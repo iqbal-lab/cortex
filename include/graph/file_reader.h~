@@ -1,0 +1,4 @@
+#include "dB_graph.h"
+
+
+int load_fasta_data_into_graph(FILE* fp, HashTable* hash_table);

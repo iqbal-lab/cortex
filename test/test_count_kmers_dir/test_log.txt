@@ -1,0 +1,76 @@
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allAs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
+file name:1 test_count_kmers_dir/allCs.fasta kmers:1 seq:35 total seq:35
+kmer:CCC count:33
+file name:1 test_count_kmers_dir/allGs.fasta kmers:1 seq:35 total seq:35
+kmer:CCC count:33
+file name:1 test_count_kmers_dir/allTs.fasta kmers:1 seq:35 total seq:35
+kmer:AAA count:33
