@@ -3,7 +3,15 @@
 
 #include <dB_graph.h>
 
+//for fasta
 int load_fasta_data_into_graph(FILE* fp, dBGraph * db_graph);
 int load_fasta_data_from_filename_into_graph(char* filename, dBGraph* db_graph);
+
+
+
+//for fastq
+int load_fastq_data_into_graph(FILE* fp, dBGraph * db_graph);
+int load_fastq_data_from_filename_into_graph(char* filename, dBGraph* db_graph);
+
 
 #endif /* FILE_READER_H_ */

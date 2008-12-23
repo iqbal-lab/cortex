@@ -18,6 +18,7 @@ typedef struct
 
 
 Sequence * read_sequence_from_fasta(FILE*);
+Sequence * read_sequence_from_fastq(FILE*);
 void free_sequence(Sequence ** );
 
 #endif /* STDSEQ_H_ */
