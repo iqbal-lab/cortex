@@ -5,6 +5,6 @@ CC = gcc
 CFLAGS = -Wall -I$(IDIR1) -I$(IDIR2)
 DEBUG = -g
 LDFLAGS =
-OPT = -O3
+OPT = -O0
 
 

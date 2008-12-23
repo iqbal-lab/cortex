@@ -4,6 +4,18 @@
 #include <dB_graph.h>
 #include <seq.h>
 
+int load_fasta_data_from_filename_into_graph(char* filename, dBGraph* db_graph)
+{
+  FILE* fp = fopen(filename, "r");
+  if (fp == NULL){
+    printf("cannot open file:%s\n",filename);
+    exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
+  }
+
+  return load_fasta_data_into_graph(fp, db_graph);
+}
+
+
 //returns length of sequence loaded
 int load_fasta_data_into_graph(FILE* fp, dBGraph * db_graph)
 {

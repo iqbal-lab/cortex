@@ -1,6 +1,7 @@
 #include "test_binary_kmer.h"
 #include "test_count_kmers.h"
 #include "test_dB_graph.h"
+#include "test_dB_graph_node.h"
 #include <CUnit.h>
 #include <Basic.h>
 
@@ -22,11 +23,11 @@ int  main()
 
   /* add the tests to the suite */
 
-  if (NULL == CU_add_test(pSuite, "test conversion from char to binary nucleotide", test_seq_to_bin)) {
+  if (NULL == CU_add_test(pSuite, "test conversion from char to binary nucleotide", test_seq_to_binary_kmer)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (NULL == CU_add_test(pSuite, "test conversion from binary nucleotide to char", test_bin_to_seq)) {
+  if (NULL == CU_add_test(pSuite, "test conversion from binary nucleotide to char", test_binary_kmer_to_seq)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
@@ -42,6 +43,14 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  // if (NULL == CU_add_test(pSuite, "test CRC returns positive values", test_element_hashval)) {
+  //  CU_cleanup_registry();
+  //  return CU_get_error();
+  //}
+  //  if (NULL == CU_add_test(pSuite, "test element_equal works", test_element_equal)) {
+  //  CU_cleanup_registry();
+  //  return CU_get_error();
+  //}
 
   /* Run all tests using the CUnit Basic interface */
   CU_basic_set_mode(CU_BRM_VERBOSE);

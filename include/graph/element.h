@@ -2,8 +2,8 @@
   element.h defines the interface for the de Bruijn graph node. The implementation is complemented by 
   a hash table that stores every node indexed by kmers (BinaryKmers). 
 
-  The elemet routines, ie the one required by hash_table/priority queue, are prefixed with element_ 
-  The de Bruin based routines are prefixed wigh db_node
+  The element routines, ie the one required by hash_table/priority queue, are prefixed with element_ 
+  The de Bruijn based routines are prefixed with db_node
 */
 
 #ifndef ELEMENT_H_
@@ -26,7 +26,7 @@ typedef enum{
 typedef struct{
 	BinaryKmer kmer;
 	Edges edges; // less significant nibble forward
-	NodeStatus status; 
+	NodeStatus status;
 } Element;
 
 typedef Element dBNode;

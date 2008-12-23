@@ -17,4 +17,5 @@ void db_graph_print_supernode(FILE * file, dBNode * node, dBGraph * db_graph);
 
 void db_graph_clip_tip(dBNode * node, int limit,dBGraph * db_graph);
 
+char * get_seq_from_elem_to_end_of_supernode(dBNode * node, Orientation orientation, dBGraph * db_graph, boolean * is_cycle);
 #endif /* DB_GRAPH_H_ */

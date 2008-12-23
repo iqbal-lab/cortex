@@ -2,8 +2,8 @@
   element.h defines the interface for the de Bruijn graph node. The implementation is complemented by 
   a hash table that stores every node indexed by kmers (BinaryKmers). 
 
-  The elemet routines, ie the one required by hash_table/priority queue, are prefixed with element_ 
-  The de Bruin based routines are prefixed wigh db_node
+  The element routines, ie the one required by hash_table/priority queue, are prefixed with element_ 
+  The de Bruijn based routines are prefixed with db_node
 */
 
 #ifndef ELEMENT_H_
@@ -17,10 +17,16 @@
 
 typedef char Edges;
 
+typedef enum{
+  none    = 0,
+  visited = 1,
+  pruned  = 2,
+} NodeStatus;
+
 typedef struct{
 	BinaryKmer kmer;
 	Edges edges; // less significant nibble forward
-	boolean visited; 
+	NodeStatus status; zamzamzam
 } Element;
 
 typedef Element dBNode;
@@ -67,14 +73,18 @@ boolean db_node_has_precisely_one_edge(dBNode *, Orientation, Nucleotide *);
 //forgets about the edges
 void db_node_reset_edges(dBNode * );
 
+void db_node_reset_edge(dBNode *, Orientation, Nucleotide );
+
 //check that the edges are 0's
 boolean db_node_edges_reset(dBNode * );
 
-//return true if the node is marked as visited
-boolean db_node_visited(dBNode *);
 
-//set node as visited
-void db_node_set_visited(dBNode *);
+boolean db_node_check_status(dBNode * node, NodeStatus status);
+
+void db_node_set_status(dBNode * node,NodeStatus status);
+
+//check if node doesn't have any edges in a given orientation
+boolean db_node_is_blunt_end(dBNode * node, Orientation orientation);
 
 
 #endif /* ELEMENT_H_ */

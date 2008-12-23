@@ -13,6 +13,7 @@ typedef struct
   char *comment;
   int length,max;
   char *seq; /* sequence */
+  char* qual;
 } Sequence;
 
 

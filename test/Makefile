@@ -1,25 +1,40 @@
 include ../Makefile.inc
 
+IDIR_BASIC =/homes/zi/dev/hg/marzam/marzam-harmonised/include/basic
+IDIR_GRAPH =/homes/zi/dev/hg/marzam/marzam-harmonised/include/graph
+IDIR_CUNIT =/homes/zi/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
+
+CC = gcc
+CFLAGS = -Wall -I$(IDIR_BASIC) -I$(IDIR_GRAPH) -I$(IDIR_CUNIT) -g
+
+
+TEST_OBJ_DIR=obj
+TEST_OBJ = $(TEST_OBJ_DIR)/test_binary_kmer.o $(TEST_OBJ_DIR)/test_dB_graph.o $(TEST_OBJ_DIR)/test_dB_graph_node.o $(TEST_OBJ_DIR)/run_tests.o
+
+GRAPH_OBJ_DIR=../src/obj/graph
+GRAPH_OBJ = $(GRAPH_OBJ_DIR)/element.o $(GRAPH_OBJ_DIR)/dB_graph.o $(GRAPH_OBJ_DIR)/seq.o $(GRAPH_OBJ_DIR)/binary_kmer.o $(GRAPH_OBJ_DIR)/priority_queue.o $(GRAPH_OBJ_DIR)/file_reader.o  $(GRAPH_OBJ_DIR)/hash_table.o  $(GRAPH_OBJ_DIR)/hash_value.o
+
+Z_LIB_DIR= ../src/third-party/zlib-1.2.3
+Z_LIB_FILES= $(Z_LIB_DIR)/*.o
+ZLIB_OBJ = $(Z_LIB_DIR)/adler32.o $(Z_LIB_DIR)/compress.o $(Z_LIB_DIR)/crc32.o $(Z_LIB_DIR)/deflate.o $(Z_LIB_DIR)/gzio.o $(Z_LIB_DIR)/infback.o $(Z_LIB_DIR)/inffast.o $(Z_LIB_DIR)/inflate.o $(Z_LIB_DIR)/inftrees.o $(Z_LIB_DIR)/trees.o $(Z_LIB_DIR)/uncompr.o $(Z_LIB_DIR)/zutil.o
+
+BIN = ../bin
+
 
 ## You only need the -L when running on EBI network. On the laptop you can make install CUNit so it's in /usr/local/lib or whatever
 ## Note you also need to buils CUNit so installs to say /homes/zi/bin, and then export LD_LIBRARY_PATH=/homes/zi/bin/lib:$LD_LIBRARY_PATH
 
-run_tests: run_tests.o test_binary_kmer.o test_dB_graph.o
-	$(CC) $(CFLAGS) $(OPT) $(LDFLAGS) -L/homes/zi/bin/lib -o run_tests ../src/file_reader.o ../src/seq.o ../src/binary_kmer.o ../src/dB_graph_node.o  ../src/dB_graph.o  ../src/priority_queue.o test_binary_kmer.o test_dB_graph.o run_tests.o -lcunit 
+default : graph run_tests zlib
 
-test_binary_kmer.o: test_binary_kmer.c
-	$(CC) $(CFLAGS) -c $? -o $@
+clean :
+	-rm $(TEST_OBJ_DIR)/*.o $(BIN)/run_tests
 
-test_dB_graph.o: test_dB_graph.c
-	$(CC) $(CFLAGS) -c $? -o $@
+zlib : 
+	cd $(Z_LIB_DIR); ./configure; make; rm minigzip.o; rm example.o
 
+run_tests : $(TEST_OBJ) $(GRAPH_OBJ) $(ZLIB_OBJ)
+	$(CC) $(CFLAGS) $(OPT) $(LDFLAGS) -L/homes/zi/bin/lib -o $(BIN)/run_tests $(GRAPH_OBJ) $(ZLIB_OBJ) $(TEST_OBJ) -lcunit 
 
-run_tests.o: run_tests.c 
-	$(CC) $(CFLAGS) -c $? -o $@
-
-
-clean:
-	-rm *.o 
-	rm run_tests
-
+obj/%.o : %.c
+	$(CC) $(CFLAGS) $(OPT) $(LDFLAGS) -c $? -o $@
 

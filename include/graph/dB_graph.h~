@@ -15,5 +15,6 @@ typedef HashTable dBGraph;
 //print the supernode where the element is placed
 void db_graph_print_supernode(FILE * file, dBNode * node, dBGraph * db_graph);
 
+void db_graph_clip_tip(dBNode * node, int limit,dBGraph * db_graph);
 
 #endif /* DB_GRAPH_H_ */
