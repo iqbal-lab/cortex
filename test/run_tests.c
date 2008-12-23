@@ -2,6 +2,7 @@
 #include "test_count_kmers.h"
 #include "test_dB_graph.h"
 #include "test_dB_graph_node.h"
+#include "test_seq.h"
 #include <CUnit.h>
 #include <Basic.h>
 
@@ -39,10 +40,10 @@ int  main()
   //  CU_cleanup_registry();
   //  return CU_get_error();
   //}
-  if (NULL == CU_add_test(pSuite, "test supernode walking", test_supernode_walking)) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
+  //if (NULL == CU_add_test(pSuite, "test supernode walking", test_supernode_walking)) {
+  //  CU_cleanup_registry();
+  //  return CU_get_error();
+  //}
   // if (NULL == CU_add_test(pSuite, "test CRC returns positive values", test_element_hashval)) {
   //  CU_cleanup_registry();
   //  return CU_get_error();
@@ -51,6 +52,10 @@ int  main()
   //  CU_cleanup_registry();
   //  return CU_get_error();
   //}
+  if (NULL == CU_add_test(pSuite, "test read_sequence_from_fastq", test_read_sequence_from_fastq)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
 
   /* Run all tests using the CUnit Basic interface */
   CU_basic_set_mode(CU_BRM_VERBOSE);
