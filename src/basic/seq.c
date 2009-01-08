@@ -91,10 +91,12 @@ Sequence * read_sequence_from_fasta(FILE *fp)
       return seq;
     }
     else{
+      free(seq);
       return NULL;
     }
   }
-
+  
+  free(seq);
   return NULL;
 }
 
