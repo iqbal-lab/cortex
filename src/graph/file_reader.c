@@ -195,6 +195,12 @@ int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph)
   
   //fprintf(stderr, "Found this many bad reads:%d\n", count_bad_reads);
 
+  free(seq->seq);
+  free(seq);
+  free(kmers->bin_kmers);
+  free(kmers);
+
+
   return seq_length;
 }
 

@@ -1,136 +1,110 @@
-==12997== Memcheck, a memory error detector.
-==12997== Copyright (C) 2002-2007, and GNU GPL'd, by Julian Seward et al.
-==12997== Using LibVEX rev 1804, a library for dynamic binary translation.
-==12997== Copyright (C) 2004-2007, and GNU GPL'd, by OpenWorks LLP.
-==12997== Using valgrind-3.3.0, a dynamic binary instrumentation framework.
-==12997== Copyright (C) 2000-2007, and GNU GPL'd, by Julian Seward et al.
-==12997== 
-==12997== My PID = 12997, parent PID = 6953.  Prog and args are:
-==12997==    ./run_tests
-==12997== 
---12997-- 
---12997-- Command line
---12997--    ./run_tests
---12997-- Startup, with flags:
---12997--    -v
---12997--    --tool=memcheck
---12997--    --leak-check=full
---12997--    --num-callers=40
---12997--    --log-file=valgrind.log
---12997-- Contents of /proc/version:
---12997--   Linux version 2.6.9-67.ELlargesmp (mockbuild@builder10.centos.org) (gcc version 3.4.6 20060404 (Red Hat 3.4.6-9)) #1 SMP Fri Nov 16 13:01:17 EST 2007
---12997-- Arch and hwcaps: AMD64, amd64-sse2
---12997-- Page sizes: currently 4096, max supported 4096
---12997-- Valgrind library directory: /homes/zi/lib/valgrind
---12997-- Reading syms from /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests (0x400000)
---12997-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/memcheck (0x38000000)
---12997--    object doesn't have a dynamic symbol table
---12997-- Reading syms from /lib64/ld-2.3.4.so (0x311CE00000)
---12997-- Reading suppressions file: /homes/zi/lib/valgrind/default.supp
---12997-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_core.so (0x4801000)
---12997-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_memcheck.so (0x4903000)
---12997-- REDIR: 0x311ce0ff90 (index) redirected to 0x4906e70 (index)
---12997-- REDIR: 0x311ce10140 (strcmp) redirected to 0x4907320 (strcmp)
---12997-- REDIR: 0x311ce10170 (strlen) redirected to 0x49070b0 (strlen)
---12997-- Reading syms from /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1 (0x4A0A000)
---12997-- Reading syms from /lib64/tls/libc-2.3.4.so (0x311D200000)
---12997-- REDIR: 0x311d270df0 (rindex) redirected to 0x4906d70 (rindex)
---12997-- REDIR: 0x311d26b5f0 (malloc) redirected to 0x4904dc0 (malloc)
---12997-- REDIR: 0x311d270a00 (strlen) redirected to 0x4907070 (strlen)
---12997-- REDIR: 0x311d270480 (strcpy) redirected to 0x49070d0 (strcpy)
---12997-- REDIR: 0x311d271d70 (mempcpy) redirected to 0x4907d30 (mempcpy)
---12997-- REDIR: 0x311d270440 (strcmp) redirected to 0x49072f0 (strcmp)
---12997-- REDIR: 0x311d269510 (free) redirected to 0x4905be0 (free)
---12997-- REDIR: 0x311d26b2c0 (calloc) redirected to 0x4906630 (calloc)
---12997-- REDIR: 0x311d2714e0 (memchr) redirected to 0x4907380 (memchr)
---12997-- REDIR: 0x311d2723a0 (memcpy) redirected to 0x49073b0 (memcpy)
---12997-- REDIR: 0x311d26bca0 (realloc) redirected to 0x4906710 (realloc)
---12997-- REDIR: 0x311d271c60 (memset) redirected to 0x4907b30 (memset)
-==12997== 
-==12997== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 10 from 5)
---12997-- 
---12997-- supp:      4 dl_relocate_object
---12997-- supp:      1 strlen-not-intercepted-early-enough-HACK-3
---12997-- supp:      1 strlen-not-intercepted-early-enough-HACK-4
---12997-- supp:      3 index-not-intercepted-early-enough-HACK-4
---12997-- supp:      1 strlen-not-intercepted-early-enough-HACK-5
-==12997== malloc/free: in use at exit: 23,808 bytes in 46 blocks.
-==12997== malloc/free: 152 allocs, 106 frees, 47,750 bytes allocated.
-==12997== 
-==12997== searching for pointers to 46 not-freed blocks.
-==12997== checked 341,104 bytes.
-==12997== 
-==12997== 1,056 (640 direct, 416 indirect) bytes in 8 blocks are definitely lost in loss record 3 of 8
-==12997==    at 0x490669A: calloc (vg_replace_malloc.c:397)
-==12997==    by 0x404225: hash_table_new (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==12997==    by 0x41183A: test_supernode_walking (test_dB_graph.c:28)
-==12997==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4123D2: main (run_tests.c:62)
-==12997== 
-==12997== 
-==12997== 2,208 (160 direct, 2,048 indirect) bytes in 4 blocks are definitely lost in loss record 4 of 8
-==12997==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==12997==    by 0x403CC6: load_fasta_data_into_graph_efficient (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==12997==    by 0x4039CE: load_fasta_data_from_filename_into_graph_efficient (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==12997==    by 0x411C4A: test_supernode_walking (test_dB_graph.c:191)
-==12997==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4123D2: main (run_tests.c:62)
-==12997== 
-==12997== 
-==12997== 16,000 (64 direct, 15,936 indirect) bytes in 4 blocks are definitely lost in loss record 6 of 8
-==12997==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==12997==    by 0x403D07: load_fasta_data_into_graph_efficient (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==12997==    by 0x4039CE: load_fasta_data_from_filename_into_graph_efficient (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==12997==    by 0x411C4A: test_supernode_walking (test_dB_graph.c:191)
-==12997==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==12997==    by 0x4123D2: main (run_tests.c:62)
-==12997== 
-==12997== LEAK SUMMARY:
-==12997==    definitely lost: 864 bytes in 16 blocks.
-==12997==    indirectly lost: 18,400 bytes in 22 blocks.
-==12997==      possibly lost: 0 bytes in 0 blocks.
-==12997==    still reachable: 4,544 bytes in 8 blocks.
-==12997==         suppressed: 0 bytes in 0 blocks.
-==12997== Reachable blocks (those to which a pointer was found) are not shown.
-==12997== To see them, rerun with: --leak-check=full --show-reachable=yes
---12997--  memcheck: sanity checks: 0 cheap, 1 expensive
---12997--  memcheck: auxmaps: 39 auxmap entries (2496k, 2M) in use
---12997--  memcheck: auxmaps_L1: 3003 searches, 14274 cmps, ratio 47:10
---12997--  memcheck: auxmaps_L2: 55 searches, 39 nodes
---12997--  memcheck: SMs: n_issued      = 21 (336k, 0M)
---12997--  memcheck: SMs: n_deissued    = 0 (0k, 0M)
---12997--  memcheck: SMs: max_noaccess  = 524287 (8388592k, 8191M)
---12997--  memcheck: SMs: max_undefined = 0 (0k, 0M)
---12997--  memcheck: SMs: max_defined   = 84 (1344k, 1M)
---12997--  memcheck: SMs: max_non_DSM   = 21 (336k, 0M)
---12997--  memcheck: max sec V bit nodes:    0 (0k, 0M)
---12997--  memcheck: set_sec_vbits8 calls: 0 (new: 0, updates: 0)
---12997--  memcheck: max shadow mem size:   4480k, 4M
---12997-- translate:            fast SP updates identified: 2,277 ( 85.7%)
---12997-- translate:   generic_known SP updates identified: 216 (  8.1%)
---12997-- translate: generic_unknown SP updates identified: 163 (  6.1%)
---12997--     tt/tc: 5,316 tt lookups requiring 5,438 probes
---12997--     tt/tc: 5,316 fast-cache updates, 5 flushes
---12997--  transtab: new        2,540 (61,226 -> 1,037,334; ratio 169:10) [0 scs]
---12997--  transtab: dumped     0 (0 -> ??)
---12997--  transtab: discarded  14 (284 -> ??)
---12997-- scheduler: 66,294 jumps (bb entries).
---12997-- scheduler: 0/3,159 major/minor sched events.
---12997--    sanity: 1 cheap, 1 expensive checks.
---12997--    exectx: 769 lists, 186 contexts (avg 0 per list)
---12997--    exectx: 264 searches, 106 full compares (401 per 1000)
---12997--    exectx: 77 cmp2, 45 cmp4, 0 cmpAll
---12997--  errormgr: 18 supplist searches, 908 comparisons during search
---12997--  errormgr: 10 errlist searches, 45 comparisons during search
+==13349== Memcheck, a memory error detector.
+==13349== Copyright (C) 2002-2007, and GNU GPL'd, by Julian Seward et al.
+==13349== Using LibVEX rev 1804, a library for dynamic binary translation.
+==13349== Copyright (C) 2004-2007, and GNU GPL'd, by OpenWorks LLP.
+==13349== Using valgrind-3.3.0, a dynamic binary instrumentation framework.
+==13349== Copyright (C) 2000-2007, and GNU GPL'd, by Julian Seward et al.
+==13349== 
+==13349== My PID = 13349, parent PID = 6953.  Prog and args are:
+==13349==    ./run_tests
+==13349== 
+--13349-- 
+--13349-- Command line
+--13349--    ./run_tests
+--13349-- Startup, with flags:
+--13349--    -v
+--13349--    --tool=memcheck
+--13349--    --leak-check=full
+--13349--    --num-callers=40
+--13349--    --log-file=valgrind.log
+--13349-- Contents of /proc/version:
+--13349--   Linux version 2.6.9-67.ELlargesmp (mockbuild@builder10.centos.org) (gcc version 3.4.6 20060404 (Red Hat 3.4.6-9)) #1 SMP Fri Nov 16 13:01:17 EST 2007
+--13349-- Arch and hwcaps: AMD64, amd64-sse2
+--13349-- Page sizes: currently 4096, max supported 4096
+--13349-- Valgrind library directory: /homes/zi/lib/valgrind
+--13349-- Reading syms from /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests (0x400000)
+--13349-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/memcheck (0x38000000)
+--13349--    object doesn't have a dynamic symbol table
+--13349-- Reading syms from /lib64/ld-2.3.4.so (0x311CE00000)
+--13349-- Reading suppressions file: /homes/zi/lib/valgrind/default.supp
+--13349-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_core.so (0x4801000)
+--13349-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_memcheck.so (0x4903000)
+--13349-- REDIR: 0x311ce0ff90 (index) redirected to 0x4906e70 (index)
+--13349-- REDIR: 0x311ce10140 (strcmp) redirected to 0x4907320 (strcmp)
+--13349-- REDIR: 0x311ce10170 (strlen) redirected to 0x49070b0 (strlen)
+--13349-- Reading syms from /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1 (0x4A0A000)
+--13349-- Reading syms from /lib64/tls/libc-2.3.4.so (0x311D200000)
+--13349-- REDIR: 0x311d270df0 (rindex) redirected to 0x4906d70 (rindex)
+--13349-- REDIR: 0x311d26b5f0 (malloc) redirected to 0x4904dc0 (malloc)
+--13349-- REDIR: 0x311d270a00 (strlen) redirected to 0x4907070 (strlen)
+--13349-- REDIR: 0x311d270480 (strcpy) redirected to 0x49070d0 (strcpy)
+--13349-- REDIR: 0x311d271d70 (mempcpy) redirected to 0x4907d30 (mempcpy)
+--13349-- REDIR: 0x311d270440 (strcmp) redirected to 0x49072f0 (strcmp)
+--13349-- REDIR: 0x311d269510 (free) redirected to 0x4905be0 (free)
+--13349-- REDIR: 0x311d26b2c0 (calloc) redirected to 0x4906630 (calloc)
+--13349-- REDIR: 0x311d2714e0 (memchr) redirected to 0x4907380 (memchr)
+--13349-- REDIR: 0x311d2723a0 (memcpy) redirected to 0x49073b0 (memcpy)
+--13349-- REDIR: 0x311d26bca0 (realloc) redirected to 0x4906710 (realloc)
+--13349-- REDIR: 0x311d271c60 (memset) redirected to 0x4907b30 (memset)
+==13349== 
+==13349== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 10 from 5)
+--13349-- 
+--13349-- supp:      4 dl_relocate_object
+--13349-- supp:      1 strlen-not-intercepted-early-enough-HACK-3
+--13349-- supp:      1 strlen-not-intercepted-early-enough-HACK-4
+--13349-- supp:      3 index-not-intercepted-early-enough-HACK-4
+--13349-- supp:      1 strlen-not-intercepted-early-enough-HACK-5
+==13349== malloc/free: in use at exit: 5,600 bytes in 30 blocks.
+==13349== malloc/free: 152 allocs, 122 frees, 47,750 bytes allocated.
+==13349== 
+==13349== searching for pointers to 30 not-freed blocks.
+==13349== checked 341,104 bytes.
+==13349== 
+==13349== 1,056 (640 direct, 416 indirect) bytes in 8 blocks are definitely lost in loss record 3 of 4
+==13349==    at 0x490669A: calloc (vg_replace_malloc.c:397)
+==13349==    by 0x404251: hash_table_new (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
+==13349==    by 0x41186A: test_supernode_walking (test_dB_graph.c:28)
+==13349==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==13349==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==13349==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==13349==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==13349==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==13349==    by 0x412402: main (run_tests.c:62)
+==13349== 
+==13349== LEAK SUMMARY:
+==13349==    definitely lost: 640 bytes in 8 blocks.
+==13349==    indirectly lost: 416 bytes in 14 blocks.
+==13349==      possibly lost: 0 bytes in 0 blocks.
+==13349==    still reachable: 4,544 bytes in 8 blocks.
+==13349==         suppressed: 0 bytes in 0 blocks.
+==13349== Reachable blocks (those to which a pointer was found) are not shown.
+==13349== To see them, rerun with: --leak-check=full --show-reachable=yes
+--13349--  memcheck: sanity checks: 0 cheap, 1 expensive
+--13349--  memcheck: auxmaps: 39 auxmap entries (2496k, 2M) in use
+--13349--  memcheck: auxmaps_L1: 3003 searches, 14274 cmps, ratio 47:10
+--13349--  memcheck: auxmaps_L2: 55 searches, 39 nodes
+--13349--  memcheck: SMs: n_issued      = 21 (336k, 0M)
+--13349--  memcheck: SMs: n_deissued    = 0 (0k, 0M)
+--13349--  memcheck: SMs: max_noaccess  = 524287 (8388592k, 8191M)
+--13349--  memcheck: SMs: max_undefined = 0 (0k, 0M)
+--13349--  memcheck: SMs: max_defined   = 84 (1344k, 1M)
+--13349--  memcheck: SMs: max_non_DSM   = 21 (336k, 0M)
+--13349--  memcheck: max sec V bit nodes:    0 (0k, 0M)
+--13349--  memcheck: set_sec_vbits8 calls: 0 (new: 0, updates: 0)
+--13349--  memcheck: max shadow mem size:   4480k, 4M
+--13349-- translate:            fast SP updates identified: 2,281 ( 85.7%)
+--13349-- translate:   generic_known SP updates identified: 216 (  8.1%)
+--13349-- translate: generic_unknown SP updates identified: 163 (  6.1%)
+--13349--     tt/tc: 5,328 tt lookups requiring 5,446 probes
+--13349--     tt/tc: 5,328 fast-cache updates, 5 flushes
+--13349--  transtab: new        2,544 (61,294 -> 1,038,526; ratio 169:10) [0 scs]
+--13349--  transtab: dumped     0 (0 -> ??)
+--13349--  transtab: discarded  14 (284 -> ??)
+--13349-- scheduler: 66,390 jumps (bb entries).
+--13349-- scheduler: 0/3,183 major/minor sched events.
+--13349--    sanity: 1 cheap, 1 expensive checks.
+--13349--    exectx: 769 lists, 202 contexts (avg 0 per list)
+--13349--    exectx: 280 searches, 108 full compares (385 per 1000)
+--13349--    exectx: 31 cmp2, 45 cmp4, 0 cmpAll
+--13349--  errormgr: 14 supplist searches, 500 comparisons during search
+--13349--  errormgr: 10 errlist searches, 45 comparisons during search
