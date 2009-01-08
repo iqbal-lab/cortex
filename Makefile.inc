@@ -1,4 +1,4 @@
-IDIR1 =/homes/zi/dev/hg/marzam/marzam_dump_pregraph/include
+IDIR1 =/homes/zi/dev/hg/marzam/marzam-harmonised-populations/include
 IDIR2 =/homes/zi/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
 
 CC = gcc

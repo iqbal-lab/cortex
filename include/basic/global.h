@@ -15,4 +15,6 @@ typedef signed char boolean;
 
 boolean DEBUG;
 
+const int NUMBER_OF_INDIVIDUALS_PER_POPULATION=2;
+const int NUMBER_OF_POPULATIONS=2;
 #endif /* GLOBAL_H_ */

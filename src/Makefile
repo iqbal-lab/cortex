@@ -3,12 +3,11 @@ include ../Makefile.inc
 IDIR_BASIC =../include/basic
 IDIR_COUNT =../include/count
 IDIR_GRAPH =../include/graph
-SRC_COUNT = ./count_src
-SRC_GRAPH = ./src_graph
+IDIR_POP_GRAPH = ../include/pop_graph
 OBJ = ./obj
 OBJ_COUNT = ./obj/count
 OBJ_GRAPH = ./obj/graph
-
+OBJ_POP_GRAPH = ./obj/pop_graph
 BIN = ../bin
 
 ifdef MAC
@@ -17,13 +16,18 @@ endif
 
 CFLAGS_COUNT = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_COUNT) $(MACFLAG) -O0
 CFLAGS_GRAPH = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_GRAPH) $(MACFLAG) -O0
+CFLAGS_POP_GRAPH = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_POP_GRAPH) $(MACFLAG) -O0
 
 GRAPH_OBJ = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph.o 
 
 GRAPH_OBJ_CL = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_clipping.o 
 
+POP_GRAPH_OBJ = obj/pop_graph/binary_kmer.o obj/pop_graph/element.o obj/pop_graph/seq.o obj/pop_graph/hash_value.o obj/pop_graph/hash_table.o obj/pop_graph/priority_queue.o obj/pop_graph/dB_graph.o obj/pop_graph/file_reader.o obj/pop_graph/graph_clipping.o 
+
 COUNT_OBJ = obj/count/binary_kmer.o obj/count/element.o obj/count/seq.o obj/count/hash_value.o obj/count/hash_table.o obj/count/priority_queue.o obj/count/count_kmers.o 
 
+pop_graph : $(POP_GRAPH_OBJ)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_POP_GRAPH) $(OPT) $(LDFLAGS) -o $(BIN)/pop_graph $(POP_GRAPH_OBJ)
 
 graph : $(GRAPH_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_GRAPH) $(OPT) $(LDFLAGS) -o $(BIN)/graph $(GRAPH_OBJ)
@@ -34,6 +38,12 @@ graph_cl : $(GRAPH_OBJ_CL)
 
 count : $(COUNT_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_COUNT) $(OPT) $(LDFLAGS) -o $(BIN)/count_kmers $(COUNT_OBJ)
+
+obj/pop_graph/%.o :  pop_graph/%.c
+	mkdir -p obj/pop_graph;$(CC) $(CFLAGS_POP_GRAPH) $(OPT) $(LDFLAGS) -c $? -o $@
+
+obj/pop_graph/%.o :  basic/%.c
+	mkdir -p obj/pop_graph/; $(CC) $(CFLAGS_POP_GRAPH) $(OPT) $(LDFLAGS) -c $? -o $@
 
 obj/graph/%.o :  graph/%.c
 	mkdir -p obj/graph;$(CC) $(CFLAGS_GRAPH) $(OPT) $(LDFLAGS) -c $? -o $@
