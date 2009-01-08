@@ -68,7 +68,7 @@ int load_fasta_data_into_graph(FILE* fp, dBGraph * db_graph)
 	    if (DEBUG)
 	      {
 		printf("kmer %i:  %s\n",i,binary_kmer_to_seq(kmers->bin_kmers[i],db_graph->kmer_size));
-	      }
+		  }
 	  
 	    if (i>0){
 	      //never assume that previous pointer stays as we do reallocation !!!!!!
@@ -87,7 +87,7 @@ int load_fasta_data_into_graph(FILE* fp, dBGraph * db_graph)
 	}
     }
   
-  fprintf(stderr, "Found this many bad reads:%d\n", count_bad_reads);
+  //fprintf(stderr, "Found this many bad reads:%d\n", count_bad_reads);
 
   return seq_length;
 }

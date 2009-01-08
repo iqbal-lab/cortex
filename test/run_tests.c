@@ -40,10 +40,10 @@ int  main()
   //  CU_cleanup_registry();
   //  return CU_get_error();
   //}
-  //if (NULL == CU_add_test(pSuite, "test supernode walking", test_supernode_walking)) {
-  //  CU_cleanup_registry();
-  //  return CU_get_error();
-  //}
+  if (NULL == CU_add_test(pSuite, "test supernode walking", test_supernode_walking)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
   // if (NULL == CU_add_test(pSuite, "test CRC returns positive values", test_element_hashval)) {
   //  CU_cleanup_registry();
   //  return CU_get_error();

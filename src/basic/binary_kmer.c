@@ -108,8 +108,10 @@ KmerArray * get_binary_kmers_from_sequence(char * seq,  int length, short kmer_s
     fputs("Out of memory trying to allocate a Kmer",stderr);
     exit(1);
   }
-  
 
+  
+// If  the number of bases is a variable called length, then the number of k-mers
+// is just (length- kmer_size +1)
   kmers->bin_kmers = malloc(sizeof(BinaryKmer) * (length - kmer_size + 1 ));
 
   if (kmers->bin_kmers == NULL){
@@ -119,8 +121,6 @@ KmerArray * get_binary_kmers_from_sequence(char * seq,  int length, short kmer_s
   
   int index_of_kmers = 0;
 
-// If  the number of bases is a variable called length, then the number of k-mers
-// is just (length- kmer_size +1)
 
   if (seq == NULL){
     puts("seq is NULL\n");    

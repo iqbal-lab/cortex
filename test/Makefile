@@ -5,7 +5,7 @@ IDIR_GRAPH =/homes/zi/dev/hg/marzam/marzam-harmonised/include/graph
 IDIR_CUNIT =/homes/zi/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
 
 CC = gcc
-CFLAGS = -Wall -I$(IDIR_BASIC) -I$(IDIR_GRAPH) -I$(IDIR_CUNIT) -g
+CFLAGS = -Wall -I$(IDIR_BASIC) -I$(IDIR_GRAPH) -I$(IDIR_CUNIT) -g -O0
 
 
 TEST_OBJ_DIR=obj

@@ -44,7 +44,7 @@ Sequence * read_sequence_from_fasta(FILE *fp)
   seq->max=0;
   seq->name = NULL;
   seq->comment = NULL;
-  //seq->qual=NULL;  //uncomment this when you add qual's to struct seq.
+  seq->qual=NULL;  
 
   while (fgets(line, MAXLINE, fp) != NULL){
     //read name
@@ -210,10 +210,12 @@ Sequence * read_sequence_from_fastq(FILE *fp)
 	return seq;
       }
     else{
+      free(seq);
       return NULL;
     }
   }
   
+  free(seq);
   return NULL;
 }
 

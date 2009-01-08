@@ -34,7 +34,7 @@ void test_supernode_walking()
   //first set up the hash/graph
   kmer_size = 3;
   number_of_buckets=5;
-  HashTable* hash_table = hash_table_new(kmer_size,5);
+  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
   load_fasta_data_from_filename_into_graph("../test/test_dB_graph_dir/generates_graph_with_two_self_loops.fasta", hash_table);
 
 
@@ -43,6 +43,9 @@ void test_supernode_walking()
   // in the reverse orientation. 
   
   Element* test_element1 = hash_table_find(seq_to_binary_kmer("GTA", kmer_size) ,hash_table);
+
+  CU_ASSERT(!(test_element1==NULL));
+
 
   boolean is_cycle=false;  
 
@@ -71,7 +74,7 @@ void test_supernode_walking()
   //first set up the hash/graph
   kmer_size = 3;
   number_of_buckets=5;
-  hash_table = hash_table_new(kmer_size,5);
+  hash_table = hash_table_new(number_of_buckets,kmer_size);
   load_fasta_data_from_filename_into_graph("../test/test_dB_graph_dir/generates_graph_with_one_long_supernode_with_conflict_at_end.fasta", hash_table);
   
   test_element1 = hash_table_find(seq_to_binary_kmer("ACA", kmer_size) ,hash_table);
@@ -103,7 +106,7 @@ void test_supernode_walking()
 //first set up the hash/graph
   kmer_size = 3;
   number_of_buckets=5;
-  hash_table = hash_table_new(kmer_size,5);
+  hash_table = hash_table_new(number_of_buckets,kmer_size);
   load_fasta_data_from_filename_into_graph("../test/test_dB_graph_dir/generates_graph_with_one_long_supernode_with_inward_conflict_at_end.fasta", hash_table);
   
   test_element1 = hash_table_find(seq_to_binary_kmer("ACA", kmer_size) ,hash_table);
@@ -135,7 +138,7 @@ void test_supernode_walking()
 //first set up the hash/graph
   kmer_size = 3;
   number_of_buckets=5;
-  hash_table = hash_table_new(kmer_size,5);
+  hash_table = hash_table_new(number_of_buckets,kmer_size);
   load_fasta_data_from_filename_into_graph("../test/test_dB_graph_dir/generates_graph_with_infinite_loop.fasta", hash_table);
   
   test_element1 = hash_table_find(seq_to_binary_kmer("AAA", kmer_size) ,hash_table);
