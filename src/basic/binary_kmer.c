@@ -83,11 +83,22 @@ char binary_nucleotide_to_char(Nucleotide n)
 
 //The first argument - seq - is a C string in A,C,G,T format
 //The second argument - length - is the length in bases of the sequence.
-//NOTE - caller of this function takes ownership of the Kmer* and has to deallocate it when finished
+//NOTE - caller of this function takes ownership of the KmerArray* and has to deallocate it when finished
 KmerArray * get_binary_kmers_from_sequence(char * seq,  int length, short kmer_size)
 {
-  boolean invalid_read = false;
+
+  //immediately abandon ship if there are any non-ACGT 
+
+  //check for non ACGT
   int i;
+  for (i=0;i<length;i++){
+    if (char_to_binary_nucleotide(seq[i]) == Undefined){
+      return NULL;
+    }
+  }
+
+
+
   BinaryKmer mask = (( (BinaryKmer) 1 << (2*kmer_size)) - 1); // mask binary 00..0011..11 as many 1's as kmer_size * 2 (every base takes 2 bits)
 
   // TODO create our own memory functions, which have malloc wrapped with a check, etc just as below
@@ -97,8 +108,10 @@ KmerArray * get_binary_kmers_from_sequence(char * seq,  int length, short kmer_s
     fputs("Out of memory trying to allocate a Kmer",stderr);
     exit(1);
   }
-  
 
+  
+// If  the number of bases is a variable called length, then the number of k-mers
+// is just (length- kmer_size +1)
   kmers->bin_kmers = malloc(sizeof(BinaryKmer) * (length - kmer_size + 1 ));
 
   if (kmers->bin_kmers == NULL){
@@ -108,49 +121,36 @@ KmerArray * get_binary_kmers_from_sequence(char * seq,  int length, short kmer_s
   
   int index_of_kmers = 0;
 
-// If  the number of bases is a variable called length, then the number of k-mers
-// is just (length- kmer_size +1)
 
   if (seq == NULL){
     puts("seq is NULL\n");    
   }
 
-  //check for non ACGT
-  for (i=0;i<length;i++){
-    if (char_to_binary_nucleotide(seq[i]) == Undefined){
-      invalid_read = true;
-      break;
-    }
-  }
-
-  if (! invalid_read){
-    //do first kmer
-    kmers->bin_kmers[index_of_kmers]= seq_to_binary_kmer(seq,kmer_size);
-
-    //do the rest --
+  
+  //do first kmer
+  kmers->bin_kmers[index_of_kmers]= seq_to_binary_kmer(seq,kmer_size);
+    
+  //do the rest --
+  index_of_kmers++;
+  
+  for(i=1; i<(length-kmer_size+1); i++){
+    //set the kmer to previous
+    kmers->bin_kmers[index_of_kmers]= kmers->bin_kmers[index_of_kmers-1];
+    //shift left one base (ie 2 bits)
+    kmers->bin_kmers[index_of_kmers] <<= 2;
+    //remove most significant base (using the mask x000.0011..11)
+    kmers->bin_kmers[index_of_kmers] &= mask;
+    //add new base
+    kmers->bin_kmers[index_of_kmers] |= char_to_binary_nucleotide(seq[i+kmer_size-1]);
+    
     index_of_kmers++;
-    
-    for(i=1; i<(length-kmer_size+1); i++){
-      //set the kmer to previous
-      kmers->bin_kmers[index_of_kmers]= kmers->bin_kmers[index_of_kmers-1];
-      //shift left one base (ie 2 bits)
-      kmers->bin_kmers[index_of_kmers] <<= 2;
-      //remove most significant base (using the mask x000.0011..11)
-      kmers->bin_kmers[index_of_kmers] &= mask;
-      //add new base
-      kmers->bin_kmers[index_of_kmers] |= char_to_binary_nucleotide(seq[i+kmer_size-1]);
-    
-      index_of_kmers++;
-    }
   }
   
-  if (invalid_read){
-    return NULL;
-  }
-  else{
-    kmers->nkmers = index_of_kmers;
-    return kmers;
-  }
+  
+  
+  kmers->nkmers = index_of_kmers;
+  return kmers;
+
 }
 
 BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
