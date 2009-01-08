@@ -5,6 +5,17 @@
 #include <seq.h>
 #include <file_reader.h>
 
+int load_fasta_data_from_filename_into_graph_efficient(char* filename, dBGraph* db_graph)
+{
+  FILE* fp = fopen(filename, "r");
+  if (fp == NULL){
+    printf("cannot open file:%s\n",filename);
+    exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
+  }
+
+  return load_fasta_data_into_graph_efficient(fp, db_graph);
+}
+
 int load_fasta_data_from_filename_into_graph(char* filename, dBGraph* db_graph)
 {
   FILE* fp = fopen(filename, "r");
@@ -97,13 +108,16 @@ int load_fasta_data_into_graph(FILE* fp, dBGraph * db_graph)
 //returns length of sequence loaded
 int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph)
 {
+
+  int longest_expected_read_length = 500;
+
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL)
     {
       printf("Out of memory allocating a Sequence object");
       exit(1);
     }
-  seq->seq = malloc(sizeof(char)*500) ;
+  seq->seq = malloc(sizeof(char)*longest_expected_read_length ) ;
 
   KmerArray * kmers = malloc(sizeof(KmerArray));  
   if (kmers == NULL){
@@ -112,7 +126,6 @@ int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph)
   }
 
 
-  int longest_expected_read_length = 500;
   kmers->bin_kmers = malloc(sizeof(BinaryKmer) * (longest_expected_read_length - db_graph->kmer_size + 1 ));
   if (kmers->bin_kmers == NULL){
     fputs("Out of memory trying to allocate a bin Kmers",stderr);
@@ -138,7 +151,7 @@ int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph)
       int ret  = get_binary_kmers_from_sequence_efficient(seq->seq,seq->length,db_graph->kmer_size, kmers);
       seq->name=0;
       seq->length=0;
-      *(seq->seq)=0;
+      //*(seq->seq)=0;
       seq->max=0;
       seq->qual=0;
 
@@ -176,7 +189,7 @@ int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph)
 	    }
 	  
 	  }
-	  *(kmers->bin_kmers)=0;
+	  //*(kmers->bin_kmers)=0;
 	}
     }
   

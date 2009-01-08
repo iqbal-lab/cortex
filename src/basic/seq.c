@@ -195,7 +195,7 @@ int  read_sequence_from_fasta_efficient(FILE *fp, Sequence* seq)
     }
   }
 
-  return 1;
+  return 0;
 }
 
 
