@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <dB_graph.h>
 #include <seq.h>
+#include <file_reader.h>
 
 int load_fasta_data_from_filename_into_graph(char* filename, dBGraph* db_graph)
 {
@@ -68,7 +69,7 @@ int load_fasta_data_into_graph(FILE* fp, dBGraph * db_graph)
 	    if (DEBUG)
 	      {
 		printf("kmer %i:  %s\n",i,binary_kmer_to_seq(kmers->bin_kmers[i],db_graph->kmer_size));
-		  }
+	      }
 	  
 	    if (i>0){
 	      //never assume that previous pointer stays as we do reallocation !!!!!!
@@ -84,6 +85,98 @@ int load_fasta_data_into_graph(FILE* fp, dBGraph * db_graph)
 	  
 	  }
 	  binary_kmer_free_kmers(&kmers);
+	}
+    }
+  
+  //fprintf(stderr, "Found this many bad reads:%d\n", count_bad_reads);
+
+  return seq_length;
+}
+
+
+//returns length of sequence loaded
+int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph)
+{
+  Sequence * seq = malloc(sizeof(Sequence));
+  if (seq == NULL)
+    {
+      printf("Out of memory allocating a Sequence object");
+      exit(1);
+    }
+  seq->seq = malloc(sizeof(char)*500) ;
+
+  KmerArray * kmers = malloc(sizeof(KmerArray));  
+  if (kmers == NULL){
+    fputs("Out of memory trying to allocate a Kmer",stderr);
+    exit(1);
+  }
+
+
+  int longest_expected_read_length = 500;
+  kmers->bin_kmers = malloc(sizeof(BinaryKmer) * (longest_expected_read_length - db_graph->kmer_size + 1 ));
+  if (kmers->bin_kmers == NULL){
+    fputs("Out of memory trying to allocate a bin Kmers",stderr);
+    exit(1);
+  }
+
+
+
+  int seq_length=0;
+  int count_bad_reads=0;
+
+  while ((read_sequence_from_fasta_efficient(fp,seq)))
+    {
+      if (DEBUG)
+	{
+	  printf ("\nsequence %s\n",seq->seq);
+	}
+
+      //KmerArray *kmers;
+      int i;
+      seq_length += seq->length;
+
+      int ret  = get_binary_kmers_from_sequence_efficient(seq->seq,seq->length,db_graph->kmer_size, kmers);
+      seq->name=0;
+      seq->length=0;
+      *(seq->seq)=0;
+      seq->max=0;
+      seq->qual=0;
+
+      if (ret == 0)
+	{
+	  count_bad_reads++;
+	}
+
+      else
+	{
+	  Element * current_node  = NULL;
+	  Element * previous_node = NULL;
+ 	
+	  Orientation current_orientation,previous_orientation;
+	
+	  for(i=0;i<kmers->nkmers;i++){	   
+     	    current_node = hash_table_find_or_insert(element_get_key(kmers->bin_kmers[i],db_graph->kmer_size),db_graph);	  	  
+	    current_orientation = db_node_get_orientation(kmers->bin_kmers[i],current_node, db_graph->kmer_size);
+	    
+	    if (DEBUG)
+	      {
+		printf("kmer %i:  %s\n",i,binary_kmer_to_seq(kmers->bin_kmers[i],db_graph->kmer_size));
+	      }
+	  
+	    if (i>0){
+	      //never assume that previous pointer stays as we do reallocation !!!!!!
+	      previous_node = hash_table_find(element_get_key(kmers->bin_kmers[i-1],db_graph->kmer_size),db_graph);
+	      
+	      if (previous_node == NULL){
+		puts("file_reader: problem - kmer not found\n");
+		exit(1);
+	      }
+	      previous_orientation = db_node_get_orientation(kmers->bin_kmers[i-1],previous_node, db_graph->kmer_size); 	      
+	      db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size);	  	      
+	    }
+	  
+	  }
+	  *(kmers->bin_kmers)=0;
 	}
     }
   

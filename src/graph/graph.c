@@ -67,7 +67,7 @@ int main(int argc, char **argv){
     int seq_length = 0;
     count_file++;
 
-    total_length += load_fasta_data_into_graph(fp_file, db_graph);
+    total_length += load_fasta_data_into_graph_efficient(fp_file, db_graph);
 
     fprintf(stderr,"\n%i file name:%s seq:%i total seq:%qd\n\n",count_file,filename,seq_length, total_length);
     
