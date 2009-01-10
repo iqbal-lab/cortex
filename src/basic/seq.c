@@ -129,9 +129,16 @@ int  read_sequence_from_fasta_efficient(FILE *fp, Sequence* seq)
 
   if (seq == NULL)
   {
-	  printf("Dont give me a null pointer - alloc memory yourself and give me that");
+	  printf("Dont give me a null pointer for seq - alloc memory yourself and give me that");
 	  exit(1);
   }
+  if (seq->seq == NULL)
+  {
+	  printf("Dont give me a null pointer for seq->seq - alloc memory yourself and give me that");
+	  exit(1);
+  }
+
+
 
   //seq->seq = NULL;
   seq->max=0;
@@ -186,6 +193,12 @@ int  read_sequence_from_fasta_efficient(FILE *fp, Sequence* seq)
 	seq->max         = max;
 	seq->length      = length;
 	
+	if (length > 500)
+	  {
+	    printf("We have met a read which is longer than our max expected, of 500 bp");
+	    exit(1);
+	  }
+
 	return 1;
       }
     else{

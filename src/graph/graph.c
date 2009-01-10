@@ -7,7 +7,7 @@
 int main(int argc, char **argv){
 
   FILE *fp_fnames,*fp_file;
-  char filename[100];
+  char filename[300];
   int hash_key_bits;
   dBGraph * db_graph = NULL; 
   short kmer_size;

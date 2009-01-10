@@ -117,7 +117,15 @@ int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph)
       printf("Out of memory allocating a Sequence object");
       exit(1);
     }
+  //ZAM todo - replace woth calloc so zero initialised.
   seq->seq = malloc(sizeof(char)*longest_expected_read_length ) ;
+  if (seq->seq == NULL)
+    {
+      printf("Out of memory allocating a seq->seq object");
+      exit(1);
+    }
+
+
 
   KmerArray * kmers = malloc(sizeof(KmerArray));  
   if (kmers == NULL){
