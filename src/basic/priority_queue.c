@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <priority_queue.h>
 
+void pqueue_free(PQueue ** pqueue)
+{
+  free(*pqueue);
+}
 
 //assumes the element is not already stored -- check this before calling this function
 void pqueue_bubble_up(int current_index, PQueue *pqueue){
