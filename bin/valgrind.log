@@ -1,507 +1,110 @@
-==1309== Memcheck, a memory error detector.
-==1309== Copyright (C) 2002-2007, and GNU GPL'd, by Julian Seward et al.
-==1309== Using LibVEX rev 1804, a library for dynamic binary translation.
-==1309== Copyright (C) 2004-2007, and GNU GPL'd, by OpenWorks LLP.
-==1309== Using valgrind-3.3.0, a dynamic binary instrumentation framework.
-==1309== Copyright (C) 2000-2007, and GNU GPL'd, by Julian Seward et al.
-==1309== 
-==1309== My PID = 1309, parent PID = 32491.  Prog and args are:
-==1309==    ./run_tests
-==1309== 
---1309-- 
---1309-- Command line
---1309--    ./run_tests
---1309-- Startup, with flags:
---1309--    -v
---1309--    --tool=memcheck
---1309--    --leak-check=full
---1309--    --num-callers=40
---1309--    --log-file=valgrind.log
---1309-- Contents of /proc/version:
---1309--   Linux version 2.6.9-67.ELlargesmp (mockbuild@builder10.centos.org) (gcc version 3.4.6 20060404 (Red Hat 3.4.6-9)) #1 SMP Fri Nov 16 13:01:17 EST 2007
---1309-- Arch and hwcaps: AMD64, amd64-sse2
---1309-- Page sizes: currently 4096, max supported 4096
---1309-- Valgrind library directory: /homes/zi/lib/valgrind
---1309-- Reading syms from /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests (0x400000)
---1309-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/memcheck (0x38000000)
---1309--    object doesn't have a dynamic symbol table
---1309-- Reading syms from /lib64/ld-2.3.4.so (0x311CE00000)
---1309-- Reading suppressions file: /homes/zi/lib/valgrind/default.supp
---1309-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_core.so (0x4801000)
---1309-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_memcheck.so (0x4903000)
---1309-- REDIR: 0x311ce0ff90 (index) redirected to 0x4906e70 (index)
---1309-- REDIR: 0x311ce10140 (strcmp) redirected to 0x4907320 (strcmp)
---1309-- REDIR: 0x311ce10170 (strlen) redirected to 0x49070b0 (strlen)
---1309-- Reading syms from /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1 (0x4A0A000)
---1309-- Reading syms from /lib64/tls/libc-2.3.4.so (0x311D200000)
---1309-- REDIR: 0x311d270df0 (rindex) redirected to 0x4906d70 (rindex)
---1309-- REDIR: 0x311d26b5f0 (malloc) redirected to 0x4904dc0 (malloc)
---1309-- REDIR: 0x311d270a00 (strlen) redirected to 0x4907070 (strlen)
---1309-- REDIR: 0x311d270480 (strcpy) redirected to 0x49070d0 (strcpy)
---1309-- REDIR: 0x311d271d70 (mempcpy) redirected to 0x4907d30 (mempcpy)
---1309-- REDIR: 0x311d270440 (strcmp) redirected to 0x49072f0 (strcmp)
---1309-- REDIR: 0x311d269510 (free) redirected to 0x4905be0 (free)
---1309-- REDIR: 0x311d26b2c0 (calloc) redirected to 0x4906630 (calloc)
---1309-- REDIR: 0x311d2714e0 (memchr) redirected to 0x4907380 (memchr)
---1309-- REDIR: 0x311d2723a0 (memcpy) redirected to 0x49073b0 (memcpy)
---1309-- REDIR: 0x311d26bca0 (realloc) redirected to 0x4906710 (realloc)
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x4119F9: test_supernode_walking (test_dB_graph.c:69)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b358a0 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x4119F9: test_supernode_walking (test_dB_graph.c:69)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411AF8: test_supernode_walking (test_dB_graph.c:101)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b363d0 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411AF8: test_supernode_walking (test_dB_graph.c:101)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411BF7: test_supernode_walking (test_dB_graph.c:133)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b37608 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411BF7: test_supernode_walking (test_dB_graph.c:133)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411CD3: test_supernode_walking (test_dB_graph.c:164)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b38840 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411CD3: test_supernode_walking (test_dB_graph.c:164)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411DF7: test_supernode_walking (test_dB_graph.c:216)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b393c8 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411DF7: test_supernode_walking (test_dB_graph.c:216)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411EF6: test_supernode_walking (test_dB_graph.c:247)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b3b038 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411EF6: test_supernode_walking (test_dB_graph.c:247)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411FF5: test_supernode_walking (test_dB_graph.c:279)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b3cda8 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411FF5: test_supernode_walking (test_dB_graph.c:279)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x4120D1: test_supernode_walking (test_dB_graph.c:310)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b3eb18 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x4120D1: test_supernode_walking (test_dB_graph.c:310)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
---1309-- REDIR: 0x311d271c60 (memset) redirected to 0x4907b30 (memset)
-==1309== 
-==1309== ERROR SUMMARY: 32 errors from 8 contexts (suppressed: 10 from 5)
-==1309== 
-==1309== 4 errors in context 1 of 8:
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x4120D1: test_supernode_walking (test_dB_graph.c:310)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b3eb18 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x4120D1: test_supernode_walking (test_dB_graph.c:310)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== 4 errors in context 2 of 8:
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411FF5: test_supernode_walking (test_dB_graph.c:279)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b3cda8 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411FF5: test_supernode_walking (test_dB_graph.c:279)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== 4 errors in context 3 of 8:
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411EF6: test_supernode_walking (test_dB_graph.c:247)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b3b038 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411EF6: test_supernode_walking (test_dB_graph.c:247)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== 4 errors in context 4 of 8:
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411DF7: test_supernode_walking (test_dB_graph.c:216)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b393c8 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411DF7: test_supernode_walking (test_dB_graph.c:216)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== 4 errors in context 5 of 8:
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411CD3: test_supernode_walking (test_dB_graph.c:164)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b38840 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411CD3: test_supernode_walking (test_dB_graph.c:164)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== 4 errors in context 6 of 8:
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411BF7: test_supernode_walking (test_dB_graph.c:133)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b37608 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411BF7: test_supernode_walking (test_dB_graph.c:133)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== 4 errors in context 7 of 8:
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411AF8: test_supernode_walking (test_dB_graph.c:101)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b363d0 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411AF8: test_supernode_walking (test_dB_graph.c:101)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== 4 errors in context 8 of 8:
-==1309== Invalid free() / delete / delete[]
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x4119F9: test_supernode_walking (test_dB_graph.c:69)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309==  Address 0x4b358a0 is 16 bytes inside a block of size 80 free'd
-==1309==    at 0x4905C4C: free (vg_replace_malloc.c:323)
-==1309==    by 0x4035C7: pqueue_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x40436E: hash_table_free (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x4119F9: test_supernode_walking (test_dB_graph.c:69)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
---1309-- 
---1309-- supp:      4 dl_relocate_object
---1309-- supp:      1 strlen-not-intercepted-early-enough-HACK-3
---1309-- supp:      1 strlen-not-intercepted-early-enough-HACK-4
---1309-- supp:      3 index-not-intercepted-early-enough-HACK-4
---1309-- supp:      1 strlen-not-intercepted-early-enough-HACK-5
-==1309== 
-==1309== IN SUMMARY: 32 errors from 8 contexts (suppressed: 10 from 5)
-==1309== 
-==1309== malloc/free: in use at exit: 4,960 bytes in 22 blocks.
-==1309== malloc/free: 152 allocs, 162 frees, 47,750 bytes allocated.
-==1309== 
-==1309== searching for pointers to 22 not-freed blocks.
-==1309== checked 341,104 bytes.
-==1309== 
-==1309== 
-==1309== 96 bytes in 6 blocks are definitely lost in loss record 1 of 3
-==1309==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==1309==    by 0x49067FA: realloc (vg_replace_malloc.c:429)
-==1309==    by 0x4038E5: pqueue_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x4044E3: hash_table_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x403BCF: load_fasta_data_into_graph (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x403A87: load_fasta_data_from_filename_into_graph (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x41190C: test_supernode_walking (test_dB_graph.c:43)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== 
-==1309== 320 bytes in 8 blocks are definitely lost in loss record 2 of 3
-==1309==    at 0x4906794: realloc (vg_replace_malloc.c:429)
-==1309==    by 0x4038E5: pqueue_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x4044E3: hash_table_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x403BCF: load_fasta_data_into_graph (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x403A87: load_fasta_data_from_filename_into_graph (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==1309==    by 0x411A30: test_supernode_walking (test_dB_graph.c:84)
-==1309==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1309==    by 0x412492: main (run_tests.c:62)
-==1309== 
-==1309== LEAK SUMMARY:
-==1309==    definitely lost: 416 bytes in 14 blocks.
-==1309==      possibly lost: 0 bytes in 0 blocks.
-==1309==    still reachable: 4,544 bytes in 8 blocks.
-==1309==         suppressed: 0 bytes in 0 blocks.
-==1309== Reachable blocks (those to which a pointer was found) are not shown.
-==1309== To see them, rerun with: --leak-check=full --show-reachable=yes
---1309--  memcheck: sanity checks: 0 cheap, 1 expensive
---1309--  memcheck: auxmaps: 39 auxmap entries (2496k, 2M) in use
---1309--  memcheck: auxmaps_L1: 3003 searches, 14274 cmps, ratio 47:10
---1309--  memcheck: auxmaps_L2: 55 searches, 39 nodes
---1309--  memcheck: SMs: n_issued      = 21 (336k, 0M)
---1309--  memcheck: SMs: n_deissued    = 0 (0k, 0M)
---1309--  memcheck: SMs: max_noaccess  = 524287 (8388592k, 8191M)
---1309--  memcheck: SMs: max_undefined = 0 (0k, 0M)
---1309--  memcheck: SMs: max_defined   = 84 (1344k, 1M)
---1309--  memcheck: SMs: max_non_DSM   = 21 (336k, 0M)
---1309--  memcheck: max sec V bit nodes:    0 (0k, 0M)
---1309--  memcheck: set_sec_vbits8 calls: 0 (new: 0, updates: 0)
---1309--  memcheck: max shadow mem size:   4480k, 4M
---1309-- translate:            fast SP updates identified: 2,287 ( 85.7%)
---1309-- translate:   generic_known SP updates identified: 216 (  8.0%)
---1309-- translate: generic_unknown SP updates identified: 164 (  6.1%)
---1309--     tt/tc: 5,345 tt lookups requiring 5,465 probes
---1309--     tt/tc: 5,345 fast-cache updates, 5 flushes
---1309--  transtab: new        2,548 (61,363 -> 1,040,049; ratio 169:10) [0 scs]
---1309--  transtab: dumped     0 (0 -> ??)
---1309--  transtab: discarded  14 (284 -> ??)
---1309-- scheduler: 66,726 jumps (bb entries).
---1309-- scheduler: 0/3,236 major/minor sched events.
---1309--    sanity: 1 cheap, 1 expensive checks.
---1309--    exectx: 769 lists, 210 contexts (avg 0 per list)
---1309--    exectx: 320 searches, 137 full compares (428 per 1000)
---1309--    exectx: 24 cmp2, 97 cmp4, 0 cmpAll
---1309--  errormgr: 21 supplist searches, 1,214 comparisons during search
---1309--  errormgr: 42 errlist searches, 177 comparisons during search
+==1580== Memcheck, a memory error detector.
+==1580== Copyright (C) 2002-2007, and GNU GPL'd, by Julian Seward et al.
+==1580== Using LibVEX rev 1804, a library for dynamic binary translation.
+==1580== Copyright (C) 2004-2007, and GNU GPL'd, by OpenWorks LLP.
+==1580== Using valgrind-3.3.0, a dynamic binary instrumentation framework.
+==1580== Copyright (C) 2000-2007, and GNU GPL'd, by Julian Seward et al.
+==1580== 
+==1580== My PID = 1580, parent PID = 32491.  Prog and args are:
+==1580==    ./run_tests
+==1580== 
+--1580-- 
+--1580-- Command line
+--1580--    ./run_tests
+--1580-- Startup, with flags:
+--1580--    -v
+--1580--    --tool=memcheck
+--1580--    --leak-check=full
+--1580--    --num-callers=40
+--1580--    --log-file=valgrind.log
+--1580-- Contents of /proc/version:
+--1580--   Linux version 2.6.9-67.ELlargesmp (mockbuild@builder10.centos.org) (gcc version 3.4.6 20060404 (Red Hat 3.4.6-9)) #1 SMP Fri Nov 16 13:01:17 EST 2007
+--1580-- Arch and hwcaps: AMD64, amd64-sse2
+--1580-- Page sizes: currently 4096, max supported 4096
+--1580-- Valgrind library directory: /homes/zi/lib/valgrind
+--1580-- Reading syms from /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests (0x400000)
+--1580-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/memcheck (0x38000000)
+--1580--    object doesn't have a dynamic symbol table
+--1580-- Reading syms from /lib64/ld-2.3.4.so (0x311CE00000)
+--1580-- Reading suppressions file: /homes/zi/lib/valgrind/default.supp
+--1580-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_core.so (0x4801000)
+--1580-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_memcheck.so (0x4903000)
+--1580-- REDIR: 0x311ce0ff90 (index) redirected to 0x4906e70 (index)
+--1580-- REDIR: 0x311ce10140 (strcmp) redirected to 0x4907320 (strcmp)
+--1580-- REDIR: 0x311ce10170 (strlen) redirected to 0x49070b0 (strlen)
+--1580-- Reading syms from /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1 (0x4A0A000)
+--1580-- Reading syms from /lib64/tls/libc-2.3.4.so (0x311D200000)
+--1580-- REDIR: 0x311d270df0 (rindex) redirected to 0x4906d70 (rindex)
+--1580-- REDIR: 0x311d26b5f0 (malloc) redirected to 0x4904dc0 (malloc)
+--1580-- REDIR: 0x311d270a00 (strlen) redirected to 0x4907070 (strlen)
+--1580-- REDIR: 0x311d270480 (strcpy) redirected to 0x49070d0 (strcpy)
+--1580-- REDIR: 0x311d271d70 (mempcpy) redirected to 0x4907d30 (mempcpy)
+--1580-- REDIR: 0x311d270440 (strcmp) redirected to 0x49072f0 (strcmp)
+--1580-- REDIR: 0x311d269510 (free) redirected to 0x4905be0 (free)
+--1580-- REDIR: 0x311d26b2c0 (calloc) redirected to 0x4906630 (calloc)
+--1580-- REDIR: 0x311d2714e0 (memchr) redirected to 0x4907380 (memchr)
+--1580-- REDIR: 0x311d2723a0 (memcpy) redirected to 0x49073b0 (memcpy)
+--1580-- REDIR: 0x311d26bca0 (realloc) redirected to 0x4906710 (realloc)
+--1580-- REDIR: 0x311d271c60 (memset) redirected to 0x4907b30 (memset)
+==1580== 
+==1580== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 10 from 5)
+--1580-- 
+--1580-- supp:      4 dl_relocate_object
+--1580-- supp:      1 strlen-not-intercepted-early-enough-HACK-3
+--1580-- supp:      1 strlen-not-intercepted-early-enough-HACK-4
+--1580-- supp:      3 index-not-intercepted-early-enough-HACK-4
+--1580-- supp:      1 strlen-not-intercepted-early-enough-HACK-5
+==1580== malloc/free: in use at exit: 5,600 bytes in 30 blocks.
+==1580== malloc/free: 152 allocs, 122 frees, 47,750 bytes allocated.
+==1580== 
+==1580== searching for pointers to 30 not-freed blocks.
+==1580== checked 341,104 bytes.
+==1580== 
+==1580== 1,056 (640 direct, 416 indirect) bytes in 8 blocks are definitely lost in loss record 3 of 4
+==1580==    at 0x490669A: calloc (vg_replace_malloc.c:397)
+==1580==    by 0x4042BD: hash_table_new (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
+==1580==    by 0x4118CA: test_supernode_walking (test_dB_graph.c:28)
+==1580==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==1580==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==1580==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==1580==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==1580==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==1580==    by 0x412462: main (run_tests.c:62)
+==1580== 
+==1580== LEAK SUMMARY:
+==1580==    definitely lost: 640 bytes in 8 blocks.
+==1580==    indirectly lost: 416 bytes in 14 blocks.
+==1580==      possibly lost: 0 bytes in 0 blocks.
+==1580==    still reachable: 4,544 bytes in 8 blocks.
+==1580==         suppressed: 0 bytes in 0 blocks.
+==1580== Reachable blocks (those to which a pointer was found) are not shown.
+==1580== To see them, rerun with: --leak-check=full --show-reachable=yes
+--1580--  memcheck: sanity checks: 0 cheap, 1 expensive
+--1580--  memcheck: auxmaps: 39 auxmap entries (2496k, 2M) in use
+--1580--  memcheck: auxmaps_L1: 3003 searches, 14274 cmps, ratio 47:10
+--1580--  memcheck: auxmaps_L2: 55 searches, 39 nodes
+--1580--  memcheck: SMs: n_issued      = 21 (336k, 0M)
+--1580--  memcheck: SMs: n_deissued    = 0 (0k, 0M)
+--1580--  memcheck: SMs: max_noaccess  = 524287 (8388592k, 8191M)
+--1580--  memcheck: SMs: max_undefined = 0 (0k, 0M)
+--1580--  memcheck: SMs: max_defined   = 84 (1344k, 1M)
+--1580--  memcheck: SMs: max_non_DSM   = 21 (336k, 0M)
+--1580--  memcheck: max sec V bit nodes:    0 (0k, 0M)
+--1580--  memcheck: set_sec_vbits8 calls: 0 (new: 0, updates: 0)
+--1580--  memcheck: max shadow mem size:   4480k, 4M
+--1580-- translate:            fast SP updates identified: 2,281 ( 85.7%)
+--1580-- translate:   generic_known SP updates identified: 216 (  8.1%)
+--1580-- translate: generic_unknown SP updates identified: 163 (  6.1%)
+--1580--     tt/tc: 5,337 tt lookups requiring 5,459 probes
+--1580--     tt/tc: 5,337 fast-cache updates, 5 flushes
+--1580--  transtab: new        2,546 (61,328 -> 1,039,134; ratio 169:10) [0 scs]
+--1580--  transtab: dumped     0 (0 -> ??)
+--1580--  transtab: discarded  14 (284 -> ??)
+--1580-- scheduler: 66,406 jumps (bb entries).
+--1580-- scheduler: 0/3,190 major/minor sched events.
+--1580--    sanity: 1 cheap, 1 expensive checks.
+--1580--    exectx: 769 lists, 202 contexts (avg 0 per list)
+--1580--    exectx: 280 searches, 112 full compares (400 per 1000)
+--1580--    exectx: 31 cmp2, 45 cmp4, 0 cmpAll
+--1580--  errormgr: 14 supplist searches, 500 comparisons during search
+--1580--  errormgr: 10 errlist searches, 45 comparisons during search
