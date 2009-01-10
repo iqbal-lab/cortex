@@ -22,7 +22,7 @@ GRAPH_OBJ = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/grap
 
 GRAPH_OBJ_CL = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_clipping.o 
 
-POP_GRAPH_OBJ = obj/pop_graph/binary_kmer.o obj/pop_graph/element.o obj/pop_graph/seq.o obj/pop_graph/hash_value.o obj/pop_graph/hash_table.o obj/pop_graph/priority_queue.o obj/pop_graph/dB_graph.o obj/pop_graph/file_reader.o obj/pop_graph/graph_clipping.o 
+POP_GRAPH_OBJ = obj/pop_graph/graph.o obj/pop_graph/binary_kmer.o obj/pop_graph/element.o obj/pop_graph/seq.o obj/pop_graph/hash_value.o obj/pop_graph/hash_table.o obj/pop_graph/priority_queue.o obj/pop_graph/dB_graph.o obj/pop_graph/file_reader.o  obj/pop_graph/dB_graph_population.o
 
 COUNT_OBJ = obj/count/binary_kmer.o obj/count/element.o obj/count/seq.o obj/count/hash_value.o obj/count/hash_table.o obj/count/priority_queue.o obj/count/count_kmers.o 
 
@@ -40,10 +40,10 @@ count : $(COUNT_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_COUNT) $(OPT) $(LDFLAGS) -o $(BIN)/count_kmers $(COUNT_OBJ)
 
 obj/pop_graph/%.o :  pop_graph/%.c
-	mkdir -p obj/pop_graph;$(CC) $(CFLAGS_GRAPH) $(OPT) $(LDFLAGS) -c $? -o $@
+	mkdir -p obj/pop_graph;$(CC) $(CFLAGS_POP_GRAPH) $(OPT) $(LDFLAGS) -c $? -o $@
 
 obj/pop_graph/%.o :  basic/%.c
-	mkdir -p obj/pop_graph/; $(CC) $(CFLAGS_GRAPH) $(OPT) $(LDFLAGS) -c $? -o $@
+	mkdir -p obj/pop_graph/; $(CC) $(CFLAGS_POP_GRAPH) $(OPT) $(LDFLAGS) -c $? -o $@
 
 obj/graph/%.o :  graph/%.c
 	mkdir -p obj/graph;$(CC) $(CFLAGS_GRAPH) $(OPT) $(LDFLAGS) -c $? -o $@

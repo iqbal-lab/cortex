@@ -1,5 +1,4 @@
 #include <hash_value.h>
-#include <element.h>
 #include <stdlib.h>
 
 static int crc_table[256] = {

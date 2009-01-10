@@ -8,6 +8,7 @@
 #include <global.h>
 #include <stdio.h>
 
+
 typedef struct{
 	BinaryKmer kmer;
 	long long count;

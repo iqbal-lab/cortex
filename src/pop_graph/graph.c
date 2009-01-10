@@ -6,6 +6,7 @@
 
 int main(int argc, char **argv){
 
+
   FILE *fp_fnames,*fp_file;
   char filename[100];
   int hash_key_bits;
@@ -15,9 +16,9 @@ int main(int argc, char **argv){
   FILE * fout;
   long count=0;
 
-  void print_supernode(dBNode * node){
+  void print_supernode_for_specific_person_or_pop(dBNode * node,EdgeArrayType type, int index){
 
-    char filename [50];
+    char filename [200];
     if (count % 100000000 == 0){
     int index = count / 100000000;
 
@@ -31,12 +32,12 @@ int main(int argc, char **argv){
     }
     
     count++;
-    db_graph_print_supernode(fout,node,db_graph);
+    db_graph_print_supernode_for_specific_person_or_pop(fout,node,db_graph, type,index);
   }
 
 
   //command line arguments 
-  fp_fnames= fopen(argv[1], "r");    //open file of file names
+  fp_fnames= fopen(argv[1], "r");    //open file of which gives one filename per population. Each of these files gives one filename per individual, and each of those gives list of files.
   kmer_size        = atoi(argv[2]);  //global variable defined in element.h
  
   hash_key_bits    = atoi(argv[3]); //number of buckets: 2^hash_key_bits
@@ -58,23 +59,21 @@ int main(int argc, char **argv){
     //int count_bad_reads = 0;
     fscanf(fp_fnames, "%s\n", filename);
     
-    fp_file = fopen(filename, "r");
-    if (fp_file == NULL){
-      printf("cannot open file:%s\n",filename);
-      exit(1);
-    }
-    
     int seq_length = 0;
     count_file++;
 
-    total_length += load_fasta_data_into_graph(fp_file, db_graph);
+    total_length += load_population_as_fasta(filename, db_graph);
 
     fprintf(stderr,"\n%i file name:%s seq:%i total seq:%qd\n\n",count_file,filename,seq_length, total_length);
     
   }
 
-  printf("print supernodes\n");
-  hash_table_traverse(&print_supernode,db_graph);
+  printf("print supernodes for each person in population 1\n");
+  printf("print supernodes for person 1 population 1\n");
+  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop,db_graph,individual_edge_array,0);
+  printf("print supernodes for person 2 population 1\n");
+  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop,db_graph,individual_edge_array,1);
+
 
   return 1;
 }

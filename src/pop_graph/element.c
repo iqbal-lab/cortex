@@ -8,6 +8,55 @@
 #include <stdio.h>
 
 
+int NUMBER_OF_INDIVIDUALS_PER_POPULATION = 2;
+int NUMBER_OF_POPULATIONS = 2;
+
+
+
+Element* new_element()
+{
+  Element* e = malloc(sizeof(Element));
+
+  if (e==NULL)
+    {
+      printf("Unable to allocate a new element");
+      exit(1);
+    }
+  
+  e->kmer=0;
+  e->population_proportions=0;
+
+
+  e->individual_edges = malloc(sizeof(Edges)*NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+  if (e->individual_edges == NULL)
+    {
+      printf("cannot alloc the edges for individuals for this element");
+      exit(1);
+    }
+
+  int i;
+  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    {
+      e->individual_edges[i]=0;
+    }
+
+
+  e->population_edges = malloc(sizeof(Edges)*NUMBER_OF_POPULATIONS);
+  if (e->population_edges == NULL)
+    {
+      printf("cannot alloc the edges for populations for this element");
+      exit(1);
+    }
+  for (i=0; i< NUMBER_OF_POPULATIONS; i++)
+    {
+      e->population_edges[i]=0;
+    }
+
+
+  e->status=none;
+
+  return e;
+}
 
 //gets you a pointer to the edge you are referring to
 Edges* get_edge(Element e, EdgeArrayType type,int index)
@@ -57,6 +106,32 @@ Edges get_edge_copy(Element e, EdgeArrayType type,int index)
 
   exit(1);
 }
+
+
+
+Edges get_union_of_edges(Element e)
+{
+
+  int i;
+  Edges edges=0;
+
+  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    {
+      edges |= e.individual_edges[i];
+    }
+
+  for (i=0; i< NUMBER_OF_POPULATIONS; i++)
+    {
+      edges |=  e.population_edges[i];
+    }
+
+  return edges;
+}
+
+
+
+
+
 
 
 
@@ -150,12 +225,9 @@ void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, 
 
 
 
-//Since we are going to have multiple superimposed graphs, we need to specify which one we are interested in
-//3rd argument specifies if talking about an individual or a population, and 4th argument gives indiex within the 
-//element's appropriate edge array
-boolean element_smaller(Element  e1, Element e2, EdgeArrayType edge_type, int edge_index){
-  
-  return get_edge_copy(e1, edge_type, edge_index)  < get_edge_copy(e2, edge_type, edge_index) ;
+boolean element_smaller(Element  e1, Element e2){
+ 
+  return get_union_of_edges(e1)  <  get_union_of_edges(e2);
   
 }
 

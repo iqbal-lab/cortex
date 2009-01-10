@@ -9,8 +9,13 @@
 #ifndef ELEMENT_H_
 #define ELEMENT_H_
 
+
 #include <binary_kmer.h>
 #include <global.h>
+
+extern int NUMBER_OF_INDIVIDUALS_PER_POPULATION;
+extern int NUMBER_OF_POPULATIONS;
+
 
 
 //type definitions
@@ -47,7 +52,6 @@ typedef struct{
 
 
 typedef Element dBNode;
-
 typedef BinaryKmer Key;
 
 typedef enum{
@@ -57,19 +61,20 @@ typedef enum{
 
 typedef Element GraphNode;
 
-
+Element* new_element();
 
 //utility function for getting the desired edge char, by specifying if talking about a population or an individual
 // and giving the appropriate index in the relevant array
 
 Edges* get_edge(Element, EdgeArrayType, int); //gets pointer to actual edge, so you can modify it
 Edges get_edge_copy(Element e, EdgeArrayType type,int index); //gets copy of edge
+Edges get_union_of_edges(Element e);
 void add_edges(Element*, EdgeArrayType, int, Edges);
 void set_edges(Element*, EdgeArrayType, int, Edges);
 void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, EdgeArrayType type, int index);
 
 
-boolean element_smaller(Element,Element, EdgeArrayType, int);
+boolean element_smaller(Element,Element);
 BinaryKmer element_get_kmer(Element *);
 boolean element_is_key(Key,Element, short kmer_size);
 Key element_get_key(BinaryKmer,short kmer_size);
