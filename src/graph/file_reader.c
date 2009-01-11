@@ -5,7 +5,7 @@
 #include <seq.h>
 #include <file_reader.h>
 
-int load_fasta_data_from_filename_into_graph_efficient(char* filename, dBGraph* db_graph)
+int load_fasta_data_from_filename_into_graph_efficient(char* filename, dBGraph* db_graph, int* number_of_reallocs)
 {
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
@@ -13,7 +13,7 @@ int load_fasta_data_from_filename_into_graph_efficient(char* filename, dBGraph* 
     exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
   }
 
-  return load_fasta_data_into_graph_efficient(fp, db_graph);
+  return load_fasta_data_into_graph_efficient(fp, db_graph, number_of_reallocs);
 }
 
 int load_fasta_data_from_filename_into_graph(char* filename, dBGraph* db_graph)
@@ -106,10 +106,10 @@ int load_fasta_data_into_graph(FILE* fp, dBGraph * db_graph)
 
 
 //returns length of sequence loaded
-int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph)
+int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph, int* number_of_reallocs)
 {
 
-  int longest_expected_read_length = 500;
+  int longest_expected_read_length = 1000;
 
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL)
@@ -125,7 +125,10 @@ int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph)
       exit(1);
     }
 
-
+  seq->max=longest_expected_read_length;
+  seq->qual=NULL;
+  seq->length=0;
+  
 
   KmerArray * kmers = malloc(sizeof(KmerArray));  
   if (kmers == NULL){
@@ -144,9 +147,12 @@ int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph)
 
   int seq_length=0;
   int count_bad_reads=0;
-
-  while ((read_sequence_from_fasta_efficient(fp,seq)))
+  int total_reallocs=0;
+  int did_a_realloc_occur_in_this_call=0;
+  while ((read_sequence_from_fasta_efficient(fp,seq, &did_a_realloc_occur_in_this_call)))
     {
+      total_reallocs=total_reallocs+did_a_realloc_occur_in_this_call;
+
       if (DEBUG)
 	{
 	  printf ("\nsequence %s\n",seq->seq);
@@ -160,8 +166,8 @@ int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph)
       seq->name=0;
       seq->length=0;
       //*(seq->seq)=0;
-      seq->max=0;
-      seq->qual=0;
+      //seq->max=0;
+      //seq->qual=0;
 
       if (ret == 0)
 	{
@@ -208,7 +214,7 @@ int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph)
   free(kmers->bin_kmers);
   free(kmers);
 
-
+  *number_of_reallocs = total_reallocs;
   return seq_length;
 }
 

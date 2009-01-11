@@ -108,8 +108,8 @@ Sequence * read_sequence_from_fasta(FILE *fp)
 
 //if going to be reading lots, alloc your own Sequence* just once,
 // and call this repeatedly, reusing that memory.
-//returns 0 in case of error. sequence is returned in the seq* you pass in as argument.
-int  read_sequence_from_fasta_efficient(FILE *fp, Sequence* seq)
+//returns 0 in case of error. sequence is returned in the seq* you pass in as argument, which you must prealloc, including seq->seq.
+int  read_sequence_from_fasta_efficient(FILE *fp, Sequence* seq, int* did_a_realloc_occur)
 {
 
 // Note - If we do have a line bigger than 5000, fgets will read it in multiple consecutive goes.
@@ -141,7 +141,7 @@ int  read_sequence_from_fasta_efficient(FILE *fp, Sequence* seq)
 
 
   //seq->seq = NULL;
-  seq->max=0;
+  //  seq->max=0;
   seq->name = NULL;
   seq->comment = NULL;
   seq->qual=NULL;  
@@ -169,33 +169,38 @@ int  read_sequence_from_fasta_efficient(FILE *fp, Sequence* seq)
 	//read Sequence
 	
 	int length = 0;
-	int max    = seq->max; //this is zero at the moment
+	int max    = seq->max; //This starts off as whatever size you alloced the seq->seq that you passed in
 	char c = 0;
 	
 	
 	while (!feof(fp) && (c = fgetc(fp)) != '>') {
-    	  if (isalpha(c) || c == '-' || c == '.') {
-	    if (length + 1 >= max) {
-	      max += SEQ_BLOCK_SIZE;
-	      seq->seq = (char*)realloc(seq->seq, sizeof(char) * max);
-	      if (seq->seq == NULL)
+    	  if (isalpha(c)) 
+	    {
+	      if (length + 1 >= max) 
 		{
-		  printf("Out of mem doing realloc of seq");
-		  exit(1);
+		  max += SEQ_BLOCK_SIZE;
+		  seq->seq = (char*)realloc(seq->seq, sizeof(char) * max);
+		  printf("Realloc of seq->seq hppening. I don't expect this to ever happen");
+		  *did_a_realloc_occur=1;
+		  if (seq->seq == NULL)
+		    {
+		      printf("Out of mem doing realloc of seq");
+		      exit(1);
+		    }
 		}
+	      seq->seq[length++] = (char)c;
 	    }
-	    seq->seq[length++] = (char)c;
-    	  }
+
 	}
 	if (c == '>') ungetc(c,fp);
 	
 	seq->seq[length] = '\0';
-	seq->max         = max;
+	//seq->max         = max;
 	seq->length      = length;
 	
-	if (length > 500)
+	if (length > 1000)
 	  {
-	    printf("We have met a read which is longer than our max expected, of 500 bp");
+	    printf("We have met a read which is longer than our max expected, of 1000 bp");
 	    exit(1);
 	  }
 

@@ -187,8 +187,10 @@ void test_supernode_walking()
   kmer_size = 3;
   number_of_buckets=5;
   hash_table = hash_table_new(number_of_buckets,kmer_size);
-
-  load_fasta_data_from_filename_into_graph_efficient("../test/test_dB_graph_dir/generates_graph_with_two_self_loops.fasta", hash_table);
+  int num_reallocs=0;
+  load_fasta_data_from_filename_into_graph_efficient("../test/test_dB_graph_dir/generates_graph_with_two_self_loops.fasta", hash_table, &num_reallocs);
+  
+  CU_ASSERT(num_reallocs==0);
 
 
   // now start at GTA and get all the sequence from there to the end of the supernode, and see
@@ -198,7 +200,6 @@ void test_supernode_walking()
   test_element1 = hash_table_find(seq_to_binary_kmer("GTA", kmer_size) ,hash_table);
 
   CU_ASSERT(!(test_element1==NULL));
-
 
   is_cycle=false;  
   test1_result = get_seq_from_elem_to_end_of_supernode(test_element1, forward, hash_table, &is_cycle);
@@ -227,8 +228,13 @@ void test_supernode_walking()
   kmer_size = 3;
   number_of_buckets=5;
   hash_table = hash_table_new(number_of_buckets,kmer_size);
-  load_fasta_data_from_filename_into_graph_efficient("../test/test_dB_graph_dir/generates_graph_with_one_long_supernode_with_conflict_at_end.fasta", hash_table);
-  
+  num_reallocs=0;
+  load_fasta_data_from_filename_into_graph_efficient("../test/test_dB_graph_dir/generates_graph_with_one_long_supernode_with_conflict_at_end.fasta", hash_table, &num_reallocs);
+
+  CU_ASSERT(num_reallocs==0);
+
+
+
   test_element1 = hash_table_find(seq_to_binary_kmer("ACA", kmer_size) ,hash_table);
 
   is_cycle=false;
@@ -259,7 +265,10 @@ void test_supernode_walking()
   kmer_size = 3;
   number_of_buckets=5;
   hash_table = hash_table_new(number_of_buckets,kmer_size);
-  load_fasta_data_from_filename_into_graph_efficient("../test/test_dB_graph_dir/generates_graph_with_one_long_supernode_with_inward_conflict_at_end.fasta", hash_table);
+  num_reallocs=0;
+  load_fasta_data_from_filename_into_graph_efficient("../test/test_dB_graph_dir/generates_graph_with_one_long_supernode_with_inward_conflict_at_end.fasta", hash_table, &num_reallocs);
+  CU_ASSERT(num_reallocs==0);
+
   
   test_element1 = hash_table_find(seq_to_binary_kmer("ACA", kmer_size) ,hash_table);
 
@@ -291,7 +300,10 @@ void test_supernode_walking()
   kmer_size = 3;
   number_of_buckets=5;
   hash_table = hash_table_new(number_of_buckets,kmer_size);
-  load_fasta_data_from_filename_into_graph_efficient("../test/test_dB_graph_dir/generates_graph_with_infinite_loop.fasta", hash_table);
+  num_reallocs=0;
+  load_fasta_data_from_filename_into_graph_efficient("../test/test_dB_graph_dir/generates_graph_with_infinite_loop.fasta", hash_table, &num_reallocs);
+  CU_ASSERT(num_reallocs==0);
+
   
   test_element1 = hash_table_find(seq_to_binary_kmer("AAA", kmer_size) ,hash_table);
 
