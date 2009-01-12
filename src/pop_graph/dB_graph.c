@@ -483,10 +483,10 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
     //return is_cycle_forward == true if the path closes a loop
     seq_forward = get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(node,forward,db_graph,&is_cycle_forward, type, index);
     
-    if (DEBUG){
+    //    if (DEBUG){
       printf("NODE c %s\n",seq); 
-      printf("NODE f %s\n",seq_forward);
-    }
+      //  printf("NODE f %s\n",seq_forward);
+      //}
     
     if (! is_cycle_forward){
       
@@ -502,9 +502,9 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 	exit(1);
       }
       
-      if (DEBUG){
+      // if (DEBUG){
 	printf("NODE r %s\n",seq_reverse);
-      }
+	//      }
       
       length_reverse = strlen(seq_reverse);
     }
@@ -518,9 +518,9 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
     }
     seq_reverse_reversed[length_reverse]='\0';
     
-    if (DEBUG){
+    //    if (DEBUG){
       printf("NODE rr %s\n",seq_reverse_reversed);
-    }
+      //}
     
     fprintf(file,">NODE\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward); 
     

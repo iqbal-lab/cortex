@@ -1,110 +1,181 @@
-==28803== Memcheck, a memory error detector.
-==28803== Copyright (C) 2002-2007, and GNU GPL'd, by Julian Seward et al.
-==28803== Using LibVEX rev 1804, a library for dynamic binary translation.
-==28803== Copyright (C) 2004-2007, and GNU GPL'd, by OpenWorks LLP.
-==28803== Using valgrind-3.3.0, a dynamic binary instrumentation framework.
-==28803== Copyright (C) 2000-2007, and GNU GPL'd, by Julian Seward et al.
-==28803== 
-==28803== My PID = 28803, parent PID = 22566.  Prog and args are:
-==28803==    ./run_tests
-==28803== 
---28803-- 
---28803-- Command line
---28803--    ./run_tests
---28803-- Startup, with flags:
---28803--    -v
---28803--    --tool=memcheck
---28803--    --leak-check=full
---28803--    --num-callers=40
---28803--    --log-file=valgrind.log
---28803-- Contents of /proc/version:
---28803--   Linux version 2.6.9-67.ELlargesmp (mockbuild@builder10.centos.org) (gcc version 3.4.6 20060404 (Red Hat 3.4.6-9)) #1 SMP Fri Nov 16 13:01:17 EST 2007
---28803-- Arch and hwcaps: AMD64, amd64-sse2
---28803-- Page sizes: currently 4096, max supported 4096
---28803-- Valgrind library directory: /homes/zi/lib/valgrind
---28803-- Reading syms from /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests (0x400000)
---28803-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/memcheck (0x38000000)
---28803--    object doesn't have a dynamic symbol table
---28803-- Reading syms from /lib64/ld-2.3.4.so (0x311CE00000)
---28803-- Reading suppressions file: /homes/zi/lib/valgrind/default.supp
---28803-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_core.so (0x4801000)
---28803-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_memcheck.so (0x4903000)
---28803-- REDIR: 0x311ce0ff90 (index) redirected to 0x4906e70 (index)
---28803-- REDIR: 0x311ce10140 (strcmp) redirected to 0x4907320 (strcmp)
---28803-- REDIR: 0x311ce10170 (strlen) redirected to 0x49070b0 (strlen)
---28803-- Reading syms from /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1 (0x4A0A000)
---28803-- Reading syms from /lib64/tls/libc-2.3.4.so (0x311D200000)
---28803-- REDIR: 0x311d270df0 (rindex) redirected to 0x4906d70 (rindex)
---28803-- REDIR: 0x311d26b5f0 (malloc) redirected to 0x4904dc0 (malloc)
---28803-- REDIR: 0x311d270a00 (strlen) redirected to 0x4907070 (strlen)
---28803-- REDIR: 0x311d270480 (strcpy) redirected to 0x49070d0 (strcpy)
---28803-- REDIR: 0x311d271d70 (mempcpy) redirected to 0x4907d30 (mempcpy)
---28803-- REDIR: 0x311d270440 (strcmp) redirected to 0x49072f0 (strcmp)
---28803-- REDIR: 0x311d269510 (free) redirected to 0x4905be0 (free)
---28803-- REDIR: 0x311d26b2c0 (calloc) redirected to 0x4906630 (calloc)
---28803-- REDIR: 0x311d2714e0 (memchr) redirected to 0x4907380 (memchr)
---28803-- REDIR: 0x311d2723a0 (memcpy) redirected to 0x49073b0 (memcpy)
---28803-- REDIR: 0x311d26bca0 (realloc) redirected to 0x4906710 (realloc)
---28803-- REDIR: 0x311d271c60 (memset) redirected to 0x4907b30 (memset)
-==28803== 
-==28803== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 10 from 5)
---28803-- 
---28803-- supp:      4 dl_relocate_object
---28803-- supp:      1 strlen-not-intercepted-early-enough-HACK-3
---28803-- supp:      1 strlen-not-intercepted-early-enough-HACK-4
---28803-- supp:      3 index-not-intercepted-early-enough-HACK-4
---28803-- supp:      1 strlen-not-intercepted-early-enough-HACK-5
-==28803== malloc/free: in use at exit: 2,800 bytes in 15 blocks.
-==28803== malloc/free: 99 allocs, 84 frees, 18,502 bytes allocated.
-==28803== 
-==28803== searching for pointers to 15 not-freed blocks.
-==28803== checked 208,976 bytes.
-==28803== 
-==28803== 528 (320 direct, 208 indirect) bytes in 4 blocks are definitely lost in loss record 3 of 4
-==28803==    at 0x490669A: calloc (vg_replace_malloc.c:397)
-==28803==    by 0x403965: hash_table_new (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised/bin/run_tests)
-==28803==    by 0x410F7A: test_supernode_walking (test_dB_graph.c:37)
-==28803==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==28803==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==28803==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==28803==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==28803==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==28803==    by 0x411712: main (run_tests.c:62)
-==28803== 
-==28803== LEAK SUMMARY:
-==28803==    definitely lost: 320 bytes in 4 blocks.
-==28803==    indirectly lost: 208 bytes in 7 blocks.
-==28803==      possibly lost: 0 bytes in 0 blocks.
-==28803==    still reachable: 2,272 bytes in 4 blocks.
-==28803==         suppressed: 0 bytes in 0 blocks.
-==28803== Reachable blocks (those to which a pointer was found) are not shown.
-==28803== To see them, rerun with: --leak-check=full --show-reachable=yes
---28803--  memcheck: sanity checks: 0 cheap, 1 expensive
---28803--  memcheck: auxmaps: 39 auxmap entries (2496k, 2M) in use
---28803--  memcheck: auxmaps_L1: 2849 searches, 13767 cmps, ratio 48:10
---28803--  memcheck: auxmaps_L2: 55 searches, 39 nodes
---28803--  memcheck: SMs: n_issued      = 18 (288k, 0M)
---28803--  memcheck: SMs: n_deissued    = 0 (0k, 0M)
---28803--  memcheck: SMs: max_noaccess  = 524287 (8388592k, 8191M)
---28803--  memcheck: SMs: max_undefined = 0 (0k, 0M)
---28803--  memcheck: SMs: max_defined   = 84 (1344k, 1M)
---28803--  memcheck: SMs: max_non_DSM   = 18 (288k, 0M)
---28803--  memcheck: max sec V bit nodes:    0 (0k, 0M)
---28803--  memcheck: set_sec_vbits8 calls: 0 (new: 0, updates: 0)
---28803--  memcheck: max shadow mem size:   4432k, 4M
---28803-- translate:            fast SP updates identified: 2,111 ( 85.5%)
---28803-- translate:   generic_known SP updates identified: 198 (  8.0%)
---28803-- translate: generic_unknown SP updates identified: 158 (  6.4%)
---28803--     tt/tc: 5,068 tt lookups requiring 5,156 probes
---28803--     tt/tc: 5,068 fast-cache updates, 5 flushes
---28803--  transtab: new        2,430 (57,220 -> 976,433; ratio 170:10) [0 scs]
---28803--  transtab: dumped     0 (0 -> ??)
---28803--  transtab: discarded  14 (284 -> ??)
---28803-- scheduler: 55,941 jumps (bb entries).
---28803-- scheduler: 0/2,936 major/minor sched events.
---28803--    sanity: 1 cheap, 1 expensive checks.
---28803--    exectx: 769 lists, 136 contexts (avg 0 per list)
---28803--    exectx: 193 searches, 73 full compares (378 per 1000)
---28803--    exectx: 13 cmp2, 45 cmp4, 0 cmpAll
---28803--  errormgr: 14 supplist searches, 500 comparisons during search
---28803--  errormgr: 10 errlist searches, 45 comparisons during search
+==8591== Memcheck, a memory error detector.
+==8591== Copyright (C) 2002-2007, and GNU GPL'd, by Julian Seward et al.
+==8591== Using LibVEX rev 1804, a library for dynamic binary translation.
+==8591== Copyright (C) 2004-2007, and GNU GPL'd, by OpenWorks LLP.
+==8591== Using valgrind-3.3.0, a dynamic binary instrumentation framework.
+==8591== Copyright (C) 2000-2007, and GNU GPL'd, by Julian Seward et al.
+==8591== 
+==8591== My PID = 8591, parent PID = 7648.  Prog and args are:
+==8591==    ./run_pop_tests
+==8591== 
+--8591-- 
+--8591-- Command line
+--8591--    ./run_pop_tests
+--8591-- Startup, with flags:
+--8591--    -v
+--8591--    --tool=memcheck
+--8591--    --leak-check=full
+--8591--    --num-callers=40
+--8591--    --log-file=valgrind.log
+--8591-- Contents of /proc/version:
+--8591--   Linux version 2.6.9-67.ELsmp (mockbuild@builder10.centos.org) (gcc version 3.4.6 20060404 (Red Hat 3.4.6-9)) #1 SMP Fri Nov 16 12:49:06 EST 2007
+--8591-- Arch and hwcaps: AMD64, amd64-sse2
+--8591-- Page sizes: currently 4096, max supported 4096
+--8591-- Valgrind library directory: /homes/zi/lib/valgrind
+--8591-- Reading syms from /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests (0x400000)
+--8591-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/memcheck (0x38000000)
+--8591--    object doesn't have a dynamic symbol table
+--8591-- Reading syms from /lib64/ld-2.3.4.so (0x3C31900000)
+--8591-- Reading suppressions file: /homes/zi/lib/valgrind/default.supp
+--8591-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_core.so (0x4801000)
+--8591-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_memcheck.so (0x4903000)
+--8591-- REDIR: 0x3c3190ff90 (index) redirected to 0x4906e70 (index)
+--8591-- REDIR: 0x3c31910140 (strcmp) redirected to 0x4907320 (strcmp)
+--8591-- REDIR: 0x3c31910170 (strlen) redirected to 0x49070b0 (strlen)
+--8591-- Reading syms from /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1 (0x4A0A000)
+--8591-- Reading syms from /lib64/tls/libc-2.3.4.so (0x3C31D00000)
+--8591-- REDIR: 0x3c31d70df0 (rindex) redirected to 0x4906d70 (rindex)
+--8591-- REDIR: 0x3c31d6b5f0 (malloc) redirected to 0x4904dc0 (malloc)
+--8591-- REDIR: 0x3c31d70a00 (strlen) redirected to 0x4907070 (strlen)
+--8591-- REDIR: 0x3c31d70480 (strcpy) redirected to 0x49070d0 (strcpy)
+--8591-- REDIR: 0x3c31d71d70 (mempcpy) redirected to 0x4907d30 (mempcpy)
+--8591-- REDIR: 0x3c31d70440 (strcmp) redirected to 0x49072f0 (strcmp)
+--8591-- REDIR: 0x3c31d69510 (free) redirected to 0x4905be0 (free)
+--8591-- REDIR: 0x3c31d6b2c0 (calloc) redirected to 0x4906630 (calloc)
+--8591-- REDIR: 0x3c31d714e0 (memchr) redirected to 0x4907380 (memchr)
+--8591-- REDIR: 0x3c31d723a0 (memcpy) redirected to 0x49073b0 (memcpy)
+--8591-- REDIR: 0x3c31d70290 (index) redirected to 0x4906e30 (index)
+--8591-- REDIR: 0x3c31d6bca0 (realloc) redirected to 0x4906710 (realloc)
+==8591== Use of uninitialised value of size 8
+==8591==    at 0x40202B: element_initialise (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x40354B: pqueue_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403022: hash_table_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x404111: load_fasta_data_into_graph_for_specific_person_or_population (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403FC9: load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403E9C: load_population_as_fasta (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x411AFD: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:14)
+==8591==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x411C74: main (run_pop_tests.c:67)
+==8591== 
+==8591== Invalid write of size 1
+==8591==    at 0x40202B: element_initialise (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x40354B: pqueue_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403022: hash_table_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x404111: load_fasta_data_into_graph_for_specific_person_or_population (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403FC9: load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403E9C: load_population_as_fasta (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x411AFD: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:14)
+==8591==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x411C74: main (run_pop_tests.c:67)
+==8591==  Address 0x3 is not stack'd, malloc'd or (recently) free'd
+==8591== 
+==8591== Process terminating with default action of signal 11 (SIGSEGV)
+==8591==  Access not within mapped region at address 0x3
+==8591==    at 0x40202B: element_initialise (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x40354B: pqueue_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403022: hash_table_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x404111: load_fasta_data_into_graph_for_specific_person_or_population (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403FC9: load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403E9C: load_population_as_fasta (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x411AFD: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:14)
+==8591==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x411C74: main (run_pop_tests.c:67)
+--8591-- REDIR: 0x3c31d71c60 (memset) redirected to 0x4907b30 (memset)
+==8591== 
+==8591== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 10 from 5)
+==8591== 
+==8591== 1 errors in context 1 of 2:
+==8591== Invalid write of size 1
+==8591==    at 0x40202B: element_initialise (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x40354B: pqueue_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403022: hash_table_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x404111: load_fasta_data_into_graph_for_specific_person_or_population (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403FC9: load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403E9C: load_population_as_fasta (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x411AFD: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:14)
+==8591==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x411C74: main (run_pop_tests.c:67)
+==8591==  Address 0x3 is not stack'd, malloc'd or (recently) free'd
+==8591== 
+==8591== 1 errors in context 2 of 2:
+==8591== Use of uninitialised value of size 8
+==8591==    at 0x40202B: element_initialise (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x40354B: pqueue_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403022: hash_table_find_or_insert (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x404111: load_fasta_data_into_graph_for_specific_person_or_population (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403FC9: load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x403E9C: load_population_as_fasta (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
+==8591==    by 0x411AFD: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:14)
+==8591==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==8591==    by 0x411C74: main (run_pop_tests.c:67)
+--8591-- 
+--8591-- supp:      4 dl_relocate_object
+--8591-- supp:      1 strlen-not-intercepted-early-enough-HACK-3
+--8591-- supp:      1 strlen-not-intercepted-early-enough-HACK-4
+--8591-- supp:      3 index-not-intercepted-early-enough-HACK-4
+--8591-- supp:      1 strlen-not-intercepted-early-enough-HACK-5
+==8591== 
+==8591== IN SUMMARY: 2 errors from 2 contexts (suppressed: 10 from 5)
+==8591== 
+==8591== malloc/free: in use at exit: 2,426 bytes in 19 blocks.
+==8591== malloc/free: 27 allocs, 8 frees, 3,026 bytes allocated.
+==8591== 
+==8591== searching for pointers to 19 not-freed blocks.
+==8591== checked 176,768 bytes.
+==8591== 
+==8591== LEAK SUMMARY:
+==8591==    definitely lost: 0 bytes in 0 blocks.
+==8591==      possibly lost: 0 bytes in 0 blocks.
+==8591==    still reachable: 2,426 bytes in 19 blocks.
+==8591==         suppressed: 0 bytes in 0 blocks.
+==8591== Reachable blocks (those to which a pointer was found) are not shown.
+==8591== To see them, rerun with: --leak-check=full --show-reachable=yes
+--8591--  memcheck: sanity checks: 0 cheap, 1 expensive
+--8591--  memcheck: auxmaps: 39 auxmap entries (2496k, 2M) in use
+--8591--  memcheck: auxmaps_L1: 2504 searches, 12028 cmps, ratio 48:10
+--8591--  memcheck: auxmaps_L2: 54 searches, 39 nodes
+--8591--  memcheck: SMs: n_issued      = 17 (272k, 0M)
+--8591--  memcheck: SMs: n_deissued    = 0 (0k, 0M)
+--8591--  memcheck: SMs: max_noaccess  = 524287 (8388592k, 8191M)
+--8591--  memcheck: SMs: max_undefined = 0 (0k, 0M)
+--8591--  memcheck: SMs: max_defined   = 83 (1328k, 1M)
+--8591--  memcheck: SMs: max_non_DSM   = 17 (272k, 0M)
+--8591--  memcheck: max sec V bit nodes:    0 (0k, 0M)
+--8591--  memcheck: set_sec_vbits8 calls: 0 (new: 0, updates: 0)
+--8591--  memcheck: max shadow mem size:   4416k, 4M
+--8591-- translate:            fast SP updates identified: 1,592 ( 85.0%)
+--8591-- translate:   generic_known SP updates identified: 161 (  8.6%)
+--8591-- translate: generic_unknown SP updates identified: 119 (  6.3%)
+--8591--     tt/tc: 4,232 tt lookups requiring 4,293 probes
+--8591--     tt/tc: 4,232 fast-cache updates, 5 flushes
+--8591--  transtab: new        2,019 (46,608 -> 793,034; ratio 170:10) [0 scs]
+--8591--  transtab: dumped     0 (0 -> ??)
+--8591--  transtab: discarded  14 (284 -> ??)
+--8591-- scheduler: 41,957 jumps (bb entries).
+--8591-- scheduler: 0/2,343 major/minor sched events.
+--8591--    sanity: 1 cheap, 1 expensive checks.
+--8591--    exectx: 769 lists, 46 contexts (avg 0 per list)
+--8591--    exectx: 47 searches, 2 full compares (42 per 1000)
+--8591--    exectx: 66 cmp2, 45 cmp4, 0 cmpAll
+--8591--  errormgr: 23 supplist searches, 1,418 comparisons during search
+--8591--  errormgr: 12 errlist searches, 66 comparisons during search

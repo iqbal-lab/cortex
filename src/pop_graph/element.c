@@ -12,7 +12,9 @@ int NUMBER_OF_INDIVIDUALS_PER_POPULATION = 2;
 int NUMBER_OF_POPULATIONS = 2;
 
 
-
+//currently noone calls this in normal use
+// In normal use, the priority queue allocates space to put the eloement directly within,
+// and calls element_initialise which allocs the arrays which the elemtn has pointers to
 Element* new_element()
 {
   Element* e = malloc(sizeof(Element));
@@ -253,14 +255,28 @@ Key element_get_key(BinaryKmer kmer, short kmer_size){
 
 }
 
+//this allocs the population and person arrays
 void element_initialise(Element * e, Key kmer, short kmer_size){
 
   e->kmer = element_get_key(kmer, kmer_size);
 
+  e->individual_edges = malloc(sizeof(Edges)*NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+  if (e->individual_edges == NULL)
+    {
+      printf("cannot alloc the edges for individuals for this element");
+      exit(1);
+    }
   int i;
   for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
     {
       e->individual_edges[i]=0;
+    }
+
+  e->population_edges = malloc(sizeof(Edges)*NUMBER_OF_POPULATIONS);
+  if (e->population_edges == NULL)
+    {
+      printf("cannot alloc the edges for populations for this element");
+      exit(1);
     }
 
   for (i=0; i<NUMBER_OF_POPULATIONS; i++)

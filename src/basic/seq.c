@@ -17,6 +17,7 @@ void seq_set_block_size(int size)
 
 Sequence * read_sequence_from_fasta(FILE *fp)
 {
+  // printf("ZAM - start read_sequence_from_fasta");
 
 // Note - If we do have a line bigger than 5000, fgets will read it in multiple consecutive goes.
 //
@@ -47,49 +48,51 @@ Sequence * read_sequence_from_fasta(FILE *fp)
   seq->qual=NULL;  
 
   while (fgets(line, MAXLINE, fp) != NULL){
+    //    printf("ZAM fgets gets a line %s\n",line);
     //read name
-	  // TODO fix it so it either works for > line longer than MAXLINE characters, or complains if that happens
-	 	 // currently it won't work. fgets will get the excess of the line in the second loop, and it wont
-	 	  // satisfy the if and so won't go into the name variable.
-
-	  if (line[0] == '>')
-	  {
-      for(i = 1;i<MAXLINE;i++)
+    // TODO fix it so it either works for > line longer than MAXLINE characters, or complains if that happens
+    // currently it won't work. fgets will get the excess of the line in the second loop, and it wont
+    // satisfy the if and so won't go into the name variable.
+    
+    if (line[0] == '>')
       {
-    	  if (line[i] == '\n') //(line[i] == ' ' || line[i] == '\t' || line[i] == '\r')
-    	  {
-    		  break;
-    	  }
-    	  name[i-1] = line[i];
-      }
-      name[i-1] = '\0';
-
-      seq->name = name;
-
-      //read Sequence
-
-      int length = 0;
-      int max    = seq->max; //this is zero at the moment
-      char c = 0;
-
-
-      while (!feof(fp) && (c = fgetc(fp)) != '>') {
+	for(i = 1;i<MAXLINE;i++)
+	  {
+	    if (line[i] == '\n') //(line[i] == ' ' || line[i] == '\t' || line[i] == '\r')
+	      {
+		break;
+	      }
+	    name[i-1] = line[i];
+	  }
+	name[i-1] = '\0';
+	
+	seq->name = name;
+	
+	//read Sequence
+	
+	int length = 0;
+	int max    = seq->max; //this is zero at the moment
+	char c = 0;
+	
+	
+	while (!feof(fp) && (c = fgetc(fp)) != '>') {
     	  if (isalpha(c) || c == '-' || c == '.') {
-    		  if (length + 1 >= max) {
-    			  max += SEQ_BLOCK_SIZE;
-    			  seq->seq = (char*)realloc(seq->seq, sizeof(char) * max);
-    		  }
-    		  seq->seq[length++] = (char)c;
+	    if (length + 1 >= max) {
+	      max += SEQ_BLOCK_SIZE;
+	      seq->seq = (char*)realloc(seq->seq, sizeof(char) * max);
+	      //printf("\nDo a realloc\n");
+	    }
+	    seq->seq[length++] = (char)c;
     	  }
+	}
+	if (c == '>') ungetc(c,fp);
+
+	seq->seq[length] = '\0';
+	seq->max         = max;
+	seq->length      = length;
+	//printf("ZAM In read_seq_from_fasta seq length of this line is %d",length);
+	return seq;
       }
-      if (c == '>') ungetc(c,fp);
-
-      seq->seq[length] = '\0';
-      seq->max         = max;
-      seq->length      = length;
-
-      return seq;
-    }
     else{
       free(seq);
       return NULL;

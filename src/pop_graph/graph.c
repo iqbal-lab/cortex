@@ -3,38 +3,19 @@
 #include <stdlib.h>
 #include <file_reader.h>
 #include <dB_graph.h>
+#include <dB_graph_population.h>
 
 int main(int argc, char **argv){
 
 
-  FILE *fp_fnames,*fp_file;
+  FILE *fp_fnames;
   char filename[100];
   int hash_key_bits;
   dBGraph * db_graph = NULL; 
   short kmer_size;
 
-  FILE * fout;
-  long count=0;
 
-  void print_supernode_for_specific_person_or_pop(dBNode * node,EdgeArrayType type, int index){
-
-    char filename [200];
-    if (count % 100000000 == 0){
-    int index = count / 100000000;
-
-    if (count !=0){
-      fclose(fout);
-    }
-
-    sprintf(filename,"out_nodes_%i_%i",kmer_size,index);
-    fprintf(stderr,"opening file %s\n",filename);
-    fout = fopen(filename,"w");
-    }
-    
-    count++;
-    db_graph_print_supernode_for_specific_person_or_pop(fout,node,db_graph, type,index);
-  }
-
+  //cut out db_graph_prit)supernode_for_specific_person etc from here
 
   //command line arguments 
   fp_fnames= fopen(argv[1], "r");    //open file of which gives one filename per population. Each of these files gives one filename per individual, and each of those gives list of files.

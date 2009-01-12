@@ -18,6 +18,6 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 
 //void db_graph_clip_tip(dBNode * node, int limit,dBGraph * db_graph);
 
-//char * get_seq_from_elem_to_end_of_supernode(dBNode * node, Orientation orientation, dBGraph * db_graph, boolean * is_cycle);
+char * get_seq_from_elem_to_end_of_supernode(dBNode * node, Orientation orientation, dBGraph * db_graph, boolean * is_cycle);
 char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode * node, Orientation orientation, dBGraph * db_graph, boolean * is_cycle, EdgeArrayType type, int index);
 #endif /* DB_GRAPH_H_ */
