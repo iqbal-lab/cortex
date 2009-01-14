@@ -9,11 +9,27 @@
 #include <pqueue_pop.h>
 
 
+boolean db_graph_is_this_node_in_this_person_or_populations_graph(dBNode* node, EdgeArrayType type, int index)
+{
+ 
+  Edges edge_for_this_person_or_pop = get_edge_copy(*node, type, index);
+
+  if (edge_for_this_person_or_pop == 0)
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
+ 
+}
+
+
 // wrapper for hash_table_find, which allows you to look in the hash table
 // specifically for nodes related to a specific person or population
 // person or population  specified by which edge array type
 // which person or pop specified by index
-
 dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key, dBGraph * hash_table, EdgeArrayType type, int index)
 {
 

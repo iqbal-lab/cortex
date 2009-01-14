@@ -366,7 +366,11 @@ boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orie
 
 
 boolean db_node_edge_exist(dBNode * element,Nucleotide base,Orientation orientation, EdgeArrayType edge_type, int edge_index){
+
+  //get the edge char for this specific person or pop:
   char edge = get_edge_copy(*element, edge_type, edge_index);
+
+
   edge >>= base;
   if (orientation == reverse){
     edge >>= 4;

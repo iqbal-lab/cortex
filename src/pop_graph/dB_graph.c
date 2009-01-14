@@ -64,7 +64,9 @@ dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node
     *reverse_edge = binary_kmer_get_last_nucleotide(rev_kmer);
   }
 
-  
+
+  //Mario - we are going to get confused by things like this. here edge variable is a nucleotide,
+  //but elsewhere edge is th char that describes all the edges in a node.
   kmer = binary_kmer_add_nucleotide_shift(kmer,edge, db_graph->kmer_size);
 
   //get node from table 
@@ -283,7 +285,7 @@ char * get_seq_from_elem_to_end_of_supernode(dBNode * node, Orientation orientat
 char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode * node, Orientation orientation, dBGraph * db_graph, boolean * is_cycle, EdgeArrayType type, int index){
   Nucleotide nucleotide1, nucleotide2, rev_nucleotide;
   char * seq = NULL;
-  int max = 1000;
+  int max = 1500;
   Orientation original_orientation, next_orientation;
   dBNode * original_node;
   dBNode * next_node;
@@ -291,7 +293,7 @@ char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode *
   
   
 
-  seq = malloc(1000*sizeof(char)); 
+  seq = malloc(1500*sizeof(char)); 
 
   if (seq == NULL){
     puts("dB_graph: cannot assign memory for sequence\n");
@@ -365,6 +367,8 @@ char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode *
     orientation = next_orientation;      
   }
 
+  //clever thing about this next line is that if it turns out that the very first node that you handed in as an argument
+  //had an edge back to itself - so it was a cycle, then the first character in seq is \0 and when the person who calls this prints what you return, they print nothing
   seq[seq_length] = '\0';
   return seq;
 }
@@ -461,6 +465,12 @@ void db_graph_print_supernode(FILE * file, dBNode * node, dBGraph * db_graph){
 //otherwise some will be left marked visited.
 void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index){
 
+  //don't do anything if this node does not occur in the graph for this person/population
+  if (!db_graph_is_this_node_in_this_person_or_populations_graph(node, type, index))
+    {
+      return;
+    }
+
   char * seq = NULL;
   char * seq_forward = NULL;
   char * seq_reverse = NULL; 
@@ -469,66 +479,96 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
   int length_reverse = 0;
   boolean is_cycle_forward, is_cycle_reverse;
 
-  if (! db_node_check_status(node,visited) && ! db_node_check_status(node,pruned)){
-  
-    seq = binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size);
-
-    if (DEBUG){
-      printf("\nSTART Supernode %s\n",seq);    
-      printf("go forward\n");
-    }
-    
-    //compute the forward path until the end of the supernode
-    //mark the nodes in the path as visited.
-    //return is_cycle_forward == true if the path closes a loop
-    seq_forward = get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(node,forward,db_graph,&is_cycle_forward, type, index);
-    
-    //    if (DEBUG){
-      printf("NODE c %s\n",seq); 
-      //  printf("NODE f %s\n",seq_forward);
-      //}
-    
-    if (! is_cycle_forward){
+  //printf("PRINT SUPERNODE for person %d\n", index);
+  if (! db_node_check_status(node,visited) && ! db_node_check_status(node,pruned))
+    {
+      
+      //this function binary_kmer_to_seq does the malloc for what it returns.
+      seq = binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size);
       
       if (DEBUG){
-	printf("go reverse\n");
+      printf("\nSTART Supernode %s\n",seq);    
+      printf("go forward\n");
       }
       
-      //compute the reverse path...
-      seq_reverse = get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(node,reverse,db_graph,&is_cycle_reverse, type, index);
+      //compute the forward path until the end of the supernode
+      //mark the nodes in the path as visited.
+ 
+     //return is_cycle_forward == true if the path closes a loop
+ 
+      //this function mallocs the sequence that it returns, and will always initialise the is_cycle_forward variable, that is currently uninitialised
+      //note that if going forward there is a cycle, then seq_forward will contain garbage, so don't use it. 
+     seq_forward = get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(node,forward,db_graph,&is_cycle_forward, type, index);
       
-      if (is_cycle_reverse){
-	puts("cycle reverse orientation without cycle in the forward orientation\n");
-	exit(1);
+      if (DEBUG){
+      printf("NODE c %s\n",seq); 
+      if (is_cycle_forward)
+	{
+	  printf("NODE f - none since is cycle forward\n");
+	}
+      else
+	{
+	  printf("NODE f %s\n",seq_forward);
+	}
       }
       
-      // if (DEBUG){
-	printf("NODE r %s\n",seq_reverse);
-	//      }
+      if (! is_cycle_forward)
+	{
+    	  if (DEBUG){
+	  printf("go reverse\n");
+	  }
+	  
+	  //compute the reverse path...
+	  //this function mallocs the sequence that it returns, andwill always initialise the is_cycle_reverse variable, that is currently uninitialised
+	  //printf("getting rev seq for person %d", index);
+	  seq_reverse = get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(node,reverse,db_graph,&is_cycle_reverse, type, index);
+	  
+	  if (is_cycle_reverse){
+	    puts("cycle in the reverse orientation without cycle in the forward orientation - impossible!\n");
+	    exit(1);
+	  }
+	
+	  if (DEBUG)
+	    {
+	      printf("NODE r %s\n",seq_reverse);
+	    }
+	  
+	  length_reverse = strlen(seq_reverse);
+	}
+
+      seq_reverse_reversed = malloc((length_reverse+1)*sizeof(char));
+
+
+      if (seq_reverse_reversed==NULL)
+	{
+	  printf("Cannot mallo cseq rev rev");
+	  exit(1);
+	}
       
-      length_reverse = strlen(seq_reverse);
-    }
-    
-    seq_reverse_reversed = malloc((length_reverse+1)*sizeof(char));
-    
-    //reverse the reverse sequence
-    for(i=0;i<length_reverse;i++){
-      seq_reverse_reversed[i] = reverse_char_nucleotide(seq_reverse[length_reverse-i-1]);
       
+      //reverse the reverse sequence
+      for(i=0;i<length_reverse;i++){
+	seq_reverse_reversed[i] = reverse_char_nucleotide(seq_reverse[length_reverse-i-1]);
+	//printf("ZAMZAM seq rev rev next char is %c\n", seq_reverse_reversed[i]);
+      }
+      seq_reverse_reversed[length_reverse]='\0';
+      //so if we had a cycle in the forward/reverse directions, this would only contain the single character \0
+
+      if (DEBUG){
+	if (length_reverse>0)
+	  {
+	    printf("NODE rr %s\n", seq_reverse_reversed);
+	  }
+      }
+      
+      //printf(">NODE\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward); 
+      fprintf(file,">NODE\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward); 
+      
+      free(seq);
+      free(seq_forward);
+      free(seq_reverse);
+      free(seq_reverse_reversed);
     }
-    seq_reverse_reversed[length_reverse]='\0';
-    
-    //    if (DEBUG){
-      printf("NODE rr %s\n",seq_reverse_reversed);
-      //}
-    
-    fprintf(file,">NODE\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward); 
-    
-    free(seq);
-    free(seq_forward);
-    free(seq_reverse);
-    free(seq_reverse_reversed);
-  }
   else{
     if (DEBUG){
       if ( db_node_check_status(node,visited)){
@@ -543,8 +583,8 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 
 
 /*
-void db_graph_clip_tip(dBNode * node, int limit,dBGraph * db_graph){
-
+  void db_graph_clip_tip(dBNode * node, int limit,dBGraph * db_graph){
+  
   int length_tip;
 
   
