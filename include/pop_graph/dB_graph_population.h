@@ -14,7 +14,10 @@
 
 boolean db_graph_is_this_node_in_this_person_or_populations_graph(dBNode* node, EdgeArrayType type, int index);
 dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key, dBGraph * hash_table, EdgeArrayType type, int index);
-void db_graph_traverse_specific_person_or_pop(void (*f)(HashTable*, Element *, EdgeArrayType, int),HashTable * hash_table, EdgeArrayType type, int index);
-void print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node,EdgeArrayType type, int index);
+void db_graph_traverse_specific_person_or_pop(void (*f)(HashTable*, Element *, EdgeArrayType, int, char**, int*),HashTable * hash_table, EdgeArrayType type, int index, char** for_test, int* index_for_test);
+void print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node,EdgeArrayType type, int index, char** for_test, int* index_for_test);
+void db_graph_set_all_visited_nodes_to_status_none(dBGraph* hash_table);
+void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population(dBGraph* hash_table, EdgeArrayType type, int index);
+
 
 #endif

@@ -14,7 +14,7 @@ typedef HashTable dBGraph;
 
 //print the supernode where the element is placed
 void db_graph_print_supernode(FILE * file, dBNode * node, dBGraph * db_graph);
-void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index);
+void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, char** for_test, int* index_for_test );
 
 //void db_graph_clip_tip(dBNode * node, int limit,dBGraph * db_graph);
 

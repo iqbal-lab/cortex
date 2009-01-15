@@ -109,6 +109,8 @@ boolean db_node_edges_reset(dBNode * node, EdgeArrayType edge_type, int edge_ind
 boolean db_node_check_status(dBNode * node, NodeStatus status);
 
 void db_node_set_status(dBNode * node,NodeStatus status);
+void db_node_set_status_to_none(dBNode * node);
+
 
 //check if node doesn't have any edges in a given orientation
 boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayType edge_type, int edge_index);

@@ -15,8 +15,6 @@ int main(int argc, char **argv){
   short kmer_size;
 
 
-  //cut out db_graph_prit)supernode_for_specific_person etc from here
-
   //command line arguments 
   fp_fnames= fopen(argv[1], "r");    //open file of which gives one filename per population. Each of these files gives one filename per individual, and each of those gives list of files.
   kmer_size        = atoi(argv[2]);  //global variable defined in element.h
@@ -51,9 +49,13 @@ int main(int argc, char **argv){
 
   printf("print supernodes for each person in population 1\n");
   printf("print supernodes for person 1 population 1\n");
-  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop,db_graph,individual_edge_array,0);
+
+  //remember last two arguments are only used for unit tests, so here they are NULL, and 0.
+  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop,db_graph,individual_edge_array,0, NULL,0);
+  db_graph_set_all_visited_nodes_to_status_none(db_graph);
+
   printf("print supernodes for person 2 population 1\n");
-  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop,db_graph,individual_edge_array,1);
+  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop,db_graph,individual_edge_array,1, NULL,0);
 
 
   return 1;

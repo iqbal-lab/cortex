@@ -459,12 +459,18 @@ void db_graph_print_supernode(FILE * file, dBNode * node, dBGraph * db_graph){
 }
 */
 
-//will print only nodes for specific person/population
-//if you want to go on to print for other people, you need to set status to none for all the nodes again after going thrrough the whole
-// graph printing supernodes
-//otherwise some will be left marked visited.
-void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index){
 
+//will print only nodes for specific person/population
+
+// ******NOTE****** if you want to go on to print for other people, you need to set status to none for all the nodes again after going thrrough the whole
+// graph printing supernodes - otherwise some will be left marked visited.
+
+//if you pass in a non-null for the char** for_test, then instead of printing to the file, it adds the supernode to the array of char*'s 
+//this enables the caller to sort the supernodes lexicographically, and test that the right supernodes are being found
+//this is not scalable to a ful genome, but sufficient for detailed unit tests
+void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, char** for_test, int* index_for_test ){
+
+  printf("*** db_graph.c start db_graph_print_supernode_for_specific_person_or_pop ***\n");
   //don't do anything if this node does not occur in the graph for this person/population
   if (!db_graph_is_this_node_in_this_person_or_populations_graph(node, type, index))
     {
@@ -562,8 +568,37 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
       }
       
       //printf(">NODE\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward); 
-      fprintf(file,">NODE\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward); 
       
+      if (for_test==NULL)  //in normal use, this will be NULL
+	{
+	  fprintf(file,">NODE\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward); 
+	}
+      else
+	{
+	  int length_of_supernode = strlen(seq_reverse_reversed)+strlen(seq) +strlen(seq_forward) -2; //don't need two of the \0 's.
+	  char* supernode = malloc(length_of_supernode*sizeof(char));
+	  if (supernode==NULL)
+	    {
+	      printf("Unable to malloc for supernode");
+	      exit(1);
+	    }
+	  supernode[0]='\0';
+	  strcat(supernode,seq_reverse_reversed);
+	  strcat(supernode,seq);
+	  strcat(supernode,seq_forward);
+	  printf("SUPERNODE is %s\n",supernode);
+	  for_test=(char**) realloc(for_test, sizeof(for_test)+sizeof(char*));
+	  if (for_test==NULL)
+	    {
+	      printf("Unable to realloc for_test");
+	      exit(1);
+	    }
+	  for_test[*index_for_test]=supernode;
+	  (*index_for_test)++;
+
+	  printf( "NOW SUPERNODE is %s and next index is %d",  for_test[*index_for_test -1], *index_for_test);
+	  
+	}
       free(seq);
       free(seq_forward);
       free(seq_reverse);
@@ -579,6 +614,10 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
       }
     }
   }
+
+
+  printf("*** db_graph.c end db_graph_print_supernode_for_specific_person_or_pop ***\n");
+
 }
 
 

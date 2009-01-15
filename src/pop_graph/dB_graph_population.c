@@ -2,6 +2,9 @@
   dB_graph_population.c - implementation
  */
 
+#include <stdlib.h>
+#include <stdio.h>
+
 #include <element.h>
 #include <hash_table.h>
 #include <dB_graph.h>
@@ -52,15 +55,29 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
   
 }
 
-void db_graph_traverse_specific_person_or_pop(void (*f)(HashTable*, Element *, EdgeArrayType, int),HashTable * hash_table, EdgeArrayType type, int index){
+void db_graph_traverse_specific_person_or_pop(void (*f)(HashTable*, Element *, EdgeArrayType, int, char**, int*),HashTable * hash_table, EdgeArrayType type, int index, char** for_test, int* index_for_test){
+
+  printf("*** db_graph_population *** start db_graph_traverse_specific_person_or_pop\n");
+
+
   int i;
   for(i=0;i<hash_table->number_buckets;i++){
-    pqueue_traverse_specific_person_or_pop(f,hash_table, &(hash_table->table[i]), type,index);
+    pqueue_traverse_specific_person_or_pop(f,hash_table, &(hash_table->table[i]), type,index, for_test, index_for_test);
   }
+
+  printf("*** db_graph_population *** end db_graph_traverse_specific_person_or_pop\n");
+
+
 }
 
-void print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node,EdgeArrayType type, int index)
+
+
+
+
+void print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node,EdgeArrayType type, int index, char** for_test, int* index_for_test)
 {
+  printf("*** db_graph_population *** start print_supernode_for_specific_person_or_pop\n");
+
   FILE * fout;
   long count=0;
   
@@ -86,6 +103,25 @@ void print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * no
       fout = fopen(filename,"w");
     }
   
-  count++;
-  db_graph_print_supernode_for_specific_person_or_pop(fout,node,db_graph, type,index);
+  printf("in db_graph_pop index before print call is %d\n",*index_for_test);
+  db_graph_print_supernode_for_specific_person_or_pop(fout,node,db_graph, type,index, for_test,index_for_test);
+  printf("QQQQQQQQQ in db_graph_pop index after print call is %d, latest supernode is %s\n",*index_for_test, for_test[*index_for_test]);
+
+  printf("*** db_graph_population *** end print_supernode_for_specific_person_or_pop\n");
+
+
 }
+
+
+
+void db_graph_set_all_visited_nodes_to_status_none(dBGraph* hash_table)
+{
+  hash_table_traverse(&db_node_set_status_to_none, hash_table);
+}
+
+void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population(dBGraph* hash_table, EdgeArrayType type, int index)
+{
+  printf("not implemented yet");
+  exit(1);
+}
+

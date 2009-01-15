@@ -468,4 +468,7 @@ boolean db_node_check_status(dBNode * node, NodeStatus status){
 void db_node_set_status(dBNode * node,NodeStatus status){
   node->status = status;
 }
+void db_node_set_status_to_none(dBNode * node){
+  node->status = none;
+}
 
