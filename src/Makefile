@@ -14,9 +14,9 @@ ifdef MAC
  MACFLAG = -fnested-functions
 endif 
 
-CFLAGS_COUNT = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_COUNT) $(MACFLAG) -O0
-CFLAGS_GRAPH = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_GRAPH) $(MACFLAG) -O0
-CFLAGS_POP_GRAPH = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_POP_GRAPH) $(MACFLAG) -O0
+CFLAGS_COUNT = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_COUNT) $(MACFLAG) -O0 -g
+CFLAGS_GRAPH = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_GRAPH) $(MACFLAG) -O0 -g
+CFLAGS_POP_GRAPH = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_POP_GRAPH) $(MACFLAG) -O0 -g
 
 GRAPH_OBJ = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph.o 
 

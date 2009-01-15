@@ -1,729 +1,150 @@
-==19758== Memcheck, a memory error detector.
-==19758== Copyright (C) 2002-2007, and GNU GPL'd, by Julian Seward et al.
-==19758== Using LibVEX rev 1804, a library for dynamic binary translation.
-==19758== Copyright (C) 2004-2007, and GNU GPL'd, by OpenWorks LLP.
-==19758== Using valgrind-3.3.0, a dynamic binary instrumentation framework.
-==19758== Copyright (C) 2000-2007, and GNU GPL'd, by Julian Seward et al.
-==19758== 
-==19758== My PID = 19758, parent PID = 19439.  Prog and args are:
-==19758==    ./run_pop_tests
-==19758== 
---19758-- 
---19758-- Command line
---19758--    ./run_pop_tests
---19758-- Startup, with flags:
---19758--    -v
---19758--    --tool=memcheck
---19758--    --leak-check=full
---19758--    --num-callers=40
---19758--    --log-file=valgrind.log
---19758-- Contents of /proc/version:
---19758--   Linux version 2.6.9-67.ELsmp (mockbuild@builder10.centos.org) (gcc version 3.4.6 20060404 (Red Hat 3.4.6-9)) #1 SMP Fri Nov 16 12:49:06 EST 2007
---19758-- Arch and hwcaps: AMD64, amd64-sse2
---19758-- Page sizes: currently 4096, max supported 4096
---19758-- Valgrind library directory: /homes/zi/lib/valgrind
---19758-- Reading syms from /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests (0x400000)
---19758-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/memcheck (0x38000000)
---19758--    object doesn't have a dynamic symbol table
---19758-- Reading syms from /lib64/ld-2.3.4.so (0x3C31900000)
---19758-- Reading suppressions file: /homes/zi/lib/valgrind/default.supp
---19758-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_core.so (0x4801000)
---19758-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_memcheck.so (0x4903000)
---19758-- REDIR: 0x3c3190ff90 (index) redirected to 0x4906e70 (index)
---19758-- REDIR: 0x3c31910140 (strcmp) redirected to 0x4907320 (strcmp)
---19758-- REDIR: 0x3c31910170 (strlen) redirected to 0x49070b0 (strlen)
---19758-- Reading syms from /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1 (0x4A0A000)
---19758-- Reading syms from /lib64/tls/libc-2.3.4.so (0x3C31D00000)
---19758-- REDIR: 0x3c31d70df0 (rindex) redirected to 0x4906d70 (rindex)
---19758-- REDIR: 0x3c31d6b5f0 (malloc) redirected to 0x4904dc0 (malloc)
---19758-- REDIR: 0x3c31d70a00 (strlen) redirected to 0x4907070 (strlen)
---19758-- REDIR: 0x3c31d70480 (strcpy) redirected to 0x49070d0 (strcpy)
---19758-- REDIR: 0x3c31d71d70 (mempcpy) redirected to 0x4907d30 (mempcpy)
---19758-- REDIR: 0x3c31d70440 (strcmp) redirected to 0x49072f0 (strcmp)
---19758-- REDIR: 0x3c31d69510 (free) redirected to 0x4905be0 (free)
---19758-- REDIR: 0x3c31d6b2c0 (calloc) redirected to 0x4906630 (calloc)
---19758-- REDIR: 0x3c31d714e0 (memchr) redirected to 0x4907380 (memchr)
---19758-- REDIR: 0x3c31d723a0 (memcpy) redirected to 0x49073b0 (memcpy)
---19758-- REDIR: 0x3c31d70290 (index) redirected to 0x4906e30 (index)
---19758-- REDIR: 0x3c31d6bca0 (realloc) redirected to 0x4906710 (realloc)
---19758-- REDIR: 0x3c31d700d0 (strcat) redirected to 0x4906e90 (strcat)
-==19758== Invalid write of size 1
-==19758==    at 0x4906EB3: strcat (mc_replace_strmem.c:186)
-==19758==    by 0x403E45: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b31809 is 0 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== Invalid write of size 1
-==19758==    at 0x4906EBF: strcat (mc_replace_strmem.c:186)
-==19758==    by 0x403E45: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b3180b is 2 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== Invalid read of size 1
-==19758==    at 0x4906EA3: strcat (mc_replace_strmem.c:186)
-==19758==    by 0x403E52: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b31809 is 0 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== Invalid write of size 1
-==19758==    at 0x4906EBF: strcat (mc_replace_strmem.c:186)
-==19758==    by 0x403E52: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b3180b is 2 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== Invalid read of size 1
-==19758==    at 0x4907083: strlen (mc_replace_strmem.c:242)
-==19758==    by 0x3C31D42DC8: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F6A8: buffered_vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F888: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D48617: printf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x403E65: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b31809 is 0 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== Invalid read of size 1
-==19758==    at 0x3C31D6673E: _IO_default_xsputn (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D4305A: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F6A8: buffered_vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F888: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D48617: printf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x403E65: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b31809 is 0 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== Invalid read of size 1
-==19758==    at 0x3C31D66730: _IO_default_xsputn (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D4305A: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F6A8: buffered_vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F888: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D48617: printf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x403E65: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b3180a is 1 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== Conditional jump or move depends on uninitialised value(s)
-==19758==    at 0x3C31D4116D: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F6A8: buffered_vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F888: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D48617: printf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x40471F: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== Invalid write of size 1
-==19758==    at 0x4906EB3: strcat (mc_replace_strmem.c:186)
-==19758==    by 0x403E52: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b3273c is 0 bytes after a block of size 4 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== Invalid read of size 8
-==19758==    at 0x404707: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b30870 is 0 bytes after a block of size 16 alloc'd
-==19758==    at 0x4906794: realloc (vg_replace_malloc.c:429)
-==19758==    by 0x403E73: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== Invalid read of size 8
-==19758==    at 0x404707: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E89: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:27)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b308c8 is 0 bytes after a block of size 16 alloc'd
-==19758==    at 0x4906794: realloc (vg_replace_malloc.c:429)
-==19758==    by 0x403E73: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E89: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:27)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
---19758-- REDIR: 0x3c31d71c60 (memset) redirected to 0x4907b30 (memset)
-==19758== 
-==19758== ERROR SUMMARY: 100 errors from 11 contexts (suppressed: 10 from 5)
-==19758== 
-==19758== 2 errors in context 1 of 11:
-==19758== Invalid read of size 8
-==19758==    at 0x404707: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E89: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:27)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b308c8 is 0 bytes after a block of size 16 alloc'd
-==19758==    at 0x4906794: realloc (vg_replace_malloc.c:429)
-==19758==    by 0x403E73: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E89: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:27)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== 2 errors in context 2 of 11:
-==19758== Invalid write of size 1
-==19758==    at 0x4906EB3: strcat (mc_replace_strmem.c:186)
-==19758==    by 0x403E52: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b3273c is 0 bytes after a block of size 4 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== 4 errors in context 3 of 11:
-==19758== Invalid write of size 1
-==19758==    at 0x4906EBF: strcat (mc_replace_strmem.c:186)
-==19758==    by 0x403E52: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b3180b is 2 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== 4 errors in context 4 of 11:
-==19758== Invalid write of size 1
-==19758==    at 0x4906EBF: strcat (mc_replace_strmem.c:186)
-==19758==    by 0x403E45: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b3180b is 2 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== 6 errors in context 5 of 11:
-==19758== Invalid write of size 1
-==19758==    at 0x4906EB3: strcat (mc_replace_strmem.c:186)
-==19758==    by 0x403E45: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b31809 is 0 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== 6 errors in context 6 of 11:
-==19758== Conditional jump or move depends on uninitialised value(s)
-==19758==    at 0x3C31D4116D: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F6A8: buffered_vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F888: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D48617: printf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x40471F: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== 6 errors in context 7 of 11:
-==19758== Invalid read of size 8
-==19758==    at 0x404707: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b30870 is 0 bytes after a block of size 16 alloc'd
-==19758==    at 0x4906794: realloc (vg_replace_malloc.c:429)
-==19758==    by 0x403E73: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== 10 errors in context 8 of 11:
-==19758== Invalid read of size 1
-==19758==    at 0x4906EA3: strcat (mc_replace_strmem.c:186)
-==19758==    by 0x403E52: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b31809 is 0 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== 12 errors in context 9 of 11:
-==19758== Invalid read of size 1
-==19758==    at 0x3C31D66730: _IO_default_xsputn (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D4305A: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F6A8: buffered_vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F888: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D48617: printf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x403E65: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b3180a is 1 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== 12 errors in context 10 of 11:
-==19758== Invalid read of size 1
-==19758==    at 0x3C31D6673E: _IO_default_xsputn (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D4305A: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F6A8: buffered_vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F888: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D48617: printf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x403E65: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b31809 is 0 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== 36 errors in context 11 of 11:
-==19758== Invalid read of size 1
-==19758==    at 0x4907083: strlen (mc_replace_strmem.c:242)
-==19758==    by 0x3C31D42DC8: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F6A8: buffered_vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D3F888: vfprintf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x3C31D48617: printf (in /lib64/tls/libc-2.3.4.so)
-==19758==    by 0x403E65: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758==  Address 0x4b31809 is 0 bytes after a block of size 1 alloc'd
-==19758==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
-==19758==    by 0x403E00: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
---19758-- 
---19758-- supp:      4 dl_relocate_object
---19758-- supp:      1 strlen-not-intercepted-early-enough-HACK-3
---19758-- supp:      1 strlen-not-intercepted-early-enough-HACK-4
---19758-- supp:      3 index-not-intercepted-early-enough-HACK-4
---19758-- supp:      1 strlen-not-intercepted-early-enough-HACK-5
-==19758== 
-==19758== IN SUMMARY: 100 errors from 11 contexts (suppressed: 10 from 5)
-==19758== 
-==19758== malloc/free: in use at exit: 11,222 bytes in 42 blocks.
-==19758== malloc/free: 105 allocs, 63 frees, 25,615 bytes allocated.
-==19758== 
-==19758== searching for pointers to 42 not-freed blocks.
-==19758== checked 245,400 bytes.
-==19758== 
-==19758== 
-==19758== 42 (32 direct, 10 indirect) bytes in 2 blocks are definitely lost in loss record 4 of 7
-==19758==    at 0x4906794: realloc (vg_replace_malloc.c:429)
-==19758==    by 0x403E73: db_graph_print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4046F2: print_supernode_for_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x4047E7: pqueue_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x404570: db_graph_traverse_specific_person_or_pop (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411E53: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== 
-==19758== 388 (80 direct, 308 indirect) bytes in 1 blocks are definitely lost in loss record 5 of 7
-==19758==    at 0x490669A: calloc (vg_replace_malloc.c:397)
-==19758==    by 0x402E61: hash_table_new (in /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests)
-==19758==    by 0x411DCB: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:13)
-==19758==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==19758==    by 0x412050: main (run_pop_tests.c:67)
-==19758== 
-==19758== LEAK SUMMARY:
-==19758==    definitely lost: 112 bytes in 3 blocks.
-==19758==    indirectly lost: 318 bytes in 20 blocks.
-==19758==      possibly lost: 0 bytes in 0 blocks.
-==19758==    still reachable: 10,792 bytes in 19 blocks.
-==19758==         suppressed: 0 bytes in 0 blocks.
-==19758== Reachable blocks (those to which a pointer was found) are not shown.
-==19758== To see them, rerun with: --leak-check=full --show-reachable=yes
---19758--  memcheck: sanity checks: 0 cheap, 1 expensive
---19758--  memcheck: auxmaps: 39 auxmap entries (2496k, 2M) in use
---19758--  memcheck: auxmaps_L1: 2987 searches, 14348 cmps, ratio 48:10
---19758--  memcheck: auxmaps_L2: 55 searches, 39 nodes
---19758--  memcheck: SMs: n_issued      = 19 (304k, 0M)
---19758--  memcheck: SMs: n_deissued    = 0 (0k, 0M)
---19758--  memcheck: SMs: max_noaccess  = 524287 (8388592k, 8191M)
---19758--  memcheck: SMs: max_undefined = 0 (0k, 0M)
---19758--  memcheck: SMs: max_defined   = 83 (1328k, 1M)
---19758--  memcheck: SMs: max_non_DSM   = 19 (304k, 0M)
---19758--  memcheck: max sec V bit nodes:    0 (0k, 0M)
---19758--  memcheck: set_sec_vbits8 calls: 0 (new: 0, updates: 0)
---19758--  memcheck: max shadow mem size:   4448k, 4M
---19758-- translate:            fast SP updates identified: 2,139 ( 84.6%)
---19758-- translate:   generic_known SP updates identified: 210 (  8.3%)
---19758-- translate: generic_unknown SP updates identified: 179 (  7.0%)
---19758--     tt/tc: 5,202 tt lookups requiring 5,312 probes
---19758--     tt/tc: 5,202 fast-cache updates, 5 flushes
---19758--  transtab: new        2,498 (59,103 -> 1,006,418; ratio 170:10) [0 scs]
---19758--  transtab: dumped     0 (0 -> ??)
---19758--  transtab: discarded  14 (284 -> ??)
---19758-- scheduler: 87,276 jumps (bb entries).
---19758-- scheduler: 0/3,091 major/minor sched events.
---19758--    sanity: 1 cheap, 1 expensive checks.
---19758--    exectx: 769 lists, 118 contexts (avg 0 per list)
---19758--    exectx: 274 searches, 162 full compares (591 per 1000)
---19758--    exectx: 52 cmp2, 364 cmp4, 0 cmpAll
---19758--  errormgr: 28 supplist searches, 1,928 comparisons during search
---19758--  errormgr: 110 errlist searches, 509 comparisons during search
+==21890== Memcheck, a memory error detector.
+==21890== Copyright (C) 2002-2007, and GNU GPL'd, by Julian Seward et al.
+==21890== Using LibVEX rev 1804, a library for dynamic binary translation.
+==21890== Copyright (C) 2004-2007, and GNU GPL'd, by OpenWorks LLP.
+==21890== Using valgrind-3.3.0, a dynamic binary instrumentation framework.
+==21890== Copyright (C) 2000-2007, and GNU GPL'd, by Julian Seward et al.
+==21890== 
+==21890== My PID = 21890, parent PID = 21208.  Prog and args are:
+==21890==    ./run_pop_tests
+==21890== 
+--21890-- 
+--21890-- Command line
+--21890--    ./run_pop_tests
+--21890-- Startup, with flags:
+--21890--    -v
+--21890--    --tool=memcheck
+--21890--    --leak-check=full
+--21890--    --num-callers=40
+--21890--    --log-file=valgrind.log
+--21890-- Contents of /proc/version:
+--21890--   Linux version 2.6.9-67.ELsmp (mockbuild@builder10.centos.org) (gcc version 3.4.6 20060404 (Red Hat 3.4.6-9)) #1 SMP Fri Nov 16 12:49:06 EST 2007
+--21890-- Arch and hwcaps: AMD64, amd64-sse2
+--21890-- Page sizes: currently 4096, max supported 4096
+--21890-- Valgrind library directory: /homes/zi/lib/valgrind
+--21890-- Reading syms from /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests (0x400000)
+--21890-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/memcheck (0x38000000)
+--21890--    object doesn't have a dynamic symbol table
+--21890-- Reading syms from /lib64/ld-2.3.4.so (0x3C31900000)
+--21890-- Reading suppressions file: /homes/zi/lib/valgrind/default.supp
+--21890-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_core.so (0x4801000)
+--21890-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_memcheck.so (0x4903000)
+--21890-- REDIR: 0x3c3190ff90 (index) redirected to 0x4906e70 (index)
+--21890-- REDIR: 0x3c31910140 (strcmp) redirected to 0x4907320 (strcmp)
+--21890-- REDIR: 0x3c31910170 (strlen) redirected to 0x49070b0 (strlen)
+--21890-- Reading syms from /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1 (0x4A0A000)
+--21890-- Reading syms from /lib64/tls/libc-2.3.4.so (0x3C31D00000)
+--21890-- REDIR: 0x3c31d70df0 (rindex) redirected to 0x4906d70 (rindex)
+--21890-- REDIR: 0x3c31d6b5f0 (malloc) redirected to 0x4904dc0 (malloc)
+--21890-- REDIR: 0x3c31d70a00 (strlen) redirected to 0x4907070 (strlen)
+--21890-- REDIR: 0x3c31d70480 (strcpy) redirected to 0x49070d0 (strcpy)
+--21890-- REDIR: 0x3c31d71d70 (mempcpy) redirected to 0x4907d30 (mempcpy)
+--21890-- REDIR: 0x3c31d70440 (strcmp) redirected to 0x49072f0 (strcmp)
+--21890-- REDIR: 0x3c31d69510 (free) redirected to 0x4905be0 (free)
+--21890-- REDIR: 0x3c31d6b2c0 (calloc) redirected to 0x4906630 (calloc)
+--21890-- REDIR: 0x3c31d714e0 (memchr) redirected to 0x4907380 (memchr)
+--21890-- REDIR: 0x3c31d723a0 (memcpy) redirected to 0x49073b0 (memcpy)
+--21890-- REDIR: 0x3c31d70290 (index) redirected to 0x4906e30 (index)
+--21890-- REDIR: 0x3c31d6bca0 (realloc) redirected to 0x4906710 (realloc)
+--21890-- REDIR: 0x3c31d700d0 (strcat) redirected to 0x4906e90 (strcat)
+==21890== Invalid read of size 8
+==21890==    at 0x411E5C: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:37)
+==21890==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x411FC4: main (run_pop_tests.c:67)
+==21890==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
+==21890== 
+==21890== Process terminating with default action of signal 11 (SIGSEGV)
+==21890==  Access not within mapped region at address 0x0
+==21890==    at 0x411E5C: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:37)
+==21890==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x411FC4: main (run_pop_tests.c:67)
+--21890-- REDIR: 0x3c31d71c60 (memset) redirected to 0x4907b30 (memset)
+==21890== 
+==21890== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 10 from 5)
+==21890== 
+==21890== 1 errors in context 1 of 1:
+==21890== Invalid read of size 8
+==21890==    at 0x411E5C: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:37)
+==21890==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x411FC4: main (run_pop_tests.c:67)
+==21890==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
+--21890-- 
+--21890-- supp:      4 dl_relocate_object
+--21890-- supp:      1 strlen-not-intercepted-early-enough-HACK-3
+--21890-- supp:      1 strlen-not-intercepted-early-enough-HACK-4
+--21890-- supp:      3 index-not-intercepted-early-enough-HACK-4
+--21890-- supp:      1 strlen-not-intercepted-early-enough-HACK-5
+==21890== 
+==21890== IN SUMMARY: 1 errors from 1 contexts (suppressed: 10 from 5)
+==21890== 
+==21890== malloc/free: in use at exit: 11,732 bytes in 56 blocks.
+==21890== malloc/free: 100 allocs, 44 frees, 25,432 bytes allocated.
+==21890== 
+==21890== searching for pointers to 56 not-freed blocks.
+==21890== checked 246,176 bytes.
+==21890== 
+==21890== 
+==21890== 70 (48 direct, 22 indirect) bytes in 4 blocks are definitely lost in loss record 8 of 13
+==21890==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
+==21890==    by 0x49067FA: realloc (vg_replace_malloc.c:429)
+==21890==    by 0x4045C9: db_graph_print_supernode_for_specific_person_or_pop (dB_graph_population.c:377)
+==21890==    by 0x4041D7: print_supernode_for_specific_person_or_pop (dB_graph_population.c:221)
+==21890==    by 0x404766: pqueue_traverse_specific_person_or_pop (pqueue_pop.c:9)
+==21890==    by 0x404252: db_graph_traverse_specific_person_or_pop (dB_graph_population.c:237)
+==21890==    by 0x411DA4: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
+==21890==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==21890==    by 0x411FC4: main (run_pop_tests.c:67)
+==21890== 
+==21890== LEAK SUMMARY:
+==21890==    definitely lost: 48 bytes in 4 blocks.
+==21890==    indirectly lost: 22 bytes in 4 blocks.
+==21890==      possibly lost: 0 bytes in 0 blocks.
+==21890==    still reachable: 11,662 bytes in 48 blocks.
+==21890==         suppressed: 0 bytes in 0 blocks.
+==21890== Reachable blocks (those to which a pointer was found) are not shown.
+==21890== To see them, rerun with: --leak-check=full --show-reachable=yes
+--21890--  memcheck: sanity checks: 0 cheap, 1 expensive
+--21890--  memcheck: auxmaps: 39 auxmap entries (2496k, 2M) in use
+--21890--  memcheck: auxmaps_L1: 2778 searches, 13323 cmps, ratio 47:10
+--21890--  memcheck: auxmaps_L2: 54 searches, 39 nodes
+--21890--  memcheck: SMs: n_issued      = 19 (304k, 0M)
+--21890--  memcheck: SMs: n_deissued    = 0 (0k, 0M)
+--21890--  memcheck: SMs: max_noaccess  = 524287 (8388592k, 8191M)
+--21890--  memcheck: SMs: max_undefined = 0 (0k, 0M)
+--21890--  memcheck: SMs: max_defined   = 83 (1328k, 1M)
+--21890--  memcheck: SMs: max_non_DSM   = 19 (304k, 0M)
+--21890--  memcheck: max sec V bit nodes:    0 (0k, 0M)
+--21890--  memcheck: set_sec_vbits8 calls: 0 (new: 0, updates: 0)
+--21890--  memcheck: max shadow mem size:   4448k, 4M
+--21890-- translate:            fast SP updates identified: 1,915 ( 84.2%)
+--21890-- translate:   generic_known SP updates identified: 200 (  8.8%)
+--21890-- translate: generic_unknown SP updates identified: 157 (  6.9%)
+--21890--     tt/tc: 4,740 tt lookups requiring 4,800 probes
+--21890--     tt/tc: 4,740 fast-cache updates, 5 flushes
+--21890--  transtab: new        2,268 (54,323 -> 922,638; ratio 169:10) [0 scs]
+--21890--  transtab: dumped     0 (0 -> ??)
+--21890--  transtab: discarded  14 (284 -> ??)
+--21890-- scheduler: 58,059 jumps (bb entries).
+--21890-- scheduler: 0/2,729 major/minor sched events.
+--21890--    sanity: 1 cheap, 1 expensive checks.
+--21890--    exectx: 769 lists, 74 contexts (avg 0 per list)
+--21890--    exectx: 155 searches, 87 full compares (561 per 1000)
+--21890--    exectx: 157 cmp2, 45 cmp4, 0 cmpAll
+--21890--  errormgr: 24 supplist searches, 1,520 comparisons during search
+--21890--  errormgr: 11 errlist searches, 55 comparisons during search
