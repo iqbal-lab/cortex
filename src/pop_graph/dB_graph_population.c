@@ -377,6 +377,16 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 	  strcat(for_test[*index_for_test],seq_forward);
 	  for_test[*index_for_test][length_of_supernode]='\0';
 	  
+	  //Now make sure you are using the smaller of the sequence and its rev complement
+	  BinaryKmer snode_kmer = seq_to_binary_kmer(for_test[*index_for_test],length_of_supernode);
+	  BinaryKmer rev_snode_kmer =  binary_kmer_reverse_complement(snode_kmer, length_of_supernode);
+	  
+	  if (rev_snode_kmer<snode_kmer)
+	    {
+	      free(for_test[*index_for_test]);
+	      for_test[*index_for_test] = binary_kmer_to_seq(rev_snode_kmer,length_of_supernode);
+	    }
+	  
 	  (*index_for_test)++;
 
 	}
