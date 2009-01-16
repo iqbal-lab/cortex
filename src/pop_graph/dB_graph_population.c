@@ -361,36 +361,31 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 	      printf("Null supernode");
 	      exit(1);
 	    }
-	  char* supernode = (char*) calloc(length_of_supernode+1,sizeof(char));
-	  if (supernode==NULL)
+
+
+	  //assume the called has malloced space for output
+
+	  for_test[*index_for_test] = (char*) calloc(length_of_supernode+1,sizeof(char));
+	  if (for_test[*index_for_test]==NULL)
 	    {
 	      printf("Unable to calloc for supernode");
 	      exit(1);
 	    }
-	  supernode[0]='\0';
-	  strcat(supernode,seq_reverse_reversed);
-	  strcat(supernode,seq);
-	  strcat(supernode,seq_forward);
-	  supernode[length_of_supernode]='\0';
-	  printf("\nSUPERNODE is %s\n",supernode);
-
-	  //malloc space for output
-	  for_test=(char**) realloc(for_test, (*index_for_test+1)*sizeof(char*));
-	  if (for_test==NULL)
-	    {
-	      printf("OOM");
-	      exit(1);
-	    }
-
-	  for_test[*index_for_test]=supernode;
+	  for_test[*index_for_test][0]='\0';
+	  strcat(for_test[*index_for_test],seq_reverse_reversed);
+	  strcat(for_test[*index_for_test],seq);
+	  strcat(for_test[*index_for_test],seq_forward);
+	  for_test[*index_for_test][length_of_supernode]='\0';
+	  
 	  (*index_for_test)++;
-	  	  
+
 	}
+
+
       free(seq);
       free(seq_forward);
       free(seq_reverse);
       free(seq_reverse_reversed);
-      printf("\nSUPERNODE is %s\n",for_test[*index_for_test]);
 	  
     }
   else{
