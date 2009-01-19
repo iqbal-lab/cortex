@@ -18,6 +18,7 @@ typedef struct
 
 
 Sequence * read_sequence_from_fasta(FILE*);
+int  read_sequence_from_fasta_efficient(FILE *fp, Sequence* seq, int* did_a_realloc_occur);
 Sequence * read_sequence_from_fastq(FILE*);
 void free_sequence(Sequence ** );
 

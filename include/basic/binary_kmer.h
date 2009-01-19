@@ -32,6 +32,7 @@ char binary_nucleotide_to_char(Nucleotide n);
 
 //get overlapping kmers from sequence
 KmerArray * get_binary_kmers_from_sequence(char * sequence,int sequence_length, short kmer_size); 
+int  get_binary_kmers_from_sequence_efficient(char * seq,  int length, short kmer_size, KmerArray* kmers);
 
 char * binary_kmer_to_seq(BinaryKmer kmer, short kmer_size);
 

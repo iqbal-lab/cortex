@@ -153,6 +153,76 @@ KmerArray * get_binary_kmers_from_sequence(char * seq,  int length, short kmer_s
 
 }
 
+
+//pass in pre-malloced KmerArray* which has bin_kmers member which is malloced to be safely larger than we need - say 500bp read - kmersize +1.
+//returns 0 if error
+int  get_binary_kmers_from_sequence_efficient(char * seq,  int length, short kmer_size, KmerArray* kmers)
+{
+
+  //immediately abandon ship if there are any non-ACGT 
+
+  //check for non ACGT
+  int i;
+  for (i=0;i<length;i++){
+    if (char_to_binary_nucleotide(seq[i]) == Undefined){
+      return 0;
+    }
+  }
+
+
+
+  BinaryKmer mask = (( (BinaryKmer) 1 << (2*kmer_size)) - 1); // mask binary 00..0011..11 as many 1's as kmer_size * 2 (every base takes 2 bits)
+
+  
+  if (kmers == NULL){
+    fputs("Dont pass in null pointer KmerArray",stderr);
+    exit(1);
+  }
+
+  
+// If  the number of bases is a variable called length, then the number of k-mers
+// is just (length- kmer_size +1)
+
+  if (kmers->bin_kmers == NULL){
+    fputs("Dont pass in null ptr for binkmers",stderr);
+    exit(1);
+  }
+  
+  int index_of_kmers = 0;
+
+
+  if (seq == NULL){
+    puts("seq is NULL\n");    
+  }
+
+  
+  //do first kmer
+  kmers->bin_kmers[index_of_kmers]= seq_to_binary_kmer(seq,kmer_size);
+    
+  //do the rest --
+  index_of_kmers++;
+  
+  for(i=1; i<(length-kmer_size+1); i++){
+    //set the kmer to previous
+    kmers->bin_kmers[index_of_kmers]= kmers->bin_kmers[index_of_kmers-1];
+    //shift left one base (ie 2 bits)
+    kmers->bin_kmers[index_of_kmers] <<= 2;
+    //remove most significant base (using the mask x000.0011..11)
+    kmers->bin_kmers[index_of_kmers] &= mask;
+    //add new base
+    kmers->bin_kmers[index_of_kmers] |= char_to_binary_nucleotide(seq[i+kmer_size-1]);
+    
+    index_of_kmers++;
+  }
+  
+  
+  
+  kmers->nkmers = index_of_kmers;
+  return 1;
+
+}
+
+
 BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
   int j;
   BinaryKmer kmer = 0;

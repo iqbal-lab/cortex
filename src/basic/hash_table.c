@@ -31,7 +31,7 @@ void hash_table_free(HashTable * * hash_table)
 
   for(i=0;i<(*hash_table)->number_buckets;i++){
     pqueue = &((*hash_table)->table[i]);
-    //pqueue_free(&pqueue);
+    //   pqueue_free(&pqueue);
   }
   
   free(*hash_table);

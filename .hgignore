@@ -5,5 +5,5 @@ syntax: glob
 *~
 *.mk
 *.d
-valgrind.log
+bin/valgrind.log
 bin/*

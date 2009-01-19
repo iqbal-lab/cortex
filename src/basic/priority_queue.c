@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <priority_queue.h>
 
+//void pqueue_free(PQueue ** pqueue)
+//{
+// free(*pqueue);
+//}
 
 //assumes the element is not already stored -- check this before calling this function
 void pqueue_bubble_up(int current_index, PQueue *pqueue){
@@ -44,7 +48,7 @@ boolean pqueue_apply_or_insert(Key key, void (*f)(Element*),PQueue *pqueue, shor
     
     if (pqueue->elements == NULL){
       puts("priority queue: cannot allocate memory");
-      exit(1);
+      exit(1);//so no need to worry about orphaned pointer at this stage.
     }
     
     element_initialise(&element,key, kmer_size);
@@ -76,8 +80,9 @@ Element * pqueue_find_or_insert(Key key,PQueue * pqueue, short kmer_size){
   
   int current_index = pqueue->number_entries;
   pqueue->number_entries++;
+
   pqueue->elements = realloc(pqueue->elements,(current_index+1) * sizeof(Element));
-  
+
   if (pqueue->elements == NULL){
     puts("priority queue: cannot allocate memory");
     exit(1);

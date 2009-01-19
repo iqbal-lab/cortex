@@ -30,4 +30,6 @@ void pqueue_traverse(void (*f)(Element *),PQueue *);
 
 Element * pqueue_find(Key,PQueue *, short kmer_size);
 
+//void pqueue_free(PQueue** pqueue);
+
 #endif /* PQUEUE_H_ */
