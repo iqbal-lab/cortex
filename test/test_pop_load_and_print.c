@@ -116,7 +116,7 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   printf(" person 2 first corr %s and got %s\n", correct_answer_person_2[0],  array_of_supernodes_for_person2[0] );
   printf(" person 2 second corr %s and got %s\n", correct_answer_person_2[1],  array_of_supernodes_for_person2[1] );
 
-  //  CU_ASSERT_STRING_EQUAL(correct_answer_person_2[0], array_of_supernodes_for_person2[0]);
+  CU_ASSERT_STRING_EQUAL(correct_answer_person_2[0], array_of_supernodes_for_person2[0]);
 
 
   CU_ASSERT(2==number_of_supernodes_in_person_2);
