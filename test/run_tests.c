@@ -40,6 +40,20 @@ int  main()
   //  CU_cleanup_registry();
   //  return CU_get_error();
   //}
+  if (NULL == CU_add_test(pSuite, "test read_sequence_from_fasta with simple file with two reads, one of which is very long", test_read_sequence_from_fasta)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pSuite, "test read_sequence_from_fasta_efficient, checking for unnecessary realloc", test_read_sequence_from_fasta_efficient)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+  if (NULL == CU_add_test(pSuite, "test read_sequence_from_fastq", test_read_sequence_from_fastq)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
   if (NULL == CU_add_test(pSuite, "test supernode walking", test_supernode_walking)) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -52,10 +66,6 @@ int  main()
   //  CU_cleanup_registry();
   //  return CU_get_error();
   //}
-  if (NULL == CU_add_test(pSuite, "test read_sequence_from_fastq", test_read_sequence_from_fastq)) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
 
   /* Run all tests using the CUnit Basic interface */
   CU_basic_set_mode(CU_BRM_VERBOSE);

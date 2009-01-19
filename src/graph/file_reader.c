@@ -109,7 +109,7 @@ int load_fasta_data_into_graph(FILE* fp, dBGraph * db_graph)
 int load_fasta_data_into_graph_efficient(FILE* fp, dBGraph * db_graph, int* number_of_reallocs)
 {
 
-  int longest_expected_read_length = 1000;
+  int longest_expected_read_length = 3000;
 
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL)

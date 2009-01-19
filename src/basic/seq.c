@@ -198,9 +198,9 @@ int  read_sequence_from_fasta_efficient(FILE *fp, Sequence* seq, int* did_a_real
 	//seq->max         = max;
 	seq->length      = length;
 	
-	if (length > 1000)
+	if (length > 3000) //ZAM TODO remove magic number 3000 
 	  {
-	    printf("We have met a read which is longer than our max expected, of 1000 bp");
+	    printf("We have met a read which is longer than our max expected, of 3000 bp. Legnth is %d, Exiting.", length);
 	    exit(1);
 	  }
 
