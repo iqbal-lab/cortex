@@ -61,9 +61,9 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   correct_answer_person_1[1]= malloc(6*sizeof(char));
   correct_answer_person_1[0]="AAA";
 
-  char** correct_answer_person_2 = malloc(2*sizeof(char*));
-  correct_answer_person_2[0]= malloc(*sizeof(char));
-  correct_answer_person_2[1]= malloc(*sizeof(char));
+  //  char** correct_answer_person_2 = malloc(2*sizeof(char*));
+  //correct_answer_person_2[0]= malloc(*sizeof(char));
+  //correct_answer_person_2[1]= malloc(*sizeof(char));
 
 
 
