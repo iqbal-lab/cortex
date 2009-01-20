@@ -57,10 +57,15 @@ int  main()
   //  CU_cleanup_registry();
   //  return CU_get_error();
   //}
-  if (NULL == CU_add_test(pPopGraphSuite, "test loading two people, one fasta each, in same population, and print supernodes", test_load_two_people_in_same_populations_and_print_separately_their_supernodes)) {
+  if (NULL == CU_add_test(pPopGraphSuite, "Loading two people, one fasta each, in same population, and print supernodes. \n\t This is just our simplest case - each person has 2 reads, and we have manually determined what the supernodes should be", test_load_two_people_in_same_populations_and_print_separately_their_supernodes)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Load four people in one population, each consists of one toy chromosome.\n\t Three differ at one locus, and one at another.\n\t Find these loci correctly", test_take_four_people_each_with_one_read_and_find_variants))
+    {
+      CU_cleanup_registry();
+      return CU_get_error();
+    }
 
   /* Run all tests using the CUnit Basic interface */
   CU_basic_set_mode(CU_BRM_VERBOSE);
