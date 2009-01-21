@@ -21,8 +21,8 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
     }
 
   int seq_loaded = load_population_as_fasta("../test/data/test_pop_load_and_print/two_individuals_simple.txt", hash_table);
-  //printf("Number of bases loaded is %d",seq_loaded);
-  //CU_ASSERT(seq_loaded == 33);
+  printf("Number of bases loaded is %d",seq_loaded);
+  CU_ASSERT(seq_loaded == 44);
 
   char** array_of_supernodes_for_person1= (char**) calloc(10,sizeof(char*));
   char** array_of_supernodes_for_person2= (char**) calloc(10,sizeof(char*));
@@ -48,9 +48,28 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   CU_ASSERT(number_of_supernodes_in_person_2==2);
 
   int i;
+
+  //  for (i=0; i<number_of_supernodes_in_person_1; i++)
+  // {
+  //   printf("\nPerson 1 node %d : %s\n",i,array_of_supernodes_for_person1[i]);
+  // }
+  //for (i=0; i<number_of_supernodes_in_person_2; i++)
+  // {
+  //   printf("\nPerson 2 node %d : %s\n",i,array_of_supernodes_for_person2[i]);
+  // }
+
+
   //Quicksort these results:
   qsort((void*) array_of_supernodes_for_person1, number_of_supernodes_in_person_1 , sizeof(char*),  &supernode_cmp);
   qsort((void*) array_of_supernodes_for_person2, number_of_supernodes_in_person_2 , sizeof(char*),  &supernode_cmp);
+  // for (i=0; i<number_of_supernodes_in_person_1; i++)
+  // {
+  //   printf("\nAfter sort Person 1 node %d : %s\n",i,array_of_supernodes_for_person1[i]);
+  // }
+  //for (i=0; i<number_of_supernodes_in_person_2; i++)
+  // {
+  //   printf("\nafter sort Person 2 node %d : %s\n",i,array_of_supernodes_for_person2[i]);
+  // }
 
 
   //Expected results are
@@ -64,7 +83,7 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   CU_ASSERT(2==number_of_supernodes_in_person_1);
   for (j=0; j<number_of_supernodes_in_person_1; j++)
    {
-     //printf("\nj is %d, Person 1 should have %s and we see %s\n", j,correct_answer_person_1[j], array_of_supernodes_for_person1[j]);
+     // printf("\nj is %d, Person 1 should have %s and we see %s\n", j,correct_answer_person_1[j], array_of_supernodes_for_person1[j]);
      CU_ASSERT_STRING_EQUAL(correct_answer_person_1[j], array_of_supernodes_for_person1[j]);
    }
 
@@ -73,7 +92,7 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   CU_ASSERT(2==number_of_supernodes_in_person_2);
   for (j=0; j<number_of_supernodes_in_person_2; j++)
     {
-      //      printf("Person 2 should have %s and we see%s\n", correct_answer_person_2[j], array_of_supernodes_for_person2[j]);
+      //    printf("Person 2 should have %s and we see%s\n", correct_answer_person_2[j], array_of_supernodes_for_person2[j]);
 
      CU_ASSERT_STRING_EQUAL(correct_answer_person_2[j], array_of_supernodes_for_person2[j]);
    }

@@ -208,7 +208,7 @@ int load_fasta_data_into_graph_for_specific_person_or_population(FILE* fp, dBGra
       KmerArray *kmers;
       int i;
       seq_length += seq->length;
-      //printf("just got another line and so far in this file Seq length is %d\n", seq_length);
+      printf("just got another line and so far in this file Seq length is %d\n", seq_length);
       kmers = get_binary_kmers_from_sequence(seq->seq,seq->length,db_graph->kmer_size);
       free_sequence(&seq);
 
@@ -251,7 +251,7 @@ int load_fasta_data_into_graph_for_specific_person_or_population(FILE* fp, dBGra
     }
   
   //fprintf(stderr, "Found this many bad reads:%d\n", count_bad_reads);
-  //printf("Seq length is %d\n", seq_length);
+  printf("Seq length is %d\n", seq_length);
   return seq_length;
 }
 
