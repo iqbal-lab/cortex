@@ -1,3 +1,4 @@
+
 /*
   dB_graph_population.c - implementation
  */
@@ -10,7 +11,7 @@
 #include <dB_graph.h>
 #include <dB_graph_population.h>
 #include <pqueue_pop.h>
-
+#include <seq.h>
 #include <string.h>
 
 
@@ -421,3 +422,310 @@ void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_popula
   exit(1);
 }
 
+
+//runs through nodes in the supernode of the argument node, and any that have status tmp_touched_previously_X, the state is returned to X
+void db_graph_return_supernode_statuses_to_previous_state(dBNode* node, EdgeArrayType type, int index)
+{
+
+  //don't do anything if this node does not occur in the graph for this person/population
+  if (!db_graph_is_this_node_in_this_person_or_populations_graph(node, type, index))
+    {
+      return;
+    }
+
+  int i;
+
+  boolean is_cycle;
+  Nucleotide nucleotide1, nucleotide2, rev_nucleotide;
+  Orientation original_orientation, next_orientation, orientation;
+  dBNode * original_node=node;
+  dBNode * next_node;
+
+
+  //go as far as you can in the forward direction, and as soon as you meet a node whose status is not tmp_touched_previously_X, then stop.
+  
+
+  original_orientation = forward; 
+  orientation = forward;
+  is_cycle = false;
+
+  
+  while(db_node_has_precisely_one_edge(node,orientation,&nucleotide1, type, index)) {
+ 
+    next_node =  db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide1,&rev_nucleotide,db_graph, type, index);
+
+
+
+    if(next_node == NULL){
+      printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
+      exit(1);
+    }	         
+    
+    if (DEBUG){
+      printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide1),
+	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size) :  binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size));
+	     
+
+    }
+    
+    //check for multiple entry edges 
+    if (db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2, type, index))
+      {
+	
+	if (db_node_check_status(next_node,tmp_touched_previously_visited))
+	  {
+	    db_node_set_status(next_node,visited);
+	  }
+	else if (db_node_check_status(next_node,tmp_touched_previously_none))
+	  {
+	    db_node_set_status(next_node,none);
+	  }
+	else if (db_node_check_status(next_node,tmp_touched_previously_pruned))
+	  {
+	    db_node_set_status(next_node,pruned);
+	  }
+	else
+	  {
+	    //We must have run out of supernode
+	    break;
+	  }
+	
+	
+      }
+    else
+      {
+      if (DEBUG)
+	{
+	  printf("Multiple entries\n");
+	}
+      break;
+      
+      }
+    
+    
+    //loop
+    if ((next_node == original_node) && (next_orientation == original_orientation))
+      {      
+	is_cycle = true;
+	break;
+	
+      }
+    
+    
+    node = next_node;
+    orientation = next_orientation;      
+  }
+
+
+  //if we get here then something has gone wrong
+  printf("Reached end of function without finding first node in supernode");
+  exit(1);
+  return NULL; //to keep compiler happy
+
+
+
+
+}
+
+//MUST ALWAYS call  db_graph_return_supernode_statuses_to_previous_state after calling this.
+dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph)
+{
+  if (! (db_graph_is_this_node_in_this_person_or_populations_graph(node, type, index)))
+    {
+      return NULL;
+    }
+
+  if (db_node_check_status(node,pruned))
+    {
+      //don't waste time with pruned nodes.
+      return NULL;
+    }
+  
+
+
+  boolean is_cycle;
+  Nucleotide nucleotide1, nucleotide2, rev_nucleotide;
+  Orientation original_orientation, next_orientation, orientation;
+  dBNode * original_node=node;
+  dBNode * next_node;
+
+
+  //First node in supernode is, almost by definition, what you get if you go in the Reverse direction (with respect to the Node)
+  // as far as you can go.
+  original_orientation = reverse; 
+  orientation = reverse;
+  
+
+  //Mark the element we're starting at as visited
+
+  if (db_node_check_status(original_node,none))
+    {
+      db_node_set_status(original_node,tmp_touched_previously_none);
+    }
+  else if (db_node_check_status(original_node,visited))
+    {
+      db_node_set_status(original_node,tmp_touched_previously_visited);
+    }
+  else 
+    {
+      printf("This node %s has status that is not visited or none or pruned",binary_kmer_to_seq(original_node->kmer, db_graph->kmer_size)); //creates a mem leak but about to die anyway
+      exit(1);
+    }
+  
+
+  is_cycle = false;
+
+  
+  while(db_node_has_precisely_one_edge(node,orientation,&nucleotide1, type, index)) {
+ 
+    next_node =  db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide1,&rev_nucleotide,db_graph, type, index);
+    
+    if(next_node == NULL){
+      printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
+      exit(1);
+    }	         
+    
+    if (DEBUG){
+      printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide1),
+	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size) :  binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size));
+	     
+
+    }
+    
+    //check for multiple entry edges 
+    if (db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2, type, index))
+      {
+      }
+    else
+      {
+      if (DEBUG)
+	{
+	  printf("Multiple entries\n");
+	}
+      //break;
+      return node; //we have gone as far as we can go - the next node has multiple entries. So we are now at the first node of the supernode
+      }
+    
+    
+    //loop
+    if ((next_node == original_node) && (next_orientation == original_orientation))
+      {      
+	is_cycle = true;
+	//break;
+	return original_node; //we have a loop that returns to where we start. Might as well consider ourselves as at the fiurst node of the supernode right at the beginning
+      }
+    
+    
+    //   db_node_set_status(next_node,visited);
+    if (db_node_check_status(next_node,none))
+      {
+	db_node_set_status(next_node,tmp_touched_previously_none);
+      }
+    else if (db_node_check_status(next_node,visited))
+      {
+	db_node_set_status(next_node,tmp_touched_previously_visited);
+      }
+    else
+      {
+	printf("This node %s has status that is not visited or none or pruned",binary_kmer_to_seq(next_node->kmer, db_graph->kmer_size)); //creates a mem leak but about to die anyway
+	exit(1);
+      }
+
+    node = next_node;
+    orientation = next_orientation;      
+  }
+
+
+  //if we get here then something has gone wrong
+  printf("Reached end of function without finding first node in supernode");
+  exit(1);
+  return NULL; //to keep compiler happy
+
+}
+
+
+
+// Given a node, will look at each person's supernode containing that node. 
+// For each of these supernodes, independently,  find the longest contiguous subsection that has min people-coverage > min_covg_for_pop_supernode.
+// (Note this may not contain the original node.)
+// Then compare across people, and define your consensus as the sub_supernode which has the most people backing it.
+// If two people have equally good sub_supernodes, choose that of the person with highest index.
+// Pass in pre-malloced Sequence* for answer
+
+void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence* pop_consensus_supernode, dBNode* node, int min_covg_for_pop_supernode, int min_length_for_pop_supernode, dBGraph* db_graph)
+{
+  int length_of_best_sub_supernode_in_each_person[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
+  int index_of_start_of_best_sub_supernode_in_each_person[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
+
+    int i;
+  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    {
+      length_of_best_sub_supernode_in_each_person[i]=0;
+      index_of_start_of_best_sub_supernode_in_each_person[i]=0;
+    }
+
+  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    {
+      //      Edges person_edges = get_edge_copy(*node, individual_edge_array, i);
+
+      //get the first node in the supernode for this edge, within this person't graph
+      dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, i, db_graph);
+      //clean up those nodes that were set with status tmp_touched_previously_X to X
+      
+//db_graph_return_supernode_statuses_to_previous_state(node,individual_edge_array, i);
+
+      // walk through the supernode, from one end to the other. As soon as we hit a node that has people-covg >= min_covg_for_pop_supernode
+      // then note down the coordinate (how far through the supernode), and keep going until we meet a node with people-covg < min_covg_for_pop_supernode
+      // Work out the length of the chunk you found, which had sufficient covg. If > min_length_for_pop_supernode, then you have found your first
+      // candidate for this person's best sub-supernode. Log the start-point and length. Then continue walkign through the supernode until you
+      // find another node that has people_covg sufficiently high. repeat the process for this point, and if its candidate is longer than our
+      // current candidate, then replace it with this new one. etc.
+      
+ //  dB_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node,  &index_of_start_of_best_sub_supernode_in_each_person[i], &length_of_best_sub_supernode_in_each_person[i], 
+      //											   min_covg_for_pop_supernode,  min_length_for_pop_supernode, individual_edge_array, i); 
+
+    }
+
+  
+  //Now find which person has the bext sub_supernode nucleated at this node 
+  int person_with_best_sub_supernode;
+  int max=0;
+  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    {
+      if ( length_of_best_sub_supernode_in_each_person[i] > max )
+	{
+	  person_with_best_sub_supernode=i;
+	  max = length_of_best_sub_supernode_in_each_person[i];
+	}
+    }
+
+  if (max==0)
+    {
+      printf("This should be impossible. Max size of sub supernode over all people is 0. Since we start wth a kmer that is in the graph, at least one person ought to have it\n");
+    }
+  
+  else
+    {
+      if (max > pop_consensus_supernode->max)
+	{
+	  pop_consensus_supernode->seq = (char*) realloc(pop_consensus_supernode->seq, sizeof(char*) * max);
+	  if (pop_consensus_supernode->seq == NULL)
+	    {
+	      printf("OOM getting pop cons supernode\n");
+	      exit(1);
+	    }
+
+	  pop_consensus_supernode->max=max;
+	}
+      int j;
+      int start = index_of_start_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode];
+      int end =    start+ length_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode];
+      db_graph_get_subsection_of_supernode_containing_given_node(pop_consensus_supernode->seq, node, start, end, individual_edge_array, person_with_best_sub_supernode);
+    }
+
+}
+
+
+void db_graph_get_subsection_of_supernode_containing_given_node(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index)
+{
+}

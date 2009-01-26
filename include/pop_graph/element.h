@@ -24,8 +24,11 @@ typedef char Edges;
 
 typedef enum{
   none    = 0,
-  visited = 1,
-  pruned  = 2,
+    visited = 1,
+    pruned  = 2,
+    tmp_touched_previously_none = 3,
+    tmp_touched_previously_visited = 4,
+    tmp_touched_previously_pruned = 5,
 } NodeStatus;
 
 

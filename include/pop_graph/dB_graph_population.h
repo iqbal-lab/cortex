@@ -11,6 +11,7 @@
 
 #include <element.h>
 #include <hash_table.h>
+#include <seq.h>
 
 //***********************
 //functions applied to node, with respect to an individual or population
@@ -33,8 +34,20 @@ void db_graph_traverse_specific_person_or_pop(void (*f)(HashTable*, Element *, E
 
 void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test );
 
-
 void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population(dBGraph* hash_table, EdgeArrayType type, int index);
+
+
+// given a node, find the start of the supernode that contains it. Then return the sequence for the subsection of that supernode starting at index start, and ending at end
+// in the pre-malloc-ed char* which was passed in as the frst argument
+void db_graph_get_subsection_of_supernode_containing_given_node(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index);
+
+//returns for this function are in the two int*'s.
+void  dB_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(const dBNode* first_node_in_supernode,  int* index_for_start_of_sub_supernode,
+											   int* length_of_best_sub_supernode, int min_people_coverage, int min_length_of_sub_supernode, EdgeArrayType type, int index);
+
+void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence* pop_consensus_supernode, dBNode* node, int min_covg_for_pop_supernode, int min_length_for_pop_supernode, dBGraph* db_graph);
+
+dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph);
 
 
 #endif

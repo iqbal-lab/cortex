@@ -4,6 +4,7 @@
 #include "test_dB_graph_node.h"
 #include "test_seq.h"
 #include "test_pop_load_and_print.h"
+#include "test_pop_supernode_consensus.h"
 #include <CUnit.h>
 #include <Basic.h>
 
@@ -67,6 +68,11 @@ int  main()
       return CU_get_error();
     }
   if (NULL == CU_add_test(pPopGraphSuite, "Load two people sharing an Alu, differing by sequence before and after the Alu. Find supernodes.", test_take_two_people_sharing_an_alu_and_find_supernodes))
+    {
+      CU_cleanup_registry();
+      return CU_get_error();
+    }
+  if (NULL == CU_add_test(pPopGraphSuite, "Load two people in one population, and test that given a kmer, we can find the first node in the supernode in which that kmer lies.", test_find_first_node_in_supernode))
     {
       CU_cleanup_registry();
       return CU_get_error();
