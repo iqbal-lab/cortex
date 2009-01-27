@@ -99,6 +99,7 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
 }
 
 
+//WARNING: this marks as visited any node that it walks over (and is in the supernode)
 char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode * node, Orientation orientation, dBGraph * db_graph, boolean * is_cycle, EdgeArrayType type, int index){
   Nucleotide nucleotide1, nucleotide2, rev_nucleotide;
   char * seq = NULL;
@@ -423,113 +424,27 @@ void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_popula
 }
 
 
-//runs through nodes in the supernode of the argument node, and any that have status tmp_touched_previously_X, the state is returned to X
-void db_graph_return_supernode_statuses_to_previous_state(dBNode* node, EdgeArrayType type, int index)
+void return_node_to_status_prior_to_tmp_touched_X(dBNode* node)
 {
-
-  //don't do anything if this node does not occur in the graph for this person/population
-  if (!db_graph_is_this_node_in_this_person_or_populations_graph(node, type, index))
+  if (node->status == tmp_touched_previously_none)
     {
-      return;
+      node->status = none;
     }
-
-  int i;
-
-  boolean is_cycle;
-  Nucleotide nucleotide1, nucleotide2, rev_nucleotide;
-  Orientation original_orientation, next_orientation, orientation;
-  dBNode * original_node=node;
-  dBNode * next_node;
-
-
-  //go as far as you can in the forward direction, and as soon as you meet a node whose status is not tmp_touched_previously_X, then stop.
-  
-
-  original_orientation = forward; 
-  orientation = forward;
-  is_cycle = false;
-
-  
-  while(db_node_has_precisely_one_edge(node,orientation,&nucleotide1, type, index)) {
- 
-    next_node =  db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide1,&rev_nucleotide,db_graph, type, index);
-
-
-
-    if(next_node == NULL){
-      printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
-      exit(1);
-    }	         
-    
-    if (DEBUG){
-      printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide1),
-	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size) :  binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size));
-	     
-
+  else if (node->status == tmp_touched_previously_visited)
+    {
+      node->status = visited;
     }
-    
-    //check for multiple entry edges 
-    if (db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2, type, index))
-      {
-	
-	if (db_node_check_status(next_node,tmp_touched_previously_visited))
-	  {
-	    db_node_set_status(next_node,visited);
-	  }
-	else if (db_node_check_status(next_node,tmp_touched_previously_none))
-	  {
-	    db_node_set_status(next_node,none);
-	  }
-	else if (db_node_check_status(next_node,tmp_touched_previously_pruned))
-	  {
-	    db_node_set_status(next_node,pruned);
-	  }
-	else
-	  {
-	    //We must have run out of supernode
-	    break;
-	  }
-	
-	
-      }
-    else
-      {
-      if (DEBUG)
-	{
-	  printf("Multiple entries\n");
-	}
-      break;
-      
-      }
-    
-    
-    //loop
-    if ((next_node == original_node) && (next_orientation == original_orientation))
-      {      
-	is_cycle = true;
-	break;
-	
-      }
-    
-    
-    node = next_node;
-    orientation = next_orientation;      
-  }
-
-
-  //if we get here then something has gone wrong
-  printf("Reached end of function without finding first node in supernode");
-  exit(1);
-  return NULL; //to keep compiler happy
-
-
-
-
+  else if (node->status == tmp_touched_previously_pruned)
+    {
+      node->status = pruned;
+    }
 }
 
-//MUST ALWAYS call  db_graph_return_supernode_statuses_to_previous_state after calling this.
-dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph)
+
+//scratch_node_array is prealloced. caller should ignore its contents - is used purely internally.
+dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph, dBNodeArray* scratch_node_array)
 {
+  printf("start of get first node function\n");
   if (! (db_graph_is_this_node_in_this_person_or_populations_graph(node, type, index)))
     {
       return NULL;
@@ -541,14 +456,15 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
       return NULL;
     }
   
-
+  //initialise scratch node array length to 0;
+  scratch_node_array->length=0;
 
   boolean is_cycle;
   Nucleotide nucleotide1, nucleotide2, rev_nucleotide;
   Orientation original_orientation, next_orientation, orientation;
   dBNode * original_node=node;
   dBNode * next_node;
-
+  int j;
 
   //First node in supernode is, almost by definition, what you get if you go in the Reverse direction (with respect to the Node)
   // as far as you can go.
@@ -572,6 +488,17 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
       exit(1);
     }
   
+
+  //add this node to scratch array, so that we can unset its status afterwards
+  if ((scratch_node_array->length)+1 > scratch_node_array->max)
+    {
+      printf("Out of mem in scratch node array");
+      exit(1);
+    }
+  (scratch_node_array->nodes)[scratch_node_array->length]=original_node;
+  scratch_node_array->length= (scratch_node_array->length) +1;
+
+
 
   is_cycle = false;
 
@@ -603,6 +530,12 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
 	  printf("Multiple entries\n");
 	}
       //break;
+      
+      for (j=0; j< scratch_node_array->length; j++)
+	{
+	  return_node_to_status_prior_to_tmp_touched_X((scratch_node_array->nodes)[j]);
+	}
+      printf("returning this first nodem, with kmer %s\n", binary_kmer_to_seq(node->kmer, db_graph->kmer_size));
       return node; //we have gone as far as we can go - the next node has multiple entries. So we are now at the first node of the supernode
       }
     
@@ -612,6 +545,12 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
       {      
 	is_cycle = true;
 	//break;
+	
+	for (j=0; j< scratch_node_array->length; j++)
+	  {
+	    return_node_to_status_prior_to_tmp_touched_X((scratch_node_array->nodes)[j]);
+	  }
+      printf("returning this first nodem, with kmer %s\n", binary_kmer_to_seq(original_node->kmer, db_graph->kmer_size));
 	return original_node; //we have a loop that returns to where we start. Might as well consider ourselves as at the fiurst node of the supernode right at the beginning
       }
     
@@ -630,6 +569,14 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
 	printf("This node %s has status that is not visited or none or pruned",binary_kmer_to_seq(next_node->kmer, db_graph->kmer_size)); //creates a mem leak but about to die anyway
 	exit(1);
       }
+    //add this node to scratch array, so that we can unset its status afterwards
+    if (scratch_node_array->length+1 > scratch_node_array->max)
+      {
+	printf("Out of mem in scratch node array");
+	exit(1);
+      }
+    (scratch_node_array->nodes)[scratch_node_array->length]=next_node;
+    scratch_node_array->length= (scratch_node_array->length) +1;
 
     node = next_node;
     orientation = next_orientation;      
@@ -651,8 +598,10 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
 // Then compare across people, and define your consensus as the sub_supernode which has the most people backing it.
 // If two people have equally good sub_supernodes, choose that of the person with highest index.
 // Pass in pre-malloced Sequence* for answer
+// pass in pre-malloced dBNodeArray for internal workings - do not look at contents afterwards.
 
-void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence* pop_consensus_supernode, dBNode* node, int min_covg_for_pop_supernode, int min_length_for_pop_supernode, dBGraph* db_graph)
+void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence* pop_consensus_supernode, dBNode* node, int min_covg_for_pop_supernode, int min_length_for_pop_supernode, 
+								       dBGraph* db_graph, dBNodeArray* scratch_node_array)
 {
   int length_of_best_sub_supernode_in_each_person[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
   int index_of_start_of_best_sub_supernode_in_each_person[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
@@ -669,7 +618,7 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
       //      Edges person_edges = get_edge_copy(*node, individual_edge_array, i);
 
       //get the first node in the supernode for this edge, within this person't graph
-      dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, i, db_graph);
+      dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, i, db_graph, scratch_node_array);
       //clean up those nodes that were set with status tmp_touched_previously_X to X
       
 //db_graph_return_supernode_statuses_to_previous_state(node,individual_edge_array, i);
@@ -720,12 +669,12 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
       int j;
       int start = index_of_start_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode];
       int end =    start+ length_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode];
-      db_graph_get_subsection_of_supernode_containing_given_node(pop_consensus_supernode->seq, node, start, end, individual_edge_array, person_with_best_sub_supernode);
+      db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(pop_consensus_supernode->seq, node, start, end, individual_edge_array, person_with_best_sub_supernode);
     }
 
 }
 
 
-void db_graph_get_subsection_of_supernode_containing_given_node(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index)
+void db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index)
 {
 }
