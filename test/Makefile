@@ -1,7 +1,7 @@
 include ../Makefile.inc
 
-IDIR_BASIC =/homes/zi/dev/hg/marzam/marzam-harmonised/include/basic
-IDIR_GRAPH =/homes/zi/dev/hg/marzam/marzam-harmonised/include/graph
+IDIR_BASIC =../include/basic
+IDIR_GRAPH =../include/graph
 IDIR_CUNIT =/homes/zi/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
 
 CC = gcc
@@ -9,7 +9,9 @@ CFLAGS = -Wall -I$(IDIR_BASIC) -I$(IDIR_GRAPH) -I$(IDIR_CUNIT) -g
 
 
 TEST_OBJ_DIR=obj
-TEST_OBJ = $(TEST_OBJ_DIR)/test_binary_kmer.o $(TEST_OBJ_DIR)/test_dB_graph.o $(TEST_OBJ_DIR)/test_dB_graph_node.o $(TEST_OBJ_DIR)/test_seq.o  $(TEST_OBJ_DIR)/run_tests.o
+##TEST_OBJ = $(TEST_OBJ_DIR)/test_binary_kmer.o $(TEST_OBJ_DIR)/test_dB_graph.o $(TEST_OBJ_DIR)/test_dB_graph_node.o $(TEST_OBJ_DIR)/test_seq.o  $(TEST_OBJ_DIR)/run_tests.o
+
+TEST_OBJ = $(TEST_OBJ_DIR)/test_binary_kmer.o $(TEST_OBJ_DIR)/test_seq.o $(TEST_OBJ_DIR)/run_tests.o
 
 GRAPH_OBJ_DIR=../src/obj/graph
 GRAPH_OBJ = $(GRAPH_OBJ_DIR)/element.o $(GRAPH_OBJ_DIR)/dB_graph.o $(GRAPH_OBJ_DIR)/seq.o $(GRAPH_OBJ_DIR)/binary_kmer.o $(GRAPH_OBJ_DIR)/priority_queue.o $(GRAPH_OBJ_DIR)/file_reader.o  $(GRAPH_OBJ_DIR)/hash_table.o  $(GRAPH_OBJ_DIR)/hash_value.o

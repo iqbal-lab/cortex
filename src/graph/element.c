@@ -78,6 +78,7 @@ void db_node_add_labeled_edge(dBNode * e, Orientation o, Nucleotide base){
 boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size){
 
   BinaryKmer src_k, tgt_k; 
+  char seq[kmer_size];
 
   src_k = src_e->kmer;
   tgt_k = tgt_e->kmer;
@@ -92,13 +93,13 @@ boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orie
     
   
   if (DEBUG){
-    printf("add edge %s -%c-> %s\n",binary_kmer_to_seq(src_k,kmer_size),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(tgt_k)),binary_kmer_to_seq(tgt_k,kmer_size));
+    printf("add edge %s -%c-> %s\n",binary_kmer_to_seq(src_k,kmer_size,seq),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(tgt_k)),binary_kmer_to_seq(tgt_k,kmer_size,seq));
   }
 
   db_node_add_labeled_edge(src_e,src_o,binary_kmer_get_last_nucleotide(tgt_k));
 
   if (DEBUG){
-    printf("add edge %s -%c-> %s\n",binary_kmer_to_seq(tgt_k,kmer_size),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size))),binary_kmer_to_seq(src_k,kmer_size));
+    printf("add edge %s -%c-> %s\n",binary_kmer_to_seq(tgt_k,kmer_size,seq),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size))),binary_kmer_to_seq(src_k,kmer_size,seq));
   }
 
   db_node_add_labeled_edge(tgt_e,opposite_orientation(tgt_o),binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size)));

@@ -1,222 +1,235 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <seq.h>
+#include <limits.h>
 
-static int SEQ_BLOCK_SIZE = 512;
-
-void seq_set_block_size(int size)
-{
-	SEQ_BLOCK_SIZE = size;
-}
 
 /* Read sequence from file "fp" in FASTA format.
-   returns a pointer to seq (struct).
-   it returns null if no sequence is left in file
+   it returns the length of the sequence, 0 if no sequence is left in file
 */
 
-Sequence * read_sequence_from_fasta(FILE *fp)
-{
+int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length){
 
-// Note - If we do have a line bigger than 5000, fgets will read it in multiple consecutive goes.
-//
-  const int MAXLINE = 5000;
-  char line[5000];
+  char line[LINE_MAX]; //LINE_MAX is defined in limits.h
   int i;
-  char name[256];
+  int j = 0; //length of sequence
+  long file_pointer;
 
-
-  if (fp == NULL)
-  {
-	  printf("Cannot pass a NULL pointer to read_sequence_from_fasta");
-	  exit(1);
+  if (fp == NULL){
+    fputs("File not defined\n",stderr);
+    exit(1);
   }
 
-  Sequence * seq = malloc(sizeof(Sequence));
-
-  if (seq == NULL)
-  {
-	  printf("Out of memory allocating a Sequence object");
-	  exit(1);
+  if (seq == NULL){
+    fputs("Cannot pass a NULL pointer for seq\n",stderr);
+    exit(1);
   }
 
-  seq->seq = NULL;
-  seq->max=0;
-  seq->name = NULL;
-  seq->comment = NULL;
-  //seq->qual=NULL;  //uncomment this when you add qual's to struct seq.
+  if (seq->seq == NULL){
+    fputs("Dont give me a null pointer for seq->seq - alloc memory yourself and give me that\n",stderr);
+    exit(1);
+  }
 
-  while (fgets(line, MAXLINE, fp) != NULL){
-    //read name
-	  // TODO fix it so it either works for > line longer than MAXLINE characters, or complains if that happens
-	 	 // currently it won't work. fgets will get the excess of the line in the second loop, and it wont
-	 	  // satisfy the if and so won't go into the name variable.
+  if (seq->name == NULL){
+    fputs("Dont give me a null pointer for seq->name - alloc memory yourself and give me that\n",stderr);
+    exit(1);
+  }
 
-	  if (line[0] == '>')
-	  {
-      for(i = 1;i<MAXLINE;i++)
-      {
-    	  if (line[i] == '\n') //(line[i] == ' ' || line[i] == '\t' || line[i] == '\r')
-    	  {
-    		  break;
-    	  }
-    	  name[i-1] = line[i];
+  
+  //read name of fasta entry
+  if (fgets(line, LINE_MAX, fp) != NULL){
+    if (line[0] == '>'){
+      for(i = 1;i<LINE_MAX;i++){	   
+	if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
+	  break;
+	}
+	if(i>255){
+	  fputs("Name too long\n",stderr);
+	  exit(1);
+	}
+	seq->name[i-1] = line[i];
       }
-      name[i-1] = '\0';
+      seq->name[i-1] = '\0';
+    
+      //read sequence -- verify position first
+      file_pointer = ftell(fp);
 
-      seq->name = name;
-
-      //read Sequence
-
-      int length = 0;
-      int max    = seq->max; //this is zero at the moment
-      char c = 0;
-
-
-      while (!feof(fp) && (c = fgetc(fp)) != '>') {
-    	  if (isalpha(c) || c == '-' || c == '.') {
-    		  if (length + 1 >= max) {
-    			  max += SEQ_BLOCK_SIZE;
-    			  seq->seq = (char*)realloc(seq->seq, sizeof(char) * max);
-    		  }
-    		  seq->seq[length++] = (char)c;
-    	  }
-      }
-      if (c == '>') ungetc(c,fp);
-
-      seq->seq[length] = '\0';
-      seq->max         = max;
-      seq->length      = length;
-
-      return seq;
-    }
-    else{
-      return NULL;
-    }
-  }
-
-  return NULL;
-}
-
-
-Sequence * read_sequence_from_fastq(FILE *fp)
-{
-
-// Note - If we do have a line bigger than 5000, fgets will read it in multiple consecutive goes.
-//
-  const int MAXLINE = 5000;
-  char line[5000];
-  int i;
-  char name[256];
-
-
-  if (fp == NULL)
-  {
-	  printf("Cannot pass a NULL pointer to read_sequence_from_fastq");
-	  exit(1);
-  }
-
-  Sequence * seq = malloc(sizeof(Sequence));
-
-  if (seq == NULL)
-  {
-	  printf("Out of memory allocating a Sequence object");
-	  exit(1);
-  }
-
-  seq->seq = NULL;
-  seq->max=0;
-  seq->name = NULL;
-  seq->comment = NULL;
-  seq->qual=NULL;  
-
-  while (fgets(line, MAXLINE, fp) != NULL){
-    //read name
-	  // TODO fix it so it either works for > line longer than MAXLINE characters, or complains if that happens
-	 	 // currently it won't work. fgets will get the excess of the line in the second loop, and it wont
-	 	  // satisfy the if and so won't go into the name variable.
-
-    if (line[0] == '@')
-      {
-	for(i = 1;i<MAXLINE;i++)
-	  {
-	    if (line[i] == '\n') //(line[i] == ' ' || line[i] == '\t' || line[i] == '\r')
-	      {
-		break;
-	      }
-	    name[i-1] = line[i];
-	  }
-	name[i-1] = '\0';
-	
-	seq->name = name;
-	
-	//read Sequence
-	
-	int length = 0;
-	int max    = seq->max; //this is zero at the moment
-	char c = 0;
-	
-	
-	while (!feof(fp) && ((c = fgetc(fp)) != '\n')   ) {
-	  if (isalpha(c)) {
-	    if (length + 1 >= max) {
-	      max += SEQ_BLOCK_SIZE;
-	      seq->seq = (char*)realloc(seq->seq, sizeof(char) * max);
-	    }
-	  seq->seq[length++] = (char)c;
-	  //printf("Next seq character is %c and length is now %d\n",c, length);
-	  }
-	  else
-	    {
-	      printf("invalid fastq");
-	      exit(1);
-	    }
+      while (fgets(line, LINE_MAX, fp) != NULL){
+	if (line[0] == '>'){
+	  fseek(fp,file_pointer,SEEK_SET);
+	  break;
 	}
 	
-	//ignore strand
-	char temp[3];
-	fgets(temp,3,fp);
-	//printf("strand %sZam",temp);
-	
-	//get quality - we know need same amount as seq->seq
-	int qual_length=0;
-	seq->qual = (char*)realloc(seq->qual, sizeof(char) * max);
-	
-	while ( !feof(fp) && ((c = fgetc(fp)) != '\n') ) {
-	seq->qual[qual_length++] = (char)c;
-	//printf("Next qual character is %c and qual_length is now %d\n",c, qual_length);
-	}
-	
-	//printf("After getting quality, qual length is %d\n", qual_length);
-	seq->seq[length] = '\0';
-	//printf("Sequence is %s,length is %d\n",seq->seq, length);
-	seq->qual[qual_length]='\0';
-	//printf("Quality %sZam",seq->qual);
-	seq->max         = max;
-	seq->length      = length;
-	
-	
-	
-	if ((qual_length != length))
-	  {
-	    printf("Not reading fastq correctly, qual length is %d and seq length is %d\nqual is %s and sequence is %s", qual_length, length, seq->qual, seq->seq);
+	//check line is fine
+	for(i=0;i<LINE_MAX;i++){
+	  if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
+	    break; //fine but nothing to add
+	  }
+	  
+	  if (line[i] != 'A' && line[i] != 'a' && 
+	      line[i] != 'C' && line[i] != 'c' && 
+	      line[i] != 'G' && line[i] != 'g' && 
+	      line[i] != 'T' && line[i] != 't' && 
+	      line[i] != 'N' && line[i] != 'n'){ 
+	    
+	    fprintf(stderr,"Invalid symbol [%c] in entry\n",line[i]);
 	    exit(1);
 	  }
-	
-	
-	
-	return seq;
+	  
+	  seq->seq[j] = line[i];
+	  j++;
+	  
+	  if (j==max_read_length){
+	    fprintf(stderr,"read [%s] too long [%i]\n",seq->name,j);
+	    exit(1);
+	  }
+	  
+	}
+    
+	file_pointer = ftell(fp);
       }
+    }
     else{
-      return NULL;
+      fputs("syntax error in fasta file -- it misses >\n",stderr);
+      exit(1);
     }
   }
-  
-  return NULL;
+  seq->seq[j] = '\0';
+  return j;
 }
 
 
 
+/* Read sequence from file "fp" in FASTQ format.
+   it returns the length of the sequence, 0 if no sequence is left in file
+*/
+
+int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
+
+  char line[LINE_MAX]; //LINE_MAX is defined in limits.h
+  int i;
+  int j = 0; //length of sequence
+  int q = 0; //length of qualities
+  long file_pointer;
+
+  if (fp == NULL){
+    fputs("File not defined\n",stderr);
+    exit(1);
+  }
+
+  if (seq == NULL){
+    fputs("Cannot pass a NULL pointer for seq\n",stderr);
+    exit(1);
+  }
+
+  if (seq->seq == NULL){
+    fputs("Dont give me a null pointer for seq->seq - alloc memory yourself and give me that\n",stderr);
+    exit(1);
+  }
+
+  if (seq->name == NULL){
+    fputs("Dont give me a null pointer for seq->name - alloc memory yourself and give me that\n",stderr);
+    exit(1);
+  }
+
+  if (seq->qual == NULL){
+    fputs("Dont give me a null pointer for seq->qual - alloc memory yourself and give me that\n",stderr);
+    exit(1);
+  }
+
+  
+  //read name of fastq entry
+  if (fgets(line, LINE_MAX, fp) != NULL){
+    if (line[0] == '@'){
+      for(i = 1;i<LINE_MAX;i++){	   
+	if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
+	  break;
+	}
+	if(i>255){
+	  fputs("Name too long\n",stderr);
+	  exit(1);
+	}
+	seq->name[i-1] = line[i];
+      }
+      seq->name[i-1] = '\0';
+    
+      //read sequence 
+
+      while (fgets(line, LINE_MAX, fp) != NULL){
+
+	if ((line[0] == '+') || (line[0] == '-')){ //go to get qualities
+	  break;
+	}
+	
+	//check line is fine
+	for(i=0;i<LINE_MAX;i++){
+	  if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
+	    break; //fine but nothing to add
+	  }
+	  
+	  if (line[i] != 'A' && line[i] != 'a' && 
+	      line[i] != 'C' && line[i] != 'c' && 
+	      line[i] != 'G' && line[i] != 'g' && 
+	      line[i] != 'T' && line[i] != 't' && 
+	      line[i] != 'N' && line[i] != 'n'){ 
+	    
+	    fprintf(stderr,"Invalid symbol [%c] in entry\n",line[i]);
+	    exit(1);
+	  }
+	  
+	  seq->seq[j] = line[i];
+	  j++;
+	  
+	  if (j==max_read_length){
+	    fprintf(stderr,"read [%s] too long [%i]\n",seq->name,j);
+	    exit(1);
+	  }
+	  
+	}
+      }
+
+      //read qualities -- verify position first
+      file_pointer = ftell(fp);
+
+      while (fgets(line, LINE_MAX, fp) != NULL){
+	if (line[0] == '@' && j==q){
+	  fseek(fp,file_pointer,SEEK_SET);
+	  break;
+	}
+       
+	for(i=0;i<LINE_MAX;i++){
+	  if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
+	    break; //fine but nothing to add
+	  }
+	  
+	  seq->qual[q] = line[i];
+	  q++;
+	  
+	  if (q==max_read_length){
+	    fprintf(stderr,"qualities for [%s] too long [%i]\n",seq->name,q);
+	    exit(1);
+	  }
+	  
+	}
+    
+	file_pointer = ftell(fp);
+      }
+
+      if (j!=q){
+	fprintf(stderr,"qualities [%i] and sequence [%i] sizes don't coincide for [%s]\n",q,j,seq->name);
+	exit(1);
+      }
+
+    }
+    else{
+      fputs("syntax error in fastq file -- it misses @\n",stderr);
+      exit(1);
+    }
+  }
+  seq->seq[j]   = '\0';
+  seq->qual[q]  = '\0'; //this is not technical necessary but simplies many checks downstream
+  return j;
+}
 
 void free_sequence(Sequence ** sequence){
   free((*sequence)->seq);

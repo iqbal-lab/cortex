@@ -64,12 +64,14 @@ void pqueue_traverse(void (*f)(Element *),PQueue * pqueue)
 }
 
 
-Element * pqueue_find_or_insert(Key key,PQueue * pqueue, short kmer_size){  
+Element * pqueue_find_or_insert(Key key,boolean * found, PQueue * pqueue, short kmer_size){  
   int i;
   Element element;
 
+  *found = false;
   for(i=0;i<pqueue->number_entries;i++){ 
     if (element_is_key(key,pqueue->elements[i], kmer_size)){
+      *found = true;
       return &(pqueue->elements[i]);
     }
   }

@@ -24,7 +24,7 @@ PQueue * pqueue_new();
 
 boolean pqueue_apply_or_insert(Key, void (*f)(Element*), PQueue *, short kmer_size);
 
-Element * pqueue_find_or_insert(Key key,PQueue *pqueue, short kmer_size);
+Element * pqueue_find_or_insert(Key key,boolean * found, PQueue *pqueue, short kmer_size);
 
 void pqueue_traverse(void (*f)(Element *),PQueue *);
 

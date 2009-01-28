@@ -1,3 +1,4 @@
+
 #include <element.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,12 +7,14 @@
 
 int main(int argc, char **argv){
 
-  FILE *fp_fnames,*fp_file;
+  FILE *fp_fnames;
   char filename[100];
   int hash_key_bits;
   dBGraph * db_graph = NULL; 
   short kmer_size;
   int clip_limit;
+  long long kmers_clipped = 0;
+  long long count_kmers = 0;
 
   FILE * fout;
   long count=0;
@@ -38,7 +41,7 @@ int main(int argc, char **argv){
 
   void tip_clipping(dBNode * node){
 
-    db_graph_clip_tip(node,clip_limit,db_graph);
+    kmers_clipped += db_graph_clip_tip(node,clip_limit,db_graph);
     
   }
 
@@ -67,23 +70,19 @@ int main(int argc, char **argv){
     //int count_bad_reads = 0;
     fscanf(fp_fnames, "%s\n", filename);
     
-    fp_file = fopen(filename, "r");
-    if (fp_file == NULL){
-      printf("cannot open file:%s\n",filename);
-      exit(1);
-    }
-    
     int seq_length = 0;
     count_file++;
 
-    total_length += load_fasta_data_into_graph(fp_file, db_graph);
+    total_length += load_fasta_data_from_filename_into_graph(filename, &count_kmers,0, 5000, db_graph);
 
-    fprintf(stderr,"\n%i file name:%s seq:%i total seq:%qd\n\n",count_file,filename,seq_length, total_length);
+    fprintf(stderr,"\n%i kmers: %qd file name:%s seq:%i total seq:%qd\n\n",count_file,count_kmers,filename,seq_length, total_length);
     
   }
 
   printf("clip tips\n");
   hash_table_traverse(&tip_clipping,db_graph);
+
+  printf("\nkmers clipped %qd\n\n",kmers_clipped);
 
   printf("print supernodes\n");
   hash_table_traverse(&print_supernode,db_graph);

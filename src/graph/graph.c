@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv){
 
-  FILE *fp_fnames,*fp_file;
+  FILE *fp_fnames;
   char filename[100];
   int hash_key_bits;
   dBGraph * db_graph = NULL; 
@@ -58,16 +58,11 @@ int main(int argc, char **argv){
     //int count_bad_reads = 0;
     fscanf(fp_fnames, "%s\n", filename);
     
-    fp_file = fopen(filename, "r");
-    if (fp_file == NULL){
-      printf("cannot open file:%s\n",filename);
-      exit(1);
-    }
     
     int seq_length = 0;
     count_file++;
 
-    total_length += load_fasta_data_into_graph(fp_file, db_graph);
+    total_length += load_fasta_data_from_filename_into_graph(filename, db_graph);
 
     fprintf(stderr,"\n%i file name:%s seq:%i total seq:%qd\n\n",count_file,filename,seq_length, total_length);
     

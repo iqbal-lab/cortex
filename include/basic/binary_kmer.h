@@ -8,10 +8,10 @@
 
 typedef enum
  {
-    Adenine  = 0,
-    Cytosine = 1,
-    Guanine  = 2,
-    Thymine  = 3,
+    Adenine   = 0,
+    Cytosine  = 1,
+    Guanine   = 2,
+    Thymine   = 3,
     Undefined = 4
   } Nucleotide ;
 
@@ -19,11 +19,17 @@ typedef long long BinaryKmer;
 
 
 // KmerArray is an array of kmers. Usually this will be from a sliding window run across a sequence.
-
 typedef struct{
 	int nkmers;
-	BinaryKmer * bin_kmers;
-} KmerArray;
+	BinaryKmer * kmer;
+} KmerSlidingWindow;
+
+
+//a set of KmerArrays
+typedef struct{
+	int nwindows;
+	KmerSlidingWindow * window; 
+} KmerSlidingWindowSet;
 
 
 Nucleotide char_to_binary_nucleotide(char c);
@@ -31,9 +37,9 @@ Nucleotide char_to_binary_nucleotide(char c);
 char binary_nucleotide_to_char(Nucleotide n);
 
 //get overlapping kmers from sequence
-KmerArray * get_binary_kmers_from_sequence(char * sequence,int sequence_length, short kmer_size); 
+int get_sliding_windows_from_sequence(char * sequence,char * qualities, int length, char quality_cutoff, short kmer_size, KmerSlidingWindowSet * windows, int max_windows, int max_kmers); 
 
-char * binary_kmer_to_seq(BinaryKmer kmer, short kmer_size);
+char * binary_kmer_to_seq(BinaryKmer kmer, short kmer_size, char * seq);
 
 BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size);
 
@@ -47,6 +53,6 @@ BinaryKmer binary_kmer_add_nucleotide_shift(BinaryKmer kmer,Nucleotide nucleotid
 
 char reverse_char_nucleotide(char c);
 
-void binary_kmer_free_kmers(KmerArray * *);
-
+void binary_kmer_free_kmers(KmerSlidingWindow * *);
+void binary_kmer_free_kmers_set(KmerSlidingWindowSet * *);
 #endif /* BINARY_KMER_H_ */

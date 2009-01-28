@@ -81,77 +81,114 @@ char binary_nucleotide_to_char(Nucleotide n)
 }
 
 
+
+
 //The first argument - seq - is a C string in A,C,G,T format
-//The second argument - length - is the length in bases of the sequence.
-//NOTE - caller of this function takes ownership of the Kmer* and has to deallocate it when finished
-KmerArray * get_binary_kmers_from_sequence(char * seq,  int length, short kmer_size)
-{
-  boolean invalid_read = false;
-  int i;
+//The second argument - quality - is a string of qualities for the sequence, one byte per base.
+//quality cutoff argument defines the threshold for quality
+//return total number of kmers read
+
+int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length, char quality_cut_off, short kmer_size, KmerSlidingWindowSet * windows, int max_windows, int max_kmers){  
+
+  char first_kmer[kmer_size];
+  int i=0; //current index
+  int count_kmers = 0;
+
   BinaryKmer mask = (( (BinaryKmer) 1 << (2*kmer_size)) - 1); // mask binary 00..0011..11 as many 1's as kmer_size * 2 (every base takes 2 bits)
 
-  // TODO create our own memory functions, which have malloc wrapped with a check, etc just as below
-  KmerArray * kmers = malloc(sizeof(KmerArray));
-  
-  if (kmers == NULL){
-    fputs("Out of memory trying to allocate a Kmer",stderr);
-    exit(1);
-  }
-  
-
-  kmers->bin_kmers = malloc(sizeof(BinaryKmer) * (length - kmer_size + 1 ));
-
-  if (kmers->bin_kmers == NULL){
-    fputs("Out of memory trying to allocate a sequence",stderr);
-    exit(1);
-  }
-  
-  int index_of_kmers = 0;
-
-// If  the number of bases is a variable called length, then the number of k-mers
-// is just (length- kmer_size +1)
-
   if (seq == NULL){
-    puts("seq is NULL\n");    
+    fputs("seq is NULL\n",stderr);    
+    exit(1);
   }
 
-  //check for non ACGT
-  for (i=0;i<length;i++){
-    if (char_to_binary_nucleotide(seq[i]) == Undefined){
-      invalid_read = true;
-      break;
-    }
+  if (length < kmer_size || max_windows == 0 || max_kmers == 0){
+    return 0;
   }
 
-  if (! invalid_read){
-    //do first kmer
-    kmers->bin_kmers[index_of_kmers]= seq_to_binary_kmer(seq,kmer_size);
 
-    //do the rest --
-    index_of_kmers++;
-    
-    for(i=1; i<(length-kmer_size+1); i++){
-      //set the kmer to previous
-      kmers->bin_kmers[index_of_kmers]= kmers->bin_kmers[index_of_kmers-1];
-      //shift left one base (ie 2 bits)
-      kmers->bin_kmers[index_of_kmers] <<= 2;
-      //remove most significant base (using the mask x000.0011..11)
-      kmers->bin_kmers[index_of_kmers] &= mask;
-      //add new base
-      kmers->bin_kmers[index_of_kmers] |= char_to_binary_nucleotide(seq[i+kmer_size-1]);
-    
-      index_of_kmers++;
-    }
-  }
+  int index_windows = 0;
   
-  if (invalid_read){
-    return NULL;
-  }
-  else{
-    kmers->nkmers = index_of_kmers;
-    return kmers;
-  }
+  //loop over the bases in the sequence
+  //index i is the current position in input sequence -- it nevers decreases. 
+  
+  do{
+
+    //built first kmer, ie a stretch of kmer_size good qualities bases
+    int j = 0; //count how many good bases
+    while ((i<length) && (j<kmer_size)){
+
+      //collects the bases in the first kmer
+      first_kmer[j] = seq[i];
+
+      if ((char_to_binary_nucleotide(seq[i]) == Undefined) || 
+	  (qualities != NULL ? qualities[i]< quality_cut_off : false)){
+
+	j=0; //restart the first kmer 
+	
+      }
+      else{
+	j++;
+      }
+
+      i++; 
+    }    
+
+    if (j==kmer_size){ //ie first kmer didn't run over the sequece
+      
+      count_kmers++;
+
+      //new sliding window
+      if (index_windows>=max_windows){
+	  fputs("number of windows is bigger than max_windows",stderr);
+	  exit(1);
+	}
+
+      KmerSlidingWindow * current_window =&(windows->window[index_windows]);
+
+      int index_kmers = 0;
+      //do first kmer
+      current_window->kmer[index_kmers]= seq_to_binary_kmer(first_kmer,kmer_size);
+
+      //do the rest --
+      index_kmers++;
+    
+      while(i<length){
+	
+	if (index_kmers>=max_kmers){
+	  fputs("number of kmers is bigger than max_kmers\n",stderr);
+	  exit(1);
+	}
+
+	Nucleotide current_base = char_to_binary_nucleotide(seq[i]);
+	if ((current_base == Undefined) ||
+	    (qualities != NULL ? qualities[i]< quality_cut_off : false)){
+	  break;
+	}
+	//set the kmer to previous
+	current_window->kmer[index_kmers]= current_window->kmer[index_kmers-1];
+	//shift left - one base (ie 2 bits)
+	current_window->kmer[index_kmers] <<= 2;
+	//remove most significant base (using the mask x000.0011..11)
+	current_window->kmer[index_kmers] &= mask;
+	//add new base
+	current_window->kmer[index_kmers] |= current_base;
+	index_kmers++;
+	count_kmers++;
+	i++;
+      }
+
+      current_window->nkmers = index_kmers; 
+    
+      index_windows++;
+            
+    }
+  } while (i<length);
+ 
+  windows->nwindows = index_windows;
+
+  return count_kmers;
 }
+
 
 BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
   int j;
@@ -162,19 +199,22 @@ BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
     kmer <<= 2;
     //and then insert next nucleotide (in binary form) at the end.
     kmer |= char_to_binary_nucleotide(seq[j]);
+    
+    if (char_to_binary_nucleotide(seq[j]) == Undefined){
+      fputs("seq contains an undefined char\n",stderr);
+      exit(1);
+    }
+    
   }
   return kmer;
 }
 
 
 //user of this method is responsible for deallocating the returned sequence
-char * binary_kmer_to_seq(BinaryKmer kmer, short kmer_size){
-  
-  char * seq = malloc(sizeof(char)* (kmer_size+1));
-  
-  if (seq == NULL)
-    {
-      fputs("Out of memory trying to allocate a seq",stderr);
+char * binary_kmer_to_seq(BinaryKmer kmer, short kmer_size, char * seq){
+ 
+  if (seq == NULL){
+      fputs("seq argument cannot be NULL",stderr);
       exit(1);
     }
 
@@ -248,11 +288,24 @@ BinaryKmer binary_kmer_add_nucleotide_shift(BinaryKmer kmer,Nucleotide nucleotid
 }
 
 
-void binary_kmer_free_kmers(KmerArray * * kmers)
+void binary_kmer_free_kmers(KmerSlidingWindow * * kmers)
 {
-	free((*kmers)->bin_kmers);
+	free((*kmers)->kmer);
 	free(*kmers);
 	*kmers = NULL;
 }
 
+void binary_kmer_free_kmers_set(KmerSlidingWindowSet * * kmers_set)
+{
+  int i;
+  for(i=0;i<(*kmers_set)->nwindows;i++){
+    KmerSlidingWindow * window = &((*kmers_set)->window[i]);
+    
+    binary_kmer_free_kmers(&window);
+    
+  }
+
+  free(*kmers_set);
+  *kmers_set = NULL;
+}
 

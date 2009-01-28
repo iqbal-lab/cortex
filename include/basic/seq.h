@@ -3,22 +3,19 @@
 
 #include <stdio.h>
 
-#define SEQ_MAX_NAME_LEN 255
-
-#define INIT_SEQ(seq) (*seq).seq = NULL; (*seq).max=0;(*seq).name = NULL; (*seq).comment = NULL;
 
 typedef struct
 {
   char *name;
   char *comment;
-  int length,max;
-  char *seq; /* sequence */
-  char* qual;
+  char *seq;  // sequence 
+  char* qual; // qualities 
 } Sequence;
 
 
-Sequence * read_sequence_from_fasta(FILE*);
-Sequence * read_sequence_from_fastq(FILE*);
+int read_sequence_from_fasta(FILE*, Sequence * seq, int max_read_length);
+int read_sequence_from_fastq(FILE*, Sequence * seq, int max_read_length);
+
 void free_sequence(Sequence ** );
 
 #endif /* STDSEQ_H_ */

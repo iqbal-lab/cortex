@@ -1,7 +1,7 @@
 #include "test_binary_kmer.h"
-#include "test_count_kmers.h"
-#include "test_dB_graph.h"
-#include "test_dB_graph_node.h"
+//#include "test_count_kmers.h"
+//#include "test_dB_graph.h"
+//#include "test_dB_graph_node.h"
 #include "test_seq.h"
 #include <CUnit.h>
 #include <Basic.h>
@@ -24,35 +24,29 @@ int  main()
 
   /* add the tests to the suite */
 
-  if (NULL == CU_add_test(pSuite, "test conversion from char to binary nucleotide", test_seq_to_binary_kmer)) {
+  
+  if (NULL == CU_add_test(pSuite, "test reading of fasta file",  test_read_sequence_from_fasta)){
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (NULL == CU_add_test(pSuite, "test conversion from binary nucleotide to char", test_binary_kmer_to_seq)) {
+  
+  if (NULL == CU_add_test(pSuite, "test reading of fastq file",  test_read_sequence_from_fastq)){
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (NULL == CU_add_test(pSuite, "test creation and deletion of binary kmers", test_binary_kmer_creation_and_deletion)) {
+
+  if (NULL == CU_add_test(pSuite, "test conversion from binary nucleotide to C string", test_seq_to_binary_kmer_and_binary_kmer_to_seq)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  //  if (NULL == CU_add_test(pSuite, "test kmer counting ", test_count_kmers)) {
-  //  CU_cleanup_registry();
-  //  return CU_get_error();
-  //}
-  //if (NULL == CU_add_test(pSuite, "test supernode walking", test_supernode_walking)) {
-  //  CU_cleanup_registry();
-  //  return CU_get_error();
-  //}
-  // if (NULL == CU_add_test(pSuite, "test CRC returns positive values", test_element_hashval)) {
-  //  CU_cleanup_registry();
-  //  return CU_get_error();
-  //}
-  //  if (NULL == CU_add_test(pSuite, "test element_equal works", test_element_equal)) {
-  //  CU_cleanup_registry();
-  //  return CU_get_error();
-  //}
-  if (NULL == CU_add_test(pSuite, "test read_sequence_from_fastq", test_read_sequence_from_fastq)) {
+
+ if (NULL == CU_add_test(pSuite, "test reverse complement", test_binary_kmer_reverse_complement)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+  
+  if (NULL == CU_add_test(pSuite, "test creation of binary kmers from sequence - sliding window", test_get_sliding_windows_from_sequence)) {
     CU_cleanup_registry();
     return CU_get_error();
   }

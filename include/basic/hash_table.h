@@ -30,7 +30,7 @@ boolean hash_table_apply_or_insert(Key key, void (*f)(Element*), HashTable *);
 void hash_table_traverse(void (*f)(Element *),HashTable *);
 
 //if the element is not in table create an element with key and adds it
-Element * hash_table_find_or_insert(Key key, HashTable * hash_table);
+Element * hash_table_find_or_insert(Key key, boolean * found, HashTable * hash_table);
 
 //return entry for kmer
 Element * hash_table_find(Key key, HashTable * hash_table);
