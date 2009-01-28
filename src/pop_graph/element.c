@@ -60,6 +60,17 @@ Element* new_element()
   return e;
 }
 
+
+void free_element(Element** element)
+{
+  free((*element)->individual_edges);
+  (*element)->individual_edges = NULL;
+  free((*element)->population_edges);
+  (*element)->population_edges = NULL;
+  free(*element);
+  *element=NULL;
+}
+
 //gets you a pointer to the edge you are referring to
 Edges* get_edge(Element e, EdgeArrayType type,int index)
 {
@@ -86,7 +97,7 @@ Edges* get_edge(Element e, EdgeArrayType type,int index)
 
 
 //return a copy of the edge you are referring to
-Edges get_edge_copy(Element e, EdgeArrayType type,int index)
+Edges get_edge_copy(const Element e, EdgeArrayType type,int index)
 {
 
   if (type == individual_edge_array)

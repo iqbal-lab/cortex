@@ -1,146 +1,161 @@
-==1068== Memcheck, a memory error detector.
-==1068== Copyright (C) 2002-2007, and GNU GPL'd, by Julian Seward et al.
-==1068== Using LibVEX rev 1804, a library for dynamic binary translation.
-==1068== Copyright (C) 2004-2007, and GNU GPL'd, by OpenWorks LLP.
-==1068== Using valgrind-3.3.0, a dynamic binary instrumentation framework.
-==1068== Copyright (C) 2000-2007, and GNU GPL'd, by Julian Seward et al.
-==1068== 
-==1068== My PID = 1068, parent PID = 861.  Prog and args are:
-==1068==    ./run_pop_tests
-==1068== 
---1068-- 
---1068-- Command line
---1068--    ./run_pop_tests
---1068-- Startup, with flags:
---1068--    -v
---1068--    --tool=memcheck
---1068--    --leak-check=full
---1068--    --num-callers=40
---1068--    --log-file=valgrind.log
---1068-- Contents of /proc/version:
---1068--   Linux version 2.6.9-67.ELsmp (mockbuild@builder10.centos.org) (gcc version 3.4.6 20060404 (Red Hat 3.4.6-9)) #1 SMP Fri Nov 16 12:49:06 EST 2007
---1068-- Arch and hwcaps: AMD64, amd64-sse2
---1068-- Page sizes: currently 4096, max supported 4096
---1068-- Valgrind library directory: /homes/zi/lib/valgrind
---1068-- Reading syms from /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests (0x400000)
---1068-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/memcheck (0x38000000)
---1068--    object doesn't have a dynamic symbol table
---1068-- Reading syms from /lib64/ld-2.3.4.so (0x3C31900000)
---1068-- Reading suppressions file: /homes/zi/lib/valgrind/default.supp
---1068-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_core.so (0x4801000)
---1068-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_memcheck.so (0x4903000)
---1068-- REDIR: 0x3c3190ff90 (index) redirected to 0x4906e70 (index)
---1068-- REDIR: 0x3c31910140 (strcmp) redirected to 0x4907320 (strcmp)
---1068-- REDIR: 0x3c31910170 (strlen) redirected to 0x49070b0 (strlen)
---1068-- Reading syms from /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1 (0x4A0A000)
---1068-- Reading syms from /lib64/tls/libc-2.3.4.so (0x3C31D00000)
---1068-- REDIR: 0x3c31d70df0 (rindex) redirected to 0x4906d70 (rindex)
---1068-- REDIR: 0x3c31d6b5f0 (malloc) redirected to 0x4904dc0 (malloc)
---1068-- REDIR: 0x3c31d70a00 (strlen) redirected to 0x4907070 (strlen)
---1068-- REDIR: 0x3c31d70480 (strcpy) redirected to 0x49070d0 (strcpy)
---1068-- REDIR: 0x3c31d71d70 (mempcpy) redirected to 0x4907d30 (mempcpy)
---1068-- REDIR: 0x3c31d70440 (strcmp) redirected to 0x49072f0 (strcmp)
---1068-- REDIR: 0x3c31d69510 (free) redirected to 0x4905be0 (free)
---1068-- REDIR: 0x3c31d6b2c0 (calloc) redirected to 0x4906630 (calloc)
---1068-- REDIR: 0x3c31d714e0 (memchr) redirected to 0x4907380 (memchr)
---1068-- REDIR: 0x3c31d723a0 (memcpy) redirected to 0x49073b0 (memcpy)
---1068-- REDIR: 0x3c31d70290 (index) redirected to 0x4906e30 (index)
---1068-- REDIR: 0x3c31d6bca0 (realloc) redirected to 0x4906710 (realloc)
---1068-- REDIR: 0x3c31d700d0 (strcat) redirected to 0x4906e90 (strcat)
-==1068== Invalid read of size 8
-==1068==    at 0x413B48: test_find_first_node_in_supernode (test_pop_supernode_consensus.c:69)
-==1068==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x41396A: main (run_pop_tests.c:83)
-==1068==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
-==1068== 
-==1068== Process terminating with default action of signal 11 (SIGSEGV)
-==1068==  Access not within mapped region at address 0x0
-==1068==    at 0x413B48: test_find_first_node_in_supernode (test_pop_supernode_consensus.c:69)
-==1068==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x41396A: main (run_pop_tests.c:83)
---1068-- REDIR: 0x3c31d71c60 (memset) redirected to 0x4907b30 (memset)
-==1068== 
-==1068== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 10 from 5)
-==1068== 
-==1068== 1 errors in context 1 of 1:
-==1068== Invalid read of size 8
-==1068==    at 0x413B48: test_find_first_node_in_supernode (test_pop_supernode_consensus.c:69)
-==1068==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x41396A: main (run_pop_tests.c:83)
-==1068==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
---1068-- 
---1068-- supp:      4 dl_relocate_object
---1068-- supp:      1 strlen-not-intercepted-early-enough-HACK-3
---1068-- supp:      1 strlen-not-intercepted-early-enough-HACK-4
---1068-- supp:      3 index-not-intercepted-early-enough-HACK-4
---1068-- supp:      1 strlen-not-intercepted-early-enough-HACK-5
-==1068== 
-==1068== IN SUMMARY: 1 errors from 1 contexts (suppressed: 10 from 5)
-==1068== 
-==1068== malloc/free: in use at exit: 480,523 bytes in 1,599 blocks.
-==1068== malloc/free: 2,097 allocs, 498 frees, 808,339 bytes allocated.
-==1068== 
-==1068== searching for pointers to 1,599 not-freed blocks.
-==1068== checked 1,078,848 bytes.
-==1068== 
-==1068== 
-==1068== 17,256 (512 direct, 16,744 indirect) bytes in 3 blocks are definitely lost in loss record 16 of 20
-==1068==    at 0x490669A: calloc (vg_replace_malloc.c:397)
-==1068==    by 0x40345D: hash_table_new (hash_table.c:15)
-==1068==    by 0x412D83: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:15)
-==1068==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
-==1068==    by 0x41396A: main (run_pop_tests.c:83)
-==1068== 
-==1068== LEAK SUMMARY:
-==1068==    definitely lost: 512 bytes in 3 blocks.
-==1068==    indirectly lost: 16,744 bytes in 742 blocks.
-==1068==      possibly lost: 0 bytes in 0 blocks.
-==1068==    still reachable: 463,267 bytes in 854 blocks.
-==1068==         suppressed: 0 bytes in 0 blocks.
-==1068== Reachable blocks (those to which a pointer was found) are not shown.
-==1068== To see them, rerun with: --leak-check=full --show-reachable=yes
---1068--  memcheck: sanity checks: 9 cheap, 2 expensive
---1068--  memcheck: auxmaps: 39 auxmap entries (2496k, 2M) in use
---1068--  memcheck: auxmaps_L1: 7597 searches, 29487 cmps, ratio 38:10
---1068--  memcheck: auxmaps_L2: 54 searches, 39 nodes
---1068--  memcheck: SMs: n_issued      = 41 (656k, 0M)
---1068--  memcheck: SMs: n_deissued    = 0 (0k, 0M)
---1068--  memcheck: SMs: max_noaccess  = 524287 (8388592k, 8191M)
---1068--  memcheck: SMs: max_undefined = 0 (0k, 0M)
---1068--  memcheck: SMs: max_defined   = 83 (1328k, 1M)
---1068--  memcheck: SMs: max_non_DSM   = 41 (656k, 0M)
---1068--  memcheck: max sec V bit nodes:    0 (0k, 0M)
---1068--  memcheck: set_sec_vbits8 calls: 0 (new: 0, updates: 0)
---1068--  memcheck: max shadow mem size:   4800k, 4M
---1068-- translate:            fast SP updates identified: 2,114 ( 84.6%)
---1068-- translate:   generic_known SP updates identified: 215 (  8.6%)
---1068-- translate: generic_unknown SP updates identified: 168 (  6.7%)
---1068--     tt/tc: 5,143 tt lookups requiring 5,221 probes
---1068--     tt/tc: 5,143 fast-cache updates, 5 flushes
---1068--  transtab: new        2,454 (59,999 -> 1,006,476; ratio 167:10) [0 scs]
---1068--  transtab: dumped     0 (0 -> ??)
---1068--  transtab: discarded  14 (284 -> ??)
---1068-- scheduler: 991,209 jumps (bb entries).
---1068-- scheduler: 9/5,939 major/minor sched events.
---1068--    sanity: 10 cheap, 2 expensive checks.
---1068--    exectx: 769 lists, 229 contexts (avg 0 per list)
---1068--    exectx: 2,606 searches, 2,407 full compares (923 per 1000)
---1068--    exectx: 2,820 cmp2, 45 cmp4, 0 cmpAll
---1068--  errormgr: 31 supplist searches, 2,234 comparisons during search
---1068--  errormgr: 11 errlist searches, 55 comparisons during search
+==3088== Memcheck, a memory error detector.
+==3088== Copyright (C) 2002-2007, and GNU GPL'd, by Julian Seward et al.
+==3088== Using LibVEX rev 1804, a library for dynamic binary translation.
+==3088== Copyright (C) 2004-2007, and GNU GPL'd, by OpenWorks LLP.
+==3088== Using valgrind-3.3.0, a dynamic binary instrumentation framework.
+==3088== Copyright (C) 2000-2007, and GNU GPL'd, by Julian Seward et al.
+==3088== 
+==3088== My PID = 3088, parent PID = 2793.  Prog and args are:
+==3088==    ./run_pop_tests
+==3088== 
+--3088-- 
+--3088-- Command line
+--3088--    ./run_pop_tests
+--3088-- Startup, with flags:
+--3088--    -v
+--3088--    --tool=memcheck
+--3088--    --leak-check=full
+--3088--    --num-callers=40
+--3088--    --log-file=valgrind.log
+--3088-- Contents of /proc/version:
+--3088--   Linux version 2.6.9-67.ELsmp (mockbuild@builder10.centos.org) (gcc version 3.4.6 20060404 (Red Hat 3.4.6-9)) #1 SMP Fri Nov 16 12:49:06 EST 2007
+--3088-- Arch and hwcaps: AMD64, amd64-sse2
+--3088-- Page sizes: currently 4096, max supported 4096
+--3088-- Valgrind library directory: /homes/zi/lib/valgrind
+--3088-- Reading syms from /net/nas10b/vol1/homes/zi/dev/hg/marzam/marzam-harmonised-populations/bin/run_pop_tests (0x400000)
+--3088-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/memcheck (0x38000000)
+--3088--    object doesn't have a dynamic symbol table
+--3088-- Reading syms from /lib64/ld-2.3.4.so (0x3C31900000)
+--3088-- Reading suppressions file: /homes/zi/lib/valgrind/default.supp
+--3088-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_core.so (0x4801000)
+--3088-- Reading syms from /net/nas10b/vol1/homes/zi/lib/valgrind/amd64-linux/vgpreload_memcheck.so (0x4903000)
+--3088-- REDIR: 0x3c3190ff90 (index) redirected to 0x4906e70 (index)
+--3088-- REDIR: 0x3c31910140 (strcmp) redirected to 0x4907320 (strcmp)
+--3088-- REDIR: 0x3c31910170 (strlen) redirected to 0x49070b0 (strlen)
+--3088-- Reading syms from /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1 (0x4A0A000)
+--3088-- Reading syms from /lib64/tls/libc-2.3.4.so (0x3C31D00000)
+--3088-- REDIR: 0x3c31d70df0 (rindex) redirected to 0x4906d70 (rindex)
+--3088-- REDIR: 0x3c31d6b5f0 (malloc) redirected to 0x4904dc0 (malloc)
+--3088-- REDIR: 0x3c31d70a00 (strlen) redirected to 0x4907070 (strlen)
+--3088-- REDIR: 0x3c31d70480 (strcpy) redirected to 0x49070d0 (strcpy)
+--3088-- REDIR: 0x3c31d71d70 (mempcpy) redirected to 0x4907d30 (mempcpy)
+--3088-- REDIR: 0x3c31d70440 (strcmp) redirected to 0x49072f0 (strcmp)
+--3088-- REDIR: 0x3c31d69510 (free) redirected to 0x4905be0 (free)
+--3088-- REDIR: 0x3c31d6b2c0 (calloc) redirected to 0x4906630 (calloc)
+--3088-- REDIR: 0x3c31d714e0 (memchr) redirected to 0x4907380 (memchr)
+--3088-- REDIR: 0x3c31d723a0 (memcpy) redirected to 0x49073b0 (memcpy)
+--3088-- REDIR: 0x3c31d70290 (index) redirected to 0x4906e30 (index)
+--3088-- REDIR: 0x3c31d6bca0 (realloc) redirected to 0x4906710 (realloc)
+--3088-- REDIR: 0x3c31d700d0 (strcat) redirected to 0x4906e90 (strcat)
+==3088== Invalid read of size 8
+==3088==    at 0x413A2E: test_find_first_node_in_supernode (test_pop_supernode_consensus.c:51)
+==3088==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4138BE: main (run_pop_tests.c:95)
+==3088==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
+==3088== 
+==3088== Process terminating with default action of signal 11 (SIGSEGV)
+==3088==  Access not within mapped region at address 0x0
+==3088==    at 0x413A2E: test_find_first_node_in_supernode (test_pop_supernode_consensus.c:51)
+==3088==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4138BE: main (run_pop_tests.c:95)
+--3088-- REDIR: 0x3c31d71c60 (memset) redirected to 0x4907b30 (memset)
+==3088== 
+==3088== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 10 from 5)
+==3088== 
+==3088== 1 errors in context 1 of 1:
+==3088== Invalid read of size 8
+==3088==    at 0x413A2E: test_find_first_node_in_supernode (test_pop_supernode_consensus.c:51)
+==3088==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4138BE: main (run_pop_tests.c:95)
+==3088==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
+--3088-- 
+--3088-- supp:      4 dl_relocate_object
+--3088-- supp:      1 strlen-not-intercepted-early-enough-HACK-3
+--3088-- supp:      1 strlen-not-intercepted-early-enough-HACK-4
+--3088-- supp:      3 index-not-intercepted-early-enough-HACK-4
+--3088-- supp:      1 strlen-not-intercepted-early-enough-HACK-5
+==3088== 
+==3088== IN SUMMARY: 1 errors from 1 contexts (suppressed: 10 from 5)
+==3088== 
+==3088== malloc/free: in use at exit: 500,568 bytes in 2,345 blocks.
+==3088== malloc/free: 2,854 allocs, 509 frees, 828,488 bytes allocated.
+==3088== 
+==3088== searching for pointers to 2,345 not-freed blocks.
+==3088== checked 1,078,920 bytes.
+==3088== 
+==3088== 
+==3088== 17,256 (512 direct, 16,744 indirect) bytes in 3 blocks are definitely lost in loss record 14 of 19
+==3088==    at 0x490669A: calloc (vg_replace_malloc.c:397)
+==3088==    by 0x4034C1: hash_table_new (hash_table.c:15)
+==3088==    by 0x412C83: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:15)
+==3088==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4138BE: main (run_pop_tests.c:95)
+==3088== 
+==3088== 
+==3088== 20,374 bytes in 746 blocks are definitely lost in loss record 18 of 19
+==3088==    at 0x4904E27: malloc (vg_replace_malloc.c:207)
+==3088==    by 0x401B40: binary_kmer_to_seq (binary_kmer.c:243)
+==3088==    by 0x40417A: load_fasta_data_into_graph_for_specific_person_or_population (file_reader.c:233)
+==3088==    by 0x403FFC: load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files (file_reader.c:84)
+==3088==    by 0x403EF4: load_population_as_fasta (file_reader.c:43)
+==3088==    by 0x412CB5: test_load_two_people_in_same_populations_and_print_separately_their_supernodes (test_pop_load_and_print.c:23)
+==3088==    by 0x4A0E17A: run_single_test (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0DFA1: run_single_suite (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0D7C6: CU_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0F643: basic_run_all_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4A0F3F6: CU_basic_run_tests (in /net/nas10b/vol1/homes/zi/bin/lib/libcunit.so.1.0.1)
+==3088==    by 0x4138BE: main (run_pop_tests.c:95)
+==3088== 
+==3088== LEAK SUMMARY:
+==3088==    definitely lost: 20,886 bytes in 749 blocks.
+==3088==    indirectly lost: 16,744 bytes in 742 blocks.
+==3088==      possibly lost: 0 bytes in 0 blocks.
+==3088==    still reachable: 462,938 bytes in 854 blocks.
+==3088==         suppressed: 0 bytes in 0 blocks.
+==3088== Reachable blocks (those to which a pointer was found) are not shown.
+==3088== To see them, rerun with: --leak-check=full --show-reachable=yes
+--3088--  memcheck: sanity checks: 12 cheap, 2 expensive
+--3088--  memcheck: auxmaps: 39 auxmap entries (2496k, 2M) in use
+--3088--  memcheck: auxmaps_L1: 9117 searches, 34020 cmps, ratio 37:10
+--3088--  memcheck: auxmaps_L2: 54 searches, 39 nodes
+--3088--  memcheck: SMs: n_issued      = 42 (672k, 0M)
+--3088--  memcheck: SMs: n_deissued    = 0 (0k, 0M)
+--3088--  memcheck: SMs: max_noaccess  = 524287 (8388592k, 8191M)
+--3088--  memcheck: SMs: max_undefined = 0 (0k, 0M)
+--3088--  memcheck: SMs: max_defined   = 83 (1328k, 1M)
+--3088--  memcheck: SMs: max_non_DSM   = 42 (672k, 0M)
+--3088--  memcheck: max sec V bit nodes:    0 (0k, 0M)
+--3088--  memcheck: set_sec_vbits8 calls: 0 (new: 0, updates: 0)
+--3088--  memcheck: max shadow mem size:   4816k, 4M
+--3088-- translate:            fast SP updates identified: 2,192 ( 84.7%)
+--3088-- translate:   generic_known SP updates identified: 219 (  8.4%)
+--3088-- translate: generic_unknown SP updates identified: 175 (  6.7%)
+--3088--     tt/tc: 5,316 tt lookups requiring 5,414 probes
+--3088--     tt/tc: 5,316 fast-cache updates, 5 flushes
+--3088--  transtab: new        2,507 (61,930 -> 1,033,560; ratio 166:10) [0 scs]
+--3088--  transtab: dumped     0 (0 -> ??)
+--3088--  transtab: discarded  14 (284 -> ??)
+--3088-- scheduler: 1,266,331 jumps (bb entries).
+--3088-- scheduler: 12/7,598 major/minor sched events.
+--3088--    sanity: 13 cheap, 2 expensive checks.
+--3088--    exectx: 769 lists, 256 contexts (avg 0 per list)
+--3088--    exectx: 3,374 searches, 3,518 full compares (1,042 per 1000)
+--3088--    exectx: 3,536 cmp2, 45 cmp4, 0 cmpAll
+--3088--  errormgr: 30 supplist searches, 2,132 comparisons during search
+--3088--  errormgr: 11 errlist searches, 55 comparisons during search

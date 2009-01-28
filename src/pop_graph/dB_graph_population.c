@@ -18,11 +18,17 @@
 
 boolean db_graph_is_this_node_in_this_person_or_populations_graph(dBNode* node, EdgeArrayType type, int index)
 {
- 
+
+  if (node ==NULL)
+    {
+      return false;
+    }
+
   Edges edge_for_this_person_or_pop = get_edge_copy(*node, type, index);
 
   if (edge_for_this_person_or_pop == 0)
     {
+
       return false;
     }
   else
@@ -442,23 +448,31 @@ void return_node_to_status_prior_to_tmp_touched_X(dBNode* node)
 
 
 //scratch_node_array is prealloced. caller should ignore its contents - is used purely internally.
-dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph, dBNodeArray* scratch_node_array)
+dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph)
 {
   printf("start of get first node function\n");
   if (! (db_graph_is_this_node_in_this_person_or_populations_graph(node, type, index)))
     {
+      if (node==NULL)
+	{
+	  printf("Bloody node is null so of course cant get first node");
+	}
+      else
+	{
+	  printf("zam0.5 this person %d does not have this node %s\n", index, binary_kmer_to_seq(node->kmer, db_graph->kmer_size));
+	}
       return NULL;
     }
 
   if (db_node_check_status(node,pruned))
     {
       //don't waste time with pruned nodes.
+      printf("zam0.6\n");
+
       return NULL;
     }
   
-  //initialise scratch node array length to 0;
-  scratch_node_array->length=0;
-
+  printf("zam1\n");
   boolean is_cycle;
   Nucleotide nucleotide1, nucleotide2, rev_nucleotide;
   Orientation original_orientation, next_orientation, orientation;
@@ -470,71 +484,40 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
   // as far as you can go.
   original_orientation = reverse; 
   orientation = reverse;
-  
-
-  //Mark the element we're starting at as visited
-
-  if (db_node_check_status(original_node,none))
-    {
-      db_node_set_status(original_node,tmp_touched_previously_none);
-    }
-  else if (db_node_check_status(original_node,visited))
-    {
-      db_node_set_status(original_node,tmp_touched_previously_visited);
-    }
-  else 
-    {
-      printf("This node %s has status that is not visited or none or pruned",binary_kmer_to_seq(original_node->kmer, db_graph->kmer_size)); //creates a mem leak but about to die anyway
-      exit(1);
-    }
-  
-
-  //add this node to scratch array, so that we can unset its status afterwards
-  if ((scratch_node_array->length)+1 > scratch_node_array->max)
-    {
-      printf("Out of mem in scratch node array");
-      exit(1);
-    }
-  (scratch_node_array->nodes)[scratch_node_array->length]=original_node;
-  scratch_node_array->length= (scratch_node_array->length) +1;
-
-
-
   is_cycle = false;
 
-  
+  printf("zam2\n");
   while(db_node_has_precisely_one_edge(node,orientation,&nucleotide1, type, index)) {
  
+    printf("zam3\n");
     next_node =  db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide1,&rev_nucleotide,db_graph, type, index);
     
     if(next_node == NULL){
       printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
       exit(1);
     }	         
-    
-    if (DEBUG){
+    printf("zam4\n");
+    //    if (DEBUG){
       printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide1),
 	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size) :  binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size));
 	     
 
-    }
+      //    }
     
+      printf("zam5\n");
     //check for multiple entry edges 
     if (db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2, type, index))
       {
+	printf("zam6\n");
       }
     else
       {
-      if (DEBUG)
-	{
+	//if (DEBUG)
+	//{
 	  printf("Multiple entries\n");
-	}
+	  //}
       //break;
-      
-      for (j=0; j< scratch_node_array->length; j++)
-	{
-	  return_node_to_status_prior_to_tmp_touched_X((scratch_node_array->nodes)[j]);
-	}
+	  printf("zam7\n");
       printf("returning this first nodem, with kmer %s\n", binary_kmer_to_seq(node->kmer, db_graph->kmer_size));
       return node; //we have gone as far as we can go - the next node has multiple entries. So we are now at the first node of the supernode
       }
@@ -543,50 +526,21 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
     //loop
     if ((next_node == original_node) && (next_orientation == original_orientation))
       {      
+	printf("zam7\n");
 	is_cycle = true;
 	//break;
 	
-	for (j=0; j< scratch_node_array->length; j++)
-	  {
-	    return_node_to_status_prior_to_tmp_touched_X((scratch_node_array->nodes)[j]);
-	  }
-      printf("returning this first nodem, with kmer %s\n", binary_kmer_to_seq(original_node->kmer, db_graph->kmer_size));
+      printf("We have a loop, so original node will do, with kmer %s\n", binary_kmer_to_seq(original_node->kmer, db_graph->kmer_size));
 	return original_node; //we have a loop that returns to where we start. Might as well consider ourselves as at the fiurst node of the supernode right at the beginning
       }
     
-    
-    //   db_node_set_status(next_node,visited);
-    if (db_node_check_status(next_node,none))
-      {
-	db_node_set_status(next_node,tmp_touched_previously_none);
-      }
-    else if (db_node_check_status(next_node,visited))
-      {
-	db_node_set_status(next_node,tmp_touched_previously_visited);
-      }
-    else
-      {
-	printf("This node %s has status that is not visited or none or pruned",binary_kmer_to_seq(next_node->kmer, db_graph->kmer_size)); //creates a mem leak but about to die anyway
-	exit(1);
-      }
-    //add this node to scratch array, so that we can unset its status afterwards
-    if (scratch_node_array->length+1 > scratch_node_array->max)
-      {
-	printf("Out of mem in scratch node array");
-	exit(1);
-      }
-    (scratch_node_array->nodes)[scratch_node_array->length]=next_node;
-    scratch_node_array->length= (scratch_node_array->length) +1;
-
+    printf("zam8\n");
     node = next_node;
     orientation = next_orientation;      
   }
+  printf("zam9\n");
 
-
-  //if we get here then something has gone wrong
-  printf("Reached end of function without finding first node in supernode");
-  exit(1);
-  return NULL; //to keep compiler happy
+  return node;
 
 }
 
@@ -618,7 +572,7 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
       //      Edges person_edges = get_edge_copy(*node, individual_edge_array, i);
 
       //get the first node in the supernode for this edge, within this person't graph
-      dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, i, db_graph, scratch_node_array);
+      dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, i, db_graph);
       //clean up those nodes that were set with status tmp_touched_previously_X to X
       
 //db_graph_return_supernode_statuses_to_previous_state(node,individual_edge_array, i);

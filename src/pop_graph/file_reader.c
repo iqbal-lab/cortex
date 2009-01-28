@@ -200,10 +200,10 @@ int load_fasta_data_into_graph_for_specific_person_or_population(FILE* fp, dBGra
 
   while ((seq = read_sequence_from_fasta(fp)))
     {
-      if (DEBUG)
-      	{
+      //if (DEBUG)
+      //	{
       printf ("\nZIM ZAM sequence %s\n",seq->seq);
-	}
+      //}
 
       KmerArray *kmers;
       int i;
@@ -228,10 +228,10 @@ int load_fasta_data_into_graph_for_specific_person_or_population(FILE* fp, dBGra
      	    current_node = hash_table_find_or_insert(element_get_key(kmers->bin_kmers[i],db_graph->kmer_size),db_graph);	  	  
 	    current_orientation = db_node_get_orientation(kmers->bin_kmers[i],current_node, db_graph->kmer_size);
 	    
-	    if (DEBUG)
-	      {
-		printf("kmer %i:  %s\n",i,binary_kmer_to_seq(kmers->bin_kmers[i],db_graph->kmer_size));
-	      }
+	    //    if (DEBUG)
+	    // {
+		printf("ZIMZAM kmer %i:  %s\n",i,binary_kmer_to_seq(kmers->bin_kmers[i],db_graph->kmer_size));
+		// }
 	  
 	    if (i>0){
 	      //never assume that previous pointer stays as we do reallocation !!!!!!
@@ -243,6 +243,7 @@ int load_fasta_data_into_graph_for_specific_person_or_population(FILE* fp, dBGra
 	      }
 	      previous_orientation = db_node_get_orientation(kmers->bin_kmers[i-1],previous_node, db_graph->kmer_size); 	      
 	      db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size, type, index);	  	      
+	      printf("Add edge between %s and %s", binary_kmer_to_seq(previous_node->kmer, db_graph->kmer_size), binary_kmer_to_seq(current_node->kmer, db_graph->kmer_size) );
 	    }
 	  
 	  }

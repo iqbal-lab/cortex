@@ -65,12 +65,14 @@ typedef enum{
 typedef Element GraphNode;
 
 Element* new_element();
+void free_element(Element** element);
+
 
 //utility function for getting the desired edge char, by specifying if talking about a population or an individual
 // and giving the appropriate index in the relevant array
 
 Edges* get_edge(Element, EdgeArrayType, int); //gets pointer to actual edge, so you can modify it
-Edges get_edge_copy(Element e, EdgeArrayType type,int index); //gets copy of edge
+Edges get_edge_copy(const Element e, EdgeArrayType type,int index); //gets copy of edge
 Edges get_union_of_edges(Element e);
 void add_edges(Element*, EdgeArrayType, int, Edges);
 void set_edges(Element*, EdgeArrayType, int, Edges);

@@ -45,7 +45,7 @@ void db_graph_get_subsection_of_supernode_containing_given_node_as_supernode_obj
 
 
 void return_node_to_status_prior_to_tmp_touched_X(dBNode*);
-dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph, dBNodeArray* scratch_node_array);
+dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph);
 void apply_function_to_every_node_in_supernode_object(dBSupernode*, void (*f)(dBNode*));
 
 void apply_function_to_every_node_in_supernode_containing_given_node(void (*f)(dBNode*, EdgeArrayType, int, dBGraph*), dBNode* node);

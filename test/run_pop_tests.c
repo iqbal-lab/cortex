@@ -3,6 +3,7 @@
 #include "test_dB_graph.h"
 #include "test_dB_graph_node.h"
 #include "test_seq.h"
+#include "test_pop_element.h"
 #include "test_pop_load_and_print.h"
 #include "test_pop_supernode_consensus.h"
 #include <CUnit.h>
@@ -58,6 +59,17 @@ int  main()
   //  CU_cleanup_registry();
   //  return CU_get_error();
   //}
+
+
+  if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge copy", test_get_edge_copy)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
   if (NULL == CU_add_test(pPopGraphSuite, "Loading two people, one fasta each, in same population, and print supernodes. \n\tEach person has 2 reads, and we have manually determined what the supernodes should be", test_load_two_people_in_same_populations_and_print_separately_their_supernodes)) {
     CU_cleanup_registry();
     return CU_get_error();

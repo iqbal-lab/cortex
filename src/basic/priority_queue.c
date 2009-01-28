@@ -91,6 +91,7 @@ Element * pqueue_find_or_insert(Key key,PQueue * pqueue, short kmer_size){
   element_initialise(&element,key, kmer_size);
 
   pqueue->elements[current_index] = element;
+  
 
   return &(pqueue->elements[i]);  
 }
