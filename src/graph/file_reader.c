@@ -92,7 +92,7 @@ int load_fasta_data_into_graph(FILE* fp, dBGraph * db_graph)
 	      }
 	      previous_orientation = db_node_get_orientation(kmers->bin_kmers[i-1],previous_node, db_graph->kmer_size); 	      
 	      db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size);	  	      
-	      printf("Add edge from %s to %s\n", binary_kmer_to_seq(previous_node->kmer, db_graph->kmer_size), binary_kmer_to_seq(current_node->kmer, db_graph->kmer_size));
+	      //printf("Add edge from %s to %s\n", binary_kmer_to_seq(previous_node->kmer, db_graph->kmer_size), binary_kmer_to_seq(current_node->kmer, db_graph->kmer_size));
 	    }
 	  
 	  }

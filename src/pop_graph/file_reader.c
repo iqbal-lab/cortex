@@ -243,7 +243,7 @@ int load_fasta_data_into_graph_for_specific_person_or_population(FILE* fp, dBGra
 	      }
 	      previous_orientation = db_node_get_orientation(kmers->bin_kmers[i-1],previous_node, db_graph->kmer_size); 	      
 	      db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size, type, index);	  	      
-	      printf("Add edge between %s and %s", binary_kmer_to_seq(previous_node->kmer, db_graph->kmer_size), binary_kmer_to_seq(current_node->kmer, db_graph->kmer_size) );
+	      //printf("Add edge between %s and %s", binary_kmer_to_seq(previous_node->kmer, db_graph->kmer_size), binary_kmer_to_seq(current_node->kmer, db_graph->kmer_size) );
 	    }
 	  
 	  }

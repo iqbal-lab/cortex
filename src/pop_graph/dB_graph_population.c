@@ -538,8 +538,7 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
     node = next_node;
     orientation = next_orientation;      
   }
-  printf("zam9\n");
-
+  printf("zam9 - we have found the first node, it is %s\n", binary_kmer_to_seq(node->kmer, db_graph->kmer_size));
   return node;
 
 }
