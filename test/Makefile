@@ -18,7 +18,8 @@ POP_GRAPH_OBJ_DIR=../src/obj/pop_graph
 
 
 
-GRAPH_TEST_OBJ = $(GRAPH_TEST_OBJ_DIR)/test_binary_kmer.o $(GRAPH_TEST_OBJ_DIR)/test_seq.o $(GRAPH_TEST_OBJ_DIR)/test_dB_graph.o $(GRAPH_TEST_OBJ_DIR)/test_dB_graph_node.o  $(GRAPH_TEST_OBJ_DIR)/run_graph_tests.o $(GRAPH_TEST_OBJ_DIR)/supernode_cmp.o
+GRAPH_TEST_OBJ = $(GRAPH_TEST_OBJ_DIR)/test_binary_kmer.o $(GRAPH_TEST_OBJ_DIR)/test_seq.o $(GRAPH_TEST_OBJ_DIR)/test_dB_graph.o $(GRAPH_TEST_OBJ_DIR)/test_dB_graph_node.o  $(GRAPH_TEST_OBJ_DIR)/run_graph_tests.o $(GRAPH_TEST_OBJ_DIR)/supernode_cmp.o $(GRAPH_TEST_OBJ_DIR)/test_hash_table.o
+
 POP_GRAPH_TEST_OBJ = $(POP_GRAPH_TEST_OBJ_DIR)/test_binary_kmer.o $(POP_GRAPH_TEST_OBJ_DIR)/test_seq.o $(POP_GRAPH_TEST_OBJ_DIR)/test_pop_load_and_print.o $(POP_GRAPH_TEST_OBJ_DIR)/run_pop_tests.o $(POP_GRAPH_TEST_OBJ_DIR)/supernode_cmp.o $(POP_GRAPH_TEST_OBJ_DIR)/test_pop_supernode_consensus.o $(POP_GRAPH_TEST_OBJ_DIR)/test_pop_element.o
 
 

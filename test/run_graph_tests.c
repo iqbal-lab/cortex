@@ -1,5 +1,6 @@
 #include "test_binary_kmer.h"
 #include "test_count_kmers.h"
+#include "test_hash_table.h"
 #include "test_dB_graph.h"
 #include "test_dB_graph_node.h"
 #include "test_seq.h"
@@ -48,6 +49,8 @@ int  main()
   //  CU_cleanup_registry();
   //  return CU_get_error();
   //}
+
+
   if (NULL == CU_add_test(pGraphSuite, "test read_sequence_from_fasta with simple file with two reads, one of which is very long", test_read_sequence_from_fasta)) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -61,7 +64,10 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
-
+  if (NULL == CU_add_test(pGraphSuite, "Load a simple fasta and confirm that hash_table_find will find the kmers and reverse complements of the kmers in those reads, and will not find any others.", test_hash_table_find)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
   if (NULL == CU_add_test(pGraphSuite, "test supernode walking", test_supernode_walking)) {
     CU_cleanup_registry();
     return CU_get_error();
