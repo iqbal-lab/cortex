@@ -298,10 +298,10 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
 
   int i;
-      for (i=0; i<number_of_supernodes_in_person_1; i++)
-  {
-    printf("SUPERNODE %s\n", array_of_supernodes_for_person1[i]);
-   }
+  //     for (i=0; i<number_of_supernodes_in_person_1; i++)
+  //{
+  // printf("SUPERNODE %s\n", array_of_supernodes_for_person1[i]);
+  //}
 
   
   int number_of_supernodes_in_person_2=0;
@@ -309,13 +309,13 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
   //printf("PERSON 2 has %d supernodes\n", number_of_supernodes_in_person_2);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
 
-   for (i=0; i<number_of_supernodes_in_person_2; i++)
-  {
-    printf("SUPERNODE %s\n", array_of_supernodes_for_person2[i]);
-  }
+  //   for (i=0; i<number_of_supernodes_in_person_2; i++)
+  // {
+  //  printf("SUPERNODE %s\n", array_of_supernodes_for_person2[i]);
+  // }
 
 
-   printf("\n\n\n******   TODO ********\n\n\n Check these supernodes are correct\n\n\n");
+   printf("\n******   TODO ********Check these supernodes are correct\n");
 
    
 
