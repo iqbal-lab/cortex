@@ -450,16 +450,16 @@ void return_node_to_status_prior_to_tmp_touched_X(dBNode* node)
 //scratch_node_array is prealloced. caller should ignore its contents - is used purely internally.
 dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph)
 {
-  printf("start of get first node function\n");
+  
   if (! (db_graph_is_this_node_in_this_person_or_populations_graph(node, type, index)))
     {
       if (node==NULL)
 	{
-	  printf("Bloody node is null so of course cant get first node");
+	  //printf("Bloody node is null so of course cant get first node");
 	}
       else
 	{
-	  printf("zam0.5 this person %d does not have this node %s\n", index, binary_kmer_to_seq(node->kmer, db_graph->kmer_size));
+	  //printf("zam0.5 this person %d does not have this node %s\n", index, binary_kmer_to_seq(node->kmer, db_graph->kmer_size));
 	}
       return NULL;
     }
@@ -467,12 +467,12 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
   if (db_node_check_status(node,pruned))
     {
       //don't waste time with pruned nodes.
-      printf("zam0.6\n");
+      //printf("zam0.6\n");
 
       return NULL;
     }
   
-  printf("zam1\n");
+  //printf("zam1\n");
   boolean is_cycle;
   Nucleotide nucleotide1, nucleotide2, rev_nucleotide;
   Orientation original_orientation, next_orientation, orientation;
@@ -486,39 +486,39 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
   orientation = reverse;
   is_cycle = false;
 
-  printf("zam2\n");
+
   while(db_node_has_precisely_one_edge(node,orientation,&nucleotide1, type, index)) {
  
-    printf("zam3\n");
+
     next_node =  db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide1,&rev_nucleotide,db_graph, type, index);
     
     if(next_node == NULL){
       printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
       exit(1);
     }	         
-    printf("zam4\n");
-    //    if (DEBUG){
-      printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide1),
-	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size) :  binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size));
-	     
 
-      //    }
+    if (DEBUG)
+      {
+      printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide1),
+	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size) :  
+	     binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size));
+	     
+      }
     
-      printf("zam5\n");
+
     //check for multiple entry edges 
     if (db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2, type, index))
       {
-	printf("zam6\n");
       }
     else
       {
-	//if (DEBUG)
-	//{
-	  printf("Multiple entries\n");
-	  //}
-      //break;
-	  printf("zam7\n");
-      printf("returning this first nodem, with kmer %s\n", binary_kmer_to_seq(node->kmer, db_graph->kmer_size));
+	if (DEBUG)
+	  {
+	    printf("Multiple entries\n");
+	  }
+	//break;
+	 
+	//printf("returning this first nodem, with kmer %s\n", binary_kmer_to_seq(node->kmer, db_graph->kmer_size));
       return node; //we have gone as far as we can go - the next node has multiple entries. So we are now at the first node of the supernode
       }
     
@@ -526,19 +526,19 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
     //loop
     if ((next_node == original_node) && (next_orientation == original_orientation))
       {      
-	printf("zam7\n");
+
 	is_cycle = true;
 	//break;
 	
-      printf("We have a loop, so original node will do, with kmer %s\n", binary_kmer_to_seq(original_node->kmer, db_graph->kmer_size));
+	//printf("We have a loop, so original node will do, with kmer %s\n", binary_kmer_to_seq(original_node->kmer, db_graph->kmer_size));
 	return original_node; //we have a loop that returns to where we start. Might as well consider ourselves as at the fiurst node of the supernode right at the beginning
       }
     
-    printf("zam8\n");
+    //printf("zam8\n");
     node = next_node;
     orientation = next_orientation;      
   }
-  printf("zam9 - we have found the first node, it is %s\n", binary_kmer_to_seq(node->kmer, db_graph->kmer_size));
+  //printf("zam9 - we have found the first node, it is %s\n", binary_kmer_to_seq(node->kmer, db_graph->kmer_size));
   return node;
 
 }
