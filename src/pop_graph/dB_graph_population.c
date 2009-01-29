@@ -447,7 +447,7 @@ void return_node_to_status_prior_to_tmp_touched_X(dBNode* node)
 }
 
 
-//scratch_node_array is prealloced. caller should ignore its contents - is used purely internally.
+
 dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph)
 {
   
@@ -478,7 +478,7 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
   Orientation original_orientation, next_orientation, orientation;
   dBNode * original_node=node;
   dBNode * next_node;
-  int j;
+
 
   //First node in supernode is, almost by definition, what you get if you go in the Reverse direction (with respect to the Node)
   // as far as you can go.
@@ -544,6 +544,64 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
 }
 
 
+dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* node, Orientation orientation, Orientation* next_orientation, EdgeArrayType type, int index, dBGraph* db_graph)
+{
+  if (! (db_graph_is_this_node_in_this_person_or_populations_graph(node, type, index)))
+    {
+      return NULL;
+    }
+  else if (db_node_check_status(node,pruned))
+    {
+      //don't waste time with pruned nodes.
+      return NULL;
+    }
+  else if (db_node_is_supernode_end(node, orientation, type, index))
+    {
+      return NULL;
+    }
+
+  Nucleotide nucleotide_for_only_edge, reverse_nucleotide_for_only_edge;
+
+  
+  db_node_has_precisely_one_edge(node,orientation,&nucleotide_for_only_edge, type, index);//gives us nucleotide
+  
+  dBNode* next_node =  db_graph_get_next_node_for_specific_person_or_pop(node,orientation ,next_orientation,nucleotide_for_only_edge,&reverse_nucleotide_for_only_edge, db_graph, type, index);
+  
+  if(next_node == NULL){
+    printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
+    exit(1);
+  }	         
+
+  if (DEBUG)
+    {
+      printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide_for_only_edge),
+	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size) :  
+	     binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size));
+      
+    }
+    
+
+  //check for multiple entry edges 
+  Nucleotide nuc;
+  if (db_node_has_precisely_one_edge(next_node,opposite_orientation(*next_orientation),&nuc, type, index))
+    {
+    }
+  else
+    {
+      return node; //we have gone as far as we can go - the next node has multiple entries. So we are now at the first node of the supernode
+    }
+    
+    
+  //loop
+  if ((next_node == node) && (*next_orientation == orientation))
+    {      
+	return node; //we have a kmer that loops back on itself
+    }
+  
+  return next_node;
+
+}
+
 
 // Given a node, will look at each person's supernode containing that node. 
 // For each of these supernodes, independently,  find the longest contiguous subsection that has min people-coverage > min_covg_for_pop_supernode.
@@ -551,10 +609,9 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
 // Then compare across people, and define your consensus as the sub_supernode which has the most people backing it.
 // If two people have equally good sub_supernodes, choose that of the person with highest index.
 // Pass in pre-malloced Sequence* for answer
-// pass in pre-malloced dBNodeArray for internal workings - do not look at contents afterwards.
 
 void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence* pop_consensus_supernode, dBNode* node, int min_covg_for_pop_supernode, int min_length_for_pop_supernode, 
-								       dBGraph* db_graph, dBNodeArray* scratch_node_array)
+								       dBGraph* db_graph)
 {
   int length_of_best_sub_supernode_in_each_person[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
   int index_of_start_of_best_sub_supernode_in_each_person[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
@@ -572,19 +629,10 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
 
       //get the first node in the supernode for this edge, within this person't graph
       dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, i, db_graph);
-      //clean up those nodes that were set with status tmp_touched_previously_X to X
-      
-//db_graph_return_supernode_statuses_to_previous_state(node,individual_edge_array, i);
 
-      // walk through the supernode, from one end to the other. As soon as we hit a node that has people-covg >= min_covg_for_pop_supernode
-      // then note down the coordinate (how far through the supernode), and keep going until we meet a node with people-covg < min_covg_for_pop_supernode
-      // Work out the length of the chunk you found, which had sufficient covg. If > min_length_for_pop_supernode, then you have found your first
-      // candidate for this person's best sub-supernode. Log the start-point and length. Then continue walkign through the supernode until you
-      // find another node that has people_covg sufficiently high. repeat the process for this point, and if its candidate is longer than our
-      // current candidate, then replace it with this new one. etc.
       
- //  dB_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node,  &index_of_start_of_best_sub_supernode_in_each_person[i], &length_of_best_sub_supernode_in_each_person[i], 
-      //											   min_covg_for_pop_supernode,  min_length_for_pop_supernode, individual_edge_array, i); 
+      db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node,  &index_of_start_of_best_sub_supernode_in_each_person[i], &length_of_best_sub_supernode_in_each_person[i], 
+      											   min_covg_for_pop_supernode,  min_length_for_pop_supernode, individual_edge_array, i, db_graph); 
 
     }
 
@@ -610,24 +658,184 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
     {
       if (max > pop_consensus_supernode->max)
 	{
-	  pop_consensus_supernode->seq = (char*) realloc(pop_consensus_supernode->seq, sizeof(char*) * max);
-	  if (pop_consensus_supernode->seq == NULL)
-	    {
-	      printf("OOM getting pop cons supernode\n");
-	      exit(1);
-	    }
-
-	  pop_consensus_supernode->max=max;
+	  printf("pop_consensus_supernode not big enough - only alloced %d and we need %d\n", pop_consensus_supernode->max, max);
+	  exit(1);
 	}
-      int j;
+
       int start = index_of_start_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode];
       int end =    start+ length_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode];
-      db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(pop_consensus_supernode->seq, node, start, end, individual_edge_array, person_with_best_sub_supernode);
+  
+      db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(pop_consensus_supernode->seq, node, start, end, individual_edge_array, person_with_best_sub_supernode, db_graph);
     }
 
+  
+
 }
 
-
-void db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index)
+//subsection (argument1) is allocated by the caller
+void db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index, dBGraph* db_graph)
 {
+  if ( (start<0) || (end<0) || (end-start<=0) )
+    {
+      printf("bad args for getting subsection");
+      exit(1);
+    }
+  dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, type, index, db_graph);
+  dBNode* current_node;
+  dBNode* next_node;
+  Orientation correct_direction_to_go;
+
+  if (db_node_is_supernode_end(first_node,forward, type, index))
+    {
+      correct_direction_to_go=reverse;
+    }
+  else if (db_node_is_supernode_end(first_node,reverse, type, index))
+    {
+      correct_direction_to_go=forward; 
+    }
+  else
+    {
+      printf("Something has gone wrong. This node has been given as first node of a supernode, but db_node_is_supernode_end thinks it is not in either direction\n");
+      exit(1);
+    }
+
+  
+
+ int i;
+ Orientation current_orientation, next_orientation;
+ current_orientation = correct_direction_to_go;
+
+  for (i=0; i<start; i++)
+    {
+      next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, db_graph);
+      if (next_node==NULL)
+	{
+	  printf("You're asking for the section from node %d to node %d in supernode that is not even that long", start, end);
+	  exit(1);
+	}
+      current_node=next_node;
+      current_orientation=next_orientation;
+    }
+
+   char* first_kmer = binary_kmer_to_seq(current_node->kmer, db_graph->kmer_size);
+   for(i=0; i<db_graph->kmer_size; i++)
+   {
+      subsection[i] = first_kmer[i];
+   }
+   free(first_kmer);
+
+   for (i=db_graph->kmer_size; i<=db_graph->kmer_size + end-start; i++)
+   {
+      next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, db_graph);
+      if (next_node==NULL)
+        {
+          printf("Youre asking for the section from node %d to node %d in supernode that is not even that long", start, end);
+          exit(1);
+        }
+      Nucleotide nuc_for_next_edge;
+      db_node_has_precisely_one_edge(current_node,current_orientation,&nuc_for_next_edge, type, index);
+      subsection[i]=binary_nucleotide_to_char(nuc_for_next_edge);
+
+      current_node=next_node;
+      current_orientation=next_orientation;
+
+      
+   }
+   subsection[i]='\0';
+
+
 }
+
+
+// walk through the supernode, from one end to the other. As soon as we hit a node that has people-covg >= min_covg_for_pop_supernode
+// then note down the coordinate (how far through the supernode), and keep going until we meet a node with people-covg < min_covg_for_pop_supernode
+// Work out the length of the chunk you found, which had sufficient covg. If > min_length_for_pop_supernode, then you have found your first
+// candidate for this person's best sub-supernode. Log the start-point and length. Then continue walkign through the supernode until you
+// find another node that has people_covg sufficiently high. repeat the process for this point, and if its candidate is longer than our
+// current candidate, then replace it with this new one. etc.
+
+//Note that if none of the nodes match criteria, return 0 in length of best sub_supernode
+void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(const dBNode* first_node_in_supernode,  int* index_for_start_of_sub_supernode,
+                                                                                           int* length_of_best_sub_supernode, int min_people_coverage,
+                                                                                           int min_length_of_sub_supernode, EdgeArrayType type, int index, dBGraph* db_graph)
+{
+
+  //OK - which direction do we walk?
+  //Either - this node is a singleton supernode (either totally unconnected or too many edges in both directions)
+  // Or    - we can go forward/reverse only, because the other direction has 0 or >1 edges.
+  //Any other possibility breaks the condition that we are at a supernode end.
+
+  Orientation correct_direction_to_go;
+
+  if (db_node_is_supernode_end(first_node_in_supernode,forward, type, index))
+    {
+    correct_direction_to_go=reverse;
+    }
+  else if (db_node_is_supernode_end(first_node_in_supernode,reverse, type,  index))
+    {
+      correct_direction_to_go=forward; 
+    }
+  else
+    {
+      printf("Something has gone wrong. This node has been given as first node of a supernode, but db_node_is_supernode_end thinks it is not in either direction\n");
+      exit(1);
+    }
+
+
+  
+  int start_of_best_section_so_far=0;
+  int length_of_best_section_so_far=1;
+  int current_start=0;
+  int current=0;
+
+  dBNode* current_node=first_node_in_supernode;
+  dBNode* next_node;
+  Orientation next_orientation;
+
+  boolean reached_end=false;
+
+  while(!reached_end)
+    {
+      next_node=db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, correct_direction_to_go, &next_orientation, type, index, db_graph);
+      if (next_node==NULL)
+	{
+	  reached_end=true;
+	}
+
+      else if  (element_get_number_of_people_or_pops_containing_this_element(next_node, type, index) < min_people_coverage)
+	{
+	  current_node=next_node;
+	  current++;
+	  current_start=current;
+	  continue;
+	 
+	}
+      
+      else //there is a next node, and it has enough people coverage
+	{
+	  current_node=next_node;
+	  current++;
+	  if (current-current_start+1 > length_of_best_section_so_far)
+	    {
+	      start_of_best_section_so_far=current_start;
+	      length_of_best_section_so_far = current-current_start+1;
+	      continue;
+	    }
+	  
+	}
+    }
+
+  if (length_of_best_section_so_far >= min_length_of_sub_supernode)
+    {
+      *index_for_start_of_sub_supernode=start_of_best_section_so_far;
+      *length_of_best_sub_supernode=length_of_best_section_so_far;
+      return;
+    }
+  else
+    {
+      *index_for_start_of_sub_supernode=0;
+      *length_of_best_sub_supernode=0;
+      return;
+    }
+}
+

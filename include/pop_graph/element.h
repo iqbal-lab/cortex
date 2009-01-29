@@ -78,6 +78,8 @@ void add_edges(Element*, EdgeArrayType, int, Edges);
 void set_edges(Element*, EdgeArrayType, int, Edges);
 void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, EdgeArrayType type, int index);
 
+int element_get_number_of_people_or_pops_containing_this_element(Element* e, EdgeArrayType type, int index);
+
 
 boolean element_smaller(Element,Element);
 BinaryKmer element_get_kmer(Element *);

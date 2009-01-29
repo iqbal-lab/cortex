@@ -236,7 +236,34 @@ void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, 
 }
 
 
+int element_get_number_of_people_or_pops_containing_this_element(Element* e, EdgeArrayType type, int index)
+{
+  int i;
+  int count=0;
+  if (type == individual_edge_array)
+    {
+      for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+	{
+	  if ( (e->individual_edges)[i] != 0)
+	    {
+	      count++;
+	    }
+	}
+    }
+  else if (type == population_edge_array)
+    {
+      for (i=0; i< NUMBER_OF_POPULATIONS; i++)
+        {
+          if ( (e->population_edges)[i] != 0)
+            {
+	      count++;
+            }
+        }
 
+    }
+
+  return count;
+}
 
 boolean element_smaller(Element  e1, Element e2){
  
