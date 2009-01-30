@@ -1,4 +1,3 @@
-
 /*
   dB_graph_population.c - implementation
  */
@@ -548,15 +547,21 @@ dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* n
 {
   if (! (db_graph_is_this_node_in_this_person_or_populations_graph(node, type, index)))
     {
+      printf("\nThis node is not in the graph of this person\n");
       return NULL;
     }
   else if (db_node_check_status(node,pruned))
     {
+      printf("ignore pruned node");
       //don't waste time with pruned nodes.
       return NULL;
     }
   else if (db_node_is_supernode_end(node, orientation, type, index))
     {
+      if (DEBUG)
+	{
+	  printf("this node is at the end of the supernode, in this orientation, so cant return the next one\n");
+	}
       return NULL;
     }
 
@@ -665,7 +670,11 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
       int start = index_of_start_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode];
       int end =    start+ length_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode];
   
-      db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(pop_consensus_supernode->seq, node, start, end, individual_edge_array, person_with_best_sub_supernode, db_graph);
+      if (db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(pop_consensus_supernode->seq, node, start, end, individual_edge_array, person_with_best_sub_supernode, db_graph)==1)
+	{
+	  printf("Aborting - something wrong with gettig the subsection");
+	  exit(1);
+	}
     }
 
   
@@ -673,15 +682,22 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
 }
 
 //subsection (argument1) is allocated by the caller
-void db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index, dBGraph* db_graph)
+//returns 0 if successfully, 1 otherwise
+int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index, dBGraph* db_graph)
 {
   if ( (start<0) || (end<0) || (end-start<=0) )
     {
-      printf("bad args for getting subsection");
-      exit(1);
+      if (DEBUG)
+	{
+	  printf("bad args for getting subsection");
+	}
+      subsection="ERROR";
+      return 1;
     }
+
+  
   dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, type, index, db_graph);
-  dBNode* current_node;
+  dBNode* current_node=first_node;
   dBNode* next_node;
   Orientation correct_direction_to_go;
 
@@ -696,7 +712,7 @@ void db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char
   else
     {
       printf("Something has gone wrong. This node has been given as first node of a supernode, but db_node_is_supernode_end thinks it is not in either direction\n");
-      exit(1);
+      return 1;
     }
 
   
@@ -710,27 +726,44 @@ void db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char
       next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, db_graph);
       if (next_node==NULL)
 	{
-	  printf("You're asking for the section from node %d to node %d in supernode that is not even that long", start, end);
-	  exit(1);
+	  if (DEBUG)
+	    {
+	      printf("You're asking for the section from node %d to node %d in supernode that is not even that long", start, end);
+	    }
+	  return 1;
 	}
       current_node=next_node;
       current_orientation=next_orientation;
     }
 
-   char* first_kmer = binary_kmer_to_seq(current_node->kmer, db_graph->kmer_size);
+  char* first_kmer_in_subsection; 
+  //first kmer depends on which direction you start in with respect to the first node OF THE SUBSECTION, not the first node of the supernode
+  if (current_orientation == forward) //i.e. orientation of first node of subsection
+    {
+      first_kmer_in_subsection = binary_kmer_to_seq(current_node->kmer, db_graph->kmer_size);
+    }
+  else
+    {
+      first_kmer_in_subsection = binary_kmer_to_seq(   binary_kmer_reverse_complement(current_node->kmer, db_graph->kmer_size) , db_graph->kmer_size);
+    }
+  
+
    for(i=0; i<db_graph->kmer_size; i++)
    {
-      subsection[i] = first_kmer[i];
+      subsection[i] = first_kmer_in_subsection[i];
    }
-   free(first_kmer);
+   free(first_kmer_in_subsection);
 
-   for (i=db_graph->kmer_size; i<=db_graph->kmer_size + end-start; i++)
+   for (i=db_graph->kmer_size; i<=db_graph->kmer_size + end-start-1; i++)
    {
       next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, db_graph);
       if (next_node==NULL)
         {
-          printf("Youre asking for the section from node %d to node %d in supernode that is not even that long", start, end);
-          exit(1);
+	  if (DEBUG)
+	    {
+	      printf("Youre asking for the section from node %d to node %d in supernode that is not even that long", start, end);
+	    }
+          return 1;
         }
       Nucleotide nuc_for_next_edge;
       db_node_has_precisely_one_edge(current_node,current_orientation,&nuc_for_next_edge, type, index);
@@ -743,7 +776,7 @@ void db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char
    }
    subsection[i]='\0';
 
-
+   return 0;
 }
 
 

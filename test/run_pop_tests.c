@@ -89,6 +89,15 @@ int  main()
       CU_cleanup_registry();
       return CU_get_error();
     }
+  if (NULL == CU_add_test(pPopGraphSuite, "Load two people in one population, and test that can pull out required subsection of a supernode.", test_correctly_find_subsection_of_supernode))
+    {
+      CU_cleanup_registry();
+      return CU_get_error();
+    }
+
+
+
+ 
 
   /* Run all tests using the CUnit Basic interface */
   CU_basic_set_mode(CU_BRM_VERBOSE);

@@ -39,7 +39,7 @@ void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_popula
 
 // given a node, find the start of the supernode that contains it. Then return the sequence for the subsection of that supernode starting at index start, and ending at end
 // in the pre-malloc-ed char* which was passed in as the frst argument
-void db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index, dBGraph* db_graph);
+int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index, dBGraph* db_graph);
 void db_graph_get_subsection_of_supernode_containing_given_node_as_supernode_object(dBSupernode* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index, dBGraph* db_graph);
 
 void apply_function_to_every_node_in_supernode_object(dBSupernode*, void (*f)(dBNode*));

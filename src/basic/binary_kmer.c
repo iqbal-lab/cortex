@@ -224,6 +224,7 @@ int  get_binary_kmers_from_sequence_efficient(char * seq,  int length, short kme
 
 //Mario - worth noting this does direct translation, and does not return the smaller of kmer and rev_comp(kmer)
 BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
+  
   int j;
   BinaryKmer kmer = 0;
   

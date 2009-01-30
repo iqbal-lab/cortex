@@ -12,7 +12,6 @@
 void test_find_first_node_in_supernode()
 {
 
-
   //*********************************************************************************
   // 1. Test two simple fasta, one each for a different person in the same pop
   //
@@ -160,7 +159,7 @@ void test_find_first_node_in_supernode()
   CU_ASSERT(testnode==NULL);
     
   
-
+  hash_table_free(&hash_table);
 
 }
 
@@ -168,6 +167,111 @@ void test_find_first_node_in_supernode()
 
 void test_correctly_find_subsection_of_supernode()
 {
+
+  int kmer_size = 5;
+  int number_of_buckets=8;
+  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+
+  int seq_loaded = load_population_as_fasta("../test/data/pop/two_people_test_consensus.txt", hash_table);
+  //printf("Number of bases loaded is %d",seq_loaded);
+  CU_ASSERT(seq_loaded == 23);
+
+  
+  //have just loaded the following
+  // >cons_person1_read
+  //  AAGACTGGAGAT
+  // >cons_person2_read
+  // ATCCTGGAGAA
+
+
+
+
+  //notice the people share CTGGA
+  //notice that each person basically has one big supernode, so the "breaking of supernodes" only occurs when you compare people.
+
+
+  char subsection[24];
+
+  dBNode* node = hash_table_find(element_get_key(seq_to_binary_kmer("GGAGA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT(node != NULL);
+
+  //test the subsections of person1's supernode, startng from the beginning
+
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,1,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "AAGACT");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,2,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "AAGACTG");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,3,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "AAGACTGG");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,4,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "AAGACTGGA");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,5,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "AAGACTGGAG");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,6,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "AAGACTGGAGA");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,7,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "AAGACTGGAGAT");
+
+  //what happens if you go too far?
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,8,individual_edge_array, 0, hash_table)==1);
+  //what happens with negative numbers?
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,-1,individual_edge_array, 0, hash_table)==1);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, -1,8,individual_edge_array, 0, hash_table)==1);
+  //what happens if start=end
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,0,individual_edge_array, 0, hash_table)==1);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,1,individual_edge_array, 0, hash_table)==1);
+  //what happens if start>end
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 5,4,individual_edge_array, 0, hash_table)==1);
+
+  //now check a few others, not starting from 0
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 3,6,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "ACTGGAGA");
+
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 2,3,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "GACTGG");
+
+
+  //now do the same kind of thing for the other person
+
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,1,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "ATCCTG");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,2,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "ATCCTGG");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,3,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "ATCCTGGA");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,4,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "ATCCTGGAG");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,5,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "ATCCTGGAGA");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,6,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "ATCCTGGAGAA");
+
+  //what happens if you go too far?
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,18,individual_edge_array, 1, hash_table)==1);
+  //what happens with negative numbers?
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,-1,individual_edge_array, 1, hash_table)==1);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, -1,8,individual_edge_array, 1, hash_table)==1);
+  //what happens if start=end
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,0,individual_edge_array, 1, hash_table)==1);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,1,individual_edge_array, 1, hash_table)==1);
+  //what happens if start>end
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 5,4,individual_edge_array, 1, hash_table)==1);
+  
+  //now check a few others, not starting from 0
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,3,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "TCCTGGA");
+
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 3,5,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection, "CTGGAGA");
+  
+
+  hash_table_free(&hash_table);
 }
 
 void test_find_best_subsection_of_supernode()
