@@ -265,7 +265,8 @@ void test_find_next_node_in_supernode()
   CU_ASSERT( !strcmp(next_kmer,"GGG") || !strcmp(next_kmer,"CCC") );
   free(next_kmer);
 
-
+  // OK - now happy with self-loops.
+  // what about confusions with orientatio and kmers?
 
 
 
