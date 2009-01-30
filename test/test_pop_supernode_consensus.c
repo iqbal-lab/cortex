@@ -212,13 +212,14 @@ void test_find_next_node_in_supernode()
   dBNode* testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
   CU_ASSERT(testnode != NULL);  
   char* answer = binary_kmer_to_seq(testnode ->kmer, hash_table->kmer_size);
-  printf("Answer is %s\n", answer);
   CU_ASSERT( !strcmp(answer, "TTG") || !strcmp(answer, "CGT")  || !strcmp(answer, "CAA") || !strcmp(answer, "ACG") );//zax
   free(answer);
 
 
   //now start walking 
   Orientation start_orientation, next_orientation, current_orientation;
+  dBNode* current_node=testnode;
+
   if (db_node_is_supernode_end(testnode, forward, individual_edge_array, 1))
     {
       start_orientation=reverse;
@@ -230,10 +231,41 @@ void test_find_next_node_in_supernode()
 
   dBNode* next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(testnode, start_orientation, &next_orientation, individual_edge_array, 1, hash_table);
   char* next_kmer= binary_kmer_to_seq(next_node->kmer, hash_table->kmer_size);
-  CU_ASSERT( !strcmp(next_kmer,"TGA") || !strcmp(next_kmer,"GTC") || !strcmp(next_kmer,"TCA") || !strcmp(next_kmer,"GAC")); //zax
+  CU_ASSERT( !strcmp(next_kmer,"TGA") || !strcmp(next_kmer,"GTC") || !strcmp(next_kmer,"TCA") || !strcmp(next_kmer,"GAC")); 
   free(next_kmer);
 
+
+  current_node=next_node;
+  current_orientation=next_orientation;
+
+  next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(testnode, start_orientation, &next_orientation, individual_edge_array, 1, hash_table);
+  next_kmer= binary_kmer_to_seq(next_node->kmer, hash_table->kmer_size);
+  CU_ASSERT( !strcmp(next_kmer,"GAC") || !strcmp(next_kmer,"TCA") || !strcmp(next_kmer,"GTC") || !strcmp(next_kmer,"TGA")); 
+  free(next_kmer);
+
+  //*********************
+  //OK - that seems ok. Let's just check that it copes with a self-looping kmer
+  //*********************
   
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("GGG",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT((query_node!=NULL));
+  
+  //first - does it correctly get itself as the first node of the supernode. It should be end of supernode in both directions
+
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
+  CU_ASSERT(testnode != NULL);  
+  answer = binary_kmer_to_seq(testnode ->kmer, hash_table->kmer_size);
+  CU_ASSERT(  !strcmp(answer, "GGG") || !strcmp(answer, "CCC") );
+  free(answer);
+
+  //now - can it get the next:
+
+  next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(testnode, forward, &next_orientation, individual_edge_array, 1, hash_table);
+  next_kmer= binary_kmer_to_seq(next_node->kmer, hash_table->kmer_size);
+  CU_ASSERT( !strcmp(next_kmer,"GGG") || !strcmp(next_kmer,"CCC") );
+  free(next_kmer);
+
+
 
 
 
