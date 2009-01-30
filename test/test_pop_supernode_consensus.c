@@ -63,7 +63,7 @@ void test_find_first_node_in_supernode()
   CU_ASSERT(testnode != NULL);  
   char* answer = binary_kmer_to_seq(testnode ->kmer, hash_table->kmer_size);
   CU_ASSERT( !strcmp(answer, "GGG") || !strcmp(answer, "CCC") );
-
+  free(answer);
 
   // *** then TTG
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TTG",hash_table->kmer_size), hash_table->kmer_size), hash_table);
@@ -78,6 +78,7 @@ void test_find_first_node_in_supernode()
   CU_ASSERT(testnode != NULL);  
   answer = binary_kmer_to_seq(testnode ->kmer, hash_table->kmer_size);
   CU_ASSERT( !strcmp(answer, "TTG") || !strcmp(answer, "CAA") || !strcmp(answer, "CGT") || !strcmp(answer, "ACG") );
+  free(answer);
   
 
   // *****then TGA
@@ -93,6 +94,7 @@ void test_find_first_node_in_supernode()
   CU_ASSERT(testnode != NULL);  
   answer = binary_kmer_to_seq(testnode ->kmer, hash_table->kmer_size);
   CU_ASSERT( !strcmp(answer, "TTG") || !strcmp(answer, "CAA") || !strcmp(answer, "CGT") || !strcmp(answer, "ACG") );
+  free(answer);
 
 
   //*** then GAC
@@ -108,6 +110,7 @@ void test_find_first_node_in_supernode()
   CU_ASSERT(testnode != NULL);  
   answer = binary_kmer_to_seq(testnode ->kmer, hash_table->kmer_size);
   CU_ASSERT( !strcmp(answer, "TTG") || !strcmp(answer, "CAA") || !strcmp(answer, "CGT") || !strcmp(answer, "ACG") );
+  free(answer);
 
   
   // then ACG - this is the one that I expect to see in both person1 and person2
@@ -119,12 +122,15 @@ void test_find_first_node_in_supernode()
   CU_ASSERT(!(testnode==NULL));
   answer = binary_kmer_to_seq(testnode->kmer, hash_table->kmer_size);
   CU_ASSERT( !strcmp(answer, "ACG") || !strcmp(answer, "AAC")  || !strcmp(answer, "CGT") || !strcmp(answer, "GTT") );
+  free(answer);
+
 
   //then person2
   testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
   CU_ASSERT(!(testnode==NULL));
   answer = binary_kmer_to_seq(testnode->kmer, hash_table->kmer_size);
   CU_ASSERT( !strcmp(answer, "ACG") || !strcmp(answer, "CGT")  || !strcmp(answer, "TTG") || !strcmp(answer, "CAA") );
+  free(answer);
 
 
   //*****
@@ -138,6 +144,7 @@ void test_find_first_node_in_supernode()
   CU_ASSERT(!(testnode==NULL));
   answer = binary_kmer_to_seq(testnode->kmer, hash_table->kmer_size);
   CU_ASSERT( !strcmp(answer, "AAA") || !strcmp(answer, "TTT") );
+  free(answer);
 
   //confirm not seen in person1
   testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
@@ -153,6 +160,7 @@ void test_find_first_node_in_supernode()
   CU_ASSERT(!(testnode==NULL));
   answer = binary_kmer_to_seq(testnode->kmer, hash_table->kmer_size);
   CU_ASSERT( !strcmp(answer, "ACG") || !strcmp(answer, "CGT")  ||  !strcmp(answer, "GTT") || !strcmp(answer, "AAC") );
+  free(answer);
 
   //confirm not seen in person1
   testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
@@ -164,6 +172,73 @@ void test_find_first_node_in_supernode()
 }
 
 
+
+void test_find_next_node_in_supernode()
+{
+  //*********************************************************************************
+  // 1. Test two simple fasta, one each for a different person in the same pop
+  //
+  //       >person1_read1
+  //        AAAAAAAAAAAAAAA
+  //        >person1_read2
+  //        ACGTT
+  //
+  //
+  //       >person2_read1
+  //       GGGGGGGGGGGGGGGGGG
+  //       >person2_read2
+  //       TTGACG
+
+
+  int kmer_size = 3;
+  int number_of_buckets=5;
+  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+
+  int seq_loaded = load_population_as_fasta("../test/data/test_pop_load_and_print/two_individuals_simple.txt", hash_table);
+  //printf("Number of bases loaded is %d",seq_loaded);
+  CU_ASSERT(seq_loaded == 44);
+
+  // Now just see if it can correctly find the first node in a supernode, and then walk along to the end. Work with person 2 for the moment (=index 1 in the array)
+
+  //first get the first node in the supernode
+  dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("GAC",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT((query_node!=NULL));
+  dBNode* testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
+  CU_ASSERT(testnode != NULL);  
+  char* answer = binary_kmer_to_seq(testnode ->kmer, hash_table->kmer_size);
+  printf("Answer is %s\n", answer);
+  CU_ASSERT( !strcmp(answer, "TTG") || !strcmp(answer, "CGT")  || !strcmp(answer, "CAA") || !strcmp(answer, "ACG") );//zax
+  free(answer);
+
+
+  //now start walking 
+  Orientation start_orientation, next_orientation, current_orientation;
+  if (db_node_is_supernode_end(testnode, forward, individual_edge_array, 1))
+    {
+      start_orientation=reverse;
+    }
+  else if (db_node_is_supernode_end(testnode, reverse, individual_edge_array, 1))
+    {
+      start_orientation=forward;
+    }
+
+  dBNode* next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(testnode, start_orientation, &next_orientation, individual_edge_array, 1, hash_table);
+  char* next_kmer= binary_kmer_to_seq(next_node->kmer, hash_table->kmer_size);
+  CU_ASSERT( !strcmp(next_kmer,"TGA") || !strcmp(next_kmer,"GTC") || !strcmp(next_kmer,"TCA") || !strcmp(next_kmer,"GAC")); //zax
+  free(next_kmer);
+
+  
+
+
+
+
+}
 
 void test_correctly_find_subsection_of_supernode()
 {
@@ -274,8 +349,62 @@ void test_correctly_find_subsection_of_supernode()
   hash_table_free(&hash_table);
 }
 
-void test_find_best_subsection_of_supernode()
+void test_find_best_subsection_of_supernode_with_just_two_people()
 {
+
+  printf("zam1\n");
+  int kmer_size = 5;
+  int number_of_buckets=8;
+  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+
+  int seq_loaded = load_population_as_fasta("../test/data/pop/two_people_test_consensus.txt", hash_table);
+  //printf("Number of bases loaded is %d",seq_loaded);
+  CU_ASSERT(seq_loaded == 23);
+  printf("zam2\n");
+
+
+  //have just loaded the following
+  // >cons_person1_read
+  //  AAGACTGGAGAT
+  // >cons_person2_read
+  // ATCCTGGAGAA
+
+  //notice the people share CTGGA
+  //notice that each person basically has one big supernode, so the "breaking of supernodes" only occurs when you compare people.
+
+  //******** 1. *************************************************
+  //Let's pick a node that happens to be in both people's graphs
+  // ************************************************************
+  dBNode* node = hash_table_find(element_get_key(seq_to_binary_kmer("TGGAG",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT(node != NULL);
+
+  printf("zam3\n");
+
+  //OK, let's see if it can successfully find the best sub_supernode for each person.
+  //There are only 2 people, so mke min people coverage 2, and don't have a min length.
+
+  int index_of_start_of_best_sub_supernode;
+  int length_of_best_sub_supernode;
+
+  dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, 0, hash_table);
+  printf("zam4\n");
+
+  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node, &index_of_start_of_best_sub_supernode, &length_of_best_sub_supernode, 2, 0, individual_edge_array, 0, hash_table);
+    printf("zam5\n");
+
+  CU_ASSERT(index_of_start_of_best_sub_supernode==4);
+  CU_ASSERT(length_of_best_sub_supernode==3);
+  printf("zam6\n");
+
+  hash_table_free(&hash_table);
+
+
 }
 
 void test_get_population_consensus_supernode()

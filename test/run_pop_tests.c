@@ -89,11 +89,23 @@ int  main()
       CU_cleanup_registry();
       return CU_get_error();
     }
+
+  if (NULL == CU_add_test(pPopGraphSuite, "Load two people in one population, and test that given a node in a person's graoh, you can find the next node in the supernode.", test_find_next_node_in_supernode))
+    {
+      CU_cleanup_registry();
+      return CU_get_error();
+    }
+
   if (NULL == CU_add_test(pPopGraphSuite, "Load two people in one population, and test that can pull out required subsection of a supernode.", test_correctly_find_subsection_of_supernode))
     {
       CU_cleanup_registry();
       return CU_get_error();
     }
+  //  if (NULL == CU_add_test(pPopGraphSuite, "Load two people in one population, and test that for each separately, can find the best sub_supernode, requiring certain people_coverage", test_find_best_subsection_of_supernode_with_just_two_people))
+  //  {
+  //   CU_cleanup_registry();
+  //   return CU_get_error();
+  //  }
 
 
 

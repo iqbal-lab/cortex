@@ -793,6 +793,12 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
                                                                                            int min_length_of_sub_supernode, EdgeArrayType type, int index, dBGraph* db_graph)
 {
 
+  if (first_node_in_supernode==NULL)
+    {
+      printf("do not give null pointer to get_best_sub_supernode function");
+      exit(1);
+    }
+
   //OK - which direction do we walk?
   //Either - this node is a singleton supernode (either totally unconnected or too many edges in both directions)
   // Or    - we can go forward/reverse only, because the other direction has 0 or >1 edges.
@@ -830,13 +836,16 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
   while(!reached_end)
     {
       next_node=db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, correct_direction_to_go, &next_orientation, type, index, db_graph);
+
       if (next_node==NULL)
 	{
+	  printf("Reached end\n");
 	  reached_end=true;
 	}
 
       else if  (element_get_number_of_people_or_pops_containing_this_element(next_node, type, index) < min_people_coverage)
 	{
+	  printf("Looking for best subsection Next node is %s\n", binary_kmer_to_seq(next_node->kmer,db_graph->kmer_size));
 	  current_node=next_node;
 	  current++;
 	  current_start=current;
@@ -846,6 +855,7 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
       
       else //there is a next node, and it has enough people coverage
 	{
+	  printf("Looking for best subsection Next node is %s\n", binary_kmer_to_seq(next_node->kmer,db_graph->kmer_size));
 	  current_node=next_node;
 	  current++;
 	  if (current-current_start+1 > length_of_best_section_so_far)
