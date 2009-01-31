@@ -26,7 +26,7 @@ int main(int argc, char **argv){
     }
 
     sprintf(filename,"out_nodes_%i_%i",kmer_size,index);
-    fprintf(stderr,"opening file %s\n",filename);
+    fprintf(stdout,"opening file %s\n",filename);
     fout = fopen(filename,"w");
     }
     
@@ -42,11 +42,11 @@ int main(int argc, char **argv){
   hash_key_bits    = atoi(argv[3]); //number of buckets: 2^hash_key_bits
   DEBUG            = atoi(argv[4]);
 
-  fprintf(stderr,"Kmer size: %d hash_table_size (%d bits): %d\n",kmer_size,hash_key_bits,1 << hash_key_bits);
+  fprintf(stdout,"Kmer size: %d hash_table_size (%d bits): %d\n",kmer_size,hash_key_bits,1 << hash_key_bits);
 
   //Create the de Bruijn graph/hash table
   db_graph = hash_table_new(1 << hash_key_bits,kmer_size);
-  fprintf(stderr,"table created: %d\n",1 << hash_key_bits);
+  fprintf(stdout,"table created: %d\n",1 << hash_key_bits);
 
 
   int count_file   = 0;
@@ -74,7 +74,19 @@ int main(int argc, char **argv){
     total_length += load_fasta_data_into_graph_efficient(fp_file, db_graph, &reallocs);
     total_reallocs +=reallocs;
 
-    fprintf(stderr,"\n%i file name:%s seq:%i total seq:%qd\n\n",count_file,filename,seq_length, total_length);
+    fprintf(stdout,"\n\n************\n\n%i file name:%s seq:%i total seq:%qd\n\n",count_file,filename,seq_length, total_length);
+
+    //add data on current memory usage:
+    FILE* fp_proc=fopen("/proc/self/status", "r");
+
+    char line[500];
+    while ( fgets(line,500,fp_proc) !=NULL)
+      {
+	if (line[0]=='V')
+	  {
+	  fprintf(stdout, "%s",line);
+	  }
+      }
     
   }
 
