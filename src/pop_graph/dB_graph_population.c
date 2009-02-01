@@ -558,10 +558,10 @@ dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* n
     }
   else if (db_node_is_supernode_end(node, orientation, type, index))
     {
-      if (DEBUG)
-	{
+      //      if (DEBUG)
+      //{
 	  printf("this node is at the end of the supernode, in this orientation, so cant return the next one\n");
-	}
+	  //	}
       return NULL;
     }
 
@@ -593,6 +593,12 @@ dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* n
     }
   else
     {
+      //double check
+      if (node ==NULL)
+	{
+	  printf("programming error. returning null node when my model in my head says impossible\n");
+	  exit(1);
+	}
       return node; //we have gone as far as we can go - the next node has multiple entries. So we are now at the first node of the supernode
     }
     
@@ -600,6 +606,13 @@ dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* n
   //loop
   if ((next_node == node) && (*next_orientation == orientation))
     {      
+      //double check
+      if (node ==NULL)
+	{
+          printf("programming error. returning null node when my model in my head says impossible\n");
+	  exit(1);
+        }
+
 	return node; //we have a kmer that loops back on itself
     }
   
@@ -828,28 +841,65 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
   int current=0;
 
   dBNode* current_node=first_node_in_supernode;
+  printf("starting at first node in supernode: %s\n", binary_kmer_to_seq(current_node->kmer,db_graph->kmer_size));
   dBNode* next_node;
+  Orientation current_orientation = correct_direction_to_go;
   Orientation next_orientation;
 
   boolean reached_end=false;
 
+  //does the start_node have enough coverage?
+
+  if (element_get_number_of_people_or_pops_containing_this_element(current_node, type, index) < min_people_coverage)
+    {
+      start_of_best_section_so_far=1;
+      current_start=1;
+    }
+
   while(!reached_end)
     {
-      next_node=db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, correct_direction_to_go, &next_orientation, type, index, db_graph);
-
+      next_node=db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, db_graph);
       if (next_node==NULL)
 	{
-	  printf("Reached end\n");
+	  printf("Reached end of supernode\n");
 	  reached_end=true;
+	  continue;
+	}
+      else if (next_node==first_node_in_supernode) 
+	{
+	  printf("reached end of supernode - in this case back at the start so it stops just before becoming a loop\n");
+	  reached_end=true;
+	  continue;
 	}
 
-      else if  (element_get_number_of_people_or_pops_containing_this_element(next_node, type, index) < min_people_coverage)
+
+      int next_people_cov= element_get_number_of_people_or_pops_containing_this_element(next_node, type, index);
+
+      if  ( next_people_cov < min_people_coverage)
 	{
-	  printf("Looking for best subsection Next node is %s\n", binary_kmer_to_seq(next_node->kmer,db_graph->kmer_size));
+	  //purely for info - remove this bit in production/non debug
+
+	  char* next_kmer;
+	  if (next_orientation==forward)
+	    {
+	      next_kmer = binary_kmer_to_seq(next_node->kmer,db_graph->kmer_size);
+	    }
+	  else
+	    {
+	      next_kmer=binary_kmer_to_seq( binary_kmer_reverse_complement(next_node->kmer,db_graph->kmer_size), db_graph->kmer_size );
+	    }
+	  
+	  printf("Looking for best subsection Next node is %s\n", next_kmer);
+	  printf("Too little peope coverage on this node - only %d\n", next_people_cov);
+	  //end of purely for info
+
+
+
 	  current_node=next_node;
+	  current_orientation=next_orientation;
 	  current++;
 	  current_start=current;
-	  continue;
+	
 	 
 	}
       
@@ -857,13 +907,18 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 	{
 	  printf("Looking for best subsection Next node is %s\n", binary_kmer_to_seq(next_node->kmer,db_graph->kmer_size));
 	  current_node=next_node;
+	  current_orientation=next_orientation;
+
 	  current++;
+
 	  if (current-current_start+1 > length_of_best_section_so_far)
 	    {
+	     
 	      start_of_best_section_so_far=current_start;
 	      length_of_best_section_so_far = current-current_start+1;
-	      continue;
+	
 	    }
+	  printf("People covg is sufficient, at %d\nCurrent is %d, current_start is %d, best length sofar s %d\n", next_people_cov, current, current_start, length_of_best_section_so_far);
 	  
 	}
     }

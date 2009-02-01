@@ -385,7 +385,6 @@ void test_correctly_find_subsection_of_supernode()
 void test_find_best_subsection_of_supernode_with_just_two_people()
 {
 
-  printf("zam1\n");
   int kmer_size = 5;
   int number_of_buckets=8;
   HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
@@ -399,7 +398,6 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
   int seq_loaded = load_population_as_fasta("../test/data/pop/two_people_test_consensus.txt", hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 23);
-  printf("zam2\n");
 
 
   //have just loaded the following
@@ -417,8 +415,6 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
   dBNode* node = hash_table_find(element_get_key(seq_to_binary_kmer("TGGAG",hash_table->kmer_size), hash_table->kmer_size), hash_table);
   CU_ASSERT(node != NULL);
 
-  printf("zam3\n");
-
   //OK, let's see if it can successfully find the best sub_supernode for each person.
   //There are only 2 people, so mke min people coverage 2, and don't have a min length.
 
@@ -426,20 +422,43 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
   int length_of_best_sub_supernode;
 
   dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, 0, hash_table);
-  printf("zam4\n");
+  char* first_kmer= binary_kmer_to_seq(first_node->kmer, hash_table->kmer_size);
+  printf("Frst kmer is %s\n", first_kmer);
+  CU_ASSERT( !strcmp(first_kmer,"GAGAT") || !strcmp(first_kmer,"ATCTC") || !strcmp(first_kmer,"AAGAC") || !strcmp(first_kmer,"GTCTT") );
+  free(first_kmer);
 
   db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node, &index_of_start_of_best_sub_supernode, &length_of_best_sub_supernode, 2, 0, individual_edge_array, 0, hash_table);
-    printf("zam5\n");
 
-  CU_ASSERT(index_of_start_of_best_sub_supernode==4);
-  CU_ASSERT(length_of_best_sub_supernode==3);
-  printf("zam6\n");
+  printf("\nindex of start is %d and length is %d", index_of_start_of_best_sub_supernode, length_of_best_sub_supernode);
+  CU_ASSERT( ( index_of_start_of_best_sub_supernode==1)  || ( index_of_start_of_best_sub_supernode==4) ); 
+  CU_ASSERT( length_of_best_sub_supernode==3);
+
+
+  //OK - works for person1 (index 0) - what about person 2
+
+  first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, 1, hash_table);
+  first_kmer= binary_kmer_to_seq(first_node->kmer, hash_table->kmer_size);
+  printf("Frst kmer is %s\n", first_kmer);
+  CU_ASSERT( !strcmp(first_kmer,"GAGAA") || !strcmp(first_kmer,"TTCTC") || !strcmp(first_kmer,"ATCCT") || !strcmp(first_kmer,"AGGAT") );
+  free(first_kmer);
+
+  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node, &index_of_start_of_best_sub_supernode, &length_of_best_sub_supernode, 2, 0, individual_edge_array, 1, hash_table);
+
+  printf("\nindex of start is %d and length is %d", index_of_start_of_best_sub_supernode, length_of_best_sub_supernode);
+  CU_ASSERT( ( index_of_start_of_best_sub_supernode==1)  || ( index_of_start_of_best_sub_supernode==2) ); 
+  CU_ASSERT( length_of_best_sub_supernode==3);
+
+
 
   hash_table_free(&hash_table);
 
 
 }
 
+
+
 void test_get_population_consensus_supernode()
 {
+
+
 }
