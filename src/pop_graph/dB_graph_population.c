@@ -669,15 +669,17 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
       //note that node may be null, and also may not be in this person's graph. In this case, ignore.
       if (first_node ==NULL)
 	{
+	  printf("first node for %d is nul, so ignore \n",i);
 	  index_of_start_of_best_sub_supernode_in_each_person[i]=0;
 	  length_of_best_sub_supernode_in_each_person[i]=0;
 	}
       else
 	{
 	  //this returns 0 in length_of_best_sub_supernode_in_each_person if no subsupernode matches constraints
-	  //printf("\nFind best sub supernode in person %d based on first node in supernode, which is %s\n", i, binary_kmer_to_seq(first_node->kmer, db_graph->kmer_size) );
+	  printf("\nFind best sub supernode in person %d based on first node in supernode, which is %s\n", i, binary_kmer_to_seq(first_node->kmer, db_graph->kmer_size) );
 	  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node,  &index_of_start_of_best_sub_supernode_in_each_person[i], &length_of_best_sub_supernode_in_each_person[i], 
 											       min_covg_for_pop_supernode,  min_length_for_pop_supernode, individual_edge_array, i, db_graph); 
+	  printf("OK - that sub supernode in person %d starts at %d ends at %d\n", i, index_of_start_of_best_sub_supernode_in_each_person[i], length_of_best_sub_supernode_in_each_person[i]);
 	}
     }
 
@@ -688,6 +690,7 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
     {
       if ( length_of_best_sub_supernode_in_each_person[i] >0 )
 	{
+	  printf("Here a good one. No need to loop\n");
 	  noone_has_decent_sub_supernode=false;
 	}
     }
@@ -695,6 +698,7 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
   if (noone_has_decent_sub_supernode)
     {
       pop_consensus_supernode->seq[0]='\0';
+      printf("noone has a decent supernode\n");
       return;
     }
 
@@ -711,9 +715,11 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
 	}
     }
 
+  printf("OKOKOK we think the person qwith =best snode is %d and length is %d\n",  person_with_best_sub_supernode, length_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode]); 
   if (max==0)
     {
       printf("This should be impossible. Max size of sub supernode over all people is 0. Since we start wth a kmer that is in the graph, at least one person ought to have it\n");
+      exit(1);
     }
   
   else
@@ -724,14 +730,26 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
 	  exit(1);
 	}
 
+
       int start = index_of_start_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode];
-      int end =    start+ length_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode];
+      int end =    start+ length_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode]-1;
+      if ((start<0) || (end<0))
+	{
+	  printf("This is wrong. start is %d and end is %d for person %d and their length is %d\n", start,end, person_with_best_sub_supernode, length_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode]);
+	  exit(1);
+	}      
+      if (start==end)
+	{
+	  //then the best we have anaged is a single kmer. No need to bother getting that subsection
+
+	}
   
-      if (db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(pop_consensus_supernode->seq, node, start, end, individual_edge_array, person_with_best_sub_supernode, db_graph)==1)
+      else if (db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(pop_consensus_supernode->seq, node, start, end, individual_edge_array, person_with_best_sub_supernode, db_graph)==1)
 	{
 	  printf("Aborting - something wrong with gettig the subsection");
 	  exit(1);
 	}
+      printf("OKOK found bvest subsection for is %s\n", pop_consensus_supernode->seq);
     }
 
   
@@ -742,12 +760,13 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
 //returns 0 if successfully, 1 otherwise
 int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index, dBGraph* db_graph)
 {
-  if ( (start<0) || (end<0) || (end-start<=0) )
+  printf("CALL GET SUBSECTION With start %d and end %d\n\n", start, end);
+  if ( (start<0) || (end<0) || (end-start<0) )
     {
-      if (DEBUG)
-	{
-	  printf("bad args for getting subsection");
-	}
+      //      if (DEBUG)
+      //	{
+	  printf("bad args for getting subsection start %d and end %d", start, end);
+	  //	}
       subsection="ERROR";
       return 1;
     }
@@ -783,10 +802,10 @@ int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char*
       next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, db_graph);
       if (next_node==NULL)
 	{
-	  if (DEBUG)
-	    {
+	  //if (DEBUG)
+	  // {
 	      printf("You're asking for the section from node %d to node %d in supernode that is not even that long", start, end);
-	    }
+	      // }
 	  return 1;
 	}
       current_node=next_node;
@@ -816,10 +835,10 @@ int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char*
       next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, db_graph);
       if (next_node==NULL)
         {
-	  if (DEBUG)
-	    {
+	  //if (DEBUG)
+	  // {
 	      printf("Youre asking for the section from node %d to node %d in supernode that is not even that long", start, end);
-	    }
+	      // }
           return 1;
         }
       Nucleotide nuc_for_next_edge;
@@ -831,7 +850,7 @@ int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char*
 
       
    }
-   subsection[i]='\0';
+   subsection[db_graph->kmer_size + end-start]='\0';
 
    return 0;
 }
@@ -888,12 +907,13 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 
   
   int start_of_best_section_so_far=0;
-  int length_of_best_section_so_far=1;
+  int length_of_best_section_so_far=0;
+  boolean in_middle_of_a_good_section=false;
   int current_start=0;
   int current=0;
 
   dBNode* current_node=first_node_in_supernode;
-  // printf("starting at first node in supernode: %s\n", binary_kmer_to_seq(current_node->kmer,db_graph->kmer_size));
+   printf("starting at first node in supernode: %s\n", binary_kmer_to_seq(current_node->kmer,db_graph->kmer_size));
   dBNode* next_node;
   Orientation current_orientation = correct_direction_to_go;
   Orientation next_orientation;
@@ -904,22 +924,23 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 
   if (element_get_number_of_people_or_pops_containing_this_element(current_node, type, index) < min_people_coverage)
     {
-      start_of_best_section_so_far=1;
-      current_start=1;
     }
-
+  else
+    {
+      in_middle_of_a_good_section=true;      
+    }
   while(!reached_end)
     {
       next_node=db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, db_graph);
       if (next_node==NULL)
 	{
-	  //printf("Reached end of supernode\n");
+	  printf("Reached end of supernode\n");
 	  reached_end=true;
 	  continue;
 	}
       else if (next_node==first_node_in_supernode) 
 	{
-	  //printf("reached end of supernode - in this case back at the start so it stops just before becoming a loop\n");
+	  printf("reached end of supernode - in this case back at the start so it stops just before becoming a loop\n");
 	  reached_end=true;
 	  continue;
 	}
@@ -929,8 +950,14 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 
       if  ( next_people_cov < min_people_coverage)
 	{
-	  //purely for info - remove this bit in production/non debug
 
+	  current++;
+	  current_node=next_node;
+	  current_orientation=next_orientation;
+	  current_start=current;
+	  in_middle_of_a_good_section=false;
+
+	  //rest of this if clause should be DEBUG only
 	  char* next_kmer;
 	  if (next_orientation==forward)
 	    {
@@ -941,48 +968,53 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 	      next_kmer=binary_kmer_to_seq( binary_kmer_reverse_complement(next_node->kmer,db_graph->kmer_size), db_graph->kmer_size );
 	    }
 	  
-	  //printf("Looking for best subsection Next node is %s\n", next_kmer);
-	  //printf("Too little peope coverage on this node - only %d\n", next_people_cov);
-	  //end of purely for info
-
-
-
-	  current_node=next_node;
-	  current_orientation=next_orientation;
-	  current++;
-	  current_start=current;
-	
+	  
+	  printf("Looking for best subsection Next node is %s\n", next_kmer);
+	  printf("Too little peope coverage on this node - only %d\n", next_people_cov);
+	  
 	 
 	}
       
       else //there is a next node, and it has enough people coverage
 	{
-	  //printf("Looking for best subsection Next node is %s\n", binary_kmer_to_seq(next_node->kmer,db_graph->kmer_size));
-	  current_node=next_node;
-	  current_orientation=next_orientation;
 
 	  current++;
+          current_node=next_node;
+          current_orientation=next_orientation;
 
+	  if (in_middle_of_a_good_section)
+	    {
+	      
+	    }
+	  else
+	    {
+	      current_start=current;
+	      in_middle_of_a_good_section=true;
+	    }
+
+	  printf("Looking for best subsection Next node is %s\n", binary_kmer_to_seq(next_node->kmer,db_graph->kmer_size));
+	
 	  if (current-current_start+1 > length_of_best_section_so_far)
 	    {
-	     
 	      start_of_best_section_so_far=current_start;
-	      length_of_best_section_so_far = current-current_start+1;
-	
+	      length_of_best_section_so_far = current-current_start+1; //remember is length in nodes not bases
 	    }
-	  //printf("People covg is sufficient, at %d\nCurrent is %d, current_start is %d, best length sofar s %d\n", next_people_cov, current, current_start, length_of_best_section_so_far);
+	  printf("People covg is sufficient, at %d\nCurrent is %d, current_start is %d, best length sofar s %d\n", next_people_cov, current, current_start, length_of_best_section_so_far);
 	  
 	}
     }
 
-  if (length_of_best_section_so_far >= min_length_of_sub_supernode)
+  //length of best section is counted in supernodes. min length of sub supernode is in bases
+  if ( ( length_of_best_section_so_far + db_graph->kmer_size - 1) >= min_length_of_sub_supernode)
     {
+      printf("Good. store best section start as %d, and length %d", start_of_best_section_so_far, length_of_best_section_so_far);
       *index_for_start_of_sub_supernode=start_of_best_section_so_far;
       *length_of_best_sub_supernode=length_of_best_section_so_far;
       return;
     }
   else
     {
+      printf("This person has nothing. Min length is %d but we only manage %d\n", min_length_of_sub_supernode, length_of_best_section_so_far);
       *index_for_start_of_sub_supernode=0;
       *length_of_best_sub_supernode=0;
       return;

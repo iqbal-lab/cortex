@@ -329,9 +329,13 @@ void test_correctly_find_subsection_of_supernode()
   //what happens with negative numbers?
   CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,-1,individual_edge_array, 0, hash_table)==1);
   CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, -1,8,individual_edge_array, 0, hash_table)==1);
-  //what happens if start=end
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,0,individual_edge_array, 0, hash_table)==1);
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,1,individual_edge_array, 0, hash_table)==1);
+
+  //what happens if start=end - originally planned to return 1 in this case, but changed behaviour, and so had to fix test. function should work if start=end and return 0
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,0,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection,"AAGAC");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,1,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection,"AGACT");
+
   //what happens if start>end
   CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 5,4,individual_edge_array, 0, hash_table)==1);
 
@@ -363,9 +367,13 @@ void test_correctly_find_subsection_of_supernode()
   //what happens with negative numbers?
   CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,-1,individual_edge_array, 1, hash_table)==1);
   CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, -1,8,individual_edge_array, 1, hash_table)==1);
-  //what happens if start=end
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,0,individual_edge_array, 1, hash_table)==1);
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,1,individual_edge_array, 1, hash_table)==1);
+
+  //what happens if start=end - again - should not complain
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,0,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection,"ATCCT");
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,1,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT_STRING_EQUAL(subsection,"TCCTG");
+
   //what happens if start>end
   CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 5,4,individual_edge_array, 1, hash_table)==1);
   
@@ -474,9 +482,9 @@ void test_get_population_consensus_supernode()
 
   // **** Have just loaded the following
 
-  // person1: ATTGAGACTACCGTATTAACTAGTAGCACTG
-  // person2:   TGAGA    CGTATTAACTAGTAGCACTG
-  // person3:   TGAGA         TAACTAGTAGCACTG
+  // person1: ATTGAGACTACCGTATTAACTAGGAGCACTG
+  // person2:   TGAGA    CGTATTAACTAGGAGCACTG
+  // person3:   TGAGA         TAACTAGGAGCACTG
   // person4:                                   identical to person 3
   // person5:   TGAGA                  GCACTG
   
@@ -507,9 +515,40 @@ void test_get_population_consensus_supernode()
     }
   popseq_obj->max=40;
 
+
+  printf("*********\n\n***********\n\n Start of next test\n\n");
   //min covg 5, min length 6
   db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj, node, 5, 6, hash_table);
+  printf("WE GET BACK %s\n", popseq_obj->seq);
   CU_ASSERT_STRING_EQUAL(popseq_obj->seq, "");
+
+  printf("*********\n\n***********\n\n Start of next test\n\n");
+
+  //min covg 5, min length 5
+  db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj, node, 5, 5, hash_table);
+  printf("Answer is %s and expect TGAGA or TCTCA\n", popseq_obj->seq); 
+  CU_ASSERT( !strcmp(popseq_obj->seq, "TGAGA") || !strcmp(popseq_obj->seq, "TCTCA") );
+
+
+  printf("*********\n\n***********\n\n Start of next test\n\n");
+
+  //min covg 4, min length 6
+  db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj, node, 4, 6, hash_table);
+  printf("Answer is %s and expect TAACTAGGA or TCCTAGTTA\n", popseq_obj->seq); 
+  CU_ASSERT( !strcmp(popseq_obj->seq, "TAACTAGGA") || !strcmp(popseq_obj->seq, "TCCTAGTTA") );
+
+  printf("*********\n\n***********\n\n Start of next test\n\n");
+
+  //min covg 2, min length 14
+  db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj, node, 2, 14, hash_table);
+  printf("Answer is %s and expect CTGGCATCCTAGTTATCGTTAGAATCTCACC  or GGTGAGATTCTAACGATAACTAGGATGCCAG \n", popseq_obj->seq); 
+  CU_ASSERT( !strcmp(popseq_obj->seq, "CTGGCATCCTAGTTATCGTTAGAATCTCACC") || !strcmp(popseq_obj->seq, "GGTGAGATTCTAACGATAACTAGGATGCCAG") );
+
+
+
+
+
+
 
 
   hash_table_free(&hash_table);
