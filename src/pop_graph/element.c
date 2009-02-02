@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 
-int NUMBER_OF_INDIVIDUALS_PER_POPULATION = 4;
+int NUMBER_OF_INDIVIDUALS_PER_POPULATION = 5;
 int NUMBER_OF_POPULATIONS = 2;
 
 
@@ -425,23 +425,6 @@ boolean db_node_edge_exist(dBNode * element,Nucleotide base,Orientation orientat
 }
 
 
-boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, EdgeArrayType edge_type, int edge_index)
-{
-  char edges = get_edge_copy(*element, edge_type, edge_index);
-  
-  if (orientation == reverse)
-    {
-      //shift along so the 4 most significant bits become the 4 least - we've passed out argument by copy so not altering the original
-      edges >>= 4;
-    }
-
-  edges &= 15; // AND with 00001111 so that we only look at the 4 least significant bits 
-   
-  //is supernode end EITHER if it has 0 edges out, or >1.
-  return ((edges == 0) || ((edges != 1) && (edges != 2) && (edges != 4) && (edges != 8)));
-
-}
-
 
 
 void db_node_reset_edges(dBNode * node,EdgeArrayType edge_type, int edge_index){
@@ -510,3 +493,25 @@ void db_node_set_status_to_none(dBNode * node){
   node->status = none;
 }
 
+
+boolean db_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, EdgeArrayType type, int index)
+{
+
+  if (node ==NULL)
+    {
+      return false;
+    }
+
+  Edges edge_for_this_person_or_pop = get_edge_copy(*node, type, index);
+
+  if (edge_for_this_person_or_pop == 0)
+    {
+
+      return false;
+    }
+  else
+    {
+      return true;
+    }
+ 
+}

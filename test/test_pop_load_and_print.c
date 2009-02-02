@@ -294,25 +294,25 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
   int number_of_supernodes_in_person_1=0;
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
   db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop, hash_table, individual_edge_array, 0, true, array_of_supernodes_for_person1,&number_of_supernodes_in_person_1);
-  //printf("PERSON 1 has %d supernodes\n", number_of_supernodes_in_person_1);
+  printf("PERSON 1 has %d supernodes\n", number_of_supernodes_in_person_1);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
 
   int i;
-  //     for (i=0; i<number_of_supernodes_in_person_1; i++)
-  //{
-  // printf("SUPERNODE %s\n", array_of_supernodes_for_person1[i]);
-  //}
+  for (i=0; i<number_of_supernodes_in_person_1; i++)
+    {
+      printf("SUPERNODE %s\n", array_of_supernodes_for_person1[i]);
+    }
 
   
   int number_of_supernodes_in_person_2=0;
   db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop, hash_table, individual_edge_array, 1, true, array_of_supernodes_for_person2,&number_of_supernodes_in_person_2);
-  //printf("PERSON 2 has %d supernodes\n", number_of_supernodes_in_person_2);
-  db_graph_set_all_visited_nodes_to_status_none(hash_table);
-
-  //   for (i=0; i<number_of_supernodes_in_person_2; i++)
-  // {
-  //  printf("SUPERNODE %s\n", array_of_supernodes_for_person2[i]);
-  // }
+ printf("PERSON 2 has %d supernodes\n", number_of_supernodes_in_person_2);
+ db_graph_set_all_visited_nodes_to_status_none(hash_table);
+ 
+ for (i=0; i<number_of_supernodes_in_person_2; i++)
+   {
+     printf("SUPERNODE %s\n", array_of_supernodes_for_person2[i]);
+   }
 
 
    printf("\n******   TODO ********Check these supernodes are correct\n");

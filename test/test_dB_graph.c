@@ -322,14 +322,9 @@ void test_supernode_walking()
   hash_table_free(&hash_table);
   free(test1_result);
 
-
-
-
-
-  
-
-
-
   fclose(output);
 
 }		    
+
+
+

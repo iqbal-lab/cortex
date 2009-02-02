@@ -220,11 +220,11 @@ void test_find_next_node_in_supernode()
   Orientation start_orientation, next_orientation, current_orientation;
   dBNode* current_node=testnode;
 
-  if (db_node_is_supernode_end(testnode, forward, individual_edge_array, 1))
+  if (db_node_is_supernode_end(testnode, forward, individual_edge_array, 1, hash_table))
     {
       start_orientation=reverse;
     }
-  else if (db_node_is_supernode_end(testnode, reverse, individual_edge_array, 1))
+  else if (db_node_is_supernode_end(testnode, reverse, individual_edge_array, 1, hash_table))
     {
       start_orientation=forward;
     }
@@ -261,9 +261,7 @@ void test_find_next_node_in_supernode()
   //now - can it get the next:
 
   next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(testnode, forward, &next_orientation, individual_edge_array, 1, hash_table);
-  next_kmer= binary_kmer_to_seq(next_node->kmer, hash_table->kmer_size);
-  CU_ASSERT( !strcmp(next_kmer,"GGG") || !strcmp(next_kmer,"CCC") );
-  free(next_kmer);
+  CU_ASSERT(next_node == NULL); //because next node is itself
 
   // OK - now happy with self-loops.
   // what about confusions with orientatio and kmers?
@@ -423,13 +421,13 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
 
   dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, 0, hash_table);
   char* first_kmer= binary_kmer_to_seq(first_node->kmer, hash_table->kmer_size);
-  printf("Frst kmer is %s\n", first_kmer);
+  //printf("Frst kmer is %s\n", first_kmer);
   CU_ASSERT( !strcmp(first_kmer,"GAGAT") || !strcmp(first_kmer,"ATCTC") || !strcmp(first_kmer,"AAGAC") || !strcmp(first_kmer,"GTCTT") );
   free(first_kmer);
 
   db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node, &index_of_start_of_best_sub_supernode, &length_of_best_sub_supernode, 2, 0, individual_edge_array, 0, hash_table);
 
-  printf("\nindex of start is %d and length is %d", index_of_start_of_best_sub_supernode, length_of_best_sub_supernode);
+  //printf("\nindex of start is %d and length is %d", index_of_start_of_best_sub_supernode, length_of_best_sub_supernode);
   CU_ASSERT( ( index_of_start_of_best_sub_supernode==1)  || ( index_of_start_of_best_sub_supernode==4) ); 
   CU_ASSERT( length_of_best_sub_supernode==3);
 
@@ -438,13 +436,13 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
 
   first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, 1, hash_table);
   first_kmer= binary_kmer_to_seq(first_node->kmer, hash_table->kmer_size);
-  printf("Frst kmer is %s\n", first_kmer);
+  //printf("Frst kmer is %s\n", first_kmer);
   CU_ASSERT( !strcmp(first_kmer,"GAGAA") || !strcmp(first_kmer,"TTCTC") || !strcmp(first_kmer,"ATCCT") || !strcmp(first_kmer,"AGGAT") );
   free(first_kmer);
 
   db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node, &index_of_start_of_best_sub_supernode, &length_of_best_sub_supernode, 2, 0, individual_edge_array, 1, hash_table);
 
-  printf("\nindex of start is %d and length is %d", index_of_start_of_best_sub_supernode, length_of_best_sub_supernode);
+  //printf("\nindex of start is %d and length is %d", index_of_start_of_best_sub_supernode, length_of_best_sub_supernode);
   CU_ASSERT( ( index_of_start_of_best_sub_supernode==1)  || ( index_of_start_of_best_sub_supernode==2) ); 
   CU_ASSERT( length_of_best_sub_supernode==3);
 
@@ -459,6 +457,61 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
 
 void test_get_population_consensus_supernode()
 {
+  int kmer_size = 5;
+  int number_of_buckets=14;
+  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
 
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+
+  int seq_loaded = load_population_as_fasta("../test/data/pop/five_people_test.txt", hash_table);
+  //printf("Number of bases loaded is %d",seq_loaded);
+  CU_ASSERT(seq_loaded == 155);
+
+
+  // **** Have just loaded the following
+
+  // person1: ATTGAGACTACCGTATTAACTAGTAGCACTG
+  // person2:   TGAGA    CGTATTAACTAGTAGCACTG
+  // person3:   TGAGA         TAACTAGTAGCACTG
+  // person4:                                   identical to person 3
+  // person5:   TGAGA                  GCACTG
+  
+  //spaces signify that they have other sequence in there that is different for each person.
+
+
+
+  //All people share the node TGAGA. What is the population consensus supernode rooted at TGAGA?
+  // That depends on what choice on minimum people coverage and minimum supernode length you demand.
+  
+
+  dBNode* node = hash_table_find(element_get_key(seq_to_binary_kmer("TGAGA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT(node != NULL);
+
+
+  Sequence* popseq_obj = malloc(sizeof(Sequence));
+  if (popseq_obj==NULL)
+    {
+      printf("OOM alloc seq in test of pop consensus supernode");
+      exit(1);
+    }
+
+  popseq_obj->seq= malloc(sizeof(char)*40);
+  if (popseq_obj->seq==NULL)
+    {
+      printf("OOM alloc seq in test of pop consensus supernode");
+      exit(1);
+    }
+  popseq_obj->max=40;
+
+  //min covg 5, min length 6
+  db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj, node, 5, 6, hash_table);
+  CU_ASSERT_STRING_EQUAL(popseq_obj->seq, "");
+
+
+  hash_table_free(&hash_table);
 
 }

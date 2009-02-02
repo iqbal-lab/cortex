@@ -22,14 +22,12 @@ extern int NUMBER_OF_POPULATIONS;
 
 typedef char Edges;
 
-typedef enum{
-  none    = 0,
+typedef enum
+  {
+    none    = 0,
     visited = 1,
     pruned  = 2,
-    tmp_touched_previously_none = 3,
-    tmp_touched_previously_visited = 4,
-    tmp_touched_previously_pruned = 5,
-} NodeStatus;
+  } NodeStatus;
 
 
 //we will be dealing with two arrays of edges. One in an array of edges, one for each individual in  population
@@ -94,9 +92,6 @@ Orientation db_node_get_orientation(BinaryKmer, dBNode *, short kmer_size);
 //add an edge between nodes -- NB: it adds both edges: forward and reverse
 boolean db_node_add_edge(dBNode *, dBNode *, Orientation, Orientation, short kmer_size, EdgeArrayType edge_type, int edge_index); 
 
-//returns true if the node side defined by the orientation is a conflict 
-//or doesn't have any outgoing edge
-boolean db_node_is_supernode_end(dBNode *, Orientation, EdgeArrayType edge_type, int edge_index);
 
 //returns yes if the label defined by the nucleotide coresponds to an 
 //outgoing edge in the side defined by the orientation.   
@@ -122,5 +117,7 @@ void db_node_set_status_to_none(dBNode * node);
 //check if node doesn't have any edges in a given orientation
 boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayType edge_type, int edge_index);
 
+
+boolean db_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, EdgeArrayType type, int index);
 
 #endif /* ELEMENT_H_ */
