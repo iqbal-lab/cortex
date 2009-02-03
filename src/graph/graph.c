@@ -6,8 +6,13 @@
 
 int main(int argc, char **argv){
 
+<<<<<<< local
   FILE *fp_fnames;
   char filename[100];
+=======
+  FILE *fp_fnames,*fp_file;
+  char filename[300];
+>>>>>>> other
   int hash_key_bits;
   dBGraph * db_graph = NULL; 
   short kmer_size;
@@ -53,6 +58,9 @@ int main(int argc, char **argv){
   long long total_length = 0; //total sequence length
 
   //Go through all the files, loading data into the graph
+
+  int total_reallocs=0;
+
   while (!feof(fp_fnames)){
 
     //int count_bad_reads = 0;
@@ -62,12 +70,19 @@ int main(int argc, char **argv){
     int seq_length = 0;
     count_file++;
 
+<<<<<<< local
     total_length += load_fasta_data_from_filename_into_graph(filename, db_graph);
+=======
+    int reallocs=0;
+    total_length += load_fasta_data_into_graph_efficient(fp_file, db_graph, &reallocs);
+    total_reallocs +=reallocs;
+>>>>>>> other
 
     fprintf(stderr,"\n%i file name:%s seq:%i total seq:%qd\n\n",count_file,filename,seq_length, total_length);
     
   }
 
+  printf("Total number of reallocs is %d", total_reallocs);
   printf("print supernodes\n");
   hash_table_traverse(&print_supernode,db_graph);
 

@@ -40,16 +40,21 @@ boolean pqueue_apply_or_insert(Key key, void (*f)(Element*),PQueue *pqueue, shor
   if (! found){
     int current_index = pqueue->number_entries;
     pqueue->number_entries++;
-    pqueue->elements = realloc(pqueue->elements,(current_index+1) * sizeof(Element));
     
-    if (pqueue->elements == NULL){
+    Element * new_ptr;
+
+    new_ptr = realloc(pqueue->elements,(current_index+1) * sizeof(Element));
+    
+    if (new_ptr == NULL){
       puts("priority queue: cannot allocate memory");
-      exit(1);
+      exit(1);//so no need to worry about orphaned pointer at this stage.
     }
     
+    pqueue->elements = new_ptr;
+
     element_initialise(&element,key, kmer_size);
     
-    pqueue->elements[current_index] = element;
+    pqueue->elements[current_index] = element; //structure assignment
 
   }
   return found;
@@ -78,16 +83,22 @@ Element * pqueue_find_or_insert(Key key,boolean * found, PQueue * pqueue, short 
   
   int current_index = pqueue->number_entries;
   pqueue->number_entries++;
-  pqueue->elements = realloc(pqueue->elements,(current_index+1) * sizeof(Element));
   
-  if (pqueue->elements == NULL){
+  Element * new_ptr;
+
+  new_ptr = realloc(pqueue->elements,(current_index+1) * sizeof(Element));
+    
+  if (new_ptr == NULL){
     puts("priority queue: cannot allocate memory");
-    exit(1);
+    exit(1);//so no need to worry about orphaned pointer at this stage.
   }
   
+  pqueue->elements = new_ptr;
+
   element_initialise(&element,key, kmer_size);
 
-  pqueue->elements[current_index] = element;
+  pqueue->elements[current_index] = element; //structure assignment!
+  
 
   return &(pqueue->elements[i]);  
 }
@@ -104,6 +115,22 @@ Element * pqueue_find(Key key,PQueue * pqueue, short kmer_size){
   
   return NULL;
 }
+
+void pqueue_free(PQueue** pqueue){
+  
+  free((*pqueue)->elements);
+  
+  free(*pqueue);
+  *pqueue = NULL;
+  
+}
+
+void pqueue_free_elements(PQueue* pqueue){
+  
+  free(pqueue->elements);
+  pqueue->elements = NULL;  
+}
+
 
 
 

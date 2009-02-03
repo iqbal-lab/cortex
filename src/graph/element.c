@@ -6,9 +6,10 @@
 #include <stdlib.h>
 #include <global.h>
 #include <stdio.h>
+#include <binary_kmer.h>
 
-
-boolean element_is_key(Key key, Element e, short kmer_size){
+boolean element_is_key(Key key, Element e, short kmer_size)
+{
   return key == e.kmer;
 }
 

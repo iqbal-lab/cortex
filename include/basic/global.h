@@ -15,4 +15,5 @@ typedef signed char boolean;
 
 boolean DEBUG;
 
+
 #endif /* GLOBAL_H_ */

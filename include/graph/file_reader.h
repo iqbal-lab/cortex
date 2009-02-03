@@ -3,9 +3,12 @@
 
 #include <dB_graph.h>
 
-int load_fasta_data_from_filename_into_graph(char* filename, long long *count_kmers, char quality_cut_off, int max_read_length, dBGraph* db_graph);
+//these routines return the length of the read sequence.
+
+//for fasta
+int load_fasta_data_from_filename_into_graph(char* filename, long long *count_kmers, long long * bad_reads, int max_read_length, dBGraph* db_graph);
 
 //for fastq
-int load_fastq_data_from_filename_into_graph(char* filename, long long * count_kmers, char quality_cut_off, int max_read_length, dBGraph* db_graph);
+int load_fastq_data_from_filename_into_graph(char* filename, long long * count_kmers, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph);
 
 #endif /* FILE_READER_H_ */

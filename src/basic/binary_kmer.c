@@ -87,6 +87,8 @@ char binary_nucleotide_to_char(Nucleotide n)
 //The second argument - quality - is a string of qualities for the sequence, one byte per base.
 //quality cutoff argument defines the threshold for quality
 //return total number of kmers read
+//The third argument - length - is the length in bases of the sequence.
+//return total number of kmers read
 
 int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length, char quality_cut_off, short kmer_size, KmerSlidingWindowSet * windows, int max_windows, int max_kmers){  
 
@@ -121,8 +123,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
       first_kmer[j] = seq[i];
 
       if ((char_to_binary_nucleotide(seq[i]) == Undefined) || 
-	  (qualities != NULL ? qualities[i]< quality_cut_off : false)){
-
+	  (qualities[i]< quality_cut_off)){
 	j=0; //restart the first kmer 
 	
       }
@@ -161,7 +162,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 
 	Nucleotide current_base = char_to_binary_nucleotide(seq[i]);
 	if ((current_base == Undefined) ||
-	    (qualities != NULL ? qualities[i]< quality_cut_off : false)){
+	    (qualities[i]< quality_cut_off)){
 	  break;
 	}
 	//set the kmer to previous
@@ -189,6 +190,9 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
   return count_kmers;
 }
 
+
+//Mario - worth noting this does direct translation, and does not return the smaller of kmer and rev_comp(kmer)
+// answer: this is the correct behaviour, isn't it?
 
 BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
   int j;

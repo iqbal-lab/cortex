@@ -6,6 +6,13 @@
 #define ELEMENT_H_
 #include <binary_kmer.h>
 #include <global.h>
+#include <stdio.h>
+
+
+
+type garbage here. if this is accidentally being included when i build pop_graph = thenI will find out
+
+
 
 typedef struct{
 	BinaryKmer kmer;
@@ -16,10 +23,13 @@ typedef BinaryKmer Key;
 
 boolean element_smaller(Element,Element);
 
+boolean element_is_key(Key,Element,short kmer_size);
+
 Key element_get_key(BinaryKmer,short kmer_size);
 
 void element_initialise(Element *,Key, short kmer_size);
 
 void element_increment_count(Element*);
 
+void element_print(FILE * file, Element* e,short kmer_size, char * prefix);
 #endif /* ELEMENT_H_ */

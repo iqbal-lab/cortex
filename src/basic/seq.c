@@ -30,6 +30,11 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length){
     exit(1);
   }
 
+  if (seq->qual == NULL){
+    fputs("Dont give me a null pointer for seq->qual - alloc memory yourself and give me that\n",stderr);
+    exit(1);
+  }
+
   if (seq->name == NULL){
     fputs("Dont give me a null pointer for seq->name - alloc memory yourself and give me that\n",stderr);
     exit(1);
@@ -76,7 +81,8 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length){
 	    exit(1);
 	  }
 	  
-	  seq->seq[j] = line[i];
+	  seq->seq[j]  = line[i];
+	  seq->qual[j] = '\0';
 	  j++;
 	  
 	  if (j==max_read_length){
@@ -94,7 +100,8 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length){
       exit(1);
     }
   }
-  seq->seq[j] = '\0';
+  seq->seq[j]  = '\0';
+  seq->qual[j] = '\0';
   return j;
 }
 
@@ -227,13 +234,15 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
     }
   }
   seq->seq[j]   = '\0';
-  seq->qual[q]  = '\0'; //this is not technical necessary but simplies many checks downstream
+  seq->qual[q]  = '\0'; //this is not technical necessary but simplyfies many checks downstream
   return j;
 }
 
 void free_sequence(Sequence ** sequence){
   free((*sequence)->seq);
-  free((*sequence)->qual);
+  if ((*sequence)->qual != NULL){
+    free((*sequence)->qual);
+  }
   free(*sequence);
   *sequence = NULL;
 }

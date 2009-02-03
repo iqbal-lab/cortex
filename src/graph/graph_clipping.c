@@ -8,13 +8,15 @@
 int main(int argc, char **argv){
 
   FILE *fp_fnames;
-  char filename[100];
+  char filename[1000];
   int hash_key_bits;
   dBGraph * db_graph = NULL; 
   short kmer_size;
   int clip_limit;
+  int fastq; //if 0 entry is fastq otherwise is quality cut-off
   long long kmers_clipped = 0;
-  long long count_kmers = 0;
+  long long count_kmers   = 0;
+  long long bad_reads     = 0;
 
   FILE * fout;
   long count=0;
@@ -48,13 +50,17 @@ int main(int argc, char **argv){
 
   //command line arguments 
   fp_fnames= fopen(argv[1], "r");    //open file of file names
-  kmer_size        = atoi(argv[2]);  //global variable defined in element.h
- 
+  kmer_size        = atoi(argv[2]); 
   hash_key_bits    = atoi(argv[3]); //number of buckets: 2^hash_key_bits
   clip_limit       = atoi(argv[4]);
-  DEBUG            = atoi(argv[5]);
+  fastq            = atoi(argv[5]);
+  DEBUG            = atoi(argv[6]);
+  
 
   fprintf(stderr,"Kmer size: %d hash_table_size (%d bits): %d\n",kmer_size,hash_key_bits,1 << hash_key_bits);
+  if (fastq>0){
+    fprintf(stderr,"quality cut-off: %i\n",fastq);
+  }
 
   //Create the de Bruijn graph/hash table
   db_graph = hash_table_new(1 << hash_key_bits,kmer_size);
@@ -73,19 +79,37 @@ int main(int argc, char **argv){
     int seq_length = 0;
     count_file++;
 
-    total_length += load_fasta_data_from_filename_into_graph(filename, &count_kmers,0, 5000, db_graph);
+    if (fastq>0){
+      seq_length += load_fastq_data_from_filename_into_graph(filename, &count_kmers, &bad_reads, fastq, 5000, db_graph);
+    }
+    else{
+      seq_length += load_fasta_data_from_filename_into_graph(filename, &count_kmers, &bad_reads, 5000, db_graph);
+    }
 
-    fprintf(stderr,"\n%i kmers: %qd file name:%s seq:%i total seq:%qd\n\n",count_file,count_kmers,filename,seq_length, total_length);
+    total_length += seq_length;
     
+    fprintf(stderr,"\n%i kmers: %qd file name:%s bad reads: %qd seq:%i total seq:%qd\n\n",count_file,count_kmers,filename,bad_reads,seq_length, total_length);
+
+    //print mem status
+    FILE* fmem=fopen("/proc/self/status", "r");
+    char line[500];
+    while (fgets(line,500,fmem) !=NULL){
+      if (line[0] == 'V' && line[1] == 'm'){
+	fprintf(stderr,"%s",line);
+      }
+    }
+    fclose(fmem);
+    fprintf(stderr,"************\n");
+  }  
+    
+  if (clip_limit>0){
+    printf("clip tips\n");
+    hash_table_traverse(&tip_clipping,db_graph);
+    printf("\nkmers clipped %qd\n\n",kmers_clipped);
   }
-
-  printf("clip tips\n");
-  hash_table_traverse(&tip_clipping,db_graph);
-
-  printf("\nkmers clipped %qd\n\n",kmers_clipped);
-
+  
   printf("print supernodes\n");
   hash_table_traverse(&print_supernode,db_graph);
-
+  
   return 1;
 }

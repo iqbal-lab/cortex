@@ -11,34 +11,36 @@
 #include <seq.h>
 #include <file_reader.h>
 
-int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, char qualiy_cut_off, int max_read_length, dBGraph * db_graph);
+int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char qualiy_cut_off, int max_read_length, dBGraph * db_graph);
 
-int load_fasta_data_from_filename_into_graph(char* filename, long long * count_kmers, char quality_cut_off, int max_read_length, dBGraph* db_graph)
+
+int load_fasta_data_from_filename_into_graph(char* filename, long long * count_kmers, long long * bad_reads, int max_read_length, dBGraph* db_graph)
 {
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
     printf("cannot open file:%s\n",filename);
-    exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
+    exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  return load_seq_data_into_graph(fp,&read_sequence_from_fasta, count_kmers, quality_cut_off, max_read_length, db_graph);
+  return load_seq_data_into_graph(fp,&read_sequence_from_fasta, count_kmers,bad_reads,  0 , max_read_length, db_graph);
+}
+
+int load_fastq_data_from_filename_into_graph(char* filename, long long * count_kmers, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph)
+{
+  FILE* fp = fopen(filename, "r");
+  if (fp == NULL){
+    printf("cannot open file:%s\n",filename);
+    exit(1); //TODO - prefer to print warning and skip file and return an error code?
+  }
+
+  return load_seq_data_into_graph(fp,&read_sequence_from_fastq, count_kmers, bad_reads, quality_cut_off, max_read_length, db_graph);
 }
 
 
-/* int load_fastq_data_from_filename_into_graph(char* filename, long long * count_kmers, char quality_cut_off, int max_read_length, dBGraph* db_graph) */
-/* { */
-/*   FILE* fp = fopen(filename, "r"); */
-/*   if (fp == NULL){ */
-/*     printf("cannot open file:%s\n",filename); */
-/*     exit(1); //TODO - prfer to print warning and skip file and reutnr an error code? */
-/*   } */
-
-/*   return load_seq_data_into_graph(fp,&read_sequence_from_fastq, count_kmers, quality_cut_off, max_read_length, db_graph); */
-/* } */
 
 
 //returns length of sequence loaded
-int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, char quality_cut_off, int max_read_length, dBGraph * db_graph){
+int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char quality_cut_off, int max_read_length, dBGraph * db_graph){
 
   //----------------------------------
   // preallocate the memory used to read the sequences
@@ -61,6 +63,12 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
     fputs("Out of memory trying to allocate string\n",stderr);
     exit(1);
   }
+
+  seq->qual  = malloc(sizeof(char) * max_read_length);
+  if (seq->qual == NULL){
+    fputs("Out of memory trying to allocate string\n",stderr);
+    exit(1);
+  }
   //--------------
 
   char kmer_seq[db_graph->kmer_size];
@@ -69,7 +77,7 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
   short kmer_size = db_graph->kmer_size;
 
   //max_read_length/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
-  int max_windows = (max_read_length/(kmer_size+1));
+  int max_windows = max_read_length/(kmer_size+1);
  
   //number of possible kmers in a 'perfect' read
   int max_kmers   = max_read_length-kmer_size+1;
@@ -109,23 +117,21 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
   }      
   //----------------------------------
 
+  int entry_length;
 
-  while (file_reader(fp,seq,max_read_length)){
+  while (entry_length = file_reader(fp,seq,max_read_length)){
 
     if (DEBUG){
       printf ("\nsequence %s\n",seq->seq);
     }
     
     int i,j;
-    seq_length += seq->length;
+    seq_length += entry_length;
     
-    int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,seq->length,quality_cut_off,db_graph->kmer_size,windows,max_windows, max_kmers);
-
-    free_sequence(&seq);
+    int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,entry_length,quality_cut_off,db_graph->kmer_size,windows,max_windows, max_kmers);
     
     if (nkmers == 0) {
-      puts("file_reader: problem when reading kmers");
-      exit(1);
+      (*bad_reads)++;
     }
     else {
       Element * current_node  = NULL;
@@ -163,10 +169,11 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
 	  
 	}
       }
-      binary_kmer_free_kmers_set(&windows);
+     
     }
   }
-  
+  free_sequence(&seq);
+  binary_kmer_free_kmers_set(&windows);
   return seq_length;    
 }
 

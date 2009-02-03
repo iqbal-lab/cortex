@@ -6,6 +6,7 @@
   The de Bruijn based routines are prefixed with db_node
 */
 
+
 #ifndef ELEMENT_H_
 #define ELEMENT_H_
 
