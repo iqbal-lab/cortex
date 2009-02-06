@@ -45,34 +45,14 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
   //----------------------------------
   // preallocate the memory used to read the sequences
   //----------------------------------
-
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
     fputs("Out of memory trying to allocate Sequence\n",stderr);
     exit(1);
   }
-
-  seq->name = malloc(sizeof(char) * LINE_MAX);
-  if (seq->name == NULL){
-    fputs("Out of memory trying to allocate string\n",stderr);
-    exit(1);
-  }
-
-  seq->seq  = malloc(sizeof(char) * max_read_length);
-  if (seq->seq == NULL){
-    fputs("Out of memory trying to allocate string\n",stderr);
-    exit(1);
-  }
-
-  seq->qual  = malloc(sizeof(char) * max_read_length);
-  if (seq->qual == NULL){
-    fputs("Out of memory trying to allocate string\n",stderr);
-    exit(1);
-  }
-  //--------------
-
-  char kmer_seq[db_graph->kmer_size];
-
+  alloc_sequence(seq,max_read_length,LINE_MAX);
+  
+  
   int seq_length=0;
   short kmer_size = db_graph->kmer_size;
 
@@ -95,28 +75,10 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
   if (windows == NULL){
     fputs("Out of memory trying to allocate a KmerArraySet",stderr);
     exit(1);
-  } 
+  }  
+  //allocate memory for the sliding windows 
+  binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
   
-  //allocate memory for the sliding windows         
-  windows->window = malloc(sizeof(KmerSlidingWindow) * max_windows);       
-  if (windows->window== NULL){
-    fputs("Out of memory trying to allocate an array of KmerSlidingWindow",stderr);
-    exit(1);
-  }
-  
-  //allocate memory for every every sliding window
-  int w;
-  for(w=0;w<max_windows;w++){
-    KmerSlidingWindow * current_window =&(windows->window[w]);
-    
-    current_window->kmer = malloc(sizeof(BinaryKmer) * max_kmers);
-    if (current_window->kmer == NULL){
-      fputs("binary_kmer: Out of memory trying to allocate an array of BinaryKmer",stderr);
-      exit(1);
-    }      
-  }      
-  //----------------------------------
-
   int entry_length;
 
   while (entry_length = file_reader(fp,seq,max_read_length)){
@@ -152,6 +114,7 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
 	  current_orientation = db_node_get_orientation(current_window->kmer[j],current_node, db_graph->kmer_size);
 	  
 	  if (DEBUG){
+	    char kmer_seq[db_graph->kmer_size];
 	    printf("kmer %i:  %s\n",i,binary_kmer_to_seq(current_window->kmer[j],db_graph->kmer_size,kmer_seq));
 	  }
 	  

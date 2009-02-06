@@ -238,11 +238,35 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
   return j;
 }
 
-void free_sequence(Sequence ** sequence){
-  free((*sequence)->seq);
-  if ((*sequence)->qual != NULL){
-    free((*sequence)->qual);
+
+void alloc_sequence(Sequence * seq, int max_read_length, int max_name_length){
+ 
+ 
+  if (seq == NULL){							
+    fputs("Cannot pass a null seq to sequence_alloc\n",stderr);	
+    exit(1);								
   }
+  seq->name = malloc(sizeof(char) * max_name_length);
+  if (seq->name == NULL){
+    fputs("Out of memory trying to allocate string\n",stderr);
+    exit(1);
+  }
+  seq->seq  = malloc(sizeof(char) * (max_read_length+1));
+  if (seq->seq == NULL){
+    fputs("Out of memory trying to allocate string\n",stderr);
+    exit(1);
+  }
+  seq->qual  = malloc(sizeof(char) * (max_read_length+1));
+  if (seq->qual == NULL){
+    fputs("Out of memory trying to allocate string\n",stderr);
+    exit(1);
+  }
+}
+
+void free_sequence(Sequence ** sequence){
+  free((*sequence)->name);
+  free((*sequence)->seq);
+  free((*sequence)->qual);
   free(*sequence);
   *sequence = NULL;
 }

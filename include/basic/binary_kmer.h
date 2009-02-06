@@ -28,6 +28,7 @@ typedef struct{
 //a set of KmerArrays
 typedef struct{
 	int nwindows;
+	int max_nwindows;
 	KmerSlidingWindow * window; 
 } KmerSlidingWindowSet;
 
@@ -53,6 +54,7 @@ BinaryKmer binary_kmer_add_nucleotide_shift(BinaryKmer kmer,Nucleotide nucleotid
 
 char reverse_char_nucleotide(char c);
 
+void binary_kmer_alloc_kmers_set(KmerSlidingWindowSet * windows, int max_windows, int max_kmers);
 void binary_kmer_free_kmers(KmerSlidingWindow * *);
 void binary_kmer_free_kmers_set(KmerSlidingWindowSet * *);
 #endif /* BINARY_KMER_H_ */

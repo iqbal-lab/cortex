@@ -292,23 +292,53 @@ BinaryKmer binary_kmer_add_nucleotide_shift(BinaryKmer kmer,Nucleotide nucleotid
 }
 
 
+
+void binary_kmer_alloc_kmers_set(KmerSlidingWindowSet * windows, int max_windows, int max_kmers){
+
+  if (windows == NULL){
+    fputs("Cannot pass a NULL window to alloc",stderr);
+    exit(1);
+  } 
+  
+  //allocate memory for the sliding windows         
+  windows->max_nwindows = max_windows;
+
+  windows->window = malloc(sizeof(KmerSlidingWindow) * max_windows);       
+  if (windows->window== NULL){
+    fputs("Out of memory trying to allocate an array of KmerSlidingWindow",stderr);
+    exit(1);
+  }
+  windows->nwindows = 0;
+  
+  //allocate memory for every every sliding window
+  int w;
+  for(w=0;w<max_windows;w++){
+    windows->window[w].nkmers=0;
+    windows->window[w].kmer = malloc(sizeof(BinaryKmer) * max_kmers);
+    if (windows->window[w].kmer == NULL){
+      fputs("binary_kmer: Out of memory trying to allocate an array of BinaryKmer",stderr);
+      exit(1);
+    }      
+  }      
+  
+}
+
 void binary_kmer_free_kmers(KmerSlidingWindow * * kmers)
 {
-	free((*kmers)->kmer);
-	free(*kmers);
-	*kmers = NULL;
+
+  free((*kmers)->kmer);
+  free(*kmers); 
+  *kmers = NULL;
 }
 
 void binary_kmer_free_kmers_set(KmerSlidingWindowSet * * kmers_set)
 {
-  int i;
-  for(i=0;i<(*kmers_set)->nwindows;i++){
-    KmerSlidingWindow * window = &((*kmers_set)->window[i]);
-    
-    binary_kmer_free_kmers(&window);
-    
+  int w;
+  for(w=0;w<(*kmers_set)->max_nwindows;w++){
+    free((*kmers_set)->window[w].kmer);
   }
-
+  
+  free((*kmers_set)->window);
   free(*kmers_set);
   *kmers_set = NULL;
 }

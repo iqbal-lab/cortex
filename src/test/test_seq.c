@@ -8,35 +8,19 @@
 #include <seq.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "test_seq.h"
+#include <limits.h>
+#include <test_seq.h>
 
 void test_read_sequence_from_fasta(){
 
+  Sequence * seq = malloc(sizeof(Sequence));
+ 
+  if (seq == NULL){							
+    fputs("Out of memory trying to allocate Sequence\n",stderr);	
+    exit(1);								
+  }
   //pre-allocate space where to read the sequences
-  Sequence* seq = malloc(sizeof(Sequence));
-  if (seq==NULL){
-    fputs("Out of memory trying to allocate a Sequence",stderr);
-      exit(1);
-  } 
-  
-  seq->name = malloc(sizeof(char)*256);
-  if (seq->name==NULL){
-    fputs("Out of memory trying to allocate seq->name",stderr);
-    exit(1);
-  } 
-  
-  seq->seq  = malloc(sizeof(char)*1000); 
-  if (seq->seq==NULL){
-    fputs("Out of memory trying to allocate seq->seq",stderr);
-    exit(1);
-  } 
-
-  seq->qual =  malloc(sizeof(char)*1000); 
-
-  if (seq->qual==NULL){
-    fputs("Out of memory trying to allocate seq->seq",stderr);
-    exit(1);
-  } 
+  alloc_sequence(seq,200,LINE_MAX);
 
   int length_seq;
   FILE* fp1 = fopen("../data/test/basic/one_entry.fasta", "r");
@@ -102,24 +86,7 @@ void test_read_sequence_from_fastq(){
       exit(1);
   } 
   
-  seq->name = malloc(sizeof(char)*256);
-  if (seq->name==NULL){
-    fputs("Out of memory trying to allocate seq->name",stderr);
-    exit(1);
-  } 
-  
-  seq->seq  = malloc(sizeof(char)*1000); 
-  if (seq->seq==NULL){
-    fputs("Out of memory trying to allocate seq->seq",stderr);
-    exit(1);
-  } 
-  
-
-  seq->qual  = malloc(sizeof(char)*1000); 
-  if (seq->qual==NULL){
-    fputs("Out of memory trying to allocate seq->qual",stderr);
-    exit(1);
-  } 
+  alloc_sequence(seq,200,LINE_MAX);
   
   int length_seq;
   FILE* fp1 = fopen("../data/test/basic/one_entry.fastq", "r");
