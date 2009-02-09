@@ -28,6 +28,7 @@ Element * pqueue_find_or_insert(Key key,PQueue *pqueue, short kmer_size);
 
 void pqueue_traverse(void (*f)(Element *),PQueue *);
 
+
 Element * pqueue_find(Key,PQueue *, short kmer_size);
 
 //void pqueue_free(PQueue** pqueue);

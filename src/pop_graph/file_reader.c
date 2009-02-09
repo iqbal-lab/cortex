@@ -33,18 +33,18 @@ int load_population_as_fasta(char* filename, dBGraph* db_graph)
 
 
       people_so_far++;
-      //      if (people_so_far>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
-      //{
-      //  printf("This filelist contains too many people for a single population, %d", people_so_far);
-      //  exit(1);
-      //}
+      if (people_so_far>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      {
+        printf("This filelist contains too many people for a single population, %d", people_so_far);
+	exit(1);
+      }
 
       total_seq_loaded = total_seq_loaded + load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, db_graph, people_so_far-1);
 
       //printf("Just loaded person number %d, and now have cumulative total of  %d bases\n", people_so_far-1, total_seq_loaded);
     }
 
-
+  //printf("Finished loading population, witht total seq loaded %d\n",total_seq_loaded); 
   return total_seq_loaded;
   
 }

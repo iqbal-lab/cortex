@@ -117,7 +117,14 @@ int  main()
      CU_cleanup_registry();
      return CU_get_error();
     }
+if (NULL == CU_add_test(pPopGraphSuite, "Check that correctly get stats on how many kmers are shared by 1,2,3,... people in a population", test_getting_stats_of_how_many_indivduals_share_a_node))
+    {
+     CU_cleanup_registry();
+     return CU_get_error();
+    }
 
+
+    
 
 
  

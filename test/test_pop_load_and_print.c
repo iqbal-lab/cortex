@@ -127,18 +127,23 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
 void test_take_four_people_each_with_one_read_and_find_variants()
 {
 
+  printf("Z1");
   int kmer_size = 5;
   int number_of_buckets=7;
   HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  printf("Z2");
 
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
+  printf("Z3");
 
   int seq_loaded = load_population_as_fasta("../test/data/test_pop_load_and_print/four_indiv_simple/four_individuals_simple.txt", hash_table);
-  //printf("Number of bases loaded is %d",seq_loaded);
+  printf("Z4");
+
+  printf("take 4 people test Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 73);
 
 

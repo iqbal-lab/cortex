@@ -282,6 +282,16 @@ void db_graph_traverse_specific_person_or_pop(void (*f)(HashTable*, Element *, E
 
 }
 
+void hash_table_traverse_2(void (*f)(HashTable*, Element *, int**, int),HashTable * hash_table, int** array, int num_people )
+{
+  int i;
+  for(i=0;i<hash_table->number_buckets;i++){
+    pqueue_traverse_2(f,&(hash_table->table[i]), hash_table, array, num_people);
+  }
+
+}
+
+
 //will print only nodes for specific person/population
 
 // ******NOTE****** if you want to go on to print for other people, you need to set status to none for all the nodes again after going thrrough the whole
@@ -1020,3 +1030,57 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
     }
 }
 
+
+
+void print_node_to_file_according_to_how_many_people_share_it(HashTable* db_graph, dBNode * node, FILE** list_of_file_ptrs)
+{
+  int i;
+  
+  int number_of_individuals_with_this_node=0;
+
+  for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    {
+      if (node->individual_edges[i] == 0)
+	{
+	}
+      else
+	{
+	  number_of_individuals_with_this_node++;
+	}
+    }
+
+  char* kmer_as_string = binary_kmer_to_seq(node->kmer, db_graph->kmer_size);
+  fprintf(list_of_file_ptrs[number_of_individuals_with_this_node], "%s\n", kmer_as_string);
+  free(kmer_as_string);
+}
+
+//array_of_counts totals up the number of kmers that are shared by 0,1,2,... individuals. Obviously the first element should be zero (no element
+//in the graph is shared by no people) - use this as a crude check.
+//number of people loaded is a param
+void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTable* db_graph, dBNode * node, int** array_of_counts, int number_of_people)
+{
+
+  int i;
+
+  int number_of_individuals_with_this_node=0;
+
+  for (i=0; i<number_of_people; i++)
+    {
+      if (node->individual_edges[i] == 0)
+	{
+        }
+      else
+        {
+          number_of_individuals_with_this_node++;
+        }
+    }
+
+  //char* kmer_as_string = binary_kmer_to_seq(node->kmer, db_graph->kmer_size);
+  //printf("There are %d peopke with node %s\n", number_of_individuals_with_this_node,kmer_as_string);
+  //free(kmer_as_string);
+
+  if (number_of_individuals_with_this_node>0)
+    {
+      (*(array_of_counts[number_of_individuals_with_this_node]))++;
+    }
+}

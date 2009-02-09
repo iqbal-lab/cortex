@@ -28,6 +28,9 @@ void print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * no
 
 // functions applied to a person/population's graph
 void db_graph_traverse_specific_person_or_pop(void (*f)(HashTable*, Element *, EdgeArrayType, int, boolean, char**, int*),HashTable * hash_table, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test);
+
+void hash_table_traverse_2(void (*f)(HashTable*, Element *, int**, int),HashTable *, int**, int);
+
 void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test );
 
 void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population(dBGraph* hash_table, EdgeArrayType type, int index);
@@ -64,5 +67,8 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence* pop_consensus_supernode, dBNode* node, int min_covg_for_pop_supernode, int min_length_for_pop_supernode, dBGraph* db_graph);
 
 
+
+void print_node_to_file_according_to_how_many_people_share_it(HashTable* db_graph, dBNode * node, FILE** list_of_file_ptrs);
+void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTable* db_graph, dBNode * node, int** array_of_counts, int number_of_people);
 
 #endif

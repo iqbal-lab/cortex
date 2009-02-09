@@ -9,3 +9,12 @@ void pqueue_traverse_specific_person_or_pop(void (*f)(HashTable*, Element *, Edg
       f(hash_table, &(pqueue->elements[i]), type, index, is_for_testing, for_test, index_for_test);
     }
 }
+
+void pqueue_traverse_2(void (*f)(HashTable*, Element *, int**, int), PQueue * pqueue, HashTable * hash_table, int** array, int num_people)
+{
+  int i;
+  for(i=0;i<pqueue->number_entries;i++){
+    f(hash_table, &(pqueue->elements[i]), array, num_people);
+  }
+
+}
