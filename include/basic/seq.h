@@ -2,7 +2,7 @@
 #define STDSEQ_H_
 
 #include <stdio.h>
-
+#include <global.h>
 
 typedef struct
 {
