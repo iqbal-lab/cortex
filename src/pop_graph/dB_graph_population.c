@@ -1062,6 +1062,11 @@ void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTab
 
   int i;
 
+  if (number_of_people>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+    {
+      printf("Cannot call find_out_how_many_individuals_share_this_node_and_add_to_statistics with number_of_people = %d, as it's bigger than the NUMBER per pop, %d", number_of_people,NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+      exit(1);
+    }
   int number_of_individuals_with_this_node=0;
 
   for (i=0; i<number_of_people; i++)
@@ -1075,9 +1080,9 @@ void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTab
         }
     }
 
-  //char* kmer_as_string = binary_kmer_to_seq(node->kmer, db_graph->kmer_size);
-  //printf("There are %d peopke with node %s\n", number_of_individuals_with_this_node,kmer_as_string);
-  //free(kmer_as_string);
+  char* kmer_as_string = binary_kmer_to_seq(node->kmer, db_graph->kmer_size);
+  printf("There are %d people with node %s\n", number_of_individuals_with_this_node,kmer_as_string);
+  free(kmer_as_string);
 
   if (number_of_individuals_with_this_node>0)
     {

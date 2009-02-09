@@ -47,16 +47,35 @@ int main(int argc, char **argv){
     
   }
 
-  printf("print supernodes for each person in population 1\n");
-  printf("print supernodes for person 1 population 1\n");
 
   //remember last two arguments are only used for unit tests, so here they are NULL, and 0.
-  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop,db_graph,individual_edge_array,0, false,NULL,0);
-  db_graph_set_all_visited_nodes_to_status_none(db_graph);
+  //db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop,db_graph,individual_edge_array,0, false,NULL,0);
+  //db_graph_set_all_visited_nodes_to_status_none(db_graph);
 
-  printf("print supernodes for person 2 population 1\n");
-  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop,db_graph,individual_edge_array,1, false, NULL,0);
+  //printf("print supernodes for person 2 population 1\n");
+  //db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop,db_graph,individual_edge_array,1, false, NULL,0);
 
+
+  int NUM_PEOPLE=2;
+  int stats[NUM_PEOPLE+1];
+  int* array[NUM_PEOPLE+1];
+
+  int j;
+  for (j=0; j<=NUM_PEOPLE; j++)
+    {
+      stats[j]=0;
+      array[j]=&stats[j];
+    }
+
+  hash_table_traverse_2(&find_out_how_many_individuals_share_this_node_and_add_to_statistics , db_graph, array, NUM_PEOPLE);
+
+  printf("Results are:\n");
+  for (j=0; j<=NUM_PEOPLE; j++)
+    {
+      printf("Number of kmers shared by %d people is %d\n", j, stats[j]);
+    }
+
+  
 
   return 1;
 }
