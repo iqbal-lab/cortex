@@ -516,32 +516,32 @@ void test_get_population_consensus_supernode()
   popseq_obj->max=40;
 
 
-  printf("*********\n\n***********\n\n Start of next test\n\n");
+  //printf("*********\n\n***********\n\n Start of next test\n\n");
   //min covg 5, min length 6
   db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj, node, 5, 6, hash_table);
-  printf("WE GET BACK %s\n", popseq_obj->seq);
+  //printf("WE GET BACK %s\n", popseq_obj->seq);
   CU_ASSERT_STRING_EQUAL(popseq_obj->seq, "");
 
-  printf("*********\n\n***********\n\n Start of next test\n\n");
+  //printf("*********\n\n***********\n\n Start of next test\n\n");
 
   //min covg 5, min length 5
   db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj, node, 5, 5, hash_table);
-  printf("Answer is %s and expect TGAGA or TCTCA\n", popseq_obj->seq); 
+  //printf("Answer is %s and expect TGAGA or TCTCA\n", popseq_obj->seq); 
   CU_ASSERT( !strcmp(popseq_obj->seq, "TGAGA") || !strcmp(popseq_obj->seq, "TCTCA") );
 
 
-  printf("*********\n\n***********\n\n Start of next test\n\n");
+  //  printf("*********\n\n***********\n\n Start of next test\n\n");
 
   //min covg 4, min length 6
   db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj, node, 4, 6, hash_table);
-  printf("Answer is %s and expect TAACTAGGA or TCCTAGTTA\n", popseq_obj->seq); 
+  //printf("Answer is %s and expect TAACTAGGA or TCCTAGTTA\n", popseq_obj->seq); 
   CU_ASSERT( !strcmp(popseq_obj->seq, "TAACTAGGA") || !strcmp(popseq_obj->seq, "TCCTAGTTA") );
 
-  printf("*********\n\n***********\n\n Start of next test\n\n");
+  //  printf("*********\n\n***********\n\n Start of next test\n\n");
 
   //min covg 2, min length 14
   db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj, node, 2, 14, hash_table);
-  printf("Answer is %s and expect CTGGCATCCTAGTTATCGTTAGAATCTCACC  or GGTGAGATTCTAACGATAACTAGGATGCCAG \n", popseq_obj->seq); 
+  //printf("Answer is %s and expect CTGGCATCCTAGTTATCGTTAGAATCTCACC  or GGTGAGATTCTAACGATAACTAGGATGCCAG \n", popseq_obj->seq); 
   CU_ASSERT( !strcmp(popseq_obj->seq, "CTGGCATCCTAGTTATCGTTAGAATCTCACC") || !strcmp(popseq_obj->seq, "GGTGAGATTCTAACGATAACTAGGATGCCAG") );
 
 
