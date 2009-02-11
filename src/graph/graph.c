@@ -6,8 +6,13 @@
 
 int main(int argc, char **argv){
 
+<<<<<<< local
+  FILE *fp_fnames;
+  char filename[100];
+=======
   FILE *fp_fnames,*fp_file;
   char filename[300];
+>>>>>>> other
   int hash_key_bits;
   dBGraph * db_graph = NULL; 
   short kmer_size;
@@ -61,18 +66,17 @@ int main(int argc, char **argv){
     //int count_bad_reads = 0;
     fscanf(fp_fnames, "%s\n", filename);
     
-    fp_file = fopen(filename, "r");
-    if (fp_file == NULL){
-      printf("cannot open file:%s\n",filename);
-      exit(1);
-    }
     
     int seq_length = 0;
     count_file++;
 
+<<<<<<< local
+    total_length += load_fasta_data_from_filename_into_graph(filename, db_graph);
+=======
     int reallocs=0;
     total_length += load_fasta_data_into_graph_efficient(fp_file, db_graph, &reallocs);
     total_reallocs +=reallocs;
+>>>>>>> other
 
     fprintf(stdout,"\n\n************\n\n%i file name:%s seq:%i total seq:%qd\n\n",count_file,filename,seq_length, total_length);
 

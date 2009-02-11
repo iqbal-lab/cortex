@@ -41,6 +41,7 @@ dBNode * db_graph_get_next_node(dBNode * current_node, Orientation current_orien
 
 void db_graph_remove_path(dBNode * node, Orientation orientation, int length, dBGraph * db_graph){
 
+  char seq[db_graph->kmer_size];
   Nucleotide nucleotide, rev_nucleotide;
   dBNode * next_node;
   Orientation next_orientation;
@@ -63,7 +64,7 @@ void db_graph_remove_path(dBNode * node, Orientation orientation, int length, dB
       
 
       if(next_node == NULL){
-	printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
+	printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
 	exit(1);
       }	           
       
@@ -75,7 +76,7 @@ void db_graph_remove_path(dBNode * node, Orientation orientation, int length, dB
 
     }
     else{
-      printf("dB_graph: assume unique path kmer:%s\n",binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
+      printf("dB_graph: assume unique path kmer:%s\n",binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
       exit(1);
     }
     
@@ -88,6 +89,7 @@ int db_graph_detect_tip(dBNode * node, Orientation orientation, int limit,dBGrap
 
   Nucleotide nucleotide, reverse_nucleotide;
   int length = 0;
+  char seq[db_graph->kmer_size];
   
   //starting in a blunt end also prevents full loops 
   if (db_node_is_blunt_end(node, opposite_orientation(orientation))){
@@ -101,7 +103,7 @@ int db_graph_detect_tip(dBNode * node, Orientation orientation, int limit,dBGrap
        next_node = db_graph_get_next_node(node,orientation,&next_orientation,nucleotide,&reverse_nucleotide,db_graph);
        
        if(next_node == NULL){
-	 printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
+	 printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
 	 exit(1);
        }	           
        
@@ -136,24 +138,87 @@ int db_graph_detect_tip(dBNode * node, Orientation orientation, int limit,dBGrap
 }
 
 
+int db_graph_clip_tip_with_orientation(dBNode * node, Orientation orientation, int limit,dBGraph * db_graph){ 
 
-char * get_seq_from_elem_to_end_of_supernode(dBNode * node, Orientation orientation, dBGraph * db_graph, boolean * is_cycle){
+  Nucleotide nucleotide, reverse_nucleotide;
+  int length = 0;
+  int i;
+  dBNode * nodes[limit];
+  Orientation next_orientation;
+  dBNode * next_node;
+  char seq[db_graph->kmer_size];
+  
+  //starting in a blunt end also prevents full loops 
+  if (db_node_is_blunt_end(node, opposite_orientation(orientation))){
+    
+    boolean join_main_trunk = false;
+
+     while(db_node_has_precisely_one_edge(node,orientation,&nucleotide)) {
+  
+       nodes[length] = node;
+
+       next_node = db_graph_get_next_node(node,orientation,&next_orientation,nucleotide,&reverse_nucleotide,db_graph);
+       
+       if(next_node == NULL){
+	 printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
+	 exit(1);
+       }	           
+       
+       length ++;
+
+       
+       if (length>limit){
+	 break;
+       }
+
+       //want to stop when we join another trunk
+       if (!db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide)){
+	 join_main_trunk = true;
+	 break;
+       }
+
+       //keep track of node
+       
+
+       node = next_node;
+       orientation = next_orientation;      
+    
+     }
+  
+  
+     if (! join_main_trunk){
+       length = 0;
+     }
+     else{//clear edges and mark nodes as pruned
+       for(i=0;i<length;i++){
+
+	 if (DEBUG){
+	   printf("CLIPPING node: %s\n",binary_kmer_to_seq(element_get_kmer(nodes[i]),db_graph->kmer_size,seq));
+	 }
+
+	 db_node_set_status(nodes[i],pruned);
+	 db_node_reset_edges(nodes[i]);
+       }
+
+       if (DEBUG){
+	printf("RESET %c BACK\n",binary_nucleotide_to_char(reverse_nucleotide));
+      }
+       db_node_reset_edge(next_node,opposite_orientation(next_orientation),reverse_nucleotide);
+     }
+
+  }
+
+  return length;
+}
+
+char * get_seq_from_elem_to_end_of_supernode(dBNode * node, Orientation orientation, dBGraph * db_graph, boolean * is_cycle,char * seq, int max_length){
   Nucleotide nucleotide1, nucleotide2, rev_nucleotide;
-  char * seq = NULL;
-  int max = 1000;
+
   Orientation original_orientation, next_orientation;
   dBNode * original_node;
   dBNode * next_node;
   int seq_length = 0;
-  
-  
-
-  seq = malloc(1000*sizeof(char)); 
-
-  if (seq == NULL){
-    puts("dB_graph: cannot assign memory for sequence\n");
-    exit(1);
-  }
+  char tmp_seq[db_graph->kmer_size];
 
   original_node = node;
   original_orientation = orientation; 
@@ -167,27 +232,21 @@ char * get_seq_from_elem_to_end_of_supernode(dBNode * node, Orientation orientat
   
   while(db_node_has_precisely_one_edge(node,orientation,&nucleotide1)) {
  
-    if ((seq_length+1)>max){
-      max+=1000;
-      seq = (char*)realloc(seq, sizeof(char) * max);
-    }
-
-    if (seq == NULL){
-      printf("dB_graph: cannot assign memory\n");
+    if ((seq_length+1)> max_length){
+      puts ("cannot allocate a sequence longer than 10000\n");
       exit(1);
     }
 
-   
     next_node =  db_graph_get_next_node(node,orientation,&next_orientation,nucleotide1,&rev_nucleotide,db_graph);
     
     if(next_node == NULL){
-      printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
+      printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,tmp_seq));
       exit(1);
     }	         
     
     if (DEBUG){
       printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide1),
-	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size) :  binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size));
+	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size,tmp_seq) :  binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size,tmp_seq));
 	     
 
     }
@@ -228,17 +287,18 @@ char * get_seq_from_elem_to_end_of_supernode(dBNode * node, Orientation orientat
 
 void db_graph_print_supernode(FILE * file, dBNode * node, dBGraph * db_graph){
 
-  char * seq = NULL;
-  char * seq_forward = NULL;
-  char * seq_reverse = NULL; 
-  char * seq_reverse_reversed = NULL;
+  char seq[db_graph->kmer_size];
+  char seq_forward[5000];
+  char seq_reverse[5000]; 
+  char seq_reverse_reversed[5000];
   int i;
   int length_reverse = 0;
   boolean is_cycle_forward, is_cycle_reverse;
+ 
 
   if (! db_node_check_status(node,visited) && ! db_node_check_status(node,pruned)){
   
-    seq = binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size);
+    binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq);
 
     if (DEBUG){
       printf("\nSTART Supernode %s\n",seq);    
@@ -248,7 +308,7 @@ void db_graph_print_supernode(FILE * file, dBNode * node, dBGraph * db_graph){
     //compute the forward path until the end of the supernode
     //mark the nodes in the path as visited.
     //return is_cycle_forward == true if the path closes a loop
-    seq_forward = get_seq_from_elem_to_end_of_supernode(node,forward,db_graph,&is_cycle_forward);
+    get_seq_from_elem_to_end_of_supernode(node,forward,db_graph,&is_cycle_forward,seq_forward,5000);
     
     if (DEBUG){
       printf("NODE c %s\n",seq); 
@@ -262,7 +322,7 @@ void db_graph_print_supernode(FILE * file, dBNode * node, dBGraph * db_graph){
       }
       
       //compute the reverse path...
-      seq_reverse = get_seq_from_elem_to_end_of_supernode(node,reverse,db_graph,&is_cycle_reverse);
+      get_seq_from_elem_to_end_of_supernode(node,reverse,db_graph,&is_cycle_reverse,seq_reverse,5000);
       
       if (is_cycle_reverse){
 	puts("cycle reverse orientation without cycle in the forward orientation\n");
@@ -276,7 +336,7 @@ void db_graph_print_supernode(FILE * file, dBNode * node, dBGraph * db_graph){
       length_reverse = strlen(seq_reverse);
     }
     
-    seq_reverse_reversed = malloc((length_reverse+1)*sizeof(char));
+   
     
     //reverse the reverse sequence
     for(i=0;i<length_reverse;i++){
@@ -291,63 +351,56 @@ void db_graph_print_supernode(FILE * file, dBNode * node, dBGraph * db_graph){
     
     fprintf(file,">NODE\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward); 
     
-    free(seq);
-    free(seq_forward);
-    free(seq_reverse);
-    free(seq_reverse_reversed);
   }
   else{
     if (DEBUG){
       if ( db_node_check_status(node,visited)){
-	printf("\n%s: visited\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
+	printf("\n%s: visited\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
       }
       if ( db_node_check_status(node,pruned)){
-	printf("\n%s: pruned\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
+	printf("\n%s: pruned\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
       }
     }
   }
 }
 
-void db_graph_clip_tip(dBNode * node, int limit,dBGraph * db_graph){
+int db_graph_clip_tip(dBNode * node, int limit,dBGraph * db_graph){
 
-  int length_tip;
-
-  
+  int length_tip = 0;
+  char seq[db_graph->kmer_size];
 
   if (DEBUG){
-    printf("Node %s\n",binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
+    printf("START Node %s\n",binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
   }
 
   if (!db_node_check_status(node,pruned)){
 
-    length_tip = db_graph_detect_tip(node,forward,limit,db_graph);
-    if (DEBUG){
-      printf("\tforward tip: %i\n",length_tip);
-    }
+    length_tip = db_graph_clip_tip_with_orientation(node,forward,limit,db_graph);
+   
     
     if (length_tip!=0){
-      
-      db_graph_remove_path(node,forward,length_tip,db_graph);
-      
+      if (DEBUG){
+	 printf("\tforward tip: %i\n",length_tip);
+       }
     }
     else{
-      length_tip = db_graph_detect_tip(node,reverse,limit,db_graph);
-      if (DEBUG){
-	printf("\treverse tip: %i\n",length_tip);
-      }
+      length_tip = db_graph_clip_tip_with_orientation(node,reverse,limit,db_graph);
       
       if (length_tip!=0){
-	db_graph_remove_path(node,reverse,length_tip,db_graph);
-      
-      }
-    }     
+	if (DEBUG){
+	 printf("\treverse tip: %i\n",length_tip);
+	}
+      }     
+    }
   }
   else{
     if (DEBUG){
       if ( db_node_check_status(node,pruned)){
-	printf("\n%s: pruned\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size));
+	printf("\n%s: pruned\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
       }
     }
   }
+  
+  return length_tip;
 }
 

@@ -24,14 +24,13 @@ HashTable * hash_table_new(int number_buckets, short kmer_size){
   return hash_table;
 }
 
-void hash_table_free(HashTable * * hash_table)
+void hash_table_free(HashTable ** hash_table)
 { 
   int i;
   PQueue * pqueue;
 
   for(i=0;i<(*hash_table)->number_buckets;i++){
-    pqueue = &((*hash_table)->table[i]);
-    //   pqueue_free(&pqueue);
+    pqueue_free_elements(&(*hash_table)->table[i]);
   }
   
   free(*hash_table);
@@ -71,11 +70,11 @@ Element * hash_table_find(Key key, HashTable * hash_table){
 
 
 
-Element * hash_table_find_or_insert(Key key, HashTable * hash_table){
+Element * hash_table_find_or_insert(Key key, boolean * found, HashTable * hash_table){
   
   int hashval = hash_value(key,hash_table->number_buckets);
 
-  return pqueue_find_or_insert(key,&(hash_table->table[hashval]), hash_table->kmer_size);
+  return pqueue_find_or_insert(key,found, &(hash_table->table[hashval]), hash_table->kmer_size);
 }
 
 
