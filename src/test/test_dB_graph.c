@@ -280,3 +280,46 @@ void test_supernode_walking()
 
 
 }
+
+
+void test_writing_reading_graph(){
+
+  dBNode node1, node2;
+  int kmer_size = 3;
+  boolean succ;
+
+  char seq[kmer_size];
+
+  seq_to_binary_kmer("AAA",3);
+
+  
+  element_initialise(&node1,seq_to_binary_kmer("AAA",kmer_size),kmer_size);
+  node1.edges = 'a'; // ie 64 = (0110 0100)2
+
+
+  FILE* fp1 = fopen("../data/test/graph/dump_element.bin", "w");
+  db_node_print_binary(fp1,&node1);
+  fclose(fp1);
+
+  FILE* fp2 = fopen("../data/test/graph/dump_element.bin", "r");
+  
+  succ = db_node_read_binary(fp2,kmer_size,&node2);
+
+  CU_ASSERT_EQUAL(succ, true);
+
+  CU_ASSERT_EQUAL(node1.kmer, node2.kmer);
+  CU_ASSERT_EQUAL(node1.edges, node2.edges);
+
+  CU_ASSERT_STRING_EQUAL("AAA", binary_kmer_to_seq(node1.kmer,kmer_size,seq));
+  CU_ASSERT_STRING_EQUAL("AAA", binary_kmer_to_seq(node2.kmer,kmer_size,seq));
+  
+  CU_ASSERT_EQUAL(node1.edges, node2.edges);
+  CU_ASSERT_EQUAL(node1.edges, 'a');
+  CU_ASSERT_EQUAL(node2.edges, 'a');
+  
+  succ = db_node_read_binary(fp2,kmer_size,&node2);
+  CU_ASSERT_EQUAL(succ, false);
+
+  fclose(fp2);
+}
+   

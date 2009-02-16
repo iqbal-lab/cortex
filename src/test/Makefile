@@ -1,8 +1,13 @@
+<<<<<<< local
 IDIR_BASIC =../../include/basic
 IDIR_GRAPH =../../include/graph
 IDIR_POP_GRAPH =../../include/pop_graph
 IDIR_TEST = ../../include/test
 
+=======
+IDIR_BASIC =../include/basic
+IDIR_GRAPH =../include/graph
+>>>>>>> other
 IDIR_CUNIT =/homes/zi/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
 
 CC = gcc

@@ -146,4 +146,3 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
 }
 
 
-
