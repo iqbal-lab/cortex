@@ -35,6 +35,10 @@ GRAPH_OBJ = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/grap
 
 GRAPH_OBJ_CL = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_clipping.o 
 
+GRAPH_OBJ_DUMP = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_dump.o 
+
+GRAPH_OBJ_READ = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_read.o 
+
 POP_GRAPH_OBJ = obj/pop_graph/graph.o obj/pop_graph/binary_kmer.o obj/pop_graph/element.o obj/pop_graph/seq.o obj/pop_graph/hash_value.o obj/pop_graph/hash_table.o obj/pop_graph/priority_queue.o obj/pop_graph/dB_graph.o obj/pop_graph/file_reader.o  obj/pop_graph/dB_graph_population.o obj/pop_graph/pqueue_pop.o
 
 COUNT_OBJ = obj/count/binary_kmer.o obj/count/element.o obj/count/seq.o obj/count/hash_value.o obj/count/hash_table.o obj/count/priority_queue.o obj/count/count_kmers.o 
@@ -51,6 +55,12 @@ graph : $(GRAPH_OBJ)
 
 graph_cl : $(GRAPH_OBJ_CL)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_GRAPH) $(OPT) $(LDFLAGS) -o $(BIN)/graph_cp $(GRAPH_OBJ_CL)
+
+graph_dump : $(GRAPH_OBJ_DUMP)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_GRAPH) $(OPT) $(LDFLAGS) -o $(BIN)/graph_dump $(GRAPH_OBJ_DUMP)
+
+graph_read : $(GRAPH_OBJ_READ)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_GRAPH) $(OPT) $(LDFLAGS) -o $(BIN)/graph_read $(GRAPH_OBJ_READ)
 
 
 count : $(COUNT_OBJ)

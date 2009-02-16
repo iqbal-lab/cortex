@@ -12,7 +12,7 @@
 
 #include <binary_kmer.h>
 #include <global.h>
-
+#include <stdio.h>
 
 //type definitions
 
@@ -50,7 +50,7 @@ Key element_get_key(BinaryKmer,short kmer_size);
 
 boolean element_smaller(Element,Element);
 
-void element_initialise(Element *,Key, short kmer_size);
+void element_initialise(Element *,BinaryKmer kmer, short kmer_size);
 
 BinaryKmer element_get_kmer(Element *);
 
@@ -71,6 +71,8 @@ boolean db_node_edge_exist(dBNode *, Nucleotide, Orientation);
 //defined by orientation. 
 boolean db_node_has_precisely_one_edge(dBNode *, Orientation, Nucleotide *);
 
+Edges db_node_get_edges(dBNode * node);
+
 //forgets about the edges
 void db_node_reset_edges(dBNode * );
 
@@ -79,6 +81,8 @@ void db_node_reset_edge(dBNode *, Orientation, Nucleotide );
 //check that the edges are 0's
 boolean db_node_edges_reset(dBNode * );
 
+//set every edge in 'edges' 
+void db_node_set_edges(dBNode * node, Edges edges);
 
 boolean db_node_check_status(dBNode * node, NodeStatus status);
 
@@ -87,5 +91,9 @@ void db_node_set_status(dBNode * node,NodeStatus status);
 //check if node doesn't have any edges in a given orientation
 boolean db_node_is_blunt_end(dBNode * node, Orientation orientation);
 
+
+void db_node_print_binary(FILE * fp, dBNode * node); 
+
+boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node); 
 
 #endif /* ELEMENT_H_ */

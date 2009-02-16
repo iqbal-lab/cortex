@@ -34,7 +34,7 @@ Key element_get_key(BinaryKmer kmer, short kmer_size){
 
 }
 
-void element_initialise(Element * e, Key kmer, short kmer_size){
+void element_initialise(Element * e, BinaryKmer kmer, short kmer_size){
 
   e->kmer = element_get_key(kmer, kmer_size);
   e->edges = 0;
@@ -151,11 +151,6 @@ Orientation opposite_orientation(Orientation o){
   
 }
 
-
-void db_node_reset_edges(dBNode * node){
-  node->edges = 0;
-}
-
 void db_node_reset_edge(dBNode * node, Orientation orientation, Nucleotide nucleotide){
 
   char edge = 1 << nucleotide;
@@ -172,11 +167,22 @@ void db_node_reset_edge(dBNode * node, Orientation orientation, Nucleotide nucle
   
 }
 
+//set all edges
+void db_node_set_edges(dBNode * node, Edges edges){
+
+  node->edges |= edges; //reset one edge
+  
+}
+
 
 
 
 boolean db_node_edges_reset(dBNode * node){
   return node->edges == 0;
+}
+
+void db_node_reset_edges(dBNode * node){
+  return node->edges = 0;
 }
 
 
@@ -227,3 +233,39 @@ void db_node_set_status(dBNode * node,NodeStatus status){
   node->status = status;
 }
 
+void db_node_print_binary(FILE * fp, dBNode * node){
+  BinaryKmer kmer = element_get_kmer(node);
+  Edges edges = node->edges;
+
+  fwrite(&kmer,  sizeof(BinaryKmer), 1, fp);
+  fwrite(&edges, sizeof(Edges), 1, fp);
+}
+
+Edges db_node_get_edges(dBNode * node){
+  return node->edges;
+}
+
+boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node){
+  BinaryKmer kmer;
+  Edges edges;
+  int read;
+  
+  read = fread(&kmer,sizeof(BinaryKmer),1,fp);
+
+  if (read>0){
+    read = fread(&edges,sizeof(Edges),1,fp);
+    if (read==0){
+      puts("error with input file\n");
+      exit(1);
+    }
+  }
+  else{
+    return false;
+  }
+
+  element_initialise(node,kmer,kmer_size);
+
+  node->edges = edges;
+
+  return true;
+}
