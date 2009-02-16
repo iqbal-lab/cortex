@@ -3,6 +3,11 @@
 
 #include <dB_graph.h>
 
+
+
+int MAX_READ_LENGTH;
+
+
 //these routines return the length of the read sequence.
 
 //for fasta

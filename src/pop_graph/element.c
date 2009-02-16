@@ -193,6 +193,22 @@ void set_edges(Element* e, EdgeArrayType type, int index, Edges edge_char)
 }
 
 
+void db_node_reset_all_edges_for_all_people_and_pops_to_zero(Element* e)
+{
+  int i;
+
+    for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    {
+      e->individual_edges[i]=0;
+    }
+
+
+  for (i=0; i<NUMBER_OF_POPULATIONS; i++)
+    {
+      e->population_edges[i]=0;
+    }
+
+}
 void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, EdgeArrayType type, int index)
 {
   if (type == individual_edge_array)
@@ -387,13 +403,19 @@ boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orie
     
   
   if (DEBUG){
-    printf("add edge %s -%c-> %s to edge type %d, and edge index %d\n",binary_kmer_to_seq(src_k,kmer_size),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(tgt_k)),binary_kmer_to_seq(tgt_k,kmer_size), edge_type, edge_index);
+    char dummy1[kmer_size];
+    char dummy2[kmer_size];
+
+    printf("add edge %s -%c-> %s to edge type %d, and edge index %d\n",binary_kmer_to_seq(src_k,kmer_size, dummy1),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(tgt_k)),
+	   binary_kmer_to_seq(tgt_k,kmer_size, dummy2), edge_type, edge_index);
   }
 
   db_node_add_labeled_edge(src_e,src_o,binary_kmer_get_last_nucleotide(tgt_k), edge_type, edge_index);
 
   if (DEBUG){
-    printf("add edge %s -%c-> %s to edge type %d, and edge index %d\n",binary_kmer_to_seq(tgt_k,kmer_size),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size))),binary_kmer_to_seq(src_k,kmer_size),  edge_type, edge_index);
+    char dummy3[kmer_size];
+    char dummy4[kmer_size];
+    printf("add edge %s -%c-> %s to edge type %d, and edge index %d\n",binary_kmer_to_seq(tgt_k,kmer_size,dummy3),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size))),binary_kmer_to_seq(src_k,kmer_size, dummy4),  edge_type, edge_index);
   }
 
   db_node_add_labeled_edge(tgt_e,opposite_orientation(tgt_o),binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size)), edge_type, edge_index );
@@ -468,6 +490,33 @@ boolean db_node_has_precisely_one_edge(dBNode * node, Orientation orientation, N
   
 }
 
+
+boolean db_node_has_precisely_one_edge_in_union_graph_over_all_people(dBNode * node, Orientation orientation, Nucleotide * nucleotide){
+  
+  Nucleotide n;
+  Edges edges = get_union_of_edges(*node);
+  short edges_count = 0;
+
+  if (orientation == reverse){
+    edges >>= 4;
+  }
+ 
+  
+  for(n=0;n<4;n++){
+    
+    if ((edges & 1) == 1){
+      *nucleotide = n;
+      edges_count++;
+    }
+    
+    edges >>= 1;    
+  }
+  
+  return (edges_count == 1);
+  
+}
+
+
 boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayType edge_type, int edge_index){
   
   Edges edges = get_edge_copy(*node, edge_type, edge_index);
@@ -485,6 +534,14 @@ boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayTy
 boolean db_node_check_status(dBNode * node, NodeStatus status){
   return node->status == status;
 }
+boolean db_node_check_status_not_pruned(dBNode * node){
+  if ( db_node_check_status(node, none) || db_node_check_status(node,visited))
+    {
+      return true;
+    }
+  return false;
+}
+
 
 void db_node_set_status(dBNode * node,NodeStatus status){
   node->status = status;
@@ -492,6 +549,124 @@ void db_node_set_status(dBNode * node,NodeStatus status){
 void db_node_set_status_to_none(dBNode * node){
   node->status = none;
 }
+
+//assumes index 0 = NA12878, index 1 = NA12891, index 2 = NA12892
+//semantics - call this when pruning node from person defined by index
+void db_node_trio_aware_set_pruned_status(dBNode * node, int index)
+{
+  if (db_node_check_status(node,none) || db_node_check_status(node,visited))
+    {
+
+  	  if (index==0)//NA12878
+	    {
+	      db_node_set_status(node, pruned_from_NA12878);
+	    }
+	  else if (index==1) //NA12891
+	    {
+	      db_node_set_status(node, pruned_from_NA12891);
+	    }
+	  else if (index==2)//NA12892
+	    {
+	      db_node_set_status(node, pruned_from_NA12892);
+	    }
+    }
+
+  if (db_node_check_status(node, pruned_from_NA12878))
+    {
+      if (index==0)//NA12878
+	{
+	  printf("WARNING. Pruning a node that is already pruned");
+	}
+      else if (index==1) //NA12891
+	{
+	  db_node_set_status(node, pruned_from_NA12878_and_NA12891);
+	}
+      else if (index==2)//NA12892
+	{
+	  db_node_set_status(node, pruned_from_NA12878_and_NA12892);
+	}
+    }
+  
+  else if (db_node_check_status(node, pruned_from_NA12891))
+    {
+      if (index==0)//NA12878
+	{
+	  db_node_set_status(node, pruned_from_NA12878_and_NA12891);
+	  
+	}
+      else if (index==1) //NA12891
+	{
+	  printf("WARNING. Pruning a node that is already pruned");
+	}
+      else if (index==2)//NA12892
+	{
+	  db_node_set_status(node, pruned_from_NA12891_and_NA12892);
+	}
+    }
+  else if (db_node_check_status(node, pruned_from_NA12892))
+    {
+      if (index==0)//NA12878
+	{
+	  db_node_set_status(node, pruned_from_NA12878_and_NA12892);
+	  
+	}
+      else if (index==1) //NA12891
+	{
+	  db_node_set_status(node, pruned_from_NA12891_and_NA12892);
+	}
+      else if (index==2)//NA12892
+	{
+	  printf("WARNING. Pruning a node that is already pruned");
+	}
+    }
+  else if (db_node_check_status(node, pruned_from_NA12878_and_NA12891))
+    {
+      if (index==0)//NA12878
+	{
+	  printf("WARNING. Pruning a node that is already pruned");
+	}
+      else if (index==1) //NA12891
+	{
+	  printf("WARNING. Pruning a node that is already pruned");
+	}
+      else if (index==2)//NA12892
+	{
+	  db_node_set_status(node, pruned_from_NA12878_and_NA12891_and_NA12892);
+	}
+    }
+  
+  else if (db_node_check_status(node, pruned_from_NA12878_and_NA12892))
+    {
+      if (index==0)//NA12878
+	{
+	  printf("WARNING. Pruning a node that is already pruned");
+	}
+      else if (index==1) //NA12891
+	{
+	  db_node_set_status(node, pruned_from_NA12878_and_NA12891_and_NA12892);
+	}
+      else if (index==2)//NA12892
+	{
+	  printf("WARNING. Pruning a node that is already pruned");
+	}
+    }
+  else if (db_node_check_status(node, pruned_from_NA12891_and_NA12892))
+    {
+      if (index==0)//NA12878
+	{
+	  db_node_set_status(node, pruned_from_NA12878_and_NA12891_and_NA12892);
+	}
+      else if (index==1) //NA12891
+	{
+	  printf("WARNING. Pruning a node that is already pruned");
+	}
+      else if (index==2)//NA12892
+	{
+	  printf("WARNING. Pruning a node that is already pruned");
+	}
+    }
+}
+
 
 
 boolean db_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, EdgeArrayType type, int index)

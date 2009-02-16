@@ -26,7 +26,14 @@ typedef enum
   {
     none    = 0,
     visited = 1,
-    pruned  = 2,
+    pruned_from_NA12878  = 2,
+    pruned_from_NA12891  = 3,
+    pruned_from_NA12892  = 4,
+    pruned_from_NA12878_and_NA12891  = 5,
+    pruned_from_NA12878_and_NA12892  = 6,
+    pruned_from_NA12891_and_NA12892  = 7,
+    pruned_from_NA12878_and_NA12891_and_NA12892  = 8,
+
   } NodeStatus;
 
 
@@ -96,9 +103,15 @@ boolean db_node_add_edge(dBNode *, dBNode *, Orientation, Orientation, short kme
 //returns yes if the label defined by the nucleotide coresponds to an 
 //outgoing edge in the side defined by the orientation.   
 boolean db_node_edge_exist(dBNode *, Nucleotide, Orientation, EdgeArrayType edge_type, int edge_index);
+
 //returns the label of the first outgoing edge -- leaving from the side 
 //defined by orientation. 
 boolean db_node_has_precisely_one_edge(dBNode *, Orientation, Nucleotide *, EdgeArrayType edge_type, int edge_index);
+
+boolean db_node_has_precisely_one_edge_in_union_graph_over_all_people(dBNode * node, Orientation orientation, Nucleotide * nucleotide);
+
+
+void db_node_reset_all_edges_for_all_people_and_pops_to_zero(Element* e);
 
 //forgets about the edges
 void db_node_reset_edges(dBNode *, EdgeArrayType, int  );
@@ -109,8 +122,11 @@ void db_node_reset_edge(dBNode *, Orientation, Nucleotide, EdgeArrayType, int );
 boolean db_node_edges_reset(dBNode * node, EdgeArrayType edge_type, int edge_index);
 
 boolean db_node_check_status(dBNode * node, NodeStatus status);
+boolean db_node_check_status_not_pruned(dBNode * node);
+
 
 void db_node_set_status(dBNode * node,NodeStatus status);
+void db_node_trio_aware_set_pruned_status(dBNode * node, int index);
 void db_node_set_status_to_none(dBNode * node);
 
 

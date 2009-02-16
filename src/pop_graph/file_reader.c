@@ -1,15 +1,158 @@
+/*
+  routines to load files into dB Graph that is aware of multiple people
+ */
+
 #include <binary_kmer.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include <dB_graph.h>
 #include <seq.h>
 #include <file_reader.h>
 #include <global.h>
 #include <string.h>
 
+
+int MAX_FILENAME_LENGTH=300;
+int MAX_READ_LENGTH=1000;
+
+int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char qualiy_cut_off, int max_read_length, dBGraph * db_graph, EdgeArrayType type, int index);
+
+
+int load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * count_kmers, long long * bad_reads, int max_read_length, dBGraph* db_graph, EdgeArrayType type, int index)
+{
+  FILE* fp = fopen(filename, "r");
+  if (fp == NULL){
+    printf("cannot open file:%s\n",filename);
+    exit(1); //TODO - prefer to print warning and skip file and return an error code?
+  }
+
+  return load_seq_data_into_graph_of_specific_person_or_pop(fp,&read_sequence_from_fasta, count_kmers,bad_reads,  0 , max_read_length, db_graph, type, index);
+}
+
+int load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * count_kmers, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph,
+EdgeArrayType type, int index)
+{
+  FILE* fp = fopen(filename, "r");
+  if (fp == NULL){
+    printf("cannot open file:%s\n",filename);
+    exit(1); //TODO - prefer to print warning and skip file and return an error code?
+  }
+
+  return load_seq_data_into_graph_of_specific_person_or_pop(fp,&read_sequence_from_fastq, count_kmers, bad_reads, quality_cut_off, max_read_length, db_graph, type, index);
+}
+
+
+
+
+//returns length of sequence loaded
+int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char quality_cut_off, int max_read_length, dBGraph * db_graph, EdgeArrayType type, int index){
+
+  //----------------------------------
+  // preallocate the memory used to read the sequences
+  //----------------------------------
+  Sequence * seq = malloc(sizeof(Sequence));
+  if (seq == NULL){
+    fputs("Out of memory trying to allocate Sequence\n",stderr);
+    exit(1);
+  }
+  alloc_sequence(seq,max_read_length,LINE_MAX);
+  
+  
+  int seq_length=0;
+  short kmer_size = db_graph->kmer_size;
+
+  //max_read_length/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
+  int max_windows = max_read_length/(kmer_size+1);
+ 
+  //number of possible kmers in a 'perfect' read
+  int max_kmers   = max_read_length-kmer_size+1;
+
+  
+
+  //----------------------------------
+  //preallocate the space of memory used to keep the sliding_windows. NB: this space of memory is reused for every call -- with the view 
+  //to avoid memory fragmentation
+  //NB: this space needs to preallocate memory for orthogonal situations: 
+  //    * a good read -> few windows, many kmers per window
+  //    * a bad read  -> many windows, few kmers per window    
+  //----------------------------------
+  KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
+  if (windows == NULL){
+    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
+    exit(1);
+  }  
+  //allocate memory for the sliding windows 
+  binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
+  
+  int entry_length;
+
+  while (entry_length = file_reader(fp,seq,max_read_length)){
+
+    if (DEBUG){
+      printf ("\nsequence %s\n",seq->seq);
+    }
+    
+    int i,j;
+    seq_length += entry_length;
+    
+    int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,entry_length,quality_cut_off,db_graph->kmer_size,windows,max_windows, max_kmers);
+    
+    if (nkmers == 0) {
+      (*bad_reads)++;
+    }
+    else {
+      Element * current_node  = NULL;
+      Element * previous_node = NULL;
+      
+      Orientation current_orientation,previous_orientation;
+      
+      for(i=0;i<windows->nwindows;i++){ //for each window
+	KmerSlidingWindow * current_window = &(windows->window[i]);
+	
+	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
+	  boolean found = false;
+	  current_node = hash_table_find_or_insert(element_get_key(current_window->kmer[j],db_graph->kmer_size),&found,db_graph);	  	 
+	  if (!found){
+	    (*count_kmers)++;
+	  }
+	  
+	  current_orientation = db_node_get_orientation(current_window->kmer[j],current_node, db_graph->kmer_size);
+	  
+	  if (DEBUG){
+	    char kmer_seq[db_graph->kmer_size];
+	    printf("kmer %i:  %s\n",i,binary_kmer_to_seq(current_window->kmer[j],db_graph->kmer_size,kmer_seq));
+	  }
+	  
+	  if (j>0){
+	    //never assume that previous pointer stays as we do reallocation !!!!!!
+	    previous_node = hash_table_find(element_get_key(current_window->kmer[j-1],db_graph->kmer_size),db_graph);
+	    
+	    if (previous_node == NULL){
+	      puts("file_reader: problem - kmer not found\n");
+	      exit(1);
+	    }
+	    previous_orientation = db_node_get_orientation(current_window->kmer[j-1],previous_node, db_graph->kmer_size); 	      
+	    db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size, type, index);	  	      
+	  }
+	  
+	}
+      }
+     
+    }
+  }
+  free_sequence(&seq);
+  binary_kmer_free_kmers_set(&windows);
+  return seq_length;    
+}
+
+
+
+
+
 //takes a filename 
-// this fle contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
-int load_population_as_fasta(char* filename, dBGraph* db_graph)
+// this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
+int load_population_as_fasta(char* filename, long long* count_kmers, long long* bad_reads, dBGraph* db_graph)
 {
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
@@ -18,7 +161,6 @@ int load_population_as_fasta(char* filename, dBGraph* db_graph)
   }
 
 
-  int MAX_FILENAME_LENGTH=300;
   char line[MAX_FILENAME_LENGTH+1];
 
   int total_seq_loaded=0;
@@ -39,29 +181,29 @@ int load_population_as_fasta(char* filename, dBGraph* db_graph)
 	exit(1);
       }
 
-      total_seq_loaded = total_seq_loaded + load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, db_graph, people_so_far-1);
+      total_seq_loaded = total_seq_loaded + load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, count_kmers, bad_reads, db_graph, people_so_far-1);
 
-      //printf("Just loaded person number %d, and now have cumulative total of  %d bases\n", people_so_far-1, total_seq_loaded);
+      //printf("Just loaded person number %d, and now have cumulative total of  %d bases with %lld kmers and %lld bad_reads so far\n", people_so_far-1, total_seq_loaded, *count_kmers, *bad_reads);
     }
 
   //printf("Finished loading population, witht total seq loaded %d\n",total_seq_loaded); 
   return total_seq_loaded;
-  
+
+
 }
 
 
 //index tells you which person within a population it is
-int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, dBGraph* db_graph, int index)
+int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* count_kmers, long long* bad_reads, dBGraph* db_graph, int index)
 {
   FILE* fptr = fopen(f_name, "r");
   if (fptr == NULL)
     {
       //printf("cannot open person-specific fasta file:%s\n",f_name);
-    exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
+    exit(1); 
     }
 
   //file contains a list of fasta file names
-  int MAX_FILENAME_LENGTH=300;
   char line[MAX_FILENAME_LENGTH+1];
   
   int total_seq_loaded=0;
@@ -74,15 +216,9 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
       if ((p = strchr(line, '\n')) != NULL)
 	*p = '\0';
       
-      //open this fasta file
-      FILE* temp_fptr = fopen(line, "r");
-      if (temp_fptr == NULL)
-	{
-	  printf("cannot open  fasta file:%s\n",line);
-	  exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
-	}
+      total_seq_loaded = total_seq_loaded + 
+	load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(line, count_kmers, bad_reads, MAX_READ_LENGTH, db_graph, individual_edge_array, index);
 
-      total_seq_loaded = total_seq_loaded + load_fasta_data_into_graph_for_specific_person_or_population(temp_fptr, db_graph, individual_edge_array, index);
     }
 
   return total_seq_loaded;
@@ -91,8 +227,10 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
 
 
 
-/*
-int load_fasta_data_from_filename_into_graph(char* filename, dBGraph* db_graph)
+
+//takes a filename 
+// this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
+int load_population_as_fastq(char* filename, long long* count_kmers, long long* bad_reads, char quality_cutoff, dBGraph* db_graph)
 {
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
@@ -100,228 +238,71 @@ int load_fasta_data_from_filename_into_graph(char* filename, dBGraph* db_graph)
     exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
   }
 
-  return load_fasta_data_into_graph(fp, db_graph);
-}
 
+  char line[MAX_FILENAME_LENGTH+1];
 
-int load_fastq_data_from_filename_into_graph(char* filename, dBGraph* db_graph)
-{
-  FILE* fp = fopen(filename, "r");
-  if (fp == NULL){
-    printf("cannot open file:%s\n",filename);
-    exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
-  }
+  int total_seq_loaded=0;
+  int people_so_far=0;
 
-  return load_fastq_data_into_graph(fp, db_graph);
-}
-
-
-//returns length of sequence loaded
-int load_fasta_data_into_graph(FILE* fp, dBGraph * db_graph)
-{
-  Sequence* seq;
-  int seq_length=0;
-  int count_bad_reads=0;
-
-  while ((seq = read_sequence_from_fasta(fp)))
+  while(fgets(line,MAX_FILENAME_LENGTH, fp) !=NULL)
     {
-      if (DEBUG)
-	{
-	  printf ("\nsequence %s\n",seq->seq);
-	}
+      //remove newline from end of line - replace with \0
+      char* p;
+      if ((p = strchr(line, '\n')) != NULL)
+	*p = '\0';
 
-      KmerArray *kmers;
-      int i;
-      seq_length += seq->length;
 
-      kmers = get_binary_kmers_from_sequence(seq->seq,seq->length,db_graph->kmer_size);
-      free_sequence(&seq);
+      people_so_far++;
+      if (people_so_far>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      {
+        printf("This filelist contains too many people for a single population, %d", people_so_far);
+	exit(1);
+      }
 
-      if (kmers == NULL)
-	{
-	  count_bad_reads++;
-	}
+      total_seq_loaded = total_seq_loaded + load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(line, count_kmers, bad_reads, quality_cutoff, db_graph, people_so_far-1);
 
-      else
-	{
-	  Element * current_node  = NULL;
-	  Element * previous_node = NULL;
- 	
-	  Orientation current_orientation,previous_orientation;
-	
-	  for(i=0;i<kmers->nkmers;i++){	   
-     	    current_node = hash_table_find_or_insert(element_get_key(kmers->bin_kmers[i],db_graph->kmer_size),db_graph);	  	  
-	    current_orientation = db_node_get_orientation(kmers->bin_kmers[i],current_node, db_graph->kmer_size);
-	    
-	    if (DEBUG)
-	      {
-		printf("kmer %i:  %s\n",i,binary_kmer_to_seq(kmers->bin_kmers[i],db_graph->kmer_size));
-		  }
-	  
-	    if (i>0){
-	      //never assume that previous pointer stays as we do reallocation !!!!!!
-	      previous_node = hash_table_find(element_get_key(kmers->bin_kmers[i-1],db_graph->kmer_size),db_graph);
-	      
-	      if (previous_node == NULL){
-		puts("file_reader: problem - kmer not found\n");
-		exit(1);
-	      }
-	      previous_orientation = db_node_get_orientation(kmers->bin_kmers[i-1],previous_node, db_graph->kmer_size); 	      
-	      db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size);	  	      
-	    }
-	  
-	  }
-	  binary_kmer_free_kmers(&kmers);
-	}
+      //printf("Just loaded person number %d, and now have cumulative total of  %d bases with %lld kmers and %lld bad_reads so far\n", people_so_far-1, total_seq_loaded, *count_kmers, *bad_reads);
     }
+
+  //printf("Finished loading population, witht total seq loaded %d\n",total_seq_loaded); 
+  return total_seq_loaded;
+
+
+}
+
+
+//index tells you which person within a population it is
+int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(char* f_name, long long* count_kmers, long long* bad_reads, char quality_cutoff,  dBGraph* db_graph, int index)
+{
+  FILE* fptr = fopen(f_name, "r");
+  if (fptr == NULL)
+    {
+      //printf("cannot open person-specific fasta file:%s\n",f_name);
+    exit(1); 
+    }
+
+  //file contains a list of fasta file names
+  char line[MAX_FILENAME_LENGTH+1];
   
-  //fprintf(stderr, "Found this many bad reads:%d\n", count_bad_reads);
-
-  return seq_length;
-}
-
-*/
-
-
-
-//returns length of sequence loaded
-int load_fasta_data_into_graph_for_specific_person_or_population(FILE* fp, dBGraph * db_graph, EdgeArrayType type, int index)
-{
-
-  //printf("ZAM start of  load_fasta_data_into_graph_for_specific_person_or_population\n");
-  if (fp ==NULL)
-    {
-      printf("Do not give NUL pointer to load_fasta_data_into_graph_for_specific_person_or_population\n");
-      exit(1);
-    }
-
-  Sequence* seq;
-  int seq_length=0;
-  int count_bad_reads=0;
-
-  while ((seq = read_sequence_from_fasta(fp)))
-    {
-      if (DEBUG)
-      	{
-      printf ("\nZIM ZAM sequence %s\n",seq->seq);
-	}
-
-      KmerArray *kmers;
-      int i;
-      seq_length += seq->length;
-      //printf("just got another line and so far in this file Seq length is %d\n", seq_length);
-      kmers = get_binary_kmers_from_sequence(seq->seq,seq->length,db_graph->kmer_size);
-      free_sequence(&seq);
-
-      if (kmers == NULL)
-	{
-	  count_bad_reads++;
-	}
-
-      else
-	{
-	  Element * current_node  = NULL;
-	  Element * previous_node = NULL;
- 	
-	  Orientation current_orientation,previous_orientation;
-	
-	  for(i=0;i<kmers->nkmers;i++){	   
-     	    current_node = hash_table_find_or_insert(element_get_key(kmers->bin_kmers[i],db_graph->kmer_size),db_graph);	  	  
-	    current_orientation = db_node_get_orientation(kmers->bin_kmers[i],current_node, db_graph->kmer_size);
-	    
-	    if (DEBUG)
-	      {
-		printf("ZIMZAM kmer %i:  %s\n",i,binary_kmer_to_seq(kmers->bin_kmers[i],db_graph->kmer_size));
-	      }
-	  
-	    if (i>0){
-	      //never assume that previous pointer stays as we do reallocation !!!!!!
-	      previous_node = hash_table_find(element_get_key(kmers->bin_kmers[i-1],db_graph->kmer_size),db_graph);
-	      
-	      if (previous_node == NULL){
-		puts("file_reader: problem - kmer not found\n");
-		exit(1);
-	      }
-	      previous_orientation = db_node_get_orientation(kmers->bin_kmers[i-1],previous_node, db_graph->kmer_size); 	      
-	      db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size, type, index);	  	      
-	      //printf("Add edge between %s and %s", binary_kmer_to_seq(previous_node->kmer, db_graph->kmer_size), binary_kmer_to_seq(current_node->kmer, db_graph->kmer_size) );
-	    }
-	  
-	  }
-	  binary_kmer_free_kmers(&kmers);
-	}
-    }
+  int total_seq_loaded=0;
   
-  //fprintf(stderr, "Found this many bad reads:%d\n", count_bad_reads);
-  //printf("Seq length is %d\n", seq_length);
-  return seq_length;
-}
-
-
-/*
-
-//returns length of sequence loaded
-int load_fastq_data_into_graph(FILE* fp, dBGraph * db_graph)
-{
-  Sequence* seq;
-  int seq_length=0;
-  int count_bad_reads=0;
-
-  while ((seq = read_sequence_from_fastq(fp)))
+  while(fgets(line,MAX_FILENAME_LENGTH, fptr) !=NULL)
     {
-      if (DEBUG)
-	{
-	  printf ("\nsequence %s\n",seq->seq);
-	}
 
-      KmerArray *kmers;
-      int i;
-      seq_length += seq->length;
+      //remove newline from endof line- replace with \0
+      char* p;
+      if ((p = strchr(line, '\n')) != NULL)
+	*p = '\0';
+      
+      total_seq_loaded = total_seq_loaded + 
+	load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(line, count_kmers, bad_reads, quality_cutoff,  MAX_READ_LENGTH, db_graph, individual_edge_array, index);
 
-      kmers = get_binary_kmers_from_sequence(seq->seq,seq->length,db_graph->kmer_size);
-      free_sequence(&seq);
-
-      if (kmers == NULL)
-	{
-	  count_bad_reads++;
-	}
-
-      else
-	{
-	  Element * current_node  = NULL;
-	  Element * previous_node = NULL;
- 	
-	  Orientation current_orientation,previous_orientation;
-	
-	  for(i=0;i<kmers->nkmers;i++){	   
-     	    current_node = hash_table_find_or_insert(element_get_key(kmers->bin_kmers[i],db_graph->kmer_size),db_graph);	  	  
-	    current_orientation = db_node_get_orientation(kmers->bin_kmers[i],current_node, db_graph->kmer_size);
-	    
-	    if (DEBUG)
-	      {
-		printf("kmer %i:  %s\n",i,binary_kmer_to_seq(kmers->bin_kmers[i],db_graph->kmer_size));
-	      }
-	  
-	    if (i>0){
-	      //never assume that previous pointer stays as we do reallocation !!!!!!
-	      previous_node = hash_table_find(element_get_key(kmers->bin_kmers[i-1],db_graph->kmer_size),db_graph);
-	      
-	      if (previous_node == NULL){
-		puts("file_reader: problem - kmer not found\n");
-		exit(1);
-	      }
-	      previous_orientation = db_node_get_orientation(kmers->bin_kmers[i-1],previous_node, db_graph->kmer_size); 	      
-	      db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size);	  	      
-	    }
-	  
-	  }
-	  binary_kmer_free_kmers(&kmers);
-	}
     }
-  
-  fprintf(stderr, "Found this many bad reads:%d\n", count_bad_reads);
 
-  return seq_length;
+  return total_seq_loaded;
+
 }
 
-*/
+
+
+

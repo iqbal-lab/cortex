@@ -27,8 +27,9 @@ CFLAGS_GRAPH = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_GRAPH) $(MACFLAG) -O0 -g
 CFLAGS_POP_GRAPH = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_POP_GRAPH) $(MACFLAG) -O0 -g
 
 CFLAGS_BASIC_TESTS = -m64 -Wall -I$(IDIR_TEST)  -I$(IDIR_BASIC) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
-
 CFLAGS_DB_GRAPH_TESTS = -m64 -Wall -I$(IDIR_TEST)  -I$(IDIR_BASIC) -I$(IDIR_GRAPH) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
+CFLAGS_POP_GRAPH_TESTS = -m64 -Wall -I$(IDIR_TEST)  -I$(IDIR_BASIC) -I$(IDIR_POP_GRAPH) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
+
 
 
 GRAPH_OBJ = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph.o 
@@ -42,6 +43,9 @@ COUNT_OBJ = obj/count/binary_kmer.o obj/count/element.o obj/count/seq.o obj/coun
 BASIC_TESTS_OBJ = obj/test/basic/binary_kmer.o obj/test/basic/seq.o obj/test/basic/test_binary_kmer.o obj/test/basic/test_seq.o obj/test/basic/run_basic_tests.o
 
 DB_GRAPH_TESTS_OBJ = obj/test/graph/binary_kmer.o obj/test/graph/element.o obj/test/graph/seq.o obj/test/graph/hash_value.o obj/test/graph/hash_table.o obj/test/graph/priority_queue.o obj/test/graph/dB_graph.o obj/test/graph/file_reader.o obj/test/graph/test_dB_graph.o obj/test/graph/run_dB_graph_tests.o
+
+POP_GRAPH_TESTS_OBJ = obj/test/pop_graph/test_binary_kmer.o obj/test/pop_graph/test_seq.o obj/test/pop_graph/test_pop_load_and_print.o obj/test/pop_graph/run_pop_tests.o obj/test/pop_graph/supernode_cmp.o obj/test/pop_graph/test_pop_supernode_consensus.o obj/test/pop_graph/test_pop_element.o  obj/test/pop_graph/test_dB_graph_population.o
+
 
 pop_graph : $(POP_GRAPH_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_POP_GRAPH) $(OPT) $(LDFLAGS) -o $(BIN)/pop_graph $(POP_GRAPH_OBJ)
@@ -61,6 +65,10 @@ run_basic_tests : $(BASIC_TESTS_OBJ)
 
 run_dB_graph_tests : $(DB_GRAPH_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_DB_GRAPH_TESTS) $(OPT) $(LDFLAGS) -o $(BIN)/run_dB_graph_tests $(DB_GRAPH_TESTS_OBJ) -lcunit 
+
+run_pop_graph_tests : $(DB_GRAPH_TESTS_OBJ)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_DB_GRAPH_TESTS) $(OPT) $(LDFLAGS) -o $(BIN)/run_pop_graph_tests $(POP_GRAPH_TESTS_OBJ) -lcunit 
+
 
 obj/pop_graph/%.o :  pop_graph/%.c
 	mkdir -p obj/pop_graph;$(CC) $(CFLAGS_POP_GRAPH) $(OPT) $(LDFLAGS) -c $? -o $@

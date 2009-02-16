@@ -3,6 +3,7 @@
  */
 
 
+
 #include <binary_kmer.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,6 +11,10 @@
 #include <dB_graph.h>
 #include <seq.h>
 #include <file_reader.h>
+
+
+int MAX_READ_LENGTH=1000;
+
 
 int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char qualiy_cut_off, int max_read_length, dBGraph * db_graph);
 

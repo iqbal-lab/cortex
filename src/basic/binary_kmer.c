@@ -215,7 +215,7 @@ BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
 }
 
 
-//user of this method is responsible for deallocating the returned sequence
+//caller passes in allocated char*. This is returned and also set in 3rd argument.
 char * binary_kmer_to_seq(BinaryKmer kmer, short kmer_size, char * seq){
  
   if (seq == NULL){

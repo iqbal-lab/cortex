@@ -6,13 +6,9 @@
 
 int main(int argc, char **argv){
 
-<<<<<<< local
-  FILE *fp_fnames;
-  char filename[100];
-=======
-  FILE *fp_fnames,*fp_file;
+  FILE *fp_fnames, *fp_file;
   char filename[300];
->>>>>>> other
+
   int hash_key_bits;
   dBGraph * db_graph = NULL; 
   short kmer_size;
@@ -54,31 +50,24 @@ int main(int argc, char **argv){
   fprintf(stdout,"table created: %d\n",1 << hash_key_bits);
 
 
-  int count_file   = 0;
+  long count_files = 0;
+  long long bad_reads =0;
+  long long total_kmers =0;
   long long total_length = 0; //total sequence length
+
 
   //Go through all the files, loading data into the graph
 
-  int total_reallocs=0;
 
   while (!feof(fp_fnames)){
 
-    //int count_bad_reads = 0;
     fscanf(fp_fnames, "%s\n", filename);
     
-    
-    int seq_length = 0;
-    count_file++;
+    count_files++;
 
-<<<<<<< local
-    total_length += load_fasta_data_from_filename_into_graph(filename, db_graph);
-=======
-    int reallocs=0;
-    total_length += load_fasta_data_into_graph_efficient(fp_file, db_graph, &reallocs);
-    total_reallocs +=reallocs;
->>>>>>> other
+    total_length += load_fasta_data_from_filename_into_graph(filename, &total_kmers, &bad_reads, MAX_READ_LENGTH, db_graph );
 
-    fprintf(stdout,"\n\n************\n\n%i file name:%s seq:%i total seq:%qd\n\n",count_file,filename,seq_length, total_length);
+    fprintf(stdout,"\n\n************\n\n%ld file name:%s total_kmers: %lld, bad_reads: %lld, total seq:%lld\n\n",count_files,filename,total_kmers, bad_reads, total_length);
 
     //add data on current memory usage:
     FILE* fp_proc=fopen("/proc/self/status", "r");
@@ -94,7 +83,6 @@ int main(int argc, char **argv){
     
   }
 
-  printf("Total number of reallocs is %d", total_reallocs);
   printf("print supernodes\n");
   hash_table_traverse(&print_supernode,db_graph);
 

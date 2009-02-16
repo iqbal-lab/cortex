@@ -18,7 +18,6 @@ int main(int argc, char **argv){
   //command line arguments 
   fp_fnames= fopen(argv[1], "r");    //open file of which gives one filename per population. Each of these files gives one filename per individual, and each of those gives list of files.
   kmer_size        = atoi(argv[2]);  //global variable defined in element.h
- 
   hash_key_bits    = atoi(argv[3]); //number of buckets: 2^hash_key_bits
   DEBUG            = atoi(argv[4]);
 
@@ -28,32 +27,30 @@ int main(int argc, char **argv){
   db_graph = hash_table_new(1 << hash_key_bits,kmer_size);
   fprintf(stderr,"table created: %d\n",1 << hash_key_bits);
 
-
-  int count_file   = 0;
+  long count_files = 0;
+  long long bad_reads =0;
+  long long total_kmers =0;
   long long total_length = 0; //total sequence length
 
   //Go through all the files, loading data into the graph
   while (!feof(fp_fnames)){
 
-    //int count_bad_reads = 0;
     fscanf(fp_fnames, "%s\n", filename);
-    
-    int seq_length = 0;
-    count_file++;
-
-    total_length += load_population_as_fasta(filename, db_graph);
-
-    fprintf(stderr,"\n%i file name:%s seq:%i total seq:%qd\n\n",count_file,filename,seq_length, total_length);
+    count_files++;
+    total_length += load_population_as_fasta(filename, &total_kmers, &bad_reads, db_graph);
+    fprintf(stderr,"\n%ld file name:%s total seq:%lld bad reads: %lld total kmers:%lld\n\n",count_files,filename,total_length, bad_reads, total_kmers);
     
   }
 
 
   //remember last two arguments are only used for unit tests, so here they are NULL, and 0.
-  //db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop,db_graph,individual_edge_array,0, false,NULL,0);
-  //db_graph_set_all_visited_nodes_to_status_none(db_graph);
+  long file_count0=0;
+  db_graph_traverse_specific_person_or_pop(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop,db_graph,file_count0, individual_edge_array,0, false,NULL,0);
+  db_graph_set_all_visited_nodes_to_status_none(db_graph);
 
-  //printf("print supernodes for person 2 population 1\n");
-  //db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop,db_graph,individual_edge_array,1, false, NULL,0);
+  printf("print supernodes for person 2 population 1\n");
+  long file_count1=0;
+  db_graph_traverse_specific_person_or_pop(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop,db_graph,file_count1, individual_edge_array,1, false, NULL,0);
 
 
   int NUM_PEOPLE=2;

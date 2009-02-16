@@ -12,17 +12,19 @@
 
 typedef HashTable dBGraph;
 
-//functions applies to Node
-void db_graph_print_supernode(FILE * file, dBNode * node, dBGraph * db_graph);
-
+//pays no attention to whether there is an edge joining current_node to the node you would get by adding this nucleotide.
+//just checksto see if such a node is in the graph
 dBNode * db_graph_get_next_node(dBNode * current_node, Orientation current_orientation, 
 				Orientation * next_orientation,
 				Nucleotide edge, Nucleotide * reverse_edge,dBGraph * db_graph);
 
-//char * get_seq_from_elem_to_end_of_supernode(dBNode * node, Orientation orientation, dBGraph * db_graph, boolean * is_cycle);
 
-//Functions applies to whole graph
-//void db_graph_clip_tip(dBNode * node, int limit,dBGraph * db_graph);
+
+
+//Functions applying to whole graph
+
+int db_graph_clip_tip(dBNode * node, int limit,dBGraph * db_graph);
+
 void db_graph_set_all_visited_nodes_to_status_none(dBGraph* hash_table);
 
 
