@@ -1,5 +1,3 @@
-include ../Makefile.inc
-
 IDIR_BASIC =../include/basic
 IDIR_GRAPH =../include/graph
 IDIR_CUNIT =/homes/zi/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
