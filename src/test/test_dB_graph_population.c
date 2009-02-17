@@ -33,9 +33,13 @@ void test_is_supernode_end()
   //  Sequence is :  ACGTAC
   // ****
 
+  long long bad_reads=0;
+  long long total_kmers=0;
+  long long seq_loaded=0;
 
-  int seq_loaded = load_population_as_fasta("../test/data/pop/supernode/one_person_two_self_loops", hash_table);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops", &total_kmers, &bad_reads, hash_table);
   CU_ASSERT(seq_loaded==6);
+  CU_ASSERT(bad_reads==0);
 
   //GTA is not the end of a supernode in either direction
   dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("GTA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
@@ -68,10 +72,15 @@ void test_is_supernode_end()
   //first set up the hash/graph
   kmer_size = 3;
   number_of_buckets=5;
-
   hash_table = hash_table_new(number_of_buckets,kmer_size);
-  seq_loaded = load_population_as_fasta("../test/data/pop/supernode/one_person_one_long_supernode_with_conflict_at_end", hash_table);
+
+  bad_reads=0;
+  total_kmers=0;
+  seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end", &total_kmers, &bad_reads, hash_table);
   CU_ASSERT(seq_loaded==13);
+  CU_ASSERT(bad_reads==0);
 
 
   //ACA IS  the end of a supernode in the reverse direction
@@ -119,8 +128,14 @@ void test_is_supernode_end()
   kmer_size = 3;
   number_of_buckets=5;
   hash_table = hash_table_new(number_of_buckets,kmer_size);
-  seq_loaded=load_population_as_fasta("../test/data/pop/supernode/one_person_one_long_supernode_with_inward_conflict_at_end", hash_table);
+
+  bad_reads=0;
+  total_kmers=0;
+  seq_loaded=0;
+
+  seq_loaded=load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_inward_conflict_at_end", &total_kmers, &bad_reads, hash_table);
   CU_ASSERT(seq_loaded==13);
+  CU_ASSERT(bad_reads==0);
 
   //ACA IS  the end of a supernode in the reverse direction
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
@@ -174,8 +189,13 @@ void test_is_supernode_end()
   kmer_size = 3;
   number_of_buckets=5;
   hash_table = hash_table_new(number_of_buckets,kmer_size);
-  seq_loaded = load_population_as_fasta("../test/data/pop/supernode/one_person_infiniteloop", hash_table);
+  bad_reads=0;
+  total_kmers=0;
+  seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_infiniteloop", &total_kmers, &bad_reads, hash_table);
   CU_ASSERT(seq_loaded==25);
+  CU_ASSERT(bad_reads==0);
 
   //AAA is a supernode end in both directions
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
@@ -216,9 +236,14 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
       exit(1);
     }
 
-  int seq_loaded = load_population_as_fasta("../test/data/test_pop_load_and_print/two_individuals_simple.txt", hash_table);
+  long long bad_reads=0;
+  long long total_kmers=0;
+  long long seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &total_kmers, &bad_reads, hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 44);
+  CU_ASSERT(bad_reads==0);
 
   int stats[6]; //array of ints. stats[0] - number of kmers shared by noone; stats[1], number shared by one person, etc
   stats[0]=0; stats[1]=0; stats[2]=0; stats[3]=0; stats[4]=0; stats[5]=0; 
@@ -230,11 +255,13 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
 
   int num_people=2;
 
-  hash_table_traverse_2(&find_out_how_many_individuals_share_this_node_and_add_to_statistics , hash_table, array, num_people);
+  db_graph_traverse_to_gather_statistics_about_people(&find_out_how_many_individuals_share_this_node_and_add_to_statistics , hash_table, array, num_people);
 
   CU_ASSERT(stats[0]==0);
   CU_ASSERT(stats[1]==6);
   CU_ASSERT(stats[2]==1);
+
+  hash_table_free(&hash_table);
  
 }
 

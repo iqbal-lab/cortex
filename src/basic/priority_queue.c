@@ -119,6 +119,12 @@ Element * pqueue_find(Key key,PQueue * pqueue, short kmer_size){
 
 void pqueue_free(PQueue** pqueue){
   
+  int i;
+  for (i=0 ; i<(*pqueue)->number_entries; i++) 
+    {
+      free_element( & (((*pqueue)->elements)[i]) );
+    }
+
   free((*pqueue)->elements);
   
   free(*pqueue);

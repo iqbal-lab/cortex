@@ -37,14 +37,15 @@ char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode *
 									EdgeArrayType type, int index);
 
 //void print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node,EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test);
-void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long file_count, EdgeArrayType type, int index,
+void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index,
 										    boolean is_for_testing, char** for_test, int* index_for_test);
 
 
 // functions applied to a person/population's graph
-void db_graph_traverse_specific_person_or_pop(void (*f)(HashTable*, Element *, long, EdgeArrayType, int, boolean, char**, int*),HashTable * hash_table, long file_count, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test);
+void db_graph_traverse_specific_person_or_pop_for_supernode_printing(void (*f)(HashTable*, Element *, long*, EdgeArrayType, int, boolean, char**, int*),HashTable * hash_table, long* supernode_count, 
+								     EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test);
 
-void hash_table_traverse_2(void (*f)(HashTable*, Element *, int**, int),HashTable *, int**, int);
+void db_graph_traverse_to_gather_statistics_about_people(void (*f)(HashTable*, Element *, int**, int),HashTable *, int**, int);
 
 void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test );
 

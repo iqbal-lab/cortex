@@ -44,13 +44,13 @@ int main(int argc, char **argv){
 
 
   //remember last two arguments are only used for unit tests, so here they are NULL, and 0.
-  long file_count0=0;
-  db_graph_traverse_specific_person_or_pop(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop,db_graph,file_count0, individual_edge_array,0, false,NULL,0);
+  long supernode_count0=0;
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop,db_graph,&supernode_count0, individual_edge_array,0, false,NULL,0);
   db_graph_set_all_visited_nodes_to_status_none(db_graph);
 
   printf("print supernodes for person 2 population 1\n");
-  long file_count1=0;
-  db_graph_traverse_specific_person_or_pop(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop,db_graph,file_count1, individual_edge_array,1, false, NULL,0);
+  long supernode_count1=0;
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop,db_graph,&supernode_count1, individual_edge_array,1, false, NULL,0);
 
 
   int NUM_PEOPLE=2;
@@ -64,7 +64,7 @@ int main(int argc, char **argv){
       array[j]=&stats[j];
     }
 
-  hash_table_traverse_2(&find_out_how_many_individuals_share_this_node_and_add_to_statistics , db_graph, array, NUM_PEOPLE);
+  db_graph_traverse_to_gather_statistics_about_people(&find_out_how_many_individuals_share_this_node_and_add_to_statistics , db_graph, array, NUM_PEOPLE);
 
   printf("Results are:\n");
   for (j=0; j<=NUM_PEOPLE; j++)

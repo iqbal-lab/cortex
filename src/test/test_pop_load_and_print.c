@@ -20,9 +20,15 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
       exit(1);
     }
 
-  int seq_loaded = load_population_as_fasta("../test/data/test_pop_load_and_print/two_individuals_simple.txt", hash_table);
+  long long bad_reads=0;
+  long long total_kmers=0;
+  long long seq_loaded=0;
+
+  printf("%s\n", "zam got this far");
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &total_kmers, &bad_reads, hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 44);
+  CU_ASSERT(bad_reads==0);
 
   char** array_of_supernodes_for_person1= (char**) calloc(10,sizeof(char*));
   char** array_of_supernodes_for_person2= (char**) calloc(10,sizeof(char*));
@@ -32,16 +38,27 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
       printf("cant start - OOM");
       exit(1);
     }
+  printf("%s\n", "iqbal got this far");
 
 
+  //these counters are used to make sure none of the files of printed out supernodes get too big. In fact
+  //they are completely unused in test code, as we don't print anything
+  long supernode_count_person1=0;
+  long supernode_count_person2=0;
+  
+  //this on the other hand is used in testing.
   int number_of_supernodes_in_person_1=0;
+
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
-  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop, hash_table, individual_edge_array, 0, true, array_of_supernodes_for_person1,&number_of_supernodes_in_person_1);
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person1, individual_edge_array, 0, 
+					   true, array_of_supernodes_for_person1,&number_of_supernodes_in_person_1);
+
   //printf("PERSON 1 has %d supernodes\n", number_of_supernodes_in_person_1);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
 
   int number_of_supernodes_in_person_2=0;
-  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop, hash_table, individual_edge_array, 1, true, array_of_supernodes_for_person2,&number_of_supernodes_in_person_2);
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person2, individual_edge_array, 1, 
+					   true, array_of_supernodes_for_person2,&number_of_supernodes_in_person_2);
   //printf("PERSON 2 has %d supernodes\n", number_of_supernodes_in_person_2);
 
   CU_ASSERT(number_of_supernodes_in_person_1==2);
@@ -127,25 +144,26 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
 void test_take_four_people_each_with_one_read_and_find_variants()
 {
 
-  printf("Z1");
   int kmer_size = 5;
   int number_of_buckets=7;
   HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
-  printf("Z2");
 
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  printf("Z3");
 
-  int seq_loaded = load_population_as_fasta("../test/data/test_pop_load_and_print/four_indiv_simple/four_individuals_simple.txt", hash_table);
-  printf("Z4");
 
-  printf("take 4 people test Number of bases loaded is %d",seq_loaded);
+  long long bad_reads=0;
+  long long total_kmers=0;
+  long long seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/four_indiv_simple/four_individuals_simple.txt", &total_kmers, &bad_reads, hash_table);
+
+  //printf("take 4 people test Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 73);
-
+  CU_ASSERT(bad_reads==0);
 
   char** array_of_supernodes_for_person1= (char**) calloc(20,sizeof(char*));
   char** array_of_supernodes_for_person2= (char**) calloc(20,sizeof(char*));
@@ -159,9 +177,17 @@ void test_take_four_people_each_with_one_read_and_find_variants()
     }
 
   
+  //these counters are used to make sure none of the files of printed out supernodes get too big. In fact
+  //they are completely unused in test code, as we don't print anything
+  long supernode_count_person1=0;
+  long supernode_count_person2=0;
+  long supernode_count_person3=0;
+  long supernode_count_person4=0;
+
   int number_of_supernodes_in_person_1=0;
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
-  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop, hash_table, individual_edge_array, 0, true, array_of_supernodes_for_person1,&number_of_supernodes_in_person_1);
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person1, individual_edge_array, 0, 
+					   true, array_of_supernodes_for_person1,&number_of_supernodes_in_person_1);
   //printf("PERSON 1 has %d supernodes\n", number_of_supernodes_in_person_1);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
 
@@ -173,7 +199,8 @@ void test_take_four_people_each_with_one_read_and_find_variants()
 
   
   int number_of_supernodes_in_person_2=0;
-  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop, hash_table, individual_edge_array, 1, true, array_of_supernodes_for_person2,&number_of_supernodes_in_person_2);
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table,&supernode_count_person2, individual_edge_array, 1, 
+					   true, array_of_supernodes_for_person2,&number_of_supernodes_in_person_2);
   // printf("PERSON 2 has %d supernodes\n", number_of_supernodes_in_person_2);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
 
@@ -184,7 +211,8 @@ void test_take_four_people_each_with_one_read_and_find_variants()
 
 
   int number_of_supernodes_in_person_3=0;
-  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop, hash_table, individual_edge_array, 2, true, array_of_supernodes_for_person3,&number_of_supernodes_in_person_3);
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person3, individual_edge_array, 2, 
+					   true, array_of_supernodes_for_person3,&number_of_supernodes_in_person_3);
   //printf("PERSON 3 has %d supernodes\n", number_of_supernodes_in_person_3);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
 
@@ -195,7 +223,8 @@ void test_take_four_people_each_with_one_read_and_find_variants()
 
 
   int number_of_supernodes_in_person_4=0;
-  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop, hash_table, individual_edge_array, 3, true, array_of_supernodes_for_person4,&number_of_supernodes_in_person_4);
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person4, individual_edge_array, 3, 
+					   true, array_of_supernodes_for_person4,&number_of_supernodes_in_person_4);
   //printf("PERSON 4 has %d supernodes\n", number_of_supernodes_in_person_4);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
 
@@ -281,10 +310,14 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
       exit(1);
     }
 
-  int seq_loaded = load_population_as_fasta("../test/data/test_pop_load_and_print/two_people_sharing_alu/two_people.txt", hash_table);
+  long long bad_reads=0;
+  long long total_kmers=0;
+  long long seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/two_people.txt",  &total_kmers, &bad_reads,hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 677);
-
+  CU_ASSERT(bad_reads ==0);
 
   char** array_of_supernodes_for_person1= (char**) calloc(316,sizeof(char*));
   char** array_of_supernodes_for_person2= (char**) calloc(255,sizeof(char*));
@@ -296,9 +329,14 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
     }
 
   
-  int number_of_supernodes_in_person_1=0;
+  //dummy counter used for making sure don't print too many supernodes to a file
+  long supernode_count_person1=0;
+  long supernode_count_person2=0;
+  
+  int  number_of_supernodes_in_person_1=0;
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
-  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop, hash_table, individual_edge_array, 0, true, array_of_supernodes_for_person1,&number_of_supernodes_in_person_1);
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person1, individual_edge_array, 0, 
+					   true, array_of_supernodes_for_person1,&number_of_supernodes_in_person_1);
   printf("PERSON 1 has %d supernodes\n", number_of_supernodes_in_person_1);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
 
@@ -310,7 +348,8 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
 
   
   int number_of_supernodes_in_person_2=0;
-  db_graph_traverse_specific_person_or_pop(&print_supernode_for_specific_person_or_pop, hash_table, individual_edge_array, 1, true, array_of_supernodes_for_person2,&number_of_supernodes_in_person_2);
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person2, individual_edge_array, 1, 
+					   true, array_of_supernodes_for_person2,&number_of_supernodes_in_person_2);
  printf("PERSON 2 has %d supernodes\n", number_of_supernodes_in_person_2);
  db_graph_set_all_visited_nodes_to_status_none(hash_table);
  

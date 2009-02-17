@@ -48,7 +48,7 @@ BASIC_TESTS_OBJ = obj/test/basic/binary_kmer.o obj/test/basic/seq.o obj/test/bas
 
 DB_GRAPH_TESTS_OBJ = obj/test/graph/binary_kmer.o obj/test/graph/element.o obj/test/graph/seq.o obj/test/graph/hash_value.o obj/test/graph/hash_table.o obj/test/graph/priority_queue.o obj/test/graph/dB_graph.o obj/test/graph/file_reader.o obj/test/graph/test_dB_graph.o obj/test/graph/run_dB_graph_tests.o
 
-POP_GRAPH_TESTS_OBJ = obj/test/pop_graph/test_binary_kmer.o obj/test/pop_graph/test_seq.o obj/test/pop_graph/test_pop_load_and_print.o obj/test/pop_graph/run_pop_tests.o obj/test/pop_graph/supernode_cmp.o obj/test/pop_graph/test_pop_supernode_consensus.o obj/test/pop_graph/test_pop_element.o  obj/test/pop_graph/test_dB_graph_population.o
+POP_GRAPH_TESTS_OBJ = obj/test/pop_graph/test_binary_kmer.o obj/test/pop_graph/test_seq.o obj/test/pop_graph/test_pop_load_and_print.o obj/test/pop_graph/run_pop_tests.o obj/test/pop_graph/supernode_cmp.o obj/test/pop_graph/test_pop_supernode_consensus.o obj/test/pop_graph/test_pop_element.o  obj/test/pop_graph/test_dB_graph_population.o obj/test/pop_graph/binary_kmer.o obj/test/pop_graph/element.o obj/test/pop_graph/seq.o obj/test/pop_graph/hash_value.o obj/test/pop_graph/hash_table.o obj/test/pop_graph/priority_queue.o obj/test/pop_graph/dB_graph.o obj/test/pop_graph/file_reader.o  obj/pop_graph/dB_graph_population.o obj/pop_graph/pqueue_pop.o 
 
 
 pop_graph : $(POP_GRAPH_OBJ)
@@ -76,8 +76,8 @@ run_basic_tests : $(BASIC_TESTS_OBJ)
 run_dB_graph_tests : $(DB_GRAPH_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_DB_GRAPH_TESTS) $(OPT) $(LDFLAGS) -o $(BIN)/run_dB_graph_tests $(DB_GRAPH_TESTS_OBJ) -lcunit 
 
-run_pop_graph_tests : $(DB_GRAPH_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_DB_GRAPH_TESTS) $(OPT) $(LDFLAGS) -o $(BIN)/run_pop_graph_tests $(POP_GRAPH_TESTS_OBJ) -lcunit 
+run_pop_graph_tests : $(POP_GRAPH_TESTS_OBJ)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_POP_GRAPH_TESTS) $(OPT) $(LDFLAGS) -o $(BIN)/run_pop_graph_tests $(POP_GRAPH_TESTS_OBJ) -lcunit 
 
 
 obj/pop_graph/%.o :  pop_graph/%.c
@@ -109,4 +109,14 @@ obj/test/graph/%.o :  graph/%.c
 
 obj/test/graph/%.o :  test/%.c 
 	mkdir -p obj/test/graph; $(CC) $(CFLAGS_DB_GRAPH_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
+
+
+obj/test/pop_graph/%.o :  basic/%.c 
+	mkdir -p obj/test/pop_graph; $(CC) $(CFLAGS_POP_GRAPH_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
+
+obj/test/pop_graph/%.o :  pop_graph/%.c 
+	mkdir -p obj/test/pop_graph; $(CC) $(CFLAGS_POP_GRAPH_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
+
+obj/test/pop_graph/%.o :  test/%.c 
+	mkdir -p obj/test/pop_graph; $(CC) $(CFLAGS_POP_GRAPH_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
 

@@ -217,18 +217,18 @@ char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode *
 }
 
 //formerly void print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node,EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test)
-void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long file_count, EdgeArrayType type, int index, 
+void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index, 
 									   boolean is_for_testing, char** for_test, int* index_for_test)
 {
 
   FILE * fout;
   
   char filename [200];
-  if (file_count % 100000000 == 0)
+  if (*supernode_count % 100000000 == 0)
     {
-      int num = file_count / 100000000;
+      int num = *supernode_count / 100000000;
       
-      if (file_count !=0)
+      if (*supernode_count !=0)
 	{
 	  fclose(fout);
 	}
@@ -244,7 +244,7 @@ void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_
       //fprintf(stderr,"opening file %s\n",filename);
       fout = fopen(filename,"w");
     }
-  
+  *supernode_count = *supernode_count+1;
   db_graph_print_supernode_for_specific_person_or_pop(fout,node,db_graph, type,index, is_for_testing,  for_test,index_for_test);
 
 }
@@ -255,21 +255,21 @@ void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_
 // *********************************************
 
 
-void db_graph_traverse_specific_person_or_pop(void (*f)(HashTable*, Element *, long , EdgeArrayType, int, boolean, char**, int*),HashTable * hash_table, long file_count, EdgeArrayType type, int index, 
-					      boolean is_for_testing, char** for_test, int* index_for_test){
+void db_graph_traverse_specific_person_or_pop_for_supernode_printing(void (*f)(HashTable*, Element *, long* , EdgeArrayType, int, boolean, char**, int*),HashTable * hash_table, long* supernode_count, 
+								     EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test){
 
   int i;
   for(i=0;i<hash_table->number_buckets;i++){
-    pqueue_traverse_specific_person_or_pop(f,hash_table, &(hash_table->table[i]), file_count, type,index, is_for_testing, for_test, index_for_test);
+    pqueue_traverse_specific_person_or_pop_for_supernode_printing(f,hash_table, &(hash_table->table[i]), supernode_count, type,index, is_for_testing, for_test, index_for_test);
   }
 
 }
 
-void hash_table_traverse_2(void (*f)(HashTable*, Element *, int**, int),HashTable * hash_table, int** array, int num_people )
+void db_graph_traverse_to_gather_statistics_about_people(void (*f)(HashTable*, Element *, int**, int),HashTable * hash_table, int** array, int num_people )
 {
   int i;
   for(i=0;i<hash_table->number_buckets;i++){
-    pqueue_traverse_2(f,&(hash_table->table[i]), hash_table, array, num_people);
+    pqueue_traverse_to_gather_statistics_about_people(f,&(hash_table->table[i]), hash_table, array, num_people);
   }
 
 }
@@ -792,7 +792,7 @@ int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char*
    {
       subsection[i] = first_kmer_in_subsection[i];
    }
-   free(first_kmer_in_subsection);
+
 
    for (i=db_graph->kmer_size; i<=db_graph->kmer_size + end-start-1; i++)
    {
@@ -1009,7 +1009,7 @@ void print_node_to_file_according_to_how_many_people_share_it(HashTable* db_grap
 
   char* kmer_as_string = binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq);
   fprintf(list_of_file_ptrs[number_of_individuals_with_this_node], "%s\n", kmer_as_string);
-  free(kmer_as_string);
+  
 }
 
 //array_of_counts totals up the number of kmers that are shared by 0,1,2,... individuals. Obviously the first element should be zero (no element
@@ -1041,7 +1041,7 @@ void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTab
 
   char* kmer_as_string = binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq);
   printf("There are %d people with node %s\n", number_of_individuals_with_this_node,kmer_as_string);
-  free(kmer_as_string);
+  
 
   if (number_of_individuals_with_this_node>0)
     {

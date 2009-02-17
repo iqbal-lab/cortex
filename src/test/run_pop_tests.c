@@ -28,39 +28,10 @@ int  main()
 
   /* add the tests to the suites */
 
-  if (NULL == CU_add_test(pPopGraphSuite, "test conversion from char to binary nucleotide", test_seq_to_binary_kmer)) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
-  if (NULL == CU_add_test(pPopGraphSuite, "test conversion from binary nucleotide to char", test_binary_kmer_to_seq)) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
-  if (NULL == CU_add_test(pPopGraphSuite, "test creation and deletion of binary kmers", test_binary_kmer_creation_and_deletion)) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
-  //  if (NULL == CU_add_test(pPopGraphSuite, "test kmer counting ", test_count_kmers)) {
-  //  CU_cleanup_registry();
-  //  return CU_get_error();
-  //}
   //if (NULL == CU_add_test(pPopGraphSuite, "test supernode walking", test_supernode_walking)) {
   //  CU_cleanup_registry();
   //  return CU_get_error();
   //}
-  // if (NULL == CU_add_test(pPopGraphSuite, "test CRC returns positive values", test_element_hashval)) {
-  //  CU_cleanup_registry();
-  //  return CU_get_error();
-  //}
-  //  if (NULL == CU_add_test(pPopGraphSuite, "test element_equal works", test_element_equal)) {
-  //  CU_cleanup_registry();
-  //  return CU_get_error();
-  //}
-  //if (NULL == CU_add_test(pPopGraphSuite, "test read_sequence_from_fastq", test_read_sequence_from_fastq)) {
-  //  CU_cleanup_registry();
-  //  return CU_get_error();
-  //}
-
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
     CU_cleanup_registry();

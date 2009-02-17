@@ -152,7 +152,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
-int load_population_as_fasta(char* filename, long long* count_kmers, long long* bad_reads, dBGraph* db_graph)
+long long load_population_as_fasta(char* filename, long long* count_kmers, long long* bad_reads, dBGraph* db_graph)
 {
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
@@ -230,7 +230,7 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
 
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
-int load_population_as_fastq(char* filename, long long* count_kmers, long long* bad_reads, char quality_cutoff, dBGraph* db_graph)
+long long load_population_as_fastq(char* filename, long long* count_kmers, long long* bad_reads, char quality_cutoff, dBGraph* db_graph)
 {
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
