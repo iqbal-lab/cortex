@@ -998,7 +998,7 @@ void print_node_to_file_according_to_how_many_people_share_it(HashTable* db_grap
 
   for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
     {
-      if (node->individual_edges[i] == 0)
+      if (get_edge_copy(*node, individual_edge_array, i) ==0 )
 	{
 	}
       else
@@ -1030,7 +1030,8 @@ void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTab
 
   for (i=0; i<number_of_people; i++)
     {
-      if (node->individual_edges[i] == 0)
+      
+      if (get_edge_copy(*node, individual_edge_array, i) ==0 )
 	{
         }
       else

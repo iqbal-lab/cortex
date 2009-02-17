@@ -27,7 +27,7 @@ HashTable * hash_table_new(int number_buckets, short kmer_size){
 void hash_table_free(HashTable ** hash_table)
 { 
   int i;
-  PQueue * pqueue;
+  //PQueue * pqueue;
 
   for(i=0;i<(*hash_table)->number_buckets;i++){
     pqueue_free_elements(&(*hash_table)->table[i]);

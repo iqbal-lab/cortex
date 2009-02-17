@@ -2,6 +2,7 @@
 #define FILE_READER_H_
 
 #include <dB_graph.h>
+#include <pop_globals.h>
 
 //for fasta
 

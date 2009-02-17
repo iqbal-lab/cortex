@@ -12,9 +12,8 @@
 
 #include <binary_kmer.h>
 #include <global.h>
+#include <pop_globals.h>
 
-extern int NUMBER_OF_INDIVIDUALS_PER_POPULATION;
-extern int NUMBER_OF_POPULATIONS;
 
 
 
@@ -49,12 +48,14 @@ typedef enum{
 typedef struct{
   BinaryKmer kmer;
   char population_proportions;
-  Edges* individual_edges; // array of edges of individuals in population that is currently being loaded/analysed
+  Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; 
+                            // array of edges of individuals in population that is currently being loaded/analysed
                            //These will be allocated for all individuals in a population, then reused for the next population
                            //In some sense these are *temporary*. You load all individuals for a population, process the graph to choose specific
                            //nodes/supernodes that you like, and then use them to specify the population_edge char for that population,
                            //You then move on to the next population, and reuse this array for the next population's individuals.
-  Edges* population_edges; //array of edges, one per population, each one is union of edges in that population that satisfy some constraint.
+  Edges population_edges[NUMBER_OF_POPULATIONS]; 
+                          //array of edges, one per population, each one is union of edges in that population that satisfy some constraint.
   NodeStatus status;
 } Element;
 

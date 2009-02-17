@@ -283,6 +283,8 @@ void test_find_next_node_in_supernode()
 
 
 
+  hash_table_free(&hash_table);
+
 
 }
 
@@ -543,7 +545,8 @@ void test_get_population_consensus_supernode()
       printf("OOM alloc seq in test of pop consensus supernode");
       exit(1);
     }
-
+  popseq_obj->name=NULL;
+  popseq_obj->qual=NULL;
 
   //printf("*********\n\n***********\n\n Start of next test\n\n");
   //min covg 5, min length 6
