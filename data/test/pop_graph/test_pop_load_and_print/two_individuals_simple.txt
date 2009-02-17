@@ -1,0 +1,2 @@
+../data/test/pop_graph/test_pop_load_and_print/person1
+../data/test/pop_graph/test_pop_load_and_print/person2

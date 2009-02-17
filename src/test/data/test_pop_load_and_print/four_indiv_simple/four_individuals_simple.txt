@@ -1,4 +1,0 @@
-../test/data/test_pop_load_and_print/four_indiv_simple/person1
-../test/data/test_pop_load_and_print/four_indiv_simple/person2
-../test/data/test_pop_load_and_print/four_indiv_simple/person3
-../test/data/test_pop_load_and_print/four_indiv_simple/person4
