@@ -1,7 +1,6 @@
 /*
   hash_table.c -- implementation
  */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <hash_table.h>
