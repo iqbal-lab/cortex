@@ -10,6 +10,7 @@
 #include <dB_graph.h>
 #include <seq.h>
 #include <file_reader.h>
+#include <element.h>
 
 int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char qualiy_cut_off, int max_read_length, dBGraph * db_graph);
 
@@ -22,7 +23,11 @@ int load_fasta_data_from_filename_into_graph(char* filename, long long * count_k
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  return load_seq_data_into_graph(fp,&read_sequence_from_fasta, count_kmers,bad_reads,  0 , max_read_length, db_graph);
+  int ret = load_seq_data_into_graph(fp,&read_sequence_from_fasta, count_kmers,bad_reads,  0 , max_read_length, db_graph);
+
+  fclose(fp);
+
+  return ret;
 }
 
 int load_fastq_data_from_filename_into_graph(char* filename, long long * count_kmers, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph)
@@ -33,7 +38,10 @@ int load_fastq_data_from_filename_into_graph(char* filename, long long * count_k
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  return load_seq_data_into_graph(fp,&read_sequence_from_fastq, count_kmers, bad_reads, quality_cut_off, max_read_length, db_graph);
+  int ret =  load_seq_data_into_graph(fp,&read_sequence_from_fastq, count_kmers, bad_reads, quality_cut_off, max_read_length, db_graph);
+  fclose(fp);
+
+  return ret;
 }
 
 
@@ -81,7 +89,7 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
   
   int entry_length;
 
-  while (entry_length = file_reader(fp,seq,max_read_length)){
+  while ((entry_length = file_reader(fp,seq,max_read_length))){
 
     if (DEBUG){
       printf ("\nsequence %s\n",seq->seq);
@@ -140,4 +148,35 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
   return seq_length;    
 }
 
+
+//returns number of sequence loaded (ie all the kmers concatenated)
+//count_kmers returns the number of new kmers
+int load_binary_data_from_filename_into_graph(char* filename, long long * count_kmers, dBGraph* db_graph)
+{
+  FILE* fp_bin = fopen(filename, "r");
+  int seq_length = 0;
+  dBNode node_from_file;
+  boolean found;
+
+  if (fp_bin == NULL){
+    printf("cannot open file:%s\n",filename);
+    exit(1); //TODO - prefer to print warning and skip file and return an error code?
+  }
+
+  //Go through all the entries in the binary file
+  while (db_node_read_binary(fp_bin,db_graph->kmer_size,&node_from_file)){
+    dBNode * current_node  = NULL;
+    current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size),&found,db_graph);
+    if (!found){
+      (*count_kmers)++;
+    }
+    
+    seq_length+=db_graph->kmer_size;
+   
+    db_node_set_edges(current_node,db_node_get_edges(&node_from_file));
+  }
+  
+  fclose(fp_bin);
+  return seq_length;
+}
 

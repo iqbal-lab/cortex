@@ -41,6 +41,8 @@ int main(int argc, char **argv){
   fout             = fopen(argv[6],"w");
   DEBUG            = atoi(argv[7]);
   
+  fprintf(stderr,"Input file of filenames: %s\n",argv[1]);
+  fprintf(stderr,"Output bin file: %s\n",argv[6]);
   fprintf(stderr,"Kmer size: %d hash_table_size (%d bits): %d\n",kmer_size,hash_key_bits,1 << hash_key_bits);
   if (fastq>0){
     fprintf(stderr,"quality cut-off: %i\n",fastq);
@@ -53,13 +55,14 @@ int main(int argc, char **argv){
 
   int count_file   = 0;
   long long total_length = 0; //total sequence length
-
+  
   //Go through all the files, loading data into the graph
   while (!feof(fp_fnames)){
-
-    //int count_bad_reads = 0;
-    fscanf(fp_fnames, "%s\n", filename);
+  
     
+    fscanf(fp_fnames, "%s\n", filename);
+   
+
     int seq_length = 0;
     count_file++;
 
@@ -96,5 +99,5 @@ int main(int argc, char **argv){
   hash_table_traverse(&print_node_binary,db_graph);
   
   fclose(fout);
-  return 1;
+  return 0;
 }
