@@ -182,7 +182,7 @@ boolean db_node_edges_reset(dBNode * node){
 }
 
 void db_node_reset_edges(dBNode * node){
-  return node->edges = 0;
+  node->edges = 0;
 }
 
 
