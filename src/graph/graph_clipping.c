@@ -1,4 +1,3 @@
-
 #include <element.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,7 +55,7 @@ int main(int argc, char **argv){
   fastq            = atoi(argv[5]);
   DEBUG            = atoi(argv[6]);
   
-
+  fprintf(stderr,"Input file of filenames: %s\n",argv[1]);
   fprintf(stderr,"Kmer size: %d hash_table_size (%d bits): %d\n",kmer_size,hash_key_bits,1 << hash_key_bits);
   if (fastq>0){
     fprintf(stderr,"quality cut-off: %i\n",fastq);
@@ -111,5 +110,5 @@ int main(int argc, char **argv){
   printf("print supernodes\n");
   hash_table_traverse(&print_supernode,db_graph);
   
-  return 1;
+  return 0;
 }
