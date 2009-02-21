@@ -1,4 +1,5 @@
 #include <test_dB_graph.h>
+#include <test_file_reader.h>
 #include <CUnit.h>
 #include <Basic.h>
 
@@ -35,7 +36,17 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
-  
+
+  if (NULL == CU_add_test(pSuite, "test writting/reading binary node",  test_writing_reading_graph)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+   if (NULL == CU_add_test(pSuite, "test dumping/reading binary",  test_dump_load_binary)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
   /* Run all tests using the CUnit Basic interface */
   CU_basic_set_mode(CU_BRM_VERBOSE);
   CU_basic_run_tests();
