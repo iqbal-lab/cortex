@@ -1,9 +1,6 @@
-#include "test_binary_kmer.h"
-#include "test_count_kmers.h"
-#include "test_dB_graph.h"
 #include "test_dB_graph_node.h"
 #include "test_dB_graph_population.h"
-#include "test_seq.h"
+
 #include "test_pop_element.h"
 #include "test_pop_load_and_print.h"
 #include "test_pop_supernode_consensus.h"
@@ -27,6 +24,14 @@ int  main()
   }
 
   /* add the tests to the suites */
+  if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge copy", test_get_edge_copy)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
 
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test that can identify supernode ends",   test_is_supernode_end)) {
