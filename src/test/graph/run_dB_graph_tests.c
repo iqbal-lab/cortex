@@ -1,5 +1,6 @@
 #include <test_dB_graph.h>
 #include <test_file_reader.h>
+#include <test_cyclic_count.h>
 #include <CUnit.h>
 #include <Basic.h>
 
@@ -43,6 +44,10 @@ int  main()
   }
 
    if (NULL == CU_add_test(pSuite, "test dumping/reading binary",  test_dump_load_binary)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+   if (NULL == CU_add_test(pSuite, "test function for rotating/shifting binary kmers",  test_rotate)){
     CU_cleanup_registry();
     return CU_get_error();
   }

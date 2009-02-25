@@ -15,7 +15,7 @@ typedef enum
     Undefined = 4
   } Nucleotide ;
 
-typedef long long BinaryKmer;
+typedef unsigned long long BinaryKmer;
 
 
 // KmerArray is an array of kmers. Usually this will be from a sliding window run across a sequence.

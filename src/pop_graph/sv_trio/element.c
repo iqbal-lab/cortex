@@ -18,8 +18,6 @@
 Element* new_element()
 {
 
-  printf("Why are you using this? Talk to Zam");
-  exit(1);
 
   Element* e = malloc(sizeof(Element));
 

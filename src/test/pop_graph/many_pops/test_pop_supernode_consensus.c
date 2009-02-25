@@ -489,7 +489,7 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
 }
 
 
-/* need to fix this so works for 3 people only
+
 void test_get_population_consensus_supernode()
 {
   int kmer_size = 5;
@@ -581,4 +581,3 @@ void test_get_population_consensus_supernode()
   hash_table_free(&hash_table);
 
 }
-*/

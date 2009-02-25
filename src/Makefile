@@ -2,7 +2,8 @@ CC = gcc
 
 IDIR_BASIC_TESTS =../include/test/basic
 IDIR_DB_GRAPH_TESTS=../include/test/graph
-IDIR_CORE_POP_GRAPH_TESTS=../include/test/pop_graph/core
+IDIR_SV_TRIO_TESTS=../include/test/pop_graph/sv_trio
+
 IDIR_BASIC =../include/basic
 IDIR_COUNT =../include/count
 IDIR_GRAPH =../include/graph
@@ -32,14 +33,14 @@ CFLAGS_GRAPH = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_GRAPH) $(MACFLAG) -O0 -g
 CFLAGS_SV_TRIO = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_SV_TRIO)  $(MACFLAG) -O0 -g
 CFLAGS_MANY_POP_GRAPH = -m64 -Wall  -I$(IDIR_BASIC) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_MANY_POP_GRAPH)  $(MACFLAG) -O0 -g
 
-CFLAGS_CORE_POP_GRAPH_TESTS = -m64 -Wall -I$(IDIR_CORE_POP_GRAPH_TESTS) -I$(IDIR_BASIC) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
 CFLAGS_BASIC_TESTS = -m64 -Wall -I$(IDIR_BASIC_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
 CFLAGS_DB_GRAPH_TESTS = -m64 -Wall -I$(IDIR_DB_GRAPH_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_GRAPH) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
+CFLAGS_SV_TRIO_TESTS = -m64 -Wall -I$(IDIR_SV_TRIO_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_SV_TRIO) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
 
 
 GRAPH_OBJ = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph.o 
 
-GRAPH_OBJ_CL = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_clipping.o 
+GRAPH_OBJ_CL = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_clipping.o obj/graph/cyclic_count.o
 
 GRAPH_OBJ_DUMP = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_dump.o 
 
@@ -53,11 +54,9 @@ COUNT_OBJ = obj/count/binary_kmer.o obj/count/element.o obj/count/seq.o obj/coun
 
 BASIC_TESTS_OBJ = obj/test/basic/binary_kmer.o obj/test/basic/seq.o obj/test/basic/test_binary_kmer.o obj/test/basic/test_seq.o obj/test/basic/run_basic_tests.o
 
-DB_GRAPH_TESTS_OBJ = obj/test/graph/binary_kmer.o obj/test/graph/element.o obj/test/graph/seq.o obj/test/graph/hash_value.o obj/test/graph/hash_table.o obj/test/graph/priority_queue.o obj/test/graph/dB_graph.o obj/test/graph/file_reader.o obj/test/graph/test_dB_graph.o obj/test/graph/run_dB_graph_tests.o obj/test/graph/test_file_reader.o
+DB_GRAPH_TESTS_OBJ = obj/test/graph/binary_kmer.o obj/test/graph/element.o obj/test/graph/seq.o obj/test/graph/hash_value.o obj/test/graph/hash_table.o obj/test/graph/priority_queue.o obj/test/graph/dB_graph.o obj/test/graph/file_reader.o obj/test/graph/test_dB_graph.o obj/test/graph/run_dB_graph_tests.o obj/test/graph/test_file_reader.o obj/test/graph/test_cyclic_count.o obj/test/graph/cyclic_count.o
 
-CORE_POP_GRAPH_TESTS_OBJ = obj/test/pop_graph/core/run_core_pop_graph_tests.o obj/test/pop_graph/core/test_dB_graph_population.o obj/test/pop_graph/core/binary_kmer.o obj/test/pop_graph/core/element.o obj/test/pop_graph/core/seq.o obj/test/pop_graph/core/hash_value.o obj/test/pop_graph/core/hash_table.o obj/test/pop_graph/core/priority_queue.o obj/test/pop_graph/core/dB_graph.o obj/test/pop_graph/core/file_reader.o
-
-POP_GRAPH_TESTS_OBJ = obj/test/pop_graph/test_binary_kmer.o obj/test/pop_graph/test_seq.o obj/test/pop_graph/test_pop_load_and_print.o obj/test/pop_graph/run_pop_tests.o obj/test/pop_graph/supernode_cmp.o obj/test/pop_graph/test_pop_supernode_consensus.o obj/test/pop_graph/test_pop_element.o  obj/test/pop_graph/test_dB_graph_population.o obj/test/pop_graph/binary_kmer.o obj/test/pop_graph/element.o obj/test/pop_graph/seq.o obj/test/pop_graph/hash_value.o obj/test/pop_graph/hash_table.o obj/test/pop_graph/priority_queue.o obj/test/pop_graph/dB_graph.o obj/test/pop_graph/file_reader.o  obj/pop_graph/dB_graph_population.o obj/pop_graph/pqueue_pop.o 
+SV_TRIO_TESTS_OBJ = obj/test/pop_graph/sv_trio/test_pop_load_and_print.o obj/test/pop_graph/sv_trio/run_sv_trio_tests.o obj/test/pop_graph/sv_trio/supernode_cmp.o obj/test/pop_graph/sv_trio/test_pop_supernode_consensus.o obj/test/pop_graph/sv_trio/test_pop_element.o  obj/test/pop_graph/sv_trio/test_dB_graph_population.o obj/test/pop_graph/sv_trio/binary_kmer.o obj/test/pop_graph/sv_trio/element.o obj/test/pop_graph/sv_trio/seq.o obj/test/pop_graph/sv_trio/hash_value.o obj/test/pop_graph/sv_trio/hash_table.o obj/test/pop_graph/sv_trio/priority_queue.o obj/test/pop_graph/sv_trio/dB_graph.o obj/test/pop_graph/sv_trio/file_reader.o  obj/pop_graph/sv_trio/dB_graph_population.o obj/pop_graph/sv_trio/pqueue_pop.o 
 
 
 sv_trio : $(SV_TRIO_OBJ)
@@ -87,11 +86,8 @@ run_basic_tests : $(BASIC_TESTS_OBJ)
 run_dB_graph_tests : $(DB_GRAPH_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_DB_GRAPH_TESTS) $(OPT) $(LDFLAGS) -o $(BIN)/run_dB_graph_tests $(DB_GRAPH_TESTS_OBJ) -lcunit 
 
-run_core_pop_graph_tests : $(CORE_POP_GRAPH_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORE_POP_GRAPH_TESTS) $(OPT) $(LDFLAGS) -o $(BIN)/run_core_pop_graph_tests $(CORE_POP_GRAPH_TESTS_OBJ) -lcunit 
-
-run_pop_graph_tests : $(POP_GRAPH_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_POP_GRAPH_TESTS) $(OPT) $(LDFLAGS) -o $(BIN)/run_pop_graph_tests $(POP_GRAPH_TESTS_OBJ) -lcunit 
+run_sv_trio_tests : $(SV_TRIO_TESTS_OBJ)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_SV_TRIO_TESTS) $(OPT) $(LDFLAGS) -o $(BIN)/run_sv_trio_tests $(SV_TRIO_TESTS_OBJ) -lcunit 
 
 
 obj/pop_graph/sv_trio/%.o :  pop_graph/sv_trio/%.c
@@ -136,13 +132,16 @@ obj/test/graph/%.o :  graph/%.c
 obj/test/graph/%.o :  test/graph/%.c 
 	mkdir -p obj/test/graph; $(CC) $(CFLAGS_DB_GRAPH_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
 
+obj/test/pop_graph/sv_trio/%.o :  basic/%.c
+	mkdir -p obj/test/pop_graph/sv_trio; $(CC) $(CFLAGS_SV_TRIO_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
 
-obj/test/pop_graph/core/%.o :  basic/%.c 
-	mkdir -p obj/test/pop_graph/core; $(CC) $(CFLAGS_POP_GRAPH_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
+obj/test/pop_graph/sv_trio/%.o :  pop_graph/core/%.c 
+	mkdir -p obj/test/pop_graph/sv_trio; $(CC) $(CFLAGS_SV_TRIO_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
 
-obj/test/pop_graph/core/%.o :  pop_graph/core/%.c 
-	mkdir -p obj/test/pop_graph/core; $(CC) $(CFLAGS_POP_GRAPH_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
+obj/test/pop_graph/sv_trio/%.o :  pop_graph/sv_trio/%.c 
+	mkdir -p obj/test/pop_graph/sv_trio; $(CC) $(CFLAGS_SV_TRIO_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
 
-obj/test/pop_graph/core/%.o :  test/pop_graph/core/%.c 
-	mkdir -p obj/test/pop_graph; $(CC) $(CFLAGS_POP_GRAPH_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
+obj/test/pop_graph/sv_trio/%.o :  test/pop_graph/sv_trio/%.c 
+	mkdir -p obj/test/pop_graph/sv_trio; $(CC) $(CFLAGS_SV_TRIO_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
+
 

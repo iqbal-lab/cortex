@@ -1,9 +1,6 @@
-#include "test_binary_kmer.h"
-#include "test_count_kmers.h"
-#include "test_dB_graph.h"
+//#include "test_dB_graph.h"
 #include "test_dB_graph_node.h"
 #include "test_dB_graph_population.h"
-#include "test_seq.h"
 #include "test_pop_element.h"
 #include "test_pop_load_and_print.h"
 #include "test_pop_supernode_consensus.h"
@@ -46,7 +43,7 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (NULL == CU_add_test(pPopGraphSuite, "Load four people in one population, each consists of one toy chromosome.\n\tThree differ at one locus, and one at another.\n\t Find their individual supernodes correctly", test_take_four_people_each_with_one_read_and_find_variants))
+  if (NULL == CU_add_test(pPopGraphSuite, "Load three people in one population, each consists of one toy chromosome.\n\t Find their individual supernodes correctly", test_take_three_people_each_with_one_read_and_find_variants))
     {
       CU_cleanup_registry();
       return CU_get_error();
@@ -78,11 +75,11 @@ int  main()
      CU_cleanup_registry();
      return CU_get_error();
     }
-    if (NULL == CU_add_test(pPopGraphSuite, "Load five people in one population, sharing different amounts of sequence. Test finding population consensus supernode.", test_get_population_consensus_supernode))
-    {
-     CU_cleanup_registry();
-     return CU_get_error();
-    }
+    //   if (NULL == CU_add_test(pPopGraphSuite, "Load five people in one population, sharing different amounts of sequence. Test finding population consensus supernode.", test_get_population_consensus_supernode))
+    //{
+    //CU_cleanup_registry();
+    //return CU_get_error();
+    //}
     if (NULL == CU_add_test(pPopGraphSuite, "Check that correctly get stats on how many kmers are shared by 1,2,3,... people in a population", test_getting_stats_of_how_many_indivduals_share_a_node))
     {
      CU_cleanup_registry();

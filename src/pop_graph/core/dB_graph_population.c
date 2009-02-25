@@ -1041,7 +1041,7 @@ void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTab
     }
 
   char* kmer_as_string = binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq);
-  printf("There are %d people with node %s\n", number_of_individuals_with_this_node,kmer_as_string);
+  //printf("There are %d people with node %s\n", number_of_individuals_with_this_node,kmer_as_string);
   
 
   if (number_of_individuals_with_this_node>0)

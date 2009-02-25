@@ -96,4 +96,5 @@ void db_node_print_binary(FILE * fp, dBNode * node);
 
 boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node); 
 
+
 #endif /* ELEMENT_H_ */

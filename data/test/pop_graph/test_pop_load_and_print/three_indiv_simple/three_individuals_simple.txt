@@ -1,0 +1,3 @@
+../data/test/pop_graph/test_pop_load_and_print/three_indiv_simple/person1
+../data/test/pop_graph/test_pop_load_and_print/three_indiv_simple/person2
+../data/test/pop_graph/test_pop_load_and_print/three_indiv_simple/person3
