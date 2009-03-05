@@ -82,7 +82,8 @@ int main(int argc, char **argv){
       seq_length += load_fastq_data_from_filename_into_graph(filename, &count_kmers, &bad_reads, fastq, 5000, db_graph);
     }
     else{
-      seq_length += load_fasta_data_from_filename_into_graph(filename, &count_kmers, &bad_reads, 5000, db_graph);
+      fprintf(stderr, "Seeting max read length to 64000000");
+      seq_length += load_fasta_data_from_filename_into_graph(filename, &count_kmers, &bad_reads, 64000000, db_graph);
     }
 
     total_length += seq_length;

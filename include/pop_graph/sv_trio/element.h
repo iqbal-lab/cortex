@@ -119,6 +119,8 @@ void db_node_set_status(dBNode * node,NodeStatus status);
 void db_node_trio_aware_set_pruned_status(dBNode * node, int index);
 void db_node_set_status_to_none(dBNode * node);
 
+void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
+void db_node_mark_chromosome_overlap(dBNode* node, int which_chromosome, Orientation orientation);
 
 //check if node doesn't have any edges in a given orientation
 boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayType edge_type, int edge_index);

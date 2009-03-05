@@ -273,6 +273,334 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
 }
 
 
+void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
+{
+  //do nothing for now. Need to check about chars
+}
+
+
+//of each 2 bit pair, least sig bit referes to forward and more sig to reverse. +1 means is present in chromosome, 0 means is not.
+void db_node_mark_chromosome_overlap(dBNode* node, int which_chromosome, Orientation orientation)
+{
+  int which_char;
+
+  if (which_chromosome==1)
+    {
+      which_char=0;
+
+      if (orientation==forward)
+	{
+	  node->chrom_xs[which_char] |=  1;
+	}
+      else
+	{
+	  node->chrom_xs[which_char] |= 2;
+	}
+    }
+  else if (which_chromosome==2)
+    {
+      which_char=0;
+      if (orientation==forward)
+	{
+	  node->chrom_xs[which_char] |= 4;
+	}
+      else
+	{
+	  node->chrom_xs[which_char] |= 8;
+	}
+    }
+  else if (which_chromosome==3)
+    {
+      which_char=0;
+      if (orientation==forward)
+	{
+	  node->chrom_xs[which_char] |=  16;
+	}
+      else
+	{
+	  node->chrom_xs[which_char] |= 32;
+	}
+    }
+  else if (which_chromosome==4)
+    {
+      which_char=0;
+      if (orientation==forward)
+	{
+	  node->chrom_xs[which_char] |=  64;
+	}
+      else
+	{
+	  node->chrom_xs[which_char] |= 128;
+	}
+    }
+  else if (which_chromosome==5)
+    {
+      which_char=1;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  1;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 2;
+        }
+
+    }
+  else if (which_chromosome==6)
+    {
+      which_char=1;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |= 4;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 8;
+        }
+
+    }
+  else if (which_chromosome==7)
+    {
+      which_char=1;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  16;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 32;
+        }
+
+    }
+  else if (which_chromosome==8)
+    {
+      which_char=1;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |= 64;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 128;
+        }
+
+    }
+  else if (which_chromosome==9)
+    {
+      which_char=2;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  1;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 2;
+        }
+
+    }
+  else if (which_chromosome==10)
+    {
+      which_char=2;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  4;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 8;
+        }
+
+    }
+  else if (which_chromosome==11)
+    {
+      which_char=2;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  16;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 32;
+        }
+
+    }
+  else if (which_chromosome==12)
+    {
+      which_char=2;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  64;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 128;
+        }
+
+    }
+  else if (which_chromosome==13)
+    {
+      which_char=3;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  1;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 2;
+        }
+
+    }
+  else if (which_chromosome==14)
+    {
+      which_char=3;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |= 4;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 8;
+        }
+
+    }
+  else if (which_chromosome==15)
+    {
+      which_char=3;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  16;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 32;
+        }
+
+    }
+  else if (which_chromosome==16)
+    {
+      which_char=3;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  64;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 128;
+        }
+
+    }
+  else if (which_chromosome==17)
+    {
+      which_char=4;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  1;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 2;
+        }
+
+    }
+  else if (which_chromosome==18)
+    {
+      which_char=4;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |= 4;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 8;
+        }
+
+    }
+  else if (which_chromosome==19)
+    {
+      which_char=4;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  16;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 32;
+        }
+
+    }
+  else if (which_chromosome==20)
+    {
+      which_char=4;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  64;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 128;
+        }
+
+    }
+  else if (which_chromosome==21)
+    {
+      which_char=5;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  1;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 2;
+        }
+
+    }
+  else if (which_chromosome==22)
+    {
+      which_char=5;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |= 4;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 8;
+        }
+
+    }
+  else if (which_chromosome==23) //X chromosome is number 23
+    {
+      which_char=5;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |=  16;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 32;
+        }
+
+    }
+  else if (which_chromosome==24)//Y chromosome is number 24
+    {
+      which_char=5;
+      if (orientation==forward)
+        {
+          node->chrom_xs[which_char] |= 64;
+        }
+      else
+        {
+          node->chrom_xs[which_char] |= 128;
+        }
+
+    }
+
+  
+  
+
+
+}
+
+
 Orientation opposite_orientation(Orientation o){
   return o ^ 1;
   

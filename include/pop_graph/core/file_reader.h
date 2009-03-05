@@ -21,7 +21,7 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
 long long load_population_as_fastq(char* filename,  long long* count_kmers, long long* bad_reads, char quality_cutoff, dBGraph* db_graph);
 int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(char* f_name, long long* count_kmers, long long* bad_reads, char quality_cutoff, dBGraph* db_graph, int index);
 
-
+int load_chromosome_overlap_data(char* f_name,  dBGraph* db_graph, int which_chromosome);
 
 
 

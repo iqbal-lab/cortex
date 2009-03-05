@@ -44,7 +44,6 @@ EdgeArrayType type, int index)
 
 
 
-
 //returns length of sequence loaded
 int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char quality_cut_off, 
 						       int max_read_length, dBGraph * db_graph, EdgeArrayType type, int index){
@@ -117,6 +116,11 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 	  if (!found){
 	    (*count_kmers)++;
 	  }
+	  else
+	    {
+	      //increment coverage
+	      //db_node_increment_coverage(current_node, type, index);
+	    }
 	  
 	  current_orientation = db_node_get_orientation(current_window->kmer[j],current_node, db_graph->kmer_size);
 	  
@@ -147,6 +151,94 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
   return seq_length;    
 }
 
+
+
+//returns length of sequence loaded
+int load_ref_overlap_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char quality_cut_off, 
+						       int max_read_length, dBGraph * db_graph, int which_chromosome){
+
+  //----------------------------------
+  // preallocate the memory used to read the sequences
+  //----------------------------------
+  Sequence * seq = malloc(sizeof(Sequence));
+  if (seq == NULL){
+    fputs("Out of memory trying to allocate Sequence\n",stderr);
+    exit(1);
+  }
+  alloc_sequence(seq,max_read_length,LINE_MAX);
+  
+  
+  int seq_length=0;
+  short kmer_size = db_graph->kmer_size;
+
+  //max_read_length/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
+  int max_windows = max_read_length/(kmer_size+1);
+ 
+  //number of possible kmers in a 'perfect' read
+  int max_kmers   = max_read_length-kmer_size+1;
+
+  
+
+  //----------------------------------
+  //preallocate the space of memory used to keep the sliding_windows. NB: this space of memory is reused for every call -- with the view 
+  //to avoid memory fragmentation
+  //NB: this space needs to preallocate memory for orthogonal situations: 
+  //    * a good read -> few windows, many kmers per window
+  //    * a bad read  -> many windows, few kmers per window    
+  //----------------------------------
+  KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
+  if (windows == NULL){
+    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
+    exit(1);
+  }  
+  //allocate memory for the sliding windows 
+  binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
+  
+  int entry_length;
+
+  while (entry_length = file_reader(fp,seq,max_read_length)){
+
+    if (DEBUG){
+      printf ("\nsequence %s\n",seq->seq);
+    }
+    
+    int i,j;
+    seq_length += entry_length;
+    
+    int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,entry_length,quality_cut_off,db_graph->kmer_size,windows,max_windows, max_kmers);
+    
+    if (nkmers == 0) {
+      (*bad_reads)++;
+    }
+    else {
+      Element * current_node  = NULL;
+
+      
+      Orientation current_orientation;
+      
+      for(i=0;i<windows->nwindows;i++){ //for each window
+	KmerSlidingWindow * current_window = &(windows->window[i]);
+	
+	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
+
+	  current_node = hash_table_find(element_get_key(current_window->kmer[j],db_graph->kmer_size),db_graph);	  	 
+
+	  if (current_node){
+	    current_orientation = db_node_get_orientation(current_window->kmer[j],current_node, db_graph->kmer_size);	    
+	    db_node_mark_chromosome_overlap(current_node, which_chromosome, current_orientation);
+	  }
+	  
+	}
+	
+      }
+    }
+    
+  }
+
+  free_sequence(&seq);
+  binary_kmer_free_kmers_set(&windows);
+  return seq_length;    
+}
 
 
 
@@ -303,6 +395,33 @@ int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_f
   return total_seq_loaded;
 
 }
+
+
+//assumes you already have loaded your reads from your individuals, so have a full graph.
+//this just marks each node with how it overlaps with this chromosome
+int load_chromosome_overlap_data(char* f_name,  dBGraph* db_graph, int which_chromosome)
+{
+  
+  int max_read_length = 500;
+
+  FILE* fptr = fopen(f_name, "r");
+  if (fptr == NULL)
+    {
+      //printf("cannot open chromosome fasta file:%s\n",f_name);
+      exit(1);
+    }
+
+  long long count_kmers, bad_reads;
+  int total_seq_loaded=0;
+
+  total_seq_loaded = total_seq_loaded +
+    load_ref_overlap_data_into_graph_of_specific_person_or_pop(fptr, &read_sequence_from_fasta, &count_kmers,&bad_reads,  0 , max_read_length, db_graph, which_chromosome);
+
+
+  return total_seq_loaded;
+
+}
+
 
 
 
