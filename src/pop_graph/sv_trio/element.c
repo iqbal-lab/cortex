@@ -630,6 +630,12 @@ boolean db_node_has_at_most_one_intersecting_chromosome(dBNode* node, int* which
   //	}
   // }
 
+  if (node==NULL)
+    {
+      printf("Dont call db_node_has_at_most_one_intersecting_chromosome wit null node");
+      exit(1);
+      return 0;
+    }
   char chrom1_to_4 = node->chrom_xs[0];
   char chrom5_to_8 = node->chrom_xs[1];
   char chrom9_to_12 = node->chrom_xs[2];

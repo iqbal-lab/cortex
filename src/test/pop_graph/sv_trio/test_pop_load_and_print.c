@@ -362,3 +362,86 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
 
 
 }
+
+
+
+
+void test_loading_simple_fasta_and_getting_chromosome_intersections()
+{
+
+  int kmer_size = 3;
+  int number_of_buckets=8;
+  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+
+  long long bad_reads=0;
+  long long total_kmers=0;
+  long long seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt",  &total_kmers, &bad_reads,hash_table);
+
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom1.fasta", hash_table, 1);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom2.fasta", hash_table, 2);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom3.fasta", hash_table, 3);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom4.fasta", hash_table, 4);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom5.fasta", hash_table, 5);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom6.fasta", hash_table, 6);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom7.fasta", hash_table, 7);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom8.fasta", hash_table, 8);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom9.fasta", hash_table, 9);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom10.fasta", hash_table, 10);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom11.fasta", hash_table, 11);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom12.fasta", hash_table, 12);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom13.fasta", hash_table, 13);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom14.fasta", hash_table, 14);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom15.fasta", hash_table, 15);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom16.fasta", hash_table, 16);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom17.fasta", hash_table, 17);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom18.fasta", hash_table, 18);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom19.fasta", hash_table, 19);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom20.fasta", hash_table, 20);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom21.fasta", hash_table, 21);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom22.fasta", hash_table, 22);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom23.fasta", hash_table, 23);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom24.fasta", hash_table, 24);
+
+
+  //now let's check a couple of kmers
+  
+  //I think TGA should be seen in precisely one chromosome
+  
+  dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TGA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT((query_node!=NULL));  
+  int answer=-99;
+  CU_ASSERT(db_node_has_at_most_one_intersecting_chromosome(query_node, &answer));
+  CU_ASSERT(answer==24);
+
+
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("CGT",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT((query_node!=NULL));  
+  answer=-99;
+  CU_ASSERT(!( db_node_has_at_most_one_intersecting_chromosome(query_node, &answer)));
+  CU_ASSERT(answer==-1);
+
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT((query_node!=NULL));  
+  answer=-99;
+  CU_ASSERT(!( db_node_has_at_most_one_intersecting_chromosome(query_node, &answer)));
+  CU_ASSERT(answer==-1);
+
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("GGG",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT((query_node!=NULL));  
+  answer=-99;
+  CU_ASSERT(!( db_node_has_at_most_one_intersecting_chromosome(query_node, &answer)));
+  CU_ASSERT(answer==-1);
+
+
+
+
+  
+}

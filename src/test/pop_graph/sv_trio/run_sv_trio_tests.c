@@ -92,6 +92,12 @@ int  main()
      CU_cleanup_registry();
      return CU_get_error();
     }
+    if (NULL == CU_add_test(pPopGraphSuite, "Load 24 fake (tiny) chromosomes and count intersections with a single person", test_loading_simple_fasta_and_getting_chromosome_intersections
+))
+    {
+     CU_cleanup_registry();
+     return CU_get_error();
+    }
 
 
     
