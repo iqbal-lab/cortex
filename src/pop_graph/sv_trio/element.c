@@ -1,5 +1,6 @@
+
 /*
- element.c -- implements the nodes of the dBruijn graph
+ Elemenx.c -- implements the nodes of the dBruijn graph
  */
 
 #include <element.h>
@@ -10,6 +11,11 @@
 
 //const int NUMBER_OF_INDIVIDUALS_PER_POPULATION = 5;
 //const int NUMBER_OF_POPULATIONS = 2;
+
+const char mask1 = 255-3; //11111100
+const char mask2 = 255-12;//11110011
+const char mask3 = 255-48;//11001111
+const char mask4 = 255-192;//00111111
 
 
 //currently noone calls this in normal use
@@ -596,6 +602,178 @@ void db_node_mark_chromosome_overlap(dBNode* node, int which_chromosome, Orienta
 
   
   
+
+
+}
+
+
+boolean db_node_has_at_most_one_intersecting_chromosome(dBNode* node, int* which_chromosome)
+{
+
+  //  if (  (node->chrom_xs[0]==0) && (node->chrom_xs[1]==0) && (node->chrom_xs[2]==0) && (node->chrom_xs[3]==0) && (node->chrom_xs[4]==0) && (node->chrom_xs[5]==0) )
+  // {
+  //   //intersects none at all
+  //   *which_chromosome=0;
+  //   return true;
+  // } 
+  //else if ((node->chrom_xs[0]==1) || (node->chrom_xs[0]==2) || (node->chrom_xs[0]==3)) //overlaps chrom 1, and none of 2,3,4
+  // {
+  //   if ( (node->chrom_xs[1]==0) && (node->chrom_xs[2]==0) && (node->chrom_xs[3]==0) && (node->chrom_xs[4]==0) && (node->chrom_xs[5]==0) ) //overlaps no other chromosome
+  //	{
+  //	  *which_chromosome=1;
+  //	  return true;
+  //	}
+  //   else
+  ////	{
+  //	  *which_chromosome=-1;//overlaps more than 1
+  //	  return false;
+  //	}
+  // }
+
+  char chrom1_to_4 = node->chrom_xs[0];
+  char chrom5_to_8 = node->chrom_xs[1];
+  char chrom9_to_12 = node->chrom_xs[2];
+  char chrom13_to_16 = node->chrom_xs[3];
+  char chrom17_to_20 = node->chrom_xs[4];
+  char chrom21_to_24 = node->chrom_xs[5];
+
+  char all_except_1_to_4 = (chrom5_to_8 || chrom9_to_12 || chrom13_to_16 || chrom17_to_20 || chrom21_to_24);
+  char all_except_5_to_8 = (chrom1_to_4 || chrom9_to_12 || chrom13_to_16 || chrom17_to_20 || chrom21_to_24);
+  char all_except_9_to_12= (chrom1_to_4 || chrom5_to_8 || chrom13_to_16 || chrom17_to_20 || chrom21_to_24);
+  char all_except_13_to_16=(chrom1_to_4 || chrom5_to_8 || chrom9_to_12 || chrom17_to_20 || chrom21_to_24);
+  char all_except_17_to_20=(chrom1_to_4 || chrom5_to_8 || chrom9_to_12 || chrom13_to_16 || chrom21_to_24);
+  char all_except_21_to_24=(chrom1_to_4 || chrom5_to_8 || chrom9_to_12 || chrom13_to_16 || chrom17_to_20);
+
+  if ( (chrom1_to_4==0) && (chrom5_to_8==0) && (chrom9_to_12==0) && (chrom13_to_16==0) && (chrom17_to_20==0) && (chrom21_to_24==0) )
+    {
+      *which_chromosome=0;
+      return true;
+    }
+  else if ( (all_except_1_to_4==0) && ( (chrom1_to_4 &  mask1) ==0) )
+  {
+    *which_chromosome=1;
+    return true;
+  }
+  else if ( (all_except_1_to_4==0) && ( (chrom1_to_4 &  mask2) ==0) )
+    {
+      *which_chromosome=2;
+      return true;
+    }
+  else if ( (all_except_1_to_4==0) && ( (chrom1_to_4 &  mask3) ==0) )
+    {
+      *which_chromosome=3;
+      return true;
+    }
+  else if ( (all_except_1_to_4==0) && ((chrom1_to_4 &  mask4) ==0) )
+    {
+      *which_chromosome=4;
+      return true;
+    }
+    else if ( (all_except_5_to_8==0) && ( (chrom5_to_8 &  mask1) ==0) )
+    {
+      *which_chromosome=5;
+      return true;
+    }
+    else if ( (all_except_5_to_8==0) && ( (chrom5_to_8 &  mask2) ==0) )
+    {
+      *which_chromosome=6;
+      return true;
+    }
+    else if ( (all_except_5_to_8==0) && ( (chrom5_to_8 &  mask3) ==0) )
+    {
+      *which_chromosome=7;
+      return true;
+    }
+    else if ( (all_except_5_to_8==0) && ( (chrom5_to_8 &  mask4) ==0) )
+    {
+      *which_chromosome=8;
+      return true;
+    }
+    else if ( (all_except_9_to_12==0) && ( (chrom9_to_12 &  mask1) ==0) )
+    {
+      *which_chromosome=9;
+      return true;
+    }
+    else if ( (all_except_9_to_12==0) && ( (chrom9_to_12 &  mask2) ==0) )
+    {
+      *which_chromosome=10;
+      return true;
+    }
+    else if ( (all_except_9_to_12==0) && ( (chrom9_to_12 &  mask3) ==0) )
+    {
+      *which_chromosome=11;
+      return true;
+    }
+    else if ( (all_except_9_to_12==0) && ( (chrom9_to_12 &  mask4) ==0) )
+    {
+      *which_chromosome=12;
+      return true;
+    }
+    else if ( (all_except_13_to_16==0) && ( (chrom13_to_16 &  mask1) ==0) )
+    {
+      *which_chromosome=13;
+      return true;
+    }
+    else if ( (all_except_13_to_16==0) && ( (chrom13_to_16 &  mask2) ==0) )
+    {
+      *which_chromosome=14;
+      return true;
+    }
+    else if ( (all_except_13_to_16==0) && ( (chrom13_to_16 &  mask3) ==0) )
+    {
+      *which_chromosome=15;
+      return true;
+    }
+    else if ( (all_except_13_to_16==0) && ( (chrom13_to_16 &  mask4) ==0) )
+    {
+      *which_chromosome=16;
+      return true;
+    }
+    else if ( (all_except_17_to_20==0) && ( (chrom17_to_20 &  mask1) ==0) )
+    {
+      *which_chromosome=17;
+      return true;
+    }
+    else if ( (all_except_17_to_20==0) && ( (chrom17_to_20 &  mask2) ==0) )
+    {
+      *which_chromosome=18;
+      return true;
+    }
+    else if ( (all_except_17_to_20==0) && ( (chrom17_to_20 &  mask3) ==0) )
+    {
+      *which_chromosome=19;
+      return true;
+    }
+    else if ( (all_except_17_to_20==0) && ( (chrom17_to_20 &  mask4) ==0) )
+    {
+      *which_chromosome=20;
+      return true;
+    }
+    else if ( (all_except_21_to_24==0) && ( (chrom21_to_24 &  mask1) ==0) )
+    {
+      *which_chromosome=21;
+      return true;
+    }
+    else if ( (all_except_21_to_24==0) && ( (chrom21_to_24 &  mask2) ==0) )
+    {
+      *which_chromosome=22;
+      return true;
+    }
+    else if ( (all_except_21_to_24==0) && ( (chrom21_to_24 &  mask3) ==0) )
+    {
+      *which_chromosome=23;
+      return true;
+    }
+    else if ( (all_except_21_to_24==0) && ( (chrom21_to_24 &  mask4) ==0) )
+    {
+      *which_chromosome=24;
+      return true;
+    }
+
+  //must be overlapping more than 1, so
+  *which_chromosome=-1;
+  return false;
+
 
 
 }

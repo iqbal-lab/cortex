@@ -33,7 +33,14 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
-
+  if (NULL == CU_add_test(pPopGraphSuite, "Test element - mark chromosome overlap", test_mark_chromosome_overlap)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test element -check if element overlaps <=1 chromosome", test_has_at_most_one_chromosome_intersection)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
   if (NULL == CU_add_test(pPopGraphSuite, "Test that can identify supernode ends",   test_is_supernode_end)) {
     CU_cleanup_registry();
     return CU_get_error();

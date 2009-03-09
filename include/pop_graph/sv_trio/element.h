@@ -44,7 +44,7 @@ typedef struct{
   BinaryKmer kmer;
   char coverage[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
   Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; //3 people, and only 1 population :-)
-  char chrom_xs[6]; //2 bits for each of 23 chromosomes. xs stands for intersections. Tells you if the element intersetcs ref chromosomes in fw, rev, both or neither orientation.
+  unsigned char chrom_xs[6]; //2 bits for each of 23 chromosomes. xs stands for intersections. Tells you if the element intersetcs ref chromosomes in fw, rev, both or neither orientation.
   NodeStatus status;
 } Element;
 
@@ -121,6 +121,7 @@ void db_node_set_status_to_none(dBNode * node);
 
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
 void db_node_mark_chromosome_overlap(dBNode* node, int which_chromosome, Orientation orientation);
+boolean db_node_has_at_most_one_intersecting_chromosome(dBNode* node, int* which_chromosome);
 
 //check if node doesn't have any edges in a given orientation
 boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayType edge_type, int edge_index);
