@@ -492,12 +492,12 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
       return false;
     }
 
-  if (which_chromosome != -99)
+  if (which_chromosome>0)
     {
       chrom_list[0]=which_chromosome;
       chrom_ctr=1;
     }
-  else
+  else if (which_chromosome == -99)
     {
       printf("programming error counting chrom overlaps");
       exit(1);
@@ -539,19 +539,26 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
 	{
 	  return false;
 	}
+      if ((next_node==first_node) && (next_orientation==start_orientation))//back to the start - will loop forever if not careful ;-0
+	{
+	  break;
+	}
       boolean new_chromosome=true;
       for (i=0; i<chrom_ctr; i++)
 	{
-	  if (chrom_list[i]==which_chromosome)
+	  if (chrom_list[i]==0)
+	    {
+	      printf("Programming error. Should not have zero entries in this array until AFTER chrom_ctr");
+	      exit(1);
+	    }
+	  else if (chrom_list[i]==which_chromosome)
 	    {
 	      //we have seen it already
 	      new_chromosome=false;
-	      printf("\nSeen this chromosome %d before\n",which_chromosome);
 	    }
 	}
       if (new_chromosome)
 	{
-	  printf("This is a new chromosome - %d\n", which_chromosome);
 	  chrom_list[chrom_ctr]=which_chromosome;
 	  chrom_ctr++;
 	}
