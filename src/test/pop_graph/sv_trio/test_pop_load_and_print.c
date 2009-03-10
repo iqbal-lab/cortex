@@ -498,11 +498,65 @@ void test_db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome()
 
   int number_of_chromosomes_overlapped=-100;
   CU_ASSERT(db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(query_node1, individual_edge_array, 0, hash_table, &number_of_chromosomes_overlapped));
-  printf("Number of overlapped chroms is %d\n", number_of_chromosomes_overlapped);
+  //printf("Number of overlapped chroms is %d\n", number_of_chromosomes_overlapped);
   CU_ASSERT(number_of_chromosomes_overlapped==2);
   CU_ASSERT(db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(query_node2, individual_edge_array, 0, hash_table, &number_of_chromosomes_overlapped))
-  printf("Number of overlapped chroms is %d\n", number_of_chromosomes_overlapped);
+    //printf("Number of overlapped chroms is %d\n", number_of_chromosomes_overlapped);
   CU_ASSERT(number_of_chromosomes_overlapped==2);
+
+  hash_table_free(&hash_table);
+
+
+
+  // ****
+  //1.2 Fasta file that generate a graph with one long supernode, with a conflict at the end
+  //   caused by two outward/exiting edges 
+  //
+  // >read1
+  // ACATT
+  // >read2
+  // ATTC
+  // >read3
+  // ATTG
+  // ****
+
+
+
+  //first set up the hash/graph
+  kmer_size = 3;
+  number_of_buckets=5;
+
+  count_kmers=0;
+  bad_reads=0;
+
+  hash_table = hash_table_new(number_of_buckets,kmer_size);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end", &count_kmers, &bad_reads, hash_table);
+
+  CU_ASSERT(seq_loaded==13);
+  CU_ASSERT(bad_reads==0);
+
+
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple2/chrom1.fasta", hash_table, 1);//does not overlap the graph
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple2/chrom2.fasta", hash_table, 2);//does not overlap the graph
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple2/chrom3.fasta", hash_table, 3);//overlaps node ATT
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple2/chrom4.fasta", hash_table, 4);//overlaps node ATT
+
+  //ACA IS  the end of a supernode in the reverse direction
+  query_node1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT(!(query_node1==NULL));
+  CU_ASSERT(!db_node_is_supernode_end(query_node1, forward, individual_edge_array, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node1, reverse, individual_edge_array, 0, hash_table));
+
+  number_of_chromosomes_overlapped=-100;
+  CU_ASSERT(!db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(query_node1, individual_edge_array, 0, hash_table, &number_of_chromosomes_overlapped));
+  
+
+  //ATT is not a supernode end
+  query_node1 = hash_table_find(element_get_key(seq_to_binary_kmer("ATT",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT(!(query_node1==NULL));
+  CU_ASSERT(!db_node_has_at_most_one_intersecting_chromosome(query_node1, &number_of_chromosomes_overlapped));
+
+  CU_ASSERT(number_of_chromosomes_overlapped==-1);
 
   
 
