@@ -445,3 +445,66 @@ void test_loading_simple_fasta_and_getting_chromosome_intersections()
 
   
 }
+
+
+
+
+
+void test_db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome()
+{
+
+
+  int kmer_size = 3;
+  int number_of_buckets=8;
+  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+
+  
+  // ****
+  //1.1 Fasta file that generate a graph with two hairpins, and a single edge (in each rorientation) joining them.
+  //  Sequence is :  ACGTAC
+  // ****
+
+  long long count_kmers=0;
+  long long bad_reads=0;
+
+  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops", &count_kmers, &bad_reads, hash_table);
+  CU_ASSERT(seq_loaded==6);
+  CU_ASSERT(bad_reads==0);
+
+
+  //CGT is not the end of a supernode in either direction
+  dBNode* query_node1 = hash_table_find(element_get_key(seq_to_binary_kmer("GTA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT(!(query_node1==NULL));
+  CU_ASSERT(!db_node_is_supernode_end(query_node1, forward, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node1, reverse, individual_edge_array, 0, hash_table));
+
+  //GTA is not the end of a supernode in either direction
+  dBNode* query_node2 = hash_table_find(element_get_key(seq_to_binary_kmer("GTA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT(!(query_node2==NULL));
+  CU_ASSERT(!db_node_is_supernode_end(query_node2, forward, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node2, reverse, individual_edge_array, 0, hash_table));
+  
+  //now load a few dummy chromosomes, each of which intersects precisely one different kmer in the graph, so that no node in the graph overlaps >1 chromosome
+  //need to take care because we have hairpins
+
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple2/chrom1.fasta", hash_table, 1);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple2/chrom1.fasta", hash_table, 2);
+
+  int number_of_chromosomes_overlapped=-100;
+  CU_ASSERT(db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(query_node1, individual_edge_array, 0, hash_table, &number_of_chromosomes_overlapped));
+  printf("Number of overlapped chroms is %d\n", number_of_chromosomes_overlapped);
+  CU_ASSERT(number_of_chromosomes_overlapped==2);
+  CU_ASSERT(db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(query_node2, individual_edge_array, 0, hash_table, &number_of_chromosomes_overlapped))
+  printf("Number of overlapped chroms is %d\n", number_of_chromosomes_overlapped);
+  CU_ASSERT(number_of_chromosomes_overlapped==2);
+
+  
+
+
+}

@@ -29,6 +29,7 @@ typedef enum
     pruned_from_NA12878_and_NA12892  = 6,
     pruned_from_NA12891_and_NA12892  = 7,
     pruned_from_NA12878_and_NA12891_and_NA12892  = 8,
+    potential_sv = 9,
 
   } NodeStatus;
 

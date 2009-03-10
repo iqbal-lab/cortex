@@ -92,8 +92,12 @@ int  main()
      CU_cleanup_registry();
      return CU_get_error();
     }
-    if (NULL == CU_add_test(pPopGraphSuite, "Load 24 fake (tiny) chromosomes and count intersections with a single person", test_loading_simple_fasta_and_getting_chromosome_intersections
-))
+    if (NULL == CU_add_test(pPopGraphSuite, "Load 24 fake (tiny) chromosomes and count intersections with a single person", test_loading_simple_fasta_and_getting_chromosome_intersections))
+    {
+     CU_cleanup_registry();
+     return CU_get_error();
+    }
+    if (NULL == CU_add_test(pPopGraphSuite, "Check with simple examples that can correctly check supernode for whether each node intersects at most one chromosome, and if so, how many chromosomes altogether are overlapped", test_db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome))
     {
      CU_cleanup_registry();
      return CU_get_error();

@@ -250,6 +250,43 @@ void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_
 }
 
 
+
+
+void db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index, 
+									   boolean is_for_testing, char** for_test, int* index_for_test)
+{
+
+  FILE * fout;
+  
+  char filename [200];
+  if (*supernode_count % 100000000 == 0)
+    {
+      int num = *supernode_count / 100000000;
+      
+      if (*supernode_count !=0)
+	{
+	  fclose(fout);
+	}
+
+      if (type == individual_edge_array)
+	{
+	  sprintf(filename,"out_nodes_kmer_%i_person_%i_subset_%i",db_graph->kmer_size,index,num);
+	}
+      else
+	{
+	  sprintf(filename,"out_nodes_kmer_%i_population_%i_subset_%i",db_graph->kmer_size,index,num);
+	}
+      //fprintf(stderr,"opening file %s\n",filename);
+      fout = fopen(filename,"w");
+    }
+  *supernode_count = *supernode_count+1;
+  db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop(fout,node,db_graph, type,index, is_for_testing,  for_test,index_for_test);
+
+}
+
+
+
+
 // *********************************************
 // functions applied to a person/pop's graph
 // *********************************************
@@ -416,7 +453,143 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
   
 }
 
+//TODO - move thiscode out into /sv_trio
+//the final argument returns the number of chromosomes intersected, but only gives the right answer if the function returns true - ie no node intersected >1 chromosome
+boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNode* node, EdgeArrayType type, int index, dBGraph* dbgraph, int* total_number_of_different_chromosomes_intersected)
+{
+ 
+  *total_number_of_different_chromosomes_intersected=0;
+  char tmp_seq[dbgraph->kmer_size];
 
+  int chrom_list[24]; //keep track of which chromosomes have been hit by this supernode
+  int i;
+  for (i=0; i<24; i++)
+    {
+      chrom_list[i]=0;
+    }
+  int chrom_ctr=0; //points to entry in array available for next chromosome we find
+
+  //first check the node exists in this person's graph
+  if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
+    {
+      if (node==NULL)
+        {
+          printf("Bloody node is null so of course cant get first node");
+        }
+      else
+        {
+          printf("This person %d does not have this node %s\n", index, binary_kmer_to_seq(node->kmer, dbgraph->kmer_size, tmp_seq));
+        }
+      exit(1);
+      return false;
+    }
+
+  dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, type, index, dbgraph);
+  
+  int which_chromosome=-99;
+  if (! db_node_has_at_most_one_intersecting_chromosome(first_node, &which_chromosome) )
+    {
+      return false;
+    }
+
+  if (which_chromosome != -99)
+    {
+      chrom_list[0]=which_chromosome;
+      chrom_ctr=1;
+    }
+  else
+    {
+      printf("programming error counting chrom overlaps");
+      exit(1);
+    }
+
+
+  dBNode* current_node;
+  dBNode* next_node;
+  current_node=first_node;
+  Orientation start_orientation, current_orientation, next_orientation;
+
+  //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
+  if (db_node_is_supernode_end(node,forward, type,index, dbgraph))
+    {
+      if (db_node_is_supernode_end(node,reverse, type,index, dbgraph))
+	{
+	  //singleton
+	  return true;
+	}
+      else
+	{
+	  start_orientation=reverse;
+	}
+    }
+  else
+    {
+      start_orientation=forward;
+    }
+
+
+  
+
+
+  //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
+  while (!db_node_is_supernode_end(current_node,current_orientation, type,index, dbgraph))
+    {
+      next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, dbgraph);
+      if (! db_node_has_at_most_one_intersecting_chromosome(next_node, &which_chromosome) )
+	{
+	  return false;
+	}
+      boolean new_chromosome=true;
+      for (i=0; i<chrom_ctr; i++)
+	{
+	  if (chrom_list[i]==which_chromosome)
+	    {
+	      //we have seen it already
+	      new_chromosome=false;
+	      printf("\nSeen this chromosome %d before\n",which_chromosome);
+	    }
+	}
+      if (new_chromosome)
+	{
+	  printf("This is a new chromosome - %d\n", which_chromosome);
+	  chrom_list[chrom_ctr]=which_chromosome;
+	  chrom_ctr++;
+	}
+      current_node=next_node;
+      current_orientation=next_orientation;
+	
+    }
+
+  *total_number_of_different_chromosomes_intersected=chrom_ctr;
+  return true;
+
+
+}
+
+//unlike the previous function, this works even when some nodes intersect multiple chromosomes
+//int db_graph_get_number_of_chromosomes_intersected_by_this_supernode(dBNode* node, EdgearrayType type, int index, dBGraph* dbgraph)
+//{
+  
+//}
+
+
+
+//TODO - implement db_graph_apply_function_to_all_nodes-in_supernode_stopping_as_soon_as_one_returns_false
+
+
+void db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test )
+{
+  // ignore if visited
+
+  // save initial node
+
+  //ignore unless for all nodes in supernode, has <=1 chrom intersection
+
+  // as byproduct get number of overlapped chromosomes. if that is =2, then call print, then print chrom numbers, then directions.
+  
+
+  
+}
 
 
 void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population(dBGraph* hash_table, EdgeArrayType type, int index)
@@ -1040,7 +1213,7 @@ void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTab
         }
     }
 
-  char* kmer_as_string = binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq);
+  //char* kmer_as_string = binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq);
   //printf("There are %d people with node %s\n", number_of_individuals_with_this_node,kmer_as_string);
   
 

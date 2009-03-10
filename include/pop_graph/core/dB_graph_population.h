@@ -39,7 +39,8 @@ char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode *
 //void print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node,EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test);
 void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index,
 										    boolean is_for_testing, char** for_test, int* index_for_test);
-
+void db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index, 
+											     boolean is_for_testing, char** for_test, int* index_for_test);
 
 // functions applied to a person/population's graph
 void db_graph_traverse_specific_person_or_pop_for_supernode_printing(void (*f)(HashTable*, Element *, long*, EdgeArrayType, int, boolean, char**, int*),HashTable * hash_table, long* supernode_count, 
@@ -67,12 +68,20 @@ boolean db_node_is_supernode_end(dBNode* node, Orientation orientation, EdgeArra
 int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index, dBGraph* db_graph);
 void db_graph_get_subsection_of_supernode_containing_given_node_as_supernode_object(dBSupernode* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index, dBGraph* db_graph);
 
+
+//TODO - implement these!!
 void apply_function_to_every_node_in_supernode_object(dBSupernode*, void (*f)(dBNode*));
 void apply_function_to_every_node_in_supernode_containing_given_node(void (*f)(dBNode*, EdgeArrayType, int, dBGraph*), dBNode* node);
 
 
 dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph);
 dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* node, Orientation o, Orientation* next_orientation, EdgeArrayType type, int index, dBGraph* db_graph);
+
+void db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, 
+										  int* index_for_test );
+
+boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNode* node, EdgeArrayType type, int index, dBGraph* dbgraph, int* total_number_of_different_chromosomes_intersected);
+
 
 
 //returns for this function are in the two int*'s.
