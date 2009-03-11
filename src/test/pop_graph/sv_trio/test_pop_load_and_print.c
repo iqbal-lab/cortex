@@ -562,3 +562,115 @@ void test_db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome()
 
 
 }
+
+
+
+void test_printing_supernode_with_chromosome_intersections()
+{
+  int kmer_size = 3;
+  int number_of_buckets=8;
+  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+
+  
+  // ****
+  //1.1 Fasta file that generate a graph with two hairpins, and a single edge (in each rorientation) joining them.
+  //  Sequence is :  ACGTAC
+  // ****
+
+  long long count_kmers=0;
+  long long bad_reads=0;
+
+  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops", &count_kmers, &bad_reads, hash_table);
+  CU_ASSERT(seq_loaded==6);
+  CU_ASSERT(bad_reads==0);
+
+
+  //GTA is not the end of a supernode in either direction - will overlap with chrom 2
+  dBNode* query_node1 = hash_table_find(element_get_key(seq_to_binary_kmer("GTA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT(!(query_node1==NULL));
+  CU_ASSERT(!db_node_is_supernode_end(query_node1, forward, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node1, reverse, individual_edge_array, 0, hash_table));
+
+  //CGT is not the end of a supernode in either direction - will overlap with chrom1
+  dBNode* query_node2 = hash_table_find(element_get_key(seq_to_binary_kmer("CGT",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT(!(query_node2==NULL));
+  CU_ASSERT(!db_node_is_supernode_end(query_node2, forward, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node2, reverse, individual_edge_array, 0, hash_table));
+  
+  //now load a few dummy chromosomes, each of which intersects precisely one different kmer in the graph, so that no node in the graph overlaps >1 chromosome
+  //need to take care because we have hairpins
+
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple2/chrom1.fasta", hash_table, 1);
+  load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple2/chrom2.fasta", hash_table, 2);
+
+  int number_of_chromosomes_overlapped=-100;
+  CU_ASSERT(db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(query_node1, individual_edge_array, 0, hash_table, &number_of_chromosomes_overlapped));
+  //printf("Number of overlapped chroms is %d\n", number_of_chromosomes_overlapped);
+  CU_ASSERT(number_of_chromosomes_overlapped==2);
+  CU_ASSERT(db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(query_node2, individual_edge_array, 0, hash_table, &number_of_chromosomes_overlapped))
+    //printf("Number of overlapped chroms is %d\n", number_of_chromosomes_overlapped);
+  CU_ASSERT(number_of_chromosomes_overlapped==2);
+
+
+  //OK - that was all preliminary - now test the printing
+
+  char** array_of_supernodes_for_person1= (char**) calloc(10,sizeof(char*));
+
+  if (array_of_supernodes_for_person1==NULL)
+    {
+      printf("cant start - OOM");
+      exit(1);
+    }
+
+  char** array_of_chrom_overlaps_for_person1= (char**) calloc(10,sizeof(char*));
+
+  if (array_of_chrom_overlaps_for_person1==NULL)
+    {
+      printf("cant start - OOM");
+      exit(1);
+    }
+
+  //this counters are used to make sure none of the files of printed out supernodes get too big. In fact
+  //it is completely unused in test code, as we don't print anything
+  long supernode_count_person1=0;
+
+  
+  //this on the other hand is used in testing.
+  int number_of_supernodes_in_person_1=0;
+  int number_of_chrom_overlaps_in_person_1=0;
+
+  //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
+ db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop, hash_table, 
+											&supernode_count_person1, individual_edge_array, 0, false, NULL, NULL, &number_of_supernodes_in_person_1, 
+											&number_of_chrom_overlaps_in_person_1);
+
+											// 0, true, array_of_supernodes_for_person1,
+											//array_of_chrom_overlaps_for_person1, &number_of_supernodes_in_person_1, &number_of_chrom_overlaps_in_person_1);
+
+
+ int i;
+ for (i=0; i< number_of_supernodes_in_person_1; i++)
+   {
+     printf("%s\n", array_of_supernodes_for_person1[i]);
+   }
+
+ for (i=0; i< number_of_chrom_overlaps_in_person_1; i++)
+   {
+     printf("%s\n", array_of_chrom_overlaps_for_person1[i]);
+   }
+
+
+
+ //Quicksort these results:
+ //qsort((void*) array_of_supernodes_for_person1, number_of_supernodes_in_person_1 , sizeof(char*),  &supernode_cmp);
+
+
+
+
+}

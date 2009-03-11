@@ -40,15 +40,25 @@ char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode *
 void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index,
 										    boolean is_for_testing, char** for_test, int* index_for_test);
 void db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index, 
-											     boolean is_for_testing, char** for_test, int* index_for_test);
+											     boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2);
+
+void db_graph_print_chrom_intersections_for_supernode(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test);
+
 
 // functions applied to a person/population's graph
 void db_graph_traverse_specific_person_or_pop_for_supernode_printing(void (*f)(HashTable*, Element *, long*, EdgeArrayType, int, boolean, char**, int*),HashTable * hash_table, long* supernode_count, 
 								     EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test);
 
+void db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(void (*f)(HashTable*, Element *, long* , EdgeArrayType, int, boolean, char**, char**, int*, int*),
+											    HashTable * hash_table, long* supernode_count, EdgeArrayType type, int index,
+											    boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2);
+
 void db_graph_traverse_to_gather_statistics_about_people(void (*f)(HashTable*, Element *, int**, int),HashTable *, int**, int);
 
 void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test );
+
+void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index,
+										 boolean is_for_testing, char** for_test, int* index_for_test);
 
 void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population(dBGraph* hash_table, EdgeArrayType type, int index);
 
@@ -77,8 +87,8 @@ void apply_function_to_every_node_in_supernode_containing_given_node(void (*f)(d
 dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph);
 dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* node, Orientation o, Orientation* next_orientation, EdgeArrayType type, int index, dBGraph* db_graph);
 
-void db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, 
-										  int* index_for_test );
+void db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, 
+										  boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2 );
 
 boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNode* node, EdgeArrayType type, int index, dBGraph* dbgraph, int* total_number_of_different_chromosomes_intersected);
 

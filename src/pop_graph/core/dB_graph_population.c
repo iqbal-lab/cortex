@@ -253,7 +253,7 @@ void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_
 
 
 void db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index, 
-									   boolean is_for_testing, char** for_test, int* index_for_test)
+									   boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2)
 {
 
   FILE * fout;
@@ -280,7 +280,7 @@ void db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_p
       fout = fopen(filename,"w");
     }
   *supernode_count = *supernode_count+1;
-  db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop(fout,node,db_graph, type,index, is_for_testing,  for_test,index_for_test);
+  db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop(fout,node,db_graph, type,index, is_for_testing,  for_test1, for_test2, index_for_test1, index_for_test2);
 
 }
 
@@ -301,6 +301,22 @@ void db_graph_traverse_specific_person_or_pop_for_supernode_printing(void (*f)(H
   }
 
 }
+
+void db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(void (*f)(HashTable*, Element *, long* , EdgeArrayType, int, boolean, char**, char**, int*, int*),
+											     HashTable * hash_table, long* supernode_count, EdgeArrayType type, int index, 
+											     boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2){
+
+  int i;
+  for(i=0;i<hash_table->number_buckets;i++){
+    pqueue_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(f,hash_table, &(hash_table->table[i]), supernode_count, type,index, is_for_testing, for_test1, for_test2, index_for_test1, index_for_test2);
+  }
+
+}
+
+
+
+
+
 
 void db_graph_traverse_to_gather_statistics_about_people(void (*f)(HashTable*, Element *, int**, int),HashTable * hash_table, int** array, int num_people )
 {
@@ -432,6 +448,7 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 	    }
 	  
 	  (*index_for_test)++;
+
 
 		  
 	}
@@ -580,19 +597,169 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
 //}
 
 
+//assume we have checked and no node has >1 chrom intwersection
+void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, 
+						      boolean is_for_testing, char** for_test, int* index_for_test)
+{
+ 
+  char tmp_seq[db_graph->kmer_size];
+
+  //first check the node exists in this person's graph
+  if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
+    {
+      if (node==NULL)
+        {
+          printf("Bloody node is null so of course cant get first node");
+        }
+      else
+        {
+          printf("This person %d does not have this node %s\n", index, binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
+        }
+      exit(1);
+    
+    }
+
+  dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, type, index, db_graph);
+
+  int which_chromosome=0;
+  db_node_has_at_most_one_intersecting_chromosome(first_node, &which_chromosome);
+
+  if (!is_for_testing)
+    {
+      fprintf(file, "%d ", which_chromosome);
+    }
+  else
+    {
+      //      zamzam
+      for_test[*index_for_test] = (char*) calloc(100,sizeof(char));//TODO - don't have hardcded 100, use length of supernode
+      if (for_test[*index_for_test]==NULL)
+	{
+	  printf("Unable to calloc for supernode");
+	  exit(1);
+	}
+      for_test[*index_for_test][0]='\0';
+      char chrom_as_string[3];
+      sprintf(chrom_as_string, "%d ",which_chromosome);
+      strcat(for_test[*index_for_test],chrom_as_string);
+      strcat(for_test[*index_for_test]," ");
+      for_test[*index_for_test][strlen(chrom_as_string)]='\0';
+      (*index_for_test)++;
+
+
+    }
+  dBNode* current_node;
+  dBNode* next_node;
+  current_node=first_node;
+  Orientation start_orientation, current_orientation, next_orientation;
+
+  //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
+  if (db_node_is_supernode_end(node,forward, type,index, db_graph))
+    {
+      if (db_node_is_supernode_end(node,reverse, type,index, db_graph))
+	{
+	  //singleton
+	  
+	  if (!is_for_testing)
+	    {
+	      fprintf(file, "\n");
+	    }
+	  else
+	    {
+	    }
+	  return;
+	}
+      else
+	{
+	  start_orientation=reverse;
+	}
+    }
+  else
+    {
+      start_orientation=forward;
+    }
+
+
+  
+
+
+  //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
+  while (!db_node_is_supernode_end(current_node,current_orientation, type,index, db_graph))
+    {
+      next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, db_graph);
+      db_node_has_at_most_one_intersecting_chromosome(next_node, &which_chromosome);
+
+      if ((next_node==first_node) && (next_orientation==start_orientation))//back to the start - will loop forever if not careful ;-0
+	{
+	  break;
+	}
+
+      if (!is_for_testing)
+	{
+	  fprintf(file, "%d ", which_chromosome);
+	}
+      else
+	{
+	  for_test[*index_for_test] = (char*) calloc(100,sizeof(char));//TODO - don't have hardcded 100, use length of supernode
+	  if (for_test[*index_for_test]==NULL)
+	    {
+	      printf("Unable to calloc for supernode");
+	      exit(1);
+	    }
+	  for_test[*index_for_test][0]='\0';
+	  char chrom_as_string2[3];
+	  sprintf(chrom_as_string2, "%d ",which_chromosome);
+
+	  strcat(for_test[*index_for_test],chrom_as_string2);
+	  for_test[*index_for_test][strlen(chrom_as_string2)]='\0';
+	  (*index_for_test)++;
+
+	}
+      current_node=next_node;
+      current_orientation=next_orientation;
+	
+    }
+
+  if (!is_for_testing)
+    {
+      fprintf(file, "\n");
+    }
+
+  return;
+}
+
+
+
 
 //TODO - implement db_graph_apply_function_to_all_nodes-in_supernode_stopping_as_soon_as_one_returns_false
 
 
-void db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test )
+void db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, 
+										  boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2 )
 {
   // ignore if visited
+  if (db_node_check_status(node, visited))
+    {
+      return;
+    }
 
-  // save initial node
+
+  int total_number_of_different_chromosomes_intersected=0;
 
   //ignore unless for all nodes in supernode, has <=1 chrom intersection
+  if  ( db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(node, individual_edge_array, index, db_graph, &total_number_of_different_chromosomes_intersected))
+    {
+      if (total_number_of_different_chromosomes_intersected==2)
+	{
+	  //then this is a supernode which is a potential sv locus.
 
-  // as byproduct get number of overlapped chromosomes. if that is =2, then call print, then print chrom numbers, then directions.
+	  //first print out the supernode itself
+	  db_graph_print_supernode_for_specific_person_or_pop(file, node, db_graph, type, index, is_for_testing, for_test1, index_for_test1 );
+	  //then print out the chromosome intersections
+	  db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop(file, node, db_graph, type, index, is_for_testing, for_test2,  index_for_test2);
+	}
+    }
+
+
   
 
   
