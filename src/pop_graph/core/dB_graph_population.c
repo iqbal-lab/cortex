@@ -270,11 +270,11 @@ void db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_p
 
       if (type == individual_edge_array)
 	{
-	  sprintf(filename,"out_nodes_kmer_%i_person_%i_subset_%i",db_graph->kmer_size,index,num);
+	  sprintf(filename,"out_supernodes_and_chrom_overlaps_kmer_%i_person_%i_subset_%i",db_graph->kmer_size,index,num);
 	}
       else
 	{
-	  sprintf(filename,"out_nodes_kmer_%i_population_%i_subset_%i",db_graph->kmer_size,index,num);
+	  sprintf(filename,"out_supernodes_and_chrom_overlaps_kmer_%i_population_%i_subset_%i",db_graph->kmer_size,index,num);
 	}
       //fprintf(stderr,"opening file %s\n",filename);
       fout = fopen(filename,"w");
@@ -630,7 +630,7 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
     }
   else
     {
-      //      zamzam
+
       for_test[*index_for_test] = (char*) calloc(100,sizeof(char));//TODO - don't have hardcded 100, use length of supernode
       if (for_test[*index_for_test]==NULL)
 	{
@@ -641,7 +641,6 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
       char chrom_as_string[3];
       sprintf(chrom_as_string, "%d ",which_chromosome);
       strcat(for_test[*index_for_test],chrom_as_string);
-      strcat(for_test[*index_for_test]," ");
       for_test[*index_for_test][strlen(chrom_as_string)]='\0';
       (*index_for_test)++;
 

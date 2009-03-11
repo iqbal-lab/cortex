@@ -603,7 +603,7 @@ void test_printing_supernode_with_chromosome_intersections()
   CU_ASSERT(!db_node_is_supernode_end(query_node2, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(!db_node_is_supernode_end(query_node2, reverse, individual_edge_array, 0, hash_table));
   
-  //now load a few dummy chromosomes, each of which intersects precisely one different kmer in the graph, so that no node in the graph overlaps >1 chromosome
+  //now dummy chromosomes, each of which intersects precisely one different kmer in the graph, so that no node in the graph overlaps >1 chromosome
   //need to take care because we have hairpins
 
   load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple2/chrom1.fasta", hash_table, 1);
