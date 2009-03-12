@@ -439,16 +439,22 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 	  for_test[*index_for_test][length_of_supernode]='\0';
 
 	  //Now make sure you are using the smaller of the sequence and its rev complement
-	  //	  BinaryKmer snode_kmer = seq_to_binary_kmer(for_test[*index_for_test],length_of_supernode);
-	  //BinaryKmer rev_snode_kmer =  binary_kmer_reverse_complement(snode_kmer, length_of_supernode);
+
+	  //for the moment, only do this for short supernodes :-(
 	  
-	  //if (rev_snode_kmer<snode_kmer)
-	  // {
-	  //   binary_kmer_to_seq(rev_snode_kmer,length_of_supernode, for_test[*index_for_test]);
-	  // }
-	  // printf("zam1 %s\n", for_test[*index_for_test]);
+	  if (length_of_supernode<32)
+	    {
+	      BinaryKmer snode_kmer = seq_to_binary_kmer(for_test[*index_for_test],length_of_supernode);
+	      BinaryKmer rev_snode_kmer =  binary_kmer_reverse_complement(snode_kmer, length_of_supernode);
+	  
+	      if (rev_snode_kmer<snode_kmer)
+		{
+		  binary_kmer_to_seq(rev_snode_kmer,length_of_supernode, for_test[*index_for_test]);
+		}
+	    }
 	  //TODO - fix this - I was trying to find reverse complement by using binary_kmer_reverse complement, and this assumes k<31, so can use long long. But supernodes can be much longer than 31 bases.
 	  // this is only an issue because I want to print out the smaller of supernode and rev_comp(supernde), so not critical.
+
 	  (*index_for_test)++;
 
 
