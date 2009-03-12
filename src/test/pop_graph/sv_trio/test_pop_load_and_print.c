@@ -440,7 +440,7 @@ void test_loading_simple_fasta_and_getting_chromosome_intersections()
   CU_ASSERT(!( db_node_has_at_most_one_intersecting_chromosome(query_node, &answer)));
   CU_ASSERT(answer==-1);
 
-
+  hash_table_free(&hash_table);
 
 
   
@@ -559,7 +559,7 @@ void test_db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome()
   CU_ASSERT(number_of_chromosomes_overlapped==-1);
 
   
-
+  hash_table_free(&hash_table);
 
 }
 
@@ -655,22 +655,35 @@ void test_printing_supernode_with_chromosome_intersections()
 
 
  int i;
- for (i=0; i< number_of_supernodes_in_person_1; i++)
-   {
-     printf("%s\n", array_of_supernodes_for_person1[i]);
-   }
+ //for (i=0; i< number_of_supernodes_in_person_1; i++)
+ // {
+ //   printf("%s\n", array_of_supernodes_for_person1[i]);
+ // }
 
- for (i=0; i< number_of_supernodes_in_person_1; i++)
-   {
-     printf("%s\n", array_of_chrom_overlaps_for_person1[i]);
-   }
+ //for (i=0; i< number_of_supernodes_in_person_1; i++)
+ // {
+ //   printf("%s\n", array_of_chrom_overlaps_for_person1[i]);
+ // }
 
 
 
  //Quicksort these results:
  //qsort((void*) array_of_supernodes_for_person1, number_of_supernodes_in_person_1 , sizeof(char*),  &supernode_cmp);
 
+ CU_ASSERT_STRING_EQUAL(array_of_supernodes_for_person1[0],"ACGTAC");
+ CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"1 1 2 2 ");
 
+ //cleanup
+ for (i=0; i< number_of_supernodes_in_person_1; i++)
+   {
+     free(array_of_supernodes_for_person1[i]);
+   }
+ for (i=0; i< number_of_chrom_overlaps_lists_in_person_1; i++)
+   {
+     free(array_of_chrom_overlaps_for_person1[i]);
+   }
 
-
+ free(array_of_supernodes_for_person1);
+ free(array_of_chrom_overlaps_for_person1);
+ hash_table_free(&hash_table);
 }

@@ -552,7 +552,7 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
       start_orientation=forward;
     }
 
-
+  current_orientation=start_orientation;
   
 
 
@@ -686,7 +686,7 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
     }
 
 
-  
+  current_orientation=start_orientation;
 
 
   //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
@@ -706,13 +706,6 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 	}
       else
 	{
-	  for_test[*index_for_test] = (char*) calloc(100,sizeof(char));//TODO - don't have hardcded 100, use length of supernode
-	  if (for_test[*index_for_test]==NULL)
-	    {
-	      printf("Unable to calloc for supernode");
-	      exit(1);
-	    }
-
 	  char chrom_as_string2[3];
 	  sprintf(chrom_as_string2, "%d ",which_chromosome);
 	  strcat(for_test[*index_for_test],chrom_as_string2);
