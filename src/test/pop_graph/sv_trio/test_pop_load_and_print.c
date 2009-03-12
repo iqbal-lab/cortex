@@ -643,15 +643,15 @@ void test_printing_supernode_with_chromosome_intersections()
   
   //this on the other hand is used in testing.
   int number_of_supernodes_in_person_1=0;
-  int number_of_chrom_overlaps_in_person_1=0;
+  int number_of_chrom_overlaps_lists_in_person_1=0;//these two should end up being the same
 
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
  db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop, hash_table, 
-											&supernode_count_person1, individual_edge_array, 0, false, NULL, NULL, &number_of_supernodes_in_person_1, 
-											&number_of_chrom_overlaps_in_person_1);
-
-											// 0, true, array_of_supernodes_for_person1,
-											//array_of_chrom_overlaps_for_person1, &number_of_supernodes_in_person_1, &number_of_chrom_overlaps_in_person_1);
+											&supernode_count_person1, individual_edge_array, 
+											//0, false, NULL, NULL, &number_of_supernodes_in_person_1, 
+											//&number_of_chrom_overlaps_in_person_1);
+											 0, true, array_of_supernodes_for_person1,
+											array_of_chrom_overlaps_for_person1, &number_of_supernodes_in_person_1, &number_of_chrom_overlaps_lists_in_person_1);
 
 
  int i;
@@ -660,7 +660,7 @@ void test_printing_supernode_with_chromosome_intersections()
      printf("%s\n", array_of_supernodes_for_person1[i]);
    }
 
- for (i=0; i< number_of_chrom_overlaps_in_person_1; i++)
+ for (i=0; i< number_of_supernodes_in_person_1; i++)
    {
      printf("%s\n", array_of_chrom_overlaps_for_person1[i]);
    }

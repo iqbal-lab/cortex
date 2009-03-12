@@ -437,16 +437,18 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 	  strcat(for_test[*index_for_test],seq);
 	  strcat(for_test[*index_for_test],seq_forward);
 	  for_test[*index_for_test][length_of_supernode]='\0';
-	  
+
 	  //Now make sure you are using the smaller of the sequence and its rev complement
-	  BinaryKmer snode_kmer = seq_to_binary_kmer(for_test[*index_for_test],length_of_supernode);
-	  BinaryKmer rev_snode_kmer =  binary_kmer_reverse_complement(snode_kmer, length_of_supernode);
+	  //	  BinaryKmer snode_kmer = seq_to_binary_kmer(for_test[*index_for_test],length_of_supernode);
+	  //BinaryKmer rev_snode_kmer =  binary_kmer_reverse_complement(snode_kmer, length_of_supernode);
 	  
-	  if (rev_snode_kmer<snode_kmer)
-	    {
-	       binary_kmer_to_seq(rev_snode_kmer,length_of_supernode, for_test[*index_for_test]);
-	    }
-	  
+	  //if (rev_snode_kmer<snode_kmer)
+	  // {
+	  //   binary_kmer_to_seq(rev_snode_kmer,length_of_supernode, for_test[*index_for_test]);
+	  // }
+	  // printf("zam1 %s\n", for_test[*index_for_test]);
+	  //TODO - fix this - I was trying to find reverse complement by using binary_kmer_reverse complement, and this assumes k<31, so can use long long. But supernodes can be much longer than 31 bases.
+	  // this is only an issue because I want to print out the smaller of supernode and rev_comp(supernde), so not critical.
 	  (*index_for_test)++;
 
 
@@ -603,6 +605,7 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 {
  
   char tmp_seq[db_graph->kmer_size];
+  int len_chrom_string_for_test=0;
 
   //first check the node exists in this person's graph
   if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
@@ -641,10 +644,7 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
       char chrom_as_string[3];
       sprintf(chrom_as_string, "%d ",which_chromosome);
       strcat(for_test[*index_for_test],chrom_as_string);
-      for_test[*index_for_test][strlen(chrom_as_string)]='\0';
-      (*index_for_test)++;
-
-
+      len_chrom_string_for_test=len_chrom_string_for_test+strlen(chrom_as_string);
     }
   dBNode* current_node;
   dBNode* next_node;
@@ -664,6 +664,8 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 	    }
 	  else
 	    {
+	      (*index_for_test)++;
+
 	    }
 	  return;
 	}
@@ -704,14 +706,11 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 	      printf("Unable to calloc for supernode");
 	      exit(1);
 	    }
-	  for_test[*index_for_test][0]='\0';
+
 	  char chrom_as_string2[3];
 	  sprintf(chrom_as_string2, "%d ",which_chromosome);
-
 	  strcat(for_test[*index_for_test],chrom_as_string2);
-	  for_test[*index_for_test][strlen(chrom_as_string2)]='\0';
-	  (*index_for_test)++;
-
+	  len_chrom_string_for_test=len_chrom_string_for_test+strlen(chrom_as_string2);
 	}
       current_node=next_node;
       current_orientation=next_orientation;
@@ -722,7 +721,11 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
     {
       fprintf(file, "\n");
     }
-
+  else
+    {
+      for_test[*index_for_test][len_chrom_string_for_test]='\0';
+      (*index_for_test)++;
+    }
   return;
 }
 
