@@ -257,18 +257,18 @@ void db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_p
 {
 
   //**debug only zam
-  printf("call db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop\n");
-  char tmp_seq[db_graph->kmer_size];
-  printf("Check if this node %s has been visited\n",binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
+  //printf("call db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop\n");
+  //char tmp_seq[db_graph->kmer_size];
+  //printf("Check if this node %s has been visited\n",binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
 
-  if (db_node_check_status(node,visited))
-    {
-      printf("Node is already visited\n");
-    }
-  else
-    {
-      printf("Node is not visited\n");
-    }
+  //if (db_node_check_status(node,visited))
+  // {
+  //    printf("Node is already visited\n");
+  //  }
+  //else
+  // {
+  //    printf("Node is not visited\n");
+  //  }
 
       //end of debug only
   FILE * fout;
@@ -354,12 +354,11 @@ void db_graph_traverse_to_gather_statistics_about_people(void (*f)(HashTable*, E
 
 void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test ){
 
-  printf("Call db_graph_print_supernode_for_specific_person_or_pop. Z1 must be next line of output\n");
-  printf("Z1");
+
   //don't do anything if this node does not occur in the graph for this person/population
   if (!db_node_is_this_node_in_this_person_or_populations_graph(node, type, index))
     {
-      printf("ignoring node that is not in this person's graph");
+      //printf("ignoring node that is not in this person's graph");
       return;
     }
 
@@ -376,7 +375,6 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
   if ( db_node_check_status_not_pruned(node)   &&  !db_node_check_status(node, visited)){
   
     binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq);
-  printf("Z2");
 
     if (DEBUG){
       printf("\nSTART Supernode %s\n",seq);    
@@ -414,8 +412,6 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
       length_reverse = strlen(seq_reverse);
     }
     
-     printf("Z3");
-
     
     //reverse the reverse sequence
     for(i=0;i<length_reverse;i++){
@@ -428,62 +424,58 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
       printf("NODE rr %s\n",seq_reverse_reversed);
     }
 
-    printf("Just about to go into code that differs between test code and non. Supernode we will print is\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward);
-    
-      if (!is_for_testing) 
-	{
-	  fprintf(file,">NODE\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward); 
-	}
-      else
-	{
-	  
-	  int length_of_supernode = strlen(seq_reverse_reversed)+strlen(seq) +strlen(seq_forward) ;
-	  if (length_of_supernode==0)
-	    {
-	      printf("Null supernode");
-	      exit(1);
-	    }
-	  
+    if (!is_for_testing) 
+      {
+	fprintf(file,">NODE\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward); 
+      }
+    else
+      {
+	
+	int length_of_supernode = strlen(seq_reverse_reversed)+strlen(seq) +strlen(seq_forward) ;
+	if (length_of_supernode==0)
+	  {
+	    printf("Null supernode");
+	    exit(1);
+	  }
+	
+	
+	//assume the caller has malloced space for output
+	
+	for_test[*index_for_test] = (char*) calloc(length_of_supernode+1,sizeof(char));
+	if (for_test[*index_for_test]==NULL)
+	  {
+	    printf("Unable to calloc for supernode");
+	    exit(1);
+	  }
+	for_test[*index_for_test][0]='\0';
+	strcat(for_test[*index_for_test],seq_reverse_reversed);
+	strcat(for_test[*index_for_test],seq);
+	strcat(for_test[*index_for_test],seq_forward);
+	for_test[*index_for_test][length_of_supernode]='\0';
 
-	  //assume the caller has malloced space for output
 
-	  for_test[*index_for_test] = (char*) calloc(length_of_supernode+1,sizeof(char));
-	  if (for_test[*index_for_test]==NULL)
-	    {
-	      printf("Unable to calloc for supernode");
-	      exit(1);
-	    }
-	  for_test[*index_for_test][0]='\0';
-	  strcat(for_test[*index_for_test],seq_reverse_reversed);
-	  strcat(for_test[*index_for_test],seq);
-	  strcat(for_test[*index_for_test],seq_forward);
-	  for_test[*index_for_test][length_of_supernode]='\0';
-  printf("Z4");
-
-	  //Now make sure you are using the smaller of the sequence and its rev complement
+	//Now make sure you are using the smaller of the sequence and its rev complement
 
 	  //for the moment, only do this for short supernodes :-(
 	  
-	  if (length_of_supernode<32)
-	    {
-	      BinaryKmer snode_kmer = seq_to_binary_kmer(for_test[*index_for_test],length_of_supernode);
-	      BinaryKmer rev_snode_kmer =  binary_kmer_reverse_complement(snode_kmer, length_of_supernode);
-	  
-	      if (rev_snode_kmer<snode_kmer)
-		{
-		  binary_kmer_to_seq(rev_snode_kmer,length_of_supernode, for_test[*index_for_test]);
-		}
-	    }
-	  //TODO - fix this - I was trying to find reverse complement by using binary_kmer_reverse complement, and this assumes k<31, so can use long long. But supernodes can be much longer than 31 bases.
-	  // this is only an issue because I want to print out the smaller of supernode and rev_comp(supernde), so not critical.
+	if (length_of_supernode<32)
+	  {
+	    BinaryKmer snode_kmer = seq_to_binary_kmer(for_test[*index_for_test],length_of_supernode);
+	    BinaryKmer rev_snode_kmer =  binary_kmer_reverse_complement(snode_kmer, length_of_supernode);
+	    
+	    if (rev_snode_kmer<snode_kmer)
+	      {
+		binary_kmer_to_seq(rev_snode_kmer,length_of_supernode, for_test[*index_for_test]);
+	      }
+	  }
+	//TODO - fix this - I was trying to find reverse complement by using binary_kmer_reverse complement, and this assumes k<31, so can use long long. But supernodes can be much longer than 31 bases.
+	// this is only an issue because I want to print out the smaller of supernode and rev_comp(supernde), so not critical.
+	
+	*index_for_test=*index_for_test+1;
+	
 
-	  *index_for_test=*index_for_test+1;
-
-
-  printf("Z5");
-		  
-	}
-          
+      }
+    
     
   }
   else
@@ -497,8 +489,7 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 	}
       }
     }
-    printf("Z6");
-
+ 
   
 }
 
@@ -640,7 +631,7 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
     }
 
   *total_number_of_different_chromosomes_intersected=chrom_ctr;
-  printf("\nTOTAL number of chromosomes intersected is %d\n", chrom_ctr);
+  //printf("\nTOTAL number of chromosomes intersected is %d\n", chrom_ctr);
   return true;
 
 
@@ -786,13 +777,12 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 void db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, 
 										  boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2 )
 {
-  printf("Call db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop");
-
+  
   // ignore if visited
   if (db_node_check_status(node, visited))
     {
-      char tmp_seq[db_graph->kmer_size];
-      printf("ignoring visited node %s\n",binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
+      //char tmp_seq[db_graph->kmer_size];
+      //printf("ignoring visited node %s\n",binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
       return;
     }
 
@@ -806,7 +796,6 @@ void db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_po
 	{
 	  //then this is a supernode which is a potential sv locus.
 
-	  printf("Is potential locs - print it\n");
 	  //first print out the supernode itself
 	  db_graph_print_supernode_for_specific_person_or_pop(file, node, db_graph, type, index, is_for_testing, for_test1, index_for_test1 );
 	  //then print out the chromosome intersections

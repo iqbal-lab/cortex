@@ -739,7 +739,7 @@ void test_printing_supernode_with_chromosome_intersections_alus()
   char** array_of_supernodes_for_person1= (char**) calloc(316,sizeof(char*));
   if (array_of_supernodes_for_person1==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
+      printf("unable to alloc the supernode array. dead before we even started. OOM");
       exit(1);
     }
 
@@ -747,6 +747,18 @@ void test_printing_supernode_with_chromosome_intersections_alus()
   for (i=0; i<316; i++)
     {
       array_of_supernodes_for_person1[i]="rubbish also";
+    }
+
+  char** array_of_chrom_overlaps_for_person1= (char**) calloc(316,sizeof(char*));
+  if (array_of_chrom_overlaps_for_person1==NULL)
+    {
+      printf("unable to alloc the chrom overlaps. dead before we even started. OOM");
+      exit(1);
+    }
+
+  for (i=0; i<316; i++)
+    {
+      array_of_chrom_overlaps_for_person1[i]="rubbish also";
     }
   
 
@@ -759,21 +771,27 @@ void test_printing_supernode_with_chromosome_intersections_alus()
 
 
   //this on the other hand is used in testing.
-  int number_of_supernodes_in_person_1=0;
-  int number_of_chrom_overlaps_lists_in_person_1=0;//these two should end up being the same
+  int number_of_supernodes_that_are_potential_sv_loci=0;
+  int number_of_chrom_overlaps_to_print_in_potential_sv_loci=0;//these two should end up being the same
 
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
   db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop, hash_table,                    
 											 &supernode_count_person1, individual_edge_array,
-											 0, false, NULL, NULL, &number_of_supernodes_in_person_1,
-											 &number_of_chrom_overlaps_lists_in_person_1);
-  //0, true, array_of_supernodes_for_person1,
-  //											 array_of_chrom_overlaps_for_person1, &number_of_supernodes_in_person_1, &number_of_chrom_overlaps_lists_in_person_1);
+											 //0, false, NULL, NULL, &number_of_supernodes_that_are_potential_sv_loci,
+											 //&number_of_chrom_overlaps_to_print_in_potential_sv_loci);
+											 0, true, array_of_supernodes_for_person1,
+  											 array_of_chrom_overlaps_for_person1, &number_of_supernodes_that_are_potential_sv_loci, &number_of_chrom_overlaps_to_print_in_potential_sv_loci);
 
 
+  //it should print nothing - only one supernode, and every node intersects exactly one chromosome. So the supernode is not a potential sv locus.
+ CU_ASSERT((number_of_supernodes_that_are_potential_sv_loci==0));
+ CU_ASSERT((number_of_chrom_overlaps_to_print_in_potential_sv_loci==0));
 
-  //0, true, array_of_supernodes_for_person1,
-  //array_of_chrom_overlaps_for_person1, &number_of_supernodes_in_person_1, &number_of_chrom_overlaps_lists_in_person_1);
+ 
+ free(array_of_supernodes_for_person1);
+ free(array_of_chrom_overlaps_for_person1);
+ hash_table_free(&hash_table);
+
 
   
 }
