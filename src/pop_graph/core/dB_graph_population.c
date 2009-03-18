@@ -256,6 +256,21 @@ void db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_p
 									   boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2)
 {
 
+  //**debug only zam
+  printf("call db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop\n");
+  char tmp_seq[db_graph->kmer_size];
+  printf("Check if this node %s has been visited\n",binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
+
+  if (db_node_check_status(node,visited))
+    {
+      printf("Node is already visited\n");
+    }
+  else
+    {
+      printf("Node is not visited\n");
+    }
+
+      //end of debug only
   FILE * fout;
   
   char filename [200];
@@ -339,10 +354,12 @@ void db_graph_traverse_to_gather_statistics_about_people(void (*f)(HashTable*, E
 
 void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test ){
 
-
+  printf("Call db_graph_print_supernode_for_specific_person_or_pop. Z1 must be next line of output\n");
+  printf("Z1");
   //don't do anything if this node does not occur in the graph for this person/population
   if (!db_node_is_this_node_in_this_person_or_populations_graph(node, type, index))
     {
+      printf("ignoring node that is not in this person's graph");
       return;
     }
 
@@ -359,6 +376,7 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
   if ( db_node_check_status_not_pruned(node)   &&  !db_node_check_status(node, visited)){
   
     binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq);
+  printf("Z2");
 
     if (DEBUG){
       printf("\nSTART Supernode %s\n",seq);    
@@ -396,7 +414,8 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
       length_reverse = strlen(seq_reverse);
     }
     
-   
+     printf("Z3");
+
     
     //reverse the reverse sequence
     for(i=0;i<length_reverse;i++){
@@ -409,6 +428,8 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
       printf("NODE rr %s\n",seq_reverse_reversed);
     }
 
+    printf("Just about to go into code that differs between test code and non. Supernode we will print is\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward);
+    
       if (!is_for_testing) 
 	{
 	  fprintf(file,">NODE\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward); 
@@ -437,6 +458,7 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 	  strcat(for_test[*index_for_test],seq);
 	  strcat(for_test[*index_for_test],seq_forward);
 	  for_test[*index_for_test][length_of_supernode]='\0';
+  printf("Z4");
 
 	  //Now make sure you are using the smaller of the sequence and its rev complement
 
@@ -455,9 +477,10 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 	  //TODO - fix this - I was trying to find reverse complement by using binary_kmer_reverse complement, and this assumes k<31, so can use long long. But supernodes can be much longer than 31 bases.
 	  // this is only an issue because I want to print out the smaller of supernode and rev_comp(supernde), so not critical.
 
-	  (*index_for_test)++;
+	  *index_for_test=*index_for_test+1;
 
 
+  printf("Z5");
 		  
 	}
           
@@ -474,7 +497,8 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 	}
       }
     }
-  
+    printf("Z6");
+
   
 }
 
@@ -490,7 +514,7 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
   int i;
   for (i=0; i<24; i++)
     {
-      chrom_list[i]=0;
+      chrom_list[i]=-1;
     }
   int chrom_ctr=0; //points to entry in array available for next chromosome we find
 
@@ -510,7 +534,8 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
     }
 
   dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, type, index, dbgraph);
-  
+  //  db_node_set_status(first_node, visited);
+
   int which_chromosome=-99;
   if (! db_node_has_at_most_one_intersecting_chromosome(first_node, &which_chromosome) )
     {
@@ -526,6 +551,15 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
     {
       printf("programming error counting chrom overlaps");
       exit(1);
+    }
+  else if (which_chromosome ==0)
+    {
+      //ignore. no overlapping chromosome
+
+    }
+  else
+    {
+      printf("Programming error. which_chromosome is %d", which_chromosome);
     }
 
 
@@ -560,6 +594,7 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
   while (!db_node_is_supernode_end(current_node,current_orientation, type,index, dbgraph))
     {
       next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, dbgraph);
+      //      db_node_set_status(next_node, visited);
       if (! db_node_has_at_most_one_intersecting_chromosome(next_node, &which_chromosome) )
 	{
 	  return false;
@@ -568,20 +603,32 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
 	{
 	  break;
 	}
+
       boolean new_chromosome=true;
-      for (i=0; i<chrom_ctr; i++)
+
+      if (chrom_ctr>0)
 	{
-	  if (chrom_list[i]==0)
+	  for (i=0; i<chrom_ctr; i++)
 	    {
-	      printf("Programming error. Should not have zero entries in this array until AFTER chrom_ctr");
-	      exit(1);
-	    }
-	  else if (chrom_list[i]==which_chromosome)
-	    {
-	      //we have seen it already
-	      new_chromosome=false;
+	      if (chrom_list[i]==0)
+		{
+		  printf("Programming error. i is %d,  Should not have zero entries in this array until AFTER chrom_ctr\n", i);
+		  printf("Current values in chrom_list are \n");
+		  int j;
+		  for (j=0; j<=i ; j++)
+		    {
+		      printf("%d\t", chrom_list[j]);
+		    }
+		  exit(1);
+		}
+	      else if (chrom_list[i]==which_chromosome)
+		{
+		  //we have seen it already
+		  new_chromosome=false;
+		}
 	    }
 	}
+	
       if (new_chromosome)
 	{
 	  chrom_list[chrom_ctr]=which_chromosome;
@@ -593,6 +640,7 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
     }
 
   *total_number_of_different_chromosomes_intersected=chrom_ctr;
+  printf("\nTOTAL number of chromosomes intersected is %d\n", chrom_ctr);
   return true;
 
 
@@ -670,7 +718,7 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 	    }
 	  else
 	    {
-	      (*index_for_test)++;
+	      *index_for_test=*index_for_test+1;
 
 	    }
 	  return;
@@ -723,7 +771,8 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
   else
     {
       for_test[*index_for_test][len_chrom_string_for_test]='\0';
-      (*index_for_test)++;
+      *index_for_test=*index_for_test+1;
+
     }
   return;
 }
@@ -737,9 +786,13 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 void db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, 
 										  boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2 )
 {
+  printf("Call db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_pop");
+
   // ignore if visited
   if (db_node_check_status(node, visited))
     {
+      char tmp_seq[db_graph->kmer_size];
+      printf("ignoring visited node %s\n",binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
       return;
     }
 
@@ -753,6 +806,7 @@ void db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_po
 	{
 	  //then this is a supernode which is a potential sv locus.
 
+	  printf("Is potential locs - print it\n");
 	  //first print out the supernode itself
 	  db_graph_print_supernode_for_specific_person_or_pop(file, node, db_graph, type, index, is_for_testing, for_test1, index_for_test1 );
 	  //then print out the chromosome intersections
@@ -762,8 +816,8 @@ void db_graph_print_supernode_if_is_potential_sv_locus_for_specific_person_or_po
 
 
   
-
-  
+  //now mark all nodes in supernode as visited
+  db_graph_set_status_of_all_nodes_in_supernode(node, visited, type, index, db_graph);
 }
 
 
@@ -772,6 +826,61 @@ void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_popula
   printf("not implemented yet");
   exit(1);
 }
+
+void db_graph_set_status_of_all_nodes_in_supernode(dBNode* node, NodeStatus status, EdgeArrayType type, int index,  dBGraph* dbgraph)
+{
+
+  dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, type, index, dbgraph);
+  dBNode* current_node=first_node;
+
+  dBNode* next_node;
+  Orientation current_orientation, next_orientation, start_orientation;
+  
+
+  db_node_set_status(current_node, status);
+
+
+  //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
+  if (db_node_is_supernode_end(current_node,forward, type,index, dbgraph))
+    {
+      if (db_node_is_supernode_end(current_node,reverse, type,index, dbgraph))
+	{
+	  //singleton
+	  return ;
+	}
+      else
+	{
+	  start_orientation=reverse;
+	}
+    }
+  else
+    {
+      start_orientation=forward;
+    }
+
+  current_orientation=start_orientation;
+
+  //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
+  while (!db_node_is_supernode_end(current_node,current_orientation, type,index, dbgraph))
+    {
+      next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, dbgraph);
+
+      if ((next_node==first_node) && (next_orientation==start_orientation))//back to the start - will loop forever if not careful ;-0
+	{
+	  break;
+	}
+      db_node_set_status(next_node, status);
+
+      current_node=next_node;
+      current_orientation=next_orientation;
+	
+    }
+
+  return;
+
+
+}
+
 
 
 

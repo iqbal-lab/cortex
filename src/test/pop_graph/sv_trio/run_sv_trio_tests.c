@@ -102,7 +102,12 @@ int  main()
      CU_cleanup_registry();
      return CU_get_error();
     }
-    if (NULL == CU_add_test(pPopGraphSuite, "Test that you can correctly print supernodes with chromosome intersections", test_printing_supernode_with_chromosome_intersections))
+    //    if (NULL == CU_add_test(pPopGraphSuite, "Simple test that you can correctly print supernodes with chromosome intersections", test_printing_supernode_with_chromosome_intersections_simple))
+    // {
+    //CU_cleanup_registry();
+    // return CU_get_error();
+    // }
+    if (NULL == CU_add_test(pPopGraphSuite, "Test that you can correctly print supernodes with chromosome intersections using simple alu example", test_printing_supernode_with_chromosome_intersections_alus))
     {
      CU_cleanup_registry();
      return CU_get_error();

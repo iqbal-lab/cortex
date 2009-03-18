@@ -83,6 +83,7 @@ void db_graph_get_subsection_of_supernode_containing_given_node_as_supernode_obj
 void apply_function_to_every_node_in_supernode_object(dBSupernode*, void (*f)(dBNode*));
 void apply_function_to_every_node_in_supernode_containing_given_node(void (*f)(dBNode*, EdgeArrayType, int, dBGraph*), dBNode* node);
 
+void db_graph_set_status_of_all_nodes_in_supernode(dBNode* node, NodeStatus status, EdgeArrayType type, int index, dBGraph* db_graph);
 
 dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph);
 dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* node, Orientation o, Orientation* next_orientation, EdgeArrayType type, int index, dBGraph* db_graph);
