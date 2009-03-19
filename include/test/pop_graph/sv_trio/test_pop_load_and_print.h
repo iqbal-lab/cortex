@@ -4,4 +4,5 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes();
 void test_loading_simple_fasta_and_getting_chromosome_intersections();
 void test_db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome();
 void test_printing_supernode_with_chromosome_intersections_simple();
-void test_printing_supernode_with_chromosome_intersections_alus();
+void  test_printing_supernode_with_chromosome_intersections_simple_alu_example();
+void  test_printing_supernode_with_chromosome_intersections_simple_alu_example_2();

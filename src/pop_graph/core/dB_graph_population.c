@@ -533,6 +533,7 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
       return false;
     }
 
+ 
   if (which_chromosome>0)
     {
       chrom_list[0]=which_chromosome;
@@ -545,8 +546,8 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
     }
   else if (which_chromosome ==0)
     {
-      //ignore. no overlapping chromosome
-
+      //  ignore. no overlapping chromosome
+      
     }
   else
     {
@@ -560,7 +561,7 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
   Orientation start_orientation, current_orientation, next_orientation;
 
   //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
-  if (db_node_is_supernode_end(node,forward, type,index, dbgraph))
+  if (db_node_is_supernode_end(first_node,forward, type,index, dbgraph))
     {
       if (db_node_is_supernode_end(node,reverse, type,index, dbgraph))
 	{
@@ -595,31 +596,36 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
 	  break;
 	}
 
-      boolean new_chromosome=true;
+      boolean new_chromosome=false;
 
-      if (chrom_ctr>0)
+      if (which_chromosome>0) //will be zero if the node intersects no chromosomes
 	{
-	  for (i=0; i<chrom_ctr; i++)
+	  new_chromosome=true;
+	  
+	  if (chrom_ctr>0)
 	    {
-	      if (chrom_list[i]==0)
+	      for (i=0; i<chrom_ctr; i++)
 		{
-		  printf("Programming error. i is %d,  Should not have zero entries in this array until AFTER chrom_ctr\n", i);
-		  printf("Current values in chrom_list are \n");
-		  int j;
-		  for (j=0; j<=i ; j++)
+		  if (chrom_list[i]==0)
 		    {
-		      printf("%d\t", chrom_list[j]);
-		    }
-		  exit(1);
+		      printf("Programming error. i is %d,  Should not have zero entries in this array until AFTER %d\n", i,chrom_ctr);
+		      printf("Current values in chrom_list are \n");
+		      int j;
+		      for (j=0; j<=i ; j++)
+			{
+			  printf("%d ", chrom_list[j]);
+			}
+		      exit(1);
 		}
-	      else if (chrom_list[i]==which_chromosome)
-		{
-		  //we have seen it already
-		  new_chromosome=false;
+		  else if (chrom_list[i]==which_chromosome)
+		    {
+		      //we have seen it already
+		      new_chromosome=false;
+		    }
 		}
 	    }
 	}
-	
+	  
       if (new_chromosome)
 	{
 	  chrom_list[chrom_ctr]=which_chromosome;
@@ -679,7 +685,7 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
   else
     {
 
-      for_test[*index_for_test] = (char*) calloc(100,sizeof(char));//TODO - don't have hardcded 100, use length of supernode
+      for_test[*index_for_test] = (char*) calloc(1000,sizeof(char));//TODO - don't have hardcded 1000, use length of supernode
       if (for_test[*index_for_test]==NULL)
 	{
 	  printf("Unable to calloc for supernode");

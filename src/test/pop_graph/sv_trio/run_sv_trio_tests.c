@@ -1,3 +1,4 @@
+
 //#include "test_dB_graph.h"
 #include "test_dB_graph_node.h"
 #include "test_dB_graph_population.h"
@@ -41,6 +42,11 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test element -check can get the direction of overlap with a chromosome", test_get_chromosome_overlap_direction)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
   if (NULL == CU_add_test(pPopGraphSuite, "Test that can identify supernode ends",   test_is_supernode_end)) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -99,20 +105,26 @@ int  main()
     }
     if (NULL == CU_add_test(pPopGraphSuite, "Check with simple examples that can correctly check supernode for whether each node intersects at most one chromosome, and if so, how many chromosomes altogether are overlapped", test_db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome))
     {
-     CU_cleanup_registry();
-     return CU_get_error();
+      CU_cleanup_registry();
+      return CU_get_error();
     }
-    //    if (NULL == CU_add_test(pPopGraphSuite, "Simple test that you can correctly print supernodes with chromosome intersections", test_printing_supernode_with_chromosome_intersections_simple))
-    // {
-    //CU_cleanup_registry();
-    // return CU_get_error();
-    // }
-    if (NULL == CU_add_test(pPopGraphSuite, "Test that you can correctly print supernodes with chromosome intersections using simple alu example", test_printing_supernode_with_chromosome_intersections_alus))
-    {
-     CU_cleanup_registry();
-     return CU_get_error();
-    }
-
+    if (NULL == CU_add_test(pPopGraphSuite, "Simple test that you can correctly print supernodes with chromosome intersections", test_printing_supernode_with_chromosome_intersections_simple))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+    if (NULL == CU_add_test(pPopGraphSuite, "Null test for sv locus detection. Person has one supernode identical to the one chromosome. No potential locus to be found.",  test_printing_supernode_with_chromosome_intersections_simple_alu_example))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+    
+    if (NULL == CU_add_test(pPopGraphSuite, "Simple test of sv detection. One person, one supernode, one end matches one chromosome, and the other the other. Do we spot it?",  test_printing_supernode_with_chromosome_intersections_simple_alu_example_2))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+    
 
     
 

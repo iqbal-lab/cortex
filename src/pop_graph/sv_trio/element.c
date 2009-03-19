@@ -285,6 +285,99 @@ void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
 }
 
 
+
+Overlap db_node_get_chromosome_overlap_direction(dBNode* node, int which_chromosome)
+{
+
+  int which_char;//there are 6 chars in which the chromosome xs are encoded. numbered 0 to 5. 0 carries chromosomes 1-4, etc.
+  int which_probe;//two 1's in the two bits that encode this chromsomes's info within the char. So for example chromosome 2 is in the 3rd and 4th bots from the right in the 0th char. so probe is 12 (4+8).
+  int which_pair_of_bits; //0 means the first two from the right, 1 means the next two, etc
+
+  if ( (which_chromosome==1)|| (which_chromosome==2) || (which_chromosome==3) || (which_chromosome==4) )
+    {
+      which_char=0;
+    }
+  else if  ( (which_chromosome==5)|| (which_chromosome==6) ||(which_chromosome==7) || (which_chromosome==8) )
+    {
+      which_char=1;
+    }
+  else if ( (which_chromosome==9)|| (which_chromosome==10) ||(which_chromosome==11) || (which_chromosome==12) )
+    {
+      which_char=2;
+    }
+  else if ( (which_chromosome==13)|| (which_chromosome==14) ||(which_chromosome==15) || (which_chromosome==16) )
+    {
+      which_char=3;
+    }
+  else if ( (which_chromosome==17)|| (which_chromosome==18) ||(which_chromosome==19) || (which_chromosome==20) )
+    {
+      which_char=4;
+    }
+  else if ( (which_chromosome==21)|| (which_chromosome==22) ||(which_chromosome==23) || (which_chromosome==24) )
+    {
+      which_char=5;
+    }
+  else
+    {
+      printf("Do not call db_node_get_chromosome_overlap_orientation with second argument not between 1 and 24. You used %d", which_chromosome);
+    }
+
+  if (  (which_chromosome==1) || (which_chromosome==5) || (which_chromosome==9) || (which_chromosome==13) || (which_chromosome==17) || (which_chromosome==21) )
+    {
+      which_probe=3; //1+2
+      which_pair_of_bits=0;
+    }
+  else  if (  (which_chromosome==2) || (which_chromosome==6) || (which_chromosome==10) || (which_chromosome==14) || (which_chromosome==18) || (which_chromosome==22) )
+    {
+      which_probe=12; //4+8
+      which_pair_of_bits=1;
+    }
+  else  if (  (which_chromosome==3) || (which_chromosome==7) || (which_chromosome==11) || (which_chromosome==15) || (which_chromosome==19) || (which_chromosome==23) )
+    {
+      which_probe=48; //16+32
+      which_pair_of_bits=2;
+    }
+  else if (  (which_chromosome==4) || (which_chromosome==8) || (which_chromosome==12) || (which_chromosome==16) || (which_chromosome==20) || (which_chromosome==24) )
+    {
+      which_probe=192; //64+128
+      which_pair_of_bits=3;
+    }
+  else
+    {
+      printf("programming error. this should not be possible.");
+      exit(1);
+    }
+
+  int fw=1<<(which_pair_of_bits*2);
+  int rev=2<<(which_pair_of_bits*2);
+  int both=3<<(which_pair_of_bits*2);
+  int none=0;
+  
+  if ( ((node->chrom_xs[which_char]) &  which_probe)==fw)
+    {
+      return overlaps_forwards_only;
+    }
+  else if ( ((node->chrom_xs[which_char]) &  which_probe)==rev)
+    {
+      return overlaps_reverse_only;
+    }
+  else if ( ((node->chrom_xs[which_char]) &  which_probe)==both)
+    {
+      return overlaps_both_directions;
+    }
+  else if ( ((node->chrom_xs[which_char]) &  which_probe)==none)
+    {
+      return does_not_overlap;
+    }
+  else
+    {
+      printf("something wrong with finding direction of overlap");
+      exit(1);
+    }
+  
+
+	
+}
 //of each 2 bit pair, least sig bit referes to forward and more sig to reverse. +1 means is present in chromosome, 0 means is not.
 void db_node_mark_chromosome_overlap(dBNode* node, int which_chromosome, Orientation orientation)
 {

@@ -58,6 +58,13 @@ typedef enum{
   reverse = 1
 } Orientation;
 
+typedef enum{
+  overlaps_forwards_only=0,
+    overlaps_reverse_only = 1,
+    overlaps_both_directions =2,
+    does_not_overlap =4,
+    } Overlap;
+
 typedef Element GraphNode;
 
 Element* new_element();
@@ -123,6 +130,7 @@ void db_node_set_status_to_none(dBNode * node);
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
 void db_node_mark_chromosome_overlap(dBNode* node, int which_chromosome, Orientation orientation);
 boolean db_node_has_at_most_one_intersecting_chromosome(dBNode* node, int* which_chromosome);
+Overlap db_node_get_chromosome_overlap_direction(dBNode* node, int which_chromosome);
 
 //check if node doesn't have any edges in a given orientation
 boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayType edge_type, int edge_index);
