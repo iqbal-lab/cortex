@@ -417,6 +417,10 @@ char* compare_chrom_overlap_and_supernode_direction(Overlap ov, Orientation o, c
     {
       strcat(pre_alloced_string,"B");
     }
+  else if (ov==does_not_overlap)
+    {
+      //do nothing - return null string
+    }
   else if ( (ov==overlaps_forwards_only) && (o==forward) )
     {
       strcat(pre_alloced_string,"F");

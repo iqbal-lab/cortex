@@ -609,6 +609,19 @@ void test_printing_supernode_with_chromosome_intersections_simple()
   load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple2/chrom1.fasta", hash_table, 1);
   load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple2/chrom2.fasta", hash_table, 2);
 
+
+  // supernode is ACGTAC, which is ACG an CGT on one supernode, in hairpin, then to next node with its own hairpin GTA and TAC
+  // overlaps look like this
+
+  //     ACG/CGT ----> GTA / TAC
+  // chrom 1 is ACG only    chrom2 is GTA only
+  // so as we got through ACG, we're going in same direction as chromosome, then through CGT means backwards to chromosome direction,
+  // then to GTA which is forwards wrt chrom2, and then backwards
+  // so we expect our chromosome overlaps to look like 1F 1R 2F 2R
+  
+  
+
+
   int number_of_chromosomes_overlapped=-100;
   CU_ASSERT(db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(query_node1, individual_edge_array, 0, hash_table, &number_of_chromosomes_overlapped));
   //printf("Number of overlapped chroms is %d\n", number_of_chromosomes_overlapped);
@@ -668,15 +681,15 @@ void test_printing_supernode_with_chromosome_intersections_simple()
  CU_ASSERT_EQUAL(number_of_chrom_overlaps_lists_in_person_1,1);
 
  
-  for (i=0; i< number_of_supernodes_in_person_1; i++)
-  {
-    printf("SUPERNODE %s\n", array_of_supernodes_for_person1[i]);
-   }
+ //  for (i=0; i< number_of_supernodes_in_person_1; i++)
+ //{
+ //  printf("SUPERNODE %s\n", array_of_supernodes_for_person1[i]);
+ // }
 
-  for (i=0; i< number_of_chrom_overlaps_lists_in_person_1; i++)
-   {
-     printf("CHROM XS %s\n", array_of_chrom_overlaps_for_person1[i]);
-   }
+ // for (i=0; i< number_of_chrom_overlaps_lists_in_person_1; i++)
+ // {
+ //   printf("CHROM XS %s\n", array_of_chrom_overlaps_for_person1[i]);
+ // }
 
 
 
@@ -685,7 +698,7 @@ void test_printing_supernode_with_chromosome_intersections_simple()
 
 
  CU_ASSERT_STRING_EQUAL(array_of_supernodes_for_person1[0],"ACGTAC");
- CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"1 1 2 2 ");
+ CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"1F 1R 2F 2R ");
 
  //cleanup
  for (i=0; i< number_of_supernodes_in_person_1; i++)
@@ -877,15 +890,16 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example_2(
  CU_ASSERT((number_of_supernodes_that_are_potential_sv_loci==1));
  CU_ASSERT((number_of_chrom_overlaps_to_print_in_potential_sv_loci==1));
 
- printf("SUPERNODE %s\n", array_of_supernodes_for_person1[0]);
- printf("CHROMS %s\n", array_of_chrom_overlaps_for_person1[0]);
+ //printf("SUPERNODE %s\n", array_of_supernodes_for_person1[0]);
+ //printf("CHROMS %s\n", array_of_chrom_overlaps_for_person1[0]);
 
  //should be the reverse complement of the sequence in person1, which is all one supernode
  CU_ASSERT_STRING_EQUAL(array_of_supernodes_for_person1[0],"CTACGGCTGACTTTTTTTTTTTTTTTTTTTTAAGAGACGGGGTCTCGCTATGTTGCTCAGGCTGGAGTGCAGTGGCTATTCACAGGCGCGATCCCACTACTGATCAGCACGGGAGTTTTGACCTGCTCCGTTTCCGACCTGGGCCGGTTCACCCCTCCTTAGGCAACCTGGTGGTCCCCCGCTCCCGGGAGGTCACCATATTGATGCCGAACTTAGTGCGGACACCCGATCGGCATAGCGCACTACAGCCCAGAACTCCTGGACTCAAGCGATCCTCCCACCTCAGCCTCCCGAGTAGCTGGGACTACAGGCACGCGCCACCGCGCCCGGCCTCTGAAC");
- // first 101 nodes intesect chom2, the last 78 nodes intersect chrom 1, and the middle (309-78-101)=130 don't intersect anything
- CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ");
- 
 
+ // first 101 nodes intesect chom2, the last 78 nodes intersect chrom 1, and the middle (309-78-101)=130 don't intersect anything
+ // since chromosome goess through nodes BACKWARDS compared with supernode, we expect all directions to be R
+CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R ");
+ 
  
 
  free(array_of_supernodes_for_person1[0]);
@@ -898,4 +912,6 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example_2(
   
 }
 
+
+ 
 
