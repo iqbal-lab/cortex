@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <global.h>
 #include <stdio.h>
+#include <string.h>
 
 
 //const int NUMBER_OF_INDIVIDUALS_PER_POPULATION = 5;
@@ -286,14 +287,18 @@ void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
 
 
 
-Overlap db_node_get_chromosome_overlap_direction(dBNode* node, int which_chromosome)
+Overlap db_node_get_direction_through_node_in_which_chromosome_passes(dBNode* node, int which_chromosome)
 {
 
   int which_char;//there are 6 chars in which the chromosome xs are encoded. numbered 0 to 5. 0 carries chromosomes 1-4, etc.
   int which_probe;//two 1's in the two bits that encode this chromsomes's info within the char. So for example chromosome 2 is in the 3rd and 4th bots from the right in the 0th char. so probe is 12 (4+8).
   int which_pair_of_bits; //0 means the first two from the right, 1 means the next two, etc
 
-  if ( (which_chromosome==1)|| (which_chromosome==2) || (which_chromosome==3) || (which_chromosome==4) )
+  if (which_chromosome==0)
+    {
+      return does_not_overlap;
+    }
+  else if ( (which_chromosome==1)|| (which_chromosome==2) || (which_chromosome==3) || (which_chromosome==4) )
     {
       which_char=0;
     }
@@ -319,7 +324,7 @@ Overlap db_node_get_chromosome_overlap_direction(dBNode* node, int which_chromos
     }
   else
     {
-      printf("Do not call db_node_get_chromosome_overlap_orientation with second argument not between 1 and 24. You used %d", which_chromosome);
+      printf("Do not call db_node_get_chromosome_overlap_direction with second argument not between 1 and 24. You used %d", which_chromosome);
     }
 
   if (  (which_chromosome==1) || (which_chromosome==5) || (which_chromosome==9) || (which_chromosome==13) || (which_chromosome==17) || (which_chromosome==21) )
@@ -378,6 +383,67 @@ Overlap db_node_get_chromosome_overlap_direction(dBNode* node, int which_chromos
 
 	
 }
+
+char* overlap_to_char(Overlap ov, char* pre_alloced_string)
+{
+  pre_alloced_string[0]='\0';
+
+  if (ov==overlaps_forwards_only)
+    {
+      strcat(pre_alloced_string, "F");
+    }
+  else if (ov==overlaps_reverse_only)
+    {
+      strcat(pre_alloced_string, "R");
+    }
+  else if (ov==overlaps_both_directions)
+    {
+      strcat(pre_alloced_string, "B");
+    }
+  else if (ov==does_not_overlap)
+    {
+      //want to return null string in this case
+    }
+
+  return pre_alloced_string;
+}
+
+
+char* compare_chrom_overlap_and_supernode_direction(Overlap ov, Orientation o, char* pre_alloced_string)
+{
+  pre_alloced_string[0]='\0';
+
+  if (ov==overlaps_both_directions)
+    {
+      strcat(pre_alloced_string,"B");
+    }
+  else if ( (ov==overlaps_forwards_only) && (o==forward) )
+    {
+      strcat(pre_alloced_string,"F");
+    }
+  else if ( (ov==overlaps_reverse_only) && (o==reverse) )
+    {
+      strcat(pre_alloced_string,"F");
+    }
+  else if ( (ov==overlaps_forwards_only) && (o==reverse) )
+    {
+      strcat(pre_alloced_string,"R");
+    }
+  else if ( (ov==overlaps_reverse_only) && (o==forward) )
+    {
+      strcat(pre_alloced_string,"R");
+    }
+  else
+    {
+      printf("problem with compairng overlap and orientation");
+      exit(1);
+    }
+  return pre_alloced_string;
+
+}
+
+
+
 //of each 2 bit pair, least sig bit referes to forward and more sig to reverse. +1 means is present in chromosome, 0 means is not.
 void db_node_mark_chromosome_overlap(dBNode* node, int which_chromosome, Orientation orientation)
 {

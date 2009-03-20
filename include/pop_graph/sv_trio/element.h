@@ -130,7 +130,9 @@ void db_node_set_status_to_none(dBNode * node);
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
 void db_node_mark_chromosome_overlap(dBNode* node, int which_chromosome, Orientation orientation);
 boolean db_node_has_at_most_one_intersecting_chromosome(dBNode* node, int* which_chromosome);
-Overlap db_node_get_chromosome_overlap_direction(dBNode* node, int which_chromosome);
+Overlap db_node_get_direction_through_node_in_which_chromosome_passes(dBNode* node, int which_chromosome);
+char* overlap_to_char(Overlap ov, char* pre_alloced_string);
+char* compare_chrom_overlap_and_supernode_direction(Overlap ov, Orientation o, char* pre_alloced_string);
 
 //check if node doesn't have any edges in a given orientation
 boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayType edge_type, int edge_index);

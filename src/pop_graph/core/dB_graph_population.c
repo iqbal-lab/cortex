@@ -678,29 +678,11 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
   int which_chromosome=0;
   db_node_has_at_most_one_intersecting_chromosome(first_node, &which_chromosome);
 
-  if (!is_for_testing)
-    {
-      fprintf(file, "%d ", which_chromosome);
-    }
-  else
-    {
-
-      for_test[*index_for_test] = (char*) calloc(1000,sizeof(char));//TODO - don't have hardcded 1000, use length of supernode
-      if (for_test[*index_for_test]==NULL)
-	{
-	  printf("Unable to calloc for supernode");
-	  exit(1);
-	}
-      for_test[*index_for_test][0]='\0';
-      char chrom_as_string[3];
-      sprintf(chrom_as_string, "%d ",which_chromosome);
-      strcat(for_test[*index_for_test],chrom_as_string);
-      len_chrom_string_for_test=len_chrom_string_for_test+strlen(chrom_as_string);
-    }
   dBNode* current_node;
   dBNode* next_node;
   current_node=first_node;
   Orientation start_orientation, current_orientation, next_orientation;
+  Overlap next_overlap;
 
   //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
   if (db_node_is_supernode_end(node,forward, type,index, db_graph))
@@ -733,6 +715,33 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 
   current_orientation=start_orientation;
 
+  Overlap first_overlap=db_node_get_direction_through_node_in_which_chromosome_passes(first_node,which_chromosome);
+  char tmp_char[2];
+  overlap_to_char(first_overlap,tmp_char);
+
+  char direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node[2];
+  compare_chrom_overlap_and_supernode_direction(first_overlap, start_orientation, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
+
+  if (!is_for_testing)
+    {
+      fprintf(file, "%d%s ", which_chromosome, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
+    }
+  else
+    {
+
+      for_test[*index_for_test] = (char*) calloc(1000,sizeof(char));//TODO - don't have hardcded 1000, use length of supernode
+      if (for_test[*index_for_test]==NULL)
+	{
+	  printf("Unable to calloc for supernode");
+	  exit(1);
+	}
+      for_test[*index_for_test][0]='\0';
+      char chrom_as_string[3];
+      sprintf(chrom_as_string, "%d%s ",which_chromosome, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
+      strcat(for_test[*index_for_test],chrom_as_string);
+      len_chrom_string_for_test=len_chrom_string_for_test+strlen(chrom_as_string);
+    }
+
 
   //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
   while (!db_node_is_supernode_end(current_node,current_orientation, type,index, db_graph))
@@ -740,6 +749,10 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
       next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, db_graph);
       db_node_has_at_most_one_intersecting_chromosome(next_node, &which_chromosome);
 
+      next_overlap=db_node_get_direction_through_node_in_which_chromosome_passes(next_node,which_chromosome);
+
+      overlap_to_char(next_overlap,tmp_char);
+      compare_chrom_overlap_and_supernode_direction(next_overlap, next_orientation, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
       if ((next_node==first_node) && (next_orientation==start_orientation))//back to the start - will loop forever if not careful ;-0
 	{
 	  break;
@@ -747,12 +760,12 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 
       if (!is_for_testing)
 	{
-	  fprintf(file, "%d ", which_chromosome);
+	  fprintf(file, "%d%s ", which_chromosome, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
 	}
       else
 	{
-	  char chrom_as_string2[3];
-	  sprintf(chrom_as_string2, "%d ",which_chromosome);
+	  char chrom_as_string2[4];
+	  sprintf(chrom_as_string2, "%d%s ",which_chromosome, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
 	  strcat(for_test[*index_for_test],chrom_as_string2);
 	  len_chrom_string_for_test=len_chrom_string_for_test+strlen(chrom_as_string2);
 	}

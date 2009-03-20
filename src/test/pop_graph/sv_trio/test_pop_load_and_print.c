@@ -668,15 +668,15 @@ void test_printing_supernode_with_chromosome_intersections_simple()
  CU_ASSERT_EQUAL(number_of_chrom_overlaps_lists_in_person_1,1);
 
  
- // for (i=0; i< number_of_supernodes_in_person_1; i++)
- // {
- //   printf("SUPERNODE %s\n", array_of_supernodes_for_person1[i]);
- //  }
+  for (i=0; i< number_of_supernodes_in_person_1; i++)
+  {
+    printf("SUPERNODE %s\n", array_of_supernodes_for_person1[i]);
+   }
 
- // for (i=0; i< number_of_chrom_overlaps_lists_in_person_1; i++)
- //  {
- //    printf("CHROM XS %s\n", array_of_chrom_overlaps_for_person1[i]);
- //  }
+  for (i=0; i< number_of_chrom_overlaps_lists_in_person_1; i++)
+   {
+     printf("CHROM XS %s\n", array_of_chrom_overlaps_for_person1[i]);
+   }
 
 
 
@@ -877,8 +877,8 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example_2(
  CU_ASSERT((number_of_supernodes_that_are_potential_sv_loci==1));
  CU_ASSERT((number_of_chrom_overlaps_to_print_in_potential_sv_loci==1));
 
- // printf("SUPERNODE %s\n", array_of_supernodes_for_person1[0]);
- //printf("CHROMS %s\n", array_of_chrom_overlaps_for_person1[0]);
+ printf("SUPERNODE %s\n", array_of_supernodes_for_person1[0]);
+ printf("CHROMS %s\n", array_of_chrom_overlaps_for_person1[0]);
 
  //should be the reverse complement of the sequence in person1, which is all one supernode
  CU_ASSERT_STRING_EQUAL(array_of_supernodes_for_person1[0],"CTACGGCTGACTTTTTTTTTTTTTTTTTTTTAAGAGACGGGGTCTCGCTATGTTGCTCAGGCTGGAGTGCAGTGGCTATTCACAGGCGCGATCCCACTACTGATCAGCACGGGAGTTTTGACCTGCTCCGTTTCCGACCTGGGCCGGTTCACCCCTCCTTAGGCAACCTGGTGGTCCCCCGCTCCCGGGAGGTCACCATATTGATGCCGAACTTAGTGCGGACACCCGATCGGCATAGCGCACTACAGCCCAGAACTCCTGGACTCAAGCGATCCTCCCACCTCAGCCTCCCGAGTAGCTGGGACTACAGGCACGCGCCACCGCGCCCGGCCTCTGAAC");
