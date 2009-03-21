@@ -9,14 +9,14 @@ int main(int argc, char **argv){
 
 
   FILE *fp_fnames;
-  char filename[100];
+  //char filename[100];
   int hash_key_bits;
   dBGraph * db_graph = NULL; 
   short kmer_size;
 
 
   //command line arguments 
-  fp_fnames= fopen(argv[1], "r");    //open file of which gives one filename per population. Each of these files gives one filename per individual, and each of those gives list of files.
+  //filename = argv[1];    //open file that lists one file per individual in the trio (population), and each of those gives list of files.
   kmer_size        = atoi(argv[2]);  //global variable defined in element.h
   hash_key_bits    = atoi(argv[3]); //number of buckets: 2^hash_key_bits
   DEBUG            = atoi(argv[4]);
@@ -33,46 +33,48 @@ int main(int argc, char **argv){
   long long total_length = 0; //total sequence length
 
   //Go through all the files, loading data into the graph
-  while (!feof(fp_fnames)){
+  total_length += load_population_as_fastq(argv[1], &total_kmers, &bad_reads, 30, db_graph);
+  fprintf(stderr,"\n%ld file name:%s total seq:%lld bad reads: %lld total kmers:%lld\n\n",count_files,argv[1],total_length, bad_reads, total_kmers);
+  
 
-    fscanf(fp_fnames, "%s\n", filename);
-    count_files++;
-    total_length += load_population_as_fasta(filename, &total_kmers, &bad_reads, db_graph);
-    fprintf(stderr,"\n%ld file name:%s total seq:%lld bad reads: %lld total kmers:%lld\n\n",count_files,filename,total_length, bad_reads, total_kmers);
-    
-  }
+  //now load the chromosomes
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.1.fa.short_reads" , db_graph, 1);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.2.fa.short_reads" , db_graph, 2);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.3.fa.short_reads" , db_graph, 3);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.4.fa.short_reads" , db_graph, 4);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.5.fa.short_reads" , db_graph, 5);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.6.fa.short_reads" , db_graph, 6);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.7.fa.short_reads" , db_graph, 7);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.8.fa.short_reads" , db_graph, 8);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.9.fa.short_reads" , db_graph, 9);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.10.fa.short_reads" , db_graph, 10);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.11.fa.short_reads" , db_graph, 11);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.12.fa.short_reads" , db_graph, 12);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.13.fa.short_reads" , db_graph, 13);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.14.fa.short_reads" , db_graph, 14);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.15.fa.short_reads" , db_graph, 15);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.16.fa.short_reads" , db_graph, 16);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.17.fa.short_reads" , db_graph, 17);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.18.fa.short_reads" , db_graph, 18);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.19.fa.short_reads" , db_graph, 19);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.20.fa.short_reads" , db_graph, 20);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.21.fa.short_reads" , db_graph, 21);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.22.fa.short_reads" , db_graph, 22);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.23.fa.short_reads" , db_graph, 23);
+  load_chromosome_overlap_data("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/Homo_sapiens.NCBI36.52.dna.chromosome.24.fa.short_reads" , db_graph, 24);
 
 
-  //remember last two arguments are only used for unit tests, so here they are NULL, and 0.
+
+  //remember last 4 arguments are only used for unit tests, so here they are NULL, and 0.
   long supernode_count0=0;
-  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop,db_graph,&supernode_count0, individual_edge_array,0, false,NULL,0);
+  db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_inversion_for_specific_person_or_pop,db_graph,&supernode_count0, 
+								  individual_edge_array,0, false,NULL,NULL,0,0);
   db_graph_set_all_visited_nodes_to_status_none(db_graph);
 
-  printf("print supernodes for person 2 population 1\n");
-  long supernode_count1=0;
-  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop,db_graph,&supernode_count1, individual_edge_array,1, false, NULL,0);
+  db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_transloc_for_specific_person_or_pop,db_graph,&supernode_count0, 
+								  individual_edge_array,0, false,NULL,NULL,0,0);
+  db_graph_set_all_visited_nodes_to_status_none(db_graph);
 
-
-  int NUM_PEOPLE=2;
-  int stats[NUM_PEOPLE+1];
-  int* array[NUM_PEOPLE+1];
-
-  int j;
-  for (j=0; j<=NUM_PEOPLE; j++)
-    {
-      stats[j]=0;
-      array[j]=&stats[j];
-    }
-
-  db_graph_traverse_to_gather_statistics_about_people(&find_out_how_many_individuals_share_this_node_and_add_to_statistics , db_graph, array, NUM_PEOPLE);
-
-  printf("Results are:\n");
-  for (j=0; j<=NUM_PEOPLE; j++)
-    {
-      printf("Number of kmers shared by %d people is %d\n", j, stats[j]);
-    }
-
-  
 
   return 1;
 }

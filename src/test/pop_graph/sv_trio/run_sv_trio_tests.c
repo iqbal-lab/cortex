@@ -125,6 +125,12 @@ int  main()
 	return CU_get_error();
       }
     
+    if (NULL == CU_add_test(pPopGraphSuite, "Simple test of inversion detection. Do we spot it?",  test_printing_of_supernode_that_might_be_an_inversion_simple))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+    
 
     
 

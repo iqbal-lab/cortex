@@ -87,7 +87,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
   
   int entry_length;
 
-  while (entry_length = file_reader(fp,seq,max_read_length)){
+  while ((entry_length = file_reader(fp,seq,max_read_length))){
 
     if (DEBUG){
       printf ("\nsequence %s\n",seq->seq);
@@ -148,6 +148,19 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
   }
   free_sequence(&seq);
   binary_kmer_free_kmers_set(&windows);
+
+
+  //print mem status
+  //FILE* fmem=fopen("/proc/self/status", "r");
+  //char memline[500];
+  //while (fgets(memline,500,fmem) !=NULL){
+  //  if (memline[0] == 'V' && memline[1] == 'm'){
+  //    fprintf(stderr,"%s",memline);
+  //  }
+  //}
+  //fclose(fmem);
+  //fprintf(stderr,"************\n");
+    
   return seq_length;    
 }
 
@@ -196,7 +209,7 @@ int load_ref_overlap_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* 
   
   int entry_length;
 
-  while (entry_length = file_reader(fp,seq,max_read_length)){
+  while ((entry_length = file_reader(fp,seq,max_read_length))){
 
     if (DEBUG){
       printf ("\nsequence %s\n",seq->seq);
@@ -234,9 +247,23 @@ int load_ref_overlap_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* 
     }
     
   }
-
+  
   free_sequence(&seq);
   binary_kmer_free_kmers_set(&windows);
+
+
+  //print mem status
+  //FILE* fmem=fopen("/proc/self/status", "r");
+  //char memline[500];
+  //while (fgets(memline,500,fmem) !=NULL){
+  //  if (memline[0] == 'V' && memline[1] == 'm'){
+  //    fprintf(stderr,"%s",memline);
+  //  }
+  // }
+  //fclose(fmem);
+  //fprintf(stderr,"************\n");
+
+
   return seq_length;    
 }
 
@@ -247,6 +274,7 @@ int load_ref_overlap_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
 long long load_population_as_fasta(char* filename, long long* count_kmers, long long* bad_reads, dBGraph* db_graph)
 {
+
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
     printf("cannot open file:%s\n",filename);
@@ -261,6 +289,7 @@ long long load_population_as_fasta(char* filename, long long* count_kmers, long 
 
   while(fgets(line,MAX_FILENAME_LENGTH, fp) !=NULL)
     {
+
       //remove newline from end of line - replace with \0
       char* p;
       if ((p = strchr(line, '\n')) != NULL)
@@ -273,6 +302,8 @@ long long load_population_as_fasta(char* filename, long long* count_kmers, long 
         printf("This filelist contains too many people for a single population, %d", people_so_far);
 	exit(1);
       }
+
+      //printf("About to try and load fasta for this person %s\n",line);
 
       total_seq_loaded = total_seq_loaded + load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, count_kmers, bad_reads, db_graph, people_so_far-1);
 
@@ -292,7 +323,7 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
   FILE* fptr = fopen(f_name, "r");
   if (fptr == NULL)
     {
-      //printf("cannot open person-specific fasta file:%s\n",f_name);
+    printf("cannot open person-specific fasta file:%s\n",f_name);
     exit(1); 
     }
 
@@ -325,12 +356,15 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
 long long load_population_as_fastq(char* filename, long long* count_kmers, long long* bad_reads, char quality_cutoff, dBGraph* db_graph)
 {
+  printf("Z1");
+
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
     printf("cannot open file:%s\n",filename);
     exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
   }
 
+  printf("Z2");
 
   char line[MAX_FILENAME_LENGTH+1];
 
@@ -339,6 +373,8 @@ long long load_population_as_fastq(char* filename, long long* count_kmers, long 
 
   while(fgets(line,MAX_FILENAME_LENGTH, fp) !=NULL)
     {
+  printf("Z3");
+
       //remove newline from end of line - replace with \0
       char* p;
       if ((p = strchr(line, '\n')) != NULL)

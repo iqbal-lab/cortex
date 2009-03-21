@@ -6,3 +6,4 @@ void test_db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome();
 void test_printing_supernode_with_chromosome_intersections_simple();
 void  test_printing_supernode_with_chromosome_intersections_simple_alu_example();
 void  test_printing_supernode_with_chromosome_intersections_simple_alu_example_2();
+void test_printing_of_supernode_that_might_be_an_inversion_simple();

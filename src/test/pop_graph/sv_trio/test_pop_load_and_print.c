@@ -667,7 +667,7 @@ void test_printing_supernode_with_chromosome_intersections_simple()
   int number_of_chrom_overlaps_lists_in_person_1=0;//these two should end up being the same
 
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
- db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop, hash_table, 
+ db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_transloc_for_specific_person_or_pop, hash_table, 
 											&supernode_count_person1, individual_edge_array, 
 											//0, false, NULL, NULL, &number_of_supernodes_in_person_1, 
 											//&number_of_chrom_overlaps_lists_in_person_1);
@@ -788,7 +788,7 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example()
   int number_of_chrom_overlaps_to_print_in_potential_sv_loci=0;//these two should end up being the same
 
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
-  db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop, hash_table,                    
+  db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_transloc_for_specific_person_or_pop, hash_table,                    
 											 &supernode_count_person1, individual_edge_array,
 											 //0, false, NULL, NULL, &number_of_supernodes_that_are_potential_sv_loci,
 											 //&number_of_chrom_overlaps_to_print_in_potential_sv_loci);
@@ -878,7 +878,7 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example_2(
   int number_of_chrom_overlaps_to_print_in_potential_sv_loci=0;//these two should end up being the same
 
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
-  db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_sv_locus_for_specific_person_or_pop, hash_table,                    
+  db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_transloc_for_specific_person_or_pop, hash_table,                    
 											 &supernode_count_person1, individual_edge_array,
 											 //0, false, NULL, NULL, &number_of_supernodes_that_are_potential_sv_loci,
 											 //&number_of_chrom_overlaps_to_print_in_potential_sv_loci);
@@ -913,5 +913,116 @@ CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"2R 2R 2R 2R 2R 2R
 }
 
 
+
+void test_printing_of_supernode_that_might_be_an_inversion_simple()
+{
+
+  int kmer_size = 3;
+  int number_of_buckets=8;
+  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+
+  
+  // ****
+  // fasta file will have ACAGATGCT
+  // chrom will be        ACAATCGCT
+  //                         *** <---- inversion marked with *
+  //  If you draw it the overlaps are F 0 0 R 0 0 F
+  // ****
+
+  long long count_kmers=0;
+  long long bad_reads=0;
+
+  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/sv/inversion/one_person", &count_kmers, &bad_reads, hash_table);
+  CU_ASSERT(seq_loaded==9);
+  CU_ASSERT(bad_reads==0);
+
+
+  load_chromosome_overlap_data("../data/test/pop_graph/sv/inversion/chromosome", hash_table, 1);
+
+
+  char** array_of_supernodes_for_person1= (char**) calloc(10,sizeof(char*));
+
+  if (array_of_supernodes_for_person1==NULL)
+    {
+      printf("cant start - OOM");
+      exit(1);
+    }
+ int i;
+ for (i=0; i<10; i++)
+   {
+     array_of_supernodes_for_person1[i]="rubbish";
+   }
+
+  char** array_of_chrom_overlaps_for_person1= (char**) calloc(10,sizeof(char*));
+
+  if (array_of_chrom_overlaps_for_person1==NULL)
+    {
+      printf("cant start - OOM");
+      exit(1);
+    }
+  for (i=0; i<10; i++)
+    {
+      array_of_chrom_overlaps_for_person1[i]="rubbish_chrom";
+    }
+  //this counters are used to make sure none of the files of printed out supernodes get too big. In fact
+  //it is completely unused in test code, as we don't print anything
+  long supernode_count_person1=0;
+
+  
+  //this on the other hand is used in testing.
+  int number_of_supernodes_in_person_1=0;
+  int number_of_chrom_overlaps_lists_in_person_1=0;//these two should end up being the same
+
+  //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
+ db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_inversion_for_specific_person_or_pop, hash_table, 
+											&supernode_count_person1, individual_edge_array, 
+											//0, false, NULL, NULL, &number_of_supernodes_in_person_1, 
+											//&number_of_chrom_overlaps_lists_in_person_1);
+											 0, true, array_of_supernodes_for_person1,
+											array_of_chrom_overlaps_for_person1, &number_of_supernodes_in_person_1, &number_of_chrom_overlaps_lists_in_person_1);
+
+
+
+ CU_ASSERT((number_of_supernodes_in_person_1==1));
+ CU_ASSERT_EQUAL(number_of_chrom_overlaps_lists_in_person_1,1);
+
+ 
+ //   for (i=0; i< number_of_supernodes_in_person_1; i++)
+ // {
+ //  printf("SUPERNODE %s\n", array_of_supernodes_for_person1[i]);
+ // }
+
+ // for (i=0; i< number_of_chrom_overlaps_lists_in_person_1; i++)
+ // {
+ //   printf("CHROM XS %s\n", array_of_chrom_overlaps_for_person1[i]);
+ // }
+
+
+
+ 
+ CU_ASSERT_STRING_EQUAL(array_of_supernodes_for_person1[0],"ACAGATGCT");
+ CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"1F 0 0 1R 0 0 1F ");
+
+ //cleanup
+ for (i=0; i< number_of_supernodes_in_person_1; i++)
+   {
+     free(array_of_supernodes_for_person1[i]);
+   }
+ for (i=0; i< number_of_chrom_overlaps_lists_in_person_1; i++)
+    {
+    free(array_of_chrom_overlaps_for_person1[i]);
+  }
+
+ free(array_of_supernodes_for_person1);
+ free(array_of_chrom_overlaps_for_person1);
+ hash_table_free(&hash_table);
+  
+}
  
 
