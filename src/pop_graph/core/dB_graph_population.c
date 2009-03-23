@@ -548,13 +548,15 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
     {
       if (node==NULL)
         {
-          printf("Bloody node is null so of course cant get first node");
+          printf("Bloody node is null so of course cant get first node. Should not be calling this function with null nodes");
+	  exit(1);
         }
       else
         {
-          printf("This person %d does not have this node %s\n", index, binary_kmer_to_seq(node->kmer, dbgraph->kmer_size, tmp_seq));
+          printf("In db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome: This person %d does not have this node %s\n", index, binary_kmer_to_seq(node->kmer, dbgraph->kmer_size, tmp_seq));
+	  //the only case when this should happen is when a read contains k-mer length of bases, and then N's. So the node does not have any edges in that person, so we think it's not in their graph.
         }
-      exit(1);
+      //exit(1);
       return false;
     }
 
@@ -688,7 +690,15 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
 void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, 
 						      boolean is_for_testing, char** for_test, int* index_for_test)
 {
- 
+
+  //ignore if not in this persons graph
+  if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
+    {
+      return;
+    }
+
+
+
   char tmp_seq[db_graph->kmer_size];
   int len_chrom_string_for_test=0;
 
@@ -701,7 +711,7 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
         }
       else
         {
-          printf("This person %d does not have this node %s\n", index, binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
+          printf("Inside db_graph_print_chrom_intersections.. This person %d does not have this node %s. Therefore exiting..\n", index, binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
         }
       exit(1);
     
@@ -710,6 +720,8 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
   dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, type, index, db_graph);
 
   int which_chromosome=0;
+
+  //if it overlaps >1 chromosomes, which_chromosome will be -1
   db_node_has_at_most_one_intersecting_chromosome(first_node, &which_chromosome);
 
   dBNode* current_node;
@@ -717,24 +729,15 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
   current_node=first_node;
   Orientation start_orientation, current_orientation, next_orientation;
   Overlap next_overlap;
-
+  boolean is_singleton=false;
+  
   //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
   if (db_node_is_supernode_end(node,forward, type,index, db_graph))
     {
       if (db_node_is_supernode_end(node,reverse, type,index, db_graph))
 	{
-	  //singleton
-	  
-	  if (!is_for_testing)
-	    {
-	      fprintf(file, "\n");
-	    }
-	  else
-	    {
-	      *index_for_test=*index_for_test+1;
-
-	    }
-	  return;
+	  is_singleton=true;
+	  start_orientation=forward; //somewhat moot. The supernode is just this node.
 	}
       else
 	{
@@ -756,6 +759,7 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
   char direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node[2];
   compare_chrom_overlap_and_supernode_direction(first_overlap, start_orientation, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
 
+
   if (!is_for_testing)
     {
       fprintf(file, "%d%s ", which_chromosome, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
@@ -776,7 +780,25 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
       len_chrom_string_for_test=len_chrom_string_for_test+strlen(chrom_as_string);
     }
 
+  if (is_singleton)
+    {
+      
+      if (!is_for_testing)
+	{
+	  fprintf(file, " singleton\n");
+	}
+      else
+	{
+	  for_test[*index_for_test][len_chrom_string_for_test]='\0';
+	  *index_for_test=*index_for_test+1;
+	  
+	}
+      return;
+      
+    }
+  
 
+  //OK - have done the first node - now do the rest in a loop.
   //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
   while (!db_node_is_supernode_end(current_node,current_orientation, type,index, db_graph))
     {
@@ -784,17 +806,40 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
       db_node_has_at_most_one_intersecting_chromosome(next_node, &which_chromosome);
 
       next_overlap=db_node_get_direction_through_node_in_which_chromosome_passes(next_node,which_chromosome);
+      if (which_chromosome==-1)
+	{
+	  printf("Called db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop with a node that intersects >1 chromosome. Should not do that\n");
+	  exit(1);
+	}
 
       overlap_to_char(next_overlap,tmp_char);
       compare_chrom_overlap_and_supernode_direction(next_overlap, next_orientation, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
       if ((next_node==first_node) && (next_orientation==start_orientation))//back to the start - will loop forever if not careful ;-0
 	{
+	  if (!is_for_testing)
+	    {
+	      fprintf(file, " Looped back to start node");
+	    }
+
 	  break;
 	}
 
       if (!is_for_testing)
 	{
-	  fprintf(file, "%d%s ", which_chromosome, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
+	  if (which_chromosome==0)
+	    {
+	      //fprintf(file, "00 ");
+	      if (strcmp("0", direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node))
+		{
+		  printf("prg error. Since which_chromosome=0 there should be no intersection. but direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node is not zero!");
+		  exit(1);
+		}
+	    }
+	  //else
+	  //  {
+	      fprintf(file, "%d%s ", which_chromosome, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
+	      //  }
+
 	}
       else
 	{
@@ -839,11 +884,16 @@ void db_graph_print_supernode_if_is_potential_transloc_for_specific_person_or_po
       return;
     }
 
+  //ignore if not in this persons graph
+  if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
+    {
+      return;
+    }
 
   int total_number_of_different_chromosomes_intersected=0;
 
   //ignore unless for all nodes in supernode, has <=1 chrom intersection
-  if  ( db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(node, individual_edge_array, index, db_graph, &total_number_of_different_chromosomes_intersected))
+  if  ( db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(node, type, index, db_graph, &total_number_of_different_chromosomes_intersected))
     {
       if (total_number_of_different_chromosomes_intersected==2)
 	{
@@ -876,11 +926,19 @@ void db_graph_print_supernode_if_is_potential_inversion_for_specific_person_or_p
       return;
     }
 
+  //ignore if not in this persons graph
+  if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
+    {
+      return;
+    }
+
+
+
 
   int total_number_of_different_chromosomes_intersected=0;
 
   //ignore unless for all nodes in supernode, has <=1 chrom intersection
-  if  ( db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(node, individual_edge_array, index, db_graph, &total_number_of_different_chromosomes_intersected))
+  if  ( db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(node, type, index, db_graph, &total_number_of_different_chromosomes_intersected))
     {
       if (total_number_of_different_chromosomes_intersected==1)
 	{

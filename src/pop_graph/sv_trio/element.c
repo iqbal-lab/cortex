@@ -294,6 +294,7 @@ Overlap db_node_get_direction_through_node_in_which_chromosome_passes(dBNode* no
   int which_probe;//two 1's in the two bits that encode this chromsomes's info within the char. So for example chromosome 2 is in the 3rd and 4th bots from the right in the 0th char. so probe is 12 (4+8).
   int which_pair_of_bits; //0 means the first two from the right, 1 means the next two, etc
 
+  
   if (which_chromosome==0)
     {
       return does_not_overlap;
@@ -324,7 +325,7 @@ Overlap db_node_get_direction_through_node_in_which_chromosome_passes(dBNode* no
     }
   else
     {
-      printf("Do not call db_node_get_chromosome_overlap_direction with second argument not between 1 and 24. You used %d", which_chromosome);
+      printf("Do not call db_node_get_chromosome_overlap_direction with second argument not between -1 and 24. You used %d", which_chromosome);
     }
 
   if (  (which_chromosome==1) || (which_chromosome==5) || (which_chromosome==9) || (which_chromosome==13) || (which_chromosome==17) || (which_chromosome==21) )
@@ -402,7 +403,7 @@ char* overlap_to_char(Overlap ov, char* pre_alloced_string)
     }
   else if (ov==does_not_overlap)
     {
-      //want to return null string in this case
+      strcat(pre_alloced_string, "0");
     }
 
   return pre_alloced_string;
@@ -419,7 +420,7 @@ char* compare_chrom_overlap_and_supernode_direction(Overlap ov, Orientation o, c
     }
   else if (ov==does_not_overlap)
     {
-      //do nothing - return null string
+      strcat(pre_alloced_string,"0");
     }
   else if ( (ov==overlaps_forwards_only) && (o==forward) )
     {

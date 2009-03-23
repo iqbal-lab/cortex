@@ -890,7 +890,7 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example_2(
  CU_ASSERT((number_of_supernodes_that_are_potential_sv_loci==1));
  CU_ASSERT((number_of_chrom_overlaps_to_print_in_potential_sv_loci==1));
 
- //printf("SUPERNODE %s\n", array_of_supernodes_for_person1[0]);
+ // printf("SUPERNODE %s\n", array_of_supernodes_for_person1[0]);
  //printf("CHROMS %s\n", array_of_chrom_overlaps_for_person1[0]);
 
  //should be the reverse complement of the sequence in person1, which is all one supernode
@@ -898,9 +898,9 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example_2(
 
  // first 101 nodes intesect chom2, the last 78 nodes intersect chrom 1, and the middle (309-78-101)=130 don't intersect anything
  // since chromosome goess through nodes BACKWARDS compared with supernode, we expect all directions to be R
-CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R ");
- 
- 
+
+
+CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R ");
 
  free(array_of_supernodes_for_person1[0]);
  free(array_of_chrom_overlaps_for_person1[0]);
@@ -993,7 +993,7 @@ void test_printing_of_supernode_that_might_be_an_inversion_simple()
  CU_ASSERT_EQUAL(number_of_chrom_overlaps_lists_in_person_1,1);
 
  
- //   for (i=0; i< number_of_supernodes_in_person_1; i++)
+ //  for (i=0; i< number_of_supernodes_in_person_1; i++)
  // {
  //  printf("SUPERNODE %s\n", array_of_supernodes_for_person1[i]);
  // }
@@ -1007,7 +1007,7 @@ void test_printing_of_supernode_that_might_be_an_inversion_simple()
 
  
  CU_ASSERT_STRING_EQUAL(array_of_supernodes_for_person1[0],"ACAGATGCT");
- CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"1F 0 0 1R 0 0 1F ");
+ CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"1F 00 00 1R 00 00 1F ");
 
  //cleanup
  for (i=0; i< number_of_supernodes_in_person_1; i++)
@@ -1024,5 +1024,8 @@ void test_printing_of_supernode_that_might_be_an_inversion_simple()
  hash_table_free(&hash_table);
   
 }
- 
+
+
+
+
 
