@@ -599,7 +599,7 @@ boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNo
   //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
   if (db_node_is_supernode_end(first_node,forward, type,index, dbgraph))
     {
-      if (db_node_is_supernode_end(node,reverse, type,index, dbgraph))
+      if (db_node_is_supernode_end(first_node,reverse, type,index, dbgraph))
 	{
 	  //singleton
 	  return true;
@@ -691,31 +691,17 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 						      boolean is_for_testing, char** for_test, int* index_for_test)
 {
 
+  char tmp_seq[db_graph->kmer_size];
+
   //ignore if not in this persons graph
   if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
     {
+      printf("In db_graph_print_chrom_intersections_for_supernode : This person %d does not have this node %s\n", index, binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
       return;
     }
 
-
-
-  char tmp_seq[db_graph->kmer_size];
   int len_chrom_string_for_test=0;
 
-  //first check the node exists in this person's graph
-  if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
-    {
-      if (node==NULL)
-        {
-          printf("Bloody node is null so of course cant get first node");
-        }
-      else
-        {
-          printf("Inside db_graph_print_chrom_intersections.. This person %d does not have this node %s. Therefore exiting..\n", index, binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
-        }
-      exit(1);
-    
-    }
 
   dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, type, index, db_graph);
 
@@ -732,10 +718,11 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
   boolean is_singleton=false;
   
   //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
-  if (db_node_is_supernode_end(node,forward, type,index, db_graph))
+  if (db_node_is_supernode_end(first_node,forward, type,index, db_graph))
     {
-      if (db_node_is_supernode_end(node,reverse, type,index, db_graph))
+      if (db_node_is_supernode_end(first_node,reverse, type,index, db_graph))
 	{
+	  fprintf(file, "is singleton ");
 	  is_singleton=true;
 	  start_orientation=forward; //somewhat moot. The supernode is just this node.
 	}
@@ -831,14 +818,15 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 	      //fprintf(file, "00 ");
 	      if (strcmp("0", direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node))
 		{
-		  printf("prg error. Since which_chromosome=0 there should be no intersection. but direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node is not zero!");
+		  printf("prg error. Since which_chromosome=0 there should be no intersection.");
+		  printf(" but direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node is not zero!");
 		  exit(1);
 		}
 	    }
 	  //else
 	  //  {
-	      fprintf(file, "%d%s ", which_chromosome, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
-	      //  }
+	  fprintf(file, "%d%s ", which_chromosome, direction_of_chromosome_passing_through_node_compared_with_direction_of_supernode_passing_through_node);
+	  //  }
 
 	}
       else
@@ -853,8 +841,10 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 	
     }
 
+
   if (!is_for_testing)
     {
+      //ok - so current_node is now the end of the supernode.
       fprintf(file, "\n");
     }
   else
@@ -1017,6 +1007,80 @@ void db_graph_set_status_of_all_nodes_in_supernode(dBNode* node, NodeStatus stat
 
 
 }
+
+
+void db_graph_get_min_and_max_covg_of_nodes_in_supernode_for_specific_person_or_pop(dBNode* node, NodeStatus status, EdgeArrayType type, int index,  dBGraph* dbgraph, int* min_covg, int* max_covg)
+{
+
+  
+  dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, type, index, dbgraph);
+  dBNode* current_node=first_node;
+
+  int min = db_node_get_coverage(first_node, type, index);
+  int max = db_node_get_coverage(first_node, type, index);
+
+  dBNode* next_node;
+  Orientation current_orientation, next_orientation, start_orientation;
+  
+
+
+
+  //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
+  if (db_node_is_supernode_end(current_node,forward, type,index, dbgraph))
+    {
+      if (db_node_is_supernode_end(current_node,reverse, type,index, dbgraph))
+	{
+	  //singleton
+	  *min_covg=min;
+	  *max_covg=max;
+	  return ;
+	}
+      else
+	{
+	  start_orientation=reverse;
+	}
+    }
+  else
+    {
+      start_orientation=forward;
+    }
+
+  current_orientation=start_orientation;
+
+  //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
+  while (!db_node_is_supernode_end(current_node,current_orientation, type,index, dbgraph))
+    {
+      next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, dbgraph);
+
+      if ((next_node==first_node) && (next_orientation==start_orientation))//back to the start - will loop forever if not careful ;-0
+	{
+	  break;
+	}
+
+      if (db_node_get_coverage(next_node,type,index)>max)
+	{
+	  max = db_node_get_coverage(next_node,type,index);
+	}
+      if (db_node_get_coverage(next_node,type,index)<min)
+	{
+	  min = db_node_get_coverage(next_node,type,index);
+	}
+      current_node=next_node;
+      current_orientation=next_orientation;
+	
+    }
+
+  *min_covg=min;
+  *max_covg=max;
+  return;
+
+
+}
+
+
+
+
+
 
 
 

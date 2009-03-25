@@ -46,6 +46,16 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test element -increment coverage for different people", test_increment_coverage)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test element - get coverage of node for specific person", test_get_coverage)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test that can identify supernode ends",   test_is_supernode_end)) {
     CU_cleanup_registry();

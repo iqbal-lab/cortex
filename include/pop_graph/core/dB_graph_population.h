@@ -87,6 +87,8 @@ void apply_function_to_every_node_in_supernode_containing_given_node(void (*f)(d
 
 void db_graph_set_status_of_all_nodes_in_supernode(dBNode* node, NodeStatus status, EdgeArrayType type, int index, dBGraph* db_graph);
 
+void db_graph_get_min_and_max_covg_of_nodes_in_supernode_for_specific_person_or_pop(dBNode* node, NodeStatus status, EdgeArrayType type, int index,  dBGraph* dbgraph, int* min_covg, int* max_covg);
+
 dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph);
 dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* node, Orientation o, Orientation* next_orientation, EdgeArrayType type, int index, dBGraph* db_graph);
 

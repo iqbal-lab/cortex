@@ -22,7 +22,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 int load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * count_kmers, long long * bad_reads, int max_read_length, dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
-  printf("start to load %s\n", filename);
+  //printf("start to load %s\n", filename);
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
     printf("cannot open file:%s\n",filename);
@@ -153,15 +153,15 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 
 
   //print mem status
-  FILE* fmem=fopen("/proc/self/status", "r");
-  char memline[500];
-  while (fgets(memline,500,fmem) !=NULL){
-    if (memline[0] == 'V' && memline[1] == 'm'){
-      fprintf(stderr,"%s",memline);
-    }
-  }
-  fclose(fmem);
-  fprintf(stderr,"************\n");
+  //FILE* fmem=fopen("/proc/self/status", "r");
+  //char memline[500];
+  //while (fgets(memline,500,fmem) !=NULL){
+  //  if (memline[0] == 'V' && memline[1] == 'm'){
+  //    fprintf(stderr,"%s",memline);
+  //  }
+  //}
+  //fclose(fmem);
+  //fprintf(stderr,"************\n");
     
   return seq_length;    
 }
@@ -255,15 +255,15 @@ int load_ref_overlap_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* 
 
 
   //print mem status
-  FILE* fmem=fopen("/proc/self/status", "r");
-  char memline[500];
-  while (fgets(memline,500,fmem) !=NULL){
-    if (memline[0] == 'V' && memline[1] == 'm'){
-      fprintf(stderr,"%s",memline);
-    }
-   }
-  fclose(fmem);
-  fprintf(stderr,"************\n");
+  //FILE* fmem=fopen("/proc/self/status", "r");
+  //char memline[500];
+  //while (fgets(memline,500,fmem) !=NULL){
+  //  if (memline[0] == 'V' && memline[1] == 'm'){
+  //    fprintf(stderr,"%s",memline);
+  //  }
+  // }
+  //fclose(fmem);
+  //fprintf(stderr,"************\n");
 
 
   return seq_length;    
@@ -448,10 +448,10 @@ int load_chromosome_overlap_data(char* f_name,  dBGraph* db_graph, int which_chr
       //printf("cannot open chromosome fasta file:%s\n",f_name);
       exit(1);
     }
-  else
-    {
-      printf("opened file %s to load overlap data\n", f_name);
-    }
+  //else
+  //  {
+  //    printf("opened file %s to load overlap data\n", f_name);
+  //  }
 
   long long count_kmers, bad_reads;
   int total_seq_loaded=0;

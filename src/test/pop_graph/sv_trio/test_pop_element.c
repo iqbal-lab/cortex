@@ -1375,3 +1375,60 @@ void test_get_chromosome_overlap_direction()
 
   free_element(&e);
 }
+
+
+
+void test_increment_coverage()
+{
+  dBNode* e = new_element();
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(e->coverage[0]==1);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(e->coverage[0]==2);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(e->coverage[0]==3);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(e->coverage[0]==4);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(e->coverage[0]==5);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(e->coverage[0]==6);
+  CU_ASSERT(e->coverage[1]==0);
+  CU_ASSERT(e->coverage[2]==0);
+
+  e->coverage[0]=(unsigned char) 251;  // note you have to be careful just assigning an int to a char
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(e->coverage[0]==252);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(e->coverage[0]==253);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(e->coverage[0]==254);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(e->coverage[0]==254);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(e->coverage[0]==254);
+  db_node_increment_coverage(e,individual_edge_array,0);
+ 
+  
+  free_element(&e);
+}
+
+void test_get_coverage()
+{
+  dBNode* e = new_element();
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(db_node_get_coverage(e,individual_edge_array,0)==1);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(db_node_get_coverage(e,individual_edge_array,0)==2);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(db_node_get_coverage(e,individual_edge_array,0)==3);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(db_node_get_coverage(e,individual_edge_array,0)==4);
+  db_node_increment_coverage(e,individual_edge_array,0);
+  CU_ASSERT(db_node_get_coverage(e,individual_edge_array,0)==5);
+  
+  e->coverage[0]=120;
+  CU_ASSERT(db_node_get_coverage(e,individual_edge_array,0)==120);
+  
+  free_element(&e);
+}

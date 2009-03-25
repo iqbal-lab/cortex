@@ -282,10 +282,23 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
 
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
 {
-  //do nothing for now. Need to check about chars
+
+  //note in C, if you compare two unsigned chars with <, it promotes them both to int first in order to do the comparison.
+
+  unsigned char limit=254;
+  if (e->coverage[index]<limit)
+    {
+      e->coverage[index]=e->coverage[index]+1;
+    }
 }
 
 
+//coverage stored as unsigned char, but we want to deal with it as an int. So access it via this getter
+int db_node_get_coverage(dBNode* e, EdgeArrayType type, int index)
+{
+  unsigned char c = e->coverage[index];
+  return (int) c;
+}
 
 Overlap db_node_get_direction_through_node_in_which_chromosome_passes(dBNode* node, int which_chromosome)
 {
