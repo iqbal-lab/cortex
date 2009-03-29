@@ -11,7 +11,7 @@
 #include <file_reader.h>
 #include <global.h>
 #include <string.h>
-
+#include <dB_graph_supernode.h>
 
 int MAX_FILENAME_LENGTH=300;
 int MAX_READ_LENGTH=1000;
@@ -86,7 +86,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
   }  
   //allocate memory for the sliding windows 
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
-  
+
   int entry_length;
 
   while ((entry_length = file_reader(fp,seq,max_read_length))){
@@ -118,12 +118,15 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 	  if (!found){
 	    (*count_kmers)++;
 	  }
-	  else
-	    {
-	      //increment coverage
-	      //db_node_increment_coverage(current_node, type, index);
-	    }
 	  
+	  //increment coverage, if not seen before in this read
+	  if (!db_node_check_status(current_node, visited))
+	    {
+	      db_node_increment_coverage(current_node, type, index);
+	      db_node_set_status(current_node, visited);
+	  
+	    }
+
 	  current_orientation = db_node_get_orientation(current_window->kmer[j],current_node, db_graph->kmer_size);
 	  
 	  if (DEBUG){
@@ -145,7 +148,23 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 	  
 	}
       }
-     
+
+      //here - go through all the windows again, find each node, and set it to unvisited.
+      for(i=0;i<windows->nwindows;i++)
+	{ //for each window
+	  KmerSlidingWindow * current_window = &(windows->window[i]);
+	  
+	  for(j=0;j<current_window->nkmers;j++)
+	    { //for each kmer in window
+	      current_node = hash_table_find(element_get_key(current_window->kmer[j],db_graph->kmer_size),db_graph);	  	 
+	      if (current_node==NULL)
+		{
+		  printf("Impossible- must be able to find all kmers in these windows as already inserted");
+		  exit(1);
+		}
+	      db_node_set_status(current_node, none);
+	    }
+	}
     }
   }
   free_sequence(&seq);

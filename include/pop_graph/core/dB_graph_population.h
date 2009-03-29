@@ -39,10 +39,15 @@ char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode *
 //void print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node,EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test);
 void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index,
 										    boolean is_for_testing, char** for_test, int* index_for_test);
-void db_graph_choose_output_filename_and_print_potential_transloc_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index, 
-											     boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2);
+
+void db_graph_choose_output_filename_and_print_potential_transloc_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index,
+                                                                                             int min_required_covg, int max_required_covg,
+                                                                                             boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2);
+
 void db_graph_choose_output_filename_and_print_potential_inversion_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index,
-											      boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2);
+                                                                                              int min_required_covg, int max_required_covg,
+                                                                                              boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2);
+
 
 void db_graph_print_chrom_intersections_for_supernode(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test);
 
@@ -51,8 +56,8 @@ void db_graph_print_chrom_intersections_for_supernode(FILE * file, dBNode * node
 void db_graph_traverse_specific_person_or_pop_for_supernode_printing(void (*f)(HashTable*, Element *, long*, EdgeArrayType, int, boolean, char**, int*),HashTable * hash_table, long* supernode_count, 
 								     EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test);
 
-void db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(void (*f)(HashTable*, Element *, long* , EdgeArrayType, int, boolean, char**, char**, int*, int*),
-											    HashTable * hash_table, long* supernode_count, EdgeArrayType type, int index,
+void db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(void (*f)(HashTable*, Element *, long* , EdgeArrayType, int, int, int, boolean, char**, char**, int*, int*),
+                                                                                            HashTable * hash_table, long* supernode_count, EdgeArrayType type, int index, int min_covg, int max_covg,
 											    boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2);
 
 void db_graph_traverse_to_gather_statistics_about_people(void (*f)(HashTable*, Element *, int**, int),HashTable *, int**, int);
@@ -87,16 +92,19 @@ void apply_function_to_every_node_in_supernode_containing_given_node(void (*f)(d
 
 void db_graph_set_status_of_all_nodes_in_supernode(dBNode* node, NodeStatus status, EdgeArrayType type, int index, dBGraph* db_graph);
 
-void db_graph_get_min_and_max_covg_of_nodes_in_supernode_for_specific_person_or_pop(dBNode* node, NodeStatus status, EdgeArrayType type, int index,  dBGraph* dbgraph, int* min_covg, int* max_covg);
+void db_graph_get_min_and_max_covg_of_nodes_in_supernode_for_specific_person_or_pop(dBNode* node, /*NodeStatus status,*/ EdgeArrayType type, int index,  dBGraph* dbgraph, int* min_covg, int* max_covg);
 
 dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph);
 dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* node, Orientation o, Orientation* next_orientation, EdgeArrayType type, int index, dBGraph* db_graph);
 
-void db_graph_print_supernode_if_is_potential_transloc_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, 
-										  boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2 );
+
+void db_graph_print_supernode_if_is_potential_transloc_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index,
+                                                                                  int min_required_covg, int max_required_covg,
+                                                                                  boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2 );
 
 void db_graph_print_supernode_if_is_potential_inversion_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index,
-										   boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2 );
+                                                                                   int min_required_covg, int max_required_covg,
+                                                                                   boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2 );
 
 boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNode* node, EdgeArrayType type, int index, dBGraph* dbgraph, int* total_number_of_different_chromosomes_intersected);
 

@@ -92,14 +92,18 @@ int main(int argc, char **argv){
 
   //remember last 4 arguments are only used for unit tests, so here they are NULL, and 0.
   long supernode_count0=0;
+
+  int min_covg_required=5;
+  int max_covg_required=50;
+
   db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_inversion_for_specific_person_or_pop,db_graph,&supernode_count0, 
-								  individual_edge_array,0, false,NULL,NULL,0,0);
+								  individual_edge_array,0, min_covg_required, max_covg_required, false,NULL,NULL,0,0);
 
   printf("printed out all the possible iversion sites we can find. start on translocs\n");
   db_graph_set_all_visited_nodes_to_status_none(db_graph);
 
   db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_transloc_for_specific_person_or_pop,db_graph,&supernode_count0, 
-								  individual_edge_array,0, false,NULL,NULL,0,0);
+								  individual_edge_array,0, min_covg_required, max_covg_required, false,NULL,NULL,0,0);
   printf("printed out all the possible transloc sites we can find\n");
 
   db_graph_set_all_visited_nodes_to_status_none(db_graph);

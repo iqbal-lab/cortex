@@ -262,3 +262,79 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
  
 }
 
+
+void test_get_min_and_max_covg_of_nodes_in_supernode()
+{
+
+  int kmer_size = 3;
+  int number_of_buckets=5;
+  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+
+  long long bad_reads=0;
+  long long total_kmers=0;
+  long long seq_loaded=0;
+
+
+
+  //start with an example with just oner person - note this is an example with the same kmer occuring twice in one read :) - CCG
+  // so need to make sure that coverga eof that kmer is not double-incremented for the two times in that read
+
+  // >r1
+  //AACCGG
+  //>r2
+  //AAC
+  //>r3
+  //AAC
+  //>r4
+  //AAC
+  //>r5
+  //ACC
+  //>r6
+  //CCG
+  //>r7
+  //CCG
+
+  //supernode will be
+  // AAC --> ACC --> CCG ___|
+  // TTG <-- TGG <-- GGC <--|
+  // hairpin :-)
+
+  //double coverness of hairpin must not confuse read coverage
+
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/coverage/one_person", &total_kmers, &bad_reads, hash_table);
+  //printf("Number of bases loaded is %d",seq_loaded);
+  CU_ASSERT(seq_loaded == 24);
+  CU_ASSERT(bad_reads==0);
+  
+
+  dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAC",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT(!(query_node==NULL));
+  CU_ASSERT(db_node_get_coverage(query_node, individual_edge_array, 0)==4);
+  //printf("Expect covg aac is 4, but is %d", db_node_get_coverage(query_node, individual_edge_array, 0));
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACC",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT(!(query_node==NULL));
+  CU_ASSERT(db_node_get_coverage(query_node, individual_edge_array, 0)==2);
+  //printf("Expect covg acc is 2, but is %d", db_node_get_coverage(query_node, individual_edge_array, 0));
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("CCG",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  CU_ASSERT(!(query_node==NULL));
+  CU_ASSERT(db_node_get_coverage(query_node, individual_edge_array, 0)==3);
+  //printf("Expect covg ccg is 3, but is %d", db_node_get_coverage(query_node, individual_edge_array, 0));
+
+
+  int min=0;
+  int max=0;
+  db_graph_get_min_and_max_covg_of_nodes_in_supernode_for_specific_person_or_pop(query_node, individual_edge_array, 0, hash_table, &min, &max);
+  
+  CU_ASSERT(min==2); //ACC
+  CU_ASSERT(max==4); //AAC
+
+  hash_table_free(&hash_table);
+
+}

@@ -18,7 +18,7 @@ typedef enum
 typedef unsigned long long BinaryKmer;
 
 
-// KmerArray is an array of kmers. Usually this will be from a sliding window run across a sequence.
+
 typedef struct{
 	int nkmers;
 	BinaryKmer * kmer;

@@ -1,9 +1,9 @@
 /*
-  supernode.h defines the interface for dealing with supernodes
+  dB_graph_supernode.h defines the interface for dealing with supernodes
 */
 
-#ifndef SUPERNODE_H_
-#define SUPERNODE_H_
+#ifndef DB_GRAPH_SUPERNODE_H_
+#define DB_GRAPH_SUPERNODE_H_
 
 #include <element.h>
 
@@ -30,4 +30,4 @@ typedef struct
 } dBNodeArray;
 
 
-#endif /* SUPERNODE_H_ */
+#endif /* DB_GRAPH_SUPERNODE_H_ */

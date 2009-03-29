@@ -252,8 +252,9 @@ void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_
 
 
 
-void db_graph_choose_output_filename_and_print_potential_transloc_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index, 
-									   boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2)
+void db_graph_choose_output_filename_and_print_potential_transloc_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index,
+											     int min_required_covg, int max_required_covg,
+											     boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2)
 {
 
   //**debug only zam
@@ -285,23 +286,25 @@ void db_graph_choose_output_filename_and_print_potential_transloc_for_specific_p
 
       if (type == individual_edge_array)
 	{
-	  sprintf(filename,"translocations_kmer_%i_person_%i_subset_%i",db_graph->kmer_size,index,num);
+	  sprintf(filename,"translocations_person_%i_mincovg_%i_maxcovg_%i_subset_%i",index, min_required_covg, max_required_covg, num);
 	}
       else
 	{
-	  sprintf(filename,"translocations_kmer_%i_population_%i_subset_%i",db_graph->kmer_size,index,num);
+	  sprintf(filename,"translocations_population_%i_mincovg_%i_maxcovg_%i_subset_%i", index, min_required_covg, max_required_covg, num);
 	}
       //fprintf(stderr,"opening file %s\n",filename);
       fout = fopen(filename,"w");
     }
   *supernode_count = *supernode_count+1;
-  db_graph_print_supernode_if_is_potential_transloc_for_specific_person_or_pop(fout,node,db_graph, type,index, is_for_testing,  for_test1, for_test2, index_for_test1, index_for_test2);
+  db_graph_print_supernode_if_is_potential_transloc_for_specific_person_or_pop(fout,node,db_graph, type,index, min_required_covg, max_required_covg,
+									       is_for_testing,  for_test1, for_test2, index_for_test1, index_for_test2);
 
 }
 
 
-void db_graph_choose_output_filename_and_print_potential_inversion_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index, 
-									   boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2)
+void db_graph_choose_output_filename_and_print_potential_inversion_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index,
+											      int min_required_covg, int max_required_covg,
+											      boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2)
 {
 
   FILE * fout;
@@ -318,17 +321,18 @@ void db_graph_choose_output_filename_and_print_potential_inversion_for_specific_
 
       if (type == individual_edge_array)
 	{
-	  sprintf(filename,"inversions_kmer_%i_person_%i_subset_%i",db_graph->kmer_size,index,num);
+	  sprintf(filename,"inversions_person_%i_mincovg_%i_maxcovg_%i_subset_%i",index,min_required_covg, max_required_covg, num);
 	}
       else
 	{
-	  sprintf(filename,"inversions_kmer_%i_population_%i_subset_%i",db_graph->kmer_size,index,num);
+	  sprintf(filename,"inversions_population_%i_mincovg_%i_maxcovg_%i_subset_%i",index, min_required_covg, max_required_covg, num);
 	}
       //fprintf(stderr,"opening file %s\n",filename);
       fout = fopen(filename,"w");
     }
   *supernode_count = *supernode_count+1;
-  db_graph_print_supernode_if_is_potential_inversion_for_specific_person_or_pop(fout,node,db_graph, type,index, is_for_testing,  for_test1, for_test2, index_for_test1, index_for_test2);
+  db_graph_print_supernode_if_is_potential_inversion_for_specific_person_or_pop(fout,node,db_graph, type,index, min_required_covg, max_required_covg,
+										is_for_testing,  for_test1, for_test2, index_for_test1, index_for_test2);
 
 }
 
@@ -351,13 +355,14 @@ void db_graph_traverse_specific_person_or_pop_for_supernode_printing(void (*f)(H
 
 }
 
-void db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(void (*f)(HashTable*, Element *, long* , EdgeArrayType, int, boolean, char**, char**, int*, int*),
-											     HashTable * hash_table, long* supernode_count, EdgeArrayType type, int index, 
+void db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(void (*f)(HashTable*, Element *, long* , EdgeArrayType, int, int, int, boolean, char**, char**, int*, int*),
+											    HashTable * hash_table, long* supernode_count, EdgeArrayType type, int index, int min_covg, int max_covg, 
 											     boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2){
 
   int i;
   for(i=0;i<hash_table->number_buckets;i++){
-    pqueue_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(f,hash_table, &(hash_table->table[i]), supernode_count, type,index, is_for_testing, for_test1, for_test2, index_for_test1, index_for_test2);
+    pqueue_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(f,hash_table, &(hash_table->table[i]), supernode_count, type,index, min_covg, max_covg, 
+											 is_for_testing, for_test1, for_test2, index_for_test1, index_for_test2);
   }
 
 }
@@ -863,6 +868,7 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 
 
 void db_graph_print_supernode_if_is_potential_transloc_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, 
+										  int min_required_covg, int max_required_covg, 
 										  boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2 )
 {
   
@@ -880,19 +886,29 @@ void db_graph_print_supernode_if_is_potential_transloc_for_specific_person_or_po
       return;
     }
 
+  //ignore if pruned from this person's graph - TODO
+
   int total_number_of_different_chromosomes_intersected=0;
 
   //ignore unless for all nodes in supernode, has <=1 chrom intersection
   if  ( db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(node, type, index, db_graph, &total_number_of_different_chromosomes_intersected))
     {
-      if (total_number_of_different_chromosomes_intersected==2)
-	{
-	  //then this is a supernode which is a potential sv locus.
 
-	  //first print out the supernode itself
-	  db_graph_print_supernode_for_specific_person_or_pop(file, node, db_graph, type, index, is_for_testing, for_test1, index_for_test1 );
-	  //then print out the chromosome intersections
-	  db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop(file, node, db_graph, type, index, is_for_testing, for_test2,  index_for_test2);
+      int min=0;
+      int max=0;
+      db_graph_get_min_and_max_covg_of_nodes_in_supernode_for_specific_person_or_pop(node, type, index, db_graph,&min, &max);
+      if ( (min>=min_required_covg) && (max<= max_required_covg))
+        {
+	  
+	  if (total_number_of_different_chromosomes_intersected==2)
+	    {
+	      //then this is a supernode which is a potential sv locus.
+	      
+	      //first print out the supernode itself
+	      db_graph_print_supernode_for_specific_person_or_pop(file, node, db_graph, type, index, is_for_testing, for_test1, index_for_test1 );
+	      //then print out the chromosome intersections
+	      db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop(file, node, db_graph, type, index, is_for_testing, for_test2,  index_for_test2);
+	    }
 	}
     }
 
@@ -905,10 +921,11 @@ void db_graph_print_supernode_if_is_potential_transloc_for_specific_person_or_po
 
 
 void db_graph_print_supernode_if_is_potential_inversion_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, 
-										  boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2 )
+										   int min_required_covg, int max_required_covg,
+										   boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2 )
 {
   
-  // ignore if visited
+  // ignore if visited 
   if (db_node_check_status(node, visited))
     {
       //char tmp_seq[db_graph->kmer_size];
@@ -922,29 +939,38 @@ void db_graph_print_supernode_if_is_potential_inversion_for_specific_person_or_p
       return;
     }
 
-
-
+  //ignore if pruned from this person's graph - TODO
 
   int total_number_of_different_chromosomes_intersected=0;
 
   //ignore unless for all nodes in supernode, has <=1 chrom intersection
   if  ( db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(node, type, index, db_graph, &total_number_of_different_chromosomes_intersected))
     {
-      if (total_number_of_different_chromosomes_intersected==1)
-	{
-	  //then this is a supernode which is a potential inversion.
 
-	  //first print out the supernode itself
-	  db_graph_print_supernode_for_specific_person_or_pop(file, node, db_graph, type, index, is_for_testing, for_test1, index_for_test1 );
-	  //then print out the chromosome intersections
-	  db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop(file, node, db_graph, type, index, is_for_testing, for_test2,  index_for_test2);
+      int min=0;
+      int max=0;
+      db_graph_get_min_and_max_covg_of_nodes_in_supernode_for_specific_person_or_pop(node, type, index, db_graph,&min, &max);
+      if ( (min>=min_required_covg) && (max<= max_required_covg))
+	{
+	  
+	  
+	  if (total_number_of_different_chromosomes_intersected==1)
+	    {
+	      //then this is a supernode which is a potential inversion.
+	      
+	      //first print out the supernode itself
+	      db_graph_print_supernode_for_specific_person_or_pop(file, node, db_graph, type, index, is_for_testing, for_test1, index_for_test1 );
+	      //then print out the chromosome intersections
+	      db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop(file, node, db_graph, type, index, is_for_testing, for_test2,  index_for_test2);
+	    }
 	}
+    
+
     }
 
-
-  
   //now mark all nodes in supernode as visited
   db_graph_set_status_of_all_nodes_in_supernode(node, visited, type, index, db_graph);
+  
 }
 
 
@@ -1009,8 +1035,14 @@ void db_graph_set_status_of_all_nodes_in_supernode(dBNode* node, NodeStatus stat
 }
 
 
-void db_graph_get_min_and_max_covg_of_nodes_in_supernode_for_specific_person_or_pop(dBNode* node, NodeStatus status, EdgeArrayType type, int index,  dBGraph* dbgraph, int* min_covg, int* max_covg)
+void db_graph_get_min_and_max_covg_of_nodes_in_supernode_for_specific_person_or_pop(dBNode* node, /* NodeStatus status,*/  EdgeArrayType type, int index,  dBGraph* dbgraph, int* min_covg, int* max_covg)
 {
+
+  if (node==NULL)
+    {
+      printf("Do not call get_min_and_max_covg on a NULL node");
+      exit(1);
+    }
 
   
   dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, type, index, dbgraph);

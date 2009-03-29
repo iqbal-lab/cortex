@@ -61,6 +61,11 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test that can get the min and max coverage of a supernode",   test_get_min_and_max_covg_of_nodes_in_supernode)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
 
   if (NULL == CU_add_test(pPopGraphSuite, "Loading two people, one fasta each, in same population, and print supernodes. \n\tEach person has 2 reads, and we have manually determined what the supernodes should be", test_load_two_people_in_same_populations_and_print_separately_their_supernodes)) {
     CU_cleanup_registry();

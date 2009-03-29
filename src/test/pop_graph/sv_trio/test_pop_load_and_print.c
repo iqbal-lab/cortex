@@ -667,11 +667,13 @@ void test_printing_supernode_with_chromosome_intersections_simple()
   int number_of_chrom_overlaps_lists_in_person_1=0;//these two should end up being the same
 
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
+  int min_covg=0;
+  int max_covg=1000;
  db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_transloc_for_specific_person_or_pop, hash_table, 
-											&supernode_count_person1, individual_edge_array, 
-											//0, false, NULL, NULL, &number_of_supernodes_in_person_1, 
+											&supernode_count_person1, individual_edge_array,0, min_covg, max_covg, 
+											//false, NULL, NULL, &number_of_supernodes_in_person_1, 
 											//&number_of_chrom_overlaps_lists_in_person_1);
-											 0, true, array_of_supernodes_for_person1,
+											 true, array_of_supernodes_for_person1,
 											array_of_chrom_overlaps_for_person1, &number_of_supernodes_in_person_1, &number_of_chrom_overlaps_lists_in_person_1);
 
 
@@ -788,11 +790,13 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example()
   int number_of_chrom_overlaps_to_print_in_potential_sv_loci=0;//these two should end up being the same
 
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
+  int min_covg=0;
+  int max_covg=1000;
   db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_transloc_for_specific_person_or_pop, hash_table,                    
-											 &supernode_count_person1, individual_edge_array,
-											 //0, false, NULL, NULL, &number_of_supernodes_that_are_potential_sv_loci,
+											 &supernode_count_person1, individual_edge_array,0, min_covg, max_covg,
+											 //false, NULL, NULL, &number_of_supernodes_that_are_potential_sv_loci,
 											 //&number_of_chrom_overlaps_to_print_in_potential_sv_loci);
-											 0, true, array_of_supernodes_for_person1,
+											 true, array_of_supernodes_for_person1,
   											 array_of_chrom_overlaps_for_person1, &number_of_supernodes_that_are_potential_sv_loci, &number_of_chrom_overlaps_to_print_in_potential_sv_loci);
 
 
@@ -878,12 +882,16 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example_2(
   int number_of_chrom_overlaps_to_print_in_potential_sv_loci=0;//these two should end up being the same
 
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
+  int min_covg=0;
+  int max_covg=1000;
+
   db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_transloc_for_specific_person_or_pop, hash_table,                    
-											 &supernode_count_person1, individual_edge_array,
-											 //0, false, NULL, NULL, &number_of_supernodes_that_are_potential_sv_loci,
+											 &supernode_count_person1, individual_edge_array, 0, min_covg, max_covg,
+											 //false, NULL, NULL, &number_of_supernodes_that_are_potential_sv_loci,
 											 //&number_of_chrom_overlaps_to_print_in_potential_sv_loci);
-											 0, true, array_of_supernodes_for_person1,
-  											 array_of_chrom_overlaps_for_person1, &number_of_supernodes_that_are_potential_sv_loci, &number_of_chrom_overlaps_to_print_in_potential_sv_loci);
+											 true, array_of_supernodes_for_person1,
+  											 array_of_chrom_overlaps_for_person1, &number_of_supernodes_that_are_potential_sv_loci, 
+											 &number_of_chrom_overlaps_to_print_in_potential_sv_loci);
 
 
   //there is one supernode and it should be seen as a potential SV locus
@@ -980,11 +988,13 @@ void test_printing_of_supernode_that_might_be_an_inversion_simple()
   int number_of_chrom_overlaps_lists_in_person_1=0;//these two should end up being the same
 
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
- db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_inversion_for_specific_person_or_pop, hash_table, 
-											&supernode_count_person1, individual_edge_array, 
-											//0, false, NULL, NULL, &number_of_supernodes_in_person_1, 
+  int min_required_covg=0;
+  int max_required_covg=1000;
+  db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(&db_graph_choose_output_filename_and_print_potential_inversion_for_specific_person_or_pop, hash_table, 
+											 &supernode_count_person1, individual_edge_array, 0, min_required_covg, max_required_covg,
+											 //false, NULL, NULL, &number_of_supernodes_in_person_1, 
 											//&number_of_chrom_overlaps_lists_in_person_1);
-											 0, true, array_of_supernodes_for_person1,
+											 true, array_of_supernodes_for_person1,
 											array_of_chrom_overlaps_for_person1, &number_of_supernodes_in_person_1, &number_of_chrom_overlaps_lists_in_person_1);
 
 
