@@ -41,7 +41,21 @@ EdgeArrayType type, int index)
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  return load_seq_data_into_graph_of_specific_person_or_pop(fp,&read_sequence_from_fastq, count_kmers, bad_reads, quality_cut_off, max_read_length, db_graph, type, index);
+  int seq_loaded = load_seq_data_into_graph_of_specific_person_or_pop(fp,&read_sequence_from_fastq, count_kmers, bad_reads, quality_cut_off, max_read_length, db_graph, type, index);
+
+  //print mem status
+  printf("Finished loading: %s\nCurrent memory status:\n", filename);
+  FILE* fmem=fopen("/proc/self/status", "r");
+  char memline[500];
+  while (fgets(memline,500,fmem) !=NULL){
+    if (memline[0] == 'V' && memline[1] == 'm'){
+      fprintf(stderr,"%s",memline);
+    }
+  }
+  fclose(fmem);
+  fprintf(stderr,"************\n");
+
+  return seq_loaded;
 }
 
 
@@ -169,18 +183,6 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
   }
   free_sequence(&seq);
   binary_kmer_free_kmers_set(&windows);
-
-
-  //print mem status
-  //FILE* fmem=fopen("/proc/self/status", "r");
-  //char memline[500];
-  //while (fgets(memline,500,fmem) !=NULL){
-  //  if (memline[0] == 'V' && memline[1] == 'm'){
-  //    fprintf(stderr,"%s",memline);
-  //  }
-  //}
-  //fclose(fmem);
-  //fprintf(stderr,"************\n");
     
   return seq_length;    
 }
@@ -377,15 +379,12 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
 long long load_population_as_fastq(char* filename, long long* count_kmers, long long* bad_reads, char quality_cutoff, dBGraph* db_graph)
 {
-  printf("Z1");
 
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
     printf("cannot open file:%s\n",filename);
     exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
   }
-
-  printf("Z2");
 
   char line[MAX_FILENAME_LENGTH+1];
 
@@ -394,7 +393,7 @@ long long load_population_as_fastq(char* filename, long long* count_kmers, long 
 
   while(fgets(line,MAX_FILENAME_LENGTH, fp) !=NULL)
     {
-  printf("Z3");
+
 
       //remove newline from end of line - replace with \0
       char* p;
@@ -411,7 +410,7 @@ long long load_population_as_fastq(char* filename, long long* count_kmers, long 
 
       total_seq_loaded = total_seq_loaded + load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(line, count_kmers, bad_reads, quality_cutoff, db_graph, people_so_far-1);
 
-      //printf("Just loaded person number %d, and now have cumulative total of  %d bases with %lld kmers and %lld bad_reads so far\n", people_so_far-1, total_seq_loaded, *count_kmers, *bad_reads);
+      printf("Just loaded person number %d, and now have cumulative total of  %d bases with %lld kmers and %lld bad_reads so far\n", people_so_far-1, total_seq_loaded, *count_kmers, *bad_reads);
     }
 
   printf("Finished loading population, witht total seq loaded %d\n",total_seq_loaded); 
