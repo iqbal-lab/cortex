@@ -22,7 +22,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 int load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * count_kmers, long long * bad_reads, int max_read_length, dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
-  //printf("start to load %s\n", filename);
+  printf("start to load %s\n", filename);
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
     printf("cannot open file:%s\n",filename);
@@ -35,6 +35,7 @@ int load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fil
 int load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * count_kmers, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph,
 EdgeArrayType type, int index)
 {
+  printf("start to load %s\n", filename);
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
     printf("cannot open file:%s\n",filename);
@@ -44,7 +45,7 @@ EdgeArrayType type, int index)
   int seq_loaded = load_seq_data_into_graph_of_specific_person_or_pop(fp,&read_sequence_from_fastq, count_kmers, bad_reads, quality_cut_off, max_read_length, db_graph, type, index);
 
   //print mem status
-  printf("Finished loading: %s\nCurrent memory status:\n", filename);
+  printf("Finished loading: %s, total bases loaded were: %d, bad reads: %lld, number of kmers: %lld, quality cutoff: %c, \nCurrent memory status:\n", filename, seq_loaded, *bad_reads, *count_kmers, quality_cut_off);
   FILE* fmem=fopen("/proc/self/status", "r");
   char memline[500];
   while (fgets(memline,500,fmem) !=NULL){
