@@ -320,3 +320,37 @@ void test_writing_reading_graph(){
   fclose(fp2);
 }
    
+
+void test_get_N50()
+{
+
+  printf("z1");
+  //first set up the hash/graph
+  int kmer_size = 5;
+  int number_of_buckets=10;
+  int seq_length=0;
+  long long count_kmers = 0;
+  long long bad_reads = 0;
+
+   dBGraph * db_graph = hash_table_new(number_of_buckets,kmer_size);
+
+  printf("z12");
+ 
+  //1. One fasta file containing two reads:
+  //  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA which becomes just a one node supernode
+  //  CACGGTATT which is a 5 node supernode.
+  // so the N50 is 5
+  
+   int max_read_length=70;
+   seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/n50_example1.fasta",&count_kmers, &bad_reads, max_read_length,  db_graph);
+  printf("z3");
+
+   CU_ASSERT_EQUAL(seq_length,50);
+   CU_ASSERT_EQUAL(count_kmers,6);
+   CU_ASSERT_EQUAL(bad_reads,0);
+    printf("4");
+
+   CU_ASSERT(db_graph_get_N50_of_supernodes(db_graph)==5);
+  printf("z5");
+
+}

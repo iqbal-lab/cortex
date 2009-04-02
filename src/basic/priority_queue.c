@@ -69,6 +69,8 @@ void pqueue_traverse(void (*f)(Element *),PQueue * pqueue)
 }
 
 
+
+
 Element * pqueue_find_or_insert(Key key,boolean * found, PQueue * pqueue, short kmer_size){  
 
   int i;

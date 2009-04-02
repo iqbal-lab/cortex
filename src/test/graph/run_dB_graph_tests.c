@@ -47,6 +47,12 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+
+   if (NULL == CU_add_test(pSuite, "test calculation of N50",  test_get_N50)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
    if (NULL == CU_add_test(pSuite, "test function for rotating/shifting binary kmers",  test_rotate)){
     CU_cleanup_registry();
     return CU_get_error();

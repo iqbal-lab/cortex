@@ -13,8 +13,8 @@
 #include <string.h>
 #include <dB_graph_supernode.h>
 
-int MAX_FILENAME_LENGTH=300;
-int MAX_READ_LENGTH=1000;
+int MAX_FILENAME_LENGTH=500;
+int MAX_READ_LENGTH=10000;
 
 int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char qualiy_cut_off, int max_read_length, dBGraph * db_graph, EdgeArrayType type, int index);
 
@@ -50,11 +50,11 @@ EdgeArrayType type, int index)
   char memline[500];
   while (fgets(memline,500,fmem) !=NULL){
     if (memline[0] == 'V' && memline[1] == 'm'){
-      fprintf(stderr,"%s",memline);
+      fprintf(stdout,"%s",memline);
     }
   }
   fclose(fmem);
-  fprintf(stderr,"************\n");
+  printf("************\n");
 
   return seq_loaded;
 }

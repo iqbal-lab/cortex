@@ -8,6 +8,17 @@
 #include <element.h>
 #include <dB_graph.h>
 #include <string.h>
+#include <pq_graph.h>
+
+void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int),HashTable * hash_table, int** array, int length_of_array){
+  int i;
+  for(i=0;i<hash_table->number_buckets;i++){
+    pqueue_traverse_with_array(f,hash_table, &(hash_table->table[i]), array, length_of_array);
+  }
+}
+
+
+
 
 dBNode * db_graph_get_next_node(dBNode * current_node, Orientation current_orientation, 
 			       Orientation * next_orientation,
@@ -404,3 +415,325 @@ int db_graph_clip_tip(dBNode * node, int limit,dBGraph * db_graph){
   return length_tip;
 }
 
+
+dBNode* db_graph_get_first_node_in_supernode_containing_given_node(dBNode* node,  dBGraph* db_graph)
+{
+  char tmp_seq[db_graph->kmer_size];
+
+  if (node==NULL)
+    {
+      printf("Bloody node is null so of course cant get first node");
+      exit(1);
+    }
+    
+  if (db_node_check_status(node, pruned) )
+    {
+      //don't waste time with pruned nodes.
+      printf ("Warning. Getting first node in supernode of a pruned node");
+      exit(1);
+    }
+  
+
+  boolean is_cycle;
+  Nucleotide nucleotide1, nucleotide2, rev_nucleotide;
+  Orientation original_orientation, next_orientation, orientation;
+  dBNode * original_node=node;
+  dBNode * next_node;
+
+
+  //First node in supernode is, almost by definition, what you get if you go in the Reverse direction (with respect to the Node)
+  // as far as you can go.
+  // I say ALMOST by defn. By this defn, if you picked two differen nodes in a supernode, and asked each which was the first node in that supernode
+  //, you would get two different answers. Just a warning.
+
+  original_orientation = reverse; 
+  orientation = reverse;
+  is_cycle = false;
+
+
+  while(db_node_has_precisely_one_edge(node,orientation,&nucleotide1))
+  {
+        
+    next_node =  db_graph_get_next_node(node,orientation,&next_orientation,nucleotide1,&rev_nucleotide,db_graph);
+    
+    if(next_node == NULL){
+      printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size, tmp_seq));
+      exit(1);
+    }	         
+
+    if (DEBUG)
+      {
+      printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide1),
+	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size, tmp_seq) :  
+	     binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size, tmp_seq));
+	     
+      }
+    
+
+    //check for multiple entry edges 
+    if (db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2))
+      {
+      }
+    else
+      {
+	if (DEBUG)
+	  {
+	    printf("Multiple entries\n");
+	  }
+	//break;
+	 
+	//printf("returning this first nodem, with kmer %s\n", binary_kmer_to_seq(node->kmer, db_graph->kmer_size));
+      return node; //we have gone as far as we can go - the next node has multiple entries. So we are now at the first node of the supernode
+      }
+    
+    
+    //loop
+    if ((next_node == original_node) && (next_orientation == original_orientation))
+      {      
+
+	is_cycle = true;
+	//break;
+	
+	//printf("We have a loop, so original node will do, with kmer %s\n", binary_kmer_to_seq(original_node->kmer, db_graph->kmer_size, tmp_seq));
+	return original_node; //we have a loop that returns to where we start. Might as well consider ourselves as at the fiurst node of the supernode right at the beginning
+      }
+    
+     node = next_node;
+    orientation = next_orientation;      
+  }
+  //printf("We have found the first node, it is %s\n", binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
+  return node;
+
+}
+
+dBNode* db_graph_get_next_node_in_supernode(dBNode* node, Orientation orientation, Orientation* next_orientation,  dBGraph* db_graph)
+{
+  char tmp_seq[db_graph->kmer_size];
+
+  if (node==NULL)
+    {
+      printf("do not try to get next node of a NULL node");
+      exit(1);
+    }
+  else if (db_node_check_status(node, pruned))
+    {
+      printf("ignore pruned node");
+      //don't waste time with pruned nodes.
+      exit(1);
+    }
+  else if (db_node_is_supernode_end(node, orientation))
+    {
+      if (DEBUG)
+	{
+	  printf("this node is at the end of the supernode, in this orientation, so cant return the next one\n");
+	}
+      return NULL;
+    }
+
+  Nucleotide nucleotide_for_only_edge, reverse_nucleotide_for_only_edge;
+
+  
+  db_node_has_precisely_one_edge(node,orientation,&nucleotide_for_only_edge);//gives us nucleotide
+  
+  dBNode* next_node =  db_graph_get_next_node(node,orientation ,next_orientation,nucleotide_for_only_edge,&reverse_nucleotide_for_only_edge, db_graph );
+ 
+  if(next_node == NULL){
+    printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size, tmp_seq));
+    exit(1);
+  }	         
+
+  if (DEBUG)
+    {
+      printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide_for_only_edge),
+	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size, tmp_seq) :  
+	     binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size, tmp_seq));
+      
+    }
+    
+
+  //check for multiple entry edges 
+  Nucleotide nuc;
+  if (db_node_has_precisely_one_edge(next_node,opposite_orientation(*next_orientation),&nuc))
+    {
+    }
+  else
+    {
+      //double check
+      if (node ==NULL)
+	{
+	  printf("programming error. returning null node when my model in my head says impossible\n");
+	  exit(1);
+	}
+      return node; //we have gone as far as we can go - the next node has multiple entries. So we are now at the first node of the supernode
+    }
+    
+    
+  //loop
+  if ((next_node == node) && (*next_orientation == orientation))
+    {      
+      //double check
+      if (node ==NULL)
+	{
+          printf("programming error. returning null node when my model in my head says impossible\n");
+	  exit(1);
+        }
+
+	return node; //we have a kmer that loops back on itself
+    }
+  
+  return next_node;
+
+}
+
+
+//the length of the supernode is passed to the caller in the array of supernode lengths that is passed in.
+//the idea is that this function is passed into the traverse function, and the caller of that
+void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Element* node, int** array_of_supernode_lengths, int length_of_array)
+{
+  int length_of_supernode=1;
+  dBNode* first_node=db_graph_get_first_node_in_supernode_containing_given_node(node, db_graph);
+  dBNode* current_node;
+  dBNode* next_node;
+  current_node=first_node;
+  Orientation start_orientation, current_orientation, next_orientation;
+  db_node_set_status(current_node, visited);
+
+  //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
+  if (db_node_is_supernode_end(first_node,forward))
+    {
+      if (db_node_is_supernode_end(first_node,reverse))
+	{
+	  //singleton
+	  *(array_of_supernode_lengths[length_of_supernode])=*(array_of_supernode_lengths[length_of_supernode])+1;
+	  return ;
+	}
+      else
+	{
+	  start_orientation=reverse;
+	}
+    }
+  else
+    {
+      start_orientation=forward;
+    }
+
+  current_orientation=start_orientation;
+  
+
+
+  //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
+  while (!db_node_is_supernode_end(current_node,current_orientation))
+    {
+      next_node = db_graph_get_next_node_in_supernode(current_node, current_orientation, &next_orientation, db_graph);
+
+      if ((next_node==first_node) && (next_orientation==start_orientation))//back to the start - will loop forever if not careful ;-0
+	{
+	  break;
+	}
+
+      length_of_supernode++;
+      current_node=next_node;
+      current_orientation=next_orientation;
+      db_node_set_status(current_node, visited);
+
+    }
+
+
+  if (length_of_supernode>length_of_array)
+    {
+      printf("We have a supernode of length %d, but have only allocated space to record lengths up to %d", length_of_supernode, length_of_array);
+      exit(1);
+    }
+  *(array_of_supernode_lengths[length_of_supernode])=*(array_of_supernode_lengths[length_of_supernode])+1;
+  return ;
+
+
+  
+}
+
+
+int db_graph_get_N50_of_supernodes(dBGraph* db_graph)
+{
+  printf("y1");
+  int numbers_of_supernodes_of_specific_lengths[10000];
+  int* numbers_of_supernodes_of_specific_lengths_ptrs[10000];
+  int lengths_of_supernodes[10000];
+  
+  int i;
+  for (i=0; i<10000; i++)
+    {
+      numbers_of_supernodes_of_specific_lengths[i]=0;
+      numbers_of_supernodes_of_specific_lengths_ptrs[i]=&(numbers_of_supernodes_of_specific_lengths[i]);
+      lengths_of_supernodes[i]=0;
+
+    }
+  printf("y2");
+
+  db_graph_traverse_with_array(&db_graph_get_supernode_length_marking_it_as_visited, db_graph,  numbers_of_supernodes_of_specific_lengths_ptrs, 10000);
+  printf("y3");
+
+  //we now have an array containing the number of supernodes of each length from 1 to 10,000 nodes.
+  //let's make another array, containing the lengths
+
+  int ctr=0;
+
+  for (i=0; i<10000; i++)
+    {
+      if (numbers_of_supernodes_of_specific_lengths[i]>0)
+	{
+	  lengths_of_supernodes[ctr]=i;
+	  ctr++;
+	}
+    }
+  printf("y4");
+
+  //1 sort the list of lengths
+  size_t numbers_len=sizeof(numbers_of_supernodes_of_specific_lengths)/sizeof(int);
+  qsort( numbers_of_supernodes_of_specific_lengths, numbers_len, sizeof(int), int_cmp); 
+
+  //2 add all of lengths*number of supernodes up - get total length
+  int total=0;
+  
+  for(i=0; i<10000; i++)
+    {
+      total=total+i*numbers_of_supernodes_of_specific_lengths[i];
+    }
+
+  //3. Start at the max supernode length and work your way down until the length so far is half the total. Where you are is the n50
+  if (ctr<0)
+    {
+      printf("negative ctr");
+      exit(1);
+    }
+
+
+  // Note -  max_supernode_len = lengths_of_supernodes[ctr-1];
+  
+  int current_cumulative_len=0;
+  printf("y5");
+
+  for (i=9999; i>=9999-ctr+1; i--)
+    {
+      current_cumulative_len += numbers_of_supernodes_of_specific_lengths[lengths_of_supernodes[i]] * lengths_of_supernodes[i] ;
+      if (current_cumulative_len > total/2)
+	{
+	  // then we have found the N50.
+	  return lengths_of_supernodes[i];
+	}
+
+    }
+  
+  //should not get here
+  printf("Should  not get here. Exiting in N50 calc code");
+  exit(1);
+  return 1;
+}
+
+int int_cmp(const void *a, const void *b)
+{
+  const int *ia = (const int *)a; // casting pointer types
+  const int *ib = (const int *)b;
+  return *ia  - *ib; 
+  /* integer comparison: returns negative if b > a 
+     and positive if a > b */
+}

@@ -58,7 +58,6 @@ void hash_table_traverse(void (*f)(Element *),HashTable * hash_table){
 }
 
 
-
 Element * hash_table_find(Key key, HashTable * hash_table){
   
   int hashval = hash_value(key,hash_table->number_buckets);

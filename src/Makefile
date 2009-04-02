@@ -42,7 +42,7 @@ CFLAGS_MANY_POP_TESTS = -m64 -Wall -I$(IDIR_MANY_POP_TESTS)  -I$(IDIR_BASIC) -I$
 
 GRAPH_OBJ = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph.o 
 
-GRAPH_OBJ_CL = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_clipping.o obj/graph/cyclic_count.o
+GRAPH_OBJ_CL = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_clipping.o obj/graph/cyclic_count.o obj/graph/pq_graph.o
 
 GRAPH_OBJ_DUMP = obj/graph/binary_kmer.o obj/graph/element.o obj/graph/seq.o obj/graph/hash_value.o obj/graph/hash_table.o obj/graph/priority_queue.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_dump.o 
 
@@ -56,7 +56,7 @@ COUNT_OBJ = obj/count/binary_kmer.o obj/count/element.o obj/count/seq.o obj/coun
 
 BASIC_TESTS_OBJ = obj/test/basic/binary_kmer.o obj/test/basic/seq.o obj/test/basic/test_binary_kmer.o obj/test/basic/test_seq.o obj/test/basic/run_basic_tests.o
 
-DB_GRAPH_TESTS_OBJ = obj/test/graph/binary_kmer.o obj/test/graph/element.o obj/test/graph/seq.o obj/test/graph/hash_value.o obj/test/graph/hash_table.o obj/test/graph/priority_queue.o obj/test/graph/dB_graph.o obj/test/graph/file_reader.o obj/test/graph/test_dB_graph.o obj/test/graph/run_dB_graph_tests.o obj/test/graph/test_file_reader.o obj/test/graph/test_cyclic_count.o obj/test/graph/cyclic_count.o
+DB_GRAPH_TESTS_OBJ = obj/test/graph/binary_kmer.o obj/test/graph/element.o obj/test/graph/seq.o obj/test/graph/hash_value.o obj/test/graph/hash_table.o obj/test/graph/priority_queue.o obj/test/graph/dB_graph.o obj/test/graph/file_reader.o obj/test/graph/test_dB_graph.o obj/test/graph/run_dB_graph_tests.o obj/test/graph/test_file_reader.o obj/test/graph/test_cyclic_count.o obj/test/graph/cyclic_count.o obj/test/graph/pq_graph.o
 
 SV_TRIO_TESTS_OBJ = obj/test/pop_graph/sv_trio/test_pop_load_and_print.o obj/test/pop_graph/sv_trio/run_sv_trio_tests.o obj/test/pop_graph/sv_trio/supernode_cmp.o obj/test/pop_graph/sv_trio/test_pop_supernode_consensus.o obj/test/pop_graph/sv_trio/test_pop_element.o  obj/test/pop_graph/sv_trio/test_dB_graph_population.o obj/test/pop_graph/sv_trio/binary_kmer.o obj/test/pop_graph/sv_trio/element.o obj/test/pop_graph/sv_trio/seq.o obj/test/pop_graph/sv_trio/hash_value.o obj/test/pop_graph/sv_trio/hash_table.o obj/test/pop_graph/sv_trio/priority_queue.o obj/test/pop_graph/sv_trio/dB_graph.o obj/test/pop_graph/sv_trio/file_reader.o  obj/pop_graph/sv_trio/dB_graph_population.o obj/pop_graph/sv_trio/pqueue_pop.o 
 
