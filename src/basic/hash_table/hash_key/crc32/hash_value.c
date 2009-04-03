@@ -74,7 +74,20 @@ static int crc32(int crc, const char *buf, int len)
 int hash_value(Key key, int number_buckets)
 {  
 
-  int hash_value = crc32(0, (char *) &key, sizeof(Key));
-  hash_value &= (number_buckets - 1);
-  return hash_value;
+  //int hash_value = crc32(0, (char *) &key, sizeof(Key));
+  //hash_value &= (number_buckets - 1);
+  //return hash_value;
+  
+  int hash_value = 0 ;
+ 
+  int i=0;
+  while(i<64){
+    hash_value |= (key & 3);
+    hash_value <<=2;
+    key >>=4;
+    i+=4;
+  }
+
+  
+  return (hash_value & (number_buckets-1));
 }

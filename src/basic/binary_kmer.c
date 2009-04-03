@@ -123,7 +123,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
       first_kmer[j] = seq[i];
 
       if ((char_to_binary_nucleotide(seq[i]) == Undefined) || 
-	  (qualities[i]< quality_cut_off)){
+	  (quality_cut_off!=0 && qualities[i]<= quality_cut_off)){
 	j=0; //restart the first kmer 
 	
       }
@@ -162,7 +162,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 
 	Nucleotide current_base = char_to_binary_nucleotide(seq[i]);
 	if ((current_base == Undefined) ||
-	    (qualities[i]< quality_cut_off)){
+	    (quality_cut_off!=0 && qualities[i]<= quality_cut_off)){
 	  break;
 	}
 	//set the kmer to previous

@@ -19,16 +19,24 @@
 typedef char Edges;
 
 typedef enum{
-  none    = 0,
-  visited = 1,
-  pruned  = 2,
+  unassigned = 0,
+  none    = 1,
+  visited = 2,
+  pruned  = 3,
 } NodeStatus;
 
 typedef struct{
 	BinaryKmer kmer;
 	Edges edges; // less significant nibble forward
+	short coverage;
 	NodeStatus status;
+	
 } Element;
+
+typedef struct{
+	BinaryKmer kmer;
+	Edges edges; // less significant nibble forward
+} Element2;
 
 typedef Element dBNode;
 
@@ -54,6 +62,9 @@ void element_initialise(Element *,BinaryKmer kmer, short kmer_size);
 
 BinaryKmer element_get_kmer(Element *);
 
+short element_get_coverage(Element *);
+short element_update_coverage(Element *, short);
+
 Orientation db_node_get_orientation(BinaryKmer, dBNode *, short kmer_size);
 
 //add an edge between nodes -- NB: it adds both edges: forward and reverse
@@ -70,6 +81,11 @@ boolean db_node_edge_exist(dBNode *, Nucleotide, Orientation);
 //returns the label of the first outgoing edge -- leaving from the side 
 //defined by orientation. 
 boolean db_node_has_precisely_one_edge(dBNode *, Orientation, Nucleotide *);
+
+//returns the label of the "two edges"
+//defined by orientation. 
+boolean db_node_has_precisely_two_edges(dBNode *, Orientation, Nucleotide *, Nucleotide *);
+
 
 Edges db_node_get_edges(dBNode * node);
 
