@@ -68,6 +68,7 @@ boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, EdgeA
     }
 
   //to keep compiler happy
+  printf("We have got the end of of the is_supernode_end function - should not reach here");
   exit(1);
   return true;
 }
@@ -164,7 +165,7 @@ char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode *
   while(db_node_has_precisely_one_edge(node,orientation,&nucleotide1, type, index)) {
  
     if ((seq_length+1)>max_length){
-      puts ("cannot allocate a sequence longer than 10000\n");
+      printf("cannot allocate a sequence longer than the max length %d\n", max_length);
       exit(1);
     }
 

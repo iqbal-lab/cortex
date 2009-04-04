@@ -135,6 +135,7 @@ void add_edges(Element* e, EdgeArrayType type, int index, Edges edge_char)
     {
       if (index>=NUMBER_OF_INDIVIDUALS_PER_POPULATION)
 	{
+	  printf("in element's add_edges function. index is %d, and should be at most %d", index, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
 	  exit(1);
 	}
       e->individual_edges[index] |= edge_char;
@@ -155,6 +156,7 @@ void set_edges(Element* e, EdgeArrayType type, int index, Edges edge_char)
     {
       if (index>=NUMBER_OF_INDIVIDUALS_PER_POPULATION)
 	{
+	  printf("in element's set_edges function. index is %d,and should be at most %d", index, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
 	  exit(1);
 	}
       e->individual_edges[index] = edge_char;
@@ -186,6 +188,7 @@ void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, 
     {
       if (index>=NUMBER_OF_INDIVIDUALS_PER_POPULATION)
 	{
+	  printf("in element's reset_one_edge function. index is %d,and should be at most %d", index, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
 	  exit(1);
 	}
 
@@ -363,7 +366,7 @@ Overlap db_node_get_direction_through_node_in_which_chromosome_passes(dBNode* no
     }
   else
     {
-      printf("programming error. this should not be possible.");
+      printf("db_node_get_direction_through_node_in_which_chromosome_passes. programming error. this should not be possible.");
       exit(1);
     }
 
@@ -977,6 +980,7 @@ Orientation db_node_get_orientation(BinaryKmer k, dBNode * e, short kmer_size){
     return reverse;
   }
 
+  printf("Exiting from  db_node_get_orientation");
   exit(1);
   
 }
