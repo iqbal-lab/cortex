@@ -18,33 +18,33 @@ int MAX_READ_LENGTH=1000;
 
 
 
-int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char qualiy_cut_off, int max_read_length, dBGraph * db_graph);
+int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * bad_reads, char qualiy_cut_off, int max_read_length, dBGraph * db_graph);
 
 
-int load_fasta_data_from_filename_into_graph(char* filename, long long * count_kmers, long long * bad_reads, int max_read_length, dBGraph* db_graph)
+int load_fasta_data_from_filename_into_graph(char* filename, long long * bad_reads, int max_read_length, dBGraph* db_graph)
 {
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
-    printf("cannot open file:%s\n",filename);
+    fprintf(stderr,"cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  int ret = load_seq_data_into_graph(fp,&read_sequence_from_fasta, count_kmers,bad_reads,  0 , max_read_length, db_graph);
+  int ret = load_seq_data_into_graph(fp,&read_sequence_from_fasta,bad_reads,0,max_read_length,db_graph);
 
   fclose(fp);
 
   return ret;
 }
 
-int load_fastq_data_from_filename_into_graph(char* filename, long long * count_kmers, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph)
+int load_fastq_data_from_filename_into_graph(char* filename, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph)
 {
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
-    printf("cannot open file:%s\n",filename);
+    fprintf(stderr,"cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  int ret =  load_seq_data_into_graph(fp,&read_sequence_from_fastq, count_kmers, bad_reads, quality_cut_off, max_read_length, db_graph);
+  int ret =  load_seq_data_into_graph(fp,&read_sequence_from_fastq,bad_reads,quality_cut_off,max_read_length,db_graph);
   fclose(fp);
 
   return ret;
@@ -54,7 +54,7 @@ int load_fastq_data_from_filename_into_graph(char* filename, long long * count_k
 
 
 //returns length of sequence loaded
-int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char quality_cut_off, int max_read_length, dBGraph * db_graph){
+int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * bad_reads, char quality_cut_off, int max_read_length, dBGraph * db_graph){
 
   //----------------------------------
   // preallocate the memory used to read the sequences
@@ -95,17 +95,18 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
   
   int entry_length;
 
+  //hash_table_print_stats(db_graph);
   while ((entry_length = file_reader(fp,seq,max_read_length))){
-
+    
     if (DEBUG){
-      printf ("\nsequence %s\n",seq->seq);
+      printf ("\nsequence %s - kmer size: %i - entry length: %i - max kmers:%i\n",seq->seq,db_graph->kmer_size, entry_length, max_kmers);
     }
     
     int i,j;
     seq_length += entry_length;
     
     int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,entry_length,quality_cut_off,db_graph->kmer_size,windows,max_windows, max_kmers);
-    
+
     if (nkmers == 0) {
       (*bad_reads)++;
     }
@@ -114,17 +115,20 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
       Element * previous_node = NULL;
       
       Orientation current_orientation,previous_orientation;
-      
+     
       for(i=0;i<windows->nwindows;i++){ //for each window
 	KmerSlidingWindow * current_window = &(windows->window[i]);
 	
 	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
 	  boolean found = false;
-	  current_node = hash_table_find_or_insert(element_get_key(current_window->kmer[j],db_graph->kmer_size),&found,db_graph);	  	 
-	  if (!found){
-	    (*count_kmers)++;
+	  current_node = hash_table_find_or_insert(element_get_key(current_window->kmer[j],db_graph->kmer_size),&found,db_graph);	  
+	  if (current_node == NULL){
+	    fputs("file_reader: problem - current kmer not found\n",stderr);
+	    exit(1);
 	  }
 	  
+	  element_update_coverage(current_node,1);
+
 	  current_orientation = db_node_get_orientation(current_window->kmer[j],current_node, db_graph->kmer_size);
 	  
 	  if (DEBUG){
@@ -133,22 +137,25 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
 	  }
 	  
 	  if (j>0){
-	    //never assume that previous pointer stays as we do reallocation !!!!!!
-	    previous_node = hash_table_find(element_get_key(current_window->kmer[j-1],db_graph->kmer_size),db_graph);
 	    
 	    if (previous_node == NULL){
-	      puts("file_reader: problem - kmer not found\n");
+	      fputs("file_reader: problem - prev kmer not found\n",stderr);
 	      exit(1);
 	    }
-	    previous_orientation = db_node_get_orientation(current_window->kmer[j-1],previous_node, db_graph->kmer_size); 	      
-	    db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size);	  	      
+	    else{
+	      db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size);	  	  
+	    }
 	  }
+	  previous_node = current_node;
+	  previous_orientation = current_orientation;
 	  
 	}
       }
-     
+      
     }
   }
+  
+ 
   free_sequence(&seq);
   binary_kmer_free_kmers_set(&windows);
   return seq_length;    
@@ -157,32 +164,38 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
 
 //returns number of sequence loaded (ie all the kmers concatenated)
 //count_kmers returns the number of new kmers
-int load_binary_data_from_filename_into_graph(char* filename, long long * count_kmers, dBGraph* db_graph)
-{
+int load_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph){
   FILE* fp_bin = fopen(filename, "r");
   int seq_length = 0;
   dBNode node_from_file;
   boolean found;
+  int count=0;
 
   if (fp_bin == NULL){
     printf("cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
-
+  
   //Go through all the entries in the binary file
   while (db_node_read_binary(fp_bin,db_graph->kmer_size,&node_from_file)){
+    count++;
+    
+    //if (count % 100000000 == 0 ){
+    // printf("loaded %i\n",count);
+
+    //}
+   
     dBNode * current_node  = NULL;
     current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size),&found,db_graph);
-    if (!found){
-      (*count_kmers)++;
-    }
     
     seq_length+=db_graph->kmer_size;
    
     db_node_set_edges(current_node,db_node_get_edges(&node_from_file));
+    element_update_coverage(current_node, element_get_coverage(&node_from_file));
   }
   
   fclose(fp_bin);
   return seq_length;
 }
+
 

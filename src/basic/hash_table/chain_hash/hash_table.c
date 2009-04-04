@@ -1,20 +1,21 @@
 /*
   hash_table.c -- implementation
  */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <hash_table.h>
 #include <priority_queue.h>
 #include <hash_value.h>
 
-HashTable * hash_table_new(int number_buckets, short kmer_size){ 
+HashTable * hash_table_new(unsigned int number_buckets, short kmer_size){ 
   
   HashTable *hash_table = malloc(sizeof(HashTable));
 
   hash_table->table = calloc(number_buckets, sizeof(PQueue));
   
   if (hash_table == NULL || hash_table->table == NULL) {
-    printf("could not allocate hash table of size %i\n",number_buckets);
+    fprintf(stderr,"could not allocate hash table of size %i\n",number_buckets);
     exit(1);
   }
   
@@ -68,13 +69,21 @@ Element * hash_table_find(Key key, HashTable * hash_table){
 
 
 
-Element * hash_table_find_or_insert(Key key, boolean * found, HashTable * hash_table){
+Element * hash_table_find_or_insert(Key key, boolean * found, HashTable * hash_table,int alloc_size){
   
   int hashval = hash_value(key,hash_table->number_buckets);
 
-  return pqueue_find_or_insert(key,found, &(hash_table->table[hashval]), hash_table->kmer_size);
+  return pqueue_find_or_insert(key,found, &(hash_table->table[hashval]), hash_table->kmer_size,alloc_size);
 }
 
+
+//doesn't check for existence
+Element * hash_table_insert(Key key, HashTable * hash_table,int alloc_size){
+  
+  int hashval = hash_value(key,hash_table->number_buckets);
+
+  return pqueue_insert(key, &(hash_table->table[hashval]), hash_table->kmer_size,alloc_size);
+}
 
 
 

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <pq_graph.h>
 
+
 void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int),HashTable * hash_table, int** array, int length_of_array){
   int i;
   for(i=0;i<hash_table->number_buckets;i++){
@@ -96,8 +97,8 @@ void db_graph_remove_path(dBNode * node, Orientation orientation, int length, dB
   }
 }
 
-int db_graph_detect_tip(dBNode * node, Orientation orientation, int limit,dBGraph * db_graph){ 
-
+int db_graph_detect_tip(dBNode * node, Orientation orientation, int limit,dBGraph * db_graph)
+{ 
   Nucleotide nucleotide, reverse_nucleotide;
   int length = 0;
   char seq[db_graph->kmer_size];
@@ -146,10 +147,13 @@ int db_graph_detect_tip(dBNode * node, Orientation orientation, int limit,dBGrap
   }
 
   return length;
+
 }
 
 
-int db_graph_clip_tip_with_orientation(dBNode * node, Orientation orientation, int limit,dBGraph * db_graph){ 
+int db_graph_clip_tip_with_orientation(dBNode * node, Orientation orientation, int limit,dBGraph * db_graph)
+{
+
 
   Nucleotide nucleotide, reverse_nucleotide;
   int length = 0;
@@ -220,6 +224,7 @@ int db_graph_clip_tip_with_orientation(dBNode * node, Orientation orientation, i
   }
 
   return length;
+ 
 }
 
 char * get_seq_from_elem_to_end_of_supernode(dBNode * node, Orientation orientation, dBGraph * db_graph, boolean * is_cycle,char * seq, int max_length){
@@ -244,14 +249,14 @@ char * get_seq_from_elem_to_end_of_supernode(dBNode * node, Orientation orientat
   while(db_node_has_precisely_one_edge(node,orientation,&nucleotide1)) {
  
     if ((seq_length+1)> max_length){
-      puts ("cannot allocate a sequence longer than 10000\n");
+      fprintf (stdout,"cannot allocate a sequence longer than max length [%i]\n",max_length);
       exit(1);
     }
 
     next_node =  db_graph_get_next_node(node,orientation,&next_orientation,nucleotide1,&rev_nucleotide,db_graph);
     
     if(next_node == NULL){
-      printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,tmp_seq));
+      fprintf(stdout,"dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,tmp_seq));
       exit(1);
     }	         
     
@@ -294,12 +299,14 @@ char * get_seq_from_elem_to_end_of_supernode(dBNode * node, Orientation orientat
 
   seq[seq_length] = '\0';
   return seq;
+
+
 }
 
 void db_graph_print_supernode(FILE * file, dBNode * node, dBGraph * db_graph){
 
   char seq[db_graph->kmer_size];
-  char seq_forward[5000];
+  char seq_forward[5000]; //TODO fix these hardcoded numbers
   char seq_reverse[5000]; 
   char seq_reverse_reversed[5000];
   int i;
@@ -416,6 +423,171 @@ int db_graph_clip_tip(dBNode * node, int limit,dBGraph * db_graph){
 }
 
 
+
+
+// perfect path -- no conflict no cycle -- returns length
+// path node_1 edge_1 node_2 edge_2 ... node_n edge_n
+// path_nodes is a n+1 array from 0..n with all the nodes in the path
+// path_orientations is n+1 array from 0..n with the orientations of the node in the path
+// path labels is n+1 array from 0..n with all the labels for the edges (see above)
+int db_graph_get_perfect_path(dBNode * node, Orientation orientation, dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, boolean * is_cycle, int limit, NodeStatus status, dBGraph * db_graph){
+  Orientation  current_orientation,next_orientation;
+  dBNode * current_node;
+  dBNode * next_node;
+  Nucleotide nucleotide,rev_nucleotide,nucleotide2;
+  int length =0;
+
+  char tmp_seq[db_graph->kmer_size];
+
+  //sanity check
+  if (node == NULL){
+    printf("db_graph_get_perfect_path: can't pass a null node\n");
+    exit(1);
+  }
+
+  current_node        = node;
+  current_orientation = orientation;
+
+  *is_cycle = false;
+
+  path_nodes[0]         = node;
+  path_orientations[0]  = orientation;
+  db_node_set_status(node,status);
+
+  if (DEBUG){
+     printf("\nNode in path: %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq));
+   }
+
+  do{ 
+
+    if (!db_node_has_precisely_one_edge(current_node, current_orientation,&nucleotide)){
+      break;
+    }
+
+    else{
+      next_node =  db_graph_get_next_node(current_node,current_orientation,&next_orientation,nucleotide,&rev_nucleotide,db_graph);
+      
+      //sanity check
+      if(next_node == NULL){
+	fprintf(stderr,"dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq));
+	exit(1);
+      }
+
+      db_node_set_status(next_node,status);
+
+      if (DEBUG){
+	printf("\nNode in path: %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq));
+      }
+      
+      path_labels[length]        = nucleotide;
+      length++;
+      path_nodes[length]         = next_node;
+      path_orientations[length]  = next_orientation;
+
+      current_node        = next_node;
+      current_orientation = next_orientation;
+    }
+  } while (length<limit && 
+	   !((next_node == node) && (next_orientation == orientation)) && //loop
+	   db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2)); //multiple entries
+	 
+  if (DEBUG){
+    printf("\nLast node in path: %s %i\n", binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size,tmp_seq),next_node->edges);
+  }
+  
+  return length;
+
+}
+
+//a perfect bubble starts in a node with only two outgoing edges in the same orientation
+// every branch of the bubble is free of conflicts until it joins with the main branch
+// the length of every branch is the same -- smaller than limit!
+
+boolean db_graph_detect_perfect_bubble(dBNode * node,
+				       Orientation * orientation,
+				       Nucleotide * base1, Nucleotide * base2, 
+				       Nucleotide * labels,dBNode * * end_node,Orientation * end_orientation,
+				       dBGraph * db_graph)
+{
+
+  
+
+  dBNode * next_node1;
+  dBNode * next_node2;
+  dBNode * nodes1[db_graph->kmer_size];
+  dBNode * nodes2[db_graph->kmer_size];
+  Orientation orientations1[db_graph->kmer_size], orientations2[db_graph->kmer_size];
+  Nucleotide labels1[db_graph->kmer_size],labels2[db_graph->kmer_size];
+
+  Orientation next_orientation1, next_orientation2;
+  Nucleotide rev_base1, rev_base2;
+  boolean is_cycle1, is_cycle2;
+  int length1, length2;
+  boolean ret = false;
+  *end_node = NULL;
+
+  if (! db_node_check_status(node,visited)){
+
+    if (db_node_has_precisely_two_edges(node,forward,base1,base2)){
+    
+      *orientation = forward;
+      next_node1 = db_graph_get_next_node(node,forward,&next_orientation1,*base1,&rev_base1,db_graph);
+      next_node2 = db_graph_get_next_node(node,forward,&next_orientation2,*base2,&rev_base2,db_graph);
+      
+      if (next_node1 == NULL || next_node2 == NULL){
+	puts("error!");
+	exit(1);
+      }
+
+      length1  = db_graph_get_perfect_path(next_node1,next_orientation1,nodes1,orientations1,labels1,&is_cycle1,db_graph->kmer_size,visited,db_graph);
+      length2  = db_graph_get_perfect_path(next_node2,next_orientation2,nodes2,orientations2,labels2,&is_cycle2,db_graph->kmer_size,visited,db_graph);
+
+    }
+    else{
+      if (db_node_has_precisely_two_edges(node,reverse,base1,base2)){
+
+	*orientation = reverse;
+	next_node1 = db_graph_get_next_node(node,reverse,&next_orientation1,*base1,&rev_base1,db_graph);
+	next_node2 = db_graph_get_next_node(node,reverse,&next_orientation2,*base2,&rev_base2,db_graph);
+	
+	if (next_node1 == NULL || next_node2 == NULL){
+	  puts("error!");
+	  exit(1);
+	}
+	
+	length1 = db_graph_get_perfect_path(next_node1,next_orientation1,nodes1,orientations1,labels1,&is_cycle1,db_graph->kmer_size,visited,db_graph);
+	length2 = db_graph_get_perfect_path(next_node2,next_orientation2,nodes2,orientations2,labels2,&is_cycle2,db_graph->kmer_size,visited,db_graph);
+
+      }
+    }
+  
+
+    db_node_set_status(node,visited);
+
+   
+    ret = (length1 == db_graph->kmer_size && 
+	   length2 == db_graph->kmer_size &&
+	   nodes1[length1] == nodes2[length2]);
+    
+    if (ret == true){
+      *end_node        = nodes1[length1];
+      *end_orientation = orientations1[length1];
+      int i;
+      for(i=0;i<db_graph->kmer_size;i++){
+	labels[i] = labels1[i];
+      }
+    }
+  }
+
+  //sanity check
+  if (ret == true && *end_node == NULL){
+    printf("db_graph_detect_perfect_bubble: error inconsistent state\n");
+    exit(1);
+  }
+  return ret;
+}
+
+  
 dBNode* db_graph_get_first_node_in_supernode_containing_given_node(dBNode* node,  dBGraph* db_graph)
 {
   char tmp_seq[db_graph->kmer_size];

@@ -22,6 +22,15 @@ BinaryKmer element_get_kmer(Element * e){
   return e->kmer;
 }
 
+short element_get_coverage(Element * e){
+  return e->coverage;
+}
+
+short element_update_coverage(Element * e, short update){
+  e->coverage += update;
+  return e->coverage;
+}
+
 Key element_get_key(BinaryKmer kmer, short kmer_size){
   
   BinaryKmer rev_kmer = binary_kmer_reverse_complement(kmer,kmer_size);
@@ -36,10 +45,13 @@ Key element_get_key(BinaryKmer kmer, short kmer_size){
 
 void element_initialise(Element * e, BinaryKmer kmer, short kmer_size){
 
-  e->kmer = element_get_key(kmer, kmer_size);
-  e->edges = 0;
-  e->status = none;
+  e->kmer     = element_get_key(kmer, kmer_size);
+  e->edges    = 0;
+  e->status   = none;
+  e->coverage = 0;
 }
+
+
 
 
 Orientation db_node_get_orientation(BinaryKmer k, dBNode * e, short kmer_size){
@@ -79,7 +91,8 @@ void db_node_add_labeled_edge(dBNode * e, Orientation o, Nucleotide base){
 boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size){
 
   BinaryKmer src_k, tgt_k; 
-  char seq[kmer_size];
+  char seq1[kmer_size];
+  char seq2[kmer_size];
 
   src_k = src_e->kmer;
   tgt_k = tgt_e->kmer;
@@ -94,13 +107,13 @@ boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orie
     
   
   if (DEBUG){
-    printf("add edge %s -%c-> %s\n",binary_kmer_to_seq(src_k,kmer_size,seq),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(tgt_k)),binary_kmer_to_seq(tgt_k,kmer_size,seq));
+    printf("add edge %s -%c-> %s\n",binary_kmer_to_seq(src_k,kmer_size,seq1),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(tgt_k)),binary_kmer_to_seq(tgt_k,kmer_size,seq2));
   }
 
   db_node_add_labeled_edge(src_e,src_o,binary_kmer_get_last_nucleotide(tgt_k));
 
   if (DEBUG){
-    printf("add edge %s -%c-> %s\n",binary_kmer_to_seq(tgt_k,kmer_size,seq),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size))),binary_kmer_to_seq(src_k,kmer_size,seq));
+    printf("add edge %s -%c-> %s\n",binary_kmer_to_seq(tgt_k,kmer_size,seq1),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size))),binary_kmer_to_seq(src_k,kmer_size,seq2));
   }
 
   db_node_add_labeled_edge(tgt_e,opposite_orientation(tgt_o),binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size)));
@@ -211,6 +224,39 @@ boolean db_node_has_precisely_one_edge(dBNode * node, Orientation orientation, N
   
 }
 
+//a conflict - bifurcation
+boolean db_node_has_precisely_two_edges(dBNode * node, Orientation orientation, Nucleotide * nucleotide1, Nucleotide * nucleotide2){
+  
+  Nucleotide n;
+
+  Edges edges = node->edges;
+  short edges_count = 0;
+
+  if (orientation == reverse){
+    edges >>= 4;
+  }
+  
+  for(n=0;n<4;n++){
+    
+    if ((edges & 1) == 1){
+      if (edges_count == 0){
+	*nucleotide1 = n;
+      }
+      
+      if (edges_count == 1){
+	*nucleotide2 = n;
+      }
+      edges_count++;
+    }
+    
+    edges >>= 1;    
+  }
+  
+  return (edges_count == 2);
+  
+}
+
+
 boolean db_node_is_blunt_end(dBNode * node, Orientation orientation){
   
   Edges edges = node->edges;
@@ -235,10 +281,13 @@ void db_node_set_status(dBNode * node,NodeStatus status){
 
 void db_node_print_binary(FILE * fp, dBNode * node){
   BinaryKmer kmer = element_get_kmer(node);
-  Edges edges = node->edges;
+  Edges edges     = node->edges;
+  short coverage  = node->coverage;
 
   fwrite(&kmer,  sizeof(BinaryKmer), 1, fp);
+  fwrite(&coverage, sizeof(short), 1, fp);
   fwrite(&edges, sizeof(Edges), 1, fp);
+  
 }
 
 Edges db_node_get_edges(dBNode * node){
@@ -248,11 +297,18 @@ Edges db_node_get_edges(dBNode * node){
 boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node){
   BinaryKmer kmer;
   Edges edges;
+  short coverage;
   int read;
   
   read = fread(&kmer,sizeof(BinaryKmer),1,fp);
 
   if (read>0){
+    read = fread(&coverage,sizeof(short),1,fp);    
+    if (read==0){
+      puts("error with input file\n");
+      exit(1);
+    }
+
     read = fread(&edges,sizeof(Edges),1,fp);
     if (read==0){
       puts("error with input file\n");
@@ -265,8 +321,8 @@ boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node){
 
   element_initialise(node,kmer,kmer_size);
 
-  node->edges = edges;
-
+  node->edges    = edges;
+  node->coverage = coverage;
   return true;
 }
 
