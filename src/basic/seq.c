@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <seq.h>
@@ -175,92 +176,124 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
   boolean end_of_file=false;
 
   do{
+
+    q=0;
+    j=0;
+
     //read name of fastq entry
-    if (fgets(line, LINE_MAX, fp) != NULL){
-      if (line[0] == '@'){
-	for(i = 1;i<LINE_MAX;i++){	   
-	  if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
-	    break;
-	  }
-	  if(i>LINE_MAX){
-	    fputs("Name too long\n",stderr);
+    if (fgets(line, LINE_MAX, fp) != NULL)
+      {
+	if (line[0] == '@')
+	  {
+	    printf("OK - just got read id line %s\n", line);
+	    for(i = 1;i<LINE_MAX;i++)
+	      {	   
+		if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r')
+		  {
+		    break;
+		  }
+		if(i>LINE_MAX)
+		  {
+		    fputs("Name too long\n",stderr);
+		    exit(1);
+		  }
+		seq->name[i-1] = line[i];
+	      }
+	    seq->name[i-1] = '\0';
+	    
+	    //read sequence 
+	    
+	    while (fgets(line, LINE_MAX, fp) != NULL)
+	      {
+		
+		if ((line[0] == '+') || (line[0] == '-'))
+		  { //go to get qualities
+		    break;
+		  }
+		
+		//check line is fine
+		for(i=0;i<LINE_MAX;i++)  
+		  {
+		    if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r')
+		      {
+			break; //fine but nothing to add
+		      }
+		    
+		    good_read = good_base(line[i]);
+		    if(! good_read)
+		      {
+			fprintf(stdout,"Invalid symbol [%c]  pos:%i in entry %s\n",line[i],i,seq->name);
+			//j=0;
+			//break;
+		      }
+		    seq->seq[j] = line[i];
+		    j++;
+		    
+		    if (j==max_read_length){
+		      fprintf(stdout,"read [%s] too long [%i]\n",seq->name,j);
+		      exit(1);
+		    }
+		    
+		  }
+	      }
+	    
+	    //read qualities -- verify position first
+	    file_pointer = ftell(fp);
+	    
+		
+	    while (fgets(line, LINE_MAX, fp) != NULL)
+	      {
+
+		if (line[0] == '@' && (j==q) )//then we have gone on to the next read  
+		  {
+		    fseek(fp,file_pointer,SEEK_SET);
+		    break; //goto next read
+		  }
+		
+		
+		for(i=0;i<LINE_MAX;i++)
+		  {
+		    if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
+		      break; //fine but nothing to add
+		    }
+		    
+		    seq->qual[q] = line[i];
+		    q++;
+		    
+		    if (q==max_read_length)
+		      {
+			fprintf(stdout,"qualities for [%s] longer than the max read length  [%i]\n",seq->name,q);
+			exit(1);
+		      }
+		    
+		  }
+		
+		file_pointer = ftell(fp);
+	      }
+	    
+	    
+	    if (j!=q)
+	      {
+		fprintf(stderr,"qualities [%i] and sequence [%i] sizes don't coincide for [%s]. Skip it\n",q,j,seq->name);
+		good_read=false;
+	      }
+	    
+	  }//if line starts with @
+	else
+	  {
+	    fputs("syntax error in fastq file -- it misses @\n",stderr);
 	    exit(1);
 	  }
-	  seq->name[i-1] = line[i];
-	}
-	seq->name[i-1] = '\0';
-	
-	//read sequence 
-	
-	while (fgets(line, LINE_MAX, fp) != NULL){
-	  
-	  if ((line[0] == '+') || (line[0] == '-')){ //go to get qualities
-	    break;
-	  }
-	  
-	  //check line is fine
-	  for(i=0;i<LINE_MAX;i++){
-	    if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
-	      break; //fine but nothing to add
-	    }
-	    
-	    good_read = good_base(line[i]);
-	    if(! good_read){
-	      fprintf(stderr,"Invalid symbol [%c]  pos:%i in entry %s\n",line[i],i,seq->name);
-	    }
-	    seq->seq[j] = line[i];
-	    j++;
-	    
-	    if (j==max_read_length){
-	      fprintf(stderr,"read [%s] too long [%i]\n",seq->name,j);
-	      exit(1);
-	    }
-	    
-	  }
-	}
-
-	//read qualities -- verify position first
-	file_pointer = ftell(fp);
-	
-	while (fgets(line, LINE_MAX, fp) != NULL){
-	  if (line[0] == '@' && j==q){
-	    fseek(fp,file_pointer,SEEK_SET);
-	    break;
-	  }
-	  
-	  for(i=0;i<LINE_MAX;i++){
-	    if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
-	      break; //fine but nothing to add
-	    }
-	    
-	    seq->qual[q] = line[i];
-	    q++;
-	    
-	    if (q==max_read_length){
-	      fprintf(stderr,"qualities for [%s] too long [%i]\n",seq->name,q);
-	      exit(1);
-	    }
-	    
-	  }
-    
-	  file_pointer = ftell(fp);
-	}
-
-	if (j!=q){
-	  fprintf(stderr,"qualities [%i] and sequence [%i] sizes don't coincide for [%s]\n",q,j,seq->name);
-	  exit(1);
-	}
-
       }
-      else{
-	fputs("syntax error in fastq file -- it misses @\n",stderr);
-	exit(1);
+    else
+      {
+	end_of_file=true;
       }
-    }
-  } while (! good_read); 
+
+  } while (! good_read && !end_of_file); 
 
   seq->seq[j]   = '\0';
-  seq->qual[q]  = '\0'; //this is not technical necessary but simplyfies many checks downstream
+  seq->qual[q]  = '\0'; //this is not technically necessary but simplifies many checks downstream
   return j;
 }
 

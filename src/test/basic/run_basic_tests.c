@@ -37,6 +37,11 @@ int  main()
     return CU_get_error();
   }
 
+  if (NULL == CU_add_test(pSuite, "test reading of fastq file when some reads are too long or have bad characters",  test_read_sequence_from_fastq_with_bad_reads_and_long_reads)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
   if (NULL == CU_add_test(pSuite, "test conversion from binary nucleotide to C string", test_seq_to_binary_kmer_and_binary_kmer_to_seq)) {
     CU_cleanup_registry();
     return CU_get_error();
