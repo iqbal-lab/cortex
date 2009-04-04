@@ -26,6 +26,11 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+
+  if (NULL == CU_add_test(pSuite, "test reading of fasta file when some reads are too long or have bad characters",  test_read_sequence_from_fasta_when_file_has_long_and_bad_reads)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
   
   if (NULL == CU_add_test(pSuite, "test reading of fastq file",  test_read_sequence_from_fastq)){
     CU_cleanup_registry();

@@ -324,7 +324,6 @@ void test_writing_reading_graph(){
 void test_get_N50()
 {
 
-  printf("z1");
   //first set up the hash/graph
   int kmer_size = 5;
   int number_of_buckets=10;
@@ -334,23 +333,66 @@ void test_get_N50()
 
    dBGraph * db_graph = hash_table_new(number_of_buckets,kmer_size);
 
-  printf("z12");
- 
   //1. One fasta file containing two reads:
   //  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA which becomes just a one node supernode
-  //  CACGGTATT which is a 5 node supernode.
-  // so the N50 is 5
+  //  CACGGTATTATTTACCT which is a 13 node supernode.
+  // so the N50 is 13
   
    int max_read_length=70;
    seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/n50_example1.fasta",&count_kmers, &bad_reads, max_read_length,  db_graph);
-  printf("z3");
 
-   CU_ASSERT_EQUAL(seq_length,50);
-   CU_ASSERT_EQUAL(count_kmers,6);
+
+   CU_ASSERT_EQUAL(seq_length,58);
+   CU_ASSERT_EQUAL(count_kmers,14);
    CU_ASSERT_EQUAL(bad_reads,0);
-    printf("4");
 
-   CU_ASSERT(db_graph_get_N50_of_supernodes(db_graph)==5);
-  printf("z5");
+   CU_ASSERT(db_graph_get_N50_of_supernodes(db_graph)==13);
+
+   //clean-up
+   hash_table_free(&db_graph);
+
+
+
+   //***************************************
+   // example 2:
+
+   // >read1
+   // AAAAAA
+   // >read2
+   // CCCCCC
+   // >read3
+   // ACGTA
+   // >read4
+   // CTATG
+   // >read5
+   // TTTAT
+   // >read6
+   // GCTTA
+   // >read7
+   // AGGCT
+   // >read8
+   // CACGGTATT
+   // 7 singleton super´nodes, and one 5-node supernode. So N50 is 1
+   
+   db_graph = hash_table_new(number_of_buckets,kmer_size);
+   count_kmers=0;
+   bad_reads=0;
+   seq_length=0;
+   seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/n50_example2.fasta",&count_kmers, &bad_reads, max_read_length,  db_graph);
+
+   CU_ASSERT_EQUAL(seq_length,46);
+   CU_ASSERT_EQUAL(count_kmers,12);
+   CU_ASSERT_EQUAL(bad_reads,0);
+
+   printf("*** n50 is %d", db_graph_get_N50_of_supernodes(db_graph));
+   CU_ASSERT(db_graph_get_N50_of_supernodes(db_graph)==1);
+
+   //clean-up
+   hash_table_free(&db_graph);
+   
+
+   
+
+
 
 }

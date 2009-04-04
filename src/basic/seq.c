@@ -42,65 +42,91 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length){
     exit(1);
   }
 
+  boolean end_of_file=false;
+
   do{
     //read name of fasta entry
-    if (fgets(line, LINE_MAX, fp) != NULL){
-      if (line[0] == '>'){
-	for(i = 1;i<LINE_MAX;i++){	   
-	  if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
-	    break;
+    if (fgets(line, LINE_MAX, fp) != NULL)
+      {
+	if (line[0] == '>')
+	  {
+	    for(i = 1;i<LINE_MAX;i++)
+	      {	   
+		if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r')
+		  {
+		    break;
+		  }
+		if(i>LINE_MAX)
+		  {
+		    fputs("Name too long\n",stderr);
+		    exit(1);
+		  }
+		seq->name[i-1] = line[i];
+	      }
+	    seq->name[i-1] = '\0';
+	    
+	    //read sequence -- verify position first
+	    file_pointer = ftell(fp);
+	    
+	    while (fgets(line, LINE_MAX, fp) != NULL)
+	      {
+		if (line[0] == '>')
+		  {
+		    fseek(fp,file_pointer,SEEK_SET);
+		    break;
+		  }
+		
+		//check line is fine
+		for(i=0;i<LINE_MAX;i++)
+		  {
+		    if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r')
+		      {
+			break; //fine but nothing to add
+		      }
+		    
+		    good_read = good_base(line[i]);
+		    
+		    if (! good_read)
+		      {
+			fprintf(stdout,"Invalid symbol [%c] pos:%i in entry %s. Ignoring and moving on to next read.\n",line[i],i,seq->name);
+			good_read=false;
+			j=0;
+			break;		  //exit(1);
+		      }
+		    
+		    seq->seq[j]  = line[i];
+		    seq->qual[j] = '\0';
+		    j++;
+		    
+		    if (j==max_read_length)
+		      {
+			fprintf(stdout,"read [%s] too long [%i]. Ignore and move on to next\n",seq->name,j);
+			// exit(1);
+			good_read=false;
+			j=0;
+			break;
+		      }
+		    
+		  }
+		
+		file_pointer = ftell(fp);
+	      }
+	    
+	    
 	  }
-	  if(i>LINE_MAX){
-	    fputs("Name too long\n",stderr);
+	else
+	  {
+	    fputs("syntax error in fasta file -- it misses >\n",stderr);
 	    exit(1);
 	  }
-	  seq->name[i-1] = line[i];
-	}
-	seq->name[i-1] = '\0';
-    
-	//read sequence -- verify position first
-	file_pointer = ftell(fp);
-
-	while (fgets(line, LINE_MAX, fp) != NULL){
-	  if (line[0] == '>'){
-	    fseek(fp,file_pointer,SEEK_SET);
-	    break;
-	  }
-	
-	  //check line is fine
-	  for(i=0;i<LINE_MAX;i++){
-	    if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
-	      break; //fine but nothing to add
-	    }
-
-	    good_read = good_base(line[i]);
-	    
-	    if (! good_read){
-	      fprintf(stderr,"Invalid symbol [%c] pos:%i in entry %s\n",line[i],i,seq->name);
-	      exit(1);
-	    }
-	  
-	    seq->seq[j]  = line[i];
-	    seq->qual[j] = '\0';
-	    j++;
-	  
-	    if (j==max_read_length){
-	      fprintf(stderr,"read [%s] too long [%i]\n",seq->name,j);
-	      exit(1);
-	    }
-	    
-	  }
-	  
-	  file_pointer = ftell(fp);
-	}
       }
-      else{
-	fputs("syntax error in fasta file -- it misses >\n",stderr);
-	exit(1);
+    else
+      {
+	end_of_file=true;
       }
-    }
-  } while (! good_read);
     
+  } while (! good_read && !end_of_file);
+  
   seq->seq[j]  = '\0';
   seq->qual[j] = '\0';
   return j;
@@ -145,6 +171,8 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
     fputs("Dont give me a null pointer for seq->qual - alloc memory yourself and give me that\n",stderr);
     exit(1);
   }
+
+  boolean end_of_file=false;
 
   do{
     //read name of fastq entry

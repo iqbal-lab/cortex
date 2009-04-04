@@ -654,8 +654,8 @@ void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Elem
 
 int db_graph_get_N50_of_supernodes(dBGraph* db_graph)
 {
-  printf("y1");
-  int numbers_of_supernodes_of_specific_lengths[10000];
+
+  int numbers_of_supernodes_of_specific_lengths[10000]; //i-th entry is number of supernodes of length i.
   int* numbers_of_supernodes_of_specific_lengths_ptrs[10000];
   int lengths_of_supernodes[10000];
   
@@ -667,14 +667,15 @@ int db_graph_get_N50_of_supernodes(dBGraph* db_graph)
       lengths_of_supernodes[i]=0;
 
     }
-  printf("y2");
+
 
   db_graph_traverse_with_array(&db_graph_get_supernode_length_marking_it_as_visited, db_graph,  numbers_of_supernodes_of_specific_lengths_ptrs, 10000);
-  printf("y3");
 
   //we now have an array containing the number of supernodes of each length from 1 to 10,000 nodes.
-  //let's make another array, containing the lengths
+  // for example it might be 0,100,1,0,0,0,23,4. note there are no supernodes of length 0, so first entry should always be 0
 
+  //let's make another array, containing the lengths
+  // this would , in the above example, be: 1,2,6,7 
   int ctr=0;
 
   for (i=0; i<10000; i++)
@@ -685,11 +686,10 @@ int db_graph_get_N50_of_supernodes(dBGraph* db_graph)
 	  ctr++;
 	}
     }
-  printf("y4");
 
-  //1 sort the list of lengths
+  //1 sort the list of lengths, to give in our example 0,0,....0,1,2,6,7
   size_t numbers_len=sizeof(numbers_of_supernodes_of_specific_lengths)/sizeof(int);
-  qsort( numbers_of_supernodes_of_specific_lengths, numbers_len, sizeof(int), int_cmp); 
+  qsort( lengths_of_supernodes, numbers_len, sizeof(int), int_cmp); 
 
   //2 add all of lengths*number of supernodes up - get total length
   int total=0;
@@ -707,16 +707,14 @@ int db_graph_get_N50_of_supernodes(dBGraph* db_graph)
     }
 
 
-  // Note -  max_supernode_len = lengths_of_supernodes[ctr-1];
-  
   int current_cumulative_len=0;
-  printf("y5");
 
   for (i=9999; i>=9999-ctr+1; i--)
     {
       current_cumulative_len += numbers_of_supernodes_of_specific_lengths[lengths_of_supernodes[i]] * lengths_of_supernodes[i] ;
-      if (current_cumulative_len > total/2)
+      if (current_cumulative_len >= total/2)
 	{
+	  printf("total is %d and n50 is %d\n", total, lengths_of_supernodes[i]);
 	  // then we have found the N50.
 	  return lengths_of_supernodes[i];
 	}

@@ -77,6 +77,129 @@ void test_read_sequence_from_fasta(){
 
 }
 
+
+void test_read_sequence_from_fasta_when_file_has_long_and_bad_reads()
+{
+  Sequence * seq = malloc(sizeof(Sequence));
+ 
+  if (seq == NULL){							
+    fputs("Out of memory trying to allocate Sequence\n",stderr);	
+    exit(1);								
+  }
+  //pre-allocate space where to read the sequences
+  int max_read_length=50;
+  alloc_sequence(seq,50,LINE_MAX);
+
+  int length_seq;
+  FILE* fp1 = fopen("../data/test/basic/includes_two_reads_that_are_too_long.fasta", "r");
+
+  // >read1 100 bases
+  // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+  // >read2 5 bases
+  // CCCCC
+  // >read3 110 bases
+  // GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+  // >read4 4 bases
+  // TTTT
+
+  length_seq = read_sequence_from_fasta(fp1,seq,max_read_length);
+  
+  CU_ASSERT_EQUAL(length_seq, 5);
+  CU_ASSERT_STRING_EQUAL("read2",seq->name);
+  CU_ASSERT_STRING_EQUAL("CCCCC",seq->seq);
+
+  length_seq = read_sequence_from_fasta(fp1,seq,max_read_length);
+  
+  CU_ASSERT_EQUAL(length_seq, 4);
+  CU_ASSERT_STRING_EQUAL("read4",seq->name);
+  CU_ASSERT_STRING_EQUAL("TTTT",seq->seq);
+
+
+
+  fclose(fp1);
+
+  FILE* fp2= fopen("../data/test/basic/includes_reads_that_have_bad_characters.fasta", "r");
+
+  // >read1
+  // AAAAAAAAAAAA¢
+  // >read2
+  // ¡€#¢∞§¶#¶•#•#•#ª#ª#ª#ªº#º#º#º––––
+  // >read3 4 c's
+  // CCCC
+  // >read4 10 Ts
+  // TTTTTTTTTT
+  // >read5
+  // $
+  // >read6
+  // AAAAAAAAAAAAAAAAAA#A
+  // >read7
+  // AAA
+
+  length_seq = read_sequence_from_fasta(fp2,seq,max_read_length);
+  
+  CU_ASSERT_EQUAL(length_seq, 4);
+  CU_ASSERT_STRING_EQUAL("read3",seq->name);
+  CU_ASSERT_STRING_EQUAL("CCCC",seq->seq);
+
+  length_seq = read_sequence_from_fasta(fp2,seq,max_read_length);
+  
+  CU_ASSERT_EQUAL(length_seq, 10);
+  CU_ASSERT_STRING_EQUAL("read4",seq->name);
+  CU_ASSERT_STRING_EQUAL("TTTTTTTTTT",seq->seq);
+
+  length_seq = read_sequence_from_fasta(fp2,seq,max_read_length);
+  
+  CU_ASSERT_EQUAL(length_seq, 3);
+  CU_ASSERT_STRING_EQUAL("read7",seq->name);
+  CU_ASSERT_STRING_EQUAL("AAA",seq->seq);
+
+  length_seq = read_sequence_from_fasta(fp2,seq,max_read_length);
+  
+  CU_ASSERT_EQUAL(length_seq, 0);
+  fclose(fp2);
+
+
+  //now make sure we do not get trapped in an infinite loop if the last read of a file is bad
+
+  FILE* fp3= fopen("../data/test/basic/includes_final_read_that_has_bad_characters.fasta", "r");
+
+  // >read1
+  // AAAAAAAAAAAA¢
+  // >read2
+  // ¡€#¢∞§¶#¶•#•#•#ª#ª#ª#ªº#º#º#º––––
+  // >read3 4 c's
+  // CCCC
+  // >read4 10 Ts
+  // TTTTTTTTTT
+  // >read5
+  // $
+  // >read6
+  // AAAAAAAAAAAAAAAAAA#A
+
+
+  length_seq = read_sequence_from_fasta(fp3,seq,max_read_length);
+
+  CU_ASSERT_EQUAL(length_seq, 4);
+  CU_ASSERT_STRING_EQUAL("read3",seq->name);
+  CU_ASSERT_STRING_EQUAL("CCCC",seq->seq);
+
+  length_seq = read_sequence_from_fasta(fp3,seq,max_read_length);
+  
+  CU_ASSERT_EQUAL(length_seq, 10);
+  CU_ASSERT_STRING_EQUAL("read4",seq->name);
+  CU_ASSERT_STRING_EQUAL("TTTTTTTTTT",seq->seq);
+
+  length_seq = read_sequence_from_fasta(fp3,seq,max_read_length);
+  
+  CU_ASSERT_EQUAL(length_seq, 0);
+  fclose(fp3);
+
+
+
+  free_sequence(&seq);
+
+}
+
 void test_read_sequence_from_fastq(){
 
   //pre-allocate space where to read the sequences
