@@ -89,7 +89,7 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length){
 		    
 		    if (! good_read)
 		      {
-			fprintf(stdout,"Invalid symbol [%c] pos:%i in entry %s. Ignoring and moving on to next read.\n",line[i],i,seq->name);
+			//fprintf(stdout,"Invalid symbol [%c] pos:%i in entry %s. Ignoring and moving on to next read.\n",line[i],i,seq->name);
 			good_read=false;
 			j=0;
 			break;		  //exit(1);
@@ -101,7 +101,7 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length){
 		    
 		    if (j==max_read_length)
 		      {
-			fprintf(stdout,"read [%s] too long [%i]. Ignore and move on to next\n",seq->name,j);
+			//fprintf(stdout,"read [%s] too long [%i]. Ignore and move on to next\n",seq->name,j);
 			// exit(1);
 			good_read=false;
 			j=0;
@@ -177,6 +177,7 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
 
   do{
 
+    good_read=true;
     q=0;
     j=0;
 
@@ -185,7 +186,6 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
       {
 	if (line[0] == '@')
 	  {
-	    printf("OK - just got read id line %s\n", line);
 	    for(i = 1;i<LINE_MAX;i++)
 	      {	   
 		if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r')
@@ -219,18 +219,18 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
 			break; //fine but nothing to add
 		      }
 		    
-		    good_read = good_base(line[i]);
-		    if(! good_read)
-		      {
-			fprintf(stdout,"Invalid symbol [%c]  pos:%i in entry %s\n",line[i],i,seq->name);
-			//j=0;
-			//break;
-		      }
+		    if (! good_base(line[i]))
+		    {
+		      good_read=false;
+		      //fprintf(stdout,"Invalid symbol [%c]  pos:%i in entry %s. Will ignore this read.\n",line[i],i,seq->name);
+		    }
+
+
 		    seq->seq[j] = line[i];
 		    j++;
 		    
 		    if (j==max_read_length){
-		      fprintf(stdout,"read [%s] too long [%i]\n",seq->name,j);
+		      fprintf(stdout,"read [%s] too long [%i]. Exiting...\n",seq->name,j);
 		      exit(1);
 		    }
 		    
@@ -244,7 +244,8 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
 	    while (fgets(line, LINE_MAX, fp) != NULL)
 	      {
 
-		if (line[0] == '@' && (j==q) )//then we have gone on to the next read  
+		if (line[0] == '@' && (j<=q) )//then we have gone on to the next read  
+		  //allowing q>j in case where qualities longer than j
 		  {
 		    fseek(fp,file_pointer,SEEK_SET);
 		    break; //goto next read
@@ -262,7 +263,7 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
 		    
 		    if (q==max_read_length)
 		      {
-			fprintf(stdout,"qualities for [%s] longer than the max read length  [%i]\n",seq->name,q);
+			fprintf(stdout,"qualities for [%s] longer than the max read length  [%i]. Exiting...\n",seq->name,q);
 			exit(1);
 		      }
 		    
@@ -274,7 +275,7 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
 	    
 	    if (j!=q)
 	      {
-		fprintf(stderr,"qualities [%i] and sequence [%i] sizes don't coincide for [%s]. Skip it\n",q,j,seq->name);
+		fprintf(stdout,"qualities [%i] and sequence [%i] sizes don't coincide for [%s]. Skip it\n",q,j,seq->name);
 		good_read=false;
 	      }
 	    

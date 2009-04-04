@@ -121,9 +121,9 @@ void test_read_sequence_from_fasta_when_file_has_long_and_bad_reads()
   FILE* fp2= fopen("../data/test/basic/includes_reads_that_have_bad_characters.fasta", "r");
 
   // >read1
-  // AAAAAAAAAAAA¢
+  // AAAAAAAAAAAA9
   // >read2
-  // ¡€#¢∞§¶#¶•#•#•#ª#ª#ª#ªº#º#º#º––––
+  // ¡€#9∞§¶#¶•#•#•#ª#ª#ª#ªº#º#º#º––––
   // >read3 4 c's
   // CCCC
   // >read4 10 Ts
@@ -164,9 +164,9 @@ void test_read_sequence_from_fasta_when_file_has_long_and_bad_reads()
   FILE* fp3= fopen("../data/test/basic/includes_final_read_that_has_bad_characters.fasta", "r");
 
   // >read1
-  // AAAAAAAAAAAA¢
+  // AAAAAAAAAAAA9
   // >read2
-  // ¡€#¢∞§¶#¶•#•#•#ª#ª#ª#ªº#º#º#º––––
+  // ¡€#9∞§¶#¶•#•#•#ª#ª#ª#ªº#º#º#º––––
   // >read3 4 c's
   // CCCC
   // >read4 10 Ts
@@ -294,7 +294,7 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   
   int length_seq;
   /*
-  FILE* fp1 = fopen("../data/test/basic/includes_one_read_that_is_too_long.fastq", "r");
+//  FILE* fp1 = fopen("../data/test/basic/includes_one_read_that_is_too_long.fastq", "r");
 
   // @read1
   // ACGT
@@ -315,26 +315,26 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
 
 
 
-  length_seq = read_sequence_from_fastq(fp1,seq,max_read_length);  
-  CU_ASSERT_EQUAL(length_seq, 4);
-  CU_ASSERT_STRING_EQUAL("read1",seq->name);
-  CU_ASSERT_STRING_EQUAL("ACGT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("@@@@",seq->qual);
+ // length_seq = read_sequence_from_fastq(fp1,seq,max_read_length);  
+ // CU_ASSERT_EQUAL(length_seq, 4);
+ // CU_ASSERT_STRING_EQUAL("read1",seq->name);
+ // CU_ASSERT_STRING_EQUAL("ACGT",seq->seq);
+ // CU_ASSERT_STRING_EQUAL("@@@@",seq->qual);
 
-  length_seq = read_sequence_from_fastq(fp1,seq,max_read_length);  
-  CU_ASSERT_EQUAL(length_seq, 4);
-  CU_ASSERT_STRING_EQUAL("read2",seq->name);
-  CU_ASSERT_STRING_EQUAL("CCCC",seq->seq);
-  CU_ASSERT_STRING_EQUAL("5555",seq->qual);
+ // length_seq = read_sequence_from_fastq(fp1,seq,max_read_length);  
+ // CU_ASSERT_EQUAL(length_seq, 4);
+ // CU_ASSERT_STRING_EQUAL("read2",seq->name);
+ // CU_ASSERT_STRING_EQUAL("CCCC",seq->seq);
+ // CU_ASSERT_STRING_EQUAL("5555",seq->qual);
 
-  length_seq = read_sequence_from_fastq(fp1,seq,max_read_length);  
-  CU_ASSERT_EQUAL(length_seq, 4);
-  CU_ASSERT_STRING_EQUAL("read4",seq->name);
-  CU_ASSERT_STRING_EQUAL("ACGT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("3333",seq->qual);
+ // length_seq = read_sequence_from_fastq(fp1,seq,max_read_length);  
+ // CU_ASSERT_EQUAL(length_seq, 4);
+ // CU_ASSERT_STRING_EQUAL("read4",seq->name);
+ // CU_ASSERT_STRING_EQUAL("ACGT",seq->seq);
+ // CU_ASSERT_STRING_EQUAL("3333",seq->qual);
 
 
-  fclose(fp1);
+ // fclose(fp1);
 
   */
 
@@ -344,9 +344,9 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   //@read1
   //ACGTACGTACGTACGT
   //+
-  //WEW£WEW£WEW£WEWA
+  //WEW2WEW2WEW2WEWA
   //@read2
-  //AAAA#¢A
+  //AAAA#9A
   //+
   //@@@@@@@
   //@read3
@@ -359,7 +359,7 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   CU_ASSERT_EQUAL(length_seq, 16);
   CU_ASSERT_STRING_EQUAL("read1",seq->name);
   CU_ASSERT_STRING_EQUAL("ACGTACGTACGTACGT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("WEW£WEW£WEW£WEWA",seq->qual);
+  CU_ASSERT_STRING_EQUAL("WEW2WEW2WEW2WEWA",seq->qual);
 
   length_seq = read_sequence_from_fastq(fp2,seq,max_read_length);  
   CU_ASSERT_EQUAL(length_seq, 4);
@@ -373,7 +373,93 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   fclose(fp2);
 
 
+
+
+  FILE* fp3 = fopen("../data/test/basic/includes_one_read_where_quality_is_longer_than_seq.fastq", "r");
+
+  //@read1
+  //ACGTACGTACGTACGT
+  //+
+  //WEW2WEW2WEW2WEWA
+  //@read2
+  //AAAA#5A
+  //+
+  //@@@@@@@@@@@@
+  //@read3
+  //TTTT
+  //+
+  //3333
+
+
+  length_seq = read_sequence_from_fastq(fp3,seq,max_read_length);  
+  CU_ASSERT_EQUAL(length_seq, 16);
+  CU_ASSERT_STRING_EQUAL("read1",seq->name);
+  CU_ASSERT_STRING_EQUAL("ACGTACGTACGTACGT",seq->seq);
+  CU_ASSERT_STRING_EQUAL("WEW2WEW2WEW2WEWA",seq->qual);
+
+  length_seq = read_sequence_from_fastq(fp3,seq,max_read_length);  
+  CU_ASSERT_EQUAL(length_seq, 4);
+  CU_ASSERT_STRING_EQUAL("read3",seq->name);
+  CU_ASSERT_STRING_EQUAL("TTTT",seq->seq);
+  CU_ASSERT_STRING_EQUAL("3333",seq->qual);
+
+  length_seq = read_sequence_from_fastq(fp3,seq,max_read_length);  
+  CU_ASSERT_EQUAL(length_seq, 0);
+  
+  fclose(fp3);
+
+  FILE* fp4 = fopen("../data/test/basic/includes_multiline_reads.fastq", "r");
+
+  // @read1
+  // ACGT
+  // +
+  // @@@@
+  // @read2 45 bases
+  // AAAAAAAAAAAAAAA
+  // CCCCCCCCCCCCCCC
+  // GGGGGGGGGGGGGGG
+  // +
+  // 222222222222222
+  // 333333333333333
+  // 444444444444444
+  // @read3
+  // TTT
+  // -
+  // ggg
+
+
+  length_seq = read_sequence_from_fastq(fp4,seq,max_read_length);  
+  CU_ASSERT_EQUAL(length_seq, 4);
+  CU_ASSERT_STRING_EQUAL("read1",seq->name);
+  CU_ASSERT_STRING_EQUAL("ACGT",seq->seq);
+  CU_ASSERT_STRING_EQUAL("@@@@",seq->qual);
+
+  length_seq = read_sequence_from_fastq(fp4,seq,max_read_length);  
+  CU_ASSERT_EQUAL(length_seq, 45);
+  CU_ASSERT_STRING_EQUAL("read2",seq->name);
+  CU_ASSERT_STRING_EQUAL("AAAAAAAAAAAAAAACCCCCCCCCCCCCCCGGGGGGGGGGGGGGG",seq->seq);
+  CU_ASSERT_STRING_EQUAL("222222222222222333333333333333444444444444444",seq->qual);
+
+  length_seq = read_sequence_from_fastq(fp4,seq,max_read_length);
+  CU_ASSERT_EQUAL(length_seq, 3);
+  CU_ASSERT_STRING_EQUAL("read3",seq->name);
+  CU_ASSERT_STRING_EQUAL("TTT",seq->seq);
+  CU_ASSERT_STRING_EQUAL("ggg",seq->qual);
+
+
+  length_seq = read_sequence_from_fastq(fp4,seq,max_read_length);  
+  CU_ASSERT_EQUAL(length_seq, 0);
+  
+  fclose(fp4);
+
+  
+ 
+
   free_sequence(&seq);
+
+
+
+
 
 
 }
