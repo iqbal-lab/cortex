@@ -7,7 +7,7 @@
 #ifndef DB_GRAPH_H_
 #define DB_GRAPH_H_
 
-#include <hash_table.h>
+#include <open_hash/hash_table.h>
 #include <stdio.h>
 
 typedef HashTable dBGraph;

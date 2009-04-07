@@ -11,7 +11,7 @@ int main(int argc, char **argv){
 
   FILE *fp_fnames;
   //char filename[100];
-  int hash_key_bits;
+  int hash_key_bits, bucket_size;
   dBGraph * db_graph = NULL; 
   short kmer_size;
 
@@ -20,12 +20,15 @@ int main(int argc, char **argv){
   //filename = argv[1];    //open file that lists one file per individual in the trio (population), and each of those gives list of files.
   kmer_size        = atoi(argv[2]);  //global variable defined in element.h
   hash_key_bits    = atoi(argv[3]); //number of buckets: 2^hash_key_bits
-  DEBUG            = atoi(argv[4]);
+  bucket_size      = atoi(argv[4]);
+  DEBUG            = atoi(argv[5]);
 
-  fprintf(stderr,"Kmer size: %d hash_table_size (%d bits): %d\n",kmer_size,hash_key_bits,1 << hash_key_bits);
+  int max_retries=10;
+
+  fprintf(stdout,"Kmer size: %d hash_table_size (%d bits): %d\n",kmer_size,hash_key_bits,1 << hash_key_bits);
 
   //Create the de Bruijn graph/hash table
-  db_graph = hash_table_new(1 << hash_key_bits,kmer_size);
+  db_graph = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
   fprintf(stderr,"table created: %d\n",1 << hash_key_bits);
 
   long count_files = 0;

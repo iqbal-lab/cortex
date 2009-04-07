@@ -10,7 +10,7 @@
 #define DB_GRAPH_POPULATION_H_
 
 #include <element.h>
-#include <hash_table.h>
+#include <open_hash/hash_table.h>
 
 int db_graph_clip_tip_for_specific_person_or_pop(dBNode * node, int limit,dBGraph * db_graph, EdgeArrayType type, int index);
 

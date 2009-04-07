@@ -10,8 +10,9 @@
 #define DB_GRAPH_POPULATION_H_
 
 #include <element.h>
-#include <hash_table.h>
+#include <open_hash/hash_table.h>
 #include <seq.h>
+#include <dB_graph.h>
 #include <dB_graph_supernode.h>
 
 //***

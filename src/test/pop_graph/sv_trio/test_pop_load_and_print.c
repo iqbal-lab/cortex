@@ -10,21 +10,26 @@
 void test_load_two_people_in_same_populations_and_print_separately_their_supernodes()
 {
 
+
+  //first set up the hash/graph
   int kmer_size = 3;
-  int number_of_buckets=5;
-  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
-  
+  int number_of_bits = 4;
+  int bucket_size    = 4;
+  long long bad_reads = 0; 
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
 
-  long long bad_reads=0;
   long long total_kmers=0;
   long long seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &total_kmers, &bad_reads, hash_table);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &bad_reads, hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 44);
   CU_ASSERT(bad_reads==0);
@@ -141,9 +146,17 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
 void test_take_three_people_each_with_one_read_and_find_variants()
 {
 
+
+
+  //first set up the hash/graph
   int kmer_size = 5;
-  int number_of_buckets=7;
-  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  int number_of_bits = 5;
+  int bucket_size    = 4;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
 
   if (hash_table==NULL)
     {
@@ -152,11 +165,9 @@ void test_take_three_people_each_with_one_read_and_find_variants()
     }
 
 
-  long long bad_reads=0;
-  long long total_kmers=0;
   long long seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/three_indiv_simple/three_individuals_simple.txt", &total_kmers, &bad_reads, hash_table);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/three_indiv_simple/three_individuals_simple.txt", &bad_reads, hash_table);
 
   //printf("take 3 people test Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 55);
@@ -275,9 +286,16 @@ void test_take_three_people_each_with_one_read_and_find_variants()
 void test_take_two_people_sharing_an_alu_and_find_supernodes()
 {
 
+  //first set up the hash/graph
   int kmer_size = 31;
-  int number_of_buckets=20;
-  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  int number_of_bits = 20;
+  int bucket_size    = 10;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
+
 
   if (hash_table==NULL)
     {
@@ -285,11 +303,10 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
       exit(1);
     }
 
-  long long bad_reads=0;
-  long long total_kmers=0;
+
   long long seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/two_people.txt",  &total_kmers, &bad_reads,hash_table);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/two_people.txt",  &bad_reads,hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 677);
   CU_ASSERT(bad_reads ==0);
@@ -369,9 +386,16 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
 void test_loading_simple_fasta_and_getting_chromosome_intersections()
 {
 
+  //first set up the hash/graph
   int kmer_size = 3;
-  int number_of_buckets=8;
-  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  int number_of_bits = 4;
+  int bucket_size    = 4;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
+
 
   if (hash_table==NULL)
     {
@@ -379,11 +403,9 @@ void test_loading_simple_fasta_and_getting_chromosome_intersections()
       exit(1);
     }
 
-  long long bad_reads=0;
-  long long total_kmers=0;
   long long seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt",  &total_kmers, &bad_reads,hash_table);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt",  &bad_reads,hash_table);
 
   load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom1.fasta", hash_table, 1);
   load_chromosome_overlap_data("../data/test/pop_graph/dummy_chromosomes/simple/chrom2.fasta", hash_table, 2);
@@ -454,9 +476,16 @@ void test_db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome()
 {
 
 
+  //first set up the hash/graph
   int kmer_size = 3;
-  int number_of_buckets=8;
-  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  int number_of_bits = 4;
+  int bucket_size    = 4;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
+
 
   if (hash_table==NULL)
     {
@@ -470,10 +499,8 @@ void test_db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome()
   //  Sequence is :  ACGTAC
   // ****
 
-  long long count_kmers=0;
-  long long bad_reads=0;
 
-  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops", &count_kmers, &bad_reads, hash_table);
+  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops", &bad_reads, hash_table);
   CU_ASSERT(seq_loaded==6);
   CU_ASSERT(bad_reads==0);
 
@@ -521,16 +548,16 @@ void test_db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome()
   // ****
 
 
-
   //first set up the hash/graph
   kmer_size = 3;
-  number_of_buckets=5;
+  number_of_bits = 4;
+  bucket_size    = 4;
+  bad_reads = 0;
+  max_retries=10;
 
-  count_kmers=0;
-  bad_reads=0;
+  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
 
-  hash_table = hash_table_new(number_of_buckets,kmer_size);
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end", &count_kmers, &bad_reads, hash_table);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end",&bad_reads, hash_table);
 
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(bad_reads==0);
@@ -567,9 +594,16 @@ void test_db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome()
 
 void test_printing_supernode_with_chromosome_intersections_simple()
 {
+  //first set up the hash/graph
   int kmer_size = 3;
-  int number_of_buckets=8;
-  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  int number_of_bits = 4;
+  int bucket_size    = 4;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
+
 
   if (hash_table==NULL)
     {
@@ -583,10 +617,8 @@ void test_printing_supernode_with_chromosome_intersections_simple()
   //  Sequence is :  ACGTAC
   // ****
 
-  long long count_kmers=0;
-  long long bad_reads=0;
 
-  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops", &count_kmers, &bad_reads, hash_table);
+  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops", &bad_reads, hash_table);
   CU_ASSERT(seq_loaded==6);
   CU_ASSERT(bad_reads==0);
 
@@ -734,9 +766,16 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example()
  // All nodes will ovwrlap just one chromosome, so will not print the supernode, as is not a potential sv locus
  // **********************************
 
+  //first set up the hash/graph
   int kmer_size = 31;
-  int number_of_buckets=15;
-  dBGraph* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  int number_of_bits = 15;
+  int bucket_size    = 10;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
+
 
   if (hash_table==NULL)
     {
@@ -744,10 +783,8 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example()
       exit(1);
     }
 
-  long long count_kmers=0;
-  long long bad_reads=0;
 
-  long long seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/just_one_of_the_two_people.txt",  &count_kmers, &bad_reads,hash_table);
+  long long seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/just_one_of_the_two_people.txt",  &bad_reads,hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(bad_reads ==0);
 
@@ -825,9 +862,16 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example_2(
  // So our one supernode (the alu) intersects 2 chromosomes, with no node intersecting >1 chromosome => is a  potential sv locus.
  // **********************************
 
+  //first set up the hash/graph
   int kmer_size = 31;
-  int number_of_buckets=15;
-  dBGraph* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  int number_of_bits = 15;
+  int bucket_size    = 10;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
+
 
   if (hash_table==NULL)
     {
@@ -835,10 +879,8 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example_2(
       exit(1);
     }
 
-  long long count_kmers=0;
-  long long bad_reads=0;
 
-  long long seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/just_one_of_the_two_people.txt",  &count_kmers, &bad_reads,hash_table);
+  long long seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/just_one_of_the_two_people.txt",  &bad_reads,hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(bad_reads ==0);
 
@@ -925,9 +967,16 @@ CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"2R 2R 2R 2R 2R 2R
 void test_printing_of_supernode_that_might_be_an_inversion_simple()
 {
 
+  //first set up the hash/graph
   int kmer_size = 3;
-  int number_of_buckets=8;
-  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  int number_of_bits = 4;
+  int bucket_size    = 4;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
+
 
   if (hash_table==NULL)
     {
@@ -943,10 +992,8 @@ void test_printing_of_supernode_that_might_be_an_inversion_simple()
   //  If you draw it the overlaps are F 0 0 R 0 0 F
   // ****
 
-  long long count_kmers=0;
-  long long bad_reads=0;
 
-  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/sv/inversion/one_person", &count_kmers, &bad_reads, hash_table);
+  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/sv/inversion/one_person", &bad_reads, hash_table);
   CU_ASSERT(seq_loaded==9);
   CU_ASSERT(bad_reads==0);
 

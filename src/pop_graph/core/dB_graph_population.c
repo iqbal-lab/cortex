@@ -350,10 +350,14 @@ void db_graph_choose_output_filename_and_print_potential_inversion_for_specific_
 void db_graph_traverse_specific_person_or_pop_for_supernode_printing(void (*f)(HashTable*, Element *, long* , EdgeArrayType, int, boolean, char**, int*),HashTable * hash_table, long* supernode_count, 
 								     EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test){
 
-  int i;
-  for(i=0;i<hash_table->number_buckets;i++){
-    pqueue_traverse_specific_person_or_pop_for_supernode_printing(f,hash_table, &(hash_table->table[i]), supernode_count, type,index, is_for_testing, for_test, index_for_test);
+
+  long long i;
+  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
+    if (!db_node_check_status(&hash_table->table[i],unassigned)){
+      f(hash_table, &hash_table->table[i], supernode_count, type,index, is_for_testing, for_test, index_for_test);
+    }
   }
+
 
 }
 
@@ -361,25 +365,31 @@ void db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overl
 											    HashTable * hash_table, long* supernode_count, EdgeArrayType type, int index, int min_covg, int max_covg, 
 											     boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2){
 
-  int i;
-  for(i=0;i<hash_table->number_buckets;i++){
-    pqueue_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(f,hash_table, &(hash_table->table[i]), supernode_count, type,index, min_covg, max_covg, 
-											 is_for_testing, for_test1, for_test2, index_for_test1, index_for_test2);
+  long long i;
+  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
+    if (!db_node_check_status(&hash_table->table[i],unassigned)){
+      f(hash_table, &hash_table->table[i], supernode_count, type, index, min_covg, max_covg, is_for_testing, for_test1, for_test2, index_for_test1, index_for_test2  );
+    }
   }
+
+
 
 }
 
 
 
-
-
-
 void db_graph_traverse_to_gather_statistics_about_people(void (*f)(HashTable*, Element *, int**, int),HashTable * hash_table, int** array, int num_people )
 {
-  int i;
-  for(i=0;i<hash_table->number_buckets;i++){
-    pqueue_traverse_to_gather_statistics_about_people(f,&(hash_table->table[i]), hash_table, array, num_people);
+
+  long long i;
+  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
+    if (!db_node_check_status(&hash_table->table[i],unassigned)){
+      f(hash_table, &hash_table->table[i], array, num_people);
+    }
   }
+
+
+
 
 }
 

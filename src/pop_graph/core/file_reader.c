@@ -16,10 +16,10 @@
 int MAX_FILENAME_LENGTH=500;
 int MAX_READ_LENGTH=10000;
 
-int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char qualiy_cut_off, int max_read_length, dBGraph * db_graph, EdgeArrayType type, int index);
+int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * bad_reads, char quality_cut_off, int max_read_length, dBGraph * db_graph, EdgeArrayType type, int index);
 
 
-int load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * count_kmers, long long * bad_reads, int max_read_length, dBGraph* db_graph, EdgeArrayType type, int index)
+int load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads, int max_read_length, dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
   printf("start to load %s\n", filename);
@@ -29,10 +29,10 @@ int load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fil
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  return load_seq_data_into_graph_of_specific_person_or_pop(fp,&read_sequence_from_fasta, count_kmers,bad_reads,  0 , max_read_length, db_graph, type, index);
+  return load_seq_data_into_graph_of_specific_person_or_pop(fp,&read_sequence_from_fasta,bad_reads,  0 , max_read_length, db_graph, type, index);
 }
 
-int load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * count_kmers, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph,
+int load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph,
 EdgeArrayType type, int index)
 {
   printf("start to load %s\n", filename);
@@ -42,10 +42,10 @@ EdgeArrayType type, int index)
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  int seq_loaded = load_seq_data_into_graph_of_specific_person_or_pop(fp,&read_sequence_from_fastq, count_kmers, bad_reads, quality_cut_off, max_read_length, db_graph, type, index);
+  int seq_loaded = load_seq_data_into_graph_of_specific_person_or_pop(fp,&read_sequence_from_fastq, bad_reads, quality_cut_off, max_read_length, db_graph, type, index);
 
   //print mem status
-  printf("Finished loading: %s, total bases loaded were: %d, bad reads: %lld, number of kmers: %lld, quality cutoff: %c, \nCurrent memory status:\n", filename, seq_loaded, *bad_reads, *count_kmers, quality_cut_off);
+  printf("Finished loading: %s, total bases loaded were: %d, bad reads: %lld, quality cutoff: %c, \nCurrent memory status:\n", filename, seq_loaded, *bad_reads, quality_cut_off);
   FILE* fmem=fopen("/proc/self/status", "r");
   char memline[500];
   while (fgets(memline,500,fmem) !=NULL){
@@ -62,7 +62,7 @@ EdgeArrayType type, int index)
 
 
 //returns length of sequence loaded
-int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char quality_cut_off, 
+int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * bad_reads, char quality_cut_off, 
 						       int max_read_length, dBGraph * db_graph, EdgeArrayType type, int index){
 
   //----------------------------------
@@ -130,16 +130,21 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
 	  boolean found = false;
 	  current_node = hash_table_find_or_insert(element_get_key(current_window->kmer[j],db_graph->kmer_size),&found,db_graph);	  	 
-	  if (!found){
-	    (*count_kmers)++;
-	  }
+	  //if (!found){  //commented out - not counting new kmers any more
+	  //  
+	  //}
+
+	  if (current_node==NULL)
+	    {
+	      printf("failed to find or insert node");
+	      exit(1);
+	    }
 	  
 	  //increment coverage, if not seen before in this read
 	  if (!db_node_check_status(current_node, visited))
 	    {
 	      db_node_increment_coverage(current_node, type, index);
 	      db_node_set_status(current_node, visited);
-	  
 	    }
 
 	  current_orientation = db_node_get_orientation(current_window->kmer[j],current_node, db_graph->kmer_size);
@@ -149,24 +154,32 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 	    printf("kmer %i:  %s\n",i,binary_kmer_to_seq(current_window->kmer[j],db_graph->kmer_size,kmer_seq));
 	  }
 	  
-	  if (j>0){
-	    //never assume that previous pointer stays as we do reallocation !!!!!!
-	    previous_node = hash_table_find(element_get_key(current_window->kmer[j-1],db_graph->kmer_size),db_graph);
-	    
-	    if (previous_node == NULL){
-	      puts("file_reader: problem - kmer not found\n");
-	      exit(1);
+	  if (j>0)
+	    {
+	      
+	      if (previous_node == NULL)
+		{
+		  puts("file_reader: problem - kmer not found\n");
+		  exit(1);
+		}
+	      else
+		{
+		  //previous_orientation = db_node_get_orientation(current_window->kmer[j-1],previous_node, db_graph->kmer_size); 	      
+		  db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size, type, index);	  	      
+		}
 	    }
-	    previous_orientation = db_node_get_orientation(current_window->kmer[j-1],previous_node, db_graph->kmer_size); 	      
-	    db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size, type, index);	  	      
-	  }
+	  
+	  previous_node = current_node;
+          previous_orientation = current_orientation;
+
 	  
 	}
       }
 
       //here - go through all the windows again, find each node, and set it to unvisited.
       for(i=0;i<windows->nwindows;i++)
-	{ //for each window
+	{ 
+	  //for each window
 	  KmerSlidingWindow * current_window = &(windows->window[i]);
 	  
 	  for(j=0;j<current_window->nkmers;j++)
@@ -191,7 +204,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 
 
 //returns length of sequence loaded
-int load_ref_overlap_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * count_kmers, long long * bad_reads, char quality_cut_off, 
+int load_ref_overlap_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * bad_reads, char quality_cut_off, 
 						       int max_read_length, dBGraph * db_graph, int which_chromosome){
 
   //----------------------------------
@@ -296,7 +309,7 @@ int load_ref_overlap_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* 
 
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
-long long load_population_as_fasta(char* filename, long long* count_kmers, long long* bad_reads, dBGraph* db_graph)
+long long load_population_as_fasta(char* filename, long long* bad_reads, dBGraph* db_graph)
 {
 
   FILE* fp = fopen(filename, "r");
@@ -329,9 +342,9 @@ long long load_population_as_fasta(char* filename, long long* count_kmers, long 
 
       //printf("About to try and load fasta for this person %s\n",line);
 
-      total_seq_loaded = total_seq_loaded + load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, count_kmers, bad_reads, db_graph, people_so_far-1);
+      total_seq_loaded = total_seq_loaded + load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, bad_reads, db_graph, people_so_far-1);
 
-      //printf("Just loaded person number %d, and now have cumulative total of  %d bases with %lld kmers and %lld bad_reads so far\n", people_so_far-1, total_seq_loaded, *count_kmers, *bad_reads);
+
     }
 
   //printf("Finished loading population, witht total seq loaded %d\n",total_seq_loaded); 
@@ -342,7 +355,7 @@ long long load_population_as_fasta(char* filename, long long* count_kmers, long 
 
 
 //index tells you which person within a population it is
-int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* count_kmers, long long* bad_reads, dBGraph* db_graph, int index)
+int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bad_reads, dBGraph* db_graph, int index)
 {
   FILE* fptr = fopen(f_name, "r");
   if (fptr == NULL)
@@ -365,7 +378,7 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
 	*p = '\0';
       
       total_seq_loaded = total_seq_loaded + 
-	load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(line, count_kmers, bad_reads, MAX_READ_LENGTH, db_graph, individual_edge_array, index);
+	load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(line, bad_reads, MAX_READ_LENGTH, db_graph, individual_edge_array, index);
 
     }
 
@@ -378,7 +391,7 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
 
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
-long long load_population_as_fastq(char* filename, long long* count_kmers, long long* bad_reads, char quality_cutoff, dBGraph* db_graph)
+long long load_population_as_fastq(char* filename, long long* bad_reads, char quality_cutoff, dBGraph* db_graph)
 {
 
   FILE* fp = fopen(filename, "r");
@@ -409,9 +422,9 @@ long long load_population_as_fastq(char* filename, long long* count_kmers, long 
 	exit(1);
       }
 
-      total_seq_loaded = total_seq_loaded + load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(line, count_kmers, bad_reads, quality_cutoff, db_graph, people_so_far-1);
+      total_seq_loaded = total_seq_loaded + load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(line, bad_reads, quality_cutoff, db_graph, people_so_far-1);
 
-      printf("Just loaded person number %d, and now have cumulative total of  %d bases with %lld kmers and %lld bad_reads so far\n", people_so_far-1, total_seq_loaded, *count_kmers, *bad_reads);
+      printf("Just loaded person number %d, and now have cumulative total of  %d bases with %lld bad_reads so far\n", people_so_far-1, total_seq_loaded, *bad_reads);
     }
 
   printf("Finished loading population, witht total seq loaded %d\n",total_seq_loaded); 
@@ -422,7 +435,7 @@ long long load_population_as_fastq(char* filename, long long* count_kmers, long 
 
 
 //index tells you which person within a population it is
-int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(char* f_name, long long* count_kmers, long long* bad_reads, char quality_cutoff,  dBGraph* db_graph, int index)
+int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(char* f_name, long long* bad_reads, char quality_cutoff,  dBGraph* db_graph, int index)
 {
   FILE* fptr = fopen(f_name, "r");
   if (fptr == NULL)
@@ -445,7 +458,7 @@ int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_f
 	*p = '\0';
       
       total_seq_loaded = total_seq_loaded + 
-	load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(line, count_kmers, bad_reads, quality_cutoff,  MAX_READ_LENGTH, db_graph, individual_edge_array, index);
+	load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(line, bad_reads, quality_cutoff,  MAX_READ_LENGTH, db_graph, individual_edge_array, index);
 
     }
 
@@ -472,11 +485,11 @@ int load_chromosome_overlap_data(char* f_name,  dBGraph* db_graph, int which_chr
   //    printf("opened file %s to load overlap data\n", f_name);
   //  }
 
-  long long count_kmers, bad_reads;
+  long long bad_reads;
   int total_seq_loaded=0;
 
   total_seq_loaded = total_seq_loaded +
-    load_ref_overlap_data_into_graph_of_specific_person_or_pop(fptr, &read_sequence_from_fasta, &count_kmers,&bad_reads,  0 , max_read_length, db_graph, which_chromosome);
+    load_ref_overlap_data_into_graph_of_specific_person_or_pop(fptr, &read_sequence_from_fasta, &bad_reads,  0 , max_read_length, db_graph, which_chromosome);
 
 
   return total_seq_loaded;

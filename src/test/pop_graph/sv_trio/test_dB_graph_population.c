@@ -14,13 +14,15 @@
 void test_is_supernode_end()
 {
 
-  int kmer_size;
-  int number_of_buckets;
-
   //first set up the hash/graph
-  kmer_size = 3;
-  number_of_buckets=5;
-  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  int kmer_size = 3;
+  int number_of_bits = 8;
+  int bucket_size    = 8;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
  
   //1. Sequence of tests as follows
   //         Each test loads a single specifically designed fasta file into a graph/hash table.
@@ -33,10 +35,7 @@ void test_is_supernode_end()
   //  Sequence is :  ACGTAC
   // ****
 
-  long long count_kmers=0;
-  long long bad_reads=0;
-
-  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops", &count_kmers, &bad_reads, hash_table);
+  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops",  &bad_reads, hash_table);
   CU_ASSERT(seq_loaded==6);
   CU_ASSERT(bad_reads==0);
 
@@ -70,13 +69,14 @@ void test_is_supernode_end()
 
   //first set up the hash/graph
   kmer_size = 3;
-  number_of_buckets=5;
+  number_of_bits = 4;
+  bucket_size    = 4;
+  bad_reads = 0;
+  max_retries=10;
 
-  count_kmers=0;
-  bad_reads=0;
+  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
 
-  hash_table = hash_table_new(number_of_buckets,kmer_size);
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end", &count_kmers, &bad_reads, hash_table);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end", &bad_reads, hash_table);
 
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(bad_reads==0);
@@ -122,15 +122,18 @@ void test_is_supernode_end()
   //   caused by two INWARD edges in the opposite direction
   // ****
 
-//first set up the hash/graph
+  //first set up the hash/graph
   kmer_size = 3;
-  number_of_buckets=5;
-  hash_table = hash_table_new(number_of_buckets,kmer_size);
+  number_of_bits = 4;
+  bucket_size    = 4;
+  bad_reads = 0;
+  max_retries=10;
 
-  count_kmers=0;
-  bad_reads=0;
 
-  seq_loaded=load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_inward_conflict_at_end",&count_kmers, &bad_reads, hash_table);
+  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
+
+  seq_loaded=load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_inward_conflict_at_end",&bad_reads, hash_table);
 
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(bad_reads==0);
@@ -183,14 +186,17 @@ void test_is_supernode_end()
   // ****
 
   
-//first set up the hash/graph
+  //first set up the hash/graph
   kmer_size = 3;
-  number_of_buckets=5;
-  hash_table = hash_table_new(number_of_buckets,kmer_size);
+  number_of_bits = 4;
+  bucket_size    = 4;
+  bad_reads = 0;
+  max_retries=10;
 
-  count_kmers=0;
-  bad_reads=0;
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_infiniteloop", &count_kmers, &bad_reads, hash_table);
+
+  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_infiniteloop",  &bad_reads, hash_table);
   CU_ASSERT(bad_reads==0);
   CU_ASSERT(seq_loaded==25);
 
@@ -223,9 +229,15 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
   //       TTGACG
 
 
+  //first set up the hash/graph
   int kmer_size = 3;
-  int number_of_buckets=5;
-  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  int number_of_bits = 4;
+  int bucket_size    = 4;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
   
   if (hash_table==NULL)
     {
@@ -233,11 +245,9 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
       exit(1);
     }
 
-  long long bad_reads=0;
-  long long total_kmers=0;
   long long seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &total_kmers, &bad_reads, hash_table);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &bad_reads, hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 44);
   CU_ASSERT(bad_reads==0);
@@ -266,9 +276,15 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
 void test_get_min_and_max_covg_of_nodes_in_supernode()
 {
 
+  //first set up the hash/graph
   int kmer_size = 3;
-  int number_of_buckets=5;
-  HashTable* hash_table = hash_table_new(number_of_buckets,kmer_size);
+  int number_of_bits = 4;
+  int bucket_size    = 4;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
   
   if (hash_table==NULL)
     {
@@ -276,8 +292,6 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
       exit(1);
     }
 
-  long long bad_reads=0;
-  long long total_kmers=0;
   long long seq_loaded=0;
 
 
@@ -308,7 +322,7 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
   //double coverness of hairpin must not confuse read coverage
 
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/coverage/one_person", &total_kmers, &bad_reads, hash_table);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/coverage/one_person", &bad_reads, hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 24);
   CU_ASSERT(bad_reads==0);

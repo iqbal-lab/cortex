@@ -14,10 +14,9 @@ void test_hash_table_find()
   int number_of_bits = 4;
   int bucket_size    = 4;
   long long bad_reads = 0; 
-  
+  int max_retries=10;
 
-
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
   
   //Load the following fasta:
   //    >read1
