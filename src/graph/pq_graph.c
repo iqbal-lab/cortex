@@ -1,5 +1,5 @@
 #include <pq_graph.h>
-#include <hash_table.h>
+#include <open_hash/hash_table.h>
 #include <element.h>
 #include <priority_queue.h>
 

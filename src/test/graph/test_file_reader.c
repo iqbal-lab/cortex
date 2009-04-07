@@ -2,7 +2,7 @@
 #include <Basic.h>
 #include <file_reader.h>
 #include <element.h>
-#include <hash_table.h>
+#include <open_hash/hash_table.h>
 #include <stdlib.h>
 #include <test_file_reader.h>
 
@@ -11,25 +11,24 @@
 void test_dump_load_binary(){
 
   int kmer_size = 3;
-  int number_of_buckets_pre = 4; // has to be power of 2 -- need to fix this
-  int number_of_buckets_post = 8; // has to be power of 2 -- need to fix this
-  long long count_kmers_pre,count_kmers_post;
+  int number_of_bits_pre = 4; 
+  int number_of_bits_post = 8;
+  int bucket_size = 5;
   long long bad_reads = 0; 
   FILE * fout = fopen("../data/test/graph/dump_graph.bin", "w");
   int seq_length_pre,seq_length_post;
   dBGraph * db_graph_pre;
   dBGraph * db_graph_post;
   
-  count_kmers_pre = 0;
-  count_kmers_post = 0;
+  
 
   void print_node_binary(dBNode * node){
     db_node_print_binary(fout,node);
   }
 
-  db_graph_pre = hash_table_new(number_of_buckets_pre,kmer_size);
+  db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,10,kmer_size);
 
-  seq_length_pre = load_fasta_data_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta", &count_kmers_pre, &bad_reads, 20, db_graph_pre);
+  seq_length_pre = load_fasta_data_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta", &bad_reads, 20, db_graph_pre);
 
   fout = fopen("../data/test/graph/dump_graph.bin", "w");
 
@@ -46,11 +45,11 @@ void test_dump_load_binary(){
   fclose(fout);
 
   
-  db_graph_post = hash_table_new(number_of_buckets_post,kmer_size);
-  seq_length_post = load_binary_data_from_filename_into_graph("../data/test/graph/dump_graph.bin", &count_kmers_post, db_graph_post);
+  db_graph_post = hash_table_new(number_of_bits_post,bucket_size,10,kmer_size);
+  seq_length_post = load_binary_data_from_filename_into_graph("../data/test/graph/dump_graph.bin", db_graph_post);
 
   CU_ASSERT_EQUAL(seq_length_post,15);
-  CU_ASSERT_EQUAL(count_kmers_post,5);
+  CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post),5);
 
   //all the kmers and their reverse complements from the reads
   dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAA", kmer_size),kmer_size) ,db_graph_post);

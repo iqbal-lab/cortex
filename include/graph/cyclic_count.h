@@ -2,7 +2,7 @@
 #ifndef CYCLIC_COUNT_H_
 #define CYCLIC_COUNT_H_
 
-#include <hash_table.h>
+#include <open_hash/hash_table.h>
 #include <element.h>
 
 unsigned long long  rotate_least_sig_2k_bits(unsigned long long value, short kmer_size);

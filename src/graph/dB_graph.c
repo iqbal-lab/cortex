@@ -8,14 +8,18 @@
 #include <element.h>
 #include <dB_graph.h>
 #include <string.h>
-#include <pq_graph.h>
 
 
 void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int),HashTable * hash_table, int** array, int length_of_array){
-  int i;
-  for(i=0;i<hash_table->number_buckets;i++){
-    pqueue_traverse_with_array(f,hash_table, &(hash_table->table[i]), array, length_of_array);
+
+  long long i;
+  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
+    if (!db_node_check_status(&hash_table->table[i],unassigned)){
+      f(hash_table, &hash_table->table[i], array, length_of_array);
+    }
   }
+
+
 }
 
 
@@ -762,6 +766,12 @@ dBNode* db_graph_get_next_node_in_supernode(dBNode* node, Orientation orientatio
 //the idea is that this function is passed into the traverse function, and the caller of that
 void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Element* node, int** array_of_supernode_lengths, int length_of_array)
 {
+
+  if (db_node_check_status(node, visited) || db_node_check_status(node,pruned))
+    {
+      return;
+    }
+
   int length_of_supernode=1;
   dBNode* first_node=db_graph_get_first_node_in_supernode_containing_given_node(node, db_graph);
   dBNode* current_node;
@@ -880,13 +890,16 @@ int db_graph_get_N50_of_supernodes(dBGraph* db_graph)
 
 
   int current_cumulative_len=0;
+  printf("Total length of supernodes is %d and ctr is %d\n", total, ctr);
 
   for (i=9999; i>=9999-ctr+1; i--)
     {
       current_cumulative_len += numbers_of_supernodes_of_specific_lengths[lengths_of_supernodes[i]] * lengths_of_supernodes[i] ;
+      //printf("Looking at supernodes whose length is %d  - there are %d of them, i is %d, current cum length is %d\n", lengths_of_supernodes[i],  numbers_of_supernodes_of_specific_lengths[lengths_of_supernodes[i]], i, current_cumulative_len);
+
       if (current_cumulative_len >= total/2)
 	{
-	  printf("total is %d and n50 is %d\n", total, lengths_of_supernodes[i]);
+	  //  printf("total is %d and n50 is %d\n", total, lengths_of_supernodes[i]);
 	  // then we have found the N50.
 	  return lengths_of_supernodes[i];
 	}

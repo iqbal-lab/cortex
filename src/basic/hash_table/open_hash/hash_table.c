@@ -137,6 +137,8 @@ void hash_table_traverse(void (*f)(Element *),HashTable * hash_table){
 }
 
 
+
+
 Element * hash_table_find(Key key, HashTable * hash_table){
   if (hash_table == NULL) {
     puts("NULL table!");

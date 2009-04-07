@@ -20,16 +20,16 @@ typedef char Edges;
 
 typedef enum
   {
-    none    = 0,
-    visited = 1,
-    pruned_from_NA12878  = 2,
-    pruned_from_NA12891  = 3,
-    pruned_from_NA12892  = 4,
-    pruned_from_NA12878_and_NA12891  = 5,
-    pruned_from_NA12878_and_NA12892  = 6,
-    pruned_from_NA12891_and_NA12892  = 7,
-    pruned_from_NA12878_and_NA12891_and_NA12892  = 8,
-    potential_sv = 9,
+    unassigned   = 0,
+    none         = 1,
+    visited      = 2,
+    pruned_from_NA12878  = 3,
+    pruned_from_NA12891  = 4,
+    pruned_from_NA12892  = 5,
+    pruned_from_NA12878_and_NA12891  = 6,
+    pruned_from_NA12878_and_NA12892  = 7,
+    pruned_from_NA12891_and_NA12892  = 8,
+    pruned_from_NA12878_and_NA12891_and_NA12892  = 9,
 
   } NodeStatus;
 

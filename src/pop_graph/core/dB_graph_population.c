@@ -6,7 +6,8 @@
 #include <stdio.h>
 
 #include <element.h>
-#include <hash_table.h>
+#include <open_hash/hash_table.h>
+
 #include <dB_graph.h>
 #include <dB_graph_population.h>
 #include <pqueue_pop.h>

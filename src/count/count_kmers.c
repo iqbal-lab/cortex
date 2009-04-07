@@ -1,6 +1,6 @@
 #include <seq.h>
 #include <binary_kmer.h>
-#include <hash_table.h>
+#include <open_hash/hash_table.h>
 #include <stdio.h>
 #include <stdlib.h>
 

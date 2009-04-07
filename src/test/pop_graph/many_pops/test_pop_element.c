@@ -1,7 +1,7 @@
 #include <CUnit.h>
 #include <Basic.h>
 #include <element.h>
-#include <hash_table.h>
+#include <open_hash/hash_table.h>
 #include "test_pop_element.h"
 #include <stdlib.h>
 

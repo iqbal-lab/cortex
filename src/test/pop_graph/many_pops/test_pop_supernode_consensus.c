@@ -4,7 +4,7 @@
 #include <dB_graph_population.h>
 #include <dB_graph_supernode.h>
 #include <element.h>
-#include <hash_table.h>
+#include <open_hash/hash_table.h>
 #include <stdlib.h>
 #include "supernode_cmp.h"
 
