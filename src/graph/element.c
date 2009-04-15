@@ -48,6 +48,7 @@ void element_initialise(Element * e, BinaryKmer kmer, short kmer_size){
   e->kmer     = element_get_key(kmer, kmer_size);
   e->edges    = 0;
   e->status   = none;
+  printf("Mario status in intialise of element is %d\n", e->status);
   e->coverage = 0;
 }
 

@@ -128,6 +128,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 	KmerSlidingWindow * current_window = &(windows->window[i]);
 	
 	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
+	  printf("insertion. j is %d\n", j);
 	  boolean found = false;
 	  current_node = hash_table_find_or_insert(element_get_key(current_window->kmer[j],db_graph->kmer_size),&found,db_graph);	  	 
 	  //if (!found){  //commented out - not counting new kmers any more
@@ -179,6 +180,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
       //here - go through all the windows again, find each node, and set it to unvisited.
       for(i=0;i<windows->nwindows;i++)
 	{ 
+	  printf("in loop i going through windows again is %d\n", i);
 	  //for each window
 	  KmerSlidingWindow * current_window = &(windows->window[i]);
 	  
@@ -187,7 +189,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 	      current_node = hash_table_find(element_get_key(current_window->kmer[j],db_graph->kmer_size),db_graph);	  	 
 	      if (current_node==NULL)
 		{
-		  printf("Impossible- must be able to find all kmers in these windows as already inserted");
+		  printf("i is %d and j is %d Impossible- must be able to find all kmers in these windows as already inserted", i, j);
 		  exit(1);
 		}
 	      db_node_set_status(current_node, none);

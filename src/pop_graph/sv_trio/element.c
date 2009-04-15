@@ -268,18 +268,19 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
 
   e->kmer = element_get_key(kmer, kmer_size);
 
-  int i;
-  for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
-    {
-      e->individual_edges[i]=0;
-      e->coverage[i]=0;
-    }
+  // int i;
+  //for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+  //  {
+  //   e->individual_edges[i]=0;
+  //    e->coverage[i]=0;
+  //  }
 
-  for (i=0; i<6; i++)
-    {
-      e->chrom_xs[i]=0;
-    }
+  //  for (i=0; i<6; i++)
+  // {
+  //   e->chrom_xs[i]=0;
+  //  }
   e->status = none;
+  printf("INSIDE ELEM INITIALISE ZAMZAMZAM element status  is %d\n", e->status);
 }
 
 
@@ -1152,6 +1153,7 @@ boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayTy
 }
 
 boolean db_node_check_status(dBNode * node, NodeStatus status){
+  printf ("PEPE %d\n",node->status);
   return node->status == status;
 }
 boolean db_node_check_status_not_pruned(dBNode * node){

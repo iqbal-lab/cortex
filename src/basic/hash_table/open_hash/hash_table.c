@@ -61,6 +61,7 @@ boolean hash_table_find_with_position(Key key, long long * current_pos, boolean 
    
   while(i<hash_table->bucket_size){
     
+    printf("in the hash table with postion while loop, hashval is %qd and status is %d\n", hashval, (hash_table->table[*current_pos]).status);
     //sanity check -- to avoid out of boundery access
     if (*current_pos >= hash_table->number_buckets * hash_table->bucket_size || *current_pos<0){
       printf("problem found\n");
@@ -71,6 +72,23 @@ boolean hash_table_find_with_position(Key key, long long * current_pos, boolean 
     if (db_node_check_status(&hash_table->table[*current_pos],unassigned)){
       break;
     }
+    else
+      {
+	if (hash_table->table[*current_pos].status == none)
+	  {
+	    printf("Did not break - status was NONE\n");
+	  }
+	else if (hash_table->table[*current_pos].status == visited)
+          {
+            printf("Did not break - status was VISITED\n");
+          }
+	else if (hash_table->table[*current_pos].status == unassigned)
+          {
+            printf("Did not break - status was UNASSIGNED\n");
+          }
+
+
+      }
 
     //element found
     if (element_is_key(key,hash_table->table[*current_pos], hash_table->kmer_size)){
@@ -158,7 +176,7 @@ Element * hash_table_find(Key key, HashTable * hash_table){
     }
 
     if (overflow){ //rehash
-      rehash++; 
+       rehash++; 
     }
   } while(overflow);
   
@@ -194,6 +212,7 @@ Element * hash_table_find_or_insert(Key key, boolean * found,  HashTable * hash_
       
 	//insert element
 	element_initialise(&element,key, hash_table->kmer_size);
+	printf("after elem initialise the elemtn status is %d\n", element.status);
 	hash_table->table[current_pos] = element; //structure assignment
 	ret = &hash_table->table[current_pos];
 	hash_table->unique_kmers++;

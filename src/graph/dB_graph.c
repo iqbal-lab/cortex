@@ -591,14 +591,14 @@ boolean db_graph_detect_perfect_bubble(dBNode * node,
   return ret;
 }
 
-  
+
 dBNode* db_graph_get_first_node_in_supernode_containing_given_node(dBNode* node,  dBGraph* db_graph)
 {
   char tmp_seq[db_graph->kmer_size];
 
   if (node==NULL)
     {
-      printf("Bloody node is null so of course cant get first node");
+      printf("db_graph_get_first_node_in_supernode_containing_given_node: node is null so of course cant get first node");
       exit(1);
     }
     
@@ -610,30 +610,31 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node(dBNode* node,
     }
   
 
-  boolean is_cycle;
   Nucleotide nucleotide1, nucleotide2, rev_nucleotide;
   Orientation original_orientation, next_orientation, orientation;
   dBNode * original_node=node;
   dBNode * next_node;
 
+  //are we already at the end of a supernode
+  if (db_node_is_supernode_end(original_node, forward))
+    {
+      return original_node;
+    }
+  else if (db_node_is_supernode_end(original_node, reverse))
+    {
+      return original_node;
+    }
 
-  //First node in supernode is, almost by definition, what you get if you go in the Reverse direction (with respect to the Node)
-  // as far as you can go.
-  // I say ALMOST by defn. By this defn, if you picked two differen nodes in a supernode, and asked each which was the first node in that supernode
-  //, you would get two different answers. Just a warning.
-
+  //arbitrary choice - go in reverse direction until you reach the end of the supernode
   original_orientation = reverse; 
   orientation = reverse;
-  is_cycle = false;
-
 
   while(db_node_has_precisely_one_edge(node,orientation,&nucleotide1))
   {
-        
     next_node =  db_graph_get_next_node(node,orientation,&next_orientation,nucleotide1,&rev_nucleotide,db_graph);
     
     if(next_node == NULL){
-      printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size, tmp_seq));
+      printf("dB_graph_get_first_node_in_supernode_containing_given_node: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size, tmp_seq));
       exit(1);
     }	         
 
@@ -652,29 +653,17 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node(dBNode* node,
       }
     else
       {
-	if (DEBUG)
-	  {
-	    printf("Multiple entries\n");
-	  }
-	//break;
-	 
-	//printf("returning this first nodem, with kmer %s\n", binary_kmer_to_seq(node->kmer, db_graph->kmer_size));
-      return node; //we have gone as far as we can go - the next node has multiple entries. So we are now at the first node of the supernode
+	return node; //we have gone as far as we can go - the next node has multiple entries. So we are now at the first node of the supernode
       }
     
     
     //loop
     if ((next_node == original_node) && (next_orientation == original_orientation))
       {      
-
-	is_cycle = true;
-	//break;
-	
-	//printf("We have a loop, so original node will do, with kmer %s\n", binary_kmer_to_seq(original_node->kmer, db_graph->kmer_size, tmp_seq));
 	return original_node; //we have a loop that returns to where we start. Might as well consider ourselves as at the fiurst node of the supernode right at the beginning
       }
     
-     node = next_node;
+    node = next_node;
     orientation = next_orientation;      
   }
   //printf("We have found the first node, it is %s\n", binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq));
@@ -703,6 +692,7 @@ dBNode* db_graph_get_next_node_in_supernode(dBNode* node, Orientation orientatio
 	{
 	  printf("this node is at the end of the supernode, in this orientation, so cant return the next one\n");
 	}
+      next_orientation=NULL;
       return NULL;
     }
 
@@ -780,7 +770,7 @@ void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Elem
   Orientation start_orientation, current_orientation, next_orientation;
   db_node_set_status(current_node, visited);
 
-  //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
+  //work out which direction to leave supernode in. 
   if (db_node_is_supernode_end(first_node,forward))
     {
       if (db_node_is_supernode_end(first_node,reverse))
@@ -821,7 +811,7 @@ void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Elem
     }
 
 
-  if (length_of_supernode>length_of_array)
+  if (length_of_supernode>length_of_array-1)
     {
       printf("We have a supernode of length %d, but have only allocated space to record lengths up to %d", length_of_supernode, length_of_array);
       exit(1);
