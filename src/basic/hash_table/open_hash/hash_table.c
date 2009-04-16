@@ -59,47 +59,48 @@ boolean hash_table_find_with_position(Key key, long long * current_pos, boolean 
   *current_pos   = (long long) hashval * hash_table->bucket_size;
   
    
-  while(i<hash_table->bucket_size){
+  while(i<hash_table->bucket_size)
+    {
     
-    printf("in the hash table with postion while loop, hashval is %qd and status is %d\n", hashval, (hash_table->table[*current_pos]).status);
-    //sanity check -- to avoid out of boundery access
-    if (*current_pos >= hash_table->number_buckets * hash_table->bucket_size || *current_pos<0){
-      printf("problem found\n");
-      exit(1);
-    }
+      //zam printf("in the hash table with postion while loop, hashval is %qd and status is %d\n", hashval, (hash_table->table[*current_pos]).status);
+      //sanity check -- to avoid out of boundary access
+      if (*current_pos >= hash_table->number_buckets * hash_table->bucket_size || *current_pos<0)
+	{
+	  printf("problem found\n");
+	  exit(1);
+	}
+      
+      //reach an empty space
+      if (db_node_check_status(&hash_table->table[*current_pos],unassigned))
+	{
+	  break;
+	}
+      //zam else
+      //  {
+      //	if (hash_table->table[*current_pos].status == none)
+      //  {
+      //    printf("Did not break - status was NONE\n");
+      //  }
+      //else if (hash_table->table[*current_pos].status == visited)
+      //    {
+      //      printf("Did not break - status was VISITED\n");
+      //    }
+      //else if (hash_table->table[*current_pos].status == unassigned)
+      //    {
+      //      printf("Did not break - status was UNASSIGNED\n");
+      //    }
+      
 
-    //reach an empty space
-    if (db_node_check_status(&hash_table->table[*current_pos],unassigned)){
-      break;
-    }
-    else
-      {
-	if (hash_table->table[*current_pos].status == none)
-	  {
-	    printf("Did not break - status was NONE\n");
-	  }
-	else if (hash_table->table[*current_pos].status == visited)
-          {
-            printf("Did not break - status was VISITED\n");
-          }
-	else if (hash_table->table[*current_pos].status == unassigned)
-          {
-            printf("Did not break - status was UNASSIGNED\n");
-          }
-
-
+      //element found
+      if (element_is_key(key,hash_table->table[*current_pos], hash_table->kmer_size)){
+	found = true;
+	break;
       }
-
-    //element found
-    if (element_is_key(key,hash_table->table[*current_pos], hash_table->kmer_size)){
-       found = true;
-       break;
-     }
-
-    (*current_pos)++;
-    i++;
-  }
-
+      
+      (*current_pos)++;
+      i++;
+    }
+  
   if (i == hash_table->bucket_size){
     *overflow = true;
   }
@@ -212,7 +213,7 @@ Element * hash_table_find_or_insert(Key key, boolean * found,  HashTable * hash_
       
 	//insert element
 	element_initialise(&element,key, hash_table->kmer_size);
-	printf("after elem initialise the elemtn status is %d\n", element.status);
+// zam printf("after elem initialise the elemtn status is %d\n", element.status);
 	hash_table->table[current_pos] = element; //structure assignment
 	ret = &hash_table->table[current_pos];
 	hash_table->unique_kmers++;

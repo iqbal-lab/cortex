@@ -268,18 +268,19 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
 
   e->kmer = element_get_key(kmer, kmer_size);
 
-  // int i;
-  //for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
-  //  {
-  //   e->individual_edges[i]=0;
-  //    e->coverage[i]=0;
-  //  }
+  int i;
+  for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    {
+      e->individual_edges[i]=0;
+      e->coverage[i]=0;
+    }
 
-  //  for (i=0; i<6; i++)
-  // {
-  //   e->chrom_xs[i]=0;
-  //  }
-  e->status = none;
+  for (i=0; i<6; i++)
+    {
+      e->chrom_xs[i]=0;
+    }
+  db_node_set_status(e, none);
+  //e->status = none;
   printf("INSIDE ELEM INITIALISE ZAMZAMZAM element status  is %d\n", e->status);
 }
 
