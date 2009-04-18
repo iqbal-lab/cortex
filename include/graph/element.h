@@ -23,6 +23,7 @@ typedef enum{
   none    = 1,
   visited = 2,
   pruned  = 3,
+  exists_in_reference =4,
 } NodeStatus;
 
 typedef struct{

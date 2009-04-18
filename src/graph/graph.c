@@ -61,6 +61,8 @@ int main(int argc, char **argv){
     fclose(fmem);
     fprintf(stderr,"************\n");
   }  
+
+
     
   
   int count_snps = 0;
