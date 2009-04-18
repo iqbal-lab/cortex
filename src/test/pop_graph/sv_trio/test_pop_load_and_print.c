@@ -229,28 +229,36 @@ void test_take_three_people_each_with_one_read_and_find_variants()
   // }
 
 
+  //qsort results
+  qsort((void*) array_of_supernodes_for_person1, number_of_supernodes_in_person_1 , sizeof(char*),  &supernode_cmp);
+  qsort((void*) array_of_supernodes_for_person2, number_of_supernodes_in_person_2 , sizeof(char*),  &supernode_cmp);
+  qsort((void*) array_of_supernodes_for_person3, number_of_supernodes_in_person_3 , sizeof(char*),  &supernode_cmp);
+
+
   //Expected results are
 
   char* correct_answer_person_1[] ={"AAGCCTCGACAGCCATGC"};
   char* correct_answer_person_2[]={"AAGCCTCGTTCGGCCATGC"};
   char* correct_answer_person_3[]={"AAGCCTCGCTA","GCATGGCTA","GCTAGC"};
-
+  char* rev_correct_answer_person_1[]={"GCATGGCTGTCGAGGCTT"};
+  char* rev_correct_answer_person_2[]={"GCATGGCCGAACGAGGCTT"};
+  char* rev_correct_answer_person_3[]={"TAGCGAGGCTT", "TAGCCATGC", "GCTAGC"};
 
 
   for (i=0; i<number_of_supernodes_in_person_1; i++)
     {
       //  printf("\ni is %d, person 1, compare %s and %s\n", i, correct_answer_person_1[i], array_of_supernodes_for_person1[i]);
-      CU_ASSERT_STRING_EQUAL(correct_answer_person_1[i], array_of_supernodes_for_person1[i]);
+      CU_ASSERT(!strcmp(correct_answer_person_1[i], array_of_supernodes_for_person1[i]) || !strcmp(rev_correct_answer_person_1[i], array_of_supernodes_for_person1[i]) );
     }
   for (i=0; i<number_of_supernodes_in_person_2; i++)
     {
-      //printf("\n i is %d, person 2, compare %s and %s\n", i, correct_answer_person_2[i], array_of_supernodes_for_person2[i]);
-      CU_ASSERT_STRING_EQUAL(correct_answer_person_2[i], array_of_supernodes_for_person2[i]);
+      // printf("\n i is %d, person 2, compare %s and %s\n", i, correct_answer_person_2[i], array_of_supernodes_for_person2[i]);
+      CU_ASSERT(!strcmp(correct_answer_person_2[i], array_of_supernodes_for_person2[i]) || !strcmp(rev_correct_answer_person_2[i], array_of_supernodes_for_person2[i]) );
     }
   for (i=0; i<number_of_supernodes_in_person_3; i++)
     {
-      //     printf("\n i is %d, person 3, compare %s and %s\n", i, correct_answer_person_3[i], array_of_supernodes_for_person3[i]);
-      CU_ASSERT_STRING_EQUAL(correct_answer_person_3[i], array_of_supernodes_for_person3[i]);
+      //   printf("\n i is %d, person 3, compare %s and %s\n", i, correct_answer_person_3[i], array_of_supernodes_for_person3[i]);
+	   CU_ASSERT(!strcmp(correct_answer_person_3[i], array_of_supernodes_for_person3[i]) || !strcmp(rev_correct_answer_person_3[i], array_of_supernodes_for_person3[i]) );
     }
 
 
@@ -859,7 +867,7 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example_2(
  // ********************************
  // Another example. Take one person, whose fasta is just an Alu. 
  // Take 2 chromosomes, one matches the start of the Alu, and the other which matches the end.
- // So our one supernode (the alu) intersects 2 chromosomes, with no node intersecting >1 chromosome => is a  potential sv locus.
+ // So our one supernode (the alu) intersects 2 chromosomes, with no node intersecting >1 chromosome => is a  potential sv (translocation) locus.
  // **********************************
 
   //first set up the hash/graph
@@ -910,7 +918,7 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example_2(
     }
   
 
-  //now load a chromosome which is the identical Alu fasta to the person we have loaded. So every node will overlap this chromosome.
+  //now load two chromosomes; one matches the start of the supernode, and the other matches the end of the supernode
   load_chromosome_overlap_data("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/matches_start_of_person1.fasta",hash_table, 1);
   load_chromosome_overlap_data("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/matches_end_of_person1.fasta",hash_table, 2);
 
@@ -941,16 +949,16 @@ void test_printing_supernode_with_chromosome_intersections_simple_alu_example_2(
  CU_ASSERT((number_of_chrom_overlaps_to_print_in_potential_sv_loci==1));
 
  // printf("SUPERNODE %s\n", array_of_supernodes_for_person1[0]);
- //printf("CHROMS %s\n", array_of_chrom_overlaps_for_person1[0]);
+ //printf("CHROMS start%sstop\n", array_of_chrom_overlaps_for_person1[0]);
 
- //should be the reverse complement of the sequence in person1, which is all one supernode
- CU_ASSERT_STRING_EQUAL(array_of_supernodes_for_person1[0],"CTACGGCTGACTTTTTTTTTTTTTTTTTTTTAAGAGACGGGGTCTCGCTATGTTGCTCAGGCTGGAGTGCAGTGGCTATTCACAGGCGCGATCCCACTACTGATCAGCACGGGAGTTTTGACCTGCTCCGTTTCCGACCTGGGCCGGTTCACCCCTCCTTAGGCAACCTGGTGGTCCCCCGCTCCCGGGAGGTCACCATATTGATGCCGAACTTAGTGCGGACACCCGATCGGCATAGCGCACTACAGCCCAGAACTCCTGGACTCAAGCGATCCTCCCACCTCAGCCTCCCGAGTAGCTGGGACTACAGGCACGCGCCACCGCGCCCGGCCTCTGAAC");
+ //should be the smae as or reverse complement of the sequence in person1, which is all one supernode
+ CU_ASSERT(  !strcmp(array_of_supernodes_for_person1[0],"CTACGGCTGACTTTTTTTTTTTTTTTTTTTTAAGAGACGGGGTCTCGCTATGTTGCTCAGGCTGGAGTGCAGTGGCTATTCACAGGCGCGATCCCACTACTGATCAGCACGGGAGTTTTGACCTGCTCCGTTTCCGACCTGGGCCGGTTCACCCCTCCTTAGGCAACCTGGTGGTCCCCCGCTCCCGGGAGGTCACCATATTGATGCCGAACTTAGTGCGGACACCCGATCGGCATAGCGCACTACAGCCCAGAACTCCTGGACTCAAGCGATCCTCCCACCTCAGCCTCCCGAGTAGCTGGGACTACAGGCACGCGCCACCGCGCCCGGCCTCTGAAC") || !strcmp(array_of_supernodes_for_person1[0], "GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGCGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG") );
 
  // first 101 nodes intesect chom2, the last 78 nodes intersect chrom 1, and the middle (309-78-101)=130 don't intersect anything
- // since chromosome goess through nodes BACKWARDS compared with supernode, we expect all directions to be R
+ // all directions should be the same
 
+ CU_ASSERT(!strcmp(array_of_chrom_overlaps_for_person1[0],"2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R ") || !strcmp(array_of_chrom_overlaps_for_person1[0], "1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 1F 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F 2F ") );
 
-CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 2R 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R 1R ");
 
  free(array_of_supernodes_for_person1[0]);
  free(array_of_chrom_overlaps_for_person1[0]);
@@ -1081,6 +1089,8 @@ void test_printing_of_supernode_that_might_be_an_inversion_simple()
  hash_table_free(&hash_table);
   
 }
+
+
 
 
 

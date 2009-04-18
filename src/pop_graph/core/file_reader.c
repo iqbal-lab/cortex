@@ -22,7 +22,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 int load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads, int max_read_length, dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
-  printf("start to load %s\n", filename);
+  // printf("start to load %s\n", filename);
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
     printf("cannot open file:%s\n",filename);
@@ -35,7 +35,7 @@ int load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fil
 int load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph,
 EdgeArrayType type, int index)
 {
-  printf("start to load %s\n", filename);
+  //  printf("start to load %s\n", filename);
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
     printf("cannot open file:%s\n",filename);
@@ -128,7 +128,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 	KmerSlidingWindow * current_window = &(windows->window[i]);
 	
 	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
-	  printf("insertion. j is %d\n", j);
+	  //printf("insertion. j is %d\n", j);
 	  boolean found = false;
 	  current_node = hash_table_find_or_insert(element_get_key(current_window->kmer[j],db_graph->kmer_size),&found,db_graph);	  	 
 	  //if (!found){  //commented out - not counting new kmers any more
@@ -180,7 +180,6 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
       //here - go through all the windows again, find each node, and set it to unvisited.
       for(i=0;i<windows->nwindows;i++)
 	{ 
-	  printf("in loop i going through windows again is %d\n", i);
 	  //for each window
 	  KmerSlidingWindow * current_window = &(windows->window[i]);
 	  

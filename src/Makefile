@@ -54,9 +54,9 @@ BASIC_TESTS_OBJ = obj/basic/binary_kmer.o obj/basic/seq.o obj/test/basic/test_bi
 
 DB_GRAPH_TESTS_OBJ = obj/basic/binary_kmer.o obj/graph/element.o obj/basic/seq.o obj/basic/hash_table/hash_key/bob_jenkins/hash_value.o obj/basic/hash_table/open_hash/hash_table.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/test/graph/test_dB_graph.o  obj/test/graph/test_file_reader.o obj/test/graph/run_dB_graph_tests.o obj/graph/pq_graph.o obj/test/graph/test_cyclic_count.o obj/graph/cyclic_count.o
 
-SV_TRIO_OBJ = obj/pop_graph/sv_trio/graph.o obj/basic/binary_kmer.o obj/pop_graph/sv_trio/element.o obj/basic/seq.o obj/basic/hash_table/hash_key/bob_jenkins/hash_value.o obj/basic/hash_table/open_hash/hash_table.o obj/pop_graph/sv_trio/dB_graph.o obj/pop_graph/sv_trio/file_reader.o  obj/pop_graph/sv_trio/dB_graph_population.o obj/pop_graph/sv_trio/pqueue_pop.o obj/pop_graph/sv_trio/clipping_trio.o
+SV_TRIO_OBJ = obj/pop_graph/sv_trio/graph.o obj/pop_graph/sv_trio/binary_kmer.o obj/pop_graph/sv_trio/element.o obj/pop_graph/sv_trio/seq.o obj/pop_graph/sv_trio/hash_value.o obj/pop_graph/sv_trio/hash_table.o obj/pop_graph/sv_trio/dB_graph.o obj/pop_graph/sv_trio/file_reader.o  obj/pop_graph/sv_trio/dB_graph_population.o obj/pop_graph/sv_trio/pqueue_pop.o obj/pop_graph/sv_trio/clipping_trio.o
 
-SV_TRIO_TESTS_OBJ = obj/test/pop_graph/sv_trio/test_pop_load_and_print.o obj/test/pop_graph/sv_trio/run_sv_trio_tests.o obj/test/pop_graph/sv_trio/supernode_cmp.o obj/test/pop_graph/sv_trio/test_pop_supernode_consensus.o obj/test/pop_graph/sv_trio/test_pop_element.o  obj/test/pop_graph/sv_trio/test_dB_graph_population.o obj/basic/binary_kmer.o obj/pop_graph/sv_trio/element.o obj/basic/seq.o obj/basic/hash_table/hash_key/bob_jenkins/hash_value.o obj/basic/hash_table/open_hash/hash_table.o obj/pop_graph/sv_trio/dB_graph.o obj/pop_graph/sv_trio/file_reader.o  obj/pop_graph/sv_trio/dB_graph_population.o 
+SV_TRIO_TESTS_OBJ = obj/test/pop_graph/sv_trio/test_pop_load_and_print.o obj/test/pop_graph/sv_trio/run_sv_trio_tests.o obj/test/pop_graph/sv_trio/supernode_cmp.o obj/test/pop_graph/sv_trio/test_pop_supernode_consensus.o obj/test/pop_graph/sv_trio/test_pop_element.o  obj/test/pop_graph/sv_trio/test_dB_graph_population.o obj/pop_graph/sv_trio/binary_kmer.o obj/pop_graph/sv_trio/element.o obj/pop_graph/sv_trio/seq.o obj/pop_graph/sv_trio/hash_value.o obj/pop_graph/sv_trio/hash_table.o obj/pop_graph/sv_trio/dB_graph.o obj/pop_graph/sv_trio/file_reader.o  obj/pop_graph/sv_trio/dB_graph_population.o 
 
 
 
@@ -103,11 +103,22 @@ obj/test/basic/%.o :  test/basic/%.c
 obj/test/graph/%.o :  test/graph/%.c 
 	mkdir -p obj/test/graph; $(CC) $(CFLAGS_GRAPH) $(CFLAGS_DB_GRAPH_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
 
+
+obj/pop_graph/sv_trio/%.o :  basic/%.c 
+	mkdir -p obj/pop_graph/sv_trio; $(CC) $(CFLAGS_SV_TRIO) $(OPT) $(LDFLAGS) -c $? -o $@
+
+obj/pop_graph/sv_trio/%.o :  basic/hash_table/hash_key/bob_jenkins/%.c 
+	mkdir -p obj/pop_graph/sv_trio; $(CC) $(CFLAGS_SV_TRIO) $(OPT) $(LDFLAGS) -c $? -o $@
+
+obj/pop_graph/sv_trio/%.o :  basic/hash_table/open_hash/%.c 
+	mkdir -p obj/pop_graph/sv_trio; $(CC) $(CFLAGS_SV_TRIO) $(OPT) $(LDFLAGS) -c $? -o $@
+
 obj/pop_graph/sv_trio/%.o :  pop_graph/core/%.c 
-	mkdir -p obj/pop_graph/core; $(CC) $(CFLAGS_SV_TRIO) $(OPT) $(LDFLAGS) -c $? -o $@
+	mkdir -p obj/pop_graph/sv_trio; $(CC) $(CFLAGS_SV_TRIO) $(OPT) $(LDFLAGS) -c $? -o $@
 
 obj/pop_graph/sv_trio/%.o :  pop_graph/sv_trio/%.c 
 	mkdir -p obj/pop_graph/sv_trio; $(CC) $(CFLAGS_SV_TRIO) $(OPT) $(LDFLAGS) -c $? -o $@
 
+
 obj/test/pop_graph/sv_trio/%.o :  test/pop_graph/sv_trio/%.c 
-	mkdir -p obj/test/graph; $(CC)  $(CFLAGS_SV_TRIO_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
+	mkdir -p obj/test/pop_graph/sv_trio; $(CC)  $(CFLAGS_SV_TRIO_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@

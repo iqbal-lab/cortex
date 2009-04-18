@@ -281,7 +281,7 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
     }
   db_node_set_status(e, none);
   //e->status = none;
-  printf("INSIDE ELEM INITIALISE ZAMZAMZAM element status  is %d\n", e->status);
+  //printf("INSIDE ELEM INITIALISE ZAMZAMZAM element status  is %d\n", e->status);
 }
 
 
@@ -1154,7 +1154,6 @@ boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayTy
 }
 
 boolean db_node_check_status(dBNode * node, NodeStatus status){
-  printf ("PEPE %d\n",node->status);
   return node->status == status;
 }
 boolean db_node_check_status_not_pruned(dBNode * node){

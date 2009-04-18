@@ -37,7 +37,7 @@ int main(int argc, char **argv){
   long long total_length = 0; //total sequence length
 
   //Go through all the files, loading data into the graph
-  total_length += load_population_as_fastq(argv[1], &total_kmers, &bad_reads, 30, db_graph);
+  total_length += load_population_as_fastq(argv[1], &bad_reads, 30, db_graph);
   fprintf(stderr,"\n%ld file name:%s total seq:%lld bad reads: %lld total kmers:%lld\n\n",count_files,argv[1],total_length, bad_reads, total_kmers);
   printf("\nLoaded all the files\n %ld file name:%s total seq:%lld bad reads: %lld total kmers:%lld\n\n",count_files,argv[1],total_length, bad_reads, total_kmers);
 

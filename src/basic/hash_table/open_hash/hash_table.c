@@ -216,7 +216,7 @@ Element * hash_table_find_or_insert(Key key, boolean * found,  HashTable * hash_
 	//insert element
 		element_initialise(&element,key, hash_table->kmer_size);
 		//element_initialise(e, key, hash_table->kmer_size);
-	printf("after elem initialise the elemtn status is %d\n", element.status);
+		//printf("after elem initialise the elemtn status is %d\n", element.status);
 	hash_table->table[current_pos] = element; //structure assignment
 	ret = &hash_table->table[current_pos];
 	hash_table->unique_kmers++;

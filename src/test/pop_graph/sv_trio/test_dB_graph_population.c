@@ -21,7 +21,6 @@ void test_is_supernode_end()
   long long bad_reads = 0;
   int max_retries=10;
 
-  printf("\n\n***START TEST***\n\n");
   dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
 
  
