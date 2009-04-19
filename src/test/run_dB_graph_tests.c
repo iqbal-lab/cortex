@@ -26,6 +26,12 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  
+   if (NULL == CU_add_test(pSuite, "test has precisely one edge with status",test_db_graph_db_node_has_precisely_n_edges_with_status)){
+     CU_cleanup_registry();
+     return CU_get_error();
+   }
+
 
   if (NULL == CU_add_test(pSuite, "test supernode walking",  test_supernode_walking)){
     CU_cleanup_registry();
@@ -42,12 +48,18 @@ int  main()
     return CU_get_error();
   }
 
-   if (NULL == CU_add_test(pSuite, "test dumping/reading binary",  test_dump_load_binary)){
+  if (NULL == CU_add_test(pSuite, "test dumping/reading binary",  test_dump_load_binary)){
     CU_cleanup_registry();
     return CU_get_error();
   }
 
-   if (NULL == CU_add_test(pSuite, "test get perfect path",  test_get_perfect_path)){
+  if (NULL == CU_add_test(pSuite, "test tip clipping",  test_tip_clipping)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+
+  if (NULL == CU_add_test(pSuite, "test get perfect path",  test_get_perfect_path)){
      CU_cleanup_registry();
      return CU_get_error();
    }

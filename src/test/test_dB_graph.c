@@ -104,16 +104,95 @@ void test_hash_table_find()
 
 
 
-
-void test_supernode_walking()
+void test_tip_clipping()
 {
 
+  //first set up the hash/graph
+  int kmer_size = 3;
+  int number_of_bits = 4;
+  int bucket_size    = 4;
+  long long bad_reads = 0; 
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  
+
+  //Load the following fasta:
+  
+  //>main_trunk
+  //GCGTCCCAT
+  //>tip
+  //CGTTT
+
+  int seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/generates_graph_with_tip.fasta",&bad_reads, 20, db_graph);
+
+
+ 
+
+  CU_ASSERT_EQUAL(seq_length,14);
+
+  dBNode* node1 = hash_table_find(element_get_key(seq_to_binary_kmer("TTT", kmer_size),kmer_size) ,db_graph);
+
+  CU_ASSERT(node1 != NULL);
+  
+  int tip_length = db_graph_db_node_clip_tip(node1, 10 , &db_node_check_status_none,&db_node_action_set_status_pruned,db_graph);
+  
+  CU_ASSERT_EQUAL(tip_length,2);
+
+  dBNode* node2 = hash_table_find(element_get_key(seq_to_binary_kmer("GTT", kmer_size),kmer_size) ,db_graph);
+  dBNode* node3 = hash_table_find(element_get_key(seq_to_binary_kmer("CGT", kmer_size),kmer_size) ,db_graph);
+
+
+
+  CU_ASSERT(db_node_check_status(node1,pruned));
+  CU_ASSERT(db_node_check_status(node2,pruned));
+  
+  CU_ASSERT(db_node_check_status(node3,none));
+
+
+  dBNode * nodes_path[100];
+  Orientation orientations_path[100];
+  Nucleotide labels_path[100];
+  char tmp_seq[100+db_graph->kmer_size+1];
+
+
+  int length_supernode = db_graph_supernode(node3,100,&db_node_check_status_none,&db_node_action_set_status_visited,tmp_seq,nodes_path,orientations_path,labels_path,db_graph);
+
+  CU_ASSERT_EQUAL(length_supernode,6);
+
+  
+  CU_ASSERT_STRING_EQUAL("ATGGGACGC",tmp_seq);
+
+
+  //check ends
+  dBNode* node4 = hash_table_find(element_get_key(seq_to_binary_kmer("GCG", kmer_size),kmer_size) ,db_graph);
+  dBNode* node5 = hash_table_find(element_get_key(seq_to_binary_kmer("CAT", kmer_size),kmer_size) ,db_graph);
+
+  
+  CU_ASSERT(db_node_check_status(node3,visited));
+  CU_ASSERT(db_node_check_status(node4,visited));
+  CU_ASSERT(db_node_check_status(node5,visited));
+   
+
+  hash_table_free(&db_graph);
+  CU_ASSERT(db_graph == NULL);
+  
+
+}
+  
+
+void test_supernode_walking() //test db_graph_get_perfect_path 
+ { 
+ 
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits=4;
   int bucket_size   = 10;
   int seq_length;
   long long bad_reads = 0;
+  dBNode * path_nodes[100];
+  Orientation path_orientations[100];
+  Nucleotide path_labels[100];
+  char tmp_seq[100];
 
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
 
@@ -148,21 +227,21 @@ void test_supernode_walking()
 
    boolean is_cycle=false;
    
-   char test1_result[5000];
-   
-   get_seq_from_elem_to_end_of_supernode(test_element1, forward, db_graph, &is_cycle, test1_result,5000);
-   CU_ASSERT(is_cycle);
+   int test1_length = db_graph_get_perfect_path(test_element1,forward,100,&db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+
+    CU_ASSERT(is_cycle);
 
 
    //depending on what orientation GTA is with respect to it's kmer, the answer you get will be either CGT or GT
    //Zam we know GTA<TAC!
    
-   CU_ASSERT_STRING_EQUAL(test1_result,"CGT");
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test1_length,tmp_seq),"CGTA");
    
+
    hash_table_free(&db_graph);
    CU_ASSERT(db_graph == NULL);
-   
  
+  
    /*   // **** */
    /*   //1.2 Fasta file that generate a graph with one long supernode, with a conflict at the end */
    /*   //   caused by two outward/exiting edges */
@@ -188,16 +267,21 @@ void test_supernode_walking()
 
    //ACA < TGT so forward gives TT
    is_cycle=false;
-   get_seq_from_elem_to_end_of_supernode(test_element1, forward, db_graph, &is_cycle, test1_result, 5000);
-   CU_ASSERT(!is_cycle);   
-   CU_ASSERT_STRING_EQUAL(test1_result,"TT");
-
    
+   int test2_length = db_graph_get_perfect_path(test_element1,forward,100,&db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+
+   CU_ASSERT(!is_cycle);
+   
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test2_length,tmp_seq),"TT");
+
    //ACA < TGT so backward gives ""
-   is_cycle=false;
-   get_seq_from_elem_to_end_of_supernode(test_element1, reverse, db_graph, &is_cycle, test1_result, 5000);
-   CU_ASSERT(!is_cycle);   
-   CU_ASSERT_STRING_EQUAL(test1_result,"");
+
+   test2_length = db_graph_get_perfect_path(test_element1,reverse,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+  
+   CU_ASSERT(!is_cycle);
+   CU_ASSERT_EQUAL(test2_length,0);
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test2_length,tmp_seq),"");
+
 
    hash_table_free(&db_graph);
    CU_ASSERT(db_graph == NULL);
@@ -229,15 +313,19 @@ void test_supernode_walking()
 
    //ACA < TGT so forward gives TT
    is_cycle=false;
-   get_seq_from_elem_to_end_of_supernode(test_element1, forward, db_graph, &is_cycle, test1_result, 5000);
-   CU_ASSERT(!is_cycle);   
-   CU_ASSERT_STRING_EQUAL(test1_result,"TT");
+
+   int test3_length = db_graph_get_perfect_path(test_element1,forward,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+
+   CU_ASSERT(!is_cycle);
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test3_length,tmp_seq),"TT");
+
    
    //ACA < TGT so backwar gives ""
    is_cycle=false;
-   get_seq_from_elem_to_end_of_supernode(test_element1, reverse, db_graph, &is_cycle, test1_result, 5000);
-   CU_ASSERT(!is_cycle);   
-   CU_ASSERT_STRING_EQUAL(test1_result,"");
+   test3_length = db_graph_get_perfect_path(test_element1,reverse,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+
+   CU_ASSERT(!is_cycle);
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test3_length,tmp_seq),"");
 
    hash_table_free(&db_graph);
    CU_ASSERT(db_graph == NULL);
@@ -252,7 +340,7 @@ void test_supernode_walking()
    //first set up the hash/graph
    kmer_size = 3;
    number_of_bits=8;
-   bucket_size   =4; 
+   bucket_size   =4;
 
    bad_reads = 0;
 
@@ -268,16 +356,17 @@ void test_supernode_walking()
 
    //forward
    is_cycle=false;
-   get_seq_from_elem_to_end_of_supernode(test_element1, forward, db_graph, &is_cycle, test1_result, 5000);
+   int test4_length = db_graph_get_perfect_path(test_element1,forward,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+   
    CU_ASSERT(is_cycle);//this time it should find a cycle
-   CU_ASSERT_STRING_EQUAL(test1_result,"");
-  
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test4_length,tmp_seq),"A");
 
    //backward
    is_cycle=false;
-   get_seq_from_elem_to_end_of_supernode(test_element1, reverse, db_graph, &is_cycle, test1_result, 5000);
+   test4_length = db_graph_get_perfect_path(test_element1,reverse,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+
    CU_ASSERT(is_cycle);//this time it should find a cycle
-   CU_ASSERT_STRING_EQUAL(test1_result,"");
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test4_length,tmp_seq),"T");
 
    hash_table_free(&db_graph);
    CU_ASSERT(db_graph == NULL);
@@ -354,7 +443,7 @@ void test_get_perfect_path(){
   boolean is_cycle;
   int length = 0;
 
-  length = db_graph_get_perfect_path(node1,reverse, nodes, orientations, bases, &is_cycle,10,visited,db_graph);
+  length = db_graph_get_perfect_path(node1,reverse, 10,db_node_action_set_status_visited,nodes, orientations, bases, &is_cycle,db_graph);
 
   CU_ASSERT_EQUAL(length,3);
   
@@ -376,7 +465,7 @@ void test_get_perfect_path(){
   CU_ASSERT_EQUAL(orientations[2],reverse);
 
   //check statuses
-  CU_ASSERT(db_node_check_status(nodes[0], visited));
+  CU_ASSERT(db_node_check_status(nodes[0], none));
   CU_ASSERT(db_node_check_status(nodes[1], visited));
   CU_ASSERT(db_node_check_status(nodes[2], visited));
 
@@ -437,7 +526,8 @@ void test_get_perfect_bubble(){
   db_node_add_edge(node5, node9, reverse,reverse, db_graph->kmer_size);
 
 
-  bubble = db_graph_detect_perfect_bubble(node1,&orientation,&base1,&base2,labels,&end_node,&end_orientation,db_graph);
+  bubble = db_graph_detect_perfect_bubble(node1,&orientation,&db_node_check_status_none,&db_node_action_set_status_visited,
+&base1,&base2,labels,&end_node,&end_orientation,db_graph);
 
   CU_ASSERT(bubble);
   CU_ASSERT_EQUAL(orientation,forward);
@@ -460,14 +550,14 @@ void test_get_perfect_bubble(){
   dBNode * nodes5p[100];
   dBNode * nodes3p[100];
 
-  length_flank5p = db_graph_get_perfect_path(node1, opposite_orientation(orientation),nodes5p,orientations5p, labels_flank5p,
-  					     &is_cycle5p,100,visited,db_graph); 
+  length_flank5p = db_graph_get_perfect_path(node1, opposite_orientation(orientation),100,&db_node_action_set_status_visited,nodes5p,orientations5p, labels_flank5p,
+  					     &is_cycle5p,db_graph); 
 
   CU_ASSERT_EQUAL(length_flank5p,0);
   CU_ASSERT_EQUAL(nodes5p[0],node1);
 
-  length_flank3p = db_graph_get_perfect_path(end_node, end_orientation,nodes3p,orientations3p, labels_flank3p,
-					     &is_cycle3p,100,visited,db_graph);    
+  length_flank3p = db_graph_get_perfect_path(end_node, end_orientation,100,&db_node_action_set_status_visited,nodes3p,orientations3p, labels_flank3p,
+					     &is_cycle3p,db_graph);    
  
   
   CU_ASSERT_EQUAL(length_flank3p,1);
@@ -476,10 +566,74 @@ void test_get_perfect_bubble(){
   CU_ASSERT_EQUAL(labels_flank3p[0],Adenine);
 
   //if searched again should return false -- becuase nodes are marked as visited
-  bubble = db_graph_detect_perfect_bubble(node1,&orientation,&base1,&base2,labels,&end_node,&end_orientation,db_graph);
+  bubble = db_graph_detect_perfect_bubble(node1,&orientation,&db_node_check_status_none,&db_node_action_set_status_visited,&base1,&base2,labels,&end_node,&end_orientation,db_graph);
   CU_ASSERT(!bubble);
 
   hash_table_free(&db_graph);
   CU_ASSERT(db_graph == NULL);
 
+}
+
+void test_db_graph_db_node_has_precisely_n_edges_with_status(){
+  int kmer_size = 3;
+  int number_of_bits = 4;
+  int bucket_size = 4;
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+
+  boolean found;
+  dBNode * node1, * node2, * node3, * node4;
+  dBNode  * next_node[4];
+  Orientation next_orientation[4];
+  Nucleotide next_base[4];
+
+  node1 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCC", kmer_size),kmer_size), &found, db_graph);
+  node2 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCT", kmer_size),kmer_size), &found, db_graph);
+  node3 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCG", kmer_size),kmer_size), &found, db_graph);
+
+ 
+
+  db_node_add_edge(node1, node2, forward,reverse, db_graph->kmer_size);	  
+  db_node_add_edge(node1, node3, forward,forward, db_graph->kmer_size);	  
+
+  boolean one_edge1 = db_graph_db_node_has_precisely_n_edges_with_status(node1,forward,none,1,
+									 next_node,next_orientation,next_base,db_graph);
+
+
+  CU_ASSERT_EQUAL(one_edge1,false);
+
+  db_node_set_status(node2,visited);
+
+  boolean one_edge2 = db_graph_db_node_has_precisely_n_edges_with_status(node1,forward,none,1,
+									 next_node,next_orientation,next_base,db_graph);
+
+ 
+  CU_ASSERT_EQUAL(one_edge2,true);
+  CU_ASSERT_EQUAL(node3,next_node[0]);
+  CU_ASSERT_EQUAL(next_orientation[0],forward);
+  CU_ASSERT_EQUAL(next_base[0],Guanine);
+  
+
+  node4 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCA", kmer_size),kmer_size), &found, db_graph);
+  db_node_add_edge(node1, node4, forward, forward, db_graph->kmer_size);	  
+   
+  boolean one_edge3 = db_graph_db_node_has_precisely_n_edges_with_status(node1,forward,none,2,
+									 next_node,next_orientation,next_base,db_graph);
+  
+
+  
+  CU_ASSERT_EQUAL(one_edge3,true);
+
+  //observe that the tests below require to know in wich order the edges are visited
+
+  CU_ASSERT_EQUAL(node4,next_node[0]);
+  CU_ASSERT_EQUAL(node3,next_node[1]);
+
+  CU_ASSERT_EQUAL(next_base[0],Adenine);
+  CU_ASSERT_EQUAL(next_base[1],Guanine);
+  
+  CU_ASSERT_EQUAL(next_orientation[0],forward);
+  CU_ASSERT_EQUAL(next_orientation[1],forward);
+
+  hash_table_free(&db_graph);
+  CU_ASSERT(db_graph == NULL);
 }

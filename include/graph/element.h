@@ -112,4 +112,16 @@ void db_node_print_binary(FILE * fp, dBNode * node);
 
 boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node); 
 
+
+
+//actions and conditions 
+
+void db_node_action_set_status_pruned(dBNode * node);
+
+void db_node_action_set_status_visited(dBNode * node);
+
+boolean db_node_check_status_none(dBNode * node);
+
+void db_node_action_do_nothing(dBNode * node);
+
 #endif /* ELEMENT_H_ */

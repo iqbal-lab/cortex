@@ -42,6 +42,25 @@ void test_binary_kmer_reverse_complement(){
   
 }
 
+void test_binary_kmer_nucleotide_iterator(){
+  
+  int count = 0;
+  
+  void check_nucleotides(Nucleotide base){
+    
+    if (base == Adenine || base == Guanine || base == Cytosine || base == Thymine){
+      count ++;
+    }
+    else{
+      count --;
+    }
+  }
+  
+  nucleotide_iterator(check_nucleotides);
+  
+  CU_ASSERT_EQUAL(count,4);
+}
+
 
 
 void test_get_sliding_windows_from_sequence(){

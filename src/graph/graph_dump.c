@@ -11,7 +11,7 @@ int main(int argc, char **argv){
   int hash_key_bits;
   dBGraph * db_graph = NULL; 
   short kmer_size;
-  int fastq; //if 0 entry is fastq otherwise is quality cut-off
+  int fastq; //if 0 entry is fasta otherwise is quality cut-off
   int bucket_size;
 
   long long bad_reads     = 0;
