@@ -35,9 +35,7 @@ void test_is_supernode_end()
   //  Sequence is :  ACGTAC
   // ****
 
-  printf("Load population as fasta\n");
   int seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops",  &bad_reads, hash_table);
-  printf("Finished loading pop as fasta\n");
   CU_ASSERT(seq_loaded==6);
   CU_ASSERT(bad_reads==0);
 

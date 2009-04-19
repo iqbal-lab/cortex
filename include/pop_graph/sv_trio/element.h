@@ -13,6 +13,7 @@
 #include <binary_kmer.h>
 #include <global.h>
 #include <pop_globals.h>
+#include <stdio.h>
 
 //type definitions
 
@@ -129,6 +130,7 @@ void db_node_set_status_to_none(dBNode * node);
 
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
 int db_node_get_coverage(dBNode* e, EdgeArrayType type, int index);
+unsigned char db_node_get_coverage_as_unsigned_char(dBNode* e, EdgeArrayType type, int index);
 
 void db_node_mark_chromosome_overlap(dBNode* node, int which_chromosome, Orientation orientation);
 boolean db_node_has_at_most_one_intersecting_chromosome(dBNode* node, int* which_chromosome);
@@ -141,4 +143,16 @@ boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayTy
 
 
 boolean db_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, EdgeArrayType type, int index);
+
+
+//functions for binary format
+void db_node_print_binary(FILE * fp, dBNode * node);
+
+//read a binary dumped by this module, sv_trio
+boolean db_node_read_sv_trio_binary(FILE * fp, short kmer_size, dBNode * node);
+
+//read a binary for an individual person, as dumped by the target "graph"
+// the edge array type and index tell you which person you should load this data into
+boolean db_node_read_graph_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index);
+
 #endif /* ELEMENT_H_ */

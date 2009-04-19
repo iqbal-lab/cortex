@@ -1,4 +1,3 @@
-
 /*
  Elemenx.c -- implements the nodes of the dBruijn graph
  */
@@ -303,6 +302,11 @@ int db_node_get_coverage(dBNode* e, EdgeArrayType type, int index)
 {
   unsigned char c = e->coverage[index];
   return (int) c;
+}
+
+unsigned char db_node_get_coverage_as_unsigned_char(dBNode* e, EdgeArrayType type, int index)
+{
+  return e->coverage[index];
 }
 
 Overlap db_node_get_direction_through_node_in_which_chromosome_passes(dBNode* node, int which_chromosome)
@@ -1313,4 +1317,137 @@ boolean db_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, E
  
 }
 
+
+void db_node_print_binary(FILE * fp, dBNode * node)
+{
+
+  BinaryKmer kmer = element_get_kmer(node);
+  unsigned char covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
+  Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; 
+  unsigned char chrom_xs[6];
+
+  int i;
+  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)                                                     
+    {                                                                                                         
+      covg[i] = db_node_get_coverage_as_unsigned_char(node, individual_edge_array, i);
+      individual_edges[i]= get_edge_copy(*node, individual_edge_array, i);
+    }      
+
+  for (i=0; i<6; i++)
+    {
+      chrom_xs[i]=node->chrom_xs[i];
+    }
+
+
+  fwrite(&kmer,  sizeof(BinaryKmer), 1, fp);
+  fwrite(covg, sizeof(unsigned char), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp); 
+  fwrite(individual_edges, sizeof(Edges), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);
+  fwrite(chrom_xs, sizeof(unsigned char), 6, fp);
+  
+}
+
+
+boolean db_node_read_sv_trio_binary(FILE * fp, short kmer_size, dBNode * node){
+
+  BinaryKmer kmer = element_get_kmer(node);
+  unsigned char covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
+  Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; 
+  unsigned char chrom_xs[6];
+
+  int read;
+  
+  read = fread(&kmer,sizeof(BinaryKmer),1,fp);
+
+  if (read>0){
+    read = fread(covg, sizeof(unsigned char), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);    
+    if (read==0){
+      puts("error with input file\n");
+      exit(1);
+    }
+
+    read = fread(individual_edges, sizeof(Edges), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);
+    if (read==0){
+      puts("error with input file\n");
+      exit(1);
+    }
+
+    read = fread(chrom_xs, sizeof(unsigned char), 6, fp);
+    if (read==0){ 
+      puts("error with input file\n"); 
+      exit(1);                       
+    }       
+  }
+  else{
+    return false;
+  }
+
+  element_initialise(node,kmer,kmer_size);
+
+  int i;
+  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    {
+      node->coverage[i]         = covg[i];
+      node->individual_edges[i] = individual_edges[i];
+    }
+
+  for (i=0; i<6; i++)
+    {
+      node->chrom_xs[i]=chrom_xs[i];
+    }
+
+  return true;
+}
+
+//read a binary for an individual person, as dumped by the target "graph"
+// the edge array type and index tell you which person you should load this data into
+boolean db_node_read_graph_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index)
+{
+
+  if ( (index<0) || (index>=NUMBER_OF_INDIVIDUALS_PER_POPULATION))
+    {
+      printf("Invalid index for which person to load binary into: %d. Exiting.", index);
+      exit(1);
+    }
+
+  BinaryKmer kmer;
+  Edges edges;
+  short coverage;
+  int read;
+  
+  read = fread(&kmer,sizeof(BinaryKmer),1,fp);
+
+  if (read>0){
+    read = fread(&coverage,sizeof(short),1,fp);    
+    if (read==0){
+      puts("error with input file\n");
+      exit(1);
+    }
+
+    read = fread(&edges,sizeof(Edges),1,fp);
+    if (read==0){
+      puts("error with input file\n");
+      exit(1);
+    }
+  }
+  else{
+    return false;
+  }
+
+  element_initialise(node,kmer,kmer_size);
+
+  node->individual_edges[index]    = edges;
+
+  //the coverage in the graph binary is a short, but sv_trio uses an unsigned char
+  if (coverage<=254)
+    {
+      node->coverage[index] = (unsigned char) coverage;
+    }
+  else
+    {
+      node->coverage[index] = 254;
+    }
+
+
+  return true;
+}
 
