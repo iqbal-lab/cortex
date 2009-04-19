@@ -296,6 +296,25 @@ void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
     }
 }
 
+void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, unsigned char update)
+{
+
+  //convert to int first, so you can add the two numbers, which might each be as big as 254
+
+  int current_covg = db_node_get_coverage(e,type, index);
+  int update_as_int = (int) update;
+
+  if (current_covg + update_as_int <= 254)
+    {
+      e->coverage[index]= (unsigned char) (current_covg + update_as_int);
+    }
+  else
+    {
+      e->coverage[index]=254;
+    }
+  
+
+}
 
 //coverage stored as unsigned char, but we want to deal with it as an int. So access it via this getter
 int db_node_get_coverage(dBNode* e, EdgeArrayType type, int index)

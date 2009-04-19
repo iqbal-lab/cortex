@@ -498,6 +498,93 @@ int load_chromosome_overlap_data(char* f_name,  dBGraph* db_graph, int which_chr
 }
 
 
+//loading a binary as dumped by sv_trio. So contains information on the whole trio.
+//returns number of kmers loaded
+int load_sv_trio_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph)
+{
+  FILE* fp_bin = fopen(filename, "r");
+  int seq_length = 0;
+  dBNode node_from_file;
+  boolean found;
+  int count=0;
+
+  if (fp_bin == NULL){
+    printf("cannot open file:%s\n",filename);
+    exit(1); //TODO - prefer to print warning and skip file and return an error code?
+  }
+  
+  //Go through all the entries in the binary file
+  while (db_node_read_sv_trio_binary(fp_bin,db_graph->kmer_size,&node_from_file)){
+    count++;
+    
+    //if (count % 100000000 == 0 ){
+    // printf("loaded %i\n",count);
+
+    //}
+   
+    dBNode * current_node  = NULL;
+    current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size),&found,db_graph);
+    
+    seq_length+=db_graph->kmer_size;
+   
+    int i;
+    for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+      {
+	add_edges(current_node,individual_edge_array, i, get_edge_copy(node_from_file, individual_edge_array, i));
+	db_node_update_coverage(current_node, individual_edge_array, i, db_node_get_coverage_as_unsigned_char(&node_from_file, individual_edge_array,i));
+      }
+    for (i=0; i<6; i++)
+      {
+	current_node->chrom_xs[i] |= node_from_file.chrom_xs[i];
+      }
+  }
+  
+  fclose(fp_bin);
+  return seq_length;
+}
 
 
 
+
+//reads a biary as dumped by graph (not sv_trio)
+int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index)
+{
+
+  FILE* fp_bin = fopen(filename, "r");
+  int seq_length = 0;
+  dBNode node_from_file;
+  boolean found;
+  int count=0;
+
+  if (fp_bin == NULL){
+    printf("cannot open file:%s\n",filename);
+    exit(1); //TODO - prefer to print warning and skip file and return an error code?
+  }
+  
+  //Go through all the entries in the binary file
+  while (db_node_read_graph_binary(fp_bin,db_graph->kmer_size,&node_from_file, type, index))
+    {
+      count++;
+      
+      //if (count % 100000000 == 0 ){
+      // printf("loaded %i\n",count);
+      //}
+      
+      dBNode * current_node  = NULL;
+      current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size),&found,db_graph);
+      
+      seq_length+=db_graph->kmer_size;//todo - maybe only increment if had to insert, not if was already in graph?
+      
+      add_edges(current_node,individual_edge_array, index, get_edge_copy(node_from_file, individual_edge_array, index));
+      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage_as_unsigned_char(&node_from_file, individual_edge_array,index) );
+      int i;
+      for (i=0; i<6; i++)
+	{
+	  current_node->chrom_xs[i] |= node_from_file.chrom_xs[i];
+	}
+    }
+  
+  fclose(fp_bin);
+  return seq_length;
+
+}

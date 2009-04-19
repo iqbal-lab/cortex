@@ -129,6 +129,7 @@ void db_node_trio_aware_set_pruned_status(dBNode * node, int index);
 void db_node_set_status_to_none(dBNode * node);
 
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
+void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, unsigned char update);
 int db_node_get_coverage(dBNode* e, EdgeArrayType type, int index);
 unsigned char db_node_get_coverage_as_unsigned_char(dBNode* e, EdgeArrayType type, int index);
 

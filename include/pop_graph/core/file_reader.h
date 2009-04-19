@@ -23,6 +23,8 @@ int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_f
 
 int load_chromosome_overlap_data(char* f_name,  dBGraph* db_graph, int which_chromosome);
 
+int load_sv_trio_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph);
+int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index);
 
 
 

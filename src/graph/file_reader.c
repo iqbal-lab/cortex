@@ -164,7 +164,8 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
 
 //returns number of sequence loaded (ie all the kmers concatenated)
 //count_kmers returns the number of new kmers
-int load_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph){
+int load_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph)
+{
   FILE* fp_bin = fopen(filename, "r");
   int seq_length = 0;
   dBNode node_from_file;
