@@ -13,10 +13,10 @@
 //const int NUMBER_OF_INDIVIDUALS_PER_POPULATION = 5;
 //const int NUMBER_OF_POPULATIONS = 2;
 
-const char mask1 = 255-3; //11111100
-const char mask2 = 255-12;//11110011
-const char mask3 = 255-48;//11001111
-const char mask4 = 255-192;//00111111
+const unsigned char mask1 = 255-3; //11111100
+const unsigned char mask2 = 255-12;//11110011
+const unsigned char mask3 = 255-48;//11001111
+const unsigned char mask4 = 255-192;//00111111
 
 
 //currently noone calls this in normal use
@@ -818,19 +818,19 @@ boolean db_node_has_at_most_one_intersecting_chromosome(dBNode* node, int* which
       exit(1);
       return 0;
     }
-  char chrom1_to_4 = node->chrom_xs[0];
-  char chrom5_to_8 = node->chrom_xs[1];
-  char chrom9_to_12 = node->chrom_xs[2];
-  char chrom13_to_16 = node->chrom_xs[3];
-  char chrom17_to_20 = node->chrom_xs[4];
-  char chrom21_to_24 = node->chrom_xs[5];
+  unsigned char chrom1_to_4 = node->chrom_xs[0];
+  unsigned char chrom5_to_8 = node->chrom_xs[1];
+  unsigned char chrom9_to_12 = node->chrom_xs[2];
+  unsigned char chrom13_to_16 = node->chrom_xs[3];
+  unsigned char chrom17_to_20 = node->chrom_xs[4];
+  unsigned char chrom21_to_24 = node->chrom_xs[5];
 
-  char all_except_1_to_4 = (chrom5_to_8 || chrom9_to_12 || chrom13_to_16 || chrom17_to_20 || chrom21_to_24);
-  char all_except_5_to_8 = (chrom1_to_4 || chrom9_to_12 || chrom13_to_16 || chrom17_to_20 || chrom21_to_24);
-  char all_except_9_to_12= (chrom1_to_4 || chrom5_to_8 || chrom13_to_16 || chrom17_to_20 || chrom21_to_24);
-  char all_except_13_to_16=(chrom1_to_4 || chrom5_to_8 || chrom9_to_12 || chrom17_to_20 || chrom21_to_24);
-  char all_except_17_to_20=(chrom1_to_4 || chrom5_to_8 || chrom9_to_12 || chrom13_to_16 || chrom21_to_24);
-  char all_except_21_to_24=(chrom1_to_4 || chrom5_to_8 || chrom9_to_12 || chrom13_to_16 || chrom17_to_20);
+  unsigned char all_except_1_to_4 = (chrom5_to_8 || chrom9_to_12 || chrom13_to_16 || chrom17_to_20 || chrom21_to_24);
+  unsigned char all_except_5_to_8 = (chrom1_to_4 || chrom9_to_12 || chrom13_to_16 || chrom17_to_20 || chrom21_to_24);
+  unsigned char all_except_9_to_12= (chrom1_to_4 || chrom5_to_8 || chrom13_to_16 || chrom17_to_20 || chrom21_to_24);
+  unsigned char all_except_13_to_16=(chrom1_to_4 || chrom5_to_8 || chrom9_to_12 || chrom17_to_20 || chrom21_to_24);
+  unsigned char all_except_17_to_20=(chrom1_to_4 || chrom5_to_8 || chrom9_to_12 || chrom13_to_16 || chrom21_to_24);
+  unsigned char all_except_21_to_24=(chrom1_to_4 || chrom5_to_8 || chrom9_to_12 || chrom13_to_16 || chrom17_to_20);
 
   if ( (chrom1_to_4==0) && (chrom5_to_8==0) && (chrom9_to_12==0) && (chrom13_to_16==0) && (chrom17_to_20==0) && (chrom21_to_24==0) )
     {
