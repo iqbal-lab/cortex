@@ -75,7 +75,7 @@ Edges* get_edge(Element e, EdgeArrayType type,int index)
     }
   else 
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array");
+      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
       exit(1);
     }
 
@@ -97,7 +97,7 @@ Edges get_edge_copy(const Element e, EdgeArrayType type,int index)
     }
   else 
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array");
+      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
       exit(1);
     }
 
@@ -142,7 +142,7 @@ void add_edges(Element* e, EdgeArrayType type, int index, Edges edge_char)
 
   else
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array");
+      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
       exit(1);
     }
   
@@ -163,7 +163,7 @@ void set_edges(Element* e, EdgeArrayType type, int index, Edges edge_char)
 
   else
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array");
+      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
       exit(1);
     }
   
@@ -204,7 +204,7 @@ void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, 
     }
   else
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array");
+      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
       exit(1);
     }
   
@@ -227,7 +227,7 @@ int element_get_number_of_people_or_pops_containing_this_element(Element* e, Edg
     }
   else
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array");
+      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
       exit(1);
     }
 

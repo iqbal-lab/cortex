@@ -5,6 +5,8 @@
 #include "test_pop_element.h"
 #include "test_pop_load_and_print.h"
 #include "test_pop_supernode_consensus.h"
+#include <test_file_reader.h>
+
 #include <CUnit.h>
 #include <Basic.h>
 
@@ -54,9 +56,10 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
-
-
-
+  if (NULL == CU_add_test(pPopGraphSuite, "Test dumping and reloading of sv_trio binary", test_dump_load_sv_trio_binary)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
   if (NULL == CU_add_test(pPopGraphSuite, "Test that can identify supernode ends",   test_is_supernode_end)) {
     CU_cleanup_registry();
     return CU_get_error();

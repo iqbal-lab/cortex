@@ -192,8 +192,8 @@ Element * hash_table_find_or_insert(Key key, boolean * found,  HashTable * hash_
     exit(1);
   }
   
-    Element element;
-    Element* e = new_element();
+  Element element;
+
 
   Element * ret = NULL;
   int rehash = 0;

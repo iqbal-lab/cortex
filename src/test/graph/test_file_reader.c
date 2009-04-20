@@ -30,8 +30,6 @@ void test_dump_load_binary(){
 
   seq_length_pre = load_fasta_data_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta", &bad_reads, 20, db_graph_pre);
 
-  fout = fopen("../data/test/graph/dump_graph.bin", "w");
-
   if (fout == NULL){
     fprintf(stderr,"cannot open ../data/test/graph/dump_graph.bin");
     exit(1);
