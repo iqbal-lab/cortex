@@ -337,6 +337,35 @@ void db_node_action_set_status_visited(dBNode * node){
   db_node_set_status(node,visited);
 }
 
+
+void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode * node){
+
+  if (db_node_check_status(node, exists_in_reference))
+    {
+      db_node_set_status(node,visited_and_exists_in_reference);      
+    }
+  else
+    {
+      db_node_set_status(node,visited);
+    }
+
+}
+
+
+void db_node_action_unset_status_visited_or_visited_and_exists_in_reference(dBNode * node){
+  if (db_node_check_status_visited_and_exists_in_reference(node))
+  {
+    db_node_set_status(node,exists_in_reference);
+  }
+  else if (db_node_check_status(node, visited))
+  {
+    db_node_set_status(node, none);
+  }
+      
+}
+
+
+
 void db_node_action_do_nothing(dBNode * node){
   
 }
@@ -344,6 +373,14 @@ void db_node_action_do_nothing(dBNode * node){
 
 boolean db_node_check_status_none(dBNode * node){
   return db_node_check_status(node,none);
+}
+
+boolean db_node_check_status_visited_and_exists_in_reference(dBNode * node){
+  return db_node_check_status(node,visited_and_exists_in_reference);
+}
+
+boolean db_node_check_status_is_not_exists_in_reference(dBNode * node){
+  return !db_node_check_status(node,exists_in_reference);
 }
 
 

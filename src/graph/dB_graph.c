@@ -429,9 +429,13 @@ boolean db_graph_detect_perfect_bubble(dBNode * node,
   return ret;
 }
 
+
+
+
+// limit is the max number of nodes in the supernode. But remember that the first one corresponds to kmer_size bases, while each subsequent
+// one corresponds to an extra base. Therefore:
 //string has to support limit+db_graph->kmer_size+1 (+1 as you need a space for the \0 at the end)
 //node_action has to be idempotent as it can be applied to the same node twice!!
-
 int db_graph_supernode(dBNode * node,int limit, boolean (*condition)(dBNode * node), void (*node_action)(dBNode * node),
 		       char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
 		       dBGraph * db_graph){
@@ -452,7 +456,7 @@ int db_graph_supernode(dBNode * node,int limit, boolean (*condition)(dBNode * no
     //compute the reverse path until the end of the supernode
     //return is_cycle_reverse == true if the path closes a loop    
  
-    length_reverse = db_graph_get_perfect_path(node,reverse,limit,node_action,
+    length_reverse = db_graph_get_perfect_path(node,reverse,limit,db_node_action_do_nothing,
 					       nodes_reverse,orientation_reverse,labels_reverse,
 					       &is_cycle,db_graph);
 
@@ -497,6 +501,76 @@ int db_graph_supernode(dBNode * node,int limit, boolean (*condition)(dBNode * no
   return length;
 }
 
+
+// whether true or false, will return the supernode in path_nodes, path_orientations, path_labels
+// and will apply action to all of the nodes.
+boolean db_graph_is_condition_true_for_all_nodes_in_supernode(dBNode * node,int limit, boolean (*condition)(dBNode * node),  void (*node_action)(dBNode * node),
+							      char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, int* path_length,
+							      dBGraph * db_graph)
+{
+
+  dBNode * nodes_reverse[limit];
+  Orientation orientation_reverse[limit];
+  Nucleotide labels_reverse[limit];
+  boolean is_cycle;
+  int length_reverse;
+
+  length_reverse = db_graph_get_perfect_path(node,reverse,limit,db_node_action_do_nothing,
+					     nodes_reverse,orientation_reverse,labels_reverse,
+					     &is_cycle,db_graph);
+
+
+  //we are at the end of a supernode
+  *path_length = db_graph_get_perfect_path(nodes_reverse[length_reverse],opposite_orientation(orientation_reverse[length_reverse]),limit,node_action,
+				     path_nodes,path_orientations,path_labels,
+				     &is_cycle,db_graph);
+
+
+  //we now have the whole supernode, apply action to all the nodes, and then just test until you fail to meet the condition
+
+  int i;
+  for (i=0; i<= *path_length; i++)
+    {
+      node_action(path_nodes[*path_length]);
+    }
+  
+  for (i=0; i<= *path_length; i++)
+    {
+      if (!condition(path_nodes[*path_length]))
+	{
+	  return false;
+	}
+    }
+
+  return true;
+
+  
+}
+
+
+
+void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node))
+{
+
+  int count_nodes=0;
+  void print_supernode(dBNode * node)
+    {
+      dBNode * nodes_path[5000];
+      Orientation orientations_path[5000];
+      Nucleotide labels_path[5000];
+      char seq[5000+db_graph->kmer_size+1];
+      int length_path=0;
+      
+      if (db_graph_is_condition_true_for_all_nodes_in_supernode(node, 5000, condition, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+								seq,nodes_path,orientations_path, labels_path, &length_path, db_graph))
+	{
+	  printf(">node_%i %i\n",count_nodes,length_path+db_graph->kmer_size);
+	  count_nodes++;
+	  printf("%s\n",seq);
+	}
+    }
+  hash_table_traverse(&print_supernode,db_graph); 
+}
 
 //routine to get SNPS 
 
@@ -604,6 +678,10 @@ void db_graph_print_supernodes(dBGraph * db_graph){
   }
   hash_table_traverse(&print_supernode,db_graph); 
 }
+
+
+
+
 
 void db_graph_print_coverage(dBGraph * db_graph){
   long long count_kmers=0;

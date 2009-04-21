@@ -5,3 +5,4 @@ void test_get_perfect_path();
 void test_get_perfect_bubble();
 void test_db_graph_db_node_has_precisely_n_edges_with_status();
 void test_tip_clipping();
+void test_is_condition_true_for_all_nodes_in_supernode();

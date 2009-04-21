@@ -637,3 +637,53 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status(){
   hash_table_free(&db_graph);
   CU_ASSERT(db_graph == NULL);
 }
+
+
+void test_is_condition_true_for_all_nodes_in_supernode()
+{
+  //first set up the hash/graph
+  int kmer_size = 3;
+  int number_of_bits=4;
+  int bucket_size   = 10;
+  int seq_length;
+  long long bad_reads = 0;
+  dBNode * path_nodes[100];
+  Orientation path_orientations[100];
+  Nucleotide path_labels[100];
+  char tmp_seq[100];
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+
+ 
+  //1. Sequence of tests as follows
+  //         Each test loads a single specifically designed fasta file into a dB_graph.
+  
+
+  // ****
+  //1.1 Fasta file that generate a graph with two hairpins, and a single edge (in each rorientation) joining them.
+  //  Sequence is :  ACGTAC
+  // ****
+
+
+  seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/generates_graph_with_two_self_loops.fasta", &bad_reads, 20,  db_graph);
+  
+  CU_ASSERT_EQUAL(seq_length,6);
+  CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),2);
+  CU_ASSERT_EQUAL(bad_reads,0);
+
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GTA", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element1!=NULL);
+
+  int limit =50;
+  dBNode * nodes_path[limit];
+  Orientation orientations_path[limit];
+  Nucleotide labels_path[limit];
+  char seq[limit+db_graph->kmer_size+1];
+  int length_path=0;
+
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_check_status_none, db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+   
+  hash_table_free(&db_graph);
+  
+  
+}
