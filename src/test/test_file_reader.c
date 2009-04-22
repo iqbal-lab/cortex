@@ -19,8 +19,6 @@ void test_dump_load_binary(){
   int seq_length_pre,seq_length_post;
   dBGraph * db_graph_pre;
   dBGraph * db_graph_post;
-  
-  
 
   void print_node_binary(dBNode * node){
     db_node_print_binary(fout,node);
@@ -167,3 +165,5 @@ void test_dump_load_binary(){
   CU_ASSERT(db_graph_post == NULL);
   
 }
+
+

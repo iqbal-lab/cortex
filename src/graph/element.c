@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <binary_kmer.h>
 
+
 boolean element_is_key(Key key, Element e, short kmer_size)
 {
   return key == e.kmer;
@@ -329,6 +330,10 @@ boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node){
 }
 
 
+void db_node_action_set_status_none(dBNode * node){
+  db_node_set_status(node,none);
+}
+
 void db_node_action_set_status_pruned(dBNode * node){
   db_node_set_status(node,pruned);
 }
@@ -344,7 +349,7 @@ void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode
     {
       db_node_set_status(node,visited_and_exists_in_reference);      
     }
-  else
+  else //WARNING. Need special case for pruned?
     {
       db_node_set_status(node,visited);
     }
@@ -375,6 +380,14 @@ boolean db_node_check_status_none(dBNode * node){
   return db_node_check_status(node,none);
 }
 
+boolean db_node_check_status_visited(dBNode * node){
+  return db_node_check_status(node,visited);
+}
+
+boolean db_node_check_status_exists_in_reference(dBNode * node){
+  return db_node_check_status(node,exists_in_reference);
+}
+
 boolean db_node_check_status_visited_and_exists_in_reference(dBNode * node){
   return db_node_check_status(node,visited_and_exists_in_reference);
 }
@@ -383,5 +396,12 @@ boolean db_node_check_status_is_not_exists_in_reference(dBNode * node){
   return !db_node_check_status(node,exists_in_reference);
 }
 
+boolean db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(dBNode * node){
+  return !(db_node_check_status(node,visited_and_exists_in_reference) || db_node_check_status(node,visited) );
+}
 
 
+boolean db_node_condition_always_true(dBNode* node)
+{
+  return true;
+}

@@ -118,6 +118,8 @@ boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node);
 
 //actions and conditions 
 
+void db_node_action_set_status_none(dBNode * node);
+
 void db_node_action_set_status_pruned(dBNode * node);
 
 void db_node_action_set_status_visited(dBNode * node);
@@ -130,10 +132,16 @@ void db_node_action_do_nothing(dBNode * node);
 
 boolean db_node_check_status_none(dBNode * node);
 
+boolean db_node_check_status_visited(dBNode * node);
+
+boolean db_node_check_status_exists_in_reference(dBNode * node);
+
 boolean db_node_check_status_visited_and_exists_in_reference(dBNode * node);
 
 boolean db_node_check_status_is_not_exists_in_reference(dBNode * node);
 
+boolean db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(dBNode * node);
 
+boolean db_node_condition_always_true(dBNode* node);
 
 #endif /* ELEMENT_H_ */

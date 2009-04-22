@@ -9,7 +9,6 @@ int  main()
 
   CU_pSuite pSuite = NULL;
 
-  printf("Z1\n");
   /* initialize the CUnit test registry */
   if (CUE_SUCCESS!=CU_initialize_registry())
     return CU_get_error();
@@ -20,7 +19,6 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
-  printf("Z2\n");
 
   /* add the tests to the suite */
 
@@ -30,14 +28,12 @@ int  main()
     return CU_get_error();
   }
   
-  printf("Z3\n");
 
    if (NULL == CU_add_test(pSuite, "test has precisely one edge with status",test_db_graph_db_node_has_precisely_n_edges_with_status)){
      CU_cleanup_registry();
      return CU_get_error();
    }
 
-  printf("Z4\n");
 
   if (NULL == CU_add_test(pSuite, "test supernode walking",  test_supernode_walking)){
     CU_cleanup_registry();
@@ -75,10 +71,15 @@ int  main()
      return CU_get_error();
    }
 
-   //   if (NULL == CU_add_test(pSuite, "test is condition true for all nodes in supernode",  test_is_condition_true_for_all_nodes_in_supernode)){
-   // CU_cleanup_registry();
-   // return CU_get_error();
-   //}
+   if (NULL == CU_add_test(pSuite, "test is condition true for all nodes in supernode",  test_is_condition_true_for_all_nodes_in_supernode)){
+       CU_cleanup_registry();
+       return CU_get_error();
+   }
+   if (NULL == CU_add_test(pSuite, "test that can spot supernode that does not intersect any chromosome",  test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference))
+     {
+       CU_cleanup_registry();
+       return CU_get_error();
+     }
 
   /* Run all tests using the CUnit Basic interface */
   CU_basic_set_mode(CU_BRM_VERBOSE);

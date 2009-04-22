@@ -673,6 +673,8 @@ void test_is_condition_true_for_all_nodes_in_supernode()
 
   dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GTA", kmer_size), kmer_size),db_graph);
   CU_ASSERT(test_element1!=NULL);
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("ACG", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element2!=NULL);
 
   int limit =50;
   dBNode * nodes_path[limit];
@@ -681,9 +683,100 @@ void test_is_condition_true_for_all_nodes_in_supernode()
   char seq[limit+db_graph->kmer_size+1];
   int length_path=0;
 
-  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_check_status_none, db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+  //  printf("Check if all nodes have status none - this should be true\n");
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true,&db_node_check_status_none,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+  CU_ASSERT(db_node_check_status(test_element1, none));
+  //  printf("set status of one node to visited\n");
+  db_node_set_status(test_element1, visited);
+  CU_ASSERT(db_node_check_status(test_element1, visited));
+  CU_ASSERT(db_node_check_status(test_element2, none));
+  // printf("Checkif all nodes have status none - this should not be true - confirm this\n");
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true,&db_node_check_status_none,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+
+
+  //  printf("double check statuses of nodes unchanged\n");
+  CU_ASSERT(db_node_check_status(test_element1, visited));
+  CU_ASSERT(db_node_check_status(test_element2, none));
+
+  // printf("Check if all nodes have status visited - this should not be true - confirm this\n");
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_visited,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+
+
+  //check again, but this time, set all nodes to visited in the process
+  //printf("Set all nodes to visited while checking them all\n");
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_visited,
+								  &db_node_action_set_status_visited_or_visited_and_exists_in_reference, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+  //and now this time it SHOULD BE TRUE
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_visited,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+
+  // and should still be true
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_visited,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+  
+
+  //printf("Nodes currently all visited. Set all nodes to none while checking them all to confirm that they are currently all visited (before doing the set-to-none)\n");
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_visited,
+								  &db_node_action_set_status_none, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_none,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+  
+  db_node_set_status(test_element2, pruned);
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_none,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element2, 50, &db_node_condition_always_true, &db_node_check_status_none,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+
    
   hash_table_free(&db_graph);
   
+  
+}
+
+
+
+void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference()
+{
+
+  //first set up the hash/graph
+  int kmer_size = 3;
+  int number_of_bits=4;
+  int bucket_size   = 10;
+  long long bad_reads=0;
+  int max_read_length=30;
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+
+  int seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/person.fasta", &bad_reads, max_read_length, db_graph);
+  
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/chrom1.fasta", db_graph);
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/chrom2.fasta", db_graph);
+  
+  //Now see if it correctly gets the supernode that does not intersect a chromosome
+  dBNode * nodes_path[100];
+  Orientation orientations_path[100];
+  Nucleotide labels_path[100];
+  char tmp_seq[100];
+
+  //element on supernode we know intersects chromosomes
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACA", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element1!=NULL);
+  //elemtn on node that does not intersect chromosomes - is "novel"
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element2!=NULL);
+
+
+  int length_path=0;
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50,  &db_node_condition_always_true,&db_node_check_status_is_not_exists_in_reference,
+							&db_node_action_set_status_visited, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element2, 50,  &db_node_condition_always_true,&db_node_check_status_is_not_exists_in_reference,
+							&db_node_action_set_status_visited, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+
+
   
 }
