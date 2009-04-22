@@ -15,8 +15,6 @@ void test_hash_table_find()
   int bucket_size    = 4;
   long long bad_reads = 0; 
   
-
-
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   //Load the following fasta:
@@ -774,9 +772,58 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50,  &db_node_condition_always_true,&db_node_check_status_is_not_exists_in_reference,
 							&db_node_action_set_status_visited, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
 
+  CU_ASSERT(length_path==3);
+  CU_ASSERT_STRING_EQUAL(tmp_seq, "ACATTC");
+
   CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element2, 50,  &db_node_condition_always_true,&db_node_check_status_is_not_exists_in_reference,
 							&db_node_action_set_status_visited, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+  CU_ASSERT(length_path==2);
+  CU_ASSERT_STRING_EQUAL(tmp_seq, "CACCC");
 
+  hash_table_free(&db_graph);
+
+
+
+  // now a harder example.
+  //first set up the hash/graph
+  kmer_size = 31;
+  number_of_bits=10;
+  bucket_size   = 10;
+  bad_reads=0;
+  max_read_length=2000;
+  int max_rehash_tries=10;
+
+  db_graph = hash_table_new(number_of_bits,bucket_size,max_rehash_tries,kmer_size);
+
+  seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/person2.fasta", &bad_reads, max_read_length, db_graph);
+  
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
+
+
+  //Now see if it correctly gets the supernode that does not intersect a chromosome
+
+  //element on supernode we know intersects chromosomes
+  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AACCCTAACCCTAACCCTAACCCTAACCCTA", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element1!=NULL);
+  //elemtn on node that does not intersect chromosomes - is "novel"
+  test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GCGGGGCGGGGCGGGGCGGGGCGGGGCCCCC", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element2!=NULL);
+
+
+  length_path=0;
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50,  &db_node_condition_always_true,&db_node_check_status_is_not_exists_in_reference,
+								   &db_node_action_set_status_visited, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+
+  CU_ASSERT(length_path==6);
+  CU_ASSERT_STRING_EQUAL(tmp_seq, "AACCCTAACCCTAACCCTAACCCTAACCCTAACCCTA");
+  
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element2, 50,  &db_node_condition_always_true,&db_node_check_status_is_not_exists_in_reference,
+								   &db_node_action_set_status_visited, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+
+  CU_ASSERT(length_path==13);
+  CU_ASSERT_STRING_EQUAL(tmp_seq, "GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT");
+	    
+  hash_table_free(&db_graph);
 
   
 }

@@ -75,7 +75,7 @@ int  main()
        CU_cleanup_registry();
        return CU_get_error();
    }
-   if (NULL == CU_add_test(pSuite, "test that can spot supernode that does not intersect any chromosome",  test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference))
+   if (NULL == CU_add_test(pSuite, "test that can spot supernode that does not intersect any chromosome (with small but real chromosomal data)",  test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference))
      {
        CU_cleanup_registry();
        return CU_get_error();

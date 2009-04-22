@@ -281,7 +281,7 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
 void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(char* f_name, dBGraph* db_graph)
 {
 
-  int max_read_length = 500;
+  int max_read_length = 3000;
 
   FILE* fptr = fopen(f_name, "r");
   if (fptr == NULL)
