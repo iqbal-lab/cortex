@@ -55,7 +55,8 @@ boolean db_graph_is_condition_true_for_all_nodes_in_supernode(dBNode * node,int 
                                                               char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, int* path_length,
                                                               dBGraph * db_graph);
 
-void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node));
+void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, 
+                                                                                  boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index);
 
 
 

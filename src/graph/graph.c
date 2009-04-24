@@ -115,12 +115,15 @@ int main(int argc, char **argv){
   case 7:
     printf("Print supernodes containing entirely novel(non-reference) sequence\n");
     read_all_ref_chromosomes_and_mark_graph(db_graph);
-    db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_is_not_exists_in_reference);
+    int min_covg=2; //demand coverage of at least 2
+
+    //todo - add condition to make sure ignore pruned
+
+    db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_is_not_exists_in_reference,min_covg, false, NULL, 0);
+
     hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); //cleanup - the printing process has set all printed nodes to visited
                                                                                                             //        - or to visited_and_exists_in_reference
   }
-
-  
 
   return 0;
 }

@@ -349,7 +349,9 @@ void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode
     {
       db_node_set_status(node,visited_and_exists_in_reference);      
     }
-  else //WARNING. Need special case for pruned?
+  //WARNING. Need special case for pruned?
+  // BIG WARNING - need to avoid status unassigned
+  else if (!db_node_check_status(node, unassigned)) 
     {
       db_node_set_status(node,visited);
     }
@@ -393,11 +395,26 @@ boolean db_node_check_status_visited_and_exists_in_reference(dBNode * node){
 }
 
 boolean db_node_check_status_is_not_exists_in_reference(dBNode * node){
-  return !db_node_check_status(node,exists_in_reference);
+  //return !db_node_check_status(node,exists_in_reference);
+  if (db_node_check_status(node,exists_in_reference))
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
 }
 
 boolean db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(dBNode * node){
-  return !(db_node_check_status(node,visited_and_exists_in_reference) || db_node_check_status(node,visited) );
+  if (db_node_check_status(node,visited_and_exists_in_reference) || db_node_check_status(node,visited)  )
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
 }
 
 

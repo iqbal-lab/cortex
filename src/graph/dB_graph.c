@@ -110,7 +110,7 @@ void db_graph_remove_path(dBNode * node, Orientation orientation, int length, dB
       
 
       if(next_node == NULL){
-	printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
+	printf("dB_graph_remove_path: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
 	exit(1);
       }	           
       
@@ -155,7 +155,7 @@ int db_graph_db_node_clip_tip_with_orientation(dBNode * node, Orientation orient
        next_node = db_graph_get_next_node(node,orientation,&next_orientation,nucleotide,&reverse_nucleotide,db_graph);
        
        if(next_node == NULL){
-	 printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
+	 printf("dB_graph_db_node_clip_tip_with_orientation: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
 	 exit(1);
        }	           
        
@@ -302,11 +302,10 @@ int db_graph_get_perfect_path(dBNode * node, Orientation orientation, int limit,
       
       //sanity check
       if(next_node == NULL){
-	fprintf(stderr,"dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq));
+	fprintf(stderr,"dB_graph_get_perfect_path: didnt find next node in hash table after this one: %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq));
 	exit(1);
       }
 
-           
       path_labels[length]        = nucleotide;
       length++;
       path_nodes[length]         = next_node;
@@ -447,6 +446,7 @@ int db_graph_supernode(dBNode * node,int limit, boolean (*condition)(dBNode * no
   int length_reverse;
   int length = 0;
 
+  char tmp_seq[db_graph->kmer_size+1];
 
 
   if (condition(node)){   
@@ -458,8 +458,7 @@ int db_graph_supernode(dBNode * node,int limit, boolean (*condition)(dBNode * no
 					       nodes_reverse,orientation_reverse,labels_reverse,
 					       &is_cycle,db_graph);
 
-    //apply action
-   
+    //apply action to the first node of supernode
     node_action(nodes_reverse[length_reverse]);
 
     //we are at the end of a supernode
@@ -470,7 +469,6 @@ int db_graph_supernode(dBNode * node,int limit, boolean (*condition)(dBNode * no
 
     //apply action to the last node
     node_action(path_nodes[length]);
-    
 
     //get string
     char tmp_seq[db_graph->kmer_size+1];
@@ -503,8 +501,8 @@ int db_graph_supernode(dBNode * node,int limit, boolean (*condition)(dBNode * no
 
 
 
-// The idea is this. First of all you check the node you are given with condition_on_initial_node_only. If this is false, forget the whole supernode.
-// If it is true, then you get the supernode and apply the action to all nodes in the supernode, and also you check
+// The idea is this. First of all you check the node you are given with condition_on_initial_node_only. If this is false, forget the whole supernode - ignore it. In that case *path_length==0.
+// If condition_on_oinitial_node_only  is true, then you get the supernode and apply the action to all nodes in the supernode, and also you check
 // if condition_for_all_nodes is true for all nodes, and return true, else false.
 // whether true or false, will return the supernode in path_nodes, path_orientations, path_labels
 // node_action MUST BE IDEMPOTENT
@@ -526,78 +524,80 @@ boolean db_graph_is_condition_true_for_all_nodes_in_supernode(dBNode * node,int 
 
   *path_length = db_graph_supernode(node, limit, condition_on_initial_node_only , action_check_condition_on_all_nodes, string, path_nodes, path_orientations, path_labels,db_graph);
 
-  //now apply action to all nodes
-  int i;
-  for (i=0; i<*path_length; i++)
+
+  if (*path_length>0)
     {
-      node_action(path_nodes[i]);
+      //now apply action to all nodes
+      int i;
+      for (i=0; i<= *path_length; i++)
+	{
+	  node_action(path_nodes[i]);
+	}
     }
   
 
   return condition_is_true_for_all_nodes_in_supernode;
 
-  //  dBNode * nodes_reverse[limit];
-  //Orientation orientation_reverse[limit];
-  //Nucleotide labels_reverse[limit];
-  //boolean is_cycle;
-  //int length_reverse;
-  //char tmp_seq[db_graph->kmer_size+1];
-
-  //printf("db_graph_is_condition_true..etc: We start at node %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,tmp_seq) );
-  //length_reverse = db_graph_get_perfect_path(node,reverse,limit,db_node_action_do_nothing,
-  //				     nodes_reverse,orientation_reverse,labels_reverse,
-  //					     &is_cycle,db_graph);
-
-  //printf("db_graph_is_condition_true..etc: We find first node in supernode is %s\n", binary_kmer_to_seq(element_get_kmer(nodes_reverse[length_reverse]),db_graph->kmer_size,tmp_seq) );
-
-  //we are at the end of a supernode
-  // *path_length = db_graph_get_perfect_path(nodes_reverse[length_reverse],opposite_orientation(orientation_reverse[length_reverse]),limit,node_action,
-  //				     path_nodes,path_orientations,path_labels,
-  //				     &is_cycle,db_graph);
-
-  //   printf("db_graph_is_condition_true..etc: We find last node in supernode is %s\n", binary_kmer_to_seq(element_get_kmer(path_nodes[*path_length]),db_graph->kmer_size,tmp_seq) );
- 
-
-  //we now have the whole supernode, apply action to all the nodes, and then just test until you fail to meet the condition
-
-  //  int i;
-
-  //  for (i=0; i<= *path_length; i++)
-  // {
-  //   if (!condition(path_nodes[i]))
-  //	{
-  //	  printf("returning false - not all nodes in supernode match condition\n");
-  //	  return false;
-  //	  
-  //	}
-  // }
-  // printf("returning true - all nodes in supernode match condition\n");
-  //return true;
 
   
 }
 
 
 
-void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node))
+void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, 
+										  boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index)
 {
 
   int count_nodes=0;
-  void print_supernode(dBNode * node)
+  void print_supernode(dBNode * e)
     {
+
       dBNode * nodes_path[5000];
       Orientation orientations_path[5000];
       Nucleotide labels_path[5000];
       char seq[5000+db_graph->kmer_size+1];
       int length_path=0;
       
-      if (db_graph_is_condition_true_for_all_nodes_in_supernode(node, 5000, &db_node_check_status_is_not_visited_or_visited_and_exists_in_reference, condition,
+      if (db_graph_is_condition_true_for_all_nodes_in_supernode(e, 5000, &db_node_check_status_is_not_visited_or_visited_and_exists_in_reference, condition,
 								&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 								seq,nodes_path,orientations_path, labels_path, &length_path, db_graph))
 	{
-	  printf(">node_%i %i\n",count_nodes,length_path+db_graph->kmer_size);
-	  count_nodes++;
-	  printf("%s\n",seq);
+	  if (length_path>0) // db_graph_is_condition_true_for_all_nodes_in_supernode returns zero length if the condition for initial node only is false. Usually this condition is checking if visited
+	    {
+	      //work out min and max covg for this supernode
+	      int min=element_get_coverage(nodes_path[0]);
+	      int max=element_get_coverage(nodes_path[0]);
+	      int j;
+	      for (j=0; j<= length_path; j++)
+		{
+		  int cov = element_get_coverage(nodes_path[j]);
+		  if (cov<min)
+		    {
+		      min=cov;
+		    }
+		  if (cov>max)
+		    {
+		      max=cov;
+		    }
+		}
+	      
+	      if (min>=min_covg_required)
+		{
+		  if (!is_for_testing)
+		    {
+		      printf(">node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min, max);
+		      count_nodes++;
+		      printf("%s\n",seq);
+		    }
+		  else
+		    {
+		      //return the supernode in the preallocated array, so the test can check it.
+		      for_test_array_of_supernodes[*for_test_index][0]='\0';
+		      strcat(for_test_array_of_supernodes[*for_test_index], seq);
+		      *for_test_index=*for_test_index+1;
+		    }
+		}
+	    }
 	}
     }
   hash_table_traverse(&print_supernode,db_graph); 
@@ -630,7 +630,7 @@ void db_graph_detect_snps(dBGraph * db_graph){
       char tmp_seq[db_graph->kmer_size+1];
       int i;
 
-      printf("SNP: %i - coverage: %d\n",count_snps,element_get_coverage(node));
+      printf("SNP: %i - coverage %d\n",count_snps,element_get_coverage(node));
       count_snps++;
 
       printf("five prime end\n");

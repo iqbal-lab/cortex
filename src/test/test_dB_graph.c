@@ -5,6 +5,7 @@
 #include <binary_kmer.h>
 #include <file_reader.h>
 #include <test_dB_graph.h>
+#include <stdlib.h>
 
 void test_hash_table_find()
 {
@@ -824,6 +825,72 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   CU_ASSERT_STRING_EQUAL(tmp_seq, "GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT");
 	    
   hash_table_free(&db_graph);
+
+  
+  // and now another
+
+  //first set up the hash/graph
+  kmer_size = 31;
+  number_of_bits=20;
+  bucket_size   = 10;
+  bad_reads=0;
+  max_read_length=2000;
+  max_rehash_tries=10;
+  seq_length=0;
+  db_graph = hash_table_new(number_of_bits,bucket_size,max_rehash_tries,kmer_size);
+
+
+  seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, max_read_length, db_graph);
+  
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
+
+  char** array_of_supernodes_for_person3= (char**) calloc(10,sizeof(char*));
+  array_of_supernodes_for_person3[0]= (char*)calloc(100,sizeof(char));
+  array_of_supernodes_for_person3[1]= (char*)calloc(100,sizeof(char));
+  array_of_supernodes_for_person3[2]= (char*)calloc(100,sizeof(char));
+
+  int number_of_supernodes=0;
+  int min_covg_required = 2;
+
+
+  //element on supernode we know intersects chromosomes
+   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACCCTAACCCTAACCCTAACCCTAACCCTAA", kmer_size), kmer_size),db_graph);
+   db_node_set_status(test_element1, none);
+   db_node_set_status(test_element1, visited);
+   db_node_set_status(test_element1, pruned);
+   db_node_set_status(test_element1, exists_in_reference);
+   db_node_set_status(test_element1, none);
+  CU_ASSERT(test_element1!=NULL);
+  //elemtn on node that does not intersect chromosomes - is "novel" - and has coverage 3
+  test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GGGCGGGGCGGGGCGGGGCGGGGCCCCCTCA", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element2!=NULL);
+  //element does not intersect chrom but has covg only 1
+  dBNode* test_element3 =  hash_table_find(element_get_key(seq_to_binary_kmer("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element3!=NULL);
+
+
+
+
+
+  db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_is_not_exists_in_reference, min_covg_required, 
+									       true, array_of_supernodes_for_person3, &number_of_supernodes);
+
+
+
+  CU_ASSERT(number_of_supernodes==1);
+  printf("suponode is %s", array_of_supernodes_for_person3[0]);
+  CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0], "ATGTGTGTGAGGGGGCCCCGCCCCGCCCCGCCCCGCCCCGCCCC") || !strcmp(array_of_supernodes_for_person3[0], "GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT"));
+
+
+
+  free(array_of_supernodes_for_person3[0]) ;
+  free(array_of_supernodes_for_person3[1]) ;
+  free(array_of_supernodes_for_person3[2]) ;
+  free(array_of_supernodes_for_person3) ;
+
+  hash_table_free(&db_graph);
+
+  
 
   
 }
