@@ -449,7 +449,7 @@ int db_graph_supernode(dBNode * node,int limit, boolean (*condition)(dBNode * no
   char tmp_seq[db_graph->kmer_size+1];
 
 
-  if (condition(node)){   
+  if (condition(node)==true){   
         
     //compute the reverse path until the end of the supernode
     //return is_cycle_reverse == true if the path closes a loop    
@@ -541,6 +541,89 @@ boolean db_graph_is_condition_true_for_all_nodes_in_supernode(dBNode * node,int 
 
   
 }
+
+
+
+// The idea is this. First of all you check the node you are given with condition_on_initial_node_only. If this is false, forget the whole supernode - ignore it. In that case *path_length==0.
+// If condition_on_initial_node_only  is true, then you get the supernode and apply the action to all nodes in the supernode, and also you check
+// if condition_for_all_nodes is true for >= min_start nodes at the start and >=min_end at the end of the supernode, but NOT ALL, then return true, else false.
+// (note if true for 3 nodes at start, that's kmer-size+2 bases, whereas 3 nodes at the end is only 3 bases).
+// whether true or false, will return the supernode in path_nodes, path_orientations, path_labels
+// node_action MUST BE IDEMPOTENT
+boolean db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(dBNode * node,int limit, boolean (*condition_on_initial_node_only)(dBNode * node), boolean (*condition_for_all_nodes)(dBNode * node),  
+										    void (*node_action)(dBNode * node), int min_start, int min_end,
+										    char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, int* path_length,
+										    dBGraph * db_graph)
+{
+
+  boolean condition_is_true_for_all_nodes_in_supernode=true;
+
+  char tmp_seq[db_graph->kmer_size+1];
+
+  void action_check_condition_on_all_nodes(dBNode* n)
+    {
+      //printf("db_graph_is_condition_true..:  applying action to node %s\n", binary_kmer_to_seq(element_get_kmer(n),db_graph->kmer_size,tmp_seq) );
+      condition_is_true_for_all_nodes_in_supernode = condition_is_true_for_all_nodes_in_supernode  &&   condition_for_all_nodes(n);
+    }
+
+  *path_length = db_graph_supernode(node, limit, condition_on_initial_node_only , action_check_condition_on_all_nodes, string, path_nodes, path_orientations, path_labels,db_graph);
+
+  int num_nodes_at_start_where_condition_is_true=0;
+  int num_nodes_at_end_where_condition_is_true=0;
+
+  if (*path_length>0)
+    {
+      //now see if have enoug nodes at start and end with condition true.
+      if (!condition_is_true_for_all_nodes_in_supernode)
+	{
+	  int j;
+	  boolean flag=true;
+	  for (j=0; j<=*path_length; j++)
+	    {
+	      if ( (flag==true) && (condition_for_all_nodes(path_nodes[j])==true) )
+		{
+		  num_nodes_at_start_where_condition_is_true++;
+		}
+	      else
+		{
+		  flag=false;
+		}
+	    }
+	  
+	  flag=true;
+	  for (j=*path_length; j>=0; j--)
+	    {
+	      if ( (flag==true) && (condition_for_all_nodes(path_nodes[j])==true) )
+		{
+		  num_nodes_at_end_where_condition_is_true++;
+		}
+	      else
+		{
+		  flag=false;
+		}
+	    }
+
+	}
+
+      //now apply action to all nodes
+      int i;
+      for (i=0; i<= *path_length; i++)
+	{
+	  node_action(path_nodes[i]);
+	}
+
+      if ( (num_nodes_at_start_where_condition_is_true>=min_start) && (num_nodes_at_end_where_condition_is_true>=min_end))
+	{
+	  return true;
+	}
+
+    }
+
+  return false;
+
+  
+}
+
 
 
 

@@ -80,6 +80,12 @@ int  main()
        CU_cleanup_registry();
        return CU_get_error();
      }
+   if (NULL == CU_add_test(pSuite, "Test can pull out supernode that overlaps chromosome1 at start and end but not middle",  test_indel_discovery_simple_test_1)){
+     CU_cleanup_registry();
+     return CU_get_error();
+   }
+
+
 
   /* Run all tests using the CUnit Basic interface */
   CU_basic_set_mode(CU_BRM_VERBOSE);

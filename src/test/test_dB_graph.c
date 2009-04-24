@@ -839,7 +839,6 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   seq_length=0;
   db_graph = hash_table_new(number_of_bits,bucket_size,max_rehash_tries,kmer_size);
 
-
   seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, max_read_length, db_graph);
   
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
@@ -855,11 +854,6 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
   //element on supernode we know intersects chromosomes
    test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACCCTAACCCTAACCCTAACCCTAACCCTAA", kmer_size), kmer_size),db_graph);
-   db_node_set_status(test_element1, none);
-   db_node_set_status(test_element1, visited);
-   db_node_set_status(test_element1, pruned);
-   db_node_set_status(test_element1, exists_in_reference);
-   db_node_set_status(test_element1, none);
   CU_ASSERT(test_element1!=NULL);
   //elemtn on node that does not intersect chromosomes - is "novel" - and has coverage 3
   test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GGGCGGGGCGGGGCGGGGCGGGGCCCCCTCA", kmer_size), kmer_size),db_graph);
@@ -878,7 +872,6 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
 
   CU_ASSERT(number_of_supernodes==1);
-  printf("suponode is %s", array_of_supernodes_for_person3[0]);
   CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0], "ATGTGTGTGAGGGGGCCCCGCCCCGCCCCGCCCCGCCCCGCCCC") || !strcmp(array_of_supernodes_for_person3[0], "GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT"));
 
 
@@ -893,4 +886,59 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   
 
   
+}
+
+
+
+
+
+void test_indel_discovery_simple_test_1()
+{
+
+
+  //first set up the hash/graph
+  int kmer_size = 31;
+  int number_of_bits=10;
+  int bucket_size   = 5;
+  long long bad_reads=0;
+  int max_read_length=600;
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+
+  int seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/person_with_sv.fasta", &bad_reads, max_read_length, db_graph);
+  CU_ASSERT(seq_length==612);
+
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
+
+  //element on supernode we know intersects chromosome entirely
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TGTGCAGAGGACAACGCAGCTCCGCCCTCGC", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element1!=NULL);
+
+  //element on supernode that overlaps at start and end but not middle, with chromosome
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("CCGGCGCAGGCGCAGTTGTTGTAGAGGCGCG", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element2!=NULL);
+
+
+  dBNode * nodes_path[100];
+  Orientation orientations_path[100];
+  Nucleotide labels_path[100];
+  char tmp_seq[100];
+  int length_path=0;
+
+  int num_nodes_we_demand_overlap_with_reference_at_start=2;
+  int num_nodes_we_demand_overlap_with_reference_at_end=22;
+
+    CU_ASSERT(!db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(test_element1, 200, &db_node_check_status_is_not_visited_or_visited_and_exists_in_reference,
+  										&db_node_check_status_exists_in_reference, &db_node_action_set_status_visited,
+  										 num_nodes_we_demand_overlap_with_reference_at_start,
+  										num_nodes_we_demand_overlap_with_reference_at_end, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+
+    CU_ASSERT(db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(test_element2, 200, &db_node_check_status_is_not_visited_or_visited_and_exists_in_reference,
+											  &db_node_check_status_exists_in_reference, &db_node_action_set_status_visited,
+											  num_nodes_we_demand_overlap_with_reference_at_start,
+											  num_nodes_we_demand_overlap_with_reference_at_end, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+
+    
+
+  hash_table_free(&db_graph);
 }

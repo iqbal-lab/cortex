@@ -345,10 +345,10 @@ void read_all_ref_chromosomes_and_mark_graph(dBGraph* db_graph)
   printf("Loaded chromosome 21\n");
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/clean/Homo_sapiens.NCBI36.52.dna.chromosome.22.fa.short_reads" , db_graph);
   printf("Loaded chromosome 22\n");
-  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/clean/Homo_sapiens.NCBI36.52.dna.chromosome.23.fa.short_reads" , db_graph);
-  printf("Loaded chromosome 23\n");
-  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/clean/Homo_sapiens.NCBI36.52.dna.chromosome.24.fa.short_reads" , db_graph);
-  printf("Loaded chromosome 24\n");
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/clean/Homo_sapiens.NCBI36.52.dna.chromosome.X.fa.short_reads" , db_graph);
+  printf("Loaded chromosome X\n");
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/clean/Homo_sapiens.NCBI36.52.dna.chromosome.Y.fa.short_reads" , db_graph);
+  printf("Loaded chromosome Y\n");
   
   
 

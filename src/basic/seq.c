@@ -103,6 +103,7 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length){
     
   seq->seq[j]  = '\0';
   seq->qual[j] = '\0';
+
   return j;
 }
 
