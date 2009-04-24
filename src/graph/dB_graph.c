@@ -686,6 +686,80 @@ void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernod
   hash_table_traverse(&print_supernode,db_graph); 
 }
 
+
+
+// can use this toprint potential indels.
+// min_start and min_end are the number of nodes of overlap with the reference that  you want at the start and  end of the supernode
+void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required,
+												       int min_start, int min_end,
+												       boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index)
+{
+
+  int count_nodes=0;
+  void print_supernode(dBNode * e)
+    {
+
+      dBNode * nodes_path[5000];
+      Orientation orientations_path[5000];
+      Nucleotide labels_path[5000];
+      char seq[5000+db_graph->kmer_size+1];
+      int length_path=0;
+      
+      if (db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(e, 5000, &db_node_check_status_is_not_visited_or_visited_and_exists_in_reference, condition,
+													    &db_node_action_set_status_visited_or_visited_and_exists_in_reference,min_start, min_end,
+													    seq,nodes_path,orientations_path, labels_path, &length_path, db_graph))
+	{
+	  if (length_path>0) // db_graph_is_condition_true_for_all_nodes_in_supernode returns zero length if the condition for initial node only is false. Usually this condition is checking if visited
+	    {
+	      //work out min and max covg for this supernode
+	      int min=element_get_coverage(nodes_path[0]);
+	      int max=element_get_coverage(nodes_path[0]);
+	      int j;
+	      for (j=0; j<= length_path; j++)
+		{
+		  int cov = element_get_coverage(nodes_path[j]);
+		  if (cov<min)
+		    {
+		      min=cov;
+		    }
+		  if (cov>max)
+		    {
+		      max=cov;
+		    }
+		}
+	      
+	      if (min>=min_covg_required)
+		{
+
+		  if (!is_for_testing)
+		    {
+		      printf(">potential_sv_node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min, max);
+		      count_nodes++;
+		      printf("%s\n",seq);
+		    }
+		  else
+		    {
+		      //return the supernode in the preallocated array, so the test can check it.
+		      for_test_array_of_supernodes[*for_test_index][0]='\0';
+		      strcat(for_test_array_of_supernodes[*for_test_index], seq);
+		      *for_test_index=*for_test_index+1;
+		    }
+		}
+	      else
+		{
+		  printf("Too low covg of only %d and w require %d\n",min, min_covg_required); 
+		}
+	    }
+	}
+    }
+  hash_table_traverse(&print_supernode,db_graph); 
+}
+
+
+
+
+
+
 //routine to get SNPS 
 
 void db_graph_detect_snps(dBGraph * db_graph){
