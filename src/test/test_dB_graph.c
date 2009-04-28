@@ -924,6 +924,7 @@ void test_indel_discovery_simple_test_1()
   Nucleotide labels_path[100];
   char tmp_seq[100];
   int length_path=0;
+  int min_diff=1; //enought o have one node different in the middle
 
   int num_nodes_we_demand_overlap_with_reference_at_start=2;
   int num_nodes_we_demand_overlap_with_reference_at_end=22;
@@ -931,12 +932,12 @@ void test_indel_discovery_simple_test_1()
   CU_ASSERT(!db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(test_element1, 200, &db_node_check_status_is_not_visited_or_visited_and_exists_in_reference,
 											 &db_node_check_status_exists_in_reference, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 											 num_nodes_we_demand_overlap_with_reference_at_start,
-											 num_nodes_we_demand_overlap_with_reference_at_end, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+											 num_nodes_we_demand_overlap_with_reference_at_end, min_diff, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
   
   CU_ASSERT(db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(test_element2, 200, &db_node_check_status_is_not_visited_or_visited_and_exists_in_reference,
 											&db_node_check_status_exists_in_reference, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 											num_nodes_we_demand_overlap_with_reference_at_start,
-											num_nodes_we_demand_overlap_with_reference_at_end, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+											num_nodes_we_demand_overlap_with_reference_at_end, min_diff, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
   
 
   //remove the visited markings
@@ -952,9 +953,9 @@ void test_indel_discovery_simple_test_1()
   int min_covg_required = 2;
   int min_start = 2;
   int min_end = 25;
-
+  
   db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required, 
-												    min_start, min_end,
+												    min_start, min_end, min_diff,
 												    true, array_of_supernodes, &number_of_supernodes);
 
 

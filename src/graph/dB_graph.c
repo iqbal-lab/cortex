@@ -551,7 +551,7 @@ boolean db_graph_is_condition_true_for_all_nodes_in_supernode(dBNode * node,int 
 // whether true or false, will return the supernode in path_nodes, path_orientations, path_labels
 // node_action MUST BE IDEMPOTENT
 boolean db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(dBNode * node,int limit, boolean (*condition_on_initial_node_only)(dBNode * node), boolean (*condition_for_all_nodes)(dBNode * node),  
-										    void (*node_action)(dBNode * node), int min_start, int min_end,
+										    void (*node_action)(dBNode * node), int min_start, int min_end, int min_diff,
 										    char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, int* path_length,
 										    dBGraph * db_graph)
 {
@@ -612,7 +612,8 @@ boolean db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supern
 	  node_action(path_nodes[i]);
 	}
 
-      if ( (num_nodes_at_start_where_condition_is_true>=min_start) && (num_nodes_at_end_where_condition_is_true>=min_end))
+      if ( (num_nodes_at_start_where_condition_is_true>=min_start) && (num_nodes_at_end_where_condition_is_true>=min_end) 
+	   && ((*path_length+1 - num_nodes_at_start_where_condition_is_true - num_nodes_at_end_where_condition_is_true)>min_diff) )
 	{
 	  return true;
 	}
@@ -691,7 +692,7 @@ void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernod
 // can use this toprint potential indels.
 // min_start and min_end are the number of nodes of overlap with the reference that  you want at the start and  end of the supernode
 void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required,
-												       int min_start, int min_end,
+												       int min_start, int min_end, int min_diff,
 												       boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index)
 {
 
@@ -706,7 +707,7 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
       int length_path=0;
       
       if (db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(e, 5000, &db_node_check_status_is_not_visited_or_visited_and_exists_in_reference, condition,
-													    &db_node_action_set_status_visited_or_visited_and_exists_in_reference,min_start, min_end,
+										      &db_node_action_set_status_visited_or_visited_and_exists_in_reference,min_start, min_end,min_diff,
 													    seq,nodes_path,orientations_path, labels_path, &length_path, db_graph))
 	{
 	  if (length_path>0) // db_graph_is_condition_true_for_all_nodes_in_supernode returns zero length if the condition for initial node only is false. Usually this condition is checking if visited
@@ -747,7 +748,7 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 		}
 	      else
 		{
-		  printf("Too low covg of only %d and w require %d\n",min, min_covg_required); 
+		  //printf("Too low covg of only %d and we require %d\n",min, min_covg_required); 
 		}
 	    }
 	}

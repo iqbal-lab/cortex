@@ -123,6 +123,18 @@ int main(int argc, char **argv){
 
     hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); //cleanup - the printing process has set all printed nodes to visited
                                                                                                             //        - or to visited_and_exists_in_reference
+
+  case 8:
+    printf("Print supernodes that match reference at start and end, but not the middle\n");
+    read_all_ref_chromosomes_and_mark_graph(db_graph);
+    int minimum_covg=20; //demand covg of at least 20
+    printf("Start printing..\n");
+    db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, minimum_covg,
+												      2,25,false,NULL,0);//2,25 are overlapping nodes with ref at start and end
+    //cleanup - the printing process has set all printed nodes to visited
+    //           - or to visited_and_exists_in_reference
+    hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
+
   }
 
   return 0;
