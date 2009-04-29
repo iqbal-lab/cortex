@@ -14,6 +14,7 @@ int main(int argc, char **argv){
   int bucket_size;
   int action; //0 dump graph - 1 call SNPs
   char* binfilename;
+  char* deletion_locus_fasta;
 
   FILE * fout; //binary output
 
@@ -25,7 +26,7 @@ int main(int argc, char **argv){
   action           = atoi(argv[5]);
   DEBUG            = atoi(argv[6]);
   binfilename      = argv[7];
-
+  deletion_locus_fasta = argv[8];
 
   printf("Input file of filenames: %s - action: %i\n",argv[1],action);
   printf("Kmer size: %d hash_table_size (%d bits): %d - bucket size: %d - total size: %qd\n",kmer_size,hash_key_bits,1 << hash_key_bits, bucket_size, ((long long) 1<<hash_key_bits)*bucket_size);
@@ -130,10 +131,25 @@ int main(int argc, char **argv){
     int minimum_covg=20; //demand covg of at least 20
     printf("Start printing..\n");
     db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, minimum_covg,
-												      2,25,false,NULL,0);//2,25 are overlapping nodes with ref at start and end
+												      2,25,40, false,NULL,0);//2,25 are overlapping nodes with ref at start and end
+                                                                                                                             //40 is number of supernodes which are NOT in reference
     //cleanup - the printing process has set all printed nodes to visited
     //           - or to visited_and_exists_in_reference
     hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
+
+
+  case 9:
+    printf("Load a putative deletion locus as if it were a chromosome, and print supernodes that intersect it in any way");
+    read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(deletion_locus_fasta, db_graph);
+    int min_covg_required=5;
+    db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
+											false,NULL,0);
+    //cleanup - the printing process has set all printed nodes to visited
+    //           - or to visited_and_exists_in_reference
+    hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+
+
+
 
   }
 

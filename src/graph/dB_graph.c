@@ -522,7 +522,7 @@ boolean db_graph_is_condition_true_for_all_nodes_in_supernode(dBNode * node,int 
       condition_is_true_for_all_nodes_in_supernode = condition_is_true_for_all_nodes_in_supernode  &&   condition_for_all_nodes(n);
     }
 
-  *path_length = db_graph_supernode(node, limit, condition_on_initial_node_only , action_check_condition_on_all_nodes, string, path_nodes, path_orientations, path_labels,db_graph);
+  *path_length = db_graph_supernode(node, limit, condition_on_initial_node_only , &action_check_condition_on_all_nodes, string, path_nodes, path_orientations, path_labels,db_graph);
 
 
   if (*path_length>0)
@@ -541,6 +541,55 @@ boolean db_graph_is_condition_true_for_all_nodes_in_supernode(dBNode * node,int 
 
   
 }
+
+
+// The idea is this. First of all you check the node you are given with condition_on_initial_node_only. If this is false, forget the whole supernode - ignore it. In that case *path_length==0.
+// If condition_on_oinitial_node_only  is true, then you get the supernode and apply the action to all nodes in the supernode, and also you check
+// if condition_for_all_nodes is true for any of the nodes, and return true, else false.
+// whether true or false, will return the supernode in path_nodes, path_orientations, path_labels
+// node_action MUST BE IDEMPOTENT
+boolean db_graph_is_condition_true_for_at_least_one_node_in_supernode(dBNode * node,int limit, boolean (*condition_on_initial_node_only)(dBNode * node), boolean (*condition_for_all_nodes)(dBNode * node),  
+							      void (*node_action)(dBNode * node),
+							      char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, int* path_length,
+							      dBGraph * db_graph)
+{
+
+  boolean condition_is_true_for_at_least_one_node_in_supernode=false;
+
+  char tmp_seq[db_graph->kmer_size+1];
+
+  void action_check_condition_true_on_at_least_one_node(dBNode* n)
+    {
+      if (condition_for_all_nodes(n)==true)
+	{
+	  condition_is_true_for_at_least_one_node_in_supernode=true;
+	}
+    }
+
+  *path_length = db_graph_supernode(node, limit, condition_on_initial_node_only , &action_check_condition_true_on_at_least_one_node, string, path_nodes, path_orientations, path_labels,db_graph);
+
+
+  if (*path_length>0)
+    {
+      //now apply action to all nodes
+      int i;
+      for (i=0; i<= *path_length; i++)
+	{
+	  node_action(path_nodes[i]);
+	}
+    }
+  
+
+  return condition_is_true_for_at_least_one_node_in_supernode;
+
+
+  
+}
+
+
+
+
+
 
 
 
@@ -686,6 +735,73 @@ void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernod
     }
   hash_table_traverse(&print_supernode,db_graph); 
 }
+
+
+
+
+void db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, 
+										  boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index)
+{
+
+  int count_nodes=0;
+  void print_supernode(dBNode * e)
+    {
+
+      dBNode * nodes_path[5000];
+      Orientation orientations_path[5000];
+      Nucleotide labels_path[5000];
+      char seq[5000+db_graph->kmer_size+1];
+      int length_path=0;
+      
+      if (db_graph_is_condition_true_for_at_least_one_node_in_supernode(e, 5000, &db_node_check_status_is_not_visited_or_visited_and_exists_in_reference, condition,
+								&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+								seq,nodes_path,orientations_path, labels_path, &length_path, db_graph))
+	{
+	  if (length_path>0) 
+	    {
+
+	      //work out min and max covg for this supernode
+	      int min=element_get_coverage(nodes_path[0]);
+	      int max=element_get_coverage(nodes_path[0]);
+	      int j;
+	      for (j=0; j<= length_path; j++)
+		{
+		  int cov = element_get_coverage(nodes_path[j]);
+		  if (cov<min)
+		    {
+		      min=cov;
+		    }
+		  if (cov>max)
+		    {
+		      max=cov;
+		    }
+		}
+	      
+	      if (min>=min_covg_required)
+		{
+		  if (!is_for_testing)
+		    {
+		      printf(">node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min, max);
+		      count_nodes++;
+		      printf("%s\n",seq);
+		    }
+		  else
+		    {
+		      //return the supernode in the preallocated array, so the test can check it.
+		      for_test_array_of_supernodes[*for_test_index][0]='\0';
+		      strcat(for_test_array_of_supernodes[*for_test_index], seq);
+		      *for_test_index=*for_test_index+1;
+		    }
+		}
+	    }
+	}
+    }
+  hash_table_traverse(&print_supernode,db_graph); 
+}
+
+
+
+
 
 
 

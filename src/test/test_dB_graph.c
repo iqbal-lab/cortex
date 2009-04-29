@@ -870,10 +870,24 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 									       true, array_of_supernodes_for_person3, &number_of_supernodes);
 
 
-
   CU_ASSERT(number_of_supernodes==1);
   CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0], "ATGTGTGTGAGGGGGCCCCGCCCCGCCCCGCCCCGCCCCGCCCC") || !strcmp(array_of_supernodes_for_person3[0], "GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT"));
 
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
+
+
+  number_of_supernodes=0;
+  //here just a quick check of the _at_least_ version of the function
+  min_covg_required=1;
+  db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference,  min_covg_required,
+										       true, array_of_supernodes_for_person3, &number_of_supernodes);
+
+
+  CU_ASSERT(number_of_supernodes==2);
+
+  //the whole of read2 is a supernode, and is in chrom 1
+  CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC") || !strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC"));
+  CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0],"CCCTAACCCTAACCCTAACCCTAACCCTAACCCTAAC") ||!strcmp(array_of_supernodes_for_person3[1],"CCCTAACCCTAACCCTAACCCTAACCCTAACCCTAAC") );
 
 
   free(array_of_supernodes_for_person3[0]) ;
