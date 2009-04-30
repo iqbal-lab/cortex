@@ -969,7 +969,7 @@ void test_indel_discovery_simple_test_1()
   int min_end = 25;
   
   db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required, 
-												    min_start, min_end, min_diff,
+												    min_start, min_end, min_diff, NULL, 
 												    true, array_of_supernodes, &number_of_supernodes);
 
 

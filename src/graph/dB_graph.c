@@ -808,7 +808,7 @@ void db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_
 // can use this toprint potential indels.
 // min_start and min_end are the number of nodes of overlap with the reference that  you want at the start and  end of the supernode
 void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required,
-												       int min_start, int min_end, int min_diff,
+												       int min_start, int min_end, int min_diff, FILE* fout,
 												       boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index)
 {
 
@@ -850,9 +850,20 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 
 		  if (!is_for_testing)
 		    {
-		      printf(">potential_sv_node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min, max);
-		      count_nodes++;
-		      printf("%s\n",seq);
+
+		      if (fout == NULL)
+			{
+			  printf(">potential_sv_node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min, max);
+			  count_nodes++;
+			  printf("%s\n",seq);
+			}
+		      else
+			{
+			  fprintf(fout, ">potential_sv_node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min, max);
+                          count_nodes++;
+                          printf("%s\n",seq);
+
+			}
 		    }
 		  else
 		    {
