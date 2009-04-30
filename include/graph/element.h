@@ -124,4 +124,9 @@ boolean db_node_check_status_none(dBNode * node);
 
 void db_node_action_do_nothing(dBNode * node);
 
+boolean db_node_check_status_not_pruned(dBNode * node);
+
+boolean db_node_check_nothing(dBNode * node);
+
+int db_node_edges_count(dBNode * node, Orientation orientation);
 #endif /* ELEMENT_H_ */

@@ -13,10 +13,8 @@ int main(int argc, char **argv){
   short kmer_size;
   int bucket_size;
   int action; //0 dump graph - 1 call SNPs
-  char* binfilename;
-
-  FILE * fout; //binary output
-
+  int ctg_length = 100000;
+  
    //command line arguments 
   fp_fnames= fopen(argv[1], "r");    //open file of file names
   kmer_size        = atoi(argv[2]); 
@@ -24,8 +22,7 @@ int main(int argc, char **argv){
   bucket_size      = atoi(argv[4]);
   action           = atoi(argv[5]);
   DEBUG            = atoi(argv[6]);
-  binfilename      = argv[7];
-
+  
 
   fprintf(stderr,"Input file of filenames: %s - action: %i\n",argv[1],action);
   fprintf(stderr,"Kmer size: %d hash_table_size (%d bits): %d - bucket size: %d - total size: %qd\n",kmer_size,hash_key_bits,1 << hash_key_bits, bucket_size, ((long long) 1<<hash_key_bits)*bucket_size);
@@ -51,6 +48,8 @@ int main(int argc, char **argv){
     
     fprintf(stderr,"\n%i kmers: %qd file name:%s seq:%qd total seq:%qd\n\n",count_file,hash_table_get_unique_kmers(db_graph),filename,seq_length, total_length);
 
+    hash_table_print_stats(db_graph);
+
     //print mem status
     FILE* fmem=fopen("/proc/self/status", "r");
     char line[500];
@@ -70,14 +69,7 @@ int main(int argc, char **argv){
   switch (action){
   case 0 :
     printf("dumping graph %s\n",argv[7]);
-    fout= fopen(argv[7], "w"); 
-
-    //routine to dump graph
-    void print_node_binary(dBNode * node){
-    db_node_print_binary(fout,node);
-    }
-
-    hash_table_traverse(&print_node_binary,db_graph); 
+    db_graph_dump_binary(argv[7],&db_node_check_nothing,db_graph);
     break;
 
   case 1 :
@@ -92,14 +84,14 @@ int main(int argc, char **argv){
 
   case 3:
     printf("print supernodes\n");
-    db_graph_print_supernodes(db_graph); 
+    db_graph_print_supernodes(argv[7],ctg_length,db_graph); 
     break;
 
   case 4:
     printf("clip tips\n");
     db_graph_clip_tips(db_graph);
     printf("print supernodes\n");
-    db_graph_print_supernodes(db_graph); 
+    db_graph_print_supernodes(argv[7],ctg_length,db_graph); 
     break;
 
   case 5:
@@ -111,9 +103,76 @@ int main(int argc, char **argv){
     printf("count kmers\n");
     db_graph_print_coverage(db_graph);
     break;
+  
+  case 7:
+    printf("clip tips\n");
+    db_graph_clip_tips(db_graph);
+    printf("detect SNPs\n");
+    db_graph_detect_snps(db_graph);
+    break;
+
+
+  case 8:    
+    printf("clip tips\n");
+    db_graph_clip_tips(db_graph);
+
+    printf("remove low coverage nodes\n");
+    db_graph_prune_low_coverage_nodes(1,db_graph);
+
+    printf("print supernodes\n");
+    db_graph_print_supernodes(argv[8],ctg_length,db_graph); 
+ 
+    printf("dumping graph %s\n",argv[7]);
+    db_graph_dump_binary(argv[7],&db_node_check_status_not_pruned,db_graph);
+ 
+    break;
+
+  case 9:
+    printf("clip tips\n");
+    db_graph_clip_tips(db_graph);
+    printf("detect SNPs\n");
+    db_graph_detect_snps(db_graph);
+    break;
+
+
+    
+  case 10:
+    
+    printf("remove low coverage nodes (<=5) \n");
+    db_graph_prune_low_coverage_nodes(5,db_graph);
+
+    printf("clip tips\n");
+    db_graph_clip_tips(db_graph);
+
+    printf("print supernodes\n");
+    db_graph_print_supernodes(argv[8],ctg_length,db_graph); 
+ 
+    printf("dumping graph %s\n",argv[7]);
+    db_graph_dump_binary(argv[7],&db_node_check_status_not_pruned,db_graph);
+
+    break;
+
+
+  case 11:
+    
+    printf("remove low coverage nodes (<=5) \n");
+    db_graph_prune_low_coverage_nodes(5,db_graph);
+
+    //printf("clip tips\n");
+    //db_graph_clip_tips(db_graph);
+
+    //printf("smooth bubbles\n");
+    //db_graph_smooth_bubbles(10,kmer_size*2,50,db_graph);
+    
+    //printf("print supernodes\n");
+    //db_graph_print_supernodes(argv[8],ctg_length,db_graph); 
+ 
+    printf("dumping graph %s\n",argv[7]);
+    db_graph_dump_binary(argv[7],&db_node_check_status_not_pruned,db_graph);
+
+    break;
   }
 
-  
 
   return 0;
 }

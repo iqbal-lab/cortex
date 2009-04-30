@@ -174,9 +174,9 @@ long long load_binary_data_from_filename_into_graph(char* filename,  dBGraph* db
   while (db_node_read_binary(fp_bin,db_graph->kmer_size,&node_from_file)){
     count++;
     
-    if (count % 10000000 == 0 ){
-     printf("loaded %i\n",count);
-    }
+    //if (count % 10000000 == 0 ){
+    //printf("loaded %qd\n",count);
+    //}
    
     dBNode * current_node  = NULL;
     current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size),&found,db_graph);

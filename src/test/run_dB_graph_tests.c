@@ -64,6 +64,11 @@ int  main()
      return CU_get_error();
    }
    
+  if (NULL == CU_add_test(pSuite, "test node prune",  test_node_prunning)){
+     CU_cleanup_registry();
+     return CU_get_error();
+   }
+
    if (NULL == CU_add_test(pSuite, "test get perfect bubble",  test_get_perfect_bubble)){
      CU_cleanup_registry();
      return CU_get_error();

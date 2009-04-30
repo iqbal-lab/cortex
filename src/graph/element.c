@@ -193,7 +193,7 @@ void db_node_set_edges(dBNode * node, Edges edges){
 
 
 boolean db_node_edges_reset(dBNode * node){
-  return node->edges == 0;
+  return node->edges = 0;
 }
 
 void db_node_reset_edges(dBNode * node){
@@ -259,6 +259,29 @@ boolean db_node_has_precisely_two_edges(dBNode * node, Orientation orientation, 
 }
 
 
+int db_node_edges_count(dBNode * node, Orientation orientation){
+
+  Edges edges = node->edges;
+  short edges_count = 0;
+  int count = 0;
+
+  if (orientation == reverse){
+    edges >>= 4;
+  }
+  
+  int n;
+  for(n=0;n<4;n++){    
+    if ((edges & 1) == 1){
+      count++;
+    }
+    edges >>= 1;    
+  }
+  
+  return count;
+  
+}
+
+
 boolean db_node_is_blunt_end(dBNode * node, Orientation orientation){
   
   Edges edges = node->edges;
@@ -272,6 +295,10 @@ boolean db_node_is_blunt_end(dBNode * node, Orientation orientation){
   
   return edges == 0;
 }
+
+
+
+
 
 boolean db_node_check_status(dBNode * node, NodeStatus status){
   return node->status == status;
@@ -341,10 +368,17 @@ void db_node_action_do_nothing(dBNode * node){
   
 }
 
-
 boolean db_node_check_status_none(dBNode * node){
   return db_node_check_status(node,none);
 }
 
+boolean db_node_check_status_not_pruned(dBNode * node){
+  return !db_node_check_status(node,pruned);
+}
+
+
+boolean db_node_check_nothing(dBNode * node){
+  return true;
+}
 
 

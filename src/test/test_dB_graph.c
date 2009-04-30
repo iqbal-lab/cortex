@@ -178,6 +178,60 @@ void test_tip_clipping()
   
 
 }
+
+void test_node_prunning()
+{
+
+  //first set up the hash/graph
+  int kmer_size = 3;
+  int number_of_bits = 4;
+  int bucket_size    = 4;
+  long long bad_reads = 0; 
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  
+
+  //Load the following fasta:
+  
+  //>main_trunk
+  //GCGTCCCAT
+  //>tip
+  //CGTTT
+
+  int seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/generates_graph_with_tip.fasta",&bad_reads, 20, db_graph);
+ 
+
+  CU_ASSERT_EQUAL(seq_length,14);
+
+  dBNode* node1 = hash_table_find(element_get_key(seq_to_binary_kmer("CCC", kmer_size),kmer_size) ,db_graph);
+  dBNode* node2 = hash_table_find(element_get_key(seq_to_binary_kmer("TCC", kmer_size),kmer_size) ,db_graph);
+  dBNode* node3 = hash_table_find(element_get_key(seq_to_binary_kmer("CCA", kmer_size),kmer_size) ,db_graph);
+  
+
+  CU_ASSERT(node1 != NULL);
+  
+  boolean node_pruned = db_graph_db_node_prune(node1,1,&db_node_action_set_status_pruned,db_graph);
+
+  CU_ASSERT(node_pruned);
+  CU_ASSERT(db_node_check_status(node1,pruned));
+
+  CU_ASSERT(!db_node_edge_exist(node3,Guanine,reverse));
+  CU_ASSERT(db_node_edge_exist(node3,Thymine,forward));
+  
+  CU_ASSERT(!db_node_edge_exist(node2,Guanine,reverse));
+  CU_ASSERT(db_node_edge_exist(node2,Cytosine,forward));
+
+  void nucleotide_action(Nucleotide n){
+  
+    CU_ASSERT(!db_node_edge_exist(node1,n,reverse));
+    CU_ASSERT(!db_node_edge_exist(node1,n,forward));
+  }
+
+  nucleotide_iterator(&nucleotide_action);
+  hash_table_free(&db_graph);
+  CU_ASSERT(db_graph == NULL);  
+
+}
   
 
 void test_supernode_walking() //test db_graph_get_perfect_path 
@@ -494,6 +548,12 @@ void test_get_perfect_bubble(){
 
   //branch1
   node2 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCA", kmer_size),kmer_size),  &found, db_graph);
+
+  //modify coverage -- use below to clip one branch
+  element_update_coverage(node2,5);
+  CU_ASSERT_EQUAL(element_get_coverage(node2),5);
+
+
   node3 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CAC", kmer_size),kmer_size),  &found, db_graph);
   node4 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("ACT", kmer_size),kmer_size),  &found, db_graph);
 
@@ -502,6 +562,8 @@ void test_get_perfect_bubble(){
 
   //branch 2
   node6 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCT", kmer_size),kmer_size),  &found, db_graph);
+  element_update_coverage(node6,1);
+  CU_ASSERT_EQUAL(element_get_coverage(node6),1);
   node7 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CTC", kmer_size),kmer_size),  &found, db_graph);
   node8 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TCT", kmer_size),kmer_size),  &found, db_graph);
 
@@ -522,12 +584,16 @@ void test_get_perfect_bubble(){
   db_node_add_edge(node7, node8, forward,reverse, db_graph->kmer_size);	  
   db_node_add_edge(node8, node5, reverse,reverse, db_graph->kmer_size);	 
 
+  CU_ASSERT(db_node_edge_exist(node1,Thymine,forward));
+  CU_ASSERT(db_node_edge_exist(node1,Adenine,forward));
+
   //add 3p extension
   db_node_add_edge(node5, node9, reverse,reverse, db_graph->kmer_size);
 
 
-  bubble = db_graph_detect_perfect_bubble(node1,&orientation,&db_node_check_status_none,&db_node_action_set_status_visited,
+  bubble = db_graph_detect_perfect_bubble(node1,&orientation,&db_node_action_set_status_visited,
 &base1,&base2,labels,&end_node,&end_orientation,db_graph);
+
 
   CU_ASSERT(bubble);
   CU_ASSERT_EQUAL(orientation,forward);
@@ -549,7 +615,7 @@ void test_get_perfect_bubble(){
   int length_flank5p,length_flank3p;
   dBNode * nodes5p[100];
   dBNode * nodes3p[100];
-
+  
   length_flank5p = db_graph_get_perfect_path(node1, opposite_orientation(orientation),100,&db_node_action_set_status_visited,nodes5p,orientations5p, labels_flank5p,
   					     &is_cycle5p,db_graph); 
 
@@ -565,10 +631,65 @@ void test_get_perfect_bubble(){
   CU_ASSERT_EQUAL(nodes3p[1],node9);  
   CU_ASSERT_EQUAL(labels_flank3p[0],Adenine);
 
-  //if searched again should return false -- becuase nodes are marked as visited
-  bubble = db_graph_detect_perfect_bubble(node1,&orientation,&db_node_check_status_none,&db_node_action_set_status_visited,&base1,&base2,labels,&end_node,&end_orientation,db_graph);
-  CU_ASSERT(!bubble);
+  //check statuses 
 
+  CU_ASSERT(db_node_check_status(node1,visited));
+  CU_ASSERT(db_node_check_status(node2,visited));
+  CU_ASSERT(db_node_check_status(node3,visited));
+  CU_ASSERT(db_node_check_status(node4,visited));
+  CU_ASSERT(db_node_check_status(node6,visited));
+  CU_ASSERT(db_node_check_status(node7,visited));
+  CU_ASSERT(db_node_check_status(node8,visited));
+  CU_ASSERT(db_node_check_status(node5,visited));
+
+
+  //check the bubble from node5 perspective
+  bubble = db_graph_detect_perfect_bubble(node5,&orientation,&db_node_action_set_status_visited,
+					  &base1,&base2,labels,&end_node,&end_orientation,db_graph);
+  
+
+  CU_ASSERT(bubble);
+  CU_ASSERT_EQUAL(orientation,forward);
+  CU_ASSERT(base1 == Adenine || base1 == Thymine);
+  CU_ASSERT(base2 == Adenine || base2 == Thymine);
+
+
+  //remove a branch
+  //this one should fail
+  boolean removed = db_graph_db_node_smooth_bubble(node1,forward,db_graph->kmer_size,1,0,
+						   &db_node_action_set_status_pruned,db_graph);
+  
+
+  CU_ASSERT(!removed);
+
+ //this one should work
+  removed = db_graph_db_node_smooth_bubble(node1,forward,db_graph->kmer_size,1,10,
+						   &db_node_action_set_status_pruned,db_graph);
+  
+  CU_ASSERT(removed);
+  //check that correct path was removed
+
+  CU_ASSERT(db_node_check_status(node1,visited));
+  CU_ASSERT(db_node_check_status(node2,visited));
+  CU_ASSERT(db_node_check_status(node3,visited));
+  CU_ASSERT(db_node_check_status(node4,visited));
+  CU_ASSERT(db_node_check_status(node6,pruned));
+  CU_ASSERT(db_node_check_status(node7,pruned));
+  CU_ASSERT(db_node_check_status(node8,pruned));
+  CU_ASSERT(db_node_check_status(node5,visited));
+
+  CU_ASSERT(!db_node_edge_exist(node1,Thymine,forward));
+  CU_ASSERT(db_node_edge_exist(node1,Adenine,forward));
+
+  //check arrows
+  char tmp_seq[100];
+  dBNode * nodes_path[100];
+  Orientation orientations_path[100];
+  Nucleotide labels_path[100];
+  int length_supernode = db_graph_supernode(node1,100,&db_node_check_status_not_pruned,&db_node_action_set_status_visited,tmp_seq,nodes_path,orientations_path,labels_path,db_graph);
+  
+  
+  
   hash_table_free(&db_graph);
   CU_ASSERT(db_graph == NULL);
 

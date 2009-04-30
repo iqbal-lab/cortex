@@ -16,7 +16,11 @@ ifdef MAC
  IDIR_CUNIT = /Users/zi/dev/hg/laptop_local/repos/CUnit/CUnit-2.1-0/CUnit/Headers
 endif 
 
-OPT  		      = -m64 -Wall -O0 -g
+OPT = -m64 -Wall -O3
+ifdef DEBUG
+	OPT = -m64 -Wall -O0 -g
+endif
+
 CFLAGS_GRAPH          = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_GRAPH) $(MACFLAG) 
 CFLAGS_TEST	      = -I$(IDIR_TEST)  -I$(IDIR_CUNIT) 
 CFLAGS_CUNIT          = -L/homes/zi/bin/lib
