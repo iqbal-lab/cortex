@@ -65,12 +65,11 @@ boolean db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supern
                                                                                     dBGraph * db_graph);
 
 
-void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, 
-                                                                                  boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index);
+void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, FILE* fout,
+										  boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index);
 
-void db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required,
+void db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, FILE* fout,
 											  boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index);
-
 
 void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required,
                                                                                                        int min_start, int min_end, int min_diff, FILE* fout,

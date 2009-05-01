@@ -866,7 +866,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
 
 
-  db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_is_not_exists_in_reference, min_covg_required, 
+  db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_is_not_exists_in_reference, min_covg_required, NULL, 
 									       true, array_of_supernodes_for_person3, &number_of_supernodes);
 
 
@@ -879,7 +879,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   number_of_supernodes=0;
   //here just a quick check of the _at_least_ version of the function
   min_covg_required=1;
-  db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference,  min_covg_required,
+  db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference,  min_covg_required, NULL, 
 										       true, array_of_supernodes_for_person3, &number_of_supernodes);
 
 
@@ -986,4 +986,74 @@ void test_indel_discovery_simple_test_1()
   
 
   hash_table_free(&db_graph);
+}
+
+
+
+
+//suppose we are given a pair of start-end coords within which we think there is a deletion.
+// Load your fasta, then load precisely that section of the chromosome as reference, and print supernodes that match ref at start and end
+// (WARNING: if you delete the middle of a sequence, you create new kmers in the middle that might not have been there before.
+//           so the nodes in the new supernode are NOT necessatrily all in the reference)
+// Then build a new graph just out of the section of the chromosome, and load the supernodes above as reference. Now look for supernodes
+// in the chromosome graph that match the "reference" supernodes at the start and end only. These are potential deletions.
+void test_deletion_validation()
+{
+
+  //first set up the hash/graph
+  int kmer_size = 31;
+  int number_of_bits=10;
+  int bucket_size   = 5;
+  long long bad_reads=0;
+  int max_read_length=2000;
+
+
+
+  //STEP 1: get supernodes from our person which match reference at start and end.
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  int seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/person_with_deletion_in_chrom.fasta",  &bad_reads, max_read_length, db_graph);
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
+
+
+  FILE* intermediate_output = fopen("../data/test/graph/test_db_graph_intermediate_output_file", "w");
+  int min_covg_required = 1;
+  int min_start = 1;
+  int min_end = 31; //iei 31 bases at start and end
+  int min_diff = 2;
+  db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
+                                                                                                    intermediate_output, false, NULL, 0);
+
+  //  db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
+  //                                                                                                  min_start, min_end, min_diff, intermediate_output,
+  //												    false, NULL, 0);
+  fclose(intermediate_output);
+  hash_table_free(&db_graph);
+
+  //STEP 2: Load the chromosome as a person, and the previosu supernodes as reference
+  db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", &bad_reads, max_read_length,db_graph);
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/test_db_graph_intermediate_output_file", db_graph);
+
+
+
+  char** array_of_supernodes= (char**) calloc(10,sizeof(char*));
+  array_of_supernodes[0]= (char*)calloc(100,sizeof(char));
+  array_of_supernodes[1]= (char*)calloc(100,sizeof(char));
+  array_of_supernodes[2]= (char*)calloc(100,sizeof(char));
+
+  int number_of_supernodes=0;
+
+  //STEP 3: Print supernodes in chromosome that match our person's supernodes (here the reference) at start and end - deletions
+  // db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
+  //                                                                                                  min_start, min_end, min_diff, NULL,
+  //                                                                                                  true, array_of_supernodes, &number_of_supernodes);
+  db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
+										       NULL,true, array_of_supernodes, &number_of_supernodes);
+
+
+
+  printf("deletion %s and number fo supernodes is %d\n", array_of_supernodes[0], number_of_supernodes);
+  
+  hash_table_free(&db_graph);
+
 }

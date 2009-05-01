@@ -85,6 +85,12 @@ int  main()
      return CU_get_error();
    }
 
+   if (NULL == CU_add_test(pSuite, "Test can pull out supernode containing a deletion from chromosome", test_deletion_validation)){
+     CU_cleanup_registry();
+     return CU_get_error();
+   }
+
+
 
 
   /* Run all tests using the CUnit Basic interface */
