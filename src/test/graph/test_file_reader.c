@@ -19,8 +19,6 @@ void test_dump_load_binary(){
   int seq_length_pre,seq_length_post;
   dBGraph * db_graph_pre;
   dBGraph * db_graph_post;
-  
-  
 
   void print_node_binary(dBNode * node){
     db_node_print_binary(fout,node);
@@ -29,6 +27,8 @@ void test_dump_load_binary(){
   db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,10,kmer_size);
 
   seq_length_pre = load_fasta_data_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta", &bad_reads, 20, db_graph_pre);
+
+  fout = fopen("../data/test/graph/dump_graph.bin", "w");
 
   if (fout == NULL){
     fprintf(stderr,"cannot open ../data/test/graph/dump_graph.bin");
@@ -165,3 +165,5 @@ void test_dump_load_binary(){
   CU_ASSERT(db_graph_post == NULL);
   
 }
+
+

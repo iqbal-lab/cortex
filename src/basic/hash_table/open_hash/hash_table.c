@@ -44,6 +44,7 @@ HashTable * hash_table_new(int number_bits, int bucket_size, int max_rehash_trie
 void hash_table_free(HashTable ** hash_table)
 { 
   free((*hash_table)->table);
+  free((*hash_table)->collisions);
   free(*hash_table);
   *hash_table = NULL;
 }

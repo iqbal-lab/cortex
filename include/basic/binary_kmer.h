@@ -37,6 +37,10 @@ Nucleotide char_to_binary_nucleotide(char c);
 
 char binary_nucleotide_to_char(Nucleotide n);
 
+char * nucleotides_to_string(Nucleotide * nucleotides, int length, char * string);
+
+Nucleotide reverse_binary_nucleotide(Nucleotide n);
+
 //get overlapping kmers from sequence
 int get_sliding_windows_from_sequence(char * sequence,char * qualities, int length, char quality_cutoff, short kmer_size, KmerSlidingWindowSet * windows, int max_windows, int max_kmers); 
 
@@ -57,4 +61,7 @@ char reverse_char_nucleotide(char c);
 void binary_kmer_alloc_kmers_set(KmerSlidingWindowSet * windows, int max_windows, int max_kmers);
 void binary_kmer_free_kmers(KmerSlidingWindow * *);
 void binary_kmer_free_kmers_set(KmerSlidingWindowSet * *);
+
+void nucleotide_iterator(void (*f)(Nucleotide));
+
 #endif /* BINARY_KMER_H_ */

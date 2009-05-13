@@ -1,6 +1,5 @@
 CC = gcc
 
-IDIR_TEST  =../include/test
 IDIR_BASIC_TESTS =../include/test/basic
 IDIR_GRAPH_COUNT_TESTS =../include/test/graph_count
 IDIR_DB_GRAPH_TESTS=../include/test/graph
@@ -26,36 +25,31 @@ ifdef MAC
 endif 
 
 OPT  		      = -m64 -Wall -O0 -g
+
 CFLAGS_GRAPH          = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_GRAPH) $(MACFLAG) 
-CFLAGS_TEST	      = -I$(IDIR_TEST)  -I$(IDIR_CUNIT) 
 CFLAGS_CUNIT          = -L/homes/zi/bin/lib
+
 
 CFLAGS_GRAPH_COUNT = -m64 -Wall  -I$(IDIR_BASIC)  -I$(IDIR_HASH) -I$(IDIR_GRAPH_COUNT) $(MACFLAG) -O0 -g
 CFLAGS_POP_GRAPH_CORE = -m64 -Wall  -I$(IDIR_BASIC)  -I$(IDIR_HASH) -I$(IDIR_POP_GRAPH_CORE)  $(MACFLAG) -O0 -g
 CFLAGS_SV_TRIO = -m64 -Wall  -I$(IDIR_BASIC)  -I$(IDIR_HASH) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_SV_TRIO)  $(MACFLAG) -O0 -g
 CFLAGS_MANY_POP_GRAPH = -m64 -Wall  -I$(IDIR_BASIC)  -I$(IDIR_HASH) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_MANY_POP_GRAPH)  $(MACFLAG) -O0 -g
-
 CFLAGS_BASIC_TESTS = -m64 -Wall -I$(IDIR_BASIC_TESTS)  -I$(IDIR_BASIC)  -I$(IDIR_HASH) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
 CFLAGS_COUNT_TESTS = -m64 -Wall -I$(IDIR_COUNT_TESTS)  -I$(IDIR_COUNT) -I$(IDIR_BASIC)  -I$(IDIR_HASH) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
 CFLAGS_GRAPH_COUNT_TESTS = -m64 -Wall -I$(IDIR_GRAPH_COUNT_TESTS)  -I$(IDIR_GRAPH_COUNT) -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
-
 CFLAGS_DB_GRAPH_TESTS = -m64 -Wall -I$(IDIR_DB_GRAPH_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_GRAPH) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
 CFLAGS_SV_TRIO_TESTS = -m64 -Wall -I$(IDIR_SV_TRIO_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_SV_TRIO) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
 CFLAGS_MANY_POP_TESTS = -m64 -Wall -I$(IDIR_MANY_POP_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_MANY_POP_GRAPH) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib  $(MACFLAG) -O0 -g
 
 
 
-
-GRAPH_OBJ_DUMP = obj/basic/binary_kmer.o obj/graph/element.o obj/basic/seq.o obj/basic/hash_table/hash_key/bob_jenkins/hash_value.o obj/basic/hash_table/open_hash/hash_table.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_dump.o 
-
 GRAPH_OBJ      = obj/basic/binary_kmer.o obj/graph/element.o obj/basic/seq.o obj/basic/hash_table/hash_key/bob_jenkins/hash_value.o obj/basic/hash_table/open_hash/hash_table.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph.o obj/graph/pq_graph.o obj/graph/cyclic_count.o
-
-BASIC_TESTS_OBJ = obj/basic/binary_kmer.o obj/basic/seq.o obj/test/basic/test_binary_kmer.o obj/test/basic/test_seq.o obj/test/basic/run_basic_tests.o
-
-DB_GRAPH_TESTS_OBJ = obj/basic/binary_kmer.o obj/graph/element.o obj/basic/seq.o obj/basic/hash_table/hash_key/bob_jenkins/hash_value.o obj/basic/hash_table/open_hash/hash_table.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/test/graph/test_dB_graph.o  obj/test/graph/test_file_reader.o obj/test/graph/run_dB_graph_tests.o obj/graph/pq_graph.o obj/test/graph/test_cyclic_count.o obj/graph/cyclic_count.o
-
+GRAPH_OBJ_DUMP = obj/basic/binary_kmer.o obj/graph/element.o obj/basic/seq.o obj/basic/hash_table/hash_key/bob_jenkins/hash_value.o obj/basic/hash_table/open_hash/hash_table.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/graph_dump.o 
 SV_TRIO_OBJ = obj/pop_graph/sv_trio/graph.o obj/pop_graph/sv_trio/binary_kmer.o obj/pop_graph/sv_trio/element.o obj/pop_graph/sv_trio/seq.o obj/pop_graph/sv_trio/hash_value.o obj/pop_graph/sv_trio/hash_table.o obj/pop_graph/sv_trio/dB_graph.o obj/pop_graph/sv_trio/file_reader.o  obj/pop_graph/sv_trio/dB_graph_population.o obj/pop_graph/sv_trio/pqueue_pop.o obj/pop_graph/sv_trio/clipping_trio.o
 
+
+BASIC_TESTS_OBJ = obj/basic/binary_kmer.o obj/basic/seq.o obj/test/basic/test_binary_kmer.o obj/test/basic/test_seq.o obj/test/basic/run_basic_tests.o
+DB_GRAPH_TESTS_OBJ = obj/basic/binary_kmer.o obj/graph/element.o obj/basic/seq.o obj/basic/hash_table/hash_key/bob_jenkins/hash_value.o obj/basic/hash_table/open_hash/hash_table.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/test/graph/test_dB_graph.o  obj/test/graph/test_file_reader.o obj/test/graph/run_dB_graph_tests.o obj/graph/pq_graph.o obj/test/graph/test_cyclic_count.o obj/graph/cyclic_count.o
 SV_TRIO_TESTS_OBJ = obj/test/pop_graph/sv_trio/test_file_reader.o obj/test/pop_graph/sv_trio/test_pop_load_and_print.o obj/test/pop_graph/sv_trio/run_sv_trio_tests.o obj/test/pop_graph/sv_trio/supernode_cmp.o obj/test/pop_graph/sv_trio/test_pop_supernode_consensus.o obj/test/pop_graph/sv_trio/test_pop_element.o  obj/test/pop_graph/sv_trio/test_dB_graph_population.o obj/pop_graph/sv_trio/binary_kmer.o obj/pop_graph/sv_trio/element.o obj/pop_graph/sv_trio/seq.o obj/pop_graph/sv_trio/hash_value.o obj/pop_graph/sv_trio/hash_table.o obj/pop_graph/sv_trio/dB_graph.o obj/pop_graph/sv_trio/file_reader.o  obj/pop_graph/sv_trio/dB_graph_population.o
 
 
@@ -79,7 +73,6 @@ run_sv_trio_tests : $(SV_TRIO_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_SV_TRIO_TESTS) $(OPT) $(LDFLAGS) -o $(BIN)/run_sv_trio_tests $(SV_TRIO_TESTS_OBJ) -lcunit
 
 
-
 #pattern rules
 
 obj/basic/hash_table/open_hash/%.o :  basic/hash_table/open_hash/%.c 
@@ -94,15 +87,14 @@ obj/basic/hash_table/hash_key/crc32/%.o :  basic/hash_table/hash_key/crc32/%.c
 obj/basic/%.o : basic/%.c 
 	mkdir -p obj/basic/; $(CC) $(CFLAGS_GRAPH) $(OPT) $(LDFLAGS) -c $? -o $@
 
-obj/graph/%.o :  graph/%.c
-	mkdir -p obj/graph/; $(CC) $(CFLAGS_GRAPH) $(OPT) $(LDFLAGS) -c $? -o $@
-
 obj/test/basic/%.o :  test/basic/%.c 
 	mkdir -p obj/test/basic; $(CC) $(CFLAGS_GRAPH) $(CFLAGS_BASIC_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
 
+obj/graph/%.o :  graph/%.c
+	mkdir -p obj/graph/; $(CC) $(CFLAGS_GRAPH) $(OPT) $(LDFLAGS) -c $? -o $@
+
 obj/test/graph/%.o :  test/graph/%.c 
 	mkdir -p obj/test/graph; $(CC) $(CFLAGS_GRAPH) $(CFLAGS_DB_GRAPH_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@
-
 
 obj/pop_graph/sv_trio/%.o :  basic/%.c 
 	mkdir -p obj/pop_graph/sv_trio; $(CC) $(CFLAGS_SV_TRIO) $(OPT) $(LDFLAGS) -c $? -o $@
@@ -118,7 +110,6 @@ obj/pop_graph/sv_trio/%.o :  pop_graph/core/%.c
 
 obj/pop_graph/sv_trio/%.o :  pop_graph/sv_trio/%.c 
 	mkdir -p obj/pop_graph/sv_trio; $(CC) $(CFLAGS_SV_TRIO) $(OPT) $(LDFLAGS) -c $? -o $@
-
 
 obj/test/pop_graph/sv_trio/%.o :  test/pop_graph/sv_trio/%.c 
 	mkdir -p obj/test/pop_graph/sv_trio; $(CC)  $(CFLAGS_SV_TRIO_TESTS) $(OPT) $(LDFLAGS) -c $? -o $@

@@ -33,7 +33,6 @@ Nucleotide char_to_binary_nucleotide(char c)
 	}
 }
 
-
 char reverse_char_nucleotide(char c)
 {
   switch (c)
@@ -62,17 +61,36 @@ char reverse_char_nucleotide(char c)
     }
 }
 
+
+Nucleotide reverse_binary_nucleotide(Nucleotide n)
+{
+  switch (n)
+    {
+    case Adenine:
+      return Thymine;
+    case Cytosine:
+      return Guanine;
+    case Guanine:
+      return Cytosine;
+    case Thymine:
+      return Adenine;
+    default:
+      printf("Non-existent nucleotide %i\n",n);
+      exit(1);
+    }
+}
+
 char binary_nucleotide_to_char(Nucleotide n)
 {
 	switch (n) {
 	case Adenine:
 	  return 'A';
 	case Cytosine:
-		return 'C';
+	  return 'C';
 	case Guanine:
-		return 'G';
+	  return 'G';
 	case Thymine:
-		return 'T';
+	  return 'T';
 	default:
 	  printf("Non existent binary nucleotide %d\n",n);
 	  assert(0); 
@@ -80,6 +98,22 @@ char binary_nucleotide_to_char(Nucleotide n)
 	}
 }
 
+
+char * nucleotides_to_string(Nucleotide * nucleotides, int length, char * string){
+  
+  if (string == NULL){
+    fputs("seq argument cannot be NULL",stderr);
+    exit(1);
+  }
+
+  int i;
+  for(i=0;i<length;i++){
+    string[i] = binary_nucleotide_to_char(nucleotides[i]);
+  }
+  
+  string[length] = '\0';
+  return string;
+}
 
 
 
@@ -215,7 +249,11 @@ BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
 }
 
 
+
 //caller passes in allocated char*. This is returned and also set in 3rd argument.
+//user of this method is responsible for deallocating the returned sequence
+//note that the allocated space has to be kmer_size+1;
+
 char * binary_kmer_to_seq(BinaryKmer kmer, short kmer_size, char * seq){
  
   if (seq == NULL){
@@ -344,3 +382,11 @@ void binary_kmer_free_kmers_set(KmerSlidingWindowSet * * kmers_set)
   *kmers_set = NULL;
 }
 
+void nucleotide_iterator(void (*f)(Nucleotide)){
+  
+  int i;
+  for (i=0;i<4;i++){
+    f(i);
+  }
+  
+}

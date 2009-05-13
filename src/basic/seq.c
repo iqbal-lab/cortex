@@ -130,6 +130,7 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length){
   
   seq->seq[j]  = '\0';
   seq->qual[j] = '\0';
+
   return j;
 }
 
@@ -275,7 +276,7 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
 	    
 	    if (j!=q)
 	      {
-		fprintf(stdout,"qualities [%i] and sequence [%i] sizes don't coincide for [%s]. Skip it\n",q,j,seq->name);
+		fprintf(stdout,"Lengths of quality [%i] and sequence [%i]  strings don't coincide for this read: [%s]. Skip it\n",q,j,seq->name);
 		good_read=false;
 	      }
 	    

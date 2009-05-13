@@ -102,17 +102,96 @@ void test_hash_table_find()
 }
 
 
-
-
-void test_supernode_walking()
+void test_tip_clipping()
 {
 
+  //first set up the hash/graph
+  int kmer_size = 3;
+  int number_of_bits = 4;
+  int bucket_size    = 4;
+  long long bad_reads = 0; 
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  
+
+  //Load the following fasta:
+  
+  //>main_trunk
+  //GCGTCCCAT
+  //>tip
+  //CGTTT
+
+  int seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/generates_graph_with_tip.fasta",&bad_reads, 20, db_graph);
+
+
+ 
+
+  CU_ASSERT_EQUAL(seq_length,14);
+
+  dBNode* node1 = hash_table_find(element_get_key(seq_to_binary_kmer("TTT", kmer_size),kmer_size) ,db_graph);
+
+  CU_ASSERT(node1 != NULL);
+  
+  int tip_length = db_graph_db_node_clip_tip(node1, 10 , &db_node_check_status_none,&db_node_action_set_status_pruned,db_graph);
+  
+  CU_ASSERT_EQUAL(tip_length,2);
+
+  dBNode* node2 = hash_table_find(element_get_key(seq_to_binary_kmer("GTT", kmer_size),kmer_size) ,db_graph);
+  dBNode* node3 = hash_table_find(element_get_key(seq_to_binary_kmer("CGT", kmer_size),kmer_size) ,db_graph);
+
+
+
+  CU_ASSERT(db_node_check_status(node1,pruned));
+  CU_ASSERT(db_node_check_status(node2,pruned));
+  
+  CU_ASSERT(db_node_check_status(node3,none));
+
+
+  dBNode * nodes_path[100];
+  Orientation orientations_path[100];
+  Nucleotide labels_path[100];
+  char tmp_seq[100+db_graph->kmer_size+1];
+
+
+  int length_supernode = db_graph_supernode(node3,100,&db_node_check_status_none,&db_node_action_set_status_visited,tmp_seq,nodes_path,orientations_path,labels_path,db_graph);
+
+  CU_ASSERT_EQUAL(length_supernode,6);
+
+  
+  CU_ASSERT_STRING_EQUAL("ATGGGACGC",tmp_seq);
+
+
+  //check ends
+  dBNode* node4 = hash_table_find(element_get_key(seq_to_binary_kmer("GCG", kmer_size),kmer_size) ,db_graph);
+  dBNode* node5 = hash_table_find(element_get_key(seq_to_binary_kmer("CAT", kmer_size),kmer_size) ,db_graph);
+
+  
+  CU_ASSERT(db_node_check_status(node3,visited));
+  CU_ASSERT(db_node_check_status(node4,visited));
+  CU_ASSERT(db_node_check_status(node5,visited));
+   
+
+  hash_table_free(&db_graph);
+  CU_ASSERT(db_graph == NULL);
+  
+
+}
+
+
+
+void test_supernode_walking() //test db_graph_get_perfect_path 
+ { 
+ 
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits=4;
   int bucket_size   = 10;
   int seq_length;
   long long bad_reads = 0;
+  dBNode * path_nodes[100];
+  Orientation path_orientations[100];
+  Nucleotide path_labels[100];
+  char tmp_seq[100];
 
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
 
@@ -147,21 +226,21 @@ void test_supernode_walking()
 
    boolean is_cycle=false;
    
-   char test1_result[5000];
-   
-   get_seq_from_elem_to_end_of_supernode(test_element1, forward, db_graph, &is_cycle, test1_result,5000);
-   CU_ASSERT(is_cycle);
+   int test1_length = db_graph_get_perfect_path(test_element1,forward,100,&db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+
+    CU_ASSERT(is_cycle);
 
 
    //depending on what orientation GTA is with respect to it's kmer, the answer you get will be either CGT or GT
    //Zam we know GTA<TAC!
    
-   CU_ASSERT_STRING_EQUAL(test1_result,"CGT");
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test1_length,tmp_seq),"CGTA");
    
+
    hash_table_free(&db_graph);
    CU_ASSERT(db_graph == NULL);
-   
  
+  
    /*   // **** */
    /*   //1.2 Fasta file that generate a graph with one long supernode, with a conflict at the end */
    /*   //   caused by two outward/exiting edges */
@@ -187,16 +266,21 @@ void test_supernode_walking()
 
    //ACA < TGT so forward gives TT
    is_cycle=false;
-   get_seq_from_elem_to_end_of_supernode(test_element1, forward, db_graph, &is_cycle, test1_result, 5000);
-   CU_ASSERT(!is_cycle);   
-   CU_ASSERT_STRING_EQUAL(test1_result,"TT");
-
    
+   int test2_length = db_graph_get_perfect_path(test_element1,forward,100,&db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+
+   CU_ASSERT(!is_cycle);
+   
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test2_length,tmp_seq),"TT");
+
    //ACA < TGT so backward gives ""
-   is_cycle=false;
-   get_seq_from_elem_to_end_of_supernode(test_element1, reverse, db_graph, &is_cycle, test1_result, 5000);
-   CU_ASSERT(!is_cycle);   
-   CU_ASSERT_STRING_EQUAL(test1_result,"");
+
+   test2_length = db_graph_get_perfect_path(test_element1,reverse,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+  
+   CU_ASSERT(!is_cycle);
+   CU_ASSERT_EQUAL(test2_length,0);
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test2_length,tmp_seq),"");
+
 
    hash_table_free(&db_graph);
    CU_ASSERT(db_graph == NULL);
@@ -228,15 +312,19 @@ void test_supernode_walking()
 
    //ACA < TGT so forward gives TT
    is_cycle=false;
-   get_seq_from_elem_to_end_of_supernode(test_element1, forward, db_graph, &is_cycle, test1_result, 5000);
-   CU_ASSERT(!is_cycle);   
-   CU_ASSERT_STRING_EQUAL(test1_result,"TT");
+
+   int test3_length = db_graph_get_perfect_path(test_element1,forward,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+
+   CU_ASSERT(!is_cycle);
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test3_length,tmp_seq),"TT");
+
    
    //ACA < TGT so backwar gives ""
    is_cycle=false;
-   get_seq_from_elem_to_end_of_supernode(test_element1, reverse, db_graph, &is_cycle, test1_result, 5000);
-   CU_ASSERT(!is_cycle);   
-   CU_ASSERT_STRING_EQUAL(test1_result,"");
+   test3_length = db_graph_get_perfect_path(test_element1,reverse,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+
+   CU_ASSERT(!is_cycle);
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test3_length,tmp_seq),"");
 
    hash_table_free(&db_graph);
    CU_ASSERT(db_graph == NULL);
@@ -251,7 +339,7 @@ void test_supernode_walking()
    //first set up the hash/graph
    kmer_size = 3;
    number_of_bits=8;
-   bucket_size   =4; 
+   bucket_size   =4;
 
    bad_reads = 0;
 
@@ -267,16 +355,17 @@ void test_supernode_walking()
 
    //forward
    is_cycle=false;
-   get_seq_from_elem_to_end_of_supernode(test_element1, forward, db_graph, &is_cycle, test1_result, 5000);
+   int test4_length = db_graph_get_perfect_path(test_element1,forward,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+   
    CU_ASSERT(is_cycle);//this time it should find a cycle
-   CU_ASSERT_STRING_EQUAL(test1_result,"");
-  
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test4_length,tmp_seq),"A");
 
    //backward
    is_cycle=false;
-   get_seq_from_elem_to_end_of_supernode(test_element1, reverse, db_graph, &is_cycle, test1_result, 5000);
+   test4_length = db_graph_get_perfect_path(test_element1,reverse,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+
    CU_ASSERT(is_cycle);//this time it should find a cycle
-   CU_ASSERT_STRING_EQUAL(test1_result,"");
+   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test4_length,tmp_seq),"T");
 
    hash_table_free(&db_graph);
    CU_ASSERT(db_graph == NULL);
@@ -353,7 +442,7 @@ void test_get_perfect_path(){
   boolean is_cycle;
   int length = 0;
 
-  length = db_graph_get_perfect_path(node1,reverse, nodes, orientations, bases, &is_cycle,10,visited,db_graph);
+  length = db_graph_get_perfect_path(node1,reverse, 10,db_node_action_set_status_visited,nodes, orientations, bases, &is_cycle,db_graph);
 
   CU_ASSERT_EQUAL(length,3);
   
@@ -375,7 +464,7 @@ void test_get_perfect_path(){
   CU_ASSERT_EQUAL(orientations[2],reverse);
 
   //check statuses
-  CU_ASSERT(db_node_check_status(nodes[0], visited));
+  CU_ASSERT(db_node_check_status(nodes[0], none));
   CU_ASSERT(db_node_check_status(nodes[1], visited));
   CU_ASSERT(db_node_check_status(nodes[2], visited));
 
@@ -436,7 +525,8 @@ void test_get_perfect_bubble(){
   db_node_add_edge(node5, node9, reverse,reverse, db_graph->kmer_size);
 
 
-  bubble = db_graph_detect_perfect_bubble(node1,&orientation,&base1,&base2,labels,&end_node,&end_orientation,db_graph);
+  bubble = db_graph_detect_perfect_bubble(node1,&orientation,&db_node_check_status_none,&db_node_action_set_status_visited,
+&base1,&base2,labels,&end_node,&end_orientation,db_graph);
 
   CU_ASSERT(bubble);
   CU_ASSERT_EQUAL(orientation,forward);
@@ -459,14 +549,14 @@ void test_get_perfect_bubble(){
   dBNode * nodes5p[100];
   dBNode * nodes3p[100];
 
-  length_flank5p = db_graph_get_perfect_path(node1, opposite_orientation(orientation),nodes5p,orientations5p, labels_flank5p,
-  					     &is_cycle5p,100,visited,db_graph); 
+  length_flank5p = db_graph_get_perfect_path(node1, opposite_orientation(orientation),100,&db_node_action_set_status_visited,nodes5p,orientations5p, labels_flank5p,
+  					     &is_cycle5p,db_graph); 
 
   CU_ASSERT_EQUAL(length_flank5p,0);
   CU_ASSERT_EQUAL(nodes5p[0],node1);
 
-  length_flank3p = db_graph_get_perfect_path(end_node, end_orientation,nodes3p,orientations3p, labels_flank3p,
-					     &is_cycle3p,100,visited,db_graph);    
+  length_flank3p = db_graph_get_perfect_path(end_node, end_orientation,100,&db_node_action_set_status_visited,nodes3p,orientations3p, labels_flank3p,
+					     &is_cycle3p,db_graph);    
  
   
   CU_ASSERT_EQUAL(length_flank3p,1);
@@ -475,13 +565,78 @@ void test_get_perfect_bubble(){
   CU_ASSERT_EQUAL(labels_flank3p[0],Adenine);
 
   //if searched again should return false -- becuase nodes are marked as visited
-  bubble = db_graph_detect_perfect_bubble(node1,&orientation,&base1,&base2,labels,&end_node,&end_orientation,db_graph);
+  bubble = db_graph_detect_perfect_bubble(node1,&orientation,&db_node_check_status_none,&db_node_action_set_status_visited,&base1,&base2,labels,&end_node,&end_orientation,db_graph);
   CU_ASSERT(!bubble);
 
   hash_table_free(&db_graph);
   CU_ASSERT(db_graph == NULL);
 
 }
+
+void test_db_graph_db_node_has_precisely_n_edges_with_status(){
+  int kmer_size = 3;
+  int number_of_bits = 4;
+  int bucket_size = 4;
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+
+  boolean found;
+  dBNode * node1, * node2, * node3, * node4;
+  dBNode  * next_node[4];
+  Orientation next_orientation[4];
+  Nucleotide next_base[4];
+
+  node1 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCC", kmer_size),kmer_size), &found, db_graph);
+  node2 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCT", kmer_size),kmer_size), &found, db_graph);
+  node3 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCG", kmer_size),kmer_size), &found, db_graph);
+
+ 
+
+  db_node_add_edge(node1, node2, forward,reverse, db_graph->kmer_size);	  
+  db_node_add_edge(node1, node3, forward,forward, db_graph->kmer_size);	  
+
+  boolean one_edge1 = db_graph_db_node_has_precisely_n_edges_with_status(node1,forward,none,1,
+									 next_node,next_orientation,next_base,db_graph);
+
+
+  CU_ASSERT_EQUAL(one_edge1,false);
+
+  db_node_set_status(node2,visited);
+
+  boolean one_edge2 = db_graph_db_node_has_precisely_n_edges_with_status(node1,forward,none,1,
+									 next_node,next_orientation,next_base,db_graph);
+
+ 
+  CU_ASSERT_EQUAL(one_edge2,true);
+  CU_ASSERT_EQUAL(node3,next_node[0]);
+  CU_ASSERT_EQUAL(next_orientation[0],forward);
+  CU_ASSERT_EQUAL(next_base[0],Guanine);
+  
+
+  node4 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCA", kmer_size),kmer_size), &found, db_graph);
+  db_node_add_edge(node1, node4, forward, forward, db_graph->kmer_size);	  
+   
+  boolean one_edge3 = db_graph_db_node_has_precisely_n_edges_with_status(node1,forward,none,2,
+									 next_node,next_orientation,next_base,db_graph);
+  
+
+  
+  CU_ASSERT_EQUAL(one_edge3,true);
+
+  //observe that the tests below require to know in wich order the edges are visited
+
+  CU_ASSERT_EQUAL(node4,next_node[0]);
+  CU_ASSERT_EQUAL(node3,next_node[1]);
+
+  CU_ASSERT_EQUAL(next_base[0],Adenine);
+  CU_ASSERT_EQUAL(next_base[1],Guanine);
+  
+  CU_ASSERT_EQUAL(next_orientation[0],forward);
+  CU_ASSERT_EQUAL(next_orientation[1],forward);
+
+  hash_table_free(&db_graph);
+  CU_ASSERT(db_graph == NULL);
+}
+
 
 
 void test_get_N50()
@@ -565,5 +720,426 @@ void test_get_N50()
    
 
 
+
+}
+
+
+void test_is_condition_true_for_all_nodes_in_supernode()
+{
+  //first set up the hash/graph
+  int kmer_size = 3;
+  int number_of_bits=4;
+  int bucket_size   = 10;
+  int seq_length;
+  long long bad_reads = 0;
+  dBNode * path_nodes[100];
+  Orientation path_orientations[100];
+  Nucleotide path_labels[100];
+  char tmp_seq[100];
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+
+ 
+  //1. Sequence of tests as follows
+  //         Each test loads a single specifically designed fasta file into a dB_graph.
+  
+
+  // ****
+  //1.1 Fasta file that generate a graph with two hairpins, and a single edge (in each rorientation) joining them.
+  //  Sequence is :  ACGTAC
+  // ****
+
+
+  seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/generates_graph_with_two_self_loops.fasta", &bad_reads, 20,  db_graph);
+  
+  CU_ASSERT_EQUAL(seq_length,6);
+  CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),2);
+  CU_ASSERT_EQUAL(bad_reads,0);
+
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GTA", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element1!=NULL);
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("ACG", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element2!=NULL);
+
+  int limit =50;
+  dBNode * nodes_path[limit];
+  Orientation orientations_path[limit];
+  Nucleotide labels_path[limit];
+  char seq[limit+db_graph->kmer_size+1];
+  int length_path=0;
+
+  //  printf("Check if all nodes have status none - this should be true\n");
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true,&db_node_check_status_none,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+  CU_ASSERT(db_node_check_status(test_element1, none));
+  //  printf("set status of one node to visited\n");
+  db_node_set_status(test_element1, visited);
+  CU_ASSERT(db_node_check_status(test_element1, visited));
+  CU_ASSERT(db_node_check_status(test_element2, none));
+  // printf("Checkif all nodes have status none - this should not be true - confirm this\n");
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true,&db_node_check_status_none,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+
+
+  //  printf("double check statuses of nodes unchanged\n");
+  CU_ASSERT(db_node_check_status(test_element1, visited));
+  CU_ASSERT(db_node_check_status(test_element2, none));
+
+  // printf("Check if all nodes have status visited - this should not be true - confirm this\n");
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_visited,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+
+
+  //check again, but this time, set all nodes to visited in the process
+  //printf("Set all nodes to visited while checking them all\n");
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_visited,
+								  &db_node_action_set_status_visited_or_visited_and_exists_in_reference, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+  //and now this time it SHOULD BE TRUE
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_visited,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+
+  // and should still be true
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_visited,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+  
+
+  //printf("Nodes currently all visited. Set all nodes to none while checking them all to confirm that they are currently all visited (before doing the set-to-none)\n");
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_visited,
+								  &db_node_action_set_status_none, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_none,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+  
+  db_node_set_status(test_element2, pruned);
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, &db_node_condition_always_true, &db_node_check_status_none,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element2, 50, &db_node_condition_always_true, &db_node_check_status_none,
+								  &db_node_action_do_nothing, seq, nodes_path, orientations_path, labels_path, &length_path, db_graph)); 
+
+   
+  hash_table_free(&db_graph);
+  
+  
+}
+
+
+
+void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference()
+{
+
+  //first set up the hash/graph
+  int kmer_size = 3;
+  int number_of_bits=4;
+  int bucket_size   = 10;
+  long long bad_reads=0;
+  int max_read_length=30;
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+
+  int seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/person.fasta", &bad_reads, max_read_length, db_graph);
+  
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/chrom1.fasta", db_graph);
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/chrom2.fasta", db_graph);
+  
+  //Now see if it correctly gets the supernode that does not intersect a chromosome
+  dBNode * nodes_path[100];
+  Orientation orientations_path[100];
+  Nucleotide labels_path[100];
+  char tmp_seq[100];
+
+  //element on supernode we know intersects chromosomes
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACA", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element1!=NULL);
+  //elemtn on node that does not intersect chromosomes - is "novel"
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element2!=NULL);
+
+
+  int length_path=0;
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50,  &db_node_condition_always_true,&db_node_check_status_is_not_exists_in_reference,
+							&db_node_action_set_status_visited, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+
+  CU_ASSERT(length_path==3);
+  CU_ASSERT_STRING_EQUAL(tmp_seq, "ACATTC");
+
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element2, 50,  &db_node_condition_always_true,&db_node_check_status_is_not_exists_in_reference,
+							&db_node_action_set_status_visited, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+  CU_ASSERT(length_path==2);
+  CU_ASSERT_STRING_EQUAL(tmp_seq, "CACCC");
+
+  hash_table_free(&db_graph);
+
+
+
+  // now a harder example.
+  //first set up the hash/graph
+  kmer_size = 31;
+  number_of_bits=10;
+  bucket_size   = 10;
+  bad_reads=0;
+  max_read_length=2000;
+  int max_rehash_tries=10;
+
+  db_graph = hash_table_new(number_of_bits,bucket_size,max_rehash_tries,kmer_size);
+
+  seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/person2.fasta", &bad_reads, max_read_length, db_graph);
+  
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
+
+
+  //Now see if it correctly gets the supernode that does not intersect a chromosome
+
+  //element on supernode we know intersects chromosomes
+  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AACCCTAACCCTAACCCTAACCCTAACCCTA", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element1!=NULL);
+  //elemtn on node that does not intersect chromosomes - is "novel"
+  test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GCGGGGCGGGGCGGGGCGGGGCGGGGCCCCC", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element2!=NULL);
+
+
+  length_path=0;
+  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50,  &db_node_condition_always_true,&db_node_check_status_is_not_exists_in_reference,
+								   &db_node_action_set_status_visited, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+
+  CU_ASSERT(length_path==6);
+  CU_ASSERT_STRING_EQUAL(tmp_seq, "AACCCTAACCCTAACCCTAACCCTAACCCTAACCCTA");
+  
+  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element2, 50,  &db_node_condition_always_true,&db_node_check_status_is_not_exists_in_reference,
+								   &db_node_action_set_status_visited, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+
+  CU_ASSERT(length_path==13);
+  CU_ASSERT_STRING_EQUAL(tmp_seq, "GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT");
+	    
+  hash_table_free(&db_graph);
+
+  
+  // and now another
+
+  //first set up the hash/graph
+  kmer_size = 31;
+  number_of_bits=20;
+  bucket_size   = 10;
+  bad_reads=0;
+  max_read_length=2000;
+  max_rehash_tries=10;
+  seq_length=0;
+  db_graph = hash_table_new(number_of_bits,bucket_size,max_rehash_tries,kmer_size);
+
+  seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, max_read_length, db_graph);
+  
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
+
+  char** array_of_supernodes_for_person3= (char**) calloc(10,sizeof(char*));
+  array_of_supernodes_for_person3[0]= (char*)calloc(100,sizeof(char));
+  array_of_supernodes_for_person3[1]= (char*)calloc(100,sizeof(char));
+  array_of_supernodes_for_person3[2]= (char*)calloc(100,sizeof(char));
+
+  int number_of_supernodes=0;
+  int min_covg_required = 2;
+
+
+  //element on supernode we know intersects chromosomes
+   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACCCTAACCCTAACCCTAACCCTAACCCTAA", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element1!=NULL);
+  //elemtn on node that does not intersect chromosomes - is "novel" - and has coverage 3
+  test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GGGCGGGGCGGGGCGGGGCGGGGCCCCCTCA", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element2!=NULL);
+  //element does not intersect chrom but has covg only 1
+  dBNode* test_element3 =  hash_table_find(element_get_key(seq_to_binary_kmer("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element3!=NULL);
+
+
+
+
+
+  db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_is_not_exists_in_reference, min_covg_required, NULL, 
+									       true, array_of_supernodes_for_person3, &number_of_supernodes);
+
+
+  CU_ASSERT(number_of_supernodes==1);
+  CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0], "ATGTGTGTGAGGGGGCCCCGCCCCGCCCCGCCCCGCCCCGCCCC") || !strcmp(array_of_supernodes_for_person3[0], "GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT"));
+
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
+
+
+  number_of_supernodes=0;
+  //here just a quick check of the _at_least_ version of the function
+  min_covg_required=1;
+  db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference,  min_covg_required, NULL, 
+										       true, array_of_supernodes_for_person3, &number_of_supernodes);
+
+
+  CU_ASSERT(number_of_supernodes==2);
+
+  //the whole of read2 is a supernode, and is in chrom 1
+  CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC") || !strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC"));
+  CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0],"CCCTAACCCTAACCCTAACCCTAACCCTAACCCTAAC") ||!strcmp(array_of_supernodes_for_person3[1],"CCCTAACCCTAACCCTAACCCTAACCCTAACCCTAAC") );
+
+
+  free(array_of_supernodes_for_person3[0]) ;
+  free(array_of_supernodes_for_person3[1]) ;
+  free(array_of_supernodes_for_person3[2]) ;
+  free(array_of_supernodes_for_person3) ;
+
+  hash_table_free(&db_graph);
+
+  
+
+  
+}
+
+
+
+
+
+void test_indel_discovery_simple_test_1()
+{
+
+
+  //first set up the hash/graph
+  int kmer_size = 31;
+  int number_of_bits=10;
+  int bucket_size   = 5;
+  long long bad_reads=0;
+  int max_read_length=600;
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+
+  int seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/person_with_sv.fasta", &bad_reads, max_read_length, db_graph);
+  CU_ASSERT(seq_length==612);
+
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
+
+  //element on supernode we know intersects chromosome entirely
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TGTGCAGAGGACAACGCAGCTCCGCCCTCGC", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element1!=NULL);
+
+  //element on supernode that overlaps at start and end but not middle, with chromosome
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("CCGGCGCAGGCGCAGTTGTTGTAGAGGCGCG", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(test_element2!=NULL);
+
+
+  dBNode * nodes_path[100];
+  Orientation orientations_path[100];
+  Nucleotide labels_path[100];
+  char tmp_seq[100];
+  int length_path=0;
+  int min_diff=1; //enought o have one node different in the middle
+
+  int num_nodes_we_demand_overlap_with_reference_at_start=2;
+  int num_nodes_we_demand_overlap_with_reference_at_end=22;
+  
+  CU_ASSERT(!db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(test_element1, 200, &db_node_check_status_is_not_visited_or_visited_and_exists_in_reference,
+											 &db_node_check_status_exists_in_reference, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+											 num_nodes_we_demand_overlap_with_reference_at_start,
+											 num_nodes_we_demand_overlap_with_reference_at_end, min_diff, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+  
+  CU_ASSERT(db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(test_element2, 200, &db_node_check_status_is_not_visited_or_visited_and_exists_in_reference,
+											&db_node_check_status_exists_in_reference, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+											num_nodes_we_demand_overlap_with_reference_at_start,
+											num_nodes_we_demand_overlap_with_reference_at_end, min_diff, tmp_seq, nodes_path, orientations_path, labels_path, &length_path, db_graph));
+  
+
+  //remove the visited markings
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
+  
+  
+  char** array_of_supernodes= (char**) calloc(10,sizeof(char*));
+  array_of_supernodes[0]= (char*)calloc(100,sizeof(char));
+  array_of_supernodes[1]= (char*)calloc(100,sizeof(char));
+  array_of_supernodes[2]= (char*)calloc(100,sizeof(char));
+
+  int number_of_supernodes=0;
+  int min_covg_required = 2;
+  int min_start = 2;
+  int min_end = 25;
+  
+  db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required, 
+												    min_start, min_end, min_diff, NULL, 
+												    true, array_of_supernodes, &number_of_supernodes);
+
+
+
+  CU_ASSERT(number_of_supernodes==1);
+  CU_ASSERT( !strcmp(array_of_supernodes[0], "GAGGAGAACGCAACTCCGCCGGCGCAGGCGCAGTTGTTGTAGAGGCGCGCCGCGCCGGCGCAGGCGCAGACACATGCTAGCGCGTCGGGGTGGAGGCGT") || !strcmp(array_of_supernodes[0], "ACGCCTCCACCCCGACGCGCTAGCATGTGTCTGCGCCTGCGCCGGCGCGGCGCGCCTCTACAACAACTGCGCCTGCGCCGGCGGAGTTGCGTTCTCCTC"));
+
+
+  free(array_of_supernodes[0]) ;
+  free(array_of_supernodes[1]) ;
+  free(array_of_supernodes[2]) ;
+  free(array_of_supernodes) ;
+  
+  
+
+  hash_table_free(&db_graph);
+}
+
+
+
+
+//suppose we are given a pair of start-end coords within which we think there is a deletion.
+// Load your fasta, then load precisely that section of the chromosome as reference, and print supernodes that match ref at start and end
+// (WARNING: if you delete the middle of a sequence, you create new kmers in the middle that might not have been there before.
+//           so the nodes in the new supernode are NOT necessatrily all in the reference)
+// Then build a new graph just out of the section of the chromosome, and load the supernodes above as reference. Now look for supernodes
+// in the chromosome graph that match the "reference" supernodes at the start and end only. These are potential deletions.
+void test_deletion_validation()
+{
+
+  //first set up the hash/graph
+  int kmer_size = 31;
+  int number_of_bits=10;
+  int bucket_size   = 5;
+  long long bad_reads=0;
+  int max_read_length=2000;
+
+
+
+  //STEP 1: get supernodes from our person which match reference at start and end.
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  int seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/person_with_deletion_in_chrom.fasta",  &bad_reads, max_read_length, db_graph);
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
+
+
+  FILE* intermediate_output = fopen("../data/test/graph/test_db_graph_intermediate_output_file", "w");
+  int min_covg_required = 1;
+  int min_start = 1;
+  int min_end = 31; //iei 31 bases at start and end
+  int min_diff = 2;
+  db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
+                                                                                                    intermediate_output, false, NULL, 0);
+
+  //  db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
+  //                                                                                                  min_start, min_end, min_diff, intermediate_output,
+  //												    false, NULL, 0);
+  fclose(intermediate_output);
+  hash_table_free(&db_graph);
+
+  //STEP 2: Load the chromosome as a person, and the previosu supernodes as reference
+  db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", &bad_reads, max_read_length,db_graph);
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/test_db_graph_intermediate_output_file", db_graph);
+
+
+
+  char** array_of_supernodes= (char**) calloc(10,sizeof(char*));
+  array_of_supernodes[0]= (char*)calloc(100,sizeof(char));
+  array_of_supernodes[1]= (char*)calloc(100,sizeof(char));
+  array_of_supernodes[2]= (char*)calloc(100,sizeof(char));
+
+  int number_of_supernodes=0;
+
+  //STEP 3: Print supernodes in chromosome that match our person's supernodes (here the reference) at start and end - deletions
+  // db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
+  //                                                                                                  min_start, min_end, min_diff, NULL,
+  //                                                                                                  true, array_of_supernodes, &number_of_supernodes);
+  db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
+										       NULL,true, array_of_supernodes, &number_of_supernodes);
+
+
+
+  //printf("deletion %s and number fo supernodes is %d\n", array_of_supernodes[0], number_of_supernodes);
+  
+  hash_table_free(&db_graph);
 
 }

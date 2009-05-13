@@ -13,15 +13,15 @@
 #include <file_reader.h>
 #include <element.h>
 
-int MAX_READ_LENGTH=1000;
+MAX_READ_LENGTH=1000;
 
 
 
 
-int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * bad_reads, char qualiy_cut_off, int max_read_length, dBGraph * db_graph);
+long long load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * bad_reads, char qualiy_cut_off, int max_read_length, dBGraph * db_graph);
 
 
-int load_fasta_data_from_filename_into_graph(char* filename, long long * bad_reads, int max_read_length, dBGraph* db_graph)
+long long load_fasta_data_from_filename_into_graph(char* filename, long long * bad_reads, int max_read_length, dBGraph* db_graph)
 {
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
@@ -29,14 +29,14 @@ int load_fasta_data_from_filename_into_graph(char* filename, long long * bad_rea
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  int ret = load_seq_data_into_graph(fp,&read_sequence_from_fasta,bad_reads,0,max_read_length,db_graph);
+  long long ret = load_seq_data_into_graph(fp,&read_sequence_from_fasta,bad_reads,0,max_read_length,db_graph);
 
   fclose(fp);
 
   return ret;
 }
 
-int load_fastq_data_from_filename_into_graph(char* filename, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph)
+long long load_fastq_data_from_filename_into_graph(char* filename, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph)
 {
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
@@ -44,7 +44,7 @@ int load_fastq_data_from_filename_into_graph(char* filename, long long * bad_rea
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  int ret =  load_seq_data_into_graph(fp,&read_sequence_from_fastq,bad_reads,quality_cut_off,max_read_length,db_graph);
+  long long ret =  load_seq_data_into_graph(fp,&read_sequence_from_fastq,bad_reads,quality_cut_off,max_read_length,db_graph);
   fclose(fp);
 
   return ret;
@@ -54,7 +54,7 @@ int load_fastq_data_from_filename_into_graph(char* filename, long long * bad_rea
 
 
 //returns length of sequence loaded
-int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * bad_reads, char quality_cut_off, int max_read_length, dBGraph * db_graph){
+long long load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * bad_reads, char quality_cut_off, int max_read_length, dBGraph * db_graph){
 
   //----------------------------------
   // preallocate the memory used to read the sequences
@@ -67,7 +67,7 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
   alloc_sequence(seq,max_read_length,LINE_MAX);
   
   
-  int seq_length=0;
+  long long seq_length=0;
   short kmer_size = db_graph->kmer_size;
 
   //max_read_length/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
@@ -103,7 +103,7 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
     }
     
     int i,j;
-    seq_length += entry_length;
+    seq_length += (long long) entry_length;
     
     int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,entry_length,quality_cut_off,db_graph->kmer_size,windows,max_windows, max_kmers);
 
@@ -164,13 +164,13 @@ int load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence *
 
 //returns number of sequence loaded (ie all the kmers concatenated)
 //count_kmers returns the number of new kmers
-int load_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph)
-{
+long long load_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph){
+
   FILE* fp_bin = fopen(filename, "r");
-  int seq_length = 0;
+ 
   dBNode node_from_file;
   boolean found;
-  int count=0;
+  long long count=0;
 
   if (fp_bin == NULL){
     printf("cannot open file:%s\n",filename);
@@ -181,22 +181,22 @@ int load_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph
   while (db_node_read_binary(fp_bin,db_graph->kmer_size,&node_from_file)){
     count++;
     
-    //if (count % 100000000 == 0 ){
-    // printf("loaded %i\n",count);
-
-    //}
+    if (count % 10000000 == 0 ){
+     printf("loaded %lld\n",count);
+    }
    
     dBNode * current_node  = NULL;
     current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size),&found,db_graph);
-    
-    seq_length+=db_graph->kmer_size;
+       
    
     db_node_set_edges(current_node,db_node_get_edges(&node_from_file));
     element_update_coverage(current_node, element_get_coverage(&node_from_file));
   }
-  
+ 
   fclose(fp_bin);
-  return seq_length;
+
+  return (long long) db_graph->kmer_size * count;
+
 }
 
 
@@ -288,7 +288,8 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
 void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(char* f_name, dBGraph* db_graph)
 {
 
-  int max_read_length = 500;
+  int max_read_length = 3000;
+
 
   FILE* fptr = fopen(f_name, "r");
   if (fptr == NULL)
@@ -351,11 +352,9 @@ void read_all_ref_chromosomes_and_mark_graph(dBGraph* db_graph)
   printf("Loaded chromosome 21\n");
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/clean/Homo_sapiens.NCBI36.52.dna.chromosome.22.fa.short_reads" , db_graph);
   printf("Loaded chromosome 22\n");
-  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/clean/Homo_sapiens.NCBI36.52.dna.chromosome.23.fa.short_reads" , db_graph);
-  printf("Loaded chromosome 23\n");
-  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/clean/Homo_sapiens.NCBI36.52.dna.chromosome.24.fa.short_reads" , db_graph);
-  printf("Loaded chromosome 24\n");
-
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/clean/Homo_sapiens.NCBI36.52.dna.chromosome.X.fa.short_reads" , db_graph);
+  printf("Loaded chromosome X\n");
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/clean/Homo_sapiens.NCBI36.52.dna.chromosome.Y.fa.short_reads" , db_graph);
+  printf("Loaded chromosome Y\n");
   
-
 }

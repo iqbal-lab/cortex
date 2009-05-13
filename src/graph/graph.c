@@ -13,7 +13,9 @@ int main(int argc, char **argv){
   short kmer_size;
   int bucket_size;
   int action; //0 dump graph - 1 call SNPs
-  
+  char* binfilename;
+  char* deletion_locus_fasta;
+
   FILE * fout; //binary output
 
    //command line arguments 
@@ -23,15 +25,15 @@ int main(int argc, char **argv){
   bucket_size      = atoi(argv[4]);
   action           = atoi(argv[5]);
   DEBUG            = atoi(argv[6]);
-  fout             = fopen(argv[7],"w"); //output file if dump binary
+  binfilename      = argv[7];
+  deletion_locus_fasta = argv[8];
 
-
-  fprintf(stderr,"Input file of filenames: %s - action: %i\n",argv[1],action);
-  fprintf(stderr,"Kmer size: %d hash_table_size (%d bits): %d - bucket size: %d - total size: %qd\n",kmer_size,hash_key_bits,1 << hash_key_bits, bucket_size, ((long long) 1<<hash_key_bits)*bucket_size);
+  printf("Input file of filenames: %s - action: %i\n",argv[1],action);
+  printf("Kmer size: %d hash_table_size (%d bits): %d - bucket size: %d - total size: %qd\n",kmer_size,hash_key_bits,1 << hash_key_bits, bucket_size, ((long long) 1<<hash_key_bits)*bucket_size);
 
   //Create the de Bruijn graph/hash table
   db_graph = hash_table_new(hash_key_bits,bucket_size, 10,kmer_size);
-  fprintf(stderr,"table created: %d\n",1 << hash_key_bits);
+  printf("table created: %d\n",1 << hash_key_bits);
 
   int count_file   = 0;
   long long total_length = 0; //total sequence length
@@ -48,108 +50,115 @@ int main(int argc, char **argv){
 
     total_length += seq_length;
     
-    fprintf(stderr,"\n%i kmers: %qd file name:%s seq:%qd total seq:%qd\n\n",count_file,hash_table_get_unique_kmers(db_graph),filename,seq_length, total_length);
+    printf("\n%i kmers: %qd file name:%s seq:%qd total seq:%qd\n\n",count_file,hash_table_get_unique_kmers(db_graph),filename,seq_length, total_length);
 
     //print mem status
     FILE* fmem=fopen("/proc/self/status", "r");
     char line[500];
     while (fgets(line,500,fmem) !=NULL){
       if (line[0] == 'V' && line[1] == 'm'){
-	fprintf(stderr,"%s",line);
+	printf("%s",line);
       }
     }
     fclose(fmem);
-    fprintf(stderr,"************\n");
+    printf("************\n");
   }  
 
 
     
   
-  int count_snps = 0;
-
-
-  //routine to get SNPS --> perhaps this should go to a library
-  void get_snps(dBNode * node){
-    
-    Orientation orientation,end_orientation;
-    Nucleotide base1,base2;
-    Nucleotide labels[db_graph->kmer_size];
-    dBNode * end_node;
-
-    if (db_graph_detect_perfect_bubble(node,&orientation,&base1,&base2,labels,&end_node,&end_orientation,db_graph)){
-      
-      int length_flank5p = 0;
-      int length_flank3p = 0;
-      dBNode * nodes5p[100];
-      dBNode * nodes3p[100];
-      Orientation orientations5p[100];
-      Orientation orientations3p[100];
-      Nucleotide labels_flank5p[100]; 
-      Nucleotide labels_flank3p[100];
-      boolean is_cycle5p, is_cycle3p;
-      char tmp_seq[db_graph->kmer_size];
-      int i;
-
-      printf("SNP: %i - coverage: %d\n",count_snps,element_get_coverage(node));
-      count_snps++;
-
-      printf("five prime end\n");
-      length_flank5p = db_graph_get_perfect_path(node,opposite_orientation(orientation),nodes5p,orientations5p,labels_flank5p,
-						 &is_cycle5p,100,visited,db_graph);  
-      printf("length 5p flank: %i\n",length_flank5p);
-
-      printf("three prime end\n");
-      length_flank3p = db_graph_get_perfect_path(end_node,end_orientation,nodes3p,orientations3p,labels_flank3p,
-						 &is_cycle3p,100,visited,db_graph);    
-      printf("length 3p flank: %i\n",length_flank3p);
-
-      //print flank5p
-      for(i=length_flank5p-1;i>=0;i--){
-	printf("%c",reverse_char_nucleotide(binary_nucleotide_to_char(labels_flank5p[i])));
-      }
-
-      //print the initial node
-      printf(" ");
-      if (orientation == forward){
-	printf ("%s ",binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,tmp_seq));
-      }
-      else{
-	printf ("%s ",binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(node),db_graph->kmer_size),db_graph->kmer_size,tmp_seq));
-      }
-
-      printf (" [%c %c] ",binary_nucleotide_to_char(base1),binary_nucleotide_to_char(base2));
-      
-      //print bubble
-      for(i=0;i<db_graph->kmer_size;i++){
-	printf("%c",binary_nucleotide_to_char(labels[i]));
-      }
-
-      printf(" ");
-      //print flank3p
-      for(i=0;i<length_flank3p;i++){
-	printf("%c",binary_nucleotide_to_char(labels_flank3p[i]));
-      }
-
-      printf("\n");
-    }
-  }    
-
-
-  //routine to dump graph
-  void print_node_binary(dBNode * node){
-    db_node_print_binary(fout,node);
-  }
-
   switch (action){
   case 0 :
     printf("dumping graph %s\n",argv[7]);
+    fout= fopen(argv[7], "w"); 
+
+    //routine to dump graph
+    void print_node_binary(dBNode * node){
+    db_node_print_binary(fout,node);
+    }
+
     hash_table_traverse(&print_node_binary,db_graph); 
     break;
 
   case 1 :
     printf("call SNPs\n");
-    hash_table_traverse(&get_snps,db_graph);
+    db_graph_detect_snps(db_graph);
     break;
+
+  case 2:
+    printf("clip tips\n");
+    db_graph_clip_tips(db_graph);
+    break;
+
+  case 3:
+    printf("print supernodes\n");
+    db_graph_print_supernodes(db_graph); 
+    break;
+
+  case 4:
+    printf("clip tips\n");
+    db_graph_clip_tips(db_graph);
+    printf("print supernodes\n");
+    db_graph_print_supernodes(db_graph); 
+    break;
+
+  case 5:
+    printf("detect SNPs\n");
+    db_graph_detect_snps(db_graph);
+    break;
+    
+  case 6:
+    printf("count kmers\n");
+    db_graph_print_coverage(db_graph);
+    break;
+    
+  case 7:
+    printf("Print supernodes containing entirely novel(non-reference) sequence\n");
+    read_all_ref_chromosomes_and_mark_graph(db_graph);
+    int min_covg=2; //demand coverage of at least 2
+
+    //todo - add condition to make sure ignore pruned
+    printf("Start printing..\n");
+    db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_is_not_exists_in_reference,min_covg, stdout, false, NULL, 0);
+
+    hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); //cleanup - the printing process has set all printed nodes to visited
+                                                                                                            //        - or to visited_and_exists_in_reference
+
+  case 8:
+    printf("Print supernodes that match reference at start and end, but not the middle\n");
+    read_all_ref_chromosomes_and_mark_graph(db_graph);
+    int minimum_covg=20; //demand covg of at least 20
+    printf("Start printing..\n");
+    db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, minimum_covg,
+												      2,25,40, stdout, false,NULL,0);//2,25 are required numbers of overlapping nodes with ref at start and end
+                                                                                                                             //40 is min number of supernodes which are NOT in reference
+    //cleanup - the printing process has set all printed nodes to visited
+    //           - or to visited_and_exists_in_reference
+    hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
+
+
+  case 9:
+    printf("Load a putative deletion locus as if it were a chromosome, and print supernodes that intersect it in any way");
+    read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(deletion_locus_fasta, db_graph);
+    int min_covg_required=5;
+    db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required, stdout,
+											false,NULL,0);
+    //cleanup - the printing process has set all printed nodes to visited
+    //           - or to visited_and_exists_in_reference
+    hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+
+  case 10:
+    printf("Load a putative deletion locus as if it were a chromosome, and print supernodes that are completely contained within this.");
+    read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(deletion_locus_fasta, db_graph);
+    int min_cov_required=5;
+    db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_cov_required, stdout,
+											 false,NULL,0);
+    //cleanup - the printing process has set all printed nodes to visited
+    //           - or to visited_and_exists_in_reference
+    hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+
+
+
   }
 
   return 0;

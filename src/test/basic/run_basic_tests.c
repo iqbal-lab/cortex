@@ -52,7 +52,12 @@ int  main()
     return CU_get_error();
   }
 
-  
+ if (NULL == CU_add_test(pSuite, "test nucleotide iterator", test_binary_kmer_nucleotide_iterator)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+
   if (NULL == CU_add_test(pSuite, "test creation of binary kmers from sequence - sliding window", test_get_sliding_windows_from_sequence)) {
     CU_cleanup_registry();
     return CU_get_error();
