@@ -31,6 +31,8 @@ typedef enum
     pruned_from_NA12878_and_NA12892  = 7,
     pruned_from_NA12891_and_NA12892  = 8,
     pruned_from_NA12878_and_NA12891_and_NA12892  = 9,
+    exists_in_reference = 10,
+    visited_and_exists_in_reference = 11,
 
   } NodeStatus;
 
@@ -109,6 +111,7 @@ boolean db_node_has_precisely_one_edge(dBNode *, Orientation, Nucleotide *, Edge
 
 boolean db_node_has_precisely_one_edge_in_union_graph_over_all_people(dBNode * node, Orientation orientation, Nucleotide * nucleotide);
 
+boolean db_node_has_precisely_two_edges(dBNode * node, Orientation orientation, Nucleotide * nucleotide1, Nucleotide * nucleotide2, EdgeArrayType type, int index);
 
 void db_node_reset_all_edges_for_all_people_and_pops_to_zero(Element* e);
 
@@ -127,6 +130,39 @@ boolean db_node_check_status_not_pruned(dBNode * node);
 void db_node_set_status(dBNode * node,NodeStatus status);
 void db_node_trio_aware_set_pruned_status(dBNode * node, int index);
 void db_node_set_status_to_none(dBNode * node);
+
+
+
+//actions and conditions 
+
+void db_node_action_set_status_none(dBNode * node);
+
+//void db_node_action_set_status_pruned(dBNode * node);
+void db_node_action_set_status_visited(dBNode * node);
+
+void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode * node);
+
+void db_node_action_unset_status_visited_or_visited_and_exists_in_reference(dBNode * node);
+
+void db_node_action_do_nothing(dBNode * node);
+
+boolean db_node_check_status_none(dBNode * node);
+
+boolean db_node_check_status_visited(dBNode * node);
+
+boolean db_node_check_status_exists_in_reference(dBNode * node);
+
+boolean db_node_check_status_visited_and_exists_in_reference(dBNode * node);
+
+boolean db_node_check_status_is_not_exists_in_reference(dBNode * node);
+
+boolean db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(dBNode * node);
+
+boolean db_node_condition_always_true(dBNode* node);
+
+
+
+
 
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
 void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, unsigned char update);

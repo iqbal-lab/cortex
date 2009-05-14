@@ -26,6 +26,27 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
 dBNode *  db_graph_find_or_insert_node_restricted_to_specific_person_or_population(Key key, boolean * found, dBGraph * hash_table, EdgeArrayType type, int index);
 
 
+//**************
+// functions pulled over from Mario's graph code
+// ************
+int db_graph_get_perfect_path_for_specific_person_or_pop(dBNode * node, Orientation orientation, int limit, void (*node_action)(dBNode * node),
+							 dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+							 boolean * is_cycle, dBGraph * db_graph, EdgeArrayType type, int index);
+
+
+boolean db_graph_detect_perfect_bubble_for_specific_person_or_pop(dBNode * node,
+								  Orientation * orientation,
+								  boolean (*condition)(dBNode * node), void (*node_action)(dBNode * node),
+								  Nucleotide * base1, Nucleotide * base2,
+								  Nucleotide * labels,dBNode * * end_node,Orientation * end_orientation,
+								  dBGraph * db_graph, EdgeArrayType type, int index);
+
+
+int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit, boolean (*condition)(dBNode * node), void (*node_action)(dBNode * node),
+						  char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+						  dBGraph * db_graph, EdgeArrayType type, int index);
+
+
 
 
 //***********************
@@ -71,10 +92,13 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population(dBGraph* hash_table, EdgeArrayType type, int index);
 
 
+dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node, Orientation current_orientation,
+                                                           Orientation * next_orientation,
+                                                           Nucleotide edge, Nucleotide * reverse_edge,dBGraph * db_graph, EdgeArrayType type, int index);
 
-dBNode * db_node_get_next_node_for_specific_person_or_pop(dBNode * current_node, Orientation current_orientation,
-							   Orientation * next_orientation,
-							   Nucleotide edge, Nucleotide * reverse_edge, HashTable * db_graph, EdgeArrayType type, int index);
+//dBNode * db_node_get_next_node_for_specific_person_or_pop(dBNode * current_node, Orientation current_orientation,
+//							   Orientation * next_orientation,
+//							   Nucleotide edge, Nucleotide * reverse_edge, HashTable * db_graph, EdgeArrayType type, int index);
 
 //returns true if the node side defined by the orientation is a conflict 
 //or doesn't have any outgoing edge

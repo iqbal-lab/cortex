@@ -60,6 +60,11 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test loading of a binary as dumped by graph, not sv_trio",test_load_graph_binary )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
   if (NULL == CU_add_test(pPopGraphSuite, "Test that can identify supernode ends",   test_is_supernode_end)) {
     CU_cleanup_registry();
     return CU_get_error();

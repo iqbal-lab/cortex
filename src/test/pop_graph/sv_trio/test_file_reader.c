@@ -199,15 +199,26 @@ void test_load_graph_binary()
 
   //pre-prepared binary file built from this fasta
   // 
+  // >read
+  // AACGTTCC
+  // >read
+  // AACGTTCC
+  // >zam
+  // GTTCA
+  // >read1 - will repeat 300 times
+  // AAAAAAA
+  // >read1
+  // AAAAAAA
+
+  // note this contains 5 unique kmers.read 1 seems to contain 4 unique kmers but only contains 3, as AACGTT is just one kmer looped back on itself
+
   seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_to_load_and_dump_as_graph_bin_kmer5.bin", db_graph, individual_edge_array, 0);
 
-  CU_ASSERT(seq_len==6);//kmers loaded
-  printf("Seq length is %d", seq_len);
-  CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph), 6);
-  printf("Has table says %lld", hash_table_get_unique_kmers(db_graph));
+  CU_ASSERT(seq_len==25);//kmers loaded * length of kmer
+  CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph), 5);
 
 
-  //all the nodes and their rev complements from the grap
+  //all the nodes and their rev complements from the graph
   dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AACGT",  kmer_size),kmer_size) ,db_graph);
   dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("ACGTT",  kmer_size),kmer_size) ,db_graph);
   dBNode* test_element3 = hash_table_find(element_get_key(seq_to_binary_kmer("CGTTC",  kmer_size),kmer_size) ,db_graph);
@@ -233,7 +244,7 @@ void test_load_graph_binary()
   CU_ASSERT(test_element2 != NULL);
   CU_ASSERT(test_element1 == test_element2);
   CU_ASSERT(db_node_get_coverage(test_element1,individual_edge_array,0)==4);
-  printf("Warning - graph has a different defn of covg to sv_trio. It increments each time you see a kmer. sv_trio only incrmeents once per read\n");
+  printf("Warning - graph has a different defn of covg to sv_trio. It increments each time you see a kmer. sv_trio only incrmeents once per read. Leave this p[rint in place until you resolve this - will bite you in the ass\n");
 
   CU_ASSERT(test_element3 != NULL);
   CU_ASSERT(test_element4 != NULL);

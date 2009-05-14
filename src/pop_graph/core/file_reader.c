@@ -546,7 +546,7 @@ int load_sv_trio_binary_data_from_filename_into_graph(char* filename,  dBGraph* 
 
 
 
-//reads a biary as dumped by graph (not sv_trio)
+//reads a binary as dumped by graph (not sv_trio)
 int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
@@ -565,7 +565,7 @@ int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGrap
   while (db_node_read_graph_binary(fp_bin,db_graph->kmer_size,&node_from_file, type, index))
     {
       count++;
-      
+
       //if (count % 100000000 == 0 ){
       // printf("loaded %i\n",count);
       //}

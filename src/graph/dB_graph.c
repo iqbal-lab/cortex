@@ -464,7 +464,7 @@ int db_graph_supernode(dBNode * node,int limit, boolean (*condition)(dBNode * no
     //we are at the end of a supernode
     length = db_graph_get_perfect_path(nodes_reverse[length_reverse],opposite_orientation(orientation_reverse[length_reverse]),limit,node_action,
 				       path_nodes,path_orientations,path_labels,
-				       &is_cycle,db_graph);
+ 				       &is_cycle,db_graph);
        
 
     //apply action to the last node

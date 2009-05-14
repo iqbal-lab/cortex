@@ -1161,6 +1161,40 @@ boolean db_node_has_precisely_one_edge_in_union_graph_over_all_people(dBNode * n
   
 }
 
+//a conflict - bifurcation
+boolean db_node_has_precisely_two_edges(dBNode * node, Orientation orientation, Nucleotide * nucleotide1, Nucleotide * nucleotide2, EdgeArrayType type, int index){
+  
+  Nucleotide n;
+
+  Edges edges = get_edge_copy(*node,type,index);
+
+  short edges_count = 0;
+
+  if (orientation == reverse){
+    edges >>= 4;
+  }
+  
+  for(n=0;n<4;n++){
+    
+    if ((edges & 1) == 1){
+      if (edges_count == 0){
+	*nucleotide1 = n;
+      }
+      
+      if (edges_count == 1){
+	*nucleotide2 = n;
+      }
+      edges_count++;
+    }
+    
+    edges >>= 1;    
+  }
+  
+  return (edges_count == 2);
+  
+}
+
+
 
 boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayType edge_type, int edge_index){
   
@@ -1467,6 +1501,100 @@ boolean db_node_read_graph_binary(FILE * fp, short kmer_size, dBNode * node, Edg
     }
 
 
+  return true;
+}
+
+
+void db_node_action_set_status_none(dBNode * node){
+  db_node_set_status(node,none);
+}
+
+//void db_node_action_set_status_pruned(dBNode * node){
+//  db_node_set_status(node,pruned);
+//}
+
+
+void db_node_action_set_status_visited(dBNode * node){
+  db_node_set_status(node,visited);
+}
+
+void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode * node){
+
+  if (db_node_check_status(node, exists_in_reference))
+    {
+      db_node_set_status(node,visited_and_exists_in_reference);      
+    }
+  //WARNING. Need special case for pruned?
+  // BIG WARNING - need to avoid status unassigned
+  else if (!db_node_check_status(node, unassigned)) 
+    {
+      db_node_set_status(node,visited);
+    }
+
+}
+
+
+void db_node_action_unset_status_visited_or_visited_and_exists_in_reference(dBNode * node){
+  if (db_node_check_status_visited_and_exists_in_reference(node))
+  {
+    db_node_set_status(node,exists_in_reference);
+  }
+  else if (db_node_check_status(node, visited))
+  {
+    db_node_set_status(node, none);
+  }
+      
+}
+
+
+
+void db_node_action_do_nothing(dBNode * node){
+  
+}
+
+
+boolean db_node_check_status_none(dBNode * node){
+  return db_node_check_status(node,none);
+}
+
+boolean db_node_check_status_visited(dBNode * node){
+  return db_node_check_status(node,visited);
+}
+
+boolean db_node_check_status_exists_in_reference(dBNode * node){
+  return db_node_check_status(node,exists_in_reference);
+}
+
+boolean db_node_check_status_visited_and_exists_in_reference(dBNode * node){
+  return db_node_check_status(node,visited_and_exists_in_reference);
+}
+
+boolean db_node_check_status_is_not_exists_in_reference(dBNode * node){
+  //return !db_node_check_status(node,exists_in_reference);
+  if (db_node_check_status(node,exists_in_reference))
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
+}
+
+boolean db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(dBNode * node){
+  if (db_node_check_status(node,visited_and_exists_in_reference) || db_node_check_status(node,visited)  )
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
+}
+
+
+boolean db_node_condition_always_true(dBNode* node)
+{
   return true;
 }
 

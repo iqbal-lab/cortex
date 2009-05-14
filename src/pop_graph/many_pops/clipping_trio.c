@@ -34,7 +34,7 @@ void db_graph_remove_path_for_specific_person_or_population(dBNode * node, Orien
       }
       
       //the only reason we know this next node is connected by en edge, is because this function db_node_has_precisely_one_edge_in_union_graph_over_all_people returned it in argument 3
-      next_node = db_node_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide,&rev_nucleotide,db_graph, type, index); 
+      next_node = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide,&rev_nucleotide,db_graph, type, index); 
 
       if (DEBUG){
 	printf("RESET %c BACK\n",binary_nucleotide_to_char(rev_nucleotide));
@@ -84,7 +84,7 @@ int db_graph_detect_tip_for_specific_person_or_pop(dBNode * node, Orientation or
        Orientation next_orientation;
        dBNode * next_node;
        
-       next_node = db_node_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide,&reverse_nucleotide,db_graph, type, index);
+       next_node = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide,&reverse_nucleotide,db_graph, type, index);
        
        if(next_node == NULL){
 	 printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
@@ -142,7 +142,7 @@ int db_graph_clip_tip_with_orientation_for_specific_person_or_pop(dBNode * node,
   
 	 nodes[length] = node;
 	 
-	 next_node = db_node_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide,&reverse_nucleotide,db_graph, type, index);
+	 next_node = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide,&reverse_nucleotide,db_graph, type, index);
 	 
 	 if(next_node == NULL){
 	   printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
