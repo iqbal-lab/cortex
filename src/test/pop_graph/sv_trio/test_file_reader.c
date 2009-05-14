@@ -274,6 +274,6 @@ void test_load_graph_binary()
   CU_ASSERT(test_element16 == NULL);
   CU_ASSERT(test_element17 == NULL);
 
-
+  hash_table_free(&db_graph);
 
 }

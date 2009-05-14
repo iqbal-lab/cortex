@@ -5,6 +5,7 @@
 #include <binary_kmer.h>
 #include <file_reader.h>
 #include <test_dB_graph.h>
+#include <stdlib.h>
 
 void test_hash_table_find()
 {
@@ -1139,7 +1140,11 @@ void test_deletion_validation()
 
 
   //printf("deletion %s and number fo supernodes is %d\n", array_of_supernodes[0], number_of_supernodes);
-  
+
+  free(array_of_supernodes[0]);
+  free(array_of_supernodes[1]);
+  free(array_of_supernodes[2]);
+  free(array_of_supernodes);
   hash_table_free(&db_graph);
 
 }

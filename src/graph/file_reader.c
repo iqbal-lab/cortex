@@ -13,7 +13,7 @@
 #include <file_reader.h>
 #include <element.h>
 
-MAX_READ_LENGTH=1000;
+int MAX_READ_LENGTH=1000;
 
 
 
