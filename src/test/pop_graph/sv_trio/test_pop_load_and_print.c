@@ -53,29 +53,29 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
 
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
   db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person1, individual_edge_array, 0, 
-					   true, array_of_supernodes_for_person1,&number_of_supernodes_in_person_1);
+								  true, array_of_supernodes_for_person1,&number_of_supernodes_in_person_1);
 
-  //printf("PERSON 1 has %d supernodes\n", number_of_supernodes_in_person_1);
+  printf("PERSON 1 has %d supernodes\n", number_of_supernodes_in_person_1);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
 
   int number_of_supernodes_in_person_2=0;
   db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person2, individual_edge_array, 1, 
 					   true, array_of_supernodes_for_person2,&number_of_supernodes_in_person_2);
-  //printf("PERSON 2 has %d supernodes\n", number_of_supernodes_in_person_2);
+  printf("PERSON 2 has %d supernodes\n", number_of_supernodes_in_person_2);
 
   CU_ASSERT(number_of_supernodes_in_person_1==2);
   CU_ASSERT(number_of_supernodes_in_person_2==2);
 
   int i;
 
-  //  for (i=0; i<number_of_supernodes_in_person_1; i++)
-  // {
-  //   printf("\nPerson 1 node %d : %s\n",i,array_of_supernodes_for_person1[i]);
-  // }
-  //for (i=0; i<number_of_supernodes_in_person_2; i++)
-  // {
-  //   printf("\nPerson 2 node %d : %s\n",i,array_of_supernodes_for_person2[i]);
-  // }
+   for (i=0; i<number_of_supernodes_in_person_1; i++)
+   {
+     printf("\nPerson 1 node %d : %s\n",i,array_of_supernodes_for_person1[i]);
+   }
+  for (i=0; i<number_of_supernodes_in_person_2; i++)
+   {
+     printf("\nPerson 2 node %d : %s\n",i,array_of_supernodes_for_person2[i]);
+   }
 
 
   //Quicksort these results:
@@ -93,16 +93,18 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
 
   //Expected results are
 
-  char* correct_answer_person_1[] ={"AAA", "AACGTT"};
-  char* correct_answer_person_2[] ={"CCC", "CGTCAA"};
+  char* correct_answer_person_1[] ={"AAAA", "AACGTT"};
+  char* correct_answer_person_2[] ={"CCCC", "CGTCAA"};
 
 
   int j;
 
+  printf("*************************************************   We find %d supernodes\n", number_of_supernodes_in_person_1);
+ 
   CU_ASSERT(2==number_of_supernodes_in_person_1);
   for (j=0; j<number_of_supernodes_in_person_1; j++)
    {
-     // printf("\nj is %d, Person 1 should have %s and we see %s\n", j,correct_answer_person_1[j], array_of_supernodes_for_person1[j]);
+     printf("\nj is %d, Person 1 should have %s and we see %s\n", j,correct_answer_person_1[j], array_of_supernodes_for_person1[j]);
      CU_ASSERT_STRING_EQUAL(correct_answer_person_1[j], array_of_supernodes_for_person1[j]);
    }
 
@@ -111,7 +113,7 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   CU_ASSERT(2==number_of_supernodes_in_person_2);
   for (j=0; j<number_of_supernodes_in_person_2; j++)
     {
-      //    printf("Person 2 should have %s and we see%s\n", correct_answer_person_2[j], array_of_supernodes_for_person2[j]);
+      printf("Person 2 should have %s and we see%s\n", correct_answer_person_2[j], array_of_supernodes_for_person2[j]);
 
      CU_ASSERT_STRING_EQUAL(correct_answer_person_2[j], array_of_supernodes_for_person2[j]);
    }
@@ -145,8 +147,6 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
 
 void test_take_three_people_each_with_one_read_and_find_variants()
 {
-
-
 
   //first set up the hash/graph
   int kmer_size = 5;
@@ -220,13 +220,13 @@ void test_take_three_people_each_with_one_read_and_find_variants()
   int number_of_supernodes_in_person_3=0;
   db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person3, individual_edge_array, 2, 
 					   true, array_of_supernodes_for_person3,&number_of_supernodes_in_person_3);
-  //printf("PERSON 3 has %d supernodes\n", number_of_supernodes_in_person_3);
+  printf("PERSON 3 has %d supernodes\n", number_of_supernodes_in_person_3);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
 
-  //for (i=0; i<number_of_supernodes_in_person_3; i++)
-  //{
-  //  printf("SUPERNODE %s\n", array_of_supernodes_for_person3[i]);
-  // }
+  for (i=0; i<number_of_supernodes_in_person_3; i++)
+  {
+    printf("SUPERNODE %s\n", array_of_supernodes_for_person3[i]);
+   }
 
 
   //qsort results
@@ -257,8 +257,8 @@ void test_take_three_people_each_with_one_read_and_find_variants()
     }
   for (i=0; i<number_of_supernodes_in_person_3; i++)
     {
-      //   printf("\n i is %d, person 3, compare %s and %s\n", i, correct_answer_person_3[i], array_of_supernodes_for_person3[i]);
-	   CU_ASSERT(!strcmp(correct_answer_person_3[i], array_of_supernodes_for_person3[i]) || !strcmp(rev_correct_answer_person_3[i], array_of_supernodes_for_person3[i]) );
+      printf("\n i is %d, person 3, compare %s and %s\n", i, correct_answer_person_3[i], array_of_supernodes_for_person3[i]);
+      CU_ASSERT(!strcmp(correct_answer_person_3[i], array_of_supernodes_for_person3[i]) || !strcmp(rev_correct_answer_person_3[i], array_of_supernodes_for_person3[i]) );
     }
 
 

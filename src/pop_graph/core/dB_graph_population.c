@@ -241,6 +241,12 @@ int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit, boole
 		       char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
 		       dBGraph * db_graph, EdgeArrayType type, int index){
 
+  if (node==NULL)
+    {
+      printf("do not call db_graph_supernode_for_specific_person_or_pop with NULL node\n");
+      exit(1);
+    }
+
   dBNode * nodes_reverse[limit];
   Orientation orientation_reverse[limit];
   Nucleotide labels_reverse[limit];
@@ -298,7 +304,12 @@ int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit, boole
     string[i] = '\0';
   }
   
-  return length;
+  else
+    {
+      return 0;
+    }
+  
+  return db_graph->kmer_size + length;
 }
 
 
@@ -694,105 +705,56 @@ void db_graph_traverse_to_gather_statistics_about_people(void (*f)(HashTable*, E
 
 void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test ){
 
-
-  //don't do anything if this node does not occur in the graph for this person/population
   if (!db_node_is_this_node_in_this_person_or_populations_graph(node, type, index))
     {
-      //printf("ignoring node that is not in this person's graph");
+      return;
+    }
+  
+  const int              max_expected_supernode_length=12000;
+  dBNode *         nodes_path[max_expected_supernode_length];
+  Orientation      orientations_path[max_expected_supernode_length];
+  Nucleotide       labels_path[max_expected_supernode_length];
+  char             seq[max_expected_supernode_length];
+  int              j;
+
+  //initialise
+  for (j=0; j<max_expected_supernode_length; j++)
+    {
+      seq[j]='0';
+    }
+
+
+  //get the supernode.
+  int length = db_graph_supernode_for_specific_person_or_pop(node,max_expected_supernode_length,&db_node_check_status_not_pruned_or_visited,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+							     seq,nodes_path,orientations_path, labels_path,db_graph, type, index);
+  if (length==0) //means the condition db_node_check_status_not_pruned_or_visited was FALSE, so don't want to print anything
+    {
       return;
     }
 
-  char seq[db_graph->kmer_size];
-  char seq_forward[5000];
-  char seq_reverse[5000]; 
-  char seq_reverse_reversed[5000];
-  int i;
-  int length_reverse = 0;
-  boolean is_cycle_forward, is_cycle_reverse;
- 
+  if (!is_for_testing) 
+    {
+      fprintf(file,">NODE\n%s\n",seq);
+    }
+  else
+    {
+      
+      for_test[*index_for_test] = (char*) calloc(length,sizeof(char));
+      if (for_test[*index_for_test]==NULL)
+	{
+	  printf("Unable to calloc for supernode");
+	  exit(1);
+	}
 
-  //used to check if not pruned or visited, but I have too many pruned statuses now
-  if ( db_node_check_status_not_pruned(node)   &&  !db_node_check_status(node, visited)){
-  
-    binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq);
+      int j;
 
-    if (DEBUG){
-      printf("\nSTART Supernode %s\n",seq);    
-      printf("go forward\n");
-    }
-    
-    //compute the forward path until the end of the supernode
-    //mark the nodes in the path as visited.
-    //return is_cycle_forward == true if the path closes a loop
-    get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(node,forward,db_graph,&is_cycle_forward,seq_forward,5000, type, index);
-    
-    if (DEBUG){
-      printf("NODE c %s\n",seq); 
-      printf("NODE f %s\n",seq_forward);
-    }
-    
-    if (! is_cycle_forward){
+      for (j=0; j<length; j++)
+	{
+	  for_test[*index_for_test][j]=seq[j];
+	}
+      for_test[*index_for_test][length]='\0';
+      *index_for_test=*index_for_test+1;
       
-      if (DEBUG){
-	printf("go reverse\n");
-      }
-      
-      //compute the reverse path...
-      get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(node,reverse,db_graph,&is_cycle_reverse,seq_reverse,5000, type, index);
-      
-      if (is_cycle_reverse){
-	puts("cycle reverse orientation without cycle in the forward orientation\n");
-	exit(1);
-      }
-      
-      if (DEBUG){
-	printf("NODE r %s\n",seq_reverse);
-      }
-      
-      length_reverse = strlen(seq_reverse);
-    }
-    
-    
-    //reverse the reverse sequence
-    for(i=0;i<length_reverse;i++){
-      seq_reverse_reversed[i] = reverse_char_nucleotide(seq_reverse[length_reverse-i-1]);
-      
-    }
-    seq_reverse_reversed[length_reverse]='\0';
-    
-    if (DEBUG){
-      printf("NODE rr %s\n",seq_reverse_reversed);
-    }
-
-    if (!is_for_testing) 
-      {
-	fprintf(file,">NODE\n%s%s%s\n",seq_reverse_reversed,seq,seq_forward); 
-      }
-    else
-      {
-	
-	int length_of_supernode = strlen(seq_reverse_reversed)+strlen(seq) +strlen(seq_forward) ;
-	if (length_of_supernode==0)
-	  {
-	    printf("Null supernode");
-	    exit(1);
-	  }
-	
-	
-	//assume the caller has malloced space for output
-	
-	for_test[*index_for_test] = (char*) calloc(length_of_supernode+1,sizeof(char));
-	if (for_test[*index_for_test]==NULL)
-	  {
-	    printf("Unable to calloc for supernode");
-	    exit(1);
-	  }
-	for_test[*index_for_test][0]='\0';
-	strcat(for_test[*index_for_test],seq_reverse_reversed);
-	strcat(for_test[*index_for_test],seq);
-	strcat(for_test[*index_for_test],seq_forward);
-	for_test[*index_for_test][length_of_supernode]='\0';
-
 	//Now make sure you are using the smaller of the sequence and its rev complement
 
 	  //for the moment, only do this for short supernodes :-(
@@ -810,25 +772,9 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 	//TODO - fix this - I was trying to find reverse complement by using binary_kmer_reverse complement, and this assumes k<31, so can use long long. But supernodes can be much longer than 31 bases.
 	// this is only an issue because I want to print out the smaller of supernode and rev_comp(supernde), so not critical.
 	
-	*index_for_test=*index_for_test+1;
-	
 
-      }
-    
-    
-  }
-  else
-    {
-      if (DEBUG){
-	if ( db_node_check_status(node,visited)){
-	  printf("\n%s: visited\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
-	}
-	if ( !db_node_check_status_not_pruned(node)){
-	  printf("\n%s: pruned\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
-	}
-      }
     }
- 
+  
   
 }
 

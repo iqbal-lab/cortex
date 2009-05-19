@@ -993,23 +993,25 @@ void db_graph_clip_tips(dBGraph * db_graph){
 }
 
 
-void db_graph_print_supernodes(dBGraph * db_graph){
+void db_graph_print_supernodes(dBGraph * db_graph)
+{
   int count_nodes=0;
-  void print_supernode(dBNode * node){
-    dBNode * nodes_path[5000];
-    Orientation orientations_path[5000];
-    Nucleotide labels_path[5000];
-    char seq[5000+db_graph->kmer_size+1];
-
-
-    int length = db_graph_supernode(node,5000,&db_node_check_status_none,&db_node_action_set_status_visited,
-				    seq,nodes_path,orientations_path, labels_path,db_graph);
-    if (length>0){
-      printf(">node_%i %i\n",count_nodes,length+db_graph->kmer_size);
-      count_nodes++;
-      printf("%s\n",seq);
+  
+  void print_supernode(dBNode * node)
+    {
+      dBNode * nodes_path[5000];
+      Orientation orientations_path[5000];
+      Nucleotide labels_path[5000];
+      char seq[5000+db_graph->kmer_size+1];
+      int length = db_graph_supernode(node,5000,&db_node_check_status_none,&db_node_action_set_status_visited,
+				      seq,nodes_path,orientations_path, labels_path,db_graph);
+      if (length>0){
+	printf(">node_%i %i\n",count_nodes,length+db_graph->kmer_size);
+	count_nodes++;
+	printf("%s\n",seq);
+      }
     }
-  }
+
   hash_table_traverse(&print_supernode,db_graph); 
 }
 

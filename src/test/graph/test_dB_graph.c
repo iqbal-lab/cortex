@@ -199,7 +199,7 @@ void test_supernode_walking() //test db_graph_get_perfect_path
  
   //1. Sequence of tests as follows
   //         Each test loads a single specifically designed fasta file into a dB_graph.
-  //         The test then picks an element in the graph, and calls get_seq_from_elem_to_end_of_supernode
+  //         The test then picks an element in the graph, and calls get_perfect_path
   //         and checks that it gets the right sequence.
   
 
@@ -229,12 +229,7 @@ void test_supernode_walking() //test db_graph_get_perfect_path
    
    int test1_length = db_graph_get_perfect_path(test_element1,forward,100,&db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
 
-    CU_ASSERT(is_cycle);
-
-
-   //depending on what orientation GTA is with respect to it's kmer, the answer you get will be either CGT or GT
-   //Zam we know GTA<TAC!
-   
+   CU_ASSERT(is_cycle);
    CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test1_length,tmp_seq),"CGTA");
    
 

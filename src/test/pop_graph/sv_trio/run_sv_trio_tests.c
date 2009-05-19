@@ -36,6 +36,11 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test setting and checking of element status",test_element_status_set_and_checks )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - mark chromosome overlap", test_mark_chromosome_overlap)) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -61,6 +66,11 @@ int  main()
     return CU_get_error();
   }
   if (NULL == CU_add_test(pPopGraphSuite, "Test loading of a binary as dumped by graph, not sv_trio",test_load_graph_binary )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+  if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for getting supernode containing a given node",   test_db_graph_supernode_for_specific_person_or_pop)) {
     CU_cleanup_registry();
     return CU_get_error();
   }

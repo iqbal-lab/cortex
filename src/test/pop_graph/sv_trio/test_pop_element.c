@@ -1432,3 +1432,147 @@ void test_get_coverage()
   
   free_element(&e);
 }
+
+
+void test_element_status_set_and_checks()
+{
+  dBNode* e = new_element();
+  
+  db_node_set_status(e, visited);
+  CU_ASSERT(db_node_check_status(e, visited)==true);
+  CU_ASSERT(db_node_check_status(e, none)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12891)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12892)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12892)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12891)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12891_and_NA12892)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12891_and_NA12892)==false);
+
+
+
+  db_node_set_status(e, none);
+  CU_ASSERT(db_node_check_status(e, none)==true);
+  CU_ASSERT(db_node_check_status(e, visited)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12891)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12892)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12892)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12891)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12891_and_NA12892)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12891_and_NA12892)==false);
+
+
+
+  db_node_set_status(e, pruned_from_NA12878);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878)==true);
+  CU_ASSERT(db_node_check_status(e, none)==false);
+  CU_ASSERT(db_node_check_status(e, visited)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12891)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12892)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12892)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12891)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12891_and_NA12892)==false);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12891_and_NA12892)==false);
+
+
+
+
+  db_node_set_status(e, pruned_from_NA12891);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12891)==true);
+  db_node_set_status(e, pruned_from_NA12892);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12892)==true);
+  db_node_set_status(e, pruned_from_NA12878_and_NA12892);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12892)==true);
+  db_node_set_status(e, pruned_from_NA12878_and_NA12891);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12891)==true);
+  db_node_set_status(e, pruned_from_NA12891_and_NA12892);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12891_and_NA12892)==true);
+  db_node_set_status(e, pruned_from_NA12878_and_NA12891_and_NA12892);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12891_and_NA12892)==true);
+
+  db_node_set_status_to_none(e);
+  CU_ASSERT(db_node_check_status(e, none)==true);
+
+  //important that at this point we have set status to none
+  db_node_trio_aware_set_pruned_status(e, 0);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878)==true);
+  db_node_set_status_to_none(e);
+  CU_ASSERT(db_node_check_status(e, none)==true);
+
+  db_node_trio_aware_set_pruned_status(e, 1);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12891)==true);
+  db_node_set_status_to_none(e);
+  CU_ASSERT(db_node_check_status(e, none)==true);
+
+  db_node_trio_aware_set_pruned_status(e, 2);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12892)==true);
+  db_node_set_status_to_none(e);
+  CU_ASSERT(db_node_check_status(e, none)==true);
+
+  db_node_set_status(e, pruned_from_NA12878_and_NA12892);
+  db_node_trio_aware_set_pruned_status(e, 1);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12891_and_NA12892)==true);
+
+  db_node_set_status_to_none(e);
+  db_node_set_status(e, pruned_from_NA12878_and_NA12891);
+  db_node_trio_aware_set_pruned_status(e, 2);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12891_and_NA12892)==true);
+
+  db_node_set_status_to_none(e);
+  db_node_set_status(e, pruned_from_NA12891_and_NA12892);
+  db_node_trio_aware_set_pruned_status(e, 0);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12878_and_NA12891_and_NA12892)==true);
+
+
+  db_node_set_status_to_none(e);
+  db_node_set_status(e, pruned_from_NA12891_and_NA12892);
+  db_node_trio_aware_set_pruned_status(e, 1);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12891_and_NA12892)==true);
+  db_node_trio_aware_set_pruned_status(e, 2);
+  CU_ASSERT(db_node_check_status(e, pruned_from_NA12891_and_NA12892)==true);
+
+
+  db_node_action_set_status_none(e);
+  CU_ASSERT(db_node_check_status(e, none)==true);
+
+  db_node_action_set_status_visited(e);
+  CU_ASSERT(db_node_check_status(e, visited)==true);
+  db_node_action_set_status_visited_or_visited_and_exists_in_reference(e);
+  CU_ASSERT(db_node_check_status(e, visited)==true);
+  db_node_action_unset_status_visited_or_visited_and_exists_in_reference(e);
+  CU_ASSERT(db_node_check_status(e, none)==true);
+
+  
+  db_node_set_status(e,exists_in_reference);
+  CU_ASSERT(db_node_check_status(e, exists_in_reference)==true);
+  db_node_action_set_status_visited_or_visited_and_exists_in_reference(e);
+  CU_ASSERT(db_node_check_status(e, visited_and_exists_in_reference)==true);
+  db_node_action_unset_status_visited_or_visited_and_exists_in_reference(e);
+  CU_ASSERT(db_node_check_status(e, exists_in_reference)==true);
+
+
+  db_node_set_status(e,exists_in_reference);
+  CU_ASSERT(!db_node_check_status_is_not_exists_in_reference(e));
+  db_node_set_status(e,visited_and_exists_in_reference);
+  CU_ASSERT(db_node_check_status_is_not_exists_in_reference(e)); //note we are being sematically strict here - the STATUS is not exists_in_reference, even though the kmer IS in the reference
+  db_node_set_status(e,none);
+  CU_ASSERT(db_node_check_status_is_not_exists_in_reference(e));
+  db_node_set_status(e,visited);
+  CU_ASSERT(db_node_check_status_is_not_exists_in_reference(e));
+  db_node_set_status(e,pruned_from_NA12878);
+  CU_ASSERT(db_node_check_status_is_not_exists_in_reference(e));
+
+  db_node_set_status_to_none(e);
+  CU_ASSERT(db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(e));
+  db_node_set_status(e,visited);
+  CU_ASSERT(!db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(e));
+  db_node_set_status(e, visited_and_exists_in_reference);
+  CU_ASSERT(!db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(e));
+  
+
+
+
+
+  
+}
