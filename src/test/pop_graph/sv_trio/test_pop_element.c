@@ -1571,7 +1571,7 @@ void test_element_status_set_and_checks()
   CU_ASSERT(!db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(e));
   
 
-
+  free_element(&e);
 
 
   

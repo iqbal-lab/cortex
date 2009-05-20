@@ -739,7 +739,7 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
   else
     {
       
-      for_test[*index_for_test] = (char*) calloc(length,sizeof(char));
+      for_test[*index_for_test] = (char*) calloc(length+1,sizeof(char));
       if (for_test[*index_for_test]==NULL)
 	{
 	  printf("Unable to calloc for supernode");

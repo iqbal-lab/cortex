@@ -239,10 +239,10 @@ void test_take_three_people_each_with_one_read_and_find_variants()
 
   char* correct_answer_person_1[] ={"AAGCCTCGACAGCCATGC"};
   char* correct_answer_person_2[]={"AAGCCTCGTTCGGCCATGC"};
-  char* correct_answer_person_3[]={"AAGCCTCGCTA","GCATGGCTA","GCTAGC"};
+  char* correct_answer_person_3[]={"AAGCCTCGCTAG","GCATGGCTAG"};
   char* rev_correct_answer_person_1[]={"GCATGGCTGTCGAGGCTT"};
   char* rev_correct_answer_person_2[]={"GCATGGCCGAACGAGGCTT"};
-  char* rev_correct_answer_person_3[]={"TAGCGAGGCTT", "TAGCCATGC", "GCTAGC"};
+  char* rev_correct_answer_person_3[]={"CTAGCGAGGCTT","CTAGCCATGC"};
 
 
   for (i=0; i<number_of_supernodes_in_person_1; i++)
@@ -723,15 +723,15 @@ void test_printing_supernode_with_chromosome_intersections_simple()
  CU_ASSERT_EQUAL(number_of_chrom_overlaps_lists_in_person_1,1);
 
  
- //  for (i=0; i< number_of_supernodes_in_person_1; i++)
- //{
- //  printf("SUPERNODE %s\n", array_of_supernodes_for_person1[i]);
- // }
+   for (i=0; i< number_of_supernodes_in_person_1; i++)
+ {
+   printf("SUPERNODE %s\n", array_of_supernodes_for_person1[i]);
+  }
 
- // for (i=0; i< number_of_chrom_overlaps_lists_in_person_1; i++)
- // {
- //   printf("CHROM XS %s\n", array_of_chrom_overlaps_for_person1[i]);
- // }
+  for (i=0; i< number_of_chrom_overlaps_lists_in_person_1; i++)
+  {
+    printf("CHROM XS %s\n", array_of_chrom_overlaps_for_person1[i]);
+  }
 
 
 
@@ -739,7 +739,7 @@ void test_printing_supernode_with_chromosome_intersections_simple()
  //qsort((void*) array_of_supernodes_for_person1, number_of_supernodes_in_person_1 , sizeof(char*),  &supernode_cmp);
 
 
- CU_ASSERT_STRING_EQUAL(array_of_supernodes_for_person1[0],"ACGTAC");
+ CU_ASSERT_STRING_EQUAL(array_of_supernodes_for_person1[0],"ACGTACG");
  CU_ASSERT_STRING_EQUAL(array_of_chrom_overlaps_for_person1[0],"1F 1R 2F 2R ");
 
  //cleanup
