@@ -1134,7 +1134,8 @@ void test_deletion_validation()
 
 
 
-  //printf("deletion %s and number fo supernodes is %d\n", array_of_supernodes[0], number_of_supernodes);
+  printf("deletion %s and number fo supernodes is %d\n", array_of_supernodes[0], number_of_supernodes);
+  CU_ASSERT_STRING_EQUAL("GAGAGGCGCGCCGCGCCGGCGC", array_of_supernodes[0]);
 
   free(array_of_supernodes[0]);
   free(array_of_supernodes[1]);
