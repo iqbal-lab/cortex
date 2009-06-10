@@ -40,7 +40,7 @@ typedef enum
 
 typedef enum{
     individual_edge_array = 0,  
-      // you could have a ref_chrom_edge_array here if you wanted also
+    ref_edge_array        = 1,
 } EdgeArrayType;
 
 

@@ -588,3 +588,153 @@ int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGrap
   return seq_length;
 
 }
+
+/*
+
+//load the next num_bases from reference  into the graph, and return those nodes in an array
+void load_next_chunk_of_reference_into_graph_and_get_as_array_of_nodes(FILE* ref_fptr, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length), long long * bad_reads, char quality_cut_off,
+								       int num_bases, dBNode* * path_nodes, Orientation* path_orientations, Nucleotide* path_labels, char* string, dBGraph* db_graph,
+								       EdgeArrayType type, int index, Sequence* prealloc_seq, KmerSlidingWindowSet* prealloc_windows )
+{
+
+  
+
+  //----------------------------------
+  // preallocate the memory used to read the sequences
+  //----------------------------------
+  //Sequence * seq = malloc(sizeof(Sequence));
+  //if (seq == NULL){
+  //  fputs("Out of memory trying to allocate Sequence\n",stderr);
+  //  exit(1);
+  // }
+  //alloc_sequence(seq,num_bases,LINE_MAX);
+
+    
+  
+
+  int seq_length=0;
+  short kmer_size = db_graph->kmer_size;
+
+  //num_bases/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
+  int max_windows = num_bases/(kmer_size+1);
+ 
+  //number of possible kmers in a 'perfect' read
+  int max_kmers   = num_bases-kmer_size+1;
+
+  
+  
+
+  //----------------------------------
+  //preallocate the space of memory used to keep the sliding_windows. NB: this space of memory is reused for every call -- with the view 
+  //to avoid memory fragmentation
+  //NB: this space needs to preallocate memory for orthogonal situations: 
+  //    * a good read -> few windows, many kmers per window
+  //    * a bad read  -> many windows, few kmers per window    
+  //----------------------------------
+  //KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
+  //if (windows == NULL){
+  //  fputs("Out of memory trying to allocate a KmerArraySet",stderr);
+  //  exit(1);
+  //}  
+  //allocate memory for the sliding windows 
+  //binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
+
+  
+
+
+  int entry_length;
+
+
+  while ((entry_length = file_reader(fp,prealloc_seq,num_bases))){
+
+    if (DEBUG){
+      printf ("\nsequence %s\n",prealloc_seq->seq);
+    }
+    
+    int i,j;
+    seq_length += entry_length;
+    
+    int nkmers = get_sliding_windows_from_sequence(prealloc_seq->seq,prealloc_seq->qual,entry_length,quality_cut_off,db_graph->kmer_size,prealloc_windows,max_windows, max_kmers);
+    
+    if (nkmers == 0) {
+      (*bad_reads)++;
+    }
+    else {
+      Element * current_node  = NULL;
+      Element * previous_node = NULL;
+      
+      Orientation current_orientation,previous_orientation;
+      
+      for(i=0;i<prealloc_windows->nwindows;i++){ //for each window
+	KmerSlidingWindow * current_window = &(prealloc_windows->window[i]);
+	
+	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
+	  //printf("insertion. j is %d\n", j);
+	  boolean found = false;
+	  current_node = hash_table_find_or_insert(element_get_key(current_window->kmer[j],db_graph->kmer_size),&found,db_graph);	  	 
+	  //if (!found){  //commented out - not counting new kmers any more
+	  //  
+	  //}
+
+	  if (current_node==NULL)
+	    {
+	      printf("failed to find or insert node");
+	      exit(1);
+	    }
+	  
+	  current_orientation = db_node_get_orientation(current_window->kmer[j],current_node, db_graph->kmer_size);
+	  
+	  if (DEBUG){
+	    char kmer_seq[db_graph->kmer_size];
+	    printf("kmer %i:  %s\n",i,binary_kmer_to_seq(current_window->kmer[j],db_graph->kmer_size,kmer_seq));
+	  }
+	  
+	  if (j>0)
+	    {
+	      
+	      if (previous_node == NULL)
+		{
+		  puts("file_reader: problem - kmer not found\n");
+		  exit(1);
+		}
+	      else
+		{
+		  //previous_orientation = db_node_get_orientation(current_window->kmer[j-1],previous_node, db_graph->kmer_size); 	      
+		  db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size, type, index);	  	      
+		}
+	    }
+	  
+	  previous_node = current_node;
+          previous_orientation = current_orientation;
+	  
+
+	  
+	}
+      }
+
+      //here - go through all the windows again, find each node, and set it to unvisited.
+      for(i=0;i<windows->nwindows;i++)
+	{ 
+	  //for each window
+	  KmerSlidingWindow * current_window = &(windows->window[i]);
+	  
+	  for(j=0;j<current_window->nkmers;j++)
+	    { //for each kmer in window
+	      current_node = hash_table_find(element_get_key(current_window->kmer[j],db_graph->kmer_size),db_graph);	  	 
+	      if (current_node==NULL)
+		{
+		  printf("i is %d and j is %d Impossible- must be able to find all kmers in these windows as already inserted", i, j);
+		  exit(1);
+		}
+	      db_node_set_status(current_node, none);
+	    }
+	}
+    }
+  }
+  free_sequence(&seq);
+  binary_kmer_free_kmers_set(&windows);
+    
+  return seq_length;    
+}
+
+*/

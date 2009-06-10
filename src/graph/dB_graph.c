@@ -746,6 +746,86 @@ void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernod
 }
 
 
+//not yet implemented
+void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode_AND_print_supernodes_it_connects_to(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, FILE* fout,
+														      boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index)
+{
+  exit(1);//remove when implemented
+
+
+  int count_nodes=0;
+  void print_supernode_and_neighbours(dBNode * e)
+    {
+
+      dBNode * nodes_path[5000];
+      Orientation orientations_path[5000];
+      Nucleotide labels_path[5000];
+      char seq[5000+db_graph->kmer_size+1];
+      int length_path=0;
+      
+      if (db_graph_is_condition_true_for_all_nodes_in_supernode(e, 5000, &db_node_check_status_is_not_visited_or_visited_and_exists_in_reference, condition,
+								&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+								seq,nodes_path,orientations_path, labels_path, &length_path, db_graph))
+	{
+	  if (length_path>0) // db_graph_is_condition_true_for_all_nodes_in_supernode returns zero length if the condition for initial node only is false. Usually this condition is checking if visited
+	    {
+	      //work out min and max covg for this supernode
+	      int min=element_get_coverage(nodes_path[0]);
+	      int max=element_get_coverage(nodes_path[0]);
+	      int j;
+	      for (j=0; j<= length_path; j++)
+		{
+		  int cov = element_get_coverage(nodes_path[j]);
+		  if (cov<min)
+		    {
+		      min=cov;
+		    }
+		  if (cov>max)
+		    {
+		      max=cov;
+		    }
+		}
+	      
+	      if (min>=min_covg_required)
+		{
+		  if (!is_for_testing)
+		    {
+		      if (fout == NULL)
+			{
+			  printf(">node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min, max);
+			  count_nodes++;
+			  printf("%s\n",seq);
+
+			  //Now print out the supernodes BEFORE this supernode, which connect to nodes_path[0]
+
+			  
+			  //Now print out the supernodes AFTER this supernode, which nodes_path[length+1] connects to  ..is that right??
+
+			}
+		      else
+			{
+			  fprintf(fout, ">node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min, max);
+                          count_nodes++;
+                          fprintf(fout, "%s\n",seq);
+			}
+		    }
+		  else
+		    {
+		      //return the supernode in the preallocated array, so the test can check it.
+		      for_test_array_of_supernodes[*for_test_index][0]='\0';
+		      strcat(for_test_array_of_supernodes[*for_test_index], seq);
+		      *for_test_index=*for_test_index+1;
+		    }
+		}
+	    }
+	}
+    }
+  hash_table_traverse(&print_supernode,db_graph); 
+  
+}
+
+
+
 
 
 void db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, FILE* fout, 
