@@ -167,3 +167,57 @@ void test_dump_load_binary(){
 }
 
 
+void test_coverage_is_correctly_counted_on_loading_from_file()
+{
+   //first set up the hash/graph
+  int kmer_size = 3;
+  int number_of_bits=4;
+  int bucket_size   = 10;
+  int seq_length;
+  long long bad_reads = 0;
+  dBNode * path_nodes[100];
+  Orientation path_orientations[100];
+  Nucleotide path_labels[100];
+  char tmp_seq[100];
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+
+  seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/file_to_test_covg_of_reads.fasta", &bad_reads, 20,  db_graph);
+
+  CU_ASSERT_EQUAL(seq_length,59);
+  printf("Seq length is %d\n", seq_length);
+  CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),12);
+  CU_ASSERT_EQUAL(bad_reads,0);
+  
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TTT", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(element_get_coverage(test_element1)==1);
+
+  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAT", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(element_get_coverage(test_element1)==1);
+
+  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(element_get_coverage(test_element1)==2);
+  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GGC", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(element_get_coverage(test_element1)==2);
+  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GCA", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(element_get_coverage(test_element1)==2);
+  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("CAG", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(element_get_coverage(test_element1)==2)
+  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AGT", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(element_get_coverage(test_element1)==2);
+  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GTC", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(element_get_coverage(test_element1)==2);
+  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TCT", kmer_size), kmer_size),db_graph);
+  CU_ASSERT(element_get_coverage(test_element1)==2);
+
+
+  
+
+
+
+  hash_table_free(&db_graph);
+
+
+
+
+}

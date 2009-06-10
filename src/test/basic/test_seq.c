@@ -257,7 +257,7 @@ void test_read_sequence_from_fastq(){
   CU_ASSERT_EQUAL(length_seq, 8);
   CU_ASSERT_STRING_EQUAL("Zam2",seq->name);
   CU_ASSERT_STRING_EQUAL("AAAAAAAA",seq->seq);
-  CU_ASSERT_STRING_EQUAL("@@@$%^&*",seq->qual);
+  CU_ASSERT_STRING_EQUAL("!@@$%^&*",seq->qual);
 
   length_seq = read_sequence_from_fastq(fp2,seq,1000);
   

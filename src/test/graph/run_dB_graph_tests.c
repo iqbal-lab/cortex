@@ -28,6 +28,11 @@ int  main()
     return CU_get_error();
   }
 
+  if (NULL == CU_add_test(pSuite, "test nodes are have coverage correctly makred on file loading",  test_coverage_is_correctly_counted_on_loading_from_file) ){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
    if (NULL == CU_add_test(pSuite, "test has precisely one edge with status",test_db_graph_db_node_has_precisely_n_edges_with_status)){
      CU_cleanup_registry();
      return CU_get_error();
