@@ -127,7 +127,16 @@ long long load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequ
 	    exit(1);
 	  }
 	  
-	  element_update_coverage(current_node,1);
+	  //element_update_coverage(current_node,1);
+
+	  //increment coverage, if not seen before in this read
+	  if (!db_node_check_status(current_node, visited))
+	    {
+	      element_update_coverage(current_node,1);
+	      db_node_set_status(current_node, visited);
+	    }
+
+
 
 	  current_orientation = db_node_get_orientation(current_window->kmer[j],current_node, db_graph->kmer_size);
 	  
@@ -151,6 +160,25 @@ long long load_seq_data_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequ
 	  
 	}
       }
+
+
+      //here - go through all the windows again, find each node, and set it to unvisited.
+      for(i=0;i<windows->nwindows;i++)
+	{ 
+	  //for each window
+	  KmerSlidingWindow * current_window = &(windows->window[i]);
+	  
+	  for(j=0;j<current_window->nkmers;j++)
+	    { //for each kmer in window
+	      current_node = hash_table_find(element_get_key(current_window->kmer[j],db_graph->kmer_size),db_graph);	  	 
+	      if (current_node==NULL)
+		{
+		  printf("i is %d and j is %d Impossible- must be able to find all kmers in these windows as already inserted", i, j);
+		  exit(1);
+		}
+	      db_node_set_status(current_node, none);
+	    }
+	}
 
     }
   }

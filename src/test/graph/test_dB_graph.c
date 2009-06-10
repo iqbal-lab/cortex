@@ -1126,11 +1126,11 @@ void test_deletion_validation()
   int number_of_supernodes=0;
 
   //STEP 3: Print supernodes in chromosome that match our person's supernodes (here the reference) at start and end - deletions
-  // db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
-  //                                                                                                  min_start, min_end, min_diff, NULL,
-  //                                                                                                  true, array_of_supernodes, &number_of_supernodes);
-  db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
-										       NULL,true, array_of_supernodes, &number_of_supernodes);
+   db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
+                                                                                                    min_start, min_end, min_diff, NULL,
+                                                                                                    true, array_of_supernodes, &number_of_supernodes);
+  //db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
+   //										       NULL,true, array_of_supernodes, &number_of_supernodes);
 
 
 

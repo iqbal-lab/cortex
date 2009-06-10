@@ -1987,3 +1987,8 @@ void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTab
 }
 
 
+
+// New improved reference-based SV calling algorithm
+void db_graph_make_reference_path_based_sv_calls(EdgeArrayType which_array_holds_reference, int index_for_ref_in_edge_array,  EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
+						 dBGraph* db_graph, FILE* ref_fptr, int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int min_delta, int max_delta, 
+						 int min_covg, int max_covg, 

@@ -745,7 +745,7 @@ void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernod
   hash_table_traverse(&print_supernode,db_graph); 
 }
 
-
+/*
 //not yet implemented
 void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode_AND_print_supernodes_it_connects_to(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, FILE* fout,
 														      boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index)
@@ -824,7 +824,7 @@ void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernod
   
 }
 
-
+*/
 
 
 
