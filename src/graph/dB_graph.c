@@ -9,6 +9,7 @@
 #include <element.h>
 #include <dB_graph.h>
 #include <string.h>
+#include <limits.h>
 
 //it doesn't check that it is a valid arrow
 dBNode * db_graph_get_next_node(dBNode * current_node, Orientation current_orientation, 
@@ -248,9 +249,11 @@ boolean db_graph_db_node_prune(dBNode * node, int coverage,
 // path_orientations is n+1 array from 0..n with the orientations of the node in the path
 // path labels is n array from 0..n-1 with all the labels for the edges (see above)
 // node_action only applied to internal nodes (not node_0 and node_n)
+// seq is a string with all the labels concatenated (NB: it doesn't contain the kmer in the first node)
+// avg_coverage, min_coverge, max_coverge -> refers to the internal nodes only
 
-
-int db_graph_get_perfect_path(dBNode * node, Orientation orientation, int limit, void (*node_action)(dBNode * node),
+int db_graph_get_perfect_path(dBNode * node, Orientation orientation, int limit, 
+			      void (*node_action)(dBNode * node),
 			      dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
 			      char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
 			      boolean * is_cycle, dBGraph * db_graph){
@@ -262,6 +265,7 @@ int db_graph_get_perfect_path(dBNode * node, Orientation orientation, int limit,
   int length =0;
   char tmp_seq[db_graph->kmer_size+1];
   int sum_coverage = 0;
+  int coverage  = 0;
 
   //sanity check
   if (node == NULL){
@@ -276,10 +280,9 @@ int db_graph_get_perfect_path(dBNode * node, Orientation orientation, int limit,
   
   path_nodes[0]         = node;
   path_orientations[0]  = orientation;  
-  sum_coverage          += element_get_coverage(node);
-  *min_coverage          = sum_coverage;
-  *max_coverage          = sum_coverage;
-
+  *max_coverage         = 0;
+  *min_coverage         = INT_MAX;
+ 
   if (DEBUG){
     printf("\nNode %i in path: %s\n", length, binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq));
    }
@@ -292,6 +295,9 @@ int db_graph_get_perfect_path(dBNode * node, Orientation orientation, int limit,
     do{ 
       if (length>0){
 	node_action(current_node);
+	sum_coverage               += coverage;
+	*max_coverage = *max_coverage < coverage ? coverage : *max_coverage;
+	*min_coverage = *min_coverage > coverage ? coverage : *min_coverage;
       }
 
       next_node =  db_graph_get_next_node(current_node,current_orientation,&next_orientation,nucleotide,&rev_nucleotide,db_graph);
@@ -299,18 +305,15 @@ int db_graph_get_perfect_path(dBNode * node, Orientation orientation, int limit,
       
       //sanity check
       if(next_node == NULL){
-	fprintf(stderr,"dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq));
+	fprintf(stderr,"dB_graph: didnt find node in hash table: %s %c %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq),binary_nucleotide_to_char(nucleotide), current_orientation == forward ? "forward" : "reverse");
 	exit(1);
       }
 
-           
+     
       path_labels[length]        = nucleotide;
       seq[length]                = binary_nucleotide_to_char(nucleotide);
-      int coverage               = element_get_coverage(next_node);
-      sum_coverage               += coverage;
-      *max_coverage = *max_coverage < coverage ? coverage : *max_coverage;
-      *min_coverage = *min_coverage > coverage ? coverage : *min_coverage;
-
+      coverage                    = element_get_coverage(next_node);
+ 
       length++;
       path_nodes[length]         = next_node;
       path_orientations[length]  = next_orientation;
@@ -327,6 +330,7 @@ int db_graph_get_perfect_path(dBNode * node, Orientation orientation, int limit,
 	   db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2) && //multiple entries
 	   db_node_has_precisely_one_edge(current_node, current_orientation,&nucleotide)); //has one next edge only
 
+   
 
     if ((next_node == node) && (next_orientation == orientation)){
       *is_cycle = true;
@@ -339,12 +343,122 @@ int db_graph_get_perfect_path(dBNode * node, Orientation orientation, int limit,
   }
 
   seq[length] = '\0';
-  *avg_coverage = (double) sum_coverage/(double) (length+1);
+  *avg_coverage = (length-1<=0) ? 0 : (double) sum_coverage/(double) (length-1);
   return length;
   
 }
 
-//a bubble starts in a node with only two outgoing edges in the same orientation
+
+// similar to the routine above but the first edge is given, this allows to start from a conflict node 
+// ie a node with multiple exits
+// perfect path -- no conflict no cycle -- returns length
+// path: node_0 edge_0 node_1 edge_1 ... node_n-1 edge_n-1 node_n
+// path_nodes is a n+1 array from 0..n with all the nodes in the path
+// path_orientations is n+1 array from 0..n with the orientations of the node in the path
+// path labels is n array from 0..n-1 with all the labels for the edges (see above)
+// node_action only applied to internal nodes (not node_0 and node_n)
+// seq is a string with all the labels concatenated (NB: it doesn't contain the kmer in the first node)
+// avg_coverage, min_coverge, max_coverge -> refers to the internal nodes only
+
+int db_graph_get_perfect_path_with_first_edge(dBNode * node, Orientation orientation, int limit, 
+					      Nucleotide fst_nucleotide,
+					      void (*node_action)(dBNode * node),
+					      dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+					      char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
+					      boolean * is_cycle, dBGraph * db_graph){
+
+  Orientation  current_orientation,next_orientation;
+  dBNode * current_node = NULL;
+  dBNode * next_node = NULL;
+  Nucleotide nucleotide,rev_nucleotide,nucleotide2;
+  int length =0;
+  char tmp_seq[db_graph->kmer_size+1];
+  int sum_coverage = 0;
+  int coverage  = 0;
+
+  //sanity check
+  if (node == NULL){
+    printf("db_graph_get_perfect_path: can't pass a null node\n");
+    exit(1);
+  }
+
+  current_node        = node;
+  current_orientation = orientation;
+
+  *is_cycle = false;
+  
+  path_nodes[0]         = node;
+  path_orientations[0]  = orientation;  
+  *max_coverage         = 0;
+  *min_coverage         = INT_MAX;
+ 
+  if (DEBUG){
+    printf("\nNode %i in path: %s\n", length, binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq));
+   }
+    
+  
+  //first edge defined
+  nucleotide = fst_nucleotide;
+
+  do{ 
+    if (length>0){
+      node_action(current_node);
+      sum_coverage += coverage;
+      *max_coverage = *max_coverage < coverage ? coverage : *max_coverage;
+      *min_coverage = *min_coverage > coverage ? coverage : *min_coverage;
+    }
+
+    next_node =  db_graph_get_next_node(current_node,current_orientation,&next_orientation,nucleotide,&rev_nucleotide,db_graph);
+
+      
+    //sanity check
+    if(next_node == NULL){
+      fprintf(stderr,"dB_graph: didnt find node in hash table: %s %c %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq),binary_nucleotide_to_char(nucleotide), current_orientation == forward ? "forward" : "reverse");
+      exit(1);
+    }
+
+    
+    path_labels[length]        = nucleotide;
+    seq[length]                = binary_nucleotide_to_char(nucleotide);
+    coverage                   = element_get_coverage(next_node);
+    
+    length++;
+
+    //printf("perfect_path_with_edge %i\n",length);
+    path_nodes[length]         = next_node;
+    path_orientations[length]  = next_orientation;
+    
+    if (DEBUG){
+      printf("\nNode %i in path: %s\n", length, binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size,tmp_seq));
+    }
+    
+    current_node        = next_node;
+    current_orientation = next_orientation;
+    
+  } while (length<limit && 
+	   !((next_node == node) && (next_orientation == orientation)) && //loop
+	   db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2) && //multiple entries
+	   db_node_has_precisely_one_edge(current_node, current_orientation,&nucleotide)); //has one next edge only
+  
+  
+  if ((next_node == node) && (next_orientation == orientation)){
+    *is_cycle = true;
+  }
+  
+  
+  
+  if (DEBUG){
+    printf("\nLast node in path: %s %i length: %i\n", binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size,tmp_seq),next_node->edges,length);
+  }
+
+  seq[length] = '\0';
+  *avg_coverage = (length-1<=0) ? 0 : (double) sum_coverage/(double) (length-1);
+  return length;
+  
+}
+
+
+// a bubble starts in a node with only two outgoing edges in the same orientation
 // every branch of the bubble is free of conflicts until it joins with the main branch
 // the differente between the length of the brances is <= delta
 
@@ -484,7 +598,7 @@ boolean db_graph_db_node_smooth_bubble(dBNode * node, Orientation orientation, i
   Orientation path_orientations2[limit+1];
   Nucleotide path_labels1[limit];
   Nucleotide path_labels2[limit];
-
+  
   dBNode * * path_nodes_tmp;
   Orientation * path_orientations_tmp;
   Nucleotide * path_labels_tmp;
@@ -544,69 +658,76 @@ boolean db_graph_db_node_smooth_bubble(dBNode * node, Orientation orientation, i
 //string has to support limit+db_graph->kmer_size+1 (+1 as you need a space for the \0 at the end)
 //node_action has to be idempotent as it can be applied to the same node twice!!
 
-int db_graph_supernode(dBNode * node,int limit, boolean (*condition)(dBNode * node), void (*node_action)(dBNode * node),
-		       char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+int db_graph_supernode(dBNode * node,int limit,void (*node_action)(dBNode * node),
+		       dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+		       char * supernode_str, double * avg_coverage,int * min,int * max, boolean * is_cycle, 
 		       dBGraph * db_graph){
 
-  dBNode * nodes_reverse[limit];
-  Orientation orientation_reverse[limit];
-  Nucleotide labels_reverse[limit];
-  boolean is_cycle;
+  
+  //use the allocated space as a temporary space
+  dBNode * * nodes_reverse = path_nodes;
+  Orientation * orientations_reverse = path_orientations;
+  Nucleotide * labels_reverse = path_labels;
+  char * seq_reverse = supernode_str;
+     
+  boolean is_cycler;
   int length_reverse;
   int length = 0;
-  char seq[limit+1];
-  int min,max;
-  double avg_coverage;
+  
+  int minr,maxr;
+  double avg_coverager;
 
 
-  if (condition(node)){    
-        
-    //compute the reverse path until the end of the supernode
-    //return is_cycle_reverse == true if the path closes a loop    
- 
-    length_reverse = db_graph_get_perfect_path(node,reverse,limit,&db_node_action_do_nothing,
-					       nodes_reverse,orientation_reverse,labels_reverse,
-					       seq,&avg_coverage,&min,&max,
-					       &is_cycle,db_graph);
 
-    //apply action
-    node_action(nodes_reverse[length_reverse]);
-
-    //we are at the end of a supernode
-    length = db_graph_get_perfect_path(nodes_reverse[length_reverse],opposite_orientation(orientation_reverse[length_reverse]),limit,node_action,
-				       path_nodes,path_orientations,path_labels,
-				       seq,&avg_coverage,&min,&max,
-				       &is_cycle,db_graph);
+  //compute the reverse path until the end of the supernode
+  //return is_cycle_reverse == true if the path closes a loop    
+  
+  length_reverse = db_graph_get_perfect_path(node,reverse,limit,&db_node_action_do_nothing,
+					     nodes_reverse,orientations_reverse,labels_reverse,
+					     seq_reverse,&avg_coverager,&minr,&maxr,
+					     &is_cycler,db_graph);
+  
+  
+  
+  if (length_reverse>0){
+    //let's re do the last step, we need to do that because the last node could have had multiple entries
     
-    //apply action to the last node
-    node_action(path_nodes[length]);
+    Nucleotide label;
+    Orientation next_orientation;
     
-
-    //get string
-    char tmp_seq[db_graph->kmer_size+1];
-    BinaryKmer kmer = element_get_kmer(path_nodes[0]);
+    dBNode * lst_node = db_graph_get_next_node(nodes_reverse[length_reverse-1],orientations_reverse[length_reverse-1],
+					       &next_orientation, labels_reverse[length_reverse-1],&label,db_graph);
     
-    if (path_orientations[0]==reverse){
-      kmer = binary_kmer_reverse_complement(kmer, db_graph->kmer_size);
-    }     
-    binary_kmer_to_seq(kmer,db_graph->kmer_size,tmp_seq);
-    
-    //build the string
-    
-    //the first node kmer
-    int i;
-    for(i=0;i<db_graph->kmer_size;i++){
-      string[i] = tmp_seq[i];
+    //sanity check
+    if (lst_node != nodes_reverse[length_reverse]){
+      puts("db_graph_supernode broken!\n");
+      exit(1);
     }
     
-    //the path
-    int j;
-    for(j=0;j<length;j++){
-      string[i] = binary_nucleotide_to_char(path_labels[j]);
-      i++;
-    }
-    string[i] = '\0';
+    
+    length = db_graph_get_perfect_path_with_first_edge(nodes_reverse[length_reverse],
+						       opposite_orientation(orientations_reverse[length_reverse]),
+						       limit,label,
+						       node_action,
+						       path_nodes,path_orientations,path_labels,
+						       supernode_str,avg_coverage,min,max,
+						       is_cycle,db_graph);
+    
   }
+  else{
+    length = db_graph_get_perfect_path(node,forward,
+				       limit,
+				       node_action,
+				       path_nodes,path_orientations,path_labels,
+				       supernode_str,avg_coverage,min,max,
+				       is_cycle,db_graph);
+  }
+  
+  
+   
+  //apply action to the fst and last node
+  node_action(path_nodes[0]);
+  node_action(path_nodes[length]);
   
   return length;
 }
@@ -694,6 +815,115 @@ void db_graph_detect_snps(dBGraph * db_graph){
 /*   hash_table_traverse(&get_snps,db_graph); */
 }
 
+//routine to get short indels
+
+void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph){
+  
+  int count_vars = 0; 
+		 
+  void get_vars(dBNode * node){
+    int length1, length2;
+    dBNode * path_nodes1[max_length+1];
+    dBNode * path_nodes2[max_length+1];
+    Orientation path_orientations1[max_length+1];
+    Orientation path_orientations2[max_length+1];
+    Nucleotide path_labels1[max_length];
+    Nucleotide path_labels2[max_length];
+    char seq1[max_length+1];
+    char seq2[max_length+1];
+    Nucleotide base1,base2;
+    Orientation orientation;
+
+    boolean found = false; 
+
+    if (db_node_check_status_none(node)){
+      if (db_graph_detect_bubble(node,forward,max_length,delta,&db_node_action_set_status_visited,
+			     &length1,&base1,path_nodes1,path_orientations1,path_labels1,seq1,
+			     &length2,&base2,path_nodes2,path_orientations2,path_labels2,seq2,
+			     db_graph)){
+	orientation = forward;
+	found = true;
+      }
+      else{
+	  if (db_graph_detect_bubble(node,reverse,max_length,delta,&db_node_action_set_status_visited,
+			       &length1,&base1,path_nodes1,path_orientations1,path_labels1,seq1,
+			       &length2,&base2,path_nodes2,path_orientations2,path_labels2,seq2,
+			       db_graph)){
+
+	    orientation = reverse;
+	    found = true;
+	  }
+      }
+	
+      if (found){
+	int length_flank5p = 0;
+	int length_flank3p = 0;
+	dBNode * nodes5p[100];
+	dBNode * nodes3p[100];
+	Orientation orientations5p[100];
+	Orientation orientations3p[100];
+	Nucleotide labels_flank5p[100];
+	Nucleotide labels_flank3p[100];
+	char seq5p[101];
+	char seq3p[101];
+	boolean is_cycle5p, is_cycle3p;
+	char tmp_seq[db_graph->kmer_size+1];
+	double avg_coverage;
+	int min,max;
+
+	int i;
+	
+	printf("VARIATION: %i - coverage: %d\n",count_vars,element_get_coverage(node));
+	count_vars++;
+	
+	length_flank5p = db_graph_get_perfect_path(node,opposite_orientation(orientation),
+						   100,&db_node_action_set_status_visited,
+						   nodes5p,orientations5p,labels_flank5p,
+						   seq5p,&avg_coverage,&min,&max,
+						   &is_cycle5p,db_graph);
+	printf("length 5p flank: %i\n",length_flank5p);
+	
+
+	length_flank3p = db_graph_get_perfect_path(path_nodes2[length2],path_orientations2[length2],
+						   100,&db_node_action_set_status_visited,
+						   nodes3p,orientations3p,labels_flank3p,
+						   seq3p,&avg_coverage,&min,&max,
+						   &is_cycle3p,db_graph);
+	printf("length 3p flank: %i\n",length_flank3p);
+	printf("length branch 1: %i - coverage: %i\n",length1,element_get_coverage(path_nodes1[0]));
+	printf("length branch 2: %i - coverage: %i\n",length2,element_get_coverage(path_nodes2[0]));
+
+	//print flank5p
+	for(i=length_flank5p-1;i>=0;i--){
+	  printf("%c",reverse_char_nucleotide(binary_nucleotide_to_char(labels_flank5p[i])));
+	}
+
+ 	//print the initial node */
+ 	printf(" "); 
+ 	if (orientation == forward){ 
+	  printf ("%s ",binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,tmp_seq));
+	}
+	else{
+	  printf ("%s ",binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(node),db_graph->kmer_size),db_graph->kmer_size,tmp_seq));
+	}
+	
+	//print branches
+	printf("%c%s ",binary_nucleotide_to_char(base1),seq1);
+	printf("%c%s ",binary_nucleotide_to_char(base2),seq2);
+	
+	//print 3p
+	printf("%s\n",seq3p);
+
+      }
+    }
+  }
+ 
+  hash_table_traverse(&get_vars,db_graph); 
+}
+
+
+
+
 //routine to get SNPS 
 
 void db_graph_smooth_bubbles(int coverage,int limit, int delta, dBGraph * db_graph){
@@ -738,64 +968,80 @@ void db_graph_print_supernodes(char * filename, int max_length, dBGraph * db_gra
   Orientation * path_orientations;
   Nucleotide *  path_labels;
   char * seq;
-  char  tmp_seq[db_graph->kmer_size+1];
-  BinaryKmer bin_kmer;
-  boolean is_cycle = false;
+  boolean is_cycle;
   double avg_coverage;
   int min,max;
   
-
+  
   path_nodes        = calloc(max_length,sizeof(dBNode*));
   path_orientations = calloc(max_length,sizeof(Orientation));
   path_labels       = calloc(max_length,sizeof(Nucleotide));
-  seq               = calloc(max_length+1,sizeof(char));
+  seq               = calloc(max_length+1+db_graph->kmer_size,sizeof(char));
   
+  //printf("print_supernodes %i\n",max_length);
+
+  long long count_kmers = 0;
+  long long count_sing  = 0;
 
   void print_supernode(dBNode * node){
     
     int count;
 
-    if (db_node_check_status(node,none)){
-
-      int length = 0;
-      
-      bin_kmer = element_get_kmer(node);
-      
-      count = db_node_edges_count(node,forward);
-      if (count!=1){
-	length = db_graph_get_perfect_path(node,reverse,max_length,&db_node_action_set_status_visited,
-					   path_nodes, path_orientations,path_labels,
-					   seq,&avg_coverage,&min,&max,
-					   &is_cycle,db_graph);
-	
-	bin_kmer = binary_kmer_reverse_complement(bin_kmer, db_graph->kmer_size);
+    count_kmers++;
+    
+    if (db_node_check_status_none(node) == true){
+      int length = db_graph_supernode(node,max_length,&db_node_action_set_status_visited,
+				      path_nodes,path_orientations,path_labels,
+				      seq,&avg_coverage,&min,&max,&is_cycle,
+				      db_graph);
+    
+ 
+    
+      if (path_orientations[0] == forward){
+	count = db_node_edges_count(path_nodes[0],reverse);
       }
       else{
-
-	count = db_node_edges_count(node,reverse);
-	if (count!=1){
-	  length = db_graph_get_perfect_path(node,forward,max_length,&db_node_action_set_status_visited,
-					     path_nodes, path_orientations,path_labels,
-					     seq,&avg_coverage,&min,&max,
-					     &is_cycle,db_graph);
-	  
-	}
-
+	count = db_node_edges_count(path_nodes[0],forward);
       }
-
+      
+      
+      char tmp_seq[db_graph->kmer_size+1];
       if (length>0){
-	db_node_set_status(path_nodes[length],visited);
-
-
-	fprintf(fout,">node_%i length:%i min_coverage:%i max_coverage:%i average_coverage:%5.2f fst:%i lstr:%i lstf:%i\n",count_nodes,length+db_graph->kmer_size,min,max,avg_coverage,count,db_node_edges_count(path_nodes[length],path_orientations[length]),db_node_edges_count(path_nodes[length],opposite_orientation(path_orientations[length])));
+	
+	//get kmer first node in path
+	BinaryKmer kmer = element_get_kmer(path_nodes[0]);
+	
+	if (path_orientations[0]==reverse){
+	  kmer = binary_kmer_reverse_complement(kmer, db_graph->kmer_size);
+	} 
+	
+	fprintf(fout,">node_%i  cylcle:%s length:%i min_coverage:%i max_coverage:%i average_coverage:%5.2f fst_coverage:%i fst:%i lst_coverage:%i lstr:%i lstf:%i\n",count_nodes,(is_cycle==true ? "true" : "false"),length+db_graph->kmer_size,min,max,avg_coverage,element_get_coverage(path_nodes[0]),count,element_get_coverage(path_nodes[length]),db_node_edges_count(path_nodes[length],path_orientations[length]),db_node_edges_count(path_nodes[length],opposite_orientation(path_orientations[length])));
+	
+	fprintf(fout,"%s%s\n",binary_kmer_to_seq(kmer,db_graph->kmer_size,tmp_seq),seq);
+	
+	if (length==max_length){
+	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
+	}
+	
 	count_nodes++;
-	fprintf(fout,"%s%s\n",binary_kmer_to_seq(bin_kmer,db_graph->kmer_size,tmp_seq),seq);
       }
+      else{
+	count_sing++;
+	int count_r =  db_node_edges_count(node,reverse);
+	int count_f =  db_node_edges_count(node,forward);
+	printf("singleton node:%qd %s coverage:%i rev:%i for:%i\n",
+	       count_sing,
+	       binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,tmp_seq),
+	       element_get_coverage(node),
+	       count_r,count_f);
+      }
+    
     }
   }
   
   hash_table_traverse(&print_supernode,db_graph); 
-  
+  printf("%qd nodes visted [%qd singletons]\n",count_kmers,count_sing);
+
   free(path_nodes);
   free(path_orientations);
   free(path_labels);
@@ -815,7 +1061,7 @@ void db_graph_print_coverage(dBGraph * db_graph){
   hash_table_traverse(&print_coverage,db_graph); 
 }
 
-void db_graph_prune_low_coverage_nodes(int coverage, dBGraph * db_graph){
+void db_graph_remove_low_coverage_nodes(int coverage, dBGraph * db_graph){
   
   void prune_node(dBNode * node){
     db_graph_db_node_prune(node,coverage,

@@ -6,6 +6,8 @@
 #include <file_reader.h>
 #include <test_dB_graph.h>
 
+
+
 void test_hash_table_find()
 {
 
@@ -247,6 +249,8 @@ void test_supernode_walking() //test db_graph_get_perfect_path
   Orientation path_orientations[100];
   Nucleotide path_labels[100];
   char tmp_seq[100];
+  double  avg_coverage;
+  int min_coverage, max_coverage;
 
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
 
@@ -265,6 +269,7 @@ void test_supernode_walking() //test db_graph_get_perfect_path
 
   seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/generates_graph_with_two_self_loops.fasta", &bad_reads, 20,  db_graph);
 
+
    CU_ASSERT_EQUAL(seq_length,6);
    CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),2);
    CU_ASSERT_EQUAL(bad_reads,0);
@@ -281,15 +286,19 @@ void test_supernode_walking() //test db_graph_get_perfect_path
 
    boolean is_cycle=false;
    
-   int test1_length = db_graph_get_perfect_path(test_element1,forward,100,&db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+   int test1_length = db_graph_get_perfect_path(test_element1,forward,100,
+						&db_node_action_do_nothing,
+						path_nodes,path_orientations,path_labels,
+						tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
+						&is_cycle,db_graph);
 
     CU_ASSERT(is_cycle);
-
-
+    CU_ASSERT_EQUAL(test1_length,4);
+    
    //depending on what orientation GTA is with respect to it's kmer, the answer you get will be either CGT or GT
    //Zam we know GTA<TAC!
    
-   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test1_length,tmp_seq),"CGTA");
+   CU_ASSERT_STRING_EQUAL(tmp_seq,"CGTA");
    
 
    hash_table_free(&db_graph);
@@ -322,19 +331,28 @@ void test_supernode_walking() //test db_graph_get_perfect_path
    //ACA < TGT so forward gives TT
    is_cycle=false;
    
-   int test2_length = db_graph_get_perfect_path(test_element1,forward,100,&db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+   int test2_length = db_graph_get_perfect_path(test_element1,forward,100,
+						&db_node_action_do_nothing,   
+						path_nodes,path_orientations,path_labels,
+						tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
+						&is_cycle,db_graph);
 
    CU_ASSERT(!is_cycle);
-   
-   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test2_length,tmp_seq),"TT");
+   CU_ASSERT_EQUAL(test2_length,2);
+
+   CU_ASSERT_STRING_EQUAL(tmp_seq,"TT");
 
    //ACA < TGT so backward gives ""
 
-   test2_length = db_graph_get_perfect_path(test_element1,reverse,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+   test2_length = db_graph_get_perfect_path(test_element1,reverse,100,
+					    &db_node_action_do_nothing,
+					    path_nodes,path_orientations,path_labels,
+					    tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
+					    &is_cycle,db_graph);
   
    CU_ASSERT(!is_cycle);
    CU_ASSERT_EQUAL(test2_length,0);
-   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test2_length,tmp_seq),"");
+   CU_ASSERT_STRING_EQUAL(tmp_seq,"");
 
 
    hash_table_free(&db_graph);
@@ -368,18 +386,28 @@ void test_supernode_walking() //test db_graph_get_perfect_path
    //ACA < TGT so forward gives TT
    is_cycle=false;
 
-   int test3_length = db_graph_get_perfect_path(test_element1,forward,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+   int test3_length = db_graph_get_perfect_path(test_element1,forward,100,
+						&db_node_action_do_nothing,
+						path_nodes,path_orientations,path_labels,
+						tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
+						&is_cycle,db_graph);
 
    CU_ASSERT(!is_cycle);
-   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test3_length,tmp_seq),"TT");
+   CU_ASSERT_EQUAL(test3_length,2);
+   CU_ASSERT_STRING_EQUAL(tmp_seq,"TT");
 
    
    //ACA < TGT so backwar gives ""
    is_cycle=false;
-   test3_length = db_graph_get_perfect_path(test_element1,reverse,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+   test3_length = db_graph_get_perfect_path(test_element1,reverse,100,
+					    &db_node_action_do_nothing,
+					    path_nodes,path_orientations,path_labels,
+					    tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
+					    &is_cycle,db_graph);
 
    CU_ASSERT(!is_cycle);
-   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test3_length,tmp_seq),"");
+   CU_ASSERT_EQUAL(test3_length,0);
+   CU_ASSERT_STRING_EQUAL(tmp_seq,"");
 
    hash_table_free(&db_graph);
    CU_ASSERT(db_graph == NULL);
@@ -410,17 +438,28 @@ void test_supernode_walking() //test db_graph_get_perfect_path
 
    //forward
    is_cycle=false;
-   int test4_length = db_graph_get_perfect_path(test_element1,forward,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+   int test4_length = db_graph_get_perfect_path(test_element1,forward,100,
+						&db_node_action_do_nothing,
+						path_nodes,path_orientations,path_labels,
+						tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
+						&is_cycle,db_graph);
    
    CU_ASSERT(is_cycle);//this time it should find a cycle
    CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test4_length,tmp_seq),"A");
 
    //backward
    is_cycle=false;
-   test4_length = db_graph_get_perfect_path(test_element1,reverse,100,db_node_action_do_nothing,path_nodes,path_orientations,path_labels,&is_cycle,db_graph);
+   test4_length = db_graph_get_perfect_path(test_element1,reverse,100,
+					    &db_node_action_do_nothing,
+					    path_nodes,path_orientations,path_labels,
+					    tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
+					    &is_cycle,db_graph);
 
    CU_ASSERT(is_cycle);//this time it should find a cycle
-   CU_ASSERT_STRING_EQUAL(nucleotides_to_string(path_labels,test4_length,tmp_seq),"T");
+
+   CU_ASSERT_EQUAL(test4_length,1);
+
+   CU_ASSERT_STRING_EQUAL(tmp_seq,"T");
 
    hash_table_free(&db_graph);
    CU_ASSERT(db_graph == NULL);
@@ -479,7 +518,7 @@ void test_get_perfect_path(){
   dBNode * node2;
   dBNode * node3;
   dBNode * node4;
- 
+  
  
   node1 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CGT", kmer_size),kmer_size), &found1, db_graph);
   node2 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("GTT", kmer_size),kmer_size),  &found2, db_graph);
@@ -491,13 +530,27 @@ void test_get_perfect_path(){
   node4 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TAG", kmer_size),kmer_size),  &found3, db_graph);
   db_node_add_edge(node3, node4, reverse,reverse, db_graph->kmer_size);	  
   
+  //add coverage
+  element_update_coverage(node1,10);
+  element_update_coverage(node2,2);
+  element_update_coverage(node3,1);
+  element_update_coverage(node4,20);
+  
+
   dBNode * nodes[10];
   Orientation orientations[10];
   Nucleotide bases[10];
   boolean is_cycle;
   int length = 0;
+  char tmp_seq[100];
+  double avg_coverage;
+  int min_coverage,max_coverage;
 
-  length = db_graph_get_perfect_path(node1,reverse, 10,db_node_action_set_status_visited,nodes, orientations, bases, &is_cycle,db_graph);
+  length = db_graph_get_perfect_path(node1,reverse, 10,
+				     &db_node_action_set_status_visited,
+				     nodes, orientations, bases,
+				     tmp_seq,&avg_coverage,&min_coverage,&max_coverage,
+				     &is_cycle,db_graph);
 
   CU_ASSERT_EQUAL(length,3);
   
@@ -522,6 +575,16 @@ void test_get_perfect_path(){
   CU_ASSERT(db_node_check_status(nodes[0], none));
   CU_ASSERT(db_node_check_status(nodes[1], visited));
   CU_ASSERT(db_node_check_status(nodes[2], visited));
+  CU_ASSERT(db_node_check_status(nodes[3], none));
+
+  //check coverage
+  CU_ASSERT_EQUAL(avg_coverage,1.5);
+  CU_ASSERT_EQUAL(min_coverage,1);
+  CU_ASSERT_EQUAL(max_coverage,2);
+
+  
+
+  
 
   hash_table_free(&db_graph);
   CU_ASSERT(db_graph == NULL);
@@ -615,14 +678,23 @@ void test_get_perfect_bubble(){
   int length_flank5p,length_flank3p;
   dBNode * nodes5p[100];
   dBNode * nodes3p[100];
+  char tmp_seq[101];
+  double avg_coverage;
+  int min_coverage, max_coverage;
   
-  length_flank5p = db_graph_get_perfect_path(node1, opposite_orientation(orientation),100,&db_node_action_set_status_visited,nodes5p,orientations5p, labels_flank5p,
+  length_flank5p = db_graph_get_perfect_path(node1, opposite_orientation(orientation),100,
+					     &db_node_action_set_status_visited,
+					     nodes5p,orientations5p, labels_flank5p,
+					     tmp_seq,&avg_coverage,&min_coverage,&max_coverage,
   					     &is_cycle5p,db_graph); 
 
   CU_ASSERT_EQUAL(length_flank5p,0);
   CU_ASSERT_EQUAL(nodes5p[0],node1);
 
-  length_flank3p = db_graph_get_perfect_path(end_node, end_orientation,100,&db_node_action_set_status_visited,nodes3p,orientations3p, labels_flank3p,
+  length_flank3p = db_graph_get_perfect_path(end_node, end_orientation,100,
+					     &db_node_action_set_status_visited,
+					     nodes3p,orientations3p, labels_flank3p,
+					     tmp_seq,&avg_coverage,&min_coverage,&max_coverage,
 					     &is_cycle3p,db_graph);    
  
   
@@ -682,14 +754,18 @@ void test_get_perfect_bubble(){
   CU_ASSERT(db_node_edge_exist(node1,Adenine,forward));
 
   //check arrows
-  char tmp_seq[100];
+
   dBNode * nodes_path[100];
   Orientation orientations_path[100];
   Nucleotide labels_path[100];
-  int length_supernode = db_graph_supernode(node1,100,&db_node_check_status_not_pruned,&db_node_action_set_status_visited,tmp_seq,nodes_path,orientations_path,labels_path,db_graph);
+  int length_supernode = db_graph_supernode(node1,100,&db_node_check_status_not_pruned,
+					    &db_node_action_set_status_visited,
+					    tmp_seq,nodes_path,orientations_path,labels_path,db_graph);
   
+
   
-  
+  //complete this test
+
   hash_table_free(&db_graph);
   CU_ASSERT(db_graph == NULL);
 

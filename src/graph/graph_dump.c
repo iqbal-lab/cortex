@@ -56,32 +56,39 @@ int main(int argc, char **argv){
     
     fscanf(fp_fnames, "%s\n", filename);
        
-    int seq_length = 0;
+    long long seq_length = 0;
     count_file++;
 
     if (fastq>0){
-      seq_length += load_fastq_data_from_filename_into_graph(filename,&bad_reads, fastq, 5000, db_graph);
+      seq_length += load_fastq_from_filename_into_graph(filename,&bad_reads, fastq, 5000, db_graph);
     }
     else{
-      seq_length += load_fasta_data_from_filename_into_graph(filename,&bad_reads, 5000, db_graph);
+      if (fastq==0){
+	seq_length += load_full_entry_fasta_from_filename_into_graph(filename,&bad_reads, 5000, db_graph);
+      }
+      else{
+	printf("loading long fasta\n");
+	seq_length += load_fasta_from_filename_into_graph(filename,&bad_reads, 10000, db_graph);
+
+      }
     }
 
     total_length += seq_length;
     
-    fprintf(stderr,"\n%i kmers: %qd file name:%s bad reads: %qd seq:%i total seq:%qd\n\n",count_file,hash_table_get_unique_kmers(db_graph),filename,bad_reads,seq_length, total_length);
+    fprintf(stderr,"\n%i kmers: %qd file name:%s bad reads: %qd seq:%qd total seq:%qd\n\n",count_file,hash_table_get_unique_kmers(db_graph),filename,bad_reads,seq_length, total_length);
 
     hash_table_print_stats(db_graph);
 
     //print mem status
-    FILE* fmem=fopen("/proc/self/status", "r");
-    char line[500];
-    while (fgets(line,500,fmem) !=NULL){
-      if (line[0] == 'V' && line[1] == 'm'){
-	fprintf(stderr,"%s",line);
-      }
-    }
-    fclose(fmem);
-    fprintf(stderr,"************\n");
+    //FILE* fmem=fopen("/proc/self/status", "r");
+    //char line[500];
+    //while (fgets(line,500,fmem) !=NULL){
+    // if (line[0] == 'V' && line[1] == 'm'){
+    //	fprintf(stderr,"%s",line);
+    // }
+    //}
+    //fclose(fmem);
+    //fprintf(stderr,"************\n");
   }  
     
   printf("print nodes binary\n");

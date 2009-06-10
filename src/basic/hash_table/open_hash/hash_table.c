@@ -132,6 +132,7 @@ void hash_table_traverse(void (*f)(Element *),HashTable * hash_table){
   for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
     if (!db_node_check_status(&hash_table->table[i],unassigned)){
       f(&hash_table->table[i]);
+      //break
     }
   }
 }

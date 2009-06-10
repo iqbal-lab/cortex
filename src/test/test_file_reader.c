@@ -7,7 +7,6 @@
 #include <test_file_reader.h>
 
 
-
 void test_dump_load_binary(){
 
   int kmer_size = 3;

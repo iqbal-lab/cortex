@@ -144,6 +144,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 
   int index_windows = 0;
   
+
   //loop over the bases in the sequence
   //index i is the current position in input sequence -- it nevers decreases. 
   
@@ -217,6 +218,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
       index_windows++;
             
     }
+
   } while (i<length);
  
   windows->nwindows = index_windows;

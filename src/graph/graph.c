@@ -13,7 +13,7 @@ int main(int argc, char **argv){
   short kmer_size;
   int bucket_size;
   int action; //0 dump graph - 1 call SNPs
-  int ctg_length = 100000;
+  int ctg_length = 200000;
   
    //command line arguments 
   fp_fnames= fopen(argv[1], "r");    //open file of file names
@@ -42,7 +42,7 @@ int main(int argc, char **argv){
     long long seq_length = 0;
     count_file++;
 
-    seq_length += load_binary_data_from_filename_into_graph(filename,db_graph);
+    seq_length += load_binary_from_filename_into_graph(filename,db_graph);
 
     total_length += seq_length;
     
@@ -116,8 +116,8 @@ int main(int argc, char **argv){
     printf("clip tips\n");
     db_graph_clip_tips(db_graph);
 
-    printf("remove low coverage nodes\n");
-    db_graph_prune_low_coverage_nodes(1,db_graph);
+    //printf("remove low coverage nodes\n");
+    //db_graph_remove_low_coverage_nodes(1,db_graph);
 
     printf("print supernodes\n");
     db_graph_print_supernodes(argv[8],ctg_length,db_graph); 
@@ -138,8 +138,8 @@ int main(int argc, char **argv){
     
   case 10:
     
-    printf("remove low coverage nodes (<=5) \n");
-    db_graph_prune_low_coverage_nodes(5,db_graph);
+    printf("remove low coverage nodes (<=1) \n");
+    db_graph_remove_low_coverage_nodes(1,db_graph);
 
     printf("clip tips\n");
     db_graph_clip_tips(db_graph);
@@ -155,8 +155,28 @@ int main(int argc, char **argv){
 
   case 11:
     
-    printf("remove low coverage nodes (<=5) \n");
-    db_graph_prune_low_coverage_nodes(5,db_graph);
+    printf("remove low coverage nodes (<=1) \n");
+    db_graph_remove_low_coverage_nodes(1,db_graph);
+
+    //printf("clip tips\n");
+    //db_graph_clip_tips(db_graph);
+
+    //printf("smooth bubbles\n");
+    //db_graph_smooth_bubbles(10,kmer_size*2,50,db_graph);
+    
+    printf("print supernodes\n");
+    db_graph_print_supernodes(argv[8],ctg_length,db_graph); 
+ 
+    printf("dumping graph %s\n",argv[7]);
+    db_graph_dump_binary(argv[7],&db_node_check_status_not_pruned,db_graph);
+
+    break;
+  
+
+  case 12:
+    
+    //printf("remove low coverage nodes (<=2) \n");
+    //db_graph_remove_low_coverage_nodes(2,db_graph);
 
     //printf("clip tips\n");
     //db_graph_clip_tips(db_graph);
@@ -167,12 +187,32 @@ int main(int argc, char **argv){
     //printf("print supernodes\n");
     //db_graph_print_supernodes(argv[8],ctg_length,db_graph); 
  
+    //printf("dumping graph %s\n",argv[7]);
+    //db_graph_dump_binary(argv[7],&db_node_check_status_not_pruned,db_graph);
+
+    db_graph_detect_vars(200,1000,db_graph);
+    break;
+  
+
+  case 13:
+    
+    printf("smooth bubbles\n");
+    db_graph_smooth_bubbles(10,kmer_size*2,50,db_graph);
+    
+    printf("print supernodes\n");
+    db_graph_print_supernodes(argv[8],ctg_length,db_graph); 
+ 
     printf("dumping graph %s\n",argv[7]);
     db_graph_dump_binary(argv[7],&db_node_check_status_not_pruned,db_graph);
 
     break;
+  
+    
+    
   }
 
+  
+  
 
   return 0;
 }

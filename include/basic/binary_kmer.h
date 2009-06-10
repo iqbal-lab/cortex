@@ -5,6 +5,7 @@
 
 #ifndef BINARY_KMER_H_
 #define BINARY_KMER_H_
+#include <global.h>
 
 typedef enum
  {
