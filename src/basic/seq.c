@@ -25,7 +25,7 @@ int  last_end_coord;
 //new_entry tells the parser to expect a new fasta entry (ie starts with >)
 //full_entry tells the caller if the end of the entry has been reached
 
-int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry, int offset){
+int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_chunk_length,boolean new_entry, boolean * full_entry, int offset){
 
   char line[LINE_MAX]; //LINE_MAX is defined in limits.h
   int i;
@@ -115,7 +115,7 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length,boole
 	//printf("complete line - new entry\n");
       }
       else{
-	if (j==max_read_length){
+	if (j==max_chunk_length){
 	  fseek(fp,prev_file_pointer,SEEK_SET); 
 	  ready_to_return = true;
 	  *full_entry = false;
@@ -137,7 +137,7 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length,boole
 	    file_pointer++;
 	    j++;
 	    
-	    if (j==max_read_length){	    
+	    if (j==max_chunk_length){	    
 	      //check if line is not complete
 	      if (i<length-1){
 		ready_to_return = true;
@@ -170,18 +170,6 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_read_length,boole
   seq->seq[j]  = '\0';
   seq->qual[j] = '\0';
   return j;
-}
-
-int read_full_entry_from_fasta(FILE *fp, Sequence * seq, int max_read_length){
-  boolean full_entry = true;
-  int ret =  read_sequence_from_fasta(fp,seq,max_read_length,true,&full_entry,0);
-  
-  if (full_entry == false){
-    puts("syntax error in fasta -- entry too long\n");
-    exit(1);
-  }
-  
-  return ret;
 }
 
 

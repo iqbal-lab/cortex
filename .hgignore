@@ -7,3 +7,4 @@ syntax: glob
 *.d
 bin/valgrind.log
 bin/*
+*.bin

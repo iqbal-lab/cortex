@@ -655,10 +655,15 @@ boolean db_graph_db_node_smooth_bubble(dBNode * node, Orientation orientation, i
   return ret;
 }
 
-//string has to support limit+db_graph->kmer_size+1 (+1 as you need a space for the \0 at the end)
-//node_action has to be idempotent as it can be applied to the same node twice!!
 
-int db_graph_supernode(dBNode * node,int limit,void (*node_action)(dBNode * node),
+// it returns the supernode containing 'node'  
+// string has to support limit+1 (+1 as you need a space for the \0 at the end)
+// node_action has to be idempotent as it can be applied to the same node twice!!
+// supernode_str returns the string made of the labels of the path (doesn't include first kmer). 
+// returns the length of supernode 
+
+
+int db_graph_supernode(dBNode * node,int limit,void (*node_action)(dBNode * node), 
 		       dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
 		       char * supernode_str, double * avg_coverage,int * min,int * max, boolean * is_cycle, 
 		       dBGraph * db_graph){
@@ -668,7 +673,6 @@ int db_graph_supernode(dBNode * node,int limit,void (*node_action)(dBNode * node
   dBNode * * nodes_reverse = path_nodes;
   Orientation * orientations_reverse = path_orientations;
   Nucleotide * labels_reverse = path_labels;
-  char * seq_reverse = supernode_str;
      
   boolean is_cycler;
   int length_reverse;
@@ -684,7 +688,7 @@ int db_graph_supernode(dBNode * node,int limit,void (*node_action)(dBNode * node
   
   length_reverse = db_graph_get_perfect_path(node,reverse,limit,&db_node_action_do_nothing,
 					     nodes_reverse,orientations_reverse,labels_reverse,
-					     seq_reverse,&avg_coverager,&minr,&maxr,
+					     supernode_str,&avg_coverager,&minr,&maxr,
 					     &is_cycler,db_graph);
   
   
@@ -724,13 +728,15 @@ int db_graph_supernode(dBNode * node,int limit,void (*node_action)(dBNode * node
   }
   
   
-   
+  
+
   //apply action to the fst and last node
   node_action(path_nodes[0]);
   node_action(path_nodes[length]);
   
   return length;
 }
+
 
 
 

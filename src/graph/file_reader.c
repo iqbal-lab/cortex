@@ -15,27 +15,6 @@
 long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), long long * bad_reads, char qualiy_cut_off, int max_read_length, dBGraph * db_graph);
 
 
-long long load_full_entry_fasta_from_filename_into_graph(char* filename, long long * bad_reads, int max_read_length, dBGraph* db_graph)
-{
-  
-  int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
-    *full_entry = true;
-    return read_full_entry_from_fasta(fp,seq,max_read_length);
-  }
-  
-  FILE* fp = fopen(filename, "r");
-  if (fp == NULL){
-    fprintf(stderr,"cannot open file:%s\n",filename);
-    exit(1); //TODO - prefer to print warning and skip file and return an error code?
-  }
-  
-  long long ret = load_seq_into_graph(fp,&file_reader,bad_reads,0,max_read_length,db_graph);
-
-  fclose(fp);
-
-  return ret;
-}
-
 long long load_fastq_from_filename_into_graph(char* filename, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph)
 {
 
@@ -63,7 +42,7 @@ long long load_fastq_from_filename_into_graph(char* filename, long long * bad_re
 }
 
 //this routine supports big fasta entries (chromosome length for example)
-long long load_fasta_from_filename_into_graph(char* filename, long long * bad_reads, int max_read_length, dBGraph* db_graph)
+long long load_fasta_from_filename_into_graph(char* filename, long long * bad_reads, int max_chunk_length, dBGraph* db_graph)
 {
 
   int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
@@ -83,7 +62,7 @@ long long load_fasta_from_filename_into_graph(char* filename, long long * bad_re
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  long long ret =  load_seq_into_graph(fp,&file_reader,bad_reads,0,max_read_length,db_graph);
+  long long ret =  load_seq_into_graph(fp,&file_reader,bad_reads,0,max_chunk_length,db_graph);
   fclose(fp);
 
 

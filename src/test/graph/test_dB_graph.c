@@ -29,7 +29,7 @@ void test_hash_table_find()
   //    >read3
   //    TAGG
 
-  int seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta",&bad_reads, 20, db_graph);
+  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta",&bad_reads, 20, db_graph);
   
   //length of total sequence
   CU_ASSERT(seq_length == 16);
@@ -115,6 +115,10 @@ void test_tip_clipping()
   int bucket_size    = 4;
   long long bad_reads = 0; 
 
+  int min_coverage, max_coverage; 
+  double avg_coverage;
+  boolean is_cycle;
+
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
 
@@ -125,7 +129,7 @@ void test_tip_clipping()
   //>tip
   //CGTTT
 
-  int seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/generates_graph_with_tip.fasta",&bad_reads, 20, db_graph);
+  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_tip.fasta",&bad_reads, 20, db_graph);
 
 
  
@@ -157,13 +161,15 @@ void test_tip_clipping()
   char tmp_seq[100+db_graph->kmer_size+1];
 
 
-  int length_supernode = db_graph_supernode(node3,100,&db_node_check_status_none,&db_node_action_set_status_visited,tmp_seq,nodes_path,orientations_path,labels_path,db_graph);
+  int length_supernode = db_graph_supernode(node3,100,&db_node_action_set_status_visited,
+					    nodes_path,orientations_path,labels_path,
+					    tmp_seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
+					    db_graph);
 
   CU_ASSERT_EQUAL(length_supernode,6);
 
+  CU_ASSERT_STRING_EQUAL("GGACGC",tmp_seq);
   
-  CU_ASSERT_STRING_EQUAL("ATGGGACGC",tmp_seq);
-
 
   //check ends
   dBNode* node4 = hash_table_find(element_get_key(seq_to_binary_kmer("GCG", kmer_size),kmer_size) ,db_graph);
@@ -200,7 +206,7 @@ void test_node_prunning()
   //>tip
   //CGTTT
 
-  int seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/generates_graph_with_tip.fasta",&bad_reads, 20, db_graph);
+  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_tip.fasta",&bad_reads, 20, db_graph);
  
 
   CU_ASSERT_EQUAL(seq_length,14);
@@ -267,7 +273,7 @@ void test_supernode_walking() //test db_graph_get_perfect_path
   // ****
 
 
-  seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/generates_graph_with_two_self_loops.fasta", &bad_reads, 20,  db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_two_self_loops.fasta", &bad_reads, 20,  db_graph);
 
 
    CU_ASSERT_EQUAL(seq_length,6);
@@ -318,7 +324,7 @@ void test_supernode_walking() //test db_graph_get_perfect_path
    bad_reads = 0;
 
    db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-   seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/generates_graph_with_one_long_supernode_with_conflict_at_end.fasta",&bad_reads,20,db_graph);
+   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_one_long_supernode_with_conflict_at_end.fasta",&bad_reads,20,db_graph);
 
    CU_ASSERT_EQUAL(seq_length,13);
    CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),5);
@@ -373,7 +379,7 @@ void test_supernode_walking() //test db_graph_get_perfect_path
 
    db_graph = hash_table_new(number_of_bits, bucket_size,10,kmer_size);
    
-   seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/generates_graph_with_one_long_supernode_with_inward_conflict_at_end.fasta", &bad_reads, 20,  db_graph);
+   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_one_long_supernode_with_inward_conflict_at_end.fasta", &bad_reads, 20,  db_graph);
 
    CU_ASSERT_EQUAL(seq_length,13);
    CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),5);
@@ -427,7 +433,7 @@ void test_supernode_walking() //test db_graph_get_perfect_path
    bad_reads = 0;
 
    db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-   seq_length = load_fasta_data_from_filename_into_graph("../data/test/graph/generates_graph_with_infinite_loop.fasta",&bad_reads,30,db_graph);
+   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_infinite_loop.fasta",&bad_reads,30,db_graph);
 
    CU_ASSERT_EQUAL(seq_length,25);
    CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),1);
@@ -755,16 +761,18 @@ void test_get_perfect_bubble(){
 
   //check arrows
 
-  dBNode * nodes_path[100];
-  Orientation orientations_path[100];
-  Nucleotide labels_path[100];
-  int length_supernode = db_graph_supernode(node1,100,&db_node_check_status_not_pruned,
-					    &db_node_action_set_status_visited,
-					    tmp_seq,nodes_path,orientations_path,labels_path,db_graph);
+  //dBNode * nodes_path[100];
+  //Orientation orientations_path[100];
+  //Nucleotide labels_path[100];
+  
+  //int length_supernode = db_graph_supernode(node1,100,&db_node_action_set_status_visited,
+  //					    nodes_path,orientations_path,labels_path,
+  //					    tmp_seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
+  //					    db_graph);
   
 
   
-  //complete this test
+  //I have to complete this test
 
   hash_table_free(&db_graph);
   CU_ASSERT(db_graph == NULL);

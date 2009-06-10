@@ -1,7 +1,0 @@
-
-****** waterlily.ebi.ac.uk> cat generates_graph_with_two_self_loops.fasta 
->IL:blah blah 
-ACGTAC
-waterlily.ebi.ac.uk> cat generates_graph_with_two_self_loops.fasta 
->IL:blah blah 
-ACGTAC

@@ -27,7 +27,7 @@ void test_dump_load_binary(){
 
   db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,10,kmer_size);
 
-  seq_length_pre = load_fasta_data_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta", &bad_reads, 20, db_graph_pre);
+  seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta", &bad_reads, 20, db_graph_pre);
 
   fout = fopen("../data/test/graph/dump_graph.bin", "w");
 
@@ -45,7 +45,7 @@ void test_dump_load_binary(){
 
   
   db_graph_post = hash_table_new(number_of_bits_post,bucket_size,10,kmer_size);
-  seq_length_post = load_binary_data_from_filename_into_graph("../data/test/graph/dump_graph.bin", db_graph_post);
+  seq_length_post = load_binary_from_filename_into_graph("../data/test/graph/dump_graph.bin", db_graph_post);
 
   CU_ASSERT_EQUAL(seq_length_post,15);
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post),5);

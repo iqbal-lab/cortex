@@ -42,6 +42,9 @@ boolean db_graph_db_node_prune(dBNode * node, int coverage,
 			       void (*node_action)(dBNode * node),
 			       dBGraph * db_graph);
 
+
+// limit is the max length
+// min_coverage, max_coverage and avg_coveragte refer to the internal nodes
 int db_graph_supernode(dBNode * node,int limit,
 		       void (*node_action)(dBNode * node), 
 		       dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,

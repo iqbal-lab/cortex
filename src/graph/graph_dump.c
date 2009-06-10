@@ -64,12 +64,7 @@ int main(int argc, char **argv){
     }
     else{
       if (fastq==0){
-	seq_length += load_full_entry_fasta_from_filename_into_graph(filename,&bad_reads, 5000, db_graph);
-      }
-      else{
-	printf("loading long fasta\n");
 	seq_length += load_fasta_from_filename_into_graph(filename,&bad_reads, 10000, db_graph);
-
       }
     }
 
