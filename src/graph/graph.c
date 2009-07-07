@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <file_reader.h>
 #include <dB_graph.h>
+#include <cyclic_count.h>
 
 int main(int argc, char **argv){
 
@@ -74,7 +75,7 @@ int main(int argc, char **argv){
 
   case 1 :
     printf("call SNPs\n");
-    db_graph_detect_snps(db_graph);
+    //db_graph_detect_snps(db_graph);
     break;
 
   case 2:
@@ -96,7 +97,7 @@ int main(int argc, char **argv){
 
   case 5:
     printf("detect SNPs\n");
-    db_graph_detect_snps(db_graph);
+    //db_graph_detect_snps(db_graph);
     break;
     
   case 6:
@@ -108,7 +109,7 @@ int main(int argc, char **argv){
     printf("clip tips\n");
     db_graph_clip_tips(db_graph);
     printf("detect SNPs\n");
-    db_graph_detect_snps(db_graph);
+    //db_graph_detect_snps(db_graph);
     break;
 
 
@@ -131,7 +132,7 @@ int main(int argc, char **argv){
     printf("clip tips\n");
     db_graph_clip_tips(db_graph);
     printf("detect SNPs\n");
-    db_graph_detect_snps(db_graph);
+    //db_graph_detect_snps(db_graph);
     break;
 
 
@@ -155,8 +156,8 @@ int main(int argc, char **argv){
 
   case 11:
     
-    printf("remove low coverage nodes (<=1) \n");
-    db_graph_remove_low_coverage_nodes(1,db_graph);
+    printf("remove low coverage nodes (<=4) \n");
+    db_graph_remove_low_coverage_nodes(4,db_graph);
 
     //printf("clip tips\n");
     //db_graph_clip_tips(db_graph);
@@ -175,8 +176,8 @@ int main(int argc, char **argv){
 
   case 12:
     
-    //printf("remove low coverage nodes (<=2) \n");
-    //db_graph_remove_low_coverage_nodes(2,db_graph);
+    printf("remove low coverage nodes (<=4) \n");
+    db_graph_remove_low_coverage_nodes(4,db_graph);
 
     //printf("clip tips\n");
     //db_graph_clip_tips(db_graph);
@@ -206,13 +207,54 @@ int main(int argc, char **argv){
     db_graph_dump_binary(argv[7],&db_node_check_status_not_pruned,db_graph);
 
     break;
-  
+
+  case 14:
+    printf("Graph loaded. Count how many nodes have cyclic shifts\n");
+    int results[kmer_size];
+    int i;
+    for (i=0; i<kmer_size; i++)
+      {
+	results[i]=0;
+      }
+    int* results_ptrs[kmer_size];
+    for (i=0; i<kmer_size; i++)
+    {
+      results_ptrs[i]=&results[i];
+    }
     
-    
-  }
+    //db_graph_traverse_with_array(&db_node_count_shifts_that_are_in_graph_and_log_in_array, db_graph, results_ptrs, kmer_size);
+
+    for (i=0; i<kmer_size; i++)
+      {
+	printf("Number of times where a node matches %d other nodes by shifting =  %d\n", i, results[i]);
+      }
 
   
-  
+  case 15:
+    printf("Print supernodes containing entirely novel(non-reference) sequence\n");
+    read_all_ref_chromosomes_and_mark_graph(db_graph);
+    int min_covg=2; //demand coverage of at least 2
+
+    //todo - add condition to make sure ignore pruned
+    printf("Start printing..\n");
+    db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_is_not_exists_in_reference,min_covg, stdout, false, NULL, 0);
+
+    hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); //cleanup - the printing process has set all printed nodes to visited
+                                                                                                            //        - or to visited_and_exists_in_reference
+
+  case 16:
+    printf("Print supernodes that match reference at start and end, but not the middle\n");
+    read_all_ref_chromosomes_and_mark_graph(db_graph);
+    int minimum_covg=5; //demand covg of at least 5
+    printf("Start printing..\n");
+    db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, minimum_covg,
+												      2,25,40, stdout, false,NULL,0);//2,25 are required numbers of overlapping nodes with ref at start and end
+                                                                                                                             //40 is min number of supernodes which are NOT in reference
+    //cleanup - the printing process has set all printed nodes to visited
+    //           - or to visited_and_exists_in_reference
+    hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
+
+  }
 
   return 0;
 }

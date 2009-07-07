@@ -64,7 +64,7 @@ int main(int argc, char **argv){
     }
     else{
       if (fastq==0){
-	seq_length += load_fasta_from_filename_into_graph(filename,&bad_reads, 10000, db_graph);
+	seq_length += load_fasta_from_filename_into_graph(filename,&bad_reads, 500000, db_graph);
       }
     }
 

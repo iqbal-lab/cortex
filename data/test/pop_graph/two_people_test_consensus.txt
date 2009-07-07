@@ -1,0 +1,2 @@
+../data/test/pop_graph/cons_person1
+../data/test/pop_graph/cons_person2

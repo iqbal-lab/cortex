@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <binary_kmer.h>
 
+
 boolean element_is_key(Key key, Element e, short kmer_size)
 {
   return key == e.kmer;
@@ -45,6 +46,14 @@ Key element_get_key(BinaryKmer kmer, short kmer_size){
 
 void element_initialise(Element * e, BinaryKmer kmer, short kmer_size){
 
+  //check that the binary kmer we are given is legitimate, given the kmer_size
+  BinaryKmer mask = ((BinaryKmer) 1<<2*kmer_size)-1;
+  if(kmer != (kmer&mask))
+    {
+      printf("Trying to initialise an element with binary kmer %qd, which has bits set beyond the limit for kmer_size %d\n", kmer, kmer_size);
+      exit(1);
+    }
+  
   e->kmer     = element_get_key(kmer, kmer_size);
   e->edges    = 0;
   e->status   = none;
@@ -262,7 +271,6 @@ boolean db_node_has_precisely_two_edges(dBNode * node, Orientation orientation, 
 int db_node_edges_count(dBNode * node, Orientation orientation){
 
   Edges edges = node->edges;
-  short edges_count = 0;
   int count = 0;
 
   if (orientation == reverse){
@@ -295,8 +303,6 @@ boolean db_node_is_blunt_end(dBNode * node, Orientation orientation){
   
   return edges == 0;
 }
-
-
 
 
 
@@ -356,13 +362,50 @@ boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node){
 }
 
 
+
+void db_node_action_set_status_none(dBNode * node){
+  db_node_set_status(node,none);
+}
+
 void db_node_action_set_status_pruned(dBNode * node){
   db_node_set_status(node,pruned);
 }
 
-void db_node_action_set_status_visited(dBNode * node){
+
+void db_node_action_set_status_visited(dBNode * node){  
   db_node_set_status(node,visited);
 }
+
+void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode * node){
+
+  if (db_node_check_status(node, exists_in_reference))
+    {
+      db_node_set_status(node,visited_and_exists_in_reference);      
+    }
+  //WARNING. Need special case for pruned?
+  // BIG WARNING - need to avoid status unassigned
+  else if (!db_node_check_status(node, unassigned)) 
+    {
+      db_node_set_status(node,visited);
+    }
+
+}
+
+
+void db_node_action_unset_status_visited_or_visited_and_exists_in_reference(dBNode * node){
+  if (db_node_check_status_visited_and_exists_in_reference(node))
+  {
+    db_node_set_status(node,exists_in_reference);
+  }
+  else if (db_node_check_status(node, visited))
+  {
+    db_node_set_status(node, none);
+  }
+      
+}
+
+
+
 
 void db_node_action_do_nothing(dBNode * node){
   
@@ -372,13 +415,55 @@ boolean db_node_check_status_none(dBNode * node){
   return db_node_check_status(node,none);
 }
 
+
 boolean db_node_check_status_not_pruned(dBNode * node){
   return !db_node_check_status(node,pruned);
+}
+
+boolean db_node_check_status_visited(dBNode * node){
+  return db_node_check_status(node,visited);
+}
+
+boolean db_node_check_status_exists_in_reference(dBNode * node){
+  return db_node_check_status(node,exists_in_reference);
 }
 
 
 boolean db_node_check_nothing(dBNode * node){
   return true;
+}
+
+boolean db_node_check_status_visited_and_exists_in_reference(dBNode * node){
+  return db_node_check_status(node,visited_and_exists_in_reference);
+}
+
+boolean db_node_check_status_is_not_exists_in_reference(dBNode * node){
+  //return !db_node_check_status(node,exists_in_reference);
+  if (db_node_check_status(node,exists_in_reference))
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
+}
+
+boolean db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(dBNode * node){
+  if (db_node_check_status(node,visited_and_exists_in_reference) || db_node_check_status(node,visited)  )
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
+}
+
+
+boolean db_node_condition_always_true(dBNode* node)
+{
+ return true;
 }
 
 

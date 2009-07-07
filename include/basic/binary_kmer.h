@@ -16,10 +16,10 @@ typedef enum
     Undefined = 4
   } Nucleotide ;
 
-typedef long long BinaryKmer;
+typedef unsigned long long BinaryKmer;
 
 
-// KmerArray is an array of kmers. Usually this will be from a sliding window run across a sequence.
+
 typedef struct{
 	int nkmers;
 	BinaryKmer * kmer;
@@ -44,6 +44,9 @@ Nucleotide reverse_binary_nucleotide(Nucleotide n);
 
 //get overlapping kmers from sequence
 int get_sliding_windows_from_sequence(char * sequence,char * qualities, int length, char quality_cutoff, short kmer_size, KmerSlidingWindowSet * windows, int max_windows, int max_kmers); 
+
+//use preallocated sliding window, and get all the kmers from the passed-in sequence. Any kmer that would have contained an N is returned as NULL
+int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short kmer_size, KmerSlidingWindow* kmer_window);
 
 char * binary_kmer_to_seq(BinaryKmer kmer, short kmer_size, char * seq);
 

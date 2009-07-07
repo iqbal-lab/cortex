@@ -1,0 +1,29 @@
+
+only chromosomes 23 and 24 have any kmers that are unique. All the other chromosomes have at least one other chromosome which is unique
+
+
+orchid.ebi.ac.uk> emacs -nw chrom1.fasta
+orchid.ebi.ac.uk> emacs -nw chrom2.fasta
+orchid.ebi.ac.uk> emacs -nw chrom3.fasta
+orchid.ebi.ac.uk> emacs -nw chrom4.fasta
+orchid.ebi.ac.uk> emacs -nw chrom5.fasta
+orchid.ebi.ac.uk> emacs -nw chrom5.fasta
+orchid.ebi.ac.uk> emacs -nw chrom6.fasta
+orchid.ebi.ac.uk> cp chrom1.fasta chrom7.fasta
+orchid.ebi.ac.uk> cp chrom1.fasta chrom8.fasta
+orchid.ebi.ac.uk> cp chrom2.fasta chrom9.fasta
+orchid.ebi.ac.uk> cp chrom2.fasta chrom10.fasta
+orchid.ebi.ac.uk> cp chrom3.fasta chrom11.fasta
+orchid.ebi.ac.uk> cp chrom3.fasta chrom12.fasta
+orchid.ebi.ac.uk> cp chrom4.fasta chrom13.fasta
+orchid.ebi.ac.uk> cp chrom4.fasta chrom14.fasta
+orchid.ebi.ac.uk> cp chrom5.fasta chrom15.fasta
+orchid.ebi.ac.uk> cp chrom5.fasta chrom16.fasta
+orchid.ebi.ac.uk> cp chrom5.fasta chrom17.fasta
+orchid.ebi.ac.uk> cp chrom6.fasta chrom18.fasta
+orchid.ebi.ac.uk> cp chrom6.fasta chrom19.fasta
+orchid.ebi.ac.uk> cp chrom6.fasta chrom20.fasta
+orchid.ebi.ac.uk> cp chrom6.fasta chrom21.fasta
+orchid.ebi.ac.uk> cp chrom6.fasta chrom22.fasta
+orchid.ebi.ac.uk> emacs -nw chrom23.fasta
+orchid.ebi.ac.uk> emacs -nw chrom24.fasta

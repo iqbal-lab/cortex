@@ -21,16 +21,23 @@ int  main()
 
   /* add the tests to the suite */
 
-  
+    
   if (NULL == CU_add_test(pSuite, "test reading of fasta file",  test_read_sequence_from_fasta)){
     CU_cleanup_registry();
     return CU_get_error();
   }
   
-  if (NULL == CU_add_test(pSuite, "test reading of fastq file",  test_read_sequence_from_fastq)){
-    CU_cleanup_registry();
-    return CU_get_error();
+  if (NULL == CU_add_test(pSuite, "test reading of fasta file when some reads that have bad characters",  test_read_sequence_from_fasta_when_file_has_bad_reads)){ 
+    CU_cleanup_registry(); 
+     return CU_get_error();
   }
+
+  
+   if (NULL == CU_add_test(pSuite, "test reading of fastq file",  test_read_sequence_from_fastq)){ 
+     CU_cleanup_registry(); 
+     return CU_get_error(); 
+   } 
+   
 
   if (NULL == CU_add_test(pSuite, "test reading of long fasta file",  test_read_sequence_from_long_fasta)){
     CU_cleanup_registry();
@@ -38,6 +45,13 @@ int  main()
   }
   
   if (NULL == CU_add_test(pSuite, "test shift last kmer to start",  test_shift_last_kmer_to_start_of_sequence)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+  
+  if (NULL == CU_add_test(pSuite, "test reading of fastq file when some reads are too long or have bad characters",  test_read_sequence_from_fastq_with_bad_reads_and_long_reads)){
+    
     CU_cleanup_registry();
     return CU_get_error();
   }
@@ -57,7 +71,7 @@ int  main()
     return CU_get_error();
   }
 
-  
+
   if (NULL == CU_add_test(pSuite, "test creation of binary kmers from sequence - sliding window", test_get_sliding_windows_from_sequence)) {
     CU_cleanup_registry();
     return CU_get_error();

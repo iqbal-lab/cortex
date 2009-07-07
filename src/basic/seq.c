@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <seq.h>
@@ -13,17 +14,15 @@ boolean good_base(char c);
 char current_entry_name[LINE_MAX+1] = "";
 int  last_end_coord;
 
-//backtrack updates the file pointer to adjust for next kmer, eg
-//>pepe
-//AACCCTGCTGC
-//first time you call 
-// read_sequence_from_long_fasta(fp, seq, 3, &full_entry,1)
-//    reads AAC and bractracks file pointer to start at C 
-// then read_sequence_from_long_fasta(fp, seq, 4, &full_entry,0)
-//returns CCCT
 
 //new_entry tells the parser to expect a new fasta entry (ie starts with >)
 //full_entry tells the caller if the end of the entry has been reached
+//This function can be use with big fasta entries. Successive calls on the same
+//big entry remember the name of the entry in seq->name.
+//seq->start, seq->end are the coordinate with respect to the full fasta entry (eg chr1 start: 1000 end: 3000)
+//offset defines the length of seq->seq that is preserved, this allows to append new sequence from the entry to a prefix in seq->seq
+//until max_chunk_length is reached. 
+//ir returns 0 when reaches EOF (in this case full_entry is true)
 
 int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_chunk_length,boolean new_entry, boolean * full_entry, int offset){
 
@@ -59,7 +58,7 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_chunk_length,bool
 
  
   //get name
-  if (new_entry == true){ //need a '>' follwed by a name
+  if (new_entry == true){ //need a '>' followed by a name
     if (fgets(line, LINE_MAX, fp) != NULL){
       if (line[0] == '>'){
 	i=1;
@@ -84,7 +83,6 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_chunk_length,bool
     seq->start = last_end_coord+1;
   }
 
-  //printf("entry: %s %i\n",seq->name,seq->start);
     
   //get sequence
 
@@ -112,14 +110,12 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_chunk_length,bool
 	fseek(fp,file_pointer,SEEK_SET);
 	ready_to_return = true;
 	*full_entry = true;
-	//printf("complete line - new entry\n");
       }
       else{
 	if (j==max_chunk_length){
 	  fseek(fp,prev_file_pointer,SEEK_SET); 
 	  ready_to_return = true;
 	  *full_entry = false;
-	  //printf("complete line - same entry\n");
 	}
 	else{
 	  //check line is fine
@@ -128,7 +124,7 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_chunk_length,bool
 	    good_read = good_base(line[i]);	  
 	    if (! good_read){
 	      fprintf(stderr,"Invalid symbol [%c] pos:%i in entry %s\n",line[i],i,seq->name);
-	      //exit(1);
+
 	    }
 	    
 	    seq->seq[j]  = line[i];
@@ -143,7 +139,6 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_chunk_length,bool
 		ready_to_return = true;
 		*full_entry = false;
 		fseek(fp,file_pointer,SEEK_SET); 	      
-		//printf("incomplete line - incomplete entry\n");
 	      }
 
 	      //else 3 cases might happen with line complete
@@ -169,12 +164,15 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_chunk_length,bool
   
   seq->seq[j]  = '\0';
   seq->qual[j] = '\0';
+
   return j;
 }
 
 
+
 /* Read sequence from file "fp" in FASTQ format.
    it returns the length of the sequence, 0 if no sequence is left in file
+   read with bad chars are skipped -- this is a different behaviour to read_sequence_from_fasta
 */
 
 int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
@@ -212,93 +210,128 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
     exit(1);
   }
 
+  boolean end_of_file=false;
+
   do{
+
+    good_read=true;
+    q=0;
+    j=0;
+
     //read name of fastq entry
-    if (fgets(line, LINE_MAX, fp) != NULL){
-      if (line[0] == '@'){
-	for(i = 1;i<LINE_MAX;i++){	   
-	  if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
-	    break;
-	  }
-	  if(i>LINE_MAX){
-	    fputs("Name too long\n",stderr);
+    if (fgets(line, LINE_MAX, fp) != NULL)
+      {
+	if (line[0] == '@')
+	  {
+	    for(i = 1;i<LINE_MAX;i++)
+	      {	   
+		if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r')
+		  {
+		    break;
+		  }
+		if(i>LINE_MAX)
+		  {
+		    fputs("Name too long\n",stderr);
+		    exit(1);
+		  }
+		seq->name[i-1] = line[i];
+	      }
+	    seq->name[i-1] = '\0';
+	    
+	    //read sequence 
+	    
+	    while (fgets(line, LINE_MAX, fp) != NULL)
+	      {
+		
+		if ((line[0] == '+') || (line[0] == '-'))
+		  { //go to get qualities
+		    break;
+		  }
+		
+		//check line is fine
+		for(i=0;i<LINE_MAX;i++)  
+		  {
+		    if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r')
+		      {
+			break; //fine but nothing to add
+		      }
+		    
+		    if (! good_base(line[i]))
+		    {
+		      good_read=false;
+		      fprintf(stderr,"Invalid symbol [%c] pos:%i in entry %s - skip read\n",line[i],i,seq->name);
+		    }
+
+
+		    seq->seq[j] = line[i];
+		    j++;
+		    
+		    if (j==max_read_length){
+		      fprintf(stdout,"read [%s] too long [%i]. Exiting...\n",seq->name,j);
+		      exit(1);
+		    }
+		    
+		  }
+	      }
+	    
+	    //read qualities -- verify position first
+	    file_pointer = ftell(fp);
+	    
+		
+	    while (fgets(line, LINE_MAX, fp) != NULL)
+	      {
+
+		if (line[0] == '@' && (j<=q) )//then we have gone on to the next read  
+		  //allowing q>j in case where qualities longer than j
+		  {
+		    fseek(fp,file_pointer,SEEK_SET);
+		    break; //goto next read
+		  }
+		
+		
+		for(i=0;i<LINE_MAX;i++)
+		  {
+		    if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
+		      break; //fine but nothing to add
+		    }
+		    
+		    seq->qual[q] = line[i];
+		    q++;
+		    
+		    if (q==max_read_length)
+		      {
+			fprintf(stdout,"qualities for [%s] longer than the max read length  [%i]. Exiting...\n",seq->name,q);
+			exit(1);
+		      }
+		    
+		  }
+		
+		file_pointer = ftell(fp);
+	      }
+	    
+	    
+	    if (j!=q)
+	      {
+		fprintf(stdout,"Lengths of quality [%i] and sequence [%i]  strings don't coincide for this read: [%s]. Skip it\n",q,j,seq->name);
+		good_read=false;
+	      }
+	    
+	  }//if line starts with @
+	else
+	  {
+	    fputs("syntax error in fastq file -- it misses @\n",stderr);
 	    exit(1);
 	  }
-	  seq->name[i-1] = line[i];
-	}
-	seq->name[i-1] = '\0';
-	
-	//read sequence 
-	
-	while (fgets(line, LINE_MAX, fp) != NULL){
-	  
-	  if ((line[0] == '+') || (line[0] == '-')){ //go to get qualities
-	    break;
-	  }
-	  
-	  //check line is fine
-	  for(i=0;i<LINE_MAX;i++){
-	    if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
-	      break; //fine but nothing to add
-	    }
-	    
-	    good_read = good_base(line[i]);
-	    if(! good_read){
-	      fprintf(stderr,"Invalid symbol [%c]  pos:%i in entry %s\n",line[i],i,seq->name);
-	    }
-	    seq->seq[j] = line[i];
-	    j++;
-	    
-	    if (j==max_read_length){
-	      fprintf(stderr,"read [%s] too long [%i]\n",seq->name,j);
-	      exit(1);
-	    }
-	    
-	  }
-	}
-
-	//read qualities -- verify position first
-	file_pointer = ftell(fp);
-	
-	while (fgets(line, LINE_MAX, fp) != NULL){
-	  if (line[0] == '@' && j==q){
-	    fseek(fp,file_pointer,SEEK_SET);
-	    break;
-	  }
-	  
-	  for(i=0;i<LINE_MAX;i++){
-	    if (line[i] == '\n' || line[i] == ' ' || line[i] == '\t' || line[i] == '\r'){
-	      break; //fine but nothing to add
-	    }
-	    
-	    seq->qual[q] = line[i];
-	    q++;
-	    
-	    if (q==max_read_length){
-	      fprintf(stderr,"qualities for [%s] too long [%i]\n",seq->name,q);
-	      exit(1);
-	    }
-	    
-	  }
-    
-	  file_pointer = ftell(fp);
-	}
-
-	if (j!=q){
-	  fprintf(stderr,"qualities [%i] and sequence [%i] sizes don't coincide for [%s]\n",q,j,seq->name);
-	  exit(1);
-	}
-
       }
-      else{
-	fputs("syntax error in fastq file -- it misses @\n",stderr);
-	exit(1);
+    else
+      {
+	end_of_file=true;
       }
-    }
-  } while (! good_read); 
+
+  } while (! good_read && !end_of_file); 
 
   seq->seq[j]   = '\0';
-  seq->qual[q]  = '\0'; //this is not technical necessary but simplyfies many checks downstream
+  seq->qual[q]  = '\0'; //this is not technically necessary but simplifies many checks downstream
   return j;
 }
 
@@ -325,6 +358,10 @@ void alloc_sequence(Sequence * seq, int max_read_length, int max_name_length){
     fputs("Out of memory trying to allocate string\n",stderr);
     exit(1);
   }
+
+  seq->seq[max_read_length]='\0';
+  seq->qual[max_read_length]='\0';
+
 }
 
 

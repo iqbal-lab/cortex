@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <binary_kmer.h>
 #include <global.h>
+#include <string.h>
 
 //returns Undefined if given non AGCT character
 Nucleotide char_to_binary_nucleotide(char c)
@@ -169,9 +170,10 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
       i++; 
     }    
 
-    if (j==kmer_size){ //ie first kmer didn't run over the sequece
+    if (j==kmer_size){ //ie we did not parse the entire sequence looking for a single good kmer, the first kmer
       
       count_kmers++;
+      first_kmer[kmer_size]='\0';
 
       //new sliding window
       if (index_windows>=max_windows){
@@ -227,13 +229,177 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 }
 
 
+//The first argument - seq - is a C string in A,C,G,T,N format. (Function handles bad characters)
+//The second argument - length - is the length in bases of the sequence.
+//we want a single sliding window, with all A's where the kmer would include an N, or Undefined nucleotide
+//this is not ideal - but the caller is presumably going to break the kmer at N's, and here we force them to break at AAAAAA also.
+int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short kmer_size, KmerSlidingWindow* kmer_window)
+{  
+
+  if ( (kmer_window==NULL) || (seq==NULL))
+    {
+      printf("Do not pass NULL pointer to get_single_kmer_sliding_window_from_sequence\n");
+      exit(1);
+    }
+
+  int number_of_steps_before_current_kmer_is_good=0; //good means free of bad characters. 
+  int latest_base_we_have_read=0;
+  int num_kmers=0;
+  char first_kmer[kmer_size+1]; //as string
+  first_kmer[kmer_size]='\0';
+  Nucleotide current_base;
+
+  long long current_good_kmer=~0;
+  
+  BinaryKmer mask = (( (BinaryKmer) 1 << (2*kmer_size)) - 1); // mask binary 00..0011..11 as many 1's as kmer_size * 2 (every base takes 2 bits)
+
+  if (length < kmer_size )
+    {
+      return 0;
+    }
+
+
+  //set up first kmer
+  int i;
+  for (i=0; i<kmer_size; i++)
+    {
+
+      first_kmer[i]=seq[latest_base_we_have_read];
+      current_base = char_to_binary_nucleotide(seq[latest_base_we_have_read]);
+
+      //shift left - one base (ie 2 bits)
+      current_good_kmer <<= 2;
+      //remove most significant base (using the mask x000.0011..11)
+      current_good_kmer &= mask;
+
+      if (current_base==Undefined)
+	{
+	  //we will ignore contents of the string  first_kmer as it contains a bad character
+	  number_of_steps_before_current_kmer_is_good=i+1;
+	  current_good_kmer |= Adenine;
+	}      
+      else
+	{
+	  //add new base
+	  current_good_kmer |= current_base;
+	}
+
+      latest_base_we_have_read++;
+    }
+
+
+  //add first kmer to window
+  num_kmers++;
+
+  if (number_of_steps_before_current_kmer_is_good==0)
+    {
+      kmer_window->kmer[num_kmers-1]=seq_to_binary_kmer(first_kmer,kmer_size);	  
+    }
+  else
+    {
+      kmer_window->kmer[num_kmers-1]=~0;
+      number_of_steps_before_current_kmer_is_good--;
+    }
+
+
+  while (latest_base_we_have_read<length)
+    {
+
+      while ( (latest_base_we_have_read<length) && (number_of_steps_before_current_kmer_is_good>0))
+	{
+	  current_base = char_to_binary_nucleotide(seq[latest_base_we_have_read]);
+
+	  //shift left - one base (ie 2 bits)
+	  current_good_kmer <<= 2;
+	  //remove most significant base (using the mask x000.0011..11)
+	  current_good_kmer &= mask;
+	  
+	  if (current_base==Undefined)
+	    {
+	      current_good_kmer |= Adenine;
+	      number_of_steps_before_current_kmer_is_good=kmer_size;
+	    }
+	  else
+	    {
+
+	      //add new base
+	      current_good_kmer |= current_base;
+
+	    }
+
+	  num_kmers++;
+
+	  //add a marked kmer to the window
+
+	  kmer_window->kmer[num_kmers-1]=~0;
+	  number_of_steps_before_current_kmer_is_good--;
+	  latest_base_we_have_read++; 
+
+	}
+
+      //as long as previous kmer was good, you loop through this while loop
+      while (latest_base_we_have_read<length)
+	{
+	  current_base = char_to_binary_nucleotide(seq[latest_base_we_have_read]);
+	  //shift left - one base (ie 2 bits)
+	  current_good_kmer <<= 2;
+	  //remove most significant base (using the mask x000.0011..11)
+	  current_good_kmer &= mask;
+
+	  if (current_base==Undefined)
+	    {
+	      current_good_kmer |= Adenine;
+	      number_of_steps_before_current_kmer_is_good=kmer_size;
+
+	      //add a marked kmer to the window 
+	      num_kmers++;
+	      kmer_window->kmer[num_kmers-1]=~0; 
+	      number_of_steps_before_current_kmer_is_good--; 
+	      latest_base_we_have_read++;
+	      break;
+	    }
+	  else
+	    {
+	  
+	      //add new base
+	      current_good_kmer |= current_base;
+	      num_kmers++;
+	      kmer_window->kmer[num_kmers-1]=current_good_kmer;      
+	      latest_base_we_have_read++;	      
+	    }
+
+	}
+  
+    }
+    
+  kmer_window->nkmers=num_kmers;
+  return num_kmers;
+
+}
+
+
+
 //Mario - worth noting this does direct translation, and does not return the smaller of kmer and rev_comp(kmer)
 // answer: this is the correct behaviour, isn't it?
 
 BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
+  
   int j;
   BinaryKmer kmer = 0;
   
+  //sanity checks
+  if (seq==NULL)
+    {
+      printf("DO not passs null ptr to seq_to_binary_kmer. Exiting..\n");
+      exit(1);
+    }
+  if (strlen(seq) != kmer_size)
+    {
+      printf("Calling seq_to_binary_kmer with  a sequence %s of length %d, but kmer size %d, which is different. Exiting", seq, (int) strlen(seq),  kmer_size);
+      exit(1);
+    }
+  
+
   for(j=0;j<kmer_size;j++){
     //shift left,
     kmer <<= 2;
@@ -250,8 +416,10 @@ BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
 }
 
 
+
+//caller passes in allocated char*. This is returned and also set in 3rd argument.
 //user of this method is responsible for deallocating the returned sequence
-//note that the allocated space has to me kmer_size+1;
+//note that the allocated space has to be kmer_size+1;
 
 char * binary_kmer_to_seq(BinaryKmer kmer, short kmer_size, char * seq){
  
