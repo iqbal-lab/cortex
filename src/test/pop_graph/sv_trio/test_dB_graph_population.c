@@ -554,18 +554,18 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
     }
   long long seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/two_people_each_with_the_same_read", &bad_reads, db_graph);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/one_person_for_testing_array_loading", &bad_reads, db_graph);
 
   //>one read
-  //AATAGACGCCCACACCTGATAGACCCCACAC
+  //AATAGACGCCCACACCTGATAGACCCCACACTCTAA
 
   
-  CU_ASSERT(seq_loaded==62);
+  CU_ASSERT(seq_loaded==36);
   
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/second_person_with_same_read.fasta", "r");
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/one_person.fasta", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ./data/test/pop_graph/second_person_with_same_read.fasta\n");
+      printf("Cannot open ./data/test/pop_graph/one_person.fasta\n");
       exit(1);
     }
 
@@ -617,15 +617,7 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
 
 
 
-  FILE* chrom_fasta_fptr = fopen("../data/test/pop_graph/second_person_with_same_read.fasta", "r");
-  if (chrom_fasta_fptr==NULL)
-    {
-      printf("Cannot open ./data/test/pop_graph/second_person_with_same_read.fasta\n");
-      exit(1);
-    }
-
-
-  int ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fasta_fptr, number_of_nodes_to_load, 0, 
+  int ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fptr, number_of_nodes_to_load, 0, 
 													     length_of_arrays,
 													     chrom_path_array, chrom_orientation_array, chrom_labels, chrom_string,
 													     seq, kmer_window, 
@@ -652,10 +644,8 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
   CU_ASSERT_STRING_EQUAL( "CGCCCAC", binary_kmer_to_seq(chrom_path_array[13]->kmer, db_graph->kmer_size, tmp_seqzam) );
 
 
-
-
   //one more batch, then array is full,
-  ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fasta_fptr, number_of_nodes_to_load, number_of_nodes_to_load, 
+  ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fptr, number_of_nodes_to_load, number_of_nodes_to_load, 
 													 length_of_arrays,
 													 chrom_path_array, chrom_orientation_array, chrom_labels, chrom_string,
 													 seq, kmer_window, 
@@ -676,8 +666,105 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
   CU_ASSERT_STRING_EQUAL( "CCCACAC", binary_kmer_to_seq(chrom_path_array[8]->kmer, db_graph->kmer_size, tmp_seqzam) );
   CU_ASSERT_STRING_EQUAL( "CCACACC", binary_kmer_to_seq(chrom_path_array[9]->kmer, db_graph->kmer_size, tmp_seqzam) );
   CU_ASSERT_STRING_EQUAL( "AGGTGTG", binary_kmer_to_seq(chrom_path_array[10]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACACCTG", binary_kmer_to_seq(chrom_path_array[11]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CACCTGA", binary_kmer_to_seq(chrom_path_array[12]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACCTGAT", binary_kmer_to_seq(chrom_path_array[13]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  
+
+  //from now on, it is always true that LAST time was not a new fasta entry, so penultimate argument is TRUE
+  ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fptr, number_of_nodes_to_load, number_of_nodes_to_load, 
+													 length_of_arrays,
+													 chrom_path_array, chrom_orientation_array, chrom_labels, chrom_string,
+													 seq, kmer_window, 
+													 false, true,
+                                                                                                         db_graph);
+
+  CU_ASSERT(ret==number_of_nodes_to_load);
 
 
+  CU_ASSERT_STRING_EQUAL( "GCCCACA", binary_kmer_to_seq(chrom_path_array[0]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCCACAC", binary_kmer_to_seq(chrom_path_array[1]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCACACC", binary_kmer_to_seq(chrom_path_array[2]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGGTGTG", binary_kmer_to_seq(chrom_path_array[3]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACACCTG", binary_kmer_to_seq(chrom_path_array[4]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CACCTGA", binary_kmer_to_seq(chrom_path_array[5]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACCTGAT", binary_kmer_to_seq(chrom_path_array[6]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCTGATA", binary_kmer_to_seq(chrom_path_array[7]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CTATCAG", binary_kmer_to_seq(chrom_path_array[8]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "TCTATCA", binary_kmer_to_seq(chrom_path_array[9]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GATAGAC", binary_kmer_to_seq(chrom_path_array[10]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ATAGACC", binary_kmer_to_seq(chrom_path_array[11]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GGGTCTA", binary_kmer_to_seq(chrom_path_array[12]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGACCCC", binary_kmer_to_seq(chrom_path_array[13]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  
+
+  //and again
+
+  ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fptr, number_of_nodes_to_load, number_of_nodes_to_load, 
+													 length_of_arrays,
+													 chrom_path_array, chrom_orientation_array, chrom_labels, chrom_string,
+													 seq, kmer_window, 
+													 false, true,
+                                                                                                         db_graph);
+
+  CU_ASSERT(ret==number_of_nodes_to_load);
+
+
+  CU_ASSERT_STRING_EQUAL( "CCTGATA", binary_kmer_to_seq(chrom_path_array[0]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CTATCAG", binary_kmer_to_seq(chrom_path_array[1]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "TCTATCA", binary_kmer_to_seq(chrom_path_array[2]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GATAGAC", binary_kmer_to_seq(chrom_path_array[3]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ATAGACC", binary_kmer_to_seq(chrom_path_array[4]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GGGTCTA", binary_kmer_to_seq(chrom_path_array[5]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGACCCC", binary_kmer_to_seq(chrom_path_array[6]->kmer, db_graph->kmer_size, tmp_seqzam) );
+
+  CU_ASSERT_STRING_EQUAL( "GACCCCA", binary_kmer_to_seq(chrom_path_array[7]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACCCCAC", binary_kmer_to_seq(chrom_path_array[8]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCCCACA", binary_kmer_to_seq(chrom_path_array[9]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCCACAC", binary_kmer_to_seq(chrom_path_array[10]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGTGTGG", binary_kmer_to_seq(chrom_path_array[11]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CACACTC", binary_kmer_to_seq(chrom_path_array[12]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACACTCT", binary_kmer_to_seq(chrom_path_array[13]->kmer, db_graph->kmer_size, tmp_seqzam) );
+
+
+  //now - does it cope with hitting the end of the entry before getting the required number of nodes
+
+  ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fptr, number_of_nodes_to_load, number_of_nodes_to_load, 
+													 length_of_arrays,
+													 chrom_path_array, chrom_orientation_array, chrom_labels, chrom_string,
+													 seq, kmer_window, 
+													 false, true,
+                                                                                                         db_graph);
+
+  CU_ASSERT(ret==2);
+
+  CU_ASSERT_STRING_EQUAL( "GACCCCA", binary_kmer_to_seq(chrom_path_array[0]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACCCCAC", binary_kmer_to_seq(chrom_path_array[1]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCCCACA", binary_kmer_to_seq(chrom_path_array[2]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCCACAC", binary_kmer_to_seq(chrom_path_array[3]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGTGTGG", binary_kmer_to_seq(chrom_path_array[4]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CACACTC", binary_kmer_to_seq(chrom_path_array[5]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACACTCT", binary_kmer_to_seq(chrom_path_array[6]->kmer, db_graph->kmer_size, tmp_seqzam) );
+
+  CU_ASSERT_STRING_EQUAL( "CACTCTA", binary_kmer_to_seq(chrom_path_array[7]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACTCTAA", binary_kmer_to_seq(chrom_path_array[8]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT(chrom_path_array[9]==NULL);
+  CU_ASSERT(chrom_path_array[10]==NULL);
+  CU_ASSERT(chrom_path_array[11]==NULL);
+  CU_ASSERT(chrom_path_array[12]==NULL);
+  CU_ASSERT(chrom_path_array[13]==NULL);
+
+
+
+  //cleanup
+
+  free(chrom_path_array);
+  free(chrom_orientation_array);
+  free(chrom_string);
+  free(chrom_labels);
+  free_sequence(&seq);
+  hash_table_free(&db_graph);
+  fclose(chrom_fptr);
 
 }
 
@@ -688,7 +775,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   // 1. NULL test. Load short fake reference, and load a person whose sequence is identical. This should find nothing.
   // ******************************************************************************************************************************
 
-  // 1a - toy example  - kmer_size=7
+  // toy example  - kmer_size=7
   //first set up the hash/graph
   int kmer_size = 7;
   int number_of_bits = 8;
@@ -707,6 +794,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   //loads two people into individual_edge_array, with identical fasta containing one read of length 31 bases.
   //notionally, one of these people is the reference. We will never use this person/references set of edges except 
   // when we go through their fasta again, and do hash)table_find for each kmer we find in the fasta, in order, and generate an array of nodes etc.
+
   seq_loaded = load_population_as_fasta("../data/test/pop_graph/two_people_each_with_the_same_read", &bad_reads, hash_table);
 
   //>one read
@@ -734,9 +822,184 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   CU_ASSERT(ret==0);
 
-  // 2. Harder NULL test. Load an ALU and load a person whose sequence is also that ALU. This should find nothing.
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
 
-  // 3. Harder NULL test. Load 1kb of chromosome 1,  and load a person whose sequence is that same 1kb of chromosome 1. This should find nothing.
+
+  // ******************************************************************************************************************************
+  // 2. Harder NULL test. Reference=an ALU and load a person whose sequence is also that ALU. This should find nothing.
+  // ******************************************************************************************************************************
+
+
+
+  kmer_size = 31;
+  number_of_bits = 8;
+  bucket_size    = 10;
+  bad_reads = 0;
+  max_retries=10;
+
+  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  seq_loaded=0;
+
+  //just load one person who's sequence is an Alu. Then take reference which is that same sequence and try to find variants
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/just_one_of_the_two_people.txt", &bad_reads, hash_table);
+
+  /*
+    >7SLRNA#SINE/Alu  plus GTTCAGAG at start and GTCAGCGTAG at end
+    GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+    GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+    GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+    CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+    ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+    GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+    AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
+    
+  */
+  
+  
+  CU_ASSERT(seq_loaded==339);
+  
+  chrom_fptr = fopen("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fasta");
+      exit(1);
+    }
+
+  min_fiveprime_flank_anchor = 10;
+  min_threeprime_flank_anchor= 10;
+  max_anchor_span = 5;
+  length_of_arrays=100;
+  min_covg =1;
+  max_covg = 10;
+  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    length_of_arrays, hash_table, NULL );
+  
+  CU_ASSERT(ret==0);
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+
+  // ******************************************************************************************************************************
+  // 3. Reference = Alu-NNNNN- same Alu, and person is identical to reference. This should find nothing
+  // ******************************************************************************************************************************
+
+
+
+  kmer_size = 31;
+  number_of_bits = 8;
+  bucket_size    = 10;
+  bad_reads = 0;
+  max_retries=10;
+
+  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_alu_Ns_then_same_alu", &bad_reads, hash_table);
+
+  /*
+    >7SLRNA#SINE/Alu  
+    GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+    GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+    GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+    CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+    ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+    GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+    AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAGNNNNNNNNNNNNNNNNNNN
+    GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+    GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+    GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+    CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+    ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+    GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+    AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
+    
+  */  
+  
+  CU_ASSERT(seq_loaded==697);
+  
+  chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu.fasta");
+      exit(1);
+    }
+
+  min_fiveprime_flank_anchor = 10;
+  min_threeprime_flank_anchor= 10;
+  max_anchor_span = 5;
+  length_of_arrays=100;
+  min_covg =1;
+  max_covg = 10;
+  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    length_of_arrays, hash_table, NULL );
+  
+  CU_ASSERT(ret==0);
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+
+  // ******************************************************************************************************************************
+  // 4. Reference = 10kb of chromosome 1. Individual is that same sequence. This should find nothing.
+  // ******************************************************************************************************************************
+
+  kmer_size = 31;
+  number_of_bits = 13;
+  bucket_size    = 10;
+  bad_reads = 0;
+  max_retries=10;
+
+  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_10kb_of_chrom1", &bad_reads, hash_table);
+
+  
+  CU_ASSERT(seq_loaded==11940);
+  
+  chrom_fptr = fopen("../data/test/pop_graph/variations/person_1kb_chrom1.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/person_1kb_chrom1.fasta");
+      exit(1);
+    }
+
+  min_fiveprime_flank_anchor = 20;
+  min_threeprime_flank_anchor= 10;
+  max_anchor_span = 1000;
+  length_of_arrays=2000;
+  min_covg =1;
+  max_covg = 10;
+  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    length_of_arrays, hash_table, NULL );
+  
+  CU_ASSERT(ret==0);
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+
+
 
   // 4. Simplest genuine test. Short sequence for ref, and individual is identical, except for one base change.
 

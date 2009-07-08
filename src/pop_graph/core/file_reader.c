@@ -37,7 +37,7 @@ int load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fil
 
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
-    fprintf(stderr,"cannot open file:%s\n",filename);
+    fprintf(stderr," load_fasta_data_from_filename_into_graph_of_specific_person_or_pop cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
@@ -66,7 +66,7 @@ int load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* fil
 
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
-    fprintf(stderr,"cannot open file:%s\n",filename);
+    fprintf(stderr,"load_fastq_data_from_filename_into_graph_of_specific_person_or_pop cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
@@ -361,8 +361,9 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	  if (previous_node == NULL)
 	    {
 	      path_labels[offset+j]=Undefined;
-	      path_string[offset+j]='N';
-	      path_string[offset+j+1]='\0';
+	      path_string[offset+j]=='\0';
+	      //path_string[offset+j]='N';
+	      //path_string[offset+j+1]='\0';
 	    }
 	  else
 	    {
@@ -527,7 +528,7 @@ long long load_population_as_fasta(char* filename, long long* bad_reads, dBGraph
 
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
-    printf("cannot open file:%s\n",filename);
+    printf("load_population_as_fasta cannot open file:%s\n",filename);
     exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
   }
 
@@ -609,7 +610,7 @@ long long load_population_as_fastq(char* filename, long long* bad_reads, char qu
 
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
-    printf("cannot open file:%s\n",filename);
+    printf("load_population_as_fastq cannot open file:%s\n",filename);
     exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
   }
 
@@ -726,7 +727,7 @@ int load_sv_trio_binary_data_from_filename_into_graph(char* filename,  dBGraph* 
   int count=0;
 
   if (fp_bin == NULL){
-    printf("cannot open file:%s\n",filename);
+    printf("load_sv_trio_binary_data_from_filename_into_graph cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
   
@@ -774,7 +775,7 @@ int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGrap
   int count=0;
 
   if (fp_bin == NULL){
-    printf("cannot open file:%s\n",filename);
+    printf("load_individual_binary_data_from_filename_into_graph cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
   

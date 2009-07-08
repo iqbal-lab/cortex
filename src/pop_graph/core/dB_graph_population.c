@@ -1602,8 +1602,6 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
     }
 
 
-  printf("Before push path string is %s\n", path_string);
-
   //push everything in the arrays left by number_of_nodes_to_load. 
   int i;
   for(i=0; i<length_of_arrays-number_of_nodes_to_load; i++)
@@ -1656,7 +1654,7 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
 	}
       seq->seq[db_graph->kmer_size]='\0';
     }
-  printf("Before calling load_seq_into_array, seq is %s and path_string is %s\n", seq->seq, path_string);
+
   return load_seq_into_array(chrom_fptr, number_of_nodes_to_load, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
 
   
@@ -1754,8 +1752,6 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   // ***********************************************************
   //********** end of malloc and initialise ********************
 
-  printf("\n\nBefore calling  db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta , seq is %s and chrom_string is %s of length %d\n", 
-	 seq->seq, chrom_string, (int) strlen(chrom_string));
 
   //load
   int ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fasta_fptr, number_of_nodes_to_load, 0, 
@@ -1770,24 +1766,11 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
       exit(1);
     }
 
-  printf("Succeeded loading %s, chrom_string is %s, and we got %d nodes\n", seq->seq, chrom_string, ret);
   char tmp_seqzam[db_graph->kmer_size+1];
   tmp_seqzam[db_graph->kmer_size]='\0';
 
   int i;
-  for (i=0; i< length_of_arrays; i++)
-    {
-      if (chrom_path_array[i]==NULL)
-	{
-	  printf("node %d is NULL\n", i);
-	}
-      else
-	{
-	  printf("Node %d is %s\n", i, binary_kmer_to_seq(chrom_path_array[i]->kmer, db_graph->kmer_size, tmp_seqzam));
-	}
-    }
-  
-
+ 
   //one more batch, then array is full, and ready for the main loop:
   ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fasta_fptr, number_of_nodes_to_load, number_of_nodes_to_load, 
 													 length_of_arrays,
@@ -1801,20 +1784,6 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
       exit(1);
     }
 
-
-  printf("Succeeded loading %s, chrom_string is %s, and we got %d nodes\n", seq->seq, chrom_string, ret);
-
-  for (i=0; i< length_of_arrays; i++)
-    {
-      if (chrom_path_array[i]==NULL)
-	{
-	  printf("node %d is NULL\n", i);
-	}
-      else
-	{
-	  printf("Node %d is %s\n", i, binary_kmer_to_seq(chrom_path_array[i]->kmer, db_graph->kmer_size, tmp_seqzam));
-	}
-    }
 
 
   printf("WARNING _ WHAT ABOUT LOOPS?");   
