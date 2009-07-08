@@ -176,8 +176,8 @@ int main(int argc, char **argv){
 
   case 12:
     
-    printf("remove low coverage nodes (<=4) \n");
-    db_graph_remove_low_coverage_nodes(4,db_graph);
+    //printf("remove low coverage nodes (<=4) \n");
+    //db_graph_remove_low_coverage_nodes(4,db_graph);
 
     //printf("clip tips\n");
     //db_graph_clip_tips(db_graph);
