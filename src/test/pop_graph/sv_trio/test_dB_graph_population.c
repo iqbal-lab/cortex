@@ -62,18 +62,10 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   CU_ASSERT(db_node_check_status(test_elem3, visited));
 
 
-  //having done this, if I try to print the supernode for ATT, it shpuld refuse (providing I put in the condition that node mut not be visited)
+
+
+  //having done this, if I try to print the supernode for CAT, it shpuld refuse (providing I put in the condition that node mut not be visited)
  
-  length = db_graph_supernode_for_specific_person_or_pop(test_elem3,max_expected_supernode_length,&db_node_check_status_not_pruned_or_visited,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
-							 seq,nodes_path,orientations_path, labels_path,hash_table, individual_edge_array, 0); //0 because we are looking at person 0 - the only person in the graph
-
-
-  CU_ASSERT(length==0);
-  CU_ASSERT(db_node_check_status(test_elem1, visited));
-  CU_ASSERT(db_node_check_status(test_elem2, visited));
-  CU_ASSERT(db_node_check_status(test_elem3, visited));
-
-
   length = db_graph_supernode_for_specific_person_or_pop(test_elem2,max_expected_supernode_length,&db_node_check_status_not_pruned_or_visited,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 seq,nodes_path,orientations_path, labels_path,hash_table, individual_edge_array, 0); //0 because we are looking at person 0 - the only person in the graph
 
@@ -97,7 +89,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   //>person1_read1
   //AAAAAAAAAAAAAAA
   //>person1_read2
-  //ACGTT     <<<<<<<<<<<<<<<<Note this generates supernode AACGTT due to a hairpin
+  //ACGTT     <<<<<<<<<<<<<<<<Note this generates supernode GACGTT due to a hairpin
   //person 2:
   //>person2_read1
   //GGGGGGGGGGGGGGGGGG
@@ -133,7 +125,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
 
   CU_ASSERT(length==4);
   CU_ASSERT_STRING_EQUAL(seq, "AAAA");
-  CU_ASSERT(db_node_check_status(test_elem1, visited)==true);
+  CU_ASSERT(db_node_check_status(test_elem1, visited)==true); 
   CU_ASSERT(db_node_check_status(test_elem2, none)==true);
   CU_ASSERT(db_node_check_status(test_elem3, none)==true);
   CU_ASSERT(db_node_check_status(test_elem4, none)==true);
@@ -154,7 +146,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   CU_ASSERT(db_node_check_status(test_elem1, none)==true);
   CU_ASSERT(db_node_check_status(test_elem2, visited)==true);
   CU_ASSERT(db_node_check_status(test_elem3, visited)==true);
-  CU_ASSERT(db_node_check_status(test_elem4, visited)==true);
+  CU_ASSERT(db_node_check_status(test_elem4, visited)==true); 
   CU_ASSERT(db_node_check_status(test_elem5, none)==true);
   CU_ASSERT(db_node_check_status(test_elem6, none)==true);
   CU_ASSERT(db_node_check_status(test_elem7, none)==true);
@@ -170,7 +162,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
 							 seq,nodes_path,orientations_path, labels_path,hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
 
   
-  CU_ASSERT(length==0);//because already visited
+  CU_ASSERT(length==0);
 
   CU_ASSERT(db_node_check_status(test_elem1, none)==true);
   CU_ASSERT(db_node_check_status(test_elem2, visited)==true);
@@ -775,6 +767,8 @@ void test_db_graph_make_reference_path_based_sv_calls()
   // 1. NULL test. Load short fake reference, and load a person whose sequence is identical. This should find nothing.
   // ******************************************************************************************************************************
 
+  printf("Start subtest 1\n");
+
   // toy example  - kmer_size=7
   //first set up the hash/graph
   int kmer_size = 7;
@@ -798,7 +792,15 @@ void test_db_graph_make_reference_path_based_sv_calls()
   seq_loaded = load_population_as_fasta("../data/test/pop_graph/two_people_each_with_the_same_read", &bad_reads, hash_table);
 
   //>one read
-  //AATAGACGCCCACACCTGATAGACCCCACAC
+  //AATAGACGCCCACACCTGATAGACCCCACAC 
+
+
+  // The de Bruijn graph of this in 7mers is as follows:
+  // a line of 8 nodes, with a loop of length 16 off the 9th node. ie all nodes have 1-in and 1-out, except the 9th node, CCCACAC, which has 2 ins and 2 outs.
+  // so it's a supernode of length 8, a loop-supernode of length 16,
+
+  // our algorithm should look at the supernode starting with AATAGAC, then the supernode starting at CCCACAC, then stop
+
 
   
   CU_ASSERT(seq_loaded==62);
@@ -810,9 +812,9 @@ void test_db_graph_make_reference_path_based_sv_calls()
       exit(1);
     }
 
-  int min_fiveprime_flank_anchor = 5;
-  int min_threeprime_flank_anchor= 5;
-  int max_anchor_span = 5;
+  int min_fiveprime_flank_anchor = 2;
+  int min_threeprime_flank_anchor= 3;// I want to try to attach anchors, and the supernodes are quite short, so for this test only ask for (ridiculously) small anchors
+  int max_anchor_span = 7;
   int length_of_arrays=14;
   int min_covg =1;
   int max_covg = 10;
@@ -825,11 +827,15 @@ void test_db_graph_make_reference_path_based_sv_calls()
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
 
+  /*
+
+
 
   // ******************************************************************************************************************************
   // 2. Harder NULL test. Reference=an ALU and load a person whose sequence is also that ALU. This should find nothing.
   // ******************************************************************************************************************************
 
+  printf("Start subtest 2\n");
 
 
   kmer_size = 31;
@@ -849,18 +855,16 @@ void test_db_graph_make_reference_path_based_sv_calls()
   //just load one person who's sequence is an Alu. Then take reference which is that same sequence and try to find variants
   seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/just_one_of_the_two_people.txt", &bad_reads, hash_table);
 
-  /*
-    >7SLRNA#SINE/Alu  plus GTTCAGAG at start and GTCAGCGTAG at end
-    GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
-    GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
-    GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
-    CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
-    ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
-    GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
-    AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
+  //   >7SLRNA#SINE/Alu  plus GTTCAGAG at start and GTCAGCGTAG at end
+  //   GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+  //   GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+  //   GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+  //   CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+  //   ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+  //   GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+  //   AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
     
-  */
-  
+   
   
   CU_ASSERT(seq_loaded==339);
   
@@ -873,7 +877,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   min_fiveprime_flank_anchor = 10;
   min_threeprime_flank_anchor= 10;
-  max_anchor_span = 5;
+  max_anchor_span = 50;
   length_of_arrays=100;
   min_covg =1;
   max_covg = 10;
@@ -891,6 +895,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   // 3. Reference = Alu-NNNNN- same Alu, and person is identical to reference. This should find nothing
   // ******************************************************************************************************************************
 
+  printf("Start subtest 3\n");
 
 
   kmer_size = 31;
@@ -909,24 +914,24 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_alu_Ns_then_same_alu", &bad_reads, hash_table);
 
-  /*
-    >7SLRNA#SINE/Alu  
-    GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
-    GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
-    GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
-    CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
-    ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
-    GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
-    AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAGNNNNNNNNNNNNNNNNNNN
-    GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
-    GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
-    GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
-    CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
-    ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
-    GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
-    AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
+  
+  //   >7SLRNA#SINE/Alu  
+  // GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+  // GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+  // GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+  // CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+  // ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+  // GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+  // AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAGNNNNNNNNNNNNNNNNNNN
+  // GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+  // GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+  // GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+  // CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+  // ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+  // GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+  // AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
     
-  */  
+  
   
   CU_ASSERT(seq_loaded==697);
   
@@ -939,7 +944,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   min_fiveprime_flank_anchor = 10;
   min_threeprime_flank_anchor= 10;
-  max_anchor_span = 5;
+  max_anchor_span = 50;
   length_of_arrays=100;
   min_covg =1;
   max_covg = 10;
@@ -956,6 +961,8 @@ void test_db_graph_make_reference_path_based_sv_calls()
   // ******************************************************************************************************************************
   // 4. Reference = 10kb of chromosome 1. Individual is that same sequence. This should find nothing.
   // ******************************************************************************************************************************
+
+  printf("Start subtest 4\n");
 
   kmer_size = 31;
   number_of_bits = 13;
@@ -1001,7 +1008,59 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
 
-  // 4. Simplest genuine test. Short sequence for ref, and individual is identical, except for one base change.
+
+
+  // ***************************************************************************************************************************************************
+  // 5. Reference = Alu-NNNNN- same Alu, and person is identical to reference except for a single base difference. This should find the single variant!
+  // ***************************************************************************************************************************************************
+
+  printf("Start subtest 5\n");
+
+  kmer_size = 31;
+  number_of_bits = 8;
+  bucket_size    = 10;
+  bad_reads = 0;
+  max_retries=10;
+
+  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_alu_Ns_then_same_alu", &bad_reads, hash_table);
+
+  CU_ASSERT(seq_loaded==697);
+  
+  chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fasta");
+      exit(1);
+    }
+
+  min_fiveprime_flank_anchor = 10;
+  min_threeprime_flank_anchor= 10;
+  max_anchor_span =100;
+  length_of_arrays=200;
+  min_covg =1;
+  max_covg = 10;
+  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    length_of_arrays, hash_table, NULL );
+  
+  CU_ASSERT(ret==1);
+  printf("Ret is %d\n", ret);
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+
+*/
+
+
+
 
   // ?. Load 1kb of chrom 1 as reference, and a person whose graph contains a single, long loop, and an AAAAAA loop. Do we get trapped in an infinite loop?
 

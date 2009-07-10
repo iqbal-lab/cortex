@@ -1599,6 +1599,19 @@ boolean db_node_check_status_is_not_exists_in_reference(dBNode * node){
     }
 }
 
+boolean db_node_check_status_is_not_visited(dBNode* node)
+{
+   if (db_node_check_status(node,visited)  )
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
+  
+}
+
 boolean db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(dBNode * node){
   if (db_node_check_status(node,visited_and_exists_in_reference) || db_node_check_status(node,visited)  )
     {

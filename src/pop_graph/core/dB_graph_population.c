@@ -237,7 +237,6 @@ boolean db_graph_detect_perfect_bubble_for_specific_person_or_pop(dBNode * node,
 // limit is the max number of nodes in the supernode. But remember that the first one corresponds to kmer_size bases, while each subsequent
 // one corresponds to an extra base. Therefore:
 //string has to support limit+db_graph->kmer_size+1 (+1 as you need a space for the \0 at the end)
-
 int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit, boolean (*condition)(dBNode * node), void (*node_action)(dBNode * node),
 		       char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
 		       dBGraph * db_graph, EdgeArrayType type, int index){
@@ -1672,9 +1671,13 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int max_anchor_span, int min_covg, int max_covg, 
 						int length_of_arrays, dBGraph* db_graph, FILE* output_file)
 {
+
+
+  printf("\n Start of db_graph_make_reference_path_based_sv_calls. WARNING _ WHAT ABOUT LOOPS?\n\n");   
   
   int num_variants_found=0;
 
+  
   //makes life much simpler to insist the array is even length.
   if (length_of_arrays%2 !=0)
     {
@@ -1682,6 +1685,12 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
       exit(1);
     }
 
+  //insist max_anchor_span=length_of_arrays/2
+  if (max_anchor_span!=length_of_arrays/2)
+    {
+      printf("If calling db_graph_make_reference_path_based_sv_calls, must ave max_anchor span as half of length_of_arrays\n");
+      exit(1);
+    }
 
 
   //prepare arrays. Four will hold 10,000 nodes/orientations/etc, corresponding to the consecutive 10000 bases of the chromosome
@@ -1689,8 +1698,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
   int number_of_nodes_to_load=length_of_arrays/2;
-  //int number_of_nodes_to_load=max_anchor_span/2;//each time you load, you pull in half an array's worth
-  //int length_of_arrays=max_anchor_span;
+
 
 
 
@@ -1753,24 +1761,26 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   //********** end of malloc and initialise ********************
 
 
-  //load
+  printf("initialised vars\n");
+
+  //load a set of nodes into thr back end (right hand/greatest indices) of array
+  // each call   will push left the nodes/etc in the various arrays by length_of_arrays/2=max_anchor_span
+  // and then put the new nodes etc in on the right of that
+
   int ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fasta_fptr, number_of_nodes_to_load, 0, 
 													     length_of_arrays,
 													     chrom_path_array, chrom_orientation_array, chrom_labels, chrom_string,
 													     seq, kmer_window, 
 													     true, false,
 													     db_graph);
+
+  printf("loaded one set of nodes\n");
   if (ret !=number_of_nodes_to_load)
     {
       printf("db_graph_make_reference_path_based_sv_calls failed on loading first batch. Exit. Sequence loaded  is %s, length %d, and we expect it to be length %d\n", seq->seq, ret, number_of_nodes_to_load);
       exit(1);
     }
 
-  char tmp_seqzam[db_graph->kmer_size+1];
-  tmp_seqzam[db_graph->kmer_size]='\0';
-
-  int i;
- 
   //one more batch, then array is full, and ready for the main loop:
   ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fasta_fptr, number_of_nodes_to_load, number_of_nodes_to_load, 
 													 length_of_arrays,
@@ -1784,46 +1794,89 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
       exit(1);
     }
 
+  printf("Loaded 2nd set of nodes\n");
 
 
-  printf("WARNING _ WHAT ABOUT LOOPS?");   
-  
-  //each call   will push left the nodes/etc in the various arrays by max_anchor_span
-  // and then put the ndew nodes etc in on the right of that
-  //TODO - change to do--while?
+
+  printf("Remember max anchor span is %d\n", max_anchor_span);
+  char tmp_zam[db_graph->kmer_size];
+
+
   do
     {
+      printf("Top of do-loop\n");
+
+      printf("Current state of array is\n");
+      int zam;
+      for (zam=0; zam<length_of_arrays; zam++)
+	{
+	  if (chrom_path_array[zam]==NULL)
+	    {
+	      printf("chrom_path_array[%d] is NULL\n", zam);
+	    }
+	  else
+	    {
+	      printf("chrom_path_array[%d] is %s\n", zam, binary_kmer_to_seq(chrom_path_array[zam]->kmer, db_graph->kmer_size, tmp_zam));
+	    }
+	}
+
       int start_node_index=0;//this is a position in chrom_path_array 
 
-      while (start_node_index<=max_anchor_span/2)
+      while (start_node_index<max_anchor_span)
 	{
+	  printf("Top of while loop- start node index is %d\n", start_node_index);
 
 	  //if this chromosome node does not exist in the person's graph, move on to the next node
 	  if (db_node_is_this_node_in_this_person_or_populations_graph(chrom_path_array[start_node_index], which_array_holds_indiv, index_for_indiv_in_edge_array) == false)
 	    {
+	      printf("This node %s is not in this person's graph: start_node_index is %d - move to next\n", binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam), start_node_index);
 	      start_node_index++;
-              break;
+	      continue;
+              //break;
+	    }
+
+	  if (db_node_check_status_visited(chrom_path_array[start_node_index])==true)
+	  {
+	    printf("This node %s is visited: start_node_index is %d - move to next\n", binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam), start_node_index);
+	    start_node_index++;
+	    continue;
+	  }
+	  else
+	    {
+	      printf("This node %s is not visited: start_node_index is %d\n", binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam), start_node_index);
 	    }
 
 	  int index_of_query_node_in_supernode_array=-1;
-	  int length_curr_supernode = db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(chrom_path_array[start_node_index], max_anchor_span, &db_node_condition_always_true, &db_node_action_do_nothing,
-										    supernode_string, current_supernode, curr_sup_orientations, curr_sup_labels, &index_of_query_node_in_supernode_array, db_graph,
-										    which_array_holds_indiv, index_for_indiv_in_edge_array);
+
+	  //sets interior nodes of supernode to visited. Since we may be starting with an interior node, this means we may meet up to 2 other nodes in this supernode as
+	  //we progress, which will not be set to visited - the start and end.
+	  int length_curr_supernode = db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(chrom_path_array[start_node_index], max_anchor_span, 
+													      &db_node_check_status_is_not_visited, &db_node_action_set_status_visited,
+													      supernode_string, current_supernode, curr_sup_orientations, 
+													      curr_sup_labels, &index_of_query_node_in_supernode_array, db_graph,
+													      which_array_holds_indiv, index_for_indiv_in_edge_array);
+
+	  char tmp_seqzam[db_graph->kmer_size];
+	  printf("Start looking at the supernode in indiv nucleated at %s\n Supernode is %s\n", binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_seqzam), supernode_string);
 
 
 	  if (index_of_query_node_in_supernode_array==-1)
 	    {
 	      printf("Warning - red alert!!!  - failed to get index of query\n");
 	      start_node_index++;
-	      break;
+	      continue;
+	      //break;
 	    }
 
-	  //Exclude/ignore hubs and singletons as well as supernodes without enough length to generate our anchors
+	  // Exclude/ignore hubs and singletons as well as supernodes without enough length to generate our anchors
 	  // check if there is room between query node and either end of supernode to fit both anchors
 	  if (length_curr_supernode - index_of_query_node_in_supernode_array < min_fiveprime_flank_anchor+min_threeprime_flank_anchor)
 	    {
+	      printf("Insufficient room on supernode for anchors at start_node_index %d, corresponding to kmer %s . Move to next position\n", start_node_index, 
+		     binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam));
 	      start_node_index++;
-	      break;
+	      //break;
+	      continue;
 	    }
 
 
@@ -1851,7 +1904,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	  //find how far along can go on reference before supernode branches
 	  while ( (chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome]==current_supernode[index_in_supernode_where_supernode_differs_from_chromosome])
 		  && (index_in_supernode_where_supernode_differs_from_chromosome < length_curr_supernode ) && (index_in_supernode_where_supernode_differs_from_chromosome>=0)
-		  && (first_index_in_chrom_where_supernode_differs_from_chromosome<max_anchor_span) 
+		  && (first_index_in_chrom_where_supernode_differs_from_chromosome-start_node_index<max_anchor_span) 
 		  )
 	    {
 	      if (traverse_sup_left_to_right==true)
@@ -1869,24 +1922,27 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	    {
 	      //does not have sufficient 5' anchor
 	      start_node_index=first_index_in_chrom_where_supernode_differs_from_chromosome;
-	      break;
+	      printf("Insufficient space for 5' anchor - move on, and set start_node_index to %d\n", start_node_index);
+	      continue;
+	      //break;
 	    }
-
+	      
 	  //note that we do one last increment/decrement at the end of the previous loop, taking us to the point beyond where they last agree
 	  if (    (index_in_supernode_where_supernode_differs_from_chromosome==length_curr_supernode)
 		  || (index_in_supernode_where_supernode_differs_from_chromosome==-1) 
-	     )
+		  )
 	    {
-	      //then actually the whole supernode matches the reference exactly.
-	      start_node_index = index_in_supernode_where_supernode_differs_from_chromosome+1;
-	      break;
+	      //then actually the whole supernode matches the reference exactly, and first_index_in_chrom_where_supernode_differs_from_chromosome is actually just one base beyond the length of the supernode
+	      start_node_index = first_index_in_chrom_where_supernode_differs_from_chromosome; //zam index_in_supernode_where_supernode_differs_from_chromosome+1;
+	      continue;
+	      //break;
 	    }
-
+	  
 	  //We now have  decent 5-prime anchor, and we know we don't match the ref exactly.
 	  // Now see if the END of the supernode matches anywhere in our current chuk of reference chromosome
-
+	  
 	  int start_of_3prime_anchor_in_sup;
-
+	  
 	  if (traverse_sup_left_to_right==true)
 	    {
 	      start_of_3prime_anchor_in_sup=length_curr_supernode-min_threeprime_flank_anchor ;
@@ -1895,10 +1951,10 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	    {
 	      start_of_3prime_anchor_in_sup = 0 + min_threeprime_flank_anchor;
 	    }
-
+	  
 	  int start_of_3prime_anchor_in_chrom = first_index_in_chrom_where_supernode_differs_from_chromosome+1;
 	  boolean found_other_anchor=false;
-
+	  
 	  //walk along entire chromosome array, and see if can attach the 3prime anchor
 	  // it may attach multiple times, but we will only find the closest
 	  while ( (found_other_anchor==false) && ( start_of_3prime_anchor_in_chrom < max_anchor_span-min_threeprime_flank_anchor))
@@ -1912,7 +1968,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		    {
 		      k=-j;
 		    }
-
+		  
 		  if (chrom_path_array[start_of_3prime_anchor_in_chrom + j] != current_supernode[start_of_3prime_anchor_in_sup + k])
 		    {
 		      potential_anchor=false;
@@ -1921,22 +1977,24 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		    {
 		      found_other_anchor=true;
 		    }
-
+		  
 		}
 	      start_of_3prime_anchor_in_chrom++;
 	    }
-	  
-	  
+	      
+	      
 	  if (found_other_anchor==false)
 	    {
 	      start_node_index++;
-	      break;
+	      continue;
+	      //break;
 	    }
 	  else
 	    {
 	      //we have found a potential SV locus.
+	      printf("We have found potential SV****************\n");
 	      num_variants_found++;
-
+	      
 	      //print reference section
 	      printf("VARIANT, 5' anchor %d, 3' anchor %d, ref branch length %d, individual branch length %d \n", first_index_in_chrom_where_supernode_differs_from_chromosome-start_node_index, min_threeprime_flank_anchor, 
 		     start_of_3prime_anchor_in_chrom-first_index_in_chrom_where_supernode_differs_from_chromosome, abs(start_of_3prime_anchor_in_sup-index_in_supernode_where_supernode_differs_from_chromosome));
@@ -1947,7 +2005,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  printf("%c", chrom_string[k]);
 		}
 	      printf("Supernode\n");
-
+	      
 	      if (traverse_sup_left_to_right==true)
 		{
 		  
@@ -1963,24 +2021,26 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      printf("%c", supernode_string[k]);
 		    }
 		}
-	      
+	     
+	      start_node_index = start_of_3prime_anchor_in_chrom+min_threeprime_flank_anchor+1;
+ 
 	    }
-
+	 
+	  printf("Reached her e- start nod eindex is %d\n", start_node_index);
 	}
 
       
-
     }  while (db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fasta_fptr, number_of_nodes_to_load, number_of_nodes_to_load,
-													       length_of_arrays, 
-													       chrom_path_array, chrom_orientation_array, chrom_labels, chrom_string,
-													       seq, kmer_window, 
-													       false, true, db_graph)>0);
+													   length_of_arrays, 
+													   chrom_path_array, chrom_orientation_array, chrom_labels, chrom_string,
+													   seq, kmer_window, 
+  													   false, true, db_graph)>0);
+													   
 
 
 
 
-
-  return num_variants_found;
+return num_variants_found;
 
 
 }
