@@ -43,6 +43,7 @@ endif
 
 CFLAGS_CUNIT          = -L/homes/zi/bin/lib
 
+CFLAGS_BASIC          = -I$(IDIR_BASIC) 
 CFLAGS_GRAPH          = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_GRAPH) 
 CFLAGS_COUNT_KMERS    = -I$(IDIR_BASIC)  -I$(IDIR_HASH) -I$(IDIR_COUNT_KMERS) 
 CFLAGS_SV_TRIO =   -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_SV_TRIO) -I$(IDIR_POP_GRAPH_CORE)
@@ -59,8 +60,9 @@ CFLAGS_MANY_POP_TESTS =  -I$(IDIR_MANY_POP_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH
 
 # Shared objects for all binaries using single colour graphs defined by element in src/graph/. Objects in /homes/zi/tmp/obj/basic can be shared by all targets. Other objects must go in target specific obj-hierarchy
 
+COUNT_OBJ      = obj/basic/binary_kmer.o obj/basic/seq.o obj/count_kmers/element.o obj/count_kmers/hash_table/hash_key/bob_jenkins/hash_value.o obj/count_kmers/hash_table/open_hash/hash_table.o obj/count_kmers/count_kmers.o
 
-GRAPH_OBJ      = obj/basic/binary_kmer.o obj/basic/seq.o obj/graph/element.o  obj/graph/hash_table/hash_key/bob_jenkins/hash_value.o obj/graph/hash_table/open_hash/hash_table.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/cyclic_count.o
+GRAPH_OBJ      = obj/basic/binary_kmer.o obj/basic/seq.o obj/graph/element.o obj/graph/hash_table/hash_key/bob_jenkins/hash_value.o obj/graph/hash_table/open_hash/hash_table.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/graph/cyclic_count.o
 
 SV_TRIO_OBJ = obj/pop_graph/sv_trio/graph.o obj/pop_graph/sv_trio/binary_kmer.o obj/pop_graph/sv_trio/element.o obj/pop_graph/sv_trio/seq.o obj/pop_graph/sv_trio/hash_value.o obj/pop_graph/sv_trio/hash_table.o obj/pop_graph/sv_trio/dB_graph.o obj/pop_graph/sv_trio/file_reader.o  obj/pop_graph/sv_trio/dB_graph_population.o obj/pop_graph/sv_trio/pqueue_pop.o 
 #obj/pop_graph/sv_trio/clipping_trio.o
@@ -74,6 +76,8 @@ GRAPH_TESTS_OBJ = obj/basic/binary_kmer.o  obj/basic/seq.o obj/graph/element.o o
 SV_TRIO_TESTS_OBJ = obj/test/pop_graph/sv_trio/test_file_reader.o obj/test/pop_graph/sv_trio/test_pop_load_and_print.o obj/test/pop_graph/sv_trio/run_sv_trio_tests.o obj/test/pop_graph/sv_trio/supernode_cmp.o obj/test/pop_graph/sv_trio/test_pop_supernode_consensus.o obj/test/pop_graph/sv_trio/test_pop_element.o  obj/test/pop_graph/sv_trio/test_dB_graph_population.o obj/pop_graph/sv_trio/binary_kmer.o obj/pop_graph/sv_trio/element.o obj/pop_graph/sv_trio/seq.o obj/pop_graph/sv_trio/hash_value.o obj/pop_graph/sv_trio/hash_table.o obj/pop_graph/sv_trio/dB_graph.o obj/pop_graph/sv_trio/file_reader.o  obj/pop_graph/sv_trio/dB_graph_population.o
 
 
+count_kmers: $(COUNT_OBJ) 
+	mkdir -p $(BIN); $(CC) $(OPT) -o $(BIN)/count_kmers $(COUNT_OBJ)
 
 graph_dump : $(GRAPH_OBJ) obj/graph/graph_dump.o
 	mkdir -p $(BIN); $(CC) $(OPT) -o $(BIN)/graph_dump $(GRAPH_OBJ) obj/graph/graph_dump.o
@@ -100,7 +104,10 @@ run_sv_trio_tests : $(SV_TRIO_TESTS_OBJ)
 #pattern rules
 
 obj/basic/%.o : basic/%.c 
-	mkdir -p obj/basic/; $(CC) $(CFLAGS_GRAPH) $(OPT) -c $? -o $@
+	mkdir -p obj/basic/; $(CC) $(CFLAGS_BASIC) $(OPT) -c $? -o $@
+
+obj/count_kmers/%.o : count_kmers/%.c 
+	mkdir -p obj/count_kmers/; $(CC) $(CFLAGS_COUNT_KMERS) $(OPT) -c $? -o $@
 
 obj/test/basic/%.o :  test/basic/%.c 
 	mkdir -p obj/test/basic; $(CC) $(CFLAGS_GRAPH) $(CFLAGS_BASIC_TESTS) $(OPT) -c $? -o $@
@@ -110,6 +117,12 @@ obj/graph/hash_table/open_hash/%.o : hash_table/open_hash/%.c
 
 obj/graph/hash_table/hash_key/bob_jenkins/%.o : hash_table/hash_key/bob_jenkins/%.c
 	mkdir -p obj/graph/hash_table/hash_key/bob_jenkins; $(CC) $(CFLAGS_GRAPH) $(OPT)  -c $? -o $@
+
+obj/count_kmers/hash_table/open_hash/%.o : hash_table/open_hash/%.c 
+	mkdir -p obj/count_kmers/hash_table/open_hash; $(CC) $(CFLAGS_COUNT_KMERS) $(OPT)  -c $? -o $@
+
+obj/count_kmers/hash_table/hash_key/bob_jenkins/%.o : hash_table/hash_key/bob_jenkins/%.c
+	mkdir -p obj/count_kmers/hash_table/hash_key/bob_jenkins; $(CC) $(CFLAGS_COUNT_KMERS) $(OPT)  -c $? -o $@
 
 obj/graph/hash_table/hash_key/crc32/%.o : hash_table/hash_key/crc32/%.c
 	mkdir -p obj/graph/hash_table/hash_key/crc32; $(CC) $(CFLAGS_GRAPH) $(OPT) -c $? -o $@
