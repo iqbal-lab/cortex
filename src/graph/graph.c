@@ -254,6 +254,20 @@ int main(int argc, char **argv){
     //           - or to visited_and_exists_in_reference
     hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
 
+
+  case 17:
+    min_covg=2; //demand coverage of at least 2
+    read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/split/clean/Homo_sapiens.NCBI36.52.dna.chromosome.c6_COX.fa.short_reads" , db_graph);
+    printf("Loaded chromosome c6 COX\n");
+
+    //    printf("Start printing supernodes that match C6 COX exactly\n");
+    //db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference,min_covg, stdout, false, NULL, 0);
+    printf("STart printing supernodes that match C6 COX at start and end but not middle\n");
+    db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, minimum_covg,
+                                                                                                      2,25,1, stdout, false,NULL,0);//2,25 are required numbers of overlapping nodes with ref at start and end, 1 is min nuber of nodes not in the reference
+    hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); //cleanup - the printing process has set all printed nodes to visited
+    printf("Finished\n");
+
   }
 
   return 0;

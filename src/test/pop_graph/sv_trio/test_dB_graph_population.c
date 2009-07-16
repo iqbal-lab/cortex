@@ -15,6 +15,9 @@
 void test_db_graph_supernode_for_specific_person_or_pop()
 {
 
+
+  printf("START OF TEST ZAM\n\n\n\n\n");
+
  //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 8;
@@ -22,6 +25,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   long long bad_reads = 0;
   int max_retries=10;
 
+  
   dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
   int seq_loaded = load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end", &bad_reads, hash_table);
   CU_ASSERT(seq_loaded==13);
@@ -51,12 +55,37 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   CU_ASSERT(db_node_check_status(test_elem1,none));
   CU_ASSERT(db_node_check_status(test_elem2,none));
   CU_ASSERT(db_node_check_status(test_elem3,none));
-  
-  int length = db_graph_supernode_for_specific_person_or_pop(test_elem1,max_expected_supernode_length,&db_node_check_status_not_pruned_or_visited,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
-							     seq,nodes_path,orientations_path, labels_path,hash_table, individual_edge_array, 0); //0 because we are looking at person 0 - the only person in the graph
 
-  CU_ASSERT(length==5);
-  CU_ASSERT_STRING_EQUAL(seq, "ACATT");
+  //coverage variables
+  double avg_coverage=0;
+  int max_coverage=0;
+  int min_coverage=0;
+  boolean is_cycle=false;
+
+
+
+
+  int length = db_graph_supernode_for_specific_person_or_pop(test_elem1,max_expected_supernode_length, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+							     nodes_path,orientations_path, labels_path, seq,
+							     &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
+							     hash_table, individual_edge_array, 0); //0 because we are looking at person 0 - the only person in the graph
+
+  CU_ASSERT(length==2);
+  CU_ASSERT(avg_coverage==1);
+  CU_ASSERT(min_coverage==1);
+  CU_ASSERT(max_coverage==1); //remember coverage only measured on internal nodes of a supernode.
+  CU_ASSERT(is_cycle==false);
+
+  CU_ASSERT_STRING_EQUAL(seq, "TT"); //does not put initial kmer "ACA" into the string, just the edges
+  CU_ASSERT(nodes_path[0]==test_elem1);
+  CU_ASSERT(nodes_path[1]==test_elem2);
+  CU_ASSERT(nodes_path[2]==test_elem3);
+  CU_ASSERT(orientations_path[0]==forward);
+  CU_ASSERT(orientations_path[1]==reverse);
+  CU_ASSERT(orientations_path[2]==reverse);
+  CU_ASSERT(labels_path[0]==Thymine);
+  CU_ASSERT(labels_path[1]==Thymine);
+	     
   CU_ASSERT(db_node_check_status(test_elem1, visited));
   CU_ASSERT(db_node_check_status(test_elem2, visited));
   CU_ASSERT(db_node_check_status(test_elem3, visited));
@@ -64,16 +93,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
 
 
 
-  //having done this, if I try to print the supernode for CAT, it shpuld refuse (providing I put in the condition that node mut not be visited)
- 
-  length = db_graph_supernode_for_specific_person_or_pop(test_elem2,max_expected_supernode_length,&db_node_check_status_not_pruned_or_visited,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
-							 seq,nodes_path,orientations_path, labels_path,hash_table, individual_edge_array, 0); //0 because we are looking at person 0 - the only person in the graph
 
-
-  CU_ASSERT(length==0);
-  CU_ASSERT(db_node_check_status(test_elem1, visited));
-  CU_ASSERT(db_node_check_status(test_elem2, visited));
-  CU_ASSERT(db_node_check_status(test_elem3, visited));
 
 
   hash_table_free(&hash_table);
@@ -89,19 +109,21 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   //>person1_read1
   //AAAAAAAAAAAAAAA
   //>person1_read2
-  //ACGTT     <<<<<<<<<<<<<<<<Note this generates supernode GACGTT due to a hairpin
+  //ACGTT     <<<<<<<<<<<<<<<<Note this generates supernode (AAC)GTT due to a hairpin
   //person 2:
   //>person2_read1
   //GGGGGGGGGGGGGGGGGG
   //>person2_read2
-  //TTGACG
+  //TTGACG   <<<<<<<<<<<<<<<< Also has a hairpin
 
   test_elem1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAA", kmer_size),kmer_size), hash_table);
   test_elem2 = hash_table_find(element_get_key(seq_to_binary_kmer("ACG", kmer_size),kmer_size), hash_table);
   test_elem3 = hash_table_find(element_get_key(seq_to_binary_kmer("CGT", kmer_size),kmer_size), hash_table);
   dBNode* test_elem4 = hash_table_find(element_get_key(seq_to_binary_kmer("GTT", kmer_size),kmer_size), hash_table);
   dBNode* test_elem5 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size),kmer_size), hash_table);
+
   dBNode* test_elem6 = hash_table_find(element_get_key(seq_to_binary_kmer("TTG", kmer_size),kmer_size), hash_table);
+
   dBNode* test_elem7 = hash_table_find(element_get_key(seq_to_binary_kmer("TGA", kmer_size),kmer_size), hash_table);
   dBNode* test_elem8 = hash_table_find(element_get_key(seq_to_binary_kmer("GAC", kmer_size),kmer_size), hash_table);
   dBNode* test_elem9 = hash_table_find(element_get_key(seq_to_binary_kmer("ACG", kmer_size),kmer_size), hash_table);
@@ -118,13 +140,33 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   CU_ASSERT(!(test_elem9 == NULL));
 
 
+  avg_coverage=0;
+  min_coverage=0;
+  max_coverage=0;
+  is_cycle=false;
 
-  length = db_graph_supernode_for_specific_person_or_pop(test_elem1,max_expected_supernode_length,&db_node_check_status_not_pruned_or_visited,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
-							 seq,nodes_path,orientations_path, labels_path,hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
 
 
-  CU_ASSERT(length==4);
-  CU_ASSERT_STRING_EQUAL(seq, "AAAA");
+
+  length = db_graph_supernode_for_specific_person_or_pop(test_elem1,max_expected_supernode_length, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+							 nodes_path,orientations_path, labels_path, seq,
+							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
+							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
+
+
+  CU_ASSERT(length==1); //just one edge - self loop
+  CU_ASSERT_STRING_EQUAL(seq, "A");
+  CU_ASSERT(nodes_path[0]==test_elem1);
+  CU_ASSERT(nodes_path[1]==test_elem1);
+  CU_ASSERT(orientations_path[0]==forward);
+  CU_ASSERT(orientations_path[1]==forward);
+  CU_ASSERT(labels_path[0]==Adenine);
+
+  CU_ASSERT(avg_coverage==0);
+  CU_ASSERT(min_coverage==0);
+  CU_ASSERT(max_coverage==0);//there are not interior nodes of supernode
+  CU_ASSERT(is_cycle==true);
+
   CU_ASSERT(db_node_check_status(test_elem1, visited)==true); 
   CU_ASSERT(db_node_check_status(test_elem2, none)==true);
   CU_ASSERT(db_node_check_status(test_elem3, none)==true);
@@ -134,15 +176,40 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   CU_ASSERT(db_node_check_status(test_elem7, none)==true);
   CU_ASSERT(db_node_check_status(test_elem8, none)==true);
   CU_ASSERT(db_node_check_status(test_elem9, none)==true);
+
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
   CU_ASSERT(db_node_check_status(test_elem1, none)==true);
 
-  length = db_graph_supernode_for_specific_person_or_pop(test_elem2,max_expected_supernode_length,&db_node_check_status_not_pruned_or_visited,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
-							 seq,nodes_path,orientations_path, labels_path,hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
+
+  avg_coverage=0;
+  min_coverage=0;
+  max_coverage=0;
+  is_cycle=false;
+
+  length = db_graph_supernode_for_specific_person_or_pop(test_elem2,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+							 nodes_path,orientations_path, labels_path, seq,
+							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
+							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
 
 
-  CU_ASSERT(length==6);
-  CU_ASSERT_STRING_EQUAL(seq, "AACGTT");
+  CU_ASSERT(length==3);
+  CU_ASSERT_STRING_EQUAL(seq, "GTT");
+  CU_ASSERT(nodes_path[0]==test_elem4);
+  CU_ASSERT(nodes_path[1]==test_elem2);
+  CU_ASSERT(nodes_path[2]==test_elem2);//hairpin!
+  CU_ASSERT(nodes_path[3]==test_elem4);
+  CU_ASSERT(orientations_path[0]==forward);
+  CU_ASSERT(orientations_path[1]==forward);
+  CU_ASSERT(orientations_path[2]==reverse);
+  CU_ASSERT(orientations_path[3]==reverse);
+  CU_ASSERT(labels_path[0]==Guanine);
+  CU_ASSERT(labels_path[1]==Thymine);
+  CU_ASSERT(labels_path[2]==Thymine);
+  CU_ASSERT(avg_coverage==2);
+  CU_ASSERT(min_coverage==2);
+  CU_ASSERT(max_coverage==2);//note that the single interior node ALSO exists in the graph of person2, but that should not incrememtn this coverage to 3.
+  CU_ASSERT(is_cycle==false);
+  
   CU_ASSERT(db_node_check_status(test_elem1, none)==true);
   CU_ASSERT(db_node_check_status(test_elem2, visited)==true);
   CU_ASSERT(db_node_check_status(test_elem3, visited)==true);
@@ -153,33 +220,103 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   CU_ASSERT(db_node_check_status(test_elem8, none)==true);
   CU_ASSERT(db_node_check_status(test_elem9, visited)==true);
 
-  length = db_graph_supernode_for_specific_person_or_pop(test_elem3,max_expected_supernode_length,&db_node_check_status_not_pruned_or_visited,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
-							 seq,nodes_path,orientations_path, labels_path,hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
-
   
-  CU_ASSERT(length==0);//because was already visited
-  length = db_graph_supernode_for_specific_person_or_pop(test_elem4,max_expected_supernode_length,&db_node_check_status_not_pruned_or_visited,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
-							 seq,nodes_path,orientations_path, labels_path,hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
+  //now try again with a different initial node within the same supernode. Should return the same as before.
+  //In general it doesn't guarantee to trvaerse the supernode in the same direction; we know which was it will go however
 
+  avg_coverage=0;
+  min_coverage=0;
+  max_coverage=0;
+  is_cycle=false;
+
+  length = db_graph_supernode_for_specific_person_or_pop(test_elem3,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+							 nodes_path,orientations_path, labels_path, seq,
+							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
+							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
   
-  CU_ASSERT(length==0);
 
+  CU_ASSERT(length==3);
+  CU_ASSERT_STRING_EQUAL(seq, "GTT");
+  CU_ASSERT(nodes_path[0]==test_elem4);
+  CU_ASSERT(nodes_path[1]==test_elem2);
+  CU_ASSERT(nodes_path[2]==test_elem2);//hairpin!
+  CU_ASSERT(nodes_path[3]==test_elem4);
+  CU_ASSERT(orientations_path[0]==forward);
+  CU_ASSERT(orientations_path[1]==forward);
+  CU_ASSERT(orientations_path[2]==reverse);
+  CU_ASSERT(orientations_path[3]==reverse);
+  CU_ASSERT(labels_path[0]==Guanine);
+  CU_ASSERT(labels_path[1]==Thymine);
+  CU_ASSERT(labels_path[2]==Thymine);
+  CU_ASSERT(avg_coverage==2);
+  CU_ASSERT(min_coverage==2);
+  CU_ASSERT(max_coverage==2);//note that the single interior node ALSO exists in the graph of person2, but that should not incrememtn this coverage to 3.
+  CU_ASSERT(is_cycle==false);
+  
   CU_ASSERT(db_node_check_status(test_elem1, none)==true);
   CU_ASSERT(db_node_check_status(test_elem2, visited)==true);
   CU_ASSERT(db_node_check_status(test_elem3, visited)==true);
-  CU_ASSERT(db_node_check_status(test_elem4, visited)==true);
+  CU_ASSERT(db_node_check_status(test_elem4, visited)==true); 
   CU_ASSERT(db_node_check_status(test_elem5, none)==true);
   CU_ASSERT(db_node_check_status(test_elem6, none)==true);
   CU_ASSERT(db_node_check_status(test_elem7, none)==true);
   CU_ASSERT(db_node_check_status(test_elem8, none)==true);
   CU_ASSERT(db_node_check_status(test_elem9, visited)==true);
 
-  length = db_graph_supernode_for_specific_person_or_pop(test_elem6,max_expected_supernode_length,&db_node_check_status_not_pruned_or_visited,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
-							 seq,nodes_path,orientations_path, labels_path,hash_table, individual_edge_array, 1); //person 1 int his array is person in person2.fasta - sorry, offset by 1
 
+
+
+  length = db_graph_supernode_for_specific_person_or_pop(test_elem4,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+							 nodes_path,orientations_path, labels_path, seq,
+							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
+							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
   
-  CU_ASSERT(length==6);
-  CU_ASSERT_STRING_EQUAL(seq, "CGTCAA");  
+  
+  CU_ASSERT(length==3);
+  CU_ASSERT_STRING_EQUAL(seq, "GTT");
+  CU_ASSERT(nodes_path[0]==test_elem4);
+  CU_ASSERT(nodes_path[1]==test_elem2);
+  CU_ASSERT(nodes_path[2]==test_elem2);//hairpin!
+  CU_ASSERT(nodes_path[3]==test_elem4);
+  CU_ASSERT(orientations_path[0]==forward);
+  CU_ASSERT(orientations_path[1]==forward);
+  CU_ASSERT(orientations_path[2]==reverse);
+  CU_ASSERT(orientations_path[3]==reverse);
+  CU_ASSERT(labels_path[0]==Guanine);
+  CU_ASSERT(labels_path[1]==Thymine);
+  CU_ASSERT(labels_path[2]==Thymine);
+  CU_ASSERT(avg_coverage==2);
+  CU_ASSERT(min_coverage==2);
+  CU_ASSERT(max_coverage==2);//note that the single interior node ALSO exists in the graph of person2, but that should not incrememtn this coverage to 3.
+  CU_ASSERT(is_cycle==false);
+  
+  CU_ASSERT(db_node_check_status(test_elem1, none)==true);
+  CU_ASSERT(db_node_check_status(test_elem2, visited)==true);
+  CU_ASSERT(db_node_check_status(test_elem3, visited)==true);
+  CU_ASSERT(db_node_check_status(test_elem4, visited)==true); 
+  CU_ASSERT(db_node_check_status(test_elem5, none)==true);
+  CU_ASSERT(db_node_check_status(test_elem6, none)==true);
+  CU_ASSERT(db_node_check_status(test_elem7, none)==true);
+  CU_ASSERT(db_node_check_status(test_elem8, none)==true);
+  CU_ASSERT(db_node_check_status(test_elem9, visited)==true);
+
+
+
+  //and now a trap! This node is not there in person 1, but is in person 2
+  length = db_graph_supernode_for_specific_person_or_pop(test_elem6,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+							 nodes_path,orientations_path, labels_path, seq,
+							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
+							 hash_table, individual_edge_array, 0);   
+  CU_ASSERT(length==0);
+
+
+
+  length = db_graph_supernode_for_specific_person_or_pop(test_elem6,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+							 nodes_path,orientations_path, labels_path, seq,
+							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
+							 hash_table, individual_edge_array, 1); 
+  CU_ASSERT(length==3);
+  CU_ASSERT_STRING_EQUAL(seq, "CAA");  
 
 
   
@@ -763,6 +900,14 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
 void test_db_graph_make_reference_path_based_sv_calls()
 {
 
+
+  //A fundamental assumption in our implementation is that the fasta whose path you are following is long, much longer than the longest supernode
+  // you are going to find. This is fine when running using reference chromosomes. However in tests, this is a pain, and so I am using fasta's for these tests
+  // that are padded at the end with N's.
+
+
+
+
   // ******************************************************************************************************************************
   // 1. NULL test. Load short fake reference, and load a person whose sequence is identical. This should find nothing.
   // ******************************************************************************************************************************
@@ -785,11 +930,9 @@ void test_db_graph_make_reference_path_based_sv_calls()
     }
   long long seq_loaded=0;
 
-  //loads two people into individual_edge_array, with identical fasta containing one read of length 31 bases.
-  //notionally, one of these people is the reference. We will never use this person/references set of edges except 
-  // when we go through their fasta again, and do hash)table_find for each kmer we find in the fasta, in order, and generate an array of nodes etc.
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/two_people_each_with_the_same_read", &bad_reads, hash_table);
+  
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/one_person_with_Ns_on_end", &bad_reads, hash_table);
 
   //>one read
   //AATAGACGCCCACACCTGATAGACCCCACAC 
@@ -803,36 +946,41 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
   
-  CU_ASSERT(seq_loaded==62);
-  
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/second_person_with_same_read.fasta", "r");
+  CU_ASSERT(seq_loaded==1462);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fasta", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ./data/test/pop_graph/second_person_with_same_read.fasta\n");
+      printf("Cannot open ./data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fasta\n");
       exit(1);
     }
 
   int min_fiveprime_flank_anchor = 2;
   int min_threeprime_flank_anchor= 3;// I want to try to attach anchors, and the supernodes are quite short, so for this test only ask for (ridiculously) small anchors
-  int max_anchor_span = 7;
-  int length_of_arrays=14;
+  int max_anchor_span = 20;
+  int length_of_arrays=40;
   int min_covg =1;
   int max_covg = 10;
+  int max_expected_size_of_supernode=20;
+
+  int ret;
+  /*
   int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-							length_of_arrays, hash_table, NULL );
+							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
 
   CU_ASSERT(ret==0);
 
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
 
-  /*
 
 
 
   // ******************************************************************************************************************************
   // 2. Harder NULL test. Reference=an ALU and load a person whose sequence is also that ALU. This should find nothing.
+  //     Our implementation of db_graph_make_reference_path_based_sv_calls assumes we have a very large ref fasta, so we load big arrays of bases
+  //     which are much longer than we expect any of the supernodes to be. In this case, we know the supernode is as long as the Alu.  
   // ******************************************************************************************************************************
 
   printf("Start subtest 2\n");
@@ -863,10 +1011,10 @@ void test_db_graph_make_reference_path_based_sv_calls()
   //   ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
   //   GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
   //   AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
-    
+  // plus loads of N's on end
    
   
-  CU_ASSERT(seq_loaded==339);
+  CU_ASSERT(seq_loaded==5158);
   
   chrom_fptr = fopen("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fasta", "r");
   if (chrom_fptr==NULL)
@@ -877,18 +1025,20 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   min_fiveprime_flank_anchor = 10;
   min_threeprime_flank_anchor= 10;
-  max_anchor_span = 50;
-  length_of_arrays=100;
+  max_anchor_span = 210;
+  length_of_arrays=420;
   min_covg =1;
   max_covg = 10;
+  max_expected_size_of_supernode=400;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    length_of_arrays, hash_table, NULL );
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
   
   CU_ASSERT(ret==0);
 
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
+
 
 
   // ******************************************************************************************************************************
@@ -944,18 +1094,20 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   min_fiveprime_flank_anchor = 10;
   min_threeprime_flank_anchor= 10;
-  max_anchor_span = 50;
-  length_of_arrays=100;
+  max_anchor_span = 370;
+  length_of_arrays= 740;
   min_covg =1;
   max_covg = 10;
+  max_expected_size_of_supernode=700;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    length_of_arrays, hash_table, NULL );
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
   
   CU_ASSERT(ret==0);
 
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
+
 
 
   // ******************************************************************************************************************************
@@ -996,12 +1148,65 @@ void test_db_graph_make_reference_path_based_sv_calls()
   length_of_arrays=2000;
   min_covg =1;
   max_covg = 10;
+  max_expected_size_of_supernode=10000;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    length_of_arrays, hash_table, NULL );
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
   
   CU_ASSERT(ret==0);
 
+  */
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+
+  // ***************************************************************************************************************************************************
+  // 5. Reference  = shrt sequence, individual is idential except for one base change
+  // ***************************************************************************************************************************************************
+
+
+
+  printf("Start subtest 5\n");
+
+  kmer_size = 7;
+  number_of_bits = 8;
+  bucket_size    = 10;
+  bad_reads = 0;
+  max_retries=10;
+
+  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_short_seq_with_one_base_difference", &bad_reads, hash_table);
+
+  CU_ASSERT(seq_loaded==172);
+  
+  chrom_fptr = fopen("../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fasta");
+      exit(1);
+    }
+
+  min_fiveprime_flank_anchor = 5;
+  min_threeprime_flank_anchor= 5;
+  max_anchor_span =40;
+  length_of_arrays=80;
+  min_covg =1;
+  max_covg = 10;
+  max_expected_size_of_supernode=40;
+  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
+  
+  CU_ASSERT(ret==1);
+  printf("Ret is %d\n", ret);
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
 
@@ -1010,8 +1215,11 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
 
+  /*
+
+
   // ***************************************************************************************************************************************************
-  // 5. Reference = Alu-NNNNN- same Alu, and person is identical to reference except for a single base difference. This should find the single variant!
+  // 6. Reference = Alu-NNNNN- same Alu, and person is identical to reference except for a single base difference. This should find the single variant!
   // ***************************************************************************************************************************************************
 
   printf("Start subtest 5\n");
@@ -1030,7 +1238,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
     }
   seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_alu_Ns_then_same_alu", &bad_reads, hash_table);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_both_alu_Ns_alu_with_one_base_difference", &bad_reads, hash_table);
 
   CU_ASSERT(seq_loaded==697);
   
@@ -1047,9 +1255,10 @@ void test_db_graph_make_reference_path_based_sv_calls()
   length_of_arrays=200;
   min_covg =1;
   max_covg = 10;
+  max_expected_size_of_supernode=2000;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    length_of_arrays, hash_table, NULL );
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
   
   CU_ASSERT(ret==1);
   printf("Ret is %d\n", ret);
@@ -1057,8 +1266,8 @@ void test_db_graph_make_reference_path_based_sv_calls()
   fclose(chrom_fptr);
 
 
-*/
 
+  */
 
 
 
