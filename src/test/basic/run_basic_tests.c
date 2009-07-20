@@ -1,3 +1,4 @@
+
 #include <test_binary_kmer.h>
 #include <test_seq.h>
 #include <CUnit.h>
@@ -61,10 +62,15 @@ int  main()
     return CU_get_error();
   }
 
- if (NULL == CU_add_test(pSuite, "test reverse complement", test_binary_kmer_reverse_complement)) {
+ if (NULL == CU_add_test(pSuite, "test binary kmer reverse complement", test_binary_kmer_reverse_complement)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
+
+ if (NULL == CU_add_test(pSuite, "test seq reverse complement", test_seq_reverse_complement)) {
+   CU_cleanup_registry();
+   return CU_get_error();
+ }
 
  if (NULL == CU_add_test(pSuite, "test nucleotide iterator", test_binary_kmer_nucleotide_iterator)) {
     CU_cleanup_registry();

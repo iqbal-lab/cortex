@@ -12,6 +12,20 @@
 #include <string.h>
 #include <limits.h>
 
+void print_fasta_from_path(FILE *fout,
+			   char * name,
+			   int length,
+			   double avg_coverage,
+			   int min_coverage,
+			   int max_coverage,
+			   dBNode * fst_node,
+			   Orientation fst_orientation,
+			   dBNode * lst_node,
+			   Orientation lst_orientation,
+			   char * string, //labels of paths
+			   int kmer_size,
+			   boolean include_first_kmer);
+
 //it doesn't check that it is a valid arrow -- it just assumes the arrows is fine
 dBNode * db_graph_get_next_node(dBNode * current_node, Orientation current_orientation, 
 			       Orientation * next_orientation,
@@ -226,7 +240,7 @@ boolean db_graph_db_node_prune_low_coverage(dBNode * node, int coverage,
 }
 
 
-// computes a perferct path starting from a node and an edge
+// computes a perfect path starting from a node and an edge
 // ie the starting node can have  multiple exits
 // perfect path -- no conflict no cycle -- returns length
 // path: node_0 edge_0 node_1 edge_1 ... node_n-1 edge_n-1 node_n
@@ -236,6 +250,7 @@ boolean db_graph_db_node_prune_low_coverage(dBNode * node, int coverage,
 // node_action only applied to internal nodes (not node_0 and node_n)
 // seq is a string with all the labels concatenated (NB: it doesn't contain the kmer in the first node)
 // avg_coverage, min_coverge, max_coverge -> refers to the internal nodes only
+// returns length of the path (as number of labels)
 
 int db_graph_get_perfect_path_with_first_edge(dBNode * node, Orientation orientation, int limit, 
 					      Nucleotide fst_nucleotide,
@@ -392,65 +407,104 @@ int db_graph_get_perfect_path(dBNode * node, Orientation orientation, int limit,
 
 // a bubble starts in a node with only two outgoing edges in the same orientation
 // every branch of the bubble is free of conflicts until it joins with the main branch
-// the differente between the length of the branches is <= delta
+// the algorithms works by trying to find supernodes for all possible edges in the given orientation.
+// the action is applied to all the internal nodes in the supernodes (even if they don't form a bubble).
+// at the moment returns only one bubble, notice that potentially there could be situations where a node forms two bubbles (something to implement). 
 
 boolean db_graph_detect_bubble(dBNode * node,
 			       Orientation orientation,
-			       int limit, int delta,
+			       int limit,
 			       void (*node_action)(dBNode * node), 
-			       int * length1, Nucleotide * base1, dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,char * seq1,
-			       int * length2, Nucleotide * base2, dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,char * seq2,
+			       int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,
+			       char * seq1, double * avg_coverage1, int * min_coverage1, int * max_coverage1,
+			       int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,
+			       char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
 			       dBGraph * db_graph){
 
   
-
   
-  dBNode * next_node1;
-  dBNode * next_node2;
-  Orientation next_orientation1, next_orientation2;
-  Nucleotide rev_base1, rev_base2;
-  boolean is_cycle1, is_cycle2;
   boolean ret = false;
+  
+  dBNode * path_nodes[4][limit+1];
+  Orientation path_orientations[4][limit+1];
+  Nucleotide path_labels[4][limit];
+  char seq[4][limit+1];
+  double avg_coverage[4];
+  int min_coverage[4];
+  int max_coverage[4];
+  int lengths[4];
+  int i=0;
+  
+  void check_nucleotide(Nucleotide n){
 
-  
-  if (db_node_has_precisely_two_edges(node,orientation,base1,base2)){
-  
-    next_node1 = db_graph_get_next_node(node,orientation,&next_orientation1,*base1,&rev_base1,db_graph);
-    next_node2 = db_graph_get_next_node(node,orientation,&next_orientation2,*base2,&rev_base2,db_graph);
-    
-  
-    if (next_node1 == NULL || next_node2 == NULL){
-      puts("error!");
-      exit(1);
+    boolean is_cycle;      
+    if (db_node_edge_exist(node,n,orientation)){
+	lengths[i] = db_graph_get_perfect_path_with_first_edge(node,orientation,
+							       limit,n,
+							       node_action,
+							       path_nodes[i],path_orientations[i],path_labels[i],
+							       seq[i],&avg_coverage[i],&min_coverage[i],&max_coverage[i],
+							       &is_cycle,db_graph);
+	
+	i++;
     }
-    
-    double avg_coverage;
-    int min_coverage;
-    int max_coverage;
-    
-    *length1  = db_graph_get_perfect_path(next_node1,next_orientation1,
-					  limit,node_action,
-					  path_nodes1,path_orientations1,path_labels1,
-					  seq1,&avg_coverage,&min_coverage,&max_coverage,
-					  &is_cycle1,db_graph);
-
-   
-    *length2  = db_graph_get_perfect_path(next_node2,next_orientation2,
-					  limit,node_action,
-					  path_nodes2,path_orientations2,path_labels2,
-					  seq2,&avg_coverage,&min_coverage,&max_coverage,
-					  &is_cycle2,db_graph);
-  
-
-    //action to the begining and end of branches
-    node_action(next_node1);
-    node_action(next_node2);
-    node_action(path_nodes1[*length1]);
-    node_action(path_nodes2[*length2]);
-
-    ret = (abs(*length1-*length2)<=delta && 
-	   path_nodes1[*length1] == path_nodes2[*length2]);
   }
+  
+  
+  nucleotide_iterator(check_nucleotide);
+ 
+  int j = 0;
+  int k = 0;
+
+  while (!ret && j<i){
+    k = j+1;
+    while (!ret && k<i){
+      
+      if (path_nodes[j][lengths[j]] == path_nodes[k][lengths[k]]){
+	*length1 = lengths[j];
+	*length2 = lengths[k];
+
+	*avg_coverage1 = avg_coverage[j];
+	*avg_coverage2 = avg_coverage[k];
+	
+	*min_coverage1 = min_coverage[j];
+	*min_coverage2 = min_coverage[k];
+		
+	*max_coverage1 = max_coverage[j];
+	*max_coverage2 = max_coverage[k];
+	  
+	int l;
+	for(l=0;l<lengths[j]; l++){
+	  path_nodes1[l] = path_nodes[j][l];
+	  path_orientations1[l] = path_orientations[j][l];
+	  path_labels1[l] = path_labels[j][l];
+	  seq1[l] = seq[j][l];
+	}
+	path_nodes1[lengths[j]] = path_nodes[j][lengths[j]];
+	path_orientations1[lengths[j]] = path_orientations[j][lengths[j]];
+	seq1[lengths[j]] = seq[j][lengths[j]];
+
+	for(l=0;l<lengths[k]; l++){
+	  path_nodes2[l] = path_nodes[k][l];
+	  path_orientations2[l] = path_orientations[k][l];
+	  path_labels2[l] = path_labels[k][l];
+	  seq2[l] = seq[k][l];
+	}
+	path_nodes2[lengths[k]] = path_nodes[k][lengths[k]];
+	path_orientations2[lengths[k]] = path_orientations[k][lengths[k]];
+	seq2[lengths[k]] = seq[k][lengths[k]];
+	
+	ret = true;
+	  
+      }
+      else{
+	k++;
+      }
+      
+    }
+    j++;
+  }
+    
   return ret;
 }
 
@@ -459,7 +513,7 @@ boolean db_graph_detect_bubble(dBNode * node,
 //clip the branch with smaller coverage in the first kmer --> this can be more sophisticated
 //dont want to flatten repeats -- use coverage_limit for this
 boolean db_graph_db_node_smooth_bubble(dBNode * node, Orientation orientation, 
-				       int limit,int delta,int coverage_limit, double ratio_threshold,
+				       int limit,int coverage_limit,
 				       void (*node_action)(dBNode * node),
 				       dBGraph * db_graph){
 
@@ -477,64 +531,58 @@ boolean db_graph_db_node_smooth_bubble(dBNode * node, Orientation orientation,
   Nucleotide * path_labels_tmp;
 
   char seq1[limit+1];
+  double avg_coverage1;
+  int min_coverage1,max_coverage1;
+
   char seq2[limit+1];
+  double avg_coverage2;
+  int min_coverage2,max_coverage2;
+
 
   int length_tmp;
   Nucleotide reverse_nucleotide;
   Orientation next_orientation;
-  Nucleotide base1,base2;
 
-  if (db_graph_detect_bubble(node,orientation,limit,delta,&db_node_action_do_nothing,
-			     &length1,&base1,path_nodes1,path_orientations1,path_labels1,seq1,
-			     &length2,&base2,path_nodes2,path_orientations2,path_labels2,seq2,
+
+  if (db_graph_detect_bubble(node,orientation,limit,&db_node_action_do_nothing,
+			     &length1,path_nodes1,path_orientations1,path_labels1,
+			     seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
+			     &length2,path_nodes2,path_orientations2,path_labels2,
+			     seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
 			     db_graph)){
  
-    if (coverage_limit>=element_get_coverage(path_nodes1[0]) && 
-	coverage_limit>=element_get_coverage(path_nodes2[0])){
-          
+
+    if ((double)coverage_limit>=avg_coverage1 && 
+        (double)coverage_limit>=avg_coverage2){
+
      
       //prune
       int i;
-
-      short coverage1 = element_get_coverage(path_nodes1[0]);
-      short coverage2 = element_get_coverage(path_nodes2[0]);
-      double ratio;
-      
-      if (coverage1>coverage2){
-	ratio = (double) coverage2 / (double) coverage1;
+     
+      ret = true;
+      if (avg_coverage1<avg_coverage2){
+	path_nodes_tmp = path_nodes1;
+	path_orientations_tmp = path_orientations1;
+	path_labels_tmp  = path_labels1;
+	length_tmp     = length1;
+	db_node_reset_edge(node,orientation,path_labels1[0]);
       }
-      else{
-	ratio = (double) coverage1 / (double) coverage2;
-      }
-
-      if (ratio<ratio_threshold){
-	ret = true;
-	if (coverage1<coverage2){
-	  path_nodes_tmp = path_nodes1;
-	  path_orientations_tmp = path_orientations1;
-	  path_labels_tmp  = path_labels1;
-	  length_tmp     = length1;
-	  db_node_reset_edge(node,orientation,base1);
-	}
-	else
-	  {
-	    path_nodes_tmp = path_nodes2;
-	    length_tmp     = length2;
-	    path_orientations_tmp = path_orientations2;
-	    path_labels_tmp       = path_labels2;
-	    db_node_reset_edge(node,orientation,base2);
-	  }
-	
-	for(i=0;i<length_tmp;i++){
-	  node_action(path_nodes_tmp[i]);
-	  db_node_reset_edges(path_nodes_tmp[i]);
+      else
+	{
+	  path_nodes_tmp = path_nodes2;
+	  length_tmp     = length2;
+	  path_orientations_tmp = path_orientations2;
+	  path_labels_tmp       = path_labels2;
+	  db_node_reset_edge(node,orientation,path_labels2[0]);
 	}
       
-
-	db_graph_get_next_node(path_nodes_tmp[length_tmp-1],path_orientations_tmp[length_tmp-1],&next_orientation,path_labels_tmp[length_tmp-1],&reverse_nucleotide,db_graph);
-	db_node_reset_edge(path_nodes_tmp[length_tmp],opposite_orientation(next_orientation),reverse_nucleotide);
+      for(i=1;i<length_tmp;i++){
+	node_action(path_nodes_tmp[i]);
+	db_node_reset_edges(path_nodes_tmp[i]);
       }
       
+      db_graph_get_next_node(path_nodes_tmp[length_tmp-1],path_orientations_tmp[length_tmp-1],&next_orientation,path_labels_tmp[length_tmp-1],&reverse_nucleotide,db_graph);
+      db_node_reset_edge(path_nodes_tmp[length_tmp],opposite_orientation(next_orientation),reverse_nucleotide);
     }
     
   }
@@ -1110,119 +1158,164 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph){
   
   int count_vars = 0; 
-		 
+	
+  int flanking_length = 1000; 
+
+  
   void get_vars(dBNode * node){
-    int length1, length2;
-    dBNode * path_nodes1[max_length+1];
-    dBNode * path_nodes2[max_length+1];
-    Orientation path_orientations1[max_length+1];
-    Orientation path_orientations2[max_length+1];
-    Nucleotide path_labels1[max_length];
-    Nucleotide path_labels2[max_length];
-    char seq1[max_length+1];
-    char seq2[max_length+1];
-    Nucleotide base1,base2;
-    Orientation orientation;
+   
+    void get_vars_with_orientation(dBNode * node, Orientation orientation){
+      
+      int length1, length2;
+      dBNode * path_nodes1[max_length+1];
+      dBNode * path_nodes2[max_length+1];
+      Orientation path_orientations1[max_length+1];
+      Orientation path_orientations2[max_length+1];
+      Nucleotide path_labels1[max_length];
+      Nucleotide path_labels2[max_length];
+      char seq1[max_length+1];
+      char seq2[max_length+1];
+    
+      double avg_coverage1;
+      int min_coverage1,max_coverage1;
+      
+      double avg_coverage2;
+      int min_coverage2,max_coverage2;
+      
+      dBNode * current_node = node;
+   
+      do{
+	
+	if (db_graph_detect_bubble(current_node,orientation,max_length,&db_node_action_set_status_visited,
+				   &length1,path_nodes1,path_orientations1,path_labels1,
+				   seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
+				   &length2,path_nodes2,path_orientations2,path_labels2,
+				   seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
+				   db_graph)){
+	  int length_flank5p = 0;	
+	  int length_flank3p = 0;
+	  dBNode * nodes5p[flanking_length];
+	  dBNode * nodes3p[flanking_length];
+	  Orientation orientations5p[flanking_length];
+	  Orientation orientations3p[flanking_length];
+	  Nucleotide labels_flank5p[flanking_length];
+	  Nucleotide labels_flank3p[flanking_length];
+	  char seq5p[flanking_length+1];
+	  char seq3p[flanking_length+1];
+	  boolean is_cycle5p, is_cycle3p;
+	  
+	  double avg_coverage5p;
+	  int min5p,max5p;
+	  double avg_coverage3p;
 
-    boolean found = false; 
-
-    if (db_node_check_status_none(node)){
-      if (db_graph_detect_bubble(node,forward,max_length,delta,&db_node_action_set_status_visited,
-			     &length1,&base1,path_nodes1,path_orientations1,path_labels1,seq1,
-			     &length2,&base2,path_nodes2,path_orientations2,path_labels2,seq2,
-			     db_graph)){
-	orientation = forward;
-	found = true;
-      }
-      else{
-	  if (db_graph_detect_bubble(node,reverse,max_length,delta,&db_node_action_set_status_visited,
-			       &length1,&base1,path_nodes1,path_orientations1,path_labels1,seq1,
-			       &length2,&base2,path_nodes2,path_orientations2,path_labels2,seq2,
-			       db_graph)){
-
-	    orientation = reverse;
-	    found = true;
+	  int min3p,max3p;
+	  
+	
+	  printf("\nVARIATION: %i - coverage: %d\n",count_vars,element_get_coverage(current_node));
+	  count_vars++;
+	  
+	  //compute 5' flanking region       	
+	  int length_flank5p_reverse = db_graph_get_perfect_path(current_node,opposite_orientation(orientation),
+								 flanking_length,&db_node_action_set_status_visited,
+								 nodes5p,orientations5p,labels_flank5p,
+								 seq5p,&avg_coverage5p,&min5p,&max5p,
+								 &is_cycle5p,db_graph);
+	  
+	  if (length_flank5p_reverse>0){
+	    Nucleotide label;
+	    Orientation next_orientation;
+	    
+	    dBNode * lst_node = db_graph_get_next_node(nodes5p[length_flank5p_reverse-1],orientations5p[length_flank5p_reverse-1],
+						       &next_orientation, labels_flank5p[length_flank5p_reverse-1],&label,db_graph);
+	    	    
+	    length_flank5p = db_graph_get_perfect_path_with_first_edge(nodes5p[length_flank5p_reverse],
+								       opposite_orientation(orientations5p[length_flank5p_reverse]),
+								       flanking_length,label,
+								       &db_node_action_set_status_visited,
+								       nodes5p,orientations5p,labels_flank5p,
+								       seq5p,&avg_coverage5p,&min5p,&max5p,
+								       &is_cycle5p,db_graph);
 	  }
-      }
-	
-      if (found){
-	int length_flank5p = 0;
-	int length_flank3p = 0;
-	dBNode * nodes5p[100];
-	dBNode * nodes3p[100];
-	Orientation orientations5p[100];
-	Orientation orientations3p[100];
-	Nucleotide labels_flank5p[100];
-	Nucleotide labels_flank3p[100];
-	char seq5p[101];
-	char seq3p[101];
-	boolean is_cycle5p, is_cycle3p;
-	char tmp_seq[db_graph->kmer_size+1];
-	double avg_coverage;
-	int min,max;
+	  else{
+	    length_flank5p = 0;
+	  }
 
-	int i;
-	
-	printf("VARIATION: %i - coverage: %d\n",count_vars,element_get_coverage(node));
-	count_vars++;
-	
-	length_flank5p = db_graph_get_perfect_path(node,opposite_orientation(orientation),
-						   100,&db_node_action_set_status_visited,
-						   nodes5p,orientations5p,labels_flank5p,
-						   seq5p,&avg_coverage,&min,&max,
-						   &is_cycle5p,db_graph);
-	printf("length 5p flank: %i\n",length_flank5p);
-	
+	  printf("length 5p flank: %i avg_coverage:%5.2f \n",length_flank5p,avg_coverage5p);
+	  
+	  
+	  //compute 3' flanking region
+	  length_flank3p = db_graph_get_perfect_path(path_nodes2[length2],path_orientations2[length2],
+						     flanking_length,&db_node_action_set_status_visited,
+						     nodes3p,orientations3p,labels_flank3p,
+						     seq3p,&avg_coverage3p,&min3p,&max3p,
+						     &is_cycle3p,db_graph);
+	  
+	  printf("length 3p flank: %i avg_coverage:%5.2f\n",length_flank3p,avg_coverage3p);
+	  
+	  printf("length branch 1: %i - avg_coverage: %5.2f\n",length1,avg_coverage1);
+	  printf("length branch 2: %i - avg_coverage: %5.2f\n",length2,avg_coverage2);
+	  
+	  
+	  char name[100];
+	  
+	  //print flank5p - 
+	  sprintf(name,"var_5p_flank_%i",count_vars);
+	  print_fasta_from_path(stdout,name,length_flank5p,avg_coverage5p,min5p,max5p,
+				nodes5p[0],orientations5p[0],				
+				nodes5p[length_flank5p],orientations5p[length_flank5p],				
+				seq5p,
+				db_graph->kmer_size,false);	
+	  
+	  //print branches
+	  sprintf(name,"branch_%i_1",count_vars);
+	  print_fasta_from_path(stdout,name,length1,
+				avg_coverage1,min_coverage1,max_coverage1,
+				path_nodes1[0],path_orientations1[0],path_nodes1[length1],path_orientations1[length1],
+				seq1,db_graph->kmer_size,false);
+	  
+	  sprintf(name,"branch_%i_2",count_vars);
+	  print_fasta_from_path(stdout,name,length2,
+				avg_coverage2,min_coverage2,max_coverage2,
+				path_nodes2[0],path_orientations2[0],path_nodes2[length2],path_orientations2[length2],
+				seq2,db_graph->kmer_size,false);
+	  
+	  //print flank3p
+	  sprintf(name,"var_3p_flank_%i",count_vars);
+	  print_fasta_from_path(stdout,name,length_flank3p,avg_coverage3p,min3p,max3p,
+				nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
+				seq3p,db_graph->kmer_size,false);
+	  
 
-	length_flank3p = db_graph_get_perfect_path(path_nodes2[length2],path_orientations2[length2],
-						   100,&db_node_action_set_status_visited,
-						   nodes3p,orientations3p,labels_flank3p,
-						   seq3p,&avg_coverage,&min,&max,
-						   &is_cycle3p,db_graph);
-	printf("length 3p flank: %i\n",length_flank3p);
-	printf("length branch 1: %i - coverage: %i\n",length1,element_get_coverage(path_nodes1[0]));
-	printf("length branch 2: %i - coverage: %i\n",length2,element_get_coverage(path_nodes2[0]));
-
-	//print flank5p
-	for(i=length_flank5p-1;i>=0;i--){
-	  printf("%c",reverse_char_nucleotide(binary_nucleotide_to_char(labels_flank5p[i])));
+	  db_node_action_set_status_visited(path_nodes2[length2]);
+	  
+	  current_node = path_nodes2[length2];
+	  orientation = path_orientations2[length2];
 	}
-
- 	//print the initial node */
- 	printf(" "); 
- 	if (orientation == forward){ 
-	  printf ("%s ",binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,tmp_seq));
-	}
-	else{
-	  printf ("%s ",binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(node),db_graph->kmer_size),db_graph->kmer_size,tmp_seq));
-	}
-	
-	//print branches
-	printf("%c%s ",binary_nucleotide_to_char(base1),seq1);
-	printf("%c%s ",binary_nucleotide_to_char(base2),seq2);
-	
-	//print 3p
-	printf("%s\n",seq3p);
-
-      }
+      } while (current_node != node //to avoid cycles
+	       && db_node_check_status_none(current_node));
+    }
+    
+  
+    if (db_node_check_status_none(node)){     
+      db_node_action_set_status_visited(node);
+      get_vars_with_orientation(node,forward);
+      get_vars_with_orientation(node,reverse);
     }
   }
  
   hash_table_traverse(&get_vars,db_graph); 
+    
 }
 
 
 
-
-//routine to get SNPS 
-
-void db_graph_smooth_bubbles(int coverage,int limit, int delta, dBGraph * db_graph){
+void db_graph_smooth_bubbles(int coverage,int limit,dBGraph * db_graph){
   
   void smooth_bubble(dBNode * node){
     if (db_node_check_status_none(node)){
-      db_graph_db_node_smooth_bubble(node,forward,limit,delta,coverage,1,
+      db_graph_db_node_smooth_bubble(node,forward,limit,coverage,
 				     &db_node_action_set_status_pruned,db_graph);
-      db_graph_db_node_smooth_bubble(node,reverse,limit,delta,coverage,1,
+      db_graph_db_node_smooth_bubble(node,reverse,limit,coverage,
 				     &db_node_action_set_status_pruned,db_graph);
       
     }
@@ -1270,17 +1363,19 @@ void db_graph_print_supernodes(char * filename, int max_length, dBGraph * db_gra
   path_labels       = calloc(max_length,sizeof(Nucleotide));
   seq               = calloc(max_length+1+db_graph->kmer_size,sizeof(char));
   
-  //printf("print_supernodes %i\n",max_length);
+  
 
   long long count_kmers = 0;
   long long count_sing  = 0;
 
   void print_supernode(dBNode * node){
     
-    int count;
+   
 
     count_kmers++;
     
+    char name[100];
+
     if (db_node_check_status_none(node) == true){
       int length = db_graph_supernode(node,max_length,&db_node_action_set_status_visited,
 				      path_nodes,path_orientations,path_labels,
@@ -1288,44 +1383,21 @@ void db_graph_print_supernodes(char * filename, int max_length, dBGraph * db_gra
 				      db_graph);
     
  
-    
-      if (path_orientations[0] == forward){
-	count = db_node_edges_count(path_nodes[0],reverse);
-      }
-      else{
-	count = db_node_edges_count(path_nodes[0],forward);
-      }
-      
-      
-      char tmp_seq[db_graph->kmer_size+1];
-      if (length>0){
-	
-	//get kmer first node in path
-	BinaryKmer kmer = element_get_kmer(path_nodes[0]);
-	
-	if (path_orientations[0]==reverse){
-	  kmer = binary_kmer_reverse_complement(kmer, db_graph->kmer_size);
-	} 
-	
-	fprintf(fout,">node_%i  cylcle:%s length:%i min_coverage:%i max_coverage:%i average_coverage:%5.2f fst_coverage:%i fst:%i lst_coverage:%i lstr:%i lstf:%i\n",count_nodes,(is_cycle==true ? "true" : "false"),length+db_graph->kmer_size,min,max,avg_coverage,element_get_coverage(path_nodes[0]),count,element_get_coverage(path_nodes[length]),db_node_edges_count(path_nodes[length],path_orientations[length]),db_node_edges_count(path_nodes[length],opposite_orientation(path_orientations[length])));
-	
-	fprintf(fout,"%s%s\n",binary_kmer_to_seq(kmer,db_graph->kmer_size,tmp_seq),seq);
-	
+
+      if (length>0){	
+	sprintf(name,"node_%i",count_nodes);
+
+	print_fasta_from_path(fout,name,length,avg_coverage,min,max,path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,db_graph->kmer_size,true);
 	if (length==max_length){
 	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
 	}
-	
 	count_nodes++;
       }
       else{
+	sprintf(name,"node_%qd",count_sing);
+	print_fasta_from_path(stdout,name,length,avg_coverage,min,max,path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,db_graph->kmer_size,true);
+	
 	count_sing++;
-	int count_r =  db_node_edges_count(node,reverse);
-	int count_f =  db_node_edges_count(node,forward);
-	printf("singleton node:%qd %s coverage:%i rev:%i for:%i\n",
-	       count_sing,
-	       binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,tmp_seq),
-	       element_get_coverage(node),
-	       count_r,count_f);
       }
     
     }
@@ -1401,13 +1473,6 @@ void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int),H
 
 
 }
-
-
-
-//=======
-
-
-
 
 dBNode* db_graph_get_first_node_in_supernode_containing_given_node(dBNode* node,  dBGraph* db_graph)
 {
@@ -1728,3 +1793,78 @@ int int_cmp(const void *a, const void *b)
      and positive if a > b */
 }
 
+
+void compute_label(dBNode * node, Orientation o, char * label){
+
+  int i=0; 
+
+  void check_nucleotide(Nucleotide n){
+
+    if (db_node_edge_exist(node,n,o)){
+	label[i] =  binary_nucleotide_to_char(n);
+	i++;
+      }
+  }
+  
+  nucleotide_iterator(check_nucleotide);
+
+  label[i]='\0';
+}
+
+void print_fasta_from_path(FILE *fout,
+			   char * name,
+			   int length,
+			   double avg_coverage,
+			   int min_coverage,
+			   int max_coverage,
+			   dBNode * fst_node,
+			   Orientation fst_orientation,
+			   dBNode * lst_node,
+			   Orientation lst_orientation,
+			   char * string, //labels of paths
+			   int kmer_size,
+			   boolean include_first_kmer){
+
+    
+
+  char fst_f[5], fst_r[5],lst_f[5],lst_r[5];
+
+  compute_label(fst_node,forward,fst_f);
+  compute_label(fst_node,reverse,fst_r);
+  compute_label(lst_node,forward,lst_f);
+  compute_label(lst_node,reverse,lst_r);
+
+  char fst_seq[kmer_size+1], lst_seq[kmer_size+1];
+ 
+  BinaryKmer fst_kmer = element_get_kmer(fst_node);
+  if (fst_orientation==reverse){
+    fst_kmer = binary_kmer_reverse_complement(fst_kmer,kmer_size);
+  } 
+  binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq);
+
+  BinaryKmer lst_kmer = element_get_kmer(lst_node);
+  if (lst_orientation==reverse){
+    lst_kmer = binary_kmer_reverse_complement(lst_kmer,kmer_size);
+  } 
+  binary_kmer_to_seq(lst_kmer,kmer_size,lst_seq);
+
+  fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s\n", name,
+	  (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage,
+	  element_get_coverage(fst_node),
+	  fst_seq,
+	  (fst_orientation == forward ? fst_r : fst_f),
+	  (fst_orientation == forward ? fst_f : fst_r),
+	  element_get_coverage(lst_node),
+	  lst_seq,
+	  (lst_orientation == forward ? lst_r : lst_f),
+	  (lst_orientation == forward ? lst_f : lst_r));
+
+
+  if (include_first_kmer){    
+    
+    fprintf(fout,"%s",binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq));
+  }
+  
+  fprintf(fout,"%s\n",string);
+  
+}

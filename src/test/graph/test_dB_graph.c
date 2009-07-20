@@ -610,7 +610,7 @@ void test_detect_and_smoothe_bubble(){
  
   dBNode * node1, * node2, * node3, * node4, * node5, * node6, * node7, * node8, * node9;
   Orientation orientations1[100],orientations2[100];
-  Nucleotide labels1[100], labels2[100],base1, base2;
+  Nucleotide labels1[100], labels2[100];
   dBNode * path_nodes1[100], * path_nodes2[100];
 
   int length1, length2;
@@ -618,6 +618,8 @@ void test_detect_and_smoothe_bubble(){
 
   boolean bubble;
 
+  double avg_coverage1,avg_coverage2;
+  int min_coverage1,max_coverage1, min_coverage2,max_coverage2;
   
   //check a perfect bubble 
 
@@ -628,7 +630,7 @@ void test_detect_and_smoothe_bubble(){
   node2 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCA", kmer_size),kmer_size),  &found, db_graph);
 
 
-  //modify coverage -- use below to clip one branch
+  //modify coverage -- used below to clip one branch
   element_update_coverage(node2,5);
   CU_ASSERT_EQUAL(element_get_coverage(node2),5);
 
@@ -671,24 +673,26 @@ void test_detect_and_smoothe_bubble(){
   db_node_add_edge(node5, node9, reverse,reverse, db_graph->kmer_size);
 
 
-  bubble = db_graph_detect_bubble(node1,forward,db_graph->kmer_size,0,
+  bubble = db_graph_detect_bubble(node1,forward,db_graph->kmer_size+1,
 				  &db_node_action_set_status_visited,
-				  &length1,&base1,path_nodes1,orientations1,labels1,seq1,
-				  &length2,&base2,path_nodes2,orientations2,labels2,seq2,
+				  &length1,path_nodes1,orientations1,labels1,
+				  seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
+				  &length2,path_nodes2,orientations2,labels2,
+				  seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
 				  db_graph);
 
 
   CU_ASSERT(bubble);
 
-  CU_ASSERT(((base1 == Adenine) && (base2 == Thymine)) || ((base2 == Adenine) && (base1 == Thymine)));
+  CU_ASSERT(((labels1[0] == Adenine) && (labels2[0] == Thymine)) || ((labels2[0] == Adenine) && (labels1[0] == Thymine)));
 
-  CU_ASSERT_EQUAL(labels1[0],Cytosine);
-  CU_ASSERT_EQUAL(labels1[1],Thymine);
+  CU_ASSERT_EQUAL(labels1[1],Cytosine);
   CU_ASSERT_EQUAL(labels1[2],Thymine);
+  CU_ASSERT_EQUAL(labels1[3],Thymine);
 
-  CU_ASSERT_EQUAL(labels2[0],Cytosine);
-  CU_ASSERT_EQUAL(labels2[1],Thymine);
+  CU_ASSERT_EQUAL(labels2[1],Cytosine);
   CU_ASSERT_EQUAL(labels2[2],Thymine);
+  CU_ASSERT_EQUAL(labels2[3],Thymine);
 
 
 
@@ -737,52 +741,50 @@ void test_detect_and_smoothe_bubble(){
   CU_ASSERT(db_node_check_status(node6,visited));
   CU_ASSERT(db_node_check_status(node7,visited));
   CU_ASSERT(db_node_check_status(node8,visited));
-  CU_ASSERT(db_node_check_status(node5,visited));
+  //this last node shouldn't be marked as visited
+  CU_ASSERT(db_node_check_status(node5,none));
 
 
   //check the bubble from node5 perspective
-  bubble = db_graph_detect_bubble(node5,forward,db_graph->kmer_size,0,
+  bubble = db_graph_detect_bubble(node5,forward,db_graph->kmer_size+1,
 				  &db_node_action_set_status_visited,
-				  &length1,&base1,path_nodes1,orientations1,labels1,seq1,
-				  &length2,&base2,path_nodes2,orientations2,labels2,seq2,
+				  &length1,path_nodes1,orientations1,labels1,
+				  seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
+				  &length2,path_nodes2,orientations2,labels2,
+				  seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
 				  db_graph);
   
 
   CU_ASSERT(bubble);
-  CU_ASSERT(((base1 == Adenine) && (base2 == Thymine)) || (((base2 == Adenine) && (base1 == Thymine))));
+  CU_ASSERT(((labels1[0] == Adenine) && (labels2[0] == Thymine)) || (((labels2[0] == Adenine) && (labels1[0] == Thymine))));
   
 
   //test smooth bubble
 
   //remove a branch
   //this one should fail -- because of limit 0 on min coverage
-  boolean removed = db_graph_db_node_smooth_bubble(node1,forward,db_graph->kmer_size,1,0,0.1,
+  boolean removed = db_graph_db_node_smooth_bubble(node1,forward,db_graph->kmer_size+1,1,
 						   &db_node_action_set_status_pruned,db_graph);
   CU_ASSERT(!removed);
-
-
-  //this one should fail -- because of ratio_threshold 0.1 
-  removed = db_graph_db_node_smooth_bubble(node1,forward,db_graph->kmer_size,1,0,0.1,
-						   &db_node_action_set_status_pruned,db_graph);
-  CU_ASSERT(!removed);
-
 
 
   //this one should work
-  removed = db_graph_db_node_smooth_bubble(node1,forward,db_graph->kmer_size,1,10,10,
+  removed = db_graph_db_node_smooth_bubble(node1,forward,db_graph->kmer_size+1,10,
 					   &db_node_action_set_status_pruned,db_graph);
   
   CU_ASSERT(removed);
   //check that correct path was removed
 
-  CU_ASSERT(db_node_check_status(node1,visited));
+  //the first node shouldn't be marked
+  CU_ASSERT(db_node_check_status(node1,none));
   CU_ASSERT(db_node_check_status(node2,visited));
   CU_ASSERT(db_node_check_status(node3,visited));
   CU_ASSERT(db_node_check_status(node4,visited));
   CU_ASSERT(db_node_check_status(node6,pruned));
   CU_ASSERT(db_node_check_status(node7,pruned));
   CU_ASSERT(db_node_check_status(node8,pruned));
-  CU_ASSERT(db_node_check_status(node5,visited));
+  //the last node shouldn't be marked 
+  CU_ASSERT(db_node_check_status(node5,none));
 
   CU_ASSERT(!db_node_edge_exist(node1,Thymine,forward));
   CU_ASSERT(db_node_edge_exist(node1,Adenine,forward));
@@ -831,28 +833,31 @@ void test_detect_and_smoothe_bubble(){
  
   CU_ASSERT(node1!=NULL);
 
-  bubble = db_graph_detect_bubble(node1,reverse,100,10,
+  bubble = db_graph_detect_bubble(node1,reverse,100,
 				  &db_node_action_set_status_visited,
-				  &length1,&base1,path_nodes1,orientations1,labels1,seq1,
-				  &length2,&base2,path_nodes2,orientations2,labels2,seq2,
+				  &length1,path_nodes1,orientations1,labels1,
+				  seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
+				  &length2,path_nodes2,orientations2,labels2,
+				  seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
 				  db_graph);
 
 
   CU_ASSERT(bubble);
-  CU_ASSERT((length1 == 20 && length2==21) || (length2 == 20 && length1==21));
   
-  if (length1==20)
+  CU_ASSERT((length1 == 21 && length2==22) || (length2 == 21 && length1==22));
+
+  if (length1==21)
     {
-      CU_ASSERT_EQUAL(base1,Guanine);
-      CU_ASSERT_STRING_EQUAL(seq1,"GGTTATTTTTCTAGAGAGTT");
-      CU_ASSERT_EQUAL(base2,Thymine);
-      CU_ASSERT_STRING_EQUAL(seq2,"GGGTTATTTTTCTAGAGAGTT");
+      CU_ASSERT_EQUAL(labels1[0],Guanine);
+      CU_ASSERT_STRING_EQUAL(seq1,"GGGTTATTTTTCTAGAGAGTT");
+      CU_ASSERT_EQUAL(labels2[0],Thymine);
+      CU_ASSERT_STRING_EQUAL(seq2,"TGGGTTATTTTTCTAGAGAGTT");
     }
   else{
-    CU_ASSERT_EQUAL(base2,Guanine);
-    CU_ASSERT_STRING_EQUAL(seq2,"GGTTATTTTTCTAGAGAGTT");
-    CU_ASSERT_EQUAL(base1,Thymine);
-    CU_ASSERT_STRING_EQUAL(seq1,"GGGTTATTTTTCTAGAGAGTT");
+    CU_ASSERT_EQUAL(labels2[0],Guanine);
+    CU_ASSERT_STRING_EQUAL(seq2,"GGGTTATTTTTCTAGAGAGTT");
+    CU_ASSERT_EQUAL(labels1[0],Thymine);
+    CU_ASSERT_STRING_EQUAL(seq1,"TGGGTTATTTTTCTAGAGAGTT");
   }
     
   hash_table_free(&db_graph);
@@ -860,62 +865,6 @@ void test_detect_and_smoothe_bubble(){
 
 }
 
-
-
-//test smooth bubble
-
-
-/*   //remove a branch */
-/*   //this one should fail */
-/*   boolean removed = db_graph_db_node_smooth_bubble(node1,forward,db_graph->kmer_size,1,0, */
-/* 						   &db_node_action_set_status_pruned,db_graph); */
-  
-
-/*   CU_ASSERT(!removed); */
-
-/*  //this one should work */
-/*   removed = db_graph_db_node_smooth_bubble(node1,forward,db_graph->kmer_size,1,10, */
-/* 						   &db_node_action_set_status_pruned,db_graph); */
-  
-/*   CU_ASSERT(removed); */
-/*   //check that correct path was removed */
-
-/*   CU_ASSERT(db_node_check_status(node1,visited)); */
-/*   CU_ASSERT(db_node_check_status(node2,visited)); */
-/*   CU_ASSERT(db_node_check_status(node3,visited)); */
-/*   CU_ASSERT(db_node_check_status(node4,visited)); */
-/*   CU_ASSERT(db_node_check_status(node6,pruned)); */
-/*   CU_ASSERT(db_node_check_status(node7,pruned)); */
-/*   CU_ASSERT(db_node_check_status(node8,pruned)); */
-/*   CU_ASSERT(db_node_check_status(node5,visited)); */
-
-/*   CU_ASSERT(!db_node_edge_exist(node1,Thymine,forward)); */
-/*   CU_ASSERT(db_node_edge_exist(node1,Adenine,forward)); */
-
-/*   //check arrows */
-
-/*   //dBNode * nodes_path[100]; */
-/*   //Orientation orientations_path[100]; */
-/*   //Nucleotide labels_path[100]; */
-  
-/*   //int length_supernode = db_graph_supernode(node1,100,&db_node_action_set_status_visited, */
-/*   //					    nodes_path,orientations_path,labels_path, */
-/*   //					    tmp_seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle, */
-/*   //					    db_graph); */
-  
-
-  
-/*   //I have to complete this test */
-/* ======= */
-/*   //if searched again should return false -- becuase nodes are marked as visited */
-/*   bubble = db_graph_detect_perfect_bubble(node1,&orientation,&db_node_check_status_none,&db_node_action_set_status_visited,&base1,&base2,labels,&end_node,&end_orientation,db_graph); */
-/*   CU_ASSERT(!bubble); */
-/* >>>>>>> other */
-
-/*   hash_table_free(&db_graph); */
-/*   CU_ASSERT(db_graph == NULL); */
-
-/* } */
 
 void test_db_graph_db_node_has_precisely_n_edges_with_status(){ 
   int kmer_size = 3;

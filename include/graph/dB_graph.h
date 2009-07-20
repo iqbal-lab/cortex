@@ -31,13 +31,15 @@ boolean db_graph_db_node_has_precisely_n_edges_with_status(dBNode * node,Orienta
 
 boolean db_graph_detect_bubble(dBNode * node,
 			       Orientation orientation,
-			       int limit, int delta,
+			       int limit, 
 			       void (*node_action)(dBNode * node), 
-			       int * length1, Nucleotide * base1, dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,char * seq1,
-			       int * length2, Nucleotide * base2, dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,char * seq2,
+			       int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,
+			       char * seq1, double * avg_coverage1, int * min_coverage1, int * max_coverage1,
+			       int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,
+			       char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
 			       dBGraph * db_graph);
 
-boolean db_graph_db_node_smooth_bubble(dBNode * node, Orientation orientation, int limit,int delta,int coverage_limit,double ratio_threshold, 
+boolean db_graph_db_node_smooth_bubble(dBNode * node, Orientation orientation, int limit,int coverage_limit,
 				       void (*node_action)(dBNode * node),
 				       dBGraph * db_graph);
 
@@ -103,7 +105,7 @@ void db_graph_clip_tips(dBGraph * db_graph);
 
 void db_graph_remove_low_coverage_nodes(int coverage, dBGraph * db_graph);
 void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph);
-void db_graph_smooth_bubbles(int coverage,int limit, int delta, dBGraph * db_graph);
+void db_graph_smooth_bubbles(int coverage,int limit, dBGraph * db_graph);
 
 
 void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph);
