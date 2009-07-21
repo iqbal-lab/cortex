@@ -112,6 +112,15 @@ obj/count_kmers/%.o : count_kmers/%.c
 obj/test/basic/%.o :  test/basic/%.c 
 	mkdir -p obj/test/basic; $(CC) $(CFLAGS_GRAPH) $(CFLAGS_BASIC_TESTS) $(OPT) -c $? -o $@
 
+obj/test/hash_table/open_hash/%.o : hash_table/open_hash/%.c 
+	mkdir -p obj/test/hash_table/open_hash; $(CC) $(CFLAGS_HASH_TABLE_TESTS) $(OPT)  -c $? -o $@
+
+obj/test/hash_table/hash_key/bob_jenkins/%.o : hash_table/hash_key/bob_jenkins/%.c
+	mkdir -p obj/test/hash_table/hash_key/bob_jenkins; $(CC) $(CFLAGS_HASH_TABLE_TESTS) $(OPT)  -c $? -o $@
+
+obj/test/hash_table/hash_key/crc32/%.o : hash_table/hash_key/crc32/%.c
+	mkdir -p obj/test/hash_table/hash_key/crc32; $(CC) $(CFLAGS_HASH_TABLE_TESTS) $(OPT) -c $? -o $@
+
 obj/graph/hash_table/open_hash/%.o : hash_table/open_hash/%.c 
 	mkdir -p obj/graph/hash_table/open_hash; $(CC) $(CFLAGS_GRAPH) $(OPT)  -c $? -o $@
 

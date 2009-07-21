@@ -37,7 +37,7 @@ int load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fil
 
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
-    fprintf(stderr,"cannot open file:%s\n",filename);
+    fprintf(stderr," load_fasta_data_from_filename_into_graph_of_specific_person_or_pop cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
@@ -66,7 +66,7 @@ int load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* fil
 
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
-    fprintf(stderr,"cannot open file:%s\n",filename);
+    fprintf(stderr,"load_fastq_data_from_filename_into_graph_of_specific_person_or_pop cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
@@ -270,11 +270,13 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   boolean full_entry=false;
 
   int chunk_length;
+  int j;
 
   if (expecting_new_fasta_entry==false)
     {
       //3rd argument is limit set on number of bases in seq before read_sequence_from_fasta returns. We want number_of_nodes_to_load new bases, plus the kmer's woorth of bases already in seq
       chunk_length = read_sequence_from_fasta(chrom_fptr,seq,number_of_nodes_to_load+db_graph->kmer_size, expecting_new_fasta_entry, &full_entry, offset_for_filereader);
+
     }
   else
     {
@@ -282,14 +284,23 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
     }
 
 
+
+
+  //doesn't matter whether start of fasta entry or not. If YES, then we ignore the first kmer_size bases, as we are only interested in edges between nodes.
+  // If NO, then seq has been preloaded with the last k bases from the previous time, which we want to ignore.
+  for (j=0; j < number_of_nodes_to_load; j++)
+    {
+      path_string[offset+j]=seq->seq[db_graph->kmer_size+j];
+    }
+
   if (DEBUG){
     printf ("\nsequence returned from read_sequence_from_fasta to load_seq_into_array is %s - kmer size: %i - number of bases loaded inc the preassigned ones at start f seq  length: %i \n",seq->seq,db_graph->kmer_size, chunk_length);
   }
   
-  int j=0;
+  j=0;
   seq_length += (long long) chunk_length;
   
-  //number of nodes may be less than what we aksed for, if we hit the end of the file
+  //number of nodes may be less than what we asked for, if we hit the end of the file
   int num_nodes = get_single_kmer_sliding_window_from_sequence(seq->seq,chunk_length,db_graph->kmer_size, kmer_window);
   
   //sanity
@@ -328,7 +339,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	  path_nodes[offset+j]        =NULL;
 	  path_orientations[offset+j] =forward;
 	  path_labels[offset+j]       =Undefined;
-	  path_string[offset+j]       ='N';
+	  //path_string[offset+j]       ='N';
 	  previous_node=NULL;
 	  continue;
 	}
@@ -361,8 +372,9 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	  if (previous_node == NULL)
 	    {
 	      path_labels[offset+j]=Undefined;
-	      path_string[offset+j]='N';
-	      path_string[offset+j+1]='\0';
+	      //path_string[offset+j]=='N';
+	      //path_string[offset+j]='N';
+	      //path_string[offset+j+1]='\0';
 	    }
 	  else
 	    {
@@ -386,8 +398,8 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 		printf("Found edge %s -%c-> %s\n",binary_kmer_to_seq(previous_k,kmer_size,seq1),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(current_k)),binary_kmer_to_seq(current_k,kmer_size,seq2));
 	      }
 	      path_labels[offset+j]=binary_kmer_get_last_nucleotide(current_k);
-	      path_string[offset+j]=binary_nucleotide_to_char(path_labels[offset+j]);
-	      path_string[offset+j+1]='\0';
+	      //path_string[offset+j]=binary_nucleotide_to_char(path_labels[offset+j]);
+	      //path_string[offset+j+1]='\0';
 	      
 	    }
 	}
@@ -527,7 +539,7 @@ long long load_population_as_fasta(char* filename, long long* bad_reads, dBGraph
 
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
-    printf("cannot open file:%s\n",filename);
+    printf("load_population_as_fasta cannot open file:%s\n",filename);
     exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
   }
 
@@ -609,7 +621,7 @@ long long load_population_as_fastq(char* filename, long long* bad_reads, char qu
 
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
-    printf("cannot open file:%s\n",filename);
+    printf("load_population_as_fastq cannot open file:%s\n",filename);
     exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
   }
 
@@ -726,7 +738,7 @@ int load_sv_trio_binary_data_from_filename_into_graph(char* filename,  dBGraph* 
   int count=0;
 
   if (fp_bin == NULL){
-    printf("cannot open file:%s\n",filename);
+    printf("load_sv_trio_binary_data_from_filename_into_graph cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
   
@@ -774,7 +786,7 @@ int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGrap
   int count=0;
 
   if (fp_bin == NULL){
-    printf("cannot open file:%s\n",filename);
+    printf("load_individual_binary_data_from_filename_into_graph cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
   

@@ -29,27 +29,62 @@ dBNode *  db_graph_find_or_insert_node_restricted_to_specific_person_or_populati
 //**************
 // functions pulled over from Mario's graph code
 // ************
-int db_graph_get_perfect_path_for_specific_person_or_pop(dBNode * node, Orientation orientation, int limit, void (*node_action)(dBNode * node),
-							 dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
-							 boolean * is_cycle, dBGraph * db_graph, EdgeArrayType type, int index);
+
+//int db_graph_get_perfect_path_for_specific_person_or_pop(dBNode * node, Orientation orientation, int limit, void (*node_action)(dBNode * node),
+//							 dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+//							 boolean * is_cycle, dBGraph * db_graph, EdgeArrayType type, int index);
 
 
-boolean db_graph_detect_perfect_bubble_for_specific_person_or_pop(dBNode * node,
-								  Orientation * orientation,
-								  boolean (*condition)(dBNode * node), void (*node_action)(dBNode * node),
-								  Nucleotide * base1, Nucleotide * base2,
-								  Nucleotide * labels,dBNode * * end_node,Orientation * end_orientation,
-								  dBGraph * db_graph, EdgeArrayType type, int index);
+int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode * node, Orientation orientation, int limit,
+                                                                         Nucleotide fst_nucleotide,
+                                                                         void (*node_action)(dBNode * node),
+                                                                         dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+                                                                         char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
+                                                                         boolean * is_cycle, dBGraph * db_graph, EdgeArrayType type, int index);
 
 
-int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit, boolean (*condition)(dBNode * node), void (*node_action)(dBNode * node),
-						  char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+
+int db_graph_get_perfect_path_for_specific_person_or_pop(dBNode * node, Orientation orientation, int limit,
+                                                         void (*node_action)(dBNode * node),
+                                                         dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+                                                         char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
+                                                         boolean * is_cycle, dBGraph * db_graph, EdgeArrayType type, int index);
+
+
+
+
+boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
+                                                                 Orientation orientation,
+                                                                 int limit, int delta,
+                                                                 void (*node_action)(dBNode * node),
+                                                                 int * length1, Nucleotide * base1, dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,char * seq1,
+                                                                 int * length2, Nucleotide * base2, dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,char * seq2,
+                                                                 dBGraph * db_graph, EdgeArrayType type, int index);
+
+
+
+
+//int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit, boolean (*condition)(dBNode * node), void (*node_action)(dBNode * node),
+//						  char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+//						  dBGraph * db_graph, EdgeArrayType type, int index);
+
+//int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(dBNode * node,int limit, boolean (*condition)(dBNode * node), void (*node_action)(dBNode * node),
+//                                                                           char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, int* query_node_posn,
+//                                                                          dBGraph * db_graph, EdgeArrayType type, int index);
+
+
+int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit,void (*node_action)(dBNode * node), 
+						  dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+						  char * supernode_str, double * avg_coverage,int * min,int * max, boolean * is_cycle,
 						  dBGraph * db_graph, EdgeArrayType type, int index);
 
-int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(dBNode * node,int limit, boolean (*condition)(dBNode * node), void (*node_action)(dBNode * node),
-                                                                            char * string,dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, int* query_node_posn,
-                                                                            dBGraph * db_graph, EdgeArrayType type, int index);
 
+
+int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(dBNode * node,int limit,void (*node_action)(dBNode * node),
+                                                                            dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+                                                                            char * supernode_str, double * avg_coverage,int * min,int * max, boolean * is_cycle,
+                                                                            int* query_node_posn,
+                                                                            dBGraph * db_graph, EdgeArrayType type, int index);
 
 
 
@@ -59,8 +94,8 @@ int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(dBNo
 
 
 
-char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode * node, Orientation orientation, dBGraph * db_graph, boolean * is_cycle, char * seq, int max_length, 
-									EdgeArrayType type, int index);
+//char * get_seq_from_elem_to_end_of_supernode_for_specific_person_or_pop(dBNode * node, Orientation orientation, dBGraph * db_graph, boolean * is_cycle, char * seq, int max_length, 
+//									EdgeArrayType type, int index);
 
 //void print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node,EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test);
 void db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop(HashTable* db_graph, dBNode * node, long* supernode_count, EdgeArrayType type, int index,
@@ -166,7 +201,7 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
 
 int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
                                                 int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int max_anchor_span, int min_covg, int max_covg,
-                                                int length_of_arrays, dBGraph* db_graph, FILE* output_file);
+                                                int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file);
 
 
 #endif

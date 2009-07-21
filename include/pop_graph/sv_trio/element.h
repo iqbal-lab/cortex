@@ -126,6 +126,7 @@ boolean db_node_edges_reset(dBNode * node, EdgeArrayType edge_type, int edge_ind
 boolean db_node_check_status(dBNode * node, NodeStatus status);
 boolean db_node_check_status_not_pruned(dBNode * node);
 boolean db_node_check_status_not_pruned_or_visited(dBNode * node);
+boolean db_node_check_status_is_not_visited(dBNode* node);
 
 
 void db_node_set_status(dBNode * node,NodeStatus status);
