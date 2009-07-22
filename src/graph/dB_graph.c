@@ -411,6 +411,8 @@ int db_graph_get_perfect_path(dBNode * node, Orientation orientation, int limit,
 // the action is applied to all the internal nodes in the supernodes (even if they don't form a bubble).
 // at the moment returns only one bubble, notice that potentially there could be situations where a node forms two bubbles (something to implement). 
 
+
+//TODO - could have triallelic
 boolean db_graph_detect_bubble(dBNode * node,
 			       Orientation orientation,
 			       int limit,
