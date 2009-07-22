@@ -6,6 +6,9 @@
 #include <stdlib.h>
 
 boolean element_is_key(Key key, Element e, short kmer_size){
+
+  char tmp_seq[kmer_size+1];
+
   return key == e.kmer;
 }
 
@@ -27,10 +30,18 @@ Key element_get_key(BinaryKmer kmer, short kmer_size){
 
 }
 
+boolean db_node_check_status(Element * element, Status status){
+  return element->status == status;
+}
+
 void element_initialise(Element * e, Key kmer, short kmer_size){
 
+  char tmp_seq[kmer_size+1];
+
   e->kmer = element_get_key(kmer, kmer_size);
-  e->count = 1;
+  e->count = 0;
+  e->status = none;
+
 }
 
 void element_increment_count(Element * e){
@@ -40,15 +51,16 @@ void element_increment_count(Element * e){
 
 void element_print(FILE * file, Element * e,short kmer_size, char * prefix){
 
-  char * string = binary_kmer_to_seq(e->kmer,kmer_size);
+  char tmp_seq[kmer_size+1];
+
+  binary_kmer_to_seq(e->kmer,kmer_size,tmp_seq);
 
   if (prefix == NULL){
-    fprintf(file,"%s %qd\n",string,e->count);
+    fprintf(file,"%s %qd\n",tmp_seq,e->count);
   }
   else{
-    fprintf(file,"%s %s %qd\n",prefix,string,e->count);
+    fprintf(file,"%s %s %qd\n",prefix,tmp_seq,e->count);
   }
   
-  free(string);
 }
 

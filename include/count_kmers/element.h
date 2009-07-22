@@ -8,15 +8,23 @@
 #include <global.h>
 #include <stdio.h>
 
+typedef enum{
+  unassigned = 0,
+  none       = 1
+} Status;
+
 
 typedef struct{
 	BinaryKmer kmer;
+	Status status;
 	long long count;
 } Element;
 
 typedef BinaryKmer Key;
 
 boolean element_smaller(Element,Element);
+
+boolean db_node_check_status(Element *, Status status);
 
 boolean element_is_key(Key,Element,short kmer_size);
 

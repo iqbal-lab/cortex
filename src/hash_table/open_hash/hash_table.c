@@ -78,6 +78,8 @@ boolean hash_table_find_in_bucket(Key key, long long * current_pos, boolean * ov
       }
     
     //element found
+
+   
     if (element_is_key(key,hash_table->table[*current_pos], hash_table->kmer_size))
       {
 	found = true;

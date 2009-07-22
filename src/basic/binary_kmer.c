@@ -63,6 +63,18 @@ char reverse_char_nucleotide(char c)
 }
 
 
+char * seq_reverse_complement(char * in, int length, char * out){
+
+  int k;
+  for(k=0;k<length;k++){
+    out[k] = reverse_char_nucleotide(in[length-k-1]);
+  }
+  out[length] = '\0';
+  return out;
+}
+
+
+
 Nucleotide reverse_binary_nucleotide(Nucleotide n)
 {
   switch (n)

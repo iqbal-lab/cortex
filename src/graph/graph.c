@@ -198,7 +198,7 @@ int main(int argc, char **argv){
   case 13:
     
     printf("smooth bubbles\n");
-    db_graph_smooth_bubbles(10,kmer_size*2,50,db_graph);
+    db_graph_smooth_bubbles(10,kmer_size*2,db_graph);
     
     printf("print supernodes\n");
     db_graph_print_supernodes(argv[8],ctg_length,db_graph); 

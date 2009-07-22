@@ -52,6 +52,8 @@ char * binary_kmer_to_seq(BinaryKmer kmer, short kmer_size, char * seq);
 
 BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size);
 
+char * seq_reverse_complement(char * in, int length, char * out);
+
 BinaryKmer binary_kmer_reverse_complement(BinaryKmer kmer, short kmer_size);
 
 Nucleotide binary_kmer_get_last_nucleotide(BinaryKmer kmer);

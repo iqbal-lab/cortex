@@ -53,6 +53,28 @@ void test_binary_kmer_reverse_complement(){
   
 }
 
+
+void test_seq_reverse_complement(){
+  
+  char out[100];
+  char * seq = "AAAAAA";
+  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq,6,out),"TTTTTT");
+  
+  seq = "ATAAAA";
+  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq,6,out),"TTTTAT");
+  
+  seq = "CGATAAAA";
+  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq,8,out),"TTTTATCG");
+ 
+  seq = "CGATAAAAGG";
+  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq,10,out),"CCTTTTATCG");
+   
+  seq = "";
+  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq,0,out),"");
+  
+}
+
+
 void test_binary_kmer_nucleotide_iterator(){
   
   int count = 0;
