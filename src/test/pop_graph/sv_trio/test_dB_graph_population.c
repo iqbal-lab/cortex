@@ -963,8 +963,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   int max_covg = 10;
   int max_expected_size_of_supernode=20;
 
-  int ret;
-  /*
+  
   int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
@@ -1025,8 +1024,8 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   min_fiveprime_flank_anchor = 10;
   min_threeprime_flank_anchor= 10;
-  max_anchor_span = 210;
-  length_of_arrays=420;
+  max_anchor_span = 370;
+  length_of_arrays=740;
   min_covg =1;
   max_covg = 10;
   max_expected_size_of_supernode=400;
@@ -1589,6 +1588,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
     }
 
 
+  /*
    reference is
 > AluJo#SINE/Alu inserted in middle of 7SLRNA#SINE/Alu
 gccgggcgcggtggcgcgtgcctgtagtcccagctactcgggaggctgag
@@ -1620,7 +1620,7 @@ gaatagccactgcactccagcctgagcaacatagcgagaccccgtctctt
 aaaaaaaaaaaaaaaaaaaa
 
   
-
+  */
 
 
 
@@ -1648,7 +1648,7 @@ aaaaaaaaaaaaaaaaaaaa
   printf("End of subtest 11\n");
 
 
-  */
+
 
 
 
