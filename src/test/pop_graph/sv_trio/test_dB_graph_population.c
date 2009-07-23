@@ -16,8 +16,6 @@ void test_db_graph_supernode_for_specific_person_or_pop()
 {
 
 
-  printf("START OF TEST ZAM\n\n\n\n\n");
-
  //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 8;
@@ -1028,7 +1026,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   length_of_arrays=740;
   min_covg =1;
   max_covg = 10;
-  max_expected_size_of_supernode=400;
+  max_expected_size_of_supernode=370;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
@@ -1042,6 +1040,21 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   // ******************************************************************************************************************************
   // 3. Reference = Alu-NNNNN- same Alu, and person is identical to reference. This should find nothing
+  //    Note this really is testing something different. Since the reference is basically the same sequence repeated twice (with N's in between),
+  //    there is a risk that we would match the 5' anchor of the (one and only) supernode at the start of the reference, and the 3' anchor at
+  //    the end of the 2nd copy of the repeat.
+  //    To be clear, look at this:
+  //        Ref:  ZamZamZamNNNNNNNNNNNNNNNNZamZamZam
+  //        Indiv ZamZamZamNNNNNNNNNNNNNNNNZamZamZam
+  //      So we look at supernode ZamZamzZam. We could, if we implemented things wrong, do this:
+  //
+  //        Ref: ZamZamZamNNNNNNNNNNNNNNNNZamZamZam
+  //             Zam............................Zam
+  //              ^                              ^
+  //             5' anchor                    3' anchor    match start of supernode ZamZamZam with start of reference, and end of supernode with end of reference
+  //     this would be a  bug - failing to realise that the entire supernode matches exactly the reference on the first instance of the repeat ZamZamZam
+  //
+  //    In fact, I found exactly this bug through this test.
   // ******************************************************************************************************************************
 
   printf("Start subtest 3\n");
@@ -1082,7 +1095,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
     
   
   
-  CU_ASSERT(seq_loaded==1394);
+  CU_ASSERT(seq_loaded==697);
   
   chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu.fasta", "r");
   if (chrom_fptr==NULL)
@@ -1097,7 +1110,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   length_of_arrays= 740;
   min_covg =1;
   max_covg = 10;
-  max_expected_size_of_supernode=700;
+  max_expected_size_of_supernode=370;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
@@ -1132,7 +1145,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_10kb_of_chrom1", &bad_reads, hash_table);
 
   
-  CU_ASSERT(seq_loaded==11940);
+  CU_ASSERT(seq_loaded==16320);
   
   chrom_fptr = fopen("../data/test/pop_graph/variations/person_1kb_chrom1.fasta", "r");
   if (chrom_fptr==NULL)
@@ -1143,8 +1156,8 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   min_fiveprime_flank_anchor = 20;
   min_threeprime_flank_anchor= 10;
-  max_anchor_span = 1000;
-  length_of_arrays=2000;
+  max_anchor_span = 10000;
+  length_of_arrays=20000;
   min_covg =1;
   max_covg = 10;
   max_expected_size_of_supernode=10000;
@@ -1252,7 +1265,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   length_of_arrays=700;
   min_covg =1;
   max_covg = 10;
-  max_expected_size_of_supernode=2000;
+  max_expected_size_of_supernode=350;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
