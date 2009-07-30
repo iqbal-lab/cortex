@@ -769,8 +769,7 @@ int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGrap
       //if (count % 100000000 == 0 ){
       // printf("loaded %i\n",count);
       //}
-      
-      printf("Get next node from file and add to hash table %d \n", count);
+
       dBNode * current_node  = NULL;
       current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size),&found,db_graph);
       

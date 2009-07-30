@@ -262,7 +262,9 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
 
   e->kmer = element_get_key(kmer, kmer_size);
 
-  //has table has calloc-ed all elements, so already initialised to zero.
+  //hash table has calloc-ed all elements, so elements fromm the hash table are already initialised to zero.
+  //however this function is used to reset to 0 Elements that are reused,
+  // - see below in the read_binary functions. Also in tests.
   int i;
   for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
     {

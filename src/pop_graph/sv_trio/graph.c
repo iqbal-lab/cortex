@@ -20,7 +20,7 @@ int main(int argc, char **argv){
   hash_key_bits    = atoi(argv[3]);  //number of buckets: 2^hash_key_bits
   bucket_size      = atoi(argv[4]);
   action           = atoi(argv[5]);
-  DEBUG            = atoi(argv[5]);
+  DEBUG            = atoi(argv[6]);
   
   int max_retries=10;
 

@@ -343,7 +343,6 @@ boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node){
       puts("error with input file\n");
       exit(1);
     }
-
     read = fread(&edges,sizeof(Edges),1,fp);
     if (read==0){
       puts("error with input file\n");

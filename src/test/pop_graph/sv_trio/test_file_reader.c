@@ -280,10 +280,10 @@ void test_load_individual_binaries_into_sv_trio()
   //prepare a hash table
 
   int kmer_size = 31;
-  int number_of_bits = 3;
-  int bucket_size = 100;
+  int number_of_bits = 0;
+  int bucket_size = 41;
   int seq_len=0;
-  int max_retries=10;
+  int max_retries=82;
   
   dBGraph* db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
 
