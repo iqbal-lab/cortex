@@ -1,3 +1,5 @@
+
+
 #include <CUnit.h>
 #include <Basic.h>
 #include <dB_graph.h>
@@ -910,7 +912,6 @@ void test_db_graph_make_reference_path_based_sv_calls()
   // 1. NULL test. Load short fake reference, and load a person whose sequence is identical. This should find nothing.
   // ******************************************************************************************************************************
 
-  printf("Start subtest 1\n");
 
   // toy example  - kmer_size=7
   //first set up the hash/graph
@@ -961,10 +962,13 @@ void test_db_graph_make_reference_path_based_sv_calls()
   int max_covg = 10;
   int max_expected_size_of_supernode=20;
 
+
+
   
   int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
+							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
+							0, NULL, NULL, NULL, NULL);
 
   CU_ASSERT(ret==0);
 
@@ -974,14 +978,12 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
 
+
   // ******************************************************************************************************************************
   // 2. Harder NULL test. Reference=an ALU and load a person whose sequence is also that ALU. This should find nothing.
   //     Our implementation of db_graph_make_reference_path_based_sv_calls assumes we have a very large ref fasta, so we load big arrays of bases
   //     which are much longer than we expect any of the supernodes to be. In this case, we know the supernode is as long as the Alu.  
   // ******************************************************************************************************************************
-
-  printf("Start subtest 2\n");
-
 
   kmer_size = 31;
   number_of_bits = 8;
@@ -1029,7 +1031,8 @@ void test_db_graph_make_reference_path_based_sv_calls()
   max_expected_size_of_supernode=370;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
+						    0, NULL, NULL, NULL, NULL);
   
   CU_ASSERT(ret==0);
 
@@ -1056,8 +1059,6 @@ void test_db_graph_make_reference_path_based_sv_calls()
   //
   //    In fact, I found exactly this bug through this test.
   // ******************************************************************************************************************************
-
-  printf("Start subtest 3\n");
 
 
   kmer_size = 31;
@@ -1113,7 +1114,9 @@ void test_db_graph_make_reference_path_based_sv_calls()
   max_expected_size_of_supernode=370;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
+						    0, NULL, NULL, NULL, NULL);
+
   
   CU_ASSERT(ret==0);
 
@@ -1125,8 +1128,6 @@ void test_db_graph_make_reference_path_based_sv_calls()
   // ******************************************************************************************************************************
   // 4. Reference = 10kb of chromosome 1. Individual is that same sequence. This should find nothing.
   // ******************************************************************************************************************************
-
-  printf("Start subtest 4\n");
 
   kmer_size = 31;
   number_of_bits = 13;
@@ -1163,7 +1164,9 @@ void test_db_graph_make_reference_path_based_sv_calls()
   max_expected_size_of_supernode=10000;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
+						    0, NULL, NULL, NULL, NULL);
+
   
   CU_ASSERT(ret==0);
 
@@ -1174,12 +1177,12 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
   // ***************************************************************************************************************************************************
-  // 5. Reference  = shrt sequence, individual is idential except for one base change
+  // 5. Reference  = short sequence, individual is idential except for one base change
   // ***************************************************************************************************************************************************
 
 
 
-  printf("Start subtest 5\n");
+  printf("Start subtest 5 - short sequence for ref; individual differs by one base\n");
 
   kmer_size = 7;
   number_of_bits = 8;
@@ -1213,28 +1216,80 @@ void test_db_graph_make_reference_path_based_sv_calls()
   min_covg =1;
   max_covg = 10;
   max_expected_size_of_supernode=40;
+
+
+  //this time, we expect results. So  malloc some arrays to hold the results. Only use this option for testing, as in general use, we expect to find millions
+  // of variants
+
+  char** return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  char** return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 30);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 30);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 30);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) * 30);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+  
+
+
+  //now do the test!!!
+  FILE* fp = fopen("../bin/temp_outputfile_for_testing_subtest5", "w");
+  fprintf(fp, "Zam iqbal test fp\n");
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
-  
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+  						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array);
+
+  fclose(fp);
+
   CU_ASSERT(ret==1);
-  printf("Ret is %d\n", ret);
+  CU_ASSERT_STRING_EQUAL("AATAGACGCCCACACCTGATAG", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("TAGCCACACTGTAC", return_trusted_branch_array[0]);
+  CU_ASSERT_STRING_EQUAL("AAGCCACACTGTAC", return_branch2_array[0]);
+  CU_ASSERT_STRING_EQUAL("TTGTA", return_flank3p_array[0]);
+
+
+
+
+  //cleanup
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
-
-
-
-
-
-
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
 
 
 
   // ***************************************************************************************************************************************************
   // 6. Reference = Alu-NNNNN- same Alu, and person is identical to reference except for a single base difference. This should find the single variant!
+  //     It is also an example where we traverse the supernode in the reverse direction to that in which is appears in our array. This is 
+  //      therefore a good unit test to ensure that our code works in this case
   // ***************************************************************************************************************************************************
 
-  printf("Start subtest 6\n");
+  printf("Start subtest 6. Reference has an exact repeat of an ALU,and individual differs by one base in one of those copies\n");
 
   kmer_size = 31;
   number_of_bits = 8;
@@ -1266,13 +1321,65 @@ void test_db_graph_make_reference_path_based_sv_calls()
   min_covg =1;
   max_covg = 10;
   max_expected_size_of_supernode=350;
+
+
+  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 400);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 400);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 400);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) * 400);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+
+  fp = fopen("../bin/temp_outputfile_for_testing_subtest6", "w");
+
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
-  
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array );
+  fclose(fp);
+
   CU_ASSERT(ret==1);
+  CU_ASSERT_STRING_EQUAL("GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("TCAGCCGTAG", return_flank3p_array[0]);
+  CU_ASSERT_STRING_EQUAL("CTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGCGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAAG", return_trusted_branch_array[0]);
+  CU_ASSERT_STRING_EQUAL("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGCGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAAG", return_branch2_array[0]);
+
+
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
+
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
+
+
 
 
 
@@ -1281,9 +1388,10 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   // ***************************************************************************************************************************************************
   // Reference is as in example 1, just a short sequence. Individual is missing 2 bases in the middle--> we should find this
+  //     Note this test is also interesting because the reference and individual both contain a closed loop in their de Bruijn graph
   // ***************************************************************************************************************************************************
 
-  printf("Start subtest 7\n");
+  printf("Start subtest 7 - deletion of 2 bases from a short sequence\n");
 
   kmer_size = 7;
   number_of_bits = 8;
@@ -1318,18 +1426,67 @@ void test_db_graph_make_reference_path_based_sv_calls()
   max_expected_size_of_supernode=40;
 
 
+  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 80);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 80);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 80);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) * 80);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+
+  fp = fopen("../bin/temp_outputfile_for_testing_subtest7", "w");
+
+
   //individual has 2 missing bases, reference does not
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array );
   
+  fclose(fp);
+
   CU_ASSERT(ret==1);
+  CU_ASSERT_STRING_EQUAL("CCACACCTGA", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("AC", return_flank3p_array[0]);
+  CU_ASSERT_STRING_EQUAL("TAGACCCCAC", return_trusted_branch_array[0]);
+  CU_ASSERT_STRING_EQUAL("GACCCCAC", return_branch2_array[0]);
+
 
 
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
 
-  printf("End of subtest 7\n");
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
+
+
 
 
 
@@ -1339,7 +1496,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   // Reference is as in example 1, just a short sequence. Individual has an extra 2 bases in the middle--> we should find this
   // ***************************************************************************************************************************************************
 
-  printf("Start subtest 8\n");
+  printf("Start subtest 8 - insertion of 2 bases in a short sequence\n");
 
   kmer_size = 7;
   number_of_bits = 8;
@@ -1376,18 +1533,71 @@ void test_db_graph_make_reference_path_based_sv_calls()
   max_expected_size_of_supernode=40;
 
 
+  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 80);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 80);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 80);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) * 80);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+
+  fp = fopen("../bin/temp_outputfile_for_testing_subtest8", "w");
+
+
+
   //cf previous test - we are using individua with index 1, not 0 as last time. ie we have swapped which is individual and which is reference
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array );
+
   
+
+
+  fclose(fp);
+
   CU_ASSERT(ret==1);
+  CU_ASSERT_STRING_EQUAL("CCACACCTGA", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("AC", return_flank3p_array[0]);
+  CU_ASSERT_STRING_EQUAL("TAGACCCCAC", return_branch2_array[0]);
+  CU_ASSERT_STRING_EQUAL("GACCCCAC", return_trusted_branch_array[0]);
+
 
 
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
 
-  printf("End of subtest 8\n");
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
+
+
 
 
 
@@ -1398,7 +1608,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   // ***************************************************************************************************************************************************
 
 
-  printf("Start subtest 9\n");
+  printf("Start subtest 9 - should find nothing. Insertion between two tandem repeats (each of which is a full supernode)\n");
 
   kmer_size = 31;
   number_of_bits = 15;
@@ -1415,7 +1625,6 @@ void test_db_graph_make_reference_path_based_sv_calls()
   seq_loaded=0;
 
 
-  //we use the same two people as last time, but swap their roles
   seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_insertion", &bad_reads, hash_table);
 
   chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_alu.fasta", "r");
@@ -1438,7 +1647,8 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
+						    0, NULL, NULL, NULL, NULL);
   
   CU_ASSERT(ret==0);
 
@@ -1446,17 +1656,17 @@ void test_db_graph_make_reference_path_based_sv_calls()
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
 
-  printf("End of subtest 9\n");
-  
 
 
   // ***************************************************************************************************************************************************
   // 10. Reference is a single sequence which is a single supernode. Individual is the same, with an Alu inserted in the middle
   // Should be able to find anchors at both ends this time, and find the insertion
+  // Note that by missing the alu in the reference, it has a load of nodes that won't be seen in the individual, so for example here
+  // we will ask for a min 3' flank of 8. This actually means 31+8 bases of agreement.
   // ***************************************************************************************************************************************************
 
 
-  printf("Start subtest 10\n");
+  printf("Start subtest 10 - single Alu insertion\n");
 
   kmer_size = 31;
   number_of_bits = 15;
@@ -1485,7 +1695,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
   min_fiveprime_flank_anchor = 3;
-  min_threeprime_flank_anchor= 3;
+  min_threeprime_flank_anchor= 8;
   max_anchor_span =500;
   length_of_arrays=1000;
   min_covg =1;
@@ -1493,19 +1703,67 @@ void test_db_graph_make_reference_path_based_sv_calls()
   max_expected_size_of_supernode=500;
 
 
+  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
 
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) *500);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+
+
+
+  
+  fp = fopen("../bin/temp_outputfile_for_testing_subtest10", "w");
+  
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
-  
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array);
+  fclose(fp);
+
+
+
+
   CU_ASSERT(ret==1);
+
+  //first base of Alu insert = first base of displaced sequence. ie we had xxxxGyyyy and then we insert Alu: xxxx[G-Alu]Gyyyy. So first base of Alu look slike is in flank5p
+  CU_ASSERT_STRING_EQUAL("TGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTG", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("TAGCCAGG", return_flank3p_array[0]);
+  CU_ASSERT_STRING_EQUAL("AAACTCCGTCTGTACTAATAGTACAAAAAT", return_trusted_branch_array[0]);
+  CU_ASSERT_STRING_EQUAL("CCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGCGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAAGAAACTCCGTCTGTACTAATAGTACAAAAAT", return_branch2_array[0]);
 
 
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
-
-  printf("End of subtest 10\n");
-
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
 
 
   // ***************************************************************************************************************************************************
@@ -1514,7 +1772,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   // ***************************************************************************************************************************************************
 
 
-  printf("Start subtest 11\n");
+  printf("Start subtest 11 - deletion of an Alu\n");
 
   kmer_size = 31;
   number_of_bits = 15;
@@ -1542,8 +1800,9 @@ void test_db_graph_make_reference_path_based_sv_calls()
     }
 
 
+
   min_fiveprime_flank_anchor = 3;
-  min_threeprime_flank_anchor= 3;
+  min_threeprime_flank_anchor= 8;
   max_anchor_span =500;
   length_of_arrays=1000;
   min_covg =1;
@@ -1551,18 +1810,64 @@ void test_db_graph_make_reference_path_based_sv_calls()
   max_expected_size_of_supernode=500;
 
 
+  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) *500);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+  
+  fp = fopen("../bin/temp_outputfile_for_testing_subtest11", "w");
+
 
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
-  
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+                                                    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array);
+  fclose(fp);
+
+
   CU_ASSERT(ret==1);
+
+  //first base of Alu insert = first base of displaced sequence. ie we had xxxxGyyyy and then we insert Alu: xxxx[G-Alu]Gyyyy. So first base of Alu look slike is in flank5p
+  CU_ASSERT_STRING_EQUAL("TGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTG", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("TAGCCAGG", return_flank3p_array[0]);
+  CU_ASSERT_STRING_EQUAL("AAACTCCGTCTGTACTAATAGTACAAAAAT", return_branch2_array[0]);
+  CU_ASSERT_STRING_EQUAL("CCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGCGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAAGAAACTCCGTCTGTACTAATAGTACAAAAAT", return_trusted_branch_array[0]);
 
 
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
 
-  printf("End of subtest 11\n");
 
 
 
@@ -1573,7 +1878,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   // ***************************************************************************************************************************************************
 
 
-  printf("Start subtest 12\n");
+  printf("Start subtest 12 - insertion of one Alu within another\n");
 
   kmer_size = 31;
   number_of_bits = 15;
@@ -1601,41 +1906,38 @@ void test_db_graph_make_reference_path_based_sv_calls()
     }
 
 
-  /*
-   reference is
-> AluJo#SINE/Alu inserted in middle of 7SLRNA#SINE/Alu
-gccgggcgcggtggcgcgtgcctgtagtcccagctactcgggaggctgag
-gtgggaggatcgcttgagtccaggagttctgggctgtagtgcgctatgcc
-gatcgggtgtccgcactaagttcggcatcaatatggtgacctcccgggag
-gccgggcgcggtggctcacgcctgtaatcccagcactttgggaggccga
-ggcgggaggatcgcttgagcccaggagttcgagaccagcctgggcaacat
-agcgagaccccgtctctacaaaaaatacaaaaattagccgggcgtggtgg
-cgcgcgcctgtagtcccagctactcgggaggctgaggcaggaggatcgct
-tgagcccaggagttcgaggctgcagtgagctatgatcgcgccactgcact
-ccagcctgggcgacagagcgagaccctgtctcaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaa
-cgggggaccaccaggttgcctaaggaggggtgaaccggcccaggtcggaa
-acggagcaggtcaaaactcccgtgctgatcagtagtgggatcgcgcctgt
-gaatagccactgcactccagcctgagcaacatagcgagaccccgtctctt
-aaaaaaaaaaaaaaaaaaaa
-..plus N's on the end
-
-
-and individual is
-
->7SLRNA#SINE/Alu
-gccgggcgcggtggcgcgtgcctgtagtcccagctactcgggaggctgag
-gtgggaggatcgcttgagtccaggagttctgggctgtagtgcgctatgcc
-gatcgggtgtccgcactaagttcggcatcaatatggtgacctcccgggag
-cgggggaccaccaggttgcctaaggaggggtgaaccggcccaggtcggaa
-acggagcaggtcaaaactcccgtgctgatcagtagtgggatcgcgcctgt
-gaatagccactgcactccagcctgagcaacatagcgagaccccgtctctt
-aaaaaaaaaaaaaaaaaaaa
-
   
-  */
-
-
+ //    reference is
+ //   > AluJo#SINE/Alu inserted in middle of 7SLRNA#SINE/Alu
+ //   GCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+ //   GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+ //   GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+ //   GCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGA
+ //   GGCGGGAGGATCGCTTGAGCCCAGGAGTTCGAGACCAGCCTGGGCAACAT
+ //   AGCGAGACCCCGTCTCTACAAAAAATACAAAAATTAGCCGGGCGTGGTGG
+ //   CGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGGATCGCT
+ //   TGAGCCCAGGAGTTCGAGGCTGCAGTGAGCTATGATCGCGCCACTGCACT
+ //   CCAGCCTGGGCGACAGAGCGAGACCCTGTCTCAAAAAAAAAAAAAAAAAA
+ //   AAAAAAAAAAAA
+ //   CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+ //   ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+ //   GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+ //   AAAAAAAAAAAAAAAAAAAA
+ //   ..plus N's on the end
+    
+    
+ //   and individual is
+    
+ //   >7SLRNA#SINE/Alu
+ //   GCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+ //   GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+ //   GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+ //   CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+ //   ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+ //   GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+ //   AAAAAAAAAAAAAAAAAAAA
+    
+    
 
 
   min_fiveprime_flank_anchor = 3;
@@ -1647,22 +1949,65 @@ aaaaaaaaaaaaaaaaaaaa
   max_expected_size_of_supernode=500;
 
 
+  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) *500);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+  
+  fp = fopen("../bin/temp_outputfile_for_testing_subtest12", "w");
+
+
 
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
-  
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+                                                    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array);
+
+
+  fclose(fp);
+
+
   CU_ASSERT(ret==1);
+
+  CU_ASSERT_STRING_EQUAL("GCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("AAA", return_flank3p_array[0]);
+  CU_ASSERT_STRING_EQUAL("CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAA", return_branch2_array[0]);
+  CU_ASSERT_STRING_EQUAL("GCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGAGGATCGCTTGAGCCCAGGAGTTCGAGACCAGCCTGGGCAACATAGCGAGACCCCGTCTCTACAAAAAATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGGATCGCTTGAGCCCAGGAGTTCGAGGCTGCAGTGAGCTATGATCGCGCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAA", return_trusted_branch_array[0]);
 
 
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
-
-  printf("End of subtest 11\n");
-
-
-
-
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
 
 
 
@@ -1671,6 +2016,7 @@ aaaaaaaaaaaaaaaaaaaa
   // 13. Reference is 10 kb of chromosome 1 plus 1kb of sequence inserted mid-supernode, and person is identical, except for that 1kb is missing 
   // ***************************************************************************************************************************************************
 
+  printf("Start subtest 13: deletion of 1kb within 10kb of sequence\n");
 
   kmer_size = 31;
   number_of_bits = 15;
@@ -1698,61 +2044,53 @@ aaaaaaaaaaaaaaaaaaaa
   // Let's be clear about what this test looks like. 
 
 
-  /*
-       The individual is 10kb of chromosome 1, which has the following supernodes
-
->node_0  cylcle:false length:4546 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:1 lstf:2
-TGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACTCCGTCTGTACTAATAGTACAAAAATTAGCCAGGCGTGATGGTGTGCACCTGTAGTCCTTGCTACTCAGAAAGCTGAGGCAGGAGAATCGCTTGTACCCAGGAGGCAGAGGTTGCAGTGAGCAGAGATTGTGCCACTGCACTCCATCCTGGGTGACAGAGTGCTATGAGTCACCACACCTGGTATGAGCCACCGTGCCTGGCCCACAATGACTTTTACACATGTTGTTAAATCATCTTACAGATTTTATAATTTGGGGGAAGAAAAGTTTTACTAAATTGTCTTTTAATGGAAACTCTACAAGAACCAGAATCTTTGCTTTGTTCACTTATGTATCCATTCCTAGGCCTAGAAAAATGTCTGACACATAGCGGCAATTATTCATTGAATAAATGGACCCAGGGATAGTACATTAGCTATGCTATATGCATACATTAAAGATGTAGATTATCGACTTTCAAAAGATAATTAATGTAACTTCTTACTGCTTCTGAACATGTTTGTGAGTTATATTGCTGAGGGACCTTTATCTTCTCATTCTTTCATCTTAACCCAGTGTTATAAAATTGAAATCACCAATATTATTCCATATCTAAAATTAATATCTACCTTGTAAAAAATATCACTCTGCTGCATTTGAGAATAGACTTTTTAGGTAATAATGATGCAATCCATAGGGTTTTTTGGGGGCACAGAGGGATTCATGCTAACAGAACATTTTATTTTCTATTTTCCCAGAGCTGTAAAACATGAAATTACGGTAGTATAAGGCATATTTTTACTCTTTTTATAATTTTTTCTAAAAAAAATTAGTGTTTGTTCCCTATATAACTTTTAACTTTATAGGTAAATATTTGTTTCTTTCAGCTCCAGTTTTATGTGAAATAGAGTTTTCAGATTTATGTAGCATGGAAAGTTTTAATACGTCAGAGTTACTGATTTTTGCCAATCATTTTCTCAATTATTTCTTTTTTATCTTTAGTTGATTTTTTTGTAGTGACACATTTTGTTTCTAGTCTCATTTCCTTTTGTTTATATTCTATGTATATTTCATTTTTGGTTACTATGAGAATTACATATAACATCCTAGAGTTATAACATTTTAATTTGAATTTATTTCAACTTAAGTTCAATCACATACCAAAATTCTACTGCTATATATATAGCTCTACTCTTTTTATGTTATTGATGTGACAAATTATATCTTTATTCATTGTATACCAGCTAACAGATTTACAATTACATTTTATGCATTTGCCTTTTAAATTATGTAGAAAATAAAAAGCAGAGTTACAAACCAAAATTACAATAGGACTGTTTTTATGTTTGTTTATGTATTTACCTTTACCAGAGAGCTTTGTATATTCATACAGCTTGCTTATTTACTTATATAGTTATTGCCTAGAGTTCATTTATTTCAACCTGAAGGACTTAACACTTCCTGAATGTCAAATTCAGGGATAAATGGATTTTTTTCAGTTTTAAAAAAAAATCCGGAAATGTCTTAATTTCTCCTTCATTTTTGAAGGATAAGTTTTCCAGCTATATATTTCTCAATTGACAGGTTTCTTCATTATTTTAAATATATAATCCACTGCCTACTGGCCTTCAAGGTTTCTGCTGAGAAATCAGCTGCTAATGTTATCTGGATCCCTATCTGTGAGAGTTGCTCTTCTCTCTGAGTTTTCAACATTCTCCCATTATCTTTTTTTTGTTTGTTTTTGAGACAAATAATTGTACATATTCATGGGATACAGAGTGATATTTTGATACATGTATACAATGCCCAGTGATCAAATAAGGATAATTAGCGTATCCATCACCTCAAATAGTTGTCATTTATTTGTATTGTGAACAGTCAACATTCTTTCTTCTAGTTTTTTAAATTTATAAACATTTAAATTTTATTACAGAAATTTAAATTTTTTGATTCTGAAAAAGTCATATATGTATGCAACATTTTTTATCGTTTATTTATATATTTATGCATCTTTCCTTTTAGTTTTGACAGAGATTTTCTATTTTATCATTATTTCAAAAGAACTCTTACCTGTATTTATTTATCAAGTATATTTCCCTTGTTTTTTCCTAGTATATTAATTTATTTACTTATCTTCTAAAAATCCTCCATATAATCTGTTTATTTTGTTTCCTTTCTATAATTTCTTCAATAATTAGTTCTGTTCTATTTTCCATTAAAATATTTAAATCTTGTATGAATTTTTGTCAGATTAGAAATTTAGGGCGTTTCTTAATTTCTCTATACTCTAGCTTTTGACTTTTTTTTTCTGACCTAAGAGGTATTTAGAGCACATTTTAGATTTTTTATTTTGACTAATCATTTAAAATGTATACTAATCTTCAATTTAAATAAAAAACTGGTCTATAGTGACAAAAATTACAAATGAGCCTAACTAATAAATTATCAGCTGTGTTTATATGTATAAGCATGCACAGATTTTGGTAAATATGTACATAGTATATTGGTGAGCTTATTTTTATCATTCTTAACTCATTGTGTAGTCTAAACGTTGGGGAAAAAATAACATACAATAATCAGATGGTGTGAATAAGAAAATTGTTCTAATGTTTGTAAACCAAGCAACTGTTTTAACTGCTCCCCTCTTCCTGATTGACTTCTAAAAGGGATTGATCCATATTGGGTCCTATCATGTACGTCACGGTATAACATCTCCAGCTATAAAATGGAAATTTGAGAATAACTTTGCTGCTACTCAGATATATTTTATTTCAAAAACATACACTAAGGTGTTGCTGTTGGATCTTTCCAAAAACATATTCACACAGAACTTTCAATCACACTGAGCCATATTTGAACAATCTTTCAAGGTCAGCTCTGGCATAAGCTAACATTATACCATTTAACTCAGAAATTTCTTTAGTATTTGATTAATGGGTTTATGTTTGATATGTAATGTAATTTTCTAATACTAAATCAAGTGGTAATTTTGTTAGTCAAGTTGATTTAGTGGCTTGGGAAGAAAGCTTTTAATGTTCCCCTAATTTTTCTTTCCTTTGACATGATCCTTCACATGTCTTATTTTGCTTAGTGATTTTTCTTTTTTTTTTTTTTTTTTTGAGACAGGGTCTTACTCTACCACCCAGGCTTGAGTGCAGTGGTGCAATCACAGCTCATTGCAGCCTTGACCTCCCAGACTCAAGCTATTCTTCCACCTCAGCCTCCCAAGTAGCTGGTACTACAGGCACATGCCACCAAACTTGGCTAATTTTTGTATTTTTTGTAGAGACAGAGTTTTGCCAAATTCTCAGGCTGGTCTGGAATTTCTGGGCTCAAGTAATCCTGCCTTGGCCTCCCAACATGCTGATATTACAGACATAAGCCACAGTACCTGGCCAGTTTTCTTTTTAAAAAAATCTATTGGTTATTAATTTGAAGCCTTCCTTTTCATAGCTGTGCTCCTTAATTGGGAGCAAACATGAATGGACCACAACTTAGCCAATTTTCTATATACGATCTTTGCCATCCTAATTTAAAGGAATATTAATTCTTTCTTTTCCTCTTTCATTCCACAAACCTGTATTGACTACATCTAAGTTCTAAATGGTGCACTGGATGTTGAAAAAGTTGATGATGAGCAAGAACAAAATTCCTGCTTTCAGGAGACTTACAGTTCAATATGGGAAATATAATTTGTTAAAATATAAAAGTGCAATTGTGTTACATGCTGTACGAAGTACATGTTGACATGTGAGCATATAATAAATGGGCTGGAGGCCAGAGGATTGCCAAAGAGAATGGGCCTCCTGCTGAGATGAAAAGTTGAGCAGGGATTAGTTGGCAAAAGTGGAGGGACGATCCTTTCTAGGCAGGAGGAAGAACATGTACAGAATCTCTGAGGTGTGATGCGACAAAGTCTATATAAAAAACTGAAGAAAGGTCTAATATGGCTTAAATACAGAAGCTAGTAGGAGAGGAGTCGAAAAGAGGCTGGAGAAGTAGAAAGTGTCTGCATTCTGCAGGAACTTATATTGTATAAAATATATTGTATATTGTATAAAAAGAATTTCTCTTTATTCTAAGTGCAATGTGAAGCCAATGAAGTGCTTTAAACAGGTGATGTGATTTGATTGAATTTATTACTTCACTTAACAAATATTCATTACATGCCCACTGTTTGTCAGATATTGCTCTAGCCCCTGGTGATACAGTAGGGAATAAAACAGGCAAAAATCCCTGTCCTCTTGCAGCTTATAATGGACTGCAATGTTTAATATGTCAGAGGAGGTCCACGGAGGAGTGACTTCTAAGCAAGAATCTGAAAAAAATGAGGATATCTAAGGAGGGAACAAATGGTTCAAAAGCCCTATAATTGCAAGCAGGCATGATGAAGCAATTGCAGTTGTCCTGACTCTCAACACCGTGGAACTCAAAGGAGATGGAAAGATTCCTTCTCTCCCTCATATATTTTCTCTCTTTCTGTCTATATATATAGAATATGAGACATTTCCCTAATCATTATGT
->node_1  cylcle:false length:1696 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
-ACATAATGATTAGGGAAATGTCTCATATTCTTCTACTCAGAAATAAGCAATATAGCAATTACTGTTTTTTACATTTTACAGTTACAGTTTCAGAGAAAGTTTGATATTTATCTAAAATTTTTCAATGTATGAACTTTTTCATTTGACAAACCATAATTGTACATATTCTTGGGATACAGAGTGATATTTTCTTTACATGTATAGAATGTGTAGTGATCAAATCAGGGTAATTTCCACTAATTTAAAATGCCACCTTTATGTTATTGTAATTTATATATATACTATATATATACACACACACATATATATATATACATGTCCACATACAGTGTGTGTGTGCACATGTACACACATGCATATGTGTATATAATGCCCAGTATAAGCAATGTGCACAAATAAAATTAGCTAACAGAGATAGTATAGAGTGAGAGGAGAGGCAGATTAATCTTTGAGGAAAAGCACAATTTTATAGCTGAATGGAGAAAGCTGAGGTGGTTTCTAAGATGGAGAATAAGACGAAAAATGTAAGTACGTTGTCTGACTGAATTCAAGAAAGAAGGGTAAAAGAGAAGAAAGTAGTGGTCTTATCATTAAATGCCACAGAGAGGTAAAGATAAAGACAACATATTGTTTTGGGTTTAGTAATTTAAGGGTTACCAAATTCCGTTTTGGAGGAGGAACAGATTCCATGTCCACTAGAATGGAATGAACAAGAAATGGAGGAGGAAAATAGGTAGTTTTTCAAAAGTTTTCAAAAATATGAAAAGAAGAAATGAAGTGGTACTTGGAAGAGATTGTTGAAATGGGAGAGACTATGGTGGCTTGTTTAGAAGCAGTTGAGATAGATCCAATTGAGATAGAGATATTGACTATATAAACAAAAGAATGACAAATTAATAGTGTAATGGATAACTTGACTTTGGCAAATATTGTGAATTTTTGTGAAAGTACAACTAAAAGGCAATGTCACTCCAATAATCACCAGAGTAATCAATTTGCTTATTGCTGTCCCTTTAAATATAGTTCTCTGGTATCAACTAACATGTTTTTAACTAATGATGCTTCTTAAAGAAAAGGGAAAAGACCTTTTTCTTTCTTTCAGTCTTCAATGATTCACTGCTTCATCTCGCTCCACCAAAGATAAATGAAATCTACATCTCTTATACATTAACAATGCATGACAATTTACAAATAGCTAAATTTTTGGAGCTAACTTTAAGTACCTGAATGGAATTTAATCAACCCACTAATCTCCTTCTCACTTCTCAGTTATTTATCAAGTTTATGTCAAGGGACAAGGAAAAATTATCCAAACATTGTTTAAAACAATCATCATTAATTAGTAACACTTATCCAGGGGGGTTTTTAACCTTTCCCCCACTCAAGGATTATTCTAATGTCAGAGTAGAATAAAAAATAAGTGCAGTGATGCTGACTCTTCCAAGCTTAACATTTCTCACAAGTCAATTAGCTTTGTACTGGGAGGAGGGCGTGAAGGGCTGCTTGCGGTAGTTGTGTAGCAGCAGCACAATGGCCGCAGACAAGGAAAACAGTTTCTAGGAATTCCTCGTATATAATTTTATATTTTTGACAAGATTAATGACCCATGCTCCCTTCCTCTCCATTTCTTTTTTTGGAATTCTGTTGGTATGTAGTTACTATATTTTATTAAAGGAAATTAGCCTTATCTCTTATT
->node_2  cylcle:false length:566 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
-AGGAAATTAGCCTTATCTCTTATTATATTTTTTATGACCTTCAAAGTAGTGTCTCTGCTTAAAAGTGTACCCTGGCCGGGCGTGGTGGCTCACACCTGTAATTCCAGCACTTTGGGAGGCCGAGGCGGGTGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACACGGTGAAACCCCGTCTGTACTAAAAATACAAAAAATTAGCAGGGCATAGTGGCGGGCGCCTGTAGTCCCAGCTACTCAGGAGGCTCAGGCAGGAGAATGGCGTGAACCCGGGAGACGGAGCTTGCGGTGAGCTGAGATCGCACCGCTGCACTCCAGCCTGGGCGACAGAGCAAGACTCCGTCTCAAAAAAAAAAAAAAAGTATACCCTGAGGCACACATCAAGCGACATGTAGAGTTCATAAATTCTGGCCAAATGGTCATACCTCAAACCTCATCAGCAGTAAGGCTCTTTACTTGCACTGACAAATATGAACGCTGGGGAATTTGGAAATGATATATAATATATAATATTATATATATAATAGATATATAATATATAATATATATAATACATAT
->node_3  cylcle:false length:2989 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:1 fst:0 lst_coverage:2 lstr:1 lstf:2
-AATTTGTTACAGCAGTAATAGAACAAGTGGTTATCCATATGAGGCAAATTAGATTGGATACCTATCTCCAATAGAAATCAATTCAAGGTGAATTCCAGGAAAATACTTAAAACATTTAGATTAAAAATAAATGAGAATTTTTGTTACTTTTGGTAGGTCATAGAACCAAGAAAAACAAACATTAAGGAGGAAAAATGAACATATGACTACATCAAAATATAAAGCTTCTCTATTTGGAAGATATCATAAGGTGACAAATCATAAACTGTAATATTTACAACATATATATAAGTGAATAAATATACATTTAGAATATATATGAACTCCCAAAAATCAACAGGAAAAATAAGACATAGAACAAGCAAAATGCATAAACAAAAGAAGGCAAAACAAAAATAATGACTCATAATTATATGAAAAGAAGCTCATCTTCATAGATGAGCAGATAAATGCAAATTAAAACCACCCTGAGATGCTTTTTACATCCATGAGCCTGATAAAAGTTAGAGTCTAAAAGTAATAACAAAGATGGGAAGTAATAGAAAATCTTGTCCATTACTGGTTAAAGTATAAACTGATACAGCTACTTTATAGAATATTACATTATAGAATAAAGTTGTGAGTATGTATATGCAGTGACTCAGCATATTCATTGCTAGTATGTACTCAAGAGAAACTTACAGGAGTGGACTAGGAAGTAAATACAAAATGATTACAACATTGTTTGTTATATCAAAAAATAAAAAAGACACCCAATTTTCCAGCAAAAAAAATAAGTAAAAATAAATCCTGGTGTATTCTAACAATGGAATAATATATAGCCATTAAAATAAATCAACTATTACTGTACATATGAATGTAAATATCAGCAAAACATATTGTTTAGTGAAAAACTAAGAAGCTGAAGAAGAATATATACAATATGGTTACATTTATATGAAGTCCAAAAACTTGCAAAATAAAGAAATGTATTTAGAAATAGATTCACATGTGAGAAAACTAGAAGAAAATTAATGAAAGGATAAGAGGGATAGCAGTAATTCTGAGTAGTTGAGGGAATTTCAATTGGAAAAAAATAATATCATATTCTTTAAGTCAGGTAGTGGGTATTAGCATTTGTTTTACCATCGTTCTTTATTCTTATAGCTACACTATATATTTTCAATGTATTTAATGTATTTTTTGCATAATTAAATATTATGCAATAAAAATGAGAAAACAAAAAAGTAGAAAATGATAAATTACAATAAAGAAATGGAGAAAAAATTATAATCTAGTTGAGTAATGGTATATTACATAGCTATTTTCTTAAGTAGATGTATGTACATGATGTATGCACGATTGTACATACATGTTCTTAATTATATATAAATATATATGTACATATTTTTAATATAAAATACTAAACAAAGTACACCAAAATATTAGCTCCTATGTTAGTGAGATAATGTTTTGTTTTTTTGTATTTTAAGTTTTACATAGTAGGTGTATTTTTCTGTTTTCATACTGCTATAAAGAACTGCCCAAGACTGGGTAATTTATAAAGGAAAGAAGTTTAATTGGCTCACCGTTCAGCACAGCTTGGGAGGCCTCAGGAAATCTACAATCATGGCGGAAGACAAAGAGGAAGCAAGCCAGCTTCTTCGCAAGGCAGCATGAAGAAGTGCCGAGCAAAGGGGAAAGAATCCCTTATAAAACCATCAAATCTCGTGAGAACTCACTATCACAAGAACAGCACAGGGGAAACTGCCCCCATGATTCAATTACCTCCACCTGGTCTCTCCCTTGACCTGTGGGGATTATGGGGACTATGGGGATTACAATTCAAGATGAGATTCAGGTGGGGATACAAAGCCTAACCATATCAGTAGGCATGTATTGAATTTTAAACTCAGAGAAAAATACTAGTGTTTTTATAGGATTCTTACTAAAGAAAAACCAGAAAGTAATAAACCATCTACGCTAAGACATAAAATTCAGTTGTTTAGTTACAAGATAGAATGTGGCCTTGTAAGAAAGCAAATTAACTTCTAACATACAAAGCCTTAGAGAAGATTCAAGTGACTGACGGATCTTAAACAGAGCTATTATTACAACTCGAACTGCAGTAAAATATCCTCAGCAACATAGATGTGTGTGTTTCACTAGTCAGAGCAATACAAATTTAATGAAACTCCACTGGTGGTGTTTTTAATCAGACAATTTCTGAAGATGTCCTGGCTTATTCACAGATGCAAGCCAAATCTCTAGAAGAGTACCATAATAAGAAAAAAAAGAATACAGGCAATTGAGAGCTGTTCCAAAGTTTAGGGAGTTTTTGTAAGGAATTAATAAATAAAAATGTTCTTGAAAGACAGAAATTAATATGCAGTTCATACTGTCAGAATTGCAGGCAATTTATCAAAGTCCCCTAATCCTCCAAAATCGCTATTTTTTTTTTGACACACACTTTACAGTACAGAAGAAAATGTCTCCGGCAATAAATCACAAAGTTAAAATTACCTAGTCTACAATTAACTACACAGTGATGGTAAATCATTTTCTACCAAAAGAAAGAAATGTCTTGTCTATTCAGGTTCTGCTCTACTTAAAAGTTTTCCTTGTTGGCGAGCAAGTGGTTAGAAAATTATATTTTATACGTACATTCAGCTTAACTATCATTCAGCTCAGGAAGATGACTCAGGGCCTTATCCATACCTTCAAGTTTGCTCTTAGCAAGTAATTGTTTCAGTATCTATATCAAAAATGGCTTAAGCCTGCAACATGTTTCTGAATGATTAACAAGGTGATAGTCAGTTCTTCATTGAATCCTGGATGCTTTATTTTTCTTAATAAGAGGAATTCATATGGATCAGCTAGAAAAAAATTAAGAGGAAAATCACATGGAAAGTTATATATTATATATCTATTATATATAATATATATCTATTACATATTATATATTGTATATCTATTACATATATATTATATATGTATTATATATATTATA
->node_4  cylcle:true length:1691 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:2
-TGGCCAGGCTGGTCTCGAACTCCTGACCTCAAATGATCCATCTACCTCGGCCTCCCAAAGTGCTGGAATTACAGATGTGAGCCACAATGCCCGGCCTTATTTTCTACAACTTTGGTAACTTTAGCATATACCCCAAATCTGTAAGACATAATATTATAATTCAAATGCAACTCATGGCTTCTCTTTGTACTCTTTCTCTAGCTTTTGAATTATTTATTCTAATACCAGTTTTAATTCTGACACAAAATCATGGGAGTTCTAATCAAAATCCAACCTTTTATCATAAAAACTATGAAGAAATTATGAGTAGAATTTAAAAAGGAAAATAGGCCTATTAATTAGATTTGTCTTTGTAGCATTTAACTCTATAATAAATAATATTTTATGCCTATGAGTCCCCAACAAAGCCTCCAGCTTCTATTTAGATATAAACTGTAAAAGTCACTACTGGATCCACAAGCAAGACTATGGTAAATAAATTTCTCCACCTAACCAGCTTCTTTTACATGATGTTACATGTTTCTTTTGTTTTTTCATTTTGGCAAATATTGATTGTCATCTTCGTGTTTGTCTATGTCCTAAGTGCTGGGATACAGAATCTGAAAAGATGGACACAGGACCTGCCTTCAAGTTCACCCCCTTTTTTTTTTTTTTTTGAGATGCAGTTTTGCTCTTGTCACCCAGGCTGGAGTGTACTGGTGAGATCTCTGCTCACTGCAACCTCCACCTTCAGGGTTCAAGTGATTCTCCTGCCTCAGCCTCCCAAGTAGCTGTGATTACAGGTCCCAGCCACCACGCCTAGCTAATTTTTGTATTTTTAGTAGAGACAGCGTTTCATCATGCTGGTCAGGCTGGTCTCGAACTCCTAACCTCAGGTAGTCGACCCACCTCGGCCTCCCACAGTGCTGAGATTACAGGCATGAGCCACCACGCCCTGCTAGGAGTTCACGCTTTAGTTGGGGAAAATATACAATAAGCAAGCCAGTTTTTAAAATGAGAACTGCAATTAGAGTTAAATGCTACAAAGACAAACTCACAGGAAGATGGGATGTAGAATGATAAGGCTCTCAGAATAGTAAGAGAAACTATTGCTTCTTACGATGTTTGTCTTTCTTTGTATCGGTGCTCAGCTGAGTCTGCAGTGCTTCAGAGGCAGCTTTCATTTTATAAAAATCTATGATTTCTCCTTCCAGTTTTTTTTTCTCTTCCTCGAGCTTCCTTATCTCCTCCTGTTGAATCATTTTAAGATGCTCGAACTTGTCCTGCAGCTGTGAAACCAATGTGCAGTTGTGACACCAAAGCAGTGTGGCTGAACACCTAAAAGAATACGCTTTTTTTCTGATTATCAAACAAACCCAAATCATCACAGTAGACCACGATCTTAATAACAATCTCAAAAACTCAGGAGTAAACACTCAGATATGGAATTTTTCTTTTCTTTCTTTTTTCCTTTTATAAGATGGAGTCTCACTCTGTTGCCCAGGCTGGAGTGCACTGGTGCGATCTCAGCTCACTGCAACCTCCATCTCCCAGTTCAAGTGATTCTCCTGCCTCAGCCTCTTGAGTAGCTGGGACTATAGGCATGCACCACCACTACAGGCGTGTGCCACCACACCTGGCTAATTTTTGTATTTTTAGTAGAGATGGGGTTTTGCCATGATGGCCAGGCTGGTCTCGAACTCCTGACCTCA
->node_5  cylcle:false length:462 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:2 lst_coverage:1 lstr:0 lstf:1
-TGGCCAGGCTGGTCTCGAACTCCTGACCTCAGGTGATCCTCCCGCTTTGGCCTCCCAAAGACTTTTTTTTTTTTTTTAATATAGAGACAAGTTCTCAGTACGTTGCCCAGGCTGGTCTCAAACTCCTGAGCTCAAGTGATCCTCCCACCTCAGCTTCCCAAAGTGCTGGGACTGACTGGATGCAGTGGCTCATGCTTGTAAACTCAGCACTTTGGGAGGCCAAGGTGGGAGGATCGCTTGAGCCCAGGAGTTCAAGACCAGACTGGGTGATATAACACAATAGTCAACTTCAACAGGAGAGAGAATCTGTAAACTTGAATATAGATCTTCCGAAATTATCCAGTCAGTGGACAGAGAAAAAAAGAATAAAAGAGAGAAAAGAAGGCTGGGTGTGGTGGCTCAAGCCTGTAATCCCAACACTTTGGGAGGCCGAGGCAGGCAGATTAAGAGGTCAGGAGTTCA
->node_6  cylcle:false length:116 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
-AATAAGAGATAAGGCTAATTTCCTTTAATAATAATAAAATCCTTTAATAAAAATATAAAGGAATAATATAATAATTTTCTTTAATAAAATATAATAAGAGATAAGGCTAATTTCCT
->node_7  cylcle:false length:41 min_coverage:2 max_coverage:2 average_coverage: 2.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:1
-ATATATAATATATAATATATATAATACATATATAATATATA
->node_8  cylcle:false length:38 min_coverage:2 max_coverage:2 average_coverage: 2.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:1
-AAAATATAATAAGAGATAAGGCTAATTTCCTTTAATAA
->node_9  cylcle:false length:48 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
-TATAATATATATAATACATATATAATATATAATATATATAATACATAT
->node_10  cylcle:false length:100 min_coverage:2 max_coverage:2 average_coverage: 2.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:1
-AGAATATGAGACATTTCCCTAATCATTATGTGTAATTACAATTACATATATATATGTAATTGTAATTACACATAATGATTAGGGAAATGTCTCATATTCT
 
 
-The reference is the same as the individual, except it has about 1kb inserted in node 0.
+  //       The individual is 10kb of chromosome 1, which has the following supernodes
 
-The inserted sequence is
+//>node_0  cylcle:false length:4546 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:1 lstf:2
+//TGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACTCCGTCTGTACTAATAGTACAAAAATTAGCCAGGCGTGATGGTGTGCACCTGTAGTCCTTGCTACTCAGAAAGCTGAGGCAGGAGAATCGCTTGTACCCAGGAGGCAGAGGTTGCAGTGAGCAGAGATTGTGCCACTGCACTCCATCCTGGGTGACAGAGTGCTATGAGTCACCACACCTGGTATGAGCCACCGTGCCTGGCCCACAATGACTTTTACACATGTTGTTAAATCATCTTACAGATTTTATAATTTGGGGGAAGAAAAGTTTTACTAAATTGTCTTTTAATGGAAACTCTACAAGAACCAGAATCTTTGCTTTGTTCACTTATGTATCCATTCCTAGGCCTAGAAAAATGTCTGACACATAGCGGCAATTATTCATTGAATAAATGGACCCAGGGATAGTACATTAGCTATGCTATATGCATACATTAAAGATGTAGATTATCGACTTTCAAAAGATAATTAATGTAACTTCTTACTGCTTCTGAACATGTTTGTGAGTTATATTGCTGAGGGACCTTTATCTTCTCATTCTTTCATCTTAACCCAGTGTTATAAAATTGAAATCACCAATATTATTCCATATCTAAAATTAATATCTACCTTGTAAAAAATATCACTCTGCTGCATTTGAGAATAGACTTTTTAGGTAATAATGATGCAATCCATAGGGTTTTTTGGGGGCACAGAGGGATTCATGCTAACAGAACATTTTATTTTCTATTTTCCCAGAGCTGTAAAACATGAAATTACGGTAGTATAAGGCATATTTTTACTCTTTTTATAATTTTTTCTAAAAAAAATTAGTGTTTGTTCCCTATATAACTTTTAACTTTATAGGTAAATATTTGTTTCTTTCAGCTCCAGTTTTATGTGAAATAGAGTTTTCAGATTTATGTAGCATGGAAAGTTTTAATACGTCAGAGTTACTGATTTTTGCCAATCATTTTCTCAATTATTTCTTTTTTATCTTTAGTTGATTTTTTTGTAGTGACACATTTTGTTTCTAGTCTCATTTCCTTTTGTTTATATTCTATGTATATTTCATTTTTGGTTACTATGAGAATTACATATAACATCCTAGAGTTATAACATTTTAATTTGAATTTATTTCAACTTAAGTTCAATCACATACCAAAATTCTACTGCTATATATATAGCTCTACTCTTTTTATGTTATTGATGTGACAAATTATATCTTTATTCATTGTATACCAGCTAACAGATTTACAATTACATTTTATGCATTTGCCTTTTAAATTATGTAGAAAATAAAAAGCAGAGTTACAAACCAAAATTACAATAGGACTGTTTTTATGTTTGTTTATGTATTTACCTTTACCAGAGAGCTTTGTATATTCATACAGCTTGCTTATTTACTTATATAGTTATTGCCTAGAGTTCATTTATTTCAACCTGAAGGACTTAACACTTCCTGAATGTCAAATTCAGGGATAAATGGATTTTTTTCAGTTTTAAAAAAAAATCCGGAAATGTCTTAATTTCTCCTTCATTTTTGAAGGATAAGTTTTCCAGCTATATATTTCTCAATTGACAGGTTTCTTCATTATTTTAAATATATAATCCACTGCCTACTGGCCTTCAAGGTTTCTGCTGAGAAATCAGCTGCTAATGTTATCTGGATCCCTATCTGTGAGAGTTGCTCTTCTCTCTGAGTTTTCAACATTCTCCCATTATCTTTTTTTTGTTTGTTTTTGAGACAAATAATTGTACATATTCATGGGATACAGAGTGATATTTTGATACATGTATACAATGCCCAGTGATCAAATAAGGATAATTAGCGTATCCATCACCTCAAATAGTTGTCATTTATTTGTATTGTGAACAGTCAACATTCTTTCTTCTAGTTTTTTAAATTTATAAACATTTAAATTTTATTACAGAAATTTAAATTTTTTGATTCTGAAAAAGTCATATATGTATGCAACATTTTTTATCGTTTATTTATATATTTATGCATCTTTCCTTTTAGTTTTGACAGAGATTTTCTATTTTATCATTATTTCAAAAGAACTCTTACCTGTATTTATTTATCAAGTATATTTCCCTTGTTTTTTCCTAGTATATTAATTTATTTACTTATCTTCTAAAAATCCTCCATATAATCTGTTTATTTTGTTTCCTTTCTATAATTTCTTCAATAATTAGTTCTGTTCTATTTTCCATTAAAATATTTAAATCTTGTATGAATTTTTGTCAGATTAGAAATTTAGGGCGTTTCTTAATTTCTCTATACTCTAGCTTTTGACTTTTTTTTTCTGACCTAAGAGGTATTTAGAGCACATTTTAGATTTTTTATTTTGACTAATCATTTAAAATGTATACTAATCTTCAATTTAAATAAAAAACTGGTCTATAGTGACAAAAATTACAAATGAGCCTAACTAATAAATTATCAGCTGTGTTTATATGTATAAGCATGCACAGATTTTGGTAAATATGTACATAGTATATTGGTGAGCTTATTTTTATCATTCTTAACTCATTGTGTAGTCTAAACGTTGGGGAAAAAATAACATACAATAATCAGATGGTGTGAATAAGAAAATTGTTCTAATGTTTGTAAACCAAGCAACTGTTTTAACTGCTCCCCTCTTCCTGATTGACTTCTAAAAGGGATTGATCCATATTGGGTCCTATCATGTACGTCACGGTATAACATCTCCAGCTATAAAATGGAAATTTGAGAATAACTTTGCTGCTACTCAGATATATTTTATTTCAAAAACATACACTAAGGTGTTGCTGTTGGATCTTTCCAAAAACATATTCACACAGAACTTTCAATCACACTGAGCCATATTTGAACAATCTTTCAAGGTCAGCTCTGGCATAAGCTAACATTATACCATTTAACTCAGAAATTTCTTTAGTATTTGATTAATGGGTTTATGTTTGATATGTAATGTAATTTTCTAATACTAAATCAAGTGGTAATTTTGTTAGTCAAGTTGATTTAGTGGCTTGGGAAGAAAGCTTTTAATGTTCCCCTAATTTTTCTTTCCTTTGACATGATCCTTCACATGTCTTATTTTGCTTAGTGATTTTTCTTTTTTTTTTTTTTTTTTTGAGACAGGGTCTTACTCTACCACCCAGGCTTGAGTGCAGTGGTGCAATCACAGCTCATTGCAGCCTTGACCTCCCAGACTCAAGCTATTCTTCCACCTCAGCCTCCCAAGTAGCTGGTACTACAGGCACATGCCACCAAACTTGGCTAATTTTTGTATTTTTTGTAGAGACAGAGTTTTGCCAAATTCTCAGGCTGGTCTGGAATTTCTGGGCTCAAGTAATCCTGCCTTGGCCTCCCAACATGCTGATATTACAGACATAAGCCACAGTACCTGGCCAGTTTTCTTTTTAAAAAAATCTATTGGTTATTAATTTGAAGCCTTCCTTTTCATAGCTGTGCTCCTTAATTGGGAGCAAACATGAATGGACCACAACTTAGCCAATTTTCTATATACGATCTTTGCCATCCTAATTTAAAGGAATATTAATTCTTTCTTTTCCTCTTTCATTCCACAAACCTGTATTGACTACATCTAAGTTCTAAATGGTGCACTGGATGTTGAAAAAGTTGATGATGAGCAAGAACAAAATTCCTGCTTTCAGGAGACTTACAGTTCAATATGGGAAATATAATTTGTTAAAATATAAAAGTGCAATTGTGTTACATGCTGTACGAAGTACATGTTGACATGTGAGCATATAATAAATGGGCTGGAGGCCAGAGGATTGCCAAAGAGAATGGGCCTCCTGCTGAGATGAAAAGTTGAGCAGGGATTAGTTGGCAAAAGTGGAGGGACGATCCTTTCTAGGCAGGAGGAAGAACATGTACAGAATCTCTGAGGTGTGATGCGACAAAGTCTATATAAAAAACTGAAGAAAGGTCTAATATGGCTTAAATACAGAAGCTAGTAGGAGAGGAGTCGAAAAGAGGCTGGAGAAGTAGAAAGTGTCTGCATTCTGCAGGAACTTATATTGTATAAAATATATTGTATATTGTATAAAAAGAATTTCTCTTTATTCTAAGTGCAATGTGAAGCCAATGAAGTGCTTTAAACAGGTGATGTGATTTGATTGAATTTATTACTTCACTTAACAAATATTCATTACATGCCCACTGTTTGTCAGATATTGCTCTAGCCCCTGGTGATACAGTAGGGAATAAAACAGGCAAAAATCCCTGTCCTCTTGCAGCTTATAATGGACTGCAATGTTTAATATGTCAGAGGAGGTCCACGGAGGAGTGACTTCTAAGCAAGAATCTGAAAAAAATGAGGATATCTAAGGAGGGAACAAATGGTTCAAAAGCCCTATAATTGCAAGCAGGCATGATGAAGCAATTGCAGTTGTCCTGACTCTCAACACCGTGGAACTCAAAGGAGATGGAAAGATTCCTTCTCTCCCTCATATATTTTCTCTCTTTCTGTCTATATATATAGAATATGAGACATTTCCCTAATCATTATGT
+//>node_1  cylcle:false length:1696 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
+//ACATAATGATTAGGGAAATGTCTCATATTCTTCTACTCAGAAATAAGCAATATAGCAATTACTGTTTTTTACATTTTACAGTTACAGTTTCAGAGAAAGTTTGATATTTATCTAAAATTTTTCAATGTATGAACTTTTTCATTTGACAAACCATAATTGTACATATTCTTGGGATACAGAGTGATATTTTCTTTACATGTATAGAATGTGTAGTGATCAAATCAGGGTAATTTCCACTAATTTAAAATGCCACCTTTATGTTATTGTAATTTATATATATACTATATATATACACACACACATATATATATATACATGTCCACATACAGTGTGTGTGTGCACATGTACACACATGCATATGTGTATATAATGCCCAGTATAAGCAATGTGCACAAATAAAATTAGCTAACAGAGATAGTATAGAGTGAGAGGAGAGGCAGATTAATCTTTGAGGAAAAGCACAATTTTATAGCTGAATGGAGAAAGCTGAGGTGGTTTCTAAGATGGAGAATAAGACGAAAAATGTAAGTACGTTGTCTGACTGAATTCAAGAAAGAAGGGTAAAAGAGAAGAAAGTAGTGGTCTTATCATTAAATGCCACAGAGAGGTAAAGATAAAGACAACATATTGTTTTGGGTTTAGTAATTTAAGGGTTACCAAATTCCGTTTTGGAGGAGGAACAGATTCCATGTCCACTAGAATGGAATGAACAAGAAATGGAGGAGGAAAATAGGTAGTTTTTCAAAAGTTTTCAAAAATATGAAAAGAAGAAATGAAGTGGTACTTGGAAGAGATTGTTGAAATGGGAGAGACTATGGTGGCTTGTTTAGAAGCAGTTGAGATAGATCCAATTGAGATAGAGATATTGACTATATAAACAAAAGAATGACAAATTAATAGTGTAATGGATAACTTGACTTTGGCAAATATTGTGAATTTTTGTGAAAGTACAACTAAAAGGCAATGTCACTCCAATAATCACCAGAGTAATCAATTTGCTTATTGCTGTCCCTTTAAATATAGTTCTCTGGTATCAACTAACATGTTTTTAACTAATGATGCTTCTTAAAGAAAAGGGAAAAGACCTTTTTCTTTCTTTCAGTCTTCAATGATTCACTGCTTCATCTCGCTCCACCAAAGATAAATGAAATCTACATCTCTTATACATTAACAATGCATGACAATTTACAAATAGCTAAATTTTTGGAGCTAACTTTAAGTACCTGAATGGAATTTAATCAACCCACTAATCTCCTTCTCACTTCTCAGTTATTTATCAAGTTTATGTCAAGGGACAAGGAAAAATTATCCAAACATTGTTTAAAACAATCATCATTAATTAGTAACACTTATCCAGGGGGGTTTTTAACCTTTCCCCCACTCAAGGATTATTCTAATGTCAGAGTAGAATAAAAAATAAGTGCAGTGATGCTGACTCTTCCAAGCTTAACATTTCTCACAAGTCAATTAGCTTTGTACTGGGAGGAGGGCGTGAAGGGCTGCTTGCGGTAGTTGTGTAGCAGCAGCACAATGGCCGCAGACAAGGAAAACAGTTTCTAGGAATTCCTCGTATATAATTTTATATTTTTGACAAGATTAATGACCCATGCTCCCTTCCTCTCCATTTCTTTTTTTGGAATTCTGTTGGTATGTAGTTACTATATTTTATTAAAGGAAATTAGCCTTATCTCTTATT
+//>node_2  cylcle:false length:566 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
+//AGGAAATTAGCCTTATCTCTTATTATATTTTTTATGACCTTCAAAGTAGTGTCTCTGCTTAAAAGTGTACCCTGGCCGGGCGTGGTGGCTCACACCTGTAATTCCAGCACTTTGGGAGGCCGAGGCGGGTGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACACGGTGAAACCCCGTCTGTACTAAAAATACAAAAAATTAGCAGGGCATAGTGGCGGGCGCCTGTAGTCCCAGCTACTCAGGAGGCTCAGGCAGGAGAATGGCGTGAACCCGGGAGACGGAGCTTGCGGTGAGCTGAGATCGCACCGCTGCACTCCAGCCTGGGCGACAGAGCAAGACTCCGTCTCAAAAAAAAAAAAAAAGTATACCCTGAGGCACACATCAAGCGACATGTAGAGTTCATAAATTCTGGCCAAATGGTCATACCTCAAACCTCATCAGCAGTAAGGCTCTTTACTTGCACTGACAAATATGAACGCTGGGGAATTTGGAAATGATATATAATATATAATATTATATATATAATAGATATATAATATATAATATATATAATACATAT
+//>node_3  cylcle:false length:2989 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:1 fst:0 lst_coverage:2 lstr:1 lstf:2
+//AATTTGTTACAGCAGTAATAGAACAAGTGGTTATCCATATGAGGCAAATTAGATTGGATACCTATCTCCAATAGAAATCAATTCAAGGTGAATTCCAGGAAAATACTTAAAACATTTAGATTAAAAATAAATGAGAATTTTTGTTACTTTTGGTAGGTCATAGAACCAAGAAAAACAAACATTAAGGAGGAAAAATGAACATATGACTACATCAAAATATAAAGCTTCTCTATTTGGAAGATATCATAAGGTGACAAATCATAAACTGTAATATTTACAACATATATATAAGTGAATAAATATACATTTAGAATATATATGAACTCCCAAAAATCAACAGGAAAAATAAGACATAGAACAAGCAAAATGCATAAACAAAAGAAGGCAAAACAAAAATAATGACTCATAATTATATGAAAAGAAGCTCATCTTCATAGATGAGCAGATAAATGCAAATTAAAACCACCCTGAGATGCTTTTTACATCCATGAGCCTGATAAAAGTTAGAGTCTAAAAGTAATAACAAAGATGGGAAGTAATAGAAAATCTTGTCCATTACTGGTTAAAGTATAAACTGATACAGCTACTTTATAGAATATTACATTATAGAATAAAGTTGTGAGTATGTATATGCAGTGACTCAGCATATTCATTGCTAGTATGTACTCAAGAGAAACTTACAGGAGTGGACTAGGAAGTAAATACAAAATGATTACAACATTGTTTGTTATATCAAAAAATAAAAAAGACACCCAATTTTCCAGCAAAAAAAATAAGTAAAAATAAATCCTGGTGTATTCTAACAATGGAATAATATATAGCCATTAAAATAAATCAACTATTACTGTACATATGAATGTAAATATCAGCAAAACATATTGTTTAGTGAAAAACTAAGAAGCTGAAGAAGAATATATACAATATGGTTACATTTATATGAAGTCCAAAAACTTGCAAAATAAAGAAATGTATTTAGAAATAGATTCACATGTGAGAAAACTAGAAGAAAATTAATGAAAGGATAAGAGGGATAGCAGTAATTCTGAGTAGTTGAGGGAATTTCAATTGGAAAAAAATAATATCATATTCTTTAAGTCAGGTAGTGGGTATTAGCATTTGTTTTACCATCGTTCTTTATTCTTATAGCTACACTATATATTTTCAATGTATTTAATGTATTTTTTGCATAATTAAATATTATGCAATAAAAATGAGAAAACAAAAAAGTAGAAAATGATAAATTACAATAAAGAAATGGAGAAAAAATTATAATCTAGTTGAGTAATGGTATATTACATAGCTATTTTCTTAAGTAGATGTATGTACATGATGTATGCACGATTGTACATACATGTTCTTAATTATATATAAATATATATGTACATATTTTTAATATAAAATACTAAACAAAGTACACCAAAATATTAGCTCCTATGTTAGTGAGATAATGTTTTGTTTTTTTGTATTTTAAGTTTTACATAGTAGGTGTATTTTTCTGTTTTCATACTGCTATAAAGAACTGCCCAAGACTGGGTAATTTATAAAGGAAAGAAGTTTAATTGGCTCACCGTTCAGCACAGCTTGGGAGGCCTCAGGAAATCTACAATCATGGCGGAAGACAAAGAGGAAGCAAGCCAGCTTCTTCGCAAGGCAGCATGAAGAAGTGCCGAGCAAAGGGGAAAGAATCCCTTATAAAACCATCAAATCTCGTGAGAACTCACTATCACAAGAACAGCACAGGGGAAACTGCCCCCATGATTCAATTACCTCCACCTGGTCTCTCCCTTGACCTGTGGGGATTATGGGGACTATGGGGATTACAATTCAAGATGAGATTCAGGTGGGGATACAAAGCCTAACCATATCAGTAGGCATGTATTGAATTTTAAACTCAGAGAAAAATACTAGTGTTTTTATAGGATTCTTACTAAAGAAAAACCAGAAAGTAATAAACCATCTACGCTAAGACATAAAATTCAGTTGTTTAGTTACAAGATAGAATGTGGCCTTGTAAGAAAGCAAATTAACTTCTAACATACAAAGCCTTAGAGAAGATTCAAGTGACTGACGGATCTTAAACAGAGCTATTATTACAACTCGAACTGCAGTAAAATATCCTCAGCAACATAGATGTGTGTGTTTCACTAGTCAGAGCAATACAAATTTAATGAAACTCCACTGGTGGTGTTTTTAATCAGACAATTTCTGAAGATGTCCTGGCTTATTCACAGATGCAAGCCAAATCTCTAGAAGAGTACCATAATAAGAAAAAAAAGAATACAGGCAATTGAGAGCTGTTCCAAAGTTTAGGGAGTTTTTGTAAGGAATTAATAAATAAAAATGTTCTTGAAAGACAGAAATTAATATGCAGTTCATACTGTCAGAATTGCAGGCAATTTATCAAAGTCCCCTAATCCTCCAAAATCGCTATTTTTTTTTTGACACACACTTTACAGTACAGAAGAAAATGTCTCCGGCAATAAATCACAAAGTTAAAATTACCTAGTCTACAATTAACTACACAGTGATGGTAAATCATTTTCTACCAAAAGAAAGAAATGTCTTGTCTATTCAGGTTCTGCTCTACTTAAAAGTTTTCCTTGTTGGCGAGCAAGTGGTTAGAAAATTATATTTTATACGTACATTCAGCTTAACTATCATTCAGCTCAGGAAGATGACTCAGGGCCTTATCCATACCTTCAAGTTTGCTCTTAGCAAGTAATTGTTTCAGTATCTATATCAAAAATGGCTTAAGCCTGCAACATGTTTCTGAATGATTAACAAGGTGATAGTCAGTTCTTCATTGAATCCTGGATGCTTTATTTTTCTTAATAAGAGGAATTCATATGGATCAGCTAGAAAAAAATTAAGAGGAAAATCACATGGAAAGTTATATATTATATATCTATTATATATAATATATATCTATTACATATTATATATTGTATATCTATTACATATATATTATATATGTATTATATATATTATA
+//>node_4  cylcle:true length:1691 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:2
+//TGGCCAGGCTGGTCTCGAACTCCTGACCTCAAATGATCCATCTACCTCGGCCTCCCAAAGTGCTGGAATTACAGATGTGAGCCACAATGCCCGGCCTTATTTTCTACAACTTTGGTAACTTTAGCATATACCCCAAATCTGTAAGACATAATATTATAATTCAAATGCAACTCATGGCTTCTCTTTGTACTCTTTCTCTAGCTTTTGAATTATTTATTCTAATACCAGTTTTAATTCTGACACAAAATCATGGGAGTTCTAATCAAAATCCAACCTTTTATCATAAAAACTATGAAGAAATTATGAGTAGAATTTAAAAAGGAAAATAGGCCTATTAATTAGATTTGTCTTTGTAGCATTTAACTCTATAATAAATAATATTTTATGCCTATGAGTCCCCAACAAAGCCTCCAGCTTCTATTTAGATATAAACTGTAAAAGTCACTACTGGATCCACAAGCAAGACTATGGTAAATAAATTTCTCCACCTAACCAGCTTCTTTTACATGATGTTACATGTTTCTTTTGTTTTTTCATTTTGGCAAATATTGATTGTCATCTTCGTGTTTGTCTATGTCCTAAGTGCTGGGATACAGAATCTGAAAAGATGGACACAGGACCTGCCTTCAAGTTCACCCCCTTTTTTTTTTTTTTTTGAGATGCAGTTTTGCTCTTGTCACCCAGGCTGGAGTGTACTGGTGAGATCTCTGCTCACTGCAACCTCCACCTTCAGGGTTCAAGTGATTCTCCTGCCTCAGCCTCCCAAGTAGCTGTGATTACAGGTCCCAGCCACCACGCCTAGCTAATTTTTGTATTTTTAGTAGAGACAGCGTTTCATCATGCTGGTCAGGCTGGTCTCGAACTCCTAACCTCAGGTAGTCGACCCACCTCGGCCTCCCACAGTGCTGAGATTACAGGCATGAGCCACCACGCCCTGCTAGGAGTTCACGCTTTAGTTGGGGAAAATATACAATAAGCAAGCCAGTTTTTAAAATGAGAACTGCAATTAGAGTTAAATGCTACAAAGACAAACTCACAGGAAGATGGGATGTAGAATGATAAGGCTCTCAGAATAGTAAGAGAAACTATTGCTTCTTACGATGTTTGTCTTTCTTTGTATCGGTGCTCAGCTGAGTCTGCAGTGCTTCAGAGGCAGCTTTCATTTTATAAAAATCTATGATTTCTCCTTCCAGTTTTTTTTTCTCTTCCTCGAGCTTCCTTATCTCCTCCTGTTGAATCATTTTAAGATGCTCGAACTTGTCCTGCAGCTGTGAAACCAATGTGCAGTTGTGACACCAAAGCAGTGTGGCTGAACACCTAAAAGAATACGCTTTTTTTCTGATTATCAAACAAACCCAAATCATCACAGTAGACCACGATCTTAATAACAATCTCAAAAACTCAGGAGTAAACACTCAGATATGGAATTTTTCTTTTCTTTCTTTTTTCCTTTTATAAGATGGAGTCTCACTCTGTTGCCCAGGCTGGAGTGCACTGGTGCGATCTCAGCTCACTGCAACCTCCATCTCCCAGTTCAAGTGATTCTCCTGCCTCAGCCTCTTGAGTAGCTGGGACTATAGGCATGCACCACCACTACAGGCGTGTGCCACCACACCTGGCTAATTTTTGTATTTTTAGTAGAGATGGGGTTTTGCCATGATGGCCAGGCTGGTCTCGAACTCCTGACCTCA
+//>node_5  cylcle:false length:462 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:2 lst_coverage:1 lstr:0 lstf:1
+//TGGCCAGGCTGGTCTCGAACTCCTGACCTCAGGTGATCCTCCCGCTTTGGCCTCCCAAAGACTTTTTTTTTTTTTTTAATATAGAGACAAGTTCTCAGTACGTTGCCCAGGCTGGTCTCAAACTCCTGAGCTCAAGTGATCCTCCCACCTCAGCTTCCCAAAGTGCTGGGACTGACTGGATGCAGTGGCTCATGCTTGTAAACTCAGCACTTTGGGAGGCCAAGGTGGGAGGATCGCTTGAGCCCAGGAGTTCAAGACCAGACTGGGTGATATAACACAATAGTCAACTTCAACAGGAGAGAGAATCTGTAAACTTGAATATAGATCTTCCGAAATTATCCAGTCAGTGGACAGAGAAAAAAAGAATAAAAGAGAGAAAAGAAGGCTGGGTGTGGTGGCTCAAGCCTGTAATCCCAACACTTTGGGAGGCCGAGGCAGGCAGATTAAGAGGTCAGGAGTTCA
+//>node_6  cylcle:false length:116 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
+//AATAAGAGATAAGGCTAATTTCCTTTAATAATAATAAAATCCTTTAATAAAAATATAAAGGAATAATATAATAATTTTCTTTAATAAAATATAATAAGAGATAAGGCTAATTTCCT
+//>node_7  cylcle:false length:41 min_coverage:2 max_coverage:2 average_coverage: 2.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:1
+//ATATATAATATATAATATATATAATACATATATAATATATA
+//>node_8  cylcle:false length:38 min_coverage:2 max_coverage:2 average_coverage: 2.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:1
+//AAAATATAATAAGAGATAAGGCTAATTTCCTTTAATAA
+//>node_9  cylcle:false length:48 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
+//TATAATATATATAATACATATATAATATATAATATATATAATACATAT
+//>node_10  cylcle:false length:100 min_coverage:2 max_coverage:2 average_coverage: 2.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:1
+//AGAATATGAGACATTTCCCTAATCATTATGTGTAATTACAATTACATATATATATGTAATTGTAATTACACATAATGATTAGGGAAATGTCTCATATTCT
 
-ACCTCAATCTATAACCACTACCTTCTGGGTCCTTTCTAAAAATTGACAAATAATAATCAT
-ATATAATTAATGTACAATGTTATGTTTCAATACATGTTTGCATTGTGGAATAATTAAATC
-AAGCTACTTGGCATGTCAGTAACATCACATGCTTAGCATTTTTGTAGTGAAAATATTTAA
-AATCTACTCTTTTAGCAATTTTGAAATATACAATACAGTACTTACTCACTTAACATCATT
-GATTGGTCCTCAGAAACTGCAACTTGGAGTGAAAAGATGTATAAAGAAACCAATTTTCCC
-ATAGGCTAATAGCTATAAATAAGAGTTAGATTCTTACAGCATATTTTTGGTCACAAAATA
-TCACCAAACTTCTAAATAAAGACCAAAACACTTCAAATATTAAACATTGAAATAAATATG
-AGCTTTGCATACATTTAAGAAAGATTAATAAAAACAAGTAAGATAATTATTTGCCCAATT
-ATTTCATTCAGGGTTGGGGAGACTGGAGTCTGTGCTGGAAGCTCAGGGCTCAAGCTGGGC
-AACAGCCCTGGACAGGATGCCATCCCACTGCAGGATGGCTCACACATGCCCACAGCCACT
-CAGCCTGGGACCATTTGGACACAGCAATTAACCTTACCTGCATGTCTTTGTGGGGAGGAA
-ACCAGAGTGCTTAGAAAAACCCATGCAGACAGACACAGAGCAAACATGCAAACCTCACAA
-AGATATTGTTTCTTCTGTCACCTGTGCTTTTGGGTCATATTCAAGAAATCATTAACCAAA
-TAAAAGTCGTGGAGCTTTTCCCTATGTTTTCTTTTAGTAGTTTTATAGTTTCAGGTCTTA
-CATTTAACTCCTTAATCCATTTTGATTTTTGCATATGGTGTGAGATAAGCTTCTGGTTTC
-ATTCTCCCACATGTGGATATCCAGTTCTCTGAACACCATATATGGAAGAGACTGTCATTT
-CCTCATGATATGTTCCTGGCACTTTTGTTGAAATCAATTGACCATAGATCTGTGGGTTTA
-TTTCTGGCTTTTTATTCTGTTCCATTGGCCAATGTACCTGTGTTTATGCTTGTGCCTTGC
-TGTTTTGATTATTATAGCTTTATAATATGTTTTGAAATCAGGTAGTGTGATGCCTCCATC
-TTTGCTTTTTATGCTCAAGATAGTTTGGATATTCAGAGTGTTTTATGGTTCCATATACAT
 
-which I took from chromosome 2.
+//The reference is the same as the individual, except it has about 1kb inserted in node 0. To be clearer, the reverse complement of node 0 is what is in the 10kb without insertion:
 
-  */
+//GTGTGGTGACTCATAGCACTCTGTCACCCAGGATGGAGTGCAGTGGCACAATCTCTGCTCACTGCAACCTCTGCCTCCTGGGTACAAGCGATTCTCCTGCCTCAGCTTTCTGAGTAGCAAGGACTACAGGTGCACACCATCACGCCTGGCTAATTTTTGTACTATTAGTACAGACGGAGTTTCACCATGTTGGCCAGGCTGGTCTCGAACTCCTGACCTCAGGGTCCATTTATTCAATGAATAATTGCCGCTATGTGTCAGACATTTTTCTAGGCCTAGGAATGGATACATAAGTGAACAAAGCAAAGATTCTGGTTCTTGTAGAGTTTCCATTAAAAGACAATTTAGTAAAACTTTTCTTCCCCCAAATTATAAAATCTGTAAGATGATTTAACAACATGTGTAAAAGTCATTGTGGGCCAGGCACGGTGGCTCATACCAGATTTTTTACAAGGTAGATATTAATTTTAGATATGGAATAATATTGGTGATTTCAATTTTATAACACTGGGTTAAGATGAAAGAATGAGAAGATAAAGGTCCCTCAGCAATATAACTCACAAACATGTTCAGAAGCAGTAAGAAGTTACATTAATTATCTTTTGAAAGTCGATAATCTACATCTTTAATGTATGCATATAGCATAGCTAATGTACTATCCCTAAAGTTAAAAGTTATATAGGGAACAAACACTAATTTTTTTTAGAAAAAATTATAAAAAGAGTAAAAATATGCCTTATACTACCGTAATTTCATGTTTTACAGCTCTGGGAAAATAGAAAATAAAATGTTCTGTTAGCATGAATCCCTCTGTGCCCCCAAAAAACCCTATGGATTGCATCATTATTACCTAAAAAGTCTATTCTCAAATGCAGCAGAGTGATTAACCAAAAATGAAATATACATAGAATATAAACAAAAGGAAATGAGACTAGAAACAAAATGTGTCACTACAAAAAAATCAACTAAAGATAAAAAAGAAATAATTGAGAAAATGATTGGCAAAAATCAGTAACTCTGACGTATTAAAACTTTCCATGCTACATAAATCTGAAAACTCTATTTCACATAAAACTGGAGCTGAAAGAAACAAATATTTACCTATTTTTTATTTTCTACATAATTTAAAAGGCAAATGCATAAAATGTAATTGTAAATCTGTTAGCTGGTATACAATGAATAAAGATATAATTTGTCACATCAATAACATAAAAAGAGTAGAGCTATATATATAGCAGTAGAATTTTGGTATGTGATTGAACTTAAGTTGAAATAAATTCAAATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGAGACATTTCCGGATTTTTTTTTAAAACTGAAAAAAATCCATTTATCCCTGAATTTGACATTCAGGAAGTGTTAAGTCCTTCAGGTTGAAATAAATGAACTCTAGGCAATAACTATATAAGTAAATAAGCAAGCTGTATGAATATACAAAGCTCTCTGGTAAAGGTAAATACATAAACAAACATAAAAACAGTCCTATTGTAATTTTGGTTTGTAACTCTGCCTCAAAAACAAACAAAAAAAAGATAATGGGAGAATGTTGAAAACTCAGAGAGAAGAGCAACTCTCACAGATAGGGATCCAGATAACATTAGCAGCTGATTTCTCAGCAGAAACCTTGAAGGCCAGTAGGCAGTGGATTATATATTTAAAATAATGAAGAAACCTGTCAATTGAGAAATATATAGCTGGAAAACTTATCCTTCAAAAATGAAGGAGAAATTAATATGACTTTTTCAGAATCAAAAAATTTAAATTTCTGTAATAAAATTTAAATGTTTATAAATTTAAAAAACTAGAAGAAAGAATGTTGACTGTTCACAATACAAATAAATGACAACTATTTGAGGTGATGGATACGCTAATTATCCTTATTTGATCACTGGGCATTGTATACATGTATCAAAATATCACTCTGTATCCCATGAATATGTACAATTATTTGTAAGAAATTATAGAAAGGAAACAAAATAAACAGATTATATGGAGGATTTTTAGAAGATAAGTAAATAAATTAATATACTAGGAAAAAACAAGGGAAATATACTTGATAAATAAATACAGGTAAGAGTTCTTTTGAAATAATGATAAAATAGAAAATCTCTGTCAAAACTAAAAGGAAAGATGCATAAATATATAAATAAACGATAAAAAATGTTGCATACATCTATAGACCAGTTTTTTATTTAAATTGAAGATTAGTATACATTTTAAATGATTAGTCAAAATAAAAAATCTAAAATGTGCTCTAAATACCTCTTAGGTCAGAAAAAAAAAGTCAAAAGCTAGAGTATAGAGAAATTAAGAAACGCCCTAAATTTCTAATCTGACAAAAATTCATACAAGATTTAAATATTTTAATGGAAAATAGAACAGAACTAATTATTGAACAGTTGCTTGGTTTACAAACATTAGAACAATTTTCTTATTCACACCATCTGATTATTGTATGTTATTTTTTCCCCAACGTTTAGACTACACAATGAGTTAAGAATGATAAAAATAAGCTCACCAATATACTATGTACATATTTACCAAAATCTGTGCATGCTTATACATATAAACACAGCTGATAATTTATTAGTTAGGCTCATTTGTAATTTTTGTCAATGGCTCAGTGTGATTGAAAGTTCTGTGTGAATATGTTTTTGGAAAGATCCAACAGCAACACCTTAGTGTATGTTTTTGAAATAAAATATATCTGAGTAGCAGCAAAGTTATTCTCAAATTTCCATTTTATAGCTGGAGATGTTATACCGTGACGTACATGATAGGACCCAATATGGATCAATCCCTTTTAGAAGTCAATCAGGAAGAGGGGAGCAGTTAATGAAGGATCATGTCAAAGGAAAGAAAAATTAGGGGAACATTAAAAGCTTTCTTCCCAAGCCACTAAATCAACTTGACTAACAAAATTACCACTTGATTTAGTATTAGAAAATTACATTACATATCAAACATAAACCCATTAATCAAATACTAAAGAAATTTCTGAGTTAAATGGTATAATGTTAGCTTATGCCAGAGCTGACCTTGAAAGATTGTTCAAATTCTGTCTCTACAAAAAATACAAAAATTAGCCAAGTTTGGTGGCATGTGCCTGTAGTACCAGCTACTTGGGAGGCTGAGGTGGAAGAATAGCTTGAGTCTGGGAGGTCAAGGCTGCAATGAGCTGTGA  TTGCACCACTGCACTCAAGCCTGGGTGGTAGAGTAAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAGAAAAATCACTAAGCAAAATAAGACATGGTATATAGAAAATTGGCTAAGTTGTGGTCCATTCATGTTTGCTCCCAATTAAGGAGCACAGCTATGAAAAGGAAGGCTTCAAATTAATAACCAATAGATTTTTTTAAAAAGAAAACTGGCCAGGTACTGTGGCTTATGTCTGTAATATCAGCATGTTGGGAGGCCAAGGCAGGATTACTTGAGCCCAGAAATTCCAGACCAGCCTGAGAATTTGGCAAAACTCGTACAGCATGTAACACAATTGCACTTTTATATTTTAACAAATTATATTTCCCATATTGAACTGTAAGTCTCCTGAAAGCAGGAATTTTGTTCTTGCTCATCATCAACTTTTTCAACATCCAGTGCACCATTTAGAACTTAGATGTAGTCAATACAGGTTTGTGGAATGAAAGAGGAAAAGAAAGAATTAATATTCCTTTAAATTAGGATGGCAAAGATCTTTAAGCCATATTAGACCTTTCTTCAGTTTTTTATATAGACTTTGTCGCATCACACCTCAGAGATTCTGTACATGTTCTTCCTCCTGCCTAGAAAGGATCGTCCCTCCACTTTTGCCAACTAATCCCTGCTCAACTTTTCATCTCAGCAGGAGGCCCATTCTCTTTGGCAATCCTCTGGCCTCCAGCCCATTTATTATATGCTCACATGTCAACATGTACTACAGTGGGCATGTAATGAATATTTGTTAAGTGAAGTAATAAATTCAATCAAATCACATCACCTGTTTAAAGCACTTCATTGGCTTCACATTGCACTTAGAATAAAGAGAAATTCTTTTTATACAATATACAATATATTTTATACAATATAAGTTCCTGCAGAATGCAGACACTTTCTACTTCTCCAGCCTCTTTTCGACTCCTCTCCTACTAGCTTCTGTAAATTGCTTCATCATGCCTGCTTGCAATTATAGGGCTTTTGAACCATTTGTTCCCTCCTTAGATATCCTCATTTTTTTCAGATTCTTGCTTAGAAGTCACTCCTCCGTGGACCTCCTCTGACATATTAAACATTGCAGTCCATTATAAGCTGCAAGAGGACAGGGATTTTTGCCTGTTTTATTCCCTACTGTATCACCAGGGGCTAGAGCAATATCTGACAAACATAATGATTAGGGAAATGTCTCATATTCTATATATATAGACAGAAAGAGAGAAAATATATGAGGGAGAGAAGGAATCTTTCCATCTCCTTTGAGTTCCACGGTGTTGAGAGTCAGGACAACTGC
+
+//  and the insert happens just after TTGGGAGGCTGAGGTGGAAGAATAGCTTGAGTCTGGGAGGTCAAGGCTGCAATGAGCTGTGA, where I have put a space above
+
+
+//The inserted sequence is
+
+//ACCTCAATCTATAACCACTACCTTCTGGGTCCTTTCTAAAAATTGACAAATAATAATCATATATAATTAATGTACAATGTTATGTTTCAATACATGTTTGCATTGTGGAATAATTAAATCAAGCTACTTGGCATGTCAGTAACATCACATGCTTAGCATTTTTGTAGTGAAAATATTTAAAATCTACTCTTTTAGCAATTTTGAAATATACAATACAGTACTTACTCACTTAACATCATTGATTGGTCCTCAGAAACTGCAACTTGGAGTGAAAAGATGTATAAAGAAACCAATTTTCCCATAGGCTAATAGCTATAAATAAGAGTTAGATTCTTACAGCATATTTTTGGTCACAAAATATCACCAAACTTCTAAATAAAGACCAAAACACTTCAAATATTAAACATTGAAATAAATATGAGCTTTGCATACATTTAAGAAAGATTAATAAAAACAAGTAAGATAATTATTTGCCCAATTATTTCATTCAGGGTTGGGGAGACTGGAGTCTGTGCTGGAAGCTCAGGGCTCAAGCTGGGCAACAGCCCTGGACAGGATGCCATCCCACTGCAGGATGGCTCACACATGCCCACAGCCACTCAGCCTGGGACCATTTGGACACAGCAATTAACCTTACCTGCATGTCTTTGTGGGGAGGAAACCAGAGTGCTTAGAAAAACCCATGCAGACAGACACAGAGCAAACATGCAAACCTCACAAAGATATTGTTTCTTCTGTCACCTGTGCTTTTGGGTCATATTCAAGAAATCATTAACCAAATAAAAGTCGTGGAGCTTTTCCCTATGTTTTCTTTTAGTAGTTTTATAGTTTCAGGTCTTACATTTAACTCCTTAATCCATTTTGATTTTTGCATATGGTGTGAGATAAGCTTCTGGTTTCATTCTCCCACATGTGGATATCCAGTTCTCTGAACACCATATATGGAAGAGACTGTCATTTCCTCATGATATGTTCCTGGCACTTTTGTTGAAATCAATTGACCATAGATCTGTGGGTTTATTTCTGGCTTTTTATTCTGTTCCATTGGCCAATGTACCTGTGTTTATGCTTGTGCCTTGCTGTTTTGATTATTATAGCTTTATAATATGTTTTGAAATCAGGTAGTGTGATGCCTCCATCTTTGCTTTTTATGCTCAAGATAGTTTGGATATTCAGAGTGTTTTATGGTTCCATATACAT
+
+// which I took from chromosome 2.
+
+
+
+
+//NOTE - the inserted sequence starts with an A. The sequence that follows the inserted sequence also starts with an A. So our algorithm will add that A to the flanking region.
+// We allow for this is checking results match expectations
+
 
 
   min_fiveprime_flank_anchor = 21;
@@ -1762,14 +2100,78 @@ which I took from chromosome 2.
   min_covg =1;
   max_covg = 100000000;
   max_expected_size_of_supernode=8000;
+
+
+  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 5600);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 5600);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 5600);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) *5600);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+  
+  fp = fopen("../bin/temp_outputfile_for_testing_subtest13", "w");
+
+
+
+
+
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL );
+						    max_expected_size_of_supernode, length_of_arrays, hash_table,  stdout,
+                                                    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array);
+
+
+  fclose(fp);
+
+
+  CU_ASSERT(ret==1);
+
+  CU_ASSERT_STRING_EQUAL("GTGTGGTGACTCATAGCACTCTGTCACCCAGGATGGAGTGCAGTGGCACAATCTCTGCTCACTGCAACCTCTGCCTCCTGGGTACAAGCGATTCTCCTGCCTCAGCTTTCTGAGTAGCAAGGACTACAGGTGCACACCATCACGCCTGGCTAATTTTTGTACTATTAGTACAGACGGAGTTTCACCATGTTGGCCAGGCTGGTCTCGAACTCCTGACCTCAGGGTCCATTTATTCAATGAATAATTGCCGCTATGTGTCAGACATTTTTCTAGGCCTAGGAATGGATACATAAGTGAACAAAGCAAAGATTCTGGTTCTTGTAGAGTTTCCATTAAAAGACAATTTAGTAAAACTTTTCTTCCCCCAAATTATAAAATCTGTAAGATGATTTAACAACATGTGTAAAAGTCATTGTGGGCCAGGCACGGTGGCTCATACCAGATTTTTTACAAGGTAGATATTAATTTTAGATATGGAATAATATTGGTGATTTCAATTTTATAACACTGGGTTAAGATGAAAGAATGAGAAGATAAAGGTCCCTCAGCAATATAACTCACAAACATGTTCAGAAGCAGTAAGAAGTTACATTAATTATCTTTTGAAAGTCGATAATCTACATCTTTAATGTATGCATATAGCATAGCTAATGTACTATCCCTAAAGTTAAAAGTTATATAGGGAACAAACACTAATTTTTTTTAGAAAAAATTATAAAAAGAGTAAAAATATGCCTTATACTACCGTAATTTCATGTTTTACAGCTCTGGGAAAATAGAAAATAAAATGTTCTGTTAGCATGAATCCCTCTGTGCCCCCAAAAAACCCTATGGATTGCATCATTATTACCTAAAAAGTCTATTCTCAAATGCAGCAGAGTGATTAACCAAAAATGAAATATACATAGAATATAAACAAAAGGAAATGAGACTAGAAACAAAATGTGTCACTACAAAAAAATCAACTAAAGATAAAAAAGAAATAATTGAGAAAATGATTGGCAAAAATCAGTAACTCTGACGTATTAAAACTTTCCATGCTACATAAATCTGAAAACTCTATTTCACATAAAACTGGAGCTGAAAGAAACAAATATTTACCTATTTTTTATTTTCTACATAATTTAAAAGGCAAATGCATAAAATGTAATTGTAAATCTGTTAGCTGGTATACAATGAATAAAGATATAATTTGTCACATCAATAACATAAAAAGAGTAGAGCTATATATATAGCAGTAGAATTTTGGTATGTGATTGAACTTAAGTTGAAATAAATTCAAATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGAGACATTTCCGGATTTTTTTTTAAAACTGAAAAAAATCCATTTATCCCTGAATTTGACATTCAGGAAGTGTTAAGTCCTTCAGGTTGAAATAAATGAACTCTAGGCAATAACTATATAAGTAAATAAGCAAGCTGTATGAATATACAAAGCTCTCTGGTAAAGGTAAATACATAAACAAACATAAAAACAGTCCTATTGTAATTTTGGTTTGTAACTCTGCCTCAAAAACAAACAAAAAAAAGATAATGGGAGAATGTTGAAAACTCAGAGAGAAGAGCAACTCTCACAGATAGGGATCCAGATAACATTAGCAGCTGATTTCTCAGCAGAAACCTTGAAGGCCAGTAGGCAGTGGATTATATATTTAAAATAATGAAGAAACCTGTCAATTGAGAAATATATAGCTGGAAAACTTATCCTTCAAAAATGAAGGAGAAATTAATATGACTTTTTCAGAATCAAAAAATTTAAATTTCTGTAATAAAATTTAAATGTTTATAAATTTAAAAAACTAGAAGAAAGAATGTTGACTGTTCACAATACAAATAAATGACAACTATTTGAGGTGATGGATACGCTAATTATCCTTATTTGATCACTGGGCATTGTATACATGTATCAAAATATCACTCTGTATCCCATGAATATGTACAATTATTTGTAAGAAATTATAGAAAGGAAACAAAATAAACAGATTATATGGAGGATTTTTAGAAGATAAGTAAATAAATTAATATACTAGGAAAAAACAAGGGAAATATACTTGATAAATAAATACAGGTAAGAGTTCTTTTGAAATAATGATAAAATAGAAAATCTCTGTCAAAACTAAAAGGAAAGATGCATAAATATATAAATAAACGATAAAAAATGTTGCATACATCTATAGACCAGTTTTTTATTTAAATTGAAGATTAGTATACATTTTAAATGATTAGTCAAAATAAAAAATCTAAAATGTGCTCTAAATACCTCTTAGGTCAGAAAAAAAAAGTCAAAAGCTAGAGTATAGAGAAATTAAGAAACGCCCTAAATTTCTAATCTGACAAAAATTCATACAAGATTTAAATATTTTAATGGAAAATAGAACAGAACTAATTATTGAACAGTTGCTTGGTTTACAAACATTAGAACAATTTTCTTATTCACACCATCTGATTATTGTATGTTATTTTTTCCCCAACGTTTAGACTACACAATGAGTTAAGAATGATAAAAATAAGCTCACCAATATACTATGTACATATTTACCAAAATCTGTGCATGCTTATACATATAAACACAGCTGATAATTTATTAGTTAGGCTCATTTGTAATTTTTGTCAATGGCTCAGTGTGATTGAAAGTTCTGTGTGAATATGTTTTTGGAAAGATCCAACAGCAACACCTTAGTGTATGTTTTTGAAATAAAATATATCTGAGTAGCAGCAAAGTTATTCTCAAATTTCCATTTTATAGCTGGAGATGTTATACCGTGACGTACATGATAGGACCCAATATGGATCAATCCCTTTTAGAAGTCAATCAGGAAGAGGGGAGCAGTTAATGAAGGATCATGTCAAAGGAAAGAAAAATTAGGGGAACATTAAAAGCTTTCTTCCCAAGCCACTAAATCAACTTGACTAACAAAATTACCACTTGATTTAGTATTAGAAAATTACATTACATATCAAACATAAACCCATTAATCAAATACTAAAGAAATTTCTGAGTTAAATGGTATAATGTTAGCTTATGCCAGAGCTGACCTTGAAAGATTGTTCAAATTCTGTCTCTACAAAAAATACAAAAATTAGCCAAGTTTGGTGGCATGTGCCTGTAGTACCAGCTACTTGGGAGGCTGAGGTGGAAGAATAGCTTGAGTCTGGGAGGTCAAGGCTGCAATGAGCTGTGA", return_flank5p_array[0]);
+
+
+
+  CU_ASSERT_STRING_EQUAL("GTTGAGAGTCAGGACAACTGC", return_flank3p_array[0]);
+
+  CU_ASSERT_STRING_EQUAL("TTGCACCACTGCACTCAAGCCTGGGTGGTAGAGTAAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAGAAAAATCACTAAGCAAAATAAGACATGGTATATAGAAAATTGGCTAAGTTGTGGTCCATTCATGTTTGCTCCCAATTAAGGAGCACAGCTATGAAAAGGAAGGCTTCAAATTAATAACCAATAGATTTTTTTAAAAAGAAAACTGGCCAGGTACTGTGGCTTATGTCTGTAATATCAGCATGTTGGGAGGCCAAGGCAGGATTACTTGAGCCCAGAAATTCCAGACCAGCCTGAGAATTTGGCAAAACTCGTACAGCATGTAACACAATTGCACTTTTATATTTTAACAAATTATATTTCCCATATTGAACTGTAAGTCTCCTGAAAGCAGGAATTTTGTTCTTGCTCATCATCAACTTTTTCAACATCCAGTGCACCATTTAGAACTTAGATGTAGTCAATACAGGTTTGTGGAATGAAAGAGGAAAAGAAAGAATTAATATTCCTTTAAATTAGGATGGCAAAGATCTTTAAGCCATATTAGACCTTTCTTCAGTTTTTTATATAGACTTTGTCGCATCACACCTCAGAGATTCTGTACATGTTCTTCCTCCTGCCTAGAAAGGATCGTCCCTCCACTTTTGCCAACTAATCCCTGCTCAACTTTTCATCTCAGCAGGAGGCCCATTCTCTTTGGCAATCCTCTGGCCTCCAGCCCATTTATTATATGCTCACATGTCAACATGTACTACAGTGGGCATGTAATGAATATTTGTTAAGTGAAGTAATAAATTCAATCAAATCACATCACCTGTTTAAAGCACTTCATTGGCTTCACATTGCACTTAGAATAAAGAGAAATTCTTTTTATACAATATACAATATATTTTATACAATATAAGTTCCTGCAGAATGCAGACACTTTCTACTTCTCCAGCCTCTTTTCGACTCCTCTCCTACTAGCTTCTGTAAATTGCTTCATCATGCCTGCTTGCAATTATAGGGCTTTTGAACCATTTGTTCCCTCCTTAGATATCCTCATTTTTTTCAGATTCTTGCTTAGAAGTCACTCCTCCGTGGACCTCCTCTGACATATTAAACATTGCAGTCCATTATAAGCTGCAAGAGGACAGGGATTTTTGCCTGTTTTATTCCCTACTGTATCACCAGGGGCTAGAGCAATATCTGACAAACATAATGATTAGGGAAATGTCTCATATTCTATATATATAGACAGAAAGAGAGAAAATATATGAGGGAGAGAAGGAATCTTTCCATCTCCTTTGAGTTCCACGGT", return_branch2_array[0]);
+
+  CU_ASSERT_STRING_EQUAL("CCTCAATCTATAACCACTACCTTCTGGGTCCTTTCTAAAAATTGACAAATAATAATCATATATAATTAATGTACAATGTTATGTTTCAATACATGTTTGCATTGTGGAATAATTAAATCAAGCTACTTGGCATGTCAGTAACATCACATGCTTAGCATTTTTGTAGTGAAAATATTTAAAATCTACTCTTTTAGCAATTTTGAAATATACAATACAGTACTTACTCACTTAACATCATTGATTGGTCCTCAGAAACTGCAACTTGGAGTGAAAAGATGTATAAAGAAACCAATTTTCCCATAGGCTAATAGCTATAAATAAGAGTTAGATTCTTACAGCATATTTTTGGTCACAAAATATCACCAAACTTCTAAATAAAGACCAAAACACTTCAAATATTAAACATTGAAATAAATATGAGCTTTGCATACATTTAAGAAAGATTAATAAAAACAAGTAAGATAATTATTTGCCCAATTATTTCATTCAGGGTTGGGGAGACTGGAGTCTGTGCTGGAAGCTCAGGGCTCAAGCTGGGCAACAGCCCTGGACAGGATGCCATCCCACTGCAGGATGGCTCACACATGCCCACAGCCACTCAGCCTGGGACCATTTGGACACAGCAATTAACCTTACCTGCATGTCTTTGTGGGGAGGAAACCAGAGTGCTTAGAAAAACCCATGCAGACAGACACAGAGCAAACATGCAAACCTCACAAAGATATTGTTTCTTCTGTCACCTGTGCTTTTGGGTCATATTCAAGAAATCATTAACCAAATAAAAGTCGTGGAGCTTTTCCCTATGTTTTCTTTTAGTAGTTTTATAGTTTCAGGTCTTACATTTAACTCCTTAATCCATTTTGATTTTTGCATATGGTGTGAGATAAGCTTCTGGTTTCATTCTCCCACATGTGGATATCCAGTTCTCTGAACACCATATATGGAAGAGACTGTCATTTCCTCATGATATGTTCCTGGCACTTTTGTTGAAATCAATTGACCATAGATCTGTGGGTTTATTTCTGGCTTTTTATTCTGTTCCATTGGCCAATGTACCTGTGTTTATGCTTGTGCCTTGCTGTTTTGATTATTATAGCTTTATAATATGTTTTGAAATCAGGTAGTGTGATGCCTCCATCTTTGCTTTTTATGCTCAAGATAGTTTGGATATTCAGAGTGTTTTATGGTTCCATATACATATTGCACCACTGCACTCAAGCCTGGGTGGTAGAGTAAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAGAAAAATCACTAAGCAAAATAAGACATGGTATATAGAAAATTGGCTAAGTTGTGGTCCATTCATGTTTGCTCCCAATTAAGGAGCACAGCTATGAAAAGGAAGGCTTCAAATTAATAACCAATAGATTTTTTTAAAAAGAAAACTGGCCAGGTACTGTGGCTTATGTCTGTAATATCAGCATGTTGGGAGGCCAAGGCAGGATTACTTGAGCCCAGAAATTCCAGACCAGCCTGAGAATTTGGCAAAACTCGTACAGCATGTAACACAATTGCACTTTTATATTTTAACAAATTATATTTCCCATATTGAACTGTAAGTCTCCTGAAAGCAGGAATTTTGTTCTTGCTCATCATCAACTTTTTCAACATCCAGTGCACCATTTAGAACTTAGATGTAGTCAATACAGGTTTGTGGAATGAAAGAGGAAAAGAAAGAATTAATATTCCTTTAAATTAGGATGGCAAAGATCTTTAAGCCATATTAGACCTTTCTTCAGTTTTTTATATAGACTTTGTCGCATCACACCTCAGAGATTCTGTACATGTTCTTCCTCCTGCCTAGAAAGGATCGTCCCTCCACTTTTGCCAACTAATCCCTGCTCAACTTTTCATCTCAGCAGGAGGCCCATTCTCTTTGGCAATCCTCTGGCCTCCAGCCCATTTATTATATGCTCACATGTCAACATGTACTACAGTGGGCATGTAATGAATATTTGTTAAGTGAAGTAATAAATTCAATCAAATCACATCACCTGTTTAAAGCACTTCATTGGCTTCACATTGCACTTAGAATAAAGAGAAATTCTTTTTATACAATATACAATATATTTTATACAATATAAGTTCCTGCAGAATGCAGACACTTTCTACTTCTCCAGCCTCTTTTCGACTCCTCTCCTACTAGCTTCTGTAAATTGCTTCATCATGCCTGCTTGCAATTATAGGGCTTTTGAACCATTTGTTCCCTCCTTAGATATCCTCATTTTTTTCAGATTCTTGCTTAGAAGTCACTCCTCCGTGGACCTCCTCTGACATATTAAACATTGCAGTCCATTATAAGCTGCAAGAGGACAGGGATTTTTGCCTGTTTTATTCCCTACTGTATCACCAGGGGCTAGAGCAATATCTGACAAACATAATGATTAGGGAAATGTCTCATATTCTATATATATAGACAGAAAGAGAGAAAATATATGAGGGAGAGAAGGAATCTTTCCATCTCCTTTGA", return_trusted_branch_array[0]);
+
+
   
   CU_ASSERT(ret==1);
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
   
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
   
 
 

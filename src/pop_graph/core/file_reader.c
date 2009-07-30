@@ -572,6 +572,7 @@ long long load_population_as_fasta(char* filename, long long* bad_reads, dBGraph
 
     }
 
+  fclose(fp);
   //printf("Finished loading population, witht total seq loaded %d\n",total_seq_loaded); 
   return total_seq_loaded;
 
@@ -607,6 +608,7 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
 
     }
 
+  fclose(fptr);
   return total_seq_loaded;
 
 }
@@ -653,6 +655,7 @@ long long load_population_as_fastq(char* filename, long long* bad_reads, char qu
     }
 
   printf("Finished loading population, witht total seq loaded %d\n",total_seq_loaded); 
+  fclose(fp);
   return total_seq_loaded;
 
 
@@ -687,43 +690,11 @@ int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_f
 
     }
 
+  fclose(fptr);
   return total_seq_loaded;
 
 }
 
-
-/*
-
-//assumes you already have loaded your reads from your individuals, so have a full graph.
-//this just marks each node with how it overlaps with this chromosome
-int load_chromosome_overlap_data(char* f_name,  dBGraph* db_graph, int which_chromosome)
-{
-  
-  int max_read_length = 500;
-
-  FILE* fptr = fopen(f_name, "r");
-  if (fptr == NULL)
-    {
-      //printf("cannot open chromosome fasta file:%s\n",f_name);
-      exit(1);
-    }
-  //else
-  //  {
-  //    printf("opened file %s to load overlap data\n", f_name);
-  //  }
-
-  long long bad_reads;
-  int total_seq_loaded=0;
-
-  total_seq_loaded = total_seq_loaded +
-    load_ref_overlap_data_into_graph_of_specific_person_or_pop(fptr, &read_sequence_from_fasta, &bad_reads,  0 , max_read_length, db_graph, which_chromosome);
-
-
-  return total_seq_loaded;
-
-}
-
-*/
 
 
 
@@ -760,12 +731,9 @@ int load_sv_trio_binary_data_from_filename_into_graph(char* filename,  dBGraph* 
     for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
       {
 	add_edges(current_node,individual_edge_array, i, get_edge_copy(node_from_file, individual_edge_array, i));
-	db_node_update_coverage(current_node, individual_edge_array, i, db_node_get_coverage_as_unsigned_char(&node_from_file, individual_edge_array,i));
+	db_node_update_coverage(current_node, individual_edge_array, i, db_node_get_coverage_as_short(&node_from_file, individual_edge_array,i));
       }
-    for (i=0; i<6; i++)
-      {
-	current_node->chrom_xs[i] |= node_from_file.chrom_xs[i];
-      }
+
   }
   
   fclose(fp_bin);
@@ -778,6 +746,9 @@ int load_sv_trio_binary_data_from_filename_into_graph(char* filename,  dBGraph* 
 //reads a binary as dumped by graph (not sv_trio)
 int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index)
 {
+
+
+  printf("Start load_individual_binary_data_from_filename_into_graph with file %s\n", filename);
 
   FILE* fp_bin = fopen(filename, "r");
   int seq_length = 0;
@@ -799,18 +770,14 @@ int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGrap
       // printf("loaded %i\n",count);
       //}
       
+      printf("Get next node from file and add to hash table %d \n", count);
       dBNode * current_node  = NULL;
       current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size),&found,db_graph);
       
       seq_length+=db_graph->kmer_size;//todo - maybe only increment if had to insert, not if was already in graph?
       
       add_edges(current_node,individual_edge_array, index, get_edge_copy(node_from_file, individual_edge_array, index));
-      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage_as_unsigned_char(&node_from_file, individual_edge_array,index) );
-      int i;
-      for (i=0; i<6; i++)
-	{
-	  current_node->chrom_xs[i] |= node_from_file.chrom_xs[i];
-	}
+      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage_as_short(&node_from_file, individual_edge_array,index) );
     }
   
   fclose(fp_bin);
@@ -818,3 +785,97 @@ int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGrap
 
 }
 
+
+
+
+long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index)
+{
+
+  printf("Start load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries for file %s\n", filename);
+
+  FILE* fptr = fopen(filename, "r");
+  if (fptr == NULL)
+    {
+      printf("cannot open %s which is supposed to list all .ctx files for person with index %d \n",filename, index);
+      exit(1); 
+    }
+
+  //file contains a list of .ctx filenames, as dumped by the graph/ target (NOT sv_trio)
+  char line[MAX_FILENAME_LENGTH+1];
+  
+  int total_seq_loaded=0;
+  
+  while(fgets(line,MAX_FILENAME_LENGTH, fptr) !=NULL)
+    {
+
+      printf("Look at next line %s of file %s\n", line, filename);
+
+      //remove newline from endof line- replace with \0
+      char* p;
+      if ((p = strchr(line, '\n')) != NULL)
+	*p = '\0';
+      
+      total_seq_loaded = total_seq_loaded + 
+	load_individual_binary_data_from_filename_into_graph(line, db_graph, individual_edge_array, index);
+
+    }
+
+  fclose(fptr);
+  return total_seq_loaded;
+
+
+  
+}
+
+
+
+
+
+
+//takes a filename 
+// this file contains a list of filenames, each of these represents an individual (and contains a list of binaries for that individual).
+long long load_population_as_binaries_from_graph(char* filename, dBGraph* db_graph)
+{
+
+  printf("STart loading pop as binary\n");
+
+  FILE* fp = fopen(filename, "r");
+  if (fp == NULL){
+    printf("load_population_as_binaries_from_graph cannot open file:%s\n",filename);
+    exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
+  }
+
+  char line[MAX_FILENAME_LENGTH+1];
+
+  int total_seq_loaded=0;
+  int people_so_far=0;
+
+  while(fgets(line,MAX_FILENAME_LENGTH, fp) !=NULL)
+    {
+      
+      printf("Look at next line %s of file  %s\n", line, filename);
+      
+      //remove newline from end of line - replace with \0
+      char* p;
+      if ((p = strchr(line, '\n')) != NULL)
+	*p = '\0';
+
+
+      people_so_far++;
+      if (people_so_far>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      {
+        printf("This filelist contains too many people, %d, remember we have set a population limit of %d in variable NUMBER_OF_INDIVIDUALS_PER_POPULATION", 
+	       people_so_far,NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+	exit(1);
+      }
+
+      total_seq_loaded = total_seq_loaded + 
+	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph, individual_edge_array, people_so_far-1);
+
+    }
+
+  printf("Finished loading population, with total seq loaded %d\n",total_seq_loaded); 
+  return total_seq_loaded;
+
+
+}

@@ -30,6 +30,8 @@ HashTable * hash_table_new(int number_bits, int bucket_size, int max_rehash_trie
   hash_table->max_rehash_tries = max_rehash_tries;
   hash_table->number_buckets = (long long) 1 << number_bits;
   hash_table->bucket_size   = bucket_size;
+
+  //calloc is vital - we want to make sure initialised to zero
   hash_table->table = calloc(hash_table->number_buckets * hash_table->bucket_size, sizeof(Element));
  
   if (hash_table->table == NULL) {

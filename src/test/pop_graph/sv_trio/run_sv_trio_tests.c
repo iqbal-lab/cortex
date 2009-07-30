@@ -41,18 +41,6 @@ int  main()
     return CU_get_error();
   }
   
-  if (NULL == CU_add_test(pPopGraphSuite, "Test element - mark chromosome overlap", test_mark_chromosome_overlap)) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
-  if (NULL == CU_add_test(pPopGraphSuite, "Test element -check if element overlaps <=1 chromosome", test_has_at_most_one_chromosome_intersection)) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
-  if (NULL == CU_add_test(pPopGraphSuite, "Test element -check can get the direction of overlap with a chromosome", test_get_chromosome_overlap_direction)) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
   if (NULL == CU_add_test(pPopGraphSuite, "Test element -increment coverage for different people", test_increment_coverage)) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -69,6 +57,12 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+ 
+  if (NULL == CU_add_test(pPopGraphSuite, "Test loading of three binaries as dumped by graph into sv_trio as separate people", test_load_individual_binaries_into_sv_trio )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for getting supernode containing a given node",   test_db_graph_supernode_for_specific_person_or_pop)) {
     CU_cleanup_registry();

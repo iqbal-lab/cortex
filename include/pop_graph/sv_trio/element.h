@@ -46,9 +46,8 @@ typedef enum{
 
 typedef struct{
   BinaryKmer kmer;
-  unsigned char coverage[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
-  Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; //3 people, and only 1 population :-)
-  unsigned char chrom_xs[6]; //2 bits for each of 23 chromosomes. xs stands for intersections. Tells you if the element intersetcs ref chromosomes in fw, rev, both or neither orientation.
+  Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
+  short coverage[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
   NodeStatus status;
 } Element;
 
@@ -167,15 +166,11 @@ boolean db_node_condition_always_true(dBNode* node);
 
 
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
-void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, unsigned char update);
+void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, short update);
 int db_node_get_coverage(dBNode* e, EdgeArrayType type, int index);
-unsigned char db_node_get_coverage_as_unsigned_char(dBNode* e, EdgeArrayType type, int index);
+int db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index);
 
-void db_node_mark_chromosome_overlap(dBNode* node, int which_chromosome, Orientation orientation);
-boolean db_node_has_at_most_one_intersecting_chromosome(dBNode* node, int* which_chromosome);
-Overlap db_node_get_direction_through_node_in_which_chromosome_passes(dBNode* node, int which_chromosome);
-char* overlap_to_char(Overlap ov, char* pre_alloced_string);
-char* compare_chrom_overlap_and_supernode_direction(Overlap ov, Orientation o, char* pre_alloced_string);
+
 
 //check if node doesn't have any edges in a given orientation
 boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayType edge_type, int edge_index);

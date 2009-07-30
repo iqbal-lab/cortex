@@ -1,3 +1,4 @@
+
 /*
   dB_graph_population.c - implementation
  */
@@ -14,6 +15,25 @@
 #include <string.h>
 #include <limits.h>
 #include <file_reader.h>
+
+
+void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
+						      char * name,
+						      int length,
+						      double avg_coverage,
+						      int min_coverage,
+						      int max_coverage,
+						      dBNode * fst_node,
+						      Orientation fst_orientation,
+						      dBNode * lst_node,
+						      Orientation lst_orientation,
+						      char * string, //labels of paths
+						      int kmer_size,
+						      boolean include_first_kmer,
+						      EdgeArrayType type,
+						      int index
+						      );
+
 
 //it doesn't check that it is a valid arrow
 dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node, Orientation current_orientation, 
@@ -1954,13 +1974,14 @@ void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTab
 //  after that                    expecting_new_fasta_entry=false, last_time_was_not_start_of_entry=true
 
 // returns the number of nodes loaded into the array
-int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(FILE* chrom_fptr, 
-												     int number_of_nodes_to_load, int number_of_nodes_loaded_last_time,
-												     int length_of_arrays, 
-												     dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char* path_string,
-												     Sequence* seq, KmerSlidingWindow* kmer_window, 
-												     boolean expecting_new_fasta_entry, boolean last_time_was_not_start_of_entry, 
-												     dBGraph* db_graph ) 
+int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta
+                                                  (FILE* chrom_fptr, 
+						   int number_of_nodes_to_load, int number_of_nodes_loaded_last_time,
+						   int length_of_arrays, 
+						   dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char* path_string,
+						   Sequence* seq, KmerSlidingWindow* kmer_window, 
+						   boolean expecting_new_fasta_entry, boolean last_time_was_not_start_of_entry, 
+						   dBGraph* db_graph ) 
 {
 
  if (length_of_arrays%2 !=0)
@@ -2037,22 +2058,55 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
 
 
 
-// New improved reference-based SV calling algorithm
-// Walks along chromosome path, comparing with supernodes, and for each supernode, sees where it attaches.
-// max_anchor_span is the biggest gap we allow/look for between where the 3' and 5' anchors attach. If you want to be able to find, say 10kb deletions, then set this to 10000, etc
-// min_fiveprime_flank_anchor is counted in number of nodes
-// length_of_arrays MUST BE EVEN
-// returns number of variants found
-int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
-						int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int max_anchor_span, int min_covg, int max_covg, 
-						int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file)
+void get_coverage_from_array_of_nodes(dBNode** array, int length, int* min_coverage, int* max_coverage, double* avg_coverage, EdgeArrayType type, int index)
 {
 
+  int sum_coverage=0;
 
-  printf("\n\n\n\nStart of db_graph_make_reference_path_based_sv_calls. WARNING _ WHAT ABOUT LOOPS?\n\n");   
-  
+  *max_coverage         = 0;
+  *min_coverage         = INT_MAX;
+
+  int i;
+
+  for (i=0; i< length; i++)
+    {
+      int this_covg = db_node_get_coverage(array[i], type, index);
+      sum_coverage += this_covg;
+      *max_coverage = *max_coverage < this_covg ? this_covg : *max_coverage;
+      *min_coverage = *min_coverage > this_covg ? this_covg : *min_coverage;
+    }  
+
+  if (*min_coverage==INT_MAX)
+    {
+      *min_coverage=0;
+    }
+  *avg_coverage = sum_coverage/length;
+}
+
+
+// *******************************************************************************
+// New SV calling algorithm based on comparing a supernode with a "trusted path". This trusted path might be the reference, or some contig that
+// we have obtained by bootstrapping.
+// ********************************************************************************
+// Walks along chromosome path, comparing with supernodes, and for each supernode that touches the trusted path, sees where it attaches.
+// max_anchor_span is the biggest gap we allow/look for between start of 5' and end of 3' anchors
+//       If you want to be able to find, say 10kb deletions, then set this to 10000+sum of your anchors/flanks
+// Length of arrays should be double the max_anchor_span, and max_expected_size)of_supernode must be < max_anchor_span
+
+// min_three/fiveprime_flank_anchor is counted in number of nodes
+// length_of_arrays MUST BE EVEN
+// returns number of variants found. 
+// if max_desired_returns>0, then the first max_desired_returns results are returned in the preallocated arrays branch1_array and branch2_array
+// In normal use, this should be zero - we'll find far too many variants. But can be used for testing.
+int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
+						int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int max_anchor_span, int min_covg, int max_covg, 
+						int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
+						int max_desired_returns,
+						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
+						char** return_flank3p_array)
+{
+
   int num_variants_found=0;
-
   
   //makes life much simpler to insist the array is even length.
   if (length_of_arrays%2 !=0)
@@ -2143,13 +2197,15 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   //********** end of malloc and initialise ********************
 
 
+
   //load a set of nodes into thr back end (right hand/greatest indices) of array
   // each call   will push left the nodes/etc in the various arrays by length_of_arrays/2=max_anchor_span
   // and then put the new nodes etc in on the right of that
 
   int ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fasta_fptr, number_of_nodes_to_load, 0, 
 													     length_of_arrays,
-													     chrom_path_array, chrom_orientation_array, chrom_labels, chrom_string,
+													     chrom_path_array, chrom_orientation_array, 
+													     chrom_labels, chrom_string,
 													     seq, kmer_window, 
 													     true, false,
 													     db_graph);
@@ -2168,6 +2224,36 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
   char tmp_zam[db_graph->kmer_size];
+
+
+
+
+  // ********************************************************
+  /* the core loop of this function: basic structure is
+     **********************************************************
+
+  do
+    {
+    while (start_node_index<max_anchor_span)
+       {
+  
+           look at the supernode in individual which contains chrom_path_array[start_node_index], and see if we can find 5' and 3' anchors
+           that match thechromsome/reference.
+	   If yes, print it. If no, increment start_node_index.
+       }
+    }
+    while (load another max_anchor_span bases into the rear end of our array)
+
+
+
+    The idea is that we will find any variant where there is a change/variation mid-supernode, PROVIDED the supernode
+    is no longer than max_anchor_span
+
+                                                                         
+  */
+                                                                   
+
+
 
 
   do
@@ -2207,11 +2293,12 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	  boolean is_cycle=false;
 	  
 	  
-	  int length_curr_supernode = db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(chrom_path_array[start_node_index], max_expected_size_of_supernode, &db_node_action_set_status_visited,
-													      current_supernode, curr_sup_orientations, curr_sup_labels, supernode_string, 
-													      &avg_coverage, &min_coverage, &max_coverage, &is_cycle, 
-													      &index_of_query_node_in_supernode_array, 
-													      db_graph, which_array_holds_indiv, index_for_indiv_in_edge_array);
+	  int length_curr_supernode = db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop
+	                                      (chrom_path_array[start_node_index], max_expected_size_of_supernode, &db_node_action_set_status_visited,
+					       current_supernode, curr_sup_orientations, curr_sup_labels, supernode_string, 
+					       &avg_coverage, &min_coverage, &max_coverage, &is_cycle, 
+					       &index_of_query_node_in_supernode_array, 
+					       db_graph, which_array_holds_indiv, index_for_indiv_in_edge_array);
 
 	  if (length_curr_supernode>max_anchor_span)
 	    {
@@ -2229,8 +2316,6 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      printf("Warning - red alert!!!  - failed to get index of query\n");
 	      start_node_index++;
 	      exit(1);
-	      //continue;
-	    
 	    }
 
 
@@ -2259,7 +2344,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      if (length_curr_supernode - index_of_query_node_in_supernode_array < min_fiveprime_flank_anchor+min_threeprime_flank_anchor)
 		{
 		  //printf("Insuff room on supernode for anchors at start_node_index %d, corresponding to kmer %s . length of current supernode is %d, index of query node in supernode is %d,Move to next position\n", 
-		  // start_node_index, binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam),length_curr_supernode, index_of_query_node_in_supernode_array);
+		  //start_node_index, binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam),length_curr_supernode, index_of_query_node_in_supernode_array);
 		  start_node_index++;
 		  continue;
 		}
@@ -2268,8 +2353,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	    {
 	      if (index_of_query_node_in_supernode_array < min_fiveprime_flank_anchor+min_threeprime_flank_anchor)
 		{
-		  //  printf("Insuff room on supernode for anchors at start_node_index %d, corresponding to kmer %s . length of current supernode is %d, index of query node in supernode is %d, traversing supernode from right to leftMove to next position\n", 
-		  // start_node_index, binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam),length_curr_supernode, index_of_query_node_in_supernode_array);
+		  //printf("Insuff room on supernode for anchors at start_node_index %d, corresponding to kmer %s . length of current supernode is %d, index of query node in supernode is %d, traversing supernode from right to leftMove to next position\n", 
+		  //start_node_index, binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam),length_curr_supernode, index_of_query_node_in_supernode_array);
 		  start_node_index++;
 		  continue;
 		}
@@ -2310,7 +2395,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	    {
 	      while ( (index_in_supernode_where_supernode_differs_from_chromosome < length_curr_supernode )  
 		  && (first_index_in_chrom_where_supernode_differs_from_chromosome-start_node_index<max_anchor_span) 
-		  && (chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome]==current_supernode[index_in_supernode_where_supernode_differs_from_chromosome])		  
+		  && (chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome]
+		      ==current_supernode[index_in_supernode_where_supernode_differs_from_chromosome])		  
 		  )
 		{
 		  index_in_supernode_where_supernode_differs_from_chromosome++;
@@ -2323,7 +2409,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      while ( 
 		     (index_in_supernode_where_supernode_differs_from_chromosome>=0)
 		     && (first_index_in_chrom_where_supernode_differs_from_chromosome-start_node_index<max_anchor_span) 
-		     && (chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome]==current_supernode[index_in_supernode_where_supernode_differs_from_chromosome])		  
+		     && (chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome]
+			 ==current_supernode[index_in_supernode_where_supernode_differs_from_chromosome])		  
 		     
 		     )
 		{
@@ -2333,7 +2420,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 	    }
 
-	  //note that we do one last increment/decrement at the end of the previous loop, taking us to the point beyond where they last agree
+
 	  if ( ( (traverse_sup_left_to_right) && (index_in_supernode_where_supernode_differs_from_chromosome>=length_curr_supernode) )
 	    ||
 	       ( (!traverse_sup_left_to_right) && (index_in_supernode_where_supernode_differs_from_chromosome<=0) )
@@ -2357,39 +2444,38 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      //does not have sufficient 5' anchor
 	      start_node_index=first_index_in_chrom_where_supernode_differs_from_chromosome;
 	      //printf("supernode differs from ref/chromosome too soon. Insufficient space for 5' anchor. index_in_supernode_where_supernode_differs_from_chromosome is %d, and index of query node in supernode array is %d - move on, and set start_node_index to %d\n", 
-	      //     index_in_supernode_where_supernode_differs_from_chromosome, index_of_query_node_in_supernode_array, start_node_index);
+	      //   index_in_supernode_where_supernode_differs_from_chromosome, index_of_query_node_in_supernode_array, start_node_index);
 	      continue;
 	    }
 	      
 	  
 	  //We now have  decent 5-prime anchor, and we know we don't match the ref exactly.
-	  // Now see if the END of the supernode matches anywhere in our current chuk of reference chromosome
+	  // Now see if the END of the supernode matches anywhere in our current array of reference chromosome
 	  
 	  int start_of_3prime_anchor_in_sup;
 	  
 	  if (traverse_sup_left_to_right==true)
 	    {
-	      start_of_3prime_anchor_in_sup=length_curr_supernode-min_threeprime_flank_anchor-1 ;
+	      start_of_3prime_anchor_in_sup=length_curr_supernode-min_threeprime_flank_anchor; 
 	      //printf("trav sup left to right, length supernodes is %d, so start of 3' anchor is %d\n", length_curr_supernode, start_of_3prime_anchor_in_sup);
 	    }
 	  else
 	    {
-	      start_of_3prime_anchor_in_sup = 0 + min_threeprime_flank_anchor-1;
+	      start_of_3prime_anchor_in_sup = 0 + min_threeprime_flank_anchor;
 	      //printf("trav sup right to left, length supernodes is %d, and start of 3' anchor is %d\n", length_curr_supernode, start_of_3prime_anchor_in_sup);
 	    }
-	  
-	  int start_of_3prime_anchor_in_chrom = first_index_in_chrom_where_supernode_differs_from_chromosome+1;
-	  boolean found_other_anchor=false;
-	  
-	  // printf("Start looking for 3' anchor from index %d\n", start_of_3prime_anchor_in_chrom);
-	  //printf("Start of 3' anchor in supernode is %d\n", start_of_3prime_anchor_in_sup);
 
 
 
 	  //walk along entire chromosome array, and see if can attach the 3prime anchor
 	  // it may attach multiple times, but we will only find the closest
+	  
+	  int start_of_3prime_anchor_in_chrom = first_index_in_chrom_where_supernode_differs_from_chromosome;
+	  boolean found_other_anchor=false;
+	  
 	  while ( (found_other_anchor==false) && ( start_of_3prime_anchor_in_chrom < length_of_arrays-min_threeprime_flank_anchor))
 	    {
+	      start_of_3prime_anchor_in_chrom++;
 	      //printf("Start of 3' anchor in chrom is %d\n", start_of_3prime_anchor_in_chrom);
 
 	      boolean potential_anchor=true;
@@ -2402,7 +2488,14 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      k=-j;
 		    }
 		  
-		  //printf("Compare chrom node %d and supernode node %d\n", start_of_3prime_anchor_in_chrom + j, start_of_3prime_anchor_in_sup + k);
+		  /*
+		  char tmp_dbg1[db_graph->kmer_size];
+		  char tmp_dbg2[db_graph->kmer_size];
+		  printf("Compare chrom node %d, %s,  and supernode node %d, %s,\n", start_of_3prime_anchor_in_chrom + j, 
+		         binary_kmer_to_seq(chrom_path_array[start_of_3prime_anchor_in_chrom + j]->kmer, db_graph->kmer_size, tmp_dbg1),
+		  	 start_of_3prime_anchor_in_sup + k,
+		  	 binary_kmer_to_seq(current_supernode[start_of_3prime_anchor_in_sup + k]->kmer, db_graph->kmer_size, tmp_dbg2));
+		  */
 		  if (chrom_path_array[start_of_3prime_anchor_in_chrom + j] != current_supernode[start_of_3prime_anchor_in_sup + k])
 		    {
 		      //printf("chrom node %d does not work as start of anchor\n", start_of_3prime_anchor_in_chrom );
@@ -2416,7 +2509,6 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  found_other_anchor=true;
 		}
 
-	      start_of_3prime_anchor_in_chrom++;
 	    }
 	      
 	      
@@ -2428,88 +2520,268 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	    }
 	  else
 	    {
+
 	      //we have found a potential SV locus.
-	      printf("\n\n\nWe have found potential SV at start_node_index %d ****************\n", start_node_index);
 	      num_variants_found++;
 
-	      //print reference section
-	      printf("VARIANT, 5' anchor %d, 3' anchor %d, ref branch length %d, individual branch length %d \n", first_index_in_chrom_where_supernode_differs_from_chromosome-start_node_index, min_threeprime_flank_anchor, 
-		     start_of_3prime_anchor_in_chrom-first_index_in_chrom_where_supernode_differs_from_chromosome, abs(start_of_3prime_anchor_in_sup-index_in_supernode_where_supernode_differs_from_chromosome+1));
-	      int k;
+	      // Note if max_desired_returns>0, then we are going to return the first max_desired_returns  results in the branch1_array etc
+	      // We can check this easily - if num_variants_found<max_desired_returns, then we add this result to the arrays
 
-	      char chrom_string_with_first_kmer[length_of_arrays+db_graph->kmer_size+1];
-	      chrom_string_with_first_kmer[0] = '\0';
-	      chrom_string_with_first_kmer[length_of_arrays+db_graph->kmer_size]='\0';
 
-	      if (chrom_orientation_array[0]==forward)
-		{
-		  strcat(chrom_string_with_first_kmer, binary_kmer_to_seq(chrom_path_array[0]->kmer, db_graph->kmer_size, tmp_zam));
-		}
-	      else
-		{
-		  strcat(chrom_string_with_first_kmer, binary_kmer_to_seq(binary_kmer_reverse_complement(chrom_path_array[0]->kmer, db_graph->kmer_size), db_graph->kmer_size, tmp_zam));		  
-		}
-	      strcat(chrom_string_with_first_kmer, chrom_string);
+	      fprintf(output_file, "VARIATION: %d\n", num_variants_found);
 
-	      //	      printf("DEBUG chrom string is %s and with first kmer is %s\n", chrom_string, chrom_string_with_first_kmer);
+	      //this is length of 5p flank in number of edges in the 5p flank.
+	      // (in addition there will be one kmer of bases of course. The print function we call will handle this for us)
+	      int length_5p_flank = first_index_in_chrom_where_supernode_differs_from_chromosome-start_node_index-1;
 
-	      printf("Ref\n");
-	      for (k=start_node_index; k< start_of_3prime_anchor_in_chrom+min_threeprime_flank_anchor+db_graph->kmer_size; k++)
-		{
-		  //printf("%c", chrom_string[k]);
-		  printf("%c", chrom_string_with_first_kmer[k]);
-		}
+	      int length_3p_flank = min_threeprime_flank_anchor;
 	      
-	      printf("\nSupernode\n");
+	      char flank5p[length_5p_flank+1];
+	      flank5p[0] = '\0';
+	      strncpy(flank5p, chrom_string+start_node_index, length_5p_flank);
+	      flank5p[length_5p_flank]='\0';
+	      
+	      int flank5p_max_covg=0;
+	      int flank5p_min_covg=0;
+	      double flank5p_avg_covg=0;
 	      
 	      if (traverse_sup_left_to_right==true)
 		{
-
-		  //first kmer
-		  if (curr_sup_orientations[0]==forward)
-		    {
-		      printf("%s", binary_kmer_to_seq(current_supernode[0]->kmer, db_graph->kmer_size, tmp_zam));
-		    }
-		  else
-		    {
-		      printf("%s", binary_kmer_to_seq(binary_kmer_reverse_complement(current_supernode[0]->kmer, db_graph->kmer_size), db_graph->kmer_size, tmp_zam));
-		    }
-		  
-		  for (k=0; k< length_curr_supernode; k++)
-		    {
-		      printf("%c", supernode_string[k]);
-		    }
+		  get_coverage_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array, 
+						   length_5p_flank, &flank5p_min_covg, &flank5p_max_covg, &flank5p_avg_covg,
+						   which_array_holds_indiv, index_for_indiv_in_edge_array);
 		}
 	      else
 		{
-		  //first kmer
-		  if (curr_sup_orientations[length_curr_supernode]==forward)
+		  get_coverage_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank, 
+						   length_5p_flank, &flank5p_min_covg, &flank5p_max_covg, &flank5p_avg_covg,
+						   which_array_holds_indiv, index_for_indiv_in_edge_array);
+		}
+
+	      
+	      char flank3p[length_3p_flank+1];
+	      flank3p[0] = '\0';
+	      strncpy(flank3p, chrom_string+start_of_3prime_anchor_in_chrom, length_3p_flank);
+	      flank3p[length_3p_flank]='\0';
+
+	      int flank3p_max_covg=0;
+	      int flank3p_min_covg=0;
+	      double flank3p_avg_covg=0;
+
+
+	      //print 5pflank
+	      char name[300];
+	      sprintf(name,"var_%i_5p_flank",num_variants_found);
+	      print_fasta_from_path_for_specific_person_or_pop(output_file, name, length_5p_flank, 
+				    flank5p_avg_covg,flank5p_min_covg,flank5p_max_covg,
+				    chrom_path_array[start_node_index],
+				    chrom_orientation_array[start_node_index],
+				    chrom_path_array[start_node_index+length_5p_flank-1],
+				    chrom_orientation_array[start_node_index+length_5p_flank-1],
+				    flank5p,
+				    db_graph->kmer_size,
+				    true,
+				    which_array_holds_indiv, index_for_indiv_in_edge_array);
+
+	      if (num_variants_found<=max_desired_returns)
+		{
+		  //add first kmer onto flank5p - this si done automatically by print_fasta_from_path
+		  if (chrom_orientation_array[start_node_index]==forward)
 		    {
-		      printf("%s", binary_kmer_to_seq(current_supernode[length_curr_supernode]->kmer, db_graph->kmer_size, tmp_zam));
+		      strcat(return_flank5p_array[num_variants_found-1],
+			     binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam));
 		    }
 		  else
 		    {
-		      printf("%s", binary_kmer_to_seq(binary_kmer_reverse_complement(current_supernode[length_curr_supernode]->kmer, db_graph->kmer_size), db_graph->kmer_size, tmp_zam));
-		    }
+		      char tmp_zam2[db_graph->kmer_size+1];
+		      tmp_zam2[db_graph->kmer_size]='\0';
 
-
-		  //		  for (k=index_of_query_node_in_supernode_array; k>start_of_3prime_anchor_in_sup-min_threeprime_flank_anchor; k--)
-		  for (k=length_curr_supernode-1; k>=0; k--)
-		    {
-		      //		      printf("%c", supernode_string[k]);
-		      char c;
-		      if (curr_sup_orientations[k]==forward)
-			{
-			  c = binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(current_supernode[k]->kmer, db_graph->kmer_size)));
-			}
-		      else
-			{
-			  c = binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(current_supernode[k]->kmer));
-			}
-		      printf("%c", c);
+		      strcat(return_flank5p_array[num_variants_found-1],
+			     seq_reverse_complement(binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam), 
+						    db_graph->kmer_size,tmp_zam2)
+			     );
 		    }
+		      
+		  strcat(return_flank5p_array[num_variants_found-1],flank5p);
 		}
-	     
+
+		    
+
+	      //print first branch, which is is from the trusted path
+	      sprintf(name,"var_%i_branch1_trusted", num_variants_found);
+
+	      char trusted_branch[length_of_arrays+1];
+	      trusted_branch[length_of_arrays]='\0';
+	      trusted_branch[0]='\0';
+
+	      int len_trusted_branch = start_of_3prime_anchor_in_chrom  - (first_index_in_chrom_where_supernode_differs_from_chromosome-1);
+	      strncpy(trusted_branch, chrom_string+first_index_in_chrom_where_supernode_differs_from_chromosome-1, len_trusted_branch);
+	      
+	      trusted_branch[len_trusted_branch]='\0';
+	      int trusted_branch_min_covg=0;
+	      int trusted_branch_max_covg=0;
+	      double trusted_branch_avg_covg=0;
+
+	      //get coverage on the trusted branch. 
+	      get_coverage_from_array_of_nodes(chrom_path_array+start_node_index+length_5p_flank,
+					       len_trusted_branch, &trusted_branch_min_covg, &trusted_branch_max_covg, &trusted_branch_avg_covg,
+					       which_array_holds_indiv, index_for_indiv_in_edge_array);
+
+
+	      print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_trusted_branch, 
+							       trusted_branch_avg_covg, trusted_branch_min_covg, trusted_branch_max_covg,
+							       chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
+							       chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
+							       chrom_path_array[start_of_3prime_anchor_in_chrom],
+							       chrom_orientation_array[start_of_3prime_anchor_in_chrom],
+							       trusted_branch,
+							       db_graph->kmer_size,
+							       false,
+							       which_array_holds_indiv, index_for_indiv_in_edge_array);
+	      
+
+	      if (num_variants_found<=max_desired_returns)
+		{
+		  strcat(return_trusted_branch_array[num_variants_found-1],trusted_branch);
+		}
+
+	      
+
+	      //print second branch - this is the variant - which is the part of the supernode between the anchors/flanking regions
+	      sprintf(name,"var_%i_branch2", num_variants_found);
+
+	      char variant_branch[max_expected_size_of_supernode];
+	      int branch2_min_covg=0;
+	      int branch2_max_covg=0;
+	      double branch2_avg_covg=0;
+	      
+	      int len_branch2;
+
+	      if (traverse_sup_left_to_right==true)
+		{
+		  len_branch2 = start_of_3prime_anchor_in_sup +1 - index_in_supernode_where_supernode_differs_from_chromosome;
+
+		  strncpy(variant_branch, supernode_string + index_of_query_node_in_supernode_array+length_5p_flank, len_branch2);
+		  variant_branch[len_branch2]='\0';
+
+		  
+		  //get coverages
+		  get_coverage_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array+length_5p_flank,
+                                                   len_branch2, &branch2_min_covg, &branch2_max_covg, &branch2_avg_covg,
+                                                   which_array_holds_indiv, index_for_indiv_in_edge_array);
+
+
+		  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
+								   0,0,0, 
+								   current_supernode[index_of_query_node_in_supernode_array+length_5p_flank], 
+								   curr_sup_orientations[index_of_query_node_in_supernode_array+length_5p_flank],
+								   current_supernode[length_curr_supernode-min_threeprime_flank_anchor], 
+								   curr_sup_orientations[length_curr_supernode-min_threeprime_flank_anchor],
+								   variant_branch, db_graph->kmer_size, false, 
+								   which_array_holds_indiv, index_for_indiv_in_edge_array
+								   );
+		  if (num_variants_found<=max_desired_returns)
+		    {
+		      strcat(return_variant_branch_array[num_variants_found-1],variant_branch);
+		    }
+		  
+
+
+		}
+	      else //traversing supernode right to left
+		{
+		  len_branch2 = index_in_supernode_where_supernode_differs_from_chromosome +1 - start_of_3prime_anchor_in_sup ;
+
+
+		  // ok - need to take reverse complement of the full supernode sequence, inlcuding first kmer
+		  char temp[max_expected_size_of_supernode];
+		  temp[0]='\0';
+
+		  if (curr_sup_orientations[0]==forward)
+		    {
+		      strcat(temp, binary_kmer_to_seq(current_supernode[0]->kmer, db_graph->kmer_size, tmp_zam));
+		    }
+		  else
+		    {
+		      strcat(temp, binary_kmer_to_seq(binary_kmer_reverse_complement(current_supernode[0]->kmer, db_graph->kmer_size), 
+						      db_graph->kmer_size, tmp_zam) );
+		    }
+
+		  strcat(temp, supernode_string);//temp is now the full sequence of the supernode.
+		                                 //remember the query node, where the supernode touches the trusted path at start_node_index, 
+                                                 // is not the 0-the element of the supernode.
+
+
+		  //  strncpy(variant_branch, temp+min_threeprime_flank_anchor+1, len_branch2);
+		  strncpy(variant_branch, temp+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2, len_branch2);
+
+		  variant_branch[len_branch2]='\0';
+		  char rev_variant_branch[len_branch2+1];
+		  seq_reverse_complement(variant_branch, len_branch2, rev_variant_branch);
+		  rev_variant_branch[len_branch2]='\0';
+
+
+		  //get coverages
+		  get_coverage_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2,
+                                                   len_branch2, &branch2_min_covg, &branch2_max_covg, &branch2_avg_covg,
+                                                   which_array_holds_indiv, index_for_indiv_in_edge_array);
+
+
+		  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
+								   1,1,1, 
+								   current_supernode[index_of_query_node_in_supernode_array-length_5p_flank], 
+								   curr_sup_orientations[index_of_query_node_in_supernode_array-length_5p_flank],
+								   current_supernode[start_of_3prime_anchor_in_sup], 
+								   curr_sup_orientations[start_of_3prime_anchor_in_sup],
+								   rev_variant_branch, db_graph->kmer_size, false, 
+								   which_array_holds_indiv, index_for_indiv_in_edge_array
+								   );
+
+
+		  if (num_variants_found<=max_desired_returns)
+		    {
+		      strcat(return_variant_branch_array[num_variants_found-1],rev_variant_branch);
+		    }
+	
+		}
+
+
+	      //print 3p flank
+
+
+	      if (traverse_sup_left_to_right==true)
+		{
+		  get_coverage_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array+length_5p_flank+len_branch2, 
+						   length_3p_flank, &flank3p_min_covg, &flank3p_max_covg, &flank3p_avg_covg,
+						   which_array_holds_indiv, index_for_indiv_in_edge_array);
+		}
+	      else
+		{
+		  get_coverage_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2-length_3p_flank, 
+						   length_3p_flank, &flank3p_min_covg, &flank3p_max_covg, &flank3p_avg_covg,
+						   which_array_holds_indiv, index_for_indiv_in_edge_array);
+		}
+
+
+							       
+	      sprintf(name,"var_%i_3p_flank",num_variants_found);
+	      print_fasta_from_path_for_specific_person_or_pop(output_file, name, length_3p_flank, 
+							       flank3p_avg_covg, flank3p_min_covg, flank3p_max_covg,
+							       chrom_path_array[start_of_3prime_anchor_in_chrom],//zam removed +1
+							       chrom_orientation_array[start_of_3prime_anchor_in_chrom],//zam removed +1
+							       chrom_path_array[start_of_3prime_anchor_in_chrom+length_3p_flank],
+							       chrom_orientation_array[start_of_3prime_anchor_in_chrom+length_3p_flank],
+							       flank3p,
+							       db_graph->kmer_size,
+							       false,
+							       which_array_holds_indiv, index_for_indiv_in_edge_array);
+
+	      if (num_variants_found<=max_desired_returns)
+		    {
+		      strcat(return_flank3p_array[num_variants_found-1],flank3p);
+		    }
+	
+
 	      start_node_index = start_of_3prime_anchor_in_chrom+min_threeprime_flank_anchor+1;
  
 	    }
@@ -2519,17 +2791,94 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
       
 
       
-    }  while (db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(chrom_fasta_fptr, number_of_nodes_to_load, number_of_nodes_to_load,
-													   length_of_arrays, 
-													   chrom_path_array, chrom_orientation_array, chrom_labels, chrom_string,
-													   seq, kmer_window, 
-  													   false, true, db_graph)>0);
+    }  while (db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta
+	                    (chrom_fasta_fptr, number_of_nodes_to_load, number_of_nodes_to_load,
+			     length_of_arrays, 
+			     chrom_path_array, chrom_orientation_array, chrom_labels, chrom_string,
+			     seq, kmer_window, 
+			     false, true, db_graph)>0);
 													   
-
-
-
-
 return num_variants_found;
 
 
+}
+
+
+void compute_label(dBNode * node, Orientation o, char * label, EdgeArrayType type, int index){
+
+  int i=0; 
+
+  void check_nucleotide(Nucleotide n){
+
+    if (db_node_edge_exist(node,n,o, type, index)){
+	label[i] =  binary_nucleotide_to_char(n);
+	i++;
+      }
+  }
+  
+  nucleotide_iterator(check_nucleotide);
+
+  label[i]='\0';
+}
+
+
+void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
+						      char * name,
+						      int length,
+						      double avg_coverage,
+						      int min_coverage,
+						      int max_coverage,
+						      dBNode * fst_node,
+						      Orientation fst_orientation,
+						      dBNode * lst_node,
+						      Orientation lst_orientation,
+						      char * string, //labels of paths
+						      int kmer_size,
+						      boolean include_first_kmer,
+						      EdgeArrayType type,
+						      int index
+						      ){
+
+    
+
+  char fst_f[5], fst_r[5],lst_f[5],lst_r[5];
+
+  compute_label(fst_node,forward,fst_f, type, index);
+  compute_label(fst_node,reverse,fst_r, type, index);
+  compute_label(lst_node,forward,lst_f, type, index);
+  compute_label(lst_node,reverse,lst_r, type, index);
+
+  char fst_seq[kmer_size+1], lst_seq[kmer_size+1];
+ 
+  BinaryKmer fst_kmer = element_get_kmer(fst_node);
+  if (fst_orientation==reverse){
+    fst_kmer = binary_kmer_reverse_complement(fst_kmer,kmer_size);
+  } 
+  binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq);
+
+  BinaryKmer lst_kmer = element_get_kmer(lst_node);
+  if (lst_orientation==reverse){
+    lst_kmer = binary_kmer_reverse_complement(lst_kmer,kmer_size);
+  } 
+  binary_kmer_to_seq(lst_kmer,kmer_size,lst_seq);
+
+  fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s\n", name,
+	  (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage,
+	  db_node_get_coverage(fst_node, type, index),
+	  fst_seq,
+	  (fst_orientation == forward ? fst_r : fst_f),
+	  (fst_orientation == forward ? fst_f : fst_r),
+	  db_node_get_coverage(lst_node, type, index),
+	  lst_seq,
+	  (lst_orientation == forward ? lst_r : lst_f),
+	  (lst_orientation == forward ? lst_f : lst_r));
+
+
+  if (include_first_kmer){    
+    
+    fprintf(fout,"%s",binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq));
+  }
+  
+  fprintf(fout,"%s\n",string);
+  
 }

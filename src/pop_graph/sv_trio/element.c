@@ -42,11 +42,6 @@ Element* new_element()
       e->coverage[i]=0;
     }
 
-  //chromosome intersections struct has 6 chars.
-  for (i=0; i<6; i++)
-    {
-      e->chrom_xs[i]=0;
-    }
 
   e->status=none;
   e->kmer=0;
@@ -267,6 +262,7 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
 
   e->kmer = element_get_key(kmer, kmer_size);
 
+  //has table has calloc-ed all elements, so already initialised to zero.
   int i;
   for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
     {
@@ -274,720 +270,36 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
       e->coverage[i]=0;
     }
 
-  for (i=0; i<6; i++)
-    {
-      e->chrom_xs[i]=0;
-    }
   db_node_set_status(e, none);
-  //e->status = none;
-  //printf("INSIDE ELEM INITIALISE ZAMZAMZAM element status  is %d\n", e->status);
+
 }
 
 
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
 {
-
-  //note in C, if you compare two unsigned chars with <, it promotes them both to int first in order to do the comparison.
-
-  unsigned char limit=254;
-  if (e->coverage[index]<limit)
-    {
-      e->coverage[index]=e->coverage[index]+1;
-    }
+  e->coverage[index]=e->coverage[index]+1;
 }
 
-void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, unsigned char update)
+void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, short update)
 {
 
-  //convert to int first, so you can add the two numbers, which might each be as big as 254
-
-  int current_covg = db_node_get_coverage(e,type, index);
-  int update_as_int = (int) update;
-
-  if (current_covg + update_as_int <= 254)
-    {
-      e->coverage[index]= (unsigned char) (current_covg + update_as_int);
-    }
-  else
-    {
-      e->coverage[index]=254;
-    }
-  
+  e->coverage[index]=db_node_get_coverage_as_short(e,type, index) + update;
 
 }
 
-//coverage stored as unsigned char, but we want to deal with it as an int. So access it via this getter
+//coverage stored as short, but we want to deal with it as an int. So access it via this getter
 int db_node_get_coverage(dBNode* e, EdgeArrayType type, int index)
 {
-  unsigned char c = e->coverage[index];
+  short c = e->coverage[index];
   return (int) c;
 }
 
-unsigned char db_node_get_coverage_as_unsigned_char(dBNode* e, EdgeArrayType type, int index)
+int db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index)
 {
   return e->coverage[index];
 }
 
-Overlap db_node_get_direction_through_node_in_which_chromosome_passes(dBNode* node, int which_chromosome)
-{
 
-  int which_char;//there are 6 chars in which the chromosome xs are encoded. numbered 0 to 5. 0 carries chromosomes 1-4, etc.
-  int which_probe;//two 1's in the two bits that encode this chromsomes's info within the char. So for example chromosome 2 is in the 3rd and 4th bots from the right in the 0th char. so probe is 12 (4+8).
-  int which_pair_of_bits; //0 means the first two from the right, 1 means the next two, etc
-
-  
-  if (which_chromosome==0)
-    {
-      return does_not_overlap;
-    }
-  else if ( (which_chromosome==1)|| (which_chromosome==2) || (which_chromosome==3) || (which_chromosome==4) )
-    {
-      which_char=0;
-    }
-  else if  ( (which_chromosome==5)|| (which_chromosome==6) ||(which_chromosome==7) || (which_chromosome==8) )
-    {
-      which_char=1;
-    }
-  else if ( (which_chromosome==9)|| (which_chromosome==10) ||(which_chromosome==11) || (which_chromosome==12) )
-    {
-      which_char=2;
-    }
-  else if ( (which_chromosome==13)|| (which_chromosome==14) ||(which_chromosome==15) || (which_chromosome==16) )
-    {
-      which_char=3;
-    }
-  else if ( (which_chromosome==17)|| (which_chromosome==18) ||(which_chromosome==19) || (which_chromosome==20) )
-    {
-      which_char=4;
-    }
-  else if ( (which_chromosome==21)|| (which_chromosome==22) ||(which_chromosome==23) || (which_chromosome==24) )
-    {
-      which_char=5;
-    }
-  else
-    {
-      printf("Do not call db_node_get_chromosome_overlap_direction with second argument not between -1 and 24. You used %d", which_chromosome);
-    }
-
-  if (  (which_chromosome==1) || (which_chromosome==5) || (which_chromosome==9) || (which_chromosome==13) || (which_chromosome==17) || (which_chromosome==21) )
-    {
-      which_probe=3; //1+2
-      which_pair_of_bits=0;
-    }
-  else  if (  (which_chromosome==2) || (which_chromosome==6) || (which_chromosome==10) || (which_chromosome==14) || (which_chromosome==18) || (which_chromosome==22) )
-    {
-      which_probe=12; //4+8
-      which_pair_of_bits=1;
-    }
-  else  if (  (which_chromosome==3) || (which_chromosome==7) || (which_chromosome==11) || (which_chromosome==15) || (which_chromosome==19) || (which_chromosome==23) )
-    {
-      which_probe=48; //16+32
-      which_pair_of_bits=2;
-    }
-  else if (  (which_chromosome==4) || (which_chromosome==8) || (which_chromosome==12) || (which_chromosome==16) || (which_chromosome==20) || (which_chromosome==24) )
-    {
-      which_probe=192; //64+128
-      which_pair_of_bits=3;
-    }
-  else
-    {
-      printf("db_node_get_direction_through_node_in_which_chromosome_passes. programming error. this should not be possible.");
-      exit(1);
-    }
-
-  int fw=1<<(which_pair_of_bits*2);
-  int rev=2<<(which_pair_of_bits*2);
-  int both=3<<(which_pair_of_bits*2);
-  int none=0;
-  
-  if ( ((node->chrom_xs[which_char]) &  which_probe)==fw)
-    {
-      return overlaps_forwards_only;
-    }
-  else if ( ((node->chrom_xs[which_char]) &  which_probe)==rev)
-    {
-      return overlaps_reverse_only;
-    }
-  else if ( ((node->chrom_xs[which_char]) &  which_probe)==both)
-    {
-      return overlaps_both_directions;
-    }
-  else if ( ((node->chrom_xs[which_char]) &  which_probe)==none)
-    {
-      return does_not_overlap;
-    }
-  else
-    {
-      printf("something wrong with finding direction of overlap");
-      exit(1);
-    }
-  
-
-	
-}
-
-char* overlap_to_char(Overlap ov, char* pre_alloced_string)
-{
-  pre_alloced_string[0]='\0';
-
-  if (ov==overlaps_forwards_only)
-    {
-      strcat(pre_alloced_string, "F");
-    }
-  else if (ov==overlaps_reverse_only)
-    {
-      strcat(pre_alloced_string, "R");
-    }
-  else if (ov==overlaps_both_directions)
-    {
-      strcat(pre_alloced_string, "B");
-    }
-  else if (ov==does_not_overlap)
-    {
-      strcat(pre_alloced_string, "0");
-    }
-
-  return pre_alloced_string;
-}
-
-
-char* compare_chrom_overlap_and_supernode_direction(Overlap ov, Orientation o, char* pre_alloced_string)
-{
-  pre_alloced_string[0]='\0';
-
-  if (ov==overlaps_both_directions)
-    {
-      strcat(pre_alloced_string,"B");
-    }
-  else if (ov==does_not_overlap)
-    {
-      strcat(pre_alloced_string,"0");
-    }
-  else if ( (ov==overlaps_forwards_only) && (o==forward) )
-    {
-      strcat(pre_alloced_string,"F");
-    }
-  else if ( (ov==overlaps_reverse_only) && (o==reverse) )
-    {
-      strcat(pre_alloced_string,"F");
-    }
-  else if ( (ov==overlaps_forwards_only) && (o==reverse) )
-    {
-      strcat(pre_alloced_string,"R");
-    }
-  else if ( (ov==overlaps_reverse_only) && (o==forward) )
-    {
-      strcat(pre_alloced_string,"R");
-    }
-  else
-    {
-      printf("problem with compairng overlap and orientation");
-      exit(1);
-    }
-  return pre_alloced_string;
-
-}
-
-
-
-//of each 2 bit pair, least sig bit referes to forward and more sig to reverse. +1 means is present in chromosome, 0 means is not.
-void db_node_mark_chromosome_overlap(dBNode* node, int which_chromosome, Orientation orientation)
-{
-  int which_char;
-
-  if (which_chromosome==1)
-    {
-      which_char=0;
-
-      if (orientation==forward)
-	{
-	  node->chrom_xs[which_char] |=  1;
-	}
-      else
-	{
-	  node->chrom_xs[which_char] |= 2;
-	}
-    }
-  else if (which_chromosome==2)
-    {
-      which_char=0;
-      if (orientation==forward)
-	{
-	  node->chrom_xs[which_char] |= 4;
-	}
-      else
-	{
-	  node->chrom_xs[which_char] |= 8;
-	}
-    }
-  else if (which_chromosome==3)
-    {
-      which_char=0;
-      if (orientation==forward)
-	{
-	  node->chrom_xs[which_char] |=  16;
-	}
-      else
-	{
-	  node->chrom_xs[which_char] |= 32;
-	}
-    }
-  else if (which_chromosome==4)
-    {
-      which_char=0;
-      if (orientation==forward)
-	{
-	  node->chrom_xs[which_char] |=  64;
-	}
-      else
-	{
-	  node->chrom_xs[which_char] |= 128;
-	}
-    }
-  else if (which_chromosome==5)
-    {
-      which_char=1;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  1;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 2;
-        }
-
-    }
-  else if (which_chromosome==6)
-    {
-      which_char=1;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |= 4;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 8;
-        }
-
-    }
-  else if (which_chromosome==7)
-    {
-      which_char=1;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  16;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 32;
-        }
-
-    }
-  else if (which_chromosome==8)
-    {
-      which_char=1;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |= 64;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 128;
-        }
-
-    }
-  else if (which_chromosome==9)
-    {
-      which_char=2;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  1;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 2;
-        }
-
-    }
-  else if (which_chromosome==10)
-    {
-      which_char=2;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  4;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 8;
-        }
-
-    }
-  else if (which_chromosome==11)
-    {
-      which_char=2;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  16;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 32;
-        }
-
-    }
-  else if (which_chromosome==12)
-    {
-      which_char=2;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  64;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 128;
-        }
-
-    }
-  else if (which_chromosome==13)
-    {
-      which_char=3;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  1;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 2;
-        }
-
-    }
-  else if (which_chromosome==14)
-    {
-      which_char=3;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |= 4;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 8;
-        }
-
-    }
-  else if (which_chromosome==15)
-    {
-      which_char=3;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  16;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 32;
-        }
-
-    }
-  else if (which_chromosome==16)
-    {
-      which_char=3;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  64;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 128;
-        }
-
-    }
-  else if (which_chromosome==17)
-    {
-      which_char=4;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  1;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 2;
-        }
-
-    }
-  else if (which_chromosome==18)
-    {
-      which_char=4;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |= 4;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 8;
-        }
-
-    }
-  else if (which_chromosome==19)
-    {
-      which_char=4;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  16;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 32;
-        }
-
-    }
-  else if (which_chromosome==20)
-    {
-      which_char=4;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  64;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 128;
-        }
-
-    }
-  else if (which_chromosome==21)
-    {
-      which_char=5;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  1;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 2;
-        }
-
-    }
-  else if (which_chromosome==22)
-    {
-      which_char=5;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |= 4;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 8;
-        }
-
-    }
-  else if (which_chromosome==23) //X chromosome is number 23
-    {
-      which_char=5;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |=  16;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 32;
-        }
-
-    }
-  else if (which_chromosome==24)//Y chromosome is number 24
-    {
-      which_char=5;
-      if (orientation==forward)
-        {
-          node->chrom_xs[which_char] |= 64;
-        }
-      else
-        {
-          node->chrom_xs[which_char] |= 128;
-        }
-
-    }
-
-  
-  
-
-
-}
-
-
-boolean db_node_has_at_most_one_intersecting_chromosome(dBNode* node, int* which_chromosome)
-{
-
-  //  if (  (node->chrom_xs[0]==0) && (node->chrom_xs[1]==0) && (node->chrom_xs[2]==0) && (node->chrom_xs[3]==0) && (node->chrom_xs[4]==0) && (node->chrom_xs[5]==0) )
-  // {
-  //   //intersects none at all
-  //   *which_chromosome=0;
-  //   return true;
-  // } 
-  //else if ((node->chrom_xs[0]==1) || (node->chrom_xs[0]==2) || (node->chrom_xs[0]==3)) //overlaps chrom 1, and none of 2,3,4
-  // {
-  //   if ( (node->chrom_xs[1]==0) && (node->chrom_xs[2]==0) && (node->chrom_xs[3]==0) && (node->chrom_xs[4]==0) && (node->chrom_xs[5]==0) ) //overlaps no other chromosome
-  //	{
-  //	  *which_chromosome=1;
-  //	  return true;
-  //	}
-  //   else
-  ////	{
-  //	  *which_chromosome=-1;//overlaps more than 1
-  //	  return false;
-  //	}
-  // }
-
-  if (node==NULL)
-    {
-      printf("Dont call db_node_has_at_most_one_intersecting_chromosome wit null node");
-      exit(1);
-      return 0;
-    }
-  unsigned char chrom1_to_4 = node->chrom_xs[0];
-  unsigned char chrom5_to_8 = node->chrom_xs[1];
-  unsigned char chrom9_to_12 = node->chrom_xs[2];
-  unsigned char chrom13_to_16 = node->chrom_xs[3];
-  unsigned char chrom17_to_20 = node->chrom_xs[4];
-  unsigned char chrom21_to_24 = node->chrom_xs[5];
-
-  unsigned char all_except_1_to_4 = (chrom5_to_8 || chrom9_to_12 || chrom13_to_16 || chrom17_to_20 || chrom21_to_24);
-  unsigned char all_except_5_to_8 = (chrom1_to_4 || chrom9_to_12 || chrom13_to_16 || chrom17_to_20 || chrom21_to_24);
-  unsigned char all_except_9_to_12= (chrom1_to_4 || chrom5_to_8 || chrom13_to_16 || chrom17_to_20 || chrom21_to_24);
-  unsigned char all_except_13_to_16=(chrom1_to_4 || chrom5_to_8 || chrom9_to_12 || chrom17_to_20 || chrom21_to_24);
-  unsigned char all_except_17_to_20=(chrom1_to_4 || chrom5_to_8 || chrom9_to_12 || chrom13_to_16 || chrom21_to_24);
-  unsigned char all_except_21_to_24=(chrom1_to_4 || chrom5_to_8 || chrom9_to_12 || chrom13_to_16 || chrom17_to_20);
-
-  if ( (chrom1_to_4==0) && (chrom5_to_8==0) && (chrom9_to_12==0) && (chrom13_to_16==0) && (chrom17_to_20==0) && (chrom21_to_24==0) )
-    {
-      *which_chromosome=0;
-      return true;
-    }
-  else if ( (all_except_1_to_4==0) && ( (chrom1_to_4 &  mask1) ==0) )
-  {
-    *which_chromosome=1;
-    return true;
-  }
-  else if ( (all_except_1_to_4==0) && ( (chrom1_to_4 &  mask2) ==0) )
-    {
-      *which_chromosome=2;
-      return true;
-    }
-  else if ( (all_except_1_to_4==0) && ( (chrom1_to_4 &  mask3) ==0) )
-    {
-      *which_chromosome=3;
-      return true;
-    }
-  else if ( (all_except_1_to_4==0) && ((chrom1_to_4 &  mask4) ==0) )
-    {
-      *which_chromosome=4;
-      return true;
-    }
-    else if ( (all_except_5_to_8==0) && ( (chrom5_to_8 &  mask1) ==0) )
-    {
-      *which_chromosome=5;
-      return true;
-    }
-    else if ( (all_except_5_to_8==0) && ( (chrom5_to_8 &  mask2) ==0) )
-    {
-      *which_chromosome=6;
-      return true;
-    }
-    else if ( (all_except_5_to_8==0) && ( (chrom5_to_8 &  mask3) ==0) )
-    {
-      *which_chromosome=7;
-      return true;
-    }
-    else if ( (all_except_5_to_8==0) && ( (chrom5_to_8 &  mask4) ==0) )
-    {
-      *which_chromosome=8;
-      return true;
-    }
-    else if ( (all_except_9_to_12==0) && ( (chrom9_to_12 &  mask1) ==0) )
-    {
-      *which_chromosome=9;
-      return true;
-    }
-    else if ( (all_except_9_to_12==0) && ( (chrom9_to_12 &  mask2) ==0) )
-    {
-      *which_chromosome=10;
-      return true;
-    }
-    else if ( (all_except_9_to_12==0) && ( (chrom9_to_12 &  mask3) ==0) )
-    {
-      *which_chromosome=11;
-      return true;
-    }
-    else if ( (all_except_9_to_12==0) && ( (chrom9_to_12 &  mask4) ==0) )
-    {
-      *which_chromosome=12;
-      return true;
-    }
-    else if ( (all_except_13_to_16==0) && ( (chrom13_to_16 &  mask1) ==0) )
-    {
-      *which_chromosome=13;
-      return true;
-    }
-    else if ( (all_except_13_to_16==0) && ( (chrom13_to_16 &  mask2) ==0) )
-    {
-      *which_chromosome=14;
-      return true;
-    }
-    else if ( (all_except_13_to_16==0) && ( (chrom13_to_16 &  mask3) ==0) )
-    {
-      *which_chromosome=15;
-      return true;
-    }
-    else if ( (all_except_13_to_16==0) && ( (chrom13_to_16 &  mask4) ==0) )
-    {
-      *which_chromosome=16;
-      return true;
-    }
-    else if ( (all_except_17_to_20==0) && ( (chrom17_to_20 &  mask1) ==0) )
-    {
-      *which_chromosome=17;
-      return true;
-    }
-    else if ( (all_except_17_to_20==0) && ( (chrom17_to_20 &  mask2) ==0) )
-    {
-      *which_chromosome=18;
-      return true;
-    }
-    else if ( (all_except_17_to_20==0) && ( (chrom17_to_20 &  mask3) ==0) )
-    {
-      *which_chromosome=19;
-      return true;
-    }
-    else if ( (all_except_17_to_20==0) && ( (chrom17_to_20 &  mask4) ==0) )
-    {
-      *which_chromosome=20;
-      return true;
-    }
-    else if ( (all_except_21_to_24==0) && ( (chrom21_to_24 &  mask1) ==0) )
-    {
-      *which_chromosome=21;
-      return true;
-    }
-    else if ( (all_except_21_to_24==0) && ( (chrom21_to_24 &  mask2) ==0) )
-    {
-      *which_chromosome=22;
-      return true;
-    }
-    else if ( (all_except_21_to_24==0) && ( (chrom21_to_24 &  mask3) ==0) )
-    {
-      *which_chromosome=23;
-      return true;
-    }
-    else if ( (all_except_21_to_24==0) && ( (chrom21_to_24 &  mask4) ==0) )
-    {
-      *which_chromosome=24;
-      return true;
-    }
-
-  //must be overlapping more than 1, so
-  *which_chromosome=-1;
-  return false;
-
-
-
-}
 
 
 Orientation opposite_orientation(Orientation o){
@@ -1394,27 +706,20 @@ void db_node_print_binary(FILE * fp, dBNode * node)
 {
 
   BinaryKmer kmer = element_get_kmer(node);
-  unsigned char covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
+  short covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
   Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; 
-  unsigned char chrom_xs[6];
 
   int i;
   for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)                                                     
     {                                                                                                         
-      covg[i] = db_node_get_coverage_as_unsigned_char(node, individual_edge_array, i);
+      covg[i] = db_node_get_coverage_as_short(node, individual_edge_array, i);
       individual_edges[i]= get_edge_copy(*node, individual_edge_array, i);
     }      
 
-  for (i=0; i<6; i++)
-    {
-      chrom_xs[i]=node->chrom_xs[i];
-    }
-
-
   fwrite(&kmer,  sizeof(BinaryKmer), 1, fp);
-  fwrite(covg, sizeof(unsigned char), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp); 
+  fwrite(covg, sizeof(short), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp); 
   fwrite(individual_edges, sizeof(Edges), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);
-  fwrite(chrom_xs, sizeof(unsigned char), 6, fp);
+
   
 }
 
@@ -1422,16 +727,17 @@ void db_node_print_binary(FILE * fp, dBNode * node)
 boolean db_node_read_sv_trio_binary(FILE * fp, short kmer_size, dBNode * node){
 
   BinaryKmer kmer = element_get_kmer(node);
-  unsigned char covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
+  short covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
   Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; 
-  unsigned char chrom_xs[6];
 
   int read;
   
   read = fread(&kmer,sizeof(BinaryKmer),1,fp);
 
   if (read>0){
-    read = fread(covg, sizeof(unsigned char), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);    
+
+
+    read = fread(covg, sizeof(short), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);    
     if (read==0){
       puts("error with input file\n");
       exit(1);
@@ -1443,11 +749,8 @@ boolean db_node_read_sv_trio_binary(FILE * fp, short kmer_size, dBNode * node){
       exit(1);
     }
 
-    read = fread(chrom_xs, sizeof(unsigned char), 6, fp);
-    if (read==0){ 
-      puts("error with input file\n"); 
-      exit(1);                       
-    }       
+
+
   }
   else{
     return false;
@@ -1460,11 +763,6 @@ boolean db_node_read_sv_trio_binary(FILE * fp, short kmer_size, dBNode * node){
     {
       node->coverage[i]         = covg[i];
       node->individual_edges[i] = individual_edges[i];
-    }
-
-  for (i=0; i<6; i++)
-    {
-      node->chrom_xs[i]=chrom_xs[i];
     }
 
   return true;
@@ -1494,32 +792,19 @@ boolean db_node_read_graph_binary(FILE * fp, short kmer_size, dBNode * node, Edg
       puts("error with input file\n");
       exit(1);
     }
-
     read = fread(&edges,sizeof(Edges),1,fp);
     if (read==0){
       puts("error with input file\n");
       exit(1);
-    }
+    }   
   }
   else{
     return false;
   }
 
   element_initialise(node,kmer,kmer_size);
-
   node->individual_edges[index]    = edges;
-
-  //the coverage in the graph binary is a short, but sv_trio uses an unsigned char
-  if (coverage<=254)
-    {
-      node->coverage[index] = (unsigned char) coverage;
-    }
-  else
-    {
-      node->coverage[index] = 254;
-    }
-
-
+  node->coverage[index] = coverage;
   return true;
 }
 

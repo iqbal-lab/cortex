@@ -200,8 +200,32 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
                                                                                                      dBGraph* db_graph );
 
 int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
-                                                int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int max_anchor_span, int min_covg, int max_covg,
-                                                int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file);
+						int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int max_anchor_span, int min_covg, int max_covg, 
+						int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
+						int max_desired_returns,
+						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
+						char** return_flank3p_array);
+
+
+
+
+
+void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
+                                                      char * name,
+                                                      int length,
+                                                      double avg_coverage,
+                                                      int min_coverage,
+                                                      int max_coverage,
+                                                      dBNode * fst_node,
+                                                      Orientation fst_orientation,
+                                                      dBNode * lst_node,
+                                                      Orientation lst_orientation,
+                                                      char * string, //labels of paths
+                                                      int kmer_size,
+                                                      boolean include_first_kmer,
+                                                      EdgeArrayType type,
+                                                      int index
+                                                      );
 
 
 #endif

@@ -1212,7 +1212,6 @@ void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph){
 
 	  int min3p,max3p;
 	  
-	
 	  printf("\nVARIATION: %i - coverage: %d\n",count_vars,element_get_coverage(current_node));
 	  count_vars++;
 	  

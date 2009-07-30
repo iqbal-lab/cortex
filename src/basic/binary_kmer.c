@@ -63,6 +63,7 @@ char reverse_char_nucleotide(char c)
 }
 
 
+//length is the length in number of bases; the char* should have one MORE base than that allocated, to hold '\0'
 char * seq_reverse_complement(char * in, int length, char * out){
 
   int k;
