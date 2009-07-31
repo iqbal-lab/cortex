@@ -56,6 +56,19 @@ void free_element(Element** element)
   *element=NULL;
 }
 
+void element_assign(Element* e1, Element* e2)
+{
+  e1->kmer = e2->kmer;
+  int i;
+  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    {
+      e1->individual_edges[i] = e2->individual_edges[i];
+      e1->coverage[i]         = e2->coverage[i];
+    }
+  e1->status = e2->status;
+}
+
+
 //gets you a pointer to the edge you are referring to
 Edges* get_edge(Element e, EdgeArrayType type,int index)
 {
@@ -285,7 +298,7 @@ void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
 void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, short update)
 {
 
-  e->coverage[index]=db_node_get_coverage_as_short(e,type, index) + update;
+  e->coverage[index] += update;
 
 }
 
@@ -296,7 +309,7 @@ int db_node_get_coverage(dBNode* e, EdgeArrayType type, int index)
   return (int) c;
 }
 
-int db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index)
+short db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index)
 {
   return e->coverage[index];
 }

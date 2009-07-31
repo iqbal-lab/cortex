@@ -71,6 +71,7 @@ typedef Element GraphNode;
 
 Element* new_element();
 void free_element(Element** element);
+void element_assign(Element* e1, Element* e2);
 
 
 //utility function for getting the desired edge char, by specifying if talking about a population or an individual
@@ -168,7 +169,7 @@ boolean db_node_condition_always_true(dBNode* node);
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
 void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, short update);
 int db_node_get_coverage(dBNode* e, EdgeArrayType type, int index);
-int db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index);
+short db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index);
 
 
 

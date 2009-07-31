@@ -9,6 +9,14 @@
 #include <binary_kmer.h>
 
 
+void element_assign(Element* e1, Element* e2)
+{
+  e1->kmer = e2->kmer;
+  e1->edges = e2->edges;
+  e1->coverage = e2->coverage;
+  e1->status = e2->status;
+}
+
 boolean element_is_key(Key key, Element e, short kmer_size)
 {
   return key == e.kmer;

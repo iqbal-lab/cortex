@@ -1,8 +1,7 @@
 #include <test_dB_graph.h>
 #include <test_file_reader.h>
 #include <test_cyclic_count.h>
-
-
+#include <test_graph_element.h>
 #include <CUnit.h>
 #include <Basic.h>
 
@@ -29,6 +28,14 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pSuite, "test of element assignment operator (currently unused)",  test_graph_element_assign)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+
+
+
 
   if (NULL == CU_add_test(pSuite, "test tip clipping",  test_tip_clipping)){
     CU_cleanup_registry();

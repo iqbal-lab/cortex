@@ -237,8 +237,12 @@ Element * hash_table_find_or_insert(Key key, boolean * found,  HashTable * hash_
 	      }
       
 	    //insert element
+	    //printf("Inserting element at position %qd in bucket \n", current_pos);
 	    element_initialise(&element,key, hash_table->kmer_size);
-	    hash_table->table[current_pos] = element; //structure assignment
+
+	    //hash_table->table[current_pos] = element; //structure assignment
+	    element_assign(&(hash_table->table[current_pos]) , &element);
+	    
 	    ret = &hash_table->table[current_pos];
 	    hash_table->unique_kmers++;
 	    

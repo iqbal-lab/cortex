@@ -2193,6 +2193,36 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   
   kmer_window->nkmers=0;
 
+
+
+  //some strings in which to hold the long sequences we will print.
+  char* trusted_branch = malloc(sizeof(char)*(length_of_arrays+1));
+  char* variant_branch = malloc(sizeof(char)*(max_expected_size_of_supernode+1));
+  
+  if ( (trusted_branch==NULL) || (variant_branch==NULL) )
+    {
+      printf("OOM. Unable to malloc trusted and variant branches. Exit. \n");
+      exit(1);
+    }
+
+  int k;
+  for (k=0; k<length_of_arrays; k++)
+    {
+      trusted_branch[k]=0;
+    }
+  for (k=0; k<max_expected_size_of_supernode; k++)
+    {
+      variant_branch[k]=0;
+    }
+  trusted_branch[0]='\0';
+  trusted_branch[length_of_arrays]=0;
+  variant_branch[0]='\0';
+  variant_branch[max_expected_size_of_supernode]=0;
+
+
+
+
+
   // ***********************************************************
   //********** end of malloc and initialise ********************
 
@@ -2458,11 +2488,29 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	    {
 	      start_of_3prime_anchor_in_sup=length_curr_supernode-min_threeprime_flank_anchor; 
 	      //printf("trav sup left to right, length supernodes is %d, so start of 3' anchor is %d\n", length_curr_supernode, start_of_3prime_anchor_in_sup);
+
+	      //this needs to be *after* the position where supernode first differs from trusted path
+	      if (start_of_3prime_anchor_in_sup<= index_in_supernode_where_supernode_differs_from_chromosome)
+		{
+		  start_node_index=first_index_in_chrom_where_supernode_differs_from_chromosome;
+		  continue;
+		}
+
 	    }
 	  else
 	    {
 	      start_of_3prime_anchor_in_sup = 0 + min_threeprime_flank_anchor;
 	      //printf("trav sup right to left, length supernodes is %d, and start of 3' anchor is %d\n", length_curr_supernode, start_of_3prime_anchor_in_sup);
+
+	      //this needs to be *after* the position where supernode first differs from trusted path, in the direction in which we are walking the supernode (right to left)
+	      if (start_of_3prime_anchor_in_sup>= index_in_supernode_where_supernode_differs_from_chromosome)
+		{
+		  start_node_index=first_index_in_chrom_where_supernode_differs_from_chromosome;
+		  continue;
+		}
+
+	      
+
 	    }
 
 
@@ -2530,7 +2578,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 	      fprintf(output_file, "VARIATION: %d\n", num_variants_found);
 
-	      //this is length of 5p flank in number of edges in the 5p flank.
+	      // this is length of 5p flank in number of edges in the 5p flank.
 	      // (in addition there will be one kmer of bases of course. The print function we call will handle this for us)
 	      int length_5p_flank = first_index_in_chrom_where_supernode_differs_from_chromosome-start_node_index-1;
 
@@ -2610,11 +2658,18 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      //print first branch, which is is from the trusted path
 	      sprintf(name,"var_%i_branch1_trusted", num_variants_found);
 
-	      char trusted_branch[length_of_arrays+1];
 	      trusted_branch[length_of_arrays]='\0';
 	      trusted_branch[0]='\0';
 
 	      int len_trusted_branch = start_of_3prime_anchor_in_chrom  - (first_index_in_chrom_where_supernode_differs_from_chromosome-1);
+	      
+	      //sanity
+	      if ( (len_trusted_branch<=0) || (len_trusted_branch>length_of_arrays-1) )
+		{
+		  printf("len_trusted_branch is %d, and length of arrays is %d - this should never happen. Exit.\n", len_trusted_branch, length_of_arrays);
+		  exit(1);;
+		}
+
 	      strncpy(trusted_branch, chrom_string+first_index_in_chrom_where_supernode_differs_from_chromosome-1, len_trusted_branch);
 	      
 	      trusted_branch[len_trusted_branch]='\0';
@@ -2650,7 +2705,6 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      //print second branch - this is the variant - which is the part of the supernode between the anchors/flanking regions
 	      sprintf(name,"var_%i_branch2", num_variants_found);
 
-	      char variant_branch[max_expected_size_of_supernode];
 	      int branch2_min_covg=0;
 	      int branch2_max_covg=0;
 	      double branch2_avg_covg=0;
@@ -2660,6 +2714,29 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      if (traverse_sup_left_to_right==true)
 		{
 		  len_branch2 = start_of_3prime_anchor_in_sup +1 - index_in_supernode_where_supernode_differs_from_chromosome;
+
+		  //sanity. Note it is legitimate for len_branch2 to be zero
+		  if (len_branch2<0)
+		    {
+		      printf("Traversing supernode left to right, but len_branch2 is %d, which is <=0 - this should be impossible. Exit\n", len_branch2);
+		      exit(1);
+		    }
+		  else if (len_branch2> length_curr_supernode)
+		    {
+		      printf("Traversing supernode left to right, but len_branch2 is %d, which is > length of supernode %d - this should be impossible. Exit\n", len_branch2, length_curr_supernode);
+		      exit(1);
+		    }
+
+		  //sanity
+		  if (index_of_query_node_in_supernode_array+length_5p_flank+len_branch2>max_expected_size_of_supernode-length_3p_flank)
+		    {
+		      printf("Programming error. index_of_query_node_in_supernode_array+length_5p_flank+len_branch2 = %d is > max_expected_size_of_supernode-length_3p_flank %d, which should never happen.\n",
+			     index_of_query_node_in_supernode_array+length_5p_flank+len_branch2,
+			     max_expected_size_of_supernode-length_3p_flank );
+		      printf("index_of_query_node_in_supernode_array is %d, length_5p_flank is %d, len_branch2 is %d, \n", index_of_query_node_in_supernode_array, length_5p_flank, len_branch2);
+		      printf(" max_expected_size_of_supernode is %d, length_3p_flank is %d",  max_expected_size_of_supernode, length_3p_flank);
+		      exit(1);
+		    }
 
 		  strncpy(variant_branch, supernode_string + index_of_query_node_in_supernode_array+length_5p_flank, len_branch2);
 		  variant_branch[len_branch2]='\0';
@@ -2672,7 +2749,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 		  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
-								   0,0,0, 
+								   branch2_avg_covg, branch2_min_covg, branch2_max_covg,
 								   current_supernode[index_of_query_node_in_supernode_array+length_5p_flank], 
 								   curr_sup_orientations[index_of_query_node_in_supernode_array+length_5p_flank],
 								   current_supernode[length_curr_supernode-min_threeprime_flank_anchor], 
@@ -2693,9 +2770,25 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  len_branch2 = index_in_supernode_where_supernode_differs_from_chromosome +1 - start_of_3prime_anchor_in_sup ;
 
 
+		  //sanity. Note it is legitimate for len_branch2 to be zero
+		  if (len_branch2<0)
+		    {
+		      printf("Traversing supernode right to left, but len_branch2 is %d, which is <=0 - this should be impossible.\n", len_branch2);
+		      printf("index_in_supernode_where_supernode_differs_from_chromosome is %d, and start_of_3prime_anchor_in_sup is %d. Exit.\n", 
+			     index_in_supernode_where_supernode_differs_from_chromosome, start_of_3prime_anchor_in_sup);
+		      exit(1);
+		    }
+		  else if (len_branch2> length_curr_supernode)
+		    {
+		      printf("Traversing supernode right to left, but len_branch2 is %d, which is > length of supernode %d - this should be impossible. Exit\n", len_branch2, length_curr_supernode);
+		      exit(1);
+		    }
+
+
 		  // ok - need to take reverse complement of the full supernode sequence, inlcuding first kmer
-		  char temp[max_expected_size_of_supernode];
+		  char temp[max_expected_size_of_supernode+db_graph->kmer_size+1];
 		  temp[0]='\0';
+		  temp[max_expected_size_of_supernode+db_graph->kmer_size]='\0';
 
 		  if (curr_sup_orientations[0]==forward)
 		    {
@@ -2709,10 +2802,20 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  strcat(temp, supernode_string);//temp is now the full sequence of the supernode.
 		                                 //remember the query node, where the supernode touches the trusted path at start_node_index, 
-                                                 // is not the 0-the element of the supernode.
+                                                 // is not the 0-th element of the supernode. (definitely not, as we are traversing right to left!)
 
 
-		  //  strncpy(variant_branch, temp+min_threeprime_flank_anchor+1, len_branch2);
+
+		  //sanity
+		  if ( (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0) || (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode) )
+		    {
+		      printf("Programming error. Either index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0\n");
+		      printf(" or index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode.\n");
+		      printf("Neither should be possible. \n");
+		      printf("index_of_query_node_in_supernode_array is %d, length_5p_flank is %d, len_branch2 is %d, max_expected_size_of_supernode is %d", 
+			     index_of_query_node_in_supernode_array, length_5p_flank, len_branch2, max_expected_size_of_supernode );
+		      exit(1);
+		    }
 		  strncpy(variant_branch, temp+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2, len_branch2);
 
 		  variant_branch[len_branch2]='\0';
@@ -2797,8 +2900,25 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 			     chrom_path_array, chrom_orientation_array, chrom_labels, chrom_string,
 			     seq, kmer_window, 
 			     false, true, db_graph)>0);
+
+
+  //free malloc-ed variables
+
+  free(chrom_path_array);
+  free(chrom_orientation_array);
+  free(chrom_labels);
+  free(chrom_string);
+  free(current_supernode);
+  free(curr_sup_orientations);
+  free(curr_sup_labels);
+  free(supernode_string);
+  free_sequence(&seq);
+  free(kmer_window->kmer);
+  free(kmer_window);
+  free(trusted_branch);
+  free(variant_branch);
 													   
-return num_variants_found;
+  return num_variants_found;
 
 
 }

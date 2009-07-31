@@ -51,6 +51,9 @@ typedef enum{
 
 typedef Element GraphNode;
 
+
+void element_assign(Element* e1, Element* e2);
+
 //reverse orientation
 Orientation opposite_orientation(Orientation);
 
