@@ -2582,8 +2582,14 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      // (in addition there will be one kmer of bases of course. The print function we call will handle this for us)
 	      int length_5p_flank = first_index_in_chrom_where_supernode_differs_from_chromosome-start_node_index-1;
 
-	      int length_3p_flank = min_threeprime_flank_anchor;
+	      int length_3p_flank = min_threeprime_flank_anchor;//we can do better than this. Probably, the two branches will be identical for some long stretch.
 	      
+	      
+	      
+
+
+
+
 	      char flank5p[length_5p_flank+1];
 	      flank5p[0] = '\0';
 	      strncpy(flank5p, chrom_string+start_node_index, length_5p_flank);
@@ -2831,7 +2837,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 		  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
-								   1,1,1, 
+								   branch2_avg_covg, branch2_min_covg, branch2_max_covg, 
 								   current_supernode[index_of_query_node_in_supernode_array-length_5p_flank], 
 								   curr_sup_orientations[index_of_query_node_in_supernode_array-length_5p_flank],
 								   current_supernode[start_of_3prime_anchor_in_sup], 
