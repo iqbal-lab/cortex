@@ -204,7 +204,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
 						int max_desired_returns,
 						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
-						char** return_flank3p_array);
+						char** return_flank3p_array, int** return_variant_start_coord);
 
 
 

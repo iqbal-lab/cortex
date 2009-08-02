@@ -2084,6 +2084,24 @@ void get_coverage_from_array_of_nodes(dBNode** array, int length, int* min_cover
 }
 
 
+void get_percent_novel_from_array_of_nodes(dBNode** array, int length, double* percent_novel, EdgeArrayType type, int index)
+{
+  int sum_novel=0;
+
+  int i;
+  for (i=0; i< length; i++)
+    {
+      boolean this_node_is_novel = !(db_node_check_status_exists_in_reference(array[i]) || db_node_check_status_visited_and_exists_in_reference(array[i]) );
+      
+      if (this_node_is_novel)
+	{
+	  sum_novel++;
+	}
+    }
+  return sum_novel/length;
+}
+
+
 // *******************************************************************************
 // New SV calling algorithm based on comparing a supernode with a "trusted path". This trusted path might be the reference, or some contig that
 // we have obtained by bootstrapping.
@@ -2103,7 +2121,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
 						int max_desired_returns,
 						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
-						char** return_flank3p_array)
+						char** return_flank3p_array, int** return_variant_start_coord)
 {
 
   int num_variants_found=0;
@@ -2227,6 +2245,10 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   //********** end of malloc and initialise ********************
 
 
+  //in order to be able to report the coordinates of the SV we find, with respect to the trusted path fasta (usually the fasta of a reference chromosome)
+  // we keep track of what coordinate in that fasta is the first base in the array.
+  int coord_of_start_of_array_in_trusted_fasta=0;
+
 
   //load a set of nodes into thr back end (right hand/greatest indices) of array
   // each call   will push left the nodes/etc in the various arrays by length_of_arrays/2=max_anchor_span
@@ -2241,6 +2263,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 													     db_graph);
 
 
+
   if (ret ==number_of_nodes_to_load)
     {
       //one more batch, then array is full, and ready for the main loop:
@@ -2251,6 +2274,10 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 													     false, false,
 													     db_graph);
     }
+
+
+
+  coord_of_start_of_array_in_trusted_fasta=0;
 
 
   char tmp_zam[db_graph->kmer_size];
@@ -2576,16 +2603,25 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      // We can check this easily - if num_variants_found<max_desired_returns, then we add this result to the arrays
 
 
-	      fprintf(output_file, "VARIATION: %d\n", num_variants_found);
-
+	      
 	      // this is length of 5p flank in number of edges in the 5p flank.
 	      // (in addition there will be one kmer of bases of course. The print function we call will handle this for us)
 	      int length_5p_flank = first_index_in_chrom_where_supernode_differs_from_chromosome-start_node_index-1;
 
-	      int length_3p_flank = min_threeprime_flank_anchor;//we can do better than this. Probably, the two branches will be identical for some long stretch.
+
+	      int start_coord_of_variant_in_trusted_path_fasta = coord_of_start_of_array_in_trusted_fasta + first_index_in_chrom_where_supernode_differs_from_chromosome + db_graph->kmer_size;
+	      fprintf(output_file, "VARIATION: %d, start coordinate %d\n", num_variants_found, start_coord_of_variant_in_trusted_path_fasta);
+	      *(return_variant_start_coord[num_variants_found-1]) = start_coord_of_variant_in_trusted_path_fasta;
+
+
+	      int length_3p_flank = min_threeprime_flank_anchor;//we can do better than this. Probably, the two branches will be identical for some long stretch. Also quite possibly the 3prime anchor
+	                                                        //will extend further in the 3prime direction. We avoided doing this in the main search loop for efficiency's sake 
 	      
 	      
 	      
+
+
+
 
 
 
@@ -2599,6 +2635,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      int flank5p_min_covg=0;
 	      double flank5p_avg_covg=0;
 	      
+
+	      //get coverage of the 5p flank
 	      if (traverse_sup_left_to_right==true)
 		{
 		  get_coverage_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array, 
@@ -2758,8 +2796,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 								   branch2_avg_covg, branch2_min_covg, branch2_max_covg,
 								   current_supernode[index_of_query_node_in_supernode_array+length_5p_flank], 
 								   curr_sup_orientations[index_of_query_node_in_supernode_array+length_5p_flank],
-								   current_supernode[length_curr_supernode-min_threeprime_flank_anchor], 
-								   curr_sup_orientations[length_curr_supernode-min_threeprime_flank_anchor],
+								   current_supernode[length_curr_supernode-length_3p_flank], 
+								   curr_sup_orientations[length_curr_supernode-length_3p_flank],
 								   variant_branch, db_graph->kmer_size, false, 
 								   which_array_holds_indiv, index_for_indiv_in_edge_array
 								   );
@@ -2891,14 +2929,15 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		    }
 	
 
-	      start_node_index = start_of_3prime_anchor_in_chrom+min_threeprime_flank_anchor+1;
+	      start_node_index = start_of_3prime_anchor_in_chrom+length_3p_flank+1;
  
 	    }
 	 
 	}
 
       
-
+      
+      coord_of_start_of_array_in_trusted_fasta+=number_of_nodes_to_load;
       
     }  while (db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta
 	                    (chrom_fasta_fptr, number_of_nodes_to_load, number_of_nodes_to_load,
