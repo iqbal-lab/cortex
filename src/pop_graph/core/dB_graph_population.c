@@ -2061,6 +2061,7 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
 void get_coverage_from_array_of_nodes(dBNode** array, int length, int* min_coverage, int* max_coverage, double* avg_coverage, EdgeArrayType type, int index)
 {
 
+  
   int sum_coverage=0;
 
   *max_coverage         = 0;
@@ -2074,6 +2075,8 @@ void get_coverage_from_array_of_nodes(dBNode** array, int length, int* min_cover
       sum_coverage += this_covg;
       *max_coverage = *max_coverage < this_covg ? this_covg : *max_coverage;
       *min_coverage = *min_coverage > this_covg ? this_covg : *min_coverage;
+      //printf("i is %d, this node has coverage %d, min is %d, max is %d\n", i, this_covg, *min_coverage, *max_coverage);
+
     }  
 
   if (*min_coverage==INT_MAX)
@@ -2098,7 +2101,7 @@ void get_percent_novel_from_array_of_nodes(dBNode** array, int length, double* p
 	  sum_novel++;
 	}
     }
-  return sum_novel/length;
+  *percent_novel =  sum_novel/length;
 }
 
 
@@ -2563,20 +2566,21 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      k=-j;
 		    }
 		  
-		  /*
+		  
 		  char tmp_dbg1[db_graph->kmer_size];
 		  char tmp_dbg2[db_graph->kmer_size];
-		  printf("Compare chrom node %d, %s,  and supernode node %d, %s,\n", start_of_3prime_anchor_in_chrom + j, 
-		         binary_kmer_to_seq(chrom_path_array[start_of_3prime_anchor_in_chrom + j]->kmer, db_graph->kmer_size, tmp_dbg1),
-		  	 start_of_3prime_anchor_in_sup + k,
-		  	 binary_kmer_to_seq(current_supernode[start_of_3prime_anchor_in_sup + k]->kmer, db_graph->kmer_size, tmp_dbg2));
-		  */
+		  //printf("Compare chrom node %d, %s,  and supernode node %d, %s,\n", start_of_3prime_anchor_in_chrom + j, 
+		  //      binary_kmer_to_seq(chrom_path_array[start_of_3prime_anchor_in_chrom + j]->kmer, db_graph->kmer_size, tmp_dbg1),
+		  //	 start_of_3prime_anchor_in_sup + k,
+		  //	 binary_kmer_to_seq(current_supernode[start_of_3prime_anchor_in_sup + k]->kmer, db_graph->kmer_size, tmp_dbg2));
+		  
 		  if (chrom_path_array[start_of_3prime_anchor_in_chrom + j] != current_supernode[start_of_3prime_anchor_in_sup + k])
 		    {
 		      //printf("chrom node %d does not work as start of anchor\n", start_of_3prime_anchor_in_chrom );
 		      potential_anchor=false;
 		    }
-		  
+
+
 		}
 	      
 	      if (potential_anchor==true)
@@ -2599,6 +2603,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      //we have found a potential SV locus.
 	      num_variants_found++;
 
+
+	      printf("iqbal start_of_3prime_anchor_in_sup is %d\n", start_of_3prime_anchor_in_sup);
+
 	      // Note if max_desired_returns>0, then we are going to return the first max_desired_returns  results in the branch1_array etc
 	      // We can check this easily - if num_variants_found<max_desired_returns, then we add this result to the arrays
 
@@ -2611,17 +2618,183 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 	      int start_coord_of_variant_in_trusted_path_fasta = coord_of_start_of_array_in_trusted_fasta + first_index_in_chrom_where_supernode_differs_from_chromosome + db_graph->kmer_size;
 	      fprintf(output_file, "VARIATION: %d, start coordinate %d\n", num_variants_found, start_coord_of_variant_in_trusted_path_fasta);
-	      *(return_variant_start_coord[num_variants_found-1]) = start_coord_of_variant_in_trusted_path_fasta;
-
+	      
+	      if (num_variants_found<=max_desired_returns) //if we are asking for some of the things we find to be returned within the arguments passed in. See comments at start of this whole function
+		{
+		  *(return_variant_start_coord[num_variants_found-1]) = start_coord_of_variant_in_trusted_path_fasta;
+		}
 
 	      int length_3p_flank = min_threeprime_flank_anchor;//we can do better than this. Probably, the two branches will be identical for some long stretch. Also quite possibly the 3prime anchor
 	                                                        //will extend further in the 3prime direction. We avoided doing this in the main search loop for efficiency's sake 
 	      
 	      
 	      
+	      //we are going to see if we can extend the 3prime anchor in the 3prime and 5prime directions. Which variables are we going to update, and what do we
+	      // have to pay attention to if we do that? 
+	      // will update primarily start_of_3prime_anchor_in_chrom, and start_of_3prime_anchor_in_sup.
+	      // consequently length_3p_flank will change. I think that's it! No problem huh?
+
+	      int how_many_steps_in_3prime_dir_can_we_extend=0;
+	      int how_many_steps_in_5prime_dir_can_we_extend=0;
+
+	      //check in 5prime dir first
+	      int j=1;
+	      boolean can_extend_further_in_5prime_dir=true;
+	      while (can_extend_further_in_5prime_dir==true) 
+		{
+		  int k=j;
+
+		  if (traverse_sup_left_to_right==false)
+		    {
+		      k=-j;
+		    }
+		  
+		  /*
+		  char tmp_dbg1[db_graph->kmer_size];
+		  char tmp_dbg2[db_graph->kmer_size];
+		  printf("Extending 3prime anchor in 5prime dir. Compare chrom node %d, %s,  and supernode node %d, %s,\n", 
+			 start_of_3prime_anchor_in_chrom - j,
+			 binary_kmer_to_seq(chrom_path_array[start_of_3prime_anchor_in_chrom - j]->kmer, db_graph->kmer_size, tmp_dbg1),
+			 start_of_3prime_anchor_in_sup - k,
+			 binary_kmer_to_seq(current_supernode[start_of_3prime_anchor_in_sup - k]->kmer, db_graph->kmer_size, tmp_dbg2));
+		  */
+		  if (chrom_path_array[start_of_3prime_anchor_in_chrom - j] != current_supernode[start_of_3prime_anchor_in_sup - k])
+		    {
+		      can_extend_further_in_5prime_dir=false;
+		    }
+		  else
+		    {
+		      how_many_steps_in_5prime_dir_can_we_extend++;
+		      j++;
+		    }
+
+		  //make sure we stop before the end of the supernode. traverse_sup_left_to_right==true => 5prime direction is in direction of decreasing index
+		  if (    ((traverse_sup_left_to_right) &&  (start_of_3prime_anchor_in_sup - k -1==0) )
+			  ||
+			  ((!traverse_sup_left_to_right) && (start_of_3prime_anchor_in_sup - k +1==length_curr_supernode-1) )//zam changed this from -2 to -1, at rh end
+			  )
+		  {
+		    can_extend_further_in_5prime_dir=false;
+		  }
+		  
+
+		  //sanity
+		  if (start_of_3prime_anchor_in_chrom-how_many_steps_in_5prime_dir_can_we_extend<=first_index_in_chrom_where_supernode_differs_from_chromosome)
+		    {
+		      //something has gone wrong
+		      printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point at which the variant starts!!\n");
+		      printf("start_of_3prime_anchor_in_chrom = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, first_index_in_chrom_where_supernode_differs_from_chromosome=%d\n",
+			     start_of_3prime_anchor_in_chrom, how_many_steps_in_5prime_dir_can_we_extend,  first_index_in_chrom_where_supernode_differs_from_chromosome);
+		      exit(1);
+		    }
+		  if (traverse_sup_left_to_right)
+		    {
+		      if (start_of_3prime_anchor_in_sup - how_many_steps_in_5prime_dir_can_we_extend <= index_in_supernode_where_supernode_differs_from_chromosome)
+			{
+			  printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point at which the variant starts!!\n");
+			  printf("start_of_3prime_anchor_in_sup = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, index_in_supernode_where_supernode_differs_from_chromosome=%d\n",
+				 start_of_3prime_anchor_in_sup, how_many_steps_in_5prime_dir_can_we_extend, index_in_supernode_where_supernode_differs_from_chromosome);
+			  printf("We are traversing supernode from left to right. Exit.\n");
+			  exit(1);
+			}
+		    }
+		  else
+		    {
+		      if (start_of_3prime_anchor_in_sup + how_many_steps_in_5prime_dir_can_we_extend >= index_in_supernode_where_supernode_differs_from_chromosome)
+			{
+			  printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point at which the variant starts!!\n");
+			  printf("start_of_3prime_anchor_in_sup = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, index_in_supernode_where_supernode_differs_from_chromosome=%d\n",
+				 start_of_3prime_anchor_in_sup, how_many_steps_in_5prime_dir_can_we_extend, index_in_supernode_where_supernode_differs_from_chromosome);
+			  printf("We are traversing supernode from right to left. Exit.\n");
+			  exit(1);
+			}
+		      
+		    }
+
+		}		  
+
+	      printf("We can extend the 3prime anchor by %d steps in the 5prime direction\n", how_many_steps_in_5prime_dir_can_we_extend);
+
+	      //check in 3prime dir 
+	      j=length_3p_flank+1;
+	      boolean can_extend_further_in_3prime_dir=false;
+
+	      if (  ( ((traverse_sup_left_to_right) &&  (start_of_3prime_anchor_in_sup+length_3p_flank<length_curr_supernode) )
+		    ||
+		     ((!traverse_sup_left_to_right) &&  (start_of_3prime_anchor_in_sup-length_3p_flank>0) ))
+		   &&
+		   (start_of_3prime_anchor_in_chrom+length_3p_flank<length_of_arrays)
+		   )
+		{
+		  can_extend_further_in_3prime_dir=true;
+		}
+
+
+	      while (can_extend_further_in_3prime_dir==true) 
+		{
+		  int k=j;
+
+		  if (traverse_sup_left_to_right==false)
+		    {
+		      k=-j;
+		    }
+		  
+
+		  /*
+		  char tmp_dbg1[db_graph->kmer_size];
+		  char tmp_dbg2[db_graph->kmer_size];
+		  printf("Extending 3prime anchor in 3prime dir. Compare chrom node %d, %s,  and supernode node %d, %s,\n", 
+		  	 start_of_3prime_anchor_in_chrom + j,
+		  	 binary_kmer_to_seq(chrom_path_array[start_of_3prime_anchor_in_chrom + j]->kmer, db_graph->kmer_size, tmp_dbg1),
+		  	 start_of_3prime_anchor_in_sup + k,
+		  	 binary_kmer_to_seq(current_supernode[start_of_3prime_anchor_in_sup + k]->kmer, db_graph->kmer_size, tmp_dbg2));
+		  */
+
+		    //we don't need to worry about N's in the chromosome array - there will never be any in the supernode array
+		  if (chrom_path_array[start_of_3prime_anchor_in_chrom + j] != current_supernode[start_of_3prime_anchor_in_sup + k])
+		    {
+		      can_extend_further_in_3prime_dir=false;
+		    }
+		  else
+		    {
+		      how_many_steps_in_3prime_dir_can_we_extend++;
+		      j++;
+		    }
+
+		  //make sure we stop if we're at end of supernode
+		  if ( (start_of_3prime_anchor_in_sup + k==1) || (start_of_3prime_anchor_in_sup + k==length_curr_supernode-2) )
+		  {
+		    can_extend_further_in_3prime_dir=false;
+		  }
+
+		  //sanity
+		  if (start_of_3prime_anchor_in_chrom + length_3p_flank+ how_many_steps_in_3prime_dir_can_we_extend >= length_of_arrays-1)
+		    {
+		      //something has gone wrong
+		      printf("We are extending the 3prime anchor in 3prime direction and have reached the end of our array. I don't believe it!!\n");
+		      printf("start_of_3prime_anchor_in_chrom = %d\nhow_many_steps_in_3prime_dir_can_we_extend=%d\n, length_of_arrays=%d\n",
+			     start_of_3prime_anchor_in_chrom, how_many_steps_in_3prime_dir_can_we_extend,  length_of_arrays);
+		      exit(1);
+		    }
+
+		}		  
+
+	      printf("We can extend the 3prime anchor by %d steps in the 3prime direction\n", how_many_steps_in_3prime_dir_can_we_extend);
 
 
 
+	      // collect info about how much bigger our 3p flank can be made:
+	      length_3p_flank+= how_many_steps_in_5prime_dir_can_we_extend + how_many_steps_in_3prime_dir_can_we_extend;
+	      start_of_3prime_anchor_in_chrom -= how_many_steps_in_5prime_dir_can_we_extend;
+
+	      if (traverse_sup_left_to_right)
+		{
+		  start_of_3prime_anchor_in_sup -= how_many_steps_in_5prime_dir_can_we_extend;
+		}
+	      else
+		{
+		  start_of_3prime_anchor_in_sup += how_many_steps_in_5prime_dir_can_we_extend;
+		}
 
 
 
@@ -2721,6 +2894,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      int trusted_branch_max_covg=0;
 	      double trusted_branch_avg_covg=0;
 
+
 	      //get coverage on the trusted branch. 
 	      get_coverage_from_array_of_nodes(chrom_path_array+start_node_index+length_5p_flank,
 					       len_trusted_branch, &trusted_branch_min_covg, &trusted_branch_max_covg, &trusted_branch_avg_covg,
@@ -2747,7 +2921,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      
 
 	      //print second branch - this is the variant - which is the part of the supernode between the anchors/flanking regions
-	      sprintf(name,"var_%i_branch2", num_variants_found);
+	      sprintf(name,"var_%i_branch2_variant", num_variants_found);
 
 	      int branch2_min_covg=0;
 	      int branch2_max_covg=0;
@@ -2796,8 +2970,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 								   branch2_avg_covg, branch2_min_covg, branch2_max_covg,
 								   current_supernode[index_of_query_node_in_supernode_array+length_5p_flank], 
 								   curr_sup_orientations[index_of_query_node_in_supernode_array+length_5p_flank],
-								   current_supernode[length_curr_supernode-length_3p_flank], 
-								   curr_sup_orientations[length_curr_supernode-length_3p_flank],
+								   current_supernode[start_of_3prime_anchor_in_sup], 
+								   curr_sup_orientations[start_of_3prime_anchor_in_sup],
 								   variant_branch, db_graph->kmer_size, false, 
 								   which_array_holds_indiv, index_for_indiv_in_edge_array
 								   );
@@ -2914,8 +3088,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      sprintf(name,"var_%i_3p_flank",num_variants_found);
 	      print_fasta_from_path_for_specific_person_or_pop(output_file, name, length_3p_flank, 
 							       flank3p_avg_covg, flank3p_min_covg, flank3p_max_covg,
-							       chrom_path_array[start_of_3prime_anchor_in_chrom],//zam removed +1
-							       chrom_orientation_array[start_of_3prime_anchor_in_chrom],//zam removed +1
+							       chrom_path_array[start_of_3prime_anchor_in_chrom],
+							       chrom_orientation_array[start_of_3prime_anchor_in_chrom],
 							       chrom_path_array[start_of_3prime_anchor_in_chrom+length_3p_flank],
 							       chrom_orientation_array[start_of_3prime_anchor_in_chrom+length_3p_flank],
 							       flank3p,
