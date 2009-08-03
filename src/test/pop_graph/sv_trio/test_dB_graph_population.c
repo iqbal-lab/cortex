@@ -1727,7 +1727,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
   min_fiveprime_flank_anchor = 3;
-  min_threeprime_flank_anchor= 8;
+  min_threeprime_flank_anchor=  8;
   max_anchor_span =500;
   length_of_arrays=1000;
   min_covg =1;
@@ -2325,7 +2325,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table,  stdout,
+						    max_expected_size_of_supernode, length_of_arrays, hash_table,  fp,
                                                     1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
 
 

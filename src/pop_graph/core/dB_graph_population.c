@@ -2149,7 +2149,6 @@ void get_percent_novel_from_array_of_nodes(dBNode** array, int length, double* p
 	}
     }
 
-  printf("%d nodes are novel out of %d\n", sum_novel, length);
   *percent_novel =  100*sum_novel/length;
 
 }
@@ -2685,10 +2684,31 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      int how_many_steps_in_3prime_dir_can_we_extend=0;
 	      int how_many_steps_in_5prime_dir_can_we_extend=0;
 
-	      //check in 5prime dir first
+	      //check in 5prime dir first. 
 	      int j=1;
 	      boolean can_extend_further_in_5prime_dir=true;
-	      while (can_extend_further_in_5prime_dir==true) 
+	      
+	      if (
+		  ( (traverse_sup_left_to_right)&&(start_of_3prime_anchor_in_sup-1==index_in_supernode_where_supernode_differs_from_chromosome) )
+		  ||
+		  ( (!traverse_sup_left_to_right)&&(start_of_3prime_anchor_in_sup+1==index_in_supernode_where_supernode_differs_from_chromosome) )
+		  )
+		{
+		  can_extend_further_in_5prime_dir=false;
+		}
+
+
+	      
+	      //Here's an example of why you have to be careful
+	      // Supernode:      KingZamIqbalIsTheKingOfEngland
+	      // Ref:            KingZamFrenchFrenchFrenchFrenchZamIqbalIsTheKingOfEngland
+
+	      //Our algorithm would say: OK, KingZam is the 5prime anchor, let's see if we can find a 3prime anchor that is 7 characters long (say). Aha! England will do. OK - can we extend backwards? Yes, we can extend backwards 
+	      // all the way back to Zam. But WAIT!! Zam is before the split!! That's fine, it means there is a repeat, just don't try and extend beyond there. Hence the while condition below
+
+	      //(By the way this is not a pathologival case - happens in Human chromosome 1)
+
+	      while ( (can_extend_further_in_5prime_dir==true)  && (start_of_3prime_anchor_in_sup - k != index_in_supernode_where_supernode_differs_from_chromosome) )
 		{
 		  int k=j;
 
@@ -2706,6 +2726,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 			 start_of_3prime_anchor_in_sup - k,
 			 binary_kmer_to_seq(current_supernode[start_of_3prime_anchor_in_sup - k]->kmer, db_graph->kmer_size, tmp_dbg2));
 		  */
+
 		  if (chrom_path_array[start_of_3prime_anchor_in_chrom - j] != current_supernode[start_of_3prime_anchor_in_sup - k])
 		    {
 		      can_extend_further_in_5prime_dir=false;
@@ -2719,7 +2740,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  //make sure we stop before the end of the supernode. traverse_sup_left_to_right==true => 5prime direction is in direction of decreasing index
 		  if (    ((traverse_sup_left_to_right) &&  (start_of_3prime_anchor_in_sup - k -1==0) )
 			  ||
-			  ((!traverse_sup_left_to_right) && (start_of_3prime_anchor_in_sup - k +1==length_curr_supernode-1) )//zam changed this from -2 to -1, at rh end
+			  ((!traverse_sup_left_to_right) && (start_of_3prime_anchor_in_sup - k +1==length_curr_supernode-1) ) //zam changed this from -2 to -1
 			  )
 		  {
 		    can_extend_further_in_5prime_dir=false;
@@ -2730,7 +2751,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  if (start_of_3prime_anchor_in_chrom-how_many_steps_in_5prime_dir_can_we_extend<=first_index_in_chrom_where_supernode_differs_from_chromosome)
 		    {
 		      //something has gone wrong
-		      printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point at which the variant starts!!\n");
+		      printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point at which the variant starts in the TRUSTED array!!\n");
 		      printf("start_of_3prime_anchor_in_chrom = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, first_index_in_chrom_where_supernode_differs_from_chromosome=%d\n",
 			     start_of_3prime_anchor_in_chrom, how_many_steps_in_5prime_dir_can_we_extend,  first_index_in_chrom_where_supernode_differs_from_chromosome);
 		      exit(1);
@@ -2739,7 +2760,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		    {
 		      if (start_of_3prime_anchor_in_sup - how_many_steps_in_5prime_dir_can_we_extend <= index_in_supernode_where_supernode_differs_from_chromosome)
 			{
-			  printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point at which the variant starts!!\n");
+			  printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point in the supernode where it separated from the 5prime flank. Should not reach here.\n");
 			  printf("start_of_3prime_anchor_in_sup = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, index_in_supernode_where_supernode_differs_from_chromosome=%d\n",
 				 start_of_3prime_anchor_in_sup, how_many_steps_in_5prime_dir_can_we_extend, index_in_supernode_where_supernode_differs_from_chromosome);
 			  printf("We are traversing supernode from left to right. Exit.\n");
@@ -2750,7 +2771,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		    {
 		      if (start_of_3prime_anchor_in_sup + how_many_steps_in_5prime_dir_can_we_extend >= index_in_supernode_where_supernode_differs_from_chromosome)
 			{
-			  printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point at which the variant starts!!\n");
+			  printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point in the supernode where it separated from the 5prime flank. Should not reach here.\n");
 			  printf("start_of_3prime_anchor_in_sup = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, index_in_supernode_where_supernode_differs_from_chromosome=%d\n",
 				 start_of_3prime_anchor_in_sup, how_many_steps_in_5prime_dir_can_we_extend, index_in_supernode_where_supernode_differs_from_chromosome);
 			  printf("We are traversing supernode from right to left. Exit.\n");
