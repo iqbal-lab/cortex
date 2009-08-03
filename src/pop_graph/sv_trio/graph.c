@@ -56,7 +56,7 @@ int main(int argc, char **argv){
       int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 							    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							    max_expected_size_of_supernode, length_of_arrays, db_graph, stdout,
-							    0, NULL, NULL, NULL, NULL);
+							    0, NULL, NULL, NULL, NULL, NULL);
 
       
 
