@@ -200,6 +200,7 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
                                                                                                      dBGraph* db_graph );
 
 int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
+						EdgeArrayType which_array_holds_ref, int index_for_ref_in_supernode_array,
 						int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int max_anchor_span, int min_covg, int max_covg, 
 						int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
 						int max_desired_returns,

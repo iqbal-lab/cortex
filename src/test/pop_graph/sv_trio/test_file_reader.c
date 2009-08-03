@@ -852,7 +852,7 @@ void test_load_seq_into_array()
   CU_ASSERT(path_labels[offset+10]==Guanine);
 
   fclose(fptr);
-
+  free_sequence(&seq);
 
 
 

@@ -2131,7 +2131,7 @@ void get_coverage_from_array_of_nodes(dBNode** array, int length, int* min_cover
 }
 
 
-void get_percent_novel_from_array_of_nodes(dBNode** array, int length, double* percent_novel)
+void get_percent_novel_from_array_of_nodes(dBNode** array, int length, double* percent_novel, EdgeArrayType type_for_reference, int index_of_reference_in_array_of_edges)
 {
   int sum_novel=0;
 
@@ -2140,8 +2140,8 @@ void get_percent_novel_from_array_of_nodes(dBNode** array, int length, double* p
     {
       if (array[i] != NULL)
 	{
-	  boolean this_node_is_novel = !(db_node_check_status_exists_in_reference(array[i]) || db_node_check_status_visited_and_exists_in_reference(array[i]) );
-	  
+	  //boolean this_node_is_novel = !(db_node_check_status_exists_in_reference(array[i]) || db_node_check_status_visited_and_exists_in_reference(array[i]) );
+	  boolean this_node_is_novel = !db_node_is_this_node_in_this_person_or_populations_graph(array[i], type_for_reference, index_of_reference_in_array_of_edges);
 	  if (this_node_is_novel)
 	    {
 	      sum_novel++;
@@ -2168,7 +2168,10 @@ void get_percent_novel_from_array_of_nodes(dBNode** array, int length, double* p
 // returns number of variants found. 
 // if max_desired_returns>0, then the first max_desired_returns results are returned in the preallocated arrays branch1_array and branch2_array
 // In normal use, this should be zero - we'll find far too many variants. But can be used for testing.
+// the edgearraytype and index for the reference are purely used for checking if nodes exist in the reference at all, or are novel. The trusted path is, in general, not necessarily the reference.
+// The trusted path comes entirely from chrom_fptr, and doe not need to be the same as the reference, as specified in arguments 4,5
 int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
+						EdgeArrayType which_array_holds_ref, int index_for_ref_in_supernode_array,
 						int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int max_anchor_span, int min_covg, int max_covg, 
 						int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
 						int max_desired_returns,
@@ -2188,7 +2191,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   //insist max_anchor_span=length_of_arrays/2
   if (max_anchor_span!=length_of_arrays/2)
     {
-      printf("If calling db_graph_make_reference_path_based_sv_calls, must ave max_anchor span as half of length_of_arrays\n");
+      printf("You have max_anchor_span = %d, and length_of_arrays = %d. If calling db_graph_make_reference_path_based_sv_calls, must have max_anchor span as half of length_of_arrays.\n",
+	     max_anchor_span, length_of_arrays);
       exit(1);
     }
 
@@ -2704,11 +2708,11 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      // Ref:            KingZamFrenchFrenchFrenchFrenchZamIqbalIsTheKingOfEngland
 
 	      //Our algorithm would say: OK, KingZam is the 5prime anchor, let's see if we can find a 3prime anchor that is 7 characters long (say). Aha! England will do. OK - can we extend backwards? Yes, we can extend backwards 
-	      // all the way back to Zam. But WAIT!! Zam is before the split!! That's fine, it means there is a repeat, just don't try and extend beyond there. Hence the while condition below
+	      // all the way back to Zam. But WAIT!! Zam is before the split!! That's fine, it means there is a repeat, just don't try and extend beyond there. Hence the else if condition marked below with ***
 
 	      //(By the way this is not a pathologival case - happens in Human chromosome 1)
 
-	      while ( (can_extend_further_in_5prime_dir==true)  && (start_of_3prime_anchor_in_sup - k != index_in_supernode_where_supernode_differs_from_chromosome) )
+	      while (can_extend_further_in_5prime_dir==true)  
 		{
 		  int k=j;
 
@@ -2731,6 +2735,14 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		    {
 		      can_extend_further_in_5prime_dir=false;
 		    }
+		  else if (  (traverse_sup_left_to_right) && (start_of_3prime_anchor_in_sup - j <= index_in_supernode_where_supernode_differs_from_chromosome+1) ) // *** see comment above this while loop
+		    {
+		      can_extend_further_in_5prime_dir=false;
+		    }
+		  else if ( (!traverse_sup_left_to_right) && (start_of_3prime_anchor_in_sup + j>= index_in_supernode_where_supernode_differs_from_chromosome-1) )
+		    {
+		      can_extend_further_in_5prime_dir=false;
+		    }  
 		  else
 		    {
 		      how_many_steps_in_5prime_dir_can_we_extend++;
@@ -2738,6 +2750,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		    }
 
 		  //make sure we stop before the end of the supernode. traverse_sup_left_to_right==true => 5prime direction is in direction of decreasing index
+		  //this is surely unnecessary - leaving in out of paranoia
 		  if (    ((traverse_sup_left_to_right) &&  (start_of_3prime_anchor_in_sup - k -1==0) )
 			  ||
 			  ((!traverse_sup_left_to_right) && (start_of_3prime_anchor_in_sup - k +1==length_curr_supernode-1) ) //zam changed this from -2 to -1
@@ -2886,7 +2899,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						   which_array_holds_indiv, index_for_indiv_in_edge_array);
 
 		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array, 
-							length_5p_flank, &flank5p_percent_novel);
+							length_5p_flank, &flank5p_percent_novel,
+							which_array_holds_ref, index_for_ref_in_supernode_array);
 				
 
 
@@ -2900,7 +2914,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank, 
-							length_5p_flank, &flank5p_percent_novel);
+							length_5p_flank, &flank5p_percent_novel,
+							which_array_holds_ref, index_for_ref_in_supernode_array);
+
 
 
 		}
@@ -2977,7 +2993,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 					       which_array_holds_indiv, index_for_indiv_in_edge_array);
 
 	      get_percent_novel_from_array_of_nodes(chrom_path_array+start_node_index+length_5p_flank, 
-						    len_trusted_branch, &trusted_branch_percent_novel);
+						    len_trusted_branch, &trusted_branch_percent_novel,
+						    which_array_holds_ref, index_for_ref_in_supernode_array);
+	      
 
 	      print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_trusted_branch, 
 							       trusted_branch_avg_covg, trusted_branch_min_covg, trusted_branch_max_covg, 
@@ -3048,7 +3066,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
                                                    which_array_holds_indiv, index_for_indiv_in_edge_array);
 
 		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array+length_5p_flank, 
-							len_branch2, &branch2_percent_novel);
+							len_branch2, &branch2_percent_novel,
+							which_array_holds_ref, index_for_ref_in_supernode_array);
+
 
 
 
@@ -3136,7 +3156,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2, 
-							len_branch2, &branch2_percent_novel);
+							len_branch2, &branch2_percent_novel,
+							which_array_holds_ref, index_for_ref_in_supernode_array);
+
 
 
 
@@ -3180,7 +3202,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						   which_array_holds_indiv, index_for_indiv_in_edge_array);
 
 		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array+length_5p_flank+len_branch2, 
-							length_3p_flank, &flank3p_percent_novel);
+							length_3p_flank, &flank3p_percent_novel,
+							which_array_holds_ref, index_for_ref_in_supernode_array);
+
 				
 
 		}
@@ -3191,7 +3215,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						   which_array_holds_indiv, index_for_indiv_in_edge_array);
 
 		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2-length_3p_flank, 
-							length_3p_flank, &flank3p_percent_novel);
+							length_3p_flank, &flank3p_percent_novel,
+							which_array_holds_ref, index_for_ref_in_supernode_array);
+
 			
 
 

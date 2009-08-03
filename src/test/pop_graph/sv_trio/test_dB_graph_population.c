@@ -895,8 +895,6 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
 
 }
 
-void test_db_graph_make_reference_path_based_sv_calls()
-{
 
 
   //A fundamental assumption in our implementation is that the fasta whose path you are following is long, much longer than the longest supernode
@@ -904,6 +902,11 @@ void test_db_graph_make_reference_path_based_sv_calls()
   // that are padded at the end with N's.
 
 
+
+/* this has been split into separate tests
+
+void test_db_graph_make_reference_path_based_sv_calls()
+{
 
 
   // ******************************************************************************************************************************
@@ -964,6 +967,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   
   int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+							individual_edge_array,1,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 							0, NULL, NULL, NULL, NULL, NULL);
@@ -1028,6 +1032,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   max_covg = 10;
   max_expected_size_of_supernode=370;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 						    0, NULL, NULL, NULL, NULL, NULL);
@@ -1111,6 +1116,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   max_covg = 10;
   max_expected_size_of_supernode=370;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 						    0, NULL, NULL, NULL, NULL, NULL);
@@ -1161,6 +1167,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   max_covg = 10;
   max_expected_size_of_supernode=10000;
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 						    0, NULL, NULL, NULL, NULL, NULL);
@@ -1258,6 +1265,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   //now do the test!!!
   FILE* fp = fopen("../bin/temp_outputfile_for_testing_subtest5", "w");
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
   						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
@@ -1371,6 +1379,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   fp = fopen("../bin/temp_outputfile_for_testing_subtest6", "w");
 
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array,return_variant_start_coords_array_ptr );
@@ -1484,6 +1493,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   //individual has 2 missing bases, reference does not
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr );
@@ -1599,6 +1609,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
   //cf previous test - we are using individua with index 1, not 0 as last time. ie we have swapped which is individual and which is reference
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
+						    individual_edge_array,1,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr );
@@ -1678,6 +1689,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
+						    individual_edge_array,0,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 						    0, NULL, NULL, NULL, NULL, NULL);
@@ -1776,6 +1788,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
   fp = fopen("../bin/temp_outputfile_for_testing_subtest10", "w");
   
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
@@ -1892,6 +1905,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
+						    individual_edge_array,0,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
                                                     1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
@@ -2040,6 +2054,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
+						    individual_edge_array,0,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
                                                     1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
@@ -2202,6 +2217,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table,  fp,
                                                     1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
@@ -2242,7 +2258,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
   // ***************************************************************************************************************************************************
-  // 14. Identical to previous test, but each person has identical 600 lines of chromosome 12 added before the sequence that was there in previous tes
+  // 14. Identical to previous test, but each person has identical 600 lines of chromosome 12 added (roughly 30kb) before the sequence that was there in previous tes
   //     This is purely to test that the start coordinate of the variant is found correctly, even when you have to load more and more sequence into the array.
   // ***************************************************************************************************************************************************
   
@@ -2324,6 +2340,7 @@ void test_db_graph_make_reference_path_based_sv_calls()
 
 
   ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, hash_table,  fp,
                                                     1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
@@ -2357,6 +2374,1544 @@ void test_db_graph_make_reference_path_based_sv_calls()
   free(return_flank3p_array);
   free(return_trusted_branch_array);
   free(return_branch2_array);
+
+
+
+}
+
+
+
+*/
+
+
+
+
+
+
+
+
+
+void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
+{
+
+
+  // ******************************************************************************************************************************
+  // 1. NULL test. Load short fake reference, and load a person whose sequence is identical. This should find nothing.
+  // ******************************************************************************************************************************
+
+
+  //first set up the hash/graph
+  int kmer_size = 7;
+  int number_of_bits = 8;
+  int bucket_size    = 10;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+
+  
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/one_person_with_Ns_on_end", &bad_reads, hash_table);
+
+  //>one read
+  //AATAGACGCCCACACCTGATAGACCCCACAC 
+
+
+  // The de Bruijn graph of this in 7mers is as follows:
+  // a line of 8 nodes, with a loop of length 16 off the 9th node. ie all nodes have 1-in and 1-out, except the 9th node, CCCACAC, which has 2 ins and 2 outs.
+  // so it's a supernode of length 8, a loop-supernode of length 16,
+
+  // our algorithm should look at the supernode starting with AATAGAC, then the supernode starting at CCCACAC, then stop
+
+
+  
+  CU_ASSERT(seq_loaded==1462);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ./data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fasta\n");
+      exit(1);
+    }
+
+  int min_fiveprime_flank_anchor = 2;
+  int min_threeprime_flank_anchor= 3;// I want to try to attach anchors, and the supernodes are quite short, so for this test only ask for (ridiculously) small anchors
+  int max_anchor_span = 20;
+  int length_of_arrays=40;
+  int min_covg =1;
+  int max_covg = 10;
+  int max_expected_size_of_supernode=20;
+
+
+
+  
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+							individual_edge_array,1,
+							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
+							0, NULL, NULL, NULL, NULL, NULL);
+
+  CU_ASSERT(ret==0);
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+
+}
+
+
+
+
+
+void test_db_graph_make_reference_path_based_sv_calls_null_test_2()
+{
+
+  // ******************************************************************************************************************************
+  // 2. Harder NULL test. Reference=an ALU and load a person whose sequence is also that ALU. This should find nothing.
+  //     Our implementation of db_graph_make_reference_path_based_sv_calls assumes we have a very large ref fasta, so we load big arrays of bases
+  //     which are much longer than we expect any of the supernodes to be. In this case, we know the supernode is as long as the Alu.  
+  // ******************************************************************************************************************************
+
+  int kmer_size = 31;
+  int number_of_bits = 8;
+  int bucket_size    = 10;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+  //just load one person who's sequence is an Alu. Then take reference which is that same sequence and try to find variants
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/just_one_of_the_two_people.txt", &bad_reads, hash_table);
+
+  //   >7SLRNA#SINE/Alu  plus GTTCAGAG at start and GTCAGCGTAG at end
+  //   GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+  //   GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+  //   GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+  //   CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+  //   ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+  //   GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+  //   AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
+  // plus loads of N's on end
+   
+  
+  CU_ASSERT(seq_loaded==5158);
+  
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fasta");
+      exit(1);
+    }
+
+  int min_fiveprime_flank_anchor = 10;
+  int min_threeprime_flank_anchor= 10;
+  int max_anchor_span = 370;
+  int length_of_arrays=740;
+  int min_covg =1;
+  int max_covg = 10;
+  int max_expected_size_of_supernode=370;
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
+						    0, NULL, NULL, NULL, NULL, NULL);
+  
+  CU_ASSERT(ret==0);
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+}
+
+
+
+
+void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
+{
+
+
+  // ******************************************************************************************************************************
+  // 3. Reference = Alu-NNNNN- same Alu, and person is identical to reference. This should find nothing
+  //    Note this really is testing something different. Since the reference is basically the same sequence repeated twice (with N's in between),
+  //    there is a risk that we would match the 5' anchor of the (one and only) supernode at the start of the reference, and the 3' anchor at
+  //    the end of the 2nd copy of the repeat.
+  //    To be clear, look at this:
+  //        Ref:  ZamZamZamNNNNNNNNNNNNNNNNZamZamZam
+  //        Indiv ZamZamZamNNNNNNNNNNNNNNNNZamZamZam
+  //      So we look at supernode ZamZamzZam. We could, if we implemented things wrong, do this:
+  //
+  //        Ref: ZamZamZamNNNNNNNNNNNNNNNNZamZamZam
+  //             Zam............................Zam
+  //              ^                              ^
+  //             5' anchor                    3' anchor    match start of supernode ZamZamZam with start of reference, and end of supernode with end of reference
+  //     this would be a  bug - failing to realise that the entire supernode matches exactly the reference on the first instance of the repeat ZamZamZam
+  //
+  //    In fact, I found exactly this bug through this test.
+  // ******************************************************************************************************************************
+
+
+  int kmer_size = 31;
+  int number_of_bits = 8;
+  int bucket_size    = 10;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_alu_Ns_then_same_alu", &bad_reads, hash_table);
+
+  
+  //   >7SLRNA#SINE/Alu  
+  // GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+  // GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+  // GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+  // CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+  // ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+  // GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+  // AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAGNNNNNNNNNNNNNNNNNNN
+  // GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+  // GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+  // GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+  // CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+  // ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+  // GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+  // AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
+    
+  
+  
+  CU_ASSERT(seq_loaded==697);
+  
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu.fasta");
+      exit(1);
+    }
+
+  int min_fiveprime_flank_anchor = 10;
+  int min_threeprime_flank_anchor= 10;
+  int max_anchor_span = 370;
+  int length_of_arrays= 740;
+  int min_covg =1;
+  int max_covg = 10;
+  int max_expected_size_of_supernode=370;
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
+						    0, NULL, NULL, NULL, NULL, NULL);
+
+  
+  CU_ASSERT(ret==0);
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+
+}
+
+
+
+
+void test_db_graph_make_reference_path_based_sv_calls_null_test_4()
+{
+
+  // ******************************************************************************************************************************
+  // 4. Reference = 10kb of chromosome 1. Individual is that same sequence. This should find nothing.
+  // ******************************************************************************************************************************
+
+  int kmer_size = 31;
+  int number_of_bits = 13;
+  int bucket_size    = 10;
+  long long  bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_10kb_of_chrom1", &bad_reads, hash_table);
+
+  
+  CU_ASSERT(seq_loaded==16320);
+  
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_1kb_chrom1.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/person_1kb_chrom1.fasta");
+      exit(1);
+    }
+
+  int min_fiveprime_flank_anchor = 20;
+  int min_threeprime_flank_anchor= 10;
+  int max_anchor_span = 10000;
+  int length_of_arrays=20000;
+  int min_covg =1;
+  int max_covg = 10;
+  int max_expected_size_of_supernode=10000;
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
+						    0, NULL, NULL, NULL, NULL, NULL);
+
+  
+  CU_ASSERT(ret==0);
+
+
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+
+}
+
+
+
+void test_db_graph_make_reference_path_based_sv_calls_null_test_5()
+{
+
+  // ***************************************************************************************************************************************************
+  // Reference is two copies of a single sequence, tandem repeat of about 36 bases. Individual is the same, with an Alu inserted between
+  // Since the supernode in the individual has one copy of th repeat, and then the Alu, and then stops, you should be unable to find
+  // an anchor at the Alu-end of the supernode. So this should find nothing.
+  // ***************************************************************************************************************************************************
+
+
+  int kmer_size = 31;
+  int number_of_bits = 15;
+  int bucket_size    = 10;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_insertion", &bad_reads, hash_table);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_alu.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/person_without_alu.fasta");
+      exit(1);
+    }
+
+
+  int min_fiveprime_flank_anchor = 3;
+  int min_threeprime_flank_anchor= 3;
+  int max_anchor_span =400;
+  int length_of_arrays=800;
+  int min_covg =1;
+  int max_covg = 100000;
+  int max_expected_size_of_supernode=400;
+
+
+
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
+						    individual_edge_array,0,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
+						    0, NULL, NULL, NULL, NULL, NULL);
+  
+  CU_ASSERT(ret==0);
+
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+
+}
+
+//numbering of tests goes back to 1 - these unti tests are for cases where we DO expect to find a variant
+void test_db_graph_make_reference_path_based_sv_calls_test_1()
+{
+
+
+  // ***************************************************************************************************************************************************
+  // 1. Reference  = short sequence, individual is idential except for one base change
+  // ***************************************************************************************************************************************************
+
+
+
+  int kmer_size = 7;
+  int number_of_bits = 8;
+  int bucket_size    = 10;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_short_seq_with_one_base_difference", &bad_reads, hash_table);
+
+  CU_ASSERT(seq_loaded==192);
+  
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fasta");
+      exit(1);
+    }
+
+  int min_fiveprime_flank_anchor = 5;
+  int min_threeprime_flank_anchor= 5;
+  int max_anchor_span =40;
+  int length_of_arrays=80;
+  int min_covg =1;
+  int max_covg = 10;
+  int max_expected_size_of_supernode=40;
+
+
+  //this time, we expect results. So  malloc some arrays to hold the results. Only use this option for testing, as in general use, we expect to find millions
+  // of variants
+
+  char** return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  char** return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 30);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 30);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 30);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) * 30);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+  
+  int return_variant_start_coords_array[2];
+  return_variant_start_coords_array[0]=0;
+  return_variant_start_coords_array[1]=0;
+
+  int* return_variant_start_coords_array_ptr[2];
+  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
+  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
+
+
+  //now do the test!!!
+  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test1", "w");
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+  						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
+
+  fclose(fp);
+
+  CU_ASSERT(ret==1);
+  CU_ASSERT_STRING_EQUAL("AATAGACGCCCACACCTGATAG", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("TAGCCACA", return_trusted_branch_array[0]);
+  CU_ASSERT_STRING_EQUAL("AAGCCACA", return_branch2_array[0]);
+  CU_ASSERT_STRING_EQUAL("CTGTACTTGTA", return_flank3p_array[0]);
+  CU_ASSERT(return_variant_start_coords_array[0]==23);
+
+
+
+  //cleanup
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
+}
+
+
+
+
+
+
+
+void test_db_graph_make_reference_path_based_sv_calls_test_2()
+{
+
+
+  // ***************************************************************************************************************************************************
+  // 2. Reference = Alu-NNNNN- same Alu, and person is identical to reference except for a single base difference. This should find the single variant!
+  //     It is also an example where we traverse the supernode in the reverse direction to that in which is appears in our array. This is 
+  //      therefore a good unit test to ensure that our code works in this case
+  //     Final comment - note that the coverage is double on a lot of these nodes because we have 2 copies of the Alu. But that doesn't in any way add credence
+  //      to the variant call - it's paralogous sequence that doubles the coverage.
+  // ***************************************************************************************************************************************************
+
+  int kmer_size = 31;
+  int number_of_bits = 8;
+  int bucket_size    = 10;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_both_alu_Ns_alu_with_one_base_difference", &bad_reads, hash_table);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fasta");
+      exit(1);
+    }
+
+  int min_fiveprime_flank_anchor = 10;
+  int min_threeprime_flank_anchor= 10;
+  int max_anchor_span =350;
+  int length_of_arrays=700;
+  int min_covg =1;
+  int max_covg = 10;
+  int max_expected_size_of_supernode=350;
+
+
+  char** return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  char** return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 400);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 400);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 400);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) * 400);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+
+  int return_variant_start_coords_array[2];  
+  return_variant_start_coords_array[0]=0;
+  return_variant_start_coords_array[1]=0;
+
+  int* return_variant_start_coords_array_ptr[2];
+  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
+  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
+
+
+  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test2", "w");
+
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array,return_variant_start_coords_array_ptr );
+  fclose(fp);
+
+  CU_ASSERT(ret==1);
+  CU_ASSERT_STRING_EQUAL("GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("GCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGCGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG", return_flank3p_array[0]);
+  CU_ASSERT_STRING_EQUAL("CTGGGAGGATCGCTTGAGTCCAGGAGTTCTGG", return_trusted_branch_array[0]);
+  CU_ASSERT_STRING_EQUAL("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGG", return_branch2_array[0]);
+  CU_ASSERT(return_variant_start_coords_array[0]==59);
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
+}
+
+
+
+
+void test_db_graph_make_reference_path_based_sv_calls_test_3()
+{
+  // ***************************************************************************************************************************************************
+  // 3. Reference is just a short sequence. Individual is missing 2 bases in the middle--> we should find this
+  //     Note this test is also interesting because the reference and individual both contain a closed loop in their de Bruijn graph
+  // ***************************************************************************************************************************************************
+
+
+  int kmer_size = 7;
+  int number_of_bits = 8;
+  int bucket_size    = 10;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_2_bases_missing", &bad_reads, hash_table);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_2_bases_missing.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/person_without_2_bases_missing.fasta");
+      exit(1);
+    }
+
+
+  int min_fiveprime_flank_anchor = 2;
+  int min_threeprime_flank_anchor= 2;
+  int max_anchor_span =40;
+  int length_of_arrays=80;
+  int min_covg =1;
+  int max_covg = 1000;
+  int max_expected_size_of_supernode=40;
+
+
+  char** return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  char** return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 80);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 80);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 80);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) * 80);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+
+  int return_variant_start_coords_array[2];    
+  return_variant_start_coords_array[0]=0;
+  return_variant_start_coords_array[1]=0;
+
+  int* return_variant_start_coords_array_ptr[2];
+  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
+  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
+
+
+  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test3", "w");
+
+
+  //individual has 2 missing bases, reference does not
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr );
+  
+  fclose(fp);
+
+  CU_ASSERT(ret==1);
+  CU_ASSERT_STRING_EQUAL("CCACACCTGA", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("ACAC", return_flank3p_array[0]);
+  CU_ASSERT_STRING_EQUAL("TAGACCCC", return_trusted_branch_array[0]);
+  CU_ASSERT_STRING_EQUAL("GACCCC", return_branch2_array[0]);
+  CU_ASSERT(return_variant_start_coords_array[0]==20);
+
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
+
+  
+}
+
+
+
+
+void test_db_graph_make_reference_path_based_sv_calls_test_4()
+{
+  // ***************************************************************************************************************************************************
+  // Reference is just a short sequence. Individual has an extra 2 bases in the middle--> we should find this
+  // ***************************************************************************************************************************************************
+
+  int kmer_size = 7;
+  int number_of_bits = 8;
+  int bucket_size    = 10;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+
+  //we use the same two people as last time, but swap their roles
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_2_bases_missing", &bad_reads, hash_table);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_2_bases_missing.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/person_with_2_bases_missing.fasta");
+      exit(1);
+    }
+
+
+  int min_fiveprime_flank_anchor = 2;
+  int min_threeprime_flank_anchor= 2;
+  int max_anchor_span =40;
+  int length_of_arrays=80;
+  int min_covg =1;
+  int max_covg = 1000;
+  int max_expected_size_of_supernode=40;
+
+
+  char** return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  char** return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 80);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 80);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 80);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) * 80);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+
+  int return_variant_start_coords_array[2];      
+  return_variant_start_coords_array[0]=0;
+  return_variant_start_coords_array[1]=0;
+
+  int* return_variant_start_coords_array_ptr[2];
+  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
+  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
+
+  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test4", "w");
+
+
+
+  //cf previous test - we are using individua with index 1, not 0 as last time. ie we have swapped which is individual and which is reference
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
+						    individual_edge_array,1,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr );
+
+  
+
+
+  fclose(fp);
+
+  CU_ASSERT(ret==1);
+  CU_ASSERT_STRING_EQUAL("CCACACCTGA", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("ACAC", return_flank3p_array[0]);
+  CU_ASSERT_STRING_EQUAL("TAGACCCC", return_branch2_array[0]);
+  CU_ASSERT_STRING_EQUAL("GACCCC", return_trusted_branch_array[0]);
+  CU_ASSERT(return_variant_start_coords_array[0]==20);
+
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
+
+}
+
+
+
+void test_db_graph_make_reference_path_based_sv_calls_test_5()
+{
+
+
+  // ***************************************************************************************************************************************************
+  // 5. Reference is a single sequence which is a single supernode. Individual is the same, with an Alu inserted in the middle
+  // Should be able to find anchors at both ends this time, and find the insertion
+  // Note that by missing the alu in the reference, it has a load of nodes that won't be seen in the individual, so for example here
+  // we will ask for a min 3' flank of 8. This actually means 31+8 bases of agreement.
+  // ***************************************************************************************************************************************************
+
+
+  int kmer_size = 31;
+  int number_of_bits = 15;
+  int bucket_size    = 10;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_inserted_mid_supernode", &bad_reads, hash_table);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fasta");
+      exit(1);
+    }
+
+
+  int   min_fiveprime_flank_anchor = 3;
+  int   min_threeprime_flank_anchor=  8;
+  int   max_anchor_span =500;
+  int   length_of_arrays=1000;
+  int   min_covg =1;
+  int   max_covg = 100000;
+  int   max_expected_size_of_supernode=500;
+
+
+  char** return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  char** return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) *500);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+
+  int return_variant_start_coords_array[2];        
+  return_variant_start_coords_array[0]=0;
+  return_variant_start_coords_array[1]=0;
+
+  int* return_variant_start_coords_array_ptr[2];  
+  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
+  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
+
+
+  
+  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test5", "w");
+  
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
+  fclose(fp);
+
+
+
+
+  CU_ASSERT(ret==1);
+
+  //first base of Alu insert = first base of displaced sequence. ie we had xxxxGyyyy and then we insert Alu: xxxx[G-Alu]Gyyyy. So first base of Alu look slike is in flank5p
+  CU_ASSERT_STRING_EQUAL("TGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTG", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("TAGCCAGG", return_flank3p_array[0]);
+  CU_ASSERT_STRING_EQUAL("AAACTCCGTCTGTACTAATAGTACAAAAAT", return_trusted_branch_array[0]);
+  CU_ASSERT_STRING_EQUAL("CCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGCGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAAGAAACTCCGTCTGTACTAATAGTACAAAAAT", return_branch2_array[0]);
+  CU_ASSERT(return_variant_start_coords_array[0]==40); //note the insertion happens at coordinate 39, but the first inserted base is the same as what would be there anyway - a G. 
+  
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
+
+
+
+}
+
+
+
+void test_db_graph_make_reference_path_based_sv_calls_test_6()
+{
+
+
+  // ***************************************************************************************************************************************************
+  // 6. Reverse the roles of previous test. Reference has an Alu, individual does not. 
+  // Should be able to find anchors at both ends this time, and find the deletion
+  // ***************************************************************************************************************************************************
+
+
+  int kmer_size = 31;
+  int number_of_bits = 15;
+  int bucket_size    = 10;
+  long long  bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+
+  //we use the same two people as last time, but swap their roles
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_inserted_mid_supernode", &bad_reads, hash_table);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fasta");
+      exit(1);
+    }
+
+
+
+  int  min_fiveprime_flank_anchor = 3;
+  int  min_threeprime_flank_anchor= 8;
+  int  max_anchor_span =500;
+  int  length_of_arrays=1000;
+  int  min_covg =1;
+  int  max_covg = 100000;
+  int  max_expected_size_of_supernode=500;
+
+
+  char**  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  char**  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  char**  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  char**  return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) *500);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+  int return_variant_start_coords_array[2];          
+  return_variant_start_coords_array[0]=0;
+  return_variant_start_coords_array[1]=0;
+
+  int* return_variant_start_coords_array_ptr[2];    
+  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
+  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
+
+  
+  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test6", "w");
+
+
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
+						    individual_edge_array,0,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+                                                    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
+  fclose(fp);
+
+
+  CU_ASSERT(ret==1);
+
+  //first base of Alu insert = first base of displaced sequence. ie we had xxxxGyyyy and then we insert Alu: xxxx[G-Alu]Gyyyy. So first base of Alu look slike is in flank5p
+  CU_ASSERT_STRING_EQUAL("TGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTG", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("TAGCCAGG", return_flank3p_array[0]);
+  CU_ASSERT_STRING_EQUAL("AAACTCCGTCTGTACTAATAGTACAAAAAT", return_branch2_array[0]);
+  CU_ASSERT_STRING_EQUAL("CCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGCGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAAGAAACTCCGTCTGTACTAATAGTACAAAAAT", return_trusted_branch_array[0]);
+  CU_ASSERT(return_variant_start_coords_array[0]==40); //note the insertion happens at coordinate 39, but the first inserted base is the same as what would be there anyway - a G. 
+
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
+}
+
+
+
+
+
+void test_db_graph_make_reference_path_based_sv_calls_test_7()
+{
+
+  // ***************************************************************************************************************************************************
+  // 7. Reference is an Alu with a different Alu inserted in the middle. Individual is just the first Alu - ie they have a deletion of an Alu from within an Alu.
+  // 
+  // ***************************************************************************************************************************************************
+
+
+  int  kmer_size = 31;
+  int  number_of_bits = 15;
+  int  bucket_size    = 10;
+  long long bad_reads = 0;
+  int  max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+
+  //we use the same two people as last time, but swap their roles
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_is_alu_other_has_2nd_alu_inserted", &bad_reads, hash_table);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fasta");
+      exit(1);
+    }
+
+
+  
+ //    reference is
+ //   > AluJo#SINE/Alu inserted in middle of 7SLRNA#SINE/Alu
+ //   GCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+ //   GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+ //   GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+ //   GCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGA
+ //   GGCGGGAGGATCGCTTGAGCCCAGGAGTTCGAGACCAGCCTGGGCAACAT
+ //   AGCGAGACCCCGTCTCTACAAAAAATACAAAAATTAGCCGGGCGTGGTGG
+ //   CGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGGATCGCT
+ //   TGAGCCCAGGAGTTCGAGGCTGCAGTGAGCTATGATCGCGCCACTGCACT
+ //   CCAGCCTGGGCGACAGAGCGAGACCCTGTCTCAAAAAAAAAAAAAAAAAA
+ //   AAAAAAAAAAAA
+ //   CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+ //   ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+ //   GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+ //   AAAAAAAAAAAAAAAAAAAA
+ //   ..plus N's on the end
+    
+    
+ //   and individual is
+    
+ //   >7SLRNA#SINE/Alu
+ //   GCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+ //   GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+ //   GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+ //   CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+ //   ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+ //   GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+ //   AAAAAAAAAAAAAAAAAAAA
+    
+    
+
+
+  int  min_fiveprime_flank_anchor = 3;
+  int  min_threeprime_flank_anchor= 3;
+  int  max_anchor_span =500;
+  int  length_of_arrays=1000;
+  int  min_covg =1;
+  int  max_covg = 100000;
+  int  max_expected_size_of_supernode=500;
+
+
+  char** return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  char** return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 500);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) *500);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+
+  int return_variant_start_coords_array[2];          
+  return_variant_start_coords_array[0]=0;
+  return_variant_start_coords_array[1]=0;
+
+  int* return_variant_start_coords_array_ptr[2];    
+  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
+  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
+
+  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test7", "w");
+
+
+
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
+						    individual_edge_array,0,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+                                                    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
+
+
+  fclose(fp);
+
+
+  CU_ASSERT(ret==1);
+
+  CU_ASSERT_STRING_EQUAL("GCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG", return_flank5p_array[0]);
+  CU_ASSERT_STRING_EQUAL("GAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAA", return_flank3p_array[0]);
+  CU_ASSERT_STRING_EQUAL("CGGGGGACCACCAGGTTGCCTAAGGAGGGGT", return_branch2_array[0]);
+  CU_ASSERT_STRING_EQUAL("GCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGAGGATCGCTTGAGCCCAGGAGTTCGAGACCAGCCTGGGCAACATAGCGAGACCCCGTCTCTACAAAAAATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGGATCGCTTGAGCCCAGGAGTTCGAGGCTGCAGTGAGCTATGATCGCGCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACGGGGGACCACCAGGTTGCCTAAGGAGGGGT", return_trusted_branch_array[0]);
+  CU_ASSERT(return_variant_start_coords_array[0]==151); 
+
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
+}
+
+
+
+void test_db_graph_make_reference_path_based_sv_calls_test_8()
+{
+
+
+  // ***************************************************************************************************************************************************
+  // 8. Reference is 10 kb of chromosome 1 plus 1kb of sequence inserted mid-supernode, and person is identical, except for that 1kb is missing 
+  // ***************************************************************************************************************************************************
+
+
+  int  kmer_size = 31;
+  int  number_of_bits = 15;
+  int  bucket_size    = 10;
+  long long bad_reads = 0;
+  int  max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_1kb_deletion", &bad_reads, hash_table);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta");
+      exit(1);
+    }
+
+  // Let's be clear about what this test looks like. 
+
+  //       The individual is 10kb of chromosome 1, which has the following supernodes
+
+//>node_0  cylcle:false length:4546 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:1 lstf:2
+//TGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACTCCGTCTGTACTAATAGTACAAAAATTAGCCAGGCGTGATGGTGTGCACCTGTAGTCCTTGCTACTCAGAAAGCTGAGGCAGGAGAATCGCTTGTACCCAGGAGGCAGAGGTTGCAGTGAGCAGAGATTGTGCCACTGCACTCCATCCTGGGTGACAGAGTGCTATGAGTCACCACACCTGGTATGAGCCACCGTGCCTGGCCCACAATGACTTTTACACATGTTGTTAAATCATCTTACAGATTTTATAATTTGGGGGAAGAAAAGTTTTACTAAATTGTCTTTTAATGGAAACTCTACAAGAACCAGAATCTTTGCTTTGTTCACTTATGTATCCATTCCTAGGCCTAGAAAAATGTCTGACACATAGCGGCAATTATTCATTGAATAAATGGACCCAGGGATAGTACATTAGCTATGCTATATGCATACATTAAAGATGTAGATTATCGACTTTCAAAAGATAATTAATGTAACTTCTTACTGCTTCTGAACATGTTTGTGAGTTATATTGCTGAGGGACCTTTATCTTCTCATTCTTTCATCTTAACCCAGTGTTATAAAATTGAAATCACCAATATTATTCCATATCTAAAATTAATATCTACCTTGTAAAAAATATCACTCTGCTGCATTTGAGAATAGACTTTTTAGGTAATAATGATGCAATCCATAGGGTTTTTTGGGGGCACAGAGGGATTCATGCTAACAGAACATTTTATTTTCTATTTTCCCAGAGCTGTAAAACATGAAATTACGGTAGTATAAGGCATATTTTTACTCTTTTTATAATTTTTTCTAAAAAAAATTAGTGTTTGTTCCCTATATAACTTTTAACTTTATAGGTAAATATTTGTTTCTTTCAGCTCCAGTTTTATGTGAAATAGAGTTTTCAGATTTATGTAGCATGGAAAGTTTTAATACGTCAGAGTTACTGATTTTTGCCAATCATTTTCTCAATTATTTCTTTTTTATCTTTAGTTGATTTTTTTGTAGTGACACATTTTGTTTCTAGTCTCATTTCCTTTTGTTTATATTCTATGTATATTTCATTTTTGGTTACTATGAGAATTACATATAACATCCTAGAGTTATAACATTTTAATTTGAATTTATTTCAACTTAAGTTCAATCACATACCAAAATTCTACTGCTATATATATAGCTCTACTCTTTTTATGTTATTGATGTGACAAATTATATCTTTATTCATTGTATACCAGCTAACAGATTTACAATTACATTTTATGCATTTGCCTTTTAAATTATGTAGAAAATAAAAAGCAGAGTTACAAACCAAAATTACAATAGGACTGTTTTTATGTTTGTTTATGTATTTACCTTTACCAGAGAGCTTTGTATATTCATACAGCTTGCTTATTTACTTATATAGTTATTGCCTAGAGTTCATTTATTTCAACCTGAAGGACTTAACACTTCCTGAATGTCAAATTCAGGGATAAATGGATTTTTTTCAGTTTTAAAAAAAAATCCGGAAATGTCTTAATTTCTCCTTCATTTTTGAAGGATAAGTTTTCCAGCTATATATTTCTCAATTGACAGGTTTCTTCATTATTTTAAATATATAATCCACTGCCTACTGGCCTTCAAGGTTTCTGCTGAGAAATCAGCTGCTAATGTTATCTGGATCCCTATCTGTGAGAGTTGCTCTTCTCTCTGAGTTTTCAACATTCTCCCATTATCTTTTTTTTGTTTGTTTTTGAGACAAATAATTGTACATATTCATGGGATACAGAGTGATATTTTGATACATGTATACAATGCCCAGTGATCAAATAAGGATAATTAGCGTATCCATCACCTCAAATAGTTGTCATTTATTTGTATTGTGAACAGTCAACATTCTTTCTTCTAGTTTTTTAAATTTATAAACATTTAAATTTTATTACAGAAATTTAAATTTTTTGATTCTGAAAAAGTCATATATGTATGCAACATTTTTTATCGTTTATTTATATATTTATGCATCTTTCCTTTTAGTTTTGACAGAGATTTTCTATTTTATCATTATTTCAAAAGAACTCTTACCTGTATTTATTTATCAAGTATATTTCCCTTGTTTTTTCCTAGTATATTAATTTATTTACTTATCTTCTAAAAATCCTCCATATAATCTGTTTATTTTGTTTCCTTTCTATAATTTCTTCAATAATTAGTTCTGTTCTATTTTCCATTAAAATATTTAAATCTTGTATGAATTTTTGTCAGATTAGAAATTTAGGGCGTTTCTTAATTTCTCTATACTCTAGCTTTTGACTTTTTTTTTCTGACCTAAGAGGTATTTAGAGCACATTTTAGATTTTTTATTTTGACTAATCATTTAAAATGTATACTAATCTTCAATTTAAATAAAAAACTGGTCTATAGTGACAAAAATTACAAATGAGCCTAACTAATAAATTATCAGCTGTGTTTATATGTATAAGCATGCACAGATTTTGGTAAATATGTACATAGTATATTGGTGAGCTTATTTTTATCATTCTTAACTCATTGTGTAGTCTAAACGTTGGGGAAAAAATAACATACAATAATCAGATGGTGTGAATAAGAAAATTGTTCTAATGTTTGTAAACCAAGCAACTGTTTTAACTGCTCCCCTCTTCCTGATTGACTTCTAAAAGGGATTGATCCATATTGGGTCCTATCATGTACGTCACGGTATAACATCTCCAGCTATAAAATGGAAATTTGAGAATAACTTTGCTGCTACTCAGATATATTTTATTTCAAAAACATACACTAAGGTGTTGCTGTTGGATCTTTCCAAAAACATATTCACACAGAACTTTCAATCACACTGAGCCATATTTGAACAATCTTTCAAGGTCAGCTCTGGCATAAGCTAACATTATACCATTTAACTCAGAAATTTCTTTAGTATTTGATTAATGGGTTTATGTTTGATATGTAATGTAATTTTCTAATACTAAATCAAGTGGTAATTTTGTTAGTCAAGTTGATTTAGTGGCTTGGGAAGAAAGCTTTTAATGTTCCCCTAATTTTTCTTTCCTTTGACATGATCCTTCACATGTCTTATTTTGCTTAGTGATTTTTCTTTTTTTTTTTTTTTTTTTGAGACAGGGTCTTACTCTACCACCCAGGCTTGAGTGCAGTGGTGCAATCACAGCTCATTGCAGCCTTGACCTCCCAGACTCAAGCTATTCTTCCACCTCAGCCTCCCAAGTAGCTGGTACTACAGGCACATGCCACCAAACTTGGCTAATTTTTGTATTTTTTGTAGAGACAGAGTTTTGCCAAATTCTCAGGCTGGTCTGGAATTTCTGGGCTCAAGTAATCCTGCCTTGGCCTCCCAACATGCTGATATTACAGACATAAGCCACAGTACCTGGCCAGTTTTCTTTTTAAAAAAATCTATTGGTTATTAATTTGAAGCCTTCCTTTTCATAGCTGTGCTCCTTAATTGGGAGCAAACATGAATGGACCACAACTTAGCCAATTTTCTATATACGATCTTTGCCATCCTAATTTAAAGGAATATTAATTCTTTCTTTTCCTCTTTCATTCCACAAACCTGTATTGACTACATCTAAGTTCTAAATGGTGCACTGGATGTTGAAAAAGTTGATGATGAGCAAGAACAAAATTCCTGCTTTCAGGAGACTTACAGTTCAATATGGGAAATATAATTTGTTAAAATATAAAAGTGCAATTGTGTTACATGCTGTACGAAGTACATGTTGACATGTGAGCATATAATAAATGGGCTGGAGGCCAGAGGATTGCCAAAGAGAATGGGCCTCCTGCTGAGATGAAAAGTTGAGCAGGGATTAGTTGGCAAAAGTGGAGGGACGATCCTTTCTAGGCAGGAGGAAGAACATGTACAGAATCTCTGAGGTGTGATGCGACAAAGTCTATATAAAAAACTGAAGAAAGGTCTAATATGGCTTAAATACAGAAGCTAGTAGGAGAGGAGTCGAAAAGAGGCTGGAGAAGTAGAAAGTGTCTGCATTCTGCAGGAACTTATATTGTATAAAATATATTGTATATTGTATAAAAAGAATTTCTCTTTATTCTAAGTGCAATGTGAAGCCAATGAAGTGCTTTAAACAGGTGATGTGATTTGATTGAATTTATTACTTCACTTAACAAATATTCATTACATGCCCACTGTTTGTCAGATATTGCTCTAGCCCCTGGTGATACAGTAGGGAATAAAACAGGCAAAAATCCCTGTCCTCTTGCAGCTTATAATGGACTGCAATGTTTAATATGTCAGAGGAGGTCCACGGAGGAGTGACTTCTAAGCAAGAATCTGAAAAAAATGAGGATATCTAAGGAGGGAACAAATGGTTCAAAAGCCCTATAATTGCAAGCAGGCATGATGAAGCAATTGCAGTTGTCCTGACTCTCAACACCGTGGAACTCAAAGGAGATGGAAAGATTCCTTCTCTCCCTCATATATTTTCTCTCTTTCTGTCTATATATATAGAATATGAGACATTTCCCTAATCATTATGT
+//>node_1  cylcle:false length:1696 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
+//ACATAATGATTAGGGAAATGTCTCATATTCTTCTACTCAGAAATAAGCAATATAGCAATTACTGTTTTTTACATTTTACAGTTACAGTTTCAGAGAAAGTTTGATATTTATCTAAAATTTTTCAATGTATGAACTTTTTCATTTGACAAACCATAATTGTACATATTCTTGGGATACAGAGTGATATTTTCTTTACATGTATAGAATGTGTAGTGATCAAATCAGGGTAATTTCCACTAATTTAAAATGCCACCTTTATGTTATTGTAATTTATATATATACTATATATATACACACACACATATATATATATACATGTCCACATACAGTGTGTGTGTGCACATGTACACACATGCATATGTGTATATAATGCCCAGTATAAGCAATGTGCACAAATAAAATTAGCTAACAGAGATAGTATAGAGTGAGAGGAGAGGCAGATTAATCTTTGAGGAAAAGCACAATTTTATAGCTGAATGGAGAAAGCTGAGGTGGTTTCTAAGATGGAGAATAAGACGAAAAATGTAAGTACGTTGTCTGACTGAATTCAAGAAAGAAGGGTAAAAGAGAAGAAAGTAGTGGTCTTATCATTAAATGCCACAGAGAGGTAAAGATAAAGACAACATATTGTTTTGGGTTTAGTAATTTAAGGGTTACCAAATTCCGTTTTGGAGGAGGAACAGATTCCATGTCCACTAGAATGGAATGAACAAGAAATGGAGGAGGAAAATAGGTAGTTTTTCAAAAGTTTTCAAAAATATGAAAAGAAGAAATGAAGTGGTACTTGGAAGAGATTGTTGAAATGGGAGAGACTATGGTGGCTTGTTTAGAAGCAGTTGAGATAGATCCAATTGAGATAGAGATATTGACTATATAAACAAAAGAATGACAAATTAATAGTGTAATGGATAACTTGACTTTGGCAAATATTGTGAATTTTTGTGAAAGTACAACTAAAAGGCAATGTCACTCCAATAATCACCAGAGTAATCAATTTGCTTATTGCTGTCCCTTTAAATATAGTTCTCTGGTATCAACTAACATGTTTTTAACTAATGATGCTTCTTAAAGAAAAGGGAAAAGACCTTTTTCTTTCTTTCAGTCTTCAATGATTCACTGCTTCATCTCGCTCCACCAAAGATAAATGAAATCTACATCTCTTATACATTAACAATGCATGACAATTTACAAATAGCTAAATTTTTGGAGCTAACTTTAAGTACCTGAATGGAATTTAATCAACCCACTAATCTCCTTCTCACTTCTCAGTTATTTATCAAGTTTATGTCAAGGGACAAGGAAAAATTATCCAAACATTGTTTAAAACAATCATCATTAATTAGTAACACTTATCCAGGGGGGTTTTTAACCTTTCCCCCACTCAAGGATTATTCTAATGTCAGAGTAGAATAAAAAATAAGTGCAGTGATGCTGACTCTTCCAAGCTTAACATTTCTCACAAGTCAATTAGCTTTGTACTGGGAGGAGGGCGTGAAGGGCTGCTTGCGGTAGTTGTGTAGCAGCAGCACAATGGCCGCAGACAAGGAAAACAGTTTCTAGGAATTCCTCGTATATAATTTTATATTTTTGACAAGATTAATGACCCATGCTCCCTTCCTCTCCATTTCTTTTTTTGGAATTCTGTTGGTATGTAGTTACTATATTTTATTAAAGGAAATTAGCCTTATCTCTTATT
+//>node_2  cylcle:false length:566 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
+//AGGAAATTAGCCTTATCTCTTATTATATTTTTTATGACCTTCAAAGTAGTGTCTCTGCTTAAAAGTGTACCCTGGCCGGGCGTGGTGGCTCACACCTGTAATTCCAGCACTTTGGGAGGCCGAGGCGGGTGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACACGGTGAAACCCCGTCTGTACTAAAAATACAAAAAATTAGCAGGGCATAGTGGCGGGCGCCTGTAGTCCCAGCTACTCAGGAGGCTCAGGCAGGAGAATGGCGTGAACCCGGGAGACGGAGCTTGCGGTGAGCTGAGATCGCACCGCTGCACTCCAGCCTGGGCGACAGAGCAAGACTCCGTCTCAAAAAAAAAAAAAAAGTATACCCTGAGGCACACATCAAGCGACATGTAGAGTTCATAAATTCTGGCCAAATGGTCATACCTCAAACCTCATCAGCAGTAAGGCTCTTTACTTGCACTGACAAATATGAACGCTGGGGAATTTGGAAATGATATATAATATATAATATTATATATATAATAGATATATAATATATAATATATATAATACATAT
+//>node_3  cylcle:false length:2989 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:1 fst:0 lst_coverage:2 lstr:1 lstf:2
+//AATTTGTTACAGCAGTAATAGAACAAGTGGTTATCCATATGAGGCAAATTAGATTGGATACCTATCTCCAATAGAAATCAATTCAAGGTGAATTCCAGGAAAATACTTAAAACATTTAGATTAAAAATAAATGAGAATTTTTGTTACTTTTGGTAGGTCATAGAACCAAGAAAAACAAACATTAAGGAGGAAAAATGAACATATGACTACATCAAAATATAAAGCTTCTCTATTTGGAAGATATCATAAGGTGACAAATCATAAACTGTAATATTTACAACATATATATAAGTGAATAAATATACATTTAGAATATATATGAACTCCCAAAAATCAACAGGAAAAATAAGACATAGAACAAGCAAAATGCATAAACAAAAGAAGGCAAAACAAAAATAATGACTCATAATTATATGAAAAGAAGCTCATCTTCATAGATGAGCAGATAAATGCAAATTAAAACCACCCTGAGATGCTTTTTACATCCATGAGCCTGATAAAAGTTAGAGTCTAAAAGTAATAACAAAGATGGGAAGTAATAGAAAATCTTGTCCATTACTGGTTAAAGTATAAACTGATACAGCTACTTTATAGAATATTACATTATAGAATAAAGTTGTGAGTATGTATATGCAGTGACTCAGCATATTCATTGCTAGTATGTACTCAAGAGAAACTTACAGGAGTGGACTAGGAAGTAAATACAAAATGATTACAACATTGTTTGTTATATCAAAAAATAAAAAAGACACCCAATTTTCCAGCAAAAAAAATAAGTAAAAATAAATCCTGGTGTATTCTAACAATGGAATAATATATAGCCATTAAAATAAATCAACTATTACTGTACATATGAATGTAAATATCAGCAAAACATATTGTTTAGTGAAAAACTAAGAAGCTGAAGAAGAATATATACAATATGGTTACATTTATATGAAGTCCAAAAACTTGCAAAATAAAGAAATGTATTTAGAAATAGATTCACATGTGAGAAAACTAGAAGAAAATTAATGAAAGGATAAGAGGGATAGCAGTAATTCTGAGTAGTTGAGGGAATTTCAATTGGAAAAAAATAATATCATATTCTTTAAGTCAGGTAGTGGGTATTAGCATTTGTTTTACCATCGTTCTTTATTCTTATAGCTACACTATATATTTTCAATGTATTTAATGTATTTTTTGCATAATTAAATATTATGCAATAAAAATGAGAAAACAAAAAAGTAGAAAATGATAAATTACAATAAAGAAATGGAGAAAAAATTATAATCTAGTTGAGTAATGGTATATTACATAGCTATTTTCTTAAGTAGATGTATGTACATGATGTATGCACGATTGTACATACATGTTCTTAATTATATATAAATATATATGTACATATTTTTAATATAAAATACTAAACAAAGTACACCAAAATATTAGCTCCTATGTTAGTGAGATAATGTTTTGTTTTTTTGTATTTTAAGTTTTACATAGTAGGTGTATTTTTCTGTTTTCATACTGCTATAAAGAACTGCCCAAGACTGGGTAATTTATAAAGGAAAGAAGTTTAATTGGCTCACCGTTCAGCACAGCTTGGGAGGCCTCAGGAAATCTACAATCATGGCGGAAGACAAAGAGGAAGCAAGCCAGCTTCTTCGCAAGGCAGCATGAAGAAGTGCCGAGCAAAGGGGAAAGAATCCCTTATAAAACCATCAAATCTCGTGAGAACTCACTATCACAAGAACAGCACAGGGGAAACTGCCCCCATGATTCAATTACCTCCACCTGGTCTCTCCCTTGACCTGTGGGGATTATGGGGACTATGGGGATTACAATTCAAGATGAGATTCAGGTGGGGATACAAAGCCTAACCATATCAGTAGGCATGTATTGAATTTTAAACTCAGAGAAAAATACTAGTGTTTTTATAGGATTCTTACTAAAGAAAAACCAGAAAGTAATAAACCATCTACGCTAAGACATAAAATTCAGTTGTTTAGTTACAAGATAGAATGTGGCCTTGTAAGAAAGCAAATTAACTTCTAACATACAAAGCCTTAGAGAAGATTCAAGTGACTGACGGATCTTAAACAGAGCTATTATTACAACTCGAACTGCAGTAAAATATCCTCAGCAACATAGATGTGTGTGTTTCACTAGTCAGAGCAATACAAATTTAATGAAACTCCACTGGTGGTGTTTTTAATCAGACAATTTCTGAAGATGTCCTGGCTTATTCACAGATGCAAGCCAAATCTCTAGAAGAGTACCATAATAAGAAAAAAAAGAATACAGGCAATTGAGAGCTGTTCCAAAGTTTAGGGAGTTTTTGTAAGGAATTAATAAATAAAAATGTTCTTGAAAGACAGAAATTAATATGCAGTTCATACTGTCAGAATTGCAGGCAATTTATCAAAGTCCCCTAATCCTCCAAAATCGCTATTTTTTTTTTGACACACACTTTACAGTACAGAAGAAAATGTCTCCGGCAATAAATCACAAAGTTAAAATTACCTAGTCTACAATTAACTACACAGTGATGGTAAATCATTTTCTACCAAAAGAAAGAAATGTCTTGTCTATTCAGGTTCTGCTCTACTTAAAAGTTTTCCTTGTTGGCGAGCAAGTGGTTAGAAAATTATATTTTATACGTACATTCAGCTTAACTATCATTCAGCTCAGGAAGATGACTCAGGGCCTTATCCATACCTTCAAGTTTGCTCTTAGCAAGTAATTGTTTCAGTATCTATATCAAAAATGGCTTAAGCCTGCAACATGTTTCTGAATGATTAACAAGGTGATAGTCAGTTCTTCATTGAATCCTGGATGCTTTATTTTTCTTAATAAGAGGAATTCATATGGATCAGCTAGAAAAAAATTAAGAGGAAAATCACATGGAAAGTTATATATTATATATCTATTATATATAATATATATCTATTACATATTATATATTGTATATCTATTACATATATATTATATATGTATTATATATATTATA
+//>node_4  cylcle:true length:1691 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:2
+//TGGCCAGGCTGGTCTCGAACTCCTGACCTCAAATGATCCATCTACCTCGGCCTCCCAAAGTGCTGGAATTACAGATGTGAGCCACAATGCCCGGCCTTATTTTCTACAACTTTGGTAACTTTAGCATATACCCCAAATCTGTAAGACATAATATTATAATTCAAATGCAACTCATGGCTTCTCTTTGTACTCTTTCTCTAGCTTTTGAATTATTTATTCTAATACCAGTTTTAATTCTGACACAAAATCATGGGAGTTCTAATCAAAATCCAACCTTTTATCATAAAAACTATGAAGAAATTATGAGTAGAATTTAAAAAGGAAAATAGGCCTATTAATTAGATTTGTCTTTGTAGCATTTAACTCTATAATAAATAATATTTTATGCCTATGAGTCCCCAACAAAGCCTCCAGCTTCTATTTAGATATAAACTGTAAAAGTCACTACTGGATCCACAAGCAAGACTATGGTAAATAAATTTCTCCACCTAACCAGCTTCTTTTACATGATGTTACATGTTTCTTTTGTTTTTTCATTTTGGCAAATATTGATTGTCATCTTCGTGTTTGTCTATGTCCTAAGTGCTGGGATACAGAATCTGAAAAGATGGACACAGGACCTGCCTTCAAGTTCACCCCCTTTTTTTTTTTTTTTTGAGATGCAGTTTTGCTCTTGTCACCCAGGCTGGAGTGTACTGGTGAGATCTCTGCTCACTGCAACCTCCACCTTCAGGGTTCAAGTGATTCTCCTGCCTCAGCCTCCCAAGTAGCTGTGATTACAGGTCCCAGCCACCACGCCTAGCTAATTTTTGTATTTTTAGTAGAGACAGCGTTTCATCATGCTGGTCAGGCTGGTCTCGAACTCCTAACCTCAGGTAGTCGACCCACCTCGGCCTCCCACAGTGCTGAGATTACAGGCATGAGCCACCACGCCCTGCTAGGAGTTCACGCTTTAGTTGGGGAAAATATACAATAAGCAAGCCAGTTTTTAAAATGAGAACTGCAATTAGAGTTAAATGCTACAAAGACAAACTCACAGGAAGATGGGATGTAGAATGATAAGGCTCTCAGAATAGTAAGAGAAACTATTGCTTCTTACGATGTTTGTCTTTCTTTGTATCGGTGCTCAGCTGAGTCTGCAGTGCTTCAGAGGCAGCTTTCATTTTATAAAAATCTATGATTTCTCCTTCCAGTTTTTTTTTCTCTTCCTCGAGCTTCCTTATCTCCTCCTGTTGAATCATTTTAAGATGCTCGAACTTGTCCTGCAGCTGTGAAACCAATGTGCAGTTGTGACACCAAAGCAGTGTGGCTGAACACCTAAAAGAATACGCTTTTTTTCTGATTATCAAACAAACCCAAATCATCACAGTAGACCACGATCTTAATAACAATCTCAAAAACTCAGGAGTAAACACTCAGATATGGAATTTTTCTTTTCTTTCTTTTTTCCTTTTATAAGATGGAGTCTCACTCTGTTGCCCAGGCTGGAGTGCACTGGTGCGATCTCAGCTCACTGCAACCTCCATCTCCCAGTTCAAGTGATTCTCCTGCCTCAGCCTCTTGAGTAGCTGGGACTATAGGCATGCACCACCACTACAGGCGTGTGCCACCACACCTGGCTAATTTTTGTATTTTTAGTAGAGATGGGGTTTTGCCATGATGGCCAGGCTGGTCTCGAACTCCTGACCTCA
+//>node_5  cylcle:false length:462 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:2 lst_coverage:1 lstr:0 lstf:1
+//TGGCCAGGCTGGTCTCGAACTCCTGACCTCAGGTGATCCTCCCGCTTTGGCCTCCCAAAGACTTTTTTTTTTTTTTTAATATAGAGACAAGTTCTCAGTACGTTGCCCAGGCTGGTCTCAAACTCCTGAGCTCAAGTGATCCTCCCACCTCAGCTTCCCAAAGTGCTGGGACTGACTGGATGCAGTGGCTCATGCTTGTAAACTCAGCACTTTGGGAGGCCAAGGTGGGAGGATCGCTTGAGCCCAGGAGTTCAAGACCAGACTGGGTGATATAACACAATAGTCAACTTCAACAGGAGAGAGAATCTGTAAACTTGAATATAGATCTTCCGAAATTATCCAGTCAGTGGACAGAGAAAAAAAGAATAAAAGAGAGAAAAGAAGGCTGGGTGTGGTGGCTCAAGCCTGTAATCCCAACACTTTGGGAGGCCGAGGCAGGCAGATTAAGAGGTCAGGAGTTCA
+//>node_6  cylcle:false length:116 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
+//AATAAGAGATAAGGCTAATTTCCTTTAATAATAATAAAATCCTTTAATAAAAATATAAAGGAATAATATAATAATTTTCTTTAATAAAATATAATAAGAGATAAGGCTAATTTCCT
+//>node_7  cylcle:false length:41 min_coverage:2 max_coverage:2 average_coverage: 2.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:1
+//ATATATAATATATAATATATATAATACATATATAATATATA
+//>node_8  cylcle:false length:38 min_coverage:2 max_coverage:2 average_coverage: 2.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:1
+//AAAATATAATAAGAGATAAGGCTAATTTCCTTTAATAA
+//>node_9  cylcle:false length:48 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
+//TATAATATATATAATACATATATAATATATAATATATATAATACATAT
+//>node_10  cylcle:false length:100 min_coverage:2 max_coverage:2 average_coverage: 2.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:1
+//AGAATATGAGACATTTCCCTAATCATTATGTGTAATTACAATTACATATATATATGTAATTGTAATTACACATAATGATTAGGGAAATGTCTCATATTCT
+
+
+//The reference is the same as the individual, except it has about 1kb inserted in node 0. To be clearer, the reverse complement of node 0 is what is in the 10kb without insertion:
+
+//GTGTGGTGACTCATAGCACTCTGTCACCCAGGATGGAGTGCAGTGGCACAATCTCTGCTCACTGCAACCTCTGCCTCCTGGGTACAAGCGATTCTCCTGCCTCAGCTTTCTGAGTAGCAAGGACTACAGGTGCACACCATCACGCCTGGCTAATTTTTGTACTATTAGTACAGACGGAGTTTCACCATGTTGGCCAGGCTGGTCTCGAACTCCTGACCTCAGGGTCCATTTATTCAATGAATAATTGCCGCTATGTGTCAGACATTTTTCTAGGCCTAGGAATGGATACATAAGTGAACAAAGCAAAGATTCTGGTTCTTGTAGAGTTTCCATTAAAAGACAATTTAGTAAAACTTTTCTTCCCCCAAATTATAAAATCTGTAAGATGATTTAACAACATGTGTAAAAGTCATTGTGGGCCAGGCACGGTGGCTCATACCAGATTTTTTACAAGGTAGATATTAATTTTAGATATGGAATAATATTGGTGATTTCAATTTTATAACACTGGGTTAAGATGAAAGAATGAGAAGATAAAGGTCCCTCAGCAATATAACTCACAAACATGTTCAGAAGCAGTAAGAAGTTACATTAATTATCTTTTGAAAGTCGATAATCTACATCTTTAATGTATGCATATAGCATAGCTAATGTACTATCCCTAAAGTTAAAAGTTATATAGGGAACAAACACTAATTTTTTTTAGAAAAAATTATAAAAAGAGTAAAAATATGCCTTATACTACCGTAATTTCATGTTTTACAGCTCTGGGAAAATAGAAAATAAAATGTTCTGTTAGCATGAATCCCTCTGTGCCCCCAAAAAACCCTATGGATTGCATCATTATTACCTAAAAAGTCTATTCTCAAATGCAGCAGAGTGATTAACCAAAAATGAAATATACATAGAATATAAACAAAAGGAAATGAGACTAGAAACAAAATGTGTCACTACAAAAAAATCAACTAAAGATAAAAAAGAAATAATTGAGAAAATGATTGGCAAAAATCAGTAACTCTGACGTATTAAAACTTTCCATGCTACATAAATCTGAAAACTCTATTTCACATAAAACTGGAGCTGAAAGAAACAAATATTTACCTATTTTTTATTTTCTACATAATTTAAAAGGCAAATGCATAAAATGTAATTGTAAATCTGTTAGCTGGTATACAATGAATAAAGATATAATTTGTCACATCAATAACATAAAAAGAGTAGAGCTATATATATAGCAGTAGAATTTTGGTATGTGATTGAACTTAAGTTGAAATAAATTCAAATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGAGACATTTCCGGATTTTTTTTTAAAACTGAAAAAAATCCATTTATCCCTGAATTTGACATTCAGGAAGTGTTAAGTCCTTCAGGTTGAAATAAATGAACTCTAGGCAATAACTATATAAGTAAATAAGCAAGCTGTATGAATATACAAAGCTCTCTGGTAAAGGTAAATACATAAACAAACATAAAAACAGTCCTATTGTAATTTTGGTTTGTAACTCTGCCTCAAAAACAAACAAAAAAAAGATAATGGGAGAATGTTGAAAACTCAGAGAGAAGAGCAACTCTCACAGATAGGGATCCAGATAACATTAGCAGCTGATTTCTCAGCAGAAACCTTGAAGGCCAGTAGGCAGTGGATTATATATTTAAAATAATGAAGAAACCTGTCAATTGAGAAATATATAGCTGGAAAACTTATCCTTCAAAAATGAAGGAGAAATTAATATGACTTTTTCAGAATCAAAAAATTTAAATTTCTGTAATAAAATTTAAATGTTTATAAATTTAAAAAACTAGAAGAAAGAATGTTGACTGTTCACAATACAAATAAATGACAACTATTTGAGGTGATGGATACGCTAATTATCCTTATTTGATCACTGGGCATTGTATACATGTATCAAAATATCACTCTGTATCCCATGAATATGTACAATTATTTGTAAGAAATTATAGAAAGGAAACAAAATAAACAGATTATATGGAGGATTTTTAGAAGATAAGTAAATAAATTAATATACTAGGAAAAAACAAGGGAAATATACTTGATAAATAAATACAGGTAAGAGTTCTTTTGAAATAATGATAAAATAGAAAATCTCTGTCAAAACTAAAAGGAAAGATGCATAAATATATAAATAAACGATAAAAAATGTTGCATACATCTATAGACCAGTTTTTTATTTAAATTGAAGATTAGTATACATTTTAAATGATTAGTCAAAATAAAAAATCTAAAATGTGCTCTAAATACCTCTTAGGTCAGAAAAAAAAAGTCAAAAGCTAGAGTATAGAGAAATTAAGAAACGCCCTAAATTTCTAATCTGACAAAAATTCATACAAGATTTAAATATTTTAATGGAAAATAGAACAGAACTAATTATTGAACAGTTGCTTGGTTTACAAACATTAGAACAATTTTCTTATTCACACCATCTGATTATTGTATGTTATTTTTTCCCCAACGTTTAGACTACACAATGAGTTAAGAATGATAAAAATAAGCTCACCAATATACTATGTACATATTTACCAAAATCTGTGCATGCTTATACATATAAACACAGCTGATAATTTATTAGTTAGGCTCATTTGTAATTTTTGTCAATGGCTCAGTGTGATTGAAAGTTCTGTGTGAATATGTTTTTGGAAAGATCCAACAGCAACACCTTAGTGTATGTTTTTGAAATAAAATATATCTGAGTAGCAGCAAAGTTATTCTCAAATTTCCATTTTATAGCTGGAGATGTTATACCGTGACGTACATGATAGGACCCAATATGGATCAATCCCTTTTAGAAGTCAATCAGGAAGAGGGGAGCAGTTAATGAAGGATCATGTCAAAGGAAAGAAAAATTAGGGGAACATTAAAAGCTTTCTTCCCAAGCCACTAAATCAACTTGACTAACAAAATTACCACTTGATTTAGTATTAGAAAATTACATTACATATCAAACATAAACCCATTAATCAAATACTAAAGAAATTTCTGAGTTAAATGGTATAATGTTAGCTTATGCCAGAGCTGACCTTGAAAGATTGTTCAAATTCTGTCTCTACAAAAAATACAAAAATTAGCCAAGTTTGGTGGCATGTGCCTGTAGTACCAGCTACTTGGGAGGCTGAGGTGGAAGAATAGCTTGAGTCTGGGAGGTCAAGGCTGCAATGAGCTGTGA  TTGCACCACTGCACTCAAGCCTGGGTGGTAGAGTAAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAGAAAAATCACTAAGCAAAATAAGACATGGTATATAGAAAATTGGCTAAGTTGTGGTCCATTCATGTTTGCTCCCAATTAAGGAGCACAGCTATGAAAAGGAAGGCTTCAAATTAATAACCAATAGATTTTTTTAAAAAGAAAACTGGCCAGGTACTGTGGCTTATGTCTGTAATATCAGCATGTTGGGAGGCCAAGGCAGGATTACTTGAGCCCAGAAATTCCAGACCAGCCTGAGAATTTGGCAAAACTCGTACAGCATGTAACACAATTGCACTTTTATATTTTAACAAATTATATTTCCCATATTGAACTGTAAGTCTCCTGAAAGCAGGAATTTTGTTCTTGCTCATCATCAACTTTTTCAACATCCAGTGCACCATTTAGAACTTAGATGTAGTCAATACAGGTTTGTGGAATGAAAGAGGAAAAGAAAGAATTAATATTCCTTTAAATTAGGATGGCAAAGATCTTTAAGCCATATTAGACCTTTCTTCAGTTTTTTATATAGACTTTGTCGCATCACACCTCAGAGATTCTGTACATGTTCTTCCTCCTGCCTAGAAAGGATCGTCCCTCCACTTTTGCCAACTAATCCCTGCTCAACTTTTCATCTCAGCAGGAGGCCCATTCTCTTTGGCAATCCTCTGGCCTCCAGCCCATTTATTATATGCTCACATGTCAACATGTACTACAGTGGGCATGTAATGAATATTTGTTAAGTGAAGTAATAAATTCAATCAAATCACATCACCTGTTTAAAGCACTTCATTGGCTTCACATTGCACTTAGAATAAAGAGAAATTCTTTTTATACAATATACAATATATTTTATACAATATAAGTTCCTGCAGAATGCAGACACTTTCTACTTCTCCAGCCTCTTTTCGACTCCTCTCCTACTAGCTTCTGTAAATTGCTTCATCATGCCTGCTTGCAATTATAGGGCTTTTGAACCATTTGTTCCCTCCTTAGATATCCTCATTTTTTTCAGATTCTTGCTTAGAAGTCACTCCTCCGTGGACCTCCTCTGACATATTAAACATTGCAGTCCATTATAAGCTGCAAGAGGACAGGGATTTTTGCCTGTTTTATTCCCTACTGTATCACCAGGGGCTAGAGCAATATCTGACAAACATAATGATTAGGGAAATGTCTCATATTCTATATATATAGACAGAAAGAGAGAAAATATATGAGGGAGAGAAGGAATCTTTCCATCTCCTTTGAGTTCCACGGTGTTGAGAGTCAGGACAACTGC
+
+//  and the insert happens just after TTGGGAGGCTGAGGTGGAAGAATAGCTTGAGTCTGGGAGGTCAAGGCTGCAATGAGCTGTGA, where I have put a space above
+
+
+//The inserted sequence is
+
+// ACCTCAATCTATAACCACTACCTTCTGGGTCCTTTCTAAAAATTGACAAATAATAATCATATATAATTAATGTACAATGTTATGTTTCAATACATGTTTGCATTGTGGAATAATTAAATCAAGCTACTTGGCATGTCAGTAACATCACATGCTTAGCATTTTTGTAGTGAAAATATTTAAAATCTACTCTTTTAGCAATTTTGAAATATACAATACAGTACTTACTCACTTAACATCATTGATTGGTCCTCAGAAACTGCAACTTGGAGTGAAAAGATGTATAAAGAAACCAATTTTCCCATAGGCTAATAGCTATAAATAAGAGTTAGATTCTTACAGCATATTTTTGGTCACAAAATATCACCAAACTTCTAAATAAAGACCAAAACACTTCAAATATTAAACATTGAAATAAATATGAGCTTTGCATACATTTAAGAAAGATTAATAAAAACAAGTAAGATAATTATTTGCCCAATTATTTCATTCAGGGTTGGGGAGACTGGAGTCTGTGCTGGAAGCTCAGGGCTCAAGCTGGGCAACAGCCCTGGACAGGATGCCATCCCACTGCAGGATGGCTCACACATGCCCACAGCCACTCAGCCTGGGACCATTTGGACACAGCAATTAACCTTACCTGCATGTCTTTGTGGGGAGGAAACCAGAGTGCTTAGAAAAACCCATGCAGACAGACACAGAGCAAACATGCAAACCTCACAAAGATATTGTTTCTTCTGTCACCTGTGCTTTTGGGTCATATTCAAGAAATCATTAACCAAATAAAAGTCGTGGAGCTTTTCCCTATGTTTTCTTTTAGTAGTTTTATAGTTTCAGGTCTTACATTTAACTCCTTAATCCATTTTGATTTTTGCATATGGTGTGAGATAAGCTTCTGGTTTCATTCTCCCACATGTGGATATCCAGTTCTCTGAACACCATATATGGAAGAGACTGTCATTTCCTCATGATATGTTCCTGGCACTTTTGTTGAAATCAATTGACCATAGATCTGTGGGTTTATTTCTGGCTTTTTATTCTGTTCCATTGGCCAATGTACCTGTGTTTATGCTTGTGCCTTGCTGTTTTGATTATTATAGCTTTATAATATGTTTTGAAATCAGGTAGTGTGATGCCTCCATCTTTGCTTTTTATGCTCAAGATAGTTTGGATATTCAGAGTGTTTTATGGTTCCATATACAT
+// which I took from chromosome 2.
+
+
+
+
+
+
+//NOTE - the inserted sequence starts with an A. The sequence that follows the inserted sequence also starts with an A. So our algorithm will add that A to the flanking region.
+// We allow for this is checking results match expectations
+
+
+
+  int  min_fiveprime_flank_anchor = 21;
+  int  min_threeprime_flank_anchor= 21;
+  int  max_anchor_span =8000;
+  int  length_of_arrays=16000;
+  int  min_covg =1;
+  int  max_covg = 100000000;
+  int  max_expected_size_of_supernode=8000;
+
+
+  char** return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  char** return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 5600);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 5600);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 5600);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) *5600);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+
+  int return_variant_start_coords_array[2];            
+  return_variant_start_coords_array[0]=0;
+  return_variant_start_coords_array[1]=0;
+
+  int* return_variant_start_coords_array_ptr[2];      
+  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
+  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
+
+  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test8", "w");
+
+
+
+
+
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table,  fp,
+                                                    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
+
+
+  fclose(fp);
+
+
+  CU_ASSERT(ret==1);
+
+  CU_ASSERT_STRING_EQUAL("CATAATGATTAGGGAAATGTCTCATATTCTATATATATAGACAGAAAGAGAGAAAATATATGAGGGAGAGAAGGAATCTTTCCATCTCCTTTGAGTTCCACGGTGTTGAGAGTCAGGACAACTGCAATTGCTTCATCATGCCTGCTTGCAATTATAGGGCTTTTGAACCATTTGTTCCCTCCTTAGATATCCTCATTTTTTTCAGATTCTTGCTTAGAAGTCACTCCTCCGTGGACCTCCTCTGACATATTAAACATTGCAGTCCATTATAAGCTGCAAGAGGACAGGGATTTTTGCCTGTTTTATTCCCTACTGTATCACCAGGGGCTAGAGCAATATCTGACAAACAGTGGGCATGTAATGAATATTTGTTAAGTGAAGTAATAAATTCAATCAAATCACATCACCTGTTTAAAGCACTTCATTGGCTTCACATTGCACTTAGAATAAAGAGAAATTCTTTTTATACAATATACAATATATTTTATACAATATAAGTTCCTGCAGAATGCAGACACTTTCTACTTCTCCAGCCTCTTTTCGACTCCTCTCCTACTAGCTTCTGTATTTAAGCCATATTAGACCTTTCTTCAGTTTTTTATATAGACTTTGTCGCATCACACCTCAGAGATTCTGTACATGTTCTTCCTCCTGCCTAGAAAGGATCGTCCCTCCACTTTTGCCAACTAATCCCTGCTCAACTTTTCATCTCAGCAGGAGGCCCATTCTCTTTGGCAATCCTCTGGCCTCCAGCCCATTTATTATATGCTCACATGTCAACATGTACTTCGTACAGCATGTAACACAATTGCACTTTTATATTTTAACAAATTATATTTCCCATATTGAACTGTAAGTCTCCTGAAAGCAGGAATTTTGTTCTTGCTCATCATCAACTTTTTCAACATCCAGTGCACCATTTAGAACTTAGATGTAGTCAATACAGGTTTGTGGAATGAAAGAGGAAAAGAAAGAATTAATATTCCTTTAAATTAGGATGGCAAAGATCGTATATAGAAAATTGGCTAAGTTGTGGTCCATTCATGTTTGCTCCCAATTAAGGAGCACAGCTATGAAAAGGAAGGCTTCAAATTAATAACCAATAGATTTTTTTAAAAAGAAAACTGGCCAGGTACTGTGGCTTATGTCTGTAATATCAGCATGTTGGGAGGCCAAGGCAGGATTACTTGAGCCCAGAAATTCCAGACCAGCCTGAGAATTTGGCAAAACTCTGTCTCTACAAAAAATACAAAAATTAGCCAAGTTTGGTGGCATGTGCCTGTAGTACCAGCTACTTGGGAGGCTGAGGTGGAAGAATAGCTTGAGTCTGGGAGGTCAAGGCTGCAATGAGCTGTGA", return_flank5p_array[0]);
+
+  CU_ASSERT_STRING_EQUAL("GAGTAAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAGAAAAATCACTAAGCAAAATAAGACATGTGAAGGATCATGTCAAAGGAAAGAAAAATTAGGGGAACATTAAAAGCTTTCTTCCCAAGCCACTAAATCAACTTGACTAACAAAATTACCACTTGATTTAGTATTAGAAAATTACATTACATATCAAACATAAACCCATTAATCAAATACTAAAGAAATTTCTGAGTTAAATGGTATAATGTTAGCTTATGCCAGAGCTGACCTTGAAAGATTGTTCAAATATGGCTCAGTGTGATTGAAAGTTCTGTGTGAATATGTTTTTGGAAAGATCCAACAGCAACACCTTAGTGTATGTTTTTGAAATAAAATATATCTGAGTAGCAGCAAAGTTATTCTCAAATTTCCATTTTATAGCTGGAGATGTTATACCGTGACGTACATGATAGGACCCAATATGGATCAATCCCTTTTAGAAGTCAATCAGGAAGAGGGGAGCAGTTAAAACAGTTGCTTGGTTTACAAACATTAGAACAATTTTCTTATTCACACCATCTGATTATTGTATGTTATTTTTTCCCCAACGTTTAGACTACACAATGAGTTAAGAATGATAAAAATAAGCTCACCAATATACTATGTACATATTTACCAAAATCTGTGCATGCTTATACATATAAACACAGCTGATAATTTATTAGTTAGGCTCATTTGTAATTTTTGTCACTATAGACCAGTTTTTTATTTAAATTGAAGATTAGTATACATTTTAAATGATTAGTCAAAATAAAAAATCTAAAATGTGCTCTAAATACCTCTTAGGTCAGAAAAAAAAAGTCAAAAGCTAGAGTATAGAGAAATTAAGAAACGCCCTAAATTTCTAATCTGACAAAAATTCATACAAGATTTAAATATTTTAATGGAAAATAGAACAGAACTAATTATTGAAGAAATTATAGAAAGGAAACAAAATAAACAGATTATATGGAGGATTTTTAGAAGATAAGTAAATAAATTAATATACTAGGAAAAAACAAGGGAAATATACTTGATAAATAAATACAGGTAAGAGTTCTTTTGAAATAATGATAAAATAGAAAATCTCTGTCAAAACTAAAAGGAAAGATGCATAAATATATAAATAAACGATAAAAAATGTTGCATACATATATGACTTTTTCAGAATCAAAAAATTTAAATTTCTGTAATAAAATTTAAATGTTTATAAATTTAAAAAACTAGAAGAAAGAATGTTGACTGTTCACAATACAAATAAATGACAACTATTTGAGGTGATGGATACGCTAATTATCCTTATTTGATCACTGGGCATTGTATACATGTATCAAAATATCACTCTGTATCCCATGAATATGTACAATTATTTGTCTCAAAAACAAACAAAAAAAAGATAATGGGAGAATGTTGAAAACTCAGAGAGAAGAGCAACTCTCACAGATAGGGATCCAGATAACATTAGCAGCTGATTTCTCAGCAGAAACCTTGAAGGCCAGTAGGCAGTGGATTATATATTTAAAATAATGAAGAAACCTGTCAATTGAGAAATATATAGCTGGAAAACTTATCCTTCAAAAATGAAGGAGAAATTAAGACATTTCCGGATTTTTTTTTAAAACTGAAAAAAATCCATTTATCCCTGAATTTGACATTCAGGAAGTGTTAAGTCCTTCAGGTTGAAATAAATGAACTCTAGGCAATAACTATATAAGTAAATAAGCAAGCTGTATGAATATACAAAGCTCTCTGGTAAAGGTAAATACATAAACAAACATAAAAACAGTCCTATTGTAATTTTGGTTTGTAACTCTGCTTTTTATTTTCTACATAATTTAAAAGGCAAATGCATAAAATGTAATTGTAAATCTGTTAGCTGGTATACAATGAATAAAGATATAATTTGTCACATCAATAACATAAAAAGAGTAGAGCTATATATATAGCAGTAGAATTTTGGTATGTGATTGAACTTAAGTTGAAATAAATTCAAATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATATACATAGAATATAAACAAAAGGAAATGAGACTAGAAACAAAATGTGTCACTACAAAAAAATCAACTAAAGATAAAAAAGAAATAATTGAGAAAATGATTGGCAAAAATCAGTAACTCTGACGTATTAAAACTTTCCATGCTACATAAATCTGAAAACTCTATTTCACATAAAACTGGAGCTGAAAGAAACAAATATTTACCTATAAAGTTAAAAGTTATATAGGGAACAAACACTAATTTTTTTTAGAAAAAATTATAAAAAGAGTAAAAATATGCCTTATACTACCGTAATTTCATGTTTTACAGCTCTGGGAAAATAGAAAATAAAATGTTCTGTTAGCATGAATCCCTCTGTGCCCCCAAAAAACCCTATGGATTGCATCATTATTACCTAAAAAGTCTATTCTCAAATGCAGCAGAGTGATATTTTTTACAAGGTAGATATTAATTTTAGATATGGAATAATATTGGTGATTTCAATTTTATAACACTGGGTTAAGATGAAAGAATGAGAAGATAAAGGTCCCTCAGCAATATAACTCACAAACATGTTCAGAAGCAGTAAGAAGTTACATTAATTATCTTTTGAAAGTCGATAATCTACATCTTTAATGTATGCATATAGCATAGCTAATGTACTATCCCTGGGTCCATTTATTCAATGAATAATTGCCGCTATGTGTCAGACATTTTTCTAGGCCTAGGAATGGATACATAAGTGAACAAAGCAAAGATTCTGGTTCTTGTAGAGTTTCCATTAAAAGACAATTTAGTAAAACTTTTCTTCCCCCAAATTATAAAATCTGTAAGATGATTTAACAACATGTGTAAAAGTCATTGTGGGCCAGGCACGGTGGCTCATACCAGGTGTGGTGACTCATAGCACTCTGTCACCCAGGATGGAGTGCAGTGGCACAATCTCTGCTCACTGCAACCTCTGCCTCCTGGGTACAAGCGATTCTCCTGCCTCAGCTTTCTGAGTAGCAAGGACTACAGGTGCACACCATCACGCCTGGCTAATTTTTGTACTATTAGTACAGACGGAGTTTCACCATGTTGGCCAGGCTGGTCTCGAACTCCTGACCTCA", 
+			 return_flank3p_array[0]);
+
+  CU_ASSERT_STRING_EQUAL("TTGCACCACTGCACTCAAGCCTGGGTGGTA", return_branch2_array[0]);
+
+  CU_ASSERT_STRING_EQUAL("CCTCAATCTATAACCACTACCTTCTGGGTCCTTTCTAAAAATTGACAAATAATAATCATATATAATTAATGTACAATGTTATGTTTCAATACATGTTTGCATTGTGGAATAATTAAATCAAGCTACTTGGCATGTCAGTAACATCACATGCTTAGCATTTTTGTAGTGAAAATATTTAAAATCTACTCTTTTAGCAATTTTGAAATATACAATACAGTACTTACTCACTTAACATCATTGATTGGTCCTCAGAAACTGCAACTTGGAGTGAAAAGATGTATAAAGAAACCAATTTTCCCATAGGCTAATAGCTATAAATAAGAGTTAGATTCTTACAGCATATTTTTGGTCACAAAATATCACCAAACTTCTAAATAAAGACCAAAACACTTCAAATATTAAACATTGAAATAAATATGAGCTTTGCATACATTTAAGAAAGATTAATAAAAACAAGTAAGATAATTATTTGCCCAATTATTTCATTCAGGGTTGGGGAGACTGGAGTCTGTGCTGGAAGCTCAGGGCTCAAGCTGGGCAACAGCCCTGGACAGGATGCCATCCCACTGCAGGATGGCTCACACATGCCCACAGCCACTCAGCCTGGGACCATTTGGACACAGCAATTAACCTTACCTGCATGTCTTTGTGGGGAGGAAACCAGAGTGCTTAGAAAAACCCATGCAGACAGACACAGAGCAAACATGCAAACCTCACAAAGATATTGTTTCTTCTGTCACCTGTGCTTTTGGGTCATATTCAAGAAATCATTAACCAAATAAAAGTCGTGGAGCTTTTCCCTATGTTTTCTTTTAGTAGTTTTATAGTTTCAGGTCTTACATTTAACTCCTTAATCCATTTTGATTTTTGCATATGGTGTGAGATAAGCTTCTGGTTTCATTCTCCCACATGTGGATATCCAGTTCTCTGAACACCATATATGGAAGAGACTGTCATTTCCTCATGATATGTTCCTGGCACTTTTGTTGAAATCAATTGACCATAGATCTGTGGGTTTATTTCTGGCTTTTTATTCTGTTCCATTGGCCAATGTACCTGTGTTTATGCTTGTGCCTTGCTGTTTTGATTATTATAGCTTTATAATATGTTTTGAAATCAGGTAGTGTGATGCCTCCATCTTTGCTTTTTATGCTCAAGATAGTTTGGATATTCAGAGTGTTTTATGGTTCCATATACATATTGCACCACTGCACTCAAGCCTGGGTGGTA", return_trusted_branch_array[0]);
+
+  CU_ASSERT(return_variant_start_coords_array[0]==6722); 
+
+
+
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+  
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
+
+}
+
+void test_db_graph_make_reference_path_based_sv_calls_test_9()
+{
+
+  // ***************************************************************************************************************************************************
+  // 9. Identical to previous test, but each person has identical 600 lines of chromosome 12 added before the sequence that was there in previous tes
+  //     This is purely to test that the start coordinate of the variant is found correctly, even when you have to load more and more sequence into the array.
+  // ***************************************************************************************************************************************************
+  
+
+  int  kmer_size = 31;
+  int  number_of_bits = 15;
+  int  bucket_size    = 10;
+  long long   bad_reads = 0;
+  int  max_retries=10;
+
+  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  if (hash_table==NULL)
+    {
+      printf("unable to alloc the hash table. dead before we even started. OOM");
+      exit(1);
+    }
+  long long seq_loaded=0;
+
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_1kb_deletion_both_with_600lineschrom12_beforehand", &bad_reads, hash_table);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta", "r");
+  if (chrom_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta");
+      exit(1);
+    }
+
+
+  int min_fiveprime_flank_anchor = 21;
+  int  min_threeprime_flank_anchor= 21;
+  int  max_anchor_span =8000;
+  int  length_of_arrays=16000;
+  int  min_covg =1;
+  int  max_covg = 100000000;
+  int  max_expected_size_of_supernode=8000;
+
+
+  char** return_flank5p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_flank3p_array = (char**) malloc( sizeof(char*) *2);
+  char** return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
+  char** return_branch2_array = (char**) malloc( sizeof(char*) *2);
+  
+  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
+    {
+      printf("Failed to alloc return_something_array - cannot start test\n");
+      exit(1);
+    }
+
+  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 5600);
+  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 5600);
+  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 5600);
+  return_branch2_array[0] = (char*) malloc( sizeof(char) *5600);
+
+  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
+     {
+      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
+      exit(1);
+    }
+  
+  return_flank5p_array[0][0]='\0';
+  return_flank3p_array[0][0]='\0';
+  return_trusted_branch_array[0][0]='\0';
+  return_branch2_array[0][0]='\0';
+
+
+  int return_variant_start_coords_array[2];              
+  return_variant_start_coords_array[0]=0;
+  return_variant_start_coords_array[1]=0;
+
+  int* return_variant_start_coords_array_ptr[2];        
+  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
+  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
+
+  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test9", "w");
+
+
+
+
+
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
+						    individual_edge_array,1,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, hash_table,  fp,
+                                                    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
+
+
+  fclose(fp);
+
+
+  CU_ASSERT(ret==1);
+
+  CU_ASSERT_STRING_EQUAL("CATAATGATTAGGGAAATGTCTCATATTCTATATATATAGACAGAAAGAGAGAAAATATATGAGGGAGAGAAGGAATCTTTCCATCTCCTTTGAGTTCCACGGTGTTGAGAGTCAGGACAACTGCAATTGCTTCATCATGCCTGCTTGCAATTATAGGGCTTTTGAACCATTTGTTCCCTCCTTAGATATCCTCATTTTTTTCAGATTCTTGCTTAGAAGTCACTCCTCCGTGGACCTCCTCTGACATATTAAACATTGCAGTCCATTATAAGCTGCAAGAGGACAGGGATTTTTGCCTGTTTTATTCCCTACTGTATCACCAGGGGCTAGAGCAATATCTGACAAACAGTGGGCATGTAATGAATATTTGTTAAGTGAAGTAATAAATTCAATCAAATCACATCACCTGTTTAAAGCACTTCATTGGCTTCACATTGCACTTAGAATAAAGAGAAATTCTTTTTATACAATATACAATATATTTTATACAATATAAGTTCCTGCAGAATGCAGACACTTTCTACTTCTCCAGCCTCTTTTCGACTCCTCTCCTACTAGCTTCTGTATTTAAGCCATATTAGACCTTTCTTCAGTTTTTTATATAGACTTTGTCGCATCACACCTCAGAGATTCTGTACATGTTCTTCCTCCTGCCTAGAAAGGATCGTCCCTCCACTTTTGCCAACTAATCCCTGCTCAACTTTTCATCTCAGCAGGAGGCCCATTCTCTTTGGCAATCCTCTGGCCTCCAGCCCATTTATTATATGCTCACATGTCAACATGTACTTCGTACAGCATGTAACACAATTGCACTTTTATATTTTAACAAATTATATTTCCCATATTGAACTGTAAGTCTCCTGAAAGCAGGAATTTTGTTCTTGCTCATCATCAACTTTTTCAACATCCAGTGCACCATTTAGAACTTAGATGTAGTCAATACAGGTTTGTGGAATGAAAGAGGAAAAGAAAGAATTAATATTCCTTTAAATTAGGATGGCAAAGATCGTATATAGAAAATTGGCTAAGTTGTGGTCCATTCATGTTTGCTCCCAATTAAGGAGCACAGCTATGAAAAGGAAGGCTTCAAATTAATAACCAATAGATTTTTTTAAAAAGAAAACTGGCCAGGTACTGTGGCTTATGTCTGTAATATCAGCATGTTGGGAGGCCAAGGCAGGATTACTTGAGCCCAGAAATTCCAGACCAGCCTGAGAATTTGGCAAAACTCTGTCTCTACAAAAAATACAAAAATTAGCCAAGTTTGGTGGCATGTGCCTGTAGTACCAGCTACTTGGGAGGCTGAGGTGGAAGAATAGCTTGAGTCTGGGAGGTCAAGGCTGCAATGAGCTGTGA", return_flank5p_array[0]);
+
+  CU_ASSERT_STRING_EQUAL("GAGTAAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAGAAAAATCACTAAGCAAAATAAGACATGTGAAGGATCATGTCAAAGGAAAGAAAAATTAGGGGAACATTAAAAGCTTTCTTCCCAAGCCACTAAATCAACTTGACTAACAAAATTACCACTTGATTTAGTATTAGAAAATTACATTACATATCAAACATAAACCCATTAATCAAATACTAAAGAAATTTCTGAGTTAAATGGTATAATGTTAGCTTATGCCAGAGCTGACCTTGAAAGATTGTTCAAATATGGCTCAGTGTGATTGAAAGTTCTGTGTGAATATGTTTTTGGAAAGATCCAACAGCAACACCTTAGTGTATGTTTTTGAAATAAAATATATCTGAGTAGCAGCAAAGTTATTCTCAAATTTCCATTTTATAGCTGGAGATGTTATACCGTGACGTACATGATAGGACCCAATATGGATCAATCCCTTTTAGAAGTCAATCAGGAAGAGGGGAGCAGTTAAAACAGTTGCTTGGTTTACAAACATTAGAACAATTTTCTTATTCACACCATCTGATTATTGTATGTTATTTTTTCCCCAACGTTTAGACTACACAATGAGTTAAGAATGATAAAAATAAGCTCACCAATATACTATGTACATATTTACCAAAATCTGTGCATGCTTATACATATAAACACAGCTGATAATTTATTAGTTAGGCTCATTTGTAATTTTTGTCACTATAGACCAGTTTTTTATTTAAATTGAAGATTAGTATACATTTTAAATGATTAGTCAAAATAAAAAATCTAAAATGTGCTCTAAATACCTCTTAGGTCAGAAAAAAAAAGTCAAAAGCTAGAGTATAGAGAAATTAAGAAACGCCCTAAATTTCTAATCTGACAAAAATTCATACAAGATTTAAATATTTTAATGGAAAATAGAACAGAACTAATTATTGAAGAAATTATAGAAAGGAAACAAAATAAACAGATTATATGGAGGATTTTTAGAAGATAAGTAAATAAATTAATATACTAGGAAAAAACAAGGGAAATATACTTGATAAATAAATACAGGTAAGAGTTCTTTTGAAATAATGATAAAATAGAAAATCTCTGTCAAAACTAAAAGGAAAGATGCATAAATATATAAATAAACGATAAAAAATGTTGCATACATATATGACTTTTTCAGAATCAAAAAATTTAAATTTCTGTAATAAAATTTAAATGTTTATAAATTTAAAAAACTAGAAGAAAGAATGTTGACTGTTCACAATACAAATAAATGACAACTATTTGAGGTGATGGATACGCTAATTATCCTTATTTGATCACTGGGCATTGTATACATGTATCAAAATATCACTCTGTATCCCATGAATATGTACAATTATTTGTCTCAAAAACAAACAAAAAAAAGATAATGGGAGAATGTTGAAAACTCAGAGAGAAGAGCAACTCTCACAGATAGGGATCCAGATAACATTAGCAGCTGATTTCTCAGCAGAAACCTTGAAGGCCAGTAGGCAGTGGATTATATATTTAAAATAATGAAGAAACCTGTCAATTGAGAAATATATAGCTGGAAAACTTATCCTTCAAAAATGAAGGAGAAATTAAGACATTTCCGGATTTTTTTTTAAAACTGAAAAAAATCCATTTATCCCTGAATTTGACATTCAGGAAGTGTTAAGTCCTTCAGGTTGAAATAAATGAACTCTAGGCAATAACTATATAAGTAAATAAGCAAGCTGTATGAATATACAAAGCTCTCTGGTAAAGGTAAATACATAAACAAACATAAAAACAGTCCTATTGTAATTTTGGTTTGTAACTCTGCTTTTTATTTTCTACATAATTTAAAAGGCAAATGCATAAAATGTAATTGTAAATCTGTTAGCTGGTATACAATGAATAAAGATATAATTTGTCACATCAATAACATAAAAAGAGTAGAGCTATATATATAGCAGTAGAATTTTGGTATGTGATTGAACTTAAGTTGAAATAAATTCAAATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATATACATAGAATATAAACAAAAGGAAATGAGACTAGAAACAAAATGTGTCACTACAAAAAAATCAACTAAAGATAAAAAAGAAATAATTGAGAAAATGATTGGCAAAAATCAGTAACTCTGACGTATTAAAACTTTCCATGCTACATAAATCTGAAAACTCTATTTCACATAAAACTGGAGCTGAAAGAAACAAATATTTACCTATAAAGTTAAAAGTTATATAGGGAACAAACACTAATTTTTTTTAGAAAAAATTATAAAAAGAGTAAAAATATGCCTTATACTACCGTAATTTCATGTTTTACAGCTCTGGGAAAATAGAAAATAAAATGTTCTGTTAGCATGAATCCCTCTGTGCCCCCAAAAAACCCTATGGATTGCATCATTATTACCTAAAAAGTCTATTCTCAAATGCAGCAGAGTGATATTTTTTACAAGGTAGATATTAATTTTAGATATGGAATAATATTGGTGATTTCAATTTTATAACACTGGGTTAAGATGAAAGAATGAGAAGATAAAGGTCCCTCAGCAATATAACTCACAAACATGTTCAGAAGCAGTAAGAAGTTACATTAATTATCTTTTGAAAGTCGATAATCTACATCTTTAATGTATGCATATAGCATAGCTAATGTACTATCCCTGGGTCCATTTATTCAATGAATAATTGCCGCTATGTGTCAGACATTTTTCTAGGCCTAGGAATGGATACATAAGTGAACAAAGCAAAGATTCTGGTTCTTGTAGAGTTTCCATTAAAAGACAATTTAGTAAAACTTTTCTTCCCCCAAATTATAAAATCTGTAAGATGATTTAACAACATGTGTAAAAGTCATTGTGGGCCAGGCACGGTGGCTCATACCAGGTGTGGTGACTCATAGCACTCTGTCACCCAGGATGGAGTGCAGTGGCACAATCTCTGCTCACTGCAACCTCTGCCTCCTGGGTACAAGCGATTCTCCTGCCTCAGCTTTCTGAGTAGCAAGGACTACAGGTGCACACCATCACGCCTGGCTAATTTTTGTACTATTAGTACAGACGGAGTTTCACCATGTTGGCCAGGCTGGTCTCGAACTCCTGACCTCA", 
+			 return_flank3p_array[0]);
+
+  CU_ASSERT_STRING_EQUAL("TTGCACCACTGCACTCAAGCCTGGGTGGTA", return_branch2_array[0]);
+
+  CU_ASSERT_STRING_EQUAL("CCTCAATCTATAACCACTACCTTCTGGGTCCTTTCTAAAAATTGACAAATAATAATCATATATAATTAATGTACAATGTTATGTTTCAATACATGTTTGCATTGTGGAATAATTAAATCAAGCTACTTGGCATGTCAGTAACATCACATGCTTAGCATTTTTGTAGTGAAAATATTTAAAATCTACTCTTTTAGCAATTTTGAAATATACAATACAGTACTTACTCACTTAACATCATTGATTGGTCCTCAGAAACTGCAACTTGGAGTGAAAAGATGTATAAAGAAACCAATTTTCCCATAGGCTAATAGCTATAAATAAGAGTTAGATTCTTACAGCATATTTTTGGTCACAAAATATCACCAAACTTCTAAATAAAGACCAAAACACTTCAAATATTAAACATTGAAATAAATATGAGCTTTGCATACATTTAAGAAAGATTAATAAAAACAAGTAAGATAATTATTTGCCCAATTATTTCATTCAGGGTTGGGGAGACTGGAGTCTGTGCTGGAAGCTCAGGGCTCAAGCTGGGCAACAGCCCTGGACAGGATGCCATCCCACTGCAGGATGGCTCACACATGCCCACAGCCACTCAGCCTGGGACCATTTGGACACAGCAATTAACCTTACCTGCATGTCTTTGTGGGGAGGAAACCAGAGTGCTTAGAAAAACCCATGCAGACAGACACAGAGCAAACATGCAAACCTCACAAAGATATTGTTTCTTCTGTCACCTGTGCTTTTGGGTCATATTCAAGAAATCATTAACCAAATAAAAGTCGTGGAGCTTTTCCCTATGTTTTCTTTTAGTAGTTTTATAGTTTCAGGTCTTACATTTAACTCCTTAATCCATTTTGATTTTTGCATATGGTGTGAGATAAGCTTCTGGTTTCATTCTCCCACATGTGGATATCCAGTTCTCTGAACACCATATATGGAAGAGACTGTCATTTCCTCATGATATGTTCCTGGCACTTTTGTTGAAATCAATTGACCATAGATCTGTGGGTTTATTTCTGGCTTTTTATTCTGTTCCATTGGCCAATGTACCTGTGTTTATGCTTGTGCCTTGCTGTTTTGATTATTATAGCTTTATAATATGTTTTGAAATCAGGTAGTGTGATGCCTCCATCTTTGCTTTTTATGCTCAAGATAGTTTGGATATTCAGAGTGTTTTATGGTTCCATATACATATTGCACCACTGCACTCAAGCCTGGGTGGTA", return_trusted_branch_array[0]);
+
+
+  CU_ASSERT(return_variant_start_coords_array[0]==42662); 
+  
+  hash_table_free(&hash_table);
+  fclose(chrom_fptr);
+  
+  free(return_flank5p_array[0]);
+  free(return_flank3p_array[0]);
+  free(return_trusted_branch_array[0]);
+  free(return_branch2_array[0]);
+  free(return_flank5p_array);
+  free(return_flank3p_array);
+  free(return_trusted_branch_array);
+  free(return_branch2_array);
+
+
 
 
 
