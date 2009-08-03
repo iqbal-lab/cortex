@@ -25,6 +25,7 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 						      int max_coverage,
                                                       int modal_coverage,
                                                       double  percent_nodes_with_modal_coverage,
+						      double percent_novel, 
 						      dBNode * fst_node,
 						      Orientation fst_orientation,
 						      dBNode * lst_node,
@@ -2130,21 +2131,26 @@ void get_coverage_from_array_of_nodes(dBNode** array, int length, int* min_cover
 }
 
 
-void get_percent_novel_from_array_of_nodes(dBNode** array, int length, double* percent_novel, EdgeArrayType type, int index)
+void get_percent_novel_from_array_of_nodes(dBNode** array, int length, double* percent_novel)
 {
   int sum_novel=0;
 
   int i;
   for (i=0; i< length; i++)
     {
-      boolean this_node_is_novel = !(db_node_check_status_exists_in_reference(array[i]) || db_node_check_status_visited_and_exists_in_reference(array[i]) );
-      
-      if (this_node_is_novel)
+      if (array[i] != NULL)
 	{
-	  sum_novel++;
+	  boolean this_node_is_novel = !(db_node_check_status_exists_in_reference(array[i]) || db_node_check_status_visited_and_exists_in_reference(array[i]) );
+	  
+	  if (this_node_is_novel)
+	    {
+	      sum_novel++;
+	    }
 	}
     }
-  *percent_novel =  sum_novel/length;
+
+  printf("%d nodes are novel out of %d\n", sum_novel, length);
+  *percent_novel =  100*sum_novel/length;
 
 }
 
@@ -2848,39 +2854,44 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      double flank5p_avg_covg=0;
 	      int flank5p_mode_coverage=0;
 	      double flank5p_percent_nodes_with_modal_covg=0;
+	      double flank5p_percent_novel=0; //if trusted path=reference, this is zero by definition, but we want to leave room for trusted path not the reference
+                                              // a node is novel iff it is not in the reference genome
 
-	      //get coverage of the 5p flank
+	      //get coverage of the 5p flank, and %novel sequence
 	      if (traverse_sup_left_to_right==true)
 		{
 		  get_coverage_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array, 
 						   length_5p_flank, &flank5p_min_covg, &flank5p_max_covg, &flank5p_avg_covg, &flank5p_mode_coverage, &flank5p_percent_nodes_with_modal_covg,
 						   which_array_holds_indiv, index_for_indiv_in_edge_array);
+
+		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array, 
+							length_5p_flank, &flank5p_percent_novel);
+				
+
+
+
 		}
 	      else
 		{
 		  get_coverage_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank, 
 						   length_5p_flank, &flank5p_min_covg, &flank5p_max_covg, &flank5p_avg_covg, &flank5p_mode_coverage, &flank5p_percent_nodes_with_modal_covg,
 						   which_array_holds_indiv, index_for_indiv_in_edge_array);
+
+
+		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank, 
+							length_5p_flank, &flank5p_percent_novel);
+
+
 		}
 
 	      
-	      char flank3p[length_3p_flank+1];
-	      flank3p[0] = '\0';
-	      strncpy(flank3p, chrom_string+start_of_3prime_anchor_in_chrom, length_3p_flank);
-	      flank3p[length_3p_flank]='\0';
-
-	      int flank3p_max_covg=0;
-	      int flank3p_min_covg=0;
-	      double flank3p_avg_covg=0;
-	      int flank3p_mode_coverage=0;
-	      double flank3p_percent_nodes_with_modal_covg=0;
-
+	      
 
 	      //print 5pflank
 	      char name[300];
 	      sprintf(name,"var_%i_5p_flank",num_variants_found);
 	      print_fasta_from_path_for_specific_person_or_pop(output_file, name, length_5p_flank, 
-							       flank5p_avg_covg,flank5p_min_covg,flank5p_max_covg, flank5p_mode_coverage, flank5p_percent_nodes_with_modal_covg, 
+							       flank5p_avg_covg,flank5p_min_covg,flank5p_max_covg, flank5p_mode_coverage, flank5p_percent_nodes_with_modal_covg, flank5p_percent_novel,
 							       chrom_path_array[start_node_index],
 							       chrom_orientation_array[start_node_index],
 							       chrom_path_array[start_node_index+length_5p_flank-1],
@@ -2937,17 +2948,19 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      double trusted_branch_avg_covg=0;
 	      int trusted_branch_mode_coverage=0;
 	      double trusted_branch_percent_nodes_with_modal_covg=0;
-
+	      double trusted_branch_percent_novel=0;
 
 	      //get coverage on the trusted branch. 
 	      get_coverage_from_array_of_nodes(chrom_path_array+start_node_index+length_5p_flank,
 					       len_trusted_branch, &trusted_branch_min_covg, &trusted_branch_max_covg, &trusted_branch_avg_covg, &trusted_branch_mode_coverage, &trusted_branch_percent_nodes_with_modal_covg,
 					       which_array_holds_indiv, index_for_indiv_in_edge_array);
 
+	      get_percent_novel_from_array_of_nodes(chrom_path_array+start_node_index+length_5p_flank, 
+						    len_trusted_branch, &trusted_branch_percent_novel);
 
 	      print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_trusted_branch, 
 							       trusted_branch_avg_covg, trusted_branch_min_covg, trusted_branch_max_covg, 
-							       trusted_branch_mode_coverage, trusted_branch_percent_nodes_with_modal_covg, 
+							       trusted_branch_mode_coverage, trusted_branch_percent_nodes_with_modal_covg, trusted_branch_percent_novel,
 							       chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
 							       chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
 							       chrom_path_array[start_of_3prime_anchor_in_chrom],
@@ -2973,6 +2986,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      double branch2_avg_covg=0;
 	      int branch2_mode_coverage=0;
 	      double branch2_percent_nodes_with_modal_covg=0;
+	      double branch2_percent_novel=0;
 
 	      int len_branch2;
 
@@ -3012,9 +3026,13 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
                                                    len_branch2, &branch2_min_covg, &branch2_max_covg, &branch2_avg_covg, &branch2_mode_coverage, &branch2_percent_nodes_with_modal_covg,
                                                    which_array_holds_indiv, index_for_indiv_in_edge_array);
 
+		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array+length_5p_flank, 
+							len_branch2, &branch2_percent_novel);
+
+
 
 		  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
-								   branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, branch2_percent_nodes_with_modal_covg, 
+								   branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, branch2_percent_nodes_with_modal_covg, branch2_percent_novel, 
 								   current_supernode[index_of_query_node_in_supernode_array+length_5p_flank], 
 								   curr_sup_orientations[index_of_query_node_in_supernode_array+length_5p_flank],
 								   current_supernode[start_of_3prime_anchor_in_sup], 
@@ -3095,8 +3113,14 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
                                                    which_array_holds_indiv, index_for_indiv_in_edge_array);
 
 
+
+		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2, 
+							len_branch2, &branch2_percent_novel);
+
+
+
 		  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
-								   branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, branch2_percent_nodes_with_modal_covg, 
+								   branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, branch2_percent_nodes_with_modal_covg, branch2_percent_novel,
 								   current_supernode[index_of_query_node_in_supernode_array-length_5p_flank], 
 								   curr_sup_orientations[index_of_query_node_in_supernode_array-length_5p_flank],
 								   current_supernode[start_of_3prime_anchor_in_sup], 
@@ -3115,6 +3139,17 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 	      //print 3p flank
+	      char flank3p[length_3p_flank+1];
+	      flank3p[0] = '\0';
+	      strncpy(flank3p, chrom_string+start_of_3prime_anchor_in_chrom, length_3p_flank);
+	      flank3p[length_3p_flank]='\0';
+
+	      int flank3p_max_covg=0;
+	      int flank3p_min_covg=0;
+	      double flank3p_avg_covg=0;
+	      int flank3p_mode_coverage=0;
+	      double flank3p_percent_nodes_with_modal_covg=0;
+	      double flank3p_percent_novel=0;
 
 
 	      if (traverse_sup_left_to_right==true)
@@ -3122,19 +3157,30 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  get_coverage_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array+length_5p_flank+len_branch2, 
 						   length_3p_flank, &flank3p_min_covg, &flank3p_max_covg, &flank3p_avg_covg, &flank3p_mode_coverage, &flank3p_percent_nodes_with_modal_covg,
 						   which_array_holds_indiv, index_for_indiv_in_edge_array);
+
+		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array+length_5p_flank+len_branch2, 
+							length_3p_flank, &flank3p_percent_novel);
+				
+
 		}
 	      else
 		{
 		  get_coverage_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2-length_3p_flank, 
 						   length_3p_flank, &flank3p_min_covg, &flank3p_max_covg, &flank3p_avg_covg,  &flank3p_mode_coverage, &flank3p_percent_nodes_with_modal_covg,
 						   which_array_holds_indiv, index_for_indiv_in_edge_array);
+
+		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2-length_3p_flank, 
+							length_3p_flank, &flank3p_percent_novel);
+			
+
+
 		}
 
 
 							       
 	      sprintf(name,"var_%i_3p_flank",num_variants_found);
 	      print_fasta_from_path_for_specific_person_or_pop(output_file, name, length_3p_flank, 
-							       flank3p_avg_covg, flank3p_min_covg, flank3p_max_covg, flank3p_mode_coverage, flank3p_percent_nodes_with_modal_covg,
+							       flank3p_avg_covg, flank3p_min_covg, flank3p_max_covg, flank3p_mode_coverage, flank3p_percent_nodes_with_modal_covg, flank3p_percent_novel, 
 							       chrom_path_array[start_of_3prime_anchor_in_chrom],
 							       chrom_orientation_array[start_of_3prime_anchor_in_chrom],
 							       chrom_path_array[start_of_3prime_anchor_in_chrom+length_3p_flank],
@@ -3216,6 +3262,7 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 						      int max_coverage,
 						      int modal_coverage,
 						      double percent_nodes_with_modal_coverage, 
+						      double percent_novel,
 						      dBNode * fst_node,
 						      Orientation fst_orientation,
 						      dBNode * lst_node,
@@ -3250,8 +3297,8 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
   } 
   binary_kmer_to_seq(lst_kmer,kmer_size,lst_seq);
 
-  fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i mode_coverage: %i percent_nodes_with_modal_covg: %5.2f fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s\n", name,
-	  (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, modal_coverage, percent_nodes_with_modal_coverage,
+  fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i mode_coverage: %i percent_nodes_with_modal_covg: %5.2f percent_novel: %5.2f fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s\n", name,
+	  (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, modal_coverage, percent_nodes_with_modal_coverage, percent_novel,
 	  db_node_get_coverage(fst_node, type, index),
 	  fst_seq,
 	  (fst_orientation == forward ? fst_r : fst_f),
