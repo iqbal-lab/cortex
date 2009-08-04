@@ -26,7 +26,7 @@ int  main()
     return CU_get_error();
   }
 
-  if (NULL == CU_add_test(pSuite, "test hash_table_apply_or_insert using Element from graph/",  test_hash_table_apply_or_insert)){
+  if (NULL == CU_add_test(pSuite, "test hash_table_apply_or_insert using Element from graph/. This test takes a little while - do not panic if it takes a minute or two",  test_hash_table_apply_or_insert)){
     CU_cleanup_registry();
     return CU_get_error();
   }

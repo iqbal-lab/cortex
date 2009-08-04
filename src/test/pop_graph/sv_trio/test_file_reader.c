@@ -950,6 +950,9 @@ void test_load_seq_into_array()
   retvalue = load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
 
   CU_ASSERT(retvalue==num_of_nodes_to_read);  
+
+  CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAACCCTAACCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAAACCCTAAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCAACCCCAACCCCAACCCCAACCCCAACCCCAACCCTAACCCCTAACCCTAACCCTAACCCTACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAACCCTCGCGGTACCCTC", path_string+offset);
+
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCT", binary_kmer_to_seq(path_nodes[offset]->kmer, db_graph->kmer_size, tmp_seq));
 
   CU_ASSERT_STRING_EQUAL("ACCCTAACCCTAACCCTAACCCTAACCCCTA", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
@@ -1020,6 +1023,7 @@ void test_load_seq_into_array()
       exit(1);
     }
 
+
   num_of_nodes_to_read=38;//num of bases is 68
   expecting_new_fasta_entry=true;
   offset=length_of_arrays-num_of_nodes_to_read;
@@ -1028,6 +1032,9 @@ void test_load_seq_into_array()
   retvalue = load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
 
   CU_ASSERT(retvalue==num_of_nodes_to_read);
+
+  CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCTAACCNTAACCCTAACCCTAACCCTAACCTAACCCTAA", path_string+offset);
+
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCT", binary_kmer_to_seq(path_nodes[offset]->kmer, db_graph->kmer_size, tmp_seq));
 
   CU_ASSERT_STRING_EQUAL("ACCCTAACCCTAACCCTAACCCTAACCCCTA", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
@@ -1092,6 +1099,9 @@ void test_load_seq_into_array()
 
 
   CU_ASSERT(retvalue==num_of_nodes_to_read);
+
+  CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCTAACCNNNNNTAACCCTAACCCTAACCCTAACCTAACCCTAA", path_string+offset);
+
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCT", binary_kmer_to_seq(path_nodes[offset]->kmer, db_graph->kmer_size, tmp_seq));
 
   CU_ASSERT_STRING_EQUAL("ACCCTAACCCTAACCCTAACCCTAACCCCTA", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
@@ -1198,6 +1208,11 @@ void test_load_seq_into_array()
 
 
   CU_ASSERT(retvalue==num_of_nodes_to_read);
+
+  iqbal - hold on confusion about whether path_string has forst kmer or not;
+  
+  CU_ASSERT_STRING_EQUAL(
+
   CU_ASSERT(path_nodes[offset]==NULL);
   CU_ASSERT(path_nodes[offset+1]==NULL);
   CU_ASSERT(path_nodes[offset+2]==NULL);
