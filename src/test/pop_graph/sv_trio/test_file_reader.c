@@ -659,13 +659,21 @@ void test_load_seq_into_array()
   
   for (i=0; i< num_of_nodes_to_read; i++)
     {
-
       CU_ASSERT(path_nodes[offset+i]==NULL);
       CU_ASSERT(path_orientations[offset+i]==forward);
       CU_ASSERT(path_labels[offset+i]==Undefined);
-      //CU_ASSERT(path_string[offset+i]=='N');
     }
+  
 
+  CU_ASSERT(path_string[offset]   == 'N');
+  CU_ASSERT(path_string[offset+1] == 'G');
+  CU_ASSERT(path_string[offset+2] == 'N');
+  CU_ASSERT(path_string[offset+3] == 'G');
+  CU_ASSERT(path_string[offset+4] == 'N');
+  CU_ASSERT(path_string[offset+5] == 'G');
+  CU_ASSERT(path_string[offset+6] == 'N');
+  CU_ASSERT(path_string[offset+7] == 'G');
+  CU_ASSERT(path_string[offset+8]=='\0');
 
   CU_ASSERT(load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, 
 				db_graph)==0);
@@ -676,7 +684,7 @@ void test_load_seq_into_array()
       CU_ASSERT(path_nodes[offset+i]==NULL);
       CU_ASSERT(path_orientations[offset+i]==forward);
       CU_ASSERT(path_labels[offset+i]==Undefined);
-    }
+      }
 
   CU_ASSERT(path_string[offset]   == 'N');
   CU_ASSERT(path_string[offset+1] == 'G');
@@ -686,6 +694,7 @@ void test_load_seq_into_array()
   CU_ASSERT(path_string[offset+5] == 'G');
   CU_ASSERT(path_string[offset+6] == 'N');
   CU_ASSERT(path_string[offset+7] == 'G');
+  CU_ASSERT(path_string[offset+8]=='\0');
   
   fclose(fptr);
 
@@ -752,10 +761,16 @@ void test_load_seq_into_array()
   retvalue = load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
 
   CU_ASSERT(retvalue==num_of_nodes_to_read);
+
+
+  //******** here is where we test the path_string ***************
+  CU_ASSERT_STRING_EQUAL("CGCGTTTACG", path_string+offset); 
+
+
+
   CU_ASSERT(path_nodes[offset]!=NULL);
   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[offset]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset]==forward);
-  //CU_ASSERT_STRING_EQUAL(path_string[offset], 'N');
 
 
   CU_ASSERT_STRING_EQUAL("CGC", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
@@ -805,6 +820,9 @@ void test_load_seq_into_array()
   CU_ASSERT(load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry,
 				db_graph)==0);
   //arrays should be unaffected
+
+
+  CU_ASSERT_STRING_EQUAL("CGCGTTTACG", path_string+offset); 
 
   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[offset]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset]==forward);

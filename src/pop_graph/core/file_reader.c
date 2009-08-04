@@ -748,8 +748,6 @@ int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGrap
 {
 
 
-  printf("Start load_individual_binary_data_from_filename_into_graph with file %s\n", filename);
-
   FILE* fp_bin = fopen(filename, "r");
   int seq_length = 0;
   dBNode node_from_file;
@@ -790,8 +788,6 @@ int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGrap
 long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
-  printf("Start load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries for file %s\n", filename);
-
   FILE* fptr = fopen(filename, "r");
   if (fptr == NULL)
     {
@@ -806,8 +802,6 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
   
   while(fgets(line,MAX_FILENAME_LENGTH, fptr) !=NULL)
     {
-
-      printf("Look at next line %s of file %s\n", line, filename);
 
       //remove newline from endof line- replace with \0
       char* p;
@@ -836,8 +830,6 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 long long load_population_as_binaries_from_graph(char* filename, dBGraph* db_graph)
 {
 
-  printf("STart loading pop as binary\n");
-
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
     printf("load_population_as_binaries_from_graph cannot open file:%s\n",filename);
@@ -851,8 +843,6 @@ long long load_population_as_binaries_from_graph(char* filename, dBGraph* db_gra
 
   while(fgets(line,MAX_FILENAME_LENGTH, fp) !=NULL)
     {
-      
-      printf("Look at next line %s of file  %s\n", line, filename);
       
       //remove newline from end of line - replace with \0
       char* p;

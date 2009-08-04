@@ -2171,7 +2171,7 @@ void get_percent_novel_from_array_of_nodes(dBNode** array, int length, double* p
 // the edgearraytype and index for the reference are purely used for checking if nodes exist in the reference at all, or are novel. The trusted path is, in general, not necessarily the reference.
 // The trusted path comes entirely from chrom_fptr, and doe not need to be the same as the reference, as specified in arguments 4,5
 int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
-						EdgeArrayType which_array_holds_ref, int index_for_ref_in_supernode_array,
+						EdgeArrayType which_array_holds_ref, int index_for_ref_in_edge_array,
 						int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int max_anchor_span, int min_covg, int max_covg, 
 						int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
 						int max_desired_returns,
@@ -2657,8 +2657,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      num_variants_found++;
 
 
-	      // Note if max_desired_returns>0, then we are going to return the first max_desired_returns  results in the branch1_array etc
-	      // We can check this easily - if num_variants_found<max_desired_returns, then we add this result to the arrays
+	      // Note if max_desired_returns>0, then we are going to return the first max_desired_returns  results in the arguments passed in for this purpose, return_branch1_array etc
+	      // We can check this easily - if num_variants_found<max_desired_returns, then we add this result to the arrays. This is essentically used only for testing.
 
 
 	      
@@ -2667,6 +2667,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      int length_5p_flank = first_index_in_chrom_where_supernode_differs_from_chromosome-start_node_index-1;
 
 
+	      //work out start coordinate and print it out
 	      int start_coord_of_variant_in_trusted_path_fasta = coord_of_start_of_array_in_trusted_fasta + first_index_in_chrom_where_supernode_differs_from_chromosome + db_graph->kmer_size;
 	      fprintf(output_file, "VARIATION: %d, start coordinate %d\n", num_variants_found, start_coord_of_variant_in_trusted_path_fasta);
 	      
@@ -2674,6 +2675,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		{
 		  *(return_variant_start_coord[num_variants_found-1]) = start_coord_of_variant_in_trusted_path_fasta;
 		}
+
+
 
 	      int length_3p_flank = min_threeprime_flank_anchor;//we can do better than this. Probably, the two branches will be identical for some long stretch. Also quite possibly the 3prime anchor
 	                                                        //will extend further in the 3prime direction. We avoided doing this in the main search loop for efficiency's sake 
@@ -2704,8 +2707,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 	      
 	      //Here's an example of why you have to be careful
-	      // Supernode:      KingZamIqbalIsTheKingOfEngland
-	      // Ref:            KingZamFrenchFrenchFrenchFrenchZamIqbalIsTheKingOfEngland
+	      // Supernode:      KingZamIqbalIsTheBossOfEngland
+	      // Ref:            KingZamFrenchFrenchFrenchFrenchZamIqbalIsTheBossOfEngland
 
 	      //Our algorithm would say: OK, KingZam is the 5prime anchor, let's see if we can find a 3prime anchor that is 7 characters long (say). Aha! England will do. OK - can we extend backwards? Yes, we can extend backwards 
 	      // all the way back to Zam. But WAIT!! Zam is before the split!! That's fine, it means there is a repeat, just don't try and extend beyond there. Hence the else if condition marked below with ***
@@ -2742,7 +2745,11 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  else if ( (!traverse_sup_left_to_right) && (start_of_3prime_anchor_in_sup + j>= index_in_supernode_where_supernode_differs_from_chromosome-1) )
 		    {
 		      can_extend_further_in_5prime_dir=false;
-		    }  
+		    }
+		  else if (start_of_3prime_anchor_in_chrom-how_many_steps_in_5prime_dir_can_we_extend<=first_index_in_chrom_where_supernode_differs_from_chromosome)
+		    {
+		      can_extend_further_in_5prime_dir=false;
+		    }
 		  else
 		    {
 		      how_many_steps_in_5prime_dir_can_we_extend++;
@@ -2761,14 +2768,14 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  
 
 		  //sanity
-		  if (start_of_3prime_anchor_in_chrom-how_many_steps_in_5prime_dir_can_we_extend<=first_index_in_chrom_where_supernode_differs_from_chromosome)
-		    {
-		      //something has gone wrong
-		      printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point at which the variant starts in the TRUSTED array!!\n");
-		      printf("start_of_3prime_anchor_in_chrom = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, first_index_in_chrom_where_supernode_differs_from_chromosome=%d\n",
-			     start_of_3prime_anchor_in_chrom, how_many_steps_in_5prime_dir_can_we_extend,  first_index_in_chrom_where_supernode_differs_from_chromosome);
-		      exit(1);
-		    }
+		  //if (start_of_3prime_anchor_in_chrom-how_many_steps_in_5prime_dir_can_we_extend<=first_index_in_chrom_where_supernode_differs_from_chromosome)
+		  //  {
+		  //    //something has gone wrong
+		  //    printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point at which the variant starts in the TRUSTED array!!\n");
+		  //    printf("start_of_3prime_anchor_in_chrom = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, first_index_in_chrom_where_supernode_differs_from_chromosome=%d\n",
+		  //	     start_of_3prime_anchor_in_chrom, how_many_steps_in_5prime_dir_can_we_extend,  first_index_in_chrom_where_supernode_differs_from_chromosome);
+		  //    exit(1);
+		  //  }
 		  if (traverse_sup_left_to_right)
 		    {
 		      if (start_of_3prime_anchor_in_sup - how_many_steps_in_5prime_dir_can_we_extend <= index_in_supernode_where_supernode_differs_from_chromosome)
@@ -2875,7 +2882,15 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  start_of_3prime_anchor_in_sup += how_many_steps_in_5prime_dir_can_we_extend;
 		}
 
-
+	      //sanity
+	      if (start_of_3prime_anchor_in_chrom<= first_index_in_chrom_where_supernode_differs_from_chromosome)
+		{
+		  printf("Exit. start_of_3prime_anchor_in_chrom is %d and is less than first_index_in_chrom_where_supernode_differs_from_chromosome is %d. This is terrible. ", 
+			 start_of_3prime_anchor_in_chrom, first_index_in_chrom_where_supernode_differs_from_chromosome);
+		  printf("Start node index is %d, and coordinate in fasta file is %d\n", start_node_index, start_coord_of_variant_in_trusted_path_fasta);
+		  exit(1);
+		}
+	      
 
 
 	      char flank5p[length_5p_flank+1];
@@ -2900,7 +2915,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array, 
 							length_5p_flank, &flank5p_percent_novel,
-							which_array_holds_ref, index_for_ref_in_supernode_array);
+							which_array_holds_ref, index_for_ref_in_edge_array);
 				
 
 
@@ -2915,7 +2930,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank, 
 							length_5p_flank, &flank5p_percent_novel,
-							which_array_holds_ref, index_for_ref_in_supernode_array);
+							which_array_holds_ref, index_for_ref_in_edge_array);
 
 
 
@@ -2994,7 +3009,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 	      get_percent_novel_from_array_of_nodes(chrom_path_array+start_node_index+length_5p_flank, 
 						    len_trusted_branch, &trusted_branch_percent_novel,
-						    which_array_holds_ref, index_for_ref_in_supernode_array);
+						    which_array_holds_ref, index_for_ref_in_edge_array);
 	      
 
 	      print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_trusted_branch, 
@@ -3067,7 +3082,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array+length_5p_flank, 
 							len_branch2, &branch2_percent_novel,
-							which_array_holds_ref, index_for_ref_in_supernode_array);
+							which_array_holds_ref, index_for_ref_in_edge_array);
 
 
 
@@ -3157,7 +3172,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2, 
 							len_branch2, &branch2_percent_novel,
-							which_array_holds_ref, index_for_ref_in_supernode_array);
+							which_array_holds_ref, index_for_ref_in_edge_array);
 
 
 
@@ -3203,7 +3218,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array+length_5p_flank+len_branch2, 
 							length_3p_flank, &flank3p_percent_novel,
-							which_array_holds_ref, index_for_ref_in_supernode_array);
+							which_array_holds_ref, index_for_ref_in_edge_array);
 
 				
 
@@ -3216,7 +3231,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  get_percent_novel_from_array_of_nodes(current_supernode+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2-length_3p_flank, 
 							length_3p_flank, &flank3p_percent_novel,
-							which_array_holds_ref, index_for_ref_in_supernode_array);
+							which_array_holds_ref, index_for_ref_in_edge_array);
 
 			
 
@@ -3321,7 +3336,21 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 						      int index
 						      ){
 
+
+  if ( (fst_node==NULL) || (lst_node==NULL) )
+    {
+      printf("IGNORING print_fasta command as have been given a NULL node\n");
+      exit(1);
+      return;
+    }
     
+  if (fout==NULL)
+    {
+      printf("Exiting - have passed a null file pointer to print_fasta_from_path_for_specific_person_or_pop\n");
+      exit(1);
+    }
+
+
 
   char fst_f[5], fst_r[5],lst_f[5],lst_r[5];
 

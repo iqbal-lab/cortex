@@ -392,9 +392,6 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
 
 
 
-//Mario - worth noting this does direct translation, and does not return the smaller of kmer and rev_comp(kmer)
-// answer: this is the correct behaviour, isn't it?
-
 BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
   
   int j;
