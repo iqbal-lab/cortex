@@ -1567,7 +1567,7 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
 
 
   //Now find which person has the bext sub_supernode nucleated at this node 
-  int person_with_best_sub_supernode;
+  int person_with_best_sub_supernode=-1;
   int max=0;
   for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
     {
@@ -1750,7 +1750,7 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
   // Or    - we can go forward/reverse only, because the other direction has 0 or >1 edges.
   // Any other possibility breaks the condition that we are at a supernode end.
 
-  Orientation correct_direction_to_go;
+  Orientation correct_direction_to_go=forward;
 
   if (db_node_is_supernode_end(first_node_in_supernode,forward, type, index, db_graph))
     {
@@ -2746,7 +2746,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		    {
 		      can_extend_further_in_5prime_dir=false;
 		    }
-		  else if (start_of_3prime_anchor_in_chrom-how_many_steps_in_5prime_dir_can_we_extend<=first_index_in_chrom_where_supernode_differs_from_chromosome)
+		  else if (start_of_3prime_anchor_in_chrom-how_many_steps_in_5prime_dir_can_we_extend<=first_index_in_chrom_where_supernode_differs_from_chromosome+1)
 		    {
 		      can_extend_further_in_5prime_dir=false;
 		    }

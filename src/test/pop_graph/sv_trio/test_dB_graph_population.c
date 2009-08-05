@@ -885,6 +885,8 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
 
   //cleanup
 
+  free(kmer_window->kmer);
+  free(kmer_window);
   free(chrom_path_array);
   free(chrom_orientation_array);
   free(chrom_string);

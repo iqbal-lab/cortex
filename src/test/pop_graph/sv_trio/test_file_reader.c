@@ -1882,8 +1882,7 @@ void test_load_seq_into_array()
   CU_ASSERT(path_labels[779]==Adenine);
   CU_ASSERT(path_string[779]=='A');
 
-  printf("we get %c not A\n", path_string[749]);
-  printf("Region is %c%c%c%c %c %c%c%c%c\n", path_string[745], path_string[746], path_string[747], path_string[748], path_string[749], path_string[750], path_string[751], path_string[752], path_string[753]);
+
   CU_ASSERT_STRING_EQUAL("CGCAGGCGCAGAGACACATGCTAGCGCGTCC", binary_kmer_to_seq(path_nodes[799]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[799]==forward);
   CU_ASSERT(path_labels[798]==Cytosine);
@@ -1924,7 +1923,6 @@ void test_load_seq_into_array()
 
   //this node used to be at index 799:
   CU_ASSERT_STRING_EQUAL("CGCAGGCGCAGAGACACATGCTAGCGCGTCC", binary_kmer_to_seq(path_nodes[399]->kmer, db_graph->kmer_size, tmp_seq));
-  printf("Zam is %s, length %d\n", tmp_seq, (int) strlen(tmp_seq));
   CU_ASSERT(path_orientations[399]==forward);
   CU_ASSERT(path_labels[398]==Cytosine);
   CU_ASSERT(path_string[398]=='C');
@@ -1947,6 +1945,10 @@ void test_load_seq_into_array()
   free(path_string);
   hash_table_free(&db_graph);
 
+
+
+  free(kmer_window->kmer);
+  free(kmer_window);
 
 
   //  ****************************************************************************************************
