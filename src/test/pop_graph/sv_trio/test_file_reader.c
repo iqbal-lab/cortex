@@ -540,6 +540,9 @@ void test_load_seq_into_array()
   CU_ASSERT_STRING_EQUAL("CCC", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+1]==reverse);
   CU_ASSERT_STRING_EQUAL("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZG", path_string);
+  CU_ASSERT(path_labels[offset]==Guanine); 
+  CU_ASSERT(path_labels[offset+1]==Undefined); 
+  
 
   //we should now hit the end of the file, but it should not affect anything in our arrays
   CU_ASSERT(load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph)==0);
@@ -548,6 +551,9 @@ void test_load_seq_into_array()
   CU_ASSERT_STRING_EQUAL("CCC", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+1]==reverse);
   CU_ASSERT_STRING_EQUAL("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZG", path_string);
+  CU_ASSERT(path_labels[offset]==Guanine); 
+  CU_ASSERT(path_labels[offset+1]==Undefined); 
+
 
   fclose(fptr);
 
@@ -597,11 +603,13 @@ void test_load_seq_into_array()
   CU_ASSERT(path_orientations[offset]==forward);
   CU_ASSERT(path_labels[offset]==Undefined);
   CU_ASSERT(path_string[offset]=='G');
+  CU_ASSERT_STRING_EQUAL("G", path_string+offset);
+
 
   CU_ASSERT(path_nodes[offset+1]==NULL);
   CU_ASSERT(path_orientations[offset+1]==forward);
   CU_ASSERT(path_labels[offset+1]==Undefined);
-  // CU_ASSERT(path_string[offset+1]=='N');
+
 
   //we should now hit the end of the file, but it should not affect anything in our arrays
   CU_ASSERT(load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph)
@@ -614,7 +622,7 @@ void test_load_seq_into_array()
   CU_ASSERT(path_nodes[offset+1]==NULL);
   CU_ASSERT(path_orientations[offset+1]==forward);
   CU_ASSERT(path_labels[offset+1]==Undefined);
-  //  CU_ASSERT(path_string[offset+1]=='N');
+
 
 
 
@@ -763,7 +771,7 @@ void test_load_seq_into_array()
   CU_ASSERT(retvalue==num_of_nodes_to_read);
 
 
-  //******** here is where we test the path_string ***************
+  //  ******** here is where we test the path_string ***************
   CU_ASSERT_STRING_EQUAL("CGCGTTTACG", path_string+offset); 
 
 
@@ -775,45 +783,45 @@ void test_load_seq_into_array()
 
   CU_ASSERT_STRING_EQUAL("CGC", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+1]==forward);
-  CU_ASSERT(path_labels[offset+1]==Cytosine);
+  CU_ASSERT(path_labels[offset]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("CGC", binary_kmer_to_seq(path_nodes[offset+2]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+2]==reverse);
-  CU_ASSERT(path_labels[offset+2]==Guanine);
+  CU_ASSERT(path_labels[offset+1]==Guanine);
 
   CU_ASSERT_STRING_EQUAL("CGC", binary_kmer_to_seq(path_nodes[offset+3]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+3]==forward);
-  CU_ASSERT(path_labels[offset+3]==Cytosine);
+  CU_ASSERT(path_labels[offset+2]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("CGC", binary_kmer_to_seq(path_nodes[offset+4]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+4]==reverse);
-  CU_ASSERT(path_labels[offset+4]==Guanine);
+  CU_ASSERT(path_labels[offset+3]==Guanine);
 
   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[offset+5]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+5]==reverse);
-  CU_ASSERT(path_labels[offset+5]==Thymine);
+  CU_ASSERT(path_labels[offset+4]==Thymine);
 
   CU_ASSERT_STRING_EQUAL("AAC", binary_kmer_to_seq(path_nodes[offset+6]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+6]==reverse);
-  CU_ASSERT(path_labels[offset+6]==Thymine);
+  CU_ASSERT(path_labels[offset+5]==Thymine);
 
   //note that path_nodes[offset+7] is NOT NULL. even though it encoded a TTT. This is because we check for 1's in ALL 64 bits of the kmer,
   //whereas when you read a TTT you only get 1's in the first 6 bits.
   CU_ASSERT_STRING_EQUAL("AAA", binary_kmer_to_seq(path_nodes[offset+7]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+7]==reverse);
-  CU_ASSERT(path_labels[offset+7]==Thymine);
+  CU_ASSERT(path_labels[offset+6]==Thymine);
 
   CU_ASSERT_STRING_EQUAL("TAA", binary_kmer_to_seq(path_nodes[offset+8]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+8]==reverse);
-  CU_ASSERT(path_labels[offset+8]==Adenine );
+  CU_ASSERT(path_labels[offset+7]==Adenine );
 
   CU_ASSERT_STRING_EQUAL("GTA", binary_kmer_to_seq(path_nodes[offset+9]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+9]==reverse);
-  CU_ASSERT(path_labels[offset+9]==Cytosine);
+  CU_ASSERT(path_labels[offset+8]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[offset+10]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+10]==forward);
-  CU_ASSERT(path_labels[offset+10]==Guanine);
+  CU_ASSERT(path_labels[offset+9]==Guanine);
 
   
   //now reach the end of file
@@ -829,52 +837,53 @@ void test_load_seq_into_array()
 
   CU_ASSERT_STRING_EQUAL("CGC", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+1]==forward);
-  CU_ASSERT(path_labels[offset+1]==Cytosine);
+  CU_ASSERT(path_labels[offset]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("CGC", binary_kmer_to_seq(path_nodes[offset+2]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+2]==reverse);
-  CU_ASSERT(path_labels[offset+2]==Guanine);
+  CU_ASSERT(path_labels[offset+1]==Guanine);
 
   CU_ASSERT_STRING_EQUAL("CGC", binary_kmer_to_seq(path_nodes[offset+3]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+3]==forward);
-  CU_ASSERT(path_labels[offset+3]==Cytosine);
+  CU_ASSERT(path_labels[offset+2]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("CGC", binary_kmer_to_seq(path_nodes[offset+4]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+4]==reverse);
-  CU_ASSERT(path_labels[offset+4]==Guanine);
+  CU_ASSERT(path_labels[offset+3]==Guanine);
 
   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[offset+5]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+5]==reverse);
-  CU_ASSERT(path_labels[offset+5]==Thymine);
+  CU_ASSERT(path_labels[offset+4]==Thymine);
 
   CU_ASSERT_STRING_EQUAL("AAC", binary_kmer_to_seq(path_nodes[offset+6]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+6]==reverse);
-  CU_ASSERT(path_labels[offset+6]==Thymine);
+  CU_ASSERT(path_labels[offset+5]==Thymine);
 
   //note that path_nodes[offset+7] is NOT NULL. even though it encoded a TTT. This is because we check for 1's in ALL 64 bits of the kmer,
   //whereas when you read a TTT you only get 1's in the first 6 bits.
   CU_ASSERT_STRING_EQUAL("AAA", binary_kmer_to_seq(path_nodes[offset+7]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+7]==reverse);
-  CU_ASSERT(path_labels[offset+7]==Thymine);
+  CU_ASSERT(path_labels[offset+6]==Thymine);
 
   CU_ASSERT_STRING_EQUAL("TAA", binary_kmer_to_seq(path_nodes[offset+8]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+8]==reverse);
-  CU_ASSERT(path_labels[offset+8]==Adenine );
+  CU_ASSERT(path_labels[offset+7]==Adenine );
 
   CU_ASSERT_STRING_EQUAL("GTA", binary_kmer_to_seq(path_nodes[offset+9]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+9]==reverse);
-  CU_ASSERT(path_labels[offset+9]==Cytosine);
+  CU_ASSERT(path_labels[offset+8]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[offset+10]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+10]==forward);
-  CU_ASSERT(path_labels[offset+10]==Guanine);
+  CU_ASSERT(path_labels[offset+9]==Guanine);
 
   fclose(fptr);
   free_sequence(&seq);
 
 
 
-  /*
+
+
   
   // ****************************************************************************************
   // Example 5: Fasta contains a chunk of chromosome 1
@@ -902,7 +911,6 @@ void test_load_seq_into_array()
       exit(1);
     }
 
-
   seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson5really", &bad_reads, db_graph);
   CU_ASSERT(seq_loaded==360);
   fptr = fopen("../data/test/pop_graph/simple5.fasta", "r");
@@ -917,8 +925,6 @@ void test_load_seq_into_array()
   length_of_arrays=400;
 
 
-  //need more space in seq
-  free_sequence(&seq);
   seq = malloc(sizeof(Sequence));
   if (seq == NULL){
     fputs("Out of memory trying to allocate Sequence\n",stderr);
@@ -941,6 +947,18 @@ void test_load_seq_into_array()
       exit(1);
     }
 
+  //initialise
+  for (i=0; i<length_of_arrays; i++)
+    {
+      path_nodes[i]=NULL;
+      path_orientations[i]=forward;
+      path_labels[i]=Undefined;
+    }
+  for (i=0; i< length_of_arrays+max_kmer_size_used_in_this_test; i++)
+    {
+      path_string[i]='Z';
+    }
+  path_string[length_of_arrays+max_kmer_size_used_in_this_test]='\0';
 
 
   expecting_new_fasta_entry=true;
@@ -951,53 +969,55 @@ void test_load_seq_into_array()
 
   CU_ASSERT(retvalue==num_of_nodes_to_read);  
 
-  CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAACCCTAACCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAAACCCTAAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCAACCCCAACCCCAACCCCAACCCCAACCCCAACCCTAACCCCTAACCCTAACCCTAACCCTACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAACCCTCGCGGTACCCTC", path_string+offset);
+  //path_string should be the sequence loaded, but not the first kmer - ie matches the edges
+  CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAAACCCTAAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCAACCCCAACCCCAACCCCAACCCCAACCCCAACCCTAACCCCTAACCCTAACCCTAACCCTACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAACCCTCGCGGTACCCTC", path_string+offset);
+
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCT", binary_kmer_to_seq(path_nodes[offset]->kmer, db_graph->kmer_size, tmp_seq));
 
   CU_ASSERT_STRING_EQUAL("ACCCTAACCCTAACCCTAACCCTAACCCCTA", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+1]==forward);
-  CU_ASSERT(path_labels[offset+1]==Adenine);
+  CU_ASSERT(path_labels[offset]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("CCCTAACCCTAACCCTAACCCTAACCCCTAA", binary_kmer_to_seq(path_nodes[offset+2]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+2]==forward);
-  CU_ASSERT(path_labels[offset+2]==Adenine);
+  CU_ASSERT(path_labels[offset+1]==Adenine);
 
 
   CU_ASSERT_STRING_EQUAL("CCTAACCCTAACCCTAACCCTAACCCCTAAC", binary_kmer_to_seq(path_nodes[offset+3]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+3]==forward);
-  CU_ASSERT(path_labels[offset+3]==Cytosine);
+  CU_ASSERT(path_labels[offset+2]==Cytosine);
 
   
   CU_ASSERT_STRING_EQUAL("CTAACCCTAACCCTAACCCTAACCCCTAACC", binary_kmer_to_seq(path_nodes[offset+4]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+4]==forward);
-  CU_ASSERT(path_labels[offset+4]==Cytosine);
+  CU_ASSERT(path_labels[offset+3]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("GGGTTAGGGGTTAGGGTTAGGGTTAGGGTTA", binary_kmer_to_seq(path_nodes[offset+5]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+5]==reverse);
-  CU_ASSERT(path_labels[offset+5]==Cytosine);
+  CU_ASSERT(path_labels[offset+4]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCCTAACCCT", binary_kmer_to_seq(path_nodes[offset+6]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+6]==forward);
-  CU_ASSERT(path_labels[offset+6]==Thymine);
+  CU_ASSERT(path_labels[offset+5]==Thymine);
 
   CU_ASSERT_STRING_EQUAL("ACCCTAACCCTAACCCTAACCCCTAACCCTA", binary_kmer_to_seq(path_nodes[offset+7]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+7]==forward);
-  CU_ASSERT(path_labels[offset+7]==Adenine);
+  CU_ASSERT(path_labels[offset+6]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("CCCTAACCCTAACCCTAACCCCTAACCCTAA", binary_kmer_to_seq(path_nodes[offset+8]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+8]==forward);
-  CU_ASSERT(path_labels[offset+8]==Adenine);
+  CU_ASSERT(path_labels[offset+7]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("CCTAACCCTAACCCTAACCCCTAACCCTAAC", binary_kmer_to_seq(path_nodes[offset+9]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+9]==forward);
-  CU_ASSERT(path_labels[offset+9]==Cytosine);
+  CU_ASSERT(path_labels[offset+8]==Cytosine);
   
 
   //and one node near the end
   CU_ASSERT_STRING_EQUAL("CCTAACCCTAACCCCTAACCCTAACCCTAAC", binary_kmer_to_seq(path_nodes[offset+308]->kmer,db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+308]==forward);
-  CU_ASSERT(path_labels[offset+308]==Cytosine);
+  CU_ASSERT(path_labels[offset+307]==Cytosine);
 
 
   fclose(fptr);
@@ -1028,30 +1048,42 @@ void test_load_seq_into_array()
   expecting_new_fasta_entry=true;
   offset=length_of_arrays-num_of_nodes_to_read;
 
+  //initialise
+  for (i=0; i<length_of_arrays; i++)
+    {
+      path_nodes[i]=NULL;
+      path_orientations[i]=forward;
+      path_labels[i]=Undefined;
+    }
+  for (i=0; i< length_of_arrays+max_kmer_size_used_in_this_test; i++)
+    {
+      path_string[i]='Z';
+    }
+  path_string[length_of_arrays+max_kmer_size_used_in_this_test]='\0';
 
   retvalue = load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
 
   CU_ASSERT(retvalue==num_of_nodes_to_read);
 
-  CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCTAACCNTAACCCTAACCCTAACCCTAACCTAACCCTAA", path_string+offset);
+  CU_ASSERT_STRING_EQUAL("AACCNTAACCCTAACCCTAACCCTAACCTAACCCTAA", path_string+offset);
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCT", binary_kmer_to_seq(path_nodes[offset]->kmer, db_graph->kmer_size, tmp_seq));
 
   CU_ASSERT_STRING_EQUAL("ACCCTAACCCTAACCCTAACCCTAACCCCTA", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+1]==forward);
-  CU_ASSERT(path_labels[offset+1]==Adenine);
+  CU_ASSERT(path_labels[offset]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("CCCTAACCCTAACCCTAACCCTAACCCCTAA", binary_kmer_to_seq(path_nodes[offset+2]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+2]==forward);
-  CU_ASSERT(path_labels[offset+2]==Adenine);
+  CU_ASSERT(path_labels[offset+1]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("CCTAACCCTAACCCTAACCCTAACCCCTAAC", binary_kmer_to_seq(path_nodes[offset+3]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+3]==forward);
-  CU_ASSERT(path_labels[offset+3]==Cytosine);
+  CU_ASSERT(path_labels[offset+2]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("CTAACCCTAACCCTAACCCTAACCCCTAACC", binary_kmer_to_seq(path_nodes[offset+4]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+4]==forward);
-  CU_ASSERT(path_labels[offset+4]==Cytosine);
+  CU_ASSERT(path_labels[offset+3]==Cytosine);
 
 
   for (i=0; i<31; i++)
@@ -1061,11 +1093,12 @@ void test_load_seq_into_array()
 
   CU_ASSERT_STRING_EQUAL("TAACCCTAACCCTAACCCTAACCTAACCCTA", binary_kmer_to_seq(path_nodes[offset+36]->kmer,  db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+36]==forward);
-  CU_ASSERT(path_labels[offset+36]==Undefined);  // ******** <<<<<<<<<<<< this is important!!!
+  CU_ASSERT(path_labels[offset+35]==Undefined);  // ******** <<<<<<<<<<<< this is important!!!
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCTAACCCTAA", binary_kmer_to_seq(path_nodes[offset+37]->kmer,  db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+37]==forward);
-  CU_ASSERT(path_labels[offset+37]==Adenine);
+  CU_ASSERT(path_labels[offset+36]==Adenine);
+
 
 
 
@@ -1094,31 +1127,44 @@ void test_load_seq_into_array()
   expecting_new_fasta_entry=true;
   offset=length_of_arrays-num_of_nodes_to_read;
 
+  //initialise
+  for (i=0; i<length_of_arrays; i++)
+    {
+      path_nodes[i]=NULL;
+      path_orientations[i]=forward;
+      path_labels[i]=Undefined;
+    }
+  for (i=0; i< length_of_arrays+max_kmer_size_used_in_this_test; i++)
+    {
+      path_string[i]='Z';
+    }
+  path_string[length_of_arrays+max_kmer_size_used_in_this_test]='\0';
+
 
   retvalue = load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
 
 
   CU_ASSERT(retvalue==num_of_nodes_to_read);
 
-  CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCTAACCNNNNNTAACCCTAACCCTAACCCTAACCTAACCCTAA", path_string+offset);
+  CU_ASSERT_STRING_EQUAL("AACCNNNNNTAACCCTAACCCTAACCCTAACCTAACCCTAA", path_string+offset);
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCT", binary_kmer_to_seq(path_nodes[offset]->kmer, db_graph->kmer_size, tmp_seq));
 
   CU_ASSERT_STRING_EQUAL("ACCCTAACCCTAACCCTAACCCTAACCCCTA", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+1]==forward);
-  CU_ASSERT(path_labels[offset+1]==Adenine);
+  CU_ASSERT(path_labels[offset]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("CCCTAACCCTAACCCTAACCCTAACCCCTAA", binary_kmer_to_seq(path_nodes[offset+2]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+2]==forward);
-  CU_ASSERT(path_labels[offset+2]==Adenine);
+  CU_ASSERT(path_labels[offset+1]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("CCTAACCCTAACCCTAACCCTAACCCCTAAC", binary_kmer_to_seq(path_nodes[offset+3]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+3]==forward);
-  CU_ASSERT(path_labels[offset+3]==Cytosine);
+  CU_ASSERT(path_labels[offset+2]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("CTAACCCTAACCCTAACCCTAACCCCTAACC", binary_kmer_to_seq(path_nodes[offset+4]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+4]==forward);
-  CU_ASSERT(path_labels[offset+4]==Cytosine);
+  CU_ASSERT(path_labels[offset+3]==Cytosine);
 
 
   for (i=0; i<35; i++)
@@ -1128,14 +1174,17 @@ void test_load_seq_into_array()
 
   CU_ASSERT_STRING_EQUAL("TAACCCTAACCCTAACCCTAACCTAACCCTA", binary_kmer_to_seq(path_nodes[offset+40]->kmer,  db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+40]==forward);
-  CU_ASSERT(path_labels[offset+40]==Undefined);  // ******** <<<<<<<<<<<< this is important!!!
+  CU_ASSERT(path_labels[offset+39]==Undefined);  // ******** <<<<<<<<<<<< this is important!!!
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCTAACCCTAA", binary_kmer_to_seq(path_nodes[offset+41]->kmer,  db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+41]==forward);
-  CU_ASSERT(path_labels[offset+41]==Adenine);
+  CU_ASSERT(path_labels[offset+40]==Adenine);
 
 
   fclose(fptr);
+
+
+
 
 
   // ****************************************************************************************
@@ -1193,6 +1242,21 @@ void test_load_seq_into_array()
       exit(1);
     }
 
+
+  //initialise
+  for (i=0; i<length_of_arrays; i++)
+    {
+      path_nodes[i]=NULL;
+      path_orientations[i]=forward;
+      path_labels[i]=Undefined;
+    }
+  for (i=0; i< length_of_arrays+max_kmer_size_used_in_this_test; i++)
+    {
+      path_string[i]='Z';
+    }
+  path_string[length_of_arrays+max_kmer_size_used_in_this_test]='\0';
+
+
   seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson8really", &bad_reads, db_graph);
   CU_ASSERT(seq_loaded==10);
   fptr = fopen("../data/test/pop_graph/simple8.fasta", "r");
@@ -1208,10 +1272,8 @@ void test_load_seq_into_array()
 
 
   CU_ASSERT(retvalue==num_of_nodes_to_read);
-
-  iqbal - hold on confusion about whether path_string has forst kmer or not;
   
-  CU_ASSERT_STRING_EQUAL(
+  CU_ASSERT_STRING_EQUAL("AACGT", path_string+offset);
 
   CU_ASSERT(path_nodes[offset]==NULL);
   CU_ASSERT(path_nodes[offset+1]==NULL);
@@ -1221,13 +1283,14 @@ void test_load_seq_into_array()
 
   CU_ASSERT_STRING_EQUAL("AAACG", binary_kmer_to_seq(path_nodes[offset+4]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+4]==forward);
-  CU_ASSERT(path_labels[offset+4]==Undefined);
+  CU_ASSERT(path_labels[offset+3]==Undefined);
 
   CU_ASSERT_STRING_EQUAL("AACGT", binary_kmer_to_seq(path_nodes[offset+5]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+5]==forward);
-  CU_ASSERT(path_labels[offset+5]==Thymine);
+  CU_ASSERT(path_labels[offset+4]==Thymine);
 
   fclose(fptr);
+
   
 
 
@@ -1262,12 +1325,26 @@ void test_load_seq_into_array()
       exit(1);
     }
 
+  //initialise
+  for (i=0; i<length_of_arrays; i++)
+    {
+      path_nodes[i]=NULL;
+      path_orientations[i]=forward;
+      path_labels[i]=Undefined;
+    }
+  for (i=0; i< length_of_arrays+max_kmer_size_used_in_this_test; i++)
+    {
+      path_string[i]='Z';
+    }
+  path_string[length_of_arrays+max_kmer_size_used_in_this_test]='\0';
 
 
   retvalue = load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
 
 
   CU_ASSERT(retvalue==num_of_nodes_to_read);
+  CU_ASSERT_STRING_EQUAL("AANAAANAAAANCGTCT", path_string+offset);
+  
   CU_ASSERT(path_nodes[offset]==NULL);
   CU_ASSERT(path_nodes[offset+1]==NULL);
   CU_ASSERT(path_nodes[offset+2]==NULL);
@@ -1289,7 +1366,7 @@ void test_load_seq_into_array()
 
   CU_ASSERT_STRING_EQUAL("AGACG", binary_kmer_to_seq(path_nodes[offset+17]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+4]==forward);
-  CU_ASSERT(path_labels[offset+4]==Undefined);
+  CU_ASSERT(path_labels[offset+3]==Undefined);
 
   free_sequence(&seq);
   free(path_nodes);
@@ -1312,8 +1389,7 @@ void test_load_seq_into_array()
 
 
 
-
-
+  // ****************************************************************************************
   // Example 10 - simplest example of loading batches. We will have an array of length 8, and load 4 bases at a time.
   // 
 
@@ -1358,6 +1434,20 @@ void test_load_seq_into_array()
       exit(1);
     }
 
+  //initialise
+  for (i=0; i<length_of_arrays; i++)
+    {
+      path_nodes[i]=NULL;
+      path_orientations[i]=forward;
+      path_labels[i]=Undefined;
+    }
+  for (i=0; i< length_of_arrays+max_kmer_size_used_in_this_test; i++)
+    {
+      path_string[i]='Z';
+    }
+  path_string[length_of_arrays+max_kmer_size_used_in_this_test]='\0';
+
+
 
   seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson10really", &bad_reads, db_graph);
   CU_ASSERT(seq_loaded==16);
@@ -1392,12 +1482,11 @@ void test_load_seq_into_array()
 
   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[offset]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset]==forward);
-  CU_ASSERT(path_labels[offset]==Undefined);
-
+  CU_ASSERT_STRING_EQUAL("T", path_string+offset);
 
   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+1]==reverse);
-  CU_ASSERT(path_labels[offset+1]==Thymine);
+  CU_ASSERT(path_labels[offset]==Thymine);
 
 
   //now we want to read another 4 nodes
@@ -1409,6 +1498,7 @@ void test_load_seq_into_array()
       path_nodes[i]       = path_nodes[i+num_of_nodes_to_read];
       path_orientations[i]= path_orientations[i+num_of_nodes_to_read];
       path_labels[i]      = path_labels[i+num_of_nodes_to_read];
+      path_string[i]      = path_string[i+num_of_nodes_to_read];
     }
 
   //check we have moved it correctly! Arrays are length 8, and we have loaded 4 bases=2 kmers so far
@@ -1419,20 +1509,22 @@ void test_load_seq_into_array()
       CU_ASSERT(path_labels[i]==Undefined);
     }
    CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[2]->kmer, db_graph->kmer_size, tmp_seq));
+   CU_ASSERT_STRING_EQUAL("T", path_string+offset-num_of_nodes_to_read);//offset
 
-
-  CU_ASSERT(path_orientations[2]==forward);
-  CU_ASSERT(path_labels[2]==Undefined);
-  CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[3]->kmer, db_graph->kmer_size, tmp_seq));
-  CU_ASSERT(path_orientations[3]==reverse);
-  CU_ASSERT(path_labels[3]==Thymine);
+   CU_ASSERT(path_orientations[2]==forward);
+   CU_ASSERT(path_labels[1]==Undefined);
+   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[3]->kmer, db_graph->kmer_size, tmp_seq));
+   CU_ASSERT(path_orientations[3]==reverse);
+   CU_ASSERT(path_labels[2]==Thymine);
   
   //move final kmer to the start of seq. 
   for (i=0; i<db_graph->kmer_size; i++)
-   {
-     seq->seq[i]=seq->seq[num_of_nodes_to_read-db_graph->kmer_size+i];
+  {
+  seq->seq[i]=seq->seq[num_of_nodes_to_read-db_graph->kmer_size+i];
    }
   
+  //and of course offset alters:
+  offset=offset-num_of_nodes_to_read;
 
   //OK - now ready to load next batch, this time of 4 nodes, remembering that now we no longer expect a new fasta entry.
   expecting_new_fasta_entry=false;
@@ -1440,38 +1532,42 @@ void test_load_seq_into_array()
   CU_ASSERT(retvalue==num_of_nodes_to_read); 
 
 
+  CU_ASSERT_STRING_EQUAL("TACGT", path_string+offset);
+
+
   //first four entries in array unchanged
   //check first 4 entries
   for (i=0; i<2; i++)
-    {
-      CU_ASSERT(path_nodes[i]==NULL);
-      CU_ASSERT(path_orientations[i]==forward);
-      CU_ASSERT(path_labels[i]==Undefined);
-    }
-
+  {
+  CU_ASSERT(path_nodes[i]==NULL);
+  CU_ASSERT(path_orientations[i]==forward);
+  CU_ASSERT(path_labels[i]==Undefined);
+  }
+  
+    
   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[2]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[2]==forward);
-  CU_ASSERT(path_labels[2]==Undefined);
+  CU_ASSERT(path_labels[1]==Undefined);
   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[3]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[3]==reverse);
-  CU_ASSERT(path_labels[3]==Thymine);
+  CU_ASSERT(path_labels[2]==Thymine);
 
   //check last 4
   CU_ASSERT_STRING_EQUAL("GTA", binary_kmer_to_seq(path_nodes[4]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[4]==forward);
-  CU_ASSERT(path_labels[4]==Adenine);
+  CU_ASSERT(path_labels[3]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("GTA", binary_kmer_to_seq(path_nodes[5]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[5]==reverse);
-  CU_ASSERT(path_labels[5]==Cytosine);
+  CU_ASSERT(path_labels[4]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[6]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[6]==forward);
-  CU_ASSERT(path_labels[6]==Guanine);
+  CU_ASSERT(path_labels[5]==Guanine);
 
   CU_ASSERT_STRING_EQUAL("ACG", binary_kmer_to_seq(path_nodes[7]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[7]==reverse);
-  CU_ASSERT(path_labels[7]==Thymine);
+  CU_ASSERT(path_labels[6]==Thymine);
 
 
 
@@ -1482,6 +1578,8 @@ void test_load_seq_into_array()
   free(path_string);
   hash_table_free(&db_graph);
 
+
+  
 
 
 
@@ -1553,6 +1651,22 @@ void test_load_seq_into_array()
       exit(1);
     }
 
+  //initialise
+  for (i=0; i<length_of_arrays; i++)
+    {
+      path_nodes[i]=NULL;
+      path_orientations[i]=forward;
+      path_labels[i]=Undefined;
+    }
+  for (i=0; i< length_of_arrays+max_kmer_size_used_in_this_test; i++)
+    {
+      path_string[i]='Z';
+    }
+  path_string[length_of_arrays+max_kmer_size_used_in_this_test]='\0';
+
+
+
+
 
   seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson11really", &bad_reads, db_graph);
   CU_ASSERT(seq_loaded==1140);
@@ -1574,9 +1688,11 @@ void test_load_seq_into_array()
   
   //when we load the first chunk, we expect the start of an entry..
   expecting_new_fasta_entry=true;
+
   //remember offset is not passed into the function call, it just tells us where we expect the answers to be
   offset=length_of_arrays-num_of_nodes_to_read;
 
+  // *********** first batch load *************
   retvalue = load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
 
   CU_ASSERT(retvalue==num_of_nodes_to_read);
@@ -1590,56 +1706,49 @@ void test_load_seq_into_array()
     }
   
 
+  //take first 430 bases of file = first 400 nodes, MINUS the first 31-mer
+  CU_ASSERT_STRING_EQUAL( "AACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAACCCTAACCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAAACCCTAAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCAACCCCAACCCCAACCCCAACCCCAACCCCAACCCTAACCCCTAACCCTAACCCTAACCCTACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCCTAACCCTAACCCTAACCCTAACCCTAACCC" ,path_string+offset);
+
+
   CU_ASSERT_STRING_EQUAL("AGGGTTAGGGTTAGGGTTAGGGTTAGGGTTA", binary_kmer_to_seq(path_nodes[offset]->kmer, db_graph->kmer_size, tmp_seq)); //reverse complement of first kmer in fasta - TAACCCTAACCCTAACCCTAACCCTAACCCT
   CU_ASSERT(path_orientations[offset]==reverse);
-  CU_ASSERT(path_labels[offset]==Undefined);
-  CU_ASSERT(path_string[offset]=='N');
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCTA", binary_kmer_to_seq(path_nodes[offset+1]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+1]==forward);
-  CU_ASSERT(path_labels[offset+1]==Adenine);
-  CU_ASSERT(path_string[offset+1]=='A');
+  CU_ASSERT(path_labels[offset]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("ACCCTAACCCTAACCCTAACCCTAACCCTAA", binary_kmer_to_seq(path_nodes[offset+2]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+2]==forward);
-  CU_ASSERT(path_labels[offset+2]==Adenine);
-  CU_ASSERT(path_string[offset+2]=='A');
+  CU_ASSERT(path_labels[offset+1]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("CCCTAACCCTAACCCTAACCCTAACCCTAAC", binary_kmer_to_seq(path_nodes[offset+3]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+3]==forward);
-  CU_ASSERT(path_labels[offset+3]==Cytosine);
-  CU_ASSERT(path_string[offset+3]=='C');
+  CU_ASSERT(path_labels[offset+2]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("AGGGTTAGGGTTAGGGTTAGGGTTAGGGTTA", binary_kmer_to_seq(path_nodes[offset+60]->kmer, db_graph->kmer_size, tmp_seq)); //first kmer on second line of fasta
   CU_ASSERT(path_orientations[offset+60]==reverse);
-  CU_ASSERT(path_labels[offset+60]==Thymine);
-  CU_ASSERT(path_string[offset+60]=='T');
+  CU_ASSERT(path_labels[offset+59]==Thymine);
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCT", binary_kmer_to_seq(path_nodes[offset+120]->kmer, db_graph->kmer_size, tmp_seq)); 
   CU_ASSERT(path_orientations[offset+120]==forward);
-  CU_ASSERT(path_labels[offset+120]==Thymine);
-  CU_ASSERT(path_string[offset+120]=='T');
+  CU_ASSERT(path_labels[offset+119]==Thymine);
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCTA", binary_kmer_to_seq(path_nodes[offset+180]->kmer, db_graph->kmer_size, tmp_seq)); 
   CU_ASSERT(path_orientations[offset+180]==forward);
-  CU_ASSERT(path_labels[offset+180]==Adenine);
-  CU_ASSERT(path_string[offset+180]=='A');
+  CU_ASSERT(path_labels[offset+179]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("GGTTAGGGTTAGGGTTTAGGGTTTAGGGTTA", binary_kmer_to_seq(path_nodes[offset+240]->kmer, db_graph->kmer_size, tmp_seq)); 
   CU_ASSERT(path_orientations[offset+240]==reverse);
-  CU_ASSERT(path_labels[offset+240]==Cytosine);
-  CU_ASSERT(path_string[offset+240]=='C');
+  CU_ASSERT(path_labels[offset+239]==Cytosine);
                           
   CU_ASSERT_STRING_EQUAL("CCTAACCCTAACCCTAACCCTAACCCTAACC", binary_kmer_to_seq(path_nodes[offset+360]->kmer, db_graph->kmer_size, tmp_seq)); 
   CU_ASSERT(path_orientations[offset+360]==forward);
-  CU_ASSERT(path_labels[offset+360]==Cytosine);
-  CU_ASSERT(path_string[offset+360]=='C');
+  CU_ASSERT(path_labels[offset+359]==Cytosine);
 
 
   CU_ASSERT_STRING_EQUAL("CTAACCCTAACCCTAACCCTAACCCTAACCC", binary_kmer_to_seq(path_nodes[offset+399]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[offset+399]==forward);
-  CU_ASSERT(path_labels[offset+399]==Cytosine);
-  CU_ASSERT(path_string[offset+399]=='C');
+  CU_ASSERT(path_labels[offset+398]==Cytosine);
 
 
   //first batch correctly loaded. Now load another 400, and ensure the transition is OK. num_of_nodes_to_read is already = 400
@@ -1675,68 +1784,66 @@ void test_load_seq_into_array()
 
 
 
+
   //load in another 400
   expecting_new_fasta_entry=false;
+
+
+  // *********** second batch load *************
   retvalue = load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
   CU_ASSERT(retvalue==num_of_nodes_to_read);
   
 
-  
-  //First the obvious - thse nodes that were between offset and offset+399 should now be between 0 and 399
-  //this is just checking my test essentially,
+  // First the obvious - these nodes that were between offset and offset+399 should now be between 0 and 399
+  // this is just checking my test essentially,
+
 
   CU_ASSERT_STRING_EQUAL("AGGGTTAGGGTTAGGGTTAGGGTTAGGGTTA", binary_kmer_to_seq(path_nodes[offset]->kmer, db_graph->kmer_size, tmp_seq)); //reverse complement of first kmer in fasta - TAACCCTAACCCTAACCCTAACCCTAACCCT
   CU_ASSERT(path_orientations[0]==reverse);
-  CU_ASSERT(path_labels[0]==Undefined);
-  CU_ASSERT(path_string[0]=='N');
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCTA", binary_kmer_to_seq(path_nodes[1]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[1]==forward);
   CU_ASSERT(path_labels[1]==Adenine);
-  CU_ASSERT(path_string[1]=='A');
 
   CU_ASSERT_STRING_EQUAL("ACCCTAACCCTAACCCTAACCCTAACCCTAA", binary_kmer_to_seq(path_nodes[2]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[2]==forward);
-  CU_ASSERT(path_labels[2]==Adenine);
-  CU_ASSERT(path_string[2]=='A');
+  CU_ASSERT(path_labels[1]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("CCCTAACCCTAACCCTAACCCTAACCCTAAC", binary_kmer_to_seq(path_nodes[3]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[3]==forward);
-  CU_ASSERT(path_labels[3]==Cytosine);
-  CU_ASSERT(path_string[3]=='C');
+  CU_ASSERT(path_labels[2]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("AGGGTTAGGGTTAGGGTTAGGGTTAGGGTTA", binary_kmer_to_seq(path_nodes[60]->kmer, db_graph->kmer_size, tmp_seq)); //first kmer on second line of fasta
   CU_ASSERT(path_orientations[60]==reverse);
-  CU_ASSERT(path_labels[60]==Thymine);
-  CU_ASSERT(path_string[60]=='T');
+  CU_ASSERT(path_labels[59]==Thymine);
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCCT", binary_kmer_to_seq(path_nodes[120]->kmer, db_graph->kmer_size, tmp_seq)); 
   CU_ASSERT(path_orientations[120]==forward);
-  CU_ASSERT(path_labels[120]==Thymine);
-  CU_ASSERT(path_string[120]=='T');
+  CU_ASSERT(path_labels[119]==Thymine);
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCTA", binary_kmer_to_seq(path_nodes[180]->kmer, db_graph->kmer_size, tmp_seq)); 
   CU_ASSERT(path_orientations[180]==forward);
-  CU_ASSERT(path_labels[180]==Adenine);
-  CU_ASSERT(path_string[180]=='A');
+  CU_ASSERT(path_labels[179]==Adenine);
 
   CU_ASSERT_STRING_EQUAL("GGTTAGGGTTAGGGTTTAGGGTTTAGGGTTA", binary_kmer_to_seq(path_nodes[240]->kmer, db_graph->kmer_size, tmp_seq)); 
   CU_ASSERT(path_orientations[240]==reverse);
-  CU_ASSERT(path_labels[240]==Cytosine);
-  CU_ASSERT(path_string[240]=='C');
+  CU_ASSERT(path_labels[239]==Cytosine);
                           
   CU_ASSERT_STRING_EQUAL("CCTAACCCTAACCCTAACCCTAACCCTAACC", binary_kmer_to_seq(path_nodes[360]->kmer, db_graph->kmer_size, tmp_seq)); 
   CU_ASSERT(path_orientations[360]==forward);
-  CU_ASSERT(path_labels[360]==Cytosine);
-  CU_ASSERT(path_string[360]=='C');
-
+  CU_ASSERT(path_labels[359]==Cytosine);
 
   CU_ASSERT_STRING_EQUAL("CTAACCCTAACCCTAACCCTAACCCTAACCC", binary_kmer_to_seq(path_nodes[399]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[399]==forward);
-  CU_ASSERT(path_labels[399]==Cytosine);
-  CU_ASSERT(path_string[399]=='C');
+  CU_ASSERT(path_labels[398]==Cytosine);
 
   //now the new nodes :-)
+
+
+
+  //with path_string test the whole lot in one go
+
+  CU_ASSERT_STRING_EQUAL( "AACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAACCCTAACCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAAACCCTAAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCAACCCCAACCCCAACCCCAACCCCAACCCCAACCCTAACCCCTAACCCTAACCCTAACCCTACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAACCCTCGCGGTACCCTCAGCCGGCCCGCCCGCCCGGGTCTGACCTGAGGAGAACTGTGCTCCGCCTTCAGAGTACCACCGAAATCTGTGCAGAGGACAACGCAGCTCCGCCCTCGCGGTGCTCTCCGGGTCTGTGCTGAGGAGAACGCAACTCCGCCGGCGCAGGCGCAGAGAGGCGCGCCGCGCCGGCGCAGGCGCAGACACATGCTAGCGCGTCGGGGTGGAGGCGTGGCGCAGGCGCAGAGAGGCGCGCCGCGCCGGCGCAGGCGCAGAGACACATGCTACCGCGTCCAGGGGTGGAGGCGTGGCGCAGGCGCAGAGAGGCGCACCGCGCCGGCGCAGGCGCAGAGACACATGCTAGCGCGTCC",path_string);
 
 
   
@@ -1746,41 +1853,41 @@ void test_load_seq_into_array()
   // ******** these next two asserts are VERY IMPORTANT **********************
   // ********  they test whether we get the correct edges across points where we load more nodes into the array
 
-  CU_ASSERT(path_labels[400]==Thymine);   
-  CU_ASSERT(path_string[400]=='T');
-
+  CU_ASSERT(path_labels[399]==Thymine);   
+  CU_ASSERT(path_string[399]=='T'); //iqbal
 
   CU_ASSERT_STRING_EQUAL("AACCCTAACCCTAACCCTAACCCTAACCCTA", binary_kmer_to_seq(path_nodes[401]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[401]==forward);
-  CU_ASSERT(path_labels[401]==Adenine);
-  CU_ASSERT(path_string[401]=='A');
+  CU_ASSERT(path_labels[400]==Adenine);
+  CU_ASSERT(path_string[400]=='A');
 
   CU_ASSERT_STRING_EQUAL("ACCCTAACCCTAACCCTAACCCTAACCCTAA", binary_kmer_to_seq(path_nodes[402]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[402]==forward);
-  CU_ASSERT(path_labels[402]==Adenine);
-  CU_ASSERT(path_string[402]=='A');
+  CU_ASSERT(path_labels[401]==Adenine);
+  CU_ASSERT(path_string[401]=='A');
 
   CU_ASSERT_STRING_EQUAL("CCCTAACCCTAACCCTAACCCTAACCCTAAC", binary_kmer_to_seq(path_nodes[403]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[403]==forward);
-  CU_ASSERT(path_labels[403]==Cytosine);
-  CU_ASSERT(path_string[403]=='C');
+  CU_ASSERT(path_labels[402]==Cytosine);
+  CU_ASSERT(path_string[402]=='C');
 
 
   CU_ASSERT_STRING_EQUAL("ACCCTAACCCTAACCCTAACCCCTAACCCTA", binary_kmer_to_seq(path_nodes[420]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[420]==forward);
-  CU_ASSERT(path_labels[420]==Adenine);
-  CU_ASSERT(path_string[420]=='A');
+  CU_ASSERT(path_labels[419]==Adenine);
+  CU_ASSERT(path_string[419]=='A');
 
   CU_ASSERT_STRING_EQUAL("GAGAGGCGCACCGCGCCGGCGCAGGCGCAGA", binary_kmer_to_seq(path_nodes[780]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[780]==forward);
-  CU_ASSERT(path_labels[780]==Adenine);
-  CU_ASSERT(path_string[780]=='A');
+  CU_ASSERT(path_labels[779]==Adenine);
+  CU_ASSERT(path_string[779]=='A');
 
+  printf("we get %c not A\n", path_string[749]);
+  printf("Region is %c%c%c%c %c %c%c%c%c\n", path_string[745], path_string[746], path_string[747], path_string[748], path_string[749], path_string[750], path_string[751], path_string[752], path_string[753]);
   CU_ASSERT_STRING_EQUAL("CGCAGGCGCAGAGACACATGCTAGCGCGTCC", binary_kmer_to_seq(path_nodes[799]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[799]==forward);
-  CU_ASSERT(path_labels[799]==Cytosine);
-  CU_ASSERT(path_string[799]=='C');
-
+  CU_ASSERT(path_labels[798]==Cytosine);
+  CU_ASSERT(path_string[798]=='C');
 
 
   //prepare to load next 400
@@ -1807,6 +1914,9 @@ void test_load_seq_into_array()
   //load the next 400 - or at least try to. This time there are only 1140-(800+31-1)=310 nodes before you run out of file.
   
   expecting_new_fasta_entry=false;
+
+
+  // *************** third batch load *****************
   retvalue = load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
   CU_ASSERT(retvalue==310);
 
@@ -1816,16 +1926,19 @@ void test_load_seq_into_array()
   CU_ASSERT_STRING_EQUAL("CGCAGGCGCAGAGACACATGCTAGCGCGTCC", binary_kmer_to_seq(path_nodes[399]->kmer, db_graph->kmer_size, tmp_seq));
   printf("Zam is %s, length %d\n", tmp_seq, (int) strlen(tmp_seq));
   CU_ASSERT(path_orientations[399]==forward);
-  CU_ASSERT(path_labels[399]==Cytosine);
-  CU_ASSERT(path_string[399]=='C');
+  CU_ASSERT(path_labels[398]==Cytosine);
+  CU_ASSERT(path_string[398]=='C');
 
   
   //finally, just check the last one. What is it's index? Well, we asked for 400, but only got 310. So we expect to find last one at 799-90=709.
 
   CU_ASSERT_STRING_EQUAL("ACCACTCTAAGCAAGAGAGCCCTGCAGTTGC", binary_kmer_to_seq(path_nodes[709]->kmer, db_graph->kmer_size, tmp_seq));
   CU_ASSERT(path_orientations[709]==reverse);
-  CU_ASSERT(path_labels[709]==Thymine);
-  CU_ASSERT(path_string[709]=='T');
+  CU_ASSERT(path_labels[708]==Thymine);
+  CU_ASSERT(path_string[708]=='T');
+
+
+
 
   free_sequence(&seq);
   free(path_nodes);
@@ -1845,7 +1958,7 @@ void test_load_seq_into_array()
 
 
 
-   */
+
 
 
 }

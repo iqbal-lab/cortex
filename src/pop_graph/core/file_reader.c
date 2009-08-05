@@ -233,11 +233,13 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 // repeated calls of this function load etc into the LAST number_of_bases_to_load places of the relevant arrays
 
 int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int length_of_arrays, 
-			    dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char* path_string,
-			    Sequence* seq, KmerSlidingWindow* kmer_window, boolean expecting_new_fasta_entry, dBGraph * db_graph)
+			dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char* path_string,
+			Sequence* seq, KmerSlidingWindow* kmer_window, boolean expecting_new_fasta_entry, dBGraph * db_graph)
 {
   
   int offset; //nodes are placed in the array from offset to offset+number_of_nodes_to_load-1, offset is calculated here to ensure they go at the end of the array
+              //path_labels and path_string will contain only the edges - ie not include the first kmer.
+
   int offset_for_filereader=0;//this is the length of seq->seq that is preserved from last time
 
   if (expecting_new_fasta_entry==false)
@@ -292,6 +294,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
     {
       path_string[offset+j]=seq->seq[db_graph->kmer_size+j];
     }
+  path_string[offset+number_of_nodes_to_load]='\0';//zam added this
 
   if (DEBUG){
     printf ("\nsequence returned from read_sequence_from_fasta to load_seq_into_array is %s - kmer size: %i - number of bases loaded inc the preassigned ones at start f seq  length: %i \n",seq->seq,db_graph->kmer_size, chunk_length);
@@ -329,7 +332,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   
   Orientation current_orientation,previous_orientation;
 
-  //if num_kmers=0 (ie have hit end of file, then kmer_window->nkmers=0), so will skip this
+  //if num_kmers=0 (ie have hit end of file), then kmer_window->nkmers=0, so will skip this next "for" loop
   for(j=0;j<kmer_window->nkmers;j++)
     { //for each kmer in window
 
@@ -338,8 +341,13 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	  //corresponds to a kmer that contains an N
 	  path_nodes[offset+j]        =NULL;
 	  path_orientations[offset+j] =forward;
-	  path_labels[offset+j]       =Undefined;
-	  //path_string[offset+j]       ='N';
+
+	  //iqbal
+	  //if (j>1)
+	  //  {  //edges to/from this node don't exist  remember path_nodes[m] is edge from node m to node m+1.
+	  //    path_labels[offset+j-1] = Undefined;
+	  //    path_labels[offset+j]   = Undefined;
+	  //  }
 	  previous_node=NULL;
 	  continue;
 	}
@@ -371,10 +379,10 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	{
 	  if (previous_node == NULL)
 	    {
-	      path_labels[offset+j]=Undefined;
-	      //path_string[offset+j]=='N';
-	      //path_string[offset+j]='N';
-	      //path_string[offset+j+1]='\0';
+	      if (j>0)
+		{
+		  path_labels[offset+j-1]=Undefined;
+		}
 	    }
 	  else
 	    {
@@ -397,9 +405,10 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	      if (DEBUG){
 		printf("Found edge %s -%c-> %s\n",binary_kmer_to_seq(previous_k,kmer_size,seq1),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(current_k)),binary_kmer_to_seq(current_k,kmer_size,seq2));
 	      }
-	      path_labels[offset+j]=binary_kmer_get_last_nucleotide(current_k);
-	      //path_string[offset+j]=binary_nucleotide_to_char(path_labels[offset+j]);
-	      //path_string[offset+j+1]='\0';
+	      if (j>0)
+		{
+		  path_labels[offset+j-1]=binary_kmer_get_last_nucleotide(current_k); //iqbal zam added if j>0 and added a -1
+		}
 	      
 	    }
 	}

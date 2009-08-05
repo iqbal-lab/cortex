@@ -117,7 +117,7 @@ int main(int argc, char **argv){
 
      //ignore mitochondrion for now, so start with i=1
       //      for (i=1; i<25; i++)
-      for (i=2; i<3; i++)
+      for (i=1; i<3; i++)
 	{
 	  printf("Call SV comparing individual with chromosome %s\n", ref_chroms[i]);
 
@@ -139,7 +139,7 @@ int main(int argc, char **argv){
 	  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
 								individual_edge_array, 0,
 								min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-								max_expected_size_of_supernode, length_of_arrays, db_graph, stdout, //out_fptr,
+								max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
 								0, NULL, NULL, NULL, NULL, NULL);
 
 	  
