@@ -20,11 +20,12 @@ typedef char Edges;
 
 typedef enum{
   unassigned = 0,
-  none    = 1,
-  visited = 2,
-  pruned  = 3,
-  exists_in_reference = 4,
-  visited_and_exists_in_reference = 5,
+    none    = 1,
+    visited = 2,
+    pruned  = 3,
+    exists_in_reference = 4,
+    visited_and_exists_in_reference = 5,
+    to_be_dumped = 6, //to be dumped as binary
 } NodeStatus;
 
 typedef struct{
@@ -129,6 +130,8 @@ void db_node_action_set_status_visited(dBNode * node);
 void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode * node);
 
 void db_node_action_unset_status_visited_or_visited_and_exists_in_reference(dBNode * node);
+
+void db_node_action_set_status_to_be_dumped(dBNode * node);
 
 void db_node_action_do_nothing(dBNode * node);
 

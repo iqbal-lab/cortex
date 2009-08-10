@@ -378,6 +378,10 @@ void db_node_action_set_status_pruned(dBNode * node){
   db_node_set_status(node,pruned);
 }
 
+void db_node_action_set_status_to_be_dumped(dBNode * node){
+  db_node_set_status(node,to_be_dumped);
+}
+
 
 void db_node_action_set_status_visited(dBNode * node){  
   db_node_set_status(node,visited);

@@ -67,6 +67,10 @@ int main(int argc, char **argv){
   ref_chroms[24]="/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/Homo_sapiens.NCBI36.52.dna.chromosome.Y.fa";
 
 
+  //TEMP
+  //ref_chroms[2]="chrom2_first_40mb.fasta";
+
+
 
   // **** set up one output file per chromosome ***** //
   
@@ -116,8 +120,7 @@ int main(int argc, char **argv){
 
 
      //ignore mitochondrion for now, so start with i=1
-      //      for (i=1; i<25; i++)
-      for (i=1; i<3; i++)
+      for (i=1; i<3; i++) //shuld be 1 and 25
 	{
 	  printf("Call SV comparing individual with chromosome %s\n", ref_chroms[i]);
 
@@ -146,14 +149,59 @@ int main(int argc, char **argv){
 	  fclose(chrom_fptr);
 	  fclose(out_fptr);
 	}
+    
+      /*
+    case 1:
+
+      printf("Make SV calls based on the trusted-path/supernode algorithm, comparing COX and QBL MHX haplotypes with each other\n");
+ 
+      min_fiveprime_flank_anchor = 2;
+      min_threeprime_flank_anchor= 2;
+      max_anchor_span = 20000;
+      length_of_arrays=40000;
+      min_covg =1;
+      max_covg = 10000000;
+      max_expected_size_of_supernode=20000;
 
 
+      FILE* cox_fptr = fopen("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/Homo_sapiens.NCBI36.52.dna.chromosome.c6_COX.fa", "r");
+      if (cox_fptr==NULL)
+	{
+	  printf("Cannot open /nfs/1000g-work/G1K/work/zi/projects/marzam/humref/Homo_sapiens.NCBI36.52.dna.chromosome.c6_COX.fa \n");
+	  exit(1);
+	}
+
+
+      FILE* cox_as_ref_out_fptr = fopen("variants_between_cox_as_ref_and_qbl_as_indiv.ccf", "w");
+      if (cox_as_ref_out_fptr==NULL)
+	{
+	  printf("Cannot open variants_between_cox_as_ref_and_qbl_as_indiv.ccf  for output\n");
+	  exit(1);
+	}
+
+      //Note the arguments below imply person 0 is the reference, and person 1 is the person we are interested in
+      int ret = db_graph_make_reference_path_based_sv_calls(cox_fptr, individual_edge_array, 1,
+							    individual_edge_array, 0,
+							    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg,
+							    max_expected_size_of_supernode, length_of_arrays, db_graph, cox_as_ref_out_fptr,
+							    0, NULL, NULL, NULL, NULL, NULL);
+
+
+      fclose(cox_fptr);
+      fclose(cox_as_ref_out_fptr);
+
+      */
+      
+
+      
+      
 
     }
 
 
   //cleanup
 
+  /*
   for(i=0; i<25; i++)
     {
       free(ref_chroms[i]);
@@ -162,6 +210,7 @@ int main(int argc, char **argv){
 
   free(ref_chroms);
   free(output_files);
+  */
 
   printf("Finished\n");
   return 1;
