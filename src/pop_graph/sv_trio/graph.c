@@ -67,10 +67,6 @@ int main(int argc, char **argv){
   ref_chroms[24]="/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/Homo_sapiens.NCBI36.52.dna.chromosome.Y.fa";
 
 
-  //TEMP
-  //ref_chroms[2]="chrom2_first_40mb.fasta";
-
-
 
   // **** set up one output file per chromosome ***** //
   
@@ -120,7 +116,7 @@ int main(int argc, char **argv){
 
 
      //ignore mitochondrion for now, so start with i=1
-      for (i=1; i<3; i++) //shuld be 1 and 25
+      for (i=1; i<25; i++) 
 	{
 	  printf("Call SV comparing individual with chromosome %s\n", ref_chroms[i]);
 
@@ -212,6 +208,6 @@ int main(int argc, char **argv){
   free(output_files);
   */
 
-  printf("Finished\n");
-  return 1;
+  printf("Finished getting SV from all chromosomes\n");
+  return 0;
 }

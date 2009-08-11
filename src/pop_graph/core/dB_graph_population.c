@@ -1145,7 +1145,7 @@ void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * n
 boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNode* node, EdgeArrayType type, int index, dBGraph* dbgraph, int* total_number_of_different_chromosomes_intersected)
 {
 
-  printf("Stop using this");
+  printf("Stop using db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome");
   exit(1);
 
 }
@@ -1157,7 +1157,7 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 						      boolean is_for_testing, char** for_test, int* index_for_test)
 {
   //deprecated
-  printf("Stop using this");
+  printf("Stop using db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop");
   exit(1);
 }
 
@@ -1166,7 +1166,7 @@ void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop
 
 void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population(dBGraph* hash_table, EdgeArrayType type, int index)
 {
-  printf("not implemented yet");
+  printf("not implemented db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population yet");
   exit(1);
 }
 
@@ -2089,7 +2089,7 @@ void get_coverage_from_array_of_nodes(dBNode** array, int length, int* min_cover
       
       if (array[i]!= NULL)
 	{
-	  db_node_get_coverage(array[i], type, index);
+	  this_covg = db_node_get_coverage(array[i], type, index);
 	}
       
       coverages[i]=this_covg; //will use this later, for the mode
@@ -2540,6 +2540,14 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	    }
 
 
+	  if (index_in_supernode_where_supernode_differs_from_chromosome==index_of_query_node_in_supernode_array)
+	    {
+	      printf("WARNING Did not even go into loop working way along ref - so supernode only touches ref at initial node - I don't think this should be possible, should go into that loop once\n");
+	      start_node_index++;
+	      exit(1);
+	      continue;
+	    }
+
 	  if ( ( (traverse_sup_left_to_right) && (index_in_supernode_where_supernode_differs_from_chromosome>=length_curr_supernode) )
 	    ||
 	       ( (!traverse_sup_left_to_right) && (index_in_supernode_where_supernode_differs_from_chromosome<=0) )
@@ -2550,11 +2558,10 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      continue;
 	    }
 
-	  if (index_in_supernode_where_supernode_differs_from_chromosome==index_of_query_node_in_supernode_array)
+	  if ( chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome]==NULL)
 	    {
-	      printf("WARNING Did not even go into loop working way along ref - so supernode only touches ref at initial node - I don't think this should be possible, should go into that loop once\n");
-	      start_node_index++;
-	      exit(1);
+	      //then the only reason they differ is an N in the trusted path - will create a false variant. Ignore and move on.
+	      start_node_index = first_index_in_chrom_where_supernode_differs_from_chromosome+1;
 	      continue;
 	    }
 
@@ -2568,7 +2575,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	    }
 	      
 	  
-	  //We now have  decent 5-prime anchor, and we know we don't match the ref exactly.
+	  //We now have  decent 5-prime anchor, and we know we don't match the ref exactly. Note that the point at which they differ may be an N in the trusted path, so may be a NULL ptr
 	  // Now see if the END of the supernode matches anywhere in our current array of reference chromosome
 	  
 	  int start_of_3prime_anchor_in_sup;
@@ -2626,13 +2633,13 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		    }
 		  
 		  
-		  
+		  //cannot have a null ptr in supernode, so this removes cases of N in chrom array
 		  if (chrom_path_array[start_of_3prime_anchor_in_chrom + j] != current_supernode[start_of_3prime_anchor_in_sup + k])
 		    {
 		      //printf("chrom node %d does not work as start of anchor\n", start_of_3prime_anchor_in_chrom );
 		      potential_anchor=false;
 		    }
-		  else if (chrom_path_array[start_of_3prime_anchor_in_chrom + j]==NULL)
+		  else if (chrom_path_array[start_of_3prime_anchor_in_chrom + j]==NULL)//paranoia - impossible
 		    {
 		      //printf("chrom node %d and sup node %d are both NULL. So this cann't be an anchor\n", start_of_3prime_anchor_in_chrom + j, start_of_3prime_anchor_in_sup + k);
 		      potential_anchor=false;
@@ -2640,15 +2647,15 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 		  //debug
-		  if ( (chrom_path_array[start_of_3prime_anchor_in_chrom + j] != NULL)&& (current_supernode[start_of_3prime_anchor_in_sup + k]!=NULL) )
-		    {
-		      char tmp_dbg1[db_graph->kmer_size];
-		      char tmp_dbg2[db_graph->kmer_size];
+		  //if ( (chrom_path_array[start_of_3prime_anchor_in_chrom + j] != NULL)&& (current_supernode[start_of_3prime_anchor_in_sup + k]!=NULL) )
+		  // {
+		  //   char tmp_dbg1[db_graph->kmer_size];
+		  //   char tmp_dbg2[db_graph->kmer_size];
 		      //printf("Compare chrom node %d, %s,  and supernode node %d, %s,\n", start_of_3prime_anchor_in_chrom + j, 
 		      //	     binary_kmer_to_seq(chrom_path_array[start_of_3prime_anchor_in_chrom + j]->kmer, db_graph->kmer_size, tmp_dbg1),
 		      //	     start_of_3prime_anchor_in_sup + k,
 		      //	     binary_kmer_to_seq(current_supernode[start_of_3prime_anchor_in_sup + k]->kmer, db_graph->kmer_size, tmp_dbg2));
-		    }
+		  // }
 
 
 		}
@@ -3388,61 +3395,64 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 						      ){
 
 
-  if ( (fst_node==NULL) || (lst_node==NULL) )
-    {
-      printf("IGNORING print_fasta command as have been given a NULL node\n");
-      exit(1);
-      return;
-    }
-    
   if (fout==NULL)
     {
       printf("Exiting - have passed a null file pointer to print_fasta_from_path_for_specific_person_or_pop\n");
       exit(1);
     }
-
-
-
-  char fst_f[5], fst_r[5],lst_f[5],lst_r[5];
-
-  compute_label(fst_node,forward,fst_f, type, index);
-  compute_label(fst_node,reverse,fst_r, type, index);
-  compute_label(lst_node,forward,lst_f, type, index);
-  compute_label(lst_node,reverse,lst_r, type, index);
-
-  char fst_seq[kmer_size+1], lst_seq[kmer_size+1];
+  
+  if ( (fst_node==NULL) || (lst_node==NULL) )
+    {
+      fprintf(fout, "WARNING - print_fasta command as have been given a NULL node as first or last node - will not print fst/lst kmers.\n");
+      fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i mode_coverage: %i percent_nodes_with_modal_covg: %5.2f percent_novel: %5.2f\n", 
+              name, (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, modal_coverage, percent_nodes_with_modal_coverage, percent_novel);
+      fprintf(fout,"%s\n",string);
+    }
+  else
+    {
+      char fst_f[5], fst_r[5],lst_f[5],lst_r[5];
+      
+      compute_label(fst_node,forward,fst_f, type, index);
+      compute_label(fst_node,reverse,fst_r, type, index);
+      compute_label(lst_node,forward,lst_f, type, index);
+      compute_label(lst_node,reverse,lst_r, type, index);
+      
+      char fst_seq[kmer_size+1], lst_seq[kmer_size+1];
  
-  BinaryKmer fst_kmer = element_get_kmer(fst_node);
-  if (fst_orientation==reverse){
-    fst_kmer = binary_kmer_reverse_complement(fst_kmer,kmer_size);
-  } 
-  binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq);
+      BinaryKmer fst_kmer = element_get_kmer(fst_node);
+      if (fst_orientation==reverse){
+	fst_kmer = binary_kmer_reverse_complement(fst_kmer,kmer_size);
+      } 
+      binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq);
+      
+      BinaryKmer lst_kmer = element_get_kmer(lst_node);
+      if (lst_orientation==reverse){
+	lst_kmer = binary_kmer_reverse_complement(lst_kmer,kmer_size);
+      } 
+      binary_kmer_to_seq(lst_kmer,kmer_size,lst_seq);
+      
+      fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i mode_coverage: %i percent_nodes_with_modal_covg: %5.2f percent_novel: %5.2f fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s\n", name,
+	      (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, modal_coverage, percent_nodes_with_modal_coverage, percent_novel,
+	      db_node_get_coverage(fst_node, type, index),
+	      fst_seq,
+	      (fst_orientation == forward ? fst_r : fst_f),
+	      (fst_orientation == forward ? fst_f : fst_r),
+	      db_node_get_coverage(lst_node, type, index),
+	      lst_seq,
+	      (lst_orientation == forward ? lst_r : lst_f),
+	      (lst_orientation == forward ? lst_f : lst_r));
 
-  BinaryKmer lst_kmer = element_get_kmer(lst_node);
-  if (lst_orientation==reverse){
-    lst_kmer = binary_kmer_reverse_complement(lst_kmer,kmer_size);
-  } 
-  binary_kmer_to_seq(lst_kmer,kmer_size,lst_seq);
 
-  fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i mode_coverage: %i percent_nodes_with_modal_covg: %5.2f percent_novel: %5.2f fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s\n", name,
-	  (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, modal_coverage, percent_nodes_with_modal_coverage, percent_novel,
-	  db_node_get_coverage(fst_node, type, index),
-	  fst_seq,
-	  (fst_orientation == forward ? fst_r : fst_f),
-	  (fst_orientation == forward ? fst_f : fst_r),
-	  db_node_get_coverage(lst_node, type, index),
-	  lst_seq,
-	  (lst_orientation == forward ? lst_r : lst_f),
-	  (lst_orientation == forward ? lst_f : lst_r));
+      if (include_first_kmer){    
+	
+	fprintf(fout,"%s",binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq));
+      }
+      
+      fprintf(fout,"%s\n",string);
+      
+    }
 
 
-  if (include_first_kmer){    
-    
-    fprintf(fout,"%s",binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq));
-  }
-  
-  fprintf(fout,"%s\n",string);
-  
 }
 
 
