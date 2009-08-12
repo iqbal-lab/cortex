@@ -109,15 +109,15 @@ int main(int argc, char **argv){
  
 	int min_fiveprime_flank_anchor = 2;
 	int min_threeprime_flank_anchor= 2;
-	int max_anchor_span = 20000;
-	int length_of_arrays=40000;
+	int max_anchor_span =  20000;
+	int length_of_arrays = 40000;
 	int min_covg =1;
 	int max_covg = 10000000;
 	int max_expected_size_of_supernode=20000;
       
       
       //ignore mitochondrion for now, so start with i=1
-      for (i=1; i<3; i++) 
+      for (i=1; i<25; i++) 
 	{
 	  printf("Call SV comparing individual with chromosome %s\n", ref_chroms[i]);
 	  
