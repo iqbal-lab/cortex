@@ -108,7 +108,7 @@ int main(int argc, char **argv){
 	printf("Make SV calls based on the trusted-path/supernode algorithm, against the whole genome\n");
  
 	int min_fiveprime_flank_anchor = 2;
-	int min_threeprime_flank_anchor= 2;
+	int min_threeprime_flank_anchor= 21;
 	int max_anchor_span =  20000;
 	int length_of_arrays = 40000;
 	int min_covg =1;
