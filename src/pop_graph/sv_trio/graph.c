@@ -12,7 +12,7 @@ int main(int argc, char **argv){
   dBGraph * db_graph = NULL; 
   short kmer_size;
   int action;
-
+  char* specific_fasta;
 
   //command line arguments 
   filename         = argv[1];        //open file that lists one file per individual in the trio (population), and each of those gives list of files.
@@ -21,7 +21,8 @@ int main(int argc, char **argv){
   bucket_size      = atoi(argv[4]);
   action           = atoi(argv[5]);
   DEBUG            = atoi(argv[6]);
-  
+  specific_fasta   = argv[7];
+
   int max_retries=10;
 
   fprintf(stdout,"Kmer size: %d hash_table_size (%d bits): %d\n",kmer_size,hash_key_bits,1 << hash_key_bits);
@@ -103,23 +104,23 @@ int main(int argc, char **argv){
   switch (action)
     {
     case 0:
-      
-      printf("Make SV calls based on the trusted-path/supernode algorithm, against the whole genome\n");
+      {
+	printf("Make SV calls based on the trusted-path/supernode algorithm, against the whole genome\n");
  
-      int min_fiveprime_flank_anchor = 2;
-      int min_threeprime_flank_anchor= 2;
-      int max_anchor_span = 20000;
-      int length_of_arrays=40000;
-      int min_covg =1;
-      int max_covg = 10000000;
-      int max_expected_size_of_supernode=20000;
-
-
-     //ignore mitochondrion for now, so start with i=1
-      for (i=1; i<25; i++) 
+	int min_fiveprime_flank_anchor = 2;
+	int min_threeprime_flank_anchor= 2;
+	int max_anchor_span = 20000;
+	int length_of_arrays=40000;
+	int min_covg =1;
+	int max_covg = 10000000;
+	int max_expected_size_of_supernode=20000;
+      
+      
+      //ignore mitochondrion for now, so start with i=1
+      for (i=1; i<3; i++) 
 	{
 	  printf("Call SV comparing individual with chromosome %s\n", ref_chroms[i]);
-
+	  
 	  FILE* chrom_fptr = fopen(ref_chroms[i], "r");
 	  if (chrom_fptr==NULL)
 	    {
@@ -133,7 +134,7 @@ int main(int argc, char **argv){
 	      printf("Cannot open %s for output\n", output_files[i]);
 	      exit(1);
 	    }
- 
+	  
 	  //Note we assume person 0 is the reference, and person 1 is the person we are interested in
 	  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
 								individual_edge_array, 0,
@@ -145,51 +146,10 @@ int main(int argc, char **argv){
 	  fclose(chrom_fptr);
 	  fclose(out_fptr);
 	}
-    
-      /*
-    case 1:
+      break;
 
-      printf("Make SV calls based on the trusted-path/supernode algorithm, comparing COX and QBL MHX haplotypes with each other\n");
- 
-      min_fiveprime_flank_anchor = 2;
-      min_threeprime_flank_anchor= 2;
-      max_anchor_span = 20000;
-      length_of_arrays=40000;
-      min_covg =1;
-      max_covg = 10000000;
-      max_expected_size_of_supernode=20000;
+      }
 
-
-      FILE* cox_fptr = fopen("/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/Homo_sapiens.NCBI36.52.dna.chromosome.c6_COX.fa", "r");
-      if (cox_fptr==NULL)
-	{
-	  printf("Cannot open /nfs/1000g-work/G1K/work/zi/projects/marzam/humref/Homo_sapiens.NCBI36.52.dna.chromosome.c6_COX.fa \n");
-	  exit(1);
-	}
-
-
-      FILE* cox_as_ref_out_fptr = fopen("variants_between_cox_as_ref_and_qbl_as_indiv.ccf", "w");
-      if (cox_as_ref_out_fptr==NULL)
-	{
-	  printf("Cannot open variants_between_cox_as_ref_and_qbl_as_indiv.ccf  for output\n");
-	  exit(1);
-	}
-
-      //Note the arguments below imply person 0 is the reference, and person 1 is the person we are interested in
-      int ret = db_graph_make_reference_path_based_sv_calls(cox_fptr, individual_edge_array, 1,
-							    individual_edge_array, 0,
-							    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg,
-							    max_expected_size_of_supernode, length_of_arrays, db_graph, cox_as_ref_out_fptr,
-							    0, NULL, NULL, NULL, NULL, NULL);
-
-
-      fclose(cox_fptr);
-      fclose(cox_as_ref_out_fptr);
-
-      */
-      
-
-      
       
 
     }

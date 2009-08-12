@@ -220,6 +220,12 @@ int  main()
 	return CU_get_error();
       }
 
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for finding coverages of nodes that lie  on one allele but not the other, in a variant.",  test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
 
 
 

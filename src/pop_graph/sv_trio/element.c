@@ -303,7 +303,7 @@ void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, short upd
 }
 
 //coverage stored as short, but we want to deal with it as an int. So access it via this getter
-int db_node_get_coverage(dBNode* e, EdgeArrayType type, int index)
+int db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index)
 {
   short c = e->coverage[index];
   return (int) c;
