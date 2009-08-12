@@ -3269,6 +3269,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 		  //now do comparison with trusted branch - look for nodes that are in one but not the other
+		  // data from this will be used in the next two calls to print_fasta, for the two branches - trusted, and variant
 		  get_covg_of_nodes_in_one_but_not_other_of_two_arrays(chrom_path_array+start_node_index+length_5p_flank, current_supernode+index_of_query_node_in_supernode_array+length_5p_flank, 
 								       len_trusted_branch, len_branch2,
 		    						       &num_nodes_on_trusted_but_not_variant_branch, &num_nodes_on_variant_but_not_trusted_branch, 
