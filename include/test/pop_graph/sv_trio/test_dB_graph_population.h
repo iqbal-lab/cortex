@@ -18,5 +18,6 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6();
 void test_db_graph_make_reference_path_based_sv_calls_test_7();
 void test_db_graph_make_reference_path_based_sv_calls_test_8();
 void test_db_graph_make_reference_path_based_sv_calls_test_9();
+void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays();
 
 

@@ -3918,3 +3918,140 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
 
 
 }
+
+
+
+
+void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
+{
+
+
+ //first set up the hash/graph
+  int kmer_size = 5;
+  int number_of_bits = 8;
+  int bucket_size    = 8;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  
+  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/one_person_two_reads", &bad_reads, hash_table);
+
+  //>read1
+  //AAAACGAAAAAATTCGAG
+  //>read2
+  //TCGAGAAAACGAGA
+
+  //We will make two arrays of nodes, one corresponding to each read, and compare these two arrays. There is no reason to be associated with a read, this is just to make the test easier.
+  // Where the nodes come from is irrelevant
+
+  dBNode* n1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAC", kmer_size),kmer_size), hash_table); //seen in both reads
+  dBNode* n2 = hash_table_find(element_get_key(seq_to_binary_kmer("AAACG", kmer_size),kmer_size), hash_table); //covg 2
+  dBNode* n3 = hash_table_find(element_get_key(seq_to_binary_kmer("AACGA", kmer_size),kmer_size), hash_table); //covg 2
+  dBNode* n4 = hash_table_find(element_get_key(seq_to_binary_kmer("ACGAA", kmer_size),kmer_size), hash_table); //covg 1
+  dBNode* n5 = hash_table_find(element_get_key(seq_to_binary_kmer("CGAAA", kmer_size),kmer_size), hash_table); //covg 1
+  dBNode* n6 = hash_table_find(element_get_key(seq_to_binary_kmer("GAAAA", kmer_size),kmer_size), hash_table); //seen in both reads
+  dBNode* n7 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAA", kmer_size),kmer_size), hash_table); //covg 2
+  dBNode* n8 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAA", kmer_size),kmer_size), hash_table); //covg 2
+  dBNode* n9 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAT", kmer_size),kmer_size), hash_table); //covg1 
+  dBNode* n10 = hash_table_find(element_get_key(seq_to_binary_kmer("AAATT", kmer_size),kmer_size), hash_table); //covg 1
+  dBNode* n11 = hash_table_find(element_get_key(seq_to_binary_kmer("AATTC", kmer_size),kmer_size), hash_table); //covg 1
+  dBNode* n12 = hash_table_find(element_get_key(seq_to_binary_kmer("ATTCG", kmer_size),kmer_size), hash_table); //covg 1
+  dBNode* n13 = hash_table_find(element_get_key(seq_to_binary_kmer("TTCGA", kmer_size),kmer_size), hash_table); //covg1
+  dBNode* n14 = hash_table_find(element_get_key(seq_to_binary_kmer("TCGAG", kmer_size),kmer_size), hash_table); // seen in both reads
+
+  dBNode* e1 = hash_table_find(element_get_key(seq_to_binary_kmer("TCGAG", kmer_size),kmer_size), hash_table); //seen in both reads
+  dBNode* e2 = hash_table_find(element_get_key(seq_to_binary_kmer("CGAGA", kmer_size),kmer_size), hash_table); //covg 2
+  dBNode* e3 = hash_table_find(element_get_key(seq_to_binary_kmer("GAGAA", kmer_size),kmer_size), hash_table); //covg 1
+  dBNode* e4 = hash_table_find(element_get_key(seq_to_binary_kmer("AGAAA", kmer_size),kmer_size), hash_table); //covg 1
+  dBNode* e5 = hash_table_find(element_get_key(seq_to_binary_kmer("GAAAA", kmer_size),kmer_size), hash_table); //seen in both reads
+  dBNode* e6 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAC", kmer_size),kmer_size), hash_table); //seen in both reads
+  //note we haven't gone all the way to the end of the second read
+
+
+
+  CU_ASSERT(n1 != NULL);
+  CU_ASSERT(n2 != NULL);
+  CU_ASSERT(n3 != NULL);
+  CU_ASSERT(n4 != NULL);
+  CU_ASSERT(n5 != NULL);
+  CU_ASSERT(n6 != NULL);
+  CU_ASSERT(n7 != NULL);
+  CU_ASSERT(n8 != NULL);
+  CU_ASSERT(n9 != NULL);
+  CU_ASSERT(n10 != NULL);
+  CU_ASSERT(n11 != NULL);
+  CU_ASSERT(n12 != NULL);
+  CU_ASSERT(n13 != NULL);
+  CU_ASSERT(n14 != NULL);
+
+  CU_ASSERT(e1 != NULL);
+  CU_ASSERT(e2 != NULL);
+  CU_ASSERT(e3 != NULL);
+  CU_ASSERT(e4 != NULL);
+  CU_ASSERT(e5 != NULL);
+  CU_ASSERT(e6 != NULL);
+
+
+  
+
+  dBNode* array1[] = {n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12,n13,n14};
+  dBNode* array2[] = {e1,e2,e3,e4,e5,e6};
+
+
+  int num_nodes_in_array1_not_array2 = 0;
+  int num_nodes_in_array2_not_array1 = 0;
+
+  int coverages_of_nodes_in_array1_not_array2[14];
+  int coverages_of_nodes_in_array2_not_array1[6];
+  
+  int* ptrs_to_coverages_of_nodes_in_array1_not_array2[14];
+  int* ptrs_to_coverages_of_nodes_in_array2_not_array1[6];
+
+  dBNode* working_array1[20];
+  dBNode* working_array2[20];
+
+  int i;
+  for (i=0; i<14; i++)
+    {
+      coverages_of_nodes_in_array1_not_array2[i]=0;
+      ptrs_to_coverages_of_nodes_in_array1_not_array2[i]=&coverages_of_nodes_in_array1_not_array2[i];
+      
+    }
+  for (i=0; i<6; i++)
+    {
+      coverages_of_nodes_in_array2_not_array1[i]=0;
+      ptrs_to_coverages_of_nodes_in_array2_not_array1[i]=&coverages_of_nodes_in_array2_not_array1[i];
+
+    }
+
+  get_covg_of_nodes_in_one_but_not_other_of_two_arrays(array1, array2, 14,6,&num_nodes_in_array1_not_array2 , &num_nodes_in_array2_not_array1, 
+						       ptrs_to_coverages_of_nodes_in_array1_not_array2, ptrs_to_coverages_of_nodes_in_array2_not_array1, 
+						       working_array1, working_array2, individual_edge_array,0);
+
+  CU_ASSERT(num_nodes_in_array1_not_array2==10 );
+  CU_ASSERT(num_nodes_in_array2_not_array1==3 );
+
+  //we also get the coverages of these nodes, in some random order (depends on the mem addresses of the nodes)
+  //Note that in advance, we don't know how many such nodes there will be, if any
+  qsort(coverages_of_nodes_in_array1_not_array2, num_nodes_in_array1_not_array2, sizeof(int), int_cmp); 
+  qsort(coverages_of_nodes_in_array2_not_array1, num_nodes_in_array2_not_array1, sizeof(int), int_cmp); 
+
+
+  CU_ASSERT(coverages_of_nodes_in_array1_not_array2[0]==1);
+  CU_ASSERT(coverages_of_nodes_in_array1_not_array2[1]==1);
+  CU_ASSERT(coverages_of_nodes_in_array1_not_array2[2]==1);
+  CU_ASSERT(coverages_of_nodes_in_array1_not_array2[3]==1);
+  CU_ASSERT(coverages_of_nodes_in_array1_not_array2[4]==1);
+  CU_ASSERT(coverages_of_nodes_in_array1_not_array2[5]==1);
+  CU_ASSERT(coverages_of_nodes_in_array1_not_array2[6]==1);
+  CU_ASSERT(coverages_of_nodes_in_array1_not_array2[7]==2);
+  CU_ASSERT(coverages_of_nodes_in_array1_not_array2[8]==2);
+  CU_ASSERT(coverages_of_nodes_in_array1_not_array2[9]==2);
+
+  CU_ASSERT(coverages_of_nodes_in_array2_not_array1[0]==1);
+  CU_ASSERT(coverages_of_nodes_in_array2_not_array1[1]==1);
+  CU_ASSERT(coverages_of_nodes_in_array2_not_array1[2]==2);
+
+  
+}

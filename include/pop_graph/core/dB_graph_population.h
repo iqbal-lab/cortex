@@ -199,6 +199,14 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
                                                                                                      boolean expecting_new_fasta_entry, boolean expecting_seq_to_have_extra_kmer_at_start,
                                                                                                      dBGraph* db_graph );
 
+
+void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(dBNode** array1, dBNode** array2, int length1, int length2,
+                                                          int* num_nodes_in_array_1not2, int * num_nodes_in_array_2not1, int** covgs_in_1not2, int** covgs_in_2not1,
+                                                          dBNode** reused_working_array1, dBNode** reused_working_array2,
+                                                          EdgeArrayType type, int index);
+
+
+
 int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
 						EdgeArrayType which_array_holds_ref, int index_for_ref_in_supernode_array,
 						int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int max_anchor_span, int min_covg, int max_covg, 
@@ -210,20 +218,22 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 
-
 void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
                                                       char * name,
                                                       int length,
                                                       double avg_coverage,
                                                       int min_coverage,
                                                       int max_coverage,
-						      int modal_coverage,
-                                                      double  percent_nodes_with_modal_coverage,
-						      double percent_novel,
+                                                      int modal_coverage,
+                                                      double percent_nodes_with_modal_coverage,
+                                                      double percent_novel,
                                                       dBNode * fst_node,
                                                       Orientation fst_orientation,
                                                       dBNode * lst_node,
                                                       Orientation lst_orientation,
+                                                      char* text_describing_comparison_with_other_path,//may be NULL -use to allow printing coveragesof nodes in this path but not in some specific other path
+                                                      int* coverages_nodes_in_this_path_but_not_some_other, //may be NULL
+                                                      int length_of_coverage_array,
                                                       char * string, //labels of paths
                                                       int kmer_size,
                                                       boolean include_first_kmer,
@@ -231,5 +241,10 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
                                                       int index
                                                       );
 
+
+//utility functions for quicksort
+
+int int_cmp(const void *a, const void *b);
+int db_node_addr_cmp(const void *a, const void *b);
 
 #endif
