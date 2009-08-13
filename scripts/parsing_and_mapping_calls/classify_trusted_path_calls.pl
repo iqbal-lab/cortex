@@ -294,28 +294,6 @@ while(<FILE>)
 		    $var_al = $cols[5]; ##$5;
 		    $dbsnp_type=$cols[8]; ##$6;
 
-		    ## dbSNP sometimes gives an Allele as A/- or -/C - might be either the ref or variant allele. Here we're not trying to handle deletions, so ignore that - dont try to match it
-		    ## Even worse, sometimes they say an allele is -/A/C. Ridiculous.
-
-		    if ($ref_al =~ /-\/([ACGT])/)
-		    {
-			$ref_al=$1;
-		    }
-		    elsif ($ref_al=~/([ACGT])\/-/)
-		    {
-			$ref_al=$1;
-		    }
-
-		    if ($var_al =~ /-\/([ACGT])/)
-		    {
-			$var_al=$1;
-		    }
-		    elsif ($var_al=~/([ACGT])\/-/)
-		    {
-			$var_al=$1;
-		    }
-
-
 		}
 		else
 		{
@@ -328,7 +306,7 @@ while(<FILE>)
 	    {
 		#print "This dbsnp line seems to match start $start and end $end and variant $varname\n$next_dbsnpline\n";
 		
-		if ( ($dbsnp_type eq "single base") ) ## ($dbsnp_type ne "dips"))
+		if ($dbsnp_type eq "single base")
 		{
 		    if (($ref_al =~ /$trusted_seq/)&& ($var_al =~ /$variant_seq/) )
 		    {
