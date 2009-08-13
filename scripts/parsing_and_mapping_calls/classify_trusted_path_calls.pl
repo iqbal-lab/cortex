@@ -28,7 +28,7 @@ my $next_dbsnpline;
 while ($dbsnp_fptr_at_start_of_right_chrom eq "false")
 {
     $next_dbsnpline = <DBSNP>;
-    if ($next_dbsnpline =~ /^$chrom|/)
+    if ($next_dbsnpline =~ /^$chrom\|/)
     {
 	$dbsnp_fptr_at_start_of_right_chrom="true";
     }
@@ -266,6 +266,7 @@ while(<FILE>)
 	## Finally - is it in dbSNP.
 	# format is chr,chrPosFrom, chrPosTo, rs,ChrAllele,variantAllele,snpAlleleChrOrien, snp2chrOrien, snpClassAbbrev
 	# eg 1|885|885|rs62636509|G|A|A/G|0|single base|1|2|2|3|reference||
+	
 
 	if ($type eq "snp")
 	{
@@ -282,6 +283,7 @@ while(<FILE>)
 	    {
 		$next_dbsnpline = <DBSNP>;
 		chomp $next_dbsnpline;
+
 		my @cols = split(/\|/, $next_dbsnpline);
 		
 		#f ($next_dbsnpline=~ /$chrom\|(\d+)\|(\d+)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|[^\|]*\|[^\|]*\|([^\|]*)\|/)
