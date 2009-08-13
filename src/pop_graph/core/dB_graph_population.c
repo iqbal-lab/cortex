@@ -1,4 +1,3 @@
-
 /*
   dB_graph_population.c - implementation
  */
@@ -3437,7 +3436,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 								   curr_sup_orientations[index_of_query_node_in_supernode_array-length_5p_flank],
 								   current_supernode[start_of_3prime_anchor_in_sup], 
 								   curr_sup_orientations[start_of_3prime_anchor_in_sup],
-								   "covgs of variant not trusted: ", covgs_in_variant_not_trusted, num_nodes_on_variant_but_not_trusted_branch,
+								   "covgs of variant not trusted nodes: ", covgs_in_variant_not_trusted, num_nodes_on_variant_but_not_trusted_branch,
 								   rev_variant_branch, db_graph->kmer_size, false, 
 								   which_array_holds_indiv, index_for_indiv_in_edge_array
 								   );
