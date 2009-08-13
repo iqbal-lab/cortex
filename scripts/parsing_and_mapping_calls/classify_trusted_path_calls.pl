@@ -276,17 +276,23 @@ while(<FILE>)
 	    my $ref_al;
 	    my $var_al;
 	    my $or;
-	    
+	    my $dbsnp_type;
+
 	    while ($st<$start)
 	    {
 		$next_dbsnpline = <DBSNP>;
-		if ($next_dbsnpline=~ /$chrom\|(\d+)\|(\d+)\|([^\|]*)\|([^\|]*)\|([^\|]*)/)
+		chomp $next_dbsnpline;
+		my @cols = split(/\|/, $next_dbsnpline);
+		
+		#f ($next_dbsnpline=~ /$chrom\|(\d+)\|(\d+)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|[^\|]*\|[^\|]*\|([^\|]*)\|/)
+		if (scalar(@cols) >8)
 		{
-		    $st = $1;
-		    $en = $2;
-		    $id=$3;
-		    $ref_al = $4;
-		    $var_al = $5;
+		    $st = $cols[1]; ##$1;
+		    $en = $cols[2]; ##$2;
+		    $id=  $cols[3]; ##$3;
+		    $ref_al = $cols[4]; ##$4;
+		    $var_al = $cols[5]; ##$5;
+		    $dbsnp_type=$cols[8]; ##$6;
 
 		    ## dbSNP sometimes gives an Allele as A/- or -/C - might be either the ref or variant allele. Here we're not trying to handle deletions, so ignore that - dont try to match it
 		    ## Even worse, sometimes they say an allele is -/A/C. Ridiculous.
@@ -321,10 +327,13 @@ while(<FILE>)
 	    if ( ($st==$start) && ($en==$start) )
 	    {
 		#print "This dbsnp line seems to match start $start and end $end and variant $varname\n$next_dbsnpline\n";
-
-		if (($ref_al =~ /$trusted_seq/)&& ($var_al =~ /$variant_seq/))
+		
+		if ( ($dbsnp_type eq "single base") ) ## ($dbsnp_type ne "dips"))
 		{
-		    $rsid = $id;
+		    if (($ref_al =~ /$trusted_seq/)&& ($var_al =~ /$variant_seq/) )
+		    {
+			$rsid = $id;
+		    }
 		}
 		else
 		{
