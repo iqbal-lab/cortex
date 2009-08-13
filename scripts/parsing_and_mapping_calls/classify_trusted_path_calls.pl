@@ -331,6 +331,8 @@ while(<FILE>)
 
 
 
+close(FILE);
+close(DBSNP);
 
 
 
