@@ -225,7 +225,7 @@ while(<FILE>)
 	}
 	else
 	{
-	    print "Cannot match $trusted_info\n";
+	    #print "Cannot match $trusted_info\n";
 	}
 
 
