@@ -273,6 +273,12 @@ Key element_get_key(BinaryKmer kmer, short kmer_size){
 
 void element_initialise(Element * e, Key kmer, short kmer_size){
 
+  if (e==NULL)
+    {
+      printf("Called elemtn_initialise on NULL ptr");
+      exit(1);
+    }
+
   e->kmer = element_get_key(kmer, kmer_size);
 
   //hash table has calloc-ed all elements, so elements fromm the hash table are already initialised to zero.
@@ -292,6 +298,11 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
 
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
 {
+  if (e==NULL)
+    {
+      printf("Called increment covg on NULL pointer");
+      exit(1);
+    }
   e->coverage[index]=e->coverage[index]+1;
 }
 
@@ -305,13 +316,28 @@ void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, short upd
 //coverage stored as short, but we want to deal with it as an int. So access it via this getter
 int db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index)
 {
-  short c = e->coverage[index];
-  return (int) c;
+
+  if (e==NULL)
+    {
+      return 0;
+    }
+  else
+    {
+      short c = e->coverage[index];
+      return (int) c;
+    }
 }
 
 short db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index)
 {
-  return e->coverage[index];
+  if (e==NULL)
+    { 
+      return 0;
+    }
+  else
+    {
+      return e->coverage[index];
+    }
 }
 
 

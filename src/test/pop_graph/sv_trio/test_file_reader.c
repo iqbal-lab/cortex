@@ -256,6 +256,15 @@ void test_load_graph_binary()
   CU_ASSERT(test_element7 == test_element8);
   CU_ASSERT(db_node_get_coverage(test_element7,individual_edge_array,0)==1);
 
+  if (test_element7==NULL)
+    {
+      printf("ZAMZAM it is NULL");
+    }
+  else
+    {
+      printf("covg of elemtn 7 is %d\n", db_node_get_coverage(test_element7,individual_edge_array,0));
+    }
+
   CU_ASSERT(test_element9 != NULL);
   CU_ASSERT(test_element10 != NULL);
   CU_ASSERT(test_element9 == test_element10);

@@ -2420,14 +2420,16 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
   int* covgs_in_trusted_not_variant = (int*) malloc(sizeof(int)*length_of_arrays);
   int* covgs_in_variant_not_trusted = (int*) malloc(sizeof(int)*max_expected_size_of_supernode);
+  int* covgs_in_some_array = (int*) malloc(sizeof(int)*length_of_arrays);
+  int* covgs_in_some_array_ref = (int*) malloc(sizeof(int)*length_of_arrays);
 
-  if ( (working_array1==NULL) || (working_array2==NULL) )
+  if ( (working_array1==NULL) || (working_array2==NULL)  ) 
     {
       printf("OOM at start - cannot alloc working arrays. Exit");
       exit(1);
     }
 
-  if ( (covgs_in_trusted_not_variant==NULL) || (covgs_in_variant_not_trusted==NULL) )
+  if ( (covgs_in_trusted_not_variant==NULL) || (covgs_in_variant_not_trusted==NULL) || (covgs_in_some_array==NULL) || (covgs_in_some_array_ref==NULL))//ZAMZAM remove covgs in some array
     {
       printf("OOM at start  - cannot malloc covg arrays. Exit\n");
       exit(1);
@@ -2436,6 +2438,11 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   int** ptrs_to_covgs_in_trusted_not_variant = (int**) malloc(sizeof(int*)*length_of_arrays);
   int** ptrs_to_covgs_in_variant_not_trusted = (int**) malloc(sizeof(int*)*max_expected_size_of_supernode);
 
+  if ( (ptrs_to_covgs_in_trusted_not_variant==NULL) || (ptrs_to_covgs_in_variant_not_trusted==NULL) )
+    {
+      printf("Cannot alloc ptr arrays for covgs in make_ref assisted calls fn");
+      exit(1);
+    }
 
   for (k=0; k< length_of_arrays; k++)
     {
@@ -3221,6 +3228,14 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 	      int len_branch2;
 
+	      //ZAMZAM remove this ater - for now want array of coverges for the whole trusted path
+	      
+	      int p;		
+	      for (p=0; p<len_trusted_branch; p++)
+		{
+		  covgs_in_some_array[p]=db_node_get_coverage(chrom_path_array[start_node_index+length_5p_flank+p], which_array_holds_indiv, index_for_indiv_in_edge_array);
+		  covgs_in_some_array_ref[p]=db_node_get_coverage(chrom_path_array[start_node_index+length_5p_flank+p], which_array_holds_ref, index_for_ref_in_edge_array);
+		}
 								 
               // ******************* variant branch - left to right
 	      if (traverse_sup_left_to_right==true)
@@ -3280,6 +3295,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  sprintf(name,"var_%i_trusted_branch", num_variants_found);
 
+		  /* ZAM ZAM ZAM ZAMZAM temporarily comment out - this is the normally what I have here
 		  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_trusted_branch, 
 								   trusted_branch_avg_covg, trusted_branch_min_covg, trusted_branch_max_covg, 
 								   trusted_branch_mode_coverage, trusted_branch_percent_nodes_with_modal_covg, trusted_branch_percent_novel,
@@ -3292,6 +3308,21 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 								   db_graph->kmer_size,
 								   false,
 								   which_array_holds_indiv, index_for_indiv_in_edge_array);
+		  */
+
+		  print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(output_file, name, len_trusted_branch, 
+										      trusted_branch_avg_covg, trusted_branch_min_covg, trusted_branch_max_covg, 
+										      trusted_branch_mode_coverage, trusted_branch_percent_nodes_with_modal_covg, trusted_branch_percent_novel,
+										      chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
+										      chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
+										      chrom_path_array[start_of_3prime_anchor_in_chrom],
+										      chrom_orientation_array[start_of_3prime_anchor_in_chrom],
+										      "covgs of trusted not variant nodes: ", covgs_in_trusted_not_variant, num_nodes_on_trusted_but_not_variant_branch, 
+										      covgs_in_some_array,covgs_in_some_array_ref, len_trusted_branch, 
+										      trusted_branch,
+										      db_graph->kmer_size,
+										      false,
+										      which_array_holds_indiv, index_for_indiv_in_edge_array);
 		  
 
 		  if (num_variants_found<=max_desired_returns)
@@ -3304,6 +3335,29 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  sprintf(name,"var_%i_variant_branch", num_variants_found);
 
 
+
+		  //ZAMZAMZAM this is temp!!
+
+		  for (p=0; p<len_branch2; p++)
+		    {
+		      covgs_in_some_array[p]=db_node_get_coverage(chrom_path_array[index_of_query_node_in_supernode_array+length_5p_flank+p], which_array_holds_indiv, index_for_indiv_in_edge_array);
+		      covgs_in_some_array_ref[p]=db_node_get_coverage(chrom_path_array[index_of_query_node_in_supernode_array+length_5p_flank+p], which_array_holds_ref, index_for_ref_in_edge_array);
+		    }
+
+
+		  print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
+										      branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, branch2_percent_nodes_with_modal_covg, branch2_percent_novel, 
+										      current_supernode[index_of_query_node_in_supernode_array+length_5p_flank], 
+										      curr_sup_orientations[index_of_query_node_in_supernode_array+length_5p_flank],
+										      current_supernode[start_of_3prime_anchor_in_sup], 
+										      curr_sup_orientations[start_of_3prime_anchor_in_sup],
+										      "covgs of variant not trusted nodes: ", covgs_in_variant_not_trusted, num_nodes_on_variant_but_not_trusted_branch,
+										      covgs_in_some_array, covgs_in_some_array_ref, len_branch2,
+										      variant_branch, db_graph->kmer_size, false, 
+										      which_array_holds_indiv, index_for_indiv_in_edge_array
+										      );
+
+		  /*
 		  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
 								   branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, branch2_percent_nodes_with_modal_covg, branch2_percent_novel, 
 								   current_supernode[index_of_query_node_in_supernode_array+length_5p_flank], 
@@ -3313,7 +3367,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 								   "covgs of variant not trusted nodes: ", covgs_in_variant_not_trusted, num_nodes_on_variant_but_not_trusted_branch,
 								   variant_branch, db_graph->kmer_size, false, 
 								   which_array_holds_indiv, index_for_indiv_in_edge_array
-								   );
+		  					   );
+		  */
 		  if (num_variants_found<=max_desired_returns)
 		    {
 		      strcat(return_variant_branch_array[num_variants_found-1],variant_branch);
@@ -3406,6 +3461,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  sprintf(name,"var_%i_trusted_branch", num_variants_found);
 
+								   
+		  /*					     
 		  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_trusted_branch, 
 								   trusted_branch_avg_covg, trusted_branch_min_covg, trusted_branch_max_covg, 
 								   trusted_branch_mode_coverage, trusted_branch_percent_nodes_with_modal_covg, trusted_branch_percent_novel,
@@ -3414,6 +3471,20 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 								   chrom_path_array[start_of_3prime_anchor_in_chrom],
 								   chrom_orientation_array[start_of_3prime_anchor_in_chrom],
 								   "covgs of trusted not variant nodes: ",covgs_in_trusted_not_variant, num_nodes_on_trusted_but_not_variant_branch, 
+								   trusted_branch,
+								   db_graph->kmer_size,
+								   false,
+								   which_array_holds_indiv, index_for_indiv_in_edge_array);
+								     */
+		  print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(output_file, name, len_trusted_branch, 
+								   trusted_branch_avg_covg, trusted_branch_min_covg, trusted_branch_max_covg, 
+								   trusted_branch_mode_coverage, trusted_branch_percent_nodes_with_modal_covg, trusted_branch_percent_novel,
+								   chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
+								   chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
+								   chrom_path_array[start_of_3prime_anchor_in_chrom],
+								   chrom_orientation_array[start_of_3prime_anchor_in_chrom],
+								   "covgs of trusted not variant nodes: ",covgs_in_trusted_not_variant, num_nodes_on_trusted_but_not_variant_branch, 
+								   covgs_in_some_array, covgs_in_some_array_ref, len_trusted_branch,
 								   trusted_branch,
 								   db_graph->kmer_size,
 								   false,
@@ -3428,8 +3499,32 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  //***** print VARIANT branch
 
+
+		  //ZAMZAMZAM this is temp!!
+
+		  for (p=0; p<len_branch2; p++)
+		    {
+		      covgs_in_some_array[p]=db_node_get_coverage(chrom_path_array[index_of_query_node_in_supernode_array-length_5p_flank-p], which_array_holds_indiv, index_for_indiv_in_edge_array);
+		      covgs_in_some_array_ref[p]=db_node_get_coverage(chrom_path_array[index_of_query_node_in_supernode_array-length_5p_flank-p], which_array_holds_ref, index_for_ref_in_edge_array);
+		    }
+
+
+
 		  sprintf(name,"var_%i_variant_branch", num_variants_found);
 
+		  print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
+										      branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, branch2_percent_nodes_with_modal_covg, branch2_percent_novel,
+										      current_supernode[index_of_query_node_in_supernode_array-length_5p_flank], 
+										      curr_sup_orientations[index_of_query_node_in_supernode_array-length_5p_flank],
+										      current_supernode[start_of_3prime_anchor_in_sup], 
+										      curr_sup_orientations[start_of_3prime_anchor_in_sup],
+										      "covgs of variant not trusted nodes: ", covgs_in_variant_not_trusted, num_nodes_on_variant_but_not_trusted_branch,
+										      covgs_in_some_array, covgs_in_some_array_ref, len_branch2, 
+										      rev_variant_branch, db_graph->kmer_size, false, 
+										      which_array_holds_indiv, index_for_indiv_in_edge_array
+										      );
+
+		  /*
 		  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
 								   branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, branch2_percent_nodes_with_modal_covg, branch2_percent_novel,
 								   current_supernode[index_of_query_node_in_supernode_array-length_5p_flank], 
@@ -3440,7 +3535,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 								   rev_variant_branch, db_graph->kmer_size, false, 
 								   which_array_holds_indiv, index_for_indiv_in_edge_array
 								   );
-
+		  */
 
 		  if (num_variants_found<=max_desired_returns)
 		    {
@@ -3558,7 +3653,14 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   free(kmer_window);
   free(trusted_branch);
   free(variant_branch);
-													   
+  free(ptrs_to_covgs_in_trusted_not_variant);
+  free(ptrs_to_covgs_in_variant_not_trusted);
+  free(covgs_in_variant_not_trusted);
+  free(covgs_in_trusted_not_variant);
+  free(covgs_in_some_array);
+  free(covgs_in_some_array_ref);
+  free(working_array1);
+  free(working_array2);
   return num_variants_found;
 
 
@@ -3667,6 +3769,125 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 	  
 	}
 
+      // now print the nodes of all of the nodes in the array, in order
+
+      fprintf(fout, "\n");
+
+      if (include_first_kmer){    
+	
+	fprintf(fout,"%s",binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq));
+      }
+      
+      fprintf(fout,"%s\n",string);
+      
+    }
+
+
+}
+
+
+
+void print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(FILE *fout,
+									 char * name,
+									 int length,
+									 double avg_coverage,
+									 int min_coverage,
+									 int max_coverage,
+									 int modal_coverage,
+									 double percent_nodes_with_modal_coverage, 
+									 double percent_novel,
+									 dBNode * fst_node,
+									 Orientation fst_orientation,
+									 dBNode * lst_node,
+									 Orientation lst_orientation,
+									 char* text_describing_comparison_with_other_path,//may be NULL -use to allow printing coveragesof nodes in this path but not in some specific other path
+									 int* coverages_nodes_in_this_path_but_not_some_other, //may be NULL
+									 int length_of_coverage_array,//refers to prev argument
+									 int* coverages_nodes_in_this_path, 
+									 int* coverages_in_ref_nodes_in_this_path,
+									 int number_nodes_in_this_path,
+									 char * string, //labels of paths
+									 int kmer_size,
+									 boolean include_first_kmer,
+									 EdgeArrayType type,
+									 int index
+									 ){
+  
+
+  if (fout==NULL)
+    {
+      printf("Exiting - have passed a null file pointer to print_fasta_from_path_for_specific_person_or_pop\n");
+      exit(1);
+    }
+  
+  if ( (fst_node==NULL) || (lst_node==NULL) )
+    {
+      fprintf(fout, "WARNING - print_fasta command as have been given a NULL node as first or last node - will not print fst/lst kmers.\n");
+      fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i mode_coverage: %i percent_nodes_with_modal_covg: %5.2f percent_novel: %5.2f\n", 
+              name, (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, modal_coverage, percent_nodes_with_modal_coverage, percent_novel);
+      fprintf(fout,"%s\n",string);
+    }
+  else
+    {
+      char fst_f[5], fst_r[5],lst_f[5],lst_r[5];
+      
+      compute_label(fst_node,forward,fst_f, type, index);
+      compute_label(fst_node,reverse,fst_r, type, index);
+      compute_label(lst_node,forward,lst_f, type, index);
+      compute_label(lst_node,reverse,lst_r, type, index);
+      
+      char fst_seq[kmer_size+1], lst_seq[kmer_size+1];
+ 
+      BinaryKmer fst_kmer = element_get_kmer(fst_node);
+      if (fst_orientation==reverse){
+	fst_kmer = binary_kmer_reverse_complement(fst_kmer,kmer_size);
+      } 
+      binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq);
+      
+      BinaryKmer lst_kmer = element_get_kmer(lst_node);
+      if (lst_orientation==reverse){
+	lst_kmer = binary_kmer_reverse_complement(lst_kmer,kmer_size);
+      } 
+      binary_kmer_to_seq(lst_kmer,kmer_size,lst_seq);
+      
+      fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i mode_coverage: %i percent_nodes_with_modal_covg: %5.2f percent_novel: %5.2f fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s ", name,
+	      (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, modal_coverage, percent_nodes_with_modal_coverage, percent_novel,
+	      db_node_get_coverage(fst_node, type, index),
+	      fst_seq,
+	      (fst_orientation == forward ? fst_r : fst_f),
+	      (fst_orientation == forward ? fst_f : fst_r),
+	      db_node_get_coverage(lst_node, type, index),
+	      lst_seq,
+	      (lst_orientation == forward ? lst_r : lst_f),
+	      (lst_orientation == forward ? lst_f : lst_r));
+
+      // often want to print out coverages of nodes that are in this path, but not in some other path
+      if ((text_describing_comparison_with_other_path!=NULL)&& (coverages_nodes_in_this_path_but_not_some_other!=NULL) && (length_of_coverage_array>0))
+	{
+	  fprintf(fout, "%s ", text_describing_comparison_with_other_path);
+	  int i;
+	  for (i=0; i<length_of_coverage_array; i++)
+	    {
+	      fprintf(fout, "%d ", coverages_nodes_in_this_path_but_not_some_other[i]);
+	    } 
+	  fprintf(fout, "number_of_such_nodes: %d", length_of_coverage_array);
+	  
+	}
+
+      // now print the nodes of all of the nodes in the array, in order
+      fprintf(fout, "Coverages in indiv of all nodes in path in order:  ");
+      int i;
+      for (i=0; i<number_nodes_in_this_path; i++)
+	{
+	  fprintf(fout, "%d ", coverages_nodes_in_this_path[i]);
+	} 
+      fprintf(fout, "Coverages in ref of all nodes in path in order:  ");
+      for (i=0; i<number_nodes_in_this_path; i++)
+	{
+          fprintf(fout, "%d ", coverages_in_ref_nodes_in_this_path[i]);
+	}
+
+      
       fprintf(fout, "\n");
 
       if (include_first_kmer){    

@@ -242,6 +242,35 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
                                                       );
 
 
+
+void print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(FILE *fout,
+									 char * name,
+									 int length,
+									 double avg_coverage,
+									 int min_coverage,
+									 int max_coverage,
+									 int modal_coverage,
+									 double percent_nodes_with_modal_coverage, 
+									 double percent_novel,
+									 dBNode * fst_node,
+									 Orientation fst_orientation,
+									 dBNode * lst_node,
+									 Orientation lst_orientation,
+									 char* text_describing_comparison_with_other_path,//may be NULL -use to allow printing coveragesof nodes in this path but not in some specific other path
+									 int* coverages_nodes_in_this_path_but_not_some_other, //may be NULL
+									 int length_of_coverage_array,//refers to prev argument
+									 int* coverages_nodes_in_this_path, 
+									 int* coverages_in_ref_nodes_in_this_path,
+									 int number_nodes_in_this_path,
+									 char * string, //labels of paths
+									 int kmer_size,
+									 boolean include_first_kmer,
+									 EdgeArrayType type,
+									 int index
+									 );
+
+
+
 //utility functions for quicksort
 
 int int_cmp(const void *a, const void *b);

@@ -1,5 +1,9 @@
 #!/usr/bin/perl -w
 use strict;
+use lib "/homes/marioc/perl-modules/ensembl/modules";
+use lib "/homes/marioc/perl-modules/ensembl-variation/modules";
+use lib "/homes/marioc/perl-modules/bioperl-live";
+use Bio::EnsEMBL::Registry;
 
 
 sub atoi;
@@ -12,6 +16,129 @@ sub atoi;
 my $file = shift;
 my $chrom = shift;
 my $dbsnp="SNPChrPosAllele_b129.txt";
+my $must_do_filtering = shift; ##"yes" or "no"
+my $dir_with_mapping_data = shift; ##for this chromosome only.
+my $registry = shift;
+
+
+##ensembl stuff  for annotating variants further down
+Bio::EnsEMBL::Registry->load_all($registry);
+my $ensembl_core_db = Bio::EnsEMBL::Registry->get_DBAdaptor('human','core');
+my $ensembl_var_db = Bio::EnsEMBL::Registry->get_DBAdaptor('human','variation');
+my $sa = $ensembl_core_db->get_SliceAdaptor;
+my $va = $ensembl_var_db->get_VariationAdaptor;
+my $ra = $ensembl_var_db->get_RepeatFeatureAdaptor;
+
+
+
+
+## If appropriate: Get hash of variants whose 5prime anchors map uniquely
+my %fivep_hash=();
+my %threep_hash=();
+if ($must_do_filtering eq "yes")
+{
+    if ($dir_with_mapping_data !~ /\/$/)
+    {
+	$dir_with_mapping_data = $dir_with_mapping_data."/";
+    }
+
+    my $get_filenames_cmd = "ls ".$dir_with_mapping_data."\*.out";
+    my $files = qx{$get_filenames_cmd};
+    my @files = split(/\n/,$files);
+
+
+    foreach my $f (@files)
+    {
+	
+	open(FILE,$f)||die("cannot open $f");
+	
+	while(<FILE>)
+	{
+	    my $line =$_;
+	    chomp $line;
+	    
+	    ## Example line you're looking for
+	    ## vulgar: chromosome_1_VARIATION_100_3p_flank_length_208 0 208 + 1 938315 938523 + 1040 M 208 208
+	    ## Will be followed by a line of this form
+	    ## position 1:938315-938523 orientation:+ pid:100.00 length:208 start:0 end:208
+	    
+	    my $varid;
+	    my $which_flank;
+	    my $query_length;
+	    my $pid;
+	    my $alignment_length;
+	    
+	    if ($line =~ /^vulgar: (\S+)_([35]p_flank)_length_(\d+)/) 
+	    {
+		$varid=$1;
+		$which_flank=$2;
+		$query_length=$3;
+		
+		$line=<FILE>;
+		chomp $line;
+		if ($line =~ /pid:(\d+).*length:(\d+) start/)
+		{
+		    $pid=$1;
+		    $alignment_length=$2;
+		}
+		else
+		{
+		    die("Problem with this like $line which should follow a vulgar line and be the pid line\n");
+		}
+		
+		
+		if (($pid==100) && ($query_length==$alignment_length))
+		{
+		    ## We have found a perfect alignment. If it is first, add it to the appropriate hash, with hash_value 1.
+		    ## If there is already a hash_value for it, this shows the match is not unique, so set the value to zero.
+		    
+		    if ($which_flank eq "3p_flank")
+		    {
+			if (exists $threep_hash{$varid})
+			{
+			    $threep_hash{$varid}=0;
+			}
+			else
+			{
+			    $threep_hash{$varid}=1;
+			}
+		    }
+		    elsif ($which_flank eq "5p_flank")
+		    {
+			if (exists $fivep_hash{$varid})
+			{
+			    $fivep_hash{$varid}=0;
+			}
+			else
+			{
+			    $fivep_hash{$varid}=1;
+			}
+		    }
+		    else
+		    {
+			die("Flank is not 3p or 5p - $which_flank");
+		    }
+		}
+		
+		
+	    }
+	}
+	
+    }
+
+}
+elsif ($must_do_filtering eq "no")
+{
+    die("Hey! You should be filtering");
+}
+else
+{
+    die("3rd argument must be yes/no, and you have entered $must_do_filtering");
+}
+
+
+
+
 
 open(FILE, $file)||die("Cannot open $file");
 open(DBSNP, $dbsnp)||die("Cannot open $dbsnp");
@@ -36,11 +163,6 @@ while ($dbsnp_fptr_at_start_of_right_chrom eq "false")
 
 
 
-
-
-
-
-
 while(<FILE>)
 {
     my $line = $_;
@@ -48,18 +170,84 @@ while(<FILE>)
     
     if ($line =~ /^VARIATION: (\d+), start coordinate (\d+)/)
     {
-	my $varname = "chrom".$chrom."_VARIATION_".$1;
+	my $varno = $1;
+	my $varname = "chromosome_".$chrom."_VARIATION_".$varno;
 	my $start = $2;
-
 	
 	##We must collect the following info: varname (done), type, size, filter, chrom (done), start (done), end, genotype, genotype confidence
 	my $type="Q";
 	my $size="Q";
-	my $filter="Q";
 	my $end="Q";
 	my $genotype="Q";
 	my $genotype_confidence="Q";
 	my $rsid="";
+
+
+	my $filter="";
+	my $filter_reason="";
+	if ($must_do_filtering eq "yes")
+	{
+	    if (exists $fivep_hash{$varname})
+	    {
+		if ($fivep_hash{$varname}==1)
+		{
+		    $filter="0";
+		    $filter_reason="-";
+		}
+		else
+		{
+
+		    ## OK - the 5prime flank does not map uniquely. This qualifies the variant for filtering out UNLESS the other place where the 5prime flank maps to is in the trusted branch!
+		    open(CHECK,"sv_called_in_chrom_".$chrom)||die("Cannot open sv_called_in_chrom $chrom");
+
+		    while (<CHECK>)
+		    {
+			my $ln = $_;
+			chomp $ln;
+			my $tmp1="var_".$varno."_5p_flank";
+			my $tmp2="var_".$varno."_trusted_branch";
+			my $fivepseq;
+
+			if ($ln =~ /$tmp1/)
+			{
+			    $fivepseq = <CHECK>;
+			    chomp $fivepseq;
+			    <CHECK>;
+			    $ln = <CHECK>;##the trusted branch sequence
+			    if ($ln =~ /$fivepseq/)
+			    {
+				## OK - we expect that sometimes the 5p flank to map also into the trusted branch - no surprise. Do not filter
+				$filter="0";
+				$filter_reason="warning_5pflank_maps_into_deletion"; #print warning as need to double check
+			    }
+			    else
+			    {
+				$filter="1"; ##does not map uniquely
+				$filter_reason="5prime_flank_not_map_uniquely";				
+			    }
+			    last;
+			}
+		    }
+		    close(CHECK);
+		    
+
+
+		}
+	    }
+	    else
+	    {
+		##5p flank does not map at all - this should be impossible
+		print("This variant $varname, the 5prime flank appears not to map at all to the reference!!! Investigate\n");
+		$filter="1";
+		$filter_reason="5prime_flank_not_map_AT_ALL";
+	    }
+	}
+	else
+	{
+	    $filter="-";
+	    $filter_reason="-";
+	}
+
 
 	my $flank5p_info = <FILE>;
 	chomp $flank5p_info;
@@ -229,9 +417,6 @@ while(<FILE>)
 	}
 
 
-	## Will later filter on basis of whether flanking regions map uniquely.
-	$filter="";
-
 
 
 	## Some simplifications - if two branches are identical except at first base, then use that info to clean up output:
@@ -323,7 +508,22 @@ while(<FILE>)
 	    }
 	}
 
-	print "#$varname\t$type\t$size\t$chrom\t$start\t$end\t$genotype\t$genotype_confidence\t$rsid\t$filter\n";
+
+	## What genes are in this variant
+	my $slice = $sa->fetch_by_region("chromosome",$chrom,$start,$end);
+
+	#my $var_feats = $slice->get_all_VariationFeatures;
+	my $genes = $slice->get_all_Genes;
+	my $rfeats = $ra->fetch_all_by_Slice($slice, undef);
+
+	#my $v_features = (map {$_->display_id} @$var_feats);
+	my $g = (map {$_->external_name} @$genes);
+	my $r = (map {$_->display_id} @$rfeats);
+
+		
+	#print "#$varname\t$type\t$size\t$chrom\t$start\t$end\t$genotype\t$genotype_confidence\t$rsid\t$filter\t$filter_reason\t$final_cols\n";
+	print join("\t", $varname,$type,$size,$chrom,$start,$end,$genotype,$genotype_confidence,$rsid,$filter,$filter_reason, join(",", (map {$_->external_name} @$genes)), join(",", (map {$_->display_id} @$rfeats))  );
+	print "\n";
 	print "Ref:$trusted_seq\n";
 	print "Var:$variant_seq\n";
 

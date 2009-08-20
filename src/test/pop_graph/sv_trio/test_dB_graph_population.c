@@ -4053,5 +4053,7 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
   CU_ASSERT(coverages_of_nodes_in_array2_not_array1[1]==1);
   CU_ASSERT(coverages_of_nodes_in_array2_not_array1[2]==2);
 
+
+  hash_table_free(&hash_table);
   
 }
