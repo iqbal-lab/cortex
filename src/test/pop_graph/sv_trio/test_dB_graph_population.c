@@ -4057,3 +4057,136 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
   hash_table_free(&hash_table);
   
 }
+
+
+
+
+void test_apply_to_all_nodes_in_path_defined_by_fasta()
+{
+
+ //first set up the hash/graph
+  int kmer_size = 5;
+  int number_of_bits = 10;
+  int bucket_size    = 8;
+  long long bad_reads = 0;
+  int max_retries=10;
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  int seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_short_seq_with_one_base_difference", &bad_reads, db_graph);
+
+  //load two people, one of whom contains this:
+
+  // >read 1
+  // AATAGACGCCCACACCTGATAGAAGCCACACTGTACTTGTANNNNNNNNNNNN
+  // NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
+
+
+
+  char** results_array= (char**) malloc(sizeof(char*)*1000);
+  if (results_array==NULL)
+    {
+      printf("Cannot alloc results_array in test of apply fn - exit.");
+      exit(1);
+    }
+  int i;
+  for(i=0; i< 1000; i++)
+    {
+      results_array[i]=(char*) malloc(sizeof(char)*6);
+      if (results_array[i]==NULL)
+	{
+	  printf("Cannot alloc results array - quit");
+	  exit(1);
+	}
+      results_array[i][0]='\0';
+    }
+
+  
+  char tmpseq[db_graph->kmer_size];
+  int count=0;
+
+  void test_func(dBNode* node)
+    {
+      if ( (node!=NULL) && (node->kmer != ~0) )
+	{
+	  BinaryKmer k = element_get_kmer(node);
+	  binary_kmer_to_seq(k, db_graph->kmer_size, tmpseq);
+	  //printf("%s\n", tmpseq);
+	  strcat(results_array[count],tmpseq);
+	  count++;
+	}
+      else
+	{
+	  //printf("Hit a null kmer at count %d\n", count);
+	}
+
+    }
+
+  FILE* fasta_fptr = fopen("../data/test/pop_graph/variations/first_person_short_seq.fasta", "r");
+  apply_to_all_nodes_in_path_defined_by_fasta(&test_func, fasta_fptr, 10, db_graph);
+  fclose(fasta_fptr);
+
+
+  CU_ASSERT_STRING_EQUAL(results_array[0], "AATAG");
+  CU_ASSERT_STRING_EQUAL(results_array[1], "ATAGA");
+  CU_ASSERT_STRING_EQUAL(results_array[2], "GTCTA");
+  CU_ASSERT_STRING_EQUAL(results_array[3], "AGACG");
+  CU_ASSERT_STRING_EQUAL(results_array[4], "GACGC");
+  CU_ASSERT_STRING_EQUAL(results_array[5], "ACGCC");
+  CU_ASSERT_STRING_EQUAL(results_array[6], "CGCCC");
+  CU_ASSERT_STRING_EQUAL(results_array[7], "GCCCA");
+  CU_ASSERT_STRING_EQUAL(results_array[8], "CCCAC");
+  CU_ASSERT_STRING_EQUAL(results_array[9], "CCACA");
+  CU_ASSERT_STRING_EQUAL(results_array[10],"CACAC");
+  CU_ASSERT_STRING_EQUAL(results_array[11],"ACACC");
+  CU_ASSERT_STRING_EQUAL(results_array[12], "AGGTG");
+  CU_ASSERT_STRING_EQUAL(results_array[13], "ACCTG");
+  CU_ASSERT_STRING_EQUAL(results_array[36], "TACAA");
+
+
+  
+  //now load some more fastas, including one which has some N's in the middle Make sure we can get the right kmers when we follow that path
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_both_alu_Ns_alu_with_one_base_difference", &bad_reads, db_graph);
+
+
+  //cleanup results
+
+  for(i=0; i< 1000; i++)
+    {
+      results_array[i][0]='\0';
+    }
+  count =0;
+
+  fasta_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu.fasta", "r");
+
+  /*
+    >7SLRNA#SINE/Alu 
+    GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+    GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+    GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+    CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+    ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+    GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+    AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAGNNNNNNNNNNNNNNNNNNN
+    GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+    GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+    GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+    CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
+    ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
+    GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
+    AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
+  */
+
+  
+  apply_to_all_nodes_in_path_defined_by_fasta(&test_func, fasta_fptr, 10, db_graph);
+  fclose(fasta_fptr);
+
+  CU_ASSERT_STRING_EQUAL(results_array[0], "GTTCA");
+
+  CU_ASSERT_STRING_EQUAL(results_array[29], "CTGTA");
+
+  CU_ASSERT_STRING_EQUAL(results_array[334], "CGTAG");
+  CU_ASSERT_STRING_EQUAL(results_array[335], "GTTCA");
+
+
+
+}

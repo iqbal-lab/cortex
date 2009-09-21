@@ -435,6 +435,8 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 }
 
 
+
+
 /*
 //returns length of sequence loaded
 int load_ref_overlap_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry, int offset), 

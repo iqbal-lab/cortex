@@ -217,6 +217,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 
+void apply_to_all_nodes_in_path_defined_by_fasta( void (*func)(dBNode*), FILE* fasta_fptr, int chunk_size, dBGraph* db_graph);
+
 
 void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
                                                       char * name,

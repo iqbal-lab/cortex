@@ -76,6 +76,10 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for applying some other function to all nodes in a path defined by a fasta",   test_apply_to_all_nodes_in_path_defined_by_fasta)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
 
 
   if (NULL == CU_add_test(pPopGraphSuite, "Loading two people, one fasta each, in same population, and print supernodes. \n\tEach person has 2 reads, and we have manually determined what the supernodes should be", test_load_two_people_in_same_populations_and_print_separately_their_supernodes)) {
