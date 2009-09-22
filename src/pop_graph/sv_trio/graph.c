@@ -153,6 +153,32 @@ int main(int argc, char **argv){
       {
 	printf("For each reference chromosome, print a fasta file which has a 1 if the 31-mer starting at that base exists precisely once in the reference, and 0 otherwise\n");
 
+	
+	char** uniq_files = malloc( sizeof(char*) * 25); //one for each chromosome, ignoring haplotypes like MHC
+	if (uniq_files==NULL)
+	      {
+		printf("OOM. Give up can't even allocate space for the names of the uniq  files \n");
+		exit(1);
+	      }
+	for (i=0; i< 25; i++)
+	      {
+		uniq_files[i] = malloc(sizeof(char)*100); 
+		if (uniq_files[i]==NULL)
+		  {
+		    printf("OOM. Giveup can't even allocate space for the names of the uniqueness files for  i = %d\n",i);
+		    exit(1);
+		  }
+	      }
+	    
+	uniq_files[0] = "kmer_uniqueness_in_chrom_MT";
+	for (i=1; i<23; i++)
+	  {
+	    sprintf(uniq_files[i], "kmer_uniqueness_in_chrom_%i", i);
+	  }
+	uniq_files[23]="kmer_uniqueness_in_chrom_X";
+	uniq_files[24]="kmer_uniqueness_in_chrom_Y";
+	    
+	    
 	for (i=1; i<25; i++) 
 	  {
 	    printf("Print kmer uniqueness-in-entire-ref file for  %s\n", ref_chroms[i]);
@@ -163,39 +189,6 @@ int main(int argc, char **argv){
 		printf("Cannot open %s \n", ref_chroms[i]);
 		exit(1);
 	      }
-
-
-
-	    // **** set up one output file per chromosome ***** //
-	    
-	    char** uniq_files = malloc( sizeof(char*) * 25); //one for each chromosome, ignoring haplotypes like MHC
-	    if (uniq_files==NULL)
-	      {
-		printf("OOM. Give up can't even allocate space for the names of the uniq  files \n");
-		exit(1);
-	      }
-	    
-	    for (i=0; i< 25; i++)
-	      {
-		uniq_files[i] = malloc(sizeof(char)*100); 
-		if (uniq_files[i]==NULL)
-		  {
-		    printf("OOM. Giveup can't even allocate space for the names of the uniqueness files for  i = %d\n",i);
-		    exit(1);
-		  }
-	      }
-	    
-	    uniq_files[0] = "sv_called_in_MT";
-	    
-	    for (i=1; i<23; i++)
-	      {
-		sprintf(uniq_files[i], "kmer_uniqueness_in_chrom_%i", i);
-	      }
-	    uniq_files[23]="kmer_uniqueness_in_chrom_X";
-	    uniq_files[24]="kmer_uniqueness_in_chrom_Y";
-	    
-	    
-	    
 	    
 	    FILE* out_fptr = fopen(uniq_files[i], "w");
 	    if (out_fptr==NULL)
@@ -203,7 +196,6 @@ int main(int argc, char **argv){
 		printf("Cannot open %s for output\n", uniq_files[i]);
 		exit(1);
 	      }
-
 	    
 	    void print_uniqueness(dBNode* node)
 	      {
@@ -226,7 +218,7 @@ int main(int argc, char **argv){
 		  }
 	      }
 
-	    apply_to_all_nodes_in_path_defined_by_fasta(&print_uniqueness, out_fptr, 10000, db_graph);//work through fasta in chunks of size 10kb
+	    apply_to_all_nodes_in_path_defined_by_fasta(&print_uniqueness, chrom_fptr, 10000, db_graph);//work through fasta in chunks of size 10kb
 	    fclose(out_fptr);
 	    fclose(chrom_fptr);
 
