@@ -228,7 +228,7 @@ int main(int argc, char **argv){
       {
 	printf("Number of times where a node matches %d other nodes by shifting =  %d\n", i, results[i]);
       }
-
+    break;
   
   case 15:
     printf("Print supernodes containing entirely novel(non-reference) sequence\n");
@@ -241,7 +241,7 @@ int main(int argc, char **argv){
 
     hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); //cleanup - the printing process has set all printed nodes to visited
                                                                                                             //        - or to visited_and_exists_in_reference
-
+    break;
   case 16:
     printf("Print supernodes that match reference at start and end, but not the middle\n");
     read_all_ref_chromosomes_and_mark_graph(db_graph);
@@ -253,7 +253,7 @@ int main(int argc, char **argv){
     //cleanup - the printing process has set all printed nodes to visited
     //           - or to visited_and_exists_in_reference
     hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
-
+    break;
 
   case 17:
     min_covg=2; //demand coverage of at least 2
@@ -275,74 +275,8 @@ int main(int argc, char **argv){
 
     hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); //cleanup - the printing process has set all printed nodes to visited
     printf("Finished\n");
+    break;
 
-
-  case 18:
-    printf("We have now loaded NA12878, Take first 40Mb of chromosome 2, and mark all supernodes that touch that. Then dump a binary.This is for debugging a segfault - want a small binary I can valgrind");
-    read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/output/zi_20090807_fix_segfault/chrom2_first_40mb.fasta" , db_graph);
-
-    int length_of_arrays = 100000;
-    dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*length_of_arrays); //everything these dBNode*'s point to will be in the hash table - ie owned by the hash table
-    Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*length_of_arrays); 
-    Nucleotide*  path_labels         = (Nucleotide*) malloc(sizeof(Nucleotide)*length_of_arrays);
-    char*        path_string            = (char*) malloc(sizeof(char)*length_of_arrays+1); //+1 for \0
-
-    if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (path_string==NULL) )
-      {
-	printf("Cannot even start. OOM. Failed to alloc arrays\n");
-	exit(1);
-      }
-
-    int n;
-    for (n=0; n<length_of_arrays; n++)
-      {
-	path_nodes[n]=NULL;
-	path_orientations[n]=forward;
-	path_labels[n]=Undefined;
-	path_string[n]='N';
-      }
-    path_string[0]='\0';
-    
-
-    void mark_supernodes_of_ref_nodes_as_to_be_dumped(dBNode* node)
-      {
-	if ((node !=NULL) && (db_node_check_status(node,exists_in_reference)) )
-	  {
-	    int limit = 100000;
-	    int min_covg=0;
-	    int max_covg=0;
-	    double avg_covg=0;
-	    boolean is_cycle=false;
-
-	    db_graph_supernode(node, limit, &db_node_action_set_status_to_be_dumped, 
-			       path_nodes, path_orientations, path_labels, path_string,
-			       &avg_covg, &min_covg, &max_covg, &is_cycle, db_graph);
-
-	  }
-
-      }
-
-    FILE* binary_of_subsection_fptr = fopen("dumped_bin.ctx", "w");
-    if ( binary_of_subsection_fptr ==NULL)
-      {
-	printf("Cannot open file to dump binary\n");
-	exit(1);
-      }
-
-    void print_nodes_marked_as_to_be_dumped_as_binary(dBNode* elem)
-      {
-	if (db_node_check_status(elem, to_be_dumped))
-	  {
-	    db_node_print_binary(binary_of_subsection_fptr, elem);
-	  }
-      }
-
-    hash_table_traverse(&mark_supernodes_of_ref_nodes_as_to_be_dumped, db_graph);
-
-    //then dump everything to be dumped!
-    hash_table_traverse(&print_nodes_marked_as_to_be_dumped_as_binary, db_graph);
-
-    fclose(binary_of_subsection_fptr);
 
   }
 
