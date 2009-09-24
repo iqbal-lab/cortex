@@ -4,6 +4,7 @@
 #include <file_reader.h>
 #include <dB_graph.h>
 #include <dB_graph_population.h>
+#include <string.h>
 
 int main(int argc, char **argv){
 
@@ -12,8 +13,7 @@ int main(int argc, char **argv){
   dBGraph * db_graph = NULL; 
   short kmer_size;
   int action;
-  char* specific_fasta;
-  char* output_covg_file;
+  char* list_of_fasta;
 
   //command line arguments 
   filename         = argv[1];        //open file that lists one file per individual in the trio (population), and each of those gives list of files.
