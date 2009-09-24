@@ -251,6 +251,13 @@ int main(int argc, char **argv){
 	    if ((p = strchr(line, '\n')) != NULL)
 	      *p = '\0';
 	    
+	    //open fasta file
+	    FILE* path_fptr = fopen(line, "r");
+	    if (path_fptr==NULL)
+	      {
+		printf("Cannot open %s\n", line);
+		exit(1);
+	      }
 
 	    //create output file 
 	    char name[300];
@@ -278,8 +285,9 @@ int main(int argc, char **argv){
 		  }
 	      }
 	    
-	    apply_to_all_nodes_in_path_defined_by_fasta(&print_covg_and_ref_covg, fptr, 50, db_graph);//work through fasta in chunks of size 50 bases - fasta not too big
+	    apply_to_all_nodes_in_path_defined_by_fasta(&print_covg_and_ref_covg, path_fptr, 50, db_graph);//work through fasta in chunks of size 50 bases - fasta not too big
 	    fclose(out_fptr);
+	    fclose(path_fptr);
 	    
 	    
 	  }
