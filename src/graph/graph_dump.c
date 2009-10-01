@@ -33,16 +33,16 @@ int main(int argc, char **argv){
   DEBUG            = atoi(argv[7]);
   
 
-  fprintf(stderr,"Input file of filenames: %s\n",argv[1]);
-  fprintf(stderr,"Output bin file: %s\n",argv[6]);
-  fprintf(stderr,"Kmer size: %d hash_table_size (%d bits): %d - bucket size: %d - total size: %qd\n",kmer_size,hash_key_bits,1 << hash_key_bits, bucket_size, ((long long) 1<<hash_key_bits)*bucket_size);
+  fprintf(stdout,"Input file of filenames: %s\n",argv[1]);
+  fprintf(stdout,"Output bin file: %s\n",argv[6]);
+  fprintf(stdout,"Kmer size: %d hash_table_size (%d bits): %d - bucket size: %d - total size: %qd\n",kmer_size,hash_key_bits,1 << hash_key_bits, bucket_size, ((long long) 1<<hash_key_bits)*bucket_size);
   if (fastq>0){
-    fprintf(stderr,"quality cut-off: %i\n",fastq);
+    fprintf(stdout,"quality cut-off: %i\n",fastq);
   }
 
   //Create the de Bruijn graph/hash table
   db_graph = hash_table_new(hash_key_bits,bucket_size, 10,kmer_size);
-  fprintf(stderr,"table created: %d\n",1 << hash_key_bits);
+  fprintf(stdout,"table created: %d\n",1 << hash_key_bits);
 
 
   int count_file   = 0;
@@ -70,7 +70,7 @@ int main(int argc, char **argv){
 
     total_length += seq_length;
     
-    fprintf(stderr,"\n%i kmers: %qd file name:%s bad reads: %qd seq:%qd total seq:%qd\n\n",count_file,hash_table_get_unique_kmers(db_graph),filename,bad_reads,seq_length, total_length);
+    fprintf(stdout,"\n%i kmers: %qd file name:%s bad reads: %qd seq:%qd total seq:%qd\n\n",count_file,hash_table_get_unique_kmers(db_graph),filename,bad_reads,seq_length, total_length);
 
     hash_table_print_stats(db_graph);
 

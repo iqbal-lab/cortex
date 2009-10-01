@@ -15,7 +15,7 @@ IDIR_COUNT_KMERS_TESTS =../include/test/count_kmers
 IDIR_SV_TRIO_TESTS=../include/test/pop_graph/sv_trio
 IDIR_MANY_POP_TESTS=../include/test/pop_graph/many_pops
 
-IDIR_CUNIT = /homes/zi/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
+IDIR_CUNIT = /home/zam/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
 
 
 BIN = ../bin
@@ -29,7 +29,7 @@ IDIR_POP_GRAPH_CORE = ../include/pop_graph/core
 IDIR_SV_TRIO = ../include/pop_graph/sv_trio
 IDIR_MANY_POP_GRAPH = ../include/pop_graph/many_pops
 
-IDIR_CUNIT = /homes/zi/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
+IDIR_CUNIT = /home/zam/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
 
 ifdef MAC
  MACFLAG    = -fnested-functions
@@ -41,7 +41,7 @@ ifdef DEBUG
  OPT                  = -m64 -Wall -O0 -g $(MACFLAG)
 endif
 
-CFLAGS_CUNIT          = -L/homes/zi/bin/lib
+CFLAGS_CUNIT          = -L/home/zam/bin/lib
 
 CFLAGS_BASIC          = -I$(IDIR_BASIC) 
 CFLAGS_GRAPH          = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_GRAPH) 
@@ -49,16 +49,16 @@ CFLAGS_COUNT_KMERS    = -I$(IDIR_BASIC)  -I$(IDIR_HASH) -I$(IDIR_COUNT_KMERS)
 CFLAGS_SV_TRIO =   -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_SV_TRIO) -I$(IDIR_POP_GRAPH_CORE)
 CFLAGS_MANY_POP_GRAPH =   -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_MANY_POP_GRAPH) -I$(IDIR_POP_GRAPH_CORE)
 
-CFLAGS_BASIC_TESTS = -I$(IDIR_BASIC_TESTS)  -I$(IDIR_BASIC)  -I$(IDIR_CUNIT) -L/homes/zi/bin/lib
-CFLAGS_HASH_TABLE_TESTS =  -I$(IDIR_HASH) -I$(IDIR_HASH_TABLE_TESTS) -I$(IDIR_CUNIT)  -I$(IDIR_GRAPH) -L/homes/zi/bin/lib
-CFLAGS_COUNT_KMERS_TESTS =  -I$(IDIR_COUNT_KMERS_TESTS)  -I$(IDIR_COUNT_KMERS) -I$(IDIR_BASIC)  -I$(IDIR_HASH) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib
-CFLAGS_GRAPH_TESTS = -I$(IDIR_GRAPH_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_GRAPH) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib 
-CFLAGS_SV_TRIO_TESTS =  -I$(IDIR_SV_TRIO_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH)  -I$(IDIR_SV_TRIO) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib
-CFLAGS_MANY_POP_TESTS =  -I$(IDIR_MANY_POP_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH)  -I$(IDIR_MANY_POP_GRAPH) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_CUNIT) -L/homes/zi/bin/lib
+CFLAGS_BASIC_TESTS = -I$(IDIR_BASIC_TESTS)  -I$(IDIR_BASIC)  -I$(IDIR_CUNIT) -L/home/zam/bin/lib
+CFLAGS_HASH_TABLE_TESTS =  -I$(IDIR_HASH) -I$(IDIR_HASH_TABLE_TESTS) -I$(IDIR_CUNIT)  -I$(IDIR_GRAPH) -L/home/zam/bin/lib
+CFLAGS_COUNT_KMERS_TESTS =  -I$(IDIR_COUNT_KMERS_TESTS)  -I$(IDIR_COUNT_KMERS) -I$(IDIR_BASIC)  -I$(IDIR_HASH) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
+CFLAGS_GRAPH_TESTS = -I$(IDIR_GRAPH_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_GRAPH) -I$(IDIR_CUNIT) -L/home/zam/bin/lib 
+CFLAGS_SV_TRIO_TESTS =  -I$(IDIR_SV_TRIO_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH)  -I$(IDIR_SV_TRIO) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
+CFLAGS_MANY_POP_TESTS =  -I$(IDIR_MANY_POP_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH)  -I$(IDIR_MANY_POP_GRAPH) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
 
 
 
-# Shared objects for all binaries using single colour graphs defined by element in src/graph/. Objects in /homes/zi/tmp/obj/basic can be shared by all targets. Other objects must go in target specific obj-hierarchy
+# Shared objects for all binaries using single colour graphs defined by element in src/graph/. Objects in /home/zam/tmp/obj/basic can be shared by all targets. Other objects must go in target specific obj-hierarchy
 
 COUNT_OBJ      = obj/basic/binary_kmer.o obj/basic/seq.o obj/count_kmers/element.o obj/count_kmers/hash_table/hash_key/bob_jenkins/hash_value.o obj/count_kmers/hash_table/open_hash/hash_table.o obj/count_kmers/count_kmers.o
 

@@ -196,86 +196,92 @@ int main(int argc, char **argv){
   
 
   case 13:
-    
-    printf("smooth bubbles\n");
-    db_graph_smooth_bubbles(10,kmer_size*2,db_graph);
-    
-    printf("print supernodes\n");
-    db_graph_print_supernodes(argv[8],ctg_length,db_graph); 
- 
-    printf("dumping graph %s\n",argv[7]);
-    db_graph_dump_binary(argv[7],&db_node_check_status_not_pruned,db_graph);
-
-    break;
-
-  case 14:
-    printf("Graph loaded. Count how many nodes have cyclic shifts\n");
-    int results[kmer_size];
-    int i;
-    for (i=0; i<kmer_size; i++)
-      {
-	results[i]=0;
-      }
-    int* results_ptrs[kmer_size];
-    for (i=0; i<kmer_size; i++)
     {
-      results_ptrs[i]=&results[i];
+      printf("smooth bubbles\n");
+      db_graph_smooth_bubbles(10,kmer_size*2,db_graph);
+      
+      printf("print supernodes\n");
+      db_graph_print_supernodes(argv[8],ctg_length,db_graph); 
+      
+      printf("dumping graph %s\n",argv[7]);
+      db_graph_dump_binary(argv[7],&db_node_check_status_not_pruned,db_graph);
+      
+      break;
     }
-    
-    //db_graph_traverse_with_array(&db_node_count_shifts_that_are_in_graph_and_log_in_array, db_graph, results_ptrs, kmer_size);
-
-    for (i=0; i<kmer_size; i++)
-      {
-	printf("Number of times where a node matches %d other nodes by shifting =  %d\n", i, results[i]);
-      }
-    break;
-  
+  case 14:
+    {
+      printf("Graph loaded. Count how many nodes have cyclic shifts\n");
+      int results[kmer_size];
+      int i;
+      for (i=0; i<kmer_size; i++)
+	{
+	  results[i]=0;
+	}
+      int* results_ptrs[kmer_size];
+      for (i=0; i<kmer_size; i++)
+	{
+	  results_ptrs[i]=&results[i];
+	}
+      
+      //db_graph_traverse_with_array(&db_node_count_shifts_that_are_in_graph_and_log_in_array, db_graph, results_ptrs, kmer_size);
+      
+      for (i=0; i<kmer_size; i++)
+	{
+	  printf("Number of times where a node matches %d other nodes by shifting =  %d\n", i, results[i]);
+	}
+      break;
+    }
   case 15:
-    printf("Print supernodes containing entirely novel(non-reference) sequence\n");
-    read_all_ref_chromosomes_and_mark_graph(db_graph);
-    int min_covg=2; //demand coverage of at least 2
-
-    //todo - add condition to make sure ignore pruned
-    printf("Start printing..\n");
-    db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_is_not_exists_in_reference,min_covg, stdout, false, NULL, 0);
-
-    hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); //cleanup - the printing process has set all printed nodes to visited
-                                                                                                            //        - or to visited_and_exists_in_reference
-    break;
+    {
+      printf("Print supernodes containing entirely novel(non-reference) sequence\n");
+      read_all_ref_chromosomes_and_mark_graph(db_graph);
+      int min_covg=2; //demand coverage of at least 2
+      
+      //todo - add condition to make sure ignore pruned
+      printf("Start printing..\n");
+      db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_is_not_exists_in_reference,min_covg, stdout, false, NULL, 0);
+      
+      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); //cleanup - the printing process has set all printed nodes to visited
+      //        - or to visited_and_exists_in_reference
+      break;
+    }
   case 16:
-    printf("Print supernodes that match reference at start and end, but not the middle\n");
-    read_all_ref_chromosomes_and_mark_graph(db_graph);
-    int minimum_covg=5; //demand covg of at least 5
-    printf("Start printing..\n");
-    db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, minimum_covg,
-												      2,25,40, stdout, false,NULL,0);//2,25 are required numbers of overlapping nodes with ref at start and end
-                                                                                                                             //40 is min number of supernodes which are NOT in reference
-    //cleanup - the printing process has set all printed nodes to visited
-    //           - or to visited_and_exists_in_reference
-    hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
-    break;
-
+    {
+      printf("Print supernodes that match reference at start and end, but not the middle\n");
+      read_all_ref_chromosomes_and_mark_graph(db_graph);
+      int minimum_covg=5; //demand covg of at least 5
+      printf("Start printing..\n");
+      db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, minimum_covg,
+													2,25,40, stdout, false,NULL,0);//2,25 are required numbers of overlapping nodes with ref at start and end
+      //40 is min number of supernodes which are NOT in reference
+      //cleanup - the printing process has set all printed nodes to visited
+      //           - or to visited_and_exists_in_reference
+      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
+      break;
+    }
   case 17:
-    min_covg=2; //demand coverage of at least 2
-    read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/output/zi_20090716_hla_drb1/hla_drb1.fasta" , db_graph);
-    printf("Loaded chromosome HLA DRB1\n");
-
-    //    printf("Start printing supernodes that match HLA DRB1  exactly\n");
-    //db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference,min_covg, stdout, false, NULL, 0);
-    //printf("STart printing supernodes that match HLA_DRB1 at start and end but not middle\n");
-    //db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, minimum_covg,
-    //                                                                                                      2,25,1, stdout, false,NULL,0);//2,25 are required numbers of overlapping nodes with ref at start and end, 1 is min nuber of nodes not in the reference
-
-
-    printf("Start printing all supernodes that match the referemce (HLA DRB1) in any way\n");
-    db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference, minimum_covg,
-                                                                                         stdout, false,NULL,0);
-
-
-
-    hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); //cleanup - the printing process has set all printed nodes to visited
-    printf("Finished\n");
-    break;
+    {
+      int minimum_covg=2; //demand coverage of at least 2
+      read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("/nfs/1000g-work/G1K/work/zi/projects/marzam/output/zi_20090716_hla_drb1/hla_drb1.fasta" , db_graph);
+      printf("Loaded chromosome HLA DRB1\n");
+      
+      //    printf("Start printing supernodes that match HLA DRB1  exactly\n");
+      //db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference,min_covg, stdout, false, NULL, 0);
+      //printf("STart printing supernodes that match HLA_DRB1 at start and end but not middle\n");
+      //db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, minimum_covg,
+      //                                                                                                      2,25,1, stdout, false,NULL,0);//2,25 are required numbers of overlapping nodes with ref at start and end, 1 is min nuber of nodes not in the reference
+      
+      
+      printf("Start printing all supernodes that match the referemce (HLA DRB1) in any way\n");
+      db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph, &db_node_check_status_exists_in_reference, minimum_covg,
+											   stdout, false,NULL,0);
+      
+      
+      
+      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); //cleanup - the printing process has set all printed nodes to visited
+      printf("Finished\n");
+      break;
+    }
 
 
   }
