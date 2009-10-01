@@ -406,46 +406,63 @@ void test_read_sequence_from_fastq(){
   CU_ASSERT_EQUAL(length_seq, 4);
   CU_ASSERT_STRING_EQUAL("Zam",seq->name);
   CU_ASSERT_STRING_EQUAL("ACGT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("&&&&",seq->qual);
+  //  CU_ASSERT_STRING_EQUAL("&&&&",seq->qual);/Zam says - /changed this line when I changed the ual reading code to offset by 33
+  CU_ASSERT((int) seq->qual[0] == 5);
+
+
+
 
   FILE* fp2 = fopen("../data/test/basic/three_entries.fastq", "r");
   
   //2. Read from fastq:
-  
-  // @Zam1
-  // ACGT
-  // +
-  // &&&&
-  // @Zam2
-  // AAAAAAAA
-  // +
-  // !@@$%^&*
-  // @Zam3
-  // ATATATAT
-  // TTTTTTTTTT
-  // -
-  // @@@@@@@&AAAAAABAAA
 
+
+  // @Zam1
+  //ACGT
+  //+
+  //&&&&
+  //@Zam2
+  //AAAAAAAA
+  //+
+  //!((/8F+,
+  //@Zam3
+  //ATATATAT
+  //TTTTTTTTTT
+  //-
+  //(((((((+AAAAAABAAA
+
+  
   length_seq = read_sequence_from_fastq(fp2,seq,1000);
   
   CU_ASSERT_EQUAL(length_seq, 4);
   CU_ASSERT_STRING_EQUAL("Zam1",seq->name);
   CU_ASSERT_STRING_EQUAL("ACGT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("&&&&",seq->qual);
+  //  CU_ASSERT_STRING_EQUAL("&&&&",seq->qual);/Zam says - /changed this line when I changed the ual reading code to offset by 33
+  CU_ASSERT((int) seq->qual[0] == 5);
+
 
   length_seq = read_sequence_from_fastq(fp2,seq,1000);
   
   CU_ASSERT_EQUAL(length_seq, 8);
   CU_ASSERT_STRING_EQUAL("Zam2",seq->name);
   CU_ASSERT_STRING_EQUAL("AAAAAAAA",seq->seq);
-  CU_ASSERT_STRING_EQUAL("!@@$%^&*",seq->qual);
+  CU_ASSERT((int) seq->qual[0] == 0);//! is quality 0 - take 33 off its ascii code, can check on http://www.asciitable.com/
+  CU_ASSERT((int) seq->qual[1] == 7);// ( is quality 7
+  CU_ASSERT((int) seq->qual[2] == 7);// ( is quality 7
+  CU_ASSERT((int) seq->qual[3] == 14);// / is quality 14
+  CU_ASSERT((int) seq->qual[4] == 23);// 8 is quality 23
+  CU_ASSERT((int) seq->qual[5] == 37);// F is quality 37
+  CU_ASSERT((int) seq->qual[6] == 10);// + is quality 10
+  CU_ASSERT((int) seq->qual[7] == 11);// , is quality 11
+
+
 
   length_seq = read_sequence_from_fastq(fp2,seq,1000);
   
   CU_ASSERT_EQUAL(length_seq, 18);
   CU_ASSERT_STRING_EQUAL("Zam3",seq->name);
   CU_ASSERT_STRING_EQUAL("ATATATATTTTTTTTTTT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("@@@@@@@&AAAAAABAAA",seq->qual);
+  CU_ASSERT((int) seq->qual[0] == 7);// ( is quality 7
 
   length_seq = read_sequence_from_fastq(fp2,seq,1000);
 
@@ -480,7 +497,7 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   // @read1
   // ACGT
   // +
-  // @@@@
+  // !!!!
   // @read2
   // CCCC
   // +
@@ -500,17 +517,25 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   CU_ASSERT_EQUAL(length_seq, 4);
   CU_ASSERT_STRING_EQUAL("read1",seq->name);
   CU_ASSERT_STRING_EQUAL("ACGT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("@@@@",seq->qual);
+  CU_ASSERT((int) (seq->qual[0])==0);
+  CU_ASSERT((int) (seq->qual[1])==0);
+  CU_ASSERT((int) (seq->qual[2])==0);
+  CU_ASSERT((int) (seq->qual[3])==0);
   
   length_seq = read_sequence_from_fastq(fp1,seq,max_read_length);
   CU_ASSERT_EQUAL(length_seq, 4);
   CU_ASSERT_STRING_EQUAL("read2",seq->name);
   CU_ASSERT_STRING_EQUAL("CCCC",seq->seq);
-  CU_ASSERT_STRING_EQUAL("5555",seq->qual);
+  CU_ASSERT((int) (seq->qual[0])==20);
+  CU_ASSERT((int) (seq->qual[1])==20);
+  CU_ASSERT((int) (seq->qual[2])==20);
+  CU_ASSERT((int) (seq->qual[3])==20);
+
   
   length_seq = read_sequence_from_fastq(fp1,seq,max_read_length);
   CU_ASSERT_EQUAL(length_seq, 100);
   CU_ASSERT_STRING_EQUAL("read3",seq->name);
+  CU_ASSERT((int) (seq->qual[0])==15); // 0 translates as ascii 48; subtract 33 and get 15
   
   
 
@@ -518,7 +543,8 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   CU_ASSERT_EQUAL(length_seq, 4);
   CU_ASSERT_STRING_EQUAL("read4",seq->name);
   CU_ASSERT_STRING_EQUAL("ACGT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("3333",seq->qual);
+  CU_ASSERT((int) (seq->qual[0])==18);
+
   
   
   fclose(fp1);
@@ -531,26 +557,27 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   //+
   //WEW2WEW2WEW2WEWA
   //@read2
-  //AAAA#9A
+  //AAAA#5A
   //+
-  //@@@@@@@
+  //1234567
   //@read3
   //TTTT
   //+
   //3333
 
 
+
   length_seq = read_sequence_from_fastq(fp2,seq,max_read_length);
   CU_ASSERT_EQUAL(length_seq, 16);
   CU_ASSERT_STRING_EQUAL("read1",seq->name);
   CU_ASSERT_STRING_EQUAL("ACGTACGTACGTACGT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("WEW2WEW2WEW2WEWA",seq->qual);
+
 
   length_seq = read_sequence_from_fastq(fp2,seq,max_read_length);
   CU_ASSERT_EQUAL(length_seq, 4);
   CU_ASSERT_STRING_EQUAL("read3",seq->name);
   CU_ASSERT_STRING_EQUAL("TTTT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("3333",seq->qual);
+
   
   length_seq = read_sequence_from_fastq(fp2,seq,max_read_length);
   CU_ASSERT_EQUAL(length_seq, 0);
@@ -569,24 +596,21 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   //@read2
   //AAAA#5A
   //+
-  //@@@@@@@@@@@@
+  //!!!!!!!!!!!!!!!!!!!!!!
   //@read3
   //TTTT
   //+
   //3333
 
-
   length_seq = read_sequence_from_fastq(fp3,seq,max_read_length);
   CU_ASSERT_EQUAL(length_seq, 16);
   CU_ASSERT_STRING_EQUAL("read1",seq->name);
   CU_ASSERT_STRING_EQUAL("ACGTACGTACGTACGT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("WEW2WEW2WEW2WEWA",seq->qual);
 
   length_seq = read_sequence_from_fastq(fp3,seq,max_read_length);
   CU_ASSERT_EQUAL(length_seq, 4);
   CU_ASSERT_STRING_EQUAL("read3",seq->name);
   CU_ASSERT_STRING_EQUAL("TTTT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("3333",seq->qual);
 
   length_seq = read_sequence_from_fastq(fp3,seq,max_read_length);
   CU_ASSERT_EQUAL(length_seq, 0);
@@ -617,19 +641,19 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   CU_ASSERT_EQUAL(length_seq, 4);
   CU_ASSERT_STRING_EQUAL("read1",seq->name);
   CU_ASSERT_STRING_EQUAL("ACGT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("@@@@",seq->qual);
+  
 
   length_seq = read_sequence_from_fastq(fp4,seq,max_read_length);
   CU_ASSERT_EQUAL(length_seq, 45);
   CU_ASSERT_STRING_EQUAL("read2",seq->name);
   CU_ASSERT_STRING_EQUAL("AAAAAAAAAAAAAAACCCCCCCCCCCCCCCGGGGGGGGGGGGGGG",seq->seq);
-  CU_ASSERT_STRING_EQUAL("222222222222222333333333333333444444444444444",seq->qual);
+  
 
   length_seq = read_sequence_from_fastq(fp4,seq,max_read_length);
   CU_ASSERT_EQUAL(length_seq, 3);
   CU_ASSERT_STRING_EQUAL("read3",seq->name);
   CU_ASSERT_STRING_EQUAL("TTT",seq->seq);
-  CU_ASSERT_STRING_EQUAL("ggg",seq->qual);
+  
 
 
   length_seq = read_sequence_from_fastq(fp4,seq,max_read_length);

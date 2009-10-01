@@ -183,6 +183,7 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
   int q = 0; //length of qualities
   long file_pointer;
   boolean good_read = true;
+  int offset = 33; // this is the offset to convert from the ascii in a fastq code, to quality value in standard Sanger format
   
 
   if (fp == NULL){
@@ -295,7 +296,7 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
 		      break; //fine but nothing to add
 		    }
 		    
-		    seq->qual[q] = line[i];
+		    seq->qual[q] = line[i]-offset;
 		    q++;
 		    
 		    if (q==max_read_length)
