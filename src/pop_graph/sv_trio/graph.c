@@ -4,6 +4,7 @@
 #include <file_reader.h>
 #include <dB_graph.h>
 #include <dB_graph_population.h>
+#include <string.h>
 
 int main(int argc, char **argv){
 
@@ -12,7 +13,7 @@ int main(int argc, char **argv){
   dBGraph * db_graph = NULL; 
   short kmer_size;
   int action;
-  char* specific_fasta;
+  char* list_of_fasta;
 
   //command line arguments 
   filename         = argv[1];        //open file that lists one file per individual in the trio (population), and each of those gives list of files.
@@ -21,7 +22,8 @@ int main(int argc, char **argv){
   bucket_size      = atoi(argv[4]);
   action           = atoi(argv[5]);
   DEBUG            = atoi(argv[6]);
-  specific_fasta   = argv[7];
+  list_of_fasta   = argv[7];
+
 
   int max_retries=10;
 
@@ -225,6 +227,72 @@ int main(int argc, char **argv){
 
 	  }
 	
+	break;
+      }
+    case 2:
+      {
+	printf("Take the file %s, which was input as argument 7, and for each fasta file listed within, print out its own output file of coverage/number_of_occurrences_in_reference for each edge, tab separated. We expect no N's in the fasta", list_of_fasta);
+
+	FILE* fptr = fopen(list_of_fasta, "r");
+	if (fptr==NULL)
+	  {
+	    printf("Cannot open %s\n", list_of_fasta);
+	    exit(1);
+	  }
+
+	//file contains a list of fasta file names
+	char line[MAX_FILENAME_LENGTH+1];
+	
+	while(fgets(line,MAX_FILENAME_LENGTH, fptr) !=NULL)
+	  {
+	    
+	    //remove newline from endof line- replace with \0
+	    char* p;
+	    if ((p = strchr(line, '\n')) != NULL)
+	      *p = '\0';
+	    
+	    //open fasta file
+	    FILE* path_fptr = fopen(line, "r");
+	    if (path_fptr==NULL)
+	      {
+		printf("Cannot open %s\n", line);
+		exit(1);
+	      }
+
+	    //create output file 
+	    char name[300];
+	    sprintf(name,"%s.covg",line);
+
+	    FILE* out_fptr = fopen(name, "w");
+	    if (out_fptr==NULL)
+	      {
+		printf("Cannot open %s\n", name);
+		exit(1);
+	      }
+	    
+	    void print_covg_and_ref_covg(dBNode* node)
+	      {
+		if ((node==NULL) || (node->kmer == ~0) )
+		  {
+		    fprintf(out_fptr, "N in fasta - unexpected\t");
+		  }
+		else
+		  {
+		      // we assume that the reference is individual at index 0.
+		    int ref_covg =  db_node_get_coverage(node, individual_edge_array,0);
+		    int covg     =  db_node_get_coverage(node, individual_edge_array,1);
+		    fprintf(out_fptr, "%d/%d\t", covg, ref_covg);
+		  }
+	      }
+	    
+	    apply_to_all_nodes_in_path_defined_by_fasta(&print_covg_and_ref_covg, path_fptr, 50, db_graph);//work through fasta in chunks of size 50 bases - fasta not too big
+	    fclose(out_fptr);
+	    fclose(path_fptr);
+	    
+	    
+	  }
+	
+	fclose(fptr);
 	break;
       }
 
