@@ -60,14 +60,15 @@ int main(int argc, char **argv){
 	}
     }
 
-  ref_chroms[0] = "/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/Homo_sapiens.NCBI36.52.dna.chromosome.MT.fa";
+  ref_chroms[0] = "/data/zam/ref/hs/fasta/Homo_sapiens.NCBI36.52.dna.chromosome.MT.fa";
+
   
   for (i=1; i<23; i++)
     {
-      sprintf(ref_chroms[i], "/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/Homo_sapiens.NCBI36.52.dna.chromosome.%i.fa", i);
+      sprintf(ref_chroms[i], "/data/zam/ref/hs/fasta/Homo_sapiens.NCBI36.52.dna.chromosome.%i.fa", i);
     }
-  ref_chroms[23]="/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/Homo_sapiens.NCBI36.52.dna.chromosome.X.fa";
-  ref_chroms[24]="/nfs/1000g-work/G1K/work/zi/projects/marzam/humref/Homo_sapiens.NCBI36.52.dna.chromosome.Y.fa";
+  ref_chroms[23]="/data/zam/ref/hs/fasta/Homo_sapiens.NCBI36.52.dna.chromosome.X.fa";
+  ref_chroms[24]="/data/zam/ref/hs/fasta/Homo_sapiens.NCBI36.52.dna.chromosome.Y.fa";
 
 
 
@@ -272,7 +273,11 @@ int main(int argc, char **argv){
 	    
 	    void print_covg_and_ref_covg(dBNode* node)
 	      {
-		if ((node==NULL) || (node->kmer == ~0) )
+		if (node==NULL) 
+		  {
+		    fprintf(out_fptr, "node is NULL\t");
+		  }
+		else if (node->kmer == ~0) 
 		  {
 		    fprintf(out_fptr, "N in fasta - unexpected\t");
 		  }
@@ -285,7 +290,7 @@ int main(int argc, char **argv){
 		  }
 	      }
 	    
-	    apply_to_all_nodes_in_path_defined_by_fasta(&print_covg_and_ref_covg, path_fptr, 50, db_graph);//work through fasta in chunks of size 50 bases - fasta not too big
+	    apply_to_all_nodes_in_path_defined_by_fasta(&print_covg_and_ref_covg, path_fptr, 2, db_graph);//work through fasta in chunks of size 50 bases - fasta not too big
 	    fclose(out_fptr);
 	    fclose(path_fptr);
 	    
