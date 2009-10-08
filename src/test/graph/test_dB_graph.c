@@ -42,29 +42,32 @@ void test_hash_table_find()
   CU_ASSERT_EQUAL(bad_reads, 0);
 
   //all the kmers and their reverse complements from the reads
-  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAA", kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("TTT",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element3 = hash_table_find(element_get_key(seq_to_binary_kmer("GGC",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element4 = hash_table_find(element_get_key(seq_to_binary_kmer("GCC",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element5 = hash_table_find(element_get_key(seq_to_binary_kmer("GCT",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element6 = hash_table_find(element_get_key(seq_to_binary_kmer("AGC",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element7 = hash_table_find(element_get_key(seq_to_binary_kmer("TAG",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element8 = hash_table_find(element_get_key(seq_to_binary_kmer("CTA",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element9 = hash_table_find(element_get_key(seq_to_binary_kmer("AGG",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element10 = hash_table_find(element_get_key(seq_to_binary_kmer("CCT",  kmer_size),kmer_size) ,db_graph);
+  BinaryKmer tmp_kmer1;
+  BinaryKmer tmp_kmer2;
+  
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("TTT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element3 = hash_table_find(element_get_key(seq_to_binary_kmer("GGC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element4 = hash_table_find(element_get_key(seq_to_binary_kmer("GCC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element5 = hash_table_find(element_get_key(seq_to_binary_kmer("GCT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element6 = hash_table_find(element_get_key(seq_to_binary_kmer("AGC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element7 = hash_table_find(element_get_key(seq_to_binary_kmer("TAG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element8 = hash_table_find(element_get_key(seq_to_binary_kmer("CTA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element9 = hash_table_find(element_get_key(seq_to_binary_kmer("AGG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element10 = hash_table_find(element_get_key(seq_to_binary_kmer("CCT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
 
   //some kmers that should not be in the graph
 
-  dBNode* test_element11 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element12 = hash_table_find(element_get_key(seq_to_binary_kmer("CCC",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element13 = hash_table_find(element_get_key(seq_to_binary_kmer("TAT",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element14 = hash_table_find(element_get_key(seq_to_binary_kmer("ATA",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element15 = hash_table_find(element_get_key(seq_to_binary_kmer("TAC",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element16 = hash_table_find(element_get_key(seq_to_binary_kmer("ATG",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element17 = hash_table_find(element_get_key(seq_to_binary_kmer("TTG",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element18 = hash_table_find(element_get_key(seq_to_binary_kmer("AAC",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element19 = hash_table_find(element_get_key(seq_to_binary_kmer("TGA",  kmer_size),kmer_size) ,db_graph);
-  dBNode* test_element20 = hash_table_find(element_get_key(seq_to_binary_kmer("TCA",  kmer_size),kmer_size) ,db_graph);
+  dBNode* test_element11 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element12 = hash_table_find(element_get_key(seq_to_binary_kmer("CCC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element13 = hash_table_find(element_get_key(seq_to_binary_kmer("TAT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element14 = hash_table_find(element_get_key(seq_to_binary_kmer("ATA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element15 = hash_table_find(element_get_key(seq_to_binary_kmer("TAC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element16 = hash_table_find(element_get_key(seq_to_binary_kmer("ATG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element17 = hash_table_find(element_get_key(seq_to_binary_kmer("TTG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element18 = hash_table_find(element_get_key(seq_to_binary_kmer("AAC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element19 = hash_table_find(element_get_key(seq_to_binary_kmer("TGA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element20 = hash_table_find(element_get_key(seq_to_binary_kmer("TCA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
 
   //kmers in the graph
   CU_ASSERT(test_element1 != NULL);
@@ -118,6 +121,8 @@ void test_tip_clipping()
   int min_coverage, max_coverage;
   double avg_coverage;
   boolean is_cycle;
+  BinaryKmer tmp_kmer1;
+  BinaryKmer tmp_kmer2;
 
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
@@ -134,7 +139,7 @@ void test_tip_clipping()
 
   CU_ASSERT_EQUAL(seq_length,14);
 
-  dBNode* node1 = hash_table_find(element_get_key(seq_to_binary_kmer("TTT", kmer_size),kmer_size) ,db_graph);
+  dBNode* node1 = hash_table_find(element_get_key(seq_to_binary_kmer("TTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
 
   CU_ASSERT(node1 != NULL);
   
@@ -142,9 +147,9 @@ void test_tip_clipping()
   
   CU_ASSERT_EQUAL(tip_length,2);
 
-  dBNode* node2 = hash_table_find(element_get_key(seq_to_binary_kmer("GTT", kmer_size),kmer_size) ,db_graph);
-  dBNode* node3 = hash_table_find(element_get_key(seq_to_binary_kmer("CGT", kmer_size),kmer_size) ,db_graph);
-  dBNode* node4 = hash_table_find(element_get_key(seq_to_binary_kmer("CCA", kmer_size),kmer_size) ,db_graph);
+  dBNode* node2 = hash_table_find(element_get_key(seq_to_binary_kmer("GTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* node3 = hash_table_find(element_get_key(seq_to_binary_kmer("CGT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* node4 = hash_table_find(element_get_key(seq_to_binary_kmer("CCA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
 
 
   //check the change in the status
@@ -171,8 +176,8 @@ void test_tip_clipping()
   
 
   //check ends
-  dBNode* node5 = hash_table_find(element_get_key(seq_to_binary_kmer("GCG", kmer_size),kmer_size) ,db_graph);
-  dBNode* node6 = hash_table_find(element_get_key(seq_to_binary_kmer("CAT", kmer_size),kmer_size) ,db_graph);
+  dBNode* node5 = hash_table_find(element_get_key(seq_to_binary_kmer("GCG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* node6 = hash_table_find(element_get_key(seq_to_binary_kmer("CAT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
 
   //check the status are correct
   
@@ -199,6 +204,8 @@ void test_node_prunning_low_coverage()
   int number_of_bits = 4;
   int bucket_size    = 4;
   long long bad_reads = 0;
+  BinaryKmer tmp_kmer1;
+  BinaryKmer tmp_kmer2;
 
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
@@ -215,9 +222,9 @@ void test_node_prunning_low_coverage()
 
   CU_ASSERT_EQUAL(seq_length,14);
 
-  dBNode* node1 = hash_table_find(element_get_key(seq_to_binary_kmer("CCC", kmer_size),kmer_size) ,db_graph);
-  dBNode* node2 = hash_table_find(element_get_key(seq_to_binary_kmer("TCC", kmer_size),kmer_size) ,db_graph);
-  dBNode* node3 = hash_table_find(element_get_key(seq_to_binary_kmer("CCA", kmer_size),kmer_size) ,db_graph);
+  dBNode* node1 = hash_table_find(element_get_key(seq_to_binary_kmer("CCC", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* node2 = hash_table_find(element_get_key(seq_to_binary_kmer("TCC", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* node3 = hash_table_find(element_get_key(seq_to_binary_kmer("CCA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
   
 
   boolean node_pruned = db_graph_db_node_prune_low_coverage(node1,1,&db_node_action_set_status_pruned,db_graph);
@@ -286,10 +293,14 @@ void test_get_perfect_path() //test db_graph_get_perfect_path
   // now start at GTA and get all the sequence from there to the end of the supernode, and see
   // if that is right.
 
-   dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GTA", kmer_size), kmer_size),db_graph);
+  BinaryKmer tmp_kmer1;
+  BinaryKmer tmp_kmer2;
+
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GTA", kmer_size,&tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
    CU_ASSERT(test_element1!=NULL);
    
    boolean is_cycle=false;
+
    
    int test1_length = db_graph_get_perfect_path(test_element1,forward,100,
 						&db_node_action_do_nothing,
@@ -326,7 +337,7 @@ void test_get_perfect_path() //test db_graph_get_perfect_path
    CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),5);
    CU_ASSERT_EQUAL(bad_reads,0);
 
-   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACA", kmer_size), kmer_size),db_graph);
+   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
    CU_ASSERT(test_element1!=NULL);
 
    //ACA < TGT so forward gives TT
@@ -385,7 +396,7 @@ void test_get_perfect_path() //test db_graph_get_perfect_path
    CU_ASSERT_EQUAL(bad_reads,0);
    
 
-   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACA", kmer_size), kmer_size) ,db_graph);
+   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
    CU_ASSERT(test_element1!=NULL);
 
    //ACA < TGT so forward gives TT
@@ -444,7 +455,7 @@ void test_get_perfect_path() //test db_graph_get_perfect_path
    CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),1);
    CU_ASSERT_EQUAL(bad_reads,0);
 
-   test_element1 = hash_table_find(seq_to_binary_kmer("AAA", kmer_size) ,db_graph);
+   test_element1 = hash_table_find(seq_to_binary_kmer("AAA", kmer_size, &tmp_kmer1) ,db_graph);
    CU_ASSERT(test_element1!=NULL);
 
    //forward
@@ -494,14 +505,14 @@ void test_get_perfect_path() //test db_graph_get_perfect_path
    dBNode * node4;
 
    
-   node1 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CGT", kmer_size),kmer_size), &found1, db_graph);
-   node2 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("GTT", kmer_size),kmer_size),  &found2, db_graph);
+   node1 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CGT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2), &found1, db_graph);
+   node2 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("GTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found2, db_graph);
    db_node_add_edge(node1, node2, reverse,reverse, db_graph->kmer_size);
 
-   node3 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TTA", kmer_size),kmer_size),  &found3, db_graph);
+   node3 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TTA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found3, db_graph);
    db_node_add_edge(node2, node3, reverse,reverse, db_graph->kmer_size);
  
-   node4 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TAG", kmer_size),kmer_size),  &found3, db_graph);
+   node4 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TAG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found3, db_graph);
    db_node_add_edge(node3, node4, reverse,reverse, db_graph->kmer_size);
   
 
@@ -566,8 +577,10 @@ void test_writing_reading_binary(){
   boolean test_read;
 
   char seq[kmer_size];
+  
+  BinaryKmer tmp_kmer;
 
-  element_initialise(&node1,seq_to_binary_kmer("AAA",kmer_size),kmer_size);
+  element_initialise(&node1,seq_to_binary_kmer("AAA",kmer_size, &tmp_kmer),kmer_size);
   node1.edges = 'a'; // ie 64 = (0110 0100)2
   node1.coverage = 10;
 
@@ -581,11 +594,11 @@ void test_writing_reading_binary(){
 
   CU_ASSERT_EQUAL(test_read, true);
 
-  CU_ASSERT_EQUAL(node1.kmer, node2.kmer);
+  CU_ASSERT(binary_kmer_comparison_operator(node1.kmer, node2.kmer));
   CU_ASSERT_EQUAL(node1.edges, node2.edges);
 
-  CU_ASSERT_STRING_EQUAL("AAA", binary_kmer_to_seq(node1.kmer,kmer_size,seq));
-  CU_ASSERT_STRING_EQUAL("AAA", binary_kmer_to_seq(node2.kmer,kmer_size,seq));
+  CU_ASSERT_STRING_EQUAL("AAA", binary_kmer_to_seq(&(node1.kmer),kmer_size,seq));
+  CU_ASSERT_STRING_EQUAL("AAA", binary_kmer_to_seq(&(node2.kmer),kmer_size,seq));
   
   CU_ASSERT_EQUAL(node1.edges, node2.edges);
   CU_ASSERT_EQUAL(node1.edges, 'a');
@@ -607,6 +620,9 @@ void test_detect_and_smoothe_bubble(){
   int bucket_size = 3;
   dBGraph * db_graph = hash_table_new(number_of_buckets,bucket_size,10,kmer_size);
   boolean found;
+  BinaryKmer tmp_kmer1;
+  BinaryKmer tmp_kmer2;
+
  
   dBNode * node1, * node2, * node3, * node4, * node5, * node6, * node7, * node8, * node9;
   Orientation orientations1[100],orientations2[100];
@@ -624,10 +640,10 @@ void test_detect_and_smoothe_bubble(){
   //check a perfect bubble 
 
   //start point
-  node1 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCC", kmer_size),kmer_size), &found, db_graph);
+  node1 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCC", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2), &found, db_graph);
 
   //branch1
-  node2 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCA", kmer_size),kmer_size),  &found, db_graph);
+  node2 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
 
 
   //modify coverage -- used below to clip one branch
@@ -635,23 +651,23 @@ void test_detect_and_smoothe_bubble(){
   CU_ASSERT_EQUAL(element_get_coverage(node2),5);
 
 
-  node3 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CAC", kmer_size),kmer_size),  &found, db_graph);
-  node4 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("ACT", kmer_size),kmer_size),  &found, db_graph);
+  node3 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CAC", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
+  node4 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("ACT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
 
   //end point (branch merge here)
-  node5 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CTT", kmer_size),kmer_size),  &found, db_graph);
+  node5 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
 
   //branch 2
-  node6 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCT", kmer_size),kmer_size),  &found, db_graph);
+  node6 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
 
   element_update_coverage(node6,1);
   CU_ASSERT_EQUAL(element_get_coverage(node6),1);
 
-  node7 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CTC", kmer_size),kmer_size),  &found, db_graph);
-  node8 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TCT", kmer_size),kmer_size),  &found, db_graph);
+  node7 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CTC", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
+  node8 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TCT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
 
   //add 3p extension
-  node9 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TTA", kmer_size),kmer_size),  &found, db_graph);
+  node9 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TTA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
  
   //branch1
   db_node_add_edge(node1, node2, forward,forward, db_graph->kmer_size);
@@ -829,7 +845,7 @@ void test_detect_and_smoothe_bubble(){
   CU_ASSERT_EQUAL(seq_length,343);
 
   //fetch the kmer where the path splits (bubble appears) GCCAACCATGCCTGTTAAGGG
-  node1 = hash_table_find(element_get_key(seq_to_binary_kmer("GCCAACCATGCCTGTTAAGGG", kmer_size),kmer_size) ,db_graph);
+  node1 = hash_table_find(element_get_key(seq_to_binary_kmer("GCCAACCATGCCTGTTAAGGG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
  
   CU_ASSERT(node1!=NULL);
 
@@ -878,9 +894,12 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status(){
   Orientation next_orientation[4];
   Nucleotide next_base[4];
 
-  node1 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCC", kmer_size),kmer_size), &found, db_graph);
-  node2 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCT", kmer_size),kmer_size), &found, db_graph);
-  node3 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCG", kmer_size),kmer_size), &found, db_graph);
+  BinaryKmer tmp_kmer1;
+  BinaryKmer tmp_kmer2;
+
+  node1 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCC", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2), &found, db_graph);
+  node2 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2), &found, db_graph);
+  node3 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2), &found, db_graph);
 
  
 
@@ -905,7 +924,7 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status(){
   CU_ASSERT_EQUAL(next_base[0],Guanine);
   
 
-  node4 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCA", kmer_size),kmer_size), &found, db_graph);
+  node4 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2), &found, db_graph);
   db_node_add_edge(node1, node4, forward, forward, db_graph->kmer_size);
    
   boolean one_edge3 = db_graph_db_node_has_precisely_n_edges_with_status(node1,forward,none,2,
@@ -1025,7 +1044,10 @@ void test_is_condition_true_for_all_nodes_in_supernode()
   int bucket_size   = 10;
   int seq_length;
   long long bad_reads = 0;
-  
+
+  BinaryKmer tmp_kmer1;
+  BinaryKmer tmp_kmer2;
+
   
 
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
@@ -1047,9 +1069,10 @@ void test_is_condition_true_for_all_nodes_in_supernode()
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),2);
   CU_ASSERT_EQUAL(bad_reads,0);
 
-  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GTA", kmer_size), kmer_size),db_graph);
+
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GTA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element1!=NULL);
-  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("ACG", kmer_size), kmer_size),db_graph);
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("ACG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element2!=NULL);
 
   int limit =50;
@@ -1186,11 +1209,15 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   boolean is_cycle;
   int min_coverage, max_coverage;
 
+  BinaryKmer tmp_kmer1;
+  BinaryKmer tmp_kmer2;
+
+
   //element on supernode we know intersects chromosomes
-  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACA", kmer_size), kmer_size),db_graph);
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element1!=NULL);
   //elemtn on node that does not intersect chromosomes - is "novel"
-  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size), kmer_size),db_graph);
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element2!=NULL);
 
 
@@ -1236,10 +1263,10 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   //Now see if it correctly gets the supernode that does not intersect a chromosome
 
   //element on supernode we know intersects chromosomes
-  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AACCCTAACCCTAACCCTAACCCTAACCCTA", kmer_size), kmer_size),db_graph);
+  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AACCCTAACCCTAACCCTAACCCTAACCCTA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element1!=NULL);
   //elemtn on node that does not intersect chromosomes - is "novel"
-  test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GCGGGGCGGGGCGGGGCGGGGCGGGGCCCCC", kmer_size), kmer_size),db_graph);
+  test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GCGGGGCGGGGCGGGGCGGGGCGGGGCCCCC", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element2!=NULL);
 
 
@@ -1283,6 +1310,21 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, max_read_length, db_graph);
   
+
+  // This person has the following supernodes:
+
+  // >this supernode is the entrety of read2 and is entirely contained in chrom1
+  // ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
+  // >node_1 - this is the start of read1, until it overlaps read 2. This supernode lies entirely in chrom1 also
+  // TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCT
+
+
+  
+
+
+
+
+
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
 
   char** array_of_supernodes_for_person3= (char**) calloc(10,sizeof(char*));
@@ -1295,13 +1337,13 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
 
   //element on supernode we know intersects chromosomes
-   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACCCTAACCCTAACCCTAACCCTAACCCTAA", kmer_size), kmer_size),db_graph);
+   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACCCTAACCCTAACCCTAACCCTAACCCTAA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element1!=NULL);
   //elemtn on node that does not intersect chromosomes - is "novel" - and has coverage 3
-  test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GGGCGGGGCGGGGCGGGGCGGGGCCCCCTCA", kmer_size), kmer_size),db_graph);
+  test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GGGCGGGGCGGGGCGGGGCGGGGCCCCCTCA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element2!=NULL);
   //element does not intersect chrom but has covg only 1
-  dBNode* test_element3 =  hash_table_find(element_get_key(seq_to_binary_kmer("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", kmer_size), kmer_size),db_graph);
+  dBNode* test_element3 =  hash_table_find(element_get_key(seq_to_binary_kmer("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element3!=NULL);
 
 
@@ -1330,11 +1372,16 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
   CU_ASSERT(number_of_supernodes==2);
 
-  //the whole of read2 is a supernode, and is in chrom 1
-  CU_ASSERT( ((! strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAAC")) && (! strcmp(array_of_supernodes_for_person3[1],"CCTAAC"))) ||
-	     (! strcmp(array_of_supernodes_for_person3[0],"CCTAAC")) && (!  strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAAC")));
+
+  //some of read 1 is in chrom1, and the supernode is printed above, just after we loaded the fasta
+  //the whole of read2 is a supernode, and is in chrom 1. Note this print function prints only the edges, not the first kmer in the path
+  CU_ASSERT( ((!strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAAC")) && (! strcmp(array_of_supernodes_for_person3[1],"GGGTTA"))) 
+	     ||
+	     ((!strcmp(array_of_supernodes_for_person3[0],"GGGTTA")) && (!  strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAAC"))) );
 
 
+  printf("We get %s and %s\n", array_of_supernodes_for_person3[0], array_of_supernodes_for_person3[1]);
+  printf("We expect ACCCTAACCCTAAC and CCTAAC\n");
 
   free(array_of_supernodes_for_person3[0]) ;
   free(array_of_supernodes_for_person3[1]) ;
@@ -1370,12 +1417,16 @@ void test_indel_discovery_simple_test_1()
 
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
 
+  BinaryKmer tmp_kmer1;
+  BinaryKmer tmp_kmer2;
+
+  
   //element on supernode we know intersects chromosome entirely
-  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TGTGCAGAGGACAACGCAGCTCCGCCCTCGC", kmer_size), kmer_size),db_graph);
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TGTGCAGAGGACAACGCAGCTCCGCCCTCGC", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element1!=NULL);
 
   //element on supernode that overlaps at start and end but not middle, with chromosome
-  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("CCGGCGCAGGCGCAGTTGTTGTAGAGGCGCG", kmer_size), kmer_size),db_graph);
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("CCGGCGCAGGCGCAGTTGTTGTAGAGGCGCG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element2!=NULL);
 
 

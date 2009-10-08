@@ -49,31 +49,33 @@ void test_dump_load_binary(){
 
   CU_ASSERT_EQUAL(seq_length_post,15);
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post),5);
+  
+  BinaryKmer tmp_seq, tmp_seq2;
 
   //all the kmers and their reverse complements from the reads
-  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAA", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("TTT", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element3 = hash_table_find(element_get_key(seq_to_binary_kmer("GGC", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element4 = hash_table_find(element_get_key(seq_to_binary_kmer("GCC", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element5 = hash_table_find(element_get_key(seq_to_binary_kmer("GCT", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element6 = hash_table_find(element_get_key(seq_to_binary_kmer("AGC", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element7 = hash_table_find(element_get_key(seq_to_binary_kmer("TAG", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element8 = hash_table_find(element_get_key(seq_to_binary_kmer("CTA", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element9 = hash_table_find(element_get_key(seq_to_binary_kmer("AGG", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element10 = hash_table_find(element_get_key(seq_to_binary_kmer("CCT", kmer_size),kmer_size) ,db_graph_post);
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAA", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("TTT", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element3 = hash_table_find(element_get_key(seq_to_binary_kmer("GGC", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element4 = hash_table_find(element_get_key(seq_to_binary_kmer("GCC", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element5 = hash_table_find(element_get_key(seq_to_binary_kmer("GCT", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element6 = hash_table_find(element_get_key(seq_to_binary_kmer("AGC", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element7 = hash_table_find(element_get_key(seq_to_binary_kmer("TAG", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element8 = hash_table_find(element_get_key(seq_to_binary_kmer("CTA", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element9 = hash_table_find(element_get_key(seq_to_binary_kmer("AGG", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element10 = hash_table_find(element_get_key(seq_to_binary_kmer("CCT", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
 
   //kmers that should not be in the graph
 
-  dBNode* test_element11 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element12 = hash_table_find(element_get_key(seq_to_binary_kmer("CCC", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element13 = hash_table_find(element_get_key(seq_to_binary_kmer("TAT", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element14 = hash_table_find(element_get_key(seq_to_binary_kmer("ATA", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element15 = hash_table_find(element_get_key(seq_to_binary_kmer("TAC", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element16 = hash_table_find(element_get_key(seq_to_binary_kmer("ATG", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element17 = hash_table_find(element_get_key(seq_to_binary_kmer("TTG", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element18 = hash_table_find(element_get_key(seq_to_binary_kmer("AAC", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element19 = hash_table_find(element_get_key(seq_to_binary_kmer("TGA", kmer_size),kmer_size) ,db_graph_post);
-  dBNode* test_element20 = hash_table_find(element_get_key(seq_to_binary_kmer("TCA", kmer_size),kmer_size) ,db_graph_post);
+  dBNode* test_element11 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element12 = hash_table_find(element_get_key(seq_to_binary_kmer("CCC", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element13 = hash_table_find(element_get_key(seq_to_binary_kmer("TAT", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element14 = hash_table_find(element_get_key(seq_to_binary_kmer("ATA", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element15 = hash_table_find(element_get_key(seq_to_binary_kmer("TAC", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element16 = hash_table_find(element_get_key(seq_to_binary_kmer("ATG", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element17 = hash_table_find(element_get_key(seq_to_binary_kmer("TTG", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element18 = hash_table_find(element_get_key(seq_to_binary_kmer("AAC", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element19 = hash_table_find(element_get_key(seq_to_binary_kmer("TGA", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+  dBNode* test_element20 = hash_table_find(element_get_key(seq_to_binary_kmer("TCA", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
 
 
   CU_ASSERT(test_element1 != NULL);

@@ -659,7 +659,7 @@ char * binary_kmer_to_seq(BinaryKmer* bkmer, short kmer_size, char * seq){
 }
 
 
-
+//does not affect the kmer passed in as argument 1
 BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size, BinaryKmer* prealloc_reverse_kmer){
   binary_kmer_initialise_to_zero(prealloc_reverse_kmer);
   BinaryKmer local_copy_of_input_kmer;

@@ -26,34 +26,46 @@ void print_fasta_from_path(FILE *fout,
 			   int kmer_size,
 			   boolean include_first_kmer);
 
+
 //it doesn't check that it is a valid arrow -- it just assumes the arrows is fine
 dBNode * db_graph_get_next_node(dBNode * current_node, Orientation current_orientation, 
 			       Orientation * next_orientation,
 			       Nucleotide edge, Nucleotide * reverse_edge,dBGraph * db_graph){
-  
-  BinaryKmer kmer = element_get_kmer(current_node);
-  dBNode * next_node;
-  BinaryKmer rev_kmer = binary_kmer_reverse_complement(kmer,db_graph->kmer_size);
+
+  BinaryKmer local_copy_of_kmer;
+  binary_kmer_assignment_operator(local_copy_of_kmer, current_node->kmer);
+
+  BinaryKmer tmp_kmer;
+  dBNode * next_node=NULL;
+
+  // after the following line tmp_kmer and rev_kmer are pointing to the same B Kmer
+  BinaryKmer* rev_kmer = binary_kmer_reverse_complement(&local_copy_of_kmer,db_graph->kmer_size, &tmp_kmer);
+
   
   if (current_orientation == reverse){   
-    *reverse_edge = binary_kmer_get_last_nucleotide(kmer);
-    kmer = rev_kmer;
+    *reverse_edge = binary_kmer_get_last_nucleotide(&local_copy_of_kmer);
+    binary_kmer_assignment_operator(local_copy_of_kmer,*rev_kmer);
   }
   else{
     *reverse_edge = binary_kmer_get_last_nucleotide(rev_kmer);
   }
 
-  
-  kmer = binary_kmer_add_nucleotide_shift(kmer,edge, db_graph->kmer_size);
+
+  binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&local_copy_of_kmer, edge, db_graph->kmer_size);
 
    //get node from table
-  next_node = hash_table_find(element_get_key(kmer,db_graph->kmer_size),db_graph);
-
- 
+  next_node = hash_table_find(element_get_key(&local_copy_of_kmer,db_graph->kmer_size, &tmp_kmer),db_graph);
 
   if (next_node != NULL){
-    *next_orientation = db_node_get_orientation(kmer,next_node,db_graph->kmer_size);
+    *next_orientation = db_node_get_orientation(&local_copy_of_kmer,next_node,db_graph->kmer_size);
   }
+  else
+    {
+      // debug
+      BinaryKmer tmpzam;
+      char tmpzamseq[db_graph->kmer_size];
+      printf("Cannot find %s so get a NULL node\n", binary_kmer_to_seq(&tmp_kmer, db_graph->kmer_size, tmpzamseq));
+    }
 
   return next_node;
 }
@@ -62,6 +74,12 @@ dBNode * db_graph_get_next_node(dBNode * current_node, Orientation current_orien
 boolean db_graph_db_node_has_precisely_n_edges_with_status(dBNode * node,Orientation orientation,NodeStatus status,int n,
 						    dBNode * * next_node, Orientation * next_orientation, Nucleotide * next_base,
 						    dBGraph * db_graph){
+
+  if ( (n>4)||(n<0))
+    {
+      printf("WARNING - calling db_graph_db_node_has_precisely_n_edges_with_status with n=%d", n);
+      return false;
+    }
 
   int count = 0;
   boolean ret = false;
@@ -265,6 +283,7 @@ int db_graph_get_perfect_path_with_first_edge(dBNode * node, Orientation orienta
   Nucleotide nucleotide,rev_nucleotide,nucleotide2;
   int length =0;
   char tmp_seq[db_graph->kmer_size+1];
+  tmp_seq[db_graph->kmer_size]='\0';
   int sum_coverage = 0;
   int coverage  = 0;
 
@@ -1523,9 +1542,11 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node(dBNode* node,
 
     if (DEBUG)
       {
-      printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide1),
-	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size, tmp_seq) :  
-	     binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size, tmp_seq));
+
+	BinaryKmer tmp_kmer;
+	printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide1),
+	       next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size, tmp_seq) :  
+	       binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size, &tmp_kmer),db_graph->kmer_size, tmp_seq));
 	     
       }
     
@@ -1593,9 +1614,10 @@ dBNode* db_graph_get_next_node_in_supernode(dBNode* node, Orientation orientatio
 
   if (DEBUG)
     {
+      BinaryKmer tmp_kmer;
       printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide_for_only_edge),
 	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size, tmp_seq) :  
-	     binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size, tmp_seq));
+	     binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size, &tmp_kmer),db_graph->kmer_size, tmp_seq));
       
     }
     
@@ -1836,18 +1858,28 @@ void print_fasta_from_path(FILE *fout,
   compute_label(lst_node,reverse,lst_r);
 
   char fst_seq[kmer_size+1], lst_seq[kmer_size+1];
- 
-  BinaryKmer fst_kmer = element_get_kmer(fst_node);
-  if (fst_orientation==reverse){
-    fst_kmer = binary_kmer_reverse_complement(fst_kmer,kmer_size);
-  } 
-  binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq);
+  fst_seq[kmer_size]='\0';
+  lst_seq[kmer_size]='\0';
 
-  BinaryKmer lst_kmer = element_get_kmer(lst_node);
-  if (lst_orientation==reverse){
-    lst_kmer = binary_kmer_reverse_complement(lst_kmer,kmer_size);
+  BinaryKmer fst_kmer;
+  BinaryKmer tmp_kmer;
+
+  binary_kmer_assignment_operator(fst_kmer, *(element_get_kmer(fst_node)));
+
+  if (fst_orientation==reverse){
+    binary_kmer_reverse_complement(&fst_kmer,kmer_size, &tmp_kmer);
+    binary_kmer_assignment_operator(fst_kmer, tmp_kmer);
   } 
-  binary_kmer_to_seq(lst_kmer,kmer_size,lst_seq);
+  binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq);
+
+  BinaryKmer lst_kmer;
+  binary_kmer_assignment_operator(lst_kmer, *(element_get_kmer(lst_node)));
+
+  if (lst_orientation==reverse){
+    binary_kmer_reverse_complement(&lst_kmer,kmer_size, &tmp_kmer);
+    binary_kmer_assignment_operator(lst_kmer, tmp_kmer);
+  } 
+  binary_kmer_to_seq(&lst_kmer,kmer_size,lst_seq);
 
   fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s\n", name,
 	  (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage,

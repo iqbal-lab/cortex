@@ -151,6 +151,8 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
     }
     else {
       Element * current_node  = NULL;
+      BinaryKmer tmp_kmer;
+
             
       Orientation current_orientation;
       Orientation previous_orientation;
@@ -160,7 +162,7 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
 	
 	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
 	  boolean found = false;
-	  current_node = hash_table_find_or_insert(element_get_key(current_window->kmer[j],db_graph->kmer_size),&found,db_graph);	  
+	  current_node = hash_table_find_or_insert(element_get_key(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),&found,db_graph);	  
 	  if (current_node == NULL){
 	    fputs("file_reader: problem - current kmer not found\n",stderr);
 	    exit(1);
@@ -170,13 +172,14 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
 	    element_update_coverage(current_node,1);
 	  }
 
-	  current_orientation = db_node_get_orientation(current_window->kmer[j],current_node, db_graph->kmer_size);
+	  current_orientation = db_node_get_orientation(&(current_window->kmer[j]),current_node, db_graph->kmer_size);
 	  
 	  if (DEBUG){
 	    char kmer_seq[db_graph->kmer_size];
 	    char kmer_seq2[db_graph->kmer_size];
 	    
-	    printf("kmer i:%i j:%i:  %s %s %i\n",i,j,binary_kmer_to_seq(current_window->kmer[j],db_graph->kmer_size,kmer_seq),binary_kmer_to_seq(binary_kmer_reverse_complement(current_window->kmer[j],db_graph->kmer_size),db_graph->kmer_size,kmer_seq2),element_get_coverage(current_node));
+	    printf("kmer i:%i j:%i:  %s %s %i\n",i,j,binary_kmer_to_seq(&(current_window->kmer[j]),db_graph->kmer_size,kmer_seq),
+		   binary_kmer_to_seq(binary_kmer_reverse_complement(&(current_window->kmer[j]),db_graph->kmer_size, tmp_kmer),db_graph->kmer_size,kmer_seq2),element_get_coverage(current_node));
 	  }
 	  
 	  if (j>0){
@@ -223,6 +226,7 @@ long long load_binary_from_filename_into_graph(char* filename,  dBGraph* db_grap
   dBNode node_from_file;
   boolean found;
   long long count=0;
+  BinaryKmer tmp_kmer;
 
   if (fp_bin == NULL){
     printf("cannot open file:%s\n",filename);
@@ -234,9 +238,8 @@ long long load_binary_from_filename_into_graph(char* filename,  dBGraph* db_grap
     count++;
     
     dBNode * current_node  = NULL;
-    current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size),&found,db_graph);
+    current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
        
-   
     db_node_set_edges(current_node,db_node_get_edges(&node_from_file));
     element_update_coverage(current_node, element_get_coverage(&node_from_file));
   }
@@ -311,13 +314,15 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
     }
     else {
       Element * current_node  = NULL;
+      BinaryKmer tmp_kmer;
 
+      
       for(i=0;i<windows->nwindows;i++){ //for each window
 	KmerSlidingWindow * current_window = &(windows->window[i]);
 	
 	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
 
-	  current_node = hash_table_find(element_get_key(current_window->kmer[j],db_graph->kmer_size),db_graph);	  	 
+	  current_node = hash_table_find(element_get_key(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph);	  	 
 
 	  if (current_node){
 	    db_node_set_status(current_node, exists_in_reference);

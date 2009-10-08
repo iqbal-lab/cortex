@@ -23,7 +23,7 @@ int  main()
 
   /* add the tests to the suite */
 
-  
+
   if (NULL == CU_add_test(pSuite, "test hash_table_find for dB_graphs",  test_hash_table_find)){
     CU_cleanup_registry();
     return CU_get_error();
@@ -59,15 +59,18 @@ int  main()
     return CU_get_error();
   }
   
+  
   if (NULL == CU_add_test(pSuite, "test get detect and smoothe bubble",  test_detect_and_smoothe_bubble)){
      CU_cleanup_registry();
      return CU_get_error();
    }
 
+
   // if (NULL == CU_add_test(pSuite, "test nodes are have coverage correctly makred on file loading",  test_coverage_is_correctly_counted_on_loading_from_file) ){
   // CU_cleanup_registry();
   // return CU_get_error();
   //}
+
 
    if (NULL == CU_add_test(pSuite, "test has precisely n edges with status",test_db_graph_db_node_has_precisely_n_edges_with_status)){
      CU_cleanup_registry();
@@ -113,12 +116,7 @@ int  main()
    }
 
 
-   //  COMMENTING THIS OUT AS WE HAVE A BETTER ALGORITHM COMING SOON
-   //if (NULL == CU_add_test(pSuite, "Test can pull out supernode containing a deletion from chromosome", test_deletion_validation)){
-   //  CU_cleanup_registry();
-   //  return CU_get_error();
-  // }
-   
+
 
 
   /* Run all tests using the CUnit Basic interface */
