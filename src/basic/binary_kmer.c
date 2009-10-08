@@ -191,15 +191,6 @@ void binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(BinaryKmer
   // add new base at right hand end 
   (*bkmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] |= n;
 
-    printf("At end of binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end bkmer is ");
-  int i;
-  for (i=0; i<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-    {
-      printf("%lld\t", (*bkmer)[i]);
-    }
-  printf("\n");
-
-
 }
 
 
@@ -336,7 +327,9 @@ char * nucleotides_to_string(Nucleotide * nucleotides, int length, char * string
 //return total number of kmers read
 int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length, char quality_cut_off, short kmer_size, KmerSlidingWindowSet * windows, int max_windows, int max_kmers){  
 
-  char first_kmer[kmer_size];
+  char first_kmer[kmer_size+1];
+  first_kmer[kmer_size]='\0';
+
   int i=0; //current index
   int count_kmers = 0;
 
@@ -599,8 +592,6 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
 //caller passes in preallocated BinaryKmer, which is also returned in the return value
 BinaryKmer* seq_to_binary_kmer(char * seq, short kmer_size, BinaryKmer* prealloced_kmer){
 
-  printf("seq to bin kmer is given %s with kmer size %d\n", seq, kmer_size);
-  
   //sanity checks
   if (seq==NULL)
     {
@@ -616,36 +607,16 @@ BinaryKmer* seq_to_binary_kmer(char * seq, short kmer_size, BinaryKmer* prealloc
   int j;
   binary_kmer_initialise_to_zero(prealloced_kmer);
 
-  printf("Seq to bin initialises handed in kmer, and after init, kmer is  ");
-  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
-    {
-      printf("%lld\t", (*prealloced_kmer)[j]);
-    }
-  printf("\n");
-
   for(j=0;j<kmer_size;j++){
 
     if (char_to_binary_nucleotide(seq[j]) == Undefined){
       fputs("seq contains an undefined char\n",stderr);
       exit(1);
     }
-    printf("Call left shift with kmer size %d and char %c\n", kmer_size, seq[j]);
-    binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(prealloced_kmer, char_to_binary_nucleotide(seq[j]), kmer_size ); 
-    //printf("In mid of seq to bin, is shifting and inserting new bases. Currently kmer is ");
-    //for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
-    //  {
-    //	printf("%lld\t", (*prealloced_kmer)[j]);
-    //  }
-    //printf("\n");
 
+    binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(prealloced_kmer, char_to_binary_nucleotide(seq[j]), kmer_size ); 
     
   }
-  printf("Seq to bin kmer returns ");
-  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
-    {
-      printf("%lld\t", (*prealloced_kmer)[j]);
-    }
-  printf("\n");
 
   return prealloced_kmer;
 
@@ -684,7 +655,6 @@ char * binary_kmer_to_seq(BinaryKmer* bkmer, short kmer_size, char * seq){
   
   seq[kmer_size] = '\0';
   
-  printf("Binary_kmer_to_seq returning %s\n", seq);
   return seq;
 }
 

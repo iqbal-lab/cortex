@@ -57,7 +57,7 @@ int  main()
     return CU_get_error();
   }
 
-  /*    
+
   if (NULL == CU_add_test(pSuite, "test reading of fasta file",  test_read_sequence_from_fasta)){
     CU_cleanup_registry();
     return CU_get_error();
@@ -79,14 +79,14 @@ int  main()
     return CU_get_error();
   }
 
-  */
+
 
   if (NULL == CU_add_test(pSuite, "test conversion from binary nucleotide to C string", test_seq_to_binary_kmer_and_binary_kmer_to_seq)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
 
-  /*  
+
  if (NULL == CU_add_test(pSuite, "test binary kmer reverse complement", test_binary_kmer_reverse_complement)) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -115,7 +115,7 @@ int  main()
     return CU_get_error();
   }
 
-  */
+
 
 
   /* Run all tests using the CUnit Basic interface */

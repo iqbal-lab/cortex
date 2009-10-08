@@ -465,7 +465,6 @@ void test_seq_to_binary_kmer_and_binary_kmer_to_seq(){
       seq_to_binary_kmer("CATCAGTGGGACATAAACCACACAGATGACACACACA",37, &kmer);
       CU_ASSERT_STRING_EQUAL("CATCAGTGGGACATAAACCACACAGATGACACACACA",binary_kmer_to_seq(&kmer,37,seq2));
 
-      printf("Zam zam we get %s and expect CATCAGTGGGACATAAACCACACAGATGACACACACA \n\n\n\n\n", seq2);
 
       char seq3[64];
       binary_kmer_initialise_to_zero(&kmer);
@@ -530,7 +529,6 @@ void test_binary_kmer_reverse_complement(){
   seq_to_binary_kmer("GGCCCCGCCCCGCCCCGCCCCGCCCCGCCCC",31, &kmer);
   binary_kmer_reverse_complement(&kmer, 31, &kmer_reverse);
   CU_ASSERT_STRING_EQUAL("GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCC", binary_kmer_to_seq(&kmer_reverse,31,seq31));
-  printf("We expect GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCC but we get %s\n", seq31);
 
 
   if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
@@ -751,7 +749,6 @@ void test_get_sliding_windows_from_sequence(){
 
     CU_ASSERT_EQUAL(nkmers5, 5);
     
-
 
 
     // Now try some examples with large kmers
