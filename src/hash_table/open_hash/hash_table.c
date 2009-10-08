@@ -59,7 +59,15 @@ void hash_table_free(HashTable ** hash_table)
 // If key is not in bucket, and bucket is full, returns overflow=true
 boolean hash_table_find_in_bucket(Key key, long long * current_pos, boolean * overflow, HashTable * hash_table, int rehash){
 
-  int hashval = hash_value(key+rehash,hash_table->number_buckets);
+
+  //add the rehash to the final bitfield in the BinaryKmer
+  BinaryKmer bkmer_with_rehash_added;
+  binary_kmer_initialise_to_zero(&bkmer_with_rehash_added);
+  binary_kmer_assignment_operator(bkmer_with_rehash_added, *key);
+  bkmer_with_rehash_added[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] =   bkmer_with_rehash_added[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]+ (bitfield_of_64bits) rehash;
+
+  int hashval = hash_value(&bkmer_with_rehash_added,hash_table->number_buckets);
+
 
   boolean found = false;
   int i=0;                     //position in bucket
@@ -133,7 +141,7 @@ boolean hash_table_apply_or_insert(Key key, void (*f)(Element *), HashTable * ha
 	      }
 
 	      element_initialise(&element,key, hash_table->kmer_size);
-	      hash_table->table[current_pos] = element; //structure assignment
+	      element_assign( &(hash_table->table[current_pos]),  &element); 
 	      hash_table->unique_kmers++;
 	    }
 	  else//overflow
@@ -240,8 +248,8 @@ Element * hash_table_find_or_insert(Key key, boolean * found,  HashTable * hash_
 	    //printf("Inserting element at position %qd in bucket \n", current_pos);
 	    element_initialise(&element,key, hash_table->kmer_size);
 
-	    hash_table->table[current_pos] = element; //structure assignment
-	    //element_assign(&(hash_table->table[current_pos]) , &element);
+	    //hash_table->table[current_pos] = element; //structure assignment
+	    element_assign(&(hash_table->table[current_pos]) , &element);
 	    
 	    ret = &hash_table->table[current_pos];
 	    hash_table->unique_kmers++;

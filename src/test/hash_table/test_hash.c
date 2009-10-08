@@ -3,6 +3,7 @@
 #include <element.h>
 #include <open_hash/hash_table.h>
 #include <stdlib.h>
+#include <binary_kmer.h>
 
 
 void test_hash_table_find_or_insert()
@@ -18,6 +19,9 @@ void test_hash_table_find_or_insert()
   // with granulatiry step. Since for kmer_size large (eg 21) it takes to long to try ALL
   // possible 21-mers, the last argument allows you to specify the largest one to test
 
+
+  BinaryKmer tmp_kmer;
+  BinaryKmer tmp_kmer2;
   
   void test(short kmer_size, int num_bits, int bucket, int max_tries, int step, long long max_kmer_to_test)
     {
@@ -33,16 +37,18 @@ void test_hash_table_find_or_insert()
       
       long long i;
           
+
       for (i=0; i< max_kmer_to_test; i++)
 	{
-	  hash_table_find_or_insert(element_get_key(i, hash_table->kmer_size),&found, hash_table);
-	  if (found==true)
+
+	  BinaryKmer b;
+	  binary_kmer_initialise_to_zero(&b);
+	  b[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]=(bitfield_of_64bits) i;
+
+	  hash_table_find_or_insert(element_get_key(&b, hash_table->kmer_size, &tmp_kmer),&found, hash_table);
+	  if (found==false)
 	    {
-	      CU_ASSERT(i>element_get_key(i, hash_table->kmer_size)); //the reverse complement has already been added
-	    }
-	  else
-	    {
-	      CU_ASSERT(i==element_get_key(i, hash_table->kmer_size)); 
+	      CU_ASSERT(binary_kmer_comparison_operator(b,*(element_get_key(&b, hash_table->kmer_size, &tmp_kmer)) ) ); 
 	    }
 	}
       
@@ -51,16 +57,21 @@ void test_hash_table_find_or_insert()
       
       for (i=0; i< max_kmer_to_test; i=i+step)
 	{
-	  e = hash_table_find(element_get_key(i,hash_table->kmer_size), hash_table);
+
+	  BinaryKmer b;
+	  binary_kmer_initialise_to_zero(&b);
+	  b[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]=(bitfield_of_64bits) i;
+
+	  e = hash_table_find(element_get_key(&b,hash_table->kmer_size,&tmp_kmer), hash_table);
 	  CU_ASSERT(e!=NULL);
 	  if (e !=NULL)
 	    {
-	      CU_ASSERT(element_get_key(e->kmer, hash_table->kmer_size)==element_get_key(i, hash_table->kmer_size));
+	      CU_ASSERT(binary_kmer_comparison_operator(e->kmer, *element_get_key(&b, hash_table->kmer_size, &tmp_kmer2)) );
 	    }
 	  else
 	    {
 	      printf("e is NULL for i=%lld - unable to find\n",i);
-	      //exit(1);
+	      exit(1);
 	    }
 	}
       
@@ -74,34 +85,35 @@ void test_hash_table_find_or_insert()
   int max_tries;
   int step;
 
-  for (kmer_size=3; kmer_size<10; kmer_size+=2)
+  for (kmer_size=3; kmer_size<6; kmer_size+=2)//changed from 10 to 6
     {
       num_bits=15;
       bucket=100;
       max_tries=10;
       step=1;
-      max_key_given_kmer_size = (BinaryKmer) 1 <<(kmer_size*2);
+      max_key_given_kmer_size = (bitfield_of_64bits) 1 <<(kmer_size*2);
       test(kmer_size, num_bits, bucket, max_tries, step, max_key_given_kmer_size); 
     }
 
 
-  /*  
-  kmer_size=17;
-  num_bits=16;
-  bucket=400;
-  max_tries=20;
-  step=10000000;
-  max_key_given_kmer_size = (BinaryKmer) 1 <<(kmer_size*2);
-  test(kmer_size, num_bits, bucket, max_tries, step, max_key_given_kmer_size);
-  */
 
+  //kmer_size=17;
+  //num_bits=16;
+  //bucket=400;
+  //max_tries=20;
+  //step=10000000;
+  //max_key_given_kmer_size = (BinaryKmer) 1 <<(kmer_size*2);
+  //test(kmer_size, num_bits, bucket, max_tries, step, max_key_given_kmer_size);
+
+
+  /*
   //now test with just one bucket
   kmer_size=3;
   num_bits=20;
   bucket=1;
   max_tries=10;
   step=1;
-  max_key_given_kmer_size = (BinaryKmer) 1 <<(kmer_size*2);
+  max_key_given_kmer_size = (bitfield_of_64bits) 1 <<(kmer_size*2);
   test(kmer_size, num_bits, bucket, max_tries, step, max_key_given_kmer_size);
 
 
@@ -111,24 +123,28 @@ void test_hash_table_find_or_insert()
   bucket=10000000;
   max_tries=10;
   step=1;
-  max_key_given_kmer_size = (BinaryKmer) 1 <<(kmer_size*2);
+  max_key_given_kmer_size = (bitfield_of_64bits) 1 <<(kmer_size*2);
   test(kmer_size, num_bits, bucket, max_tries, step, max_key_given_kmer_size);
 
-
-  /* this takes ages:  
-  //and with large kmer but still shallow buckets
-  kmer_size=31;
-  step=200000;
-  long long max_kmer_to_test=100000;
-  test(kmer_size, num_bits, bucket, max_tries, step, max_kmer_to_test);
   */
+  // this takes ages:  
+  //and with large kmer but still shallow buckets
+  //kmer_size=31;
+  //step=200000;
+  //bitfield_of_64bits max_kmer_to_test=100000;
+  //test(kmer_size, num_bits, bucket, max_tries, step, max_kmer_to_test);
+  
+
+
+
+
 }
 
 
 void test_hash_table_apply_or_insert()
 {
   short kmer_size;
-  long long max_key_given_kmer_size;
+  bitfield_of_64bits max_key_given_kmer_size;
   
 
   //adds kmers to hash, then goes through and tries applying to them all, and checks if the apply was applied
@@ -140,7 +156,8 @@ void test_hash_table_apply_or_insert()
       long long bad_reads     = 0; 
       int max_retries         = max_tries;
       boolean found           = false;
-      
+      BinaryKmer tmp_kmer;
+
       HashTable* hash_table  = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
       
       
@@ -149,7 +166,11 @@ void test_hash_table_apply_or_insert()
       //insert all possible binary kmers, prior to start of test
       for (i=0; i< max_kmer_to_test; i++)
 	{
-	  hash_table_find_or_insert(element_get_key(i, hash_table->kmer_size),&found, hash_table);
+          BinaryKmer b;
+          binary_kmer_initialise_to_zero(&b);
+          b[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]=(bitfield_of_64bits) i;
+
+	  hash_table_find_or_insert(element_get_key(&b, hash_table->kmer_size, &tmp_kmer),&found, hash_table);
 	}
       
       
@@ -158,9 +179,13 @@ void test_hash_table_apply_or_insert()
       //now test the "apply"
       for (i=0; i< max_kmer_to_test; i=i+step)
 	{
-	  applied = hash_table_apply_or_insert(element_get_key(i,hash_table->kmer_size),&db_node_action_set_status_pruned , hash_table);
+	  BinaryKmer b;
+          binary_kmer_initialise_to_zero(&b);
+          b[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]=(bitfield_of_64bits) i;
+
+	  applied = hash_table_apply_or_insert(element_get_key(&b,hash_table->kmer_size, &tmp_kmer),&db_node_action_set_status_pruned , hash_table);
 	  CU_ASSERT(applied==true);
-	  CU_ASSERT(db_node_check_status(hash_table_find(element_get_key(i,hash_table->kmer_size),hash_table), pruned)==true);
+	  CU_ASSERT(db_node_check_status(hash_table_find(element_get_key(&b,hash_table->kmer_size, &tmp_kmer),hash_table), pruned)==true);
 	}
       
       hash_table_free(&hash_table);
@@ -175,7 +200,7 @@ void test_hash_table_apply_or_insert()
 
   for (kmer_size=3; kmer_size<10; kmer_size+=2)
     {
-      max_key_given_kmer_size = (BinaryKmer) 1 <<(kmer_size*2);
+      max_key_given_kmer_size = (bitfield_of_64bits) 1 <<(kmer_size*2);
       num_bits=15;
       bucket=100;
       max_tries=10;
@@ -189,7 +214,7 @@ void test_hash_table_apply_or_insert()
   bucket=1;
   max_tries=10;
   step=1;
-  max_key_given_kmer_size = (BinaryKmer) 1 <<(kmer_size*2);
+  max_key_given_kmer_size = (bitfield_of_64bits) 1 <<(kmer_size*2);
   test(kmer_size, num_bits, bucket, max_tries, step, max_key_given_kmer_size);
 
 
@@ -199,7 +224,7 @@ void test_hash_table_apply_or_insert()
   bucket=10000000;
   max_tries=10;
   step=1;
-  max_key_given_kmer_size = (BinaryKmer) 1 <<(kmer_size*2);
+  max_key_given_kmer_size = (bitfield_of_64bits) 1 <<(kmer_size*2);
   test(kmer_size, num_bits, bucket, max_tries, step, max_key_given_kmer_size);
 
   //and with large kmer but still shallow buckets

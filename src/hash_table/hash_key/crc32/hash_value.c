@@ -77,6 +77,11 @@ int hash_value(Key key, int number_buckets)
   //int hash_value = crc32(0, (char *) &key, sizeof(Key));
   //hash_value &= (number_buckets - 1);
   //return hash_value;
+
+
+  printf("This has not been modified to support big kmers. Implement it!");
+  exit(1);
+    
   
   int hash_value = 0 ;
  

@@ -43,7 +43,7 @@ typedef struct{
 
 typedef Element dBNode;
 
-typedef BinaryKmer Key;
+typedef BinaryKmer* Key;
 
 typedef enum{
   forward = 0,
@@ -60,18 +60,18 @@ Orientation opposite_orientation(Orientation);
 
 boolean element_is_key(Key,Element, short kmer_size);
 
-Key element_get_key(BinaryKmer,short kmer_size);
+Key element_get_key(BinaryKmer*,short kmer_size, Key preallocated_key);
 
 boolean element_smaller(Element,Element);
 
-void element_initialise(Element *,BinaryKmer kmer, short kmer_size);
+void element_initialise(Element *,BinaryKmer* kmer, short kmer_size);
 
-BinaryKmer element_get_kmer(Element *);
+BinaryKmer* element_get_kmer(Element *);
 
 short element_get_coverage(Element *);
 short element_update_coverage(Element *, short);
 
-Orientation db_node_get_orientation(BinaryKmer, dBNode *, short kmer_size);
+Orientation db_node_get_orientation(BinaryKmer*, dBNode *, short kmer_size);
 
 //add an edge between nodes -- NB: it adds both edges: forward and reverse
 boolean db_node_add_edge(dBNode *, dBNode *, Orientation, Orientation, short kmer_size); 

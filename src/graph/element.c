@@ -11,7 +11,8 @@
 
 void element_assign(Element* e1, Element* e2)
 {
-  e1->kmer = e2->kmer;
+  //e1->kmer = e2->kmer;
+  binary_kmer_assignment_operator((*e1).kmer, (*e2).kmer);
   e1->edges = e2->edges;
   e1->coverage = e2->coverage;
   e1->status = e2->status;
@@ -19,7 +20,14 @@ void element_assign(Element* e1, Element* e2)
 
 boolean element_is_key(Key key, Element e, short kmer_size)
 {
-  return key == e.kmer;
+  if (key==NULL)
+    {
+      printf("Do not call element_is_key wth a NULL pointer. Exiting\n");
+      exit(1);
+    }
+
+  return binary_kmer_comparison_operator(*key, e.kmer);
+
 }
 
 boolean element_smaller(Element  e1, Element e2){
@@ -27,7 +35,8 @@ boolean element_smaller(Element  e1, Element e2){
 }
 
 
-BinaryKmer element_get_kmer(Element * e){
+//TODO - make API safer - this gets contents of hash table, not  copy
+BinaryKmer* element_get_kmer(Element * e){
   return e->kmer;
 }
 
@@ -40,29 +49,34 @@ short element_update_coverage(Element * e, short update){
   return e->coverage;
 }
 
-Key element_get_key(BinaryKmer kmer, short kmer_size){
-  
-  BinaryKmer rev_kmer = binary_kmer_reverse_complement(kmer,kmer_size);
-  
-  if (rev_kmer < kmer){
-    kmer = rev_kmer;
-  }
+Key element_get_key(BinaryKmer* kmer, short kmer_size, Key preallocated_key){
 
-  return kmer;
+  BinaryKmer local_rev_kmer;
+  binary_kmer_initialise_to_zero(&local_rev_kmer);
+
+  binary_kmer_reverse_complement(kmer,kmer_size, &local_rev_kmer);
+  
+  if (binary_kmer_less_than(local_rev_kmer,*kmer, kmer_size))
+    {
+      binary_kmer_assignment_operator(*((BinaryKmer*)preallocated_key),local_rev_kmer);
+    }
+  else
+    {
+      binary_kmer_assignment_operator(*((BinaryKmer*)preallocated_key),*kmer);
+    }
+
+  return preallocated_key;
 
 }
 
-void element_initialise(Element * e, BinaryKmer kmer, short kmer_size){
+void element_initialise(Element * e, BinaryKmer* kmer, short kmer_size){
 
-  //check that the binary kmer we are given is legitimate, given the kmer_size
-  BinaryKmer mask = ((BinaryKmer) 1<<2*kmer_size)-1;
-  if(kmer != (kmer&mask))
-    {
-      printf("Trying to initialise an element with binary kmer %qd, which has bits set beyond the limit for kmer_size %d\n", kmer, kmer_size);
-      exit(1);
-    }
-  
-  e->kmer     = element_get_key(kmer, kmer_size);
+  //TODO - add check that the kmer passed in really is consistent with kmer_size
+
+  BinaryKmer tmp_kmer;
+  binary_kmer_initialise_to_zero(&tmp_kmer);
+  binary_kmer_assignment_operator( e->kmer, *(element_get_key(kmer, kmer_size, &tmp_kmer)));
+
   e->edges    = 0;
   e->status   = none;
   e->coverage = 0;
@@ -70,17 +84,24 @@ void element_initialise(Element * e, BinaryKmer kmer, short kmer_size){
 
 
 
-
-Orientation db_node_get_orientation(BinaryKmer k, dBNode * e, short kmer_size){
-
-  if (e->kmer == k){
-    return forward;
-  }
+Orientation db_node_get_orientation(BinaryKmer* k, dBNode * e, short kmer_size)
+{
+  if (binary_kmer_comparison_operator(e->kmer,*k)==true)
+    {
+      return forward;
+    }
   
-  if (e->kmer == binary_kmer_reverse_complement(k,kmer_size)){
-    return reverse;
-  }
+  BinaryKmer tmp_kmer;
 
+  if (binary_kmer_comparison_operator(e->kmer, *(binary_kmer_reverse_complement(k,kmer_size, &tmp_kmer)))==true)
+    {
+      return reverse;
+    }
+  
+  printf("programming error - you have called  db_node_get_orientation with a kmer that is neither equal to the kmer in this node, nor its rev comp\n");
+  char tmpseq1[kmer_size];
+  char tmpseq2[kmer_size];
+  printf("Arg 1 Kmer is %s and Arg 2 node kmer is %s\n", binary_kmer_to_seq(k, kmer_size, tmpseq1), binary_kmer_to_seq(&(e->kmer), kmer_size, tmpseq2));
   exit(1);
   
 }
@@ -107,33 +128,34 @@ void db_node_add_labeled_edge(dBNode * e, Orientation o, Nucleotide base){
 
 boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size){
 
-  BinaryKmer src_k, tgt_k; 
+
+  BinaryKmer src_k, tgt_k, tmp_kmer; 
   char seq1[kmer_size];
   char seq2[kmer_size];
 
-  src_k = src_e->kmer;
-  tgt_k = tgt_e->kmer;
+  binary_kmer_assignment_operator(src_k, src_e->kmer);
+  binary_kmer_assignment_operator(tgt_k, tgt_e->kmer);
  
   if (src_o == reverse){
-    src_k = binary_kmer_reverse_complement(src_k,kmer_size);
+    binary_kmer_assignment_operator(src_k, *(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer)));
   }
     
   if (tgt_o == reverse){
-    tgt_k = binary_kmer_reverse_complement(tgt_k,kmer_size);
+    binary_kmer_assignment_operator(tgt_k, *(binary_kmer_reverse_complement(&tgt_k,kmer_size, &tmp_kmer)));
   }
     
   
   if (DEBUG){
-    printf("add edge %s -%c-> %s\n",binary_kmer_to_seq(src_k,kmer_size,seq1),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(tgt_k)),binary_kmer_to_seq(tgt_k,kmer_size,seq2));
+    printf("add edge %s -%c-> %s\n",binary_kmer_to_seq(&src_k,kmer_size,seq1),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(&tgt_k)),binary_kmer_to_seq(&tgt_k,kmer_size,seq2));
   }
 
-  db_node_add_labeled_edge(src_e,src_o,binary_kmer_get_last_nucleotide(tgt_k));
+  db_node_add_labeled_edge(src_e,src_o,binary_kmer_get_last_nucleotide(&tgt_k));
 
   if (DEBUG){
-    printf("add edge %s -%c-> %s\n",binary_kmer_to_seq(tgt_k,kmer_size,seq1),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size))),binary_kmer_to_seq(src_k,kmer_size,seq2));
+    printf("add edge %s -%c-> %s\n",binary_kmer_to_seq(&tgt_k,kmer_size,seq1),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer))),binary_kmer_to_seq(&src_k,kmer_size,seq2));
   }
 
-  db_node_add_labeled_edge(tgt_e,opposite_orientation(tgt_o),binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size)));
+  db_node_add_labeled_edge(tgt_e,opposite_orientation(tgt_o),binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer)));
 
   return true;
 }
@@ -323,11 +345,13 @@ void db_node_set_status(dBNode * node,NodeStatus status){
 }
 
 void db_node_print_binary(FILE * fp, dBNode * node){
-  BinaryKmer kmer = element_get_kmer(node);
+  BinaryKmer kmer;
+  binary_kmer_assignment_operator(kmer,  *element_get_kmer(node));
   Edges edges     = node->edges;
   short coverage  = node->coverage;
 
-  fwrite(&kmer,  sizeof(BinaryKmer), 1, fp);
+  int i;
+  fwrite(kmer,  NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
   fwrite(&coverage, sizeof(short), 1, fp);
   fwrite(&edges, sizeof(Edges), 1, fp);
   
@@ -343,7 +367,11 @@ boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node){
   short coverage;
   int read;
   
-  read = fread(&kmer,sizeof(BinaryKmer),1,fp);
+  int i;
+  for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      read = fread(&(kmer[i]),sizeof(bitfield_of_64bits),1,fp);
+    }
 
   if (read>0){
     read = fread(&coverage,sizeof(short),1,fp);    
@@ -351,6 +379,7 @@ boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node){
       puts("error with input file\n");
       exit(1);
     }
+
     read = fread(&edges,sizeof(Edges),1,fp);
     if (read==0){
       puts("error with input file\n");
@@ -361,7 +390,7 @@ boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node){
     return false;
   }
 
-  element_initialise(node,kmer,kmer_size);
+  element_initialise(node,&kmer,kmer_size);
 
   node->edges    = edges;
   node->coverage = coverage;
