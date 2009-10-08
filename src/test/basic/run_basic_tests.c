@@ -22,46 +22,71 @@ int  main()
 
   /* add the tests to the suite */
 
-    
-  if (NULL == CU_add_test(pSuite, "test reading of fasta file",  test_read_sequence_from_fasta)){
+
+
+
+
+  if (NULL == CU_add_test(pSuite, "Check that bitfield as defined really is 64bits on this platform", test_that_bitfield_really_is_64bits )){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+  if (NULL == CU_add_test(pSuite, "Test the assignment operator for BinaryKmers", test_binary_kmer_assignment_operator  )){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+  if (NULL == CU_add_test(pSuite, "Test the comparison operator for binary kmers", test_binary_kmer_comparison_operator )){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+  if (NULL == CU_add_test(pSuite, "Test the less than operator for binary kmers", test_binary_kmer_less_than )){
     CU_cleanup_registry();
     return CU_get_error();
   }
   
-  if (NULL == CU_add_test(pSuite, "test reading of fasta file when some reads that have bad characters",  test_read_sequence_from_fasta_when_file_has_bad_reads)){ 
-    CU_cleanup_registry(); 
-     return CU_get_error();
+  if (NULL == CU_add_test(pSuite, "Test the left shift operator for big binary kmers that are encoded in multiple long integers", test_binary_kmer_left_shift )){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  
+  
+  if (NULL == CU_add_test(pSuite, "Test the right shift operator for big binary kmers that are encoded in multiple long integers", test_binary_kmer_right_shift )){
+    CU_cleanup_registry();
+    return CU_get_error();
   }
 
-  
-   if (NULL == CU_add_test(pSuite, "test reading of fastq file",  test_read_sequence_from_fastq)){ 
-     CU_cleanup_registry(); 
-     return CU_get_error(); 
-   } 
-   
+  /*    
+  if (NULL == CU_add_test(pSuite, "test reading of fasta file",  test_read_sequence_from_fasta)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
 
   if (NULL == CU_add_test(pSuite, "test reading of long fasta file",  test_read_sequence_from_long_fasta)){
     CU_cleanup_registry();
     return CU_get_error();
   }
-  
-  if (NULL == CU_add_test(pSuite, "test shift last kmer to start",  test_shift_last_kmer_to_start_of_sequence)){
+
+
+  if (NULL == CU_add_test(pSuite, "test reading of fastq file",  test_read_sequence_from_fastq)){
     CU_cleanup_registry();
     return CU_get_error();
   }
 
-  
   if (NULL == CU_add_test(pSuite, "test reading of fastq file when some reads are too long or have bad characters",  test_read_sequence_from_fastq_with_bad_reads_and_long_reads)){
-    
     CU_cleanup_registry();
     return CU_get_error();
   }
+
+  */
 
   if (NULL == CU_add_test(pSuite, "test conversion from binary nucleotide to C string", test_seq_to_binary_kmer_and_binary_kmer_to_seq)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
 
+  /*  
  if (NULL == CU_add_test(pSuite, "test binary kmer reverse complement", test_binary_kmer_reverse_complement)) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -72,16 +97,26 @@ int  main()
    return CU_get_error();
  }
 
+ 
  if (NULL == CU_add_test(pSuite, "test nucleotide iterator", test_binary_kmer_nucleotide_iterator)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
 
-
+ 
   if (NULL == CU_add_test(pSuite, "test creation of binary kmers from sequence - sliding window", test_get_sliding_windows_from_sequence)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
+
+
+  if (NULL == CU_add_test(pSuite, "test shift last kmer to start",  test_shift_last_kmer_to_start_of_sequence)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+  */
+
 
   /* Run all tests using the CUnit Basic interface */
   CU_basic_set_mode(CU_BRM_VERBOSE);

@@ -8,6 +8,203 @@
 #include <global.h>
 #include <string.h>
 
+
+void binary_kmer_initialise_to_zero(BinaryKmer* bkmer)
+{
+  int i;
+  for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      ((*bkmer)[i])=0;
+    }
+}
+
+
+void binary_kmer_assignment_operator(BinaryKmer left, BinaryKmer right)
+{
+  int i;
+  for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      left[i]=right[i];
+    }
+}
+
+
+//returns true if they are the same
+boolean binary_kmer_comparison_operator(const BinaryKmer const left, const BinaryKmer const right)
+{
+
+  boolean they_are_the_same=true;
+
+  int i;
+  for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      if (left[i]!=right[i])
+	{
+	  they_are_the_same=false;
+	  break;                             //sorry Mario, I know you hate breaks
+	}
+      
+    }
+
+  return they_are_the_same;
+}
+
+
+//TODO - this wrongly says left<right when they are the same!
+boolean binary_kmer_less_than(const BinaryKmer const left, const BinaryKmer const right, short kmer_size)
+{
+  boolean left_is_less_than_right=false;
+
+  //need the following to work out which bits to ignore
+  int number_of_bitfields_fully_used = kmer_size/32;
+  int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
+
+  int i;
+  //start at most significant end
+  for (i=NUMBER_OF_BITFIELDS_IN_BINARY_KMER-number_of_bitfields_fully_used-1; i<NUMBER_OF_BITFIELDS_IN_BINARY_KMER ; i++)
+    {
+      if (left[i]<right[i])
+	{
+	  left_is_less_than_right=true;
+	  break;                             //sorry Mario, I know you hate breaks
+	}
+      else if (left[i]>right[i])
+	{
+	  left_is_less_than_right=false;
+	  break;
+	}
+
+      
+    }
+
+  return left_is_less_than_right;
+  
+}
+
+
+
+//implicit in this is the idea that you shift left, and mask to 0 the bits that fall off the left hand end
+void binary_kmer_left_shift(BinaryKmer* kmer, int num_bits_to_shift, short kmer_size)
+{
+
+
+  //we will start at the right-most bitfield, and shift it left, keeping the overflow to apply to the next bitfield on the left.
+  if (num_bits_to_shift>63)
+  {
+    printf("Have not implemented  binary_kmer_left_shift to support shifts bigger than 63 bits. Did try setting limit to 64, but compiler warns if you do that");
+    exit(1);
+  }
+
+  void shift_left(int which_bitfield_in_kmer, bitfield_of_64bits overflow_to_apply_from_bitfield_to_the_right)
+    {
+
+      //get the overflow that you will create when you shift left
+      bitfield_of_64bits mask = ~(((bitfield_of_64bits)1<<(64-num_bits_to_shift))-1);   // start with 1's in all bits except the left hand (most significant) number_of_bits_to_shift, and then you take complement with ~
+      bitfield_of_64bits new_overflow = ((*kmer)[which_bitfield_in_kmer]) & mask;
+      new_overflow >>= (64-num_bits_to_shift); //so overflow is at far right hand end of the bitfield
+      
+      //shift left
+      ((*kmer)[which_bitfield_in_kmer]) <<= num_bits_to_shift;
+
+      //apply overflow we have been passed in
+      ((*kmer)[which_bitfield_in_kmer]) = ((*kmer)[which_bitfield_in_kmer]) | overflow_to_apply_from_bitfield_to_the_right;
+
+      
+      which_bitfield_in_kmer--;
+      
+      if (which_bitfield_in_kmer>=0)
+      {
+	shift_left(which_bitfield_in_kmer, new_overflow);
+      }
+      
+      
+      return;
+      
+    }
+  
+
+  shift_left(NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1,0);
+
+  //remove the num_bits_to_shift bits at the left hand end that have been pushed beyond the end of the kmer
+  
+  int number_of_bitfields_fully_used = kmer_size/32;
+  int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
+
+  if (number_of_bitfields_fully_used<NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
+  {
+
+    bitfield_of_64bits mask = 0;
+    mask = ((((bitfield_of_64bits)1)<<number_of_bits_in_most_sig_bitfield)-1);
+
+    // mask the (number_of_bitfields_fully_used+1)-th bitfield from the right
+    (*kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used -1 ] = (*kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used -1] & mask;
+  }
+}
+
+
+  //does not need to know kmer size.
+void binary_kmer_right_shift(BinaryKmer* kmer, int num_bits_to_shift)
+{
+
+
+  if (num_bits_to_shift>63)
+    {
+      printf("Have not implemented  binary_kmer_right_shift to support shifts bigger than 63 bits. Did try setting limit to 64, but compiler warns if you do that");
+      exit(1);
+    }
+
+  void shift_right(int which_bitfield_in_kmer, bitfield_of_64bits overflow_to_apply_from_bitfield_to_the_left)
+    {
+
+      //get the overflow that you will create when you shift right
+      bitfield_of_64bits mask =  (((bitfield_of_64bits)1<<num_bits_to_shift)-1);  
+      bitfield_of_64bits new_overflow = ((*kmer)[which_bitfield_in_kmer]) & mask;
+      new_overflow <<= (64-num_bits_to_shift);
+
+      //shift right
+      ((*kmer)[which_bitfield_in_kmer]) >>= num_bits_to_shift;
+      //apply overflow we have been given from bitfield on the left
+      ((*kmer)[which_bitfield_in_kmer]) = ((*kmer)[which_bitfield_in_kmer]) | overflow_to_apply_from_bitfield_to_the_left;
+      
+      which_bitfield_in_kmer++;
+      if (which_bitfield_in_kmer < NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
+	{
+	  shift_right(which_bitfield_in_kmer, new_overflow);
+	}
+      
+      return;
+
+    }
+
+
+  shift_right(0,0);
+
+}
+
+
+void binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(BinaryKmer* bkmer, Nucleotide n, short kmer_size)
+{
+
+  //shift left by one base,
+  binary_kmer_left_shift(bkmer, 2, kmer_size);
+
+  // add new base at right hand end 
+  (*bkmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] |= n;
+
+    printf("At end of binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end bkmer is ");
+  int i;
+  for (i=0; i<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      printf("%lld\t", (*bkmer)[i]);
+    }
+  printf("\n");
+
+
+}
+
+
+
+
 //returns Undefined if given non AGCT character
 Nucleotide char_to_binary_nucleotide(char c)
 {
@@ -89,7 +286,7 @@ Nucleotide reverse_binary_nucleotide(Nucleotide n)
     case Thymine:
       return Adenine;
     default:
-      printf("Non-existent nucleotide %i\n",n);
+      printf("Calling reverse_binary_nucleotide on non-existent nucleotide %i\n",n);
       exit(1);
     }
 }
@@ -137,17 +334,14 @@ char * nucleotides_to_string(Nucleotide * nucleotides, int length, char * string
 //return total number of kmers read
 //The third argument - length - is the length in bases of the sequence.
 //return total number of kmers read
-
 int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length, char quality_cut_off, short kmer_size, KmerSlidingWindowSet * windows, int max_windows, int max_kmers){  
 
   char first_kmer[kmer_size];
   int i=0; //current index
   int count_kmers = 0;
 
-  BinaryKmer mask = (( (BinaryKmer) 1 << (2*kmer_size)) - 1); // mask binary 00..0011..11 as many 1's as kmer_size * 2 (every base takes 2 bits)
-
   if (seq == NULL){
-    fputs("seq is NULL\n",stderr);    
+    fputs("in get_sliding_windows_from_sequence, seq is NULL\n",stderr);    
     exit(1);
   }
 
@@ -155,10 +349,8 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
     return 0;
   }
 
-
   int index_windows = 0;
   
-
   //loop over the bases in the sequence
   //index i is the current position in input sequence -- it nevers decreases. 
   
@@ -174,7 +366,6 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
       if ((char_to_binary_nucleotide(seq[i]) == Undefined) || 
 	  (quality_cut_off!=0 && qualities[i]<= quality_cut_off)){
 	j=0; //restart the first kmer 
-	
       }
       else{
 	j++;
@@ -186,7 +377,6 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
     if (j==kmer_size){ //ie we did not parse the entire sequence looking for a single good kmer, the first kmer
       
       count_kmers++;
-      first_kmer[kmer_size]='\0';
 
       //new sliding window
       if (index_windows>=max_windows){
@@ -198,7 +388,9 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 
       int index_kmers = 0;
       //do first kmer
-      current_window->kmer[index_kmers]= seq_to_binary_kmer(first_kmer,kmer_size);
+      BinaryKmer tmp_bin_kmer;
+      seq_to_binary_kmer(first_kmer,kmer_size, &tmp_bin_kmer);
+      binary_kmer_assignment_operator(current_window->kmer[index_kmers] , tmp_bin_kmer);
 
       //do the rest --
       index_kmers++;
@@ -216,13 +408,9 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 	  break;
 	}
 	//set the kmer to previous
-	current_window->kmer[index_kmers]= current_window->kmer[index_kmers-1];
-	//shift left - one base (ie 2 bits)
-	current_window->kmer[index_kmers] <<= 2;
-	//remove most significant base (using the mask x000.0011..11)
-	current_window->kmer[index_kmers] &= mask;
-	//add new base
-	current_window->kmer[index_kmers] |= current_base;
+	binary_kmer_assignment_operator(current_window->kmer[index_kmers], current_window->kmer[index_kmers-1]);
+	binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&(current_window->kmer[index_kmers]), current_base, kmer_size);
+
 	index_kmers++;
 	count_kmers++;
 	i++;
@@ -233,7 +421,6 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
       index_windows++;
             
     }
-
   } while (i<length);
  
   windows->nwindows = index_windows;
@@ -242,10 +429,32 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 }
 
 
+//caller passes in preallocated BinaryKmer, which is also returned in the return value
+//BinaryKmer* seq_to_binary_kmer(char * seq, short kmer_size, BinaryKmer* prealloced_kmer){
+  
+//  int j;
+//  binary_kmer_initialise_to_zero(prealloced_kmer);
+
+//  for(j=0;j<kmer_size;j++){
+
+//    if (char_to_binary_nucleotide(seq[j]) == Undefined){
+//      fputs("seq contains an undefined char\n",stderr);
+//      exit(1);
+//    }
+//    binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(prealloced_kmer, char_to_binary_nucleotide(seq[j]), kmer_size ); 
+    
+//  }
+//  return prealloced_kmer;
+
+//}
+
+
+
 //The first argument - seq - is a C string in A,C,G,T,N format. (Function handles bad characters)
 //The second argument - length - is the length in bases of the sequence.
 //we want a single sliding window, with all A's where the kmer would include an N, or Undefined nucleotide
-//this is not ideal - but the caller is presumably going to break the kmer at N's, and here we force them to break at AAAAAA also.
+//this seems not ideal - but the caller is presumably going to break the kmer at N's, and here we force them to break at AAAAAA also.
+// but would only happen if kmer_size = NUMBER_OF_BITFIELDS_IN_BINARY_KMER*32 - ie is even - which we never do.
 int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short kmer_size, KmerSlidingWindow* kmer_window)
 {  
 
@@ -262,9 +471,18 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
   first_kmer[kmer_size]='\0';
   Nucleotide current_base;
 
-  long long current_good_kmer=~0;
+  BinaryKmer marked_kmer; //will have all longlongs in array being ~0
+  int i;
+  for (i=0; i<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      marked_kmer[i]=~0;
+    }
+
+  BinaryKmer current_good_kmer;
+  binary_kmer_assignment_operator(current_good_kmer, marked_kmer); //initialisation
+  //long long current_good_kmer=~0;
   
-  BinaryKmer mask = (( (BinaryKmer) 1 << (2*kmer_size)) - 1); // mask binary 00..0011..11 as many 1's as kmer_size * 2 (every base takes 2 bits)
+  // don't think need this given new API --> BinaryKmer mask = (( (BinaryKmer) 1 << (2*kmer_size)) - 1); // mask binary 00..0011..11 as many 1's as kmer_size * 2 (every base takes 2 bits)
 
   if (length < kmer_size )
     {
@@ -273,28 +491,21 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
 
 
   //set up first kmer
-  int i;
   for (i=0; i<kmer_size; i++)
     {
 
       first_kmer[i]=seq[latest_base_we_have_read];
       current_base = char_to_binary_nucleotide(seq[latest_base_we_have_read]);
 
-      //shift left - one base (ie 2 bits)
-      current_good_kmer <<= 2;
-      //remove most significant base (using the mask x000.0011..11)
-      current_good_kmer &= mask;
-
       if (current_base==Undefined)
 	{
 	  //we will ignore contents of the string  first_kmer as it contains a bad character
+	  binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, Adenine, kmer_size );
 	  number_of_steps_before_current_kmer_is_good=i+1;
-	  current_good_kmer |= Adenine;
 	}      
       else
 	{
-	  //add new base
-	  current_good_kmer |= current_base;
+	  binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, current_base, kmer_size );
 	}
 
       latest_base_we_have_read++;
@@ -304,15 +515,19 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
   //add first kmer to window
   num_kmers++;
 
+  BinaryKmer tmp_bin_kmer;
+  binary_kmer_assignment_operator(tmp_bin_kmer, marked_kmer);
+
   if (number_of_steps_before_current_kmer_is_good==0)
     {
-      kmer_window->kmer[num_kmers-1]=seq_to_binary_kmer(first_kmer,kmer_size);	  
+      seq_to_binary_kmer(first_kmer,kmer_size, &tmp_bin_kmer);
     }
   else
     {
-      kmer_window->kmer[num_kmers-1]=~0;
       number_of_steps_before_current_kmer_is_good--;
     }
+  binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1], tmp_bin_kmer);
+
 
 
   while (latest_base_we_have_read<length)
@@ -322,29 +537,22 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
 	{
 	  current_base = char_to_binary_nucleotide(seq[latest_base_we_have_read]);
 
-	  //shift left - one base (ie 2 bits)
-	  current_good_kmer <<= 2;
-	  //remove most significant base (using the mask x000.0011..11)
-	  current_good_kmer &= mask;
-	  
 	  if (current_base==Undefined)
 	    {
-	      current_good_kmer |= Adenine;
+	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, Adenine, kmer_size );
 	      number_of_steps_before_current_kmer_is_good=kmer_size;
 	    }
 	  else
 	    {
-
 	      //add new base
-	      current_good_kmer |= current_base;
-
+	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, current_base, kmer_size );
 	    }
 
 	  num_kmers++;
 
 	  //add a marked kmer to the window
+	  binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1], marked_kmer);
 
-	  kmer_window->kmer[num_kmers-1]=~0;
 	  number_of_steps_before_current_kmer_is_good--;
 	  latest_base_we_have_read++; 
 
@@ -354,19 +562,16 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
       while (latest_base_we_have_read<length)
 	{
 	  current_base = char_to_binary_nucleotide(seq[latest_base_we_have_read]);
-	  //shift left - one base (ie 2 bits)
-	  current_good_kmer <<= 2;
-	  //remove most significant base (using the mask x000.0011..11)
-	  current_good_kmer &= mask;
 
 	  if (current_base==Undefined)
 	    {
-	      current_good_kmer |= Adenine;
+	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, Adenine, kmer_size );
 	      number_of_steps_before_current_kmer_is_good=kmer_size;
 
 	      //add a marked kmer to the window 
 	      num_kmers++;
-	      kmer_window->kmer[num_kmers-1]=~0; 
+	      binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1], marked_kmer);
+
 	      number_of_steps_before_current_kmer_is_good--; 
 	      latest_base_we_have_read++;
 	      break;
@@ -375,9 +580,9 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
 	    {
 	  
 	      //add new base
-	      current_good_kmer |= current_base;
+	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, current_base, kmer_size );
 	      num_kmers++;
-	      kmer_window->kmer[num_kmers-1]=current_good_kmer;      
+	      binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1],current_good_kmer);      
 	      latest_base_we_have_read++;	      
 	    }
 
@@ -391,11 +596,10 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
 }
 
 
+//caller passes in preallocated BinaryKmer, which is also returned in the return value
+BinaryKmer* seq_to_binary_kmer(char * seq, short kmer_size, BinaryKmer* prealloced_kmer){
 
-BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
-  
-  int j;
-  BinaryKmer kmer = 0;
+  printf("seq to bin kmer is given %s with kmer size %d\n", seq, kmer_size);
   
   //sanity checks
   if (seq==NULL)
@@ -409,87 +613,139 @@ BinaryKmer seq_to_binary_kmer(char * seq, short kmer_size){
       exit(1);
     }
   
+  int j;
+  binary_kmer_initialise_to_zero(prealloced_kmer);
+
+  printf("Seq to bin initialises handed in kmer, and after init, kmer is  ");
+  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
+    {
+      printf("%lld\t", (*prealloced_kmer)[j]);
+    }
+  printf("\n");
 
   for(j=0;j<kmer_size;j++){
-    //shift left,
-    kmer <<= 2;
-    //and then insert next nucleotide (in binary form) at the end.
-    kmer |= char_to_binary_nucleotide(seq[j]);
-    
+
     if (char_to_binary_nucleotide(seq[j]) == Undefined){
       fputs("seq contains an undefined char\n",stderr);
       exit(1);
     }
+    printf("Call left shift with kmer size %d and char %c\n", kmer_size, seq[j]);
+    binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(prealloced_kmer, char_to_binary_nucleotide(seq[j]), kmer_size ); 
+    //printf("In mid of seq to bin, is shifting and inserting new bases. Currently kmer is ");
+    //for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
+    //  {
+    //	printf("%lld\t", (*prealloced_kmer)[j]);
+    //  }
+    //printf("\n");
+
     
   }
-  return kmer;
+  printf("Seq to bin kmer returns ");
+  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
+    {
+      printf("%lld\t", (*prealloced_kmer)[j]);
+    }
+  printf("\n");
+
+  return prealloced_kmer;
+
 }
+
+
+  
+  
 
 
 
 //caller passes in allocated char*. This is returned and also set in 3rd argument.
 //user of this method is responsible for deallocating the returned sequence
 //note that the allocated space has to be kmer_size+1;
-
-char * binary_kmer_to_seq(BinaryKmer kmer, short kmer_size, char * seq){
+char * binary_kmer_to_seq(BinaryKmer* bkmer, short kmer_size, char * seq){
  
+  BinaryKmer local_bkmer;
+  binary_kmer_assignment_operator(local_bkmer, *bkmer);
+
   if (seq == NULL){
       fputs("seq argument cannot be NULL",stderr);
       exit(1);
     }
 
-  int mask = 3; // 0000011 mask used to extract the two less significative bits
+  int mask = 3; // 0000011 mask used to extract the two least significative bits
   int j;
   
   for(j=kmer_size-1; j>=0; j--){ //start from the back of the sequence
     
-    //get translation for the two less significative bits
-    seq[j] =  binary_nucleotide_to_char(kmer & mask);
-    //shift right
-    kmer >>=2;
+    //get translation for the two least significant bits
+    seq[j] =  binary_nucleotide_to_char(local_bkmer[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] & mask);
+    //shift right zam
+    binary_kmer_right_shift(&local_bkmer, 2); //note this is a local copy internal to this function - not altering the original BinaryKmer
+
   }
   
   seq[kmer_size] = '\0';
   
+  printf("Binary_kmer_to_seq returning %s\n", seq);
   return seq;
 }
 
 
-BinaryKmer binary_kmer_reverse_complement(BinaryKmer kmer, short kmer_size){
 
-  BinaryKmer reverse_kmer = 0;
-  BinaryKmer mask = 3; //000..0011
+BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size, BinaryKmer* prealloc_reverse_kmer){
+  binary_kmer_initialise_to_zero(prealloc_reverse_kmer);
+  BinaryKmer local_copy_of_input_kmer;
+  binary_kmer_assignment_operator(local_copy_of_input_kmer, *kmer);
+
+
+  bitfield_of_64bits  mask = 3; //000..0011
   int j;
 
-  //xor with the mask first
-  kmer ^= (( (BinaryKmer) 1 << (2*kmer_size)) - 1);// mask binary 00..0011..11 as many 1's as kmer_size * 2 (every base takes 2 bits)
+  //first complement the original kmer - xor with all 1's  
 
-  //reverse
+  int number_of_bitfields_fully_used = kmer_size/32;
+  int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
+
+
+  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
+    {
+      local_copy_of_input_kmer[j] ^= ~0;           
+    }
+
+
+  //then reverse
   for(j=0;j<kmer_size;j++){
-    //make space for new base
-    reverse_kmer<<=2;
+
+    //make space for new base  
+    binary_kmer_left_shift(prealloc_reverse_kmer, 2, kmer_size);
+
     //add base
-    reverse_kmer |= (kmer & mask);
-    kmer >>=2;
+    (*prealloc_reverse_kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] 
+      = (*prealloc_reverse_kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] | (local_copy_of_input_kmer[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] & mask);
+
+    binary_kmer_right_shift(&local_copy_of_input_kmer, 2);
+
   }
-  return reverse_kmer;
+
+  return prealloc_reverse_kmer;
 }
 
 
-Nucleotide binary_kmer_get_last_nucleotide(BinaryKmer kmer){
+Nucleotide binary_kmer_get_last_nucleotide(BinaryKmer* kmer){
   
-  kmer &= 3; // mask against (11)base 2
+  bitfield_of_64bits bf = (*kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] & 3; // mask against (11)base 2
 
-  return kmer;
+  return (Nucleotide) bf;
   
 }
 
-Nucleotide binary_kmer_get_first_nucleotide(BinaryKmer kmer,short kmer_size){
-  
-  kmer &= 3 << 2*(kmer_size-1); // mask against (11)base 2
+Nucleotide binary_kmer_get_first_nucleotide(BinaryKmer* kmer,short kmer_size){
 
-  kmer >>= 2*(kmer_size-1);
-  return kmer;
+  int number_of_bitfields_fully_used = kmer_size/32;
+  int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
+
+  bitfield_of_64bits bf = (*kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used -1] & (3 <<  (number_of_bits_in_most_sig_bitfield-2));
+  
+  bf >>= (number_of_bits_in_most_sig_bitfield-2);
+  return bf;
   
 }
 
@@ -497,15 +753,15 @@ Nucleotide binary_kmer_get_first_nucleotide(BinaryKmer kmer,short kmer_size){
 //this routines adds nucleotide add the end of kmer and removes the first base -- generating a new kmer that overlaps
 //with kmer passed as argument
 
-BinaryKmer binary_kmer_add_nucleotide_shift(BinaryKmer kmer,Nucleotide nucleotide, short kmer_size){
+//BinaryKmer binary_kmer_add_nucleotide_shift(BinaryKmer kmer,Nucleotide nucleotide, short kmer_size){
  
-  kmer &= (((BinaryKmer) 1 << 2*(kmer_size-1))-1); // remove the last 2 bits - one base
-  kmer <<= 2;
-  kmer |= nucleotide; //add the new base
+//  kmer &= (((BinaryKmer) 1 << 2*(kmer_size-1))-1); // remove the last 2 bits - one base
+//  kmer <<= 2;
+//  kmer |= nucleotide; //add the new base
 
-  return kmer;
+//  return kmer;
 
-}
+//}
 
 
 
