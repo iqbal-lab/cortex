@@ -179,7 +179,7 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
 	    char kmer_seq2[db_graph->kmer_size];
 	    
 	    printf("kmer i:%i j:%i:  %s %s %i\n",i,j,binary_kmer_to_seq(&(current_window->kmer[j]),db_graph->kmer_size,kmer_seq),
-		   binary_kmer_to_seq(binary_kmer_reverse_complement(&(current_window->kmer[j]),db_graph->kmer_size, tmp_kmer),db_graph->kmer_size,kmer_seq2),element_get_coverage(current_node));
+		   binary_kmer_to_seq(binary_kmer_reverse_complement(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph->kmer_size,kmer_seq2),element_get_coverage(current_node));
 	  }
 	  
 	  if (j>0){

@@ -1895,7 +1895,7 @@ void print_fasta_from_path(FILE *fout,
 
   if (include_first_kmer){    
     
-    fprintf(fout,"%s",binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq));
+    fprintf(fout,"%s",binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq));
   }
   
   fprintf(fout,"%s\n",string);

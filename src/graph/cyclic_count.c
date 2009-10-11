@@ -9,6 +9,9 @@
 //} mystruct;
 // compiler reats it as a 12 bit integer, so you can do bit shifts etc. Does not get allocated at=s 12 bits, but can treat it as such.
 
+
+/*
+
 unsigned long long  rotate_least_sig_2k_bits(unsigned long long value, short kmer_size) 
 {
   int two_k_minus_two = 2* kmer_size-2;
@@ -54,4 +57,7 @@ int db_node_how_many_cyclic_perms_of_this_node_are_in_graph(dBNode* node, HashTa
   
 }
 
+
+
+*/
 
