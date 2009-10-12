@@ -37,7 +37,7 @@ boolean element_smaller(Element  e1, Element e2){
 
 //TODO - make API safer - this gets contents of hash table, not  copy
 BinaryKmer* element_get_kmer(Element * e){
-  return e->kmer;
+  return &(e->kmer);
 }
 
 short element_get_coverage(Element * e){
