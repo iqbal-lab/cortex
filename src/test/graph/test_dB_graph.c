@@ -1322,9 +1322,6 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   
 
 
-
-
-
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
 
   char** array_of_supernodes_for_person3= (char**) calloc(10,sizeof(char*));
@@ -1381,7 +1378,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
 
   printf("We get %s and %s\n", array_of_supernodes_for_person3[0], array_of_supernodes_for_person3[1]);
-  printf("We expect ACCCTAACCCTAAC and CCTAAC\n");
+  //printf("We expect ACCCTAACCCTAAC and CCTAAC\n");
 
   free(array_of_supernodes_for_person3[0]) ;
   free(array_of_supernodes_for_person3[1]) ;

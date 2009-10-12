@@ -23,7 +23,9 @@ void test_binary_kmer_assignment_operator()
 {
   int i;
 
-  bitfield_of_64bits  array[10] = {1,2,7,25,25656464646,43,4444444,101010,999,32};
+  bitfield_of_64bits  array[10] = {(bitfield_of_64bits) 1,(bitfield_of_64bits)2,(bitfield_of_64bits)7,(bitfield_of_64bits)25,
+				   (bitfield_of_64bits)25656464646,(bitfield_of_64bits)43,(bitfield_of_64bits)4444444,(bitfield_of_64bits)101010,(bitfield_of_64bits)999,
+				   (bitfield_of_64bits)32};
 
   if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>10)
     {
@@ -33,9 +35,14 @@ void test_binary_kmer_assignment_operator()
 
   //set up your test kmer
   BinaryKmer test_kmer;
+  binary_kmer_initialise_to_zero(&test_kmer);
+
   for (i=0 ; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
     {
+      printf("Before assign, test_kmer[%d] is %lld\n", i, test_kmer[i]);
       test_kmer[i]=array[i];
+      printf("After assign, test_kmer[%d] is %lld\n", i, test_kmer[i]);
+
     }
   
   BinaryKmer assignee;
@@ -43,8 +50,16 @@ void test_binary_kmer_assignment_operator()
 
   for (i=0 ; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
     {
-      CU_ASSERT(assignee[i]==test_kmer[i]);
+      printf("Just after assig op , test_kmer[%d] is %lld\n", i, test_kmer[i]);
     }
+
+  for (i=0 ; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      CU_ASSERT(assignee[i]==test_kmer[i]);
+      printf("Assignee[%d] is %lld and we expected %lld and array[i] is %lld\n", i, assignee[i], test_kmer[i], array[i]);
+    }
+
+
 
 }
 

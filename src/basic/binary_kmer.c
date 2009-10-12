@@ -22,10 +22,20 @@ void binary_kmer_initialise_to_zero(BinaryKmer* bkmer)
 void binary_kmer_assignment_operator(BinaryKmer left, BinaryKmer right)
 {
   int i;
+  //for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+  //  {
+  //   printf("In bk ass before ass Right[%d] is %lld\n", i, right[i]);
+  //  }
+
   for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
     {
       left[i]=right[i];
     }
+  //for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+  //  {
+  //    printf("In bk ass after ass Right[%d] is %lld\n", i, right[i]);
+  //  }
+
 }
 
 
