@@ -106,7 +106,7 @@ void test_binary_kmer_less_than()
   
   bitfield_of_64bits j;
   short kmer_size;
-
+  
   for (kmer_size=31; kmer_size < NUMBER_OF_BITFIELDS_IN_BINARY_KMER*32; kmer_size=kmer_size+32)
     {
       int number_of_bitfields_fully_used = kmer_size/32;

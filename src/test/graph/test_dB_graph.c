@@ -1320,8 +1320,6 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
 
 
-
-
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
 
   char** array_of_supernodes_for_person3= (char**) calloc(10,sizeof(char*));
@@ -1354,8 +1352,6 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   CU_ASSERT(number_of_supernodes==1);
   CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0], "ATGTGTGTGAGGG")
 	     || !strcmp(array_of_supernodes_for_person3[0], "CCCTCACACACAT"));
-
-  printf("checking is not exists in ref: We get %s and expect ATGTGTGTGAGGG or CCCTCACACACAT\n", array_of_supernodes_for_person3[0]);
 
   hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
 

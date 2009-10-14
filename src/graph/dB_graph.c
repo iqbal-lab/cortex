@@ -1051,6 +1051,7 @@ void db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_
     Orientation orientations_path[5000];
     Nucleotide labels_path[5000];
     char seq[5000+1];
+    seq[0]='\0';
     int length_path=0;
     double avg_coverage;
     int min_coverage;

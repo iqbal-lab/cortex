@@ -22,20 +22,11 @@ void binary_kmer_initialise_to_zero(BinaryKmer* bkmer)
 void binary_kmer_assignment_operator(BinaryKmer left, BinaryKmer right)
 {
   int i;
-  //for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-  //  {
-  //   printf("In bk ass before ass Right[%d] is %lld\n", i, right[i]);
-  //  }
 
   for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
     {
       left[i]=right[i];
     }
-  //for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-  //  {
-  //    printf("In bk ass after ass Right[%d] is %lld\n", i, right[i]);
-  //  }
-
 }
 
 
@@ -70,7 +61,10 @@ boolean binary_kmer_less_than(const BinaryKmer const left, const BinaryKmer cons
   int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
 
   int i;
+
+
   //start at most significant end
+  // this would break if we had number_of_bitfields_fully_used==NUMBER_OF_BITFIELDS_IN_BINARY_KMER. But we can never have that as k is always odd.
   for (i=NUMBER_OF_BITFIELDS_IN_BINARY_KMER-number_of_bitfields_fully_used-1; i<NUMBER_OF_BITFIELDS_IN_BINARY_KMER ; i++)
     {
       if (left[i]<right[i])
