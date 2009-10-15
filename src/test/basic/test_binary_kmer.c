@@ -39,9 +39,7 @@ void test_binary_kmer_assignment_operator()
 
   for (i=0 ; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
     {
-      printf("Before assign, test_kmer[%d] is %lld\n", i, test_kmer[i]);
       test_kmer[i]=array[i];
-      printf("After assign, test_kmer[%d] is %lld\n", i, test_kmer[i]);
 
     }
   
@@ -50,13 +48,7 @@ void test_binary_kmer_assignment_operator()
 
   for (i=0 ; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
     {
-      printf("Just after assig op , test_kmer[%d] is %lld\n", i, test_kmer[i]);
-    }
-
-  for (i=0 ; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-    {
       CU_ASSERT(assignee[i]==test_kmer[i]);
-      printf("Assignee[%d] is %lld and we expected %lld and array[i] is %lld\n", i, assignee[i], test_kmer[i], array[i]);
     }
 
 
@@ -81,7 +73,7 @@ void test_binary_kmer_comparison_operator()
       bk1[i]=0;
       bk2[i]=1;
       bk3[i]=0;
-      bk4[i]=i;
+      bk4[i]=i+2;
       bk5[i]=i+1;
       bk6[i]=~0;
       bk7[i]=1<<i;

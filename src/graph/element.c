@@ -350,7 +350,6 @@ void db_node_print_binary(FILE * fp, dBNode * node){
   Edges edges     = node->edges;
   short coverage  = node->coverage;
 
-  int i;
   fwrite(kmer,  NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
   fwrite(&coverage, sizeof(short), 1, fp);
   fwrite(&edges, sizeof(Edges), 1, fp);

@@ -58,7 +58,7 @@ boolean binary_kmer_less_than(const BinaryKmer const left, const BinaryKmer cons
 
   //need the following to work out which bits to ignore
   int number_of_bitfields_fully_used = kmer_size/32;
-  int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
+  //int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
 
   int i;
 
@@ -674,11 +674,6 @@ BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size, Bi
   int j;
 
   //first complement the original kmer - xor with all 1's  
-
-  int number_of_bitfields_fully_used = kmer_size/32;
-  int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
-
-
   for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
     {
       local_copy_of_input_kmer[j] ^= ~0;           
