@@ -1317,8 +1317,11 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   // ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
   // >node_1 - this is the start of read1, until it overlaps read 2. This supernode lies entirely in chrom1 also
   // TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCT
-
-
+  // > node 3 - overlaps chrom but has low covg
+  // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+  // >node 4 - no overlap with chromosome
+  // GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
+  
 
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
 
@@ -1350,9 +1353,10 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
 
   CU_ASSERT(number_of_supernodes==1);
-  CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0], "ATGTGTGTGAGGG")
+  CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0], "CCCGCCCCGCCCC")
 	     || !strcmp(array_of_supernodes_for_person3[0], "CCCTCACACACAT"));
-
+  
+  
   hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
 
 
@@ -1370,13 +1374,28 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
   //some of read 1 is in chrom1, and the supernode is printed above, just after we loaded the fasta
   //the whole of read2 is a supernode, and is in chrom 1. Note this print function prints only the edges, not the first kmer in the path
-  CU_ASSERT( ((!strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAAC")) && (! strcmp(array_of_supernodes_for_person3[1],"GGGTTA"))) 
+
+
+  CU_ASSERT(  ((!strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAAC")) && (! strcmp(array_of_supernodes_for_person3[1],"GGGTTA"))) 
 	     ||
-	     ((!strcmp(array_of_supernodes_for_person3[0],"GGGTTA")) && (!  strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAAC"))) );
+	      ((!strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAAC")) && (! strcmp(array_of_supernodes_for_person3[1],"AACCCT"))) 
+	     ||
+	      ((!strcmp(array_of_supernodes_for_person3[0],"GTTAGGGTTAGGGT")) && (! strcmp(array_of_supernodes_for_person3[1],"AACCCT"))) 
+	     ||
+	      ((!strcmp(array_of_supernodes_for_person3[0],"GTTAGGGTTAGGGT")) && (! strcmp(array_of_supernodes_for_person3[1],"GGGTTA"))) 
+	     ||
+	      ((!strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAAC")) && (! strcmp(array_of_supernodes_for_person3[2],"GGGTTA"))) 
+	     ||
+	      ((!strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAAC")) && (! strcmp(array_of_supernodes_for_person3[2],"AACCCT"))) 
+	     ||
+	      ((!strcmp(array_of_supernodes_for_person3[1],"GTTAGGGTTAGGGT")) && (! strcmp(array_of_supernodes_for_person3[2],"AACCCT"))) 
+	     ||
+	      ((!strcmp(array_of_supernodes_for_person3[1],"GTTAGGGTTAGGGT")) && (! strcmp(array_of_supernodes_for_person3[2],"GGGTTA"))) 
+	      );
 
-
+  // for some reason I previously had this assert set to allow CCTAAC, which seems wrong, and is now coming out as one of the answers sometimes (depends on value of NUMBER_OF_BITFIELDS... etc).
   printf("We get %s and %s\n", array_of_supernodes_for_person3[0], array_of_supernodes_for_person3[1]);
-  //printf("We expect ACCCTAACCCTAAC and CCTAAC\n");
+
 
   free(array_of_supernodes_for_person3[0]) ;
   free(array_of_supernodes_for_person3[1]) ;
@@ -1476,10 +1495,12 @@ void test_indel_discovery_simple_test_1()
   db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
 												    min_start, min_end, min_diff, NULL,
 												    true, array_of_supernodes, &number_of_supernodes);
+												    
 
 
 
   CU_ASSERT(number_of_supernodes==1);
+
   CU_ASSERT( !strcmp(array_of_supernodes[0], "AGTTGTTGTAGAGGCGCGCCGCGCCGGCGCAGGCGCAGACACATGCTAGCGCGTCGGGGTGGAGGCGT") || !strcmp(array_of_supernodes[0], "ACGCCTCCACCCCGACGCGCTAGCATGTGTCTGCGCCTGCGCCGGCGCGGCGCGCCTCTACAACAACT"));
     //  CU_ASSERT( !strcmp(array_of_supernodes[0], "GAGGAGAACGCAACTCCGCCGGCGCAGGCGCAGTTGTTGTAGAGGCGCGCCGCGCCGGCGCAGGCGCAGACACATGCTAGCGCGTCGGGGTGGAGGCGT") || !strcmp(array_of_supernodes[0], "ACGCCTCCACCCCGACGCGCTAGCATGTGTCTGCGCCTGCGCCGGCGCGGCGCGCCTCTACAACAACTGCGCCTGCGCCGGCGGAGTTGCGTTCTCCTC"));
 

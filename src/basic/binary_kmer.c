@@ -51,7 +51,7 @@ boolean binary_kmer_comparison_operator(const BinaryKmer const left, const Binar
 }
 
 
-//TODO - this wrongly says left<right when they are the same!
+//TODO - this wrongly says left<right when they are the same! IS really a <= operator
 boolean binary_kmer_less_than(const BinaryKmer const left, const BinaryKmer const right, short kmer_size)
 {
   boolean left_is_less_than_right=false;
@@ -70,7 +70,7 @@ boolean binary_kmer_less_than(const BinaryKmer const left, const BinaryKmer cons
       if (left[i]<right[i])
 	{
 	  left_is_less_than_right=true;
-	  break;                             //sorry Mario, I know you hate breaks
+	  break;                             
 	}
       else if (left[i]>right[i])
 	{
@@ -91,6 +91,14 @@ boolean binary_kmer_less_than(const BinaryKmer const left, const BinaryKmer cons
 void binary_kmer_left_shift(BinaryKmer* kmer, int num_bits_to_shift, short kmer_size)
 {
 
+  if (kmer_size==32*NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
+    {
+      printf("Kmer should be even, and we do not allow it to be 32*NUMBER_OF_BITFIELDS_IN_BINARY_KMER");
+      exit(1);
+    }
+
+  int number_of_bitfields_fully_used = kmer_size/32;
+  int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used)); // maybe clearer to call this 2*kmer_size - 64*number_of_bitfields_fully_used
 
   //we will start at the right-most bitfield, and shift it left, keeping the overflow to apply to the next bitfield on the left.
   if (num_bits_to_shift>63)
@@ -116,7 +124,8 @@ void binary_kmer_left_shift(BinaryKmer* kmer, int num_bits_to_shift, short kmer_
       
       which_bitfield_in_kmer--;
       
-      if (which_bitfield_in_kmer>=0)
+      //if (which_bitfield_in_kmer>=0)
+      if (which_bitfield_in_kmer>=NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1-number_of_bitfields_fully_used)
       {
 	shift_left(which_bitfield_in_kmer, new_overflow);
       }
@@ -131,8 +140,6 @@ void binary_kmer_left_shift(BinaryKmer* kmer, int num_bits_to_shift, short kmer_
 
   //remove the num_bits_to_shift bits at the left hand end that have been pushed beyond the end of the kmer
   
-  int number_of_bitfields_fully_used = kmer_size/32;
-  int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
 
   if (number_of_bitfields_fully_used<NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
   {
@@ -426,26 +433,6 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 }
 
 
-//caller passes in preallocated BinaryKmer, which is also returned in the return value
-//BinaryKmer* seq_to_binary_kmer(char * seq, short kmer_size, BinaryKmer* prealloced_kmer){
-  
-//  int j;
-//  binary_kmer_initialise_to_zero(prealloced_kmer);
-
-//  for(j=0;j<kmer_size;j++){
-
-//    if (char_to_binary_nucleotide(seq[j]) == Undefined){
-//      fputs("seq contains an undefined char\n",stderr);
-//      exit(1);
-//    }
-//    binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(prealloced_kmer, char_to_binary_nucleotide(seq[j]), kmer_size ); 
-    
-//  }
-//  return prealloced_kmer;
-
-//}
-
-
 
 //The first argument - seq - is a C string in A,C,G,T,N format. (Function handles bad characters)
 //The second argument - length - is the length in bases of the sequence.
@@ -719,18 +706,6 @@ Nucleotide binary_kmer_get_first_nucleotide(BinaryKmer* kmer,short kmer_size){
 }
 
 
-//this routines adds nucleotide add the end of kmer and removes the first base -- generating a new kmer that overlaps
-//with kmer passed as argument
-
-//BinaryKmer binary_kmer_add_nucleotide_shift(BinaryKmer kmer,Nucleotide nucleotide, short kmer_size){
- 
-//  kmer &= (((BinaryKmer) 1 << 2*(kmer_size-1))-1); // remove the last 2 bits - one base
-//  kmer <<= 2;
-//  kmer |= nucleotide; //add the new base
-
-//  return kmer;
-
-//}
 
 
 

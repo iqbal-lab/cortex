@@ -291,6 +291,7 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
   //allocate memory for the sliding windows 
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
 
+  BinaryKmer tmp_kmer;
 
   boolean full_entry = true;
   boolean prev_full_entry = true;
@@ -314,7 +315,6 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
     }
     else {
       Element * current_node  = NULL;
-      BinaryKmer tmp_kmer;
 
       
       for(i=0;i<windows->nwindows;i++){ //for each window
@@ -322,7 +322,7 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
 	
 	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
 
-	  current_node = hash_table_find(element_get_key(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph);	  	 
+	  	  current_node = hash_table_find(element_get_key(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph);	  	 
 
 	  if (current_node){
 	    db_node_set_status(current_node, exists_in_reference);

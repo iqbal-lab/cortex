@@ -265,7 +265,10 @@ void test_binary_kmer_left_shift()
     }
   test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]=1;
 
-  int kmer_size = NUMBER_OF_BITFIELDS_IN_BINARY_KMER*32;
+  int kmer_size = NUMBER_OF_BITFIELDS_IN_BINARY_KMER*32-1;
+  int number_of_bitfields_fully_used = kmer_size/32;
+  int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
+
 
   for (i=0; i<63; i++)
     {
@@ -288,18 +291,39 @@ void test_binary_kmer_left_shift()
       binary_kmer_left_shift(&test, 1, kmer_size);
       CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==0);
 
-      for (i=0; i<63; i++)
+      if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==2)
 	{
-	  binary_kmer_left_shift(&test, 1, kmer_size);
-	  
-	  CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==0);
-	  CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2]==( ((bitfield_of_64bits) 1)<<(i+1)));
-	  int j;
-	  for (j=0; j< NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2; j++)
+	  for (i=0; i<61; i++)//ie go to the end of the kmer, last 2 bits are masked to zero
 	    {
-	      test[j]=0;
+	      binary_kmer_left_shift(&test, 1, kmer_size);
+	      
+	      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==0);
+	      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2]==( ((bitfield_of_64bits) 1)<<(i+1)));
+
+	      int j;
+	      for (j=0; j< NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2; j++)
+		{
+		  test[j]=0;
+		}
 	    }
 	}
+	else
+	  {
+	  for (i=0; i<63; i++)
+	    {
+	      binary_kmer_left_shift(&test, 1, kmer_size);
+	      
+	      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==0);
+	      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2]==( ((bitfield_of_64bits) 1)<<(i+1)));
+
+	      int j;
+	      for (j=0; j< NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2; j++)
+		{
+		  test[j]=0;
+		}
+	    }
+
+	  }
       
     }
 
@@ -380,7 +404,9 @@ void test_binary_kmer_left_shift()
 
       //simple example - 1s in every bit up to size of kmer
       //Set all the bitfields in test except the leftmost that holds any kmer bits
-      for (i=NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+
+
+      for (i=NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used-1; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
 	{
 	  test[i]=~0;
 	}
@@ -473,10 +499,10 @@ void test_seq_to_binary_kmer_and_binary_kmer_to_seq(){
       CU_ASSERT_STRING_EQUAL("CATCAGTGGGACATAAACCACACAGATGACACACACA",binary_kmer_to_seq(&kmer,37,seq2));
 
 
-      char seq3[64];
+      char seq3[63];
       binary_kmer_initialise_to_zero(&kmer);
-      seq_to_binary_kmer("CATCAGTGGGACATAAACCACACAGATGACACACACACATCAGTGGGACATAAACCACACAGAT",64, &kmer);
-      CU_ASSERT_STRING_EQUAL("CATCAGTGGGACATAAACCACACAGATGACACACACACATCAGTGGGACATAAACCACACAGAT",binary_kmer_to_seq(&kmer,64,seq3));
+      seq_to_binary_kmer("CATCAGTGGGACATAAACCACACAGATGACACACACACATCAGTGGGACATAAACCACACAGA",63, &kmer);
+      CU_ASSERT_STRING_EQUAL("CATCAGTGGGACATAAACCACACAGATGACACACACACATCAGTGGGACATAAACCACACAGA",binary_kmer_to_seq(&kmer,63,seq3));
     }
 
   if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>2)
@@ -486,10 +512,10 @@ void test_seq_to_binary_kmer_and_binary_kmer_to_seq(){
       seq_to_binary_kmer("CATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTCATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGT",80, &kmer);
       CU_ASSERT_STRING_EQUAL("CATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTCATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGT",binary_kmer_to_seq(&kmer,80,seq2));
 
-      char seq3[96];
+      char seq3[95];
       binary_kmer_initialise_to_zero(&kmer);
-      seq_to_binary_kmer("CATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTCATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTGGGGGGGGTTTTCACA",96, &kmer);
-      CU_ASSERT_STRING_EQUAL("CATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTCATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTGGGGGGGGTTTTCACA",binary_kmer_to_seq(&kmer,96,seq3));
+      seq_to_binary_kmer("CATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTCATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTGGGGGGGGTTTTCAC",95, &kmer);
+      CU_ASSERT_STRING_EQUAL("CATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTCATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTGGGGGGGGTTTTCAC",binary_kmer_to_seq(&kmer,95,seq3));
 
     }
 
@@ -503,18 +529,18 @@ void test_binary_kmer_reverse_complement(){
   BinaryKmer kmer, kmer_reverse;
   char seq7[7];
   char seq1[1];
-  char seq32[32];
+  char seq31[31];
   char seq33[33];
   char seq37[37];
   char seq57[57];
-  char seq64[64];
+  char seq63[63];
   char seq65[65];
   char seq81[81];
   char seq97[97];
   char seq127[127];
   char seq159[159];
   char seq255[255];
-  char seq31[31];//added by zam in debugging
+
 
   //test with various different kmer sizes
 
@@ -528,11 +554,6 @@ void test_binary_kmer_reverse_complement(){
   CU_ASSERT_STRING_EQUAL("T",binary_kmer_to_seq(&kmer_reverse,1,seq1));
 
 
-  seq_to_binary_kmer("AACGTAACGTAACGTAACGTTTTTTCATGGCA",32, &kmer);
-  binary_kmer_reverse_complement(&kmer, 32, &kmer_reverse);
-  CU_ASSERT_STRING_EQUAL("TGCCATGAAAAAACGTTACGTTACGTTACGTT", binary_kmer_to_seq(&kmer_reverse,32,seq32));
-
-  //added by zam
   seq_to_binary_kmer("GGCCCCGCCCCGCCCCGCCCCGCCCCGCCCC",31, &kmer);
   binary_kmer_reverse_complement(&kmer, 31, &kmer_reverse);
   CU_ASSERT_STRING_EQUAL("GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCC", binary_kmer_to_seq(&kmer_reverse,31,seq31));
@@ -553,9 +574,9 @@ void test_binary_kmer_reverse_complement(){
       binary_kmer_reverse_complement(&kmer, 57, &kmer_reverse);
       CU_ASSERT_STRING_EQUAL("GGGGGGGGGGTTTTTTTTTTAAACGTAACGTAACGTAACGTTTTTTCATGGCAACGT", binary_kmer_to_seq(&kmer_reverse,57,seq57));
 
-      seq_to_binary_kmer("ACGTTGCCATGAAAAAACGTTACGTTACGTTACGTTTAAAAAAAAAACCCCCCCCCCGGGTACC",64, &kmer);
-      binary_kmer_reverse_complement(&kmer, 64, &kmer_reverse);
-      CU_ASSERT_STRING_EQUAL("GGTACCCGGGGGGGGGGTTTTTTTTTTAAACGTAACGTAACGTAACGTTTTTTCATGGCAACGT", binary_kmer_to_seq(&kmer_reverse,64,seq64));
+      seq_to_binary_kmer("ACGTTGCCATGAAAAAACGTTACGTTACGTTACGTTTAAAAAAAAAACCCCCCCCCCGGGTAC",63, &kmer);
+      binary_kmer_reverse_complement(&kmer, 63, &kmer_reverse);
+      CU_ASSERT_STRING_EQUAL("GTACCCGGGGGGGGGGTTTTTTTTTTAAACGTAACGTAACGTAACGTTTTTTCATGGCAACGT", binary_kmer_to_seq(&kmer_reverse,63,seq63));
     }
 
   if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>2)

@@ -315,8 +315,8 @@ int db_graph_get_perfect_path_with_first_edge(dBNode * node, Orientation orienta
     if (length>0){
       node_action(current_node);
       sum_coverage += coverage;
-      *max_coverage = *max_coverage < coverage ? coverage : *max_coverage;
-      *min_coverage = *min_coverage > coverage ? coverage : *min_coverage;
+      *max_coverage = (*max_coverage < coverage) ? coverage : *max_coverage;
+      *min_coverage = (*min_coverage > coverage) ? coverage : *min_coverage;
     }
 
     next_node =  db_graph_get_next_node(current_node,current_orientation,&next_orientation,nucleotide,&rev_nucleotide,db_graph);
@@ -649,7 +649,7 @@ int db_graph_supernode(dBNode * node,int limit,void (*node_action)(dBNode * node
   
   
   if (length_reverse>0){
-    //let's re do the last step, we need to do that because the last node could have had multiple entries
+    //let's redo the last step, we need to do that because the last node could have had multiple entries
     
     Nucleotide label;
     Orientation next_orientation;
@@ -834,7 +834,7 @@ boolean db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supern
 				    path_nodes, path_orientations, path_labels,
 				    string, avg_coverage, min, max, is_cycle,
 				    db_graph);
-  
+
   int num_nodes_at_start_where_condition_is_true=0;
   int num_nodes_at_end_where_condition_is_true=0;
   
