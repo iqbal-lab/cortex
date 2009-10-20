@@ -26,6 +26,10 @@ void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_referen
 void read_all_ref_chromosomes_and_mark_graph(dBGraph* db_graph);
 
 
+// for dumping clean fasta files from fastq - ie only holding reads that lie entirely in a (presumably cleaned) graph
+void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
+						  long long * bad_reads, int max_read_length, dBGraph * db_graph,
+						  boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index);
 
 
 //for binary

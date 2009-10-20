@@ -227,3 +227,84 @@ void test_coverage_is_correctly_counted_on_loading_from_file()
 
 }
 
+
+
+//Assumption is that you use a bunch of fastq to build a graph, then clean it.
+//You then want access to a set of fasta files that correspond to the good reads only.
+void test_dumping_of_clean_fasta()
+{
+  
+  int kmer_size = 17;
+  int number_of_bits = 10; 
+  int bucket_size = 30;
+  long long bad_reads = 0; 
+  int seq_length;
+  dBGraph * db_graph;
+
+  db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, 200, db_graph);
+
+
+  //OK, we now have a graph. Let's see if dumping a clean fasta gives the right answers. 
+
+  FILE* fptr = fopen("../data/test/graph/person3_with_errors.fastq", "r");
+  if (fptr==NULL)
+    {
+      printf("Cannot open ../data/test/graph/person3_with_errors.fastq  in test_dumping_of_clean_fasta. Exiting.\n");
+      exit(1);
+    }
+
+  int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
+    * full_entry = true;
+
+    if (new_entry!= true){
+      puts("new_entry has to be true for fastq\n");
+      exit(1);
+    }
+
+    return read_sequence_from_fastq(fp,seq,max_read_length);
+  }
+
+
+  int max_read_length = 100;
+
+
+
+  //alloc array to hold results
+  char** array_of_reads= (char**) calloc(30,sizeof(char*));
+  int i;
+  for (i=0; i<30; i++)
+    {
+      array_of_reads[i]= (char*)calloc(100,sizeof(char));
+    }
+  int number_of_reads=0;
+  read_fastq_and_print_reads_that_lie_in_graph(fptr, stdout, &file_reader, 
+					       &bad_reads, max_read_length, db_graph, 
+					       //false, NULL, NULL);
+					       true, array_of_reads, &number_of_reads);
+
+  CU_ASSERT_STRING_EQUAL(array_of_reads[0], "ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC");
+  CU_ASSERT_STRING_EQUAL(array_of_reads[1], "GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT");
+  CU_ASSERT_STRING_EQUAL(array_of_reads[2], "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT");
+
+  for (i=0; i<29; i++)
+    {
+      free(array_of_reads[i]);
+    }
+  free(array_of_reads);
+  hash_table_free(&db_graph);
+
+  /*> read
+ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
+Examing this:  AGGGCGGGGCGGGGCAGGGCAGGGCGGAGCCCACTCACACACAT
+Examing this:  GGGGCGGGGCGGGGCGGGGTGGGGCGGGGCCCCCTCACACACAT
+Examing this:  GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
+> read
+GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
+Examing this:  TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+> read
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+  */
+
+
+}

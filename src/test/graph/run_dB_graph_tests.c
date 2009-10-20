@@ -35,8 +35,6 @@ int  main()
 
 
 
-
-
   if (NULL == CU_add_test(pSuite, "test tip clipping",  test_tip_clipping)){
     CU_cleanup_registry();
     return CU_get_error();
@@ -47,6 +45,14 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+
+  if (NULL == CU_add_test(pSuite, "test reading a fastq and dumping only reads that lie within the graph",  test_dumping_of_clean_fasta)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+
+
      
   if (NULL == CU_add_test(pSuite, "test get perfect path",  test_get_perfect_path)){
     CU_cleanup_registry();
