@@ -350,7 +350,14 @@ void db_node_print_binary(FILE * fp, dBNode * node){
   Edges edges     = node->edges;
   short coverage  = node->coverage;
 
-  fwrite(kmer,  NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
+  //  fwrite(kmer,  NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
+  int i;
+  for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      fwrite(&(kmer[i]),  sizeof(bitfield_of_64bits), 1, fp);
+    }
+
+
   fwrite(&coverage, sizeof(short), 1, fp);
   fwrite(&edges, sizeof(Edges), 1, fp);
   
@@ -367,11 +374,12 @@ boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node){
   int read;
   
   int i;
+  
   for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
     {
       read = fread(&(kmer[i]),sizeof(bitfield_of_64bits),1,fp);
     }
-
+  //read = fread(&kmer,sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER,1,fp);
   if (read>0){
     read = fread(&coverage,sizeof(short),1,fp);    
     if (read==0){

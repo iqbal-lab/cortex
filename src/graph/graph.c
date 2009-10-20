@@ -4,6 +4,7 @@
 #include <file_reader.h>
 #include <dB_graph.h>
 #include <cyclic_count.h>
+#include <string.h>
 
 int main(int argc, char **argv){
 
@@ -23,7 +24,7 @@ int main(int argc, char **argv){
   bucket_size      = atoi(argv[4]);
   action           = atoi(argv[5]);
   DEBUG            = atoi(argv[6]);
-  
+
 
   fprintf(stderr,"Input file of filenames: %s - action: %i\n",argv[1],action);
   fprintf(stderr,"Kmer size: %d hash_table_size (%d bits): %d - bucket size: %d - total size: %qd\n",kmer_size,hash_key_bits,1 << hash_key_bits, bucket_size, ((long long) 1<<hash_key_bits)*bucket_size);
@@ -280,6 +281,80 @@ int main(int argc, char **argv){
       
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); //cleanup - the printing process has set all printed nodes to visited
       printf("Finished\n");
+      break;
+    }
+  case 18:
+    {
+
+      printf("Print supernodes\n");
+      db_graph_print_supernodes(stdout,ctg_length,db_graph);
+      printf("Given this list of fastq files %s, read them each and dump a fasta file for each one containing only those reads lying inside our (cleaned) graph\n", argv[9]);
+
+
+      int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
+	* full_entry = true;
+	
+	if (new_entry!= true){
+	  puts("new_entry has to be true for fastq\n");
+	  exit(1);
+	}
+	
+	return read_sequence_from_fastq(fp,seq,max_read_length);
+      }
+      
+
+      FILE* list_fptr = fopen(argv[9], "r");
+      if (list_fptr==NULL)
+	{
+	  printf("Cannot open %s\n", argv[9]);
+	  exit(1);
+	}
+      
+      char line[MAX_FILENAME_LENGTH+1];
+      
+
+      
+      while(fgets(line,MAX_FILENAME_LENGTH, list_fptr) !=NULL)
+	{
+	  
+	  //remove newline from end of line - replace with \0
+	  char* p;
+	  if ((p = strchr(line, '\n')) != NULL)
+	    {
+	      *p = '\0';
+	    }
+
+	  printf("Looking at %s\n", line);
+
+	  char outputfile[200];
+	  sprintf(outputfile,"%s.cleaned.fasta",line);
+	  FILE* out = fopen(outputfile, "w");
+	  if (out ==NULL)
+	    {
+	      printf("Cannot open %s, exiting", outputfile);
+	      exit(1);
+	    }
+	  printf("We will output to %s\n", outputfile);
+
+
+	  FILE* read_fptr = fopen(line, "r");
+	  if (read_fptr==NULL)
+	    {
+	      printf("Cannot open %s", line);
+	      exit(1);
+	    }
+
+	  long long b_reads=0; //will ignore base reads, but needed by API
+	  int max_read_length=10000;
+	  
+	  read_fastq_and_print_reads_that_lie_in_graph(read_fptr, out, &file_reader, 
+						       &b_reads, max_read_length, db_graph,
+						       false, NULL, NULL);//last 3 arguments show is not for testing
+	  fclose(out);
+	  fclose(read_fptr);
+	  
+	}
+      fclose(list_fptr);
       break;
     }
 

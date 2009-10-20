@@ -15,7 +15,7 @@
 #include <string.h>
 
 int MAX_READ_LENGTH=1000;
-
+int MAX_FILENAME_LENGTH=200;
 
 
 
@@ -439,6 +439,8 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
 		  all_kmers_in_this_window_are_in_graph=false;
 		}
 	    }
+
+
 	  if (all_kmers_in_this_window_are_in_graph==true)
 	    {
 	      //print out this window as a "read". If this read has many windows, we will print each as a separate read (provided they lie in the graph)
@@ -464,6 +466,9 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
 		  *for_test_index=*for_test_index+1;
 		}
 	    }
+	  //else
+	  //  {
+	  //  }
 	  
 	}
     }

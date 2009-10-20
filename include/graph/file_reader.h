@@ -6,6 +6,8 @@
 
 int MAX_READ_LENGTH;
 
+extern int MAX_FILENAME_LENGTH;
+
 
 //these routines return the length of the read sequence, for the binary file is all the kmers conctenated
 
