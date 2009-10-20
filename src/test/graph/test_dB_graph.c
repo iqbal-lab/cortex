@@ -1309,13 +1309,30 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   db_graph = hash_table_new(number_of_bits,bucket_size,max_rehash_tries,kmer_size);
 
   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, max_read_length, db_graph);
+
+
+  // fasta looks like this:
+  /*
+    >read1 overlaps human chrom 1 - it is 9 copies of TAACCC and then TAACC on the end.  
+    TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC
+    > read 2 overlaps human chrom 1 - is has a CCCC in the middle which means any 31-mer will contain CCCC and so not overlap the above
+    ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
+    > read 3 does not
+    GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
+    > read 3 does not
+    GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
+    > read 3 does not
+    GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
+    > read 4 does not, but has too low coverage
+    TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+  */
   
 
   // This person has the following supernodes:
 
   // >this supernode is the entrety of read2 and is entirely contained in chrom1
   // ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
-  // >node_1 - this is the start of read1, until it overlaps read 2. This supernode lies entirely in chrom1 also
+  // >node_1 - This supernode lies entirely in chrom1 also. However note the supernode is a loop, so you could start printing at various places....
   // TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCT
   // > node 3 - overlaps chrom but has low covg
   // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
@@ -1376,25 +1393,73 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   //the whole of read2 is a supernode, and is in chrom 1. Note this print function prints only the edges, not the first kmer in the path
 
 
-  CU_ASSERT(  ((!strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAAC")) && (! strcmp(array_of_supernodes_for_person3[1],"GGGTTA"))) 
-	     ||
-	      ((!strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAAC")) && (! strcmp(array_of_supernodes_for_person3[1],"AACCCT"))) 
-	     ||
-	      ((!strcmp(array_of_supernodes_for_person3[0],"GTTAGGGTTAGGGT")) && (! strcmp(array_of_supernodes_for_person3[1],"AACCCT"))) 
-	     ||
-	      ((!strcmp(array_of_supernodes_for_person3[0],"GTTAGGGTTAGGGT")) && (! strcmp(array_of_supernodes_for_person3[1],"GGGTTA"))) 
-	     ||
-	      ((!strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAAC")) && (! strcmp(array_of_supernodes_for_person3[2],"GGGTTA"))) 
-	     ||
-	      ((!strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAAC")) && (! strcmp(array_of_supernodes_for_person3[2],"AACCCT"))) 
-	     ||
-	      ((!strcmp(array_of_supernodes_for_person3[1],"GTTAGGGTTAGGGT")) && (! strcmp(array_of_supernodes_for_person3[2],"AACCCT"))) 
-	     ||
-	      ((!strcmp(array_of_supernodes_for_person3[1],"GTTAGGGTTAGGGT")) && (! strcmp(array_of_supernodes_for_person3[2],"GGGTTA"))) 
-	      );
+  //one of the supernodes is unambiguous
+  CU_ASSERT(    (!strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAAC")) 
+		|| (!strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAAC"))
+		|| (!strcmp(array_of_supernodes_for_person3[0],"GTTAGGGTTAGGGT")) 
+		|| (!strcmp(array_of_supernodes_for_person3[1],"GTTAGGGTTAGGGT")) 
+		);
+	     
 
-  // for some reason I previously had this assert set to allow CCTAAC, which seems wrong, and is now coming out as one of the answers sometimes (depends on value of NUMBER_OF_BITFIELDS... etc).
-  printf("We get %s and %s\n", array_of_supernodes_for_person3[0], array_of_supernodes_for_person3[1]);
+  //the other one is ambiguous because you could start printing at one of 5 places (is a loop of 5 kmers)
+
+  /* - this is what we test for if the print prints the whole supernode including the first 31 bases
+  CU_ASSERT( 
+            !strcmp(array_of_supernodes_for_person3[0],"TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCT") || !strcmp(array_of_supernodes_for_person3[1],"TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCT")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"AGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTA") || !strcmp(array_of_supernodes_for_person3[1],"AGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTA")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"AACCCTAACCCTAACCCTAACCCTAACCCTAACCCTA") || !strcmp(array_of_supernodes_for_person3[1],"AACCCTAACCCTAACCCTAACCCTAACCCTAACCCTA")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"TAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTT") || !strcmp(array_of_supernodes_for_person3[1],"TAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTT")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAA") || !strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAA")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"TTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGT") || !strcmp(array_of_supernodes_for_person3[1],"TTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGT")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"CCCTAACCCTAACCCTAACCCTAACCCTAACCCTAAC") || !strcmp(array_of_supernodes_for_person3[1],"CCCTAACCCTAACCCTAACCCTAACCCTAACCCTAAC")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"GTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGG") || !strcmp(array_of_supernodes_for_person3[1],"GTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGG")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"CCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC") || !strcmp(array_of_supernodes_for_person3[1],"CCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"GGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGG") || !strcmp(array_of_supernodes_for_person3[1],"GGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGG")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"CTAACCCTAACCCTAACCCTAACCCTAACCCTAACCC") || !strcmp(array_of_supernodes_for_person3[1],"CTAACCCTAACCCTAACCCTAACCCTAACCCTAACCC")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"GGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAG") || !strcmp(array_of_supernodes_for_person3[1],"GGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAG")
+	    
+	     );
+  */
+
+
+
+ CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0],"AACCCT") || !strcmp(array_of_supernodes_for_person3[1],"AACCCT")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"AGGGTT") || !strcmp(array_of_supernodes_for_person3[1],"AGGGTT")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"ACCCTA") || !strcmp(array_of_supernodes_for_person3[1],"ACCCTA")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"TAGGGT") || !strcmp(array_of_supernodes_for_person3[1],"TAGGGT")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"CCCTAA") || !strcmp(array_of_supernodes_for_person3[1],"CCCTAA")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"TTAGGG") || !strcmp(array_of_supernodes_for_person3[1],"TTAGGG")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"CCTAAC") || !strcmp(array_of_supernodes_for_person3[1],"CCTAAC")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"GTTAGG") || !strcmp(array_of_supernodes_for_person3[1],"GTTAGG")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"CTAACC") || !strcmp(array_of_supernodes_for_person3[1],"CTAACC")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"GGTTAG") || !strcmp(array_of_supernodes_for_person3[1],"GGTTAG")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"TAACCC") || !strcmp(array_of_supernodes_for_person3[1],"TAACCC")
+	    ||
+	    !strcmp(array_of_supernodes_for_person3[0],"GGGTTA") || !strcmp(array_of_supernodes_for_person3[1],"GGGTTA")
+
+	    
+	     );
 
 
   free(array_of_supernodes_for_person3[0]) ;
@@ -1490,7 +1555,7 @@ void test_indel_discovery_simple_test_1()
   int number_of_supernodes=0;
   int min_covg_required = 2;
   int min_start = 2;
-  int min_end = 25;
+  int min_end = 2;
   
   db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(db_graph, &db_node_check_status_exists_in_reference, min_covg_required,
 												    min_start, min_end, min_diff, NULL,
@@ -1499,9 +1564,10 @@ void test_indel_discovery_simple_test_1()
 
 
 
+  printf("We get %d supernodes\n\n\n\n", number_of_supernodes);
   CU_ASSERT(number_of_supernodes==1);
 
-  CU_ASSERT( !strcmp(array_of_supernodes[0], "AGTTGTTGTAGAGGCGCGCCGCGCCGGCGCAGGCGCAGACACATGCTAGCGCGTCGGGGTGGAGGCGT") || !strcmp(array_of_supernodes[0], "ACGCCTCCACCCCGACGCGCTAGCATGTGTCTGCGCCTGCGCCGGCGCGGCGCGCCTCTACAACAACT"));
+  CU_ASSERT( !strcmp(array_of_supernodes[0], "AGTTGTTGTAGAGGCGCGCCGCGCCGGCGCAGGCGCAGACACATGCTAGCGCGTCGGGGTGGAGGCGT") || !strcmp(array_of_supernodes[0], "TGCGCCTGCGCCGGCGCGGCGCGCCTCTACAACAACTGCGCCTGCGCCGGCGGAGTTGCGTTCTCCTC"));
     //  CU_ASSERT( !strcmp(array_of_supernodes[0], "GAGGAGAACGCAACTCCGCCGGCGCAGGCGCAGTTGTTGTAGAGGCGCGCCGCGCCGGCGCAGGCGCAGACACATGCTAGCGCGTCGGGGTGGAGGCGT") || !strcmp(array_of_supernodes[0], "ACGCCTCCACCCCGACGCGCTAGCATGTGTCTGCGCCTGCGCCGGCGCGGCGCGCCTCTACAACAACTGCGCCTGCGCCGGCGGAGTTGCGTTCTCCTC"));
 
 
