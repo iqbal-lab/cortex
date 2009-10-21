@@ -285,9 +285,9 @@ int main(int argc, char **argv){
     }
   case 18:
     {
+      //printf("print supernodes\n");
+      //db_graph_print_supernodes(stdout,ctg_length,db_graph);
 
-      printf("Print supernodes\n");
-      db_graph_print_supernodes(stdout,ctg_length,db_graph);
       printf("Given this list of fastq files %s, read them each and dump a fasta file for each one containing only those reads lying inside our (cleaned) graph\n", argv[9]);
 
 

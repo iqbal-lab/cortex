@@ -13,19 +13,21 @@ void test_dump_load_binary(){
   int number_of_bits_post = 8;
   int bucket_size = 5;
   long long bad_reads = 0; 
-  FILE * fout = fopen("../data/test/graph/dump_graph.bin", "w");
+  FILE * fout;
   int seq_length_pre,seq_length_post;
   dBGraph * db_graph_pre;
   dBGraph * db_graph_post;
+  int max_retries = 10;
+  int max_chunk_len_reading_from_fasta = 200;
 
   void print_node_binary(dBNode * node){
     db_node_print_binary(fout,node);
   }
 
-  db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,10,kmer_size);
+  db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
 
 
-  seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta", &bad_reads, 20, db_graph_pre);
+  seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta", &bad_reads, max_chunk_len_reading_from_fasta, db_graph_pre);
 
 
   fout = fopen("../data/test/graph/dump_graph.bin", "w");
@@ -43,7 +45,7 @@ void test_dump_load_binary(){
   fclose(fout);
 
   
-  db_graph_post = hash_table_new(number_of_bits_post,bucket_size,10,kmer_size);
+  db_graph_post = hash_table_new(number_of_bits_post,bucket_size,max_retries,kmer_size);
 
   seq_length_post = load_binary_from_filename_into_graph("../data/test/graph/dump_graph.bin", db_graph_post);
 
@@ -166,6 +168,139 @@ void test_dump_load_binary(){
 
   hash_table_free(&db_graph_post);
   CU_ASSERT(db_graph_post == NULL);
+
+
+  //Now try the same thing with big kmers
+
+  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
+    {
+
+      kmer_size = 33;
+      number_of_bits_pre = 10; 
+      number_of_bits_post =12;
+      bucket_size = 10;
+      bad_reads = 0; 
+      
+      db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
+
+
+      seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/person2.fasta", &bad_reads, max_chunk_len_reading_from_fasta, db_graph_pre);
+      
+      /*
+	> 6 unique 33-mers
+	TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC
+	> 13 unique 33-mers
+	ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
+	> 12 unique 33-mers
+	GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
+      */
+
+      fout = fopen("../data/test/graph/dump_graph.bin", "w");
+      
+      if (fout == NULL){
+	fprintf(stderr,"cannot open ../data/test/graph/dump_graph.bin");
+	exit(1);
+      }
+
+      hash_table_traverse(&print_node_binary,db_graph_pre);
+  
+      hash_table_free(&db_graph_pre);
+      CU_ASSERT(db_graph_pre==NULL);
+      
+      fclose(fout);
+      
+  
+      db_graph_post = hash_table_new(number_of_bits_post,bucket_size,max_retries,kmer_size);
+
+      seq_length_post = load_binary_from_filename_into_graph("../data/test/graph/dump_graph.bin", db_graph_post);
+
+      CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post),31);
+  
+
+      //some the kmers and their reverse complements from the reads
+      test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TAACCCTAACCCTAACCCTAACCCTAACCCTAA", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("TTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTA", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element3 = hash_table_find(element_get_key(seq_to_binary_kmer("AACCCTAACCCTAACCCTAACCCTAACCCTAAC", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element4 = hash_table_find(element_get_key(seq_to_binary_kmer("GTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTT", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element5 = hash_table_find(element_get_key(seq_to_binary_kmer("ACCCTAACCCTAACCCTAACCCTAACCCTAACC", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element6 = hash_table_find(element_get_key(seq_to_binary_kmer("GGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGT", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element7 = hash_table_find(element_get_key(seq_to_binary_kmer("CCCTAACCCTAACCCTAACCCTAACCCTAACCC", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element8 = hash_table_find(element_get_key(seq_to_binary_kmer("GGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGG", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element9 = hash_table_find(element_get_key(seq_to_binary_kmer("CCTAACCCTAACCCTAACCCTAACCCTAACCCT", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element10 = hash_table_find(element_get_key(seq_to_binary_kmer("AGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGG", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element11 = hash_table_find(element_get_key(seq_to_binary_kmer("CTAACCCTAACCCTAACCCTAACCCTAACCCTA", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element12 = hash_table_find(element_get_key(seq_to_binary_kmer("TAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAG", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      
+      //from read 2:
+      test_element13 = hash_table_find(element_get_key(seq_to_binary_kmer("ACCCTAACCCTAACCCTAACCCCTAACCCTAAC", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element14 = hash_table_find(element_get_key(seq_to_binary_kmer("GTTAGGGTTAGGGGTTAGGGTTAGGGTTAGGGT", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element15 = hash_table_find(element_get_key(seq_to_binary_kmer("CCCTAACCCTAACCCTAACCCCTAACCCTAACC", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+      test_element16 = hash_table_find(element_get_key(seq_to_binary_kmer("GGTTAGGGTTAGGGGTTAGGGTTAGGGTTAGGG", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+
+      CU_ASSERT(test_element1 != NULL);
+      CU_ASSERT(test_element2 != NULL);
+      CU_ASSERT(test_element1 == test_element2);
+
+      CU_ASSERT(test_element3 != NULL);
+      CU_ASSERT(test_element4 != NULL);
+      CU_ASSERT(test_element3 == test_element4);
+
+      CU_ASSERT(test_element5 != NULL);
+      CU_ASSERT(test_element6 != NULL);
+      CU_ASSERT(test_element5 == test_element6);
+
+      CU_ASSERT(test_element7 != NULL);
+      CU_ASSERT(test_element8 != NULL);
+      CU_ASSERT(test_element7 == test_element8);
+
+      CU_ASSERT(test_element9 != NULL);
+      CU_ASSERT(test_element10 != NULL);
+      CU_ASSERT(test_element9 == test_element10);
+
+      CU_ASSERT(test_element11 != NULL);
+      CU_ASSERT(test_element12 != NULL);
+      CU_ASSERT(test_element11 == test_element12);
+
+
+      CU_ASSERT(test_element13 != NULL);
+      CU_ASSERT(test_element14 != NULL);
+      CU_ASSERT(test_element13 == test_element14);
+
+      CU_ASSERT(test_element15 != NULL);
+      CU_ASSERT(test_element16 != NULL);
+      CU_ASSERT(test_element15 == test_element16);
+
+
+      //now check arrows
+
+      //Note we know that read1 forms a supernode that is a loop.
+
+      // TAACCCTAACCCTAACCCTAACCCTAACCCTAA ----- C ----> AACCCTAACCCTAACCCTAACCCTAACCCTAAC
+      CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base)==true);
+      CU_ASSERT_EQUAL(base,Cytosine);
+      
+      CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base)==true);
+      CU_ASSERT_EQUAL(base,Guanine);
+
+      // AACCCTAACCCTAACCCTAACCCTAACCCTAAC ----C  ----> ACCCTAACCCTAACCCTAACCCTAACCCTAACC
+      CU_ASSERT(db_node_has_precisely_one_edge(test_element3, forward,&base)==true);
+      CU_ASSERT_EQUAL(base,Cytosine);
+      
+      CU_ASSERT(db_node_has_precisely_one_edge(test_element3, reverse,&base)==true);
+      CU_ASSERT_EQUAL(base,Adenine);
+      
+      // ACCCTAACCCTAACCCTAACCCTAACCCTAACC ---C -----> CCCTAACCCTAACCCTAACCCTAACCCTAACCC
+      CU_ASSERT(db_node_has_precisely_one_edge(test_element5, forward,&base)==true);
+      CU_ASSERT_EQUAL(base,Cytosine);
+      
+      CU_ASSERT(db_node_has_precisely_one_edge(test_element5, reverse,&base)==true);
+      CU_ASSERT_EQUAL(base,Thymine);
+      
+      //OK. Looks good.
+
+      hash_table_free(&db_graph_post);
+
+    }
   
 }
 
