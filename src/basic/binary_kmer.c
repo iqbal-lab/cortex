@@ -409,6 +409,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 	Nucleotide current_base = char_to_binary_nucleotide(seq[i]);
 	if ((current_base == Undefined) ||
 	    (quality_cut_off!=0 && qualities[i]<= quality_cut_off)){
+	  i++; //zam test
 	  break;
 	}
 	//set the kmer to previous

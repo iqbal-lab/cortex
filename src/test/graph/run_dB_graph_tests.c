@@ -46,6 +46,11 @@ int  main()
     return CU_get_error();
   }
 
+  if (NULL == CU_add_test(pSuite, "test getting sliding windows where criterion for breaking a window is that a kmer is not in the graph",  test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph )){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
   if (NULL == CU_add_test(pSuite, "test reading a fastq and dumping only reads that lie within the graph",  test_dumping_of_clean_fasta)){
     CU_cleanup_registry();
     return CU_get_error();
@@ -72,7 +77,7 @@ int  main()
    }
 
 
-   if (NULL == CU_add_test(pSuite, "test nodes are have coverage correctly makred on file loading",  test_coverage_is_correctly_counted_on_loading_from_file) ){
+   if (NULL == CU_add_test(pSuite, "test nodes are have coverage correctly marked on file loading",  test_coverage_is_correctly_counted_on_loading_from_file) ){
    CU_cleanup_registry();
    return CU_get_error();
   }
