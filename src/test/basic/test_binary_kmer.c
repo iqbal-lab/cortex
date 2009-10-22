@@ -299,7 +299,7 @@ void test_binary_kmer_left_shift()
 	{
 	  binary_kmer_left_shift(&test, 1, kmer_size);
 	  
-	  printf("Have shifted 1 left by %d, and furthest rh bitfield is %lld\n", i+1, test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]);
+	  //printf("Have shifted 1 left by %d, and furthest rh bitfield is %lld\n", i+1, test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]);
 	  
 	  CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==( ((bitfield_of_64bits) 1)<<(i+1)));
 	  int j;

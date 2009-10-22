@@ -1564,7 +1564,6 @@ void test_indel_discovery_simple_test_1()
 
 
 
-  printf("We get %d supernodes\n\n\n\n", number_of_supernodes);
   CU_ASSERT(number_of_supernodes==1);
 
   CU_ASSERT( !strcmp(array_of_supernodes[0], "AGTTGTTGTAGAGGCGCGCCGCGCCGGCGCAGGCGCAGACACATGCTAGCGCGTCGGGGTGGAGGCGT") || !strcmp(array_of_supernodes[0], "TGCGCCTGCGCCGGCGCGGCGCGCCTCTACAACAACTGCGCCTGCGCCGGCGGAGTTGCGTTCTCCTC"));

@@ -318,6 +318,9 @@ void test_dump_load_binary(){
 
       seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, max_chunk_len_reading_from_fasta, db_graph_pre);
       
+
+
+
       /*
 	>read1 overlaps human chrom 1 
 	TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC
@@ -341,7 +344,7 @@ void test_dump_load_binary(){
 	exit(1);
       }
 
-      hash_table_traverse(&print_node_binary,db_graph_pre);
+      hash_table_traverse(&print_node_binary,db_graph_pre);//remember print_node_binary was defined locally, above, and prints to fout.
   
       hash_table_free(&db_graph_pre);
       CU_ASSERT(db_graph_pre==NULL);
@@ -355,7 +358,14 @@ void test_dump_load_binary(){
 
       //now try to traverse a supernode. This is effectively a regressiontest for a bug in graph/element.c: print_binary/read_binary
       test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TAACCCTAACCCTAACC", kmer_size, &tmp_seq),kmer_size, &tmp_seq2) ,db_graph_post);
+
+
+      // this node is in the middle of this supernode: CCCTAACCCTAACCCTAACCC. You can't extend forward because there is one copy in the reads with a T afterwards
+      // and one with a C afterwards. And you can' extend the other way because the first kmer CCCTAACCCTAACCCTA has two arrows in. ie is preceded by two different bases (A and T) in
+      // different reads
       
+      CU_ASSERT(test_element1 != NULL);
+
 
       dBNode * path_nodes[100];
       Orientation path_orientations[100];
@@ -370,9 +380,11 @@ void test_dump_load_binary(){
 				    path_nodes, path_orientations, path_labels, path_string,
 				    &avg_covg, &min_covg, &max_covg, &is_cycle, db_graph_post);
 
-      CU_ASSERT(len==6); //supernode is a loop. 6 steps back to beginning
-      CU_ASSERT(is_cycle==true);
-      printf("Len is %d\n\n", len);
+      CU_ASSERT(len==4); 
+      CU_ASSERT(is_cycle==false);
+
+      CU_ASSERT( (!strcmp(path_string, "AGGG") ) || (!strcmp(path_string, "ACCC"))) ;
+	
 
       //free(path_nodes);
       //free(path_orientations);
