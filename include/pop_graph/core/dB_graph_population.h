@@ -50,17 +50,15 @@ int db_graph_get_perfect_path_for_specific_person_or_pop(dBNode * node, Orientat
                                                          char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
                                                          boolean * is_cycle, dBGraph * db_graph, EdgeArrayType type, int index);
 
-
-
-
 boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
-                                                                 Orientation orientation,
-                                                                 int limit, int delta,
-                                                                 void (*node_action)(dBNode * node),
-                                                                 int * length1, Nucleotide * base1, dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,char * seq1,
-                                                                 int * length2, Nucleotide * base2, dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,char * seq2,
-                                                                 dBGraph * db_graph, EdgeArrayType type, int index);
-
+								  Orientation orientation,
+								  int limit,
+								  void (*node_action)(dBNode * node), 
+								  int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,
+								  char * seq1, double * avg_coverage1, int * min_coverage1, int * max_coverage1,
+								  int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,
+								  char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
+								 dBGraph * db_graph, EdgeArrayType type, int index);
 
 
 

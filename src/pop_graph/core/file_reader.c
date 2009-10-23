@@ -17,7 +17,7 @@ int MAX_FILENAME_LENGTH=500;
 int MAX_READ_LENGTH=10000;
 
 int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
-						       long long * bad_reads, char quality_cut_off, int max_read_length, dBGraph * db_graph, EdgeArrayType type, int index);
+						       long long * bad_reads, char quality_cut_off, int max_read_length, dBGraph* db_graph, EdgeArrayType type, int index);
 
 
 //this routine supports big fasta entries (chromosome length for example)
@@ -154,6 +154,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 	Element * previous_node  = NULL;
 	Orientation current_orientation;
 	Orientation previous_orientation;
+	BinaryKmer tmp_kmer;
 	
 	for(i=0;i<windows->nwindows;i++)
 	  { //for each window
@@ -162,7 +163,7 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 	    for(j=0;j<current_window->nkmers;j++) //for each kmer in window
 	      {
 		boolean found = false;
-		current_node = hash_table_find_or_insert(element_get_key(current_window->kmer[j],db_graph->kmer_size),&found,db_graph);	  
+		current_node = hash_table_find_or_insert(element_get_key(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),&found,db_graph);	  
 		if (current_node == NULL)
 		  {
 		    fputs("file_reader: problem - current kmer not found\n",stderr);
@@ -174,14 +175,14 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 		    db_node_increment_coverage(current_node, type, index);
 		  }
 
-		current_orientation = db_node_get_orientation(current_window->kmer[j],current_node, db_graph->kmer_size);
+		current_orientation = db_node_get_orientation(&(current_window->kmer[j]),current_node, db_graph->kmer_size);
 		
 		if (DEBUG)
 		  {
 		    char kmer_seq[db_graph->kmer_size];
 		    char kmer_seq2[db_graph->kmer_size];
-		    printf("kmer i:%i j:%i:  %s %s %i\n",i,j,binary_kmer_to_seq(current_window->kmer[j],db_graph->kmer_size,kmer_seq),
-			   binary_kmer_to_seq(binary_kmer_reverse_complement(current_window->kmer[j],db_graph->kmer_size),db_graph->kmer_size,kmer_seq2),
+		    printf("kmer i:%i j:%i:  %s %s %i\n",i,j,binary_kmer_to_seq(&(current_window->kmer[j]),db_graph->kmer_size,kmer_seq),
+			   binary_kmer_to_seq(binary_kmer_reverse_complement(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph->kmer_size,kmer_seq2),
 			   db_node_get_coverage(current_node, type, index));
 		  }
 		
@@ -274,6 +275,14 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   int chunk_length;
   int j;
 
+  BinaryKmer marked_kmer; //will have all longlongs in array being ~0
+  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
+    {
+      marked_kmer[j]=~0;
+    }
+
+
+
   if (expecting_new_fasta_entry==false)
     {
       //3rd argument is limit set on number of bases in seq before read_sequence_from_fasta returns. We want number_of_nodes_to_load new bases, plus the kmer's woorth of bases already in seq
@@ -331,12 +340,13 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   Element * previous_node = NULL;
   
   Orientation current_orientation,previous_orientation;
+  BinaryKmer tmp_kmer;
 
   //if num_kmers=0 (ie have hit end of file), then kmer_window->nkmers=0, so will skip this next "for" loop
   for(j=0;j<kmer_window->nkmers;j++)
     { //for each kmer in window
 
-      if (kmer_window->kmer[j]==~0) //encoding as  1's in all 64 bits, a non-kmer - ie anything that would have had an N in it
+      if ( binary_kmer_comparison_operator(kmer_window->kmer[j], marked_kmer) ) //encoding as  1's in all 64 bits, a non-kmer - ie anything that would have had an N in it
 	{
 	  //corresponds to a kmer that contains an N
 	  path_nodes[offset+j]        =NULL;
@@ -353,14 +363,14 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	}
       
       boolean found = false;
-      current_node = hash_table_find_or_insert(element_get_key(kmer_window->kmer[j],db_graph->kmer_size),&found,db_graph);	  
+      current_node = hash_table_find_or_insert(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),&found,db_graph);	  
 
       if (current_node == NULL){
 	fputs("Problem in load_seq_into_array - current kmer not found\n",stderr);
 	exit(1);
       }
       
-      current_orientation = db_node_get_orientation(kmer_window->kmer[j],current_node, db_graph->kmer_size);
+      current_orientation = db_node_get_orientation(&(kmer_window->kmer[j]),current_node, db_graph->kmer_size);
 
       path_nodes[offset+j]        = current_node;
       path_orientations[offset+j] = current_orientation;
@@ -368,7 +378,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
       if (DEBUG){
 	char kmer_seq[db_graph->kmer_size];
-	printf("j=%d, Current node kmer is  %s\n",j, binary_kmer_to_seq(kmer_window->kmer[j],db_graph->kmer_size,kmer_seq));
+	printf("j=%d, Current node kmer is  %s\n",j, binary_kmer_to_seq(&(kmer_window->kmer[j]),db_graph->kmer_size,kmer_seq));
 	if (current_orientation==forward)
 	  printf("Current orientation is forward\n");
 	else
@@ -390,24 +400,24 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	      char seq1[kmer_size];
 	      char seq2[kmer_size];
 	      
-	      previous_k = previous_node->kmer;
-	      current_k  = current_node->kmer;
+	      binary_kmer_assignment_operator(previous_k, previous_node->kmer);
+	      binary_kmer_assignment_operator(current_k, current_node->kmer);
 	      
 	      if (previous_orientation == reverse){
-		previous_k = binary_kmer_reverse_complement(previous_k,kmer_size);
+		binary_kmer_assignment_operator(previous_k, *(binary_kmer_reverse_complement(&previous_k,kmer_size, &tmp_kmer)) );
 	      }
 	      
 	      if (current_orientation == reverse){
-		current_k = binary_kmer_reverse_complement(current_k,kmer_size);
+		binary_kmer_assignment_operator(current_k, *(binary_kmer_reverse_complement(&current_k,kmer_size, &tmp_kmer)) ) ;
 	      }
     
 	      
 	      if (DEBUG){
-		printf("Found edge %s -%c-> %s\n",binary_kmer_to_seq(previous_k,kmer_size,seq1),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(current_k)),binary_kmer_to_seq(current_k,kmer_size,seq2));
+		printf("Found edge %s -%c-> %s\n",binary_kmer_to_seq(&previous_k,kmer_size,seq1),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(&current_k)),binary_kmer_to_seq(&current_k,kmer_size,seq2));
 	      }
 	      if (j>0)
 		{
-		  path_labels[offset+j-1]=binary_kmer_get_last_nucleotide(current_k); //iqbal zam added if j>0 and added a -1
+		  path_labels[offset+j-1]=binary_kmer_get_last_nucleotide(&current_k); //iqbal zam added if j>0 and added a -1
 		}
 	      
 	    }
@@ -734,7 +744,8 @@ int load_sv_trio_binary_data_from_filename_into_graph(char* filename,  dBGraph* 
     //}
    
     dBNode * current_node  = NULL;
-    current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size),&found,db_graph);
+    BinaryKmer tmp_kmer;
+    current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
     
     seq_length+=db_graph->kmer_size;
    
@@ -780,7 +791,8 @@ int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGrap
       //}
 
       dBNode * current_node  = NULL;
-      current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size),&found,db_graph);
+      BinaryKmer tmp_kmer;
+      current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
       
       seq_length+=db_graph->kmer_size;//todo - maybe only increment if had to insert, not if was already in graph?
       

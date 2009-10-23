@@ -24,15 +24,9 @@ typedef enum
     unassigned   = 0,
     none         = 1,
     visited      = 2,
-    pruned_from_NA12878  = 3,
-    pruned_from_NA12891  = 4,
-    pruned_from_NA12892  = 5,
-    pruned_from_NA12878_and_NA12891  = 6,
-    pruned_from_NA12878_and_NA12892  = 7,
-    pruned_from_NA12891_and_NA12892  = 8,
-    pruned_from_NA12878_and_NA12891_and_NA12892  = 9,
-    exists_in_reference = 10,
-    visited_and_exists_in_reference = 11,
+    pruned       = 3,
+    exists_in_reference = 4,
+    visited_and_exists_in_reference = 5,
 
   } NodeStatus;
 
@@ -40,7 +34,7 @@ typedef enum
 
 typedef enum{
     individual_edge_array = 0,  
-    ref_edge_array        = 1,
+    //ref_edge_array        = 1,
 } EdgeArrayType;
 
 
@@ -53,19 +47,19 @@ typedef struct{
 
 
 typedef Element dBNode;
-typedef BinaryKmer Key;
+typedef BinaryKmer*  Key;
 
 typedef enum{
   forward = 0,
   reverse = 1
 } Orientation;
 
-typedef enum{
-  overlaps_forwards_only=0,
-    overlaps_reverse_only = 1,
-    overlaps_both_directions =2,
-    does_not_overlap =4,
-    } Overlap;
+//typedef enum{
+//  overlaps_forwards_only=0,
+//    overlaps_reverse_only = 1,
+//    overlaps_both_directions =2,
+//    does_not_overlap =4,
+//    } Overlap;
 
 typedef Element GraphNode;
 
@@ -88,14 +82,14 @@ int element_get_number_of_people_or_pops_containing_this_element(Element* e, Edg
 
 
 boolean element_smaller(Element,Element);
-BinaryKmer element_get_kmer(Element *);
+BinaryKmer* element_get_kmer(Element *);
 boolean element_is_key(Key,Element, short kmer_size);
-Key element_get_key(BinaryKmer,short kmer_size);
+Key element_get_key(BinaryKmer*,short kmer_size, Key preallocated_key);
 void element_initialise(Element *,Key, short kmer_size);
 
 //reverse orientation
 Orientation opposite_orientation(Orientation);
-Orientation db_node_get_orientation(BinaryKmer, dBNode *, short kmer_size);
+Orientation db_node_get_orientation(BinaryKmer*, dBNode *, short kmer_size);
 
 //add an edge between nodes -- NB: it adds both edges: forward and reverse
 boolean db_node_add_edge(dBNode *, dBNode *, Orientation, Orientation, short kmer_size, EdgeArrayType edge_type, int edge_index); 

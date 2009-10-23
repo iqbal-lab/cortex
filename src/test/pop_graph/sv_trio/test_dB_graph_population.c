@@ -39,12 +39,13 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   Orientation orientations_path[max_expected_supernode_length];
   Nucleotide labels_path[max_expected_supernode_length];
   char seq[max_expected_supernode_length+hash_table->kmer_size+1];
+  BinaryKmer tmp_kmer1, tmp_kmer2;
 
   //get the supernodes one at a time. Remember length is the number of edges between nodes.
 
-  dBNode* test_elem1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACA", kmer_size),kmer_size), hash_table);
-  dBNode* test_elem2 = hash_table_find(element_get_key(seq_to_binary_kmer("CAT", kmer_size),kmer_size), hash_table);
-  dBNode* test_elem3 = hash_table_find(element_get_key(seq_to_binary_kmer("ATT", kmer_size),kmer_size), hash_table);
+  dBNode* test_elem1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table);
+  dBNode* test_elem2 = hash_table_find(element_get_key(seq_to_binary_kmer("CAT", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table);
+  dBNode* test_elem3 = hash_table_find(element_get_key(seq_to_binary_kmer("ATT", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(test_elem1 == NULL));
   CU_ASSERT(!(test_elem2 == NULL));
   CU_ASSERT(!(test_elem3 == NULL));
@@ -114,17 +115,17 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   //>person2_read2
   //TTGACG   <<<<<<<<<<<<<<<< Also has a hairpin
 
-  test_elem1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAA", kmer_size),kmer_size), hash_table);
-  test_elem2 = hash_table_find(element_get_key(seq_to_binary_kmer("ACG", kmer_size),kmer_size), hash_table);
-  test_elem3 = hash_table_find(element_get_key(seq_to_binary_kmer("CGT", kmer_size),kmer_size), hash_table);
-  dBNode* test_elem4 = hash_table_find(element_get_key(seq_to_binary_kmer("GTT", kmer_size),kmer_size), hash_table);
-  dBNode* test_elem5 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size),kmer_size), hash_table);
+  test_elem1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table);
+  test_elem2 = hash_table_find(element_get_key(seq_to_binary_kmer("ACG", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table);
+  test_elem3 = hash_table_find(element_get_key(seq_to_binary_kmer("CGT", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table);
+  dBNode* test_elem4 = hash_table_find(element_get_key(seq_to_binary_kmer("GTT", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table);
+  dBNode* test_elem5 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table);
 
-  dBNode* test_elem6 = hash_table_find(element_get_key(seq_to_binary_kmer("TTG", kmer_size),kmer_size), hash_table);
+  dBNode* test_elem6 = hash_table_find(element_get_key(seq_to_binary_kmer("TTG", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table);
 
-  dBNode* test_elem7 = hash_table_find(element_get_key(seq_to_binary_kmer("TGA", kmer_size),kmer_size), hash_table);
-  dBNode* test_elem8 = hash_table_find(element_get_key(seq_to_binary_kmer("GAC", kmer_size),kmer_size), hash_table);
-  dBNode* test_elem9 = hash_table_find(element_get_key(seq_to_binary_kmer("ACG", kmer_size),kmer_size), hash_table);
+  dBNode* test_elem7 = hash_table_find(element_get_key(seq_to_binary_kmer("TGA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table);
+  dBNode* test_elem8 = hash_table_find(element_get_key(seq_to_binary_kmer("GAC", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table);
+  dBNode* test_elem9 = hash_table_find(element_get_key(seq_to_binary_kmer("ACG", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table);
 
 
   CU_ASSERT(!(test_elem1 == NULL));
@@ -332,6 +333,7 @@ void test_is_supernode_end()
   int bucket_size    = 8;
   long long bad_reads = 0;
   int max_retries=10;
+  BinaryKmer tmp_kmer1, tmp_kmer2;
 
   dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
 
@@ -352,19 +354,19 @@ void test_is_supernode_end()
   CU_ASSERT(bad_reads==0);
 
   //GTA is not the end of a supernode in either direction
-  dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("GTA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("GTA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
 
   //CGT is not the end of a supernode in either direction
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("CGT",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("CGT",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
 
   //ACG is not  the end of a supernode in the reverse direction
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACG",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
@@ -394,33 +396,33 @@ void test_is_supernode_end()
   CU_ASSERT(bad_reads==0);
 
   //ACA IS  the end of a supernode in the reverse direction
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
   
 
   //ATG is not a supernode end
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ATG",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ATG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
 
 
   //ATT IS  the end of a supernode in the reverse direction
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ATT",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ATT",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
   
   //TTC is a supernode end in both directions
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TTC",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TTC",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
 
   //TTG is a supernode end in both directions
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TTG",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TTG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
@@ -451,38 +453,38 @@ void test_is_supernode_end()
   CU_ASSERT(bad_reads==0);
 
   //ACA IS  the end of a supernode in the reverse direction
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
   
   //ATG is not a supernode end
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ATG",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ATG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
 
 
   //ATT IS  the end of a supernode in the reverse direction
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ATT",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ATT",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
   
   //TTC is a supernode end in both directions
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TTC",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TTC",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
 
   //AAT is a supernode end in reverse directions
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAT",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAT",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
 
   //TAA is a supernode end in both directions
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TAA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TAA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
@@ -513,7 +515,7 @@ void test_is_supernode_end()
   CU_ASSERT(seq_loaded==25);
 
   //AAA is a supernode end in both directions
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAA",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
@@ -594,6 +596,7 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
   int bucket_size    = 4;
   long long bad_reads = 0;
   int max_retries=10;
+  BinaryKmer tmp_kmer1, tmp_kmer2;
 
   dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
 
@@ -640,15 +643,15 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
   CU_ASSERT(bad_reads==0);
   
 
-  dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAC",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAC",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(db_node_get_coverage(query_node, individual_edge_array, 0)==4);
   //printf("Expect covg aac is 4, but is %d", db_node_get_coverage(query_node, individual_edge_array, 0));
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACC",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACC",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(db_node_get_coverage(query_node, individual_edge_array, 0)==2);
   //printf("Expect covg acc is 2, but is %d", db_node_get_coverage(query_node, individual_edge_array, 0));
-  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("CCG",hash_table->kmer_size), hash_table->kmer_size), hash_table);
+  query_node = hash_table_find(element_get_key(seq_to_binary_kmer("CCG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
   CU_ASSERT(db_node_get_coverage(query_node, individual_edge_array, 0)==4); //NOTE this is only 4 because we cound kmer coverage. CCG occurs twice in read r1, once on each strand
   //printf("Expect covg ccg is 4, but is %d", db_node_get_coverage(query_node, individual_edge_array, 0));
@@ -762,13 +765,13 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
     {
       CU_ASSERT(chrom_path_array[i]==NULL);
     }
-  CU_ASSERT_STRING_EQUAL( "AATAGAC", binary_kmer_to_seq(chrom_path_array[7]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ATAGACG", binary_kmer_to_seq(chrom_path_array[8]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "GCGTCTA", binary_kmer_to_seq(chrom_path_array[9]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "AGACGCC", binary_kmer_to_seq(chrom_path_array[10]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "GACGCCC", binary_kmer_to_seq(chrom_path_array[11]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ACGCCCA", binary_kmer_to_seq(chrom_path_array[12]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CGCCCAC", binary_kmer_to_seq(chrom_path_array[13]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AATAGAC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[7]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ATAGACG", binary_kmer_to_seq(element_get_kmer(chrom_path_array[8]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GCGTCTA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[9]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGACGCC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[10]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GACGCCC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[11]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACGCCCA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[12]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CGCCCAC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[13]), db_graph->kmer_size, tmp_seqzam) );
 
 
   //one more batch, then array is full,
@@ -782,20 +785,20 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
 
 
 
-  CU_ASSERT_STRING_EQUAL( "AATAGAC", binary_kmer_to_seq(chrom_path_array[0]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ATAGACG", binary_kmer_to_seq(chrom_path_array[1]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "GCGTCTA", binary_kmer_to_seq(chrom_path_array[2]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "AGACGCC", binary_kmer_to_seq(chrom_path_array[3]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "GACGCCC", binary_kmer_to_seq(chrom_path_array[4]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ACGCCCA", binary_kmer_to_seq(chrom_path_array[5]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CGCCCAC", binary_kmer_to_seq(chrom_path_array[6]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "GCCCACA", binary_kmer_to_seq(chrom_path_array[7]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CCCACAC", binary_kmer_to_seq(chrom_path_array[8]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CCACACC", binary_kmer_to_seq(chrom_path_array[9]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "AGGTGTG", binary_kmer_to_seq(chrom_path_array[10]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ACACCTG", binary_kmer_to_seq(chrom_path_array[11]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CACCTGA", binary_kmer_to_seq(chrom_path_array[12]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ACCTGAT", binary_kmer_to_seq(chrom_path_array[13]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AATAGAC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[0]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ATAGACG", binary_kmer_to_seq(element_get_kmer(chrom_path_array[1]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GCGTCTA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[2]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGACGCC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[3]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GACGCCC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[4]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACGCCCA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[5]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CGCCCAC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[6]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GCCCACA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[7]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCCACAC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[8]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCACACC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[9]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGGTGTG", binary_kmer_to_seq(element_get_kmer(chrom_path_array[10]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACACCTG", binary_kmer_to_seq(element_get_kmer(chrom_path_array[11]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CACCTGA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[12]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACCTGAT", binary_kmer_to_seq(element_get_kmer(chrom_path_array[13]), db_graph->kmer_size, tmp_seqzam) );
   
 
   //from now on, it is always true that LAST time was not a new fasta entry, so penultimate argument is TRUE
@@ -809,20 +812,20 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
   CU_ASSERT(ret==number_of_nodes_to_load);
 
 
-  CU_ASSERT_STRING_EQUAL( "GCCCACA", binary_kmer_to_seq(chrom_path_array[0]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CCCACAC", binary_kmer_to_seq(chrom_path_array[1]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CCACACC", binary_kmer_to_seq(chrom_path_array[2]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "AGGTGTG", binary_kmer_to_seq(chrom_path_array[3]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ACACCTG", binary_kmer_to_seq(chrom_path_array[4]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CACCTGA", binary_kmer_to_seq(chrom_path_array[5]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ACCTGAT", binary_kmer_to_seq(chrom_path_array[6]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CCTGATA", binary_kmer_to_seq(chrom_path_array[7]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CTATCAG", binary_kmer_to_seq(chrom_path_array[8]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "TCTATCA", binary_kmer_to_seq(chrom_path_array[9]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "GATAGAC", binary_kmer_to_seq(chrom_path_array[10]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ATAGACC", binary_kmer_to_seq(chrom_path_array[11]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "GGGTCTA", binary_kmer_to_seq(chrom_path_array[12]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "AGACCCC", binary_kmer_to_seq(chrom_path_array[13]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GCCCACA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[0]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCCACAC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[1]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCACACC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[2]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGGTGTG", binary_kmer_to_seq(element_get_kmer(chrom_path_array[3]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACACCTG", binary_kmer_to_seq(element_get_kmer(chrom_path_array[4]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CACCTGA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[5]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACCTGAT", binary_kmer_to_seq(element_get_kmer(chrom_path_array[6]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCTGATA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[7]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CTATCAG", binary_kmer_to_seq(element_get_kmer(chrom_path_array[8]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "TCTATCA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[9]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GATAGAC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[10]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ATAGACC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[11]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GGGTCTA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[12]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGACCCC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[13]), db_graph->kmer_size, tmp_seqzam) );
   
 
   //and again
@@ -837,21 +840,21 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
   CU_ASSERT(ret==number_of_nodes_to_load);
 
 
-  CU_ASSERT_STRING_EQUAL( "CCTGATA", binary_kmer_to_seq(chrom_path_array[0]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CTATCAG", binary_kmer_to_seq(chrom_path_array[1]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "TCTATCA", binary_kmer_to_seq(chrom_path_array[2]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "GATAGAC", binary_kmer_to_seq(chrom_path_array[3]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ATAGACC", binary_kmer_to_seq(chrom_path_array[4]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "GGGTCTA", binary_kmer_to_seq(chrom_path_array[5]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "AGACCCC", binary_kmer_to_seq(chrom_path_array[6]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCTGATA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[0]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CTATCAG", binary_kmer_to_seq(element_get_kmer(chrom_path_array[1]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "TCTATCA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[2]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GATAGAC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[3]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ATAGACC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[4]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GGGTCTA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[5]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGACCCC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[6]), db_graph->kmer_size, tmp_seqzam) );
 
-  CU_ASSERT_STRING_EQUAL( "GACCCCA", binary_kmer_to_seq(chrom_path_array[7]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ACCCCAC", binary_kmer_to_seq(chrom_path_array[8]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CCCCACA", binary_kmer_to_seq(chrom_path_array[9]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CCCACAC", binary_kmer_to_seq(chrom_path_array[10]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "AGTGTGG", binary_kmer_to_seq(chrom_path_array[11]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CACACTC", binary_kmer_to_seq(chrom_path_array[12]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ACACTCT", binary_kmer_to_seq(chrom_path_array[13]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GACCCCA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[7]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACCCCAC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[8]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCCCACA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[9]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCCACAC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[10]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGTGTGG", binary_kmer_to_seq(element_get_kmer(chrom_path_array[11]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CACACTC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[12]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACACTCT", binary_kmer_to_seq(element_get_kmer(chrom_path_array[13]), db_graph->kmer_size, tmp_seqzam) );
 
 
   //now - does it cope with hitting the end of the entry before getting the required number of nodes
@@ -865,16 +868,16 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
 
   CU_ASSERT(ret==2);
 
-  CU_ASSERT_STRING_EQUAL( "GACCCCA", binary_kmer_to_seq(chrom_path_array[0]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ACCCCAC", binary_kmer_to_seq(chrom_path_array[1]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CCCCACA", binary_kmer_to_seq(chrom_path_array[2]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CCCACAC", binary_kmer_to_seq(chrom_path_array[3]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "AGTGTGG", binary_kmer_to_seq(chrom_path_array[4]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "CACACTC", binary_kmer_to_seq(chrom_path_array[5]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ACACTCT", binary_kmer_to_seq(chrom_path_array[6]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "GACCCCA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[0]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACCCCAC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[1]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCCCACA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[2]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CCCACAC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[3]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "AGTGTGG", binary_kmer_to_seq(element_get_kmer(chrom_path_array[4]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CACACTC", binary_kmer_to_seq(element_get_kmer(chrom_path_array[5]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACACTCT", binary_kmer_to_seq(element_get_kmer(chrom_path_array[6]), db_graph->kmer_size, tmp_seqzam) );
 
-  CU_ASSERT_STRING_EQUAL( "CACTCTA", binary_kmer_to_seq(chrom_path_array[7]->kmer, db_graph->kmer_size, tmp_seqzam) );
-  CU_ASSERT_STRING_EQUAL( "ACTCTAA", binary_kmer_to_seq(chrom_path_array[8]->kmer, db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "CACTCTA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[7]), db_graph->kmer_size, tmp_seqzam) );
+  CU_ASSERT_STRING_EQUAL( "ACTCTAA", binary_kmer_to_seq(element_get_kmer(chrom_path_array[8]), db_graph->kmer_size, tmp_seqzam) );
   CU_ASSERT(chrom_path_array[9]==NULL);
   CU_ASSERT(chrom_path_array[10]==NULL);
   CU_ASSERT(chrom_path_array[11]==NULL);
@@ -902,1496 +905,6 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
   //A fundamental assumption in our implementation is that the fasta whose path you are following is long, much longer than the longest supernode
   // you are going to find. This is fine when running using reference chromosomes. However in tests, this is a pain, and so I am using fasta's for these tests
   // that are padded at the end with N's.
-
-
-
-/* this has been split into separate tests
-
-void test_db_graph_make_reference_path_based_sv_calls()
-{
-
-
-  // ******************************************************************************************************************************
-  // 1. NULL test. Load short fake reference, and load a person whose sequence is identical. This should find nothing.
-  // ******************************************************************************************************************************
-
-
-  // toy example  - kmer_size=7
-  //first set up the hash/graph
-  int kmer_size = 7;
-  int number_of_bits = 8;
-  int bucket_size    = 10;
-  long long bad_reads = 0;
-  int max_retries=10;
-
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  long long seq_loaded=0;
-
-
-  
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/one_person_with_Ns_on_end", &bad_reads, hash_table);
-
-  //>one read
-  //AATAGACGCCCACACCTGATAGACCCCACAC 
-
-
-  // The de Bruijn graph of this in 7mers is as follows:
-  // a line of 8 nodes, with a loop of length 16 off the 9th node. ie all nodes have 1-in and 1-out, except the 9th node, CCCACAC, which has 2 ins and 2 outs.
-  // so it's a supernode of length 8, a loop-supernode of length 16,
-
-  // our algorithm should look at the supernode starting with AATAGAC, then the supernode starting at CCCACAC, then stop
-
-
-  
-  CU_ASSERT(seq_loaded==1462);
-
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ./data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fasta\n");
-      exit(1);
-    }
-
-  int min_fiveprime_flank_anchor = 2;
-  int min_threeprime_flank_anchor= 3;// I want to try to attach anchors, and the supernodes are quite short, so for this test only ask for (ridiculously) small anchors
-  int max_anchor_span = 20;
-  int length_of_arrays=40;
-  int min_covg =1;
-  int max_covg = 10;
-  int max_expected_size_of_supernode=20;
-
-
-
-  
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-							individual_edge_array,1,
-							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
-							0, NULL, NULL, NULL, NULL, NULL);
-
-  CU_ASSERT(ret==0);
-
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-
-
-
-
-
-  // ******************************************************************************************************************************
-  // 2. Harder NULL test. Reference=an ALU and load a person whose sequence is also that ALU. This should find nothing.
-  //     Our implementation of db_graph_make_reference_path_based_sv_calls assumes we have a very large ref fasta, so we load big arrays of bases
-  //     which are much longer than we expect any of the supernodes to be. In this case, we know the supernode is as long as the Alu.  
-  // ******************************************************************************************************************************
-
-  kmer_size = 31;
-  number_of_bits = 8;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-  //just load one person who's sequence is an Alu. Then take reference which is that same sequence and try to find variants
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/just_one_of_the_two_people.txt", &bad_reads, hash_table);
-
-  //   >7SLRNA#SINE/Alu  plus GTTCAGAG at start and GTCAGCGTAG at end
-  //   GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
-  //   GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
-  //   GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
-  //   CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
-  //   ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
-  //   GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
-  //   AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
-  // plus loads of N's on end
-   
-  
-  CU_ASSERT(seq_loaded==5158);
-  
-  chrom_fptr = fopen("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fasta");
-      exit(1);
-    }
-
-  min_fiveprime_flank_anchor = 10;
-  min_threeprime_flank_anchor= 10;
-  max_anchor_span = 370;
-  length_of_arrays=740;
-  min_covg =1;
-  max_covg = 10;
-  max_expected_size_of_supernode=370;
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-						    individual_edge_array,1,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
-						    0, NULL, NULL, NULL, NULL, NULL);
-  
-  CU_ASSERT(ret==0);
-
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-
-
-
-  // ******************************************************************************************************************************
-  // 3. Reference = Alu-NNNNN- same Alu, and person is identical to reference. This should find nothing
-  //    Note this really is testing something different. Since the reference is basically the same sequence repeated twice (with N's in between),
-  //    there is a risk that we would match the 5' anchor of the (one and only) supernode at the start of the reference, and the 3' anchor at
-  //    the end of the 2nd copy of the repeat.
-  //    To be clear, look at this:
-  //        Ref:  ZamZamZamNNNNNNNNNNNNNNNNZamZamZam
-  //        Indiv ZamZamZamNNNNNNNNNNNNNNNNZamZamZam
-  //      So we look at supernode ZamZamzZam. We could, if we implemented things wrong, do this:
-  //
-  //        Ref: ZamZamZamNNNNNNNNNNNNNNNNZamZamZam
-  //             Zam............................Zam
-  //              ^                              ^
-  //             5' anchor                    3' anchor    match start of supernode ZamZamZam with start of reference, and end of supernode with end of reference
-  //     this would be a  bug - failing to realise that the entire supernode matches exactly the reference on the first instance of the repeat ZamZamZam
-  //
-  //    In fact, I found exactly this bug through this test.
-  // ******************************************************************************************************************************
-
-
-  kmer_size = 31;
-  number_of_bits = 8;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_alu_Ns_then_same_alu", &bad_reads, hash_table);
-
-  
-  //   >7SLRNA#SINE/Alu  
-  // GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
-  // GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
-  // GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
-  // CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
-  // ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
-  // GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
-  // AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAGNNNNNNNNNNNNNNNNNNN
-  // GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
-  // GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
-  // GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
-  // CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
-  // ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
-  // GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
-  // AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
-    
-  
-  
-  CU_ASSERT(seq_loaded==697);
-  
-  chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu.fasta");
-      exit(1);
-    }
-
-  min_fiveprime_flank_anchor = 10;
-  min_threeprime_flank_anchor= 10;
-  max_anchor_span = 370;
-  length_of_arrays= 740;
-  min_covg =1;
-  max_covg = 10;
-  max_expected_size_of_supernode=370;
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-						    individual_edge_array,1,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
-						    0, NULL, NULL, NULL, NULL, NULL);
-
-  
-  CU_ASSERT(ret==0);
-
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-
-
-
-  // ******************************************************************************************************************************
-  // 4. Reference = 10kb of chromosome 1. Individual is that same sequence. This should find nothing.
-  // ******************************************************************************************************************************
-
-  kmer_size = 31;
-  number_of_bits = 13;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_10kb_of_chrom1", &bad_reads, hash_table);
-
-  
-  CU_ASSERT(seq_loaded==16320);
-  
-  chrom_fptr = fopen("../data/test/pop_graph/variations/person_1kb_chrom1.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/variations/person_1kb_chrom1.fasta");
-      exit(1);
-    }
-
-  min_fiveprime_flank_anchor = 20;
-  min_threeprime_flank_anchor= 10;
-  max_anchor_span = 10000;
-  length_of_arrays=20000;
-  min_covg =1;
-  max_covg = 10;
-  max_expected_size_of_supernode=10000;
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-						    individual_edge_array,1,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
-						    0, NULL, NULL, NULL, NULL, NULL);
-
-  
-  CU_ASSERT(ret==0);
-
-
-
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-
-
-  // ***************************************************************************************************************************************************
-  // 5. Reference  = short sequence, individual is idential except for one base change
-  // ***************************************************************************************************************************************************
-
-
-
-  printf("Start subtest 5 - short sequence for ref; individual differs by one base\n");
-
-  kmer_size = 7;
-  number_of_bits = 8;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_short_seq_with_one_base_difference", &bad_reads, hash_table);
-
-  CU_ASSERT(seq_loaded==192);
-  
-  chrom_fptr = fopen("../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fasta");
-      exit(1);
-    }
-
-  min_fiveprime_flank_anchor = 5;
-  min_threeprime_flank_anchor= 5;
-  max_anchor_span =40;
-  length_of_arrays=80;
-  min_covg =1;
-  max_covg = 10;
-  max_expected_size_of_supernode=40;
-
-
-  //this time, we expect results. So  malloc some arrays to hold the results. Only use this option for testing, as in general use, we expect to find millions
-  // of variants
-
-  char** return_flank5p_array = (char**) malloc( sizeof(char*) *2);
-  char** return_flank3p_array = (char**) malloc( sizeof(char*) *2);
-  char** return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
-  char** return_branch2_array = (char**) malloc( sizeof(char*) *2);
-  
-  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
-    {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
-    }
-
-  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 30);
-  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 30);
-  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 30);
-  return_branch2_array[0] = (char*) malloc( sizeof(char) * 30);
-
-  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
-     {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
-    }
-  
-  return_flank5p_array[0][0]='\0';
-  return_flank3p_array[0][0]='\0';
-  return_trusted_branch_array[0][0]='\0';
-  return_branch2_array[0][0]='\0';
-  
-  int return_variant_start_coords_array[2];
-  return_variant_start_coords_array[0]=0;
-  return_variant_start_coords_array[1]=0;
-
-  int* return_variant_start_coords_array_ptr[2];
-  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
-  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
-
-
-  //now do the test!!!
-  FILE* fp = fopen("../bin/temp_outputfile_for_testing_subtest5", "w");
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-						    individual_edge_array,1,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
-  						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
-
-  fclose(fp);
-
-  CU_ASSERT(ret==1);
-  CU_ASSERT_STRING_EQUAL("AATAGACGCCCACACCTGATAG", return_flank5p_array[0]);
-  CU_ASSERT_STRING_EQUAL("TAGCCACA", return_trusted_branch_array[0]);
-  CU_ASSERT_STRING_EQUAL("AAGCCACA", return_branch2_array[0]);
-  CU_ASSERT_STRING_EQUAL("CTGTACTTGTA", return_flank3p_array[0]);
-  CU_ASSERT(return_variant_start_coords_array[0]==23);
-
-
-
-  //cleanup
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-  free(return_flank5p_array[0]);
-  free(return_flank3p_array[0]);
-  free(return_trusted_branch_array[0]);
-  free(return_branch2_array[0]);
-  free(return_flank5p_array);
-  free(return_flank3p_array);
-  free(return_trusted_branch_array);
-  free(return_branch2_array);
-
-
-
-
-
-
-  // ***************************************************************************************************************************************************
-  // 6. Reference = Alu-NNNNN- same Alu, and person is identical to reference except for a single base difference. This should find the single variant!
-  //     It is also an example where we traverse the supernode in the reverse direction to that in which is appears in our array. This is 
-  //      therefore a good unit test to ensure that our code works in this case
-  //     Final comment - note that the coverage is double on a lot of these nodes because we have 2 copies of the Alu. But that doesn't in any way add credence
-  //      to the variant call - it's paralogous sequence that doubles the coverage.
-  // ***************************************************************************************************************************************************
-
-  printf("Start subtest 6. Reference has an exact repeat of an ALU,and individual differs by one base in one of those copies\n");
-
-  kmer_size = 31;
-  number_of_bits = 8;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_both_alu_Ns_alu_with_one_base_difference", &bad_reads, hash_table);
-
-  chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fasta");
-      exit(1);
-    }
-
-  min_fiveprime_flank_anchor = 10;
-  min_threeprime_flank_anchor= 10;
-  max_anchor_span =350;
-  length_of_arrays=700;
-  min_covg =1;
-  max_covg = 10;
-  max_expected_size_of_supernode=350;
-
-
-  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
-  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
-  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
-  return_branch2_array = (char**) malloc( sizeof(char*) *2);
-  
-  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
-    {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
-    }
-
-  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 400);
-  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 400);
-  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 400);
-  return_branch2_array[0] = (char*) malloc( sizeof(char) * 400);
-
-  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
-     {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
-    }
-  
-  return_flank5p_array[0][0]='\0';
-  return_flank3p_array[0][0]='\0';
-  return_trusted_branch_array[0][0]='\0';
-  return_branch2_array[0][0]='\0';
-
-  
-  return_variant_start_coords_array[0]=0;
-  return_variant_start_coords_array[1]=0;
-
-  
-  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
-  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
-
-
-  fp = fopen("../bin/temp_outputfile_for_testing_subtest6", "w");
-
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-						    individual_edge_array,1,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
-						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array,return_variant_start_coords_array_ptr );
-  fclose(fp);
-
-  CU_ASSERT(ret==1);
-  CU_ASSERT_STRING_EQUAL("GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG", return_flank5p_array[0]);
-  CU_ASSERT_STRING_EQUAL("GCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGCGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG", return_flank3p_array[0]);
-  CU_ASSERT_STRING_EQUAL("CTGGGAGGATCGCTTGAGTCCAGGAGTTCTGG", return_trusted_branch_array[0]);
-  CU_ASSERT_STRING_EQUAL("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGG", return_branch2_array[0]);
-  CU_ASSERT(return_variant_start_coords_array[0]==59);
-
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-
-  free(return_flank5p_array[0]);
-  free(return_flank3p_array[0]);
-  free(return_trusted_branch_array[0]);
-  free(return_branch2_array[0]);
-  free(return_flank5p_array);
-  free(return_flank3p_array);
-  free(return_trusted_branch_array);
-  free(return_branch2_array);
-
-
-
-
-
-
-  
-
-
-  // ***************************************************************************************************************************************************
-  // Reference is as in example 1, just a short sequence. Individual is missing 2 bases in the middle--> we should find this
-  //     Note this test is also interesting because the reference and individual both contain a closed loop in their de Bruijn graph
-  // ***************************************************************************************************************************************************
-
-  printf("Start subtest 7 - deletion of 2 bases from a short sequence\n");
-
-  kmer_size = 7;
-  number_of_bits = 8;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_2_bases_missing", &bad_reads, hash_table);
-
-  chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_2_bases_missing.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/variations/person_without_2_bases_missing.fasta");
-      exit(1);
-    }
-
-
-  min_fiveprime_flank_anchor = 2;
-  min_threeprime_flank_anchor= 2;
-  max_anchor_span =40;
-  length_of_arrays=80;
-  min_covg =1;
-  max_covg = 1000;
-  max_expected_size_of_supernode=40;
-
-
-  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
-  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
-  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
-  return_branch2_array = (char**) malloc( sizeof(char*) *2);
-  
-  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
-    {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
-    }
-
-  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 80);
-  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 80);
-  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 80);
-  return_branch2_array[0] = (char*) malloc( sizeof(char) * 80);
-
-  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
-     {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
-    }
-  
-  return_flank5p_array[0][0]='\0';
-  return_flank3p_array[0][0]='\0';
-  return_trusted_branch_array[0][0]='\0';
-  return_branch2_array[0][0]='\0';
-
-  
-  return_variant_start_coords_array[0]=0;
-  return_variant_start_coords_array[1]=0;
-
-  
-  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
-  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
-
-
-  fp = fopen("../bin/temp_outputfile_for_testing_subtest7", "w");
-
-
-  //individual has 2 missing bases, reference does not
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-						    individual_edge_array,1,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
-						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr );
-  
-  fclose(fp);
-
-  CU_ASSERT(ret==1);
-  CU_ASSERT_STRING_EQUAL("CCACACCTGA", return_flank5p_array[0]);
-  CU_ASSERT_STRING_EQUAL("ACAC", return_flank3p_array[0]);
-  CU_ASSERT_STRING_EQUAL("TAGACCCC", return_trusted_branch_array[0]);
-  CU_ASSERT_STRING_EQUAL("GACCCC", return_branch2_array[0]);
-  CU_ASSERT(return_variant_start_coords_array[0]==20);
-
-
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-
-  free(return_flank5p_array[0]);
-  free(return_flank3p_array[0]);
-  free(return_trusted_branch_array[0]);
-  free(return_branch2_array[0]);
-  free(return_flank5p_array);
-  free(return_flank3p_array);
-  free(return_trusted_branch_array);
-  free(return_branch2_array);
-
-
-
-
-
-
-
-
-  // ***************************************************************************************************************************************************
-  // Reference is as in example 1, just a short sequence. Individual has an extra 2 bases in the middle--> we should find this
-  // ***************************************************************************************************************************************************
-
-  printf("Start subtest 8 - insertion of 2 bases in a short sequence\n");
-
-  kmer_size = 7;
-  number_of_bits = 8;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-
-  //we use the same two people as last time, but swap their roles
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_2_bases_missing", &bad_reads, hash_table);
-
-  chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_2_bases_missing.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/variations/person_with_2_bases_missing.fasta");
-      exit(1);
-    }
-
-
-  min_fiveprime_flank_anchor = 2;
-  min_threeprime_flank_anchor= 2;
-  max_anchor_span =40;
-  length_of_arrays=80;
-  min_covg =1;
-  max_covg = 1000;
-  max_expected_size_of_supernode=40;
-
-
-  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
-  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
-  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
-  return_branch2_array = (char**) malloc( sizeof(char*) *2);
-  
-  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
-    {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
-    }
-
-  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 80);
-  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 80);
-  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 80);
-  return_branch2_array[0] = (char*) malloc( sizeof(char) * 80);
-
-  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
-     {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
-    }
-  
-  return_flank5p_array[0][0]='\0';
-  return_flank3p_array[0][0]='\0';
-  return_trusted_branch_array[0][0]='\0';
-  return_branch2_array[0][0]='\0';
-
-  
-  return_variant_start_coords_array[0]=0;
-  return_variant_start_coords_array[1]=0;
-
-  
-  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
-  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
-
-  fp = fopen("../bin/temp_outputfile_for_testing_subtest8", "w");
-
-
-
-  //cf previous test - we are using individua with index 1, not 0 as last time. ie we have swapped which is individual and which is reference
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
-						    individual_edge_array,1,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
-						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr );
-
-  
-
-
-  fclose(fp);
-
-  CU_ASSERT(ret==1);
-  CU_ASSERT_STRING_EQUAL("CCACACCTGA", return_flank5p_array[0]);
-  CU_ASSERT_STRING_EQUAL("ACAC", return_flank3p_array[0]);
-  CU_ASSERT_STRING_EQUAL("TAGACCCC", return_branch2_array[0]);
-  CU_ASSERT_STRING_EQUAL("GACCCC", return_trusted_branch_array[0]);
-  CU_ASSERT(return_variant_start_coords_array[0]==20);
-
-
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-
-  free(return_flank5p_array[0]);
-  free(return_flank3p_array[0]);
-  free(return_trusted_branch_array[0]);
-  free(return_branch2_array[0]);
-  free(return_flank5p_array);
-  free(return_flank3p_array);
-  free(return_trusted_branch_array);
-  free(return_branch2_array);
-
-
-
-
-
-
-  // ***************************************************************************************************************************************************
-  // Reference is two copies of a single sequence, tandem repeat of about 36 bases. Individual is the same, with an Alu inserted between
-  // Since the supernode in the individual has one copy of th repeat, and then the Alu, and then stops, you should be unable to find
-  // an anchor at the Alu-end of the supernode. So this should find nothing.
-  // ***************************************************************************************************************************************************
-
-
-  printf("Start subtest 9 - should find nothing. Insertion between two tandem repeats (each of which is a full supernode)\n");
-
-  kmer_size = 31;
-  number_of_bits = 15;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_insertion", &bad_reads, hash_table);
-
-  chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_alu.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/variations/person_without_alu.fasta");
-      exit(1);
-    }
-
-
-  min_fiveprime_flank_anchor = 3;
-  min_threeprime_flank_anchor= 3;
-  max_anchor_span =400;
-  length_of_arrays=800;
-  min_covg =1;
-  max_covg = 100000;
-  max_expected_size_of_supernode=400;
-
-
-
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
-						    individual_edge_array,0,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
-						    0, NULL, NULL, NULL, NULL, NULL);
-  
-  CU_ASSERT(ret==0);
-
-
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-
-
-
-  // ***************************************************************************************************************************************************
-  // 10. Reference is a single sequence which is a single supernode. Individual is the same, with an Alu inserted in the middle
-  // Should be able to find anchors at both ends this time, and find the insertion
-  // Note that by missing the alu in the reference, it has a load of nodes that won't be seen in the individual, so for example here
-  // we will ask for a min 3' flank of 8. This actually means 31+8 bases of agreement.
-  // ***************************************************************************************************************************************************
-
-
-  printf("Start subtest 10 - single Alu insertion\n");
-
-  kmer_size = 31;
-  number_of_bits = 15;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_inserted_mid_supernode", &bad_reads, hash_table);
-
-  chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fasta");
-      exit(1);
-    }
-
-
-  min_fiveprime_flank_anchor = 3;
-  min_threeprime_flank_anchor=  8;
-  max_anchor_span =500;
-  length_of_arrays=1000;
-  min_covg =1;
-  max_covg = 100000;
-  max_expected_size_of_supernode=500;
-
-
-  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
-  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
-  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
-  return_branch2_array = (char**) malloc( sizeof(char*) *2);
-  
-  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
-    {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
-    }
-
-  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 500);
-  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 500);
-  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 500);
-  return_branch2_array[0] = (char*) malloc( sizeof(char) *500);
-
-  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
-     {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
-    }
-  
-  return_flank5p_array[0][0]='\0';
-  return_flank3p_array[0][0]='\0';
-  return_trusted_branch_array[0][0]='\0';
-  return_branch2_array[0][0]='\0';
-
-
-  
-  return_variant_start_coords_array[0]=0;
-  return_variant_start_coords_array[1]=0;
-
-  
-  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
-  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
-
-
-  
-  fp = fopen("../bin/temp_outputfile_for_testing_subtest10", "w");
-  
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-						    individual_edge_array,1,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
-						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
-  fclose(fp);
-
-
-
-
-  CU_ASSERT(ret==1);
-
-  //first base of Alu insert = first base of displaced sequence. ie we had xxxxGyyyy and then we insert Alu: xxxx[G-Alu]Gyyyy. So first base of Alu look slike is in flank5p
-  CU_ASSERT_STRING_EQUAL("TGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTG", return_flank5p_array[0]);
-  CU_ASSERT_STRING_EQUAL("TAGCCAGG", return_flank3p_array[0]);
-  CU_ASSERT_STRING_EQUAL("AAACTCCGTCTGTACTAATAGTACAAAAAT", return_trusted_branch_array[0]);
-  CU_ASSERT_STRING_EQUAL("CCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGCGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAAGAAACTCCGTCTGTACTAATAGTACAAAAAT", return_branch2_array[0]);
-  CU_ASSERT(return_variant_start_coords_array[0]==40); //note the insertion happens at coordinate 39, but the first inserted base is the same as what would be there anyway - a G. 
-  
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-  free(return_flank5p_array[0]);
-  free(return_flank3p_array[0]);
-  free(return_trusted_branch_array[0]);
-  free(return_branch2_array[0]);
-  free(return_flank5p_array);
-  free(return_flank3p_array);
-  free(return_trusted_branch_array);
-  free(return_branch2_array);
-
-
-
-
-
-  // ***************************************************************************************************************************************************
-  // 11. Reverse the roles of previous test. Reference has an Alu, individual does not. 
-  // Should be able to find anchors at both ends this time, and find the deletion
-  // ***************************************************************************************************************************************************
-
-
-  printf("Start subtest 11 - deletion of an Alu\n");
-
-  kmer_size = 31;
-  number_of_bits = 15;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-
-  //we use the same two people as last time, but swap their roles
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_inserted_mid_supernode", &bad_reads, hash_table);
-
-  chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fasta");
-      exit(1);
-    }
-
-
-
-  min_fiveprime_flank_anchor = 3;
-  min_threeprime_flank_anchor= 8;
-  max_anchor_span =500;
-  length_of_arrays=1000;
-  min_covg =1;
-  max_covg = 100000;
-  max_expected_size_of_supernode=500;
-
-
-  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
-  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
-  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
-  return_branch2_array = (char**) malloc( sizeof(char*) *2);
-  
-  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
-    {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
-    }
-
-  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 500);
-  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 500);
-  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 500);
-  return_branch2_array[0] = (char*) malloc( sizeof(char) *500);
-
-  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
-     {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
-    }
-  
-  return_flank5p_array[0][0]='\0';
-  return_flank3p_array[0][0]='\0';
-  return_trusted_branch_array[0][0]='\0';
-  return_branch2_array[0][0]='\0';
-
-  
-  return_variant_start_coords_array[0]=0;
-  return_variant_start_coords_array[1]=0;
-
-  
-  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
-  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
-
-  
-  fp = fopen("../bin/temp_outputfile_for_testing_subtest11", "w");
-
-
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
-						    individual_edge_array,0,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
-                                                    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
-  fclose(fp);
-
-
-  CU_ASSERT(ret==1);
-
-  //first base of Alu insert = first base of displaced sequence. ie we had xxxxGyyyy and then we insert Alu: xxxx[G-Alu]Gyyyy. So first base of Alu look slike is in flank5p
-  CU_ASSERT_STRING_EQUAL("TGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTG", return_flank5p_array[0]);
-  CU_ASSERT_STRING_EQUAL("TAGCCAGG", return_flank3p_array[0]);
-  CU_ASSERT_STRING_EQUAL("AAACTCCGTCTGTACTAATAGTACAAAAAT", return_branch2_array[0]);
-  CU_ASSERT_STRING_EQUAL("CCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGCGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAAGAAACTCCGTCTGTACTAATAGTACAAAAAT", return_trusted_branch_array[0]);
-  CU_ASSERT(return_variant_start_coords_array[0]==40); //note the insertion happens at coordinate 39, but the first inserted base is the same as what would be there anyway - a G. 
-
-
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-  free(return_flank5p_array[0]);
-  free(return_flank3p_array[0]);
-  free(return_trusted_branch_array[0]);
-  free(return_branch2_array[0]);
-  free(return_flank5p_array);
-  free(return_flank3p_array);
-  free(return_trusted_branch_array);
-  free(return_branch2_array);
-
-
-
-
-
-  // ***************************************************************************************************************************************************
-  // 12. Reference is an Alu with a different Alu inserted in the middle. Individual is just the first Alu - ie they have a deletion of an Alu from within an Alu.
-  // 
-  // ***************************************************************************************************************************************************
-
-
-  printf("Start subtest 12 - deletion  of one Alu that had been inserted within another\n");
-
-  kmer_size = 31;
-  number_of_bits = 15;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-
-  //we use the same two people as last time, but swap their roles
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_is_alu_other_has_2nd_alu_inserted", &bad_reads, hash_table);
-
-  chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fasta");
-      exit(1);
-    }
-
-
-  
- //    reference is
- //   > AluJo#SINE/Alu inserted in middle of 7SLRNA#SINE/Alu
- //   GCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
- //   GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
- //   GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
- //   GCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGA
- //   GGCGGGAGGATCGCTTGAGCCCAGGAGTTCGAGACCAGCCTGGGCAACAT
- //   AGCGAGACCCCGTCTCTACAAAAAATACAAAAATTAGCCGGGCGTGGTGG
- //   CGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGGATCGCT
- //   TGAGCCCAGGAGTTCGAGGCTGCAGTGAGCTATGATCGCGCCACTGCACT
- //   CCAGCCTGGGCGACAGAGCGAGACCCTGTCTCAAAAAAAAAAAAAAAAAA
- //   AAAAAAAAAAAA
- //   CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
- //   ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
- //   GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
- //   AAAAAAAAAAAAAAAAAAAA
- //   ..plus N's on the end
-    
-    
- //   and individual is
-    
- //   >7SLRNA#SINE/Alu
- //   GCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
- //   GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
- //   GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
- //   CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAA
- //   ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
- //   GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
- //   AAAAAAAAAAAAAAAAAAAA
-    
-    
-
-
-  min_fiveprime_flank_anchor = 3;
-  min_threeprime_flank_anchor= 3;
-  max_anchor_span =500;
-  length_of_arrays=1000;
-  min_covg =1;
-  max_covg = 100000;
-  max_expected_size_of_supernode=500;
-
-
-  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
-  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
-  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
-  return_branch2_array = (char**) malloc( sizeof(char*) *2);
-  
-  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
-    {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
-    }
-
-  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 500);
-  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 500);
-  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 500);
-  return_branch2_array[0] = (char*) malloc( sizeof(char) *500);
-
-  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
-     {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
-    }
-  
-  return_flank5p_array[0][0]='\0';
-  return_flank3p_array[0][0]='\0';
-  return_trusted_branch_array[0][0]='\0';
-  return_branch2_array[0][0]='\0';
-
-  
-  return_variant_start_coords_array[0]=0;
-  return_variant_start_coords_array[1]=0;
-
-  
-  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
-  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
-
-  fp = fopen("../bin/temp_outputfile_for_testing_subtest12", "w");
-
-
-
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
-						    individual_edge_array,0,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
-                                                    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
-
-
-  fclose(fp);
-
-
-  CU_ASSERT(ret==1);
-
-  CU_ASSERT_STRING_EQUAL("GCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG", return_flank5p_array[0]);
-  CU_ASSERT_STRING_EQUAL("GAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAA", return_flank3p_array[0]);
-  CU_ASSERT_STRING_EQUAL("CGGGGGACCACCAGGTTGCCTAAGGAGGGGT", return_branch2_array[0]);
-  CU_ASSERT_STRING_EQUAL("GCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGAGGATCGCTTGAGCCCAGGAGTTCGAGACCAGCCTGGGCAACATAGCGAGACCCCGTCTCTACAAAAAATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGGATCGCTTGAGCCCAGGAGTTCGAGGCTGCAGTGAGCTATGATCGCGCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACGGGGGACCACCAGGTTGCCTAAGGAGGGGT", return_trusted_branch_array[0]);
-  CU_ASSERT(return_variant_start_coords_array[0]==151); 
-
-
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-  free(return_flank5p_array[0]);
-  free(return_flank3p_array[0]);
-  free(return_trusted_branch_array[0]);
-  free(return_branch2_array[0]);
-  free(return_flank5p_array);
-  free(return_flank3p_array);
-  free(return_trusted_branch_array);
-  free(return_branch2_array);
-
-
-
-
-  // ***************************************************************************************************************************************************
-  // 13. Reference is 10 kb of chromosome 1 plus 1kb of sequence inserted mid-supernode, and person is identical, except for that 1kb is missing 
-  // ***************************************************************************************************************************************************
-
-  printf("Start subtest 13: deletion of 1kb within 10kb of sequence\n");
-
-  kmer_size = 31;
-  number_of_bits = 15;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_1kb_deletion", &bad_reads, hash_table);
-
-  chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta");
-      exit(1);
-    }
-
-  // Let's be clear about what this test looks like. 
-
-
-
-
-  //       The individual is 10kb of chromosome 1, which has the following supernodes
-
-//>node_0  cylcle:false length:4546 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:1 lstf:2
-//TGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACTCCGTCTGTACTAATAGTACAAAAATTAGCCAGGCGTGATGGTGTGCACCTGTAGTCCTTGCTACTCAGAAAGCTGAGGCAGGAGAATCGCTTGTACCCAGGAGGCAGAGGTTGCAGTGAGCAGAGATTGTGCCACTGCACTCCATCCTGGGTGACAGAGTGCTATGAGTCACCACACCTGGTATGAGCCACCGTGCCTGGCCCACAATGACTTTTACACATGTTGTTAAATCATCTTACAGATTTTATAATTTGGGGGAAGAAAAGTTTTACTAAATTGTCTTTTAATGGAAACTCTACAAGAACCAGAATCTTTGCTTTGTTCACTTATGTATCCATTCCTAGGCCTAGAAAAATGTCTGACACATAGCGGCAATTATTCATTGAATAAATGGACCCAGGGATAGTACATTAGCTATGCTATATGCATACATTAAAGATGTAGATTATCGACTTTCAAAAGATAATTAATGTAACTTCTTACTGCTTCTGAACATGTTTGTGAGTTATATTGCTGAGGGACCTTTATCTTCTCATTCTTTCATCTTAACCCAGTGTTATAAAATTGAAATCACCAATATTATTCCATATCTAAAATTAATATCTACCTTGTAAAAAATATCACTCTGCTGCATTTGAGAATAGACTTTTTAGGTAATAATGATGCAATCCATAGGGTTTTTTGGGGGCACAGAGGGATTCATGCTAACAGAACATTTTATTTTCTATTTTCCCAGAGCTGTAAAACATGAAATTACGGTAGTATAAGGCATATTTTTACTCTTTTTATAATTTTTTCTAAAAAAAATTAGTGTTTGTTCCCTATATAACTTTTAACTTTATAGGTAAATATTTGTTTCTTTCAGCTCCAGTTTTATGTGAAATAGAGTTTTCAGATTTATGTAGCATGGAAAGTTTTAATACGTCAGAGTTACTGATTTTTGCCAATCATTTTCTCAATTATTTCTTTTTTATCTTTAGTTGATTTTTTTGTAGTGACACATTTTGTTTCTAGTCTCATTTCCTTTTGTTTATATTCTATGTATATTTCATTTTTGGTTACTATGAGAATTACATATAACATCCTAGAGTTATAACATTTTAATTTGAATTTATTTCAACTTAAGTTCAATCACATACCAAAATTCTACTGCTATATATATAGCTCTACTCTTTTTATGTTATTGATGTGACAAATTATATCTTTATTCATTGTATACCAGCTAACAGATTTACAATTACATTTTATGCATTTGCCTTTTAAATTATGTAGAAAATAAAAAGCAGAGTTACAAACCAAAATTACAATAGGACTGTTTTTATGTTTGTTTATGTATTTACCTTTACCAGAGAGCTTTGTATATTCATACAGCTTGCTTATTTACTTATATAGTTATTGCCTAGAGTTCATTTATTTCAACCTGAAGGACTTAACACTTCCTGAATGTCAAATTCAGGGATAAATGGATTTTTTTCAGTTTTAAAAAAAAATCCGGAAATGTCTTAATTTCTCCTTCATTTTTGAAGGATAAGTTTTCCAGCTATATATTTCTCAATTGACAGGTTTCTTCATTATTTTAAATATATAATCCACTGCCTACTGGCCTTCAAGGTTTCTGCTGAGAAATCAGCTGCTAATGTTATCTGGATCCCTATCTGTGAGAGTTGCTCTTCTCTCTGAGTTTTCAACATTCTCCCATTATCTTTTTTTTGTTTGTTTTTGAGACAAATAATTGTACATATTCATGGGATACAGAGTGATATTTTGATACATGTATACAATGCCCAGTGATCAAATAAGGATAATTAGCGTATCCATCACCTCAAATAGTTGTCATTTATTTGTATTGTGAACAGTCAACATTCTTTCTTCTAGTTTTTTAAATTTATAAACATTTAAATTTTATTACAGAAATTTAAATTTTTTGATTCTGAAAAAGTCATATATGTATGCAACATTTTTTATCGTTTATTTATATATTTATGCATCTTTCCTTTTAGTTTTGACAGAGATTTTCTATTTTATCATTATTTCAAAAGAACTCTTACCTGTATTTATTTATCAAGTATATTTCCCTTGTTTTTTCCTAGTATATTAATTTATTTACTTATCTTCTAAAAATCCTCCATATAATCTGTTTATTTTGTTTCCTTTCTATAATTTCTTCAATAATTAGTTCTGTTCTATTTTCCATTAAAATATTTAAATCTTGTATGAATTTTTGTCAGATTAGAAATTTAGGGCGTTTCTTAATTTCTCTATACTCTAGCTTTTGACTTTTTTTTTCTGACCTAAGAGGTATTTAGAGCACATTTTAGATTTTTTATTTTGACTAATCATTTAAAATGTATACTAATCTTCAATTTAAATAAAAAACTGGTCTATAGTGACAAAAATTACAAATGAGCCTAACTAATAAATTATCAGCTGTGTTTATATGTATAAGCATGCACAGATTTTGGTAAATATGTACATAGTATATTGGTGAGCTTATTTTTATCATTCTTAACTCATTGTGTAGTCTAAACGTTGGGGAAAAAATAACATACAATAATCAGATGGTGTGAATAAGAAAATTGTTCTAATGTTTGTAAACCAAGCAACTGTTTTAACTGCTCCCCTCTTCCTGATTGACTTCTAAAAGGGATTGATCCATATTGGGTCCTATCATGTACGTCACGGTATAACATCTCCAGCTATAAAATGGAAATTTGAGAATAACTTTGCTGCTACTCAGATATATTTTATTTCAAAAACATACACTAAGGTGTTGCTGTTGGATCTTTCCAAAAACATATTCACACAGAACTTTCAATCACACTGAGCCATATTTGAACAATCTTTCAAGGTCAGCTCTGGCATAAGCTAACATTATACCATTTAACTCAGAAATTTCTTTAGTATTTGATTAATGGGTTTATGTTTGATATGTAATGTAATTTTCTAATACTAAATCAAGTGGTAATTTTGTTAGTCAAGTTGATTTAGTGGCTTGGGAAGAAAGCTTTTAATGTTCCCCTAATTTTTCTTTCCTTTGACATGATCCTTCACATGTCTTATTTTGCTTAGTGATTTTTCTTTTTTTTTTTTTTTTTTTGAGACAGGGTCTTACTCTACCACCCAGGCTTGAGTGCAGTGGTGCAATCACAGCTCATTGCAGCCTTGACCTCCCAGACTCAAGCTATTCTTCCACCTCAGCCTCCCAAGTAGCTGGTACTACAGGCACATGCCACCAAACTTGGCTAATTTTTGTATTTTTTGTAGAGACAGAGTTTTGCCAAATTCTCAGGCTGGTCTGGAATTTCTGGGCTCAAGTAATCCTGCCTTGGCCTCCCAACATGCTGATATTACAGACATAAGCCACAGTACCTGGCCAGTTTTCTTTTTAAAAAAATCTATTGGTTATTAATTTGAAGCCTTCCTTTTCATAGCTGTGCTCCTTAATTGGGAGCAAACATGAATGGACCACAACTTAGCCAATTTTCTATATACGATCTTTGCCATCCTAATTTAAAGGAATATTAATTCTTTCTTTTCCTCTTTCATTCCACAAACCTGTATTGACTACATCTAAGTTCTAAATGGTGCACTGGATGTTGAAAAAGTTGATGATGAGCAAGAACAAAATTCCTGCTTTCAGGAGACTTACAGTTCAATATGGGAAATATAATTTGTTAAAATATAAAAGTGCAATTGTGTTACATGCTGTACGAAGTACATGTTGACATGTGAGCATATAATAAATGGGCTGGAGGCCAGAGGATTGCCAAAGAGAATGGGCCTCCTGCTGAGATGAAAAGTTGAGCAGGGATTAGTTGGCAAAAGTGGAGGGACGATCCTTTCTAGGCAGGAGGAAGAACATGTACAGAATCTCTGAGGTGTGATGCGACAAAGTCTATATAAAAAACTGAAGAAAGGTCTAATATGGCTTAAATACAGAAGCTAGTAGGAGAGGAGTCGAAAAGAGGCTGGAGAAGTAGAAAGTGTCTGCATTCTGCAGGAACTTATATTGTATAAAATATATTGTATATTGTATAAAAAGAATTTCTCTTTATTCTAAGTGCAATGTGAAGCCAATGAAGTGCTTTAAACAGGTGATGTGATTTGATTGAATTTATTACTTCACTTAACAAATATTCATTACATGCCCACTGTTTGTCAGATATTGCTCTAGCCCCTGGTGATACAGTAGGGAATAAAACAGGCAAAAATCCCTGTCCTCTTGCAGCTTATAATGGACTGCAATGTTTAATATGTCAGAGGAGGTCCACGGAGGAGTGACTTCTAAGCAAGAATCTGAAAAAAATGAGGATATCTAAGGAGGGAACAAATGGTTCAAAAGCCCTATAATTGCAAGCAGGCATGATGAAGCAATTGCAGTTGTCCTGACTCTCAACACCGTGGAACTCAAAGGAGATGGAAAGATTCCTTCTCTCCCTCATATATTTTCTCTCTTTCTGTCTATATATATAGAATATGAGACATTTCCCTAATCATTATGT
-//>node_1  cylcle:false length:1696 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
-//ACATAATGATTAGGGAAATGTCTCATATTCTTCTACTCAGAAATAAGCAATATAGCAATTACTGTTTTTTACATTTTACAGTTACAGTTTCAGAGAAAGTTTGATATTTATCTAAAATTTTTCAATGTATGAACTTTTTCATTTGACAAACCATAATTGTACATATTCTTGGGATACAGAGTGATATTTTCTTTACATGTATAGAATGTGTAGTGATCAAATCAGGGTAATTTCCACTAATTTAAAATGCCACCTTTATGTTATTGTAATTTATATATATACTATATATATACACACACACATATATATATATACATGTCCACATACAGTGTGTGTGTGCACATGTACACACATGCATATGTGTATATAATGCCCAGTATAAGCAATGTGCACAAATAAAATTAGCTAACAGAGATAGTATAGAGTGAGAGGAGAGGCAGATTAATCTTTGAGGAAAAGCACAATTTTATAGCTGAATGGAGAAAGCTGAGGTGGTTTCTAAGATGGAGAATAAGACGAAAAATGTAAGTACGTTGTCTGACTGAATTCAAGAAAGAAGGGTAAAAGAGAAGAAAGTAGTGGTCTTATCATTAAATGCCACAGAGAGGTAAAGATAAAGACAACATATTGTTTTGGGTTTAGTAATTTAAGGGTTACCAAATTCCGTTTTGGAGGAGGAACAGATTCCATGTCCACTAGAATGGAATGAACAAGAAATGGAGGAGGAAAATAGGTAGTTTTTCAAAAGTTTTCAAAAATATGAAAAGAAGAAATGAAGTGGTACTTGGAAGAGATTGTTGAAATGGGAGAGACTATGGTGGCTTGTTTAGAAGCAGTTGAGATAGATCCAATTGAGATAGAGATATTGACTATATAAACAAAAGAATGACAAATTAATAGTGTAATGGATAACTTGACTTTGGCAAATATTGTGAATTTTTGTGAAAGTACAACTAAAAGGCAATGTCACTCCAATAATCACCAGAGTAATCAATTTGCTTATTGCTGTCCCTTTAAATATAGTTCTCTGGTATCAACTAACATGTTTTTAACTAATGATGCTTCTTAAAGAAAAGGGAAAAGACCTTTTTCTTTCTTTCAGTCTTCAATGATTCACTGCTTCATCTCGCTCCACCAAAGATAAATGAAATCTACATCTCTTATACATTAACAATGCATGACAATTTACAAATAGCTAAATTTTTGGAGCTAACTTTAAGTACCTGAATGGAATTTAATCAACCCACTAATCTCCTTCTCACTTCTCAGTTATTTATCAAGTTTATGTCAAGGGACAAGGAAAAATTATCCAAACATTGTTTAAAACAATCATCATTAATTAGTAACACTTATCCAGGGGGGTTTTTAACCTTTCCCCCACTCAAGGATTATTCTAATGTCAGAGTAGAATAAAAAATAAGTGCAGTGATGCTGACTCTTCCAAGCTTAACATTTCTCACAAGTCAATTAGCTTTGTACTGGGAGGAGGGCGTGAAGGGCTGCTTGCGGTAGTTGTGTAGCAGCAGCACAATGGCCGCAGACAAGGAAAACAGTTTCTAGGAATTCCTCGTATATAATTTTATATTTTTGACAAGATTAATGACCCATGCTCCCTTCCTCTCCATTTCTTTTTTTGGAATTCTGTTGGTATGTAGTTACTATATTTTATTAAAGGAAATTAGCCTTATCTCTTATT
-//>node_2  cylcle:false length:566 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
-//AGGAAATTAGCCTTATCTCTTATTATATTTTTTATGACCTTCAAAGTAGTGTCTCTGCTTAAAAGTGTACCCTGGCCGGGCGTGGTGGCTCACACCTGTAATTCCAGCACTTTGGGAGGCCGAGGCGGGTGGATCACGAGGTCAGGAGATCGAGACCATCCTGGCTAACACGGTGAAACCCCGTCTGTACTAAAAATACAAAAAATTAGCAGGGCATAGTGGCGGGCGCCTGTAGTCCCAGCTACTCAGGAGGCTCAGGCAGGAGAATGGCGTGAACCCGGGAGACGGAGCTTGCGGTGAGCTGAGATCGCACCGCTGCACTCCAGCCTGGGCGACAGAGCAAGACTCCGTCTCAAAAAAAAAAAAAAAGTATACCCTGAGGCACACATCAAGCGACATGTAGAGTTCATAAATTCTGGCCAAATGGTCATACCTCAAACCTCATCAGCAGTAAGGCTCTTTACTTGCACTGACAAATATGAACGCTGGGGAATTTGGAAATGATATATAATATATAATATTATATATATAATAGATATATAATATATAATATATATAATACATAT
-//>node_3  cylcle:false length:2989 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:1 fst:0 lst_coverage:2 lstr:1 lstf:2
-//AATTTGTTACAGCAGTAATAGAACAAGTGGTTATCCATATGAGGCAAATTAGATTGGATACCTATCTCCAATAGAAATCAATTCAAGGTGAATTCCAGGAAAATACTTAAAACATTTAGATTAAAAATAAATGAGAATTTTTGTTACTTTTGGTAGGTCATAGAACCAAGAAAAACAAACATTAAGGAGGAAAAATGAACATATGACTACATCAAAATATAAAGCTTCTCTATTTGGAAGATATCATAAGGTGACAAATCATAAACTGTAATATTTACAACATATATATAAGTGAATAAATATACATTTAGAATATATATGAACTCCCAAAAATCAACAGGAAAAATAAGACATAGAACAAGCAAAATGCATAAACAAAAGAAGGCAAAACAAAAATAATGACTCATAATTATATGAAAAGAAGCTCATCTTCATAGATGAGCAGATAAATGCAAATTAAAACCACCCTGAGATGCTTTTTACATCCATGAGCCTGATAAAAGTTAGAGTCTAAAAGTAATAACAAAGATGGGAAGTAATAGAAAATCTTGTCCATTACTGGTTAAAGTATAAACTGATACAGCTACTTTATAGAATATTACATTATAGAATAAAGTTGTGAGTATGTATATGCAGTGACTCAGCATATTCATTGCTAGTATGTACTCAAGAGAAACTTACAGGAGTGGACTAGGAAGTAAATACAAAATGATTACAACATTGTTTGTTATATCAAAAAATAAAAAAGACACCCAATTTTCCAGCAAAAAAAATAAGTAAAAATAAATCCTGGTGTATTCTAACAATGGAATAATATATAGCCATTAAAATAAATCAACTATTACTGTACATATGAATGTAAATATCAGCAAAACATATTGTTTAGTGAAAAACTAAGAAGCTGAAGAAGAATATATACAATATGGTTACATTTATATGAAGTCCAAAAACTTGCAAAATAAAGAAATGTATTTAGAAATAGATTCACATGTGAGAAAACTAGAAGAAAATTAATGAAAGGATAAGAGGGATAGCAGTAATTCTGAGTAGTTGAGGGAATTTCAATTGGAAAAAAATAATATCATATTCTTTAAGTCAGGTAGTGGGTATTAGCATTTGTTTTACCATCGTTCTTTATTCTTATAGCTACACTATATATTTTCAATGTATTTAATGTATTTTTTGCATAATTAAATATTATGCAATAAAAATGAGAAAACAAAAAAGTAGAAAATGATAAATTACAATAAAGAAATGGAGAAAAAATTATAATCTAGTTGAGTAATGGTATATTACATAGCTATTTTCTTAAGTAGATGTATGTACATGATGTATGCACGATTGTACATACATGTTCTTAATTATATATAAATATATATGTACATATTTTTAATATAAAATACTAAACAAAGTACACCAAAATATTAGCTCCTATGTTAGTGAGATAATGTTTTGTTTTTTTGTATTTTAAGTTTTACATAGTAGGTGTATTTTTCTGTTTTCATACTGCTATAAAGAACTGCCCAAGACTGGGTAATTTATAAAGGAAAGAAGTTTAATTGGCTCACCGTTCAGCACAGCTTGGGAGGCCTCAGGAAATCTACAATCATGGCGGAAGACAAAGAGGAAGCAAGCCAGCTTCTTCGCAAGGCAGCATGAAGAAGTGCCGAGCAAAGGGGAAAGAATCCCTTATAAAACCATCAAATCTCGTGAGAACTCACTATCACAAGAACAGCACAGGGGAAACTGCCCCCATGATTCAATTACCTCCACCTGGTCTCTCCCTTGACCTGTGGGGATTATGGGGACTATGGGGATTACAATTCAAGATGAGATTCAGGTGGGGATACAAAGCCTAACCATATCAGTAGGCATGTATTGAATTTTAAACTCAGAGAAAAATACTAGTGTTTTTATAGGATTCTTACTAAAGAAAAACCAGAAAGTAATAAACCATCTACGCTAAGACATAAAATTCAGTTGTTTAGTTACAAGATAGAATGTGGCCTTGTAAGAAAGCAAATTAACTTCTAACATACAAAGCCTTAGAGAAGATTCAAGTGACTGACGGATCTTAAACAGAGCTATTATTACAACTCGAACTGCAGTAAAATATCCTCAGCAACATAGATGTGTGTGTTTCACTAGTCAGAGCAATACAAATTTAATGAAACTCCACTGGTGGTGTTTTTAATCAGACAATTTCTGAAGATGTCCTGGCTTATTCACAGATGCAAGCCAAATCTCTAGAAGAGTACCATAATAAGAAAAAAAAGAATACAGGCAATTGAGAGCTGTTCCAAAGTTTAGGGAGTTTTTGTAAGGAATTAATAAATAAAAATGTTCTTGAAAGACAGAAATTAATATGCAGTTCATACTGTCAGAATTGCAGGCAATTTATCAAAGTCCCCTAATCCTCCAAAATCGCTATTTTTTTTTTGACACACACTTTACAGTACAGAAGAAAATGTCTCCGGCAATAAATCACAAAGTTAAAATTACCTAGTCTACAATTAACTACACAGTGATGGTAAATCATTTTCTACCAAAAGAAAGAAATGTCTTGTCTATTCAGGTTCTGCTCTACTTAAAAGTTTTCCTTGTTGGCGAGCAAGTGGTTAGAAAATTATATTTTATACGTACATTCAGCTTAACTATCATTCAGCTCAGGAAGATGACTCAGGGCCTTATCCATACCTTCAAGTTTGCTCTTAGCAAGTAATTGTTTCAGTATCTATATCAAAAATGGCTTAAGCCTGCAACATGTTTCTGAATGATTAACAAGGTGATAGTCAGTTCTTCATTGAATCCTGGATGCTTTATTTTTCTTAATAAGAGGAATTCATATGGATCAGCTAGAAAAAAATTAAGAGGAAAATCACATGGAAAGTTATATATTATATATCTATTATATATAATATATATCTATTACATATTATATATTGTATATCTATTACATATATATTATATATGTATTATATATATTATA
-//>node_4  cylcle:true length:1691 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:2
-//TGGCCAGGCTGGTCTCGAACTCCTGACCTCAAATGATCCATCTACCTCGGCCTCCCAAAGTGCTGGAATTACAGATGTGAGCCACAATGCCCGGCCTTATTTTCTACAACTTTGGTAACTTTAGCATATACCCCAAATCTGTAAGACATAATATTATAATTCAAATGCAACTCATGGCTTCTCTTTGTACTCTTTCTCTAGCTTTTGAATTATTTATTCTAATACCAGTTTTAATTCTGACACAAAATCATGGGAGTTCTAATCAAAATCCAACCTTTTATCATAAAAACTATGAAGAAATTATGAGTAGAATTTAAAAAGGAAAATAGGCCTATTAATTAGATTTGTCTTTGTAGCATTTAACTCTATAATAAATAATATTTTATGCCTATGAGTCCCCAACAAAGCCTCCAGCTTCTATTTAGATATAAACTGTAAAAGTCACTACTGGATCCACAAGCAAGACTATGGTAAATAAATTTCTCCACCTAACCAGCTTCTTTTACATGATGTTACATGTTTCTTTTGTTTTTTCATTTTGGCAAATATTGATTGTCATCTTCGTGTTTGTCTATGTCCTAAGTGCTGGGATACAGAATCTGAAAAGATGGACACAGGACCTGCCTTCAAGTTCACCCCCTTTTTTTTTTTTTTTTGAGATGCAGTTTTGCTCTTGTCACCCAGGCTGGAGTGTACTGGTGAGATCTCTGCTCACTGCAACCTCCACCTTCAGGGTTCAAGTGATTCTCCTGCCTCAGCCTCCCAAGTAGCTGTGATTACAGGTCCCAGCCACCACGCCTAGCTAATTTTTGTATTTTTAGTAGAGACAGCGTTTCATCATGCTGGTCAGGCTGGTCTCGAACTCCTAACCTCAGGTAGTCGACCCACCTCGGCCTCCCACAGTGCTGAGATTACAGGCATGAGCCACCACGCCCTGCTAGGAGTTCACGCTTTAGTTGGGGAAAATATACAATAAGCAAGCCAGTTTTTAAAATGAGAACTGCAATTAGAGTTAAATGCTACAAAGACAAACTCACAGGAAGATGGGATGTAGAATGATAAGGCTCTCAGAATAGTAAGAGAAACTATTGCTTCTTACGATGTTTGTCTTTCTTTGTATCGGTGCTCAGCTGAGTCTGCAGTGCTTCAGAGGCAGCTTTCATTTTATAAAAATCTATGATTTCTCCTTCCAGTTTTTTTTTCTCTTCCTCGAGCTTCCTTATCTCCTCCTGTTGAATCATTTTAAGATGCTCGAACTTGTCCTGCAGCTGTGAAACCAATGTGCAGTTGTGACACCAAAGCAGTGTGGCTGAACACCTAAAAGAATACGCTTTTTTTCTGATTATCAAACAAACCCAAATCATCACAGTAGACCACGATCTTAATAACAATCTCAAAAACTCAGGAGTAAACACTCAGATATGGAATTTTTCTTTTCTTTCTTTTTTCCTTTTATAAGATGGAGTCTCACTCTGTTGCCCAGGCTGGAGTGCACTGGTGCGATCTCAGCTCACTGCAACCTCCATCTCCCAGTTCAAGTGATTCTCCTGCCTCAGCCTCTTGAGTAGCTGGGACTATAGGCATGCACCACCACTACAGGCGTGTGCCACCACACCTGGCTAATTTTTGTATTTTTAGTAGAGATGGGGTTTTGCCATGATGGCCAGGCTGGTCTCGAACTCCTGACCTCA
-//>node_5  cylcle:false length:462 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:2 lst_coverage:1 lstr:0 lstf:1
-//TGGCCAGGCTGGTCTCGAACTCCTGACCTCAGGTGATCCTCCCGCTTTGGCCTCCCAAAGACTTTTTTTTTTTTTTTAATATAGAGACAAGTTCTCAGTACGTTGCCCAGGCTGGTCTCAAACTCCTGAGCTCAAGTGATCCTCCCACCTCAGCTTCCCAAAGTGCTGGGACTGACTGGATGCAGTGGCTCATGCTTGTAAACTCAGCACTTTGGGAGGCCAAGGTGGGAGGATCGCTTGAGCCCAGGAGTTCAAGACCAGACTGGGTGATATAACACAATAGTCAACTTCAACAGGAGAGAGAATCTGTAAACTTGAATATAGATCTTCCGAAATTATCCAGTCAGTGGACAGAGAAAAAAAGAATAAAAGAGAGAAAAGAAGGCTGGGTGTGGTGGCTCAAGCCTGTAATCCCAACACTTTGGGAGGCCGAGGCAGGCAGATTAAGAGGTCAGGAGTTCA
-//>node_6  cylcle:false length:116 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
-//AATAAGAGATAAGGCTAATTTCCTTTAATAATAATAAAATCCTTTAATAAAAATATAAAGGAATAATATAATAATTTTCTTTAATAAAATATAATAAGAGATAAGGCTAATTTCCT
-//>node_7  cylcle:false length:41 min_coverage:2 max_coverage:2 average_coverage: 2.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:1
-//ATATATAATATATAATATATATAATACATATATAATATATA
-//>node_8  cylcle:false length:38 min_coverage:2 max_coverage:2 average_coverage: 2.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:1
-//AAAATATAATAAGAGATAAGGCTAATTTCCTTTAATAA
-//>node_9  cylcle:false length:48 min_coverage:1 max_coverage:1 average_coverage: 1.00 fst_coverage:2 fst:1 lst_coverage:2 lstr:1 lstf:2
-//TATAATATATATAATACATATATAATATATAATATATATAATACATAT
-//>node_10  cylcle:false length:100 min_coverage:2 max_coverage:2 average_coverage: 2.00 fst_coverage:2 fst:2 lst_coverage:2 lstr:2 lstf:1
-//AGAATATGAGACATTTCCCTAATCATTATGTGTAATTACAATTACATATATATATGTAATTGTAATTACACATAATGATTAGGGAAATGTCTCATATTCT
-
-
-//The reference is the same as the individual, except it has about 1kb inserted in node 0. To be clearer, the reverse complement of node 0 is what is in the 10kb without insertion:
-
-//GTGTGGTGACTCATAGCACTCTGTCACCCAGGATGGAGTGCAGTGGCACAATCTCTGCTCACTGCAACCTCTGCCTCCTGGGTACAAGCGATTCTCCTGCCTCAGCTTTCTGAGTAGCAAGGACTACAGGTGCACACCATCACGCCTGGCTAATTTTTGTACTATTAGTACAGACGGAGTTTCACCATGTTGGCCAGGCTGGTCTCGAACTCCTGACCTCAGGGTCCATTTATTCAATGAATAATTGCCGCTATGTGTCAGACATTTTTCTAGGCCTAGGAATGGATACATAAGTGAACAAAGCAAAGATTCTGGTTCTTGTAGAGTTTCCATTAAAAGACAATTTAGTAAAACTTTTCTTCCCCCAAATTATAAAATCTGTAAGATGATTTAACAACATGTGTAAAAGTCATTGTGGGCCAGGCACGGTGGCTCATACCAGATTTTTTACAAGGTAGATATTAATTTTAGATATGGAATAATATTGGTGATTTCAATTTTATAACACTGGGTTAAGATGAAAGAATGAGAAGATAAAGGTCCCTCAGCAATATAACTCACAAACATGTTCAGAAGCAGTAAGAAGTTACATTAATTATCTTTTGAAAGTCGATAATCTACATCTTTAATGTATGCATATAGCATAGCTAATGTACTATCCCTAAAGTTAAAAGTTATATAGGGAACAAACACTAATTTTTTTTAGAAAAAATTATAAAAAGAGTAAAAATATGCCTTATACTACCGTAATTTCATGTTTTACAGCTCTGGGAAAATAGAAAATAAAATGTTCTGTTAGCATGAATCCCTCTGTGCCCCCAAAAAACCCTATGGATTGCATCATTATTACCTAAAAAGTCTATTCTCAAATGCAGCAGAGTGATTAACCAAAAATGAAATATACATAGAATATAAACAAAAGGAAATGAGACTAGAAACAAAATGTGTCACTACAAAAAAATCAACTAAAGATAAAAAAGAAATAATTGAGAAAATGATTGGCAAAAATCAGTAACTCTGACGTATTAAAACTTTCCATGCTACATAAATCTGAAAACTCTATTTCACATAAAACTGGAGCTGAAAGAAACAAATATTTACCTATTTTTTATTTTCTACATAATTTAAAAGGCAAATGCATAAAATGTAATTGTAAATCTGTTAGCTGGTATACAATGAATAAAGATATAATTTGTCACATCAATAACATAAAAAGAGTAGAGCTATATATATAGCAGTAGAATTTTGGTATGTGATTGAACTTAAGTTGAAATAAATTCAAATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGAGACATTTCCGGATTTTTTTTTAAAACTGAAAAAAATCCATTTATCCCTGAATTTGACATTCAGGAAGTGTTAAGTCCTTCAGGTTGAAATAAATGAACTCTAGGCAATAACTATATAAGTAAATAAGCAAGCTGTATGAATATACAAAGCTCTCTGGTAAAGGTAAATACATAAACAAACATAAAAACAGTCCTATTGTAATTTTGGTTTGTAACTCTGCCTCAAAAACAAACAAAAAAAAGATAATGGGAGAATGTTGAAAACTCAGAGAGAAGAGCAACTCTCACAGATAGGGATCCAGATAACATTAGCAGCTGATTTCTCAGCAGAAACCTTGAAGGCCAGTAGGCAGTGGATTATATATTTAAAATAATGAAGAAACCTGTCAATTGAGAAATATATAGCTGGAAAACTTATCCTTCAAAAATGAAGGAGAAATTAATATGACTTTTTCAGAATCAAAAAATTTAAATTTCTGTAATAAAATTTAAATGTTTATAAATTTAAAAAACTAGAAGAAAGAATGTTGACTGTTCACAATACAAATAAATGACAACTATTTGAGGTGATGGATACGCTAATTATCCTTATTTGATCACTGGGCATTGTATACATGTATCAAAATATCACTCTGTATCCCATGAATATGTACAATTATTTGTAAGAAATTATAGAAAGGAAACAAAATAAACAGATTATATGGAGGATTTTTAGAAGATAAGTAAATAAATTAATATACTAGGAAAAAACAAGGGAAATATACTTGATAAATAAATACAGGTAAGAGTTCTTTTGAAATAATGATAAAATAGAAAATCTCTGTCAAAACTAAAAGGAAAGATGCATAAATATATAAATAAACGATAAAAAATGTTGCATACATCTATAGACCAGTTTTTTATTTAAATTGAAGATTAGTATACATTTTAAATGATTAGTCAAAATAAAAAATCTAAAATGTGCTCTAAATACCTCTTAGGTCAGAAAAAAAAAGTCAAAAGCTAGAGTATAGAGAAATTAAGAAACGCCCTAAATTTCTAATCTGACAAAAATTCATACAAGATTTAAATATTTTAATGGAAAATAGAACAGAACTAATTATTGAACAGTTGCTTGGTTTACAAACATTAGAACAATTTTCTTATTCACACCATCTGATTATTGTATGTTATTTTTTCCCCAACGTTTAGACTACACAATGAGTTAAGAATGATAAAAATAAGCTCACCAATATACTATGTACATATTTACCAAAATCTGTGCATGCTTATACATATAAACACAGCTGATAATTTATTAGTTAGGCTCATTTGTAATTTTTGTCAATGGCTCAGTGTGATTGAAAGTTCTGTGTGAATATGTTTTTGGAAAGATCCAACAGCAACACCTTAGTGTATGTTTTTGAAATAAAATATATCTGAGTAGCAGCAAAGTTATTCTCAAATTTCCATTTTATAGCTGGAGATGTTATACCGTGACGTACATGATAGGACCCAATATGGATCAATCCCTTTTAGAAGTCAATCAGGAAGAGGGGAGCAGTTAATGAAGGATCATGTCAAAGGAAAGAAAAATTAGGGGAACATTAAAAGCTTTCTTCCCAAGCCACTAAATCAACTTGACTAACAAAATTACCACTTGATTTAGTATTAGAAAATTACATTACATATCAAACATAAACCCATTAATCAAATACTAAAGAAATTTCTGAGTTAAATGGTATAATGTTAGCTTATGCCAGAGCTGACCTTGAAAGATTGTTCAAATTCTGTCTCTACAAAAAATACAAAAATTAGCCAAGTTTGGTGGCATGTGCCTGTAGTACCAGCTACTTGGGAGGCTGAGGTGGAAGAATAGCTTGAGTCTGGGAGGTCAAGGCTGCAATGAGCTGTGA  TTGCACCACTGCACTCAAGCCTGGGTGGTAGAGTAAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAGAAAAATCACTAAGCAAAATAAGACATGGTATATAGAAAATTGGCTAAGTTGTGGTCCATTCATGTTTGCTCCCAATTAAGGAGCACAGCTATGAAAAGGAAGGCTTCAAATTAATAACCAATAGATTTTTTTAAAAAGAAAACTGGCCAGGTACTGTGGCTTATGTCTGTAATATCAGCATGTTGGGAGGCCAAGGCAGGATTACTTGAGCCCAGAAATTCCAGACCAGCCTGAGAATTTGGCAAAACTCGTACAGCATGTAACACAATTGCACTTTTATATTTTAACAAATTATATTTCCCATATTGAACTGTAAGTCTCCTGAAAGCAGGAATTTTGTTCTTGCTCATCATCAACTTTTTCAACATCCAGTGCACCATTTAGAACTTAGATGTAGTCAATACAGGTTTGTGGAATGAAAGAGGAAAAGAAAGAATTAATATTCCTTTAAATTAGGATGGCAAAGATCTTTAAGCCATATTAGACCTTTCTTCAGTTTTTTATATAGACTTTGTCGCATCACACCTCAGAGATTCTGTACATGTTCTTCCTCCTGCCTAGAAAGGATCGTCCCTCCACTTTTGCCAACTAATCCCTGCTCAACTTTTCATCTCAGCAGGAGGCCCATTCTCTTTGGCAATCCTCTGGCCTCCAGCCCATTTATTATATGCTCACATGTCAACATGTACTACAGTGGGCATGTAATGAATATTTGTTAAGTGAAGTAATAAATTCAATCAAATCACATCACCTGTTTAAAGCACTTCATTGGCTTCACATTGCACTTAGAATAAAGAGAAATTCTTTTTATACAATATACAATATATTTTATACAATATAAGTTCCTGCAGAATGCAGACACTTTCTACTTCTCCAGCCTCTTTTCGACTCCTCTCCTACTAGCTTCTGTAAATTGCTTCATCATGCCTGCTTGCAATTATAGGGCTTTTGAACCATTTGTTCCCTCCTTAGATATCCTCATTTTTTTCAGATTCTTGCTTAGAAGTCACTCCTCCGTGGACCTCCTCTGACATATTAAACATTGCAGTCCATTATAAGCTGCAAGAGGACAGGGATTTTTGCCTGTTTTATTCCCTACTGTATCACCAGGGGCTAGAGCAATATCTGACAAACATAATGATTAGGGAAATGTCTCATATTCTATATATATAGACAGAAAGAGAGAAAATATATGAGGGAGAGAAGGAATCTTTCCATCTCCTTTGAGTTCCACGGTGTTGAGAGTCAGGACAACTGC
-
-//  and the insert happens just after TTGGGAGGCTGAGGTGGAAGAATAGCTTGAGTCTGGGAGGTCAAGGCTGCAATGAGCTGTGA, where I have put a space above
-
-
-//The inserted sequence is
-
-// ACCTCAATCTATAACCACTACCTTCTGGGTCCTTTCTAAAAATTGACAAATAATAATCATATATAATTAATGTACAATGTTATGTTTCAATACATGTTTGCATTGTGGAATAATTAAATCAAGCTACTTGGCATGTCAGTAACATCACATGCTTAGCATTTTTGTAGTGAAAATATTTAAAATCTACTCTTTTAGCAATTTTGAAATATACAATACAGTACTTACTCACTTAACATCATTGATTGGTCCTCAGAAACTGCAACTTGGAGTGAAAAGATGTATAAAGAAACCAATTTTCCCATAGGCTAATAGCTATAAATAAGAGTTAGATTCTTACAGCATATTTTTGGTCACAAAATATCACCAAACTTCTAAATAAAGACCAAAACACTTCAAATATTAAACATTGAAATAAATATGAGCTTTGCATACATTTAAGAAAGATTAATAAAAACAAGTAAGATAATTATTTGCCCAATTATTTCATTCAGGGTTGGGGAGACTGGAGTCTGTGCTGGAAGCTCAGGGCTCAAGCTGGGCAACAGCCCTGGACAGGATGCCATCCCACTGCAGGATGGCTCACACATGCCCACAGCCACTCAGCCTGGGACCATTTGGACACAGCAATTAACCTTACCTGCATGTCTTTGTGGGGAGGAAACCAGAGTGCTTAGAAAAACCCATGCAGACAGACACAGAGCAAACATGCAAACCTCACAAAGATATTGTTTCTTCTGTCACCTGTGCTTTTGGGTCATATTCAAGAAATCATTAACCAAATAAAAGTCGTGGAGCTTTTCCCTATGTTTTCTTTTAGTAGTTTTATAGTTTCAGGTCTTACATTTAACTCCTTAATCCATTTTGATTTTTGCATATGGTGTGAGATAAGCTTCTGGTTTCATTCTCCCACATGTGGATATCCAGTTCTCTGAACACCATATATGGAAGAGACTGTCATTTCCTCATGATATGTTCCTGGCACTTTTGTTGAAATCAATTGACCATAGATCTGTGGGTTTATTTCTGGCTTTTTATTCTGTTCCATTGGCCAATGTACCTGTGTTTATGCTTGTGCCTTGCTGTTTTGATTATTATAGCTTTATAATATGTTTTGAAATCAGGTAGTGTGATGCCTCCATCTTTGCTTTTTATGCTCAAGATAGTTTGGATATTCAGAGTGTTTTATGGTTCCATATACAT
-// which I took from chromosome 2.
-
-
-
-
-//NOTE - the inserted sequence starts with an A. The sequence that follows the inserted sequence also starts with an A. So our algorithm will add that A to the flanking region.
-// We allow for this is checking results match expectations
-
-
-
-  min_fiveprime_flank_anchor = 21;
-  min_threeprime_flank_anchor= 21;
-  max_anchor_span =8000;
-  length_of_arrays=16000;
-  min_covg =1;
-  max_covg = 100000000;
-  max_expected_size_of_supernode=8000;
-
-
-  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
-  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
-  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
-  return_branch2_array = (char**) malloc( sizeof(char*) *2);
-  
-  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
-    {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
-    }
-
-  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 5600);
-  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 5600);
-  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 5600);
-  return_branch2_array[0] = (char*) malloc( sizeof(char) *5600);
-
-  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
-     {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
-    }
-  
-  return_flank5p_array[0][0]='\0';
-  return_flank3p_array[0][0]='\0';
-  return_trusted_branch_array[0][0]='\0';
-  return_branch2_array[0][0]='\0';
-
-  
-  return_variant_start_coords_array[0]=0;
-  return_variant_start_coords_array[1]=0;
-
-  
-  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
-  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
-
-  fp = fopen("../bin/temp_outputfile_for_testing_subtest13", "w");
-
-
-
-
-
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-						    individual_edge_array,1,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table,  fp,
-                                                    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
-
-
-  fclose(fp);
-
-
-  CU_ASSERT(ret==1);
-
-  CU_ASSERT_STRING_EQUAL("CATAATGATTAGGGAAATGTCTCATATTCTATATATATAGACAGAAAGAGAGAAAATATATGAGGGAGAGAAGGAATCTTTCCATCTCCTTTGAGTTCCACGGTGTTGAGAGTCAGGACAACTGCAATTGCTTCATCATGCCTGCTTGCAATTATAGGGCTTTTGAACCATTTGTTCCCTCCTTAGATATCCTCATTTTTTTCAGATTCTTGCTTAGAAGTCACTCCTCCGTGGACCTCCTCTGACATATTAAACATTGCAGTCCATTATAAGCTGCAAGAGGACAGGGATTTTTGCCTGTTTTATTCCCTACTGTATCACCAGGGGCTAGAGCAATATCTGACAAACAGTGGGCATGTAATGAATATTTGTTAAGTGAAGTAATAAATTCAATCAAATCACATCACCTGTTTAAAGCACTTCATTGGCTTCACATTGCACTTAGAATAAAGAGAAATTCTTTTTATACAATATACAATATATTTTATACAATATAAGTTCCTGCAGAATGCAGACACTTTCTACTTCTCCAGCCTCTTTTCGACTCCTCTCCTACTAGCTTCTGTATTTAAGCCATATTAGACCTTTCTTCAGTTTTTTATATAGACTTTGTCGCATCACACCTCAGAGATTCTGTACATGTTCTTCCTCCTGCCTAGAAAGGATCGTCCCTCCACTTTTGCCAACTAATCCCTGCTCAACTTTTCATCTCAGCAGGAGGCCCATTCTCTTTGGCAATCCTCTGGCCTCCAGCCCATTTATTATATGCTCACATGTCAACATGTACTTCGTACAGCATGTAACACAATTGCACTTTTATATTTTAACAAATTATATTTCCCATATTGAACTGTAAGTCTCCTGAAAGCAGGAATTTTGTTCTTGCTCATCATCAACTTTTTCAACATCCAGTGCACCATTTAGAACTTAGATGTAGTCAATACAGGTTTGTGGAATGAAAGAGGAAAAGAAAGAATTAATATTCCTTTAAATTAGGATGGCAAAGATCGTATATAGAAAATTGGCTAAGTTGTGGTCCATTCATGTTTGCTCCCAATTAAGGAGCACAGCTATGAAAAGGAAGGCTTCAAATTAATAACCAATAGATTTTTTTAAAAAGAAAACTGGCCAGGTACTGTGGCTTATGTCTGTAATATCAGCATGTTGGGAGGCCAAGGCAGGATTACTTGAGCCCAGAAATTCCAGACCAGCCTGAGAATTTGGCAAAACTCTGTCTCTACAAAAAATACAAAAATTAGCCAAGTTTGGTGGCATGTGCCTGTAGTACCAGCTACTTGGGAGGCTGAGGTGGAAGAATAGCTTGAGTCTGGGAGGTCAAGGCTGCAATGAGCTGTGA", return_flank5p_array[0]);
-
-  CU_ASSERT_STRING_EQUAL("GAGTAAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAGAAAAATCACTAAGCAAAATAAGACATGTGAAGGATCATGTCAAAGGAAAGAAAAATTAGGGGAACATTAAAAGCTTTCTTCCCAAGCCACTAAATCAACTTGACTAACAAAATTACCACTTGATTTAGTATTAGAAAATTACATTACATATCAAACATAAACCCATTAATCAAATACTAAAGAAATTTCTGAGTTAAATGGTATAATGTTAGCTTATGCCAGAGCTGACCTTGAAAGATTGTTCAAATATGGCTCAGTGTGATTGAAAGTTCTGTGTGAATATGTTTTTGGAAAGATCCAACAGCAACACCTTAGTGTATGTTTTTGAAATAAAATATATCTGAGTAGCAGCAAAGTTATTCTCAAATTTCCATTTTATAGCTGGAGATGTTATACCGTGACGTACATGATAGGACCCAATATGGATCAATCCCTTTTAGAAGTCAATCAGGAAGAGGGGAGCAGTTAAAACAGTTGCTTGGTTTACAAACATTAGAACAATTTTCTTATTCACACCATCTGATTATTGTATGTTATTTTTTCCCCAACGTTTAGACTACACAATGAGTTAAGAATGATAAAAATAAGCTCACCAATATACTATGTACATATTTACCAAAATCTGTGCATGCTTATACATATAAACACAGCTGATAATTTATTAGTTAGGCTCATTTGTAATTTTTGTCACTATAGACCAGTTTTTTATTTAAATTGAAGATTAGTATACATTTTAAATGATTAGTCAAAATAAAAAATCTAAAATGTGCTCTAAATACCTCTTAGGTCAGAAAAAAAAAGTCAAAAGCTAGAGTATAGAGAAATTAAGAAACGCCCTAAATTTCTAATCTGACAAAAATTCATACAAGATTTAAATATTTTAATGGAAAATAGAACAGAACTAATTATTGAAGAAATTATAGAAAGGAAACAAAATAAACAGATTATATGGAGGATTTTTAGAAGATAAGTAAATAAATTAATATACTAGGAAAAAACAAGGGAAATATACTTGATAAATAAATACAGGTAAGAGTTCTTTTGAAATAATGATAAAATAGAAAATCTCTGTCAAAACTAAAAGGAAAGATGCATAAATATATAAATAAACGATAAAAAATGTTGCATACATATATGACTTTTTCAGAATCAAAAAATTTAAATTTCTGTAATAAAATTTAAATGTTTATAAATTTAAAAAACTAGAAGAAAGAATGTTGACTGTTCACAATACAAATAAATGACAACTATTTGAGGTGATGGATACGCTAATTATCCTTATTTGATCACTGGGCATTGTATACATGTATCAAAATATCACTCTGTATCCCATGAATATGTACAATTATTTGTCTCAAAAACAAACAAAAAAAAGATAATGGGAGAATGTTGAAAACTCAGAGAGAAGAGCAACTCTCACAGATAGGGATCCAGATAACATTAGCAGCTGATTTCTCAGCAGAAACCTTGAAGGCCAGTAGGCAGTGGATTATATATTTAAAATAATGAAGAAACCTGTCAATTGAGAAATATATAGCTGGAAAACTTATCCTTCAAAAATGAAGGAGAAATTAAGACATTTCCGGATTTTTTTTTAAAACTGAAAAAAATCCATTTATCCCTGAATTTGACATTCAGGAAGTGTTAAGTCCTTCAGGTTGAAATAAATGAACTCTAGGCAATAACTATATAAGTAAATAAGCAAGCTGTATGAATATACAAAGCTCTCTGGTAAAGGTAAATACATAAACAAACATAAAAACAGTCCTATTGTAATTTTGGTTTGTAACTCTGCTTTTTATTTTCTACATAATTTAAAAGGCAAATGCATAAAATGTAATTGTAAATCTGTTAGCTGGTATACAATGAATAAAGATATAATTTGTCACATCAATAACATAAAAAGAGTAGAGCTATATATATAGCAGTAGAATTTTGGTATGTGATTGAACTTAAGTTGAAATAAATTCAAATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATATACATAGAATATAAACAAAAGGAAATGAGACTAGAAACAAAATGTGTCACTACAAAAAAATCAACTAAAGATAAAAAAGAAATAATTGAGAAAATGATTGGCAAAAATCAGTAACTCTGACGTATTAAAACTTTCCATGCTACATAAATCTGAAAACTCTATTTCACATAAAACTGGAGCTGAAAGAAACAAATATTTACCTATAAAGTTAAAAGTTATATAGGGAACAAACACTAATTTTTTTTAGAAAAAATTATAAAAAGAGTAAAAATATGCCTTATACTACCGTAATTTCATGTTTTACAGCTCTGGGAAAATAGAAAATAAAATGTTCTGTTAGCATGAATCCCTCTGTGCCCCCAAAAAACCCTATGGATTGCATCATTATTACCTAAAAAGTCTATTCTCAAATGCAGCAGAGTGATATTTTTTACAAGGTAGATATTAATTTTAGATATGGAATAATATTGGTGATTTCAATTTTATAACACTGGGTTAAGATGAAAGAATGAGAAGATAAAGGTCCCTCAGCAATATAACTCACAAACATGTTCAGAAGCAGTAAGAAGTTACATTAATTATCTTTTGAAAGTCGATAATCTACATCTTTAATGTATGCATATAGCATAGCTAATGTACTATCCCTGGGTCCATTTATTCAATGAATAATTGCCGCTATGTGTCAGACATTTTTCTAGGCCTAGGAATGGATACATAAGTGAACAAAGCAAAGATTCTGGTTCTTGTAGAGTTTCCATTAAAAGACAATTTAGTAAAACTTTTCTTCCCCCAAATTATAAAATCTGTAAGATGATTTAACAACATGTGTAAAAGTCATTGTGGGCCAGGCACGGTGGCTCATACCAGGTGTGGTGACTCATAGCACTCTGTCACCCAGGATGGAGTGCAGTGGCACAATCTCTGCTCACTGCAACCTCTGCCTCCTGGGTACAAGCGATTCTCCTGCCTCAGCTTTCTGAGTAGCAAGGACTACAGGTGCACACCATCACGCCTGGCTAATTTTTGTACTATTAGTACAGACGGAGTTTCACCATGTTGGCCAGGCTGGTCTCGAACTCCTGACCTCA", 
-			 return_flank3p_array[0]);
-
-  CU_ASSERT_STRING_EQUAL("TTGCACCACTGCACTCAAGCCTGGGTGGTA", return_branch2_array[0]);
-
-  CU_ASSERT_STRING_EQUAL("CCTCAATCTATAACCACTACCTTCTGGGTCCTTTCTAAAAATTGACAAATAATAATCATATATAATTAATGTACAATGTTATGTTTCAATACATGTTTGCATTGTGGAATAATTAAATCAAGCTACTTGGCATGTCAGTAACATCACATGCTTAGCATTTTTGTAGTGAAAATATTTAAAATCTACTCTTTTAGCAATTTTGAAATATACAATACAGTACTTACTCACTTAACATCATTGATTGGTCCTCAGAAACTGCAACTTGGAGTGAAAAGATGTATAAAGAAACCAATTTTCCCATAGGCTAATAGCTATAAATAAGAGTTAGATTCTTACAGCATATTTTTGGTCACAAAATATCACCAAACTTCTAAATAAAGACCAAAACACTTCAAATATTAAACATTGAAATAAATATGAGCTTTGCATACATTTAAGAAAGATTAATAAAAACAAGTAAGATAATTATTTGCCCAATTATTTCATTCAGGGTTGGGGAGACTGGAGTCTGTGCTGGAAGCTCAGGGCTCAAGCTGGGCAACAGCCCTGGACAGGATGCCATCCCACTGCAGGATGGCTCACACATGCCCACAGCCACTCAGCCTGGGACCATTTGGACACAGCAATTAACCTTACCTGCATGTCTTTGTGGGGAGGAAACCAGAGTGCTTAGAAAAACCCATGCAGACAGACACAGAGCAAACATGCAAACCTCACAAAGATATTGTTTCTTCTGTCACCTGTGCTTTTGGGTCATATTCAAGAAATCATTAACCAAATAAAAGTCGTGGAGCTTTTCCCTATGTTTTCTTTTAGTAGTTTTATAGTTTCAGGTCTTACATTTAACTCCTTAATCCATTTTGATTTTTGCATATGGTGTGAGATAAGCTTCTGGTTTCATTCTCCCACATGTGGATATCCAGTTCTCTGAACACCATATATGGAAGAGACTGTCATTTCCTCATGATATGTTCCTGGCACTTTTGTTGAAATCAATTGACCATAGATCTGTGGGTTTATTTCTGGCTTTTTATTCTGTTCCATTGGCCAATGTACCTGTGTTTATGCTTGTGCCTTGCTGTTTTGATTATTATAGCTTTATAATATGTTTTGAAATCAGGTAGTGTGATGCCTCCATCTTTGCTTTTTATGCTCAAGATAGTTTGGATATTCAGAGTGTTTTATGGTTCCATATACATATTGCACCACTGCACTCAAGCCTGGGTGGTA", return_trusted_branch_array[0]);
-
-  CU_ASSERT(return_variant_start_coords_array[0]==6722); 
-
-
-
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-  
-  free(return_flank5p_array[0]);
-  free(return_flank3p_array[0]);
-  free(return_trusted_branch_array[0]);
-  free(return_branch2_array[0]);
-  free(return_flank5p_array);
-  free(return_flank3p_array);
-  free(return_trusted_branch_array);
-  free(return_branch2_array);
-
-
-
-
-
-  // ***************************************************************************************************************************************************
-  // 14. Identical to previous test, but each person has identical 600 lines of chromosome 12 added (roughly 30kb) before the sequence that was there in previous tes
-  //     This is purely to test that the start coordinate of the variant is found correctly, even when you have to load more and more sequence into the array.
-  // ***************************************************************************************************************************************************
-  
-
-  printf("Start subtest 14: same deletion of 1kb within 10kb of sequence as in subtest13, but with some extra sequence bunged on front of fastas, so check whether we get start coord of variant right\n");
-
-  kmer_size = 31;
-  number_of_bits = 15;
-  bucket_size    = 10;
-  bad_reads = 0;
-  max_retries=10;
-
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  if (hash_table==NULL)
-    {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
-    }
-  seq_loaded=0;
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_1kb_deletion_both_with_600lineschrom12_beforehand", &bad_reads, hash_table);
-
-  chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta", "r");
-  if (chrom_fptr==NULL)
-    {
-      printf("Cannot open ../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta");
-      exit(1);
-    }
-
-
-  min_fiveprime_flank_anchor = 21;
-  min_threeprime_flank_anchor= 21;
-  max_anchor_span =8000;
-  length_of_arrays=16000;
-  min_covg =1;
-  max_covg = 100000000;
-  max_expected_size_of_supernode=8000;
-
-
-  return_flank5p_array = (char**) malloc( sizeof(char*) *2);
-  return_flank3p_array = (char**) malloc( sizeof(char*) *2);
-  return_trusted_branch_array = (char**) malloc( sizeof(char*) *2);
-  return_branch2_array = (char**) malloc( sizeof(char*) *2);
-  
-  if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
-    {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
-    }
-
-  return_flank5p_array[0] = (char*) malloc( sizeof(char) * 5600);
-  return_flank3p_array[0] = (char*) malloc( sizeof(char) * 5600);
-  return_trusted_branch_array[0] = (char*) malloc( sizeof(char) * 5600);
-  return_branch2_array[0] = (char*) malloc( sizeof(char) *5600);
-
-  if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
-     {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
-    }
-  
-  return_flank5p_array[0][0]='\0';
-  return_flank3p_array[0][0]='\0';
-  return_trusted_branch_array[0][0]='\0';
-  return_branch2_array[0][0]='\0';
-
-  
-  return_variant_start_coords_array[0]=0;
-  return_variant_start_coords_array[1]=0;
-
-  
-  return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
-  return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
-
-  fp = fopen("../bin/temp_outputfile_for_testing_subtest14", "w");
-
-
-
-
-
-  ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-						    individual_edge_array,1,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table,  fp,
-                                                    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
-
-
-  fclose(fp);
-
-
-  CU_ASSERT(ret==1);
-
-  CU_ASSERT_STRING_EQUAL("CATAATGATTAGGGAAATGTCTCATATTCTATATATATAGACAGAAAGAGAGAAAATATATGAGGGAGAGAAGGAATCTTTCCATCTCCTTTGAGTTCCACGGTGTTGAGAGTCAGGACAACTGCAATTGCTTCATCATGCCTGCTTGCAATTATAGGGCTTTTGAACCATTTGTTCCCTCCTTAGATATCCTCATTTTTTTCAGATTCTTGCTTAGAAGTCACTCCTCCGTGGACCTCCTCTGACATATTAAACATTGCAGTCCATTATAAGCTGCAAGAGGACAGGGATTTTTGCCTGTTTTATTCCCTACTGTATCACCAGGGGCTAGAGCAATATCTGACAAACAGTGGGCATGTAATGAATATTTGTTAAGTGAAGTAATAAATTCAATCAAATCACATCACCTGTTTAAAGCACTTCATTGGCTTCACATTGCACTTAGAATAAAGAGAAATTCTTTTTATACAATATACAATATATTTTATACAATATAAGTTCCTGCAGAATGCAGACACTTTCTACTTCTCCAGCCTCTTTTCGACTCCTCTCCTACTAGCTTCTGTATTTAAGCCATATTAGACCTTTCTTCAGTTTTTTATATAGACTTTGTCGCATCACACCTCAGAGATTCTGTACATGTTCTTCCTCCTGCCTAGAAAGGATCGTCCCTCCACTTTTGCCAACTAATCCCTGCTCAACTTTTCATCTCAGCAGGAGGCCCATTCTCTTTGGCAATCCTCTGGCCTCCAGCCCATTTATTATATGCTCACATGTCAACATGTACTTCGTACAGCATGTAACACAATTGCACTTTTATATTTTAACAAATTATATTTCCCATATTGAACTGTAAGTCTCCTGAAAGCAGGAATTTTGTTCTTGCTCATCATCAACTTTTTCAACATCCAGTGCACCATTTAGAACTTAGATGTAGTCAATACAGGTTTGTGGAATGAAAGAGGAAAAGAAAGAATTAATATTCCTTTAAATTAGGATGGCAAAGATCGTATATAGAAAATTGGCTAAGTTGTGGTCCATTCATGTTTGCTCCCAATTAAGGAGCACAGCTATGAAAAGGAAGGCTTCAAATTAATAACCAATAGATTTTTTTAAAAAGAAAACTGGCCAGGTACTGTGGCTTATGTCTGTAATATCAGCATGTTGGGAGGCCAAGGCAGGATTACTTGAGCCCAGAAATTCCAGACCAGCCTGAGAATTTGGCAAAACTCTGTCTCTACAAAAAATACAAAAATTAGCCAAGTTTGGTGGCATGTGCCTGTAGTACCAGCTACTTGGGAGGCTGAGGTGGAAGAATAGCTTGAGTCTGGGAGGTCAAGGCTGCAATGAGCTGTGA", return_flank5p_array[0]);
-
-  CU_ASSERT_STRING_EQUAL("GAGTAAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAGAAAAATCACTAAGCAAAATAAGACATGTGAAGGATCATGTCAAAGGAAAGAAAAATTAGGGGAACATTAAAAGCTTTCTTCCCAAGCCACTAAATCAACTTGACTAACAAAATTACCACTTGATTTAGTATTAGAAAATTACATTACATATCAAACATAAACCCATTAATCAAATACTAAAGAAATTTCTGAGTTAAATGGTATAATGTTAGCTTATGCCAGAGCTGACCTTGAAAGATTGTTCAAATATGGCTCAGTGTGATTGAAAGTTCTGTGTGAATATGTTTTTGGAAAGATCCAACAGCAACACCTTAGTGTATGTTTTTGAAATAAAATATATCTGAGTAGCAGCAAAGTTATTCTCAAATTTCCATTTTATAGCTGGAGATGTTATACCGTGACGTACATGATAGGACCCAATATGGATCAATCCCTTTTAGAAGTCAATCAGGAAGAGGGGAGCAGTTAAAACAGTTGCTTGGTTTACAAACATTAGAACAATTTTCTTATTCACACCATCTGATTATTGTATGTTATTTTTTCCCCAACGTTTAGACTACACAATGAGTTAAGAATGATAAAAATAAGCTCACCAATATACTATGTACATATTTACCAAAATCTGTGCATGCTTATACATATAAACACAGCTGATAATTTATTAGTTAGGCTCATTTGTAATTTTTGTCACTATAGACCAGTTTTTTATTTAAATTGAAGATTAGTATACATTTTAAATGATTAGTCAAAATAAAAAATCTAAAATGTGCTCTAAATACCTCTTAGGTCAGAAAAAAAAAGTCAAAAGCTAGAGTATAGAGAAATTAAGAAACGCCCTAAATTTCTAATCTGACAAAAATTCATACAAGATTTAAATATTTTAATGGAAAATAGAACAGAACTAATTATTGAAGAAATTATAGAAAGGAAACAAAATAAACAGATTATATGGAGGATTTTTAGAAGATAAGTAAATAAATTAATATACTAGGAAAAAACAAGGGAAATATACTTGATAAATAAATACAGGTAAGAGTTCTTTTGAAATAATGATAAAATAGAAAATCTCTGTCAAAACTAAAAGGAAAGATGCATAAATATATAAATAAACGATAAAAAATGTTGCATACATATATGACTTTTTCAGAATCAAAAAATTTAAATTTCTGTAATAAAATTTAAATGTTTATAAATTTAAAAAACTAGAAGAAAGAATGTTGACTGTTCACAATACAAATAAATGACAACTATTTGAGGTGATGGATACGCTAATTATCCTTATTTGATCACTGGGCATTGTATACATGTATCAAAATATCACTCTGTATCCCATGAATATGTACAATTATTTGTCTCAAAAACAAACAAAAAAAAGATAATGGGAGAATGTTGAAAACTCAGAGAGAAGAGCAACTCTCACAGATAGGGATCCAGATAACATTAGCAGCTGATTTCTCAGCAGAAACCTTGAAGGCCAGTAGGCAGTGGATTATATATTTAAAATAATGAAGAAACCTGTCAATTGAGAAATATATAGCTGGAAAACTTATCCTTCAAAAATGAAGGAGAAATTAAGACATTTCCGGATTTTTTTTTAAAACTGAAAAAAATCCATTTATCCCTGAATTTGACATTCAGGAAGTGTTAAGTCCTTCAGGTTGAAATAAATGAACTCTAGGCAATAACTATATAAGTAAATAAGCAAGCTGTATGAATATACAAAGCTCTCTGGTAAAGGTAAATACATAAACAAACATAAAAACAGTCCTATTGTAATTTTGGTTTGTAACTCTGCTTTTTATTTTCTACATAATTTAAAAGGCAAATGCATAAAATGTAATTGTAAATCTGTTAGCTGGTATACAATGAATAAAGATATAATTTGTCACATCAATAACATAAAAAGAGTAGAGCTATATATATAGCAGTAGAATTTTGGTATGTGATTGAACTTAAGTTGAAATAAATTCAAATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATATACATAGAATATAAACAAAAGGAAATGAGACTAGAAACAAAATGTGTCACTACAAAAAAATCAACTAAAGATAAAAAAGAAATAATTGAGAAAATGATTGGCAAAAATCAGTAACTCTGACGTATTAAAACTTTCCATGCTACATAAATCTGAAAACTCTATTTCACATAAAACTGGAGCTGAAAGAAACAAATATTTACCTATAAAGTTAAAAGTTATATAGGGAACAAACACTAATTTTTTTTAGAAAAAATTATAAAAAGAGTAAAAATATGCCTTATACTACCGTAATTTCATGTTTTACAGCTCTGGGAAAATAGAAAATAAAATGTTCTGTTAGCATGAATCCCTCTGTGCCCCCAAAAAACCCTATGGATTGCATCATTATTACCTAAAAAGTCTATTCTCAAATGCAGCAGAGTGATATTTTTTACAAGGTAGATATTAATTTTAGATATGGAATAATATTGGTGATTTCAATTTTATAACACTGGGTTAAGATGAAAGAATGAGAAGATAAAGGTCCCTCAGCAATATAACTCACAAACATGTTCAGAAGCAGTAAGAAGTTACATTAATTATCTTTTGAAAGTCGATAATCTACATCTTTAATGTATGCATATAGCATAGCTAATGTACTATCCCTGGGTCCATTTATTCAATGAATAATTGCCGCTATGTGTCAGACATTTTTCTAGGCCTAGGAATGGATACATAAGTGAACAAAGCAAAGATTCTGGTTCTTGTAGAGTTTCCATTAAAAGACAATTTAGTAAAACTTTTCTTCCCCCAAATTATAAAATCTGTAAGATGATTTAACAACATGTGTAAAAGTCATTGTGGGCCAGGCACGGTGGCTCATACCAGGTGTGGTGACTCATAGCACTCTGTCACCCAGGATGGAGTGCAGTGGCACAATCTCTGCTCACTGCAACCTCTGCCTCCTGGGTACAAGCGATTCTCCTGCCTCAGCTTTCTGAGTAGCAAGGACTACAGGTGCACACCATCACGCCTGGCTAATTTTTGTACTATTAGTACAGACGGAGTTTCACCATGTTGGCCAGGCTGGTCTCGAACTCCTGACCTCA", 
-			 return_flank3p_array[0]);
-
-  CU_ASSERT_STRING_EQUAL("TTGCACCACTGCACTCAAGCCTGGGTGGTA", return_branch2_array[0]);
-
-  CU_ASSERT_STRING_EQUAL("CCTCAATCTATAACCACTACCTTCTGGGTCCTTTCTAAAAATTGACAAATAATAATCATATATAATTAATGTACAATGTTATGTTTCAATACATGTTTGCATTGTGGAATAATTAAATCAAGCTACTTGGCATGTCAGTAACATCACATGCTTAGCATTTTTGTAGTGAAAATATTTAAAATCTACTCTTTTAGCAATTTTGAAATATACAATACAGTACTTACTCACTTAACATCATTGATTGGTCCTCAGAAACTGCAACTTGGAGTGAAAAGATGTATAAAGAAACCAATTTTCCCATAGGCTAATAGCTATAAATAAGAGTTAGATTCTTACAGCATATTTTTGGTCACAAAATATCACCAAACTTCTAAATAAAGACCAAAACACTTCAAATATTAAACATTGAAATAAATATGAGCTTTGCATACATTTAAGAAAGATTAATAAAAACAAGTAAGATAATTATTTGCCCAATTATTTCATTCAGGGTTGGGGAGACTGGAGTCTGTGCTGGAAGCTCAGGGCTCAAGCTGGGCAACAGCCCTGGACAGGATGCCATCCCACTGCAGGATGGCTCACACATGCCCACAGCCACTCAGCCTGGGACCATTTGGACACAGCAATTAACCTTACCTGCATGTCTTTGTGGGGAGGAAACCAGAGTGCTTAGAAAAACCCATGCAGACAGACACAGAGCAAACATGCAAACCTCACAAAGATATTGTTTCTTCTGTCACCTGTGCTTTTGGGTCATATTCAAGAAATCATTAACCAAATAAAAGTCGTGGAGCTTTTCCCTATGTTTTCTTTTAGTAGTTTTATAGTTTCAGGTCTTACATTTAACTCCTTAATCCATTTTGATTTTTGCATATGGTGTGAGATAAGCTTCTGGTTTCATTCTCCCACATGTGGATATCCAGTTCTCTGAACACCATATATGGAAGAGACTGTCATTTCCTCATGATATGTTCCTGGCACTTTTGTTGAAATCAATTGACCATAGATCTGTGGGTTTATTTCTGGCTTTTTATTCTGTTCCATTGGCCAATGTACCTGTGTTTATGCTTGTGCCTTGCTGTTTTGATTATTATAGCTTTATAATATGTTTTGAAATCAGGTAGTGTGATGCCTCCATCTTTGCTTTTTATGCTCAAGATAGTTTGGATATTCAGAGTGTTTTATGGTTCCATATACATATTGCACCACTGCACTCAAGCCTGGGTGGTA", return_trusted_branch_array[0]);
-
-
-  CU_ASSERT(return_variant_start_coords_array[0]==42662); 
-  
-  hash_table_free(&hash_table);
-  fclose(chrom_fptr);
-  
-  free(return_flank5p_array[0]);
-  free(return_flank3p_array[0]);
-  free(return_trusted_branch_array[0]);
-  free(return_branch2_array[0]);
-  free(return_flank5p_array);
-  free(return_flank3p_array);
-  free(return_trusted_branch_array);
-  free(return_branch2_array);
-
-
-
-}
-
-
-
-*/
-
-
-
-
-
-
-
-
 
 void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
 {
@@ -3932,6 +2445,7 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
   int bucket_size    = 8;
   long long bad_reads = 0;
   int max_retries=10;
+  BinaryKmer tmp_kmer1, tmp_kmer2;
 
   
   dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
@@ -3945,27 +2459,27 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
   //We will make two arrays of nodes, one corresponding to each read, and compare these two arrays. There is no reason to be associated with a read, this is just to make the test easier.
   // Where the nodes come from is irrelevant
 
-  dBNode* n1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAC", kmer_size),kmer_size), hash_table); //seen in both reads
-  dBNode* n2 = hash_table_find(element_get_key(seq_to_binary_kmer("AAACG", kmer_size),kmer_size), hash_table); //covg 2
-  dBNode* n3 = hash_table_find(element_get_key(seq_to_binary_kmer("AACGA", kmer_size),kmer_size), hash_table); //covg 2
-  dBNode* n4 = hash_table_find(element_get_key(seq_to_binary_kmer("ACGAA", kmer_size),kmer_size), hash_table); //covg 1
-  dBNode* n5 = hash_table_find(element_get_key(seq_to_binary_kmer("CGAAA", kmer_size),kmer_size), hash_table); //covg 1
-  dBNode* n6 = hash_table_find(element_get_key(seq_to_binary_kmer("GAAAA", kmer_size),kmer_size), hash_table); //seen in both reads
-  dBNode* n7 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAA", kmer_size),kmer_size), hash_table); //covg 2
-  dBNode* n8 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAA", kmer_size),kmer_size), hash_table); //covg 2
-  dBNode* n9 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAT", kmer_size),kmer_size), hash_table); //covg1 
-  dBNode* n10 = hash_table_find(element_get_key(seq_to_binary_kmer("AAATT", kmer_size),kmer_size), hash_table); //covg 1
-  dBNode* n11 = hash_table_find(element_get_key(seq_to_binary_kmer("AATTC", kmer_size),kmer_size), hash_table); //covg 1
-  dBNode* n12 = hash_table_find(element_get_key(seq_to_binary_kmer("ATTCG", kmer_size),kmer_size), hash_table); //covg 1
-  dBNode* n13 = hash_table_find(element_get_key(seq_to_binary_kmer("TTCGA", kmer_size),kmer_size), hash_table); //covg1
-  dBNode* n14 = hash_table_find(element_get_key(seq_to_binary_kmer("TCGAG", kmer_size),kmer_size), hash_table); // seen in both reads
+  dBNode* n1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAC", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //seen in both reads
+  dBNode* n2 = hash_table_find(element_get_key(seq_to_binary_kmer("AAACG", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg 2
+  dBNode* n3 = hash_table_find(element_get_key(seq_to_binary_kmer("AACGA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg 2
+  dBNode* n4 = hash_table_find(element_get_key(seq_to_binary_kmer("ACGAA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg 1
+  dBNode* n5 = hash_table_find(element_get_key(seq_to_binary_kmer("CGAAA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg 1
+  dBNode* n6 = hash_table_find(element_get_key(seq_to_binary_kmer("GAAAA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //seen in both reads
+  dBNode* n7 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg 2
+  dBNode* n8 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg 2
+  dBNode* n9 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAT", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg1 
+  dBNode* n10 = hash_table_find(element_get_key(seq_to_binary_kmer("AAATT", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg 1
+  dBNode* n11 = hash_table_find(element_get_key(seq_to_binary_kmer("AATTC", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg 1
+  dBNode* n12 = hash_table_find(element_get_key(seq_to_binary_kmer("ATTCG", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg 1
+  dBNode* n13 = hash_table_find(element_get_key(seq_to_binary_kmer("TTCGA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg1
+  dBNode* n14 = hash_table_find(element_get_key(seq_to_binary_kmer("TCGAG", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); // seen in both reads
 
-  dBNode* e1 = hash_table_find(element_get_key(seq_to_binary_kmer("TCGAG", kmer_size),kmer_size), hash_table); //seen in both reads
-  dBNode* e2 = hash_table_find(element_get_key(seq_to_binary_kmer("CGAGA", kmer_size),kmer_size), hash_table); //covg 2
-  dBNode* e3 = hash_table_find(element_get_key(seq_to_binary_kmer("GAGAA", kmer_size),kmer_size), hash_table); //covg 1
-  dBNode* e4 = hash_table_find(element_get_key(seq_to_binary_kmer("AGAAA", kmer_size),kmer_size), hash_table); //covg 1
-  dBNode* e5 = hash_table_find(element_get_key(seq_to_binary_kmer("GAAAA", kmer_size),kmer_size), hash_table); //seen in both reads
-  dBNode* e6 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAC", kmer_size),kmer_size), hash_table); //seen in both reads
+  dBNode* e1 = hash_table_find(element_get_key(seq_to_binary_kmer("TCGAG", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //seen in both reads
+  dBNode* e2 = hash_table_find(element_get_key(seq_to_binary_kmer("CGAGA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg 2
+  dBNode* e3 = hash_table_find(element_get_key(seq_to_binary_kmer("GAGAA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg 1
+  dBNode* e4 = hash_table_find(element_get_key(seq_to_binary_kmer("AGAAA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //covg 1
+  dBNode* e5 = hash_table_find(element_get_key(seq_to_binary_kmer("GAAAA", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //seen in both reads
+  dBNode* e6 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAC", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2), hash_table); //seen in both reads
   //note we haven't gone all the way to the end of the second read
 
 
@@ -4104,12 +2618,20 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
   char tmpseq[db_graph->kmer_size];
   int count=0;
 
+  BinaryKmer marked_kmer; //will have all longlongs in array being ~0
+  for (i=0; i<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      marked_kmer[i]=~0;
+    }
+
+
   void test_func(dBNode* node)
     {
-      if ( (node!=NULL) && (node->kmer != ~0) )
+      if ( (node!=NULL) && (!binary_kmer_comparison_operator(*element_get_kmer(node), marked_kmer)) )
 	{
-	  BinaryKmer k = element_get_kmer(node);
-	  binary_kmer_to_seq(k, db_graph->kmer_size, tmpseq);
+	  BinaryKmer k;
+	  binary_kmer_assignment_operator(k, *element_get_kmer(node));
+	  binary_kmer_to_seq(&k, db_graph->kmer_size, tmpseq);
 	  //printf("%s\n", tmpseq);
 	  strcat(results_array[count],tmpseq);
 	  count++;

@@ -8,7 +8,6 @@
 #include <element.h>
 #include <dB_graph.h>
 #include <dB_graph_population.h>
-
 #include <string.h>
 
 
@@ -21,30 +20,44 @@
 dBNode * db_graph_get_next_node(dBNode * current_node, Orientation current_orientation, 
 			       Orientation * next_orientation,
 			       Nucleotide edge, Nucleotide * reverse_edge,dBGraph * db_graph){
+
+  BinaryKmer local_copy_of_kmer;
+  binary_kmer_assignment_operator(local_copy_of_kmer, current_node->kmer);
   
-  BinaryKmer kmer = element_get_kmer(current_node);
-  dBNode * next_node;
-  BinaryKmer rev_kmer = binary_kmer_reverse_complement(kmer,db_graph->kmer_size);
+  BinaryKmer tmp_kmer;
+  dBNode * next_node=NULL;
+
+  // after the following line tmp_kmer and rev_kmer are pointing to the same B Kmer
+  BinaryKmer* rev_kmer = binary_kmer_reverse_complement(&local_copy_of_kmer,db_graph->kmer_size, &tmp_kmer);
+
   
   if (current_orientation == reverse){   
-    *reverse_edge = binary_kmer_get_last_nucleotide(kmer);
-    kmer = rev_kmer;
+    *reverse_edge = binary_kmer_get_last_nucleotide(&local_copy_of_kmer);
+    binary_kmer_assignment_operator(local_copy_of_kmer,*rev_kmer);
   }
   else{
     *reverse_edge = binary_kmer_get_last_nucleotide(rev_kmer);
   }
 
-  
-  kmer = binary_kmer_add_nucleotide_shift(kmer,edge, db_graph->kmer_size);
 
-  //get node from table 
-  next_node = hash_table_find(element_get_key(kmer,db_graph->kmer_size),db_graph);
+  binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&local_copy_of_kmer, edge, db_graph->kmer_size);
+
+   //get node from table
+  next_node = hash_table_find(element_get_key(&local_copy_of_kmer,db_graph->kmer_size, &tmp_kmer),db_graph);
 
   if (next_node != NULL){
-    *next_orientation = db_node_get_orientation(kmer,next_node,db_graph->kmer_size);
+    *next_orientation = db_node_get_orientation(&local_copy_of_kmer,next_node,db_graph->kmer_size);
   }
+  else
+    {
+      // debug
+      BinaryKmer tmpzam;
+      char tmpzamseq[db_graph->kmer_size];
+      printf("Cannot find %s so get a NULL node\n", binary_kmer_to_seq(&tmp_kmer, db_graph->kmer_size, tmpzamseq));
+    }
 
   return next_node;
+
 }
 
 

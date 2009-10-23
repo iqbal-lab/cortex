@@ -9,7 +9,6 @@
 #include <open_hash/hash_table.h>
 #include <dB_graph.h>
 #include <dB_graph_population.h>
-// #include <pqueue_pop.h>
 #include <seq.h>
 #include <string.h>
 #include <limits.h>
@@ -43,33 +42,43 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 //it doesn't check that it is a valid arrow
 dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node, Orientation current_orientation, 
 							   Orientation * next_orientation,
-							   Nucleotide edge, Nucleotide * reverse_edge,dBGraph * db_graph, EdgeArrayType type, int index){
+							   Nucleotide edge, Nucleotide * reverse_edge,dBGraph * db_graph, EdgeArrayType type, int index)
+{
+
+  BinaryKmer local_copy_of_kmer;
+  binary_kmer_assignment_operator(local_copy_of_kmer, current_node->kmer);
   
-  BinaryKmer kmer = element_get_kmer(current_node);
-  dBNode * next_node;
-  BinaryKmer rev_kmer = binary_kmer_reverse_complement(kmer,db_graph->kmer_size);
+  BinaryKmer tmp_kmer;
+  dBNode * next_node=NULL;
+  
+  // after the following line tmp_kmer and rev_kmer are pointing to the same B Kmer
+  BinaryKmer* rev_kmer = binary_kmer_reverse_complement(&local_copy_of_kmer,db_graph->kmer_size, &tmp_kmer);
+  
   
   if (current_orientation == reverse){   
-    *reverse_edge = binary_kmer_get_last_nucleotide(kmer);
-    kmer = rev_kmer;
+    *reverse_edge = binary_kmer_get_last_nucleotide(&local_copy_of_kmer);
+    binary_kmer_assignment_operator(local_copy_of_kmer,*rev_kmer);
   }
   else{
     *reverse_edge = binary_kmer_get_last_nucleotide(rev_kmer);
   }
 
+
+  binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&local_copy_of_kmer, edge, db_graph->kmer_size);
   
-  kmer = binary_kmer_add_nucleotide_shift(kmer,edge, db_graph->kmer_size);
-
    //get node from table
-  next_node = hash_table_find(element_get_key(kmer,db_graph->kmer_size),db_graph);
-
- 
+  next_node = hash_table_find(element_get_key(&local_copy_of_kmer,db_graph->kmer_size, &tmp_kmer),db_graph);
 
   if (next_node != NULL)
     {
-      *next_orientation = db_node_get_orientation(kmer,next_node,db_graph->kmer_size);
+      *next_orientation = db_node_get_orientation(&local_copy_of_kmer,next_node,db_graph->kmer_size);
     }
-  
+  else
+    {
+      //no else
+    }
+
+
   //need to check the node is in this person's graph
   if (! (db_node_is_this_node_in_this_person_or_populations_graph(next_node, type, index)))
     {
@@ -77,6 +86,8 @@ dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node
     }
  
   return next_node;
+  
+
 }
 
 
@@ -110,6 +121,7 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
   Nucleotide nucleotide,rev_nucleotide,nucleotide2;
   int length =0;
   char tmp_seq[db_graph->kmer_size+1];
+  tmp_seq[db_graph->kmer_size]='\0';
   int sum_coverage = 0;
   int coverage  = 0;
 
@@ -211,7 +223,7 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
     }
   else
     {
-      printf("WARNING IMPOSSIBLE ZAM");
+      printf("WARNING IMPOSSIBLE");
     }
   */
   
@@ -285,13 +297,22 @@ int db_graph_get_perfect_path_for_specific_person_or_pop(dBNode * node, Orientat
 // every branch of the bubble is free of conflicts until it joins with the main branch
 // the differente between the length of the branches is <= delta
 
+// the algorithms works by trying to find supernodes for all possible edges in the given orientation.
+// the action is applied to all the internal nodes in the supernodes (even if they don't form a bubble).
+// at the moment returns only one bubble, notice that potentially there could be situations where a node forms two bubbles (something to implement). 
+
+
+//TODO - could have triallelic
 boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
-								 Orientation orientation,
-								 int limit, int delta,
-								 void (*node_action)(dBNode * node), 
-								 int * length1, Nucleotide * base1, dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,char * seq1,
-								 int * length2, Nucleotide * base2, dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,char * seq2,
+								  Orientation orientation,
+								  int limit,
+								  void (*node_action)(dBNode * node), 
+								  int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,
+								  char * seq1, double * avg_coverage1, int * min_coverage1, int * max_coverage1,
+								  int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,
+								  char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
 								 dBGraph * db_graph, EdgeArrayType type, int index){
+
 
 
   if (node==NULL)
@@ -304,53 +325,91 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
       //printf("\nThis node is not in the graph of this person\n");
       return false;
     }
+
+
   
-  dBNode * next_node1;
-  dBNode * next_node2;
-  Orientation next_orientation1, next_orientation2;
-  Nucleotide rev_base1, rev_base2;
-  boolean is_cycle1, is_cycle2;
   boolean ret = false;
-
-
-  if (db_node_has_precisely_two_edges(node,orientation,base1,base2,type,index)){
   
-    next_node1 = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation1,*base1,&rev_base1,db_graph,type,index);
-    next_node2 = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation2,*base2,&rev_base2,db_graph,type,index);
-    
+  dBNode * path_nodes[4][limit+1];
+  Orientation path_orientations[4][limit+1];
+  Nucleotide path_labels[4][limit];
+  char seq[4][limit+1];
+  double avg_coverage[4];
+  int min_coverage[4];
+  int max_coverage[4];
+  int lengths[4];
+  int i=0;
   
-    if (next_node1 == NULL || next_node2 == NULL){
-      puts("error in db_graph_detect_bubble_for_specific_person_or_population! next_node 1 or 2 is NULL ");
-      exit(1);
+  void check_nucleotide(Nucleotide n){
+
+    boolean is_cycle;      
+    if (db_node_edge_exist(node,n,orientation, type, index)){
+	lengths[i] = db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(node,orientation,
+											 limit,n,
+											 node_action,
+											 path_nodes[i],path_orientations[i],path_labels[i],
+											 seq[i],&avg_coverage[i],&min_coverage[i],&max_coverage[i],
+											 &is_cycle,db_graph, type, index);
+	
+	i++;
     }
-    
-    double avg_coverage;
-    int min_coverage;
-    int max_coverage;
-    
-    *length1  = db_graph_get_perfect_path_for_specific_person_or_pop(next_node1,next_orientation1,
-									    limit,node_action,
-									    path_nodes1,path_orientations1,path_labels1,
-									    seq1,&avg_coverage,&min_coverage,&max_coverage,
-									    &is_cycle1,db_graph, type, index);
-
-   
-    *length2  = db_graph_get_perfect_path_for_specific_person_or_pop(next_node2,next_orientation2,
-									    limit,node_action,
-									    path_nodes2,path_orientations2,path_labels2,
-									    seq2,&avg_coverage,&min_coverage,&max_coverage,
-									    &is_cycle2,db_graph, type, index);
-  
-
-    //action to the begining and end of branches
-    node_action(next_node1);
-    node_action(next_node2);
-    node_action(path_nodes1[*length1]);
-    node_action(path_nodes2[*length2]);
-
-    ret = (abs(*length1-*length2)<=delta && 
-	   path_nodes1[*length1] == path_nodes2[*length2]);
   }
+  
+  
+  nucleotide_iterator(check_nucleotide);
+ 
+  int j = 0;
+  int k = 0;
+
+  while (!ret && j<i){
+    k = j+1;
+    while (!ret && k<i){
+      
+      if (path_nodes[j][lengths[j]] == path_nodes[k][lengths[k]]){
+	*length1 = lengths[j];
+	*length2 = lengths[k];
+
+	*avg_coverage1 = avg_coverage[j];
+	*avg_coverage2 = avg_coverage[k];
+	
+	*min_coverage1 = min_coverage[j];
+	*min_coverage2 = min_coverage[k];
+		
+	*max_coverage1 = max_coverage[j];
+	*max_coverage2 = max_coverage[k];
+	  
+	int l;
+	for(l=0;l<lengths[j]; l++){
+	  path_nodes1[l] = path_nodes[j][l];
+	  path_orientations1[l] = path_orientations[j][l];
+	  path_labels1[l] = path_labels[j][l];
+	  seq1[l] = seq[j][l];
+	}
+	path_nodes1[lengths[j]] = path_nodes[j][lengths[j]];
+	path_orientations1[lengths[j]] = path_orientations[j][lengths[j]];
+	seq1[lengths[j]] = seq[j][lengths[j]];
+
+	for(l=0;l<lengths[k]; l++){
+	  path_nodes2[l] = path_nodes[k][l];
+	  path_orientations2[l] = path_orientations[k][l];
+	  path_labels2[l] = path_labels[k][l];
+	  seq2[l] = seq[k][l];
+	}
+	path_nodes2[lengths[k]] = path_nodes[k][lengths[k]];
+	path_orientations2[lengths[k]] = path_orientations[k][lengths[k]];
+	seq2[lengths[k]] = seq[k][lengths[k]];
+	
+	ret = true;
+	  
+      }
+      else{
+	k++;
+      }
+      
+    }
+    j++;
+  }
+    
   return ret;
 }
 
@@ -533,7 +592,7 @@ boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, EdgeA
   
   if (orientation == reverse)
     {
-      //shift along so the 4 most significant bits become the 4 least - we've passed out argument by copy so not altering the original
+      //shift along so the 4 most significant bits become the 4 least - we've passed our argument by copy so not altering the original
       edges >>= 4;
     }
 
@@ -672,123 +731,6 @@ void db_graph_traverse_to_gather_statistics_about_people(void (*f)(HashTable*, E
 
 
 
-/*
-
-
-//will print only nodes for specific person/population
-
-// ******NOTE****** if you want to go on to print for other people, you need to set status to none for all the nodes again after going thrrough the whole
-// graph printing supernodes - otherwise some will be left marked visited.
-
-//if you pass in true for the boolean is_for_testing,  then instead of printing to the file, it adds the supernode to the array of char*'s 
-//this enables the caller to sort the supernodes lexicographically, and test that the right supernodes are being found
-//this is not scalable to a ful genome, but sufficient for detailed unit tests
-
-void db_graph_print_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test ){
-
-  if (!db_node_is_this_node_in_this_person_or_populations_graph(node, type, index))
-    {
-      return;
-    }
-  
-  const int              max_expected_supernode_length=12000;
-  dBNode *         nodes_path[max_expected_supernode_length];
-  Orientation      orientations_path[max_expected_supernode_length];
-  Nucleotide       labels_path[max_expected_supernode_length];
-  char             seq[max_expected_supernode_length];
-  int              j;
-
-  //initialise
-  for (j=0; j<max_expected_supernode_length; j++)
-    {
-      seq[j]='0';
-    }
-
-
-
-  //get the supernode.
-  int length = db_graph_supernode_for_specific_person_or_pop(node,max_expected_supernode_length,&db_node_check_status_not_pruned_or_visited,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
-							     seq,nodes_path,orientations_path, labels_path,db_graph, type, index);
-  if (length==0) //means the condition db_node_check_status_not_pruned_or_visited was FALSE, so don't want to print anything
-    {
-      return;
-    }
-
-  if (!is_for_testing) 
-    {
-      fprintf(file,">NODE\n%s\n",seq);
-    }
-  else
-    {
-      
-      for_test[*index_for_test] = (char*) calloc(length+1,sizeof(char));
-      if (for_test[*index_for_test]==NULL)
-	{
-	  printf("Unable to calloc for supernode");
-	  exit(1);
-	}
-
-      int j;
-
-      for (j=0; j<length; j++)
-	{
-	  for_test[*index_for_test][j]=seq[j];
-	}
-      for_test[*index_for_test][length]='\0';
-      *index_for_test=*index_for_test+1;
-      
-	//Now make sure you are using the smaller of the sequence and its rev complement
-
-	  //for the moment, only do this for short supernodes :-(
-	  
-	//	if (length_of_supernode<32)
-	// {
-	//   BinaryKmer snode_kmer = seq_to_binary_kmer(for_test[*index_for_test],length_of_supernode);
-	//   BinaryKmer rev_snode_kmer =  binary_kmer_reverse_complement(snode_kmer, length_of_supernode);
-	    
-	//    if (rev_snode_kmer<snode_kmer)
-	//     {
-	//	binary_kmer_to_seq(rev_snode_kmer,length_of_supernode, for_test[*index_for_test]);
-	//     }
-	// }
-	//TODO - fix this - I was trying to find reverse complement by using binary_kmer_reverse complement, and this assumes k<31, so can use long long. But supernodes can be much longer than 31 bases.
-	// this is only an issue because I want to print out the smaller of supernode and rev_comp(supernde), so not critical.
-	
-
-    }
-  
-  
-}
-
-*/
-
-
-
-
-
-
-
-//TODO - move thiscode out into /sv_trio
-//the final argument returns the number of chromosomes intersected, but only gives the right answer if the function returns true - ie no node intersected >1 chromosome
-boolean db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome(dBNode* node, EdgeArrayType type, int index, dBGraph* dbgraph, int* total_number_of_different_chromosomes_intersected)
-{
-
-  printf("Stop using db_graph_do_all_nodes_in_supernode_intersect_at_most_one_chromosome");
-  exit(1);
-
-}
-
-
-
-//assume we have checked and no node has >1 chrom intwersection
-void db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop(FILE * file, dBNode * node, dBGraph * db_graph, EdgeArrayType type, int index, 
-						      boolean is_for_testing, char** for_test, int* index_for_test)
-{
-  //deprecated
-  printf("Stop using db_graph_print_chrom_intersections_for_supernode_for_specific_person_or_pop");
-  exit(1);
-}
-
 
 
 
@@ -797,155 +739,6 @@ void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_popula
   printf("not implemented db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population yet");
   exit(1);
 }
-
-void db_graph_set_status_of_all_nodes_in_supernode(dBNode* node, NodeStatus status, EdgeArrayType type, int index,  dBGraph* dbgraph)
-{
-
-  // printf("reimplement db_graph_set_status_of_all_nodes_in_supernode using db_graph_supernode_for_specific_person_or_pop\n");
-  
-  dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, type, index, dbgraph);
-  dBNode* current_node=first_node;
-
-  dBNode* next_node;
-  Orientation current_orientation, next_orientation, start_orientation;
-  
-
-  db_node_set_status(current_node, status);
-
-
-  //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
-  if (db_node_is_supernode_end(current_node,forward, type,index, dbgraph))
-    {
-      if (db_node_is_supernode_end(current_node,reverse, type,index, dbgraph))
-	{
-	  //singleton
-	  return ;
-	}
-      else
-	{
-	  start_orientation=reverse;
-	}
-    }
-  else
-    {
-      start_orientation=forward;
-    }
-
-  current_orientation=start_orientation;
-
-  //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
-  while (!db_node_is_supernode_end(current_node,current_orientation, type,index, dbgraph))
-    {
-      next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, dbgraph);
-
-      if ((next_node==first_node) && (next_orientation==start_orientation))//back to the start - will loop forever if not careful ;-0
-	{
-	  break;
-	}
-      db_node_set_status(next_node, status);
-
-      current_node=next_node;
-      current_orientation=next_orientation;
-	
-    }
-
-  return;
-
-
-
-
-}
-
-
-
-void db_graph_get_min_and_max_covg_of_nodes_in_supernode_for_specific_person_or_pop(dBNode* node, /* NodeStatus status,*/  EdgeArrayType type, int index,  dBGraph* dbgraph, int* min_covg, int* max_covg)
-{
-
-
-  //TODO - fix this to only look at interior nodes in supernode
-  // ALSO fix this to call db_graph_supernode
-
-  printf("reimplement to use db_graph_supernode - currently NULL\n");
-  
-
-  /*
-
-  if (node==NULL)
-    {
-      printf("Do not call get_min_and_max_covg on a NULL node");
-      exit(1);
-    }
-
-  
-  dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, type, index, dbgraph);
-  dBNode* current_node=first_node;
-
-  int min = db_node_get_coverage(first_node, type, index);
-  int max = db_node_get_coverage(first_node, type, index);
-
-  dBNode* next_node;
-  Orientation current_orientation, next_orientation, start_orientation;
-  
-
-
-
-  //work out which direction to leave supernode in. Function is_supernode_end will also return true if is an infinite self-loop
-  if (db_node_is_supernode_end(current_node,forward, type,index, dbgraph))
-    {
-      if (db_node_is_supernode_end(current_node,reverse, type,index, dbgraph))
-	{
-	  //singleton
-	  *min_covg=min;
-	  *max_covg=max;
-	  return ;
-	}
-      else
-	{
-	  start_orientation=reverse;
-	}
-    }
-  else
-    {
-      start_orientation=forward;
-    }
-
-  current_orientation=start_orientation;
-
-  //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
-  while (!db_node_is_supernode_end(current_node,current_orientation, type,index, dbgraph))
-    {
-      next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, dbgraph);
-
-      if ((next_node==first_node) && (next_orientation==start_orientation))//back to the start - will loop forever if not careful ;-0
-	{
-	  break;
-	}
-
-      if (db_node_get_coverage(next_node,type,index)>max)
-	{
-	  max = db_node_get_coverage(next_node,type,index);
-	}
-      if (db_node_get_coverage(next_node,type,index)<min)
-	{
-	  min = db_node_get_coverage(next_node,type,index);
-	}
-      current_node=next_node;
-      current_orientation=next_orientation;
-	
-    }
-
-  *min_covg=min;
-  *max_covg=max;
-  return;
-  */
-
-}
-
-
-
-
-
-
 
 
 
@@ -1004,9 +797,10 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
 
     if (DEBUG)
       {
-      printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide1),
-	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size, tmp_seq) :  
-	     binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size, tmp_seq));
+	BinaryKmer tmp_kmer;
+	printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide1),
+	       next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size, tmp_seq) :  
+	       binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size, &tmp_kmer),db_graph->kmer_size, tmp_seq));
 	     
       }
     
@@ -1088,9 +882,10 @@ dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* n
 
   if (DEBUG)
     {
+      BinaryKmer tmp_kmer;
       printf("TRY TO ADD %c - next node %s\n",binary_nucleotide_to_char(nucleotide_for_only_edge),
 	     next_orientation == forward ? binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size, tmp_seq) :  
-	     binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size),db_graph->kmer_size, tmp_seq));
+	     binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(next_node),db_graph->kmer_size, &tmp_kmer),db_graph->kmer_size, tmp_seq));
       
     }
     
@@ -1310,11 +1105,12 @@ int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char*
   //first kmer depends on which direction you start in with respect to the first node OF THE SUBSECTION, not the first node of the supernode
   if (current_orientation == forward) //i.e. orientation of first node of subsection
     {
-      first_kmer_in_subsection = binary_kmer_to_seq(current_node->kmer, db_graph->kmer_size, tmp_seq);
+      first_kmer_in_subsection = binary_kmer_to_seq(&(current_node->kmer), db_graph->kmer_size, tmp_seq);
     }
   else
     {
-      first_kmer_in_subsection = binary_kmer_to_seq(   binary_kmer_reverse_complement(current_node->kmer, db_graph->kmer_size) , db_graph->kmer_size, tmp_seq);
+      BinaryKmer tmp_kmer;
+      first_kmer_in_subsection = binary_kmer_to_seq(   binary_kmer_reverse_complement(&(current_node->kmer), db_graph->kmer_size, &tmp_kmer) , db_graph->kmer_size, tmp_seq);
     }
   
 
@@ -1460,11 +1256,12 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 	  char* next_kmer;
 	  if (next_orientation==forward)
 	    {
-	      next_kmer = binary_kmer_to_seq(next_node->kmer,db_graph->kmer_size, tmp_seq);
+	      next_kmer = binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size, tmp_seq);
 	    }
 	  else
 	    {
-	      next_kmer=binary_kmer_to_seq( binary_kmer_reverse_complement(next_node->kmer,db_graph->kmer_size), db_graph->kmer_size, tmp_seq );
+	      BinaryKmer tmp_kmer;
+	      next_kmer=binary_kmer_to_seq( binary_kmer_reverse_complement(&(next_node->kmer),db_graph->kmer_size, &tmp_kmer), db_graph->kmer_size, tmp_seq );
 	    }
 	  
 	  
@@ -1540,7 +1337,7 @@ void print_node_to_file_according_to_how_many_people_share_it(HashTable* db_grap
 	}
     }
 
-  char* kmer_as_string = binary_kmer_to_seq(node->kmer, db_graph->kmer_size, tmp_seq);
+  char* kmer_as_string = binary_kmer_to_seq(element_get_kmer(node), db_graph->kmer_size, tmp_seq);
   fprintf(list_of_file_ptrs[number_of_individuals_with_this_node], "%s\n", kmer_as_string);
   
 }
@@ -2056,7 +1853,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
       exit(1);
     }
 
-  if ( (covgs_in_trusted_not_variant==NULL) || (covgs_in_variant_not_trusted==NULL) || (covgs_in_some_array==NULL) || (covgs_in_some_array_ref==NULL))//ZAMZAM remove covgs in some array
+  if ( (covgs_in_trusted_not_variant==NULL) || (covgs_in_variant_not_trusted==NULL) || (covgs_in_some_array==NULL) || (covgs_in_some_array_ref==NULL))//ZAMZAMremove covgs in some array
     {
       printf("OOM at start  - cannot malloc covg arrays. Exit\n");
       exit(1);
@@ -2122,8 +1919,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
   char tmp_zam[db_graph->kmer_size];
-
-
+  BinaryKmer tmp_kmer;
+  
 
 
   // ********************************************************
@@ -2784,7 +2581,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  if (chrom_orientation_array[start_node_index]==forward)
 		    {
 		      strcat(return_flank5p_array[num_variants_found-1],
-			     binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam));
+			     binary_kmer_to_seq(element_get_kmer(chrom_path_array[start_node_index]), db_graph->kmer_size, tmp_zam));
 		    }
 		  else
 		    {
@@ -2792,7 +2589,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      tmp_zam2[db_graph->kmer_size]='\0';
 
 		      strcat(return_flank5p_array[num_variants_found-1],
-			     seq_reverse_complement(binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam), 
+			     seq_reverse_complement(binary_kmer_to_seq(element_get_kmer(chrom_path_array[start_node_index]), db_graph->kmer_size, tmp_zam), 
 						    db_graph->kmer_size,tmp_zam2)
 			     );
 		    }
@@ -3031,11 +2828,11 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  if (curr_sup_orientations[0]==forward)
 		    {
-		      strcat(temp, binary_kmer_to_seq(current_supernode[0]->kmer, db_graph->kmer_size, tmp_zam));
+		      strcat(temp, binary_kmer_to_seq(element_get_kmer(current_supernode[0]), db_graph->kmer_size, tmp_zam));
 		    }
 		  else
 		    {
-		      strcat(temp, binary_kmer_to_seq(binary_kmer_reverse_complement(current_supernode[0]->kmer, db_graph->kmer_size), 
+		      strcat(temp, binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(current_supernode[0]), db_graph->kmer_size, &tmp_kmer), 
 						      db_graph->kmer_size, tmp_zam) );
 		    }
 
@@ -3484,18 +3281,32 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
       
       char fst_seq[kmer_size+1], lst_seq[kmer_size+1];
  
-      BinaryKmer fst_kmer = element_get_kmer(fst_node);
-      if (fst_orientation==reverse){
-	fst_kmer = binary_kmer_reverse_complement(fst_kmer,kmer_size);
-      } 
-      binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq);
+      BinaryKmer fst_kmer;
+      BinaryKmer tmp_kmer;
+
+      if (fst_orientation==reverse)
+	{
+	  binary_kmer_assignment_operator(fst_kmer, *(  binary_kmer_reverse_complement(element_get_kmer(fst_node),kmer_size, &tmp_kmer) ) );
+	} 
+      else
+	{
+	  binary_kmer_assignment_operator(fst_kmer, *(element_get_kmer(fst_node)) );
+	}
       
-      BinaryKmer lst_kmer = element_get_kmer(lst_node);
+      binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq);
+      
+      BinaryKmer lst_kmer;
+
       if (lst_orientation==reverse){
-	lst_kmer = binary_kmer_reverse_complement(lst_kmer,kmer_size);
+	binary_kmer_assignment_operator(lst_kmer, *(  binary_kmer_reverse_complement(element_get_kmer(lst_node),kmer_size, &tmp_kmer) ) );
       } 
-      binary_kmer_to_seq(lst_kmer,kmer_size,lst_seq);
+      else
+	{
+	  binary_kmer_assignment_operator(lst_kmer, *(element_get_kmer(lst_node)) );
+	}
+      binary_kmer_to_seq(&lst_kmer,kmer_size,lst_seq);
       
+
       fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i mode_coverage: %i percent_nodes_with_modal_covg: %5.2f percent_novel: %5.2f fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s ", name,
 	      (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, modal_coverage, percent_nodes_with_modal_coverage, percent_novel,
 	      db_node_get_coverage(fst_node, type, index),
@@ -3526,7 +3337,7 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 
       if (include_first_kmer){    
 	
-	fprintf(fout,"%s",binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq));
+	fprintf(fout,"%s",binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq));
       }
       
       fprintf(fout,"%s\n",string);
@@ -3588,18 +3399,33 @@ void print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(FILE *f
       compute_label(lst_node,reverse,lst_r, type, index);
       
       char fst_seq[kmer_size+1], lst_seq[kmer_size+1];
- 
-      BinaryKmer fst_kmer = element_get_kmer(fst_node);
-      if (fst_orientation==reverse){
-	fst_kmer = binary_kmer_reverse_complement(fst_kmer,kmer_size);
-      } 
-      binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq);
+
+
+      BinaryKmer fst_kmer;
+      BinaryKmer tmp_kmer;
+
+      if (fst_orientation==reverse)
+	{
+	  binary_kmer_assignment_operator(fst_kmer, *(  binary_kmer_reverse_complement(element_get_kmer(fst_node),kmer_size, &tmp_kmer) ) );
+	} 
+      else
+	{
+	  binary_kmer_assignment_operator(fst_kmer, *(element_get_kmer(fst_node)) );
+	}
       
-      BinaryKmer lst_kmer = element_get_kmer(lst_node);
+      binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq);
+      
+      BinaryKmer lst_kmer;
+
       if (lst_orientation==reverse){
-	lst_kmer = binary_kmer_reverse_complement(lst_kmer,kmer_size);
+	binary_kmer_assignment_operator(lst_kmer, *(  binary_kmer_reverse_complement(element_get_kmer(lst_node),kmer_size, &tmp_kmer) ) );
       } 
-      binary_kmer_to_seq(lst_kmer,kmer_size,lst_seq);
+      else
+	{
+	  binary_kmer_assignment_operator(lst_kmer, *(element_get_kmer(lst_node)) );
+	}
+      binary_kmer_to_seq(&lst_kmer,kmer_size,lst_seq);
+
       
       fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i mode_coverage: %i percent_nodes_with_modal_covg: %5.2f percent_novel: %5.2f fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s ", name,
 	      (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, modal_coverage, percent_nodes_with_modal_coverage, percent_novel,
@@ -3643,7 +3469,7 @@ void print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(FILE *f
 
       if (include_first_kmer){    
 	
-	fprintf(fout,"%s",binary_kmer_to_seq(fst_kmer,kmer_size,fst_seq));
+	fprintf(fout,"%s",binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq));
       }
       
       fprintf(fout,"%s\n",string);

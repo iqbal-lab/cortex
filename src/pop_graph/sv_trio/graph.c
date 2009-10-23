@@ -200,9 +200,16 @@ int main(int argc, char **argv){
 		exit(1);
 	      }
 	    
+	      BinaryKmer marked_kmer; //will have all longlongs in array being ~0
+	      int i;
+	      for (i=0; i<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+		{
+		  marked_kmer[i]=~0;
+		}
+
 	    void print_uniqueness(dBNode* node)
 	      {
-		if ((node==NULL) || (node->kmer == ~0) )
+		if ((node==NULL) || (binary_kmer_comparison_operator(node->kmer, marked_kmer)) )
 		  {
 		    fprintf(out_fptr, "0");
 		  }

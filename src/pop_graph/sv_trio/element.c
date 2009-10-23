@@ -33,7 +33,7 @@ Element* new_element()
       exit(1);
     }
   
-  e->kmer=0;
+  binary_kmer_initialise_to_zero(&(e->kmer));
 
   int i;
   for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
@@ -44,8 +44,7 @@ Element* new_element()
 
 
   e->status=none;
-  e->kmer=0;
-
+  
   return e;
 }
 
@@ -58,7 +57,8 @@ void free_element(Element** element)
 
 void element_assign(Element* e1, Element* e2)
 {
-  e1->kmer = e2->kmer;
+
+  binary_kmer_assignment_operator( (*e1).kmer, (*e2).kmer);
   int i;
   for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
     {
@@ -250,23 +250,33 @@ boolean element_smaller(Element  e1, Element e2){
 
 
 
-BinaryKmer element_get_kmer(Element * e){
-  return e->kmer;
+//WARNING - this gives you a pointer to a the binary kmer in the node. You could modify contents of the hash table
+BinaryKmer* element_get_kmer(Element * e){
+  return &(e->kmer);
 }
 
 boolean element_is_key(Key key, Element e, short kmer_size){
-  return key == e.kmer;
+  //  return key == e.kmer;
+  return binary_kmer_comparison_operator(*key, e.kmer);
 }
 
-Key element_get_key(BinaryKmer kmer, short kmer_size){
+Key element_get_key(BinaryKmer* kmer, short kmer_size, Key preallocated_key){
   
-  BinaryKmer rev_kmer = binary_kmer_reverse_complement(kmer,kmer_size);
-  
-  if (rev_kmer < kmer){
-    kmer = rev_kmer;
-  }
+  BinaryKmer local_rev_kmer;
+  binary_kmer_initialise_to_zero(&local_rev_kmer);
 
-  return kmer;
+  binary_kmer_reverse_complement(kmer,kmer_size, &local_rev_kmer);
+  
+  if (binary_kmer_less_than(local_rev_kmer,*kmer, kmer_size))
+    {
+      binary_kmer_assignment_operator(*((BinaryKmer*)preallocated_key),local_rev_kmer);
+    }
+  else
+    {
+      binary_kmer_assignment_operator(*((BinaryKmer*)preallocated_key),*kmer);
+    }
+
+  return preallocated_key;
 
 }
 
@@ -279,7 +289,9 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
       exit(1);
     }
 
-  e->kmer = element_get_key(kmer, kmer_size);
+  BinaryKmer tmp_kmer;
+  binary_kmer_initialise_to_zero(&tmp_kmer);
+  binary_kmer_assignment_operator( e->kmer, *(element_get_key(kmer, kmer_size, &tmp_kmer)));
 
   //hash table has calloc-ed all elements, so elements fromm the hash table are already initialised to zero.
   //however this function is used to reset to 0 Elements that are reused,
@@ -348,19 +360,24 @@ Orientation opposite_orientation(Orientation o){
   
 }
 
-Orientation db_node_get_orientation(BinaryKmer k, dBNode * e, short kmer_size){
+Orientation db_node_get_orientation(BinaryKmer* k, dBNode * e, short kmer_size){
 
-  if (e->kmer == k){
-    return forward;
-  }
+  if (binary_kmer_comparison_operator(e->kmer,*k)==true)
+    {
+      return forward;
+    }
   
-  if (e->kmer == binary_kmer_reverse_complement(k,kmer_size)){
-    return reverse;
-  }
+  BinaryKmer tmp_kmer;
 
-  printf("Exiting from  db_node_get_orientation because the binary kmer given is neither fw nor rev complement of the kmer associated with this element");
-  char tmp_seq[kmer_size];
-  printf("Kmer is %s\n, and element kmer is %s\n", binary_kmer_to_seq(k, kmer_size, tmp_seq), binary_kmer_to_seq(e->kmer, kmer_size, tmp_seq) );
+  if (binary_kmer_comparison_operator(e->kmer, *(binary_kmer_reverse_complement(k,kmer_size, &tmp_kmer)))==true)
+    {
+      return reverse;
+    }
+  
+  printf("programming error - you have called  db_node_get_orientation with a kmer that is neither equal to the kmer in this node, nor its rev comp\n");
+  char tmpseq1[kmer_size];
+  char tmpseq2[kmer_size];
+  printf("Arg 1 Kmer is %s and Arg 2 node kmer is %s\n", binary_kmer_to_seq(k, kmer_size, tmpseq1), binary_kmer_to_seq(&(e->kmer), kmer_size, tmpseq2));
   exit(1);
   
 }
@@ -391,34 +408,42 @@ void db_node_add_labeled_edge(dBNode * e, Orientation o, Nucleotide base, EdgeAr
 
 boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size, EdgeArrayType edge_type, int edge_index){
 
-  BinaryKmer src_k, tgt_k; 
+  BinaryKmer src_k, tgt_k, tmp_kmer; 
+  char seq1[kmer_size];
+  char seq2[kmer_size];
 
-  src_k = src_e->kmer;
-  tgt_k = tgt_e->kmer;
+  binary_kmer_assignment_operator(src_k, src_e->kmer);
+  binary_kmer_assignment_operator(tgt_k, tgt_e->kmer);
+
   char tmp_seq[kmer_size];
  
   if (src_o == reverse){
-    src_k = binary_kmer_reverse_complement(src_k,kmer_size);
+    binary_kmer_assignment_operator(src_k, *(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer)));
   }
     
   if (tgt_o == reverse){
-    tgt_k = binary_kmer_reverse_complement(tgt_k,kmer_size);
+    binary_kmer_assignment_operator(tgt_k, *(binary_kmer_reverse_complement(&tgt_k,kmer_size, &tmp_kmer)));
   }
     
   
   if (DEBUG){
-    printf("add edge %s -%c-> %s to edge type %d, and edge index %d\n",binary_kmer_to_seq(src_k,kmer_size, tmp_seq),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(tgt_k)),
-	   binary_kmer_to_seq(tgt_k,kmer_size, tmp_seq), edge_type, edge_index);
+    printf("add edge %s -%c-> %s to edge type %d, and edge index %d\n",
+	   binary_kmer_to_seq(&src_k,kmer_size, seq1),
+	   binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(&tgt_k)),
+	   binary_kmer_to_seq(&tgt_k,kmer_size, seq2), edge_type, edge_index);
   }
 
-  db_node_add_labeled_edge(src_e,src_o,binary_kmer_get_last_nucleotide(tgt_k), edge_type, edge_index);
+  db_node_add_labeled_edge(src_e,src_o,binary_kmer_get_last_nucleotide(&tgt_k), edge_type, edge_index);
 
   if (DEBUG){
 
-    printf("add edge %s -%c-> %s to edge type %d, and edge index %d\n",binary_kmer_to_seq(tgt_k,kmer_size,tmp_seq),binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size))),binary_kmer_to_seq(src_k,kmer_size, tmp_seq),  edge_type, edge_index);
+    printf("add edge %s -%c-> %s to edge type %d, and edge index %d\n",
+	   binary_kmer_to_seq(&tgt_k,kmer_size,seq1),
+	   binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer))),
+	   binary_kmer_to_seq(&src_k,kmer_size, seq2),  edge_type, edge_index);
   }
 
-  db_node_add_labeled_edge(tgt_e,opposite_orientation(tgt_o),binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(src_k,kmer_size)), edge_type, edge_index );
+  db_node_add_labeled_edge(tgt_e,opposite_orientation(tgt_o),binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer)), edge_type, edge_index );
 
   return true;
 }
@@ -580,10 +605,7 @@ boolean db_node_check_status_not_pruned(dBNode * node){
 
 boolean db_node_check_status_not_pruned_or_visited(dBNode * node)
 {
-  if ( db_node_check_status(node,visited) || db_node_check_status(node,visited_and_exists_in_reference) || 
-	 db_node_check_status(node, pruned_from_NA12878) ||  db_node_check_status(node, pruned_from_NA12891) || db_node_check_status(node, pruned_from_NA12892) ||
-	 db_node_check_status(node, pruned_from_NA12878_and_NA12891) || db_node_check_status(node, pruned_from_NA12878_and_NA12892) || db_node_check_status(node, pruned_from_NA12891_and_NA12892)
-	 ) 
+  if ( db_node_check_status(node,visited) || db_node_check_status(node,visited_and_exists_in_reference) ||  db_node_check_status(node, pruned)	 ) 
     {
       return false;
     }
@@ -601,122 +623,6 @@ void db_node_set_status_to_none(dBNode * node){
   node->status = none;
 }
 
-//assumes index 0 = NA12878, index 1 = NA12891, index 2 = NA12892
-//semantics - call this when pruning node from person defined by index
-void db_node_trio_aware_set_pruned_status(dBNode * node, int index)
-{
-  if (db_node_check_status(node,none) || db_node_check_status(node,visited))
-    {
-
-  	  if (index==0)//NA12878
-	    {
-	      db_node_set_status(node, pruned_from_NA12878);
-	    }
-	  else if (index==1) //NA12891
-	    {
-	      db_node_set_status(node, pruned_from_NA12891);
-	    }
-	  else if (index==2)//NA12892
-	    {
-	      db_node_set_status(node, pruned_from_NA12892);
-	    }
-    }
-
-  if (db_node_check_status(node, pruned_from_NA12878))
-    {
-      if (index==0)//NA12878
-	{
-	  //printf("WARNING. Pruning a node that is already pruned");
-	}
-      else if (index==1) //NA12891
-	{
-	  db_node_set_status(node, pruned_from_NA12878_and_NA12891);
-	}
-      else if (index==2)//NA12892
-	{
-	  db_node_set_status(node, pruned_from_NA12878_and_NA12892);
-	}
-    }
-  
-  else if (db_node_check_status(node, pruned_from_NA12891))
-    {
-      if (index==0)//NA12878
-	{
-	  db_node_set_status(node, pruned_from_NA12878_and_NA12891);
-	  
-	}
-      else if (index==1) //NA12891
-	{
-	  //printf("WARNING. Pruning a node that is already pruned");
-	}
-      else if (index==2)//NA12892
-	{
-	  db_node_set_status(node, pruned_from_NA12891_and_NA12892);
-	}
-    }
-  else if (db_node_check_status(node, pruned_from_NA12892))
-    {
-      if (index==0)//NA12878
-	{
-	  db_node_set_status(node, pruned_from_NA12878_and_NA12892);
-	  
-	}
-      else if (index==1) //NA12891
-	{
-	  db_node_set_status(node, pruned_from_NA12891_and_NA12892);
-	}
-      else if (index==2)//NA12892
-	{
-	  //printf("WARNING. Pruning a node that is already pruned");
-	}
-    }
-  else if (db_node_check_status(node, pruned_from_NA12878_and_NA12891))
-    {
-      if (index==0)//NA12878
-	{
-	  //printf("WARNING. Pruning a node that is already pruned");
-	}
-      else if (index==1) //NA12891
-	{
-	  //printf("WARNING. Pruning a node that is already pruned");
-	}
-      else if (index==2)//NA12892
-	{
-	  db_node_set_status(node, pruned_from_NA12878_and_NA12891_and_NA12892);
-	}
-    }
-  
-  else if (db_node_check_status(node, pruned_from_NA12878_and_NA12892))
-    {
-      if (index==0)//NA12878
-	{
-	  //printf("WARNING. Pruning a node that is already pruned");
-	}
-      else if (index==1) //NA12891
-	{
-	  db_node_set_status(node, pruned_from_NA12878_and_NA12891_and_NA12892);
-	}
-      else if (index==2)//NA12892
-	{
-	  //printf("WARNING. Pruning a node that is already pruned");
-	}
-    }
-  else if (db_node_check_status(node, pruned_from_NA12891_and_NA12892))
-    {
-      if (index==0)//NA12878
-	{
-	  db_node_set_status(node, pruned_from_NA12878_and_NA12891_and_NA12892);
-	}
-      else if (index==1) //NA12891
-	{
-	  //printf("WARNING. Pruning a node that is already pruned");
-	}
-      else if (index==2)//NA12892
-	{
-	  //printf("WARNING. Pruning a node that is already pruned");
-	}
-    }
-}
 
 
 
@@ -746,7 +652,8 @@ boolean db_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, E
 void db_node_print_binary(FILE * fp, dBNode * node)
 {
 
-  BinaryKmer kmer = element_get_kmer(node);
+  BinaryKmer kmer;
+  binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
   short covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
   Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; 
 
@@ -756,8 +663,8 @@ void db_node_print_binary(FILE * fp, dBNode * node)
       covg[i] = db_node_get_coverage_as_short(node, individual_edge_array, i);
       individual_edges[i]= get_edge_copy(*node, individual_edge_array, i);
     }      
-
-  fwrite(&kmer,  sizeof(BinaryKmer), 1, fp);
+				  
+  fwrite(&kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
   fwrite(covg, sizeof(short), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp); 
   fwrite(individual_edges, sizeof(Edges), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);
 
@@ -767,13 +674,14 @@ void db_node_print_binary(FILE * fp, dBNode * node)
 
 boolean db_node_read_sv_trio_binary(FILE * fp, short kmer_size, dBNode * node){
 
-  BinaryKmer kmer = element_get_kmer(node);
+  BinaryKmer kmer;
+  binary_kmer_assignment_operator(kmer, *(element_get_kmer(node)) );
   short covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
   Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; 
 
   int read;
-  
-  read = fread(&kmer,sizeof(BinaryKmer),1,fp);
+
+  read = fread(&kmer,sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER,1,fp);  
 
   if (read>0){
 
@@ -797,7 +705,7 @@ boolean db_node_read_sv_trio_binary(FILE * fp, short kmer_size, dBNode * node){
     return false;
   }
 
-  element_initialise(node,kmer,kmer_size);
+  element_initialise(node,&kmer,kmer_size);
 
   int i;
   for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
@@ -825,7 +733,7 @@ boolean db_node_read_graph_binary(FILE * fp, short kmer_size, dBNode * node, Edg
   short coverage;
   int read;
   
-  read = fread(&kmer,sizeof(BinaryKmer),1,fp);
+  read = fread(&kmer,sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER,1,fp);
 
   if (read>0){
     read = fread(&coverage,sizeof(short),1,fp);    
@@ -843,7 +751,7 @@ boolean db_node_read_graph_binary(FILE * fp, short kmer_size, dBNode * node, Edg
     return false;
   }
 
-  element_initialise(node,kmer,kmer_size);
+  element_initialise(node,&kmer,kmer_size);
   node->individual_edges[index]    = edges;
   node->coverage[index] = coverage;
   return true;
