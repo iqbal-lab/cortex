@@ -211,7 +211,40 @@ void test_load_graph_binary()
 
   // note this contains 5 unique kmers.read 1 seems to contain 4 unique kmers but only contains 3, as AACGTT is just one kmer looped back on itself
 
-  seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_to_load_and_dump_as_graph_bin_kmer5.bin", db_graph, individual_edge_array, 0);
+
+  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==1)
+    {
+      //seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_to_load_and_dump_as_graph_bin_kmer5.bin", db_graph, individual_edge_array, 0);
+      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_1.ctx", db_graph, individual_edge_array, 0);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==2)
+    {
+      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_2.ctx", db_graph, individual_edge_array, 0);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==3)
+    {
+      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_3.ctx", db_graph, individual_edge_array, 0);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==4)
+    {
+      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_4.ctx", db_graph, individual_edge_array, 0);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==5)
+    {
+      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_5.ctx", db_graph, individual_edge_array, 0);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==6)
+    {
+      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_6.ctx", db_graph, individual_edge_array, 0);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==7)
+    {
+      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_7.ctx", db_graph, individual_edge_array, 0);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==8)
+    {
+      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_8.ctx", db_graph, individual_edge_array, 0);
+    }
 
   CU_ASSERT(seq_len==25);//kmers loaded * length of kmer
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph), 5);
@@ -259,14 +292,6 @@ void test_load_graph_binary()
   CU_ASSERT(test_element7 == test_element8);
   CU_ASSERT(db_node_get_coverage(test_element7,individual_edge_array,0)==1);
 
-  if (test_element7==NULL)
-    {
-      printf("ZAMZAM it is NULL");
-    }
-  else
-    {
-      printf("covg of elemtn 7 is %d\n", db_node_get_coverage(test_element7,individual_edge_array,0));
-    }
 
   CU_ASSERT(test_element9 != NULL);
   CU_ASSERT(test_element10 != NULL);
@@ -318,9 +343,38 @@ void test_load_individual_binaries_into_sv_trio()
 
 
 
-  load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio", db_graph);
-
-
+  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==1)
+    {
+      load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_1", db_graph);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==2)
+    {
+     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_2", db_graph);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==3)
+    {
+     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_3", db_graph);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==4)
+    {
+     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_4", db_graph);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==5)
+    {
+     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_5", db_graph);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==6)
+    {
+     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_6", db_graph);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==7)
+    {
+     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_7", db_graph);
+    }
+  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==8)
+    {
+     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_8", db_graph);
+    }
 
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph), 41);
 

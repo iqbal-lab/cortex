@@ -1,9 +1,1 @@
-
-
-     CUnit - A Unit testing framework for C - Version 2.1-0
-     http://cunit.sourceforge.net/
-
-
-Suite: Suite_1
-  Test: test hash_table_find_or_insert using Element from graph/ ... passed
-  Test: test hash_table_apply_or_insert using Element from graph/. This test takes a little while - do not panic if it takes a minute or two ... 
+zam
