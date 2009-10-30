@@ -1364,6 +1364,9 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
   CU_ASSERT_STRING_EQUAL("TAGCCACA", return_trusted_branch_array[0]);
   CU_ASSERT_STRING_EQUAL("AAGCCACA", return_branch2_array[0]);
   CU_ASSERT_STRING_EQUAL("CTGTACTTGTA", return_flank3p_array[0]);
+
+  printf("We expect 1 back, and get %d\n We expect 5p flank AATAGACGCCCACACCTGATAG and get %s\n", ret, return_flank5p_array[0]);
+
   CU_ASSERT(return_variant_start_coords_array[0]==23);
 
 
