@@ -50,6 +50,10 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pSuite, "test getting sliding windows where require that entire sequence including edges lie in the graph",  test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph )){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
 
   if (NULL == CU_add_test(pSuite, "test reading a fastq and dumping only reads that lie within the graph",  test_dumping_of_clean_fasta)){
     CU_cleanup_registry();

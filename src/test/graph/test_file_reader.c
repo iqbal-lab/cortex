@@ -719,6 +719,207 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
 
 
 
+void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph()
+{
+
+  int kmer_size = 17;
+  int number_of_bits = 10; 
+  int bucket_size = 30;
+  long long bad_reads = 0; 
+  int seq_length;
+  dBGraph * db_graph;
+
+  db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, 200, db_graph);
+
+
+  //OK - we have graph. Now test getting sliding windows from 
+  // 1. a sequence that is all in the graph
+  // 2. a sequence that has one bad base in the middle
+  // 3. total garbage sequence
+
+  FILE* fp = fopen("../data/test/graph/person3_with_errors_extended_file.fastq", "r");
+  if (fp==NULL)
+    {
+      printf("Cannot open ../data/test/graph/person3_with_errors_extended_file.fastq in test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph");
+      exit(1);
+    }
+  
+
+  //allocations 
+  int max_read_length=100;
+  Sequence * seq = malloc(sizeof(Sequence));
+  if (seq == NULL){
+    fputs("Out of memory trying to allocate Sequence\n",stderr);
+    exit(1);
+  }
+  alloc_sequence(seq,max_read_length,LINE_MAX);
+
+
+  //max_read_length/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
+  int max_windows = max_read_length/(kmer_size+1);
+ 
+  //number of possible kmers in a 'perfect' read
+  int max_kmers   = max_read_length-kmer_size+1;
+
+  
+
+  //----------------------------------
+  //preallocate the space of memory used to keep the sliding_windows. NB: this space of memory is reused for every call -- with the view 
+  //to avoid memory fragmentation
+  //NB: this space needs to preallocate memory for orthogonal situations: 
+  //    * a good read -> few windows, many kmers per window
+  //    * a bad read  -> many windows, few kmers per window    
+  //----------------------------------
+  KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
+  if (windows == NULL){
+    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
+    exit(1);
+  }  
+  //allocate memory for the sliding windows 
+  binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
+
+
+
+
+  // GET READ 1 - this si full of sequencing errors, and it should be impossible to find any kmers that are in the graph
+  int len = read_sequence_from_fastq(fp, seq, max_read_length);
+  int quality_cutoff=0;
+  get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
+										windows, max_windows, max_kmers, db_graph);  
+  CU_ASSERT(windows->nwindows==0);
+
+
+
+  // GET READ 2 - this one lies entirely in the graph
+  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
+										windows, max_windows, max_kmers, db_graph);  
+  CU_ASSERT(windows->nwindows==1);
+  CU_ASSERT((windows->window[0]).nkmers=28);
+
+  BinaryKmer test_kmer;
+  seq_to_binary_kmer("ACCCTAACCCTAACCCT", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[0],test_kmer)==true ); 
+  seq_to_binary_kmer("CCCTAACCCTAACCCTA", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[1],test_kmer)==true ); 
+  seq_to_binary_kmer("CCTAACCCTAACCCTAA", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[2],test_kmer)==true ); 
+
+  seq_to_binary_kmer("CTAACCCTAACCCTAAC", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[3],test_kmer)==true ); 
+  seq_to_binary_kmer("TAACCCTAACCCTAACC", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[4],test_kmer)==true ); 
+  seq_to_binary_kmer("AACCCTAACCCTAACCC", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[5],test_kmer)==true ); 
+  seq_to_binary_kmer("ACCCTAACCCTAACCCC", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[6],test_kmer)==true ); 
+
+  seq_to_binary_kmer("CCCTAACCCTAACCCCT", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[7],test_kmer)==true ); 
+  seq_to_binary_kmer("CCTAACCCTAACCCCTA", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[8],test_kmer)==true ); 
+  seq_to_binary_kmer("CTAACCCTAACCCCTAA", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[9],test_kmer)==true ); 
+
+
+  seq_to_binary_kmer("TAACCCTAACCCCTAAC", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[10],test_kmer)==true ); 
+  seq_to_binary_kmer("AACCCTAACCCCTAACC", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[11],test_kmer)==true ); 
+  seq_to_binary_kmer("ACCCTAACCCCTAACCC", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[12],test_kmer)==true ); 
+
+  seq_to_binary_kmer("CCCTAACCCCTAACCCT", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[13],test_kmer)==true ); 
+  seq_to_binary_kmer("CCTAACCCCTAACCCTA", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[14],test_kmer)==true ); 
+  seq_to_binary_kmer("CTAACCCCTAACCCTAA", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[15],test_kmer)==true ); 
+
+  // ..not going all the way to the end.
+  // move on to next read
+
+
+
+  // GET READ 3 - lots of errors again
+  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
+										windows, max_windows, max_kmers, db_graph);  
+  CU_ASSERT(windows->nwindows==0);
+
+
+  // GET fourth read - this one has a single base in the middle which means kmers containing it won't be in thr graph. Otherwise the same as read3 in person3.fasta
+
+  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
+										   windows, max_windows, max_kmers, db_graph);  
+  CU_ASSERT(windows->nwindows==0);
+  
+
+  // GET FIFTH READ - lies entirely in graph, so should just get one window
+  
+  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
+										windows, max_windows, max_kmers, db_graph);  
+  CU_ASSERT(windows->nwindows==1);
+  CU_ASSERT((windows->window[0]).nkmers==28);
+
+  seq_to_binary_kmer("GGGGCGGGGCGGGGCGG", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[0],test_kmer)==true ); 
+  seq_to_binary_kmer("GGGCGGGGCGGGGCGGG", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[1],test_kmer)==true ); 
+  seq_to_binary_kmer("GGCGGGGCGGGGCGGGG", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[2],test_kmer)==true ); 
+  seq_to_binary_kmer("GCGGGGCGGGGCGGGGC", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[3],test_kmer)==true ); 
+  seq_to_binary_kmer("CGGGGCGGGGCGGGGCG", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[4],test_kmer)==true ); 
+  seq_to_binary_kmer("GGGGCGGGGCGGGGCGG", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[5],test_kmer)==true ); 
+  
+  //... etc ...
+
+  seq_to_binary_kmer("GGCCCCCTCACACACAT", kmer_size, &test_kmer);
+  CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[27],test_kmer)==true ); 
+  
+
+  // READ 6 - entirely in graph
+  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
+										windows, max_windows, max_kmers, db_graph);  
+  CU_ASSERT(windows->nwindows==1);
+  CU_ASSERT((windows->window[0]).nkmers==15);
+  
+  seq_to_binary_kmer("TTTTTTTTTTTTTTTTT", kmer_size, &test_kmer);
+  int i;
+  for (i=0; i<15; i++)
+    {
+      CU_ASSERT(binary_kmer_comparison_operator( (windows->window[0]).kmer[i],test_kmer)==true ); 
+    }
+
+  // READ 7 - first character wrong. Vital test this one. Slightly different code path if the first kmer of all is bad.
+  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
+										windows, max_windows, max_kmers, db_graph);  
+  CU_ASSERT(windows->nwindows==0);
+
+
+
+  // READ 7 - errors spaced apart
+
+  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
+										windows, max_windows, max_kmers, db_graph);  
+  CU_ASSERT(windows->nwindows==0);
+
+
+
+}
+
+
+
+
 
 //Assumption is that you use a bunch of fastq to build a graph, then clean it.
 //You then want access to a set of fasta files that correspond to the good reads only.

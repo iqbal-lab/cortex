@@ -484,6 +484,167 @@ int get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_grap
 }
 
 
+// This is just like get_sliding_windows_from_sequence is seq.c, but this one abandons ship and returns NO windows if any of the kmers is not in the graph
+// OR if any of the edges is not in the graph. ie entire read must lie in graph
+
+//The first argument - seq - is a C string in A,C,G,T format
+//The second argument - quality - is a string of qualities for the sequence, one byte per base.
+//quality cutoff argument defines the threshold for quality
+//return total number of kmers read
+//The third argument - length - is the length in bases of the sequence.
+//return total number of kmers read
+int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(char * seq,  char * qualities, int length, char quality_cut_off, 
+										     KmerSlidingWindowSet * windows, int max_windows, int max_kmers, dBGraph* db_graph)  
+{
+  short kmer_size = db_graph->kmer_size;
+
+  char first_kmer[kmer_size+1];
+  first_kmer[kmer_size]='\0';
+
+  BinaryKmer tmp_bin_kmer;
+  BinaryKmer tmp_bin_kmer2;
+  BinaryKmer tmp_bin_kmer3;
+      
+
+
+  int i=0; //current index
+  int count_kmers = 0;
+
+  if (seq == NULL){
+    fputs("in get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph, seq is NULL\n",stderr);    
+    exit(1);
+  }
+
+  if (length < kmer_size || max_windows == 0 || max_kmers == 0){
+    return 0;
+  }
+
+  int index_windows = 0;
+  
+  //loop over the bases in the sequence
+  //index i is the current position in input sequence -- it nevers decreases. 
+  
+  do{ //first do
+
+    //build first kmer, ie a stretch of kmer_size good qualities bases
+    int j = 0; //count how many good bases
+
+    while ((i<length) && (j<kmer_size)){
+
+      //collects the bases in the first kmer
+      first_kmer[j] = seq[i];
+
+      if ((char_to_binary_nucleotide(seq[i]) == Undefined) || 
+	  (quality_cut_off!=0 && qualities[i]<= quality_cut_off)){
+	j=0; //restart the first kmer 
+      }
+      else{
+	j++;
+      }
+
+      i++; 
+    }    
+
+    if (j==kmer_size){ //ie we did not parse the entire sequence looking for a single good kmer, the first kmer
+      
+      if (  hash_table_find(element_get_key(seq_to_binary_kmer(first_kmer,kmer_size, &tmp_bin_kmer), kmer_size, &tmp_bin_kmer2), db_graph) == NULL )
+	{
+	  // give up
+	  i=length;
+	  index_windows=0;
+	  break;
+	  
+	}
+
+      count_kmers++;
+
+      //new sliding window
+      if (index_windows>=max_windows){
+	  fputs("number of windows is bigger than max_windows",stderr);
+	  exit(1);
+	}
+
+      KmerSlidingWindow * current_window =&(windows->window[index_windows]);
+
+      int index_kmers = 0;
+      //do first kmer
+      seq_to_binary_kmer(first_kmer,kmer_size, &tmp_bin_kmer);
+      binary_kmer_assignment_operator(current_window->kmer[index_kmers] , tmp_bin_kmer);
+
+      //do the rest --
+      index_kmers++;
+    
+      while(i<length){
+	
+	if (index_kmers>=max_kmers){
+	  fputs("number of kmers is bigger than max_kmers\n",stderr);
+	  exit(1);
+	}
+
+	Nucleotide current_base = char_to_binary_nucleotide(seq[i]);
+	BinaryKmer tmp_curr_kmer;
+
+	//set to previous kmer, then shift an add new base
+	binary_kmer_assignment_operator(tmp_curr_kmer, current_window->kmer[index_kmers-1]);
+	binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&tmp_curr_kmer, current_base, kmer_size);
+
+	dBNode* test_prev_node = hash_table_find(element_get_key(&(current_window->kmer[index_kmers-1]) , kmer_size, &tmp_bin_kmer2), db_graph);
+	dBNode* test_curr_node = hash_table_find(element_get_key(&tmp_curr_kmer,                          kmer_size, &tmp_bin_kmer3), db_graph);
+
+
+	if (  (current_base == Undefined) 
+	      ||
+	      (quality_cut_off!=0 && qualities[i]<= quality_cut_off)
+	      )
+	  {
+	    //give up
+	    i=length;
+	    index_windows=0;
+	    break;
+	  }
+	else if  (test_curr_node == NULL)
+	  {
+	    //give up
+	    i=length;
+	    index_windows=0;
+	    break;
+	  } 
+	else //check edge exists between prev kmer and this one   
+	  {
+	    Orientation prev_orientation = db_node_get_orientation(&(current_window->kmer[index_kmers-1]),test_prev_node, kmer_size);
+	    
+	    if (! (db_node_edge_exist(test_prev_node, current_base, prev_orientation) ) )
+	      {
+		//give up
+		i=length;
+		index_windows=0;
+		break;
+	      }
+
+	  }
+	binary_kmer_assignment_operator(current_window->kmer[index_kmers], tmp_curr_kmer);
+	index_kmers++;
+	count_kmers++;
+	i++;
+      }
+
+      current_window->nkmers = index_kmers; 
+      index_windows++;
+            
+    }
+  } while (i<length);
+ 
+
+  windows->nwindows = index_windows;
+
+  return count_kmers;
+
+
+
+}
+
+
+
 
 void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
 						  long long * bad_reads, int max_read_length, dBGraph * db_graph,
@@ -583,7 +744,7 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
 		//print out this window as a "read". If this read has many windows, we will print each as a separate read (provided they lie in the graph)
 		if (is_for_testing == false)
 		  {
-		    fprintf(fout, "> read\n");
+		    fprintf(fout, "> %s part %d \n", seq->name, i );
 		    fprintf(fout, "%s", binary_kmer_to_seq(&(current_window->kmer[0]), db_graph->kmer_size, tmpseq) );
 		    for(j=1;j<current_window->nkmers;j++){ 
 		      fprintf(fout, "%c", binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(&(current_window->kmer[j]))) );
@@ -622,6 +783,7 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
   binary_kmer_free_kmers_set(&windows);
 
 }
+
 
 void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(char* f_name, dBGraph* db_graph)
 {

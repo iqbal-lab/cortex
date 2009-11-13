@@ -33,6 +33,14 @@ void read_all_ref_chromosomes_and_mark_graph(dBGraph* db_graph);
 int get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(char * seq,  char * qualities, int length, char quality_cut_off,
                                                                                   KmerSlidingWindowSet * windows, int max_windows, int max_kmers, dBGraph* db_graph);
 
+
+
+int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(char * seq,  char * qualities, int length, char quality_cut_off,
+                                                                                     KmerSlidingWindowSet * windows, int max_windows, int max_kmers, dBGraph* db_graph);
+
+
+
+
 // for dumping clean fasta files from fastq - ie only holding reads that lie entirely in a (presumably cleaned) graph
 void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
 						  long long * bad_reads, int max_read_length, dBGraph * db_graph,

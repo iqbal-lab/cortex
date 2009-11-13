@@ -1,4 +1,5 @@
 void test_dump_load_binary();
 void test_coverage_is_correctly_counted_on_loading_from_file();
 void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph();
+void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph();
 void test_dumping_of_clean_fasta();
