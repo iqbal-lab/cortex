@@ -357,6 +357,109 @@ int main(int argc, char **argv){
       fclose(list_fptr);
       break;
     }
+  case 19:
+    {
+      // We suspect that a couple of bubbles found by detect vars when Mario mixed ref and person in one graph are there
+      // wrongly, because the edge between two specific nodes is only there in the reference, but the algorithm
+      // acts as if it is there in the individual. Test these specific nodes and edges
+
+      BinaryKmer tmp_kmer1;
+      BinaryKmer tmp_kmer2;
+
+      dBNode* node_of_fst_kmer_branch2_bubble_1434000 = hash_table_find(element_get_key(seq_to_binary_kmer("GTGTGGTGTGAATAGGCTCCTGCATGTGGCA", 
+													   db_graph->kmer_size,&tmp_kmer1), db_graph->kmer_size, &tmp_kmer2),db_graph);
+      Orientation fst_orientation = forward;
+      //      dBNode* node_of_lst_kmer_branch2_bubble_1434000 = hash_table_find(element_get_key(seq_to_binary_kmer("TGTGGTGTGAATAGGCTCCTGCATGTGGCAT", 
+      //		     										   db_graph->kmer_size,&tmp_kmer1), db_graph->kmer_size, &tmp_kmer2),db_graph);
+      //Orientation lst_orientation = reverse;
+      Nucleotide expected_nuc_joining_nodes = Thymine;
+
+      if (node_of_fst_kmer_branch2_bubble_1434000==NULL)
+	{
+	  printf("Problem - get NULL when try to find nodes for bubble_1434000\n");
+	}
+      else
+	{
+	  if (db_node_edge_exist(node_of_fst_kmer_branch2_bubble_1434000, expected_nuc_joining_nodes , fst_orientation)==true)
+	    {
+	      printf("Damn, that edge does exist in NA12878 for bubble_1434000\n");
+	    }
+	  else
+	    {
+	      printf("Good. That edge for bubble_1434000 is NOT there is NA12878");
+	    }
+	}
+
+      
+      dBNode* node_of_fst_kmer_branch2_bubble_2293897 = hash_table_find(element_get_key(seq_to_binary_kmer("TCCGGTCTCCACGCCCCGCGGAGCAGGCCCA",
+													   db_graph->kmer_size,&tmp_kmer1), db_graph->kmer_size, &tmp_kmer2),db_graph);
+      fst_orientation = forward;
+      expected_nuc_joining_nodes = Thymine;
+
+      if  (node_of_fst_kmer_branch2_bubble_2293897==NULL)
+        {
+          printf("Problem - get NULL when try to find nodes for bubble_2293897\n");
+        }
+      else
+        {
+          if (db_node_edge_exist(node_of_fst_kmer_branch2_bubble_2293897, expected_nuc_joining_nodes , fst_orientation)==true)
+            {
+              printf("Damn, that edge does exist in NA12878 for bubble_2293897\n");
+            }
+          else
+            {
+              printf("Good. That edge for bubble_2293897 is NOT there is NA12878");
+            }
+        }
+
+
+      dBNode* node_of_fst_kmer_branch2_bubble_1427650 = hash_table_find(element_get_key(seq_to_binary_kmer("AGTTAAAATGACAGACATGAAGCAGAATCAT",
+													   db_graph->kmer_size,&tmp_kmer1), db_graph->kmer_size, &tmp_kmer2),db_graph);
+      fst_orientation = forward;
+      expected_nuc_joining_nodes = Thymine;
+
+      if (node_of_fst_kmer_branch2_bubble_1427650==NULL) 
+        {
+          printf("Problem - get NULL when try to find nodes for bubble_1427650\n");
+        }
+      else
+        {
+          if (db_node_edge_exist(node_of_fst_kmer_branch2_bubble_1427650, expected_nuc_joining_nodes , fst_orientation)==true)
+            {
+              printf("Damn, that edge does exist in NA12878 for bubble_1427650\n");
+            }
+          else
+            {
+              printf("Good. That edge for bubble_1427650 is NOT there is NA12878");
+            }
+        }
+
+      dBNode* node_of_lst_kmer_branch2_bubble_1427650 = hash_table_find(element_get_key(seq_to_binary_kmer("ATTTGGTATAACCTACTGATAGTCTTAGGTT",
+													   db_graph->kmer_size,&tmp_kmer1), db_graph->kmer_size, &tmp_kmer2),db_graph);
+      Orientation lst_orientation = forward;
+      expected_nuc_joining_nodes = Guanine;
+
+      if  (node_of_lst_kmer_branch2_bubble_1427650==NULL) 
+        {
+          printf("Problem - get NULL when try to find nodes for bubble_1427650\n");
+        }
+      else
+        {
+          if (db_node_edge_exist(node_of_lst_kmer_branch2_bubble_1427650, expected_nuc_joining_nodes , lst_orientation)==true)
+            {
+              printf("Damn, that edge does exist in NA12878 for bubble_1427650\n");
+            }
+          else
+            {
+              printf("Good. That edge for bubble_1427650 is NOT there is NA12878");
+            }
+        }
+
+      
+
+      
+      break;
+    }
 
 
   }
