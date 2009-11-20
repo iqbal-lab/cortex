@@ -361,6 +361,8 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
 int get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(char * seq,  char * qualities, int length, char quality_cut_off, 
 										  KmerSlidingWindowSet * windows, int max_windows, int max_kmers, dBGraph* db_graph)  
 {
+
+
   short kmer_size = db_graph->kmer_size;
 
   char first_kmer[kmer_size+1];
@@ -484,8 +486,8 @@ int get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_grap
 }
 
 
-// This is just like get_sliding_windows_from_sequence is seq.c, but this one abandons ship and returns NO windows if any of the kmers is not in the graph
-// OR if any of the edges is not in the graph. ie entire read must lie in graph
+// This is just like get_sliding_windows_from_sequence is seq.c, but this one breaks a window if any of the kmers is not in the graph
+// OR if any of the edges is not in the graph. ie entire window and edges must lie in graph
 
 //The first argument - seq - is a C string in A,C,G,T format
 //The second argument - quality - is a string of qualities for the sequence, one byte per base.
@@ -549,10 +551,14 @@ int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_g
       
       if (  hash_table_find(element_get_key(seq_to_binary_kmer(first_kmer,kmer_size, &tmp_bin_kmer), kmer_size, &tmp_bin_kmer2), db_graph) == NULL )
 	{
+	  j=0;
+	  i=i-(kmer_size-1); // first kmer may be bad because of the first base. Start again from just after that
+	  continue; //want to restart building a first kmer       
+
 	  // give up
-	  i=length;
-	  index_windows=0;
-	  break;
+	  //i=length;
+	  //index_windows=0;
+	  //break;
 	  
 	}
 
@@ -598,15 +604,16 @@ int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_g
 	      )
 	  {
 	    //give up
-	    i=length;
-	    index_windows=0;
+	    //i=length;
+	    //index_windows=0;
 	    break;
 	  }
 	else if  (test_curr_node == NULL)
 	  {
 	    //give up
-	    i=length;
-	    index_windows=0;
+	    //i=length;
+	    //index_windows=0;
+	    i++;
 	    break;
 	  } 
 	else //check edge exists between prev kmer and this one   
@@ -616,8 +623,10 @@ int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_g
 	    if (! (db_node_edge_exist(test_prev_node, current_base, prev_orientation) ) )
 	      {
 		//give up
-		i=length;
-		index_windows=0;
+		//i=length;
+		i=i-(kmer_size-1);
+		//i++;
+		//index_windows=0;
 		break;
 	      }
 
