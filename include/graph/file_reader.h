@@ -46,6 +46,12 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
 						  long long * bad_reads, int max_read_length, dBGraph * db_graph,
 						  boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index);
 
+void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_not_in_graph(FILE* fp, FILE* fout,
+                                                                                             int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry,
+                                                                                                                 boolean * full_entry),
+                                                                                             long long * bad_reads, int max_read_length, dBGraph * db_graph,
+                                                                                             boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index);
+
 
 //for binary
 long long  load_binary_from_filename_into_graph(char* filename, dBGraph* db_graph);

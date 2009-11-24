@@ -16,6 +16,8 @@ int main(int argc, char **argv){
   int bucket_size;
   int action; //0 dump graph - 1 call SNPs
   int ctg_length = 200000;
+  int unused_delta_var = 200;
+  int max_allowed_branch_len = 10000;
   
    //command line arguments 
   fp_fnames= fopen(argv[1], "r");    //open file of file names
@@ -192,7 +194,7 @@ int main(int argc, char **argv){
     //printf("dumping graph %s\n",argv[7]);
     //db_graph_dump_binary(argv[7],&db_node_check_status_not_pruned,db_graph);
 
-    db_graph_detect_vars(200,1000,db_graph);
+    db_graph_detect_vars(unused_delta_var,max_allowed_branch_len,db_graph);
     break;
   
 
@@ -460,7 +462,85 @@ int main(int argc, char **argv){
       
       break;
     }
+  
+  case 20:
+    {
 
+      //printf("print supernodes\n");
+      //db_graph_print_supernodes(stdout,ctg_length,db_graph);
+      
+      printf("Given this list of fastq files %s, read them each and dump a fasta file of sub_reads lying inside our (cleaned) graph. Break when a kmer is not in the graph or an edge is not\n", argv[9]);
+
+
+      int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
+	* full_entry = true;
+	
+	if (new_entry!= true){
+	  puts("new_entry has to be true for fastq\n");
+	  exit(1);
+	}
+	
+	return read_sequence_from_fastq(fp,seq,max_read_length);
+      }
+      
+
+      FILE* list_fptr = fopen(argv[9], "r");
+      if (list_fptr==NULL)
+	{
+	  printf("Cannot open %s\n", argv[9]);
+	  exit(1);
+	}
+      
+      char line[MAX_FILENAME_LENGTH+1];
+      
+
+      
+      while(fgets(line,MAX_FILENAME_LENGTH, list_fptr) !=NULL)
+	{
+	  
+	  //remove newline from end of line - replace with \0
+	  char* p;
+	  if ((p = strchr(line, '\n')) != NULL)
+	    {
+	      *p = '\0';
+	    }
+
+	  printf("Looking at %s\n", line);
+
+	  char outputfile[200];
+	  sprintf(outputfile,"%s.cleaned.fasta",line);
+	  FILE* out = fopen(outputfile, "w");
+	  if (out ==NULL)
+	    {
+	      printf("Cannot open %s, exiting", outputfile);
+	      exit(1);
+	    }
+	  printf("We will output to %s\n", outputfile);
+
+
+	  FILE* read_fptr = fopen(line, "r");
+	  if (read_fptr==NULL)
+	    {
+	      printf("Cannot open %s", line);
+	      exit(1);
+	    }
+
+	  long long b_reads=0; //will ignore base reads, but needed by API
+	  int max_read_length=10000;
+	  
+
+
+	  read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_not_in_graph(read_fptr, out, &file_reader, 
+												  &b_reads, max_read_length, db_graph,
+												  false, NULL, NULL);//last 3 arguments show is not for testing
+	  fclose(out);
+	  fclose(read_fptr);
+	  
+	}
+      fclose(list_fptr);
+
+      break;
+    }
 
   }
 

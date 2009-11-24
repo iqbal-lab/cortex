@@ -777,8 +777,8 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
 	  //  {
 	  //  }
 	  
-	}
-    }
+	  }
+      }
     
     if (full_entry == false){
       shift_last_kmer_to_start_of_sequence(seq,entry_length,db_graph->kmer_size);
@@ -792,6 +792,134 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
   binary_kmer_free_kmers_set(&windows);
 
 }
+
+
+void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_not_in_graph(FILE* fp, FILE* fout,
+											     int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, 
+														 boolean * full_entry), 
+											     long long * bad_reads, int max_read_length, dBGraph * db_graph,
+											     boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index)
+{
+    //----------------------------------
+  // preallocate the memory used to read the sequences
+  //----------------------------------
+  Sequence * seq = malloc(sizeof(Sequence));
+  if (seq == NULL){
+    fputs("Out of memory trying to allocate Sequence\n",stderr);
+    exit(1);
+  }
+  alloc_sequence(seq,max_read_length,LINE_MAX);
+  
+  
+  int seq_length=0;
+  short kmer_size = db_graph->kmer_size;
+
+  //max_read_length/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
+  int max_windows = max_read_length/(kmer_size+1);
+ 
+  //number of possible kmers in a 'perfect' read
+  int max_kmers   = max_read_length-kmer_size+1;
+
+  
+
+  //----------------------------------
+  //preallocate the space of memory used to keep the sliding_windows. NB: this space of memory is reused for every call -- with the view 
+  //to avoid memory fragmentation
+  //NB: this space needs to preallocate memory for orthogonal situations: 
+  //    * a good read -> few windows, many kmers per window
+  //    * a bad read  -> many windows, few kmers per window    
+  //----------------------------------
+  KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
+  if (windows == NULL){
+    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
+    exit(1);
+  }  
+  //allocate memory for the sliding windows 
+  binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
+
+  char tmpseq[db_graph->kmer_size+1];
+  tmpseq[db_graph->kmer_size]='\0';
+  tmpseq[0]='\0';
+  
+
+  BinaryKmer tmp_kmer;
+  boolean full_entry = true;
+  boolean prev_full_entry = true;
+
+  int entry_length;
+
+  while ((entry_length = file_reader(fp,seq,max_read_length, full_entry, &full_entry))){
+
+    if (DEBUG){
+      printf ("\nsequence %s\n",seq->seq);
+    }
+    
+    int i,j;
+    seq_length += (long long) (entry_length - (prev_full_entry==false ? db_graph->kmer_size : 0));
+
+    
+    //use quality cutoff of 0, arg 4 below
+    // int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,entry_length,0,db_graph->kmer_size,windows,max_windows, max_kmers);
+    //    int nkmers = get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq,seq->qual,entry_length,0,
+    //											       windows,max_windows, max_kmers, db_graph);
+    
+    int nkmers = get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, entry_length, 0,
+												  windows, max_windows, max_kmers, db_graph);
+    
+
+    if (nkmers == 0) 
+      {
+	(*bad_reads)++;
+      }
+    else 
+      {
+	Element * current_node  = NULL;
+	
+	for(i=0;i<windows->nwindows;i++)
+	  { //for each window
+	    KmerSlidingWindow * current_window = &(windows->window[i]);
+	    
+	    //print out this window as a "read". If this read has many windows, we will print each as a separate read (provided they lie in the graph)
+	    if (is_for_testing == false)
+	      {
+		fprintf(fout, "> %s part %d \n", seq->name, i );
+		fprintf(fout, "%s", binary_kmer_to_seq(&(current_window->kmer[0]), db_graph->kmer_size, tmpseq) );
+		for(j=1;j<current_window->nkmers;j++){ 
+		  fprintf(fout, "%c", binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(&(current_window->kmer[j]))) );
+		}
+		fprintf(fout, "\n");
+	      }
+	    else
+	      {
+		for_test_array_of_clean_reads[*for_test_index][0]='\0';
+		strcat(for_test_array_of_clean_reads[*for_test_index], binary_kmer_to_seq(&(current_window->kmer[0]), db_graph->kmer_size, tmpseq) );
+		for(j=1;j<current_window->nkmers;j++){ 
+		  char tmp_ch[2];
+		  tmp_ch[0]=binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(&(current_window->kmer[j])));
+		  tmp_ch[1]='\0';
+		  strcat(for_test_array_of_clean_reads[*for_test_index], tmp_ch );
+		}
+		*for_test_index=*for_test_index+1;
+	      }
+	    
+		    
+	  }
+      }
+	
+	
+    if (full_entry == false){
+      shift_last_kmer_to_start_of_sequence(seq,entry_length,db_graph->kmer_size);
+    }
+    
+    prev_full_entry = full_entry;
+    
+  }
+  
+  free_sequence(&seq);
+  binary_kmer_free_kmers_set(&windows);
+  
+}
+
 
 
 void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(char* f_name, dBGraph* db_graph)
