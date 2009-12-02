@@ -514,3 +514,27 @@ boolean db_node_condition_always_true(dBNode* node)
 }
 
 
+boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2)
+{
+  if ( (o1==forward) && (o2==forward) && db_node_check_status(node1, read_start_forward) && db_node_check_status(node2, read_start_forward) )
+    {
+      return true;
+    }
+  else if ( (o1==reverse) && (o2==forward) && db_node_check_status(node1, read_start_reverse) && db_node_check_status(node2, read_start_forward) )
+    {
+      return true;
+    }
+  else if ( (o1==forward) && (o2==reverse) && db_node_check_status(node1, read_start_forward) && db_node_check_status(node2, read_start_reverse) )
+    {
+      return true;
+    }
+  else if ( (o1==reverse) && (o2==reverse) && db_node_check_status(node1, read_start_reverse) && db_node_check_status(node2, read_start_reverse) )
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+

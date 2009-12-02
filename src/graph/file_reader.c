@@ -21,6 +21,10 @@ int MAX_FILENAME_LENGTH=200;
 
 long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), long long * bad_reads, char qualiy_cut_off, int max_read_length, dBGraph * db_graph);
 
+long long load_paired_end_seq_into_graph(FILE* fp1, FILE* fp2, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry),
+                                         long long * bad_reads, char quality_cut_off, int max_read_length, long long* dup_reads, boolean remove_dups, dBGraph * db_graph);
+
+
 
 long long load_fastq_from_filename_into_graph(char* filename, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph)
 {
@@ -47,6 +51,42 @@ long long load_fastq_from_filename_into_graph(char* filename, long long * bad_re
 
   return ret;
 }
+
+long long load_paired_fastq_from_filenames_into_graph(char* filename1, char* filename2, long long * bad_reads,  char quality_cut_off, int max_read_length, 
+						      boolean remove_duplicates, dBGraph* db_graph)
+{
+
+  int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
+    * full_entry = true;
+
+    if (new_entry!= true){
+      puts("new_entry has to be true for fastq\n");
+      exit(1);
+    }
+
+    return read_sequence_from_fastq(fp,seq,max_read_length);
+  }
+
+  FILE* fp1 = fopen(filename1, "r");
+  if (fp1 == NULL){
+    fprintf(stderr,"cannot open file:%s\n",filename1);
+    exit(1); //TODO - prefer to print warning and skip file and return an error code?
+  }
+  FILE* fp2 = fopen(filename2, "r");
+  if (fp2 == NULL){
+    fprintf(stderr,"cannot open file:%s\n",filename2);
+    exit(1); //TODO - prefer to print warning and skip file and return an error code?
+  }
+
+  long long dup_reads=0;
+  long long ret =  load_paired_end_seq_into_graph(fp1, fp2, &file_reader,bad_reads,quality_cut_off,max_read_length, &dup_reads, remove_duplicates, db_graph);
+  fclose(fp1);
+  fclose(fp2);
+
+  printf("Total duplicate reads in %s and %s: %lld\n", filename1, filename2, dup_reads);
+  return ret;
+}
+
 
 //this routine supports big fasta entries (chromosome length for example)
 long long load_fasta_from_filename_into_graph(char* filename, long long * bad_reads, int max_chunk_length, dBGraph* db_graph)
@@ -175,6 +215,7 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
 
 	  current_orientation = db_node_get_orientation(&(current_window->kmer[j]),current_node, db_graph->kmer_size);
 	  
+
 	  if (DEBUG){
 	    char kmer_seq[db_graph->kmer_size];
 	    char kmer_seq2[db_graph->kmer_size];
@@ -216,6 +257,256 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
   binary_kmer_free_kmers_set(&windows);
   return seq_length;    
 }
+
+
+//do not export the folloiwing internal function
+void load_kmers_from_sliding_window_into_graph(KmerSlidingWindowSet * windows, boolean* prev_full_ent, boolean* full_ent, long long* seq_len, dBGraph* db_graph)
+{
+
+      Element * current_node  = NULL;
+      Element * previous_node  = NULL;
+      Orientation current_orientation;
+      Orientation previous_orientation;
+      BinaryKmer tmp_kmer;
+      int i,j;
+      for(i=0;i<windows->nwindows;i++){ //for each window
+	KmerSlidingWindow * current_window = &(windows->window[i]);
+	
+	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
+	  boolean found = false;
+	  current_node = hash_table_find_or_insert(element_get_key(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),&found,db_graph);	  
+	  if (current_node == NULL){
+	    fputs("file_reader: problem - current kmer not found\n",stderr);
+	    exit(1);
+	  }
+	  
+	  if (! (i==0 && j==0 && *prev_full_ent == false && current_node == previous_node)){ //otherwise is the same old last entry
+	    element_update_coverage(current_node,1);
+	  }
+
+	  current_orientation = db_node_get_orientation(&(current_window->kmer[j]),current_node, db_graph->kmer_size);
+
+
+	  if ( (i==0) && (j==0) && (current_orientation==forward))
+	    {
+	      db_node_set_status(current_node, read_start_forward);
+	    }
+	  else if ( (i==0) && (j==0) && (current_orientation==reverse))
+	    {
+	      db_node_set_status(current_node, read_start_reverse);
+	    }
+
+	  
+	  if (DEBUG){
+	    char kmer_seq[db_graph->kmer_size];
+	    char kmer_seq2[db_graph->kmer_size];
+	    
+	    printf("kmer i:%i j:%i:  %s %s %i\n",i,j,binary_kmer_to_seq(&(current_window->kmer[j]),db_graph->kmer_size,kmer_seq),
+		   binary_kmer_to_seq(binary_kmer_reverse_complement(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph->kmer_size,kmer_seq2),element_get_coverage(current_node));
+	  }
+	  
+	  if (j>0){
+	    
+	    if (previous_node == NULL){
+	      printf("PROBLEM i:%i j:%i seq_length:%qd nkmers:%i prev_full_entry:%s\n",i,j,*(seq_len),current_window->nkmers,*prev_full_ent == true ? "true" : "false");
+	      fputs("file_reader: problem - prev kmer not found\n",stderr);
+	      exit(1);
+	    }
+	    else{
+	      db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size);	  	  
+	    }
+	  }
+	  previous_node = current_node;
+	  previous_orientation = current_orientation;
+	  
+	}
+      }
+     
+}
+
+//do not export the following internal function
+void paired_end_sequence_core_loading_loop(FILE* fp1 , FILE* fp2, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry),
+					   Sequence* seq1, Sequence* seq2, char quality_cut_off, int max_read_length, int max_kmers, int max_windows, 
+					   KmerSlidingWindowSet * windows1, KmerSlidingWindowSet * windows2, long long* seq_len, long long* dup_reads, long long* bad_reads, 
+					   boolean remove_dups, dBGraph* db_graph)
+{
+
+  int entry_length1, entry_length2;
+
+  boolean full_entry1 = true;
+  boolean full_entry2 = true;
+  boolean prev_full_entry1 = true;
+  boolean prev_full_entry2 = true;
+
+ 
+  //we assume that both files are the same length
+  while ((entry_length1 = file_reader(fp1,seq1,max_read_length,full_entry1,&full_entry1))){
+   
+    entry_length2 = file_reader(fp2,seq2,max_read_length,full_entry2,&full_entry2);
+
+    if (entry_length2==0)
+      {
+	printf("Warning - second mate pair file is shorter than first. Last read was %s\n", seq1->name);
+	exit(1);
+      }
+    
+
+    //printf("entry %s %i %i %s\n",seq1->name,seq1->start,seq1->end,prev_full_entry1?"not connect":"connect");
+    //printf("entry %s %i %i %s\n",seq2->name,seq2->start,seq2->end,prev_full_entry2?"not connect":"connect");
+    
+   if (DEBUG){
+      printf ("\nsequence 1 of pair %s - kmer size: %i - entry length: %i - max kmers:%i\n",seq1->seq,db_graph->kmer_size, entry_length1, max_kmers);
+      printf ("\nsequence 2 of pair %s - kmer size: %i - entry length: %i - max kmers:%i\n",seq2->seq,db_graph->kmer_size, entry_length2, max_kmers);
+    }
+    
+    //seq_len is ampount fo sequence read in from files, not necessarily loaded into graph
+    (*seq_len) += (long long) (entry_length1 - (prev_full_entry1==false ? db_graph->kmer_size : 0));
+    (*seq_len) += (long long) (entry_length2 - (prev_full_entry2==false ? db_graph->kmer_size : 0));
+   
+ 
+    int nkmers1 = get_sliding_windows_from_sequence(seq1->seq,seq1->qual,
+						   entry_length1,quality_cut_off,db_graph->kmer_size,windows1,max_windows, max_kmers);
+    int nkmers2 = get_sliding_windows_from_sequence(seq2->seq,seq2->qual,
+						   entry_length2,quality_cut_off,db_graph->kmer_size,windows2,max_windows, max_kmers);
+
+
+    //check whether first kmer of both reads is a read-start. If yes, then discard read as duplicate.
+    BinaryKmer tmp_kmer;
+
+    if (remove_dups==true)
+      {
+	KmerSlidingWindow * first_window1= &(windows1->window[0]);
+	KmerSlidingWindow * first_window2= &(windows2->window[0]);
+	//get node and orientation for first kmer in read from file1
+	dBNode* test1 = hash_table_find(element_get_key(&(first_window1->kmer[0]),db_graph->kmer_size, &tmp_kmer), db_graph);
+	//get node and orientation for first kmer in read from file2
+	dBNode* test2 = hash_table_find(element_get_key(&(first_window2->kmer[0]),db_graph->kmer_size, &tmp_kmer), db_graph);
+	
+
+	if ((test1 != NULL) && (test2 !=NULL))// can only be previous read_starts if the node already s there in the graph!
+	  {
+	    Orientation test_o1 = db_node_get_orientation(&(first_window1->kmer[0]),test1, db_graph->kmer_size);
+	    Orientation test_o2 = db_node_get_orientation(&(first_window2->kmer[0]),test2, db_graph->kmer_size);
+
+	    if (db_node_check_duplicates(test1, test_o1, test2, test_o2)==true)
+	      {
+		(*dup_reads)++;
+		printf("Discard reads %s and %s - duplicates\n", seq1->name, seq2->name);
+		continue;
+	      }
+	  }
+      }
+    
+
+    if ((nkmers1 == 0)&& (nkmers2 == 0)) {
+      (*bad_reads)=(*bad_reads)+2;
+    }
+    else if ((nkmers1==0)&&(nkmers2!=0))
+      {
+	(*bad_reads)++;
+	load_kmers_from_sliding_window_into_graph(windows2, &prev_full_entry2, &full_entry2, seq_len, db_graph);
+      }
+    else if ((nkmers1!=0)&&(nkmers2==0))
+      {
+	(*bad_reads)++;
+	load_kmers_from_sliding_window_into_graph(windows1, &prev_full_entry1, &full_entry1, seq_len, db_graph);
+      }
+    else 
+      {
+	load_kmers_from_sliding_window_into_graph(windows1, &prev_full_entry1, &full_entry1, seq_len, db_graph);
+	load_kmers_from_sliding_window_into_graph(windows2, &prev_full_entry2, &full_entry2, seq_len, db_graph);
+      }
+
+    }
+
+    if (full_entry1 == false){
+      shift_last_kmer_to_start_of_sequence(seq1,entry_length1,db_graph->kmer_size);
+    }
+    if (full_entry2 == false){
+      shift_last_kmer_to_start_of_sequence(seq2,entry_length2,db_graph->kmer_size);
+    }
+
+
+    prev_full_entry1 = full_entry1;
+    prev_full_entry2 = full_entry2;
+   
+
+}
+  
+
+
+//returns length of sequence loaded
+long long load_paired_end_seq_into_graph(FILE* fp1, FILE* fp2, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
+					 long long * bad_reads, char quality_cut_off, int max_read_length, long long* dup_reads, boolean remove_dups, dBGraph * db_graph){
+
+ 
+
+
+  //----------------------------------
+  // preallocate the memory used to read the sequences
+  //----------------------------------
+  Sequence * seq1 = malloc(sizeof(Sequence));
+  if (seq1 == NULL){
+    fputs("Out of memory trying to allocate Sequence\n",stderr);
+    exit(1);
+  }
+  alloc_sequence(seq1,max_read_length,LINE_MAX);
+  Sequence * seq2 = malloc(sizeof(Sequence));
+  if (seq2 == NULL){
+    fputs("Out of memory trying to allocate Sequence\n",stderr);
+    exit(1);
+  }
+  alloc_sequence(seq2,max_read_length,LINE_MAX);
+  
+  
+  long long seq_length=0;
+  short kmer_size = db_graph->kmer_size;
+
+  //max_read_length/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
+  int max_windows = max_read_length/(kmer_size+1);
+ 
+  //number of possible kmers in a 'perfect' read
+  int max_kmers   = max_read_length-kmer_size+1;
+
+  
+
+  //----------------------------------
+  //preallocate the space of memory used to keep the sliding_windows. NB: this space of memory is reused for every call -- with the view 
+  //to avoid memory fragmentation
+  //NB: this space needs to preallocate memory for orthogonal situations: 
+  //    * a good read -> few windows, many kmers per window
+  //    * a bad read  -> many windows, few kmers per window    
+  //----------------------------------
+  KmerSlidingWindowSet * windows1 = malloc(sizeof(KmerSlidingWindowSet));  
+  if (windows1 == NULL){
+    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
+    exit(1);
+  }  
+  //allocate memory for the sliding windows 
+  binary_kmer_alloc_kmers_set(windows1, max_windows, max_kmers);
+
+  KmerSlidingWindowSet * windows2 = malloc(sizeof(KmerSlidingWindowSet));  
+  if (windows2 == NULL){
+    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
+    exit(1);
+  }  
+  //allocate memory for the sliding windows 
+  binary_kmer_alloc_kmers_set(windows2, max_windows, max_kmers);
+  
+
+  //work through the paired files, loading sequence into the graph. If remove_dups==true, then for each pair, discard both mate reads if they both start at a read_start kmer
+  paired_end_sequence_core_loading_loop(fp1, fp2, file_reader, seq1, seq2, quality_cut_off,  max_read_length, max_kmers, max_windows, 
+					windows1, windows2,  &(seq_length), dup_reads, bad_reads, remove_dups, db_graph);
+  
+
+
+  free_sequence(&seq1);
+  free_sequence(&seq2);
+  binary_kmer_free_kmers_set(&windows1);
+  binary_kmer_free_kmers_set(&windows2);
+  return seq_length;    
+}
+
 
 //returns number of sequence loaded (ie all the kmers concatenated)
 //count_kmers returns the number of new kmers
@@ -842,7 +1133,7 @@ void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_
   tmpseq[0]='\0';
   
 
-  BinaryKmer tmp_kmer;
+  //BinaryKmer tmp_kmer;
   boolean full_entry = true;
   boolean prev_full_entry = true;
 
@@ -873,7 +1164,7 @@ void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_
       }
     else 
       {
-	Element * current_node  = NULL;
+	//Element * current_node  = NULL;
 	
 	for(i=0;i<windows->nwindows;i++)
 	  { //for each window

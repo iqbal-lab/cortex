@@ -18,6 +18,9 @@ long long load_fasta_from_filename_into_graph(char* filename, long long * bad_re
 //for fastq
 long long load_fastq_from_filename_into_graph(char* filename, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph);
 
+long long load_paired_fastq_from_filenames_into_graph(char* filename1, char* filename2, long long * bad_reads,  char quality_cut_off, int max_read_length,
+                                                      boolean remove_duplicates, dBGraph* db_graph);
+
 //for reference
 
 void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),

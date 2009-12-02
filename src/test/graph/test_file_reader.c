@@ -1081,3 +1081,62 @@ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 
 
 }
+
+
+
+
+void test_loading_of_paired_end_reads_removing_duplicates()
+{
+
+   //first set up the hash/graph
+  int kmer_size = 21;
+  int number_of_bits=10;
+  int bucket_size   = 10;
+  int seq_length;
+  long long bad_reads = 0;
+ 
+  char quality_cut_off=1; 
+
+
+
+  // first a test where you do not remove duplicates - does all the data get loaded?
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  
+  int max_read_length=100;
+  seq_length = load_paired_fastq_from_filenames_into_graph("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
+							   &bad_reads, quality_cut_off, max_read_length,  false, db_graph);
+  CU_ASSERT(seq_length==720);
+  CU_ASSERT(db_graph->unique_kmers == 243);
+
+  hash_table_free(&db_graph);
+
+  // then a test where you do remove duplicates from files that don't contain any
+
+  db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  
+  seq_length = load_paired_fastq_from_filenames_into_graph("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
+							   &bad_reads, quality_cut_off, max_read_length,  true, db_graph);
+  CU_ASSERT(seq_length==720);
+  CU_ASSERT(db_graph->unique_kmers == 243);
+
+  hash_table_free(&db_graph);
+
+
+  //now try a pair of files containing one duplicate pair of reads (duplicated in both files) and also one read that is duplicated only in the _1 file
+  // only the former pair of reads should be discarded
+
+
+  db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  
+  seq_length = load_paired_fastq_from_filenames_into_graph("../data/test/graph/paired_end_file2_with_dup_1.fastq", "../data/test/graph/paired_end_file2_with_dup_2.fastq",
+							   &bad_reads, quality_cut_off, max_read_length,  true, db_graph);
+
+  //as before, but with four more 36bp reads
+  CU_ASSERT(seq_length==864);
+  CU_ASSERT(db_graph->unique_kmers == 245);
+
+  hash_table_free(&db_graph);
+  
+
+
+}
