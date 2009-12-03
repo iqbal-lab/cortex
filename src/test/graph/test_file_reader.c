@@ -1196,7 +1196,6 @@ void test_loading_of_single_ended_reads_removing_duplicates()
   CU_ASSERT(seq_length==360);
   CU_ASSERT(db_graph->unique_kmers == 105);
   CU_ASSERT(dup_reads==0);
-  printf ("1200 dup reads is %lld\n", dup_reads);
   hash_table_free(&db_graph);
   dup_reads=0;
 
@@ -1209,7 +1208,6 @@ void test_loading_of_single_ended_reads_removing_duplicates()
   //as before, but with four more 36bp reads
   CU_ASSERT(seq_length==432);
   CU_ASSERT(dup_reads==2);
-  printf ("1213 dup reads is %lld\n", dup_reads);
 
   hash_table_free(&db_graph);
 
