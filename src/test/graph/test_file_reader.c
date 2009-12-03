@@ -1094,49 +1094,66 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   int bucket_size   = 10;
   int seq_length;
   long long bad_reads = 0;
- 
+  long long dup_reads = 0;
   char quality_cut_off=1; 
 
 
 
-  // first a test where you do not remove duplicates - does all the data get loaded?
+  // first a test where the file contains no duplicates and you do not try to remove duplicates - does all the data get loaded?
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   int max_read_length=100;
   seq_length = load_paired_fastq_from_filenames_into_graph("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
-							   &bad_reads, quality_cut_off, max_read_length,  false, db_graph);
+							   &bad_reads, quality_cut_off, max_read_length,  &dup_reads, false, db_graph);
   CU_ASSERT(seq_length==720);
   CU_ASSERT(db_graph->unique_kmers == 243);
 
   hash_table_free(&db_graph);
 
-  // then a test where you do remove duplicates from files that don't contain any
+  // then a test where you try to  remove duplicates from files that don't contain any
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   seq_length = load_paired_fastq_from_filenames_into_graph("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
-							   &bad_reads, quality_cut_off, max_read_length,  true, db_graph);
+							   &bad_reads, quality_cut_off, max_read_length,  &dup_reads,true, db_graph);
   CU_ASSERT(seq_length==720);
   CU_ASSERT(db_graph->unique_kmers == 243);
-
+  CU_ASSERT(dup_reads==0);
   hash_table_free(&db_graph);
 
 
-  //now try a pair of files containing one duplicate pair of reads (duplicated in both files) and also one read that is duplicated only in the _1 file
+  //now try a pair of files containing one duplicate pair of reads (corresponding mates duplicated in both files) and also one read that is duplicated only in the _1 file
   // only the former pair of reads should be discarded
-
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   seq_length = load_paired_fastq_from_filenames_into_graph("../data/test/graph/paired_end_file2_with_dup_1.fastq", "../data/test/graph/paired_end_file2_with_dup_2.fastq",
-							   &bad_reads, quality_cut_off, max_read_length,  true, db_graph);
+							   &bad_reads, quality_cut_off, max_read_length, &dup_reads, true, db_graph);
 
+  
   //as before, but with four more 36bp reads
   CU_ASSERT(seq_length==864);
   CU_ASSERT(db_graph->unique_kmers == 245);
+  CU_ASSERT(dup_reads==1);
 
   hash_table_free(&db_graph);
+  dup_reads=0;
   
+  // now take a pair of files where there is an original mate pair, one proper duplicate, and then 3 other mate-pairs that might be confused for duplicates
+  // - one read is a dup of the original, and the other is reverse complement of the other.
+  // Of these, only one pair is what we want to call a duplicate. However our filter cannot distinguish between the following cases
+  //   1. a second mate pair that is identical to a previous mate pair
+  //   2. Pair1_read1 is identical to Pair2_read1, and Pair2_read2 is identical to Pair3_read1.
+  // the final mate pair in our file has one mate which is the same as a left_mate in one read pair, and a right mate which is the same
+  // as the right mate in another read pair. So it isn't really a dup, but we discard it anyway as we cannot tell the difference.
 
+  db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  seq_length = load_list_of_paired_end_fastq_into_graph( "../data/test/graph/list_paired_end_file3_left", 
+							 "../data/test/graph/list_paired_end_file3_right", 
+							 quality_cut_off, max_read_length, &bad_reads, &dup_reads, true, db_graph); 
 
+  CU_ASSERT(seq_length==360); //five 36bp reads, left and right
+  CU_ASSERT(dup_reads==2);
+
+  hash_table_free(&db_graph);
 }

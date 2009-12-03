@@ -19,7 +19,9 @@ long long load_fasta_from_filename_into_graph(char* filename, long long * bad_re
 long long load_fastq_from_filename_into_graph(char* filename, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph);
 
 long long load_paired_fastq_from_filenames_into_graph(char* filename1, char* filename2, long long * bad_reads,  char quality_cut_off, int max_read_length,
-                                                      boolean remove_duplicates, dBGraph* db_graph);
+                                                      long long* num_duplicate_pairs_removed, boolean remove_duplicates, dBGraph* db_graph);
+long long load_list_of_paired_end_fastq_into_graph(char* list_of_left_mates, char* list_of_right_mates, char quality_cut_off, int max_read_length,
+                                                   long long* bad_reads, long long* num_dups, boolean remove_dups, dBGraph* db_graph);
 
 //for reference
 

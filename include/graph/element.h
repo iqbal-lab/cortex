@@ -28,6 +28,7 @@ typedef enum{
   to_be_dumped = 6, //to be dumped as binary
   read_start_forward = 7,//used when removing duplicate reads
   read_start_reverse = 8,//used when removing duplicate reads
+  read_start_forward_and_reverse = 9,//used when removing duplicate reads
 } NodeStatus;
 
 typedef struct{
@@ -158,6 +159,10 @@ boolean db_node_check_status_is_not_exists_in_reference(dBNode * node);
 boolean db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(dBNode * node);
 
 boolean db_node_condition_always_true(dBNode* node);
+
+boolean db_node_check_read_start(dBNode* node, Orientation ori);
+
+void db_node_set_read_start_status(dBNode* node, Orientation ori);
 
 boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2);
 

@@ -53,7 +53,7 @@ long long load_fastq_from_filename_into_graph(char* filename, long long * bad_re
 }
 
 long long load_paired_fastq_from_filenames_into_graph(char* filename1, char* filename2, long long * bad_reads,  char quality_cut_off, int max_read_length, 
-						      boolean remove_duplicates, dBGraph* db_graph)
+						      long long* num_duplicate_pairs_removed, boolean remove_duplicates, dBGraph* db_graph)
 {
 
   int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
@@ -78,12 +78,11 @@ long long load_paired_fastq_from_filenames_into_graph(char* filename1, char* fil
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  long long dup_reads=0;
-  long long ret =  load_paired_end_seq_into_graph(fp1, fp2, &file_reader,bad_reads,quality_cut_off,max_read_length, &dup_reads, remove_duplicates, db_graph);
+  long long ret =  load_paired_end_seq_into_graph(fp1, fp2, &file_reader,bad_reads,quality_cut_off,max_read_length, num_duplicate_pairs_removed, remove_duplicates, db_graph);
   fclose(fp1);
   fclose(fp2);
 
-  printf("Total duplicate reads in %s and %s: %lld\n", filename1, filename2, dup_reads);
+  //printf("Total duplicate reads in %s and %s: %lld\n", filename1, filename2, *num_duplicate_pairs_removed);
   return ret;
 }
 
@@ -195,8 +194,8 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
       BinaryKmer tmp_kmer;
 
             
-      Orientation current_orientation;
-      Orientation previous_orientation;
+      Orientation current_orientation=forward;//initialise only to keep compiler happy
+      Orientation previous_orientation=forward;//initialise only to keep compiler happy
      
       for(i=0;i<windows->nwindows;i++){ //for each window
 	KmerSlidingWindow * current_window = &(windows->window[i]);
@@ -260,13 +259,14 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
 
 
 //do not export the folloiwing internal function
-void load_kmers_from_sliding_window_into_graph(KmerSlidingWindowSet * windows, boolean* prev_full_ent, boolean* full_ent, long long* seq_len, dBGraph* db_graph)
+void load_kmers_from_sliding_window_into_graph_marking_read_starts(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
+								   boolean* full_ent, long long* seq_len, dBGraph* db_graph)
 {
 
       Element * current_node  = NULL;
       Element * previous_node  = NULL;
-      Orientation current_orientation;
-      Orientation previous_orientation;
+      Orientation current_orientation=forward;
+      Orientation previous_orientation=forward;
       BinaryKmer tmp_kmer;
       int i,j;
       for(i=0;i<windows->nwindows;i++){ //for each window
@@ -289,11 +289,11 @@ void load_kmers_from_sliding_window_into_graph(KmerSlidingWindowSet * windows, b
 
 	  if ( (i==0) && (j==0) && (current_orientation==forward))
 	    {
-	      db_node_set_status(current_node, read_start_forward);
+	      db_node_set_read_start_status(current_node, forward);
 	    }
 	  else if ( (i==0) && (j==0) && (current_orientation==reverse))
 	    {
-	      db_node_set_status(current_node, read_start_reverse);
+	      db_node_set_read_start_status(current_node, reverse);
 	    }
 
 	  
@@ -331,7 +331,8 @@ void paired_end_sequence_core_loading_loop(FILE* fp1 , FILE* fp2, int (* file_re
 					   boolean remove_dups, dBGraph* db_graph)
 {
 
-  int entry_length1, entry_length2;
+  int entry_length1=0;
+  int entry_length2=0;
 
   boolean full_entry1 = true;
   boolean full_entry2 = true;
@@ -391,7 +392,7 @@ void paired_end_sequence_core_loading_loop(FILE* fp1 , FILE* fp2, int (* file_re
 	    if (db_node_check_duplicates(test1, test_o1, test2, test_o2)==true)
 	      {
 		(*dup_reads)++;
-		printf("Discard reads %s and %s - duplicates\n", seq1->name, seq2->name);
+		//printf("Discard reads %s and %s - duplicates\n", seq1->name, seq2->name);
 		continue;
 	      }
 	  }
@@ -404,17 +405,17 @@ void paired_end_sequence_core_loading_loop(FILE* fp1 , FILE* fp2, int (* file_re
     else if ((nkmers1==0)&&(nkmers2!=0))
       {
 	(*bad_reads)++;
-	load_kmers_from_sliding_window_into_graph(windows2, &prev_full_entry2, &full_entry2, seq_len, db_graph);
+	load_kmers_from_sliding_window_into_graph_marking_read_starts(windows2, &prev_full_entry2, &full_entry2, seq_len, db_graph);
       }
     else if ((nkmers1!=0)&&(nkmers2==0))
       {
 	(*bad_reads)++;
-	load_kmers_from_sliding_window_into_graph(windows1, &prev_full_entry1, &full_entry1, seq_len, db_graph);
+	load_kmers_from_sliding_window_into_graph_marking_read_starts(windows1, &prev_full_entry1, &full_entry1, seq_len, db_graph);
       }
     else 
       {
-	load_kmers_from_sliding_window_into_graph(windows1, &prev_full_entry1, &full_entry1, seq_len, db_graph);
-	load_kmers_from_sliding_window_into_graph(windows2, &prev_full_entry2, &full_entry2, seq_len, db_graph);
+	load_kmers_from_sliding_window_into_graph_marking_read_starts(windows1, &prev_full_entry1, &full_entry1, seq_len, db_graph);
+	load_kmers_from_sliding_window_into_graph_marking_read_starts(windows2, &prev_full_entry2, &full_entry2, seq_len, db_graph);
       }
 
     }
@@ -507,6 +508,58 @@ long long load_paired_end_seq_into_graph(FILE* fp1, FILE* fp2, int (* file_reade
   return seq_length;    
 }
 
+
+
+//assume we have two lists of equal length, of mate fastq files in the same order in each file
+long long load_list_of_paired_end_fastq_into_graph(char* list_of_left_mates, char* list_of_right_mates, char quality_cut_off, int max_read_length, 
+						   long long* bad_reads, long long* num_dups, boolean remove_dups, dBGraph* db_graph)
+{
+
+
+  FILE* f1 = fopen(list_of_left_mates, "r");
+  if (f1==NULL)
+    {
+      printf("Cannot open %s - exit\n", list_of_left_mates);
+      exit(1);
+    }
+  FILE* f2 = fopen(list_of_right_mates, "r");
+  if (f2==NULL)
+    {
+      printf("Cannot open %s - exit\n", list_of_right_mates);
+      exit(1);
+    }
+
+  long long seq_length = 0;
+  char filename1[MAX_FILENAME_LENGTH+1];
+  char filename2[MAX_FILENAME_LENGTH+1];
+
+
+  while (fgets(filename1,MAX_FILENAME_LENGTH, f1) !=NULL);
+    {
+      //remove newline from end of line - replace with \0
+      char* p;
+      if ((p = strchr(filename1, '\n')) != NULL)
+	*p = '\0';
+
+      printf("ARGLY\nn");
+
+      if (fgets(filename2,MAX_FILENAME_LENGTH, f2) ==NULL)
+	{
+	  printf("Files %s and %s are not the same length, and they are lists of mate fastqs\n",list_of_left_mates, list_of_right_mates);
+	}
+      if ((p = strchr(filename2, '\n')) != NULL)
+	*p = '\0';
+
+
+      seq_length += load_paired_fastq_from_filenames_into_graph(filename1, filename2, bad_reads, quality_cut_off, max_read_length, num_dups, remove_dups, db_graph);
+      printf("zam\n");
+    }
+    printf("iqbal\n");
+
+
+    return seq_length;
+
+}
 
 //returns number of sequence loaded (ie all the kmers concatenated)
 //count_kmers returns the number of new kmers
