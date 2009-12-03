@@ -1157,3 +1157,63 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 
   hash_table_free(&db_graph);
 }
+
+
+
+void test_loading_of_single_ended_reads_removing_duplicates()
+{
+
+   //first set up the hash/graph
+  int kmer_size = 21;
+  int number_of_bits=10;
+  int bucket_size   = 10;
+  int seq_length;
+  long long bad_reads = 0; long long dup_reads=0;
+  
+  char quality_cut_off=1; 
+
+
+
+  // first a test where the file contains no duplicates and you do not try to remove duplicates - does all the data get loaded?
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  
+  int max_read_length=100;
+  seq_length = load_fastq_from_filename_into_graph("../data/test/graph/paired_end_file1_1.fastq",
+						    &bad_reads, quality_cut_off, &dup_reads, max_read_length, false, db_graph);
+
+  CU_ASSERT(seq_length==360);
+  CU_ASSERT(db_graph->unique_kmers == 105);
+  CU_ASSERT(dup_reads==0);
+  hash_table_free(&db_graph);
+
+  // then a test where you try to  remove duplicates from files that don't contain any
+
+  dup_reads=0;
+  db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  
+  seq_length = load_fastq_from_filename_into_graph("../data/test/graph/paired_end_file1_1.fastq",
+						    &bad_reads, quality_cut_off, &dup_reads, max_read_length,true, db_graph);
+  CU_ASSERT(seq_length==360);
+  CU_ASSERT(db_graph->unique_kmers == 105);
+  CU_ASSERT(dup_reads==0);
+  printf ("1200 dup reads is %lld\n", dup_reads);
+  hash_table_free(&db_graph);
+  dup_reads=0;
+
+
+  db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  seq_length = load_fastq_from_filename_into_graph("../data/test/graph/paired_end_file2_with_dup_1.fastq", 
+						    &bad_reads, quality_cut_off, &dup_reads, max_read_length, true, db_graph);
+
+  
+  //as before, but with four more 36bp reads
+  CU_ASSERT(seq_length==432);
+  CU_ASSERT(dup_reads==2);
+  printf ("1213 dup reads is %lld\n", dup_reads);
+
+  hash_table_free(&db_graph);
+
+
+
+  
+}

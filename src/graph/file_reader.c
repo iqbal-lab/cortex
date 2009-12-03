@@ -284,31 +284,37 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
     //printf("number kmers:%i %i\n",nkmers,windows->nwindows);
 
 
-    if (remove_dups_single_endedly==true)
-      {
-	BinaryKmer tmp_kmer;
-	KmerSlidingWindow * first_window= &(windows->window[0]);
-	//get node and orientation for first kmer in read from file1
-	dBNode* test = hash_table_find(element_get_key(&(first_window->kmer[0]),db_graph->kmer_size, &tmp_kmer), db_graph);
-
-	if (test != NULL) // can only be previous read_start if the node already s there in the graph!
-	  {
-	    Orientation test_o = db_node_get_orientation(&(first_window->kmer[0]),test, db_graph->kmer_size);
-
-	    if (db_node_check_single_ended_duplicates(test, test_o)==true)
-	      {
-		(*dup_reads)++;
-		//printf("Discard reads %s and %s - duplicates\n", seq1->name, seq2->name);
-		continue;
-	      }
-	  }
-      }
-
     
     if (nkmers == 0) {
       (*bad_reads)++;
     }
     else {
+
+
+      if (remove_dups_single_endedly==true)
+	{
+	  BinaryKmer tmp_kmer;
+	  KmerSlidingWindow * first_window= &(windows->window[0]);
+	  //get node and orientation for first kmer in read from file1
+	  dBNode* test = hash_table_find(element_get_key(&(first_window->kmer[0]),db_graph->kmer_size, &tmp_kmer), db_graph);
+	  
+	  if (test != NULL) // can only be previous read_start if the node already s there in the graph!
+	    {
+	      Orientation test_o = db_node_get_orientation(&(first_window->kmer[0]),test, db_graph->kmer_size);
+	      
+	      if (db_node_check_single_ended_duplicates(test, test_o)==true)
+		{
+		  (*dup_reads)++;
+		  //printf("Discard single ended read %s  - duplicate\n", seq->name);
+		  continue;
+		}
+	    }
+	}
+      
+      
+      
+
+
       if (remove_dups_single_endedly==true)
 	{
 	  load_kmers_from_sliding_window_into_graph_marking_read_starts(windows, &prev_full_entry, &full_entry, &seq_length, true, db_graph);
@@ -387,7 +393,7 @@ void paired_end_sequence_core_loading_loop(FILE* fp1 , FILE* fp2, int (* file_re
     //check whether first kmer of both reads is a read-start. If yes, then discard read as duplicate.
     BinaryKmer tmp_kmer;
 
-    if (remove_dups==true)
+    if ( (remove_dups==true) && (nkmers1!=0) && (nkmers2 !=0) )
       {
 	KmerSlidingWindow * first_window1= &(windows1->window[0]);
 	KmerSlidingWindow * first_window2= &(windows2->window[0]);
