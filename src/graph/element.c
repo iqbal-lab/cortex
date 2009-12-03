@@ -596,3 +596,20 @@ boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, O
     }
 }
 
+//we have a read that starts at node in direction o1, and we want to know if a previous read started at that node in that direction
+boolean db_node_check_single_ended_duplicates(dBNode* node1, Orientation o1)
+{
+  if (      (o1==forward) && db_node_check_read_start(node1, forward)  )
+    {
+      return true;
+    }
+  else if ( (o1==reverse) && db_node_check_read_start(node1, reverse) )
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+

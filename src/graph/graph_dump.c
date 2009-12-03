@@ -11,11 +11,11 @@ int main(int argc, char **argv){
   int hash_key_bits;
   dBGraph * db_graph = NULL; 
   short kmer_size;
-  int fastq; //if 0 entry is fasta otherwise is quality cut-off
+  int quality_cut_off; //if 0 entry is fasta otherwise is quality cut-off
   int bucket_size;
 
   long long bad_reads     = 0;
-
+  long long dup_reads     = 0;
   FILE * fout;
 
   void print_node_binary(dBNode * node){
@@ -28,7 +28,7 @@ int main(int argc, char **argv){
   kmer_size        = atoi(argv[2]); 
   hash_key_bits    = atoi(argv[3]); //number of buckets: 2^hash_key_bits
   bucket_size      = atoi(argv[4]);
-  fastq            = atoi(argv[5]);
+  quality_cut_off            = atoi(argv[5]);
   fout             = fopen(argv[6],"w");
   DEBUG            = atoi(argv[7]);
   
@@ -36,8 +36,8 @@ int main(int argc, char **argv){
   fprintf(stdout,"Input file of filenames: %s\n",argv[1]);
   fprintf(stdout,"Output bin file: %s\n",argv[6]);
   fprintf(stdout,"Kmer size: %d hash_table_size (%d bits): %d - bucket size: %d - total size: %qd\n",kmer_size,hash_key_bits,1 << hash_key_bits, bucket_size, ((long long) 1<<hash_key_bits)*bucket_size);
-  if (fastq>0){
-    fprintf(stdout,"quality cut-off: %i\n",fastq);
+  if (quality_cut_off>0){
+    fprintf(stdout,"quality cut-off: %i\n",quality_cut_off);
   }
 
   //Create the de Bruijn graph/hash table
@@ -59,12 +59,13 @@ int main(int argc, char **argv){
     long long seq_length = 0;
     count_file++;
 
-    if (fastq>0){
-      seq_length += load_fastq_from_filename_into_graph(filename,&bad_reads, fastq, 5000, db_graph);
+    if (quality_cut_off>0){
+      //assuming not removing duplicates
+      seq_length += load_fastq_from_filename_into_graph(filename,&bad_reads, quality_cut_off, &dup_reads, 5000, false,db_graph);
     }
     else{
-      if (fastq==0){
-	seq_length += load_fasta_from_filename_into_graph(filename,&bad_reads, 500000, db_graph);
+      if (quality_cut_off==0){
+	seq_length += load_fasta_from_filename_into_graph(filename,&bad_reads, 500000, false, db_graph);
       }
     }
 

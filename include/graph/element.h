@@ -166,6 +166,8 @@ void db_node_set_read_start_status(dBNode* node, Orientation ori);
 
 boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2);
 
+boolean db_node_check_single_ended_duplicates(dBNode* node1, Orientation o1);
+
 
 
 #endif /* ELEMENT_H_ */

@@ -13,7 +13,7 @@ void test_dump_load_binary(){
   int number_of_bits_pre = 4; 
   int number_of_bits_post = 8;
   int bucket_size = 5;
-  long long bad_reads = 0; 
+  long long bad_reads = 0; long long dup_reads=0; 
   FILE * fout;
   int seq_length_pre,seq_length_post;
   dBGraph * db_graph_pre;
@@ -28,7 +28,7 @@ void test_dump_load_binary(){
   db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
 
 
-  seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta", &bad_reads, max_chunk_len_reading_from_fasta, db_graph_pre);
+  seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta", &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta, false, db_graph_pre);
 
 
   fout = fopen("../data/test/graph/dump_graph.bin", "w");
@@ -185,7 +185,7 @@ void test_dump_load_binary(){
       db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
 
 
-      seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/person2.fasta", &bad_reads, max_chunk_len_reading_from_fasta, db_graph_pre);
+      seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/person2.fasta", &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta, false, db_graph_pre);
       
       /*
 	> 6 unique 33-mers
@@ -316,7 +316,7 @@ void test_dump_load_binary(){
       db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
 
 
-      seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, max_chunk_len_reading_from_fasta, db_graph_pre);
+      seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta, false, db_graph_pre);
       
 
 
@@ -404,13 +404,13 @@ void test_coverage_is_correctly_counted_on_loading_from_file()
   int number_of_bits=4;
   int bucket_size   = 10;
   int seq_length;
-  long long bad_reads = 0;
+  long long bad_reads = 0; long long dup_reads=0;
 
 
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   int max_chunk_length=100;
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/file_to_test_covg_of_reads.fasta", &bad_reads,max_chunk_length,  db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/file_to_test_covg_of_reads.fasta", &bad_reads,&dup_reads,max_chunk_length,  false, db_graph);
 
   /*
     >occurs once
@@ -471,12 +471,12 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
   int kmer_size = 17;
   int number_of_bits = 10; 
   int bucket_size = 30;
-  long long bad_reads = 0; 
+  long long bad_reads = 0; long long dup_reads=0; 
   int seq_length;
   dBGraph * db_graph;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, 200, db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, false, db_graph);
 
 
   //OK - we have graph. Now test getting sliding windows from 
@@ -744,12 +744,12 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   int kmer_size = 17;
   int number_of_bits = 10; 
   int bucket_size = 30;
-  long long bad_reads = 0; 
+  long long bad_reads = 0; long long dup_reads=0; 
   int seq_length;
   dBGraph * db_graph;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, 200, db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, false, db_graph);
 
 
   //OK - we have graph. Now test getting sliding windows from 
@@ -1007,12 +1007,12 @@ void test_dumping_of_clean_fasta()
   int kmer_size = 17;
   int number_of_bits = 10; 
   int bucket_size = 30;
-  long long bad_reads = 0; 
+  long long bad_reads = 0; long long dup_reads=0; 
   int seq_length;
   dBGraph * db_graph;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, 200, db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, false, db_graph);
 
 
   //OK, we now have a graph. Let's see if dumping a clean fasta gives the right answers. 
@@ -1093,8 +1093,8 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   int number_of_bits=10;
   int bucket_size   = 10;
   int seq_length;
-  long long bad_reads = 0;
-  long long dup_reads = 0;
+  long long bad_reads = 0; long long dup_reads=0;
+  
   char quality_cut_off=1; 
 
 
