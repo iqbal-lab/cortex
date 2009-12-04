@@ -1147,13 +1147,15 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   // the final mate pair in our file has one mate which is the same as a left_mate in one read pair, and a right mate which is the same
   // as the right mate in another read pair. So it isn't really a dup, but we discard it anyway as we cannot tell the difference.
 
+  int count_file_pairs=0;
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   seq_length = load_list_of_paired_end_fastq_into_graph( "../data/test/graph/list_paired_end_file3_left", 
 							 "../data/test/graph/list_paired_end_file3_right", 
-							 quality_cut_off, max_read_length, &bad_reads, &dup_reads, true, db_graph); 
+							 quality_cut_off, max_read_length, &bad_reads, &dup_reads, &count_file_pairs, true, db_graph); 
 
   CU_ASSERT(seq_length==360); //five 36bp reads, left and right
   CU_ASSERT(dup_reads==2);
+  CU_ASSERT(count_file_pairs==1);
 
   hash_table_free(&db_graph);
 }

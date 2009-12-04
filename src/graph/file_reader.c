@@ -69,6 +69,7 @@ long long load_paired_fastq_from_filenames_into_graph(char* filename1, char* fil
 						      long long* dup_reads, boolean remove_duplicates, dBGraph* db_graph)
 {
 
+  printf("Start loading %s and %s\n", filename1, filename2);
   int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
     * full_entry = true;
 
@@ -95,7 +96,7 @@ long long load_paired_fastq_from_filenames_into_graph(char* filename1, char* fil
   fclose(fp1);
   fclose(fp2);
 
-  //printf("Total duplicate reads in %s and %s: %lld\n", filename1, filename2, *dup_reads);
+  printf("Finished loading. Total duplicate reads in %s and %s: %lld\n", filename1, filename2, *dup_reads);
   return ret;
 }
 
@@ -305,7 +306,7 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
 	      if (db_node_check_single_ended_duplicates(test, test_o)==true)
 		{
 		  (*dup_reads)++;
-		  //printf("Discard single ended read %s  - duplicate\n", seq->name);
+		  printf("Discard duplicate single ended read %s\n", seq->name);
 		  continue;
 		}
 	    }
@@ -411,7 +412,7 @@ void paired_end_sequence_core_loading_loop(FILE* fp1 , FILE* fp2, int (* file_re
 	    if (db_node_check_duplicates(test1, test_o1, test2, test_o2)==true)
 	      {
 		(*dup_reads)++;
-		//printf("Discard reads %s and %s - duplicates\n", seq1->name, seq2->name);
+		printf("Discard duplicate reads %s and %s\n", seq1->name, seq2->name);
 		continue;
 	      }
 	  }
@@ -531,47 +532,59 @@ long long load_paired_end_seq_into_graph(FILE* fp1, FILE* fp2, int (* file_reade
 
 //assume we have two lists of equal length, of mate fastq files in the same order in each file
 long long load_list_of_paired_end_fastq_into_graph(char* list_of_left_mates, char* list_of_right_mates, char quality_cut_off, int max_read_length, 
-						   long long* bad_reads, long long* num_dups, boolean remove_dups, dBGraph* db_graph)
+						   long long* bad_reads, long long* num_dups, int* count_file_pairs, boolean remove_dups, dBGraph* db_graph)
 {
-
 
   FILE* f1 = fopen(list_of_left_mates, "r");
   if (f1==NULL)
     {
-      printf("Cannot open %s - exit\n", list_of_left_mates);
+      printf("Cannot open left mate file %s - exit\n", list_of_left_mates);
       exit(1);
     }
   FILE* f2 = fopen(list_of_right_mates, "r");
   if (f2==NULL)
     {
-      printf("Cannot open %s - exit\n", list_of_right_mates);
+      printf("Cannot open right mate file %s - exit\n", list_of_right_mates);
       exit(1);
     }
 
   long long seq_length = 0;
   char filename1[MAX_FILENAME_LENGTH+1];
   char filename2[MAX_FILENAME_LENGTH+1];
+  filename1[0]='\0';
+  filename2[0]='\0';
 
 
-  while (fgets(filename1,MAX_FILENAME_LENGTH, f1) !=NULL);
+  while (feof(f1) ==0)
     {
-      //remove newline from end of line - replace with \0
-      char* p;
-      if ((p = strchr(filename1, '\n')) != NULL)
-	*p = '\0';
-
-      if (fgets(filename2,MAX_FILENAME_LENGTH, f2) ==NULL)
+      if (fgets(filename1,MAX_FILENAME_LENGTH, f1) !=NULL)
 	{
-	  printf("Files %s and %s are not the same length, and they are lists of mate fastqs\n",list_of_left_mates, list_of_right_mates);
+
+	  //remove newline from end of line - replace with \0
+	  char* p;
+	  if ((p = strchr(filename1, '\n')) != NULL)
+	    {
+	      *p = '\0';
+	    }
+	  
+	  if (fgets(filename2,MAX_FILENAME_LENGTH, f2) ==NULL)
+	    {
+	      printf("Files %s and %s are not the same length, and they are lists of mate fastqs\n",list_of_left_mates, list_of_right_mates);
+	    }
+	  if ((p = strchr(filename2, '\n')) != NULL)
+	    {
+	      *p = '\0';
+	    }
+	  
+	  seq_length += load_paired_fastq_from_filenames_into_graph(filename1, filename2, bad_reads, quality_cut_off, max_read_length, num_dups, remove_dups, db_graph);
+	  (*count_file_pairs)++;
+	 
 	}
-      if ((p = strchr(filename2, '\n')) != NULL)
-	*p = '\0';
 
-
-      seq_length += load_paired_fastq_from_filenames_into_graph(filename1, filename2, bad_reads, quality_cut_off, max_read_length, num_dups, remove_dups, db_graph);
 
     }
-
+    fclose(f1);
+    fclose(f2);
 
 
     return seq_length;
