@@ -306,7 +306,7 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
 	      if (db_node_check_single_ended_duplicates(test, test_o)==true)
 		{
 		  (*dup_reads)++;
-		  printf("Discard duplicate single ended read %s\n", seq->name);
+		  //printf("Discard duplicate single ended read %s\n", seq->name);
 		  continue;
 		}
 	    }
@@ -412,7 +412,7 @@ void paired_end_sequence_core_loading_loop(FILE* fp1 , FILE* fp2, int (* file_re
 	    if (db_node_check_duplicates(test1, test_o1, test2, test_o2)==true)
 	      {
 		(*dup_reads)++;
-		printf("Discard duplicate reads %s and %s\n", seq1->name, seq2->name);
+		//printf("Discard duplicate reads %s and %s\n", seq1->name, seq2->name);
 		continue;
 	      }
 	  }

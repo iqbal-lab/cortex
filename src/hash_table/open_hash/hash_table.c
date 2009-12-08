@@ -149,7 +149,7 @@ boolean hash_table_apply_or_insert(Key key, void (*f)(Element *), HashTable * ha
 	      rehash++;
 	      if (rehash>hash_table->max_rehash_tries)
 		{
-		  fprintf(stderr,"too much rehashing!! Rehash=%d\n", rehash);
+		  printf("too much rehashing!! Rehash=%d\n", rehash);
 		  exit(1);
 		}
 	    }
@@ -205,7 +205,7 @@ Element * hash_table_find(Key key, HashTable * hash_table)
 	  rehash++; 
 	  if (rehash>hash_table->max_rehash_tries)
 	    {
-	      fprintf(stderr,"too much rehashing!! Rehash=%d\n", rehash);
+	      printf("too much rehashing!! Rehash=%d\n", rehash);
 	      exit(1);
 	    }
 	}
@@ -261,7 +261,7 @@ Element * hash_table_find_or_insert(Key key, boolean * found,  HashTable * hash_
 	    rehash++;
 	    if (rehash>hash_table->max_rehash_tries)
 	      {
-		fprintf(stderr,"too much rehashing!! Rehash=%d\n", rehash);
+		printf("too much rehashing!! Rehash=%d\n", rehash);
 		exit(1);
 	      }
 	  }

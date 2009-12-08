@@ -104,8 +104,8 @@ int main(int argc, char **argv){
 	
 	total_length += single_seq_length;
 	
-	printf("\nNum single-ended files loaded:%i kmers: %qd file name:%s cumulative bad reads: %qd seq in this file: %qd, total single-ended seq:%qd cumul. duplicates removed:%qd from single-ended fasta/q files\n\n",
-	       num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),filename,bad_reads,single_seq_length, total_length, dup_reads_in_single_ended);
+	printf("\nNum SE files loaded:%i kmers: %qd cumulative bad reads: %qd total SE seq: %qd duplicates removed: %qd\n\n",
+	       num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_reads,total_length, dup_reads_in_single_ended);
       }
 
     }
@@ -116,8 +116,8 @@ int main(int argc, char **argv){
       paired_seq_length = load_list_of_paired_end_fastq_into_graph(pair_fnames1, pair_fnames2, quality_cut_off, max_read_length, 
 								   &bad_reads, &dup_reads_in_paired, &num_file_pairs_loaded, rmdups_paired, db_graph); 
       
-      printf("\nNum paired-end files loaded:%i kmers: %qd file name:%s cumulative bad reads: %qd total paired-ended seq:%qd duplicates removed:%qd from paired-end fasta/q files\n\n",
-	     num_file_pairs_loaded,hash_table_get_unique_kmers(db_graph),filename,bad_reads,paired_seq_length, dup_reads_in_paired);
+      printf("\nNum PE files loaded:%i kmers: %qd cumulative bad reads: %qd total PE seq: %qd duplicates removed:%qd\n\n",
+	     num_file_pairs_loaded,hash_table_get_unique_kmers(db_graph),bad_reads,paired_seq_length, dup_reads_in_paired);
       
       total_length += paired_seq_length;
     }

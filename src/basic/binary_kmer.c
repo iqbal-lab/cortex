@@ -372,6 +372,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 	  (quality_cut_off!=0 && qualities[i]<= quality_cut_off)){
 	j=0; //restart the first kmer 
       }
+      //could add else if here, checking if latest base is equal to previous n-->homopolymer.
       else{
 	j++;
       }
@@ -413,6 +414,9 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 	  i++; //zam test
 	  break;
 	}
+	//could add else if here to break if is now a homopolymer off too long length
+
+
 	//set the kmer to previous
 	binary_kmer_assignment_operator(current_window->kmer[index_kmers], current_window->kmer[index_kmers-1]);
 	binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&(current_window->kmer[index_kmers]), current_base, kmer_size);
