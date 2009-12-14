@@ -28,7 +28,7 @@ void test_dump_load_binary(){
   db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
 
 
-  seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta", &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta, false, db_graph_pre);
+  seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta", &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta, false, false, 0, db_graph_pre);
 
 
   fout = fopen("../data/test/graph/dump_graph.bin", "w");
@@ -185,7 +185,7 @@ void test_dump_load_binary(){
       db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
 
 
-      seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/person2.fasta", &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta, false, db_graph_pre);
+      seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/person2.fasta", &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta, false, false, 0, db_graph_pre);
       
       /*
 	> 6 unique 33-mers
@@ -316,7 +316,7 @@ void test_dump_load_binary(){
       db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
 
 
-      seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta, false, db_graph_pre);
+      seq_length_pre = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta, false, false, 0, db_graph_pre);
       
 
 
@@ -410,7 +410,7 @@ void test_coverage_is_correctly_counted_on_loading_from_file()
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   int max_chunk_length=100;
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/file_to_test_covg_of_reads.fasta", &bad_reads,&dup_reads,max_chunk_length,  false, db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/file_to_test_covg_of_reads.fasta", &bad_reads,&dup_reads,max_chunk_length,  false, false, 0, db_graph);
 
   /*
     >occurs once
@@ -476,7 +476,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
   dBGraph * db_graph;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, false, db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, false, false, 0, db_graph);
 
 
   //OK - we have graph. Now test getting sliding windows from 
@@ -749,7 +749,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   dBGraph * db_graph;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, false, db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, false, false, 0, db_graph);
 
 
   //OK - we have graph. Now test getting sliding windows from 
@@ -1012,7 +1012,7 @@ void test_dumping_of_clean_fasta()
   dBGraph * db_graph;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, false, db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, false, false, 0, db_graph);
 
 
   //OK, we now have a graph. Let's see if dumping a clean fasta gives the right answers. 
@@ -1104,7 +1104,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   
   int max_read_length=100;
   seq_length = load_paired_fastq_from_filenames_into_graph("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
-							   &bad_reads, quality_cut_off, max_read_length,  &dup_reads, false, db_graph);
+							   &bad_reads, quality_cut_off, max_read_length,  &dup_reads, false, false, 0, db_graph);
   CU_ASSERT(seq_length==720);
   CU_ASSERT(db_graph->unique_kmers == 243);
 
@@ -1115,7 +1115,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   seq_length = load_paired_fastq_from_filenames_into_graph("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
-							   &bad_reads, quality_cut_off, max_read_length,  &dup_reads,true, db_graph);
+							   &bad_reads, quality_cut_off, max_read_length,  &dup_reads,true, false, 0, db_graph);
   CU_ASSERT(seq_length==720);
   CU_ASSERT(db_graph->unique_kmers == 243);
   CU_ASSERT(dup_reads==0);
@@ -1128,7 +1128,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   seq_length = load_paired_fastq_from_filenames_into_graph("../data/test/graph/paired_end_file2_with_dup_1.fastq", "../data/test/graph/paired_end_file2_with_dup_2.fastq",
-							   &bad_reads, quality_cut_off, max_read_length, &dup_reads, true, db_graph);
+							   &bad_reads, quality_cut_off, max_read_length, &dup_reads, true, false, 0, db_graph);
 
   
   //as before, but with four more 36bp reads
@@ -1151,7 +1151,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   seq_length = load_list_of_paired_end_fastq_into_graph( "../data/test/graph/list_paired_end_file3_left", 
 							 "../data/test/graph/list_paired_end_file3_right", 
-							 quality_cut_off, max_read_length, &bad_reads, &dup_reads, &count_file_pairs, true, db_graph); 
+							 quality_cut_off, max_read_length, &bad_reads, &dup_reads, &count_file_pairs, true, false, 0, db_graph); 
 
   CU_ASSERT(seq_length==360); //five 36bp reads, left and right
   CU_ASSERT(dup_reads==2);
@@ -1181,7 +1181,7 @@ void test_loading_of_single_ended_reads_removing_duplicates()
   
   int max_read_length=100;
   seq_length = load_fastq_from_filename_into_graph("../data/test/graph/paired_end_file1_1.fastq",
-						    &bad_reads, quality_cut_off, &dup_reads, max_read_length, false, db_graph);
+						    &bad_reads, quality_cut_off, &dup_reads, max_read_length, false, false, 0, db_graph);
 
   CU_ASSERT(seq_length==360);
   CU_ASSERT(db_graph->unique_kmers == 105);
@@ -1194,7 +1194,7 @@ void test_loading_of_single_ended_reads_removing_duplicates()
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   seq_length = load_fastq_from_filename_into_graph("../data/test/graph/paired_end_file1_1.fastq",
-						    &bad_reads, quality_cut_off, &dup_reads, max_read_length,true, db_graph);
+						    &bad_reads, quality_cut_off, &dup_reads, max_read_length,true, false, 0, db_graph);
   CU_ASSERT(seq_length==360);
   CU_ASSERT(db_graph->unique_kmers == 105);
   CU_ASSERT(dup_reads==0);
@@ -1204,7 +1204,7 @@ void test_loading_of_single_ended_reads_removing_duplicates()
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   seq_length = load_fastq_from_filename_into_graph("../data/test/graph/paired_end_file2_with_dup_1.fastq", 
-						    &bad_reads, quality_cut_off, &dup_reads, max_read_length, true, db_graph);
+						    &bad_reads, quality_cut_off, &dup_reads, max_read_length, true, false, 0, db_graph);
 
   
   //as before, but with four more 36bp reads
