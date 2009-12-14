@@ -21,15 +21,16 @@ int MAX_FILENAME_LENGTH=200;
 
 long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
 			      long long * bad_reads, char qualiy_cut_off, long long* dup_reads,
-			      int max_read_length, boolean remove_dups_single_endedly, dBGraph * db_graph);
+			      int max_read_length, boolean remove_dups_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, dBGraph* db_graph);
 
 long long load_paired_end_seq_into_graph(FILE* fp1, FILE* fp2, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry),
-                                         long long * bad_reads, char quality_cut_off, int max_read_length, long long* dup_reads, boolean remove_dups, dBGraph * db_graph);
+                                         long long * bad_reads, char quality_cut_off, int max_read_length, long long* dup_reads, boolean remove_dups, 
+					 boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph);
 
 
 
 long long load_fastq_from_filename_into_graph(char* filename, long long * bad_reads,  char quality_cut_off, long long* dup_reads, int max_read_length, 
-					      boolean remove_duplicates_single_endedly, dBGraph* db_graph)
+					      boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff,dBGraph* db_graph)
 {
 
   int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
@@ -53,11 +54,11 @@ long long load_fastq_from_filename_into_graph(char* filename, long long * bad_re
 
   if (remove_duplicates_single_endedly==true)
     {
-      ret =  load_seq_into_graph(fp,&file_reader,bad_reads,quality_cut_off,dup_reads, max_read_length,true, db_graph);
+      ret =  load_seq_into_graph(fp,&file_reader,bad_reads,quality_cut_off,dup_reads, max_read_length,true, break_homopolymers, homopolymer_cutoff, db_graph);
     }
   else
     {
-      ret =  load_seq_into_graph(fp,&file_reader,bad_reads,quality_cut_off, dup_reads, max_read_length,false,db_graph);
+      ret =  load_seq_into_graph(fp,&file_reader,bad_reads,quality_cut_off, dup_reads, max_read_length,false,break_homopolymers, homopolymer_cutoff, db_graph);
     }
   fclose(fp);
 
@@ -66,7 +67,7 @@ long long load_fastq_from_filename_into_graph(char* filename, long long * bad_re
 
 long long load_paired_fastq_from_filenames_into_graph(char* filename1, char* filename2, 
 						      long long * bad_reads,  char quality_cut_off, int max_read_length, 
-						      long long* dup_reads, boolean remove_duplicates, dBGraph* db_graph)
+						      long long* dup_reads, boolean remove_duplicates, boolean break_homopolymers, int homopolymer_cutoff, dBGraph* db_graph)
 {
 
   printf("Start loading %s and %s\n", filename1, filename2);
@@ -92,7 +93,8 @@ long long load_paired_fastq_from_filenames_into_graph(char* filename1, char* fil
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  long long ret =  load_paired_end_seq_into_graph(fp1, fp2, &file_reader,bad_reads,quality_cut_off,max_read_length, dup_reads, remove_duplicates, db_graph);
+  long long ret =  load_paired_end_seq_into_graph(fp1, fp2, &file_reader,bad_reads,quality_cut_off,max_read_length, dup_reads, remove_duplicates, 
+						  break_homopolymers, homopolymer_cutoff, db_graph);
   fclose(fp1);
   fclose(fp2);
 
@@ -103,7 +105,7 @@ long long load_paired_fastq_from_filenames_into_graph(char* filename1, char* fil
 
 //this routine supports big fasta entries (chromosome length for example)
 long long load_fasta_from_filename_into_graph(char* filename, long long * bad_reads, long long* dup_reads, int max_chunk_length, 
-					      boolean remove_duplicates_single_endedly, dBGraph* db_graph)
+					      boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, dBGraph* db_graph)
 {
 
   int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
@@ -126,11 +128,11 @@ long long load_fasta_from_filename_into_graph(char* filename, long long * bad_re
   long long ret;
   if (remove_duplicates_single_endedly==true)
     {
-      ret =  load_seq_into_graph(fp,&file_reader,bad_reads,0,dup_reads, max_chunk_length,true, db_graph);
+      ret =  load_seq_into_graph(fp,&file_reader,bad_reads,0,dup_reads, max_chunk_length,true, break_homopolymers, homopolymer_cutoff, db_graph);
     }
   else
     {
-      ret =  load_seq_into_graph(fp,&file_reader,bad_reads,0,dup_reads, max_chunk_length,false, db_graph);
+      ret =  load_seq_into_graph(fp,&file_reader,bad_reads,0,dup_reads, max_chunk_length,false, break_homopolymers, homopolymer_cutoff, db_graph);
     }
   fclose(fp);
 
@@ -218,7 +220,8 @@ void load_kmers_from_sliding_window_into_graph_marking_read_starts(KmerSlidingWi
 // low probability of two reads starting at the same point.
 long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
 			      long long * bad_reads, char quality_cut_off, long long* dup_reads, 
-			      int max_read_length, boolean remove_dups_single_endedly, dBGraph * db_graph){
+			      int max_read_length, boolean remove_dups_single_endedly, 
+			      boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph){
 
  
   //----------------------------------
@@ -280,7 +283,8 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
 
  
     int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,
-						   entry_length,quality_cut_off,db_graph->kmer_size,windows,max_windows, max_kmers);
+						   entry_length,quality_cut_off,db_graph->kmer_size,windows,max_windows, 
+						   max_kmers, break_homopolymers, homopolymer_cutoff);
 
     //printf("number kmers:%i %i\n",nkmers,windows->nwindows);
 
@@ -348,7 +352,7 @@ long long load_seq_into_graph(FILE* fp, int (* file_reader)(FILE * fp, Sequence 
 void paired_end_sequence_core_loading_loop(FILE* fp1 , FILE* fp2, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry),
 					   Sequence* seq1, Sequence* seq2, char quality_cut_off, int max_read_length, int max_kmers, int max_windows, 
 					   KmerSlidingWindowSet * windows1, KmerSlidingWindowSet * windows2, long long* seq_len, long long* dup_reads, long long* bad_reads, 
-					   boolean remove_dups, dBGraph* db_graph)
+					   boolean remove_dups, boolean break_homopolymers, int homopolymer_cutoff, dBGraph* db_graph)
 {
 
   int entry_length1=0;
@@ -386,9 +390,9 @@ void paired_end_sequence_core_loading_loop(FILE* fp1 , FILE* fp2, int (* file_re
    
  
     int nkmers1 = get_sliding_windows_from_sequence(seq1->seq,seq1->qual,
-						   entry_length1,quality_cut_off,db_graph->kmer_size,windows1,max_windows, max_kmers);
+						    entry_length1,quality_cut_off,db_graph->kmer_size,windows1,max_windows, max_kmers, break_homopolymers, homopolymer_cutoff);
     int nkmers2 = get_sliding_windows_from_sequence(seq2->seq,seq2->qual,
-						   entry_length2,quality_cut_off,db_graph->kmer_size,windows2,max_windows, max_kmers);
+						    entry_length2,quality_cut_off,db_graph->kmer_size,windows2,max_windows, max_kmers, break_homopolymers, homopolymer_cutoff);
 
 
     //check whether first kmer of both reads is a read-start. If yes, then discard read as duplicate.
@@ -458,7 +462,8 @@ void paired_end_sequence_core_loading_loop(FILE* fp1 , FILE* fp2, int (* file_re
 
 //returns length of sequence loaded
 long long load_paired_end_seq_into_graph(FILE* fp1, FILE* fp2, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
-					 long long * bad_reads, char quality_cut_off, int max_read_length, long long* dup_reads, boolean remove_dups, dBGraph * db_graph){
+					 long long * bad_reads, char quality_cut_off, int max_read_length, long long* dup_reads, boolean remove_dups, 
+					 boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph){
 
  
 
@@ -517,7 +522,7 @@ long long load_paired_end_seq_into_graph(FILE* fp1, FILE* fp2, int (* file_reade
 
   //work through the paired files, loading sequence into the graph. If remove_dups==true, then for each pair, discard both mate reads if they both start at a read_start kmer
   paired_end_sequence_core_loading_loop(fp1, fp2, file_reader, seq1, seq2, quality_cut_off,  max_read_length, max_kmers, max_windows, 
-					windows1, windows2,  &(seq_length), dup_reads, bad_reads, remove_dups, db_graph);
+					windows1, windows2,  &(seq_length), dup_reads, bad_reads, remove_dups, break_homopolymers, homopolymer_cutoff,db_graph);
   
 
 
@@ -532,7 +537,8 @@ long long load_paired_end_seq_into_graph(FILE* fp1, FILE* fp2, int (* file_reade
 
 //assume we have two lists of equal length, of mate fastq files in the same order in each file
 long long load_list_of_paired_end_fastq_into_graph(char* list_of_left_mates, char* list_of_right_mates, char quality_cut_off, int max_read_length, 
-						   long long* bad_reads, long long* num_dups, int* count_file_pairs, boolean remove_dups, dBGraph* db_graph)
+						   long long* bad_reads, long long* num_dups, int* count_file_pairs, boolean remove_dups, 
+						   boolean break_homopolymers, int homopolymer_cutoff,dBGraph* db_graph)
 {
 
   FILE* f1 = fopen(list_of_left_mates, "r");
@@ -576,7 +582,8 @@ long long load_list_of_paired_end_fastq_into_graph(char* list_of_left_mates, cha
 	      *p = '\0';
 	    }
 	  
-	  seq_length += load_paired_fastq_from_filenames_into_graph(filename1, filename2, bad_reads, quality_cut_off, max_read_length, num_dups, remove_dups, db_graph);
+	  seq_length += load_paired_fastq_from_filenames_into_graph(filename1, filename2, bad_reads, quality_cut_off, max_read_length, num_dups, remove_dups, 
+								    break_homopolymers, homopolymer_cutoff, db_graph);
 	  (*count_file_pairs)++;
 	 
 	}
@@ -683,7 +690,8 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
     seq_length += (long long) (entry_length - (prev_full_entry==false ? db_graph->kmer_size : 0));
 
     
-    int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,entry_length,quality_cut_off,db_graph->kmer_size,windows,max_windows, max_kmers);
+    //last two arguments mean not to break at homopolymers
+    int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,entry_length,quality_cut_off,db_graph->kmer_size,windows,max_windows, max_kmers,false,0);
     
     if (nkmers == 0) {
       (*bad_reads)++;

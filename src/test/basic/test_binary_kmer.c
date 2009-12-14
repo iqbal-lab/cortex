@@ -718,13 +718,19 @@ void test_get_sliding_windows_from_sequence(){
     CU_ASSERT_EQUAL(windows->max_nwindows,20);
 
     //----------------------------------
+
+
+    // ****************************************************
+    // First tests do not involve any homopolymer breaking:
+    // ****************************************************
+
   
     char * seq  = "AAAAANNTTTTGGGG";
     char qual0[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     char kmer_seq3[3];
 
-    int nkmers1 = get_sliding_windows_from_sequence(seq,qual0,strlen(seq),0,3,windows,20,20);
+    int nkmers1 = get_sliding_windows_from_sequence(seq,qual0,strlen(seq),0,3,windows,20,20, false, 0);
 
     CU_ASSERT_EQUAL(windows->nwindows,2);
 
@@ -745,7 +751,7 @@ void test_get_sliding_windows_from_sequence(){
     
     char qual1[15] = { 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 10, 20, 20, 20};
 
-    int nkmers2 = get_sliding_windows_from_sequence(seq,qual1,strlen(seq),15,3,windows,20,20);
+    int nkmers2 = get_sliding_windows_from_sequence(seq,qual1,strlen(seq),15,3,windows,20,20, false,0);
 
     CU_ASSERT_EQUAL(windows->nwindows,3);
 
@@ -765,7 +771,7 @@ void test_get_sliding_windows_from_sequence(){
 
     char qual2[15] = { 5, 10, 20, 20, 20, 20, 0, 0, 0, 20, 20, 30, 20, 20, 20};
 
-    int nkmers3 = get_sliding_windows_from_sequence(seq,qual2,strlen(seq),15,3,windows,20,20);
+    int nkmers3 = get_sliding_windows_from_sequence(seq,qual2,strlen(seq),15,3,windows,20,20, false,0);
 
     CU_ASSERT_EQUAL(windows->nwindows,2);
 
@@ -781,13 +787,13 @@ void test_get_sliding_windows_from_sequence(){
     CU_ASSERT_EQUAL(nkmers3, 5);
 
     char qual3[15] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    int nkmers4 = get_sliding_windows_from_sequence(seq,qual3,strlen(seq),15,3,windows,20,20);
+    int nkmers4 = get_sliding_windows_from_sequence(seq,qual3,strlen(seq),15,3,windows,20,20, false,0);
 
     CU_ASSERT_EQUAL(windows->nwindows,0);
     CU_ASSERT_EQUAL(nkmers4, 0);
 
     char kmer_seq5[5];
-    int nkmers5 = get_sliding_windows_from_sequence(seq,qual0,strlen(seq),0,5,windows,20,20);
+    int nkmers5 = get_sliding_windows_from_sequence(seq,qual0,strlen(seq),0,5,windows,20,20, false,0);
     
     CU_ASSERT_EQUAL(windows->nwindows,2);
   
@@ -820,7 +826,7 @@ void test_get_sliding_windows_from_sequence(){
 	char kmer_seq33[33];
 	int quality_cutoff=0;
 	short kmer_size=33;
-	int nkmers_33 = get_sliding_windows_from_sequence(seq_contains_only_one_good_33mer,qual_144_zeroes,strlen(seq_contains_only_one_good_33mer),quality_cutoff,kmer_size,windows,40,40);
+	int nkmers_33 = get_sliding_windows_from_sequence(seq_contains_only_one_good_33mer,qual_144_zeroes,strlen(seq_contains_only_one_good_33mer),quality_cutoff,kmer_size,windows,40,40, false,0);
 
 	CU_ASSERT_EQUAL(windows->nwindows,1);
 	CU_ASSERT_EQUAL((windows->window[0]).nkmers, 1);
@@ -828,13 +834,13 @@ void test_get_sliding_windows_from_sequence(){
 	CU_ASSERT(nkmers_33==1);
 
 	quality_cutoff=20;
-	nkmers_33 = get_sliding_windows_from_sequence(seq_contains_only_one_good_33mer,qual_144_30s,strlen(seq_contains_only_one_good_33mer),quality_cutoff,kmer_size,windows,40,40);
+	nkmers_33 = get_sliding_windows_from_sequence(seq_contains_only_one_good_33mer,qual_144_30s,strlen(seq_contains_only_one_good_33mer),quality_cutoff,kmer_size,windows,40,40, false,0);
 	CU_ASSERT_EQUAL(windows->nwindows,1);
 	CU_ASSERT_EQUAL((windows->window[0]).nkmers, 1);
 	CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[0]),33,kmer_seq33),"GCACATATGGGCACATATGGGCACATATGGGCA");
 	CU_ASSERT(nkmers_33==1);
 
-	nkmers_33 = get_sliding_windows_from_sequence(seq_contains_only_one_good_33mer,qual_all_30s_except_for_the_one_33mer,strlen(seq_contains_only_one_good_33mer),quality_cutoff,kmer_size,windows,40,40);
+	nkmers_33 = get_sliding_windows_from_sequence(seq_contains_only_one_good_33mer,qual_all_30s_except_for_the_one_33mer,strlen(seq_contains_only_one_good_33mer),quality_cutoff,kmer_size,windows,40,40, false,0);
 	CU_ASSERT_EQUAL(windows->nwindows,0);
 	CU_ASSERT(nkmers_33==0);
 
@@ -849,4 +855,126 @@ void test_get_sliding_windows_from_sequence(){
 
 
     
+}
+
+
+void test_breaking_homopolymers_in_get_sliding_windows ()
+{
+   //----------------------------------
+    KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
+    if (windows == NULL){
+      fputs("Out of memory trying to allocate a KmerSlidingWindowSet",stderr);
+      exit(1);
+    } 
+
+    binary_kmer_alloc_kmers_set(windows,20,30);
+    
+    CU_ASSERT_EQUAL(windows->max_nwindows,20);
+
+    //----------------------------------
+
+
+    char * seq  = "AAAAANNTCAGAT";
+    char qual0[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    char kmer_seq3[3];
+
+    //break at homopolymers of length 4. ie you should never load any homopolymer of length >3, and when you reach one of length >=4, you don't start your next window
+    //until after the end of the homopolymer
+    int nkmers1 = get_sliding_windows_from_sequence(seq,qual0,strlen(seq),0,3,windows,20,20, true, 4);
+
+    CU_ASSERT_EQUAL(windows->nwindows,2);
+
+    CU_ASSERT_EQUAL((windows->window[0]).nkmers, 1);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[0]),3,kmer_seq3),"AAA");
+ 
+    CU_ASSERT_EQUAL((windows->window[1]).nkmers, 4);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[0]),3,kmer_seq3),"TCA");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[1]),3,kmer_seq3),"CAG");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[2]),3,kmer_seq3),"AGA");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[3]),3,kmer_seq3),"GAT");
+
+    CU_ASSERT_EQUAL(nkmers1, 5);
+
+    //now try length 3, which is also the kmer_length. Should only get one window
+    nkmers1 = get_sliding_windows_from_sequence(seq,qual0,strlen(seq),0,3,windows,20,20, true, 3);
+
+    CU_ASSERT_EQUAL(windows->nwindows,1);
+    CU_ASSERT_EQUAL((windows->window[0]).nkmers, 4);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[0]),3,kmer_seq3),"TCA");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[1]),3,kmer_seq3),"CAG");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[2]),3,kmer_seq3),"AGA");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[3]),3,kmer_seq3),"GAT");
+
+    CU_ASSERT_EQUAL(nkmers1, 4);
+
+    //does it break if you enter hom cutoff of 0 or 1 or 2?
+
+    //cutoff is 2
+    nkmers1 = get_sliding_windows_from_sequence(seq,qual0,strlen(seq),0,3,windows,20,20, true, 2);
+
+    CU_ASSERT_EQUAL(windows->nwindows,1);
+    CU_ASSERT_EQUAL((windows->window[0]).nkmers, 4);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[0]),3,kmer_seq3),"TCA");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[1]),3,kmer_seq3),"CAG");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[2]),3,kmer_seq3),"AGA");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[3]),3,kmer_seq3),"GAT");
+
+    CU_ASSERT_EQUAL(nkmers1, 4);
+
+    //cutoff is 1
+    nkmers1 = get_sliding_windows_from_sequence(seq,qual0,strlen(seq),0,3,windows,20,20, true, 1);
+
+    CU_ASSERT_EQUAL(windows->nwindows,0);
+    CU_ASSERT_EQUAL(nkmers1, 0);
+
+    //cutoff is zero
+    nkmers1 = get_sliding_windows_from_sequence(seq,qual0,strlen(seq),0,3,windows,20,20, true, 0);
+
+    CU_ASSERT_EQUAL(windows->nwindows,0);
+    CU_ASSERT_EQUAL(nkmers1, 0);
+
+
+    
+
+
+
+    // Now try some examples with large kmers
+
+    
+    if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>2)
+      {
+	
+	char* seq_contains_only_one_good_33mer="CCCCCCCCTANTGGGCACATATGGGCACATATGGNGCACATATGGGCACATATGGGCACATATGGNGCACATATGGNNNNNNNNNNGCACATATGGGNCANCATATGNNGCACATATGGGCACATATGGGCACATATGGGCANC";
+        char qual_144_zeroes[144] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	char kmer_seq33[33];
+	int quality_cutoff=0;
+	short kmer_size=33;
+	//let's put a homopolymer cutoff of 4 - should have no effect, as the one good 33mer contains none longer than 3
+	int nkmers_33 = get_sliding_windows_from_sequence(seq_contains_only_one_good_33mer,qual_144_zeroes,strlen(seq_contains_only_one_good_33mer),quality_cutoff,kmer_size,windows,40,40, true,4);
+
+	CU_ASSERT_EQUAL(windows->nwindows,1);
+	CU_ASSERT_EQUAL((windows->window[0]).nkmers, 1);
+	CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[0]),33,kmer_seq33),"GCACATATGGGCACATATGGGCACATATGGGCA");
+	CU_ASSERT(nkmers_33==1);
+
+
+	//let's put a homopolymer cutoff of 3 - should find nothing
+	nkmers_33 = get_sliding_windows_from_sequence(seq_contains_only_one_good_33mer,qual_144_zeroes,strlen(seq_contains_only_one_good_33mer),quality_cutoff,kmer_size,windows,40,40, true,3);
+
+	CU_ASSERT_EQUAL(windows->nwindows,0);
+	CU_ASSERT(nkmers_33==0);
+
+
+
+      }
+
+
+
+    binary_kmer_free_kmers_set(&windows);
+    
+    CU_ASSERT(windows == NULL);
+
+  
 }

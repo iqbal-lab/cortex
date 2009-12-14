@@ -108,6 +108,11 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pSuite, "test creation of binary kmers from sequence - breaking at homopolymers", test_breaking_homopolymers_in_get_sliding_windows    )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
 
 
   if (NULL == CU_add_test(pSuite, "test shift last kmer to start",  test_shift_last_kmer_to_start_of_sequence)){
