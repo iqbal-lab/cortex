@@ -935,6 +935,93 @@ void test_breaking_homopolymers_in_get_sliding_windows ()
     CU_ASSERT_EQUAL(nkmers1, 0);
 
 
+
+    // another example:
+
+    seq  = "AAAAANNTCTCCCCCTAGATGGGGGGGGGGGGGCCACCCNCCCCGTGATAT";
+    char qual_other[51] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    char kmer_seq7[7];
+
+    //first of all - not breaking homopolymers, only the N's cause problems:
+    nkmers1 = get_sliding_windows_from_sequence(seq,qual_other,strlen(seq),0,7,windows,40,40, false, 0);
+
+    CU_ASSERT_EQUAL(windows->nwindows,2);
+
+    CU_ASSERT_EQUAL((windows->window[0]).nkmers, 26);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[0]),7,kmer_seq7),"TCTCCCC");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[1]),7,kmer_seq7),"CTCCCCC");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[2]),7,kmer_seq7),"TCCCCCT");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[3]),7,kmer_seq7),"CCCCCTA");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[4]),7,kmer_seq7),"CCCCTAG");
+    // ... not doing them all
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[25]),7,kmer_seq7),"GCCACCC");
+
+
+
+    CU_ASSERT_EQUAL((windows->window[1]).nkmers, 5);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[0]),7,kmer_seq3),"CCCCGTG");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[1]),7,kmer_seq3),"CCCGTGA");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[2]),7,kmer_seq3),"CCGTGAT");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[3]),7,kmer_seq3),"CGTGATA");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[4]),7,kmer_seq3),"GTGATAT");
+
+    CU_ASSERT_EQUAL(nkmers1, 31);
+
+
+    //then, breaking homopolymers - no homopolymer of length 1 or greater
+    nkmers1 = get_sliding_windows_from_sequence(seq,qual_other,strlen(seq),0,7,windows,40,40, true, 1);
+    CU_ASSERT_EQUAL(windows->nwindows,0);
+    CU_ASSERT_EQUAL(nkmers1, 0);
+    //then, breaking homopolymers - no homopolymer of length 2 or greater
+    nkmers1 = get_sliding_windows_from_sequence(seq,qual_other,strlen(seq),0,7,windows,40,40, true, 2);
+    CU_ASSERT_EQUAL(windows->nwindows,1);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[0]),7,kmer_seq7),"GTGATAT");
+    CU_ASSERT_EQUAL((windows->window[0]).nkmers, 1);
+    CU_ASSERT_EQUAL(nkmers1, 1);
+    //then, breaking homopolymers - no homopolymer of length 3 or greater
+    nkmers1 = get_sliding_windows_from_sequence(seq,qual_other,strlen(seq),0,7,windows,40,40, true, 3);
+    CU_ASSERT_EQUAL(windows->nwindows,2);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[0]),7,kmer_seq7),"TAGATGG");
+    CU_ASSERT_EQUAL((windows->window[0]).nkmers, 1);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[0]),7,kmer_seq7),"GTGATAT");
+    CU_ASSERT_EQUAL((windows->window[1]).nkmers, 1);
+    CU_ASSERT_EQUAL(nkmers1, 2);
+    //then, breaking homopolymers - no homopolymer of length 4 or greater
+    nkmers1 = get_sliding_windows_from_sequence(seq,qual_other,strlen(seq),0,7,windows,40,40, true, 4);
+    CU_ASSERT_EQUAL(windows->nwindows,2);
+    CU_ASSERT_EQUAL((windows->window[0]).nkmers, 2);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[0]),7,kmer_seq7),"TAGATGG");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[1]),7,kmer_seq7),"AGATGGG");
+
+    CU_ASSERT_EQUAL((windows->window[1]).nkmers, 1);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[0]),7,kmer_seq7),"GTGATAT");
+    CU_ASSERT_EQUAL(nkmers1, 3);
+
+    //"AAAAANNTCTCCCCCTAGATGGGGGGGGGGGGGCCACCCNCCCCGTGATAT"
+    //then, breaking homopolymers - no homopolymer of length 5 or greater
+    nkmers1 = get_sliding_windows_from_sequence(seq,qual_other,strlen(seq),0,7,windows,40,40, true, 5);
+    CU_ASSERT_EQUAL(windows->nwindows,3);
+    CU_ASSERT_EQUAL((windows->window[0]).nkmers, 1);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[0].kmer[0]),7,kmer_seq7),"TCTCCCC");
+
+    CU_ASSERT_EQUAL((windows->window[1]).nkmers, 3);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[0]),7,kmer_seq7),"TAGATGG");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[1]),7,kmer_seq7),"AGATGGG");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[1].kmer[2]),7,kmer_seq7),"GATGGGG");
+
+    CU_ASSERT_EQUAL((windows->window[2]).nkmers, 5);
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[2].kmer[0]),7,kmer_seq7),"CCCCGTG");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[2].kmer[1]),7,kmer_seq7),"CCCGTGA");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[2].kmer[2]),7,kmer_seq7),"CCGTGAT");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[2].kmer[3]),7,kmer_seq7),"CGTGATA");
+    CU_ASSERT_STRING_EQUAL(binary_kmer_to_seq(&(windows->window[2].kmer[4]),7,kmer_seq7),"GTGATAT");
+
+    CU_ASSERT_EQUAL(nkmers1, 9);
+
+    
+
+
+
     
 
 
