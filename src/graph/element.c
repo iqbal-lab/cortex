@@ -373,8 +373,7 @@ boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node){
   short coverage;
   int read;
   
-  int i;
-  
+  // int i;
   //for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
   //  {
   //    read = fread(&(kmer[i]),sizeof(bitfield_of_64bits),1,fp);
@@ -543,7 +542,7 @@ void db_node_set_read_start_status(dBNode* node, Orientation ori)
     }
   else if (db_node_check_status(node, unassigned) )
     {
-      printf("Warning - setting status of an unassigned node to read_start\. Exitn");
+      printf("Warning - setting status of an unassigned node to read_start. Exit");
       exit(1);
     }
   else if (db_node_check_status(node, read_start_forward) && (ori==reverse) )
