@@ -1802,6 +1802,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
       exit(1);
     }
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*length_of_arrays);    //*(number_of_nodes_to_load + db_graph->kmer_size));
+  //kmer_window->kmer = (BinaryKmer*) malloc(sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER*length_of_arrays);    //*(number_of_nodes_to_load + db_graph->kmer_size));
   if (kmer_window->kmer==NULL)
     {
       printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
@@ -1968,12 +1969,16 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	  //if this chromosome node does not exist in the person's graph, move on to the next node
 	  if (db_node_is_this_node_in_this_person_or_populations_graph(chrom_path_array[start_node_index], which_array_holds_indiv, index_for_indiv_in_edge_array) == false)
 	    {
+	      //printf("ZAM DEBUG node number %d not in the graph of person %d\n", start_node_index, index_for_indiv_in_edge_array);
+
 	      start_node_index++;
 	      continue;
 	    }
 
 	  if (db_node_check_status_visited(chrom_path_array[start_node_index])==true)
 	  {
+	    //printf("ZAM DEBUG - node %d is visited\n", start_node_index);
+
 	    start_node_index++;
 	    continue;
 	  }
@@ -2056,6 +2061,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 	    }
 
+	  
 
 	  //now see how far along the chromosome you go before the supernode breaks off and differs
 	  int first_index_in_chrom_where_supernode_differs_from_chromosome = start_node_index;
@@ -2083,6 +2089,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      printf("WARNING 4\n");
 	      exit(1);
 	    }
+
+
 
 
 	  //find how far along can go on reference before supernode branches off and starts to differ from the ref/chromosome
@@ -2254,6 +2262,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	    {
 
 	      //we have found a potential SV locus.
+	      //printf("ZAM DEBUG - found potential SV locus\n");
 	      num_variants_found++;
 
 
@@ -3113,6 +3122,7 @@ void compute_label(dBNode * node, Orientation o, char * label, EdgeArrayType typ
 //want to have it all in memory. So we read through the fasta defining the path.
 // caller must have an idea of size of fasta, and suggest a chunk_size (ideally <0.5 of the size of the file) in bases.
 //  So chunk size wil be the number of bases/nodes loaded each time we go through the internal file-reading loop in this function
+//  We assume chunk size is less than half the entire file.
 void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fasta_fptr, int chunk_size, dBGraph* db_graph)
 {
 
@@ -3154,22 +3164,23 @@ void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fa
       printf("Failed to malloc kmer sliding window in apply_to_all_nodes_in_path_defined_by_fasta. Exit.\n");
       exit(1);
     }
+
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*length_of_arrays);   
   if (kmer_window->kmer==NULL)
     {
       printf("Failed to malloc kmer_window->kmer in apply_to_all_nodes_in_path_defined_by_fastadb_graph. Exit.\n");
       exit(1);
-    }
-  
+    }  
   kmer_window->nkmers=0;
 
 
 
 
   //load a set of nodes into thr back end (right hand/greatest indices) of array
-  // each call   will push left the nodes/etc in the various arrays by length_of_arrays/2=max_anchor_span
+  // each call   will push left the nodes/etc in the various arrays by length_of_arrays
   // and then put the new nodes etc in on the right of that
 
+  int total_so_far;
   int ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(fasta_fptr, chunk_size, 0, 
 													     length_of_arrays,
 													     path_array, orientation_array, 
@@ -3177,7 +3188,7 @@ void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fa
 													     seq, kmer_window, 
 													     true, false,
 													     db_graph);
-
+  total_so_far+=ret;
 
 
   if (ret == chunk_size)
@@ -3189,6 +3200,7 @@ void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fa
 													     seq, kmer_window, 
 													     false, false,
 													     db_graph);
+      total_so_far+=ret;
     }
 
 

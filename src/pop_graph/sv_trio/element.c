@@ -638,7 +638,6 @@ boolean db_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, E
 
   if (edge_for_this_person_or_pop == 0)
     {
-
       return false;
     }
   else

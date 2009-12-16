@@ -1352,11 +1352,11 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
   //now do the test!!!
   FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test1", "w");
   int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-						    individual_edge_array,1,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
-  						    1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
-
+							individual_edge_array,1,
+							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+							max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
+							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr);
+  
   fclose(fp);
 
   CU_ASSERT(ret==1);
@@ -1365,7 +1365,6 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
   CU_ASSERT_STRING_EQUAL("AAGCCACA", return_branch2_array[0]);
   CU_ASSERT_STRING_EQUAL("CTGTACTTGTA", return_flank3p_array[0]);
 
-  printf("We expect 1 back, and get %d\n We expect 5p flank AATAGACGCCCACACCTGATAG and get %s\n", ret, return_flank5p_array[0]);
 
   CU_ASSERT(return_variant_start_coords_array[0]==23);
 
@@ -2630,7 +2629,7 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
 
   void test_func(dBNode* node)
     {
-      if ( (node!=NULL) && (!binary_kmer_comparison_operator(*element_get_kmer(node), marked_kmer)) )
+      if ( (node!=NULL) ) //I don't think we need this:   && (!binary_kmer_comparison_operator(*element_get_kmer(node), marked_kmer)) )
 	{
 	  BinaryKmer k;
 	  binary_kmer_assignment_operator(k, *element_get_kmer(node));
@@ -2649,7 +2648,6 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
   FILE* fasta_fptr = fopen("../data/test/pop_graph/variations/first_person_short_seq.fasta", "r");
   apply_to_all_nodes_in_path_defined_by_fasta(&test_func, fasta_fptr, 10, db_graph);
   fclose(fasta_fptr);
-
 
   CU_ASSERT_STRING_EQUAL(results_array[0], "AATAG");
   CU_ASSERT_STRING_EQUAL(results_array[1], "ATAGA");

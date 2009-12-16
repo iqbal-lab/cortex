@@ -221,7 +221,8 @@ int load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_rea
 
   free_sequence(&seq);
   binary_kmer_free_kmers_set(&windows);
-  
+
+
   return seq_length;    
 }
 
@@ -276,18 +277,18 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   int j;
 
   BinaryKmer marked_kmer; //will have all longlongs in array being ~0
-  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
-    {
-      marked_kmer[j]=~0;
-    }
-
+  //  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
+  //    {
+  //      marked_kmer[j]=~0;
+  //    }
+  binary_kmer_set_all_bitfields(marked_kmer, ~( (bitfield_of_64bits) 0) );
+  
 
 
   if (expecting_new_fasta_entry==false)
     {
       //3rd argument is limit set on number of bases in seq before read_sequence_from_fasta returns. We want number_of_nodes_to_load new bases, plus the kmer's woorth of bases already in seq
       chunk_length = read_sequence_from_fasta(chrom_fptr,seq,number_of_nodes_to_load+db_graph->kmer_size, expecting_new_fasta_entry, &full_entry, offset_for_filereader);
-
     }
   else
     {
@@ -303,7 +304,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
     {
       path_string[offset+j]=seq->seq[db_graph->kmer_size+j];
     }
-  path_string[offset+number_of_nodes_to_load]='\0';//zam added this
+  path_string[offset+number_of_nodes_to_load]='\0';
 
   if (DEBUG){
     printf ("\nsequence returned from read_sequence_from_fasta to load_seq_into_array is %s - kmer size: %i - number of bases loaded inc the preassigned ones at start f seq  length: %i \n",seq->seq,db_graph->kmer_size, chunk_length);
@@ -346,7 +347,8 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   for(j=0;j<kmer_window->nkmers;j++)
     { //for each kmer in window
 
-      if ( binary_kmer_comparison_operator(kmer_window->kmer[j], marked_kmer) ) //encoding as  1's in all 64 bits, a non-kmer - ie anything that would have had an N in it
+      if ( binary_kmer_comparison_operator(kmer_window->kmer[j], marked_kmer) ) //encoding as  1's in all 64 bits of all bitfields in BineryKmer, 
+	                                                                        //a non-kmer - ie anything that would have had an N in it
 	{
 	  //corresponds to a kmer that contains an N
 	  path_nodes[offset+j]        =NULL;
@@ -363,10 +365,16 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	}
       
       boolean found = false;
-      current_node = hash_table_find_or_insert(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),&found,db_graph);	  
+      //ZAM DEBUG - next line is surely wrong
+      //current_node = hash_table_find_or_insert(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),&found,db_graph);	  
+      current_node = hash_table_find(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph);	  
 
       if (current_node == NULL){
-	fputs("Problem in load_seq_into_array - current kmer not found\n",stderr);
+	BinaryKmer tmp_dbg_kmer;
+	char tmp_dbg_seq[db_graph->kmer_size];
+
+	printf("Problem in load_seq_into_array - current kmer not found %s\n",
+	       binary_kmer_to_seq(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_dbg_kmer), db_graph->kmer_size,tmp_dbg_seq));
 	exit(1);
       }
       

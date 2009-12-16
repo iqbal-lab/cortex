@@ -15,7 +15,7 @@ void binary_kmer_initialise_to_zero(BinaryKmer* bkmer)
   int i;
   for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
     {
-      ((*bkmer)[i])=0;
+      ((*bkmer)[i])=(bitfield_of_64bits) 0;
     }
 }
 
@@ -27,6 +27,16 @@ void binary_kmer_assignment_operator(BinaryKmer left, BinaryKmer right)
   for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
     {
       left[i]=right[i];
+    }
+}
+
+
+void binary_kmer_set_all_bitfields(BinaryKmer assignee, bitfield_of_64bits val)
+{
+  int i;
+  for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      assignee[i]=val;
     }
 }
 
@@ -111,6 +121,7 @@ void binary_kmer_left_shift(BinaryKmer* kmer, int num_bits_to_shift, short kmer_
   void shift_left(int which_bitfield_in_kmer, bitfield_of_64bits overflow_to_apply_from_bitfield_to_the_right)
     {
 
+
       //get the overflow that you will create when you shift left
       bitfield_of_64bits mask = ~(((bitfield_of_64bits)1<<(64-num_bits_to_shift))-1);   // start with 1's in all bits except the left hand (most significant) number_of_bits_to_shift, and then you take complement with ~
       bitfield_of_64bits new_overflow = ((*kmer)[which_bitfield_in_kmer]) & mask;
@@ -121,6 +132,16 @@ void binary_kmer_left_shift(BinaryKmer* kmer, int num_bits_to_shift, short kmer_
 
       //apply overflow we have been passed in
       ((*kmer)[which_bitfield_in_kmer]) = ((*kmer)[which_bitfield_in_kmer]) | overflow_to_apply_from_bitfield_to_the_right;
+
+      //zam added this if
+      if (which_bitfield_in_kmer==NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1-number_of_bitfields_fully_used) //ie you are in the leftmost bitfield, where not all of the bits are used
+	{
+	  //mask off everything to the left of the bits that contain your kmer.
+	  ((*kmer)[which_bitfield_in_kmer]) = ((*kmer)[which_bitfield_in_kmer]) & ( (((bitfield_of_64bits)1)<<number_of_bits_in_most_sig_bitfield) -1);
+
+
+	}
+
 
       
       which_bitfield_in_kmer--;
@@ -139,9 +160,7 @@ void binary_kmer_left_shift(BinaryKmer* kmer, int num_bits_to_shift, short kmer_
 
   shift_left(NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1,0);
 
-  //remove the num_bits_to_shift bits at the left hand end that have been pushed beyond the end of the kmer
-  
-
+  //remove the num_bits_to_shift bits at the left hand end that have been pushed beyond the end of the kmer  
   if (number_of_bitfields_fully_used<NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
   {
 
@@ -150,6 +169,15 @@ void binary_kmer_left_shift(BinaryKmer* kmer, int num_bits_to_shift, short kmer_
 
     // mask the (number_of_bitfields_fully_used+1)-th bitfield from the right
     (*kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used -1 ] = (*kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used -1] & mask;
+
+    //this next is important - do not remove it
+    int j;
+    for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used -1; j++)
+      {
+	(*kmer)[j] = (bitfield_of_64bits)0;
+      }
+
+
   }
 }
 
@@ -465,7 +493,9 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
     }
 
   BinaryKmer current_good_kmer;
-  binary_kmer_assignment_operator(current_good_kmer, marked_kmer); //initialisation
+  //binary_kmer_assignment_operator(current_good_kmer, marked_kmer); //initialisation
+  binary_kmer_initialise_to_zero(&current_good_kmer); //zam DEBUG
+
   //long long current_good_kmer=~0;
   
   // don't think need this given new API --> BinaryKmer mask = (( (BinaryKmer) 1 << (2*kmer_size)) - 1); // mask binary 00..0011..11 as many 1's as kmer_size * 2 (every base takes 2 bits)
@@ -503,6 +533,7 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
 
   BinaryKmer tmp_bin_kmer;
   binary_kmer_assignment_operator(tmp_bin_kmer, marked_kmer);
+  //binary_kmer_initialise_to_zero(&tmp_bin_kmer);//zam debug
 
   if (number_of_steps_before_current_kmer_is_good==0)
     {
@@ -732,7 +763,8 @@ void binary_kmer_alloc_kmers_set(KmerSlidingWindowSet * windows, int max_windows
   int w;
   for(w=0;w<max_windows;w++){
     windows->window[w].nkmers=0;
-    windows->window[w].kmer = malloc(sizeof(BinaryKmer) * max_kmers);
+    //windows->window[w].kmer = malloc(sizeof(BinaryKmer) * max_kmers);
+    windows->window[w].kmer = (BinaryKmer*) malloc(sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER * max_kmers);
     if (windows->window[w].kmer == NULL){
       fputs("binary_kmer: Out of memory trying to allocate an array of BinaryKmer",stderr);
       exit(1);

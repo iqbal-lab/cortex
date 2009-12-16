@@ -76,7 +76,7 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for applying some other function to all nodes in a path defined by a fasta",   test_apply_to_all_nodes_in_path_defined_by_fasta)) {
+    if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for applying some other function to all nodes in a path defined by a fasta",   test_apply_to_all_nodes_in_path_defined_by_fasta)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
@@ -129,11 +129,11 @@ int  main()
      return CU_get_error();
     }
     
-    if (NULL == CU_add_test(pPopGraphSuite, "Unit test of utilty function to produce array of nodes corresponding to a given path through graph, as specified by a fasta file",  test_load_seq_into_array))
+        if (NULL == CU_add_test(pPopGraphSuite, "Unit test of utilty function to produce array of nodes corresponding to a given path through graph, as specified by a fasta file",  test_load_seq_into_array))
       {
-	CU_cleanup_registry();
-	return CU_get_error();
-      }
+    	CU_cleanup_registry();
+    	return CU_get_error();
+     }
     if (NULL == CU_add_test(pPopGraphSuite, "Unit test of wrapper function for above utility function",  test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta))
       {
 	CU_cleanup_registry();

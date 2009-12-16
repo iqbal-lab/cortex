@@ -18,7 +18,7 @@
 #define ALLOW_KMERS_UP_TO_255 8
 
 // change this if you want to support different kmer-ranges
-#define NUMBER_OF_BITFIELDS_IN_BINARY_KMER  ALLOW_KMERS_UP_TO_31
+#define NUMBER_OF_BITFIELDS_IN_BINARY_KMER  ALLOW_KMERS_UP_TO_63
 
 
 
@@ -35,7 +35,7 @@ typedef enum
 //platform specific
 typedef unsigned long long bitfield_of_64bits;
 
-typedef bitfield_of_64bits BinaryKmer[NUMBER_OF_BITFIELDS_IN_BINARY_KMER];  //think of this as the number of long longs we encode the kmer in
+typedef bitfield_of_64bits BinaryKmer[NUMBER_OF_BITFIELDS_IN_BINARY_KMER];  //think of NUMBER_OF_BITFIELDS_IN_BINARY_KMER as the number of long longs we encode the kmer in
 
 
 
@@ -58,6 +58,7 @@ typedef struct
 // basic BinaryKmer operations
 void       binary_kmer_initialise_to_zero(BinaryKmer* bkmer);
 void       binary_kmer_assignment_operator(BinaryKmer left, BinaryKmer right);
+void       binary_kmer_set_all_bitfields(BinaryKmer assignee, bitfield_of_64bits val);
 boolean    binary_kmer_comparison_operator(const BinaryKmer const left, const BinaryKmer const right);
 boolean    binary_kmer_less_than(const BinaryKmer const left, const BinaryKmer const right,short kmer_size);
 void       binary_kmer_right_shift(BinaryKmer* kmer, int num_bits_to_shift);
