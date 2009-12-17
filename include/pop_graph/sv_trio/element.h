@@ -102,6 +102,9 @@ boolean db_node_add_edge(dBNode *, dBNode *, Orientation, Orientation, short kme
 //outgoing edge in the side defined by the orientation.   
 boolean db_node_edge_exist(dBNode *, Nucleotide, Orientation, EdgeArrayType edge_type, int edge_index);
 
+//as previous, but this time you pass in a function that specifies the edge of interest (might for example be the union of all edges, or edges 1 and 3 or whatever)
+boolean db_node_edge_exist_within_specified_function_of_coloured_edges(dBNode * element,Nucleotide base,Orientation orientation, Edges (*f)(Element* ));
+
 //returns the label of the first outgoing edge -- leaving from the side 
 //defined by orientation. 
 boolean db_node_has_precisely_one_edge(dBNode *, Orientation, Nucleotide *, EdgeArrayType edge_type, int edge_index);
@@ -116,6 +119,11 @@ void db_node_reset_all_edges_for_all_people_and_pops_to_zero(Element* e);
 void db_node_reset_edges(dBNode *, EdgeArrayType, int  );
 
 void db_node_reset_edge(dBNode *, Orientation, Nucleotide, EdgeArrayType, int );
+
+
+
+//TODO - maybe do not need to export this:
+void db_node_reset_specified_edges(dBNode * node, Orientation orientation, Nucleotide nucleotide, void (*f)(dBNode*, Orientation, Nucleotide)  );
 
 //check that the edges are 0's
 boolean db_node_edges_reset(dBNode * node, EdgeArrayType edge_type, int edge_index);

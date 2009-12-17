@@ -134,7 +134,6 @@ Edges get_union_of_edges(Element e)
 
 
 
-
 //adds edges from edge_char to the appropriate person/population edgeset, without removing existing edges
 void add_edges(Element* e, EdgeArrayType type, int index, Edges edge_char)
 {
@@ -472,6 +471,34 @@ boolean db_node_edge_exist(dBNode * element,Nucleotide base,Orientation orientat
 }
 
 
+//final argument f is a function that returns an Edge that is a function of the different colured edges in a node.
+// eg we might be interested in the union of all the coloured edges in the graph, or just the colour/edge for the first person,
+//    or the union of all edges except that corresponding to the reference.
+boolean db_node_edge_exist_within_specified_function_of_coloured_edges(dBNode * element,Nucleotide base,Orientation orientation, Edges (*f)(Element* ))
+{
+
+  char edge = f(element);
+
+
+  edge >>= base;
+  if (orientation == reverse){
+    edge >>= 4;
+  }
+  
+  edge &= 1;
+  
+  if (edge == 1){
+    return true;
+  }
+  else{
+    return false;
+  }
+  
+}
+
+
+
+
 
 
 void db_node_reset_edges(dBNode * node,EdgeArrayType edge_type, int edge_index){
@@ -480,6 +507,12 @@ void db_node_reset_edges(dBNode * node,EdgeArrayType edge_type, int edge_index){
 
 void db_node_reset_edge(dBNode * node, Orientation orientation, Nucleotide nucleotide, EdgeArrayType edge_type, int edge_index){
   reset_one_edge(node, orientation, nucleotide, edge_type, edge_index);
+}
+
+//pass in a function which will apply reset_one_edge to whichever of the edges it cares about
+void db_node_reset_specified_edges(dBNode * node, Orientation orientation, Nucleotide nucleotide,  
+				   void (*f)(dBNode*, Orientation, Nucleotide )){
+  f(node, orientation, nucleotide);
 }
 
 

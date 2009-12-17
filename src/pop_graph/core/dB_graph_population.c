@@ -39,7 +39,8 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 						      );
 
 
-//it doesn't check that it is a valid arrow
+//This function does not  check that it there is such an edge in the specified person/colour - but it does check if the target node is in the specific person.
+//if you want to be sure the dge exists in that colour, then check it before calling this function
 dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node, Orientation current_orientation, 
 							   Orientation * next_orientation,
 							   Nucleotide edge, Nucleotide * reverse_edge,dBGraph * db_graph, EdgeArrayType type, int index)
@@ -93,7 +94,250 @@ dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node
 
 
 
+boolean db_graph_db_node_has_precisely_n_edges_with_status_for_specific_person_or_pop(dBNode * node,Orientation orientation,NodeStatus status,int n,
+										      dBNode * * next_node, Orientation * next_orientation, Nucleotide * next_base,
+										      dBGraph * db_graph, EdgeArrayType type, int index)
+{
 
+  if ( (n>4)||(n<0))
+    {
+      printf("WARNING - calling db_graph_db_node_has_precisely_n_edges_with_status with n=%d", n);
+      return false;
+    }
+
+  int count = 0;
+  boolean ret = false;
+
+  void check_edge(Nucleotide base){
+
+    dBNode * tmp_next_node;
+    Orientation tmp_next_orientation;
+    Nucleotide rev_base;
+
+   
+
+    if (db_node_edge_exist(node,base,orientation, type, index)){
+
+      tmp_next_node = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&tmp_next_orientation,
+									base,&rev_base,db_graph, type, index);
+
+      if (db_node_check_status(tmp_next_node,status)){
+	next_base[count] = base;
+	next_node[count] = tmp_next_node;
+	
+	next_orientation[count] = tmp_next_orientation;
+	count++;
+      }
+      
+    }
+    
+  }
+  
+  
+  nucleotide_iterator(&check_edge);
+
+  if (count == n){
+    ret = true;
+  }
+
+  return ret;
+
+}
+
+
+int db_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop(dBNode * node, Orientation orientation, int limit,
+									  void (*node_action)(dBNode * node),dBGraph * db_graph, EdgeArrayType type, int index)
+{ 
+
+  Nucleotide nucleotide, reverse_nucleotide;
+  int length = 0;
+  int i;
+  dBNode * nodes[limit];
+  Orientation next_orientation;
+  dBNode * next_node;
+  char seq[db_graph->kmer_size+1];
+  
+  //starting in a blunt end also prevents full loops 
+  if (db_node_is_blunt_end(node, opposite_orientation(orientation), type, index)){
+    
+    boolean join_main_trunk = false;
+
+    while(db_node_has_precisely_one_edge(node,orientation,&nucleotide, type, index)) {
+  
+       nodes[length] = node;
+
+       next_node = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide,&reverse_nucleotide,db_graph, type, index);
+       
+       if(next_node == NULL){
+	 printf("dB_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
+	 exit(1);
+       }	           
+       
+       length ++;
+
+       
+       if (length>limit){
+	 break;
+       }
+
+       //want to stop when we join another trunk
+       if (!db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide, type, index)){
+	 join_main_trunk = true;
+	 break;
+       }
+
+       //keep track of node
+       
+       node = next_node;
+       orientation = next_orientation;        
+     }
+  
+     if (! join_main_trunk){
+       length = 0;
+     }
+     else{//clear edges and mark nodes as pruned
+       for(i=0;i<length;i++){
+
+	 if (DEBUG){
+	   printf("CLIPPING node: %s\n",binary_kmer_to_seq(element_get_kmer(nodes[i]),db_graph->kmer_size,seq));
+	 }
+	 
+	 node_action(nodes[i]);
+	 //perhaps we want to move this inside the node action?
+	 db_node_reset_edges(nodes[i], type, index);
+       }
+
+       if (DEBUG){
+	printf("RESET %c BACK\n",binary_nucleotide_to_char(reverse_nucleotide));
+      }
+       db_node_reset_edge(next_node,opposite_orientation(next_orientation),reverse_nucleotide, type, index);
+     }
+
+  }
+
+  return length;
+}
+
+
+
+
+// clip a tip in the graph (the tip starts in node)
+// limit is max length for tip
+// node_action is applied to all the elements in the tip
+// returns the length of the tip (0 means no length)
+int db_graph_db_node_clip_tip_for_specific_person_or_pop(dBNode * node, int limit,
+							 void (*node_action)(dBNode * node),
+							 dBGraph * db_graph, EdgeArrayType type, int index)
+{
+
+  int length_tip = 0;
+
+  
+  length_tip = db_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop(node,forward,limit,node_action,db_graph, type, index);
+  
+  if (length_tip==0){
+    length_tip = db_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop(node,reverse,limit,node_action,db_graph, type, index);
+    
+  }
+  
+  return length_tip;
+}
+
+
+
+// 1. the argument sum_of_covgs_in_desired_colours allows you to choose which colour (or union of colours) you want to apply this to
+// eg you might want  to "remove" (as defined by the action) any node that has coverage <= your threshold in the UNION of all colours, or in colour red or whatever
+// SO - this func returns the sum of coverages in the colours you care about
+// 2. the argument get_edge_of_interest is a function that gets the "edge" you are interested in - may be a single edge/colour from the graph, or might be a union of some edges
+// 3 Pass apply_reset_to_specified_edges which applies reset_one_edge to whichever set of edges you care about, 
+// 4 Pass apply_reset_to_specified_edges_2 which applies db_node_reset_edges to whichever set of edges you care about, 
+boolean db_graph_db_node_prune_low_coverage(dBNode * node, int coverage,
+					    void (*node_action)(dBNode * node),
+					    dBGraph * db_graph, 
+					    int (*sum_of_covgs_in_desired_colours)(Element *), 
+					    Edges (*get_edge_of_interest)(Element*),
+					    void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide),
+					    void (*apply_reset_to_specified_edges_2)(dBNode*) )
+{
+
+  boolean ret = false;
+
+  if (sum_of_covgs_in_desired_colours(node)<=coverage){
+    ret = true;
+  
+    void nucleotide_action(Nucleotide nucleotide){
+      Orientation next_orientation;
+      Nucleotide reverse_nucleotide;
+      dBNode * next_node;
+
+
+      //remove evidence in adjacent nodes where they point to this one
+      if (db_node_edge_exist_within_specified_function_of_coloured_edges(node,nucleotide,forward, get_edge_of_interest)){
+	next_node = db_graph_get_next_node(node,forward,&next_orientation,nucleotide,&reverse_nucleotide,db_graph);
+	db_node_reset_specified_edges(next_node,opposite_orientation(next_orientation),reverse_nucleotide, &apply_reset_to_specified_edges);
+	  
+      }
+	
+      if (db_node_edge_exist_within_specified_function_of_coloured_edges(node,nucleotide,reverse, get_edge_of_interest)){
+	next_node = db_graph_get_next_node(node,reverse,&next_orientation,nucleotide,&reverse_nucleotide,db_graph);
+	db_node_reset_specified_edges(next_node,opposite_orientation(next_orientation),reverse_nucleotide, &apply_reset_to_specified_edges);
+	
+      }
+    }
+
+    nucleotide_iterator(&nucleotide_action);
+
+    node_action(node);
+    //remove all edges from this node, in colours we care about
+    apply_reset_to_specified_edges_2(node);   
+
+  }
+
+  return ret;
+}
+
+
+boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int coverage,
+							     void (*node_action)(dBNode * node),
+							     dBGraph * db_graph)
+{
+
+  Edges (*get_edge_of_interest)(Element* node)
+  {
+    return get_union_of_edges(*e);
+  }
+  
+  Edges set_to_zero(Edges edge)
+  {
+    return 0;
+  }
+
+  void (*apply_reset_to_specified_edges)(dBNode* node , Orientation or , Nucleotide nuc)
+  {
+      int i;
+      for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+	{
+	  reset_one_edge(node, or, nuc, individual_edge_array, i);
+	}
+  }
+  
+  void (*apply_reset_to_specified_edges_2)(dBNode* node)
+  {
+      int i;
+      for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+	{
+	  db_node_reset_edges(node);
+	}
+  }
+
+  db_graph_db_node_prune_low_coverage(node, coverage, node_action, db_graph,
+				      sum_of_covgs_in_desired_colours,
+				      get_edge_of_interest,
+				      apply_reset_to_specified_edges,
+				      apply_reset_to_specified_edges_2);
+
+
+}
 
 
 // computes a perfect path starting from a node and an edge
@@ -159,8 +403,8 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
     if (length>0){
       node_action(current_node);
       sum_coverage += coverage;
-      *max_coverage = *max_coverage < coverage ? coverage : *max_coverage;
-      *min_coverage = *min_coverage > coverage ? coverage : *min_coverage;
+      *max_coverage = (*max_coverage < coverage) ? coverage : *max_coverage;
+      *min_coverage = (*min_coverage > coverage) ? coverage : *min_coverage;
     }
 
     //this will return NULL if the next node is not in the person's graph. It does NOT check if the edge is in the graph...
@@ -415,6 +659,91 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
 
 
 
+//clip the branch with smaller coverage in the first kmer --> this can be more sophisticated
+//dont want to flatten repeats -- use coverage_limit for this
+
+//TODO - discuss with Mario - for now, do not export
+boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(dBNode * node, Orientation orientation, 
+								  int limit,int coverage_limit,
+								  void (*node_action)(dBNode * node),
+								  dBGraph * db_graph, EdgeArrayType type, int index){
+
+  boolean ret = false;
+  int length1, length2;
+  dBNode * path_nodes1[limit+1];
+  dBNode * path_nodes2[limit+1];
+  Orientation path_orientations1[limit+1];
+  Orientation path_orientations2[limit+1];
+  Nucleotide path_labels1[limit];
+  Nucleotide path_labels2[limit];
+  
+  dBNode * * path_nodes_tmp;
+  Orientation * path_orientations_tmp;
+  Nucleotide * path_labels_tmp;
+
+  char seq1[limit+1];
+  double avg_coverage1;
+  int min_coverage1,max_coverage1;
+
+  char seq2[limit+1];
+  double avg_coverage2;
+  int min_coverage2,max_coverage2;
+
+
+  int length_tmp;
+  Nucleotide reverse_nucleotide;
+  Orientation next_orientation;
+
+
+  if (db_graph_detect_bubble_for_specific_person_or_pop(node,orientation,limit,&db_node_action_do_nothing,
+							&length1,path_nodes1,path_orientations1,path_labels1,
+							seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
+							&length2,path_nodes2,path_orientations2,path_labels2,
+							seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
+							db_graph, type, index)){
+    
+
+    if ((double)coverage_limit>=avg_coverage1 && 
+        (double)coverage_limit>=avg_coverage2){
+
+     
+      //prune
+      int i;
+     
+      ret = true;
+      if (avg_coverage1<avg_coverage2){
+	path_nodes_tmp = path_nodes1;
+	path_orientations_tmp = path_orientations1;
+	path_labels_tmp  = path_labels1;
+	length_tmp     = length1;
+	db_node_reset_edge(node,orientation,path_labels1[0], type, index);
+      }
+      else
+	{
+	  path_nodes_tmp = path_nodes2;
+	  length_tmp     = length2;
+	  path_orientations_tmp = path_orientations2;
+	  path_labels_tmp       = path_labels2;
+	  db_node_reset_edge(node,orientation,path_labels2[0], type, index);
+	}
+      
+      for(i=1;i<length_tmp;i++){
+	node_action(path_nodes_tmp[i]);
+	db_node_reset_edges(path_nodes_tmp[i], type, index);
+      }
+      
+      db_graph_get_next_node_for_specific_person_or_pop(path_nodes_tmp[length_tmp-1],path_orientations_tmp[length_tmp-1],&next_orientation,path_labels_tmp[length_tmp-1],&reverse_nucleotide,
+							db_graph, type, index);
+      db_node_reset_edge(path_nodes_tmp[length_tmp],opposite_orientation(next_orientation),reverse_nucleotide, type, index);
+    }
+    
+  }
+
+  return ret;
+}
+
+
+
 
 // it returns the supernode containing 'node'  
 // string has to support limit+1 (+1 as you need a space for the \0 at the end)
@@ -578,6 +907,743 @@ int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(dBNo
 }
 
 
+// The idea is this. First of all you check the node you are given with condition_on_initial_node_only.
+// If this is false, forget the whole supernode - ignore it. In that case *path_length==0.
+// If condition_on_initial_node_only is true, then apply big OR / big AND of condition_for_all_nodes (depending on flag)
+// apply the action to all nodes in the supernode, 
+// whether true or false, will return the supernode in path_nodes, path_orientations, path_labels
+// node_action MUST BE IDEMPOTENT
+
+boolean db_graph_logical_operation_on_condition_for_all_nodes_in_supernode(dBNode * node,int limit, 
+									   boolean (*condition_for_all_nodes)(dBNode * node),  
+									   void (*node_action)(dBNode * node),
+									   dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, int* path_length,
+									   char * string, double * avg_coverage,int * min,int * max, boolean * is_cycle, 
+									   boolean big_and, //otherwise is big or
+									   dBGraph * db_graph, EdgeArrayType type, int index)
+{
+
+  boolean return_val;
+  if (big_and)
+    {
+      return_val = true;
+    }
+  else
+    {
+      return_val=false;
+    }
+
+  void action_check_condition_on_all_nodes(dBNode* n)
+    {
+      if ( big_and == true)
+	{
+	  return_val = return_val && condition_for_all_nodes(n);
+	}
+      else
+	{
+	  return_val = return_val || condition_for_all_nodes(n);
+	}
+    }
+
+       
+  *path_length = db_graph_supernode_for_specific_person_or_pop(node, limit, 
+							       action_check_condition_on_all_nodes, 
+							       path_nodes, path_orientations, path_labels,
+							       string, avg_coverage, min, max, is_cycle,
+							       db_graph, type, index);
+
+  
+  //now apply action to all nodes
+  //notice that a node could be met twice with different orientations, that's why we don't apply the action in the function above (passed to db_graph_supernode) as it could interact with the condition we are checking for. 
+  int i;
+  for (i=0; i<= *path_length; i++)
+    {
+      node_action(path_nodes[i]);
+    }
+  
+  return return_val;
+  
+}
+
+
+
+
+// The idea is this. First of all you check the node you are given with condition_on_initial_node_only. If this is false, forget the whole supernode - ignore it. In that case *path_length==0.
+// If condition_on_initial_node_only  is true, then you get the supernode and apply the action to all nodes in the supernode, and also you check
+// if condition_for_all_nodes is true for all nodes, and return true, else false.
+// whether true or false, will return the supernode in path_nodes, path_orientations, path_labels
+// node_action MUST BE IDEMPOTENT
+boolean db_graph_is_condition_true_for_all_nodes_in_supernode(dBNode * node,int limit, 						
+							      boolean (*condition_for_all_nodes)(dBNode * node),  
+							      void (*node_action)(dBNode * node),
+							      dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, int* path_length,
+							      char * string, double * avg_coverage,int * min,int * max, boolean * is_cycle, 
+							      dBGraph * db_graph, EdgeArrayType type, int index)
+{
+
+  return db_graph_logical_operation_on_condition_for_all_nodes_in_supernode(node,limit,
+									    condition_for_all_nodes,
+									    node_action,
+									    path_nodes, path_orientations, path_labels, path_length, 
+									    string, avg_coverage, min, max, is_cycle,
+									    true, db_graph, type, index);
+									   
+}
+
+
+// The idea is this. First of all you check the node you are given with condition_on_initial_node_only.
+// Initial node dependes on the order of traversal (we cannot determine that beforehand, depends on hash_table size/parameters)
+// If this is false, forget the whole supernode - ignore it. In that case *path_length==0.
+// If condition_on_initial_node_only  is true, then you get the supernode and apply the action to all nodes in the supernode, and also you check
+// if condition_for_all_nodes is true for any of the nodes, and return true, else false.
+// whether true or false, will return the supernode in path_nodes, path_orientations, path_labels
+// node_action MUST BE IDEMPOTENT
+
+
+
+boolean db_graph_is_condition_true_for_at_least_one_node_in_supernode(dBNode * node,int limit, 
+								      boolean (*condition_for_all_nodes)(dBNode * node),  
+								      void (*node_action)(dBNode * node),
+								      dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,  int* path_length,
+								      char * string, double * avg_coverage,int * min,int * max, boolean * is_cycle, 
+								      dBGraph * db_graph, EdgeArrayType type, int index)
+{
+  return db_graph_logical_operation_on_condition_for_all_nodes_in_supernode(node,limit,
+									    condition_for_all_nodes,
+									    node_action,
+									    path_nodes, path_orientations, path_labels, path_length,
+									    string, avg_coverage, min, max, is_cycle,
+									    false, db_graph, type, index);
+
+}
+
+
+// The idea is this. First of all you check the node you are given with condition_on_initial_node_only. 
+// If this is false, forget the whole supernode - ignore it. In that case *path_length==0.
+// If condition_on_initial_node_only  is true, then you get the supernode;
+// if condition_for_all_nodes is true for >= min_start nodes at the start and >=min_end at the end of the supernode, but NOT ALL, then return true, else false.
+// whether true or false, will return the supernode in path_nodes, path_orientations, path_labels
+// apply the action to all nodes in the supernode, and also you check
+// node_action MUST BE IDEMPOTENT
+
+boolean db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(dBNode * node,int limit,
+										    boolean (*condition_for_all_nodes)(dBNode * node),  
+										    void (*node_action)(dBNode * node), 
+										    int min_start, int min_end, int min_diff,
+										    dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,int * path_length,
+										    char * string, double * avg_coverage,int * min,int * max, boolean * is_cycle,
+										    dBGraph * db_graph, EdgeArrayType type, int index)
+{
+
+  boolean condition_is_true_for_all_nodes_in_supernode=true;
+
+  void action_check_condition_on_all_nodes(dBNode* n)
+    {
+      //printf("db_graph_is_condition_true..:  applying action to node %s\n", binary_kmer_to_seq(element_get_kmer(n),db_graph->kmer_size,tmp_seq) );
+      condition_is_true_for_all_nodes_in_supernode = condition_is_true_for_all_nodes_in_supernode  &&   condition_for_all_nodes(n);
+    }
+
+  
+  *path_length = db_graph_supernode_for_specific_person_or_pop(node, limit, 
+							       action_check_condition_on_all_nodes, 
+							       path_nodes, path_orientations, path_labels,
+							       string, avg_coverage, min, max, is_cycle,
+							       db_graph, type, index);
+
+  int num_nodes_at_start_where_condition_is_true=0;
+  int num_nodes_at_end_where_condition_is_true=0;
+  
+  if (*path_length>0)
+    {
+	   //now see if have enoug nodes at start and end with condition true.
+      if (!condition_is_true_for_all_nodes_in_supernode)
+	{
+	  int j;
+	  boolean flag=true;
+	  for (j=0; j<=*path_length; j++)
+	    {
+	      if ( (flag==true) && (condition_for_all_nodes(path_nodes[j])==true) )
+		{
+		  num_nodes_at_start_where_condition_is_true++;
+		}
+	      else
+		{
+		  flag=false;
+		}
+	    }
+	  
+	  
+	  flag=true;
+	  for (j=*path_length; j>=0; j--)
+	    {
+	      if ( (flag==true) && (condition_for_all_nodes(path_nodes[j])==true) )
+		{
+		  num_nodes_at_end_where_condition_is_true++;
+		}
+	      else
+		{
+		  flag=false;
+		}
+	    }
+	  
+	}
+    }
+
+  //now apply action to all nodes
+  int i;
+  for (i=0; i<= *path_length; i++)
+    {
+      node_action(path_nodes[i]);
+    }
+  
+  boolean ret_val = false;
+  if ( (num_nodes_at_start_where_condition_is_true>=min_start) && (num_nodes_at_end_where_condition_is_true>=min_end) 
+       && ((*path_length+1 - num_nodes_at_start_where_condition_is_true - num_nodes_at_end_where_condition_is_true)>min_diff) )
+    {
+      ret_val = true;
+    }
+
+  return ret_val;
+  
+}
+
+void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, FILE* fout,  
+										  boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index, EdgeArrayType type, int index)
+{
+
+  int count_nodes=0;
+  void print_supernode(dBNode * e)
+    {
+      // TODO  - change this magic 5000 to global max-expected supernode size
+      dBNode * nodes_path[5000];
+      Orientation orientations_path[5000];
+      Nucleotide labels_path[5000];
+      char seq[5000+1];
+      double avg_coverage;
+      int min_coverage;
+      int  max_coverage;
+      int length_path=0;
+      boolean is_cycle;
+      
+      if (db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(e)){
+
+	
+	if (db_graph_is_condition_true_for_all_nodes_in_supernode(e, 5000, condition,
+								  &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+								  nodes_path,orientations_path, labels_path, &length_path, 
+								  seq, &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
+								  db_graph, type, index))
+	  {
+	
+	   
+
+	    if (min_coverage>=min_covg_required)
+	      {
+		if (!is_for_testing)
+		  {
+		    if (fout == NULL)
+		      {
+			printf(">node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min_coverage, max_coverage);
+			count_nodes++;
+			printf("%s\n",seq);
+		      }
+		    else
+		      {
+			fprintf(fout, ">node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min_coverage, max_coverage);
+			count_nodes++;
+			fprintf(fout, "%s\n",seq);
+		      }
+		  }
+		else
+		  {
+		    //return the supernode in the preallocated array, so the test can check it.
+		    for_test_array_of_supernodes[*for_test_index][0]='\0';
+		    strcat(for_test_array_of_supernodes[*for_test_index], seq);
+		    *for_test_index=*for_test_index+1;
+		  }
+	      }
+	  }
+      }
+    }
+  hash_table_traverse(&print_supernode,db_graph); 
+}
+
+
+
+void db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, FILE* fout, 
+											  boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index, 
+											  EdgeArrayType type, int index)
+{
+  
+  int count_nodes=0;
+  void print_supernode(dBNode * e)
+  {
+    
+    dBNode * nodes_path[5000];
+    Orientation orientations_path[5000];
+    Nucleotide labels_path[5000];
+    char seq[5000+1];
+    seq[0]='\0';
+    int length_path=0;
+    double avg_coverage;
+    int min_coverage;
+    int  max_coverage;
+    boolean is_cycle;
+    
+    
+    if (db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(e))
+      {
+    
+	if (db_graph_is_condition_true_for_at_least_one_node_in_supernode(e, 5000, condition,
+									  &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+									  nodes_path,orientations_path, labels_path, &length_path, 
+									  seq, &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
+									  db_graph, type, index))
+	{
+
+	  
+	  if (min_coverage>=min_covg_required)
+	    {
+	      if (!is_for_testing)
+		{
+		  if (fout==NULL)
+		    {
+		      printf(">node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min_coverage, max_coverage);
+		      count_nodes++;
+		      printf("%s\n",seq);
+		    }
+		  else
+		    {
+		      fprintf(fout, ">node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min_coverage, max_coverage);
+		      count_nodes++;
+		      fprintf(fout, "%s\n",seq);
+		    }
+	      }
+	      else
+		{
+		  //return the supernode in the preallocated array, so the test can check it.
+		  for_test_array_of_supernodes[*for_test_index][0]='\0';
+		  strcat(for_test_array_of_supernodes[*for_test_index], seq);
+		  *for_test_index=*for_test_index+1;
+		}
+	    }
+	}
+      }
+  }
+  hash_table_traverse(&print_supernode,db_graph); 
+}
+
+
+
+
+// can use this toprint potential indels.
+// min_start and min_end are the number of nodes of overlap with the reference that  you want at the start and  end of the supernode
+void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required,
+												       int min_start, int min_end, int min_diff, FILE* fout,
+												       boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index,
+												       EdgeArrayType type, int index)
+{
+
+  int count_nodes=0;
+  void print_supernode(dBNode * e)
+    {
+
+      dBNode * nodes_path[5000];
+      Orientation orientations_path[5000];
+      Nucleotide labels_path[5000];
+      char seq[5000+1];
+      double avg_coverage;
+      int min_coverage;
+      int  max_coverage;
+      int length_path=0;
+      boolean is_cycle;
+
+      if (db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(e))
+	{
+	  if (db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(e, 5000, condition,
+											  &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
+											  min_start, min_end,min_diff,
+											  nodes_path,orientations_path, labels_path, &length_path,
+											  seq, &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
+											  db_graph, type, index))
+	{
+	  
+	  
+	      if (min_coverage>=min_covg_required)
+		{
+		  
+		  if (!is_for_testing)
+		    {
+		      
+		      if (fout == NULL)
+			{
+			  printf(">potential_sv_node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min_coverage, max_coverage);
+			  count_nodes++;
+			  printf("%s\n",seq);
+			}
+		      else
+			{
+			  fprintf(fout, ">potential_sv_node_%i length: %i min covg: %d max covg: %d\n",count_nodes,length_path+db_graph->kmer_size, min_coverage, max_coverage);
+                          count_nodes++;
+                          fprintf(fout, "%s\n",seq);
+
+			}
+		    }
+		  else
+		    {
+		      //return the supernode in the preallocated array, so the test can check it.
+		      for_test_array_of_supernodes[*for_test_index][0]='\0';
+		      strcat(for_test_array_of_supernodes[*for_test_index], seq);
+		      *for_test_index=*for_test_index+1;
+		    }
+		}
+	      else
+		{
+		  //printf("Too low covg of only %d and we require %d\n",min, min_covg_required); 
+		}
+	}
+	}
+    }
+  hash_table_traverse(&print_supernode,db_graph); 
+}
+
+
+
+//routine to DETECT/DISCOVER variants directly from the graph - reference-free (unless you have put the reference in the graph!)
+// last argument is a condition which you apply to the flanks and branches to decide whether to call.
+// e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
+//      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
+void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph, 
+			  boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p) ))
+{
+  
+  int count_vars = 0; 
+  int flanking_length = 1000; 
+  
+  void get_vars(dBNode * node){
+   
+    void get_vars_with_orientation(dBNode * node, Orientation orientation){
+      
+      int length1, length2;
+      dBNode * path_nodes1[max_length+1];
+      dBNode * path_nodes2[max_length+1];
+      Orientation path_orientations1[max_length+1];
+      Orientation path_orientations2[max_length+1];
+      Nucleotide path_labels1[max_length];
+      Nucleotide path_labels2[max_length];
+      char seq1[max_length+1];
+      char seq2[max_length+1];
+    
+      double avg_coverage1;
+      int min_coverage1,max_coverage1;
+      
+      double avg_coverage2;
+      int min_coverage2,max_coverage2;
+      
+      dBNode * current_node = node;
+   
+      do{
+	
+	if (db_graph_detect_bubble(current_node,orientation,max_length,&db_node_action_set_status_visited,
+				   &length1,path_nodes1,path_orientations1,path_labels1,
+				   seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
+				   &length2,path_nodes2,path_orientations2,path_labels2,
+				   seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
+				   db_graph))
+	  {
+	    int length_flank5p = 0;	
+	    int length_flank3p = 0;
+	    dBNode * nodes5p[flanking_length];
+	    dBNode * nodes3p[flanking_length];
+	    Orientation orientations5p[flanking_length];
+	    Orientation orientations3p[flanking_length];
+	    Nucleotide labels_flank5p[flanking_length];
+	    Nucleotide labels_flank3p[flanking_length];
+	    char seq5p[flanking_length+1];
+	    char seq3p[flanking_length+1];
+	    boolean is_cycle5p, is_cycle3p;
+	    
+	    double avg_coverage5p;
+	    int min5p,max5p;
+	    double avg_coverage3p;
+	    
+	    int min3p,max3p;
+	    
+	    
+	    //compute 5' flanking region       	
+	    int length_flank5p_reverse = db_graph_get_perfect_path(current_node,opposite_orientation(orientation),
+								   flanking_length,&db_node_action_set_status_visited,
+								   nodes5p,orientations5p,labels_flank5p,
+								   seq5p,&avg_coverage5p,&min5p,&max5p,
+								   &is_cycle5p,db_graph);
+	    
+	    if (length_flank5p_reverse>0){
+	      Nucleotide label;
+	      Orientation next_orientation;
+	      
+	      dBNode * lst_node = db_graph_get_next_node(nodes5p[length_flank5p_reverse-1],orientations5p[length_flank5p_reverse-1],
+							 &next_orientation, labels_flank5p[length_flank5p_reverse-1],&label,db_graph);
+	      
+	      length_flank5p = db_graph_get_perfect_path_with_first_edge(nodes5p[length_flank5p_reverse],
+									 opposite_orientation(orientations5p[length_flank5p_reverse]),
+									 flanking_length,label,
+									 &db_node_action_set_status_visited,
+									 nodes5p,orientations5p,labels_flank5p,
+									 seq5p,&avg_coverage5p,&min5p,&max5p,
+									 &is_cycle5p,db_graph);
+	    }
+	    else{
+	      length_flank5p = 0;
+	    }
+	    
+	    
+	    
+	    //compute 3' flanking region
+	    length_flank3p = db_graph_get_perfect_path(path_nodes2[length2],path_orientations2[length2],
+						       flanking_length,&db_node_action_set_status_visited,
+						       nodes3p,orientations3p,labels_flank3p,
+						       seq3p,&avg_coverage3p,&min3p,&max3p,
+						       &is_cycle3p,db_graph);
+
+
+	    
+	    char name[100];
+	    if (condition(nodes5p, length_flank5p, path_nodes1, length1, path_nodes2, length2, nodes3p, length_flank3p)==true)
+	      {
+
+		printf("\nVARIATION: %i\n",count_vars);
+		count_vars++;
+		
+		//printf("length 5p flank: %i avg_coverage:%5.2f \n",length_flank5p,avg_coverage5p);	    
+		//printf("length branch 1: %i - avg_coverage: %5.2f\n",length1,avg_coverage1);
+		//printf("length branch 2: %i - avg_coverage: %5.2f\n",length2,avg_coverage2);
+		//printf("length 3p flank: %i avg_coverage:%5.2f\n",length_flank3p,avg_coverage3p);
+
+		//print flank5p - 
+		sprintf(name,"var_5p_flank_%i",count_vars);
+		print_fasta_from_path(stdout,name,length_flank5p,avg_coverage5p,min5p,max5p,
+				      nodes5p[0],orientations5p[0],				
+				      nodes5p[length_flank5p],orientations5p[length_flank5p],				
+				      seq5p,
+				      db_graph->kmer_size,false);	
+		
+		//print branches
+		sprintf(name,"branch_%i_1",count_vars);
+		print_fasta_from_path(stdout,name,length1,
+				      avg_coverage1,min_coverage1,max_coverage1,
+				      path_nodes1[0],path_orientations1[0],path_nodes1[length1],path_orientations1[length1],
+				      seq1,db_graph->kmer_size,false);
+		
+		sprintf(name,"branch_%i_2",count_vars);
+		print_fasta_from_path(stdout,name,length2,
+				      avg_coverage2,min_coverage2,max_coverage2,
+				      path_nodes2[0],path_orientations2[0],path_nodes2[length2],path_orientations2[length2],
+				      seq2,db_graph->kmer_size,false);
+		
+		//print flank3p
+		sprintf(name,"var_3p_flank_%i",count_vars);
+		print_fasta_from_path(stdout,name,length_flank3p,avg_coverage3p,min3p,max3p,
+				      nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
+				      seq3p,db_graph->kmer_size,false);
+		
+	      }
+	    db_node_action_set_status_visited(path_nodes2[length2]);
+		
+	    current_node = path_nodes2[length2];
+	    orientation = path_orientations2[length2];
+	  }
+      } while (current_node != node //to avoid cycles
+	       && db_node_check_status_none(current_node));
+    }
+    
+    
+    if (db_node_check_status_none(node)){     
+      db_node_action_set_status_visited(node);
+      get_vars_with_orientation(node,forward);
+      get_vars_with_orientation(node,reverse);
+    }
+  }
+ 
+  hash_table_traverse(&get_vars,db_graph); 
+    
+}
+
+//do not export - discuss with Mario
+void db_graph_smooth_bubbles_for_specific_person_or_pop(int coverage,int limit,dBGraph * db_graph, EdgeArrayType type, int index){
+  
+  void smooth_bubble(dBNode * node){
+    if (db_node_check_status_none(node)){
+      db_graph_db_node_smooth_bubble_for_specific_person_or_pop(node,forward,limit,coverage,
+								&db_node_action_set_status_pruned,db_graph, type, index);
+      db_graph_db_node_smooth_bubble_for_specific_person_or_pop(node,reverse,limit,coverage,
+								&db_node_action_set_status_pruned,db_graph, type, index);
+      
+    }
+  }
+  
+  hash_table_traverse(&smooth_bubble,db_graph); 
+
+}
+
+
+void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index)
+{
+  
+  void clip_tips(dBNode * node){
+    
+    if (db_node_check_status_none(node)){
+      db_graph_db_node_clip_tip_for_specific_person_or_pop(node, db_graph->kmer_size*2,&db_node_action_set_status_pruned,db_graph, type, index);
+    }
+  }
+
+  hash_table_traverse(&clip_tips,db_graph);
+  
+}
+
+void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, char* filename_sings, int max_length, dBGraph * db_graph, EdgeArrayType type, int index){
+
+  FILE * fout1; //file to which we will write all supernodes which are longer than 1 node in fasta format
+  fout1= fopen(filename_sups, "w"); 
+  FILE * fout2; //file to which we will write all "singleton" supernodes, that are just  1 node, in fasta format
+  fout2= fopen(filename_sings, "w"); 
+  
+  int count_nodes=0;
+  
+  dBNode * *    path_nodes;
+  Orientation * path_orientations;
+  Nucleotide *  path_labels;
+  char * seq;
+  boolean is_cycle;
+  double avg_coverage;
+  int min,max;
+  
+  
+  path_nodes        = calloc(max_length,sizeof(dBNode*));
+  path_orientations = calloc(max_length,sizeof(Orientation));
+  path_labels       = calloc(max_length,sizeof(Nucleotide));
+  seq               = calloc(max_length+1+db_graph->kmer_size,sizeof(char));
+  
+  
+
+  long long count_kmers = 0;
+  long long count_sing  = 0;
+
+  void print_supernode(dBNode * node){
+    
+   
+
+    count_kmers++;
+    
+    char name[100];
+
+    if (db_node_check_status_none(node) == true){
+      int length = db_graph_supernode_for_specific_person_or_pop(node,max_length,&db_node_action_set_status_visited,
+								 path_nodes,path_orientations,path_labels,
+								 seq,&avg_coverage,&min,&max,&is_cycle,
+								 db_graph, type, index);
+    
+ 
+
+      if (length>0){	
+	sprintf(name,"node_%i",count_nodes);
+
+	print_fasta_from_path(fout1,name,length,avg_coverage,min,max,path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,db_graph->kmer_size,true);
+	if (length==max_length){
+	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
+	}
+	count_nodes++;
+      }
+      else{
+	sprintf(name,"node_%qd",count_sing);
+	print_fasta_from_path(fout2,name,length,avg_coverage,min,max,path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,db_graph->kmer_size,true);
+	count_sing++;
+      }
+    
+    }
+  }
+  
+  hash_table_traverse(&print_supernode,db_graph); 
+  printf("%qd nodes visted [%qd singletons]\n",count_kmers,count_sing);
+
+  free(path_nodes);
+  free(path_orientations);
+  free(path_labels);
+  free(seq);
+  fclose(fout);
+}
+
+
+void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index){
+  long long count_kmers=0;
+
+  void print_coverage(dBNode * node){
+    char seq[db_graph->kmer_size];
+
+    printf("%qd\t%s\t%i\n",count_kmers,binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq),db_node_get_coverage(node, type, index));
+    count_kmers++;;
+  }
+  hash_table_traverse(&print_coverage,db_graph); 
+}
+
+
+
+
+// 1. sum_of_covgs_in_desired_colours returns the sum of the coverages for the colours you are interested in
+// 1. the argument get_edge_of_interest is a function that gets the "edge" you are interested in - may be a single edge/colour from the graph, or might be a union of some edges 
+// 2 Pass apply_reset_to_specified_edges which applies reset_one_edge to whichever set of edges you care about,
+// 3 Pass apply_reset_to_specified_edges_2 which applies db_node_reset_edges to whichever set of edges you care about,
+void db_graph_remove_low_coverage_nodes(int coverage, dBGraph * db_graph,
+					int (*sum_of_covgs_in_desired_colours)(Element *), 
+					Edges (*get_edge_of_interest)(Element*), 
+					void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+					void (*apply_reset_to_specified_edges_2)(dBNode*) )
+{
+  
+  void prune_node(dBNode * node){
+    db_graph_db_node_prune_low_coverage(node,coverage,
+					&db_node_action_set_status_pruned,
+					db_graph,
+					sum_of_covgs_in_desired_colours, get_edge_of_interest, apply_reset_to_specified_edges, apply_reset_to_specified_edges_2
+					);
+  }
+
+  hash_table_traverse(&prune_node,db_graph); 
+}
+
+
+void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph * db_graph)
+{
+  
+  void prune_node(dBNode * node){
+    db_graph_db_node_prune_low_coverage_ignoring_colours(node,coverage,
+							 &db_node_action_set_status_pruned,
+							 db_graph
+							 );
+  }
+
+  hash_table_traverse(&prune_node,db_graph); 
+}
+
+
+void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph){
+  FILE * fout; //binary output
+  fout= fopen(filename, "w"); 
+  
+  long long count=0;
+  //routine to dump graph
+  void print_node_binary(dBNode * node){   
+    if (condition(node)){
+      count++;
+      db_node_print_binary(fout,node);
+    }
+  }
+
+  hash_table_traverse(&print_node_binary,db_graph); 
+  fclose(fout);
+
+  printf("%qd kmers dumped\n",count);
+}
+
 
 
 
@@ -651,18 +1717,11 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
 
   dBNode *  e = hash_table_find(key, hash_table);
 
-  if (e==NULL)
-    {
-      return NULL;
-    }
-
   //ASSUMING read length is strictly greater than kmer-length
   //then you should never see a kmer (node) which is unconnected to another (even if the other is itself)
   //ie to check if this kmer is seen in a given person/pop, it is enough to check if it has an edge
 
-  Edges edge_for_this_person_or_pop = get_edge_copy(*e, type, index);
-
-  if (edge_for_this_person_or_pop == 0)
+  if (db_node_is_this_node_in_this_person_or_populations_graph(e, type, index)==false)
     {
       return NULL;
     }
@@ -675,12 +1734,178 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
 
 
 
+void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int),HashTable * hash_table, int** array, int length_of_array){
+  
+  long long i;
+  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
+    if (!db_node_check_status(&hash_table->table[i],unassigned)){
+      f(hash_table, &hash_table->table[i], array, length_of_array);
+    }
+  }
+  
+  
+}
 
 
-// *********************************************
-// functions applied to a person/pop's graph
-// *********************************************
+/*******     TODO sort this out - not critical 
 
+//the length of the supernode is passed to the caller in the array of supernode lengths that is passed in.
+//the idea is that this function is passed into the traverse function, and the caller of that
+void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Element* node, int** array_of_supernode_lengths, int length_of_array,
+							 EdgeArrayType type, int index)
+{
+
+  if (db_node_check_status(node, visited) || db_node_check_status(node,pruned))
+    {
+      return;
+    }
+
+  int length_of_supernode=1;
+  dBNode* first_node=db_graph_get_first_node_in_supernode_containing_given_node(node, db_graph);
+  dBNode* current_node;
+  dBNode* next_node;
+  current_node=first_node;
+  Orientation start_orientation, current_orientation, next_orientation;
+  db_node_set_status(current_node, visited);
+
+  //work out which direction to leave supernode in. 
+  if (db_node_is_supernode_end(first_node,forward))
+    {
+      if (db_node_is_supernode_end(first_node,reverse))
+	{
+	  //singleton
+	  *(array_of_supernode_lengths[length_of_supernode])=*(array_of_supernode_lengths[length_of_supernode])+1;
+	  return ;
+	}
+      else
+	{
+	  start_orientation=reverse;
+	}
+    }
+  else
+    {
+      start_orientation=forward;
+    }
+
+  current_orientation=start_orientation;
+  
+
+
+  //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
+  while (!db_node_is_supernode_end(current_node,current_orientation))
+    {
+      next_node = db_graph_get_next_node_in_supernode(current_node, current_orientation, &next_orientation, db_graph);
+
+      if ((next_node==first_node) && (next_orientation==start_orientation))//back to the start - will loop forever if not careful ;-0
+	{
+	  break;
+	}
+
+      length_of_supernode++;
+      current_node=next_node;
+      current_orientation=next_orientation;
+      db_node_set_status(current_node, visited);
+
+    }
+
+
+  if (length_of_supernode>length_of_array-1)
+    {
+      printf("We have a supernode of length %d, but have only allocated space to record lengths up to %d", length_of_supernode, length_of_array);
+      exit(1);
+    }
+  *(array_of_supernode_lengths[length_of_supernode])=*(array_of_supernode_lengths[length_of_supernode])+1;
+  return ;
+
+
+  
+}
+*/
+
+
+ /*  TODO - FIX this
+
+int db_graph_get_N50_of_supernodes(dBGraph* db_graph)
+{
+
+  int numbers_of_supernodes_of_specific_lengths[10000]; //i-th entry is number of supernodes of length i.
+  int* numbers_of_supernodes_of_specific_lengths_ptrs[10000];
+  int lengths_of_supernodes[10000];
+  
+  int i;
+  for (i=0; i<10000; i++)
+    {
+      numbers_of_supernodes_of_specific_lengths[i]=0;
+      numbers_of_supernodes_of_specific_lengths_ptrs[i]=&(numbers_of_supernodes_of_specific_lengths[i]);
+      lengths_of_supernodes[i]=0;
+
+    }
+
+
+  db_graph_traverse_with_array(&db_graph_get_supernode_length_marking_it_as_visited, db_graph,  numbers_of_supernodes_of_specific_lengths_ptrs, 10000);
+
+  //we now have an array containing the number of supernodes of each length from 1 to 10,000 nodes.
+  // for example it might be 0,100,1,0,0,0,23,4. note there are no supernodes of length 0, so first entry should always be 0
+
+  //let's make another array, containing the lengths
+  // this would , in the above example, be: 1,2,6,7 
+  int ctr=0;
+
+  for (i=0; i<10000; i++)
+    {
+      if (numbers_of_supernodes_of_specific_lengths[i]>0)
+	{
+	  lengths_of_supernodes[ctr]=i;
+	  ctr++;
+	}
+    }
+
+  //1 sort the list of lengths, to give in our example 0,0,....0,1,2,6,7
+  size_t numbers_len=sizeof(numbers_of_supernodes_of_specific_lengths)/sizeof(int);
+  qsort( lengths_of_supernodes, numbers_len, sizeof(int), int_cmp); 
+
+  //2 add all of lengths*number of supernodes up - get total length
+  int total=0;
+  
+  for(i=0; i<10000; i++)
+    {
+      total=total+i*numbers_of_supernodes_of_specific_lengths[i];
+    }
+
+  //3. Start at the max supernode length and work your way down until the length so far is half the total. Where you are is the n50
+  if (ctr<0)
+    {
+      printf("negative ctr");
+      exit(1);
+    }
+
+
+  int current_cumulative_len=0;
+  //printf("Total length of supernodes is %d and ctr is %d\n", total, ctr);
+
+  for (i=9999; i>=9999-ctr+1; i--)
+    {
+      current_cumulative_len += numbers_of_supernodes_of_specific_lengths[lengths_of_supernodes[i]] * lengths_of_supernodes[i] ;
+      //printf("Looking at supernodes whose length is %d  - there are %d of them, i is %d, current cum length is %d\n", lengths_of_supernodes[i],  numbers_of_supernodes_of_specific_lengths[lengths_of_supernodes[i]], i, current_cumulative_len);
+
+      if (current_cumulative_len >= total/2)
+	{
+	  //  printf("total is %d and n50 is %d\n", total, lengths_of_supernodes[i]);
+	  // then we have found the N50.
+	  return lengths_of_supernodes[i];
+	}
+
+    }
+  
+  //should not get here
+  printf("Should  not get here. Exiting in N50 calc code");
+  exit(1);
+  return 1;
+}
+
+ */
+
+  /* get rid of this
 
 void db_graph_traverse_specific_person_or_pop_for_supernode_printing(void (*f)(HashTable*, Element *, long* , EdgeArrayType, int, boolean, char**, int*),HashTable * hash_table, 
 								     long* supernode_count, 
@@ -696,7 +1921,10 @@ void db_graph_traverse_specific_person_or_pop_for_supernode_printing(void (*f)(H
 
 
 }
+  */
 
+
+/* delete?
 void db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(void (*f)(HashTable*, Element *, long* , EdgeArrayType, int, int, int, boolean, char**, char**, int*, int*),
 											    HashTable * hash_table, long* supernode_count, EdgeArrayType type, int index, int min_covg, int max_covg, 
 											     boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2){
@@ -711,6 +1939,8 @@ void db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overl
 
 
 }
+*/
+
 
 
 
@@ -743,6 +1973,7 @@ void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_popula
 
 
 
+//TODO - get rid of this
 dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(dBNode* node, EdgeArrayType type, int index, dBGraph* db_graph)
 {
 
@@ -843,6 +2074,9 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
 
 }
 
+
+
+//TODO - get rid of this
 
 dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* node, Orientation orientation, Orientation* next_orientation, EdgeArrayType type, int index, dBGraph* db_graph)
 {
@@ -1396,7 +2630,8 @@ void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTab
 // This boils down to knowing whether the last time was a new fasta entry
 
 
-//Note what happens as you repeatedly call this, with number_of_nodes_to_load = length_of_arrays/2. The first time, you load nodes into the back (right hand) end of the array, and the front end is empty.
+// Note what happens as you repeatedly call this, with number_of_nodes_to_load = length_of_arrays/2. The first time, you load nodes into the back (right hand) 
+// end of the array, and the front end is empty.
 //    The next time, these are pushed to the front, and new ones are loaded into the back.
 //  the first time you call this, expecting_new_fasta_entry=true,  last_time_was_not_start_of_entry=false
 //  the next time,                expecting_new_fasta_entry=false, last_time_was_not_start_of_entry=false,

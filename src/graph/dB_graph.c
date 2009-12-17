@@ -120,8 +120,6 @@ boolean db_graph_db_node_has_precisely_n_edges_with_status(dBNode * node,Orienta
 
 }
 
-
-
 int db_graph_db_node_clip_tip_with_orientation(dBNode * node, Orientation orientation, int limit,
 					       void (*node_action)(dBNode * node),dBGraph * db_graph){ 
 
@@ -256,7 +254,6 @@ boolean db_graph_db_node_prune_low_coverage(dBNode * node, int coverage,
 
   return ret;
 }
-
 
 // computes a perfect path starting from a node and an edge
 // ie the starting node can have  multiple exits
