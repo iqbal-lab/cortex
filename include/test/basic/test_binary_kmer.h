@@ -19,3 +19,5 @@ void test_binary_kmer_reverse_complement();
 void test_seq_reverse_complement();
 
 void test_get_sliding_windows_from_sequence();
+
+void test_breaking_homopolymers_in_get_sliding_windows();

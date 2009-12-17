@@ -373,8 +373,7 @@ boolean db_node_read_binary(FILE * fp, short kmer_size, dBNode * node){
   short coverage;
   int read;
   
-  int i;
-  
+  // int i;
   //for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
   //  {
   //    read = fread(&(kmer[i]),sizeof(bitfield_of_64bits),1,fp);
@@ -513,4 +512,103 @@ boolean db_node_condition_always_true(dBNode* node)
  return true;
 }
 
+
+// wrapper to allow comparison with read_start_forward OR read_start_forward_and_reverse
+// ie. if you want to check if this node is the start of a read (forwards), then call this, with second argument forward
+// and it will handle the case when it is a read start in both directions
+boolean db_node_check_read_start(dBNode* node, Orientation ori)
+{
+  if ( (ori==forward) && 
+       (db_node_check_status(node, read_start_forward) || db_node_check_status(node, read_start_forward_and_reverse) ) ) 
+    {
+      return true;
+    }
+  else if ( (ori==reverse) && 
+       (db_node_check_status(node, read_start_reverse) || db_node_check_status(node, read_start_forward_and_reverse) ) ) 
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+void db_node_set_read_start_status(dBNode* node, Orientation ori)
+{
+  if (db_node_check_status(node, visited) )
+    {
+      printf("Warning - setting status of a visisted node to read_start\n");
+    }
+  else if (db_node_check_status(node, unassigned) )
+    {
+      printf("Warning - setting status of an unassigned node to read_start. Exit");
+      exit(1);
+    }
+  else if (db_node_check_status(node, read_start_forward) && (ori==reverse) )
+    {
+      db_node_set_status(node, read_start_forward_and_reverse);
+    }
+  else if (db_node_check_status(node, read_start_reverse) && (ori==forward) )
+    {
+      db_node_set_status(node, read_start_forward_and_reverse);
+    }
+  else if (ori==forward)
+    {
+      db_node_set_status(node, read_start_forward);
+    }
+  else if (ori==reverse)
+    {
+      db_node_set_status(node, read_start_reverse);
+    }
+  else
+    {
+      printf("Programming error in read start setting of node");
+      exit(1);
+    }
+  
+}
+
+
+
+boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2)
+{
+  if (      (o1==forward) && (o2==forward) && db_node_check_read_start(node1, forward) && db_node_check_read_start(node2, forward) )
+    {
+      return true;
+    }
+  else if ( (o1==reverse) && (o2==forward) && db_node_check_read_start(node1, reverse) && db_node_check_read_start(node2, forward) )
+    {
+      return true;
+    }
+  else if ( (o1==forward) && (o2==reverse) && db_node_check_read_start(node1, forward) && db_node_check_read_start(node2, reverse) )
+    {
+      return true;
+    }
+  else if ( (o1==reverse) && (o2==reverse) && db_node_check_read_start(node1, reverse) && db_node_check_read_start(node2, reverse) )
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+//we have a read that starts at node in direction o1, and we want to know if a previous read started at that node in that direction
+boolean db_node_check_single_ended_duplicates(dBNode* node1, Orientation o1)
+{
+  if (      (o1==forward) && db_node_check_read_start(node1, forward)  )
+    {
+      return true;
+    }
+  else if ( (o1==reverse) && db_node_check_read_start(node1, reverse) )
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
 

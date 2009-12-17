@@ -16,7 +16,7 @@ void test_hash_table_find()
   int number_of_bits = 4;
   int bucket_size    = 4;
   long long bad_reads = 0; 
-
+  long long dup_reads=0;
   int max_retries=10;
 
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
@@ -30,7 +30,7 @@ void test_hash_table_find()
   //    TAGG
 
 
-  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta",&bad_reads, 20, db_graph);
+  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/test_dB_graph.fasta",&bad_reads, &dup_reads, 20, false, false, 0,db_graph);
 
   //length of total sequence
   CU_ASSERT(seq_length == 16);
@@ -116,7 +116,7 @@ void test_tip_clipping()
   int kmer_size = 3;
   int number_of_bits = 4;
   int bucket_size    = 4;
-  long long bad_reads = 0;
+  long long bad_reads=0; long long dup_reads=0;
 
   int min_coverage, max_coverage;
   double avg_coverage;
@@ -134,7 +134,7 @@ void test_tip_clipping()
   //>tip
   //CGTTT
 
-  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_tip.fasta",&bad_reads, 20, db_graph);
+  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_tip.fasta",&bad_reads, &dup_reads, 20, false, false, 0, db_graph);
 
 
   CU_ASSERT_EQUAL(seq_length,14);
@@ -203,7 +203,7 @@ void test_node_prunning_low_coverage()
   int kmer_size = 3;
   int number_of_bits = 4;
   int bucket_size    = 4;
-  long long bad_reads = 0;
+  long long bad_reads=0; long long dup_reads=0;
   BinaryKmer tmp_kmer1;
   BinaryKmer tmp_kmer2;
 
@@ -218,7 +218,7 @@ void test_node_prunning_low_coverage()
   //CGTTT
 
 
-  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_tip.fasta",&bad_reads, 20, db_graph);
+  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_tip.fasta",&bad_reads, &dup_reads, 20, false, false, 0, db_graph);
 
   CU_ASSERT_EQUAL(seq_length,14);
 
@@ -259,7 +259,7 @@ void test_get_perfect_path() //test db_graph_get_perfect_path
   int number_of_bits=4;
   int bucket_size   = 10;
   int seq_length;
-  long long bad_reads = 0;
+  long long bad_reads=0; long long dup_reads=0;
   dBNode * path_nodes[100];
   Orientation path_orientations[100];
   Nucleotide path_labels[100];
@@ -283,7 +283,7 @@ void test_get_perfect_path() //test db_graph_get_perfect_path
   // ****
 
 
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_two_self_loops.fasta", &bad_reads, 20,  db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_two_self_loops.fasta", &bad_reads, &dup_reads, 20,  false, false, 0, db_graph);
 
    CU_ASSERT_EQUAL(seq_length,6);
    CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),2);
@@ -331,7 +331,7 @@ void test_get_perfect_path() //test db_graph_get_perfect_path
    
    db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
    
-   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_one_long_supernode_with_conflict_at_end.fasta",&bad_reads,20,db_graph);
+   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_one_long_supernode_with_conflict_at_end.fasta",&bad_reads, &dup_reads,20,false, false, 0, db_graph);
 
    CU_ASSERT_EQUAL(seq_length,13);
    CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),5);
@@ -389,7 +389,7 @@ void test_get_perfect_path() //test db_graph_get_perfect_path
    db_graph = hash_table_new(number_of_bits, bucket_size,10,kmer_size);
    
 
-   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_one_long_supernode_with_inward_conflict_at_end.fasta", &bad_reads, 20,  db_graph);
+   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_one_long_supernode_with_inward_conflict_at_end.fasta", &bad_reads, &dup_reads, 20,  false, false, 0, db_graph);
 
    CU_ASSERT_EQUAL(seq_length,13);
    CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),5);
@@ -449,7 +449,7 @@ void test_get_perfect_path() //test db_graph_get_perfect_path
 
    db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
 
-   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_infinite_loop.fasta",&bad_reads,30,db_graph);
+   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_infinite_loop.fasta",&bad_reads, &dup_reads,30,false, false, 0, db_graph);
 
    CU_ASSERT_EQUAL(seq_length,25);
    CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),1);
@@ -838,9 +838,9 @@ void test_detect_and_smoothe_bubble(){
   bucket_size = 40;
   db_graph = hash_table_new(number_of_buckets,bucket_size,10,kmer_size);
   
-  long long bad_reads;
- 
-  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generate_bubble_with_unequal_branch_sizes.fa",&bad_reads, 200,  db_graph);
+  long long bad_reads=0;
+  long long dup_reads=0;
+  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generate_bubble_with_unequal_branch_sizes.fa",&bad_reads, &dup_reads, 200,  false, false, 0, db_graph);
   
   CU_ASSERT_EQUAL(seq_length,343);
 
@@ -965,7 +965,7 @@ void test_get_N50()
 
   int seq_length=0;
   //long long count_kmers = 0;
-  long long bad_reads = 0;
+  long long bad_reads=0; long long dup_reads=0;
 
 
   //1. One fasta file containing two reads:
@@ -974,7 +974,7 @@ void test_get_N50()
   // so the N50 is 13
   
    int max_read_length=70;
-   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/n50_example1.fasta",&bad_reads, max_read_length,  db_graph);
+   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/n50_example1.fasta",&bad_reads, &dup_reads, max_read_length,  false, false, 0, db_graph);
 
 
    CU_ASSERT_EQUAL(seq_length,58);
@@ -1016,7 +1016,7 @@ void test_get_N50()
    //count_kmers=0;
    bad_reads=0;
    seq_length=0;
-   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/n50_example2.fasta",&bad_reads, max_read_length,  db_graph);
+   seq_length = load_fasta_from_filename_into_graph("../data/test/graph/n50_example2.fasta",&bad_reads, &dup_reads, max_read_length,  false, false, 0, db_graph);
 
    CU_ASSERT_EQUAL(seq_length,46);
    //  CU_ASSERT_EQUAL(count_kmers,12);
@@ -1043,7 +1043,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
   int number_of_bits=4;
   int bucket_size   = 10;
   int seq_length;
-  long long bad_reads = 0;
+  long long bad_reads=0; long long dup_reads=0;
 
   BinaryKmer tmp_kmer1;
   BinaryKmer tmp_kmer2;
@@ -1063,7 +1063,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
   // ****
 
 
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_two_self_loops.fasta", &bad_reads, 20,  db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/generates_graph_with_two_self_loops.fasta", &bad_reads, &dup_reads, 20,  false, false, 0, db_graph);
   
   CU_ASSERT_EQUAL(seq_length,6);
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),2);
@@ -1189,12 +1189,12 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   int kmer_size = 3;
   int number_of_bits=4;
   int bucket_size   = 10;
-  long long bad_reads=0;
+  long long bad_reads=0; long long dup_reads=0;;
   int max_read_length=30;
 
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
 
-  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person.fasta", &bad_reads, max_read_length, db_graph);
+  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person.fasta", &bad_reads, &dup_reads, max_read_length, false, false, 0, db_graph);
   
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/chrom1.fasta", db_graph);
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/chrom2.fasta", db_graph);
@@ -1255,7 +1255,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
   db_graph = hash_table_new(number_of_bits,bucket_size,max_rehash_tries,kmer_size);
 
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person2.fasta", &bad_reads, max_read_length, db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person2.fasta", &bad_reads, &dup_reads, max_read_length, false, false, 0, db_graph);
   
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
 
@@ -1308,7 +1308,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   seq_length=0;
   db_graph = hash_table_new(number_of_bits,bucket_size,max_rehash_tries,kmer_size);
 
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, max_read_length, db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person3.fasta", &bad_reads, &dup_reads, max_read_length, false, false, 0, db_graph);
 
 
   // fasta looks like this:
@@ -1486,12 +1486,12 @@ void test_indel_discovery_simple_test_1()
   int kmer_size = 31;
   int number_of_bits=10;
   int bucket_size   = 5;
-  long long bad_reads=0;
+  long long bad_reads=0; long long dup_reads=0;;
   int max_read_length=600;
 
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
 
-  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person_with_sv.fasta", &bad_reads, max_read_length, db_graph);
+  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person_with_sv.fasta", &bad_reads, &dup_reads, max_read_length, false, false, 0, db_graph);
   CU_ASSERT(seq_length==612);
 
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
@@ -1596,14 +1596,14 @@ void test_deletion_validation()
   int kmer_size = 31;
   int number_of_bits=10;
   int bucket_size   = 5;
-  long long bad_reads=0;
+  long long bad_reads=0; long long dup_reads=0;;
   int max_read_length=2000;
 
 
 
   //STEP 1: get supernodes from our person which match reference at start and end.
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person_with_deletion_in_chrom.fasta",  &bad_reads, max_read_length, db_graph);
+  int seq_length = load_fasta_from_filename_into_graph("../data/test/graph/person_with_deletion_in_chrom.fasta",  &bad_reads, &dup_reads, max_read_length, false, false, 0, db_graph);
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
 
 
@@ -1623,7 +1623,7 @@ void test_deletion_validation()
 
   //STEP 2: Load the chromosome as a person, and the previosu supernodes as reference
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", &bad_reads, max_read_length,db_graph);
+  seq_length = load_fasta_from_filename_into_graph("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", &bad_reads, &dup_reads, max_read_length,false, false, 0, db_graph);
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/test_d_graph_intermediate_output_file", db_graph);
 
 
