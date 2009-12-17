@@ -277,14 +277,23 @@ int main(int argc, char **argv){
 		printf("Cannot open %s\n", name);
 		exit(1);
 	      }
+
+
+	    BinaryKmer marked_kmer; //will have all longlongs in array being ~0
+	    int i;
+	    for (i=0; i<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+	      {
+		marked_kmer[i]=~0;
+	      }
+
 	    
 	    void print_covg_and_ref_covg(dBNode* node)
-	      {
+	    {
 		if (node==NULL) 
 		  {
 		    fprintf(out_fptr, "node is NULL\t");
 		  }
-		else if (node->kmer == ~0) 
+		else if ( binary_kmer_comparison_operator(node->kmer, marked_kmer)==true ) 
 		  {
 		    fprintf(out_fptr, "N in fasta - unexpected\t");
 		  }

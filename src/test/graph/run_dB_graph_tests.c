@@ -60,6 +60,16 @@ int  main()
     return CU_get_error();
   }
 
+  if (NULL == CU_add_test(pSuite, "test loading single end fastq and discarding PCR duplicate reads",  test_loading_of_single_ended_reads_removing_duplicates)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+  if (NULL == CU_add_test(pSuite, "test loading paired end fastq and discarding PCR duplicate reads",  test_loading_of_paired_end_reads_removing_duplicates)){
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
 
 
      

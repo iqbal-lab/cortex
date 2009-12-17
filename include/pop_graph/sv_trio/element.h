@@ -27,7 +27,10 @@ typedef enum
     pruned       = 3,
     exists_in_reference = 4,
     visited_and_exists_in_reference = 5,
-
+    to_be_dumped = 6, //to be dumped as binary 
+    read_start_forward = 7,//used when removing duplicate reads
+    read_start_reverse = 8,//used when removing duplicate reads
+    read_start_forward_and_reverse = 9,//used when removing duplicate reads  
   } NodeStatus;
 
 
@@ -183,5 +186,15 @@ boolean db_node_read_sv_trio_binary(FILE * fp, short kmer_size, dBNode * node);
 //read a binary for an individual person, as dumped by the target "graph"
 // the edge array type and index tell you which person you should load this data into
 boolean db_node_read_graph_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index);
+
+
+boolean db_node_check_read_start(dBNode* node, Orientation ori);
+
+void db_node_set_read_start_status(dBNode* node, Orientation ori);
+
+boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2);
+
+//we have a read that starts at node in direction o1, and we want to know if a previous read started at that node in that direction
+boolean db_node_check_single_ended_duplicates(dBNode* node1, Orientation o1);
 
 #endif /* ELEMENT_H_ */

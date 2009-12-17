@@ -25,7 +25,16 @@ void test_dump_load_sv_trio_binary(){
   }
 
   db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,10,kmer_size);
-  seq_length_pre = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_dB_graph.fasta", &bad_reads, 20, db_graph_pre, individual_edge_array,0);
+
+  //we need the following arguments for the API but we will not use them - for duplicate removal and homopolymer breaking
+  boolean remove_duplicates_single_endedly=false;
+  boolean break_homopolymers=false;
+  long long dup_reads=0;
+  int homopolymer_cutoff=0;
+
+  seq_length_pre = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_dB_graph.fasta", &bad_reads, &dup_reads, 20, 
+										      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+										      db_graph_pre, individual_edge_array,0);
 
   CU_ASSERT(seq_length_pre==16);
 

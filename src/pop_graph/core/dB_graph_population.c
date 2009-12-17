@@ -3180,7 +3180,7 @@ void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fa
   // each call   will push left the nodes/etc in the various arrays by length_of_arrays
   // and then put the new nodes etc in on the right of that
 
-  int total_so_far;
+  int total_so_far=0;
   int ret = db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta(fasta_fptr, chunk_size, 0, 
 													     length_of_arrays,
 													     path_array, orientation_array, 

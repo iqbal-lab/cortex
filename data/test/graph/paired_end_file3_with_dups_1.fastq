@@ -1,0 +1,20 @@
+@IL4_315:1:330:205:374/1
+CATGAGGCCCCGGGAGCCGCTGTCCACCTACCCTCC
++
+=AAAA?AAAAA:?::A?A>;;7/7;8.<,'/55*+7
+@duplicate_of_IL4_315:1:330:205:374/1 - mate is also dup
+CATGAGGCCCCGGGAGCCGCTGTCCACCTACCCTCC
++
+=AAAA?AAAAA:?::A?A>;;7/7;8.<,'/55*+7
+@duplicate_of_IL4_315:1:330:205:374/1 - mate is reverse complement of dup
+CATGAGGCCCCGGGAGCCGCTGTCCACCTACCCTCC
++
+=AAAA?AAAAA:?::A?A>;;7/7;8.<,'/55*+7
+@rev_comp_duplicate_of_IL4_315:1:330:205:374/1 - mate is dup of the mate
+GGAGGGTAGGTGGACAGCGGCTCCCGGGGCCTCATG
++
+=AAAA?AAAAA:?::A?A>;;7/7;8.<,'/55*+7
+@rev_comp_duplicate_of_IL4_315:1:330:205:374/1 - mate is rev comp of dup of the mate. This will be indistinguishable from a dup to our algorithm as both mates match previous read_starts in this file, but from different mate pairs
+GGAGGGTAGGTGGACAGCGGCTCCCGGGGCCTCATG
++
+=AAAA?AAAAA:?::A?A>;;7/7;8.<,'/55*+7

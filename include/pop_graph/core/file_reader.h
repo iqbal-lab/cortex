@@ -11,11 +11,23 @@
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;
 
-int load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads, int max_read_length, dBGraph* db_graph, EdgeArrayType type, 
-								       int index);
-int load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads,  char quality_cut_off, int max_read_length, dBGraph* db_graph,
-								       EdgeArrayType type, int index);
+long long load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads, long long* dup_reads, int max_chunk_length,
+                                                                             boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff,
+                                                                             dBGraph* db_graph, EdgeArrayType type, int index);
+long long load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads,  char quality_cut_off, long long* dup_reads, int max_read_length,
+                                                                             boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff,
+                                                                             dBGraph* db_graph, EdgeArrayType type, int index);
 
+
+
+long long load_paired_fastq_from_filenames_into_graph_of_specific_person_or_pop(char* filename1, char* filename2, 
+										long long * bad_reads,  char quality_cut_off, int max_read_length, 
+										long long* dup_reads, boolean remove_duplicates, boolean break_homopolymers, int homopolymer_cutoff, 
+										dBGraph* db_graph, EdgeArrayType type, int index );
+
+long long load_list_of_paired_end_fastq_into_graph_of_specific_person_or_pop(char* list_of_left_mates, char* list_of_right_mates, char quality_cut_off, int max_read_length,
+                                                                             long long* bad_reads, long long* num_dups, int* count_file_pairs, boolean remove_dups,
+                                                                             boolean break_homopolymers, int homopolymer_cutoff,dBGraph* db_graph, EdgeArrayType type, int index);
 
 long long load_population_as_fasta(char* filename, long long* bad_reads, dBGraph* db_graph);
 int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bad_reads, dBGraph* db_graph, int index);
