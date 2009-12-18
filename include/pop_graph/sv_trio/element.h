@@ -102,12 +102,17 @@ boolean db_node_add_edge(dBNode *, dBNode *, Orientation, Orientation, short kme
 //outgoing edge in the side defined by the orientation.   
 boolean db_node_edge_exist(dBNode *, Nucleotide, Orientation, EdgeArrayType edge_type, int edge_index);
 
-//as previous, but this time you pass in a function that specifies the edge of interest (might for example be the union of all edges, or edges 1 and 3 or whatever)
-boolean db_node_edge_exist_within_specified_function_of_coloured_edges(dBNode * element,Nucleotide base,Orientation orientation, Edges (*f)(Element* ));
+//final argument f is a function that returns an Edge that is a function of the different colured edges in a node.                                                                                       // eg we might be interested in the union of all the coloured edges in the graph, or just the colour/edge for the first person,                                                                          //    or the union of all edges except that corresponding to the reference.
+boolean db_node_edge_exist_within_specified_function_of_coloured_edges(dBNode * element,Nucleotide base,Orientation orientation, Edges (*f)(const Element* ));
+
 
 //returns the label of the first outgoing edge -- leaving from the side 
 //defined by orientation. 
 boolean db_node_has_precisely_one_edge(dBNode *, Orientation, Nucleotide *, EdgeArrayType edge_type, int edge_index);
+
+
+boolean db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(dBNode * node, Orientation orientation, Nucleotide * nucleotide, 
+									      Edges (*get_colour)(const dBNode*) );
 
 boolean db_node_has_precisely_one_edge_in_union_graph_over_all_people(dBNode * node, Orientation orientation, Nucleotide * nucleotide);
 
@@ -124,6 +129,7 @@ void db_node_reset_edge(dBNode *, Orientation, Nucleotide, EdgeArrayType, int );
 
 //TODO - maybe do not need to export this:
 void db_node_reset_specified_edges(dBNode * node, Orientation orientation, Nucleotide nucleotide, void (*f)(dBNode*, Orientation, Nucleotide)  );
+
 
 //check that the edges are 0's
 boolean db_node_edges_reset(dBNode * node, EdgeArrayType edge_type, int edge_index);
@@ -144,7 +150,7 @@ void db_node_set_status_to_none(dBNode * node);
 
 void db_node_action_set_status_none(dBNode * node);
 
-//void db_node_action_set_status_pruned(dBNode * node);
+void db_node_action_set_status_pruned(dBNode * node);
 void db_node_action_set_status_visited(dBNode * node);
 
 void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode * node);
@@ -175,6 +181,7 @@ void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
 void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, short update);
 int db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index);
 short db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index);
+int db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, int (*get_covg)(const dBNode*) );
 
 
 
@@ -183,6 +190,9 @@ boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayTy
 
 
 boolean db_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, EdgeArrayType type, int index);
+
+
+boolean db_node_is_this_node_in_subgraph_defined_by_func_of_colours(dBNode* node, Edges (*get_colour)(const dBNode*) );
 
 
 //functions for binary format

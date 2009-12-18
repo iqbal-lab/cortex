@@ -38,7 +38,41 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 						      int index
 						      );
 
+void print_minimal_fasta_from_path_for_specific_person_or_pop(FILE *fout,
+							      char * name,
+							      int length,
+							      double avg_coverage,
+							      int min_coverage,
+							      int max_coverage,
+							      dBNode * fst_node,
+							      Orientation fst_orientation,
+							      dBNode * lst_node,
+							      Orientation lst_orientation,
+							      char * string, //labels of paths
+							      int kmer_size,
+							      boolean include_first_kmer,
+							      EdgeArrayType type,
+							      int index
+							      );
 
+void print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *fout,
+									  char * name,
+									  int length,
+									  double avg_coverage,
+									  int min_coverage,
+									  int max_coverage,
+									  dBNode * fst_node,
+									  Orientation fst_orientation,
+									  dBNode * lst_node,
+									  Orientation lst_orientation,
+									  char * string, //labels of paths
+									  int kmer_size,
+									  boolean include_first_kmer,
+									  Edges (*get_colour)(const dBNode*),
+									  int (*get_covg)(const dBNode*)
+									  );
+
+                                                                          
 //This function does not  check that it there is such an edge in the specified person/colour - but it does check if the target node is in the specific person.
 //if you want to be sure the dge exists in that colour, then check it before calling this function
 dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node, Orientation current_orientation, 
@@ -93,7 +127,64 @@ dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node
 
 
 
+//This function does not  check that it there is such an edge in the specified person/colour - but it does check if the target node is in the specific person.
+//if you want to be sure the dge exists in that colour, then check it before calling this function
+//The last argument allows you to apply the operation to some subgraph - eg you might take the unuiion of colours 2 and 3, or of all colours.
+//If for example you wanted to get the next node in the graph irrespective of colour, get_colour would return the union (bitwise AND) of all edges in a node.
+dBNode * db_graph_get_next_node_in_subgraph_defined_by_func_of_colours(dBNode * current_node, Orientation current_orientation, 
+								       Orientation * next_orientation,
+								       Nucleotide edge, Nucleotide * reverse_edge,dBGraph * db_graph, 
+								       Edges (*get_colour)(const dBNode*)
+								       )
+{
 
+  BinaryKmer local_copy_of_kmer;
+  binary_kmer_assignment_operator(local_copy_of_kmer, current_node->kmer);
+  
+  BinaryKmer tmp_kmer;
+  dBNode * next_node=NULL;
+  
+  // after the following line tmp_kmer and rev_kmer are pointing to the same B Kmer
+  BinaryKmer* rev_kmer = binary_kmer_reverse_complement(&local_copy_of_kmer,db_graph->kmer_size, &tmp_kmer);
+  
+  
+  if (current_orientation == reverse){   
+    *reverse_edge = binary_kmer_get_last_nucleotide(&local_copy_of_kmer);
+    binary_kmer_assignment_operator(local_copy_of_kmer,*rev_kmer);
+  }
+  else{
+    *reverse_edge = binary_kmer_get_last_nucleotide(rev_kmer);
+  }
+
+
+  binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&local_copy_of_kmer, edge, db_graph->kmer_size);
+  
+   //get node from table
+  next_node = hash_table_find(element_get_key(&local_copy_of_kmer,db_graph->kmer_size, &tmp_kmer),db_graph);
+
+  if (next_node != NULL)
+    {
+      *next_orientation = db_node_get_orientation(&local_copy_of_kmer,next_node,db_graph->kmer_size);
+    }
+  else
+    {
+      //no else
+    }
+
+
+  //need to check the node is in the specified subgraph graph
+  if (! (db_node_is_this_node_in_subgraph_defined_by_func_of_colours(next_node, get_colour)) )
+    {
+      return NULL;
+    }
+ 
+  return next_node;
+  
+
+}
+
+
+//MARIO Mario - noode seems to call or use this?
 boolean db_graph_db_node_has_precisely_n_edges_with_status_for_specific_person_or_pop(dBNode * node,Orientation orientation,NodeStatus status,int n,
 										      dBNode * * next_node, Orientation * next_orientation, Nucleotide * next_base,
 										      dBGraph * db_graph, EdgeArrayType type, int index)
@@ -255,7 +346,7 @@ boolean db_graph_db_node_prune_low_coverage(dBNode * node, int coverage,
 					    void (*node_action)(dBNode * node),
 					    dBGraph * db_graph, 
 					    int (*sum_of_covgs_in_desired_colours)(Element *), 
-					    Edges (*get_edge_of_interest)(Element*),
+					    Edges (*get_edge_of_interest)(const Element*),
 					    void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide),
 					    void (*apply_reset_to_specified_edges_2)(dBNode*) )
 {
@@ -274,13 +365,13 @@ boolean db_graph_db_node_prune_low_coverage(dBNode * node, int coverage,
       //remove evidence in adjacent nodes where they point to this one
       if (db_node_edge_exist_within_specified_function_of_coloured_edges(node,nucleotide,forward, get_edge_of_interest)){
 	next_node = db_graph_get_next_node(node,forward,&next_orientation,nucleotide,&reverse_nucleotide,db_graph);
-	db_node_reset_specified_edges(next_node,opposite_orientation(next_orientation),reverse_nucleotide, &apply_reset_to_specified_edges);
+	db_node_reset_specified_edges(next_node,opposite_orientation(next_orientation),reverse_nucleotide, apply_reset_to_specified_edges);
 	  
       }
 	
       if (db_node_edge_exist_within_specified_function_of_coloured_edges(node,nucleotide,reverse, get_edge_of_interest)){
 	next_node = db_graph_get_next_node(node,reverse,&next_orientation,nucleotide,&reverse_nucleotide,db_graph);
-	db_node_reset_specified_edges(next_node,opposite_orientation(next_orientation),reverse_nucleotide, &apply_reset_to_specified_edges);
+	db_node_reset_specified_edges(next_node,opposite_orientation(next_orientation),reverse_nucleotide, apply_reset_to_specified_edges);
 	
       }
     }
@@ -302,9 +393,9 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int 
 							     dBGraph * db_graph)
 {
 
-  Edges (*get_edge_of_interest)(Element* node)
+  Edges get_edge_of_interest(const Element* node)
   {
-    return get_union_of_edges(*e);
+    return get_union_of_edges(*node);
   }
   
   Edges set_to_zero(Edges edge)
@@ -312,7 +403,7 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int 
     return 0;
   }
 
-  void (*apply_reset_to_specified_edges)(dBNode* node , Orientation or , Nucleotide nuc)
+  void apply_reset_to_specified_edges(dBNode* node , Orientation or , Nucleotide nuc)
   {
       int i;
       for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
@@ -321,20 +412,31 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int 
 	}
   }
   
-  void (*apply_reset_to_specified_edges_2)(dBNode* node)
+  void apply_reset_to_specified_edges_2(dBNode* node)
   {
       int i;
       for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
 	{
-	  db_node_reset_edges(node);
+	  db_node_reset_edges(node, individual_edge_array, i);
 	}
   }
 
-  db_graph_db_node_prune_low_coverage(node, coverage, node_action, db_graph,
-				      sum_of_covgs_in_desired_colours,
-				      get_edge_of_interest,
-				      apply_reset_to_specified_edges,
-				      apply_reset_to_specified_edges_2);
+  int sum_of_covgs_in_desired_colours(dBNode * node)
+  {
+    int total=0;
+    int i;
+    for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+      {
+	total += db_node_get_coverage(node, individual_edge_array,i);
+      }
+    return total;
+  }
+
+  return db_graph_db_node_prune_low_coverage(node, coverage, node_action, db_graph,
+					     sum_of_covgs_in_desired_colours,
+					     get_edge_of_interest,
+					     apply_reset_to_specified_edges,
+					     apply_reset_to_specified_edges_2);
 
 
 }
@@ -485,6 +587,138 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
 }
 
 
+
+// computes a perfect path starting from a node and an edge
+// ie the starting node can have  multiple exits
+// perfect path -- no conflict no cycle -- returns length
+// path: node_0 edge_0 node_1 edge_1 ... node_n-1 edge_n-1 node_n
+// path_nodes is a n+1 array from 0..n with all the nodes in the path
+// path_orientations is n+1 array from 0..n with the orientations of the node in the path
+// path labels is n array from 0..n-1 with all the labels for the edges (see above)
+// node_action only applied to internal nodes (not node_0 and node_n)
+// seq is a string with all the labels concatenated (NB: it doesn't contain the kmer in the first node)
+// avg_coverage, min_coverge, max_coverge -> refers to the internal nodes only
+
+//get_colour returns an edge which is a function of the edges in a node. eg union of all edges, or of colours 1 and 2
+// get covg returns coverge desired - most ikely is sum of covgs in each of colours which are summed/unioned in get_colour
+int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(dBNode * node, Orientation orientation, int limit, 
+										     Nucleotide fst_nucleotide,
+										     void (*node_action)(dBNode * node),
+										     dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+										     char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
+										     boolean * is_cycle, dBGraph * db_graph, 
+										     Edges (*get_colour)(const dBNode*),
+										     int (*get_covg)(const dBNode*) 
+										     )
+{
+
+  Orientation  current_orientation,next_orientation;
+  dBNode * current_node = NULL;
+  dBNode * next_node = NULL;
+  Nucleotide nucleotide,rev_nucleotide,nucleotide2;
+  int length =0;
+  char tmp_seq[db_graph->kmer_size+1];
+  tmp_seq[db_graph->kmer_size]='\0';
+  int sum_coverage = 0;
+  int coverage  = 0;
+
+  //sanity checks
+  if (node == NULL)
+    {
+      printf("db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours: can't pass a null node\n");
+      exit(1);
+    }
+  else if (! (db_node_is_this_node_in_subgraph_defined_by_func_of_colours(node, get_colour)))
+    {
+      //printf("\nThis node is not in the graph of this person - in db_graph_get_perfect_path_\n");
+      return false;
+    }
+
+  current_node        = node;
+  current_orientation = orientation;
+
+  *is_cycle = false;
+  
+  path_nodes[0]         = node;
+  path_orientations[0]  = orientation;  
+  *max_coverage         = 0;
+  *min_coverage         = INT_MAX;
+ 
+  if (DEBUG){
+    printf("\n ZAM Node %i in path: %s\n", length, binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq));
+  }
+    
+  
+  //first edge defined
+  nucleotide = fst_nucleotide;
+
+  do{ 
+    if (length>0){
+      node_action(current_node);
+      sum_coverage += coverage;
+      *max_coverage = (*max_coverage < coverage) ? coverage : *max_coverage;
+      *min_coverage = (*min_coverage > coverage) ? coverage : *min_coverage;
+    }
+
+    //this will return NULL if the next node is not in the subgraph specified by get_colour. 
+    next_node =  db_graph_get_next_node_in_subgraph_defined_by_func_of_colours(current_node,current_orientation,&next_orientation,nucleotide,&rev_nucleotide,db_graph, get_colour);
+
+      
+
+
+    //sanity check
+    if(next_node == NULL)
+      {
+	fprintf(stderr,"dB_graph: didnt find node in hash table: %s %c %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq),binary_nucleotide_to_char(nucleotide), current_orientation == forward ? "forward" : "reverse");
+	exit(1);
+      }
+
+
+    path_labels[length]        = nucleotide;
+    seq[length]                = binary_nucleotide_to_char(nucleotide);
+    coverage                   = db_node_get_coverage_in_subgraph_defined_by_func_of_colours(next_node, get_covg);
+    
+    length++;
+
+    path_nodes[length]         = next_node;
+    path_orientations[length]  = next_orientation;
+    
+    if (DEBUG){
+      printf("\n Length of path so far is  %i : %s\n", length, binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size,tmp_seq));
+    }
+    
+    current_node        = next_node;
+    current_orientation = next_orientation;
+    
+  } while (length<limit && 
+	   !((next_node == node) && (next_orientation == orientation)) && //loop
+	   db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(next_node,opposite_orientation(next_orientation),&nucleotide2, get_colour) && //multiple entries
+	   db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(current_node, current_orientation,&nucleotide, get_colour)); //has one next edge only
+  
+  
+  if ((next_node == node) && (next_orientation == orientation)){
+    *is_cycle = true;
+  }
+
+  
+  
+   seq[length] = '\0';
+  *avg_coverage = (length-1<=0) ? 0 : (double) sum_coverage/(double) (length-1);
+
+  if (*min_coverage == INT_MAX)
+    {
+      *min_coverage = 0;
+    };
+
+  return length;
+  
+}
+
+
+
+
+
+
 // perfect path -- no conflict no cycle -- returns length
 // path: node_0 edge_0 node_1 edge_1 ... node_n-1 edge_n-1 node_n
 // path_nodes is a n+1 array from 0..n with all the nodes in the path
@@ -522,6 +756,58 @@ int db_graph_get_perfect_path_for_specific_person_or_pop(dBNode * node, Orientat
 										   path_nodes,path_orientations,path_labels,
 										   seq,avg_coverage,min_coverage,max_coverage,
 										   is_cycle,db_graph, type, index);
+    }
+  else{
+    *max_coverage         = 0;
+    *min_coverage         = 0;
+    seq[0] = '\0';
+  }
+
+  return length;
+
+}
+
+
+// perfect path -- no conflict no cycle -- returns length
+// path: node_0 edge_0 node_1 edge_1 ... node_n-1 edge_n-1 node_n
+// path_nodes is a n+1 array from 0..n with all the nodes in the path
+// path_orientations is n+1 array from 0..n with the orientations of the node in the path
+// path labels is n array from 0..n-1 with all the labels for the edges (see above)
+// node_action only applied to internal nodes (not node_0 and node_n)
+// seq is a string with all the labels concatenated (NB: it doesn't contain the kmer in the first node)
+// avg_coverage, min_coverge, max_coverge -> refers to the internal nodes only
+
+int db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(dBNode * node, Orientation orientation, int limit, 
+								     void (*node_action)(dBNode * node),
+								     dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+								     char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
+								     boolean * is_cycle, dBGraph * db_graph, 
+								     Edges (*get_colour)(const dBNode*),
+								     int (*get_covg)(const dBNode*) )
+{
+
+  int length =0;
+  Nucleotide nucleotide;
+
+  //sanity check
+  if (node == NULL){
+    printf("db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours: can't pass a null node\n");
+    exit(1);
+  }
+
+  path_nodes[0]         = node;
+  path_orientations[0]  = orientation;  
+ 
+
+  if (db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(node,orientation,&nucleotide, get_colour))
+    {
+    
+      length= db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(node,orientation, limit, nucleotide,
+											       node_action,
+											       path_nodes,path_orientations,path_labels,
+											       seq,avg_coverage,min_coverage,max_coverage,
+											       is_cycle,db_graph, 
+											       get_colour, get_covg);
     }
   else{
     *max_coverage         = 0;
@@ -659,6 +945,129 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
 
 
 
+// a bubble starts in a node with only two outgoing edges in the same orientation
+// every branch of the bubble is free of conflicts until it joins with the main branch
+// the differente between the length of the branches is <= delta
+
+// the algorithms works by trying to find supernodes for all possible edges in the given orientation.
+// the action is applied to all the internal nodes in the supernodes (even if they don't form a bubble).
+// at the moment returns only one bubble, notice that potentially there could be situations where a node forms two bubbles (something to implement). 
+
+
+//TODO - could have triallelic
+boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * node,
+								      Orientation orientation,
+								      int limit,
+								      void (*node_action)(dBNode * node), 
+								      int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,
+								      char * seq1, double * avg_coverage1, int * min_coverage1, int * max_coverage1,
+								      int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,
+								      char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
+								      dBGraph * db_graph, Edges (*get_colour)(const dBNode*),  int (*get_covg)(const dBNode*) )
+{
+
+  if (node==NULL)
+    {
+      printf("Do not call db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours with NULL node. Exiting\n");
+      exit(1);
+    }
+  else if (! (db_node_is_this_node_in_subgraph_defined_by_func_of_colours(node, get_colour)))
+    {
+      //printf("\nThis node is not in the graph of this person\n");
+      return false;
+    }
+
+
+  
+  boolean ret = false;
+  
+  dBNode * path_nodes[4][limit+1];
+  Orientation path_orientations[4][limit+1];
+  Nucleotide path_labels[4][limit];
+  char seq[4][limit+1];
+  double avg_coverage[4];
+  int min_coverage[4];
+  int max_coverage[4];
+  int lengths[4];
+  int i=0;
+  
+  void check_nucleotide(Nucleotide n){
+
+    boolean is_cycle;      
+    if (db_node_edge_exist_within_specified_function_of_coloured_edges(node,n,orientation, get_colour)){
+	lengths[i] = db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(node,orientation,
+												      limit,n,
+												      node_action,
+												      path_nodes[i],path_orientations[i],path_labels[i],
+												      seq[i],&avg_coverage[i],&min_coverage[i],&max_coverage[i],
+												      &is_cycle,db_graph, get_colour, get_covg);
+	
+	i++;
+    }
+  }
+  
+  
+  nucleotide_iterator(check_nucleotide);
+ 
+  int j = 0;
+  int k = 0;
+
+  while (!ret && j<i){
+    k = j+1;
+    while (!ret && k<i){
+      
+      if (path_nodes[j][lengths[j]] == path_nodes[k][lengths[k]]){
+	*length1 = lengths[j];
+	*length2 = lengths[k];
+
+	*avg_coverage1 = avg_coverage[j];
+	*avg_coverage2 = avg_coverage[k];
+	
+	*min_coverage1 = min_coverage[j];
+	*min_coverage2 = min_coverage[k];
+		
+	*max_coverage1 = max_coverage[j];
+	*max_coverage2 = max_coverage[k];
+	  
+	int l;
+	for(l=0;l<lengths[j]; l++){
+	  path_nodes1[l] = path_nodes[j][l];
+	  path_orientations1[l] = path_orientations[j][l];
+	  path_labels1[l] = path_labels[j][l];
+	  seq1[l] = seq[j][l];
+	}
+	path_nodes1[lengths[j]] = path_nodes[j][lengths[j]];
+	path_orientations1[lengths[j]] = path_orientations[j][lengths[j]];
+	seq1[lengths[j]] = seq[j][lengths[j]];
+
+	for(l=0;l<lengths[k]; l++){
+	  path_nodes2[l] = path_nodes[k][l];
+	  path_orientations2[l] = path_orientations[k][l];
+	  path_labels2[l] = path_labels[k][l];
+	  seq2[l] = seq[k][l];
+	}
+	path_nodes2[lengths[k]] = path_nodes[k][lengths[k]];
+	path_orientations2[lengths[k]] = path_orientations[k][lengths[k]];
+	seq2[lengths[k]] = seq[k][lengths[k]];
+	
+	ret = true;
+	  
+      }
+      else{
+	k++;
+      }
+      
+    }
+    j++;
+  }
+    
+  return ret;
+}
+
+
+
+
+
 //clip the branch with smaller coverage in the first kmer --> this can be more sophisticated
 //dont want to flatten repeats -- use coverage_limit for this
 
@@ -695,12 +1104,12 @@ boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(dBNode * node,
   Orientation next_orientation;
 
 
-  if (db_graph_detect_bubble_for_specific_person_or_pop(node,orientation,limit,&db_node_action_do_nothing,
-							&length1,path_nodes1,path_orientations1,path_labels1,
-							seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
-							&length2,path_nodes2,path_orientations2,path_labels2,
-							seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
-							db_graph, type, index)){
+  if (db_graph_detect_bubble_for_specific_person_or_population(node,orientation,limit,&db_node_action_do_nothing,
+							       &length1,path_nodes1,path_orientations1,path_labels1,
+							       seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
+							       &length2,path_nodes2,path_orientations2,path_labels2,
+							       seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
+							       db_graph, type, index)){
     
 
     if ((double)coverage_limit>=avg_coverage1 && 
@@ -1310,11 +1719,14 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 
 
 //routine to DETECT/DISCOVER variants directly from the graph - reference-free (unless you have put the reference in the graph!)
-// last argument is a condition which you apply to the flanks and branches to decide whether to call.
+// penultimate argument is a condition which you apply to the flanks and branches to decide whether to call.
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
+// last argument get_colour specifies some combination of colours, defining the graph within which we look for bubbles.
+// most obvious choices are: colour/edge with index (say)2, or union of all edges, or union of ll except that which is the reference genome
 void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph, 
-			  boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p) ))
+			  boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p),
+			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) )
 {
   
   int count_vars = 0; 
@@ -1344,12 +1756,12 @@ void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph,
    
       do{
 	
-	if (db_graph_detect_bubble(current_node,orientation,max_length,&db_node_action_set_status_visited,
-				   &length1,path_nodes1,path_orientations1,path_labels1,
-				   seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
-				   &length2,path_nodes2,path_orientations2,path_labels2,
-				   seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
-				   db_graph))
+	if (db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(current_node,orientation,max_length,&db_node_action_set_status_visited,
+									  &length1,path_nodes1,path_orientations1,path_labels1,
+									  seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
+									  &length2,path_nodes2,path_orientations2,path_labels2,
+									  seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
+									  db_graph, get_colour, get_covg))
 	  {
 	    int length_flank5p = 0;	
 	    int length_flank3p = 0;
@@ -1371,26 +1783,27 @@ void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph,
 	    
 	    
 	    //compute 5' flanking region       	
-	    int length_flank5p_reverse = db_graph_get_perfect_path(current_node,opposite_orientation(orientation),
-								   flanking_length,&db_node_action_set_status_visited,
-								   nodes5p,orientations5p,labels_flank5p,
-								   seq5p,&avg_coverage5p,&min5p,&max5p,
-								   &is_cycle5p,db_graph);
+	    int length_flank5p_reverse = db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(current_node,opposite_orientation(orientation),
+													  flanking_length,&db_node_action_set_status_visited,
+													  nodes5p,orientations5p,labels_flank5p,
+													  seq5p,&avg_coverage5p,&min5p,&max5p,
+													  &is_cycle5p,db_graph, get_colour, get_covg);
 	    
 	    if (length_flank5p_reverse>0){
 	      Nucleotide label;
 	      Orientation next_orientation;
+	     
+	      dBNode * lst_node = db_graph_get_next_node_in_subgraph_defined_by_func_of_colours(nodes5p[length_flank5p_reverse-1],orientations5p[length_flank5p_reverse-1],
+												&next_orientation, labels_flank5p[length_flank5p_reverse-1],&label,
+												db_graph, get_colour);
 	      
-	      dBNode * lst_node = db_graph_get_next_node(nodes5p[length_flank5p_reverse-1],orientations5p[length_flank5p_reverse-1],
-							 &next_orientation, labels_flank5p[length_flank5p_reverse-1],&label,db_graph);
-	      
-	      length_flank5p = db_graph_get_perfect_path_with_first_edge(nodes5p[length_flank5p_reverse],
-									 opposite_orientation(orientations5p[length_flank5p_reverse]),
-									 flanking_length,label,
-									 &db_node_action_set_status_visited,
-									 nodes5p,orientations5p,labels_flank5p,
-									 seq5p,&avg_coverage5p,&min5p,&max5p,
-									 &is_cycle5p,db_graph);
+	      length_flank5p = db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(nodes5p[length_flank5p_reverse],
+														opposite_orientation(orientations5p[length_flank5p_reverse]),
+														flanking_length,label,
+														&db_node_action_set_status_visited,
+														nodes5p,orientations5p,labels_flank5p,
+														seq5p,&avg_coverage5p,&min5p,&max5p,
+														&is_cycle5p,db_graph, get_colour, get_covg);
 	    }
 	    else{
 	      length_flank5p = 0;
@@ -1399,11 +1812,11 @@ void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph,
 	    
 	    
 	    //compute 3' flanking region
-	    length_flank3p = db_graph_get_perfect_path(path_nodes2[length2],path_orientations2[length2],
-						       flanking_length,&db_node_action_set_status_visited,
-						       nodes3p,orientations3p,labels_flank3p,
-						       seq3p,&avg_coverage3p,&min3p,&max3p,
-						       &is_cycle3p,db_graph);
+	    length_flank3p = db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(path_nodes2[length2],path_orientations2[length2],
+											      flanking_length,&db_node_action_set_status_visited,
+											      nodes3p,orientations3p,labels_flank3p,
+											      seq3p,&avg_coverage3p,&min3p,&max3p,
+											      &is_cycle3p,db_graph, get_colour, get_covg);
 
 
 	    
@@ -1419,32 +1832,37 @@ void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph,
 		//printf("length branch 2: %i - avg_coverage: %5.2f\n",length2,avg_coverage2);
 		//printf("length 3p flank: %i avg_coverage:%5.2f\n",length_flank3p,avg_coverage3p);
 
+
 		//print flank5p - 
 		sprintf(name,"var_5p_flank_%i",count_vars);
-		print_fasta_from_path(stdout,name,length_flank5p,avg_coverage5p,min5p,max5p,
-				      nodes5p[0],orientations5p[0],				
-				      nodes5p[length_flank5p],orientations5p[length_flank5p],				
-				      seq5p,
-				      db_graph->kmer_size,false);	
+
+		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(stdout,name,length_flank5p,avg_coverage5p,min5p,max5p,
+										     nodes5p[0],orientations5p[0],			
+										     nodes5p[length_flank5p],orientations5p[length_flank5p],				
+										     seq5p,
+										     db_graph->kmer_size,true, get_colour, get_covg);	
 		
 		//print branches
 		sprintf(name,"branch_%i_1",count_vars);
-		print_fasta_from_path(stdout,name,length1,
-				      avg_coverage1,min_coverage1,max_coverage1,
-				      path_nodes1[0],path_orientations1[0],path_nodes1[length1],path_orientations1[length1],
-				      seq1,db_graph->kmer_size,false);
+		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(stdout,name,length1,
+										     avg_coverage1,min_coverage1,max_coverage1,
+										     path_nodes1[0],path_orientations1[0],path_nodes1[length1],path_orientations1[length1],
+										     seq1,
+										     db_graph->kmer_size,false, get_colour, get_covg);
 		
 		sprintf(name,"branch_%i_2",count_vars);
-		print_fasta_from_path(stdout,name,length2,
-				      avg_coverage2,min_coverage2,max_coverage2,
-				      path_nodes2[0],path_orientations2[0],path_nodes2[length2],path_orientations2[length2],
-				      seq2,db_graph->kmer_size,false);
+		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(stdout,name,length2,
+										     avg_coverage2,min_coverage2,max_coverage2,
+										     path_nodes2[0],path_orientations2[0],path_nodes2[length2],path_orientations2[length2],
+										     seq2,
+										     db_graph->kmer_size,false, get_colour, get_covg);
 		
 		//print flank3p
 		sprintf(name,"var_3p_flank_%i",count_vars);
-		print_fasta_from_path(stdout,name,length_flank3p,avg_coverage3p,min3p,max3p,
-				      nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
-				      seq3p,db_graph->kmer_size,false);
+		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(stdout,name,length_flank3p,avg_coverage3p,min3p,max3p,
+										     nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
+										     seq3p,
+										     db_graph->kmer_size,false, get_colour, get_covg);
 		
 	      }
 	    db_node_action_set_status_visited(path_nodes2[length2]);
@@ -1541,13 +1959,15 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
 								 path_nodes,path_orientations,path_labels,
 								 seq,&avg_coverage,&min,&max,&is_cycle,
 								 db_graph, type, index);
-    
+      
  
 
       if (length>0){	
 	sprintf(name,"node_%i",count_nodes);
 
-	print_fasta_from_path(fout1,name,length,avg_coverage,min,max,path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,db_graph->kmer_size,true);
+	print_minimal_fasta_from_path_for_specific_person_or_pop(fout1,name,length,avg_coverage,min,max,
+								 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
+								 db_graph->kmer_size,true, type, index);
 	if (length==max_length){
 	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
 	}
@@ -1555,7 +1975,9 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
       }
       else{
 	sprintf(name,"node_%qd",count_sing);
-	print_fasta_from_path(fout2,name,length,avg_coverage,min,max,path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,db_graph->kmer_size,true);
+	print_minimal_fasta_from_path_for_specific_person_or_pop(fout2,name,length,avg_coverage,min,max,
+								 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
+								 db_graph->kmer_size,true, type, index);
 	count_sing++;
       }
     
@@ -1569,7 +1991,8 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
   free(path_orientations);
   free(path_labels);
   free(seq);
-  fclose(fout);
+  fclose(fout1);
+  fclose(fout2);
 }
 
 
@@ -1594,7 +2017,7 @@ void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, Edge
 // 3 Pass apply_reset_to_specified_edges_2 which applies db_node_reset_edges to whichever set of edges you care about,
 void db_graph_remove_low_coverage_nodes(int coverage, dBGraph * db_graph,
 					int (*sum_of_covgs_in_desired_colours)(Element *), 
-					Edges (*get_edge_of_interest)(Element*), 
+					Edges (*get_edge_of_interest)(const Element*), 
 					void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 					void (*apply_reset_to_specified_edges_2)(dBNode*) )
 {
@@ -4352,6 +4775,23 @@ void compute_label(dBNode * node, Orientation o, char * label, EdgeArrayType typ
   label[i]='\0';
 }
 
+void compute_label_in_subgraph_defined_by_func_of_colours(dBNode * node, Orientation o, char * label, Edges (*get_colour)(const dBNode*)){
+
+  int i=0; 
+
+  void check_nucleotide(Nucleotide n){
+
+    if (db_node_edge_exist_within_specified_function_of_coloured_edges(node,n,o, get_colour)){
+	label[i] =  binary_nucleotide_to_char(n);
+	i++;
+      }
+  }
+  
+  nucleotide_iterator(check_nucleotide);
+
+  label[i]='\0';
+}
+
 
 //sometimes we want to apply a function to all nodes in a path, but the path is so long that we don't
 //want to have it all in memory. So we read through the fasta defining the path.
@@ -4727,6 +5167,199 @@ void print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(FILE *f
 }
 
 
+void print_minimal_fasta_from_path_for_specific_person_or_pop(FILE *fout,
+							      char * name,
+							      int length,
+							      double avg_coverage,
+							      int min_coverage,
+							      int max_coverage,
+							      dBNode * fst_node,
+							      Orientation fst_orientation,
+							      dBNode * lst_node,
+							      Orientation lst_orientation,
+							      char * string, //labels of paths
+							      int kmer_size,
+							      boolean include_first_kmer,
+							      EdgeArrayType type,
+							      int index
+							      )
+{
+
+  if (fout==NULL)
+    {
+      printf("Exiting - have passed a null file pointer to print_fasta_from_path_for_specific_person_or_pop\n");
+      exit(1);
+    }
+  
+  if ( (fst_node==NULL) || (lst_node==NULL) )
+    {
+      fprintf(fout, "WARNING - print_fasta command as have been given a NULL node as first or last node - will not print fst/lst kmers.\n");
+      fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i\n", 
+              name, (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage);
+      fprintf(fout,"%s\n",string);
+    }
+  else
+    {
+      char fst_f[5], fst_r[5],lst_f[5],lst_r[5];
+      
+      compute_label(fst_node,forward,fst_f, type, index);
+      compute_label(fst_node,reverse,fst_r, type, index);
+      compute_label(lst_node,forward,lst_f, type, index);
+      compute_label(lst_node,reverse,lst_r, type, index);
+      
+      char fst_seq[kmer_size+1], lst_seq[kmer_size+1];
+ 
+      BinaryKmer fst_kmer;
+      BinaryKmer tmp_kmer;
+
+      if (fst_orientation==reverse)
+	{
+	  binary_kmer_assignment_operator(fst_kmer, *(  binary_kmer_reverse_complement(element_get_kmer(fst_node),kmer_size, &tmp_kmer) ) );
+	} 
+      else
+	{
+	  binary_kmer_assignment_operator(fst_kmer, *(element_get_kmer(fst_node)) );
+	}
+      
+      binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq);
+      
+      BinaryKmer lst_kmer;
+
+      if (lst_orientation==reverse){
+	binary_kmer_assignment_operator(lst_kmer, *(  binary_kmer_reverse_complement(element_get_kmer(lst_node),kmer_size, &tmp_kmer) ) );
+      } 
+      else
+	{
+	  binary_kmer_assignment_operator(lst_kmer, *(element_get_kmer(lst_node)) );
+	}
+      binary_kmer_to_seq(&lst_kmer,kmer_size,lst_seq);
+      
+
+      fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s ", name,
+	      (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, 
+	      db_node_get_coverage(fst_node, type, index),
+	      fst_seq,
+	      (fst_orientation == forward ? fst_r : fst_f),
+	      (fst_orientation == forward ? fst_f : fst_r),
+	      db_node_get_coverage(lst_node, type, index),
+	      lst_seq,
+	      (lst_orientation == forward ? lst_r : lst_f),
+	      (lst_orientation == forward ? lst_f : lst_r));
+
+
+
+      fprintf(fout, "\n");
+
+      if (include_first_kmer){    
+	
+	fprintf(fout,"%s",binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq));
+      }
+      
+      fprintf(fout,"%s\n",string);
+      
+    }
+
+
+
+}
+
+
+
+void print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *fout,
+									  char * name,
+									  int length,
+									  double avg_coverage,
+									  int min_coverage,
+									  int max_coverage,
+									  dBNode * fst_node,
+									  Orientation fst_orientation,
+									  dBNode * lst_node,
+									  Orientation lst_orientation,
+									  char * string, //labels of paths
+									  int kmer_size,
+									  boolean include_first_kmer,
+									  Edges (*get_colour)(const dBNode*),
+									  int (*get_covg)(const dBNode*)
+									  )
+{
+
+  if (fout==NULL)
+    {
+      printf("Exiting - have passed a null file pointer to print_fasta_from_path_for_specific_person_or_pop\n");
+      exit(1);
+    }
+  
+  if ( (fst_node==NULL) || (lst_node==NULL) )
+    {
+      fprintf(fout, "WARNING - print_fasta command as have been given a NULL node as first or last node - will not print fst/lst kmers.\n");
+      fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i\n", 
+              name, (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage);
+      fprintf(fout,"%s\n",string);
+    }
+  else
+    {
+      char fst_f[5], fst_r[5],lst_f[5],lst_r[5];
+      
+      compute_label_in_subgraph_defined_by_func_of_colours(fst_node,forward,fst_f, get_colour);
+      compute_label_in_subgraph_defined_by_func_of_colours(fst_node,reverse,fst_r, get_colour);
+      compute_label_in_subgraph_defined_by_func_of_colours(lst_node,forward,lst_f, get_colour);
+      compute_label_in_subgraph_defined_by_func_of_colours(lst_node,reverse,lst_r, get_colour);
+      
+      char fst_seq[kmer_size+1], lst_seq[kmer_size+1];
+ 
+      BinaryKmer fst_kmer;
+      BinaryKmer tmp_kmer;
+
+      if (fst_orientation==reverse)
+	{
+	  binary_kmer_assignment_operator(fst_kmer, *(  binary_kmer_reverse_complement(element_get_kmer(fst_node),kmer_size, &tmp_kmer) ) );
+	} 
+      else
+	{
+	  binary_kmer_assignment_operator(fst_kmer, *(element_get_kmer(fst_node)) );
+	}
+      
+      binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq);
+      
+      BinaryKmer lst_kmer;
+
+      if (lst_orientation==reverse){
+	binary_kmer_assignment_operator(lst_kmer, *(  binary_kmer_reverse_complement(element_get_kmer(lst_node),kmer_size, &tmp_kmer) ) );
+      } 
+      else
+	{
+	  binary_kmer_assignment_operator(lst_kmer, *(element_get_kmer(lst_node)) );
+	}
+      binary_kmer_to_seq(&lst_kmer,kmer_size,lst_seq);
+      
+
+      fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s ", name,
+	      (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, 
+	      db_node_get_coverage_in_subgraph_defined_by_func_of_colours(fst_node, get_covg),
+	      fst_seq,
+	      (fst_orientation == forward ? fst_r : fst_f),
+	      (fst_orientation == forward ? fst_f : fst_r),
+	      db_node_get_coverage_in_subgraph_defined_by_func_of_colours(lst_node, get_covg),
+	      lst_seq,
+	      (lst_orientation == forward ? lst_r : lst_f),
+	      (lst_orientation == forward ? lst_f : lst_r));
+
+
+
+      fprintf(fout, "\n");
+
+      if (include_first_kmer){    
+	
+	fprintf(fout,"%s",binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq));
+      }
+      
+      fprintf(fout,"%s\n",string);
+      
+    }
+
+
+
+}
 
 
 

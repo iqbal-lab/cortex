@@ -20,6 +20,18 @@ dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node
                                                            Orientation * next_orientation,
                                                            Nucleotide edge, Nucleotide * reverse_edge,dBGraph * db_graph, EdgeArrayType type, int index);
 
+//This function does not  check that it there is such an edge in the specified person/colour - but it does check if the target node is in the specific person.
+//if you want to be sure the dge exists in that colour, then check it before calling this function
+//The last argument allows you to apply the operation to some subgraph - eg you might take the unuiion of colours 2 and 3, or of all colours.
+//If for example you wanted to get the next node in the graph irrespective of colour, get_colour would return the union (bitwise AND) of all edges in a node.
+dBNode * db_graph_get_next_node_in_subgraph_defined_by_func_of_colours(dBNode * current_node, Orientation current_orientation, 
+								       Orientation * next_orientation,
+								       Nucleotide edge, Nucleotide * reverse_edge,dBGraph * db_graph, 
+								       Edges (*get_colour)(const dBNode*)
+								       );
+
+
+
 
 boolean db_graph_db_node_has_precisely_n_edges_with_status_for_specific_person_or_pop(dBNode * node,Orientation orientation,NodeStatus status,int n,
                                                                                       dBNode * * next_node, Orientation * next_orientation, Nucleotide * next_base,
@@ -50,7 +62,7 @@ boolean db_graph_db_node_prune_low_coverage(dBNode * node, int coverage,
 					    void (*node_action)(dBNode * node),
 					    dBGraph * db_graph, 
 					    int (*sum_of_covgs_in_desired_colours)(Element *), 
-					    Edges (*get_edge_of_interest)(Element*),
+					    Edges (*get_edge_of_interest)(const Element*),
 					    void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide),
 					    void (*apply_reset_to_specified_edges_2)(dBNode*) );
 
@@ -66,11 +78,31 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
 									 char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
 									 boolean * is_cycle, dBGraph * db_graph, EdgeArrayType type, int index);
 
+int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(dBNode * node, Orientation orientation, int limit, 
+										     Nucleotide fst_nucleotide,
+										     void (*node_action)(dBNode * node),
+										     dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+										     char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
+										     boolean * is_cycle, dBGraph * db_graph, 
+										     Edges (*get_colour)(const dBNode*),
+										     int (*get_covg)(const dBNode*)
+										     );
+
 int db_graph_get_perfect_path_for_specific_person_or_pop(dBNode * node, Orientation orientation, int limit, 
 							 void (*node_action)(dBNode * node),
 							 dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
 							 char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
 							 boolean * is_cycle, dBGraph * db_graph, EdgeArrayType type, int index);
+
+
+int db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(dBNode * node, Orientation orientation, int limit, 
+								     void (*node_action)(dBNode * node),
+								     dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
+								     char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
+								     boolean * is_cycle, dBGraph * db_graph, 
+								     Edges (*get_colour)(const dBNode*),
+								     int (*get_covg)(const dBNode*)) ;
+
 
 boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
 								  Orientation orientation,
@@ -82,6 +114,16 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
 								  char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
 								 dBGraph * db_graph, EdgeArrayType type, int index);
 
+
+boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * node,
+								      Orientation orientation,
+								      int limit,
+								      void (*node_action)(dBNode * node), 
+								      int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,
+								      char * seq1, double * avg_coverage1, int * min_coverage1, int * max_coverage1,
+								      int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,
+								      char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
+								      dBGraph * db_graph, Edges (*get_colour)(const dBNode*)  , int (*get_covg)(const dBNode*) );
 
 int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit,void (*node_action)(dBNode * node), 
 						  dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char * supernode_str, 
@@ -139,7 +181,8 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
 void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph, 
-			  boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p) );
+			  boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p),
+			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) );
 
 void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
 
@@ -153,7 +196,7 @@ void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, Edge
 // 3 Pass apply_reset_to_specified_edges_2 which applies db_node_reset_edges to whichever set of edges you care about,
 void db_graph_remove_low_coverage_nodes(int coverage, dBGraph * db_graph,
 					int (*sum_of_covgs_in_desired_colours)(Element *), 
-					Edges (*get_edge_of_interest)(Element*), 
+					Edges (*get_edge_of_interest)(const Element*), 
 					void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 					void (*apply_reset_to_specified_edges_2)(dBNode*) );
 

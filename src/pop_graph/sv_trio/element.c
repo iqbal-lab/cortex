@@ -352,6 +352,19 @@ short db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index)
 }
 
 
+int db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, int (*get_covg)(const dBNode*) )
+{
+
+  if (e==NULL)
+    {
+      return 0;
+    }
+  else
+    {
+      return get_covg(e);
+    }
+}
+
 
 
 Orientation opposite_orientation(Orientation o){
@@ -474,7 +487,7 @@ boolean db_node_edge_exist(dBNode * element,Nucleotide base,Orientation orientat
 //final argument f is a function that returns an Edge that is a function of the different colured edges in a node.
 // eg we might be interested in the union of all the coloured edges in the graph, or just the colour/edge for the first person,
 //    or the union of all edges except that corresponding to the reference.
-boolean db_node_edge_exist_within_specified_function_of_coloured_edges(dBNode * element,Nucleotide base,Orientation orientation, Edges (*f)(Element* ))
+boolean db_node_edge_exist_within_specified_function_of_coloured_edges(dBNode * element,Nucleotide base,Orientation orientation, Edges (*f)( const Element* ))
 {
 
   char edge = f(element);
@@ -527,6 +540,35 @@ boolean db_node_has_precisely_one_edge(dBNode * node, Orientation orientation, N
   
   Nucleotide n;
   Edges edges = get_edge_copy(*node,edge_type,edge_index);
+  short edges_count = 0;
+
+  if (orientation == reverse){
+    edges >>= 4;
+  }
+ 
+  
+  for(n=0;n<4;n++){
+    
+    if ((edges & 1) == 1){
+      *nucleotide = n;
+      edges_count++;
+    }
+    
+    edges >>= 1;    
+  }
+  
+  return (edges_count == 1);
+  
+}
+
+
+
+boolean db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(dBNode * node, Orientation orientation, Nucleotide * nucleotide, 
+									      Edges (*get_colour)(const dBNode*) )
+{
+  
+  Nucleotide n;
+  Edges edges = get_colour(node);
   short edges_count = 0;
 
   if (orientation == reverse){
@@ -680,6 +722,28 @@ boolean db_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, E
  
 }
 
+boolean db_node_is_this_node_in_subgraph_defined_by_func_of_colours(dBNode* node, Edges (*get_colour)(const dBNode*) )
+{
+
+  if (node ==NULL)
+    {
+      return false;
+    }
+
+  //get_colour will return an edge which is some function of all the edges/colours at that node. eg, will AND all the edges, to consider the union of all colours, etc
+  Edges edge = get_colour(node);
+
+  if (edge == 0)
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
+ 
+}
+
 
 void db_node_print_binary(FILE * fp, dBNode * node)
 {
@@ -794,9 +858,9 @@ void db_node_action_set_status_none(dBNode * node){
   db_node_set_status(node,none);
 }
 
-//void db_node_action_set_status_pruned(dBNode * node){
-//  db_node_set_status(node,pruned);
-//}
+void db_node_action_set_status_pruned(dBNode * node){
+  db_node_set_status(node,pruned);
+}
 
 
 void db_node_action_set_status_visited(dBNode * node){
