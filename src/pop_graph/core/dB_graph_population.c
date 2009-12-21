@@ -1071,7 +1071,7 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 //clip the branch with smaller coverage in the first kmer --> this can be more sophisticated
 //dont want to flatten repeats -- use coverage_limit for this
 
-//TODO - discuss with Mario - for now, do not export
+
 boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(dBNode * node, Orientation orientation, 
 								  int limit,int coverage_limit,
 								  void (*node_action)(dBNode * node),
@@ -2157,12 +2157,12 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
 
 
 
-void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int),HashTable * hash_table, int** array, int length_of_array){
+ void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, EdgeArrayType, int),HashTable * hash_table, int** array, int length_of_array, EdgeArrayType type, int index){
   
   long long i;
   for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
     if (!db_node_check_status(&hash_table->table[i],unassigned)){
-      f(hash_table, &hash_table->table[i], array, length_of_array);
+      f(hash_table, &hash_table->table[i], array, length_of_array, type, index);
     }
   }
   
@@ -2170,8 +2170,8 @@ void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int),H
 }
 
 
-/*******     TODO sort this out - not critical 
-
+//TODO - update this to use db_graph_supernode
+/*
 //the length of the supernode is passed to the caller in the array of supernode lengths that is passed in.
 //the idea is that this function is passed into the traverse function, and the caller of that
 void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Element* node, int** array_of_supernode_lengths, int length_of_array,
@@ -2184,7 +2184,7 @@ void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Elem
     }
 
   int length_of_supernode=1;
-  dBNode* first_node=db_graph_get_first_node_in_supernode_containing_given_node(node, db_graph);
+  dBNode* first_node=db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, 0 , db_graph);
   dBNode* current_node;
   dBNode* next_node;
   current_node=first_node;
@@ -2192,9 +2192,9 @@ void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Elem
   db_node_set_status(current_node, visited);
 
   //work out which direction to leave supernode in. 
-  if (db_node_is_supernode_end(first_node,forward))
+  if (db_node_is_supernode_end(first_node,forward, type, index, db_graph))
     {
-      if (db_node_is_supernode_end(first_node,reverse))
+      if (db_node_is_supernode_end(first_node,reverse, type, index,db_graph))
 	{
 	  //singleton
 	  *(array_of_supernode_lengths[length_of_supernode])=*(array_of_supernode_lengths[length_of_supernode])+1;
@@ -2215,9 +2215,9 @@ void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Elem
 
 
   //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
-  while (!db_node_is_supernode_end(current_node,current_orientation))
+  while (!db_node_is_supernode_end(current_node,current_orientation, type, index, db_graph))
     {
-      next_node = db_graph_get_next_node_in_supernode(current_node, current_orientation, &next_orientation, db_graph);
+      next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, db_graph);
 
       if ((next_node==first_node) && (next_orientation==start_orientation))//back to the start - will loop forever if not careful ;-0
 	{
@@ -2243,12 +2243,12 @@ void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Elem
 
   
 }
-*/
 
 
- /*  TODO - FIX this
 
-int db_graph_get_N50_of_supernodes(dBGraph* db_graph)
+
+
+int db_graph_get_N50_of_supernodes(dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
   int numbers_of_supernodes_of_specific_lengths[10000]; //i-th entry is number of supernodes of length i.
@@ -2265,7 +2265,7 @@ int db_graph_get_N50_of_supernodes(dBGraph* db_graph)
     }
 
 
-  db_graph_traverse_with_array(&db_graph_get_supernode_length_marking_it_as_visited, db_graph,  numbers_of_supernodes_of_specific_lengths_ptrs, 10000);
+  db_graph_traverse_with_array(&db_graph_get_supernode_length_marking_it_as_visited, db_graph,  numbers_of_supernodes_of_specific_lengths_ptrs, 10000, type, index);
 
   //we now have an array containing the number of supernodes of each length from 1 to 10,000 nodes.
   // for example it might be 0,100,1,0,0,0,23,4. note there are no supernodes of length 0, so first entry should always be 0
@@ -2325,8 +2325,10 @@ int db_graph_get_N50_of_supernodes(dBGraph* db_graph)
   exit(1);
   return 1;
 }
+*/
 
- */
+
+
 
   /* get rid of this
 

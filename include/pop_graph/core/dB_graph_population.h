@@ -125,6 +125,13 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 								      char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
 								      dBGraph * db_graph, Edges (*get_colour)(const dBNode*)  , int (*get_covg)(const dBNode*) );
 
+
+boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(dBNode * node, Orientation orientation, 
+								  int limit,int coverage_limit,
+								  void (*node_action)(dBNode * node),
+								  dBGraph * db_graph, EdgeArrayType type, int index);
+
+
 int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit,void (*node_action)(dBNode * node), 
 						  dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char * supernode_str, 
 						  double * avg_coverage,int * min,int * max, boolean * is_cycle, 
@@ -209,6 +216,7 @@ boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, EdgeA
 
 
 
+
 //***
 // functions that are direct extensions of those in hash_table.h
 // ****
@@ -220,7 +228,15 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
 // - not implemented: dBNode *  db_graph_find_or_insert_node_restricted_to_specific_person_or_population(Key key, boolean * found, dBGraph * hash_table, EdgeArrayType type, int index);
 
 
-void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int),HashTable * hash_table, int** array, int length_of_array);
+
+void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, EdgeArrayType, int),HashTable * hash_table, int** array, int length_of_array, EdgeArrayType type, int index);
+ 
+
+void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Element* node, int** array_of_supernode_lengths, int length_of_array,
+                                                         EdgeArrayType type, int index);
+
+int db_graph_get_N50_of_supernodes(dBGraph* db_graph, EdgeArrayType type, int index);
+
 
 void db_graph_traverse_to_gather_statistics_about_people(void (*f)(HashTable*, Element *, int**, int),HashTable * hash_table, int** array, int num_people );
 

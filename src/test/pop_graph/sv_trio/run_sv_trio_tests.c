@@ -48,6 +48,10 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test function checking number of edges to nodes with specified status",test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour    )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
   if (NULL == CU_add_test(pPopGraphSuite, "Sanity test for hash_table_find - adding kmers to graph and finding them", test_hash_table_find)) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -81,13 +85,29 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (NULL == CU_add_test(pPopGraphSuite, "Test error correction via topology of graph - tip clipping", test_tip_clipping )) {
+  if (NULL == CU_add_test(pPopGraphSuite, "Test function for checking if condition is true for all nodes in supernode",   test_is_condition_true_for_all_nodes_in_supernode)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
 
 
-    if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for applying some other function to all nodes in a path defined by a fasta",   test_apply_to_all_nodes_in_path_defined_by_fasta)) {
+  if (NULL == CU_add_test(pPopGraphSuite, "Test error correction via topology of graph - tip clipping", test_tip_clipping )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test removal of low-coverage nodes",  test_pruning_low_coverage_nodes)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test (currently unused) function for smoothing bubbles",  test_detect_and_smooth_bubble   )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for applying some other function to all nodes in a path defined by a fasta",   test_apply_to_all_nodes_in_path_defined_by_fasta)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+    if (NULL == CU_add_test(pPopGraphSuite, "Test get_perfect_path (maximal path without branches) in single colour of graph", test_get_perfect_path_in_one_colour     )) {
     CU_cleanup_registry();
     return CU_get_error();
   }
@@ -140,11 +160,18 @@ int  main()
      return CU_get_error();
     }
     
-        if (NULL == CU_add_test(pPopGraphSuite, "Unit test of utilty function to produce array of nodes corresponding to a given path through graph, as specified by a fasta file",  test_load_seq_into_array))
+    if (NULL == CU_add_test(pPopGraphSuite, "Unit test of utilty function to produce array of nodes corresponding to a given path through graph, as specified by a fasta file",  test_load_seq_into_array))
       {
     	CU_cleanup_registry();
     	return CU_get_error();
      }
+    if (NULL == CU_add_test(pPopGraphSuite, "Test function that reads a reference fasta and marks nodes in the graph with status exists_in_reference",  test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference))
+      {
+    	CU_cleanup_registry();
+    	return CU_get_error();
+     }
+
+
     if (NULL == CU_add_test(pPopGraphSuite, "Unit test of wrapper function for above utility function",  test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta))
       {
 	CU_cleanup_registry();
