@@ -12,6 +12,216 @@
 #include <stdlib.h>
 #include <limits.h>
 
+
+// there are "pure" hash table tests which know nothing of the graph. This on the other hand
+// is a sanity check one level up from those
+void test_hash_table_find()
+{
+
+  //first set up the hash/graph
+  int kmer_size = 3;
+  int number_of_bits = 4;
+  int bucket_size    = 4;
+  long long bad_reads = 0; 
+  long long dup_reads=0;
+  int max_retries=10;
+  boolean remove_duplicates_single_endedly=false; 
+  boolean break_homopolymers=false;
+  int homopolymer_cutoff=0;
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+
+  //Load the following fasta:
+  //    >read1
+  //    AAAAAAAA
+  //    >read2
+  //    GGCT
+  //    >read3
+  //    TAGG
+  int seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_dB_graph.fasta",&bad_reads, &dup_reads, 20, 
+										      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,0);
+
+  //length of total sequence
+  CU_ASSERT(seq_length == 16);
+  
+  //number of kmers
+  CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph), 5);
+
+  //bad reads
+  CU_ASSERT_EQUAL(bad_reads, 0);
+
+  //all the kmers and their reverse complements from the reads
+  BinaryKmer tmp_kmer1;
+  BinaryKmer tmp_kmer2;
+  
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("TTT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element3 = hash_table_find(element_get_key(seq_to_binary_kmer("GGC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element4 = hash_table_find(element_get_key(seq_to_binary_kmer("GCC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element5 = hash_table_find(element_get_key(seq_to_binary_kmer("GCT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element6 = hash_table_find(element_get_key(seq_to_binary_kmer("AGC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element7 = hash_table_find(element_get_key(seq_to_binary_kmer("TAG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element8 = hash_table_find(element_get_key(seq_to_binary_kmer("CTA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element9 = hash_table_find(element_get_key(seq_to_binary_kmer("AGG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element10 = hash_table_find(element_get_key(seq_to_binary_kmer("CCT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+
+  //some kmers that should not be in the graph
+
+  dBNode* test_element11 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element12 = hash_table_find(element_get_key(seq_to_binary_kmer("CCC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element13 = hash_table_find(element_get_key(seq_to_binary_kmer("TAT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element14 = hash_table_find(element_get_key(seq_to_binary_kmer("ATA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element15 = hash_table_find(element_get_key(seq_to_binary_kmer("TAC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element16 = hash_table_find(element_get_key(seq_to_binary_kmer("ATG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element17 = hash_table_find(element_get_key(seq_to_binary_kmer("TTG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element18 = hash_table_find(element_get_key(seq_to_binary_kmer("AAC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element19 = hash_table_find(element_get_key(seq_to_binary_kmer("TGA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element20 = hash_table_find(element_get_key(seq_to_binary_kmer("TCA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+
+  //kmers in the graph
+  CU_ASSERT(test_element1 != NULL);
+  CU_ASSERT(test_element2 != NULL);
+  CU_ASSERT(test_element1 == test_element2);
+
+  CU_ASSERT(test_element3 != NULL);
+  CU_ASSERT(test_element4 != NULL);
+  CU_ASSERT(test_element3 == test_element4);
+
+  CU_ASSERT(test_element5 != NULL);
+  CU_ASSERT(test_element6 != NULL);  
+  CU_ASSERT(test_element5 == test_element6);
+
+  CU_ASSERT(test_element7 != NULL);
+  CU_ASSERT(test_element8 != NULL);
+  CU_ASSERT(test_element7 == test_element8);
+
+  CU_ASSERT(test_element9 != NULL);
+  CU_ASSERT(test_element10 != NULL);
+  CU_ASSERT(test_element9 == test_element10);  
+
+  //kmers not in the graph
+  CU_ASSERT(test_element11 == NULL);
+  CU_ASSERT(test_element12 == NULL);
+  CU_ASSERT(test_element13 == NULL);
+  CU_ASSERT(test_element14 == NULL);
+  CU_ASSERT(test_element15 == NULL);
+  CU_ASSERT(test_element16 == NULL);
+  CU_ASSERT(test_element17 == NULL);
+  CU_ASSERT(test_element18 == NULL);
+  CU_ASSERT(test_element19 == NULL);
+  CU_ASSERT(test_element20 == NULL);
+
+  
+  hash_table_free(&db_graph);
+  CU_ASSERT(db_graph == NULL);
+  
+}
+
+void test_tip_clipping()
+{
+
+  //first set up the hash/graph
+  int kmer_size = 3;
+  int number_of_bits = 4;
+  int bucket_size    = 4;
+  long long bad_reads=0; 
+  long long dup_reads=0;
+  boolean remove_duplicates_single_endedly=false; 
+  boolean break_homopolymers=false;
+  int homopolymer_cutoff=0;
+
+  int min_coverage, max_coverage;
+  double avg_coverage;
+  boolean is_cycle;
+  BinaryKmer tmp_kmer1;
+  BinaryKmer tmp_kmer2;
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  
+
+  //Load the following fasta:
+  
+  //>main_trunk
+  //GCGTCCCAT
+  //>tip
+  //CGTTT
+
+  int seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_tip.fasta",&bad_reads, &dup_reads, 20,
+										      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
+										      db_graph, individual_edge_array,0);
+  
+
+  CU_ASSERT_EQUAL(seq_length,14);
+
+  dBNode* node1 = hash_table_find(element_get_key(seq_to_binary_kmer("TTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+
+  CU_ASSERT(node1 != NULL);
+  
+  int tip_length = db_graph_db_node_clip_tip_for_specific_person_or_pop(node1, 10,&db_node_action_set_status_pruned,db_graph, individual_edge_array,0);
+  
+  CU_ASSERT_EQUAL(tip_length,2);
+
+  dBNode* node2 = hash_table_find(element_get_key(seq_to_binary_kmer("GTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,
+				  db_graph);
+  dBNode* node3 = hash_table_find(element_get_key(seq_to_binary_kmer("CGT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,
+				  db_graph);
+  dBNode* node4 = hash_table_find(element_get_key(seq_to_binary_kmer("CCA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,
+				  db_graph);
+
+
+  //check the change in the status
+  CU_ASSERT(db_node_check_status(node1,pruned));
+  CU_ASSERT(db_node_check_status(node2,pruned));
+  
+  //check status didn't change
+  CU_ASSERT(db_node_check_status(node3,none));
+  CU_ASSERT(db_node_check_status(node4,none));
+
+  //now check that if you look to see if the cipped kmers "exist" in the person's graph, you do not find them, as there is no edge
+  CU_ASSERT(db_graph_find_node_restricted_to_specific_person_or_population(element_get_key(seq_to_binary_kmer("GTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) , 
+									   db_graph, individual_edge_array,0)==NULL);
+  CU_ASSERT(db_graph_find_node_restricted_to_specific_person_or_population(element_get_key(seq_to_binary_kmer("TTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) , 
+									   db_graph, individual_edge_array,0)==NULL);
+
+  //check tip clip works well with db_graph_supernode (ie that the tip was really removed)
+  dBNode * nodes_path[100];
+  Orientation orientations_path[100];
+  Nucleotide labels_path[100];
+  char tmp_seq[100+1];
+
+  int length_supernode = db_graph_supernode_for_specific_person_or_pop(node3,100,&db_node_action_set_status_visited,
+								       nodes_path,orientations_path,labels_path,
+								       tmp_seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
+								       db_graph, individual_edge_array,0);
+
+  CU_ASSERT_EQUAL(length_supernode,6);
+  CU_ASSERT_STRING_EQUAL("GGACGC",tmp_seq);
+  
+  
+  //check ends
+  dBNode* node5 = hash_table_find(element_get_key(seq_to_binary_kmer("GCG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,
+				  db_graph);
+  dBNode* node6 = hash_table_find(element_get_key(seq_to_binary_kmer("CAT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,
+				  db_graph);
+
+  //check the status are correct
+  
+  CU_ASSERT(db_node_check_status(node1,pruned));
+  CU_ASSERT(db_node_check_status(node2,pruned));
+
+  CU_ASSERT(db_node_check_status(node3,visited));  
+  CU_ASSERT(db_node_check_status(node4,visited));
+  CU_ASSERT(db_node_check_status(node5,visited));
+  CU_ASSERT(db_node_check_status(node6,visited));
+   
+
+  hash_table_free(&db_graph);
+  CU_ASSERT(db_graph == NULL);
+  
+
+}
+
+
 void test_db_graph_supernode_for_specific_person_or_pop()
 {
 

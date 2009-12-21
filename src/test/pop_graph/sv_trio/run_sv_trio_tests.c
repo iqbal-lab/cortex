@@ -48,6 +48,11 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Sanity test for hash_table_find - adding kmers to graph and finding them", test_hash_table_find)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
   if (NULL == CU_add_test(pPopGraphSuite, "Test dumping and reloading of sv_trio binary", test_dump_load_sv_trio_binary)) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -76,6 +81,12 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test error correction via topology of graph - tip clipping", test_tip_clipping )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+
     if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for applying some other function to all nodes in a path defined by a fasta",   test_apply_to_all_nodes_in_path_defined_by_fasta)) {
     CU_cleanup_registry();
     return CU_get_error();
