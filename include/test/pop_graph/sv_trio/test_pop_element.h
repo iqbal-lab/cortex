@@ -6,3 +6,4 @@ void test_get_chromosome_overlap_direction();
 void test_increment_coverage();
 void test_get_coverage();
 void test_element_status_set_and_checks();
+void test_element_assign();

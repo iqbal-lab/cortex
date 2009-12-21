@@ -200,3 +200,37 @@ void test_element_status_set_and_checks()
 
   
 }
+
+
+void test_element_assign()
+{
+  Element e1, e2;
+
+  BinaryKmer b1;
+  binary_kmer_initialise_to_zero(&b1);
+  b1[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] = (bitfield_of_64bits) 1;
+
+  BinaryKmer b2;
+  binary_kmer_initialise_to_zero(&b2);
+  b2[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] = (bitfield_of_64bits) 3;
+
+  
+  element_initialise(&e1, &b1, 31);
+  element_initialise(&e2, &b2, 31);
+
+  set_edges(&e1, individual_edge_array, 0, 1);
+  set_edges(&e2, individual_edge_array, 0, 2);
+  
+  db_node_set_status(&e1, visited);
+  db_node_set_status(&e2, pruned);
+
+  db_node_update_coverage(&e1, individual_edge_array, 0, 101);
+  db_node_update_coverage(&e2, individual_edge_array, 0, 202);
+  
+  element_assign(&e1, &e2);
+
+  CU_ASSERT(db_node_get_coverage(&e1, individual_edge_array,0)==202);
+  CU_ASSERT(get_edge_copy(e1, individual_edge_array,0)==2 );
+  CU_ASSERT(binary_kmer_comparison_operator(e1.kmer,b2) );
+  CU_ASSERT(e1.status==pruned );
+}

@@ -35,12 +35,11 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (NULL == CU_add_test(pPopGraphSuite, "Test setting and checking of element status",test_element_status_set_and_checks )) {
+  if (NULL == CU_add_test(pPopGraphSuite, "Test assignment operator for element", test_element_assign)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  
-  if (NULL == CU_add_test(pPopGraphSuite, "Test element -increment coverage for different people", test_increment_coverage)) {
+  if (NULL == CU_add_test(pPopGraphSuite, "Test setting and checking of element status",test_element_status_set_and_checks )) {
     CU_cleanup_registry();
     return CU_get_error();
   }
@@ -48,6 +47,11 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test element -increment coverage for different people", test_increment_coverage)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
   if (NULL == CU_add_test(pPopGraphSuite, "Test function checking number of edges to nodes with specified status",test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour    )) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -65,6 +69,31 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test that coverage of kmers are correcty counted as reads are loaded from a file",test_coverage_is_correctly_counted_on_loading_from_file )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test getting sliding windows, breaking when kmer is not in graph - internal function",test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test getting sliding windows breaking when kner or edge is not in graph - internal function",test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test dumping of cleaned fasta by aligning against a cleaned graph",test_dumping_of_clean_fasta )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test removal of PCR duplicate reads from paired-end fastq",test_loading_of_paired_end_reads_removing_duplicates )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test removal of PCR duplicate reafds from single-ended fastq", test_loading_of_single_ended_reads_removing_duplicates)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
  
   if (NULL == CU_add_test(pPopGraphSuite, "Test loading of three binaries as dumped by graph into sv_trio as separate people", test_load_individual_binaries_into_sv_trio )) {
     CU_cleanup_registry();

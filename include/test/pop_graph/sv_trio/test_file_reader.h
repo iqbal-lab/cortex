@@ -1,5 +1,10 @@
-
+void test_coverage_is_correctly_counted_on_loading_from_file();
 void test_dump_load_sv_trio_binary();
 void test_load_graph_binary();
 void test_load_individual_binaries_into_sv_trio();
+void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph();
+void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph();
+void test_dumping_of_clean_fasta();
+void test_loading_of_paired_end_reads_removing_duplicates();
+void test_loading_of_single_ended_reads_removing_duplicates();
 void test_load_seq_into_array();

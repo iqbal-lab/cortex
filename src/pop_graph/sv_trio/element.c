@@ -784,13 +784,13 @@ boolean db_node_read_sv_trio_binary(FILE * fp, short kmer_size, dBNode * node){
 
     read = fread(covg, sizeof(short), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);    
     if (read==0){
-      puts("error with input file\n");
+      puts("error with input file - failed to read covg in db_node_read_sv_trio_binary\n");
       exit(1);
     }
 
     read = fread(individual_edges, sizeof(Edges), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);
     if (read==0){
-      puts("error with input file\n");
+      puts("error with input file - failed to read Edges in db_node_read_sv_trio_binary\n");
       exit(1);
     }
 
