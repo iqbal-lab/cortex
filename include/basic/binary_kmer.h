@@ -18,7 +18,7 @@
 #define ALLOW_KMERS_UP_TO_255 8
 
 // change this if you want to support different kmer-ranges
-#define NUMBER_OF_BITFIELDS_IN_BINARY_KMER  ALLOW_KMERS_UP_TO_63
+#define NUMBER_OF_BITFIELDS_IN_BINARY_KMER  ALLOW_KMERS_UP_TO_31
 
 
 

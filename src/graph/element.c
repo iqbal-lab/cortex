@@ -125,7 +125,6 @@ void db_node_add_labeled_edge(dBNode * e, Orientation o, Nucleotide base){
 
 //adding an edge between two nodes implies adding two labeled edges (one in each direction)
 //be aware that in the case of self-loops in palindromes the two labeled edges collapse in one
-
 boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size){
 
 

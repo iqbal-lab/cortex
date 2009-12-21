@@ -9,15 +9,6 @@
 #include <string.h>
 
 
-//const int NUMBER_OF_INDIVIDUALS_PER_POPULATION = 5;
-//const int NUMBER_OF_POPULATIONS = 2;
-
-const unsigned char mask1 = 255-3; //11111100
-const unsigned char mask2 = 255-12;//11110011
-const unsigned char mask3 = 255-48;//11001111
-const unsigned char mask4 = 255-192;//00111111
-
-
 //currently noone calls this in normal use
 // In normal use, the priority queue allocates space to put the eloement directly within,
 // and calls element_initialise
