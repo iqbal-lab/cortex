@@ -1234,6 +1234,11 @@ int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit,void (
 
 
 
+boolean condition_always_true(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
+			      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
+{
+  return true;
+}
 
 
 
@@ -3379,11 +3384,10 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
 						int max_desired_returns,
 						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
-						char** return_flank3p_array, int** return_variant_start_coord)
-
-//						boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var, 
-//							      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
-//					)
+						char** return_flank3p_array, int** return_variant_start_coord,
+						boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var, 
+							      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
+					)
 {
 
   int num_variants_found=0;
@@ -4542,7 +4546,26 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      
 
 
-	      if (1) //(condition(flank5p etc))
+	      int start_of_var_branch_in_supernode_array;//coord of first node, may be at lh or rh end of section of array corresponding to this branch
+	      int left_most_coord_of_var_branch_in_supernode_array; //if traversing right to left, this is the start of the 3prime anchor
+	      if (traverse_sup_left_to_right==true)
+		{
+		  start_of_var_branch_in_supernode_array           = index_of_query_node_in_supernode_array+length_5p_flank;
+		  left_most_coord_of_var_branch_in_supernode_array = start_of_var_branch_in_supernode_array;
+		}
+	      else
+		{
+		  start_of_var_branch_in_supernode_array           = index_of_query_node_in_supernode_array-length_5p_flank; 
+		  left_most_coord_of_var_branch_in_supernode_array = start_of_3prime_anchor_in_sup;
+		}
+	      
+
+	      if  (condition(&chrom_path_array[start_node_index], length_5p_flank, 
+			     &chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome], len_trusted_branch,
+			     &current_supernode[left_most_coord_of_var_branch_in_supernode_array], len_branch2,
+			     &chrom_path_array[start_of_3prime_anchor_in_chrom], length_3p_flank, 
+			     index_for_ref_in_edge_array, index_for_indiv_in_edge_array)==true )
+		   
 		{
 		  char name[300]; 
 		  sprintf(name,"var_%i_5p_flank",num_variants_found);
@@ -4585,8 +4608,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
 								       branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, 
 								       branch2_percent_nodes_with_modal_covg, branch2_percent_novel, 
-								       current_supernode[index_of_query_node_in_supernode_array+length_5p_flank], 
-								       curr_sup_orientations[index_of_query_node_in_supernode_array+length_5p_flank],
+								       current_supernode[start_of_var_branch_in_supernode_array], 
+								       curr_sup_orientations[start_of_var_branch_in_supernode_array],
 								       current_supernode[start_of_3prime_anchor_in_sup], 
 								       curr_sup_orientations[start_of_3prime_anchor_in_sup],
 								       "covgs of variant not trusted nodes: ", covgs_in_variant_not_trusted, num_nodes_on_variant_but_not_trusted_branch,
@@ -4623,8 +4646,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
 								       branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, 
 								       branch2_percent_nodes_with_modal_covg, branch2_percent_novel,
-								       current_supernode[index_of_query_node_in_supernode_array-length_5p_flank], 
-								       curr_sup_orientations[index_of_query_node_in_supernode_array-length_5p_flank],
+								       current_supernode[start_of_var_branch_in_supernode_array], 
+								       curr_sup_orientations[start_of_var_branch_in_supernode_array],
 								       current_supernode[start_of_3prime_anchor_in_sup], 
 								       curr_sup_orientations[start_of_3prime_anchor_in_sup],
 								       "covgs of variant not trusted nodes: ", covgs_in_variant_not_trusted, num_nodes_on_variant_but_not_trusted_branch,

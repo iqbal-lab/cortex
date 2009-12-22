@@ -289,7 +289,12 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
 						int max_desired_returns,
 						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
-						char** return_flank3p_array, int** return_variant_start_coord);
+						char** return_flank3p_array, int** return_variant_start_coord,
+						boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
+								      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv) );
+
+boolean condition_always_true(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
+			      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv);
 
 
 void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fasta_fptr, int chunk_size, dBGraph* db_graph);
