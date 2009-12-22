@@ -25,7 +25,7 @@ void test_dump_load_sv_trio_binary(){
   dBGraph * db_graph_post;
 
   void print_node_binary(dBNode * node){
-    db_node_print_binary(fout,node);
+    db_node_print_multicolour_binary(fout,node);
   }
 
   db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
@@ -55,10 +55,10 @@ void test_dump_load_sv_trio_binary(){
   fclose(fout);
 
   db_graph_post = hash_table_new(number_of_bits_post,bucket_size,10,kmer_size);
-  seq_length_post = load_sv_trio_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_sv_trio_graph.bin", db_graph_post);
+  seq_length_post = load_multicolour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_sv_trio_graph.bin", db_graph_post);
 
 
-  //load_sv_trio_binary_data_from_filename_into_graph returns total number of unique kmers loaded, times kmer_length
+  //load_multicolour_binary_data_from_filename_into_graph returns total number of unique kmers loaded, times kmer_length
   CU_ASSERT_EQUAL(seq_length_post,15);
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post),5);
 
@@ -233,7 +233,7 @@ void test_dump_load_sv_trio_binary(){
   
       db_graph_post = hash_table_new(number_of_bits_post,bucket_size,max_retries,kmer_size);
 
-      seq_length_post = load_sv_trio_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_graph_2.bin", db_graph_post);
+      seq_length_post = load_multicolour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_graph_2.bin", db_graph_post);
 
       CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post),31);
   
@@ -374,7 +374,7 @@ void test_dump_load_sv_trio_binary(){
   
   db_graph_post = hash_table_new(number_of_bits_post,bucket_size,max_retries,kmer_size);
   
-  seq_length_post = load_sv_trio_binary_data_from_filename_into_graph("../data/test/graph/dump_graph.bin", db_graph_post);
+  seq_length_post = load_multicolour_binary_data_from_filename_into_graph("../data/test/graph/dump_graph.bin", db_graph_post);
   
   //now try to traverse a supernode. This is effectively a regressiontest for a bug in graph/element.c: print_binary/read_binary
   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TAACCCTAACCCTAACC", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2) ,db_graph_post);
@@ -450,36 +450,36 @@ void test_load_graph_binary()
 
   if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==1)
     {
-      //seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_to_load_and_dump_as_graph_bin_kmer5.bin", db_graph, individual_edge_array, 0);
-      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_1.ctx", db_graph, individual_edge_array, 0);
+      //seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_to_load_and_dump_as_graph_bin_kmer5.bin", db_graph, individual_edge_array, 0);
+      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_1.ctx", db_graph, individual_edge_array, 0);
     }
   else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==2)
     {
-      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_2.ctx", db_graph, individual_edge_array, 0);
+      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_2.ctx", db_graph, individual_edge_array, 0);
     }
   else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==3)
     {
-      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_3.ctx", db_graph, individual_edge_array, 0);
+      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_3.ctx", db_graph, individual_edge_array, 0);
     }
   else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==4)
     {
-      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_4.ctx", db_graph, individual_edge_array, 0);
+      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_4.ctx", db_graph, individual_edge_array, 0);
     }
   else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==5)
     {
-      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_5.ctx", db_graph, individual_edge_array, 0);
+      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_5.ctx", db_graph, individual_edge_array, 0);
     }
   else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==6)
     {
-      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_6.ctx", db_graph, individual_edge_array, 0);
+      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_6.ctx", db_graph, individual_edge_array, 0);
     }
   else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==7)
     {
-      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_7.ctx", db_graph, individual_edge_array, 0);
+      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_7.ctx", db_graph, individual_edge_array, 0);
     }
   else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==8)
     {
-      seq_len = load_individual_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_8.ctx", db_graph, individual_edge_array, 0);
+      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_8.ctx", db_graph, individual_edge_array, 0);
     }
 
   CU_ASSERT(seq_len==25);//kmers loaded * length of kmer

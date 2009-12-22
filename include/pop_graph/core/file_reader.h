@@ -38,10 +38,10 @@ int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_f
 int load_chromosome_overlap_data(char* f_name,  dBGraph* db_graph, int which_chromosome);
 
 //functions for loading graphs from sv_trio
-int load_sv_trio_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph);
+int load_multicolour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph);
 
 //functions for loading binaries for graph/ target
-int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index);
+int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index);
 long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index);
 long long load_population_as_binaries_from_graph(char* filename, dBGraph* db_graph);
 

@@ -1323,6 +1323,19 @@ boolean condition_always_true(dBNode** flank_5p, int len5p, dBNode** ref_branch,
 }
 
 
+//this is the default condition used by the trsuted-path/reference-based SV caller
+// it requires of a potential variant site that (after normalising by factoring out coverage due to the rest of the genome)
+// there is coverage of variant nodes that are not in the ref-allele/trusted-path branch
+// this assumes that we are doing a DIPLOID assembly, and requires you to pass in the expected coverage per chromosome/haplotype
+// i.e if you (total reads*read_length)/length_of_genome = 30x coverage, then pass in 15, as you expect 15x per copy of a chromosome.
+boolean condition_default(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
+			      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
+{
+  
+  //basic idea is simple. Take the nodes which are in the variant and not the trusted path
+
+
+}
 
 // identical code to db_graph_supernode_for_specific_person_or_pop but this returns the index of the query node (first argument) in th supernode array
 // will make a significant performance gain compared with getting the path_nodes array back and then searching it
@@ -2135,20 +2148,22 @@ void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph *
 }
 
 
+
+
 void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph){
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   
   long long count=0;
   //routine to dump graph
-  void print_node_binary(dBNode * node){   
+  void print_node_multicolour_binary(dBNode * node){   
     if (condition(node)){
       count++;
-      db_node_print_binary(fout,node);
+      db_node_print_multicolour_binary(fout,node);
     }
   }
 
-  hash_table_traverse(&print_node_binary,db_graph); 
+  hash_table_traverse(&print_node_multicolour_binary,db_graph); 
   fclose(fout);
 
   printf("%qd kmers dumped\n",count);
@@ -3344,7 +3359,7 @@ void get_percent_novel_from_array_of_nodes(dBNode** array, int length, double* p
 
 
 //this is horribly inefficient - order n^2 to compare. But for now I prefer correctness/definitely right-ness over efficiency
-// also remember that95% of everything you find will be very short.
+// also remember that 95% of everything you find will be very short.
 // I won't count null pointers that are in one but not the other
 void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(dBNode** array1, dBNode** array2, int length1, int length2, 
 							  int* num_nodes_in_array_1not2, int * num_nodes_in_array_2not1, int** covgs_in_1not2, int** covgs_in_2not1,

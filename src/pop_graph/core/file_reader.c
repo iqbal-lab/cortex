@@ -1105,9 +1105,9 @@ int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_f
 
 
 
-//loading a binary as dumped by sv_trio. So contains information on the whole trio.
+
 //returns number of kmers loaded
-int load_sv_trio_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph)
+int load_multicolour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph)
 {
   FILE* fp_bin = fopen(filename, "r");
   int seq_length = 0;
@@ -1116,12 +1116,12 @@ int load_sv_trio_binary_data_from_filename_into_graph(char* filename,  dBGraph* 
   int count=0;
 
   if (fp_bin == NULL){
-    printf("load_sv_trio_binary_data_from_filename_into_graph cannot open file:%s\n",filename);
+    printf("load_multicolour_binary_data_from_filename_into_graph cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
   
   //Go through all the entries in the binary file
-  while (db_node_read_sv_trio_binary(fp_bin,db_graph->kmer_size,&node_from_file)){
+  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file)){
     count++;
     
     //if (count % 100000000 == 0 ){
@@ -1151,8 +1151,8 @@ int load_sv_trio_binary_data_from_filename_into_graph(char* filename,  dBGraph* 
 
 
 
-//reads a binary as dumped by graph (not sv_trio)
-int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index)
+
+int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
 
@@ -1163,12 +1163,12 @@ int load_individual_binary_data_from_filename_into_graph(char* filename,  dBGrap
   int count=0;
 
   if (fp_bin == NULL){
-    printf("load_individual_binary_data_from_filename_into_graph cannot open file:%s\n",filename);
+    printf("load_single_colour_binary_data_from_filename_into_graph cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
   
   //Go through all the entries in the binary file
-  while (db_node_read_graph_binary(fp_bin,db_graph->kmer_size,&node_from_file, type, index))
+  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&node_from_file, type, index))
     {
       count++;
 
@@ -1218,7 +1218,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 	*p = '\0';
       
       total_seq_loaded = total_seq_loaded + 
-	load_individual_binary_data_from_filename_into_graph(line, db_graph, individual_edge_array, index);
+	load_single_colour_binary_data_from_filename_into_graph(line, db_graph, individual_edge_array, index);
 
     }
 

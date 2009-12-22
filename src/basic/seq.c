@@ -264,13 +264,15 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
 		    }
 
 
+		    if (j>=max_read_length){
+		      fprintf(stdout,"read [%s] too long [%i]. Skip read\n",seq->name,j);
+		      //exit(1);
+		      good_read=false;
+		    }
+
 		    seq->seq[j] = line[i];
 		    j++;
 		    
-		    if (j==max_read_length){
-		      fprintf(stdout,"read [%s] too long [%i]. Exiting...\n",seq->name,j);
-		      exit(1);
-		    }
 		    
 		  }
 	      }

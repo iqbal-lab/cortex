@@ -196,14 +196,14 @@ boolean db_node_is_this_node_in_subgraph_defined_by_func_of_colours(dBNode* node
 
 
 //functions for binary format
-void db_node_print_binary(FILE * fp, dBNode * node);
+void db_node_print_multicolour_binary(FILE * fp, dBNode * node);
 
 //read a binary dumped by this module, sv_trio
 boolean db_node_read_sv_trio_binary(FILE * fp, short kmer_size, dBNode * node);
 
 //read a binary for an individual person, as dumped by the target "graph"
 // the edge array type and index tell you which person you should load this data into
-boolean db_node_read_graph_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index);
+boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index);
 
 
 boolean db_node_check_read_start(dBNode* node, Orientation ori);
