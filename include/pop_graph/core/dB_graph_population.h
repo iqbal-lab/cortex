@@ -145,6 +145,13 @@ int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(dBNo
 									    dBGraph * db_graph, EdgeArrayType type, int index);
   
 
+int db_graph_supernode_in_subgraph_defined_by_func_of_colours(dBNode * node,int limit,void (*node_action)(dBNode * node),
+                                                              dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char * supernode_str,
+                                                              double * avg_coverage,int * min,int * max, boolean * is_cycle,
+                                                              dBGraph * db_graph, EdgeArrayType type, int index,
+                                                              Edges (*get_colour)(const dBNode*),
+                                                              int (*get_covg)(const dBNode*)  );
+
 
 boolean db_graph_is_condition_true_for_all_nodes_in_supernode(dBNode * node,int limit,
                                                               boolean (*condition_for_all_nodes)(dBNode * node),

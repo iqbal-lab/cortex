@@ -1233,6 +1233,88 @@ int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit,void (
 }
 
 
+// it returns the supernode containing 'node'  
+// string has to support limit+1 (+1 as you need a space for the \0 at the end)
+// node_action has to be idempotent as it can be applied to the same node twice!!
+// supernode_str returns the string made of the labels of the path (doesn't include first kmer). 
+// returns the length of supernode 
+// last two arguments mean you find supernode in a subgraph of the main graph defined by the edges as returned by get_colour.
+int db_graph_supernode_in_subgraph_defined_by_func_of_colours(dBNode * node,int limit,void (*node_action)(dBNode * node), 
+							      dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char * supernode_str, 
+							      double * avg_coverage,int * min,int * max, boolean * is_cycle, 
+							      dBGraph * db_graph, EdgeArrayType type, int index,
+							      Edges (*get_colour)(const dBNode*),
+							      int (*get_covg)(const dBNode*)  ){
+
+  
+  //use the allocated space as a temporary space
+  dBNode * * nodes_reverse = path_nodes;
+  Orientation * orientations_reverse = path_orientations;
+  Nucleotide * labels_reverse = path_labels;
+     
+  boolean is_cycler;
+  int length_reverse;
+  int length = 0;
+  
+  int minr,maxr;
+  double avg_coverager;
+
+
+  //compute the reverse path until the end of the supernode
+  //return is_cycle_reverse == true if the path closes a loop    
+  
+  length_reverse = db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(node,reverse,limit,&db_node_action_do_nothing,
+										    nodes_reverse,orientations_reverse,labels_reverse,
+										    supernode_str,&avg_coverager,&minr,&maxr,
+										    &is_cycler,db_graph, get_colour, get_covg);
+  
+  if (length_reverse>0){
+    //let's re do the last step, we need to do that because the last node could have had multiple entries
+    
+    Nucleotide label;
+    Orientation next_orientation;
+    
+    dBNode * lst_node = db_graph_get_next_node_in_subgraph_defined_by_func_of_colours(nodes_reverse[length_reverse-1],orientations_reverse[length_reverse-1],
+										      &next_orientation, labels_reverse[length_reverse-1],&label,db_graph, get_colour);
+    
+    //sanity check
+    if (lst_node != nodes_reverse[length_reverse]){
+      puts("db_graph_supernode broken!\n");
+      exit(1);
+    }
+    
+    
+    length = db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(nodes_reverse[length_reverse],
+											      opposite_orientation(orientations_reverse[length_reverse]),
+											      limit,label,
+											      node_action,
+											      path_nodes,path_orientations,path_labels,
+											      supernode_str,avg_coverage,min,max,
+											      is_cycle,db_graph, get_colour, get_covg);
+    
+  }
+  else{
+    length = db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(node,forward,
+									      limit,
+									      node_action,
+									      path_nodes,path_orientations,path_labels,
+									      supernode_str,avg_coverage,min,max,
+									      is_cycle,db_graph, get_colour, get_covg);
+  }
+  
+  
+  
+
+  //apply action to the fst and last node
+  node_action(path_nodes[0]);
+  node_action(path_nodes[length]);
+  
+  return length;
+}
+
+
+
+
 
 boolean condition_always_true(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
 			      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
