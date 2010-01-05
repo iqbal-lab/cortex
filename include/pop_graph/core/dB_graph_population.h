@@ -61,7 +61,7 @@ int db_graph_db_node_clip_tip_for_specific_person_or_pop(dBNode * node, int limi
 boolean db_graph_db_node_prune_low_coverage(dBNode * node, int coverage,
 					    void (*node_action)(dBNode * node),
 					    dBGraph * db_graph, 
-					    int (*sum_of_covgs_in_desired_colours)(Element *), 
+					    int (*sum_of_covgs_in_desired_colours)(const Element *), 
 					    Edges (*get_edge_of_interest)(const Element*),
 					    void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide),
 					    void (*apply_reset_to_specified_edges_2)(dBNode*) );
@@ -194,9 +194,11 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 // last argument is a condition which you apply to the flanks and branches to decide whether to call.
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
-void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph, 
+void db_graph_detect_vars(int max_length, dBGraph * db_graph, 
 			  boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p),
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) );
+
+boolean detect_vars_condition_always_true(dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p);
 
 void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
 
@@ -209,7 +211,7 @@ void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, Edge
 // 2 Pass apply_reset_to_specified_edges which applies reset_one_edge to whichever set of edges you care about,
 // 3 Pass apply_reset_to_specified_edges_2 which applies db_node_reset_edges to whichever set of edges you care about,
 void db_graph_remove_low_coverage_nodes(int coverage, dBGraph * db_graph,
-					int (*sum_of_covgs_in_desired_colours)(Element *), 
+					int (*sum_of_covgs_in_desired_colours)(const Element *), 
 					Edges (*get_edge_of_interest)(const Element*), 
 					void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 					void (*apply_reset_to_specified_edges_2)(dBNode*) );
@@ -289,6 +291,9 @@ void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(dBNode** array1, dBNod
 							  int* num_nodes_in_array_1not2, int * num_nodes_in_array_2not1, int** covgs_in_1not2, int** covgs_in_2not1,
 							  dBNode** reused_working_array1, dBNode** reused_working_array2,
 							  EdgeArrayType type, int index);
+
+boolean make_reference_path_based_sv_calls_condition_always_true( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
+                                                                  dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv);
 
 int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
 						EdgeArrayType which_array_holds_ref, int index_for_ref_in_edge_array,

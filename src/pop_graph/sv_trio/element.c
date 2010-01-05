@@ -119,7 +119,33 @@ Edges get_union_of_edges(Element e)
   return edges;
 }
 
+Edges element_get_colour_union_of_all_colours(const Element* e)
+{
+  int i;
+  Edges edges=0;
+  
+  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    {
+      edges |= e->individual_edges[i];
+    }
 
+  return edges;
+  
+}
+
+int element_get_covg_union_of_all_covgs(const dBNode* e)
+{
+  int i;
+  int covg=0;
+  
+  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    {
+      covg += e->coverage[i];
+    }
+
+  return covg;
+  
+}
 
 
 

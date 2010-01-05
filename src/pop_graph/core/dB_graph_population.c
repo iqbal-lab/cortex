@@ -345,7 +345,7 @@ int db_graph_db_node_clip_tip_for_specific_person_or_pop(dBNode * node, int limi
 boolean db_graph_db_node_prune_low_coverage(dBNode * node, int coverage,
 					    void (*node_action)(dBNode * node),
 					    dBGraph * db_graph, 
-					    int (*sum_of_covgs_in_desired_colours)(Element *), 
+					    int (*sum_of_covgs_in_desired_colours)(const Element *), 
 					    Edges (*get_edge_of_interest)(const Element*),
 					    void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide),
 					    void (*apply_reset_to_specified_edges_2)(dBNode*) )
@@ -421,7 +421,7 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int 
 	}
   }
 
-  int sum_of_covgs_in_desired_colours(dBNode * node)
+  int sum_of_covgs_in_desired_colours(const dBNode * node)
   {
     int total=0;
     int i;
@@ -1333,7 +1333,8 @@ boolean condition_default(dBNode** flank_5p, int len5p, dBNode** ref_branch, int
 {
   
   //basic idea is simple. Take the nodes which are in the variant and not the trusted path
-
+  
+  return true;
 
 }
 
@@ -1818,13 +1819,18 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 
 
 
+boolean detect_vars_condition_always_true(dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p)
+{
+  return true;
+}
+
 //routine to DETECT/DISCOVER variants directly from the graph - reference-free (unless you have put the reference in the graph!)
 // penultimate argument is a condition which you apply to the flanks and branches to decide whether to call.
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
 // last argument get_colour specifies some combination of colours, defining the graph within which we look for bubbles.
 // most obvious choices are: colour/edge with index (say)2, or union of all edges, or union of ll except that which is the reference genome
-void db_graph_detect_vars(int delta, int max_length, dBGraph * db_graph, 
+void db_graph_detect_vars(int max_length, dBGraph * db_graph, 
 			  boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p),
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) )
 {
@@ -2116,7 +2122,7 @@ void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, Edge
 // 2 Pass apply_reset_to_specified_edges which applies reset_one_edge to whichever set of edges you care about,
 // 3 Pass apply_reset_to_specified_edges_2 which applies db_node_reset_edges to whichever set of edges you care about,
 void db_graph_remove_low_coverage_nodes(int coverage, dBGraph * db_graph,
-					int (*sum_of_covgs_in_desired_colours)(Element *), 
+					int (*sum_of_covgs_in_desired_colours)(const Element *), 
 					Edges (*get_edge_of_interest)(const Element*), 
 					void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 					void (*apply_reset_to_specified_edges_2)(dBNode*) )
@@ -3456,6 +3462,12 @@ void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(dBNode** array1, dBNod
 
 
 
+}
+
+boolean make_reference_path_based_sv_calls_condition_always_true( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
+								  dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
+{
+  return true;
 }
 
 

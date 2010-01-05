@@ -77,6 +77,9 @@ void element_assign(Element* e1, Element* e2);
 Edges* get_edge(Element, EdgeArrayType, int); //gets pointer to actual edge, so you can modify it
 Edges get_edge_copy(const Element e, EdgeArrayType type,int index); //gets copy of edge
 Edges get_union_of_edges(Element e);
+Edges element_get_colour_union_of_all_colours(const Element*);
+int element_get_covg_union_of_all_covgs(const dBNode*);
+
 void add_edges(Element*, EdgeArrayType, int, Edges);
 void set_edges(Element*, EdgeArrayType, int, Edges);
 void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, EdgeArrayType type, int index);
