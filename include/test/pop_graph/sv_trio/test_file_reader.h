@@ -8,3 +8,4 @@ void test_dumping_of_clean_fasta();
 void test_loading_of_paired_end_reads_removing_duplicates();
 void test_loading_of_single_ended_reads_removing_duplicates();
 void test_load_seq_into_array();
+void test_align_next_read_to_graph_and_return_node_array();

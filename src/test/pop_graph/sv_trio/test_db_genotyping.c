@@ -2,6 +2,7 @@
 #include <Basic.h>
 #include <test_db_genotyping.h>
 #include <db_genotyping.h>
+#include <stdlib.h>
 
 void test_get_node_multiplicities()
 {
@@ -45,7 +46,7 @@ void test_get_node_multiplicities()
   int* mult2_in_1_ptr[4]={&mult2_in_1[0], &mult2_in_1[1], &mult2_in_1[2], &mult2_in_1[3]};
 
   get_node_multiplicities(array1, 4, array2, 4, mult_ptr1, mult_ptr2, mult1_in_2_ptr, mult2_in_1_ptr, 
-			  &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+			  true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
 
   int p;
   for (p=0; p<3; p++)
@@ -64,7 +65,7 @@ void test_get_node_multiplicities()
   //second test - two branches of equal length, one branch containing a repeated node
   array1[1]=e1;//so array1[0]==array1[1]
   get_node_multiplicities(array1, 4, array2, 4, mult_ptr1, mult_ptr2, mult1_in_2_ptr, mult2_in_1_ptr,
-                          &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+                          true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
 
   CU_ASSERT(mult1[0]==2);
   CU_ASSERT(mult1[1]==2);
@@ -100,7 +101,7 @@ void test_get_node_multiplicities()
   int* mult3_in_1_ptr[7]={&mult3_in_1[0], &mult3_in_1[1], &mult3_in_1[2], &mult3_in_1[3], &mult3_in_1[4], &mult3_in_1[5], &mult3_in_1[6]};
 
   get_node_multiplicities(array1, 4, array3, 7, mult_ptr1, mult_ptr3, mult1_in_3_ptr, mult3_in_1_ptr,
-                          &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+                          true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
 
 
   CU_ASSERT(mult1[0]==1);
@@ -130,6 +131,15 @@ void test_get_node_multiplicities()
   CU_ASSERT(mult3_in_1[5]==0);
   CU_ASSERT(mult3_in_1[6]==1);
 
-
+  free(e1);
+  free(e2);
+  free(e3);
+  free(e4);
+  free(e5);
+  free(e6);
+  free(e7);
+  free(e8);
+  free(e9);
+  free(e10);
 
 }

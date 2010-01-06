@@ -4266,5 +4266,10 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
   CU_ASSERT_STRING_EQUAL(results_array[335], "GTTCA");
 
 
-
+  for(i=0; i< 1000; i++)
+    {
+      free(results_array[i]);
+    }
+  free(results_array);
+  hash_table_free(&db_graph);
 }

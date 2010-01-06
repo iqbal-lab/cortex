@@ -534,7 +534,7 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
       printf("Do not pass NULL pointer to get_single_kmer_sliding_window_from_sequence\n");
       exit(1);
     }
-
+  
   int number_of_steps_before_current_kmer_is_good=0; //good means free of bad characters. 
   int latest_base_we_have_read=0;
   int num_kmers=0;

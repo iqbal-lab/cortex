@@ -205,6 +205,73 @@ void load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_p
 }
 
 
+//pass in a single kmer sliding window and the Sequence* it was derived from. Will find the nodes correspinding to this seqeunce
+//and put them in array. Also will check that edges exist as expected from the Sequence*
+void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, Sequence* seq, dBGraph* db_graph, dBNode** array_nodes, Orientation* array_orientations, 
+					       int max_array_size, 
+					       boolean require_nodes_to_lie_in_given_colour, int colour)
+
+{
+
+      Element * current_node  = NULL;
+      Element * previous_node  = NULL;
+      Orientation current_orientation=forward;
+      Orientation previous_orientation=forward;
+      Nucleotide current_base;
+      BinaryKmer tmp_kmer;
+      int j;
+	
+      if (kmer_window->nkmers>max_array_size)
+	{
+	  printf("Cannot load_kmers_from_sliding_window_into_array as max_array_size %d < number f kmers in the window %d\n", max_array_size, kmer_window->nkmers);
+	  exit(1);
+	}
+
+      for(j=0;j<kmer_window->nkmers;j++){ //for each kmer in window
+	current_node = hash_table_find(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph);	  
+	if (current_node == NULL){
+	  fputs("load_kmers_from_sliding_window_into_array: problem - current kmer not found\n",stderr);
+	  exit(1);
+	}
+	if ( (require_nodes_to_lie_in_given_colour==true) && 
+	     (db_node_is_this_node_in_this_person_or_populations_graph(current_node, individual_edge_array, colour)==false) )
+	  {
+	    printf("This current node does not exist in colour %d\n", colour);
+	    exit(1);
+	  }
+
+	  
+	//if not adding the checks for edges, then can dlete all the orientation stuff.
+	current_orientation = db_node_get_orientation(&(kmer_window->kmer[j]),current_node, db_graph->kmer_size);
+
+	//add to array
+	array_nodes[j]        = current_node;
+	array_orientations[j] = current_orientation;
+
+	if (j>0)
+	  {
+	    current_base = char_to_binary_nucleotide(seq->seq[db_graph->kmer_size -1+j ]);
+	    if (previous_node == NULL)
+	      {
+		printf("PROBLEM j:%i nkmers:%i \n",j, kmer_window->nkmers);
+		printf("file_reader: we have a problem - prev kmer not found\n");
+		exit(1);
+	      }
+	    else if (! (db_node_edge_exist(previous_node, current_base, previous_orientation, individual_edge_array, colour) ) )
+	      { 
+		printf("Missing edge");
+		exit(1);
+	      }
+	  }
+	previous_node = current_node;
+	previous_orientation = current_orientation;
+	  
+      }
+}
+
+
+
+
 
 //returns length of sequence loaded
 //penultimate argument is to specify whether to discard potential PCR duplicate reads single-endedly - ie if read starts at same kmer
@@ -671,9 +738,9 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
     }
   path_string[offset+number_of_nodes_to_load]='\0';
 
-  if (DEBUG){
-    printf ("\nsequence returned from read_sequence_from_fasta to load_seq_into_array is %s - kmer size: %i - number of bases loaded inc the preassigned ones at start f seq  length: %i \n",seq->seq,db_graph->kmer_size, chunk_length);
-  }
+    if (DEBUG){
+    printf ("\n sequence returned from read_sequence_from_fasta to load_seq_into_array is %s - kmer size: %i - number of bases loaded inc the preassigned ones at start f seq  length: %i \n",seq->seq,db_graph->kmer_size, chunk_length);
+    }
   
   j=0;
   seq_length += (long long) chunk_length;
@@ -819,111 +886,6 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
 
 
-
-/*
-//returns length of sequence loaded
-int load_ref_overlap_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry, int offset), 
-							       long long * bad_reads, char quality_cut_off,  int max_read_length, dBGraph * db_graph, int which_chromosome)
-{
-
-
-  //----------------------------------
-  // preallocate the memory used to read the sequences
-  //----------------------------------
-  Sequence * seq = malloc(sizeof(Sequence));
-  if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
-  }
-  alloc_sequence(seq,max_read_length,LINE_MAX);
-  
-  
-  int seq_length=0;
-  short kmer_size = db_graph->kmer_size;
-
-  //max_read_length/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
-  int max_windows = max_read_length/(kmer_size+1);
- 
-  //number of possible kmers in a 'perfect' read
-  int max_kmers   = max_read_length-kmer_size+1;
-
-  
-
-  //----------------------------------
-  //preallocate the space of memory used to keep the sliding_windows. NB: this space of memory is reused for every call -- with the view 
-  //to avoid memory fragmentation
-  //NB: this space needs to preallocate memory for orthogonal situations: 
-  //    * a good read -> few windows, many kmers per window
-  //    * a bad read  -> many windows, few kmers per window    
-  //----------------------------------
-  KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
-  if (windows == NULL){
-    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
-    exit(1);
-  }  
-  //allocate memory for the sliding windows 
-  binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
-  
-  int entry_length;
-  boolean full_entry = true;
-  boolean prev_full_entry = true;
-
-
-  while ((entry_length = file_reader(fp,seq,max_read_length, full_entry, &full_entry))){
-
-    if (DEBUG){
-      printf ("\nsequence %s\n",seq->seq);
-    }
-    
-    int i,j;
-    seq_length  += (long long) (entry_length - (prev_full_entry==false ? db_graph->kmer_size : 0));
-
-    int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,entry_length,quality_cut_off,db_graph->kmer_size,windows,max_windows, max_kmers);
-    
-    if (nkmers == 0) {
-      (*bad_reads)++;
-    }
-    else {
-      Element * current_node  = NULL;
-
-      
-      Orientation current_orientation;
-      
-      for(i=0;i<windows->nwindows;i++){ //for each window
-	KmerSlidingWindow * current_window = &(windows->window[i]);
-	
-	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
-
-	  current_node = hash_table_find(element_get_key(current_window->kmer[j],db_graph->kmer_size),db_graph);	  	 
-
-	  if (current_node){
-	    current_orientation = db_node_get_orientation(current_window->kmer[j],current_node, db_graph->kmer_size);	    
-	    db_node_mark_chromosome_overlap(current_node, which_chromosome, current_orientation);
-	  }
-	  
-	}
-	
-      }
-    }
-
-    if (full_entry == false)
-      {
-        shift_last_kmer_to_start_of_sequence(seq,entry_length,db_graph->kmer_size);
-      }
-    
-    prev_full_entry = full_entry;
-    
-    
-  }
-  
-  free_sequence(&seq);
-  binary_kmer_free_kmers_set(&windows);
-
-
-  return seq_length;    
-}
-
-*/
 
 
 //takes a filename 
@@ -2046,4 +2008,107 @@ void read_all_ref_chromosomes_and_mark_graph(dBGraph* db_graph)
   
 }
 
+
+
+
+
+int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length, dBNode** array_nodes, Orientation* array_orientations, 
+						   boolean require_nodes_to_lie_in_given_colour,
+						   int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
+						   Sequence* seq, KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour)
+{
+  
+  boolean full_entry = true;
+  boolean prev_full_entry = true;
+
+  //get next read as a C string and put it in seq. Entry_length is the length of the read.
+  int entry_length = file_reader(fp,seq,max_read_length,full_entry,&full_entry);
+  //turn it into a sliding window 
+  int nkmers = get_single_kmer_sliding_window_from_sequence(seq->seq,entry_length, db_graph->kmer_size, kmer_window);
+  //work through the sliding window and put nodes into the array you pass in.
+  load_kmers_from_sliding_window_into_array(kmer_window, seq, db_graph, array_nodes, array_orientations, 
+					    max_read_length-db_graph->kmer_size+1, require_nodes_to_lie_in_given_colour, colour);
+
+  return nkmers;
+}
+
+
+// returns 1 unless hits end of file, when returns 0
+// Exits if the sequence read does not exist in db_graph (ie any kmer or edge) in the colour specified as last argument
+int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
+					   dBNode** flank5p,    Orientation* flank5p_or,    int* len_flank5p,
+					   dBNode** ref_allele, Orientation* ref_allele_or, int* len_ref_allele, 
+					   dBNode** alt_allele, Orientation* alt_allele_or, int* len_alt_allele, 
+					   dBNode** flank3p,    Orientation* flank3p_or,    int* len_flank3p,
+					   dBGraph* db_graph, int colour)
+{
+  int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
+    long long ret;
+    int offset = 0;
+
+    if (new_entry!= true){
+      printf("new_entry has to be true for read_next_variant_from_full_flank_file\n");
+      exit(1);
+    }
+
+    ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
+    
+    return ret;
+  }
+  
+  //----------------------------------
+  // allocate the memory used to read the sequences
+  //----------------------------------
+  Sequence * seq = malloc(sizeof(Sequence));
+  if (seq == NULL){
+    fputs("Out of memory trying to allocate Sequence\n",stderr);
+    exit(1);
+  }
+  alloc_sequence(seq,max_read_length,LINE_MAX);
+  
+  //We are going to load all the bases into a single sliding window 
+  KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
+  if (kmer_window==NULL)
+    {
+      printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
+      exit(1);
+    }
+  kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
+  if (kmer_window->kmer==NULL)
+    {
+      printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
+      exit(1);
+    }
+  kmer_window->nkmers=0;
+  
+  
+  //end of intialisation 
+
+
+  *len_flank5p = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, flank5p, flank5p_or,  true, file_reader,
+							       seq, kmer_window, db_graph, colour);
+
+  if (*len_flank5p==0)
+    {
+      return 0; //end of file (should never have a zero length read as 5prime flank btw)
+    }
+
+  *len_ref_allele = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, ref_allele, ref_allele_or, true, file_reader,
+							       seq, kmer_window, db_graph, colour);
+  
+  *len_alt_allele = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, alt_allele, alt_allele_or, true, file_reader,
+							       seq, kmer_window, db_graph, colour);
+  *len_flank3p = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, flank3p, flank3p_or, true, file_reader,
+								seq, kmer_window, db_graph, colour);
+
+  if (*len_flank3p==0)
+    {
+      printf("Malformed full flank format file.");
+      exit(1);
+    }
+
+  return 0;
+
+}
+					   
 

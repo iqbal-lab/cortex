@@ -10,14 +10,19 @@
 #include <stdlib.h>
 
 
+//Utility function - only exported so I can test it.
 //Given two branches (arrays of dBNode*'s), return (in arguments 5,6,7,8) two arrays for each branch. One gives, for each node in the branch, the 
 //number of times that node is seen in that branch. The second gives, for each node in a branch, the number of times that node is seen in
 //the OTHER branch.
+// The argument only_count_nodes_with_edge_in_specified_colour_func allows you to specify if you care whether a node has an edge in some colour or not.
+// e.g. if we are only interested in the blue subgraph, and we do not want to count nodes that are not in the blue subgraph, we set this to true,
+// and use the following two arguments also:
 //The last two arguments allow you to do this to subgraph of the de Bruijn graph defined by these two functions - eg the union of all colours,
-// or just one colour
+// or just one colour. These arguments are ignored if only_count_nodes_with_edge_in_specified_colour_func==false
 void get_node_multiplicities(dBNode** branch1, int len_branch1, dBNode** branch2, int len_branch2, 
 			     int** br1_multiplicity_in_br1, int** br2_multiplicity_in_br2,
 			     int** br1_multiplicity_in_br2, int** br2_multiplicity_in_br1,
+			     boolean only_count_nodes_with_edge_in_specified_colour_func,
 			     Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) )
 {
   int working_array1[len_branch1];
@@ -55,10 +60,17 @@ void get_node_multiplicities(dBNode** branch1, int len_branch1, dBNode** branch2
 	for (j=0 ; j<len_br_target; j++)
 	  {
 	    //if i-th and j-th elements are the same, AND they exist in the colour (or function of colours) we are interested in
-	    if ( (db_node_addr_cmp(&br_src[i], &br_target[j])==0 ) && 
-		 (db_node_is_this_node_in_subgraph_defined_by_func_of_colours(br_src[i], get_colour)) )
+	    if (db_node_addr_cmp(&br_src[i], &br_target[j])==0 )
 	      {
-		count_occurrences++;
+		if ( (only_count_nodes_with_edge_in_specified_colour_func==true) && 
+		     (!db_node_is_this_node_in_subgraph_defined_by_func_of_colours(br_src[i], get_colour)) )
+		  {
+		    //does not count if node does not exist in the specified subgraph
+		  }
+		else
+		  {
+		    count_occurrences++;
+		  }
 	      }
 	  }
 	
@@ -71,3 +83,5 @@ void get_node_multiplicities(dBNode** branch1, int len_branch1, dBNode** branch2
   get_mult(branch2, len_branch2, branch1, len_branch1,  br2_multiplicity_in_br1);
   
 }
+
+

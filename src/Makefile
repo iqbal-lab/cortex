@@ -50,7 +50,7 @@ CFLAGS_SV_TRIO =   -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_SV_TRIO) -I$(IDIR_P
 CFLAGS_MANY_POP_GRAPH =   -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_MANY_POP_GRAPH) -I$(IDIR_POP_GRAPH_CORE)
 
 CFLAGS_BASIC_TESTS = -I$(IDIR_BASIC_TESTS)  -I$(IDIR_BASIC)  -I$(IDIR_CUNIT) -L/home/zam/bin/lib
-CFLAGS_HASH_TABLE_TESTS =  -I$(IDIR_HASH) -I$(IDIR_HASH_TABLE_TESTS) -I$(IDIR_CUNIT)  -I$(IDIR_GRAPH) -L/home/zam/bin/lib
+CFLAGS_HASH_TABLE_TESTS =  -I$(IDIR_HASH) -I$(IDIR_HASH_TABLE_TESTS) -I$(IDIR_CUNIT)  -I$(IDIR_SV_TRIO) -L/home/zam/bin/lib
 CFLAGS_COUNT_KMERS_TESTS =  -I$(IDIR_COUNT_KMERS_TESTS)  -I$(IDIR_COUNT_KMERS) -I$(IDIR_BASIC)  -I$(IDIR_HASH) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
 CFLAGS_GRAPH_TESTS = -I$(IDIR_GRAPH_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_GRAPH) -I$(IDIR_CUNIT) -L/home/zam/bin/lib 
 CFLAGS_SV_TRIO_TESTS =  -I$(IDIR_SV_TRIO_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH)  -I$(IDIR_SV_TRIO) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
@@ -69,7 +69,7 @@ SV_TRIO_OBJ = obj/pop_graph/sv_trio/graph.o obj/pop_graph/sv_trio/binary_kmer.o 
 
 BASIC_TESTS_OBJ = obj/basic/binary_kmer.o obj/basic/seq.o obj/test/basic/test_binary_kmer.o obj/test/basic/test_seq.o obj/test/basic/run_basic_tests.o
 
-HASH_TABLE_TESTS_OBJ = obj/test/hash_table/run_hash_table_tests.o obj/graph/element.o obj/graph/hash_table/hash_key/bob_jenkins/hash_value.o obj/graph/hash_table/open_hash/hash_table.o obj/test/hash_table/test_hash.o obj/basic/binary_kmer.o  obj/basic/seq.o 
+HASH_TABLE_TESTS_OBJ = obj/test/hash_table/run_hash_table_tests.o obj/pop_graph/sv_trio/element.o obj/pop_graph/sv_trio/hash_value.o obj/pop_graph/sv_trio/hash_table.o obj/test/hash_table/test_hash.o obj/basic/binary_kmer.o  obj/basic/seq.o 
 
 GRAPH_TESTS_OBJ = obj/basic/binary_kmer.o  obj/basic/seq.o obj/graph/element.o obj/graph/hash_table/hash_key/bob_jenkins/hash_value.o obj/graph/hash_table/open_hash/hash_table.o obj/graph/dB_graph.o obj/graph/file_reader.o obj/test/graph/test_dB_graph.o obj/test/graph/test_file_reader.o obj/test/graph/test_graph_element.o obj/test/graph/run_dB_graph_tests.o 
 
