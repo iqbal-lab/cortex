@@ -9,3 +9,4 @@ void test_loading_of_paired_end_reads_removing_duplicates();
 void test_loading_of_single_ended_reads_removing_duplicates();
 void test_load_seq_into_array();
 void test_align_next_read_to_graph_and_return_node_array();
+void test_read_next_variant_from_full_flank_file();

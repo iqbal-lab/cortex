@@ -336,7 +336,7 @@ long long load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* fi
       printf ("\nsequence %s - kmer size: %i - entry length: %i - max kmers:%i\n",seq->seq,db_graph->kmer_size, entry_length, max_kmers);
     }
     
-    int i,j;
+
     seq_length += (long long) (entry_length - (prev_full_entry==false ? db_graph->kmer_size : 0));
    
     //printf("Length %qd %i %s %i %i\n",seq_length,entry_length, seq->name, seq->start, seq->end);
@@ -2011,7 +2011,7 @@ void read_all_ref_chromosomes_and_mark_graph(dBGraph* db_graph)
 
 
 
-
+//returns the number of kmers loaded
 int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length, dBNode** array_nodes, Orientation* array_orientations, 
 						   boolean require_nodes_to_lie_in_given_colour,
 						   int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
@@ -2035,6 +2035,7 @@ int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length
 
 // returns 1 unless hits end of file, when returns 0
 // Exits if the sequence read does not exist in db_graph (ie any kmer or edge) in the colour specified as last argument
+
 int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 					   dBNode** flank5p,    Orientation* flank5p_or,    int* len_flank5p,
 					   dBNode** ref_allele, Orientation* ref_allele_or, int* len_ref_allele, 
@@ -2093,21 +2094,28 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
       return 0; //end of file (should never have a zero length read as 5prime flank btw)
     }
 
+  printf("5p flank: %s, length %d\n", seq->seq, *len_flank5p);
+
+
   *len_ref_allele = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, ref_allele, ref_allele_or, true, file_reader,
 							       seq, kmer_window, db_graph, colour);
+  printf("ref allele flank: %s, length %d\n", seq->seq, *len_ref_allele);
   
   *len_alt_allele = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, alt_allele, alt_allele_or, true, file_reader,
 							       seq, kmer_window, db_graph, colour);
+  printf("alt allele: %s, length %d\n", seq->seq, *len_alt_allele );
+
   *len_flank3p = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, flank3p, flank3p_or, true, file_reader,
 								seq, kmer_window, db_graph, colour);
+  printf("3p flank: %s, length %d\n", seq->seq, *len_flank3p);
 
   if (*len_flank3p==0)
     {
-      printf("Malformed full flank format file.");
+      printf("Malformed full flank format file. Last seq we got back was %s", seq->seq);
       exit(1);
     }
 
-  return 0;
+  return 1;
 
 }
 					   

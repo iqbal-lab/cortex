@@ -307,6 +307,11 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for reading variants from a Cortex full-flank-format file",  test_read_next_variant_from_full_flank_file))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
 
 
 

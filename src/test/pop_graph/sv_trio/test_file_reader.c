@@ -3282,3 +3282,105 @@ TTTTTTTTTTTTTTTTAAA
   free_sequence(&seq);
   hash_table_free(&db_graph);
 }
+
+
+
+void test_read_next_variant_from_full_flank_file()
+{
+
+
+  //Load a single file containing a SNP between two reads, and use detect_vars and trusted SV caller to dump a pair of files.
+  // then load these dumped files and check we get what we expect.
+
+   //first set up the hash/graph
+  int kmer_size = 5;
+  int number_of_bits=6;
+  int bucket_size   = 10;
+  int seq_length;
+  long long bad_reads = 0; 
+  long long dup_reads=0;
+  boolean remove_duplicates_single_endedly=false; 
+  boolean break_homopolymers=false;
+  int homopolymer_cutoff=0;
+
+
+  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  
+  int max_chunk_length=100;
+  seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/one_person_with_SNP.fasta", &bad_reads,&dup_reads,max_chunk_length,  
+										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+										  db_graph, individual_edge_array, 0);
+
+  FILE* fout_bubble       = fopen("tmp_test_read_next_variant_from_full_flank_file_bubble.fff", "w");
+  FILE* fout_ref_assisted = fopen("tmp_test_read_next_variant_from_full_flank_file_RA.fff", "w");
+  if ((fout_bubble==NULL) || (fout_ref_assisted==NULL))
+    {
+      printf("Unable to open one of tmp_test_read_next_variant_from_full_flank_file_bubble.fff or tmp_test_read_next_variant_from_full_flank_file_RA.fff");
+      exit(1);
+    }
+
+  int max_branch_len=10;
+  db_graph_detect_vars(fout_bubble, max_branch_len,db_graph, &detect_vars_condition_always_true, 
+		       &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+  fclose(fout_bubble);
+
+
+  //Now check that we can read back in what we have printed out.
+  dBNode* flank5p[20];
+  dBNode* one_allele[20];
+  dBNode* other_allele[20];
+  dBNode* flank3p[20];
+  Orientation flank5p_or[20];
+  Orientation one_allele_or[20];
+  Orientation other_allele_or[20];
+  Orientation flank3p_or[20];
+  int len_flank5p;
+  int len_one_allele;
+  int len_other_allele;
+  int len_flank3p;
+  int max_read_length = 50;
+
+  FILE* var_fptr =  fopen("tmp_test_read_next_variant_from_full_flank_file_bubble.fff", "r");
+
+  read_next_variant_from_full_flank_file(var_fptr, max_read_length,
+					 flank5p, flank5p_or, &len_flank5p,
+					 one_allele,  one_allele_or,  &len_one_allele,
+					 other_allele,  other_allele_or,  &len_other_allele,
+					 flank3p,     flank3p_or,     &len_flank3p,
+					 db_graph, 0);
+  
+  CU_ASSERT( (len_flank5p==2) || (len_flank5p==3) ); //depends how the graph is traversed, as to which end is seen as 5/3 prime
+
+
+
+  FILE* ref_fptr = fopen("../data/test/pop_graph/variations/one_person_without_SNP.fasta", "r");
+  if (ref_fptr==NULL)
+    {
+      printf("Cannot open ../data/test/pop_graph/variations/one_person_without_SNP.fasta");
+      exit(1);
+    }
+
+  int min_fiveprime_flank_anchor=3;
+  int min_threeprime_flank_anchor=2;
+  int max_anchor_span=20;
+  int min_covg=0;//these dummy variables are not looked at by current implementation
+  int max_covg=2000;//ditto
+  int max_expected_size_of_supernode=20;
+  int length_of_arrays=40;
+  
+  //not worrying about the two arguments 4,5 which specify which colour is the reference - these only  used for working out which
+  //nodes are novel, for putting in the header. Set to same colour as individual - nothing will seem novel.
+  db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 0, 
+					      individual_edge_array, 0,
+					      min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+					      max_expected_size_of_supernode, length_of_arrays, db_graph, fout_ref_assisted,
+					      0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true);
+  fclose(fout_ref_assisted);
+
+
+
+  hash_table_free(&db_graph);
+
+}
+
+

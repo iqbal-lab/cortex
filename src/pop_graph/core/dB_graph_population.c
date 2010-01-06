@@ -1824,13 +1824,28 @@ boolean detect_vars_condition_always_true(dBNode** flank_5p, int len5p, dBNode**
   return true;
 }
 
+
+boolean detect_vars_condition_flanks_at_least_3(dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p)
+{
+  if ((len5p>=3)&&(len3p>=3))
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+
+
 //routine to DETECT/DISCOVER variants directly from the graph - reference-free (unless you have put the reference in the graph!)
 // penultimate argument is a condition which you apply to the flanks and branches to decide whether to call.
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
 // last argument get_colour specifies some combination of colours, defining the graph within which we look for bubbles.
 // most obvious choices are: colour/edge with index (say)2, or union of all edges, or union of ll except that which is the reference genome
-void db_graph_detect_vars(int max_length, dBGraph * db_graph, 
+void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph, 
 			  boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p),
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) )
 {
@@ -1930,7 +1945,7 @@ void db_graph_detect_vars(int max_length, dBGraph * db_graph,
 	    if (condition(nodes5p, length_flank5p, path_nodes1, length1, path_nodes2, length2, nodes3p, length_flank3p)==true)
 	      {
 
-		printf("\nVARIATION: %i\n",count_vars);
+		//printf("\nVARIATION: %i\n",count_vars);
 		count_vars++;
 		
 		//printf("length 5p flank: %i avg_coverage:%5.2f \n",length_flank5p,avg_coverage5p);	    
@@ -1942,7 +1957,7 @@ void db_graph_detect_vars(int max_length, dBGraph * db_graph,
 		//print flank5p - 
 		sprintf(name,"var_5p_flank_%i",count_vars);
 
-		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(stdout,name,length_flank5p,avg_coverage5p,min5p,max5p,
+		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length_flank5p,avg_coverage5p,min5p,max5p,
 										     nodes5p[0],orientations5p[0],			
 										     nodes5p[length_flank5p],orientations5p[length_flank5p],				
 										     seq5p,
@@ -1950,14 +1965,14 @@ void db_graph_detect_vars(int max_length, dBGraph * db_graph,
 		
 		//print branches
 		sprintf(name,"branch_%i_1",count_vars);
-		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(stdout,name,length1,
+		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length1,
 										     avg_coverage1,min_coverage1,max_coverage1,
 										     path_nodes1[0],path_orientations1[0],path_nodes1[length1],path_orientations1[length1],
 										     seq1,
 										     db_graph->kmer_size,false, get_colour, get_covg);
 		
 		sprintf(name,"branch_%i_2",count_vars);
-		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(stdout,name,length2,
+		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length2,
 										     avg_coverage2,min_coverage2,max_coverage2,
 										     path_nodes2[0],path_orientations2[0],path_nodes2[length2],path_orientations2[length2],
 										     seq2,
@@ -1965,7 +1980,7 @@ void db_graph_detect_vars(int max_length, dBGraph * db_graph,
 		
 		//print flank3p
 		sprintf(name,"var_3p_flank_%i",count_vars);
-		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(stdout,name,length_flank3p,avg_coverage3p,min3p,max3p,
+		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length_flank3p,avg_coverage3p,min3p,max3p,
 										     nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
 										     seq3p,
 										     db_graph->kmer_size,false, get_colour, get_covg);

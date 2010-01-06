@@ -89,7 +89,7 @@ int main(int argc, char **argv){
 	//detect variants looking for bubbles in the union graph of all colours.
 	//apply no condition to whether one branch or other shoud be one colour or another
 	int max_allowed_branch_len=500000; //500kb
-	db_graph_detect_vars(max_allowed_branch_len,db_graph, &detect_vars_condition_always_true, 
+	db_graph_detect_vars(stdout, max_allowed_branch_len,db_graph, &detect_vars_condition_flanks_at_least_3,
 			     &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
 	break;
       }
