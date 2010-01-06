@@ -3234,10 +3234,46 @@ TTTTTTTTTTTTTTTTAAA
   BinaryKmer test_kmer, test_kmer_rev;
   seq_to_binary_kmer("TAACCCTAACCCTAACC", 17, &test_kmer);
   binary_kmer_reverse_complement(&test_kmer, 17, &test_kmer_rev);
-
   CU_ASSERT(array_or[0]==reverse);
   CU_ASSERT(binary_kmer_comparison_operator(array_nodes[0]->kmer,test_kmer_rev)==true ); 
-  char test_seq[17];
+
+  seq_to_binary_kmer("AACCCTAACCCTAACCC", 17, &test_kmer);
+  binary_kmer_reverse_complement(&test_kmer, 17, &test_kmer_rev);
+  CU_ASSERT(array_or[1]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(array_nodes[1]->kmer,test_kmer)==true ); 
+
+  seq_to_binary_kmer("TAACCCTAACCCTAACC", 17, &test_kmer);
+  binary_kmer_reverse_complement(&test_kmer, 17, &test_kmer_rev);
+  CU_ASSERT(array_or[42]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(array_nodes[42]->kmer,test_kmer_rev)==true ); 
+  
+
+  //get the next read
+  num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_read_length, array_nodes, array_or, true, file_reader,
+								 seq, kmer_window, db_graph, colour);
+  
+
+  CU_ASSERT(num_kmers==45-17+1);//next read is 45 bases long
+
+  seq_to_binary_kmer("ACCCTAACCCTAACCCT", 17, &test_kmer);
+  binary_kmer_reverse_complement(&test_kmer, 17, &test_kmer_rev);
+  CU_ASSERT(array_or[0]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(array_nodes[0]->kmer,test_kmer)==true ); 
+
+  seq_to_binary_kmer("CCCTAACCCTAACCCTA", 17, &test_kmer);
+  binary_kmer_reverse_complement(&test_kmer, 17, &test_kmer_rev);
+  CU_ASSERT(array_or[1]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(array_nodes[1]->kmer,test_kmer)==true ); 
+
+  seq_to_binary_kmer("CCTAACCCTAACCCTAA", 17, &test_kmer);
+  binary_kmer_reverse_complement(&test_kmer, 17, &test_kmer_rev);
+  CU_ASSERT(array_or[2]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(array_nodes[2]->kmer,test_kmer)==true ); 
+
+  seq_to_binary_kmer("CTAACCCTAACCCTAAC", 17, &test_kmer);
+  binary_kmer_reverse_complement(&test_kmer, 17, &test_kmer_rev);
+  CU_ASSERT(array_or[28]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(array_nodes[28]->kmer,test_kmer)==true ); 
 
 
 
