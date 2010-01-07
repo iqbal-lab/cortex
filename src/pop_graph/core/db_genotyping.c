@@ -25,22 +25,6 @@ void get_node_multiplicities(dBNode** branch1, int len_branch1, dBNode** branch2
 			     boolean only_count_nodes_with_edge_in_specified_colour_func,
 			     Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) )
 {
-  int working_array1[len_branch1];
-  int working_array1_num=0; //number of things we have added to this array
-  int working_array2[len_branch2];
-  int working_array2_num=0; //number of things we have added to this array
-
-  int k;
-
-  void init_array(int* arr, int len)
-  {
-    for (k=0; k<len; k++)
-    {
-      arr[k]=-1;
-    }
-  }
-  init_array(working_array1, len_branch1);
-  init_array(working_array2, len_branch2);
 
   //we will reuse this;
   void get_mult(dBNode** br_src, int len_br_src, dBNode** br_target, int len_br_target, int** mult_array)
@@ -85,3 +69,13 @@ void get_node_multiplicities(dBNode** branch1, int len_branch1, dBNode** branch2
 }
 
 
+
+void genotype_all_variants_in_fff_file(char* filename, Variant_File_Format output_format, char* out_filename, void (*genotype_model)() )
+{
+  //call read_next_variant in a loop, and pass each one into the genotype_model function. The model function will print in the required format
+}
+
+void genotype_model_simple()
+{
+  //Use model defined in notebook
+}

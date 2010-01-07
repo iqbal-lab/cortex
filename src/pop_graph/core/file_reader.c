@@ -2094,20 +2094,20 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
       return 0; //end of file (should never have a zero length read as 5prime flank btw)
     }
 
-  printf("5p flank: %s, length %d\n", seq->seq, *len_flank5p);
+  // printf("5p flank: %s, length %d\n", seq->seq, *len_flank5p);
 
 
   *len_ref_allele = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, ref_allele, ref_allele_or, true, file_reader,
 							       seq, kmer_window, db_graph, colour);
-  printf("ref allele flank: %s, length %d\n", seq->seq, *len_ref_allele);
+  //printf("ref allele flank: %s, length %d\n", seq->seq, *len_ref_allele);
   
   *len_alt_allele = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, alt_allele, alt_allele_or, true, file_reader,
 							       seq, kmer_window, db_graph, colour);
-  printf("alt allele: %s, length %d\n", seq->seq, *len_alt_allele );
+  //printf("alt allele: %s, length %d\n", seq->seq, *len_alt_allele );
 
   *len_flank3p = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, flank3p, flank3p_or, true, file_reader,
 								seq, kmer_window, db_graph, colour);
-  printf("3p flank: %s, length %d\n", seq->seq, *len_flank3p);
+  //printf("3p flank: %s, length %d\n", seq->seq, *len_flank3p);
 
   if (*len_flank3p==0)
     {
