@@ -1,26 +1,6 @@
 #include <db_genotyping.h>
 
 
-void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
-				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
-				     dBNode** ref_allele, Orientation* ref_allele_or, int len_ref_allele, 
-				     dBNode** alt_allele, Orientation* alt_allele_or, int len_alt_allele, 
-				     dBNode** flank3p,    Orientation* flank3p_or,    int len_flank3p)
-{
-  var->flank5p       = flank5p;
-  var->flank5p_or    = flank5p_or;
-  var->len_flank5p   = len_flank5p;
-  var->ref_allele    = ref_allele;
-  var->ref_allele_or = ref_allele_or;
-  var->len_ref_allele= len_ref_allele;
-  var->alt_allele    = alt_allele;
-  var->alt_allele_or = alt_allele_or;
-  var->len_alt_allele= len_alt_allele;
-  var->flank3p       =flank3p;
-  var->flank3p_or    = flank3p_or;
-  var->len_flank3p   = len_flank3p;
-
-}
 				     
 
 
@@ -202,6 +182,7 @@ void genotype_model_simple(VariantBranchesAndFlanks* var, dBGraph* db_graph, int
 			  ref_multiplicity_in_ref, alt_multiplicity_in_ref,
 			  var, db_graph, colour1, colour_ref);
   
+
   double prob_data_under_alt_ref(int* mle_allele_freq) 
   {
     //will need to work through each branch, looking for maximal subcontigs that have multiplicity 1
@@ -214,12 +195,12 @@ void genotype_model_simple(VariantBranchesAndFlanks* var, dBGraph* db_graph, int
 
     for (i=0; i<2*population_size_colour1; i++)
       {
-	likelihoods[i]=calc_log_likelihood_of_data_seen_on_one_allele(ref_normalised_covg, ref_multiplicity_in_ref, ref_multiplicity_in_alt, ref_normalised_covg,
-								      var->len_ref_allele, 2*population_size_colour1-i, avg_depth_of_covg_pop1/2, 
-								      avg_read_len, db_graph->kmer_size)
-	  + calc_log_likelihood_of_data_seen_on_one_allele(alt_normalised_covg, alt_multiplicity_in_alt, alt_multiplicity_in_ref, alt_normalised_covg,
-									   var->len_alt_allele, i, avg_depth_of_covg_pop1/2, 
-									   avg_read_len, db_graph->kmer_size);
+	likelihoods[i]=calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(ref_normalised_covg, ref_multiplicity_in_ref, ref_multiplicity_in_alt, ref_normalised_covg,
+												      var->len_ref_allele, 2*population_size_colour1-i, avg_depth_of_covg_pop1/2, 
+												      avg_read_len, db_graph->kmer_size)
+	  + calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(alt_normalised_covg, alt_multiplicity_in_alt, alt_multiplicity_in_ref, alt_normalised_covg,
+											   var->len_alt_allele, i, avg_depth_of_covg_pop1/2, 
+											   avg_read_len, db_graph->kmer_size);
 	if (likelihoods[i]>mle_af)
 	  {
 	    max_likelihood = likelihoods[i];
@@ -243,7 +224,7 @@ void genotype_model_simple(VariantBranchesAndFlanks* var, dBGraph* db_graph, int
 
     for (i=0; i<2*population_size_colour1; i++)
       {
-	likelihoods[i]= calc_log_likelihood_of_data_seen_on_one_allele(alt_normalised_covg, alt_multiplicity_in_alt, alt_multiplicity_in_ref, alt_normalised_covg,
+	likelihoods[i]= calc_log_likelihood_of_data_seen_on_one_allele(alt_normalised_covg, alt_multiplicity_in_alt, alt_normalised_covg,
 								       var->len_alt_allele, i, avg_depth_of_covg_pop1, //note depth here is full diploid depth
 								       avg_read_len, db_graph->kmer_size);
 	if (likelihoods[i]>mle_af)

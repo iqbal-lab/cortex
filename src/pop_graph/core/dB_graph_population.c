@@ -1819,15 +1819,15 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 
 
 
-boolean detect_vars_condition_always_true(dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p)
+boolean detect_vars_condition_always_true(VariantBranchesAndFlanks* var)
 {
   return true;
 }
 
 
-boolean detect_vars_condition_flanks_at_least_3(dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p)
+boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks* var)
 {
-  if ((len5p>=3)&&(len3p>=3))
+  if ((var->len_flank5p >=3) && (var->len_flank3p >=3))
     {
       return true;
     }
@@ -1839,6 +1839,7 @@ boolean detect_vars_condition_flanks_at_least_3(dBNode** flank_5p, int len5p, dB
 
 
 
+
 //routine to DETECT/DISCOVER variants directly from the graph - reference-free (unless you have put the reference in the graph!)
 // penultimate argument is a condition which you apply to the flanks and branches to decide whether to call.
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
@@ -1846,7 +1847,7 @@ boolean detect_vars_condition_flanks_at_least_3(dBNode** flank_5p, int len5p, dB
 // last argument get_colour specifies some combination of colours, defining the graph within which we look for bubbles.
 // most obvious choices are: colour/edge with index (say)2, or union of all edges, or union of ll except that which is the reference genome
 void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph, 
-			  boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p),
+			  boolean (*condition)(VariantBranchesAndFlanks*),
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) )
 {
   
@@ -1874,6 +1875,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
       int min_coverage2,max_coverage2;
       
       dBNode * current_node = node;
+      VariantBranchesAndFlanks var;//will reuse this as we traverse the graph
    
       do{
 	
@@ -1942,7 +1944,11 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
 	    
 	    char name[100];
-	    if (condition(nodes5p, length_flank5p, path_nodes1, length1, path_nodes2, length2, nodes3p, length_flank3p)==true)
+	    
+	    //warning - array of 5prime nodes, oprientations is in reverse order to what you would expect - it is never used in what follows
+	    set_variant_branches_and_flanks(&var, nodes5p, orientations5p, length_flank5p, path_nodes1, path_orientations1, length1, 
+					    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p);
+	    if (condition(&var)==true)
 	      {
 
 		//printf("\nVARIATION: %i\n",count_vars);

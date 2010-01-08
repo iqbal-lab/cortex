@@ -14,7 +14,7 @@
 #include <seq.h>
 #include <dB_graph.h>
 #include <dB_graph_supernode.h>
-
+#include <db_variants.h>
 
 dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node, Orientation current_orientation,
                                                            Orientation * next_orientation,
@@ -195,11 +195,11 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
 void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph, 
-			  boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p),
+			  boolean (*condition)( VariantBranchesAndFlanks*), 
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) );
 
-boolean detect_vars_condition_always_true(dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p);
-boolean detect_vars_condition_flanks_at_least_3(dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p);
+boolean detect_vars_condition_always_true(VariantBranchesAndFlanks*);
+boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks*);
 
 
 void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);

@@ -10,31 +10,6 @@
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;
 
-typedef enum
- {
-    full_flank_format   = 0,
-    glf  = 1,
- } Variant_File_Format ;
-
-typedef struct{
-  dBNode** flank5p;
-  Orientation* flank5p_or;
-  int len_flank5p;
-  dBNode** ref_allele; 
-  Orientation* ref_allele_or; 
-  int len_ref_allele;
-  dBNode** alt_allele; 
-  Orientation* alt_allele_or;
-  int len_alt_allele;
-  dBNode** flank3p;    
-  Orientation* flank3p_or;
-  int len_flank3p;
-} VariantBranchesAndFlanks;
-
-
-
-
-
 
 long long load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads, long long* dup_reads, int max_chunk_length,
                                                                              boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff,
@@ -131,6 +106,8 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
                                            dBNode** alt_allele, Orientation* alt_allele_or, int* len_alt_allele,
                                            dBNode** flank3p,    Orientation* flank3p_or,    int* len_flank3p,
                                            dBGraph* db_graph, int colour);
+
+
 
 
 #endif /* FILE_READER_H_ */

@@ -6,11 +6,6 @@
 
 
 
-void set_variant_branches_and_flanks(VariantBranchesAndFlanks* variant,
-                                     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
-                                     dBNode** ref_allele, Orientation* ref_allele_or, int len_ref_allele,
-                                     dBNode** alt_allele, Orientation* alt_allele_or, int len_alt_allele,
-                                     dBNode** flank3p,    Orientation* flank3p_or,    int len_flank3p);
 
 void get_node_multiplicities(dBNode** branch1, int len_branch1, dBNode** branch2, int len_branch2,
                              int** br1_multiplicity_in_br1, int** br2_multiplicity_in_br2,

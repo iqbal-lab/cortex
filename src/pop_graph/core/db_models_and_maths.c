@@ -136,8 +136,8 @@ void get_normalised_coverage(int population_size, int avg_depth_of_covg, int avg
 // i.e. if there are 5 nodes that are repeated twice within the allele, and 200 that are unique, then it will do the calculation for the 200,
 // and multiply by 200/205. (and then return the log of this)
 // Note, if you have a bunch of people sequenced to 5x depth each, the avg_depth_of_covg_per_haploid is 2.5. 
-double calc_log_likelihood_of_data_seen_on_one_allele(int* array_of_covgs, int* array_of_mult_wrt_self, int* array_of_mult_wrt_other, int* normalised_covg, 
-						      int len_arrays, int allele_freq, double avg_depth_of_covg_per_haploid, int avg_read_len, short kmer_size)
+double calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(int* array_of_covgs, int* array_of_mult_wrt_self, int* array_of_mult_wrt_other, int* normalised_covg, 
+										      int len_arrays, int allele_freq, double avg_depth_of_covg_per_haploid, int avg_read_len, short kmer_size)
 {
     double haploid_lambda  = allele_freq*avg_depth_of_covg_per_haploid*(1-kmer_size/avg_read_len);
     
@@ -150,6 +150,52 @@ double calc_log_likelihood_of_data_seen_on_one_allele(int* array_of_covgs, int* 
     while (k<len_arrays)
       {
 	if ((array_of_mult_wrt_self[k]>1) || (array_of_mult_wrt_other[k]>0) )//this node occurs >1 time in this allele, or >0 times in the other allele
+	  {
+	    if (array_count>0)
+	      {
+		log_prob_data += get_log_probability_of_observed_covgs(array, array_count, haploid_lambda); 
+	      }
+	    k++;
+	    array_count=0;
+	    num_nodes_with_mult_above1++;
+	  }
+	else
+	  {
+	    //still in the same contiguous chunk of nodes with multiplicity 1 in the ref allele
+	    array[array_count]=normalised_covg[k];
+	    k++;
+	    array_count++;
+	  }
+      }
+    double proportion_of_ref_allele_with_multiplicity1 = (len_arrays - num_nodes_with_mult_above1)/len_arrays;
+    return log_prob_data+ log(proportion_of_ref_allele_with_multiplicity1);
+    
+    
+}
+
+
+
+//allele freq is int between 0 and 2*population_size
+//This calculates, conditional on the allele frequency, the log likelihood of seeing the data we see on that allele
+//Uses a Poisson model, but also breaks the allele into intervals consisting of nodes that are unique on that allele
+//Then calculates the likelihood for the union of those, and multiplies by the proportion of the allele that lies in these intervals
+// i.e. if there are 5 nodes that are repeated twice within the allele, and 200 that are unique, then it will do the calculation for the 200,
+// and multiply by 200/205. (and then return the log of this)
+// Note, if you have a bunch of people sequenced to 5x depth each, the avg_depth_of_covg_per_haploid is 2.5. 
+double calc_log_likelihood_of_data_seen_on_one_allele(int* array_of_covgs, int* array_of_mult_wrt_self,  int* normalised_covg, 
+						      int len_arrays, int allele_freq, double avg_depth_of_covg_per_haploid, int avg_read_len, short kmer_size)
+{
+    double haploid_lambda  = allele_freq*avg_depth_of_covg_per_haploid*(1-kmer_size/avg_read_len);
+    
+    int array[len_arrays];
+    int array_count=0;
+    int k=0;
+    int num_nodes_with_mult_above1=0;
+    double log_prob_data=0;
+
+    while (k<len_arrays)
+      {
+	if (array_of_mult_wrt_self[k]>1)//this node occurs >1 time in this allele
 	  {
 	    if (array_count>0)
 	      {

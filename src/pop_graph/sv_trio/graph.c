@@ -379,7 +379,13 @@ int main(int argc, char **argv){
 	break;
 	
       }
+    case 8:
+      {
+	//Call bubbles with high differentiation between populations
+	boolean condition(dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p)
 
+	break;
+      }
       
 
     }
