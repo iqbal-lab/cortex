@@ -148,7 +148,7 @@ int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(dBNo
 int db_graph_supernode_in_subgraph_defined_by_func_of_colours(dBNode * node,int limit,void (*node_action)(dBNode * node),
                                                               dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char * supernode_str,
                                                               double * avg_coverage,int * min,int * max, boolean * is_cycle,
-                                                              dBGraph * db_graph, EdgeArrayType type, int index,
+                                                              dBGraph * db_graph, 
                                                               Edges (*get_colour)(const dBNode*),
                                                               int (*get_covg)(const dBNode*)  );
 
@@ -205,6 +205,9 @@ boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks*);
 void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
 
 void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, char* filename_sings, int max_length, dBGraph * db_graph, EdgeArrayType type, int index);
+
+void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, char* filename_sings, int max_length, 
+							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*));
 
 void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
 

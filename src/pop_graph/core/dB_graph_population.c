@@ -1242,7 +1242,7 @@ int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit,void (
 int db_graph_supernode_in_subgraph_defined_by_func_of_colours(dBNode * node,int limit,void (*node_action)(dBNode * node), 
 							      dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char * supernode_str, 
 							      double * avg_coverage,int * min,int * max, boolean * is_cycle, 
-							      dBGraph * db_graph, EdgeArrayType type, int index,
+							      dBGraph * db_graph, 
 							      Edges (*get_colour)(const dBNode*),
 							      int (*get_covg)(const dBNode*)  ){
 
@@ -1840,6 +1840,7 @@ boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks* var)
 
 
 
+
 //routine to DETECT/DISCOVER variants directly from the graph - reference-free (unless you have put the reference in the graph!)
 // penultimate argument is a condition which you apply to the flanks and branches to decide whether to call.
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
@@ -1947,7 +1948,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    
 	    //warning - array of 5prime nodes, oprientations is in reverse order to what you would expect - it is never used in what follows
 	    set_variant_branches_and_flanks(&var, nodes5p, orientations5p, length_flank5p, path_nodes1, path_orientations1, length1, 
-					    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p);
+					    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p, unknown);
 	    if (condition(&var)==true)
 	      {
 
@@ -2121,6 +2122,81 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
   fclose(fout1);
   fclose(fout2);
 }
+
+
+void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, char* filename_sings, int max_length, 
+							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)  ){
+
+  FILE * fout1; //file to which we will write all supernodes which are longer than 1 node in fasta format
+  fout1= fopen(filename_sups, "w"); 
+  FILE * fout2; //file to which we will write all "singleton" supernodes, that are just  1 node, in fasta format
+  fout2= fopen(filename_sings, "w"); 
+  
+  int count_nodes=0;
+  
+  dBNode * *    path_nodes;
+  Orientation * path_orientations;
+  Nucleotide *  path_labels;
+  char * seq;
+  boolean is_cycle;
+  double avg_coverage;
+  int min,max;
+  
+  
+  path_nodes        = calloc(max_length,sizeof(dBNode*));
+  path_orientations = calloc(max_length,sizeof(Orientation));
+  path_labels       = calloc(max_length,sizeof(Nucleotide));
+  seq               = calloc(max_length+1+db_graph->kmer_size,sizeof(char));
+  
+  
+
+  long long count_kmers = 0;
+  long long count_sing  = 0;
+
+  void print_supernode(dBNode * node){
+    
+    count_kmers++;
+    char name[100];
+
+    if (db_node_check_status_none(node) == true){
+      int length = db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_length,&db_node_action_set_status_visited,
+									     path_nodes,path_orientations,path_labels,
+									     seq,&avg_coverage,&min,&max,&is_cycle,
+									     db_graph, get_colour, get_covg);
+      
+      if (length>0){	
+	sprintf(name,"node_%i",count_nodes);
+
+	print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout1,name,length,avg_coverage,min,max,
+									     path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
+									     db_graph->kmer_size,true, get_colour, get_covg);
+	if (length==max_length){
+	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
+	}
+	count_nodes++;
+      }
+      else{
+	sprintf(name,"node_%qd",count_sing);
+	print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout2,name,length,avg_coverage,min,max,
+									     path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
+									     db_graph->kmer_size,true, get_colour, get_covg);
+	count_sing++;
+      }
+    
+    }
+  }
+  
+  hash_table_traverse(&print_supernode,db_graph); 
+  printf("%qd nodes visted [%qd singletons]\n",count_kmers,count_sing);
+
+  free(path_nodes);
+  free(path_orientations);
+  free(path_labels);
+  free(seq);
+  fclose(fout1);
+  fclose(fout2);
+}
+
 
 
 void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index){

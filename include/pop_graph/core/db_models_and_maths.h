@@ -32,6 +32,10 @@ void get_normalised_coverage(int population_size, int avg_depth_of_covg, int avg
 			    int* ref_normalised_covg, int* alt_normalised_covg,
 			    int* ref_multiplicity_in_ref, int* alt_multiplicity_in_ref,
 			    VariantBranchesAndFlanks* var, dBGraph* db_graph, int colour, int colour_ref);
+void get_rough_normalised_coverage(int population_size, int avg_depth_of_covg, int avg_read_len, 
+				   int* ref_normalised_covg, int*alt_normalised_covg,
+				   int* ref_multiplicity_in_ref, int* alt_multiplicity_in_ref,
+				   VariantBranchesAndFlanks* var, dBGraph* db_graph, int colour, int colour_ref);
 
 double calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(int* array_of_covgs, int* array_of_mult_wrt_self, int* array_of_mult_wrt_other, int* normalised_covg,
 										      int len_arrays, int allele_freq, double avg_depth_of_covg_per_haploid, int avg_read_len, short kmer_size);

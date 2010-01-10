@@ -102,7 +102,8 @@ double get_log_probability_of_observed_covgs(int* coverages, int array_len, doub
 }
 
 
-//normalise away the coverage due to the rest of the genome
+//normalise away the coverage due to the rest of the genome. This requires you to know which allele is the ref allele
+//If you do not know that, use the get_rough_normalised_coverage which does a rough approximation
 void get_normalised_coverage(int population_size, int avg_depth_of_covg, int avg_read_len, 
 			    int* ref_normalised_covg, int*alt_normalised_covg,
 			    int* ref_multiplicity_in_ref, int* alt_multiplicity_in_ref,
@@ -111,21 +112,80 @@ void get_normalised_coverage(int population_size, int avg_depth_of_covg, int avg
   
   double diploid_lambda  = population_size*avg_depth_of_covg*(1-(db_graph->kmer_size)/avg_read_len);
   
+  if (var->which != first)
+    {
+      printf("Cannot call get_normalised_coverage unless you can guarantee the ref allele is the first in var, and this is reflected in all your multiplicity arrays etc");
+      exit(1);
+    }
+
   //get normalised coverages
   int i;
-  for (i=0; i<var->len_ref_allele; i++)
+  for (i=0; i<var->len_one_allele; i++)
     {
       //normalised covg = covg of data in colour1 - diploid_lambda(number of times seem in ref genome - num times seen in ref allele)
-      ref_normalised_covg[i] = db_node_get_coverage((var->ref_allele)[i], individual_edge_array, colour) - 
-	diploid_lambda*( db_node_get_coverage((var->ref_allele)[i], individual_edge_array, colour_ref) - ref_multiplicity_in_ref[i]);
+      ref_normalised_covg[i] = db_node_get_coverage((var->one_allele)[i], individual_edge_array, colour) - 
+	diploid_lambda*( db_node_get_coverage((var->one_allele)[i], individual_edge_array, colour_ref) - ref_multiplicity_in_ref[i]);
     }
   
-  for (i=0; i<var->len_alt_allele; i++)
+  for (i=0; i<var->len_other_allele; i++)
     {
       //normalised covg = covg of data in colour1 - diploid_lambda(number of times seem in ref genome - num times seen in ref allele)
-      alt_normalised_covg[i] = db_node_get_coverage((var->alt_allele)[i], individual_edge_array, colour) - 
-	diploid_lambda*( db_node_get_coverage((var->ref_allele)[i], individual_edge_array, colour_ref) - alt_multiplicity_in_ref[i]);
+      alt_normalised_covg[i] = db_node_get_coverage((var->other_allele)[i], individual_edge_array, colour) - 
+	diploid_lambda*( db_node_get_coverage((var->one_allele)[i], individual_edge_array, colour_ref) - alt_multiplicity_in_ref[i]);
     }
+}
+
+
+
+
+void get_rough_normalised_coverage(int population_size, int avg_depth_of_covg, int avg_read_len, 
+				   int* ref_normalised_covg, int*alt_normalised_covg,
+				   int* ref_multiplicity_in_ref, int* alt_multiplicity_in_alt,
+				   VariantBranchesAndFlanks* var, dBGraph* db_graph, int colour, int colour_ref)
+{
+
+  exit(1); //convince me this works!
+
+
+  if (var->which != unknown)
+    {
+      printf("Why are you calling get_rough_normalised_coverage when you KNOW which allele is the ref?\n");
+      exit(1);
+    }
+
+  int i;
+  for (i=0; i<var->len_one_allele; i++)
+    {
+      int multiplicity_in_ref_genome = db_node_get_coverage((var->one_allele)[i], individual_edge_array, colour_ref);
+      
+      if (multiplicity_in_ref_genome>1)
+	{
+	  //normalised covg = covg of data in colour1 - pop_size*(multiplicity in ref - multiplicity in this allele)*avg_covg_per_person*scaling factor because of kmer_length&read length
+	  ref_normalised_covg[i] = db_node_get_coverage((var->one_allele)[i], individual_edge_array, colour) - 
+	    (multiplicity_in_ref_genome - ref_multiplicity_in_ref[i])*population_size*avg_depth_of_covg*(1-(db_graph->kmer_size)/avg_read_len);
+	}
+      else
+	{
+	  ref_normalised_covg[i]=db_node_get_coverage((var->one_allele)[i], individual_edge_array, colour);
+	}
+    }
+  
+  for (i=0; i<var->len_other_allele; i++)
+    {
+      int multiplicity_in_ref_genome = db_node_get_coverage((var->other_allele)[i], individual_edge_array, colour_ref);
+
+      if (multiplicity_in_ref_genome>1)
+	{
+	  alt_normalised_covg[i] = db_node_get_coverage((var->other_allele)[i], individual_edge_array, colour) - 
+	    (multiplicity_in_ref_genome - alt_multiplicity_in_alt[i])*population_size*avg_depth_of_covg*(1-(db_graph->kmer_size)/avg_read_len);
+	}
+      else
+	{
+          alt_normalised_covg[i]=db_node_get_coverage((var->other_allele)[i], individual_edge_array, colour);
+        }
+
+    }
+
 }
 
 

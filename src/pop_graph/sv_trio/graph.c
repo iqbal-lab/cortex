@@ -17,6 +17,8 @@ int main(int argc, char **argv){
   int action;
   char* dumped_binary;
   char* list_of_fastq;
+  boolean allow_for_ref=false;
+  
   //command line arguments 
   filename         = argv[1];        //open file that lists one file per individual in the trio (population), and each of those gives list of files.
   kmer_size        = atoi(argv[2]);  //global variable defined in element.h
@@ -26,6 +28,7 @@ int main(int argc, char **argv){
   DEBUG            = atoi(argv[6]);
   dumped_binary   = argv[7];
   list_of_fastq = argv[8];
+
 
   int max_retries=10;
 
@@ -381,11 +384,287 @@ int main(int argc, char **argv){
       }
     case 8:
       {
+
+	/*
+	//Assume we have loaded the following into the dbg
+	// colour 0 : reference
+	// colour 1 : CEPH
+	// colour 2 : YRI
+
+	int num_ceph=49; //49 ceph people have slx data
+	int num_yri =57; //57 yri have slx data
+	double avg_ceph_covg_per_person = 0;
+	double avg_yri_covg_per_person = 0; 
+	//************************ MUST fix the above - is not 0!!!!!!!!!!!!!!!!!!!!!!!!!!
+	
+	  
+
 	//Call bubbles with high differentiation between populations
-	boolean condition(dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p)
+	//We don't knwo which branch is the ref branch in detect vars, but this does not matter
+	boolean condition_AF_of_branch1_gtr_90_in_yri_and_less_10_in_ceph(VariantBranchesAndFlanks* var)
+	{
+	  //return true if the allele frequency that maximises the likelihood of seeing branch 1 > 90% in YRI, and <10% in CEPH
+	  // **AND** the allele frequency of branch2  < 10% in YRI, and >10% in CEPH 
+
+	  int br1_multiplicity_in_br1[var->len_one_allele];
+	  int br1_multiplicity_in_br2[var->len_one_allele];
+	  int br2_multiplicity_in_br2[var->len_other_allele];
+	  int br2_multiplicity_in_br1[var->len_other_allele];
+	  int* br1_multiplicity_in_br1_ptr[var->len_one_allele];
+	  int* br1_multiplicity_in_br2_ptr[var->len_one_allele];
+	  int* br2_multiplicity_in_br2_ptr[var->len_other_allele];
+	  int* br2_multiplicity_in_br1_ptr[var->len_other_allele];
+	  int br1_normalised_covg_ceph[var->len_one_allele];
+	  int br2_normalised_covg_ceph[var->len_other_allele];
+	  int* br1_normalised_covg_ptr_ceph[var->len_one_allele];
+	  int* br2_normalised_covg_ptr_ceph[var->len_other_allele];
+	  int br1_normalised_covg_yri[var->len_one_allele];
+	  int br2_normalised_covg_yri[var->len_other_allele];
+	  int* br1_normalised_covg_ptr_yri[var->len_one_allele];
+	  int* br2_normalised_covg_ptr_yri[var->len_other_allele];
+	  
+	  int i;
+	  for (i=0; i<var->len_one_allele; i++)
+	    {
+	      br1_multiplicity_in_br1[i]=0;
+	      br1_multiplicity_in_br2[i]=0;
+	      br1_multiplicity_in_br1_ptr[i]=&br1_multiplicity_in_br1[i];
+	      br1_multiplicity_in_br2_ptr[i]=&br1_multiplicity_in_br2[i];
+	      br1_normalised_covg_ceph[i]=0;
+	      br1_normalised_covg_ptr_ceph[i] = &br1_normalised_covg_ceph[i];
+	      br1_normalised_covg_yri[i]=0;
+	      br1_normalised_covg_ptr_yri[i] = &br1_normalised_covg_yri[i];
+	    }
+	  for (i=0; i<var->len_other_allele; i++)
+	    {
+	      br2_multiplicity_in_br1[i]=0;
+	      br2_multiplicity_in_br2[i]=0;
+	      br2_multiplicity_in_br1_ptr[i]=&br2_multiplicity_in_br1[i];
+	      br2_multiplicity_in_br2_ptr[i]=&br2_multiplicity_in_br2[i];
+	      br2_normalised_covg_ceph[i]=0;
+	      br2_normalised_covg_ptr_ceph[i] = &br1_normalised_covg_ceph[i];
+	      br2_normalised_covg_yri[i]=0;
+	      br2_normalised_covg_ptr_yri[i] = &br1_normalised_covg_yri[i];
+
+	    }
+	  
+	  get_node_multiplicities(var->one_allele, var->len_one_allele, var->other_allele, var->len_other_allele, 
+				  br1_multiplicity_in_br1_ptr,  br2_multiplicity_in_br2_ptr,
+				  br1_multiplicity_in_br2_ptr,  br2_multiplicity_in_br1_ptr,
+				  false,NULL, NULL);
+	  get_rough_normalised_coverage(num_ceph, avg_ceph_covg_per_person, 36,
+					br1_normalised_covg_ceph, br2_normalised_covg_ceph,
+					br1_multiplicity_in_br1, br1_multiplicity_in_br2,
+					var, db_graph, 1, 0);
+	  get_rough_normalised_coverage(num_yri, avg_yri_covg_per_person, 36,
+					br1_normalised_covg_yri, br2_normalised_covg_yri,
+					br1_multiplicity_in_br1, br1_multiplicity_in_br2,
+					var, db_graph, 2, 0);
+
+	  double likelihoods_yri[2*num_yri];
+	  double likelihoods_ceph[2*num_ceph];
+	  double max_likelihood=LARGE_NEGATIVE_NUMBER;
+	  int mle_af=-1;
+	  
+	  for (i=0; i<2*num_yri; i++)
+	    {
+	      likelihoods_yri[i]=calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(br1_normalised_covg_yri, ref_multiplicity_in_ref, ref_multiplicity_in_alt, 
+														ref_normalised_covg_yri,
+														var->len_one_allele, i, avg_depth_of_covg_pop1/2, 
+													    avg_read_len, db_graph->kmer_size)
+		+ calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(alt_normalised_covg, alt_multiplicity_in_alt, alt_multiplicity_in_ref, alt_normalised_covg,
+												 var->len_other_allele, i, avg_depth_of_covg_pop1/2, 
+											   avg_read_len, db_graph->kmer_size);
+	if (likelihoods[i]>mle_af)
+	  {
+	    max_likelihood = likelihoods[i];
+	    mle_af = i;
+	  }
+      }
+    *mle_allele_freq = mle_af;
+    return max_likelihood;;
+			
+
+	  
+	  
+	}
+	boolean condition_AF_of_branch1_gtr_90_in_ceph_and_less_10_in_yri(VariantBranchesAndFlanks* var)
+	{
+	  
+	}
+	*/
+	break;
+      }
+    case 9:
+      {
+	// Traverse graph marking any node that is not highly differentiated between pops
+	// as visited. Then print supernodes for what remains. Then re-mark those nodes, and find bubbles.
+
+	//Assume we have loaded the following into the dbg
+	// colour 0 : reference
+	// colour 1 : CEPH
+	// colour 2 : YRI
+
+	double avg_ceph_haploid_covg_per_person = 1.5;
+	double avg_yri_haploid_covg_per_person = 1.5; 
+	int num_yri_haploids=114;// 2*pop size
+	int num_ceph_haploids=98;//2* pop size
+
+	void mark_nodes_gtr90_yri_less_10_ceph(dBNode* e)
+	{
+
+	  int multiplier=0; //to allow for multiples in ref
+
+	  if (allow_for_ref==true)
+	    {
+	      if (e->coverage[0] > 0) //exists in reference
+		{
+		  multiplier=e->coverage[0];
+		}
+	    }
+	  //so now, if the kmer is novel, multiplier is 2, otherwise multiplier is the number of times we expect to see it in one haploid.
+
+	  int occurrences_of_kmer_in_yri = (int) (e->coverage[2])/avg_yri_haploid_covg_per_person;
+	  int occurrences_of_kmer_in_ceph= (int) (e->coverage[1])/avg_ceph_haploid_covg_per_person;
+	  int num_haploids_with_kmer_in_yri = occurrences_of_kmer_in_yri-multiplier*num_yri_haploids;
+	  int num_haploids_with_kmer_in_ceph = occurrences_of_kmer_in_ceph-multiplier*num_ceph_haploids;
+
+	  if ( (num_haploids_with_kmer_in_yri> 0.9*num_yri_haploids)
+	       && (num_haploids_with_kmer_in_ceph < 0.1*num_ceph_haploids) )
+	    {
+	      //do nothing
+	    }
+	  else
+	    {
+	      db_node_set_status(e, visited);
+	    }
+	}
+	void mark_nodes_gtr90_ceph_less_10_yri(dBNode* e)
+	{
+	  int multiplier=0; //to allow for multiples in ref
+	  if (allow_for_ref==true)
+	    {
+	      if (e->coverage[0] > 0) //exists in reference
+		{
+		  multiplier=e->coverage[0];
+		}
+	    }
+	  //so now, if the kmer is novel, multiplier is 0, otherwise multiplier is the number of times we expect to see it in one haploid.
+
+	  int occurrences_of_kmer_in_yri = (int) (e->coverage[2])/avg_yri_haploid_covg_per_person;
+	  int occurrences_of_kmer_in_ceph= (int) (e->coverage[0])/avg_ceph_haploid_covg_per_person;
+	  int num_haploids_with_kmer_in_yri = occurrences_of_kmer_in_yri-multiplier*num_yri_haploids;
+	  int num_haploids_with_kmer_in_ceph = occurrences_of_kmer_in_ceph-multiplier*num_ceph_haploids;
+
+	  if ( (num_haploids_with_kmer_in_ceph> 0.9*num_ceph_haploids)
+	       && (num_haploids_with_kmer_in_yri < 0.1*num_yri_haploids) )
+	    {
+	      //do nothing
+	    }
+	  else
+	    {
+	      db_node_set_status(e, visited);
+	    }
+	}
+
+	Edges get_colour_ceph(const dBNode* node)
+	{
+	  return node->individual_edges[1];
+	}
+	Edges get_colour_yri(const dBNode* node)
+	{
+	  return node->individual_edges[2];
+	}
+	int get_covg_ceph(const dBNode* node)
+	{
+	  return node->coverage[1];
+	}
+	int get_covg_yri(const dBNode* node)
+	{
+	  return node->coverage[2];
+	}
+	
+
+	int max_length = 2000000; //longesyt allowed branch
+
+
+	void traverse_graph_and_get_results(boolean do_we_allow_for_multiplicity_of_node_in_reference_genome)
+	{
+
+	  allow_for_ref = do_we_allow_for_multiplicity_of_node_in_reference_genome;
+
+	  char allow_for_ref_char[25];
+	  if (do_we_allow_for_multiplicity_of_node_in_reference_genome==true)
+	    {
+	      sprintf(allow_for_ref_char,"allow_for_ref");
+	    }
+	  else
+	    {
+	      sprintf(allow_for_ref_char,"not_allow_for_ref");
+	    }
+
+	  char filename_high_yri_low_ceph_sups_by_yri_edges[50];
+	  char filename_high_yri_low_ceph_sings_by_yri_edges[50];
+	  char filename_high_yri_low_ceph_bubbles[50];
+	  sprintf(filename_high_yri_low_ceph_sups_by_yri_edges, "%s_prefilter_nodes_supernodes_yri_gtr_90_and_ceph_less_10",allow_for_ref_char);
+	  sprintf(filename_high_yri_low_ceph_sings_by_yri_edges, "%s_prefilter_nodes_hub_kmers_yri_gtr_90_and_ceph_less_10",allow_for_ref_char);
+	  sprintf (filename_high_yri_low_ceph_bubbles, "%s_prefilter_nodes_bubbles_yri_gtr_90_and_ceph_less_10",allow_for_ref_char);
+	  char filename_high_ceph_low_yri_sups_by_ceph_edges[50];
+	  char filename_high_ceph_low_yri_sings_by_ceph_edges[50];
+	  char filename_high_ceph_low_yri_bubbles[50];
+	  sprintf(filename_high_ceph_low_yri_sups_by_ceph_edges, "%s_prefilter_nodes_supernodes_ceph_gtr_90_and_yri_less_10",allow_for_ref_char);
+	  sprintf(filename_high_ceph_low_yri_sings_by_ceph_edges, "%s_prefilter_nodes_hub_kmers_ceph_gtr_90_and_yri_less_10",allow_for_ref_char);
+	  sprintf(filename_high_ceph_low_yri_bubbles, "%s_prefilter_nodes_bubbles_ceph_gtr_90_and_yri_less_10",allow_for_ref_char);
+	  
+	  //traverse graph, and mark everything as visited, EXCEPT stuff that is >90% freq in YRI and <10% in CEPH
+	  hash_table_traverse(&mark_nodes_gtr90_yri_less_10_ceph, db_graph);
+	  db_graph_print_supernodes_for_specific_person_or_pop(filename_high_yri_low_ceph_sups_by_yri_edges, filename_high_yri_low_ceph_sings_by_yri_edges,
+							       max_length, db_graph, individual_edge_array,2);
+	  //clean up node status markings
+	  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+	  
+	  
+	  FILE* fptr_yri_high = fopen(filename_high_yri_low_ceph_bubbles, "w");
+	  if (fptr_yri_high==NULL)
+	    {
+	      printf("Cannot open %s", filename_high_yri_low_ceph_bubbles);
+	      exit(1);
+	    }
+	  //AGAIN - traverse graph, and mark everything as visited, EXCEPT stuff that is >90% freq in YRI and <10% in CEPH
+	  hash_table_traverse(&mark_nodes_gtr90_yri_less_10_ceph, db_graph);
+	  db_graph_detect_vars(fptr_yri_high, max_length, db_graph,
+			       &detect_vars_condition_always_true,
+			       get_colour_yri, get_covg_yri);
+	  fclose(fptr_yri_high);
+	  
+	  //clean up node status markings
+	  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+	  
+	  //traverse graph, and mark everything as visited, EXCEPT stuff that is >90% freq in CEPH and <10% in YRI
+	  hash_table_traverse(&mark_nodes_gtr90_ceph_less_10_yri, db_graph);
+	  db_graph_print_supernodes_for_specific_person_or_pop(filename_high_ceph_low_yri_sups_by_ceph_edges, filename_high_ceph_low_yri_sings_by_ceph_edges,
+							       max_length, db_graph, individual_edge_array,1);
+	//clean up node status markings
+	  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+	  //AGAIN - traverse graph, and mark everything as visited, EXCEPT stuff that is >90% freq in CEPH and <10% in YRI
+	  hash_table_traverse(&mark_nodes_gtr90_ceph_less_10_yri, db_graph);
+	  
+	  FILE* fptr_ceph_high = fopen(filename_high_ceph_low_yri_bubbles, "w");
+	  if (fptr_ceph_high==NULL)
+	    {
+	      printf("Cannot open %s", filename_high_ceph_low_yri_bubbles);
+	      exit(1);
+	    }
+	  
+	  db_graph_detect_vars(fptr_ceph_high, max_length, db_graph,
+			       &detect_vars_condition_always_true,
+			       get_colour_ceph, get_covg_ceph);
+	  fclose(fptr_ceph_high);
+	}
 
 	break;
       }
+      
       
 
     }
