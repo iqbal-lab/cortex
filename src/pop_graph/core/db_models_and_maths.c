@@ -144,9 +144,6 @@ void get_rough_normalised_coverage(int population_size, int avg_depth_of_covg, i
 				   VariantBranchesAndFlanks* var, dBGraph* db_graph, int colour, int colour_ref)
 {
 
-  exit(1); //convince me this works!
-
-
   if (var->which != unknown)
     {
       printf("Why are you calling get_rough_normalised_coverage when you KNOW which allele is the ref?\n");

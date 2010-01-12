@@ -37,13 +37,13 @@ int main(int argc, char **argv){
 
   //Create the de Bruijn graph/hash table
   db_graph = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
-  fprintf(stderr,"table created: %d\n",1 << hash_key_bits);
+  printf("table created: %d\n",1 << hash_key_bits);
 
  
-  fprintf(stderr, "Start loading population\n");
+  printf("Start loading population\n");
   load_population_as_binaries_from_graph(filename, db_graph);
-  fprintf(stderr, "Finished loading population\n");
-
+  printf("Finished loading population\n");
+  printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));
 
 
 
@@ -505,15 +505,15 @@ int main(int argc, char **argv){
 	// colour 1 : CEPH
 	// colour 2 : YRI
 
-	double avg_ceph_haploid_covg_per_person = 1.5;
-	double avg_yri_haploid_covg_per_person = 1.5; 
+	double avg_ceph_haploid_covg_per_person =1.075;
+	double avg_yri_haploid_covg_per_person = 1.4; 
 	int num_yri_haploids=114;// 2*pop size
 	int num_ceph_haploids=98;//2* pop size
 
 	void mark_nodes_gtr90_yri_less_10_ceph(dBNode* e)
 	{
 
-	  int multiplier=0; //to allow for multiples in ref
+	  int multiplier=1; //to allow for multiples in ref
 
 	  if (allow_for_ref==true)
 	    {
@@ -522,12 +522,13 @@ int main(int argc, char **argv){
 		  multiplier=e->coverage[0];
 		}
 	    }
-	  //so now, if the kmer is novel, multiplier is 2, otherwise multiplier is the number of times we expect to see it in one haploid.
+	  //so now, if the kmer is novel, multiplier is 1, otherwise multiplier is the number of times we expect to see it in one haploid.
+	  printf("Multiplier is %d\n", multiplier);
 
 	  int occurrences_of_kmer_in_yri = (int) (e->coverage[2])/avg_yri_haploid_covg_per_person;
 	  int occurrences_of_kmer_in_ceph= (int) (e->coverage[1])/avg_ceph_haploid_covg_per_person;
-	  int num_haploids_with_kmer_in_yri = occurrences_of_kmer_in_yri-multiplier*num_yri_haploids;
-	  int num_haploids_with_kmer_in_ceph = occurrences_of_kmer_in_ceph-multiplier*num_ceph_haploids;
+	  int num_haploids_with_kmer_in_yri = occurrences_of_kmer_in_yri/multiplier;
+	  int num_haploids_with_kmer_in_ceph = occurrences_of_kmer_in_ceph/multiplier;
 
 	  if ( (num_haploids_with_kmer_in_yri> 0.9*num_yri_haploids)
 	       && (num_haploids_with_kmer_in_ceph < 0.1*num_ceph_haploids) )
@@ -541,7 +542,7 @@ int main(int argc, char **argv){
 	}
 	void mark_nodes_gtr90_ceph_less_10_yri(dBNode* e)
 	{
-	  int multiplier=0; //to allow for multiples in ref
+	  int multiplier=1; //to allow for multiples in ref
 	  if (allow_for_ref==true)
 	    {
 	      if (e->coverage[0] > 0) //exists in reference
@@ -549,12 +550,12 @@ int main(int argc, char **argv){
 		  multiplier=e->coverage[0];
 		}
 	    }
-	  //so now, if the kmer is novel, multiplier is 0, otherwise multiplier is the number of times we expect to see it in one haploid.
+	  //so now, if the kmer is novel, multiplier is 1, otherwise multiplier is the number of times we expect to see it in one haploid.
 
-	  int occurrences_of_kmer_in_yri = (int) (e->coverage[2])/avg_yri_haploid_covg_per_person;
-	  int occurrences_of_kmer_in_ceph= (int) (e->coverage[0])/avg_ceph_haploid_covg_per_person;
-	  int num_haploids_with_kmer_in_yri = occurrences_of_kmer_in_yri-multiplier*num_yri_haploids;
-	  int num_haploids_with_kmer_in_ceph = occurrences_of_kmer_in_ceph-multiplier*num_ceph_haploids;
+	  int occurrences_of_kmer_in_yri =  ( (e->coverage[2])/avg_yri_haploid_covg_per_person);
+	  int occurrences_of_kmer_in_ceph= ( (e->coverage[1])/avg_ceph_haploid_covg_per_person);
+	  int num_haploids_with_kmer_in_yri = occurrences_of_kmer_in_yri/multiplier;
+	  int num_haploids_with_kmer_in_ceph = occurrences_of_kmer_in_ceph/multiplier;
 
 	  if ( (num_haploids_with_kmer_in_ceph> 0.9*num_ceph_haploids)
 	       && (num_haploids_with_kmer_in_yri < 0.1*num_yri_haploids) )
@@ -585,7 +586,7 @@ int main(int argc, char **argv){
 	}
 	
 
-	int max_length = 2000000; //longesyt allowed branch
+	int max_length = 20000; //longest allowed branch in a bubble
 
 
 	void traverse_graph_and_get_results(boolean do_we_allow_for_multiplicity_of_node_in_reference_genome)
@@ -603,25 +604,28 @@ int main(int argc, char **argv){
 	      sprintf(allow_for_ref_char,"not_allow_for_ref");
 	    }
 
-	  char filename_high_yri_low_ceph_sups_by_yri_edges[50];
-	  char filename_high_yri_low_ceph_sings_by_yri_edges[50];
-	  char filename_high_yri_low_ceph_bubbles[50];
+	  char filename_high_yri_low_ceph_sups_by_yri_edges[100];
+	  char filename_high_yri_low_ceph_sings_by_yri_edges[100];
+	  char filename_high_yri_low_ceph_bubbles[100];
 	  sprintf(filename_high_yri_low_ceph_sups_by_yri_edges, "%s_prefilter_nodes_supernodes_yri_gtr_90_and_ceph_less_10",allow_for_ref_char);
 	  sprintf(filename_high_yri_low_ceph_sings_by_yri_edges, "%s_prefilter_nodes_hub_kmers_yri_gtr_90_and_ceph_less_10",allow_for_ref_char);
 	  sprintf (filename_high_yri_low_ceph_bubbles, "%s_prefilter_nodes_bubbles_yri_gtr_90_and_ceph_less_10",allow_for_ref_char);
-	  char filename_high_ceph_low_yri_sups_by_ceph_edges[50];
-	  char filename_high_ceph_low_yri_sings_by_ceph_edges[50];
-	  char filename_high_ceph_low_yri_bubbles[50];
+	  char filename_high_ceph_low_yri_sups_by_ceph_edges[100];
+	  char filename_high_ceph_low_yri_sings_by_ceph_edges[100];
+	  char filename_high_ceph_low_yri_bubbles[100];
 	  sprintf(filename_high_ceph_low_yri_sups_by_ceph_edges, "%s_prefilter_nodes_supernodes_ceph_gtr_90_and_yri_less_10",allow_for_ref_char);
 	  sprintf(filename_high_ceph_low_yri_sings_by_ceph_edges, "%s_prefilter_nodes_hub_kmers_ceph_gtr_90_and_yri_less_10",allow_for_ref_char);
 	  sprintf(filename_high_ceph_low_yri_bubbles, "%s_prefilter_nodes_bubbles_ceph_gtr_90_and_yri_less_10",allow_for_ref_char);
 	  
+
+
 	  //traverse graph, and mark everything as visited, EXCEPT stuff that is >90% freq in YRI and <10% in CEPH
 	  hash_table_traverse(&mark_nodes_gtr90_yri_less_10_ceph, db_graph);
 	  db_graph_print_supernodes_for_specific_person_or_pop(filename_high_yri_low_ceph_sups_by_yri_edges, filename_high_yri_low_ceph_sings_by_yri_edges,
 							       max_length, db_graph, individual_edge_array,2);
-	  //clean up node status markings
-	  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+
+	  //clean up node status marking
+	  hash_table_traverse(&db_node_set_status_to_none, db_graph);
 	  
 	  
 	  FILE* fptr_yri_high = fopen(filename_high_yri_low_ceph_bubbles, "w");
@@ -636,16 +640,20 @@ int main(int argc, char **argv){
 			       &detect_vars_condition_always_true,
 			       get_colour_yri, get_covg_yri);
 	  fclose(fptr_yri_high);
-	  
+
 	  //clean up node status markings
-	  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+	  hash_table_traverse(&db_node_set_status_to_none, db_graph);
 	  
+
 	  //traverse graph, and mark everything as visited, EXCEPT stuff that is >90% freq in CEPH and <10% in YRI
 	  hash_table_traverse(&mark_nodes_gtr90_ceph_less_10_yri, db_graph);
 	  db_graph_print_supernodes_for_specific_person_or_pop(filename_high_ceph_low_yri_sups_by_ceph_edges, filename_high_ceph_low_yri_sings_by_ceph_edges,
 							       max_length, db_graph, individual_edge_array,1);
+
 	//clean up node status markings
-	  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+	  hash_table_traverse(&db_node_set_status_to_none, db_graph);
+
+
 	  //AGAIN - traverse graph, and mark everything as visited, EXCEPT stuff that is >90% freq in CEPH and <10% in YRI
 	  hash_table_traverse(&mark_nodes_gtr90_ceph_less_10_yri, db_graph);
 	  
@@ -660,7 +668,18 @@ int main(int argc, char **argv){
 			       &detect_vars_condition_always_true,
 			       get_colour_ceph, get_covg_ceph);
 	  fclose(fptr_ceph_high);
+	  //clean up node status markings
+	  hash_table_traverse(&db_node_set_status_to_none, db_graph);
+
+
+
 	}
+
+
+	printf("Get supernodes and bubbles that are highly differentiated between CEPH and YRI - with normalisation of reference:\n");
+	traverse_graph_and_get_results(true);
+	printf("Get supernodes and bubbles that are highly differentiated between CEPH and YRI - without making allowance for whether nodes are known in reference:\n");
+	traverse_graph_and_get_results(false);
 
 	break;
       }
@@ -669,7 +688,7 @@ int main(int argc, char **argv){
 
     }
 
-
+  hash_table_free(&db_graph);
 
   return 0;
 }
