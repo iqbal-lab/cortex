@@ -6,7 +6,7 @@
 #include <dB_graph_population.h>
 #include <string.h>
 #include <internal_oxford.h>
-#include <db_genotyping.h>
+
 
 
 //#include <internal_tgac.h>
@@ -20,7 +20,6 @@ int main(int argc, char **argv){
   int action;
   char* dumped_binary;
   char* list_of_fastq;
-  boolean allow_for_ref=false;
   
   //command line arguments 
   filename         = argv[1];        //open file that lists one file per individual in the trio (population), and each of those gives list of files.
@@ -283,6 +282,81 @@ int main(int argc, char **argv){
       }
     case 7:
       {
+	//Make bubble calls for homozygous non-ref variants, using two colours (ref=0, individual=1)
+	
+	boolean condition_is_hom_nonref(VariantBranchesAndFlanks* var)
+	{
+	  //Assumes the reference is colour 0 and the individual is colour 1
+	  int covg_threshold = 1;
+	  int i;
+	  int count_how_many_nodes_in_one_allele_have_covg_by_indiv=0;
+	  int count_how_many_nodes_in_other_allele_have_covg_by_indiv=0;
+	  int count_how_many_nodes_in_one_allele_have_covg_by_ref=0;
+	  int count_how_many_nodes_in_other_allele_have_covg_by_ref=0;
+
+	  for (i=0; i< var->len_one_allele; i++)
+	    {
+	      if ( (var->one_allele)[i]->coverage[1] >= covg_threshold )
+		{
+		  count_how_many_nodes_in_one_allele_have_covg_by_indiv++;
+		}
+	      if ( (var->one_allele)[i]->coverage[0] > 0 )
+		{
+		  count_how_many_nodes_in_one_allele_have_covg_by_ref++;
+		}
+	    }
+	  for (i=0; i< var->len_other_allele; i++)
+	    {
+	      if ( (var->other_allele)[i]->coverage[1] >= covg_threshold )
+		{
+		  count_how_many_nodes_in_other_allele_have_covg_by_indiv++;
+		}
+	      if ( (var->other_allele)[i]->coverage[0] > 0 )
+		{
+		  count_how_many_nodes_in_other_allele_have_covg_by_ref++;
+		}
+	    }
+	  if (//individual has branch1 but not branch2 
+	      (count_how_many_nodes_in_one_allele_have_covg_by_indiv==var->len_one_allele)
+	       &&
+	       (count_how_many_nodes_in_other_allele_have_covg_by_indiv==0)
+	       &&
+	      //reference has branch2 only
+	      (count_how_many_nodes_in_one_allele_have_covg_by_ref==0)
+	      &&
+	      (count_how_many_nodes_in_other_allele_have_covg_by_ref==var->len_other_allele)
+	      )
+	    {
+	      return true;
+	    }
+	  else if (//individual has branch2 but not branch1
+		   (count_how_many_nodes_in_one_allele_have_covg_by_indiv==0)
+		   &&
+		   (count_how_many_nodes_in_other_allele_have_covg_by_indiv==var->len_one_allele)
+		   &&
+		   //reference has branch1 only
+		   (count_how_many_nodes_in_one_allele_have_covg_by_ref==var->len_other_allele)
+		   &&
+		   (count_how_many_nodes_in_other_allele_have_covg_by_ref==0)
+		   )
+	    {
+	      return true;
+	    }
+	  else
+	    {
+	      return false;
+	    }
+		   
+	}
+
+	int max_allowed_branch_len=500000; //500kb
+	db_graph_detect_vars(stdout, max_allowed_branch_len,db_graph, &condition_is_hom_nonref,
+			     &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+
+	break;
+      }
+    case 8:
+      {
 	printf("Make SV calls based on the trusted-path algorithm, against the whole human genome\n");
 
 	
@@ -364,11 +438,11 @@ int main(int argc, char **argv){
 	      }
 	    
 	    //Note we assume person 0 is the reference, and person 1 is the person we are interested in
-	    int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
-								  individual_edge_array, 0,
-								  min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-								  max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
-								  0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true);
+	    db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
+							individual_edge_array, 0,
+							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+							max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
+							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true);
 	    
 	    
 	    fclose(chrom_fptr);
