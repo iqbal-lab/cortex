@@ -379,6 +379,18 @@ int main(int argc, char **argv){
 	break;
 	
       }
+    case 8:
+      {
+	//detect homozygous bubbles in an an individual by comparison with the reference.
+	//the graph is a union of colours 0 (ref) and 1 (individual)
+	//Apply condition that one branch lies in the reference, but has no coverage from the individual.
+
+
+	boolean condition_is_hom_nonref
+
+
+	break;
+      }
 
       
 
