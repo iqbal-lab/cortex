@@ -14,7 +14,7 @@
 #include <seq.h>
 #include <dB_graph.h>
 #include <dB_graph_supernode.h>
-
+#include <db_variants.h>
 
 dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node, Orientation current_orientation,
                                                            Orientation * next_orientation,
@@ -148,7 +148,7 @@ int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(dBNo
 int db_graph_supernode_in_subgraph_defined_by_func_of_colours(dBNode * node,int limit,void (*node_action)(dBNode * node),
                                                               dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char * supernode_str,
                                                               double * avg_coverage,int * min,int * max, boolean * is_cycle,
-                                                              dBGraph * db_graph, EdgeArrayType type, int index,
+                                                              dBGraph * db_graph, 
                                                               Edges (*get_colour)(const dBNode*),
                                                               int (*get_covg)(const dBNode*)  );
 
@@ -194,15 +194,20 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 // last argument is a condition which you apply to the flanks and branches to decide whether to call.
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
-void db_graph_detect_vars(int max_length, dBGraph * db_graph, 
-			  boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p),
+void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph, 
+			  boolean (*condition)( VariantBranchesAndFlanks*), 
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) );
 
-boolean detect_vars_condition_always_true(dBNode** flank_5p, int len5p, dBNode** first_branch, int len_b1, dBNode** second_branch, int len_b2, dBNode** flank_3p, int len3p);
+boolean detect_vars_condition_always_true(VariantBranchesAndFlanks*);
+boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks*);
+
 
 void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
 
 void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, char* filename_sings, int max_length, dBGraph * db_graph, EdgeArrayType type, int index);
+
+void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, char* filename_sings, int max_length, 
+							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*));
 
 void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
 

@@ -4,6 +4,7 @@
 #include "test_pop_element.h"
 #include "test_pop_load_and_print.h"
 #include "test_pop_supernode_consensus.h"
+#include "test_db_genotyping.h"
 #include <test_file_reader.h>
 
 #include <CUnit.h>
@@ -19,7 +20,7 @@ int  main()
     return CU_get_error();
 
   /* add a suite to the registry */
-  pPopGraphSuite = CU_add_suite("Test SV trio -specific aspects of the population/people aware dB graph", NULL, NULL);
+  pPopGraphSuite = CU_add_suite("Test main functionality of Cortex", NULL, NULL);
   if (NULL == pPopGraphSuite) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -200,12 +201,17 @@ int  main()
     	return CU_get_error();
      }
 
-
     if (NULL == CU_add_test(pPopGraphSuite, "Unit test of wrapper function for above utility function",  test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
+    if (NULL == CU_add_test(pPopGraphSuite, "Test utility function to get next read from file and return it as an array of nodes",  test_align_next_read_to_graph_and_return_node_array))
+      {
+    	CU_cleanup_registry();
+    	return CU_get_error();
+     }
+
     /*
     if (NULL == CU_add_test(pPopGraphSuite, "Tests of new algorithm to find variants using paths AND supernodes",  test_db_graph_make_reference_path_based_sv_calls))
       {
@@ -292,6 +298,16 @@ int  main()
       }
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for finding coverages of nodes that lie  on one allele but not the other, in a variant.",  test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for getting multiplicities of nodes in branches",  test_get_node_multiplicities))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for reading variants from a Cortex full-flank-format file",  test_read_next_variant_from_full_flank_file))
       {
 	CU_cleanup_registry();
 	return CU_get_error();

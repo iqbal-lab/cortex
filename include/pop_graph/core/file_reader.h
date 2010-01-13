@@ -5,11 +5,11 @@
 #include <dB_graph.h>
 #include <pop_globals.h>
 
-//for fasta
 
 
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;
+
 
 long long load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads, long long* dup_reads, int max_chunk_length,
                                                                              boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff,
@@ -93,6 +93,21 @@ void read_all_ref_chromosomes_and_mark_graph(dBGraph* db_graph);
 int load_seq_into_array(FILE* chrom_fptr, int number_of_bases_to_load, int length_of_arrays,
 			    dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char* path_string,
 			    Sequence* seq, KmerSlidingWindow* kmer_window, boolean expecting_new_fasta_entry,  dBGraph * db_graph);
+
+
+int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length, dBNode** array_nodes, Orientation* array_orientations, 
+						   boolean require_nodes_to_lie_in_given_colour,
+						   int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
+						   Sequence* seq, KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour);
+
+int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
+                                           dBNode** flank5p,    Orientation* flank5p_or,    int* len_flank5p,
+                                           dBNode** ref_allele, Orientation* ref_allele_or, int* len_ref_allele,
+                                           dBNode** alt_allele, Orientation* alt_allele_or, int* len_alt_allele,
+                                           dBNode** flank3p,    Orientation* flank3p_or,    int* len_flank3p,
+                                           dBGraph* db_graph, int colour);
+
+
 
 
 #endif /* FILE_READER_H_ */
