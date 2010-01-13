@@ -6,6 +6,9 @@
 #include <dB_graph_population.h>
 #include <string.h>
 #include <internal_oxford.h>
+#include <db_genotyping.h>
+
+
 //#include <internal_tgac.h>
 
 int main(int argc, char **argv){
@@ -385,26 +388,42 @@ int main(int argc, char **argv){
     case 8:
       {
 
-	/*
+
 	//Assume we have loaded the following into the dbg
 	// colour 0 : reference
 	// colour 1 : CEPH
 	// colour 2 : YRI
 
-	int num_ceph=49; //49 ceph people have slx data
-	int num_yri =57; //57 yri have slx data
-	double avg_ceph_covg_per_person = 0;
-	double avg_yri_covg_per_person = 0; 
-	//************************ MUST fix the above - is not 0!!!!!!!!!!!!!!!!!!!!!!!!!!
-	
-	  
+	int num_ceph=10; //49; //49 ceph people have slx data
+	int num_yri =10; //57; //57 yri have slx data
+	double avg_ceph_covg_per_person = 1; //2.15;
+	double avg_yri_covg_per_person = 1; //2.8; 
+	int avg_read_len=36;
+
+	Edges get_colour_ceph(const dBNode* node)
+	{
+	  return node->individual_edges[1];
+	}
+	Edges get_colour_yri(const dBNode* node)
+	{
+	  return node->individual_edges[2];
+	}
+	int get_covg_ceph(const dBNode* node)
+	{
+	  return node->coverage[1];
+	}
+	int get_covg_yri(const dBNode* node)
+	{
+	  return node->coverage[2];
+	}
+
 
 	//Call bubbles with high differentiation between populations
 	//We don't knwo which branch is the ref branch in detect vars, but this does not matter
 	boolean condition_AF_of_branch1_gtr_90_in_yri_and_less_10_in_ceph(VariantBranchesAndFlanks* var)
 	{
 	  //return true if the allele frequency that maximises the likelihood of seeing branch 1 > 90% in YRI, and <10% in CEPH
-	  // **AND** the allele frequency of branch2  < 10% in YRI, and >10% in CEPH 
+
 
 	  int br1_multiplicity_in_br1[var->len_one_allele];
 	  int br1_multiplicity_in_br2[var->len_one_allele];
@@ -422,7 +441,11 @@ int main(int argc, char **argv){
 	  int br2_normalised_covg_yri[var->len_other_allele];
 	  int* br1_normalised_covg_ptr_yri[var->len_one_allele];
 	  int* br2_normalised_covg_ptr_yri[var->len_other_allele];
-	  
+	  int br1_un_normalised_covg_ceph[var->len_one_allele];
+	  int br2_un_normalised_covg_ceph[var->len_other_allele];
+	  int br1_un_normalised_covg_yri[var->len_one_allele];
+	  int br2_un_normalised_covg_yri[var->len_other_allele];
+
 	  int i;
 	  for (i=0; i<var->len_one_allele; i++)
 	    {
@@ -434,6 +457,9 @@ int main(int argc, char **argv){
 	      br1_normalised_covg_ptr_ceph[i] = &br1_normalised_covg_ceph[i];
 	      br1_normalised_covg_yri[i]=0;
 	      br1_normalised_covg_ptr_yri[i] = &br1_normalised_covg_yri[i];
+	      br1_un_normalised_covg_ceph[i] = (var->one_allele)[i]->coverage[1];
+	      br1_un_normalised_covg_yri[i] = (var->one_allele)[i]->coverage[2];
+
 	    }
 	  for (i=0; i<var->len_other_allele; i++)
 	    {
@@ -445,6 +471,8 @@ int main(int argc, char **argv){
 	      br2_normalised_covg_ptr_ceph[i] = &br1_normalised_covg_ceph[i];
 	      br2_normalised_covg_yri[i]=0;
 	      br2_normalised_covg_ptr_yri[i] = &br1_normalised_covg_yri[i];
+	      br2_un_normalised_covg_ceph[i] = (var->other_allele)[i]->coverage[1];
+	      br2_un_normalised_covg_yri[i] = (var->other_allele)[i]->coverage[2];
 
 	    }
 	  
@@ -464,35 +492,213 @@ int main(int argc, char **argv){
 	  double likelihoods_yri[2*num_yri];
 	  double likelihoods_ceph[2*num_ceph];
 	  double max_likelihood=LARGE_NEGATIVE_NUMBER;
-	  int mle_af=-1;
+	  int mle_af_yri=-1;
+	  int mle_af_ceph=-1;
 	  
 	  for (i=0; i<2*num_yri; i++)
 	    {
-	      likelihoods_yri[i]=calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(br1_normalised_covg_yri, ref_multiplicity_in_ref, ref_multiplicity_in_alt, 
-														ref_normalised_covg_yri,
-														var->len_one_allele, i, avg_depth_of_covg_pop1/2, 
-													    avg_read_len, db_graph->kmer_size)
-		+ calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(alt_normalised_covg, alt_multiplicity_in_alt, alt_multiplicity_in_ref, alt_normalised_covg,
-												 var->len_other_allele, i, avg_depth_of_covg_pop1/2, 
-											   avg_read_len, db_graph->kmer_size);
-	if (likelihoods[i]>mle_af)
-	  {
-	    max_likelihood = likelihoods[i];
-	    mle_af = i;
-	  }
-      }
-    *mle_allele_freq = mle_af;
-    return max_likelihood;;
-			
+	      likelihoods_yri[i]=calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(br1_un_normalised_covg_yri, br1_multiplicity_in_br1, br1_multiplicity_in_br2, 
+														br1_normalised_covg_yri,
+														var->len_one_allele, i, avg_yri_covg_per_person/2, 
+														avg_read_len, db_graph->kmer_size)
+                  		+ calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(br2_un_normalised_covg_yri, br2_multiplicity_in_br2, br2_multiplicity_in_br1, 
+														 br2_normalised_covg_yri,
+														 var->len_other_allele, i, avg_yri_covg_per_person/2, 
+														 avg_read_len, db_graph->kmer_size);
+	      if (likelihoods_yri[i]>max_likelihood)
+		{
+		  max_likelihood = likelihoods_yri[i];
+		  mle_af_yri = i;
+		}
+	    }
 
-	  
-	  
+	  //reset this:
+	  max_likelihood=LARGE_NEGATIVE_NUMBER;
+	  for (i=0; i<2*num_ceph; i++)
+	    {
+	      likelihoods_ceph[i]=calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(br1_un_normalised_covg_ceph, br1_multiplicity_in_br1, br1_multiplicity_in_br2, 
+														 br1_normalised_covg_ceph,
+														 var->len_one_allele, i, avg_ceph_covg_per_person/2, 
+														 avg_read_len, db_graph->kmer_size)
+		+ calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(br2_un_normalised_covg_ceph, br2_multiplicity_in_br2, br2_multiplicity_in_br1, br2_normalised_covg_ceph,
+												 var->len_other_allele, i, avg_ceph_covg_per_person/2, 
+												 avg_read_len, db_graph->kmer_size);
+	      if (likelihoods_ceph[i]>max_likelihood)
+		{
+		  max_likelihood = likelihoods_ceph[i];
+		  mle_af_ceph = i;
+		}
+	    }
+	  if ( (mle_af_yri>0.9*2*num_yri) && (mle_af_ceph<0.1*2*num_ceph) )
+	    {
+	      return true;
+	    }
+	  else
+	    {
+	      return false;
+	    }
+
 	}
+
+
+
 	boolean condition_AF_of_branch1_gtr_90_in_ceph_and_less_10_in_yri(VariantBranchesAndFlanks* var)
 	{
+
+	  //return true if the allele frequency that maximises the likelihood of seeing branch 1 > 90% in CEPH, and <10% in YRI
+
+	  int br1_multiplicity_in_br1[var->len_one_allele];
+	  int br1_multiplicity_in_br2[var->len_one_allele];
+	  int br2_multiplicity_in_br2[var->len_other_allele];
+	  int br2_multiplicity_in_br1[var->len_other_allele];
+	  int* br1_multiplicity_in_br1_ptr[var->len_one_allele];
+	  int* br1_multiplicity_in_br2_ptr[var->len_one_allele];
+	  int* br2_multiplicity_in_br2_ptr[var->len_other_allele];
+	  int* br2_multiplicity_in_br1_ptr[var->len_other_allele];
+	  int br1_normalised_covg_ceph[var->len_one_allele];
+	  int br2_normalised_covg_ceph[var->len_other_allele];
+	  int* br1_normalised_covg_ptr_ceph[var->len_one_allele];
+	  int* br2_normalised_covg_ptr_ceph[var->len_other_allele];
+	  int br1_normalised_covg_yri[var->len_one_allele];
+	  int br2_normalised_covg_yri[var->len_other_allele];
+	  int* br1_normalised_covg_ptr_yri[var->len_one_allele];
+	  int* br2_normalised_covg_ptr_yri[var->len_other_allele];
+	  int br1_un_normalised_covg_ceph[var->len_one_allele];
+	  int br2_un_normalised_covg_ceph[var->len_other_allele];
+	  int br1_un_normalised_covg_yri[var->len_one_allele];
+	  int br2_un_normalised_covg_yri[var->len_other_allele];
+
+	  int i;
+	  for (i=0; i<var->len_one_allele; i++)
+	    {
+	      br1_multiplicity_in_br1[i]=0;
+	      br1_multiplicity_in_br2[i]=0;
+	      br1_multiplicity_in_br1_ptr[i]=&br1_multiplicity_in_br1[i];
+	      br1_multiplicity_in_br2_ptr[i]=&br1_multiplicity_in_br2[i];
+	      br1_normalised_covg_ceph[i]=0;
+	      br1_normalised_covg_ptr_ceph[i] = &br1_normalised_covg_ceph[i];
+	      br1_normalised_covg_yri[i]=0;
+	      br1_normalised_covg_ptr_yri[i] = &br1_normalised_covg_yri[i];
+	      br1_un_normalised_covg_ceph[i] = (var->one_allele)[i]->coverage[1];
+	      br1_un_normalised_covg_yri[i] = (var->one_allele)[i]->coverage[2];
+
+	    }
+	  for (i=0; i<var->len_other_allele; i++)
+	    {
+	      br2_multiplicity_in_br1[i]=0;
+	      br2_multiplicity_in_br2[i]=0;
+	      br2_multiplicity_in_br1_ptr[i]=&br2_multiplicity_in_br1[i];
+	      br2_multiplicity_in_br2_ptr[i]=&br2_multiplicity_in_br2[i];
+	      br2_normalised_covg_ceph[i]=0;
+	      br2_normalised_covg_ptr_ceph[i] = &br1_normalised_covg_ceph[i];
+	      br2_normalised_covg_yri[i]=0;
+	      br2_normalised_covg_ptr_yri[i] = &br1_normalised_covg_yri[i];
+	      br2_un_normalised_covg_ceph[i] = (var->other_allele)[i]->coverage[1];
+	      br2_un_normalised_covg_yri[i] = (var->other_allele)[i]->coverage[2];
+
+	    }
+	  
+	  get_node_multiplicities(var->one_allele, var->len_one_allele, var->other_allele, var->len_other_allele, 
+				  br1_multiplicity_in_br1_ptr,  br2_multiplicity_in_br2_ptr,
+				  br1_multiplicity_in_br2_ptr,  br2_multiplicity_in_br1_ptr,
+				  false,NULL, NULL);
+	  get_rough_normalised_coverage(num_ceph, avg_ceph_covg_per_person, 36,
+					br1_normalised_covg_ceph, br2_normalised_covg_ceph,
+					br1_multiplicity_in_br1, br1_multiplicity_in_br2,
+					var, db_graph, 1, 0);
+	  get_rough_normalised_coverage(num_yri, avg_yri_covg_per_person, 36,
+					br1_normalised_covg_yri, br2_normalised_covg_yri,
+					br1_multiplicity_in_br1, br1_multiplicity_in_br2,
+					var, db_graph, 2, 0);
+
+	  double likelihoods_yri[2*num_yri];
+	  double likelihoods_ceph[2*num_ceph];
+	  double max_likelihood=LARGE_NEGATIVE_NUMBER;
+	  int mle_af_yri=-1;
+	  int mle_af_ceph=-1;
+	  
+	  for (i=0; i<2*num_yri; i++)
+	    {
+	      likelihoods_yri[i]=calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(br1_un_normalised_covg_yri, br1_multiplicity_in_br1, br1_multiplicity_in_br2, 
+														br1_normalised_covg_yri,
+														var->len_one_allele, i, avg_yri_covg_per_person/2, 
+														avg_read_len, db_graph->kmer_size)
+		+ calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(br2_un_normalised_covg_yri, br2_multiplicity_in_br2, br2_multiplicity_in_br1, br2_normalised_covg_yri,
+												 var->len_other_allele, i, avg_yri_covg_per_person/2, 
+												 avg_read_len, db_graph->kmer_size);
+	      if (likelihoods_yri[i]>max_likelihood)
+		{
+		  max_likelihood = likelihoods_yri[i];
+		  mle_af_yri = i;
+		}
+	    }
+
+	  //reset this:
+	  max_likelihood=LARGE_NEGATIVE_NUMBER;
+
+
+	  for (i=0; i<2*num_ceph; i++)
+	    {
+	      likelihoods_ceph[i]=calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(br1_un_normalised_covg_ceph, br1_multiplicity_in_br1, br1_multiplicity_in_br2, 
+														 br1_normalised_covg_ceph,
+														 var->len_one_allele, i, avg_ceph_covg_per_person/2, 
+														 avg_read_len, db_graph->kmer_size)
+		+ calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_alleles(br2_un_normalised_covg_ceph, br2_multiplicity_in_br2, br2_multiplicity_in_br1, br2_normalised_covg_ceph,
+												 var->len_other_allele, i, avg_ceph_covg_per_person/2, 
+												 avg_read_len, db_graph->kmer_size);
+	      if (likelihoods_ceph[i]>max_likelihood)
+		{
+		  max_likelihood = likelihoods_ceph[i];
+		  mle_af_ceph = i;
+		}
+	    }
+	  if ( (mle_af_yri<0.1*2*num_yri) && (mle_af_ceph>0.9*2*num_ceph) )
+	    {
+	      return true;
+	    }
+	  else
+	    {
+	      return false;
+	    }
 	  
 	}
-	*/
+
+	int max_length = 20000; //longest allowed branch in a bubble
+
+	//print bubbles that are frequent in YRI but not CEPH
+	FILE* fptr_yri_high = fopen("bubbles_yri_high", "w");
+	if (fptr_yri_high==NULL)
+	  {
+	    printf("Cannot open bubbles_yri_high\n");
+	    exit(1);
+	  }
+	db_graph_detect_vars(fptr_yri_high, max_length, db_graph,
+			     &condition_AF_of_branch1_gtr_90_in_yri_and_less_10_in_ceph,
+			     get_colour_yri, get_covg_yri);
+	fclose(fptr_yri_high);
+	
+	//clean up node status markings
+	hash_table_traverse(&db_node_set_status_to_none, db_graph);
+
+
+	//print bubbles that are frequent in CEPH but not YRI
+	FILE* fptr_ceph_high = fopen("bubbles_ceph_high", "w");
+	if (fptr_ceph_high==NULL)
+	  {
+	    printf("Cannot open bubbles_ceph_high\n");
+	    exit(1);
+	  }
+	db_graph_detect_vars(fptr_ceph_high, max_length, db_graph,
+			     condition_AF_of_branch1_gtr_90_in_ceph_and_less_10_in_yri,
+			     get_colour_ceph, get_covg_ceph);
+	fclose(fptr_ceph_high);
+	
+	//clean up node status markings
+	hash_table_traverse(&db_node_set_status_to_none, db_graph);
+
+
+	
+
 	break;
       }
     case 9:

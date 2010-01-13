@@ -224,7 +224,7 @@ double calc_log_likelihood_of_data_seen_on_one_allele_excluding_nodes_on_both_al
 	    array_count++;
 	  }
       }
-    double proportion_of_ref_allele_with_multiplicity1 = (len_arrays - num_nodes_with_mult_above1)/len_arrays;
+    double proportion_of_ref_allele_with_multiplicity1 = ((double) (len_arrays - num_nodes_with_mult_above1))/((double) len_arrays);
     return log_prob_data+ log(proportion_of_ref_allele_with_multiplicity1);
     
     
@@ -270,7 +270,7 @@ double calc_log_likelihood_of_data_seen_on_one_allele(int* array_of_covgs, int* 
 	    array_count++;
 	  }
       }
-    double proportion_of_ref_allele_with_multiplicity1 = (len_arrays - num_nodes_with_mult_above1)/len_arrays;
+    double proportion_of_ref_allele_with_multiplicity1 = ((double)(len_arrays - num_nodes_with_mult_above1))/((double)len_arrays);
     return log_prob_data+ log(proportion_of_ref_allele_with_multiplicity1);
     
     
