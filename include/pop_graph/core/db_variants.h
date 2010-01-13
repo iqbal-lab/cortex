@@ -1,7 +1,7 @@
 #include <element.h>
 
 
-#ifndef DB_VARIANTS_H
+#ifndef DB_VARIANTS_H_
 #define DB_VARIANTS_H_
 
 typedef enum
