@@ -43,9 +43,9 @@ typedef enum{
 
 typedef struct{
   BinaryKmer kmer;
+  int coverage[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
   Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
-  short coverage[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
-  NodeStatus status;
+  char status; //will case a NodeStatus to char
 } Element;
 
 
@@ -181,9 +181,9 @@ boolean db_node_condition_always_true(dBNode* node);
 
 
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
-void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, short update);
+void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, int update);
 int db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index);
-short db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index);
+//short db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index);
 int db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, int (*get_covg)(const dBNode*) );
 
 

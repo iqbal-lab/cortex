@@ -334,7 +334,7 @@ void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
   e->coverage[index]=e->coverage[index]+1;
 }
 
-void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, short update)
+void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, int update)
 {
 
   e->coverage[index] += update;
@@ -351,11 +351,11 @@ int db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index)
     }
   else
     {
-      short c = e->coverage[index];
-      return (int) c;
+      return e->coverage[index];
     }
 }
 
+/*
 short db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index)
 {
   if (e==NULL)
@@ -367,6 +367,7 @@ short db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index)
       return e->coverage[index];
     }
 }
+*/
 
 
 int db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, int (*get_covg)(const dBNode*) )
@@ -683,7 +684,7 @@ boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayTy
 }
 
 boolean db_node_check_status(dBNode * node, NodeStatus status){
-  return node->status == status;
+  return node->status == (char) status;
 }
 
 boolean db_node_check_status_not_pruned(dBNode * node){
@@ -709,7 +710,7 @@ boolean db_node_check_status_not_pruned_or_visited(dBNode * node)
 
 
 void db_node_set_status(dBNode * node,NodeStatus status){
-  node->status = status;
+  node->status = (char) status;
 }
 void db_node_set_status_to_none(dBNode * node){
   node->status = none;
@@ -767,18 +768,18 @@ void db_node_print_multicolour_binary(FILE * fp, dBNode * node)
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
-  short covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
+  int covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
   Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; 
 
   int i;
   for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)                                                     
     {                                                                                                         
-      covg[i] = db_node_get_coverage_as_short(node, individual_edge_array, i);
+      covg[i] = db_node_get_coverage(node, individual_edge_array, i);
       individual_edges[i]= get_edge_copy(*node, individual_edge_array, i);
     }      
 				  
   fwrite(&kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
-  fwrite(covg, sizeof(short), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp); 
+  fwrite(covg, sizeof(int), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp); 
   fwrite(individual_edges, sizeof(Edges), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);
 
   
@@ -790,7 +791,7 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *(element_get_kmer(node)) );
-  short covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
+  int covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
   Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; 
 
   int read;
@@ -800,7 +801,7 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
   if (read>0){
 
 
-    read = fread(covg, sizeof(short), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);    
+    read = fread(covg, sizeof(int), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);    
     if (read==0){
       puts("error with input file - failed to read covg in db_node_read_sv_trio_binary\n");
       exit(1);
@@ -831,7 +832,7 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
   return true;
 }
 
-//read a binary for an individual person, as dumped by the target "graph"
+//read a binary for an individual person, - sinlge colour only
 // the edge array type and index tell you which person you should load this data into
 boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index)
 {
@@ -844,13 +845,13 @@ boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * n
 
   BinaryKmer kmer;
   Edges edges;
-  short coverage;
+  int coverage;
   int read;
   
   read = fread(&kmer,sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER,1,fp);
 
   if (read>0){
-    read = fread(&coverage,sizeof(short),1,fp);    
+    read = fread(&coverage,sizeof(int),1,fp);    
     if (read==0){
       puts("error with input file\n");
       exit(1);
@@ -891,7 +892,6 @@ void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode
     {
       db_node_set_status(node,visited_and_exists_in_reference);      
     }
-  //WARNING. Need special case for pruned?
   else if (!db_node_check_status(node, unassigned)) 
     {
       db_node_set_status(node,visited);

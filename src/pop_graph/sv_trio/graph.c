@@ -93,7 +93,7 @@ int main(int argc, char **argv){
       {
 	//detect variants looking for bubbles in the union graph of all colours.
 	//apply no condition to whether one branch or other shoud be one colour or another
-	int max_allowed_branch_len=500000; //500kb
+	int max_allowed_branch_len=5000; //5000
 	db_graph_detect_vars(stdout, max_allowed_branch_len,db_graph, &detect_vars_condition_flanks_at_least_3,
 			     &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
 	break;
@@ -319,10 +319,10 @@ int main(int argc, char **argv){
 	  if (//individual has branch1 but not branch2 
 	      (count_how_many_nodes_in_one_allele_have_covg_by_indiv==var->len_one_allele)
 	       &&
-	       (count_how_many_nodes_in_other_allele_have_covg_by_indiv==0)
+	      (count_how_many_nodes_in_other_allele_have_covg_by_indiv<=1)//last node of the two branches is same
 	       &&
 	      //reference has branch2 only
-	      (count_how_many_nodes_in_one_allele_have_covg_by_ref==0)
+	      (count_how_many_nodes_in_one_allele_have_covg_by_ref<=1)//Mario - do you agree?
 	      &&
 	      (count_how_many_nodes_in_other_allele_have_covg_by_ref==var->len_other_allele)
 	      )
@@ -330,14 +330,14 @@ int main(int argc, char **argv){
 	      return true;
 	    }
 	  else if (//individual has branch2 but not branch1
-		   (count_how_many_nodes_in_one_allele_have_covg_by_indiv==0)
+		   (count_how_many_nodes_in_one_allele_have_covg_by_indiv<=1)
 		   &&
 		   (count_how_many_nodes_in_other_allele_have_covg_by_indiv==var->len_one_allele)
 		   &&
 		   //reference has branch1 only
 		   (count_how_many_nodes_in_one_allele_have_covg_by_ref==var->len_other_allele)
 		   &&
-		   (count_how_many_nodes_in_other_allele_have_covg_by_ref==0)
+		   (count_how_many_nodes_in_other_allele_have_covg_by_ref<=1)
 		   )
 	    {
 	      return true;
@@ -349,7 +349,7 @@ int main(int argc, char **argv){
 		   
 	}
 
-	int max_allowed_branch_len=500000; //500kb
+	int max_allowed_branch_len=500; 
 	db_graph_detect_vars(stdout, max_allowed_branch_len,db_graph, &condition_is_hom_nonref,
 			     &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
 

@@ -518,7 +518,7 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
     //sanity check
     if(next_node == NULL)
       {
-	fprintf(stderr,"dB_graph: didnt find node in hash table: %s %c %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq),binary_nucleotide_to_char(nucleotide), current_orientation == forward ? "forward" : "reverse");
+	fprintf(stderr,"db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop: didnt find node in hash table: %s %c %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq),binary_nucleotide_to_char(nucleotide), current_orientation == forward ? "forward" : "reverse");
 	exit(1);
       }
 
@@ -669,7 +669,7 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
     //sanity check
     if(next_node == NULL)
       {
-	fprintf(stderr,"dB_graph: didnt find node in hash table: %s %c %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq),binary_nucleotide_to_char(nucleotide), current_orientation == forward ? "forward" : "reverse");
+	fprintf(stderr,"db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours: didnt find node in hash table: %s %c %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq),binary_nucleotide_to_char(nucleotide), current_orientation == forward ? "forward" : "reverse");
 	exit(1);
       }
 
@@ -1868,7 +1868,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
       Nucleotide path_labels2[max_length];
       char seq1[max_length+1];
       char seq2[max_length+1];
-    
+
       double avg_coverage1;
       int min_coverage1,max_coverage1;
       
@@ -2652,7 +2652,7 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
     next_node =  db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide1,&rev_nucleotide,db_graph, type, index);
     
     if(next_node == NULL){
-      printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size, tmp_seq));
+      printf("db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size, tmp_seq));
       exit(1);
     }	         
 

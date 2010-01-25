@@ -1101,7 +1101,7 @@ int load_multicolour_binary_data_from_filename_into_graph(char* filename,  dBGra
     for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
       {
 	add_edges(current_node,individual_edge_array, i, get_edge_copy(node_from_file, individual_edge_array, i));
-	db_node_update_coverage(current_node, individual_edge_array, i, db_node_get_coverage_as_short(&node_from_file, individual_edge_array,i));
+	db_node_update_coverage(current_node, individual_edge_array, i, db_node_get_coverage(&node_from_file, individual_edge_array,i));
       }
 
   }
@@ -1145,7 +1145,7 @@ int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBG
       seq_length+=db_graph->kmer_size;//todo - maybe only increment if had to insert, not if was already in graph?
       
       add_edges(current_node,individual_edge_array, index, get_edge_copy(node_from_file, individual_edge_array, index));
-      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage_as_short(&node_from_file, individual_edge_array,index) );
+      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&node_from_file, individual_edge_array,index) );
     }
   
   fclose(fp_bin);
