@@ -133,6 +133,21 @@ Edges element_get_colour_union_of_all_colours(const Element* e)
   
 }
 
+
+Edges element_get_colour0(const Element* e)
+{
+  Edges edges=get_edge_copy(*e, individual_edge_array,0);
+  return edges;
+}
+
+Edges element_get_colour1(const Element* e)
+{
+  Edges edges=get_edge_copy(*e, individual_edge_array,1);
+  return edges;
+}
+
+
+
 int element_get_covg_union_of_all_covgs(const dBNode* e)
 {
   int i;
@@ -145,6 +160,17 @@ int element_get_covg_union_of_all_covgs(const dBNode* e)
 
   return covg;
   
+}
+
+
+int element_get_covg_colour0(const dBNode* e)
+{
+  return e->coverage[0];
+}
+
+int element_get_covg_colour1(const dBNode* e)
+{
+  return e->coverage[1];
 }
 
 
@@ -886,6 +912,11 @@ void db_node_action_set_status_visited(dBNode * node){
   db_node_set_status(node,visited);
 }
 
+void db_node_action_set_status_ignore_this_node(dBNode * node)
+{
+  db_node_set_status(node,ignore_this_node);
+}
+
 void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode * node){
 
   if (db_node_check_status(node, exists_in_reference))
@@ -911,6 +942,23 @@ void db_node_action_unset_status_visited_or_visited_and_exists_in_reference(dBNo
   }
       
 }
+
+void db_node_action_unset_status_visited_or_visited_and_exists_in_reference_or_ignore_this_node(dBNode * node){
+  if (db_node_check_status_visited_and_exists_in_reference(node))
+  {
+    db_node_set_status(node,exists_in_reference);
+  }
+  else if (db_node_check_status(node, visited))
+  {
+    db_node_set_status(node, none);
+  }
+  else if (db_node_check_status(node, ignore_this_node))
+  {
+    db_node_set_status(node, none);
+  }
+      
+}
+
 
 
 

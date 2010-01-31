@@ -196,11 +196,14 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
 void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph, 
 			  boolean (*condition)( VariantBranchesAndFlanks*), 
+                          void (*action_branches)(dBNode*),
+                          void (*action_flanks)(dBNode*),
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) );
 
 boolean detect_vars_condition_always_true(VariantBranchesAndFlanks*);
+boolean detect_vars_condition_always_false(VariantBranchesAndFlanks*);
 boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks*);
-
+boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var);
 
 void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
 
@@ -297,8 +300,14 @@ void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(dBNode** array1, dBNod
 							  dBNode** reused_working_array1, dBNode** reused_working_array2,
 							  EdgeArrayType type, int index);
 
-boolean make_reference_path_based_sv_calls_condition_always_true( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
-                                                                  dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv);
+//boolean make_reference_path_based_sv_calls_condition_always_true( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
+//                                                                  dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv);
+boolean make_reference_path_based_sv_calls_condition_always_true(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv);
+
+boolean make_reference_path_based_sv_calls_condition_is_hom_nonref(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv);
+boolean make_reference_path_based_sv_calls_condition_is_het(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv);
+
+
 
 int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
 						EdgeArrayType which_array_holds_ref, int index_for_ref_in_edge_array,
@@ -307,8 +316,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						int max_desired_returns,
 						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
 						char** return_flank3p_array, int** return_variant_start_coord,
-						boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
-								      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv) );
+						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv) );
+						//boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
+						//		      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv) );
 
 boolean condition_always_true(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
 			      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv);

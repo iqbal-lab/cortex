@@ -20,7 +20,15 @@ int main(int argc, char **argv){
   int action;
   char* dumped_binary;
   char* list_of_fastq;
-  
+  boolean remove_low_covg_nodes;
+  char* detectvars_filename;
+  char* detectvars_after_remv_ref_bubble_filename;
+  char* detectvars_hom_nonref_filename;
+  char* ref_assisted_hom_filename;
+  char* ref_assisted_het_filename;
+  char* ref_fasta;
+
+
   //command line arguments 
   filename         = argv[1];        //open file that lists one file per individual in the trio (population), and each of those gives list of files.
   kmer_size        = atoi(argv[2]);  //global variable defined in element.h
@@ -30,7 +38,13 @@ int main(int argc, char **argv){
   DEBUG            = atoi(argv[6]);
   dumped_binary   = argv[7];
   list_of_fastq = argv[8];
-
+  remove_low_covg_nodes = (boolean) atoi(argv[9]);
+  detectvars_filename = argv[10];
+  detectvars_after_remv_ref_bubble_filename = argv[11];
+  detectvars_hom_nonref_filename=argv[12];
+  ref_assisted_hom_filename=argv[13];
+  ref_assisted_het_filename=argv[14];
+  ref_fasta = argv[15];
 
   int max_retries=10;
 
@@ -94,7 +108,10 @@ int main(int argc, char **argv){
 	//detect variants looking for bubbles in the union graph of all colours.
 	//apply no condition to whether one branch or other shoud be one colour or another
 	int max_allowed_branch_len=5000; //5000
-	db_graph_detect_vars(stdout, max_allowed_branch_len,db_graph, &detect_vars_condition_flanks_at_least_3,
+	db_graph_detect_vars(stdout, max_allowed_branch_len,db_graph, 
+			     &detect_vars_condition_flanks_at_least_3,
+			     &db_node_action_set_status_visited,
+			     &db_node_action_set_status_visited,
 			     &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
 	break;
       }
@@ -351,6 +368,8 @@ int main(int argc, char **argv){
 
 	int max_allowed_branch_len=500; 
 	db_graph_detect_vars(stdout, max_allowed_branch_len,db_graph, &condition_is_hom_nonref,
+			     &db_node_action_set_status_visited,
+			     &db_node_action_set_status_visited,
 			     &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
 
 	break;
@@ -459,7 +478,125 @@ int main(int argc, char **argv){
 	break;
 	
       }
+    case 9:
+      {
+	
 
+	// STEP1 - detect vars, calls hets, with no conditions
+
+	int max_allowed_branch_len=50000; 
+	FILE* detect_vars_fptr = fopen(detectvars_filename, "w");
+	if (detect_vars_fptr==NULL)
+	  {
+	    printf("Cannot open %s, so exit\n", detectvars_filename);
+	    exit(1);
+	  }
+	db_graph_detect_vars(detect_vars_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_always_true,
+			     &db_node_action_set_status_visited,
+			     &db_node_action_set_status_visited,
+			     &element_get_colour1, &element_get_covg_colour1);
+	fclose(detect_vars_fptr);
+
+	//cleanup
+	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+	
+
+	//STEP2 - detect vars in the reference colour, and mark these branches as visited, so they are ignored. Then call vars in colour1
+	FILE* detect_vars_after_remv_ref_bub_fptr = fopen(detectvars_after_remv_ref_bubble_filename, "w");
+	if (detect_vars_after_remv_ref_bub_fptr==NULL)
+	  {
+	    printf("Cannot open %s so exit\n", detectvars_after_remv_ref_bubble_filename);
+	    exit(1);
+	  }
+	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
+									   &detect_vars_condition_always_true,
+									   &element_get_colour0, &element_get_covg_colour0,
+									   &element_get_colour1, &element_get_covg_colour1);
+	fclose(detect_vars_after_remv_ref_bub_fptr);
+	//no need to traverse and do cleanup, as db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored does it at the end
+
+	//STEP3 - detect hom non ref variants
+	FILE* detect_vars_hom_nonref_fptr = fopen(detectvars_hom_nonref_filename, "w");
+	if (detect_vars_hom_nonref_fptr==NULL)
+	  {
+	    printf("Cannot open %s so exit\n", detectvars_hom_nonref_filename);
+	    exit(1);
+	  }
+
+	db_graph_detect_vars( detect_vars_hom_nonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref,
+			      &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
+			      &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+
+	//cleanup
+	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+
+
+	//STEP 4 - detect homozygous variants using ref-assisted trusted-path algorithm
+
+	int min_fiveprime_flank_anchor = 3;
+	int min_threeprime_flank_anchor= 21;
+	int max_anchor_span =  50000;
+	int length_of_arrays = 100000;
+	int min_covg =1;
+	int max_covg = 10000000;
+	int max_expected_size_of_supernode=50000;
+	
+
+	//needs a filepointer to traverse the reference as it walks the graph
+	FILE* ref_fptr = fopen(ref_fasta, "r");
+	if (ref_fptr==NULL)
+	  {
+	    printf("Cannot open %s \n", ref_fasta);
+	    exit(1);
+	  }
+
+	FILE* ref_ass_hom_fptr = fopen(ref_assisted_hom_filename, "w");
+	if (ref_ass_hom_fptr==NULL)
+	  {
+	    printf("Cnnot open %s, so exit", ref_assisted_hom_filename);
+	    exit(1);
+	  }
+
+	db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 1, individual_edge_array, 0,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_hom_fptr,
+						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_is_hom_nonref);
+	fclose(ref_ass_hom_fptr);
+	fclose(ref_fptr);
+
+	//cleanup
+	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+
+
+	//STEP 5 - detect het variants using ref-assisted trusted-path algorithm
+	ref_fptr = fopen(ref_fasta, "r");
+	if (ref_fptr==NULL)
+	  {
+	    printf("Cannot open %s second time\n", ref_fasta);
+	    exit(1);
+	  }
+
+	FILE* ref_ass_het_fptr = fopen(ref_assisted_het_filename, "w");
+	if (ref_ass_het_fptr==NULL)
+	  {
+	    printf("Cnnot open %s, so exit", ref_assisted_het_filename);
+	    exit(1);
+	  }
+
+	db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 1, individual_edge_array, 0,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_het_fptr,
+						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_is_het);
+	fclose(ref_ass_het_fptr);
+	fclose(ref_fptr);
+
+	//cleanup
+	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+
+	printf("Finished making all calls\n");
+
+
+      }
       
       
 

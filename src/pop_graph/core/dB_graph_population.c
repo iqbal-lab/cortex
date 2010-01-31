@@ -1824,6 +1824,11 @@ boolean detect_vars_condition_always_true(VariantBranchesAndFlanks* var)
   return true;
 }
 
+boolean detect_vars_condition_always_false(VariantBranchesAndFlanks* var)
+{
+  return false;
+}
+
 
 boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks* var)
 {
@@ -1838,6 +1843,72 @@ boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks* var)
 }
 
 
+boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var)
+{
+  //Assumes the reference is colour 0 and the individual is colour 1
+  int covg_threshold = 1;
+  int i;
+  int count_how_many_nodes_in_one_allele_have_covg_by_indiv=0;
+  int count_how_many_nodes_in_other_allele_have_covg_by_indiv=0;
+  int count_how_many_nodes_in_one_allele_have_covg_by_ref=0;
+  int count_how_many_nodes_in_other_allele_have_covg_by_ref=0;
+  
+  for (i=0; i< var->len_one_allele; i++)
+    {
+      if ( (var->one_allele)[i]->coverage[1] >= covg_threshold )
+	{
+	  count_how_many_nodes_in_one_allele_have_covg_by_indiv++;
+	}
+      if ( (var->one_allele)[i]->coverage[0] > 0 )
+	{
+	  count_how_many_nodes_in_one_allele_have_covg_by_ref++;
+	}
+    }
+  for (i=0; i< var->len_other_allele; i++)
+    {
+      if ( (var->other_allele)[i]->coverage[1] >= covg_threshold )
+	{
+	  count_how_many_nodes_in_other_allele_have_covg_by_indiv++;
+	}
+      if ( (var->other_allele)[i]->coverage[0] > 0 )
+	{
+	  count_how_many_nodes_in_other_allele_have_covg_by_ref++;
+	}
+    }
+  if (//individual has branch1 but not branch2 
+      (count_how_many_nodes_in_one_allele_have_covg_by_indiv==var->len_one_allele)
+      &&
+      (count_how_many_nodes_in_other_allele_have_covg_by_indiv<=1)//last node of the two branches is same
+      &&
+      //reference has branch2 only
+      (count_how_many_nodes_in_one_allele_have_covg_by_ref<=1)//Mario - do you agree?
+      &&
+      (count_how_many_nodes_in_other_allele_have_covg_by_ref==var->len_other_allele)
+      )
+    {
+      return true;
+    }
+  else if (//individual has branch2 but not branch1
+	   (count_how_many_nodes_in_one_allele_have_covg_by_indiv<=1)
+	   &&
+	   (count_how_many_nodes_in_other_allele_have_covg_by_indiv==var->len_one_allele)
+	   &&
+	   //reference has branch1 only
+	   (count_how_many_nodes_in_one_allele_have_covg_by_ref==var->len_other_allele)
+	   &&
+	   (count_how_many_nodes_in_other_allele_have_covg_by_ref<=1)
+	   )
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+  
+}
+
+
 
 
 
@@ -1847,27 +1918,47 @@ boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks* var)
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
 // last argument get_colour specifies some combination of colours, defining the graph within which we look for bubbles.
 // most obvious choices are: colour/edge with index (say)2, or union of all edges, or union of ll except that which is the reference genome
+
 void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph, 
 			  boolean (*condition)(VariantBranchesAndFlanks*),
+			  void (*action_branches)(dBNode*),
+			  void (*action_flanks)(dBNode*),
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) )
 {
   
   int count_vars = 0; 
   int flanking_length = 1000; 
+
+  //allocate arrays
+  dBNode** path_nodes1 = (dBNode**) malloc(sizeof(dBNode*)*(max_length+1));
+  dBNode** path_nodes2 = (dBNode**) malloc(sizeof(dBNode*)*(max_length+1));
+  Orientation* path_orientations1 = (Orientation*) malloc(sizeof(Orientation)*(max_length+1));
+  Orientation* path_orientations2 = (Orientation*) malloc(sizeof(Orientation)*(max_length+1));
+  Nucleotide* path_labels1 = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_length+1) );
+  Nucleotide* path_labels2 = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_length+1) );
+  char* seq1 = (char*) malloc(sizeof(char)*(max_length+1));
+  char* seq2 = (char*) malloc(sizeof(char)*(max_length+1));
+
+  if ( (path_nodes1==NULL) || (path_nodes2==NULL) || (path_orientations1==NULL) || (path_orientations2==NULL) 
+       || (path_labels1==NULL) || (path_labels2==NULL) || (seq1==NULL) || (seq2==NULL) )
+    {
+      printf("Could not allocate arrays in db_graph_detect_vars. Out of memory, or you asked for unreasonably big max branch size: %d\n", max_length);
+      exit(1);
+    }
   
   void get_vars(dBNode * node){
    
     void get_vars_with_orientation(dBNode * node, Orientation orientation){
       
       int length1, length2;
-      dBNode * path_nodes1[max_length+1];
-      dBNode * path_nodes2[max_length+1];
-      Orientation path_orientations1[max_length+1];
-      Orientation path_orientations2[max_length+1];
-      Nucleotide path_labels1[max_length];
-      Nucleotide path_labels2[max_length];
-      char seq1[max_length+1];
-      char seq2[max_length+1];
+      //dBNode * path_nodes1[max_length+1];
+      //dBNode * path_nodes2[max_length+1];
+      //Orientation path_orientations1[max_length+1];
+      //Orientation path_orientations2[max_length+1];
+      //Nucleotide path_labels1[max_length];
+      //Nucleotide path_labels2[max_length];
+      //char seq1[max_length+1];
+      //char seq2[max_length+1];
 
       double avg_coverage1;
       int min_coverage1,max_coverage1;
@@ -1880,7 +1971,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
    
       do{
 	
-	if (db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(current_node,orientation,max_length,&db_node_action_set_status_visited,
+	if (db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(current_node,orientation,max_length,action_branches,
 									  &length1,path_nodes1,path_orientations1,path_labels1,
 									  seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
 									  &length2,path_nodes2,path_orientations2,path_labels2,
@@ -1908,7 +1999,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    
 	    //compute 5' flanking region       	
 	    int length_flank5p_reverse = db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(current_node,opposite_orientation(orientation),
-													  flanking_length,&db_node_action_set_status_visited,
+													  flanking_length,action_flanks,
 													  nodes5p,orientations5p,labels_flank5p,
 													  seq5p,&avg_coverage5p,&min5p,&max5p,
 													  &is_cycle5p,db_graph, get_colour, get_covg);
@@ -1924,7 +2015,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	      length_flank5p = db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(nodes5p[length_flank5p_reverse],
 														opposite_orientation(orientations5p[length_flank5p_reverse]),
 														flanking_length,label,
-														&db_node_action_set_status_visited,
+														action_flanks,
 														nodes5p,orientations5p,labels_flank5p,
 														seq5p,&avg_coverage5p,&min5p,&max5p,
 														&is_cycle5p,db_graph, get_colour, get_covg);
@@ -1937,7 +2028,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    
 	    //compute 3' flanking region
 	    length_flank3p = db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(path_nodes2[length2],path_orientations2[length2],
-											      flanking_length,&db_node_action_set_status_visited,
+											      flanking_length, action_flanks,
 											      nodes3p,orientations3p,labels_flank3p,
 											      seq3p,&avg_coverage3p,&min3p,&max3p,
 											      &is_cycle3p,db_graph, get_colour, get_covg);
@@ -1949,7 +2040,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    //warning - array of 5prime nodes, oprientations is in reverse order to what you would expect - it is never used in what follows
 	    set_variant_branches_and_flanks(&var, nodes5p, orientations5p, length_flank5p, path_nodes1, path_orientations1, length1, 
 					    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p, unknown);
-	    if (condition(&var)==true)
+	    if (condition(&var)==true) 
 	      {
 
 		//printf("\nVARIATION: %i\n",count_vars);
@@ -1993,8 +2084,9 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 										     db_graph->kmer_size,false, get_colour, get_covg);
 		
 	      }
-	    db_node_action_set_status_visited(path_nodes2[length2]);
-		
+	    //db_node_action_set_status_visited(path_nodes2[length2]);
+	    action_branches(path_nodes2[length2]);
+
 	    current_node = path_nodes2[length2];
 	    orientation = path_orientations2[length2];
 	  }
@@ -2004,15 +2096,58 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
     
     
     if (db_node_check_status_none(node)){     
-      db_node_action_set_status_visited(node);
+      //db_node_action_set_status_visited(node);
+      action_flanks(node);
       get_vars_with_orientation(node,forward);
       get_vars_with_orientation(node,reverse);
     }
   }
  
   hash_table_traverse(&get_vars,db_graph); 
+
+  //cleanup
+  free(path_nodes1);
+  free(path_nodes2);
+  free(path_orientations1);
+  free(path_orientations2);
+  free(path_labels1);
+  free(path_labels2);
+  free(seq1);
+  free(seq2);
+
     
 }
+
+
+//looks for bubbles in the individual's colour, after having marked all bubbles found purely in the reference colour (ie ignore those)
+//condition is only applied to the second set of bubble,s called in the individual
+void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fout, int max_length, dBGraph * db_graph, 
+									boolean (*condition)(VariantBranchesAndFlanks*),
+									Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
+									Edges (*get_colour_indiv)(const dBNode*), int (*get_covg_indiv)(const dBNode*) )
+{
+
+  //first detect bubbles in the ref colour, but do not print them out, so they get marked as visited
+  db_graph_detect_vars(NULL, max_length, db_graph, 
+		       &detect_vars_condition_always_false,
+		       &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
+		       &db_node_action_set_status_visited, //mark everything else as visited
+		       get_colour_ref, get_covg_ref);
+
+  //unset the nodes marked as visited, but not those marked as to be ignored
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+
+  //then start again, detecting variants in the individual.
+  db_graph_detect_vars(fout, max_length, db_graph, 
+		       &detect_vars_condition_always_true,
+		       &db_node_action_set_status_visited,
+		       &db_node_action_set_status_visited,
+		       get_colour_indiv, get_covg_indiv);
+
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference_or_ignore_this_node, db_graph);	
+
+}
+
 
 //do not export - discuss with Mario
 void db_graph_smooth_bubbles_for_specific_person_or_pop(int coverage,int limit,dBGraph * db_graph, EdgeArrayType type, int index){
@@ -3561,10 +3696,63 @@ void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(dBNode** array1, dBNod
 
 }
 
-boolean make_reference_path_based_sv_calls_condition_always_true( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
-								  dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
+//boolean make_reference_path_based_sv_calls_condition_always_true( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
+//								  dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
+
+boolean make_reference_path_based_sv_calls_condition_always_true(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv)
 {
   return true;
+}
+
+
+//this is very primitive, but leave it that way. Next version is much better
+boolean make_reference_path_based_sv_calls_condition_is_hom_nonref(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv)
+						
+{
+
+  boolean flag=true;
+  int evidence_count = 0;
+  int i;
+
+  for (i=0; i<var->len_one_allele; i++)
+    {
+      //look at points on the reference allele that are unique in the reference
+      if ( (var->one_allele)[i]->coverage[colour_ref]==1 )
+	{
+	  evidence_count++;
+
+	  if ( (var->one_allele)[i]->coverage[colour_indiv] ==0)//no evidence seen in sequencing data for this position on allele
+	    {
+	      //supports hom hypothesis
+	    }
+	  else
+	    {
+	      flag=false;//as soon as you see any data at a point on allele that is unique, you decide must be a het
+	    }
+	}
+    }
+
+  //if evidence count==0, then all points on ref allele are repeated alsewhere. Just call het
+  if ( (evidence_count>0)&&(flag==true) )
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+boolean make_reference_path_based_sv_calls_condition_is_het(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv)
+{
+  if (make_reference_path_based_sv_calls_condition_is_hom_nonref(var, colour_ref, colour_indiv)==false)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
 }
 
 
@@ -3591,9 +3779,10 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						int max_desired_returns,
 						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
 						char** return_flank3p_array, int** return_variant_start_coord,
-						boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var, 
-							      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
-					)
+						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv)
+						//boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var, 
+						//	      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
+						)
 {
 
   int num_variants_found=0;
@@ -3755,6 +3944,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
       ptrs_to_covgs_in_variant_not_trusted[k]=&covgs_in_variant_not_trusted[k];
     }
 
+
+  VariantBranchesAndFlanks var; //we will reuse this
 
 
   // ***********************************************************
@@ -4766,12 +4957,28 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		}
 	      
 
-	      if  (condition(&chrom_path_array[start_node_index], length_5p_flank, 
-			     &chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome], len_trusted_branch,
-			     &current_supernode[left_most_coord_of_var_branch_in_supernode_array], len_branch2,
-			     &chrom_path_array[start_of_3prime_anchor_in_chrom], length_3p_flank, 
-			     index_for_ref_in_edge_array, index_for_indiv_in_edge_array)==true )
-		   
+	      set_variant_branches_and_flanks(&var, 
+					      &chrom_path_array[start_node_index], 
+					      &chrom_orientation_array[start_node_index], 
+					      length_5p_flank,
+					      &chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome], 
+					      &chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome], 
+					      len_trusted_branch,
+					      &current_supernode[left_most_coord_of_var_branch_in_supernode_array],
+					      &curr_sup_orientations[left_most_coord_of_var_branch_in_supernode_array],
+					      len_branch2,
+					      &chrom_path_array[start_of_3prime_anchor_in_chrom],
+					      &chrom_orientation_array[start_of_3prime_anchor_in_chrom],
+					      length_3p_flank, 
+					      first);//first tells it that the trusted branch is the reference
+
+	      // if  (condition(&chrom_path_array[start_node_index], length_5p_flank, 
+	      //	     &chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome], len_trusted_branch,
+	      //		     &current_supernode[left_most_coord_of_var_branch_in_supernode_array], len_branch2,
+	      //		     &chrom_path_array[start_of_3prime_anchor_in_chrom], length_3p_flank, 
+	      //	     index_for_ref_in_edge_array, index_for_indiv_in_edge_array)==true )
+		
+	      if (condition(&var, index_for_ref_in_edge_array, index_for_indiv_in_edge_array)==true)
 		{
 		  char name[300]; 
 		  sprintf(name,"var_%i_5p_flank",num_variants_found);

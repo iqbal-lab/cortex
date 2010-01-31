@@ -31,6 +31,7 @@ typedef enum
     read_start_forward = 7,//used when removing duplicate reads
     read_start_reverse = 8,//used when removing duplicate reads
     read_start_forward_and_reverse = 9,//used when removing duplicate reads  
+    ignore_this_node = 10,
   } NodeStatus;
 
 
@@ -78,7 +79,13 @@ Edges* get_edge(Element, EdgeArrayType, int); //gets pointer to actual edge, so 
 Edges get_edge_copy(const Element e, EdgeArrayType type,int index); //gets copy of edge
 Edges get_union_of_edges(Element e);
 Edges element_get_colour_union_of_all_colours(const Element*);
+Edges element_get_colour0(const Element* e);
+Edges element_get_colour1(const Element* e);
+
 int element_get_covg_union_of_all_covgs(const dBNode*);
+int element_get_covg_colour0(const dBNode* e);
+int element_get_covg_colour1(const dBNode* e);
+
 
 void add_edges(Element*, EdgeArrayType, int, Edges);
 void set_edges(Element*, EdgeArrayType, int, Edges);
@@ -152,13 +159,16 @@ void db_node_set_status_to_none(dBNode * node);
 //actions and conditions 
 
 void db_node_action_set_status_none(dBNode * node);
-
 void db_node_action_set_status_pruned(dBNode * node);
 void db_node_action_set_status_visited(dBNode * node);
+void db_node_action_set_status_ignore_this_node(dBNode * node);
 
 void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode * node);
 
 void db_node_action_unset_status_visited_or_visited_and_exists_in_reference(dBNode * node);
+
+void db_node_action_unset_status_visited_or_visited_and_exists_in_reference_or_ignore_this_node(dBNode * node);
+
 
 void db_node_action_do_nothing(dBNode * node);
 
