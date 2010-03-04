@@ -24,3 +24,9 @@ void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var,
 }
 
 
+/*
+void print_both_alleles(VariantBranchesAndFlanks* var)
+{
+  
+}
+*/

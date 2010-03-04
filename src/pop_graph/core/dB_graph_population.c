@@ -630,7 +630,7 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
     }
   else if (! (db_node_is_this_node_in_subgraph_defined_by_func_of_colours(node, get_colour)))
     {
-      //printf("\nThis node is not in the graph of this person - in db_graph_get_perfect_path_\n");
+      printf("\nThis node is not in the graph of this person - in db_graph_get_perfect_path_\n");
       return false;
     }
 
@@ -710,6 +710,7 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
       *min_coverage = 0;
     };
 
+  printf("returning length %d from db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours\n", length);
   return length;
   
 }
@@ -953,6 +954,8 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
 // the action is applied to all the internal nodes in the supernodes (even if they don't form a bubble).
 // at the moment returns only one bubble, notice that potentially there could be situations where a node forms two bubbles (something to implement). 
 
+// sometimes, you want to mark branches of a bubble specially, in which case pass true for apply_special_action_to_branches, and a unction pointer to special_action.
+// otherwise, pass false, NULL for the last two actions.
 
 //TODO - could have triallelic
 boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * node,
@@ -963,7 +966,8 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 								      char * seq1, double * avg_coverage1, int * min_coverage1, int * max_coverage1,
 								      int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,
 								      char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
-								      dBGraph * db_graph, Edges (*get_colour)(const dBNode*),  int (*get_covg)(const dBNode*) )
+								      dBGraph * db_graph, Edges (*get_colour)(const dBNode*),  int (*get_covg)(const dBNode*),
+								      boolean apply_special_action_to_branches, void (*special_action)(dBNode * node))
 {
 
   if (node==NULL)
@@ -977,7 +981,7 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
       return false;
     }
 
-
+  printf("Got beyond this point in detect bubbles\n");
   
   boolean ret = false;
   
@@ -994,6 +998,7 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
   void check_nucleotide(Nucleotide n){
 
     boolean is_cycle;      
+    //check in all four directions, and in the process apply action (usually setting to visited)
     if (db_node_edge_exist_within_specified_function_of_coloured_edges(node,n,orientation, get_colour)){
 	lengths[i] = db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(node,orientation,
 												      limit,n,
@@ -1005,9 +1010,10 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 	i++;
     }
   }
-  
-  
+
+  // i is now a count of how many edges there are  
   nucleotide_iterator(check_nucleotide);
+  printf("There are %d edges\n", i);
  
   int j = 0;
   int k = 0;
@@ -1051,6 +1057,23 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 	seq2[lengths[k]] = seq[k][lengths[k]];
 	
 	ret = true;
+	//OK - we are done here. We have found a bubble, and put its data into the relevant arrays, so happy to return
+	//First we apply the special action to the branches of the bubble we have found
+
+	printf("Found bubble j is %d and i is %d\n", j, i);
+	if (apply_special_action_to_branches==true)
+	  {
+	    for(l=0;l<lengths[j]; l++)
+	      {
+		printf("Applying special action %d\n",l); 
+		special_action(path_nodes1[l]);
+	      }
+	    for(l=0;l<lengths[k]; l++)
+	      {
+		printf("Applying special action %d\n",l); 
+		special_action(path_nodes2[l]);
+	      }
+	  }
 	  
       }
       else{
@@ -1824,6 +1847,29 @@ boolean detect_vars_condition_always_true(VariantBranchesAndFlanks* var)
   return true;
 }
 
+boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesAndFlanks* var)
+{
+  int i;
+  for (i=0; i<var->len_one_allele; i++)
+    {
+      if (db_node_check_status((var->one_allele)[i], ignore_this_node)==true)
+	{
+	  return false;
+	}
+    }
+
+  for (i=0; i<var->len_other_allele; i++)
+    {
+      if (db_node_check_status((var->other_allele)[i], ignore_this_node)==true)
+	{
+	  return false;
+	}
+    }
+
+  return true;
+}
+
+
 boolean detect_vars_condition_always_false(VariantBranchesAndFlanks* var)
 {
   return false;
@@ -1843,7 +1889,7 @@ boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks* var)
 }
 
 
-boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var)
+boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(dBNode*), int (*get_covg_indiv)(dBNode*) )
 {
   //Assumes the reference is colour 0 and the individual is colour 1
   int covg_threshold = 1;
@@ -1855,26 +1901,28 @@ boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var)
   
   for (i=0; i< var->len_one_allele; i++)
     {
-      if ( (var->one_allele)[i]->coverage[1] >= covg_threshold )
+      if ( get_covg_indiv((var->one_allele)[i]) >= covg_threshold )
 	{
 	  count_how_many_nodes_in_one_allele_have_covg_by_indiv++;
 	}
-      if ( (var->one_allele)[i]->coverage[0] > 0 )
+      if ( get_covg_ref((var->one_allele)[i]) > 0 )
 	{
 	  count_how_many_nodes_in_one_allele_have_covg_by_ref++;
 	}
     }
   for (i=0; i< var->len_other_allele; i++)
     {
-      if ( (var->other_allele)[i]->coverage[1] >= covg_threshold )
+      if ( get_covg_indiv((var->other_allele)[i]) >= covg_threshold )
 	{
 	  count_how_many_nodes_in_other_allele_have_covg_by_indiv++;
 	}
-      if ( (var->other_allele)[i]->coverage[0] > 0 )
+      if ( get_covg_ref((var->other_allele)[i]) > 0 )
 	{
 	  count_how_many_nodes_in_other_allele_have_covg_by_ref++;
 	}
     }
+
+
   if (//individual has branch1 but not branch2 
       (count_how_many_nodes_in_one_allele_have_covg_by_indiv==var->len_one_allele)
       &&
@@ -1891,18 +1939,20 @@ boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var)
   else if (//individual has branch2 but not branch1
 	   (count_how_many_nodes_in_one_allele_have_covg_by_indiv<=1)
 	   &&
-	   (count_how_many_nodes_in_other_allele_have_covg_by_indiv==var->len_one_allele)
+	   (count_how_many_nodes_in_other_allele_have_covg_by_indiv==var->len_other_allele)
 	   &&
 	   //reference has branch1 only
-	   (count_how_many_nodes_in_one_allele_have_covg_by_ref==var->len_other_allele)
+	   (count_how_many_nodes_in_one_allele_have_covg_by_ref==var->len_one_allele)
 	   &&
 	   (count_how_many_nodes_in_other_allele_have_covg_by_ref<=1)
 	   )
     {
+      printf("Return true\n");
       return true;
     }
   else
     {
+      printf("Return false\n");
       return false;
     }
   
@@ -1913,7 +1963,7 @@ boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var)
 
 
 //routine to DETECT/DISCOVER variants directly from the graph - reference-free (unless you have put the reference in the graph!)
-// penultimate argument is a condition which you apply to the flanks and branches to decide whether to call.
+// "condition" argument is a condition which you apply to the flanks and branches to decide whether to call.
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
 // last argument get_colour specifies some combination of colours, defining the graph within which we look for bubbles.
@@ -1925,7 +1975,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  void (*action_flanks)(dBNode*),
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) )
 {
-  
+  printf("Start detect_vars\n");
   int count_vars = 0; 
   int flanking_length = 1000; 
 
@@ -1971,13 +2021,19 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
    
       do{
 	
-	if (db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(current_node,orientation,max_length,action_branches,
+	//The idea is that db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours will mark anything is sees with action_flanks
+	//However if it does find a bubble, and if you want it to (penultimate argument=true)  then the branches are  marked with action_branches
+	if (db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(current_node,orientation,max_length,action_flanks,
 									  &length1,path_nodes1,path_orientations1,path_labels1,
 									  seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
 									  &length2,path_nodes2,path_orientations2,path_labels2,
 									  seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
-									  db_graph, get_colour, get_covg))
+									  db_graph, get_colour, get_covg,
+									  true, action_branches))
 	  {
+
+	    printf("Found bubble - investigate\n");
+	    
 	    int length_flank5p = 0;	
 	    int length_flank3p = 0;
 	    dBNode * nodes5p[flanking_length];
@@ -2043,7 +2099,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    if (condition(&var)==true) 
 	      {
 
-		//printf("\nVARIATION: %i\n",count_vars);
+		printf("\nPassed condition - found VARIATION: %i\n",count_vars);
 		count_vars++;
 		
 		//printf("length 5p flank: %i avg_coverage:%5.2f \n",length_flank5p,avg_coverage5p);	    
@@ -2138,8 +2194,9 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fo
   hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 
   //then start again, detecting variants in the individual.
+  printf("Now see if can detect anything afer marking stuff to be ignored\n");
   db_graph_detect_vars(fout, max_length, db_graph, 
-		       &detect_vars_condition_always_true,
+		       &detect_vars_condition_branches_not_marked_to_be_ignored,//ignore anything you find that is marked to be ignored
 		       &db_node_action_set_status_visited,
 		       &db_node_action_set_status_visited,
 		       get_colour_indiv, get_covg_indiv);

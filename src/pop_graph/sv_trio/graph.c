@@ -72,6 +72,8 @@ int main(int argc, char **argv){
     case 0:
       {
 	printf("Dump binary %s\n", dumped_binary);
+	db_graph_dump_binary(dumped_binary,&db_node_check_status_not_pruned,db_graph);
+
 	break;
       } 
     case 1:
@@ -107,7 +109,7 @@ int main(int argc, char **argv){
       {
 	//detect variants looking for bubbles in the union graph of all colours.
 	//apply no condition to whether one branch or other shoud be one colour or another
-	int max_allowed_branch_len=5000; //5000
+	int max_allowed_branch_len=50000; //5000
 	db_graph_detect_vars(stdout, max_allowed_branch_len,db_graph, 
 			     &detect_vars_condition_flanks_at_least_3,
 			     &db_node_action_set_status_visited,
@@ -481,6 +483,22 @@ int main(int argc, char **argv){
     case 9:
       {
 	
+	int get_covg_ref(dBNode* e)
+	{
+	  return e->coverage[0];
+	}
+	int get_covg_indiv(dBNode* e)
+	{
+	  return e->coverage[1];
+	}
+
+	boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var)
+	{
+	  return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_ref, &get_covg_indiv);
+	}
+
+
+
 
 	// STEP1 - detect vars, calls hets, with no conditions
 
@@ -491,15 +509,17 @@ int main(int argc, char **argv){
 	    printf("Cannot open %s, so exit\n", detectvars_filename);
 	    exit(1);
 	  }
+	printf("Going to output ref free hets to %s\n", detectvars_filename);
 	db_graph_detect_vars(detect_vars_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_always_true,
 			     &db_node_action_set_status_visited,
 			     &db_node_action_set_status_visited,
 			     &element_get_colour1, &element_get_covg_colour1);
 	fclose(detect_vars_fptr);
 
-	//cleanup
+	//cleanu
 	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
-	
+	printf("ZAMZAM - end of re-free het calls");
+
 
 	//STEP2 - detect vars in the reference colour, and mark these branches as visited, so they are ignored. Then call vars in colour1
 	FILE* detect_vars_after_remv_ref_bub_fptr = fopen(detectvars_after_remv_ref_bubble_filename, "w");
@@ -508,6 +528,7 @@ int main(int argc, char **argv){
 	    printf("Cannot open %s so exit\n", detectvars_after_remv_ref_bubble_filename);
 	    exit(1);
 	  }
+	printf("Call het variants after marking off the bubbles in the ref\n");
 	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
 									   &detect_vars_condition_always_true,
 									   &element_get_colour0, &element_get_covg_colour0,
@@ -523,6 +544,7 @@ int main(int argc, char **argv){
 	    exit(1);
 	  }
 
+	printf("About to print hom nonref calls to %s\n", detectvars_hom_nonref_filename);
 	db_graph_detect_vars( detect_vars_hom_nonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref,
 			      &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
 			      &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
@@ -534,7 +556,7 @@ int main(int argc, char **argv){
 	//STEP 4 - detect homozygous variants using ref-assisted trusted-path algorithm
 
 	int min_fiveprime_flank_anchor = 3;
-	int min_threeprime_flank_anchor= 21;
+	int min_threeprime_flank_anchor= 3;
 	int max_anchor_span =  50000;
 	int length_of_arrays = 100000;
 	int min_covg =1;

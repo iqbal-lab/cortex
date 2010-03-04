@@ -123,7 +123,8 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 								      char * seq1, double * avg_coverage1, int * min_coverage1, int * max_coverage1,
 								      int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,
 								      char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
-								      dBGraph * db_graph, Edges (*get_colour)(const dBNode*)  , int (*get_covg)(const dBNode*) );
+								      dBGraph * db_graph, Edges (*get_colour)(const dBNode*)  , int (*get_covg)(const dBNode*),
+								      boolean apply_special_action_to_branches, void (*special_action)(dBNode * node) );
 
 
 boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(dBNode * node, Orientation orientation, 
@@ -200,10 +201,16 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
                           void (*action_flanks)(dBNode*),
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) );
 
+void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fout, int max_length, dBGraph * db_graph, 
+									boolean (*condition)(VariantBranchesAndFlanks*),
+									Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
+									Edges (*get_colour_indiv)(const dBNode*), int (*get_covg_indiv)(const dBNode*) );
+
 boolean detect_vars_condition_always_true(VariantBranchesAndFlanks*);
+boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesAndFlanks* var);
 boolean detect_vars_condition_always_false(VariantBranchesAndFlanks*);
 boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks*);
-boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var);
+boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(dBNode*), int (*get_covg_indiv)(dBNode*) );
 
 void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
 
