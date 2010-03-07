@@ -90,21 +90,18 @@ void test_increment_coverage()
   CU_ASSERT(e->coverage[0]==5);
   db_node_increment_coverage(e,individual_edge_array,0);
   CU_ASSERT(e->coverage[0]==6);
-  CU_ASSERT(e->coverage[1]==0);
-  CU_ASSERT(e->coverage[2]==0);
 
-  e->coverage[0]=(unsigned char) 251;  // note you have to be careful just assigning an int to a char
-  db_node_increment_coverage(e,individual_edge_array,0);
-  CU_ASSERT(e->coverage[0]==252);
-  db_node_increment_coverage(e,individual_edge_array,0);
-  CU_ASSERT(e->coverage[0]==253);
-  db_node_increment_coverage(e,individual_edge_array,0);
-  CU_ASSERT(e->coverage[0]==254);
-  db_node_increment_coverage(e,individual_edge_array,0);
-  CU_ASSERT(e->coverage[0]==255);
-  db_node_increment_coverage(e,individual_edge_array,0);
-  CU_ASSERT(e->coverage[0]==256);
-  db_node_increment_coverage(e,individual_edge_array,0);
+  if (NUMBER_OF_INDIVIDUALS_PER_POPULATION>1)
+    {
+      CU_ASSERT(e->coverage[1]==0);
+      db_node_increment_coverage(e,individual_edge_array,1);
+      CU_ASSERT(e->coverage[1]==1);
+    }
+  if (NUMBER_OF_INDIVIDUALS_PER_POPULATION>2)
+    {
+      CU_ASSERT(e->coverage[2]==0);
+    }
+
  
   
   free_element(&e);
