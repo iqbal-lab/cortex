@@ -2109,7 +2109,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
 
 		//print flank5p - 
-		sprintf(name,"var_5p_flank_%i",count_vars);
+		sprintf(name,"var_%i_5p_flank",count_vars);
 
 		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length_flank5p,avg_coverage5p,min5p,max5p,
 										     nodes5p[0],orientations5p[0],			
@@ -2133,7 +2133,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 										     db_graph->kmer_size,false, get_colour, get_covg);
 		
 		//print flank3p
-		sprintf(name,"var_3p_flank_%i",count_vars);
+		sprintf(name,"var_%i_3p_flank",count_vars);
 		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length_flank3p,avg_coverage3p,min3p,max3p,
 										     nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
 										     seq3p,
@@ -3766,6 +3766,7 @@ boolean make_reference_path_based_sv_calls_condition_always_true(VariantBranches
 boolean make_reference_path_based_sv_calls_condition_is_hom_nonref(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv)
 						
 {
+  return true;
 
   boolean flag=true;
   int evidence_count = 0;
@@ -3837,11 +3838,11 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
 						char** return_flank3p_array, int** return_variant_start_coord,
 						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv)
-						//boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var, 
-						//	      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
 						)
 {
 
+
+  printf("STARTED make ref ass calls\n");
   int num_variants_found=0;
   
   //makes life much simpler to insist the array is even length.
@@ -3884,7 +3885,6 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   Orientation* curr_sup_orientations   = (Orientation*) malloc(sizeof(Orientation)*(max_expected_size_of_supernode+ db_graph->kmer_size));
   Nucleotide*  curr_sup_labels         = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_expected_size_of_supernode+ db_graph->kmer_size));
   char*        supernode_string        = (char*) malloc(sizeof(char)*((max_expected_size_of_supernode+ db_graph->kmer_size)+1)); //+1 for \0
-
 
 
   int n;
@@ -3930,8 +3930,6 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
     }
   
   kmer_window->nkmers=0;
-
-
 
   //some strings in which to hold the long sequences we will print.
   char* trusted_branch = malloc(sizeof(char)*(length_of_arrays+1));
@@ -4075,8 +4073,6 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
                                                                    
 
 
-
-
   do
     {
       int start_node_index=0;//this is a position in chrom_path_array 
@@ -4090,6 +4086,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      start_node_index++;
 	      continue;
 	    }
+
 
 	  //if this chromosome node does not exist in the person's graph, move on to the next node
 	  if (db_node_is_this_node_in_this_person_or_populations_graph(chrom_path_array[start_node_index], which_array_holds_indiv, index_for_indiv_in_edge_array) == false)
@@ -4125,6 +4122,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 					       &index_of_query_node_in_supernode_array, 
 					       db_graph, which_array_holds_indiv, index_for_indiv_in_edge_array);
 
+
 	  if (length_curr_supernode>max_anchor_span)
 	    {
 	      printf("Warning - bad choice of params. Current supernode is length %d, but max anchro size is %d\n", length_curr_supernode, max_anchor_span);
@@ -4158,6 +4156,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	    {
 	      traverse_sup_left_to_right=false;
 	    }
+
 
 
 
@@ -4218,6 +4217,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 
+
 	  //find how far along can go on reference before supernode branches off and starts to differ from the ref/chromosome
 	  if (traverse_sup_left_to_right==true)
 	    {
@@ -4249,6 +4249,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	    }
 
 
+
 	  if (index_in_supernode_where_supernode_differs_from_chromosome==index_of_query_node_in_supernode_array)
 	    {
 	      printf("WARNING Did not even go into loop working way along ref - so supernode only touches ref at initial node - I don't think this should be possible, should go into that loop once\n");
@@ -4256,6 +4257,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      exit(1);
 	      continue;
 	    }
+
 
 	  if ( ( (traverse_sup_left_to_right) && (index_in_supernode_where_supernode_differs_from_chromosome>=length_curr_supernode) )
 	    ||
@@ -4317,6 +4319,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      
 
 	    }
+
 
 
 
@@ -4428,6 +4431,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      //check in 5prime dir first. 
 	      int j=1;
 	      boolean can_extend_further_in_5prime_dir=true;
+
 	      
 	      if (
 		  ( (traverse_sup_left_to_right)&&(start_of_3prime_anchor_in_sup-1==index_in_supernode_where_supernode_differs_from_chromosome) )
@@ -4547,6 +4551,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		    }
 
 		}		  
+
 
 
 	      //check in 3prime dir 
@@ -5035,6 +5040,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      //		     &chrom_path_array[start_of_3prime_anchor_in_chrom], length_3p_flank, 
 	      //	     index_for_ref_in_edge_array, index_for_indiv_in_edge_array)==true )
 		
+
 	      if (condition(&var, index_for_ref_in_edge_array, index_for_indiv_in_edge_array)==true)
 		{
 		  char name[300]; 

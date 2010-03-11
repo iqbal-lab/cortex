@@ -557,14 +557,15 @@ int main(int argc, char **argv){
 
 	int min_fiveprime_flank_anchor = 3;
 	int min_threeprime_flank_anchor= 3;
-	int max_anchor_span =  50000;
-	int length_of_arrays = 100000;
+	int max_anchor_span =  5000;//50000;
+	int length_of_arrays = 10000; //100000;
 	int min_covg =1;
 	int max_covg = 10000000;
-	int max_expected_size_of_supernode=50000;
+	int max_expected_size_of_supernode=5000; //50000;
 	
 
 	//needs a filepointer to traverse the reference as it walks the graph
+	printf("Detect hom vars using ref ass caller, using this ref file %s\n", ref_fasta);
 	FILE* ref_fptr = fopen(ref_fasta, "r");
 	if (ref_fptr==NULL)
 	  {

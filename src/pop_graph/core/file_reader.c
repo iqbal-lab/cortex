@@ -797,8 +797,6 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	}
       
       boolean found = false;
-      //ZAM DEBUG - next line is surely wrong
-      //current_node = hash_table_find_or_insert(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),&found,db_graph);	  
       current_node = hash_table_find(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph);	  
 
       if (current_node == NULL){
@@ -809,7 +807,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	       binary_kmer_to_seq(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_dbg_kmer), db_graph->kmer_size,tmp_dbg_seq));
 	exit(1);
       }
-      
+
       current_orientation = db_node_get_orientation(&(kmer_window->kmer[j]),current_node, db_graph->kmer_size);
 
       path_nodes[offset+j]        = current_node;
