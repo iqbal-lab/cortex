@@ -44,5 +44,7 @@ void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var,
 
 void exact_copy_variant_branches_and_flanks(VariantBranchesAndFlanks copy_to, const VariantBranchesAndFlanks copy_from);
 void copy_variant_branches_and_flanks_switching_branches(VariantBranchesAndFlanks copy_to, const VariantBranchesAndFlanks copy_from);
+void action_set_flanks_and_branches_to_be_ignored(VariantBranchesAndFlanks* var);
+void db_variant_action_do_nothing(VariantBranchesAndFlanks* var);
 
 #endif

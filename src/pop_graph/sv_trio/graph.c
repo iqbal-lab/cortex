@@ -24,8 +24,7 @@ int main(int argc, char **argv){
   char* detectvars_filename;
   char* detectvars_after_remv_ref_bubble_filename;
   char* detectvars_hom_nonref_filename;
-  char* ref_assisted_hom_filename;
-  char* ref_assisted_het_filename;
+  char* ref_assisted_filename;
   char* ref_fasta;
 
 
@@ -42,9 +41,8 @@ int main(int argc, char **argv){
   detectvars_filename = argv[10];
   detectvars_after_remv_ref_bubble_filename = argv[11];
   detectvars_hom_nonref_filename=argv[12];
-  ref_assisted_hom_filename=argv[13];
-  ref_assisted_het_filename=argv[14];
-  ref_fasta = argv[15];
+  ref_assisted_filename=argv[13];
+  ref_fasta = argv[14];
 
   int max_retries=10;
 
@@ -463,7 +461,7 @@ int main(int argc, char **argv){
 							individual_edge_array, 0,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
-							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true);
+							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
 	    
 	    
 	    fclose(chrom_fptr);
@@ -518,7 +516,6 @@ int main(int argc, char **argv){
 
 	//cleanu
 	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
-	printf("ZAMZAM - end of re-free het calls");
 
 
 	//STEP2 - detect vars in the reference colour, and mark these branches as visited, so they are ignored. Then call vars in colour1
@@ -550,71 +547,47 @@ int main(int argc, char **argv){
 			      &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
 
 	//cleanup
-	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
 
 
-	//STEP 4 - detect homozygous variants using ref-assisted trusted-path algorithm
+	//STEP 4 - detect homovariants using ref-assisted trusted-path algorithm
 
 	int min_fiveprime_flank_anchor = 3;
 	int min_threeprime_flank_anchor= 3;
-	int max_anchor_span =  5000;//50000;
-	int length_of_arrays = 10000; //100000;
+	int max_anchor_span =  70000;
+	int length_of_arrays = 140000;
 	int min_covg =1;
-	int max_covg = 10000000;
-	int max_expected_size_of_supernode=5000; //50000;
+	int max_covg = 100000000;
+	int max_expected_size_of_supernode=70000;
 	
 
 	//needs a filepointer to traverse the reference as it walks the graph
-	printf("Detect hom vars using ref ass caller, using this ref file %s\n", ref_fasta);
+	printf("Detect polymorphic sites using reference assisted caller, using this ref file %s\n", ref_fasta);
+
+	FILE* ref_ass_fptr = fopen(ref_assisted_filename, "w");
+	if (ref_ass_fptr==NULL)
+	  {
+	    printf("Cnnot open %s, so exit", ref_assisted_filename);
+	    exit(1);
+	  }
+
 	FILE* ref_fptr = fopen(ref_fasta, "r");
 	if (ref_fptr==NULL)
 	  {
-	    printf("Cannot open %s \n", ref_fasta);
-	    exit(1);
-	  }
-
-	FILE* ref_ass_hom_fptr = fopen(ref_assisted_hom_filename, "w");
-	if (ref_ass_hom_fptr==NULL)
-	  {
-	    printf("Cnnot open %s, so exit", ref_assisted_hom_filename);
+	    printf("Cannot open %s, so exit", ref_fasta);
 	    exit(1);
 	  }
 
 	db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 1, individual_edge_array, 0,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_hom_fptr,
-						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_is_hom_nonref);
-	fclose(ref_ass_hom_fptr);
-	fclose(ref_fptr);
+						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_fptr,
+						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
+	fclose(ref_ass_fptr);
+
 
 	//cleanup
 	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 
-
-	//STEP 5 - detect het variants using ref-assisted trusted-path algorithm
-	ref_fptr = fopen(ref_fasta, "r");
-	if (ref_fptr==NULL)
-	  {
-	    printf("Cannot open %s second time\n", ref_fasta);
-	    exit(1);
-	  }
-
-	FILE* ref_ass_het_fptr = fopen(ref_assisted_het_filename, "w");
-	if (ref_ass_het_fptr==NULL)
-	  {
-	    printf("Cnnot open %s, so exit", ref_assisted_het_filename);
-	    exit(1);
-	  }
-
-	db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 1, individual_edge_array, 0,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_het_fptr,
-						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_is_het);
-	fclose(ref_ass_het_fptr);
-	fclose(ref_fptr);
-
-	//cleanup
-	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 
 	printf("Finished making all calls\n");
 

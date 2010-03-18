@@ -710,7 +710,6 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
       *min_coverage = 0;
     };
 
-  printf("returning length %d from db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours\n", length);
   return length;
   
 }
@@ -981,7 +980,6 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
       return false;
     }
 
-  printf("Got beyond this point in detect bubbles\n");
   
   boolean ret = false;
   
@@ -1013,7 +1011,6 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 
   // i is now a count of how many edges there are  
   nucleotide_iterator(check_nucleotide);
-  printf("There are %d edges\n", i);
  
   int j = 0;
   int k = 0;
@@ -1060,17 +1057,17 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 	//OK - we are done here. We have found a bubble, and put its data into the relevant arrays, so happy to return
 	//First we apply the special action to the branches of the bubble we have found
 
-	printf("Found bubble j is %d and i is %d\n", j, i);
+
 	if (apply_special_action_to_branches==true)
 	  {
 	    for(l=0;l<lengths[j]; l++)
 	      {
-		printf("Applying special action %d\n",l); 
+		//printf("Applying special action %d\n",l); 
 		special_action(path_nodes1[l]);
 	      }
 	    for(l=0;l<lengths[k]; l++)
 	      {
-		printf("Applying special action %d\n",l); 
+		//printf("Applying special action %d\n",l); 
 		special_action(path_nodes2[l]);
 	      }
 	  }
@@ -1947,12 +1944,12 @@ boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv
 	   (count_how_many_nodes_in_other_allele_have_covg_by_ref<=1)
 	   )
     {
-      printf("Return true\n");
+      //printf("Return true\n");
       return true;
     }
   else
     {
-      printf("Return false\n");
+      //printf("Return false\n");
       return false;
     }
   
@@ -2032,8 +2029,6 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 									  true, action_branches))
 	  {
 
-	    printf("Found bubble - investigate\n");
-	    
 	    int length_flank5p = 0;	
 	    int length_flank3p = 0;
 	    dBNode * nodes5p[flanking_length];
@@ -2099,7 +2094,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    if (condition(&var)==true) 
 	      {
 
-		printf("\nPassed condition - found VARIATION: %i\n",count_vars);
+		//printf("\nPassed condition - found VARIATION: %i\n",count_vars);
 		count_vars++;
 		
 		//printf("length 5p flank: %i avg_coverage:%5.2f \n",length_flank5p,avg_coverage5p);	    
@@ -2177,6 +2172,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
 //looks for bubbles in the individual's colour, after having marked all bubbles found purely in the reference colour (ie ignore those)
 //condition is only applied to the second set of bubble,s called in the individual
+//Leaves the bubbles in the ref marked as to be ignored at the end
 void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fout, int max_length, dBGraph * db_graph, 
 									boolean (*condition)(VariantBranchesAndFlanks*),
 									Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
@@ -2201,7 +2197,9 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fo
 		       &db_node_action_set_status_visited,
 		       get_colour_indiv, get_covg_indiv);
 
-  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference_or_ignore_this_node, db_graph);	
+
+  //unset the nodes marked as visited, but not those marked as to be ignored
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 
 }
 
@@ -3753,8 +3751,6 @@ void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(dBNode** array1, dBNod
 
 }
 
-//boolean make_reference_path_based_sv_calls_condition_always_true( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
-//								  dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
 
 boolean make_reference_path_based_sv_calls_condition_always_true(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv)
 {
@@ -3766,8 +3762,6 @@ boolean make_reference_path_based_sv_calls_condition_always_true(VariantBranches
 boolean make_reference_path_based_sv_calls_condition_is_hom_nonref(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv)
 						
 {
-  return true;
-
   boolean flag=true;
   int evidence_count = 0;
   int i;
@@ -3837,7 +3831,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						int max_desired_returns,
 						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
 						char** return_flank3p_array, int** return_variant_start_coord,
-						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv)
+						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
+						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var)
 						)
 {
 
@@ -4406,7 +4401,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 	      //work out start coordinate and print it out
 	      int start_coord_of_variant_in_trusted_path_fasta = coord_of_start_of_array_in_trusted_fasta + first_index_in_chrom_where_supernode_differs_from_chromosome + db_graph->kmer_size;
-	      fprintf(output_file, "VARIATION: %d, start coordinate %d\n", num_variants_found, start_coord_of_variant_in_trusted_path_fasta);
+	      //fprintf(output_file, "VARIATION: %d, start coordinate %d\n", num_variants_found, start_coord_of_variant_in_trusted_path_fasta);
 	      
 	      if (num_variants_found<=max_desired_returns) //if we are asking for some of the things we find to be returned within the arguments passed in. See comments at start of this whole function
 		{
@@ -5034,126 +5029,127 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 					      length_3p_flank, 
 					      first);//first tells it that the trusted branch is the reference
 
-	      // if  (condition(&chrom_path_array[start_node_index], length_5p_flank, 
-	      //	     &chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome], len_trusted_branch,
-	      //		     &current_supernode[left_most_coord_of_var_branch_in_supernode_array], len_branch2,
-	      //		     &chrom_path_array[start_of_3prime_anchor_in_chrom], length_3p_flank, 
-	      //	     index_for_ref_in_edge_array, index_for_indiv_in_edge_array)==true )
-		
 
 	      if (condition(&var, index_for_ref_in_edge_array, index_for_indiv_in_edge_array)==true)
 		{
-		  char name[300]; 
-		  sprintf(name,"var_%i_5p_flank",num_variants_found);
-		  print_fasta_from_path_for_specific_person_or_pop(output_file, name, length_5p_flank, 
-								   flank5p_avg_covg,flank5p_min_covg,flank5p_max_covg, flank5p_mode_coverage, 
-								   flank5p_percent_nodes_with_modal_covg, flank5p_percent_novel,
-								   chrom_path_array[start_node_index],
-								   chrom_orientation_array[start_node_index],
-								   chrom_path_array[start_node_index+length_5p_flank-1],
-								   chrom_orientation_array[start_node_index+length_5p_flank-1],
-								   NULL, NULL, 0, //these 3 args are for when you want to find covg of nodes in this path and not another - not needed here
-								   flank5p,
-								   db_graph->kmer_size,
-								   true,
-								   which_array_holds_indiv, index_for_indiv_in_edge_array);
-		  
-		  
-		  if (traverse_sup_left_to_right==true)
-		    {
-		      sprintf(name,"var_%i_trusted_branch", num_variants_found);
-		      
-		      
-		      print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_trusted_branch, 
-								       trusted_branch_avg_covg, trusted_branch_min_covg, trusted_branch_max_covg, 
-								       trusted_branch_mode_coverage, trusted_branch_percent_nodes_with_modal_covg, trusted_branch_percent_novel,
-								       chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
-								       chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
-								       chrom_path_array[start_of_3prime_anchor_in_chrom],
-								       chrom_orientation_array[start_of_3prime_anchor_in_chrom],
-								       "covgs of trusted not variant nodes: ", covgs_in_trusted_not_variant, num_nodes_on_trusted_but_not_variant_branch, 
-								       trusted_branch,
-								       db_graph->kmer_size,
-								       false,
-								       which_array_holds_indiv, index_for_indiv_in_edge_array);
-		      
-		      
-		      
-		      sprintf(name,"var_%i_variant_branch", num_variants_found);
-		      
-		      print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
-								       branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, 
-								       branch2_percent_nodes_with_modal_covg, branch2_percent_novel, 
-								       current_supernode[start_of_var_branch_in_supernode_array], 
-								       curr_sup_orientations[start_of_var_branch_in_supernode_array],
-								       current_supernode[start_of_3prime_anchor_in_sup], 
-								       curr_sup_orientations[start_of_3prime_anchor_in_sup],
-								       "covgs of variant not trusted nodes: ", covgs_in_variant_not_trusted, num_nodes_on_variant_but_not_trusted_branch,
-								       variant_branch, db_graph->kmer_size, false, 
-								       which_array_holds_indiv, index_for_indiv_in_edge_array
-								       );
-		      
-		      
-		    }
-		  else //traversing right to left
-		    {
-		      
-		      sprintf(name,"var_%i_trusted_branch", num_variants_found);
-		      
-		      print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_trusted_branch, 
-								       trusted_branch_avg_covg, trusted_branch_min_covg, trusted_branch_max_covg, 
-								       trusted_branch_mode_coverage, trusted_branch_percent_nodes_with_modal_covg, trusted_branch_percent_novel,
-								       chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
-								       chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
-								       chrom_path_array[start_of_3prime_anchor_in_chrom],
-								       chrom_orientation_array[start_of_3prime_anchor_in_chrom],
-								       "covgs of trusted not variant nodes: ",covgs_in_trusted_not_variant, num_nodes_on_trusted_but_not_variant_branch, 
-								       trusted_branch,
-								       db_graph->kmer_size,
-								       false,
-								       which_array_holds_indiv, index_for_indiv_in_edge_array);
-		      
+		  //in some situations you want to mark all branches of variants for future use after this function returns
+		  action_for_branches_of_called_variants(&var);
 
-		      char rev_variant_branch[len_branch2+1];
-		      seq_reverse_complement(variant_branch, len_branch2, rev_variant_branch);
-		      rev_variant_branch[len_branch2]='\0';
-		      sprintf(name,"var_%i_variant_branch", num_variants_found);
+		  if (output_file != NULL)
+		    {
 		      
-		      print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
-								       branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, 
-								       branch2_percent_nodes_with_modal_covg, branch2_percent_novel,
-								       current_supernode[start_of_var_branch_in_supernode_array], 
-								       curr_sup_orientations[start_of_var_branch_in_supernode_array],
-								       current_supernode[start_of_3prime_anchor_in_sup], 
-								       curr_sup_orientations[start_of_3prime_anchor_in_sup],
-								       "covgs of variant not trusted nodes: ", covgs_in_variant_not_trusted, num_nodes_on_variant_but_not_trusted_branch,
-								       rev_variant_branch, db_graph->kmer_size, false, 
-								       which_array_holds_indiv, index_for_indiv_in_edge_array
-								       );
+		      char name[300]; 
+		      sprintf(name,"var_%i_5p_flank",num_variants_found);
+		      print_fasta_from_path_for_specific_person_or_pop(output_file, name, length_5p_flank, 
+								       flank5p_avg_covg,flank5p_min_covg,flank5p_max_covg, flank5p_mode_coverage, 
+								       flank5p_percent_nodes_with_modal_covg, flank5p_percent_novel,
+								       chrom_path_array[start_node_index],
+								       chrom_orientation_array[start_node_index],
+								       chrom_path_array[start_node_index+length_5p_flank-1],
+								       chrom_orientation_array[start_node_index+length_5p_flank-1],
+								       NULL, NULL, 0, //these 3 args are for when you want to find covg of nodes in this path and not another - not needed here
+								       flank5p,
+								       db_graph->kmer_size,
+								       true,
+								       which_array_holds_indiv, index_for_indiv_in_edge_array);
 		      
-		      //for unit tests only
-		      if (num_variants_found<=max_desired_returns)
+		      
+		      if (traverse_sup_left_to_right==true)
 			{
-			  strcat(return_variant_branch_array[num_variants_found-1],rev_variant_branch);
+			  sprintf(name,"var_%i_trusted_branch", num_variants_found);
+			  
+			  
+			  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_trusted_branch, 
+									   trusted_branch_avg_covg, trusted_branch_min_covg, trusted_branch_max_covg, 
+									   trusted_branch_mode_coverage, trusted_branch_percent_nodes_with_modal_covg, trusted_branch_percent_novel,
+									   chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
+									   chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
+									   chrom_path_array[start_of_3prime_anchor_in_chrom],
+									   chrom_orientation_array[start_of_3prime_anchor_in_chrom],
+									   "covgs of trusted not variant nodes: ", covgs_in_trusted_not_variant, num_nodes_on_trusted_but_not_variant_branch, 
+									   trusted_branch,
+									   db_graph->kmer_size,
+									   false,
+									   which_array_holds_indiv, index_for_indiv_in_edge_array);
+			  
+			  
+			  
+			  sprintf(name,"var_%i_variant_branch", num_variants_found);
+			  
+			  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
+									   branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, 
+									   branch2_percent_nodes_with_modal_covg, branch2_percent_novel, 
+									   current_supernode[start_of_var_branch_in_supernode_array], 
+									   curr_sup_orientations[start_of_var_branch_in_supernode_array],
+									   current_supernode[start_of_3prime_anchor_in_sup], 
+									   curr_sup_orientations[start_of_3prime_anchor_in_sup],
+									   "covgs of variant not trusted nodes: ", covgs_in_variant_not_trusted, num_nodes_on_variant_but_not_trusted_branch,
+									   variant_branch, db_graph->kmer_size, false, 
+									   which_array_holds_indiv, index_for_indiv_in_edge_array
+									   );
+			  
+			  
 			}
+		      else //traversing right to left
+			{
+			  
+			  sprintf(name,"var_%i_trusted_branch", num_variants_found);
+			  
+			  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_trusted_branch, 
+									   trusted_branch_avg_covg, trusted_branch_min_covg, trusted_branch_max_covg, 
+									   trusted_branch_mode_coverage, trusted_branch_percent_nodes_with_modal_covg, trusted_branch_percent_novel,
+									   chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
+									   chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
+									   chrom_path_array[start_of_3prime_anchor_in_chrom],
+									   chrom_orientation_array[start_of_3prime_anchor_in_chrom],
+									   "covgs of trusted not variant nodes: ",covgs_in_trusted_not_variant, num_nodes_on_trusted_but_not_variant_branch, 
+									   trusted_branch,
+									   db_graph->kmer_size,
+									   false,
+									   which_array_holds_indiv, index_for_indiv_in_edge_array);
+			  
+			  
+			  char rev_variant_branch[len_branch2+1];
+			  seq_reverse_complement(variant_branch, len_branch2, rev_variant_branch);
+			  rev_variant_branch[len_branch2]='\0';
+			  sprintf(name,"var_%i_variant_branch", num_variants_found);
+			  
+			  print_fasta_from_path_for_specific_person_or_pop(output_file, name, len_branch2, 
+									   branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, 
+									   branch2_percent_nodes_with_modal_covg, branch2_percent_novel,
+									   current_supernode[start_of_var_branch_in_supernode_array], 
+									   curr_sup_orientations[start_of_var_branch_in_supernode_array],
+									   current_supernode[start_of_3prime_anchor_in_sup], 
+									   curr_sup_orientations[start_of_3prime_anchor_in_sup],
+									   "covgs of variant not trusted nodes: ", covgs_in_variant_not_trusted, num_nodes_on_variant_but_not_trusted_branch,
+									   rev_variant_branch, db_graph->kmer_size, false, 
+									   which_array_holds_indiv, index_for_indiv_in_edge_array
+									   );
+			  
+			  //for unit tests only
+			  if (num_variants_found<=max_desired_returns)
+			    {
+			      strcat(return_variant_branch_array[num_variants_found-1],rev_variant_branch);
+			    }
+			  
+			}
+		      sprintf(name,"var_%i_3p_flank",num_variants_found);
+		      print_fasta_from_path_for_specific_person_or_pop(output_file, name, length_3p_flank, 
+								       flank3p_avg_covg, flank3p_min_covg, flank3p_max_covg, flank3p_mode_coverage, 
+								       flank3p_percent_nodes_with_modal_covg, flank3p_percent_novel, 
+								       chrom_path_array[start_of_3prime_anchor_in_chrom],
+								       chrom_orientation_array[start_of_3prime_anchor_in_chrom],
+								       chrom_path_array[start_of_3prime_anchor_in_chrom+length_3p_flank],
+								       chrom_orientation_array[start_of_3prime_anchor_in_chrom+length_3p_flank],
+								       NULL, NULL, 0,
+								       flank3p,
+								       db_graph->kmer_size,
+								       false,
+								       which_array_holds_indiv, index_for_indiv_in_edge_array);
+		      
+		      
 		      
 		    }
-		  sprintf(name,"var_%i_3p_flank",num_variants_found);
-		  print_fasta_from_path_for_specific_person_or_pop(output_file, name, length_3p_flank, 
-								   flank3p_avg_covg, flank3p_min_covg, flank3p_max_covg, flank3p_mode_coverage, 
-								   flank3p_percent_nodes_with_modal_covg, flank3p_percent_novel, 
-								   chrom_path_array[start_of_3prime_anchor_in_chrom],
-								   chrom_orientation_array[start_of_3prime_anchor_in_chrom],
-								   chrom_path_array[start_of_3prime_anchor_in_chrom+length_3p_flank],
-								   chrom_orientation_array[start_of_3prime_anchor_in_chrom+length_3p_flank],
-								   NULL, NULL, 0,
-								   flank3p,
-								   db_graph->kmer_size,
-								   false,
-								   which_array_holds_indiv, index_for_indiv_in_edge_array);
-		  
-		  
-		  
 		}
 	      
 	      
@@ -5206,6 +5202,57 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   return num_variants_found;
 
 
+}
+
+
+
+
+
+int db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_ignored(char* chrom_fasta, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
+											EdgeArrayType which_array_holds_ref, int index_for_ref_in_edge_array,
+											int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, 
+											int max_anchor_span, int min_covg, int max_covg,
+											int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
+											int max_desired_returns,
+											char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array,
+											char** return_flank3p_array, int** return_variant_start_coord,
+											boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv)
+											)
+{
+
+  FILE* fptr = fopen(chrom_fasta, "r");
+  if (fptr==NULL)
+    {
+      printf("Cannot open %s the first tme in  db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_ignored", chrom_fasta);
+      exit(1);
+    }
+  //call variants in the reference colour
+  int num_false_vars_masked = db_graph_make_reference_path_based_sv_calls(fptr, which_array_holds_ref, index_for_ref_in_edge_array, which_array_holds_ref, index_for_ref_in_edge_array, 
+									  min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+									  max_expected_size_of_supernode, length_of_arrays, db_graph, NULL, 0,
+									  NULL, NULL, NULL, NULL, NULL,
+									  &make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored);
+  fclose(fptr);
+
+  printf("Masked %d false variants by calling in ref colour\n", num_false_vars_masked);
+  //unset visited, but leaving nodes marked as to_be_ignored if they were in variants in the ref colour
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+
+
+  fptr = fopen(chrom_fasta, "r");
+  if (fptr==NULL)
+    {
+      printf("Cannot open %s the second tme in  db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_ignored", chrom_fasta);
+      exit(1);
+    }
+  int num_vars_found = db_graph_make_reference_path_based_sv_calls(fptr, which_array_holds_indiv, index_for_indiv_in_edge_array, which_array_holds_ref, index_for_ref_in_edge_array, 
+								   min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+								   max_expected_size_of_supernode, length_of_arrays, db_graph, output_file, max_desired_returns,
+								   return_flank5p_array, return_trusted_branch_array, return_variant_branch_array, return_flank3p_array, return_variant_start_coord, 
+								   condition, &db_variant_action_do_nothing);
+  fclose(fptr);
+  return num_vars_found;
+  
 }
 
 

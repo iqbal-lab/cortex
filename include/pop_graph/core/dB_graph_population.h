@@ -323,9 +323,21 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						int max_desired_returns,
 						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
 						char** return_flank3p_array, int** return_variant_start_coord,
-						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv) );
-						//boolean (*condition)( dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
-						//		      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv) );
+						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
+						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var)
+						);
+
+int db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_ignored(char* chrom_fasta, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
+											EdgeArrayType which_array_holds_ref, int index_for_ref_in_edge_array,
+											int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, 
+											int max_anchor_span, int min_covg, int max_covg,
+											int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
+											int max_desired_returns,
+											char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array,
+											char** return_flank3p_array, int** return_variant_start_coord,
+											boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv)
+											);
+
 
 boolean condition_always_true(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
 			      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv);

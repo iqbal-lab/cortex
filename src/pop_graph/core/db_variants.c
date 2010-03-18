@@ -30,3 +30,31 @@ void print_both_alleles(VariantBranchesAndFlanks* var)
   
 }
 */
+
+
+void action_set_flanks_and_branches_to_be_ignored(VariantBranchesAndFlanks* var)
+{
+  int i;
+  for (i=0; i<var->len_one_allele; i++)
+    {
+      db_node_action_set_status_ignore_this_node((var->one_allele)[i]);
+    }
+  for (i=0; i<var->len_other_allele; i++)
+    {
+      db_node_action_set_status_ignore_this_node((var->other_allele)[i]);
+    }
+  for (i=0; i<var->len_flank5p; i++)
+    {
+      db_node_action_set_status_ignore_this_node((var->flank5p)[i]);
+    }
+  for (i=0; i<var->len_flank3p; i++)
+    {
+      db_node_action_set_status_ignore_this_node((var->flank3p)[i]);
+    }
+}
+
+
+void db_variant_action_do_nothing(VariantBranchesAndFlanks* var)
+{
+  return;
+}
