@@ -105,6 +105,12 @@ int main(int argc, char **argv){
       }
     case 2:
       {
+
+	void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
+	{
+        }
+
+
 	//detect variants looking for bubbles in the union graph of all colours.
 	//apply no condition to whether one branch or other shoud be one colour or another
 	int max_allowed_branch_len=50000; //5000
@@ -112,7 +118,8 @@ int main(int argc, char **argv){
 			     &detect_vars_condition_flanks_at_least_3,
 			     &db_node_action_set_status_visited,
 			     &db_node_action_set_status_visited,
-			     &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+			     &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs,
+			     &print_no_extra_info);
 	break;
       }
     case 3:
@@ -301,6 +308,12 @@ int main(int argc, char **argv){
       {
 	//Make bubble calls for homozygous non-ref variants, using two colours (ref=0, individual=1)
 	
+	void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
+	{
+        }
+
+
+
 	boolean condition_is_hom_nonref(VariantBranchesAndFlanks* var)
 	{
 	  //Assumes the reference is colour 0 and the individual is colour 1
@@ -370,7 +383,7 @@ int main(int argc, char **argv){
 	db_graph_detect_vars(stdout, max_allowed_branch_len,db_graph, &condition_is_hom_nonref,
 			     &db_node_action_set_status_visited,
 			     &db_node_action_set_status_visited,
-			     &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+			     &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info);
 
 	break;
       }
@@ -480,6 +493,11 @@ int main(int argc, char **argv){
       }
     case 9:
       {
+
+
+	void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
+	{
+        }
 	
 	int get_covg_ref(dBNode* e)
 	{
@@ -494,6 +512,148 @@ int main(int argc, char **argv){
 	{
 	  return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_ref, &get_covg_indiv);
 	}
+
+
+
+
+	// STEP1 - detect vars, calls hets, with no conditions
+
+	int max_allowed_branch_len=50000; 
+	FILE* detect_vars_fptr = fopen(detectvars_filename, "w");
+	if (detect_vars_fptr==NULL)
+	  {
+	    printf("Cannot open %s, so exit\n", detectvars_filename);
+	    exit(1);
+	  }
+	printf("Going to output ref free hets to %s\n", detectvars_filename);
+	db_graph_detect_vars(detect_vars_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_always_true,
+			     &db_node_action_set_status_visited,
+			     &db_node_action_set_status_visited,
+			     &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
+	fclose(detect_vars_fptr);
+
+	//cleanu
+	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+
+
+	//STEP2 - detect vars in the reference colour, and mark these branches as visited, so they are ignored. Then call vars in colour1
+	FILE* detect_vars_after_remv_ref_bub_fptr = fopen(detectvars_after_remv_ref_bubble_filename, "w");
+	if (detect_vars_after_remv_ref_bub_fptr==NULL)
+	  {
+	    printf("Cannot open %s so exit\n", detectvars_after_remv_ref_bubble_filename);
+	    exit(1);
+	  }
+	printf("Call het variants after marking off the bubbles in the ref\n");
+	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
+									   &detect_vars_condition_always_true,
+									   &element_get_colour0, &element_get_covg_colour0,
+									   &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
+	fclose(detect_vars_after_remv_ref_bub_fptr);
+	//no need to traverse and do cleanup, as db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored does it at the end
+
+	//STEP3 - detect hom non ref variants
+	FILE* detect_vars_hom_nonref_fptr = fopen(detectvars_hom_nonref_filename, "w");
+	if (detect_vars_hom_nonref_fptr==NULL)
+	  {
+	    printf("Cannot open %s so exit\n", detectvars_hom_nonref_filename);
+	    exit(1);
+	  }
+
+	printf("About to print hom nonref calls to %s\n", detectvars_hom_nonref_filename);
+	db_graph_detect_vars( detect_vars_hom_nonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref,
+			      &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
+			      &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info);
+
+	//cleanup
+	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
+
+
+	//STEP 4 - detect homovariants using ref-assisted trusted-path algorithm
+
+	int min_fiveprime_flank_anchor = 3;
+	int min_threeprime_flank_anchor= 3;
+	int max_anchor_span =  70000;
+	int length_of_arrays = 140000;
+	int min_covg =1;
+	int max_covg = 100000000;
+	int max_expected_size_of_supernode=70000;
+	
+
+	//needs a filepointer to traverse the reference as it walks the graph
+	printf("Detect polymorphic sites using reference assisted caller, using this ref file %s\n", ref_fasta);
+
+	FILE* ref_ass_fptr = fopen(ref_assisted_filename, "w");
+	if (ref_ass_fptr==NULL)
+	  {
+	    printf("Cnnot open %s, so exit", ref_assisted_filename);
+	    exit(1);
+	  }
+
+	FILE* ref_fptr = fopen(ref_fasta, "r");
+	if (ref_fptr==NULL)
+	  {
+	    printf("Cannot open %s, so exit", ref_fasta);
+	    exit(1);
+	  }
+
+	db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 1, individual_edge_array, 0,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_fptr,
+						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
+	fclose(ref_ass_fptr);
+
+
+	//cleanup
+	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+
+
+	printf("Finished making all calls\n");
+
+	break;
+      }
+      case 10
+	{
+	  int get_covg_ref(dBNode* e)
+	  {
+	    return e->coverage[0];
+	  }
+	  int get_covg_na12878(dBNode* e)
+	  {
+	    return e->coverage[1];
+	  }
+	  int get_covg_na19240(dBNode* e)
+	  {
+	    return e->coverage[2];
+	  }
+	  int get_covg_chimp(dBNode* e)
+	  {
+	    return e->coverage[3];
+	  }
+	  int get_covg_gorilla(dBNode* e)
+	  {
+	    return e->coverage[4];
+	  }
+	  int get_covg_macaca(dBNode* e)
+	  {
+	    return e->coverage[5];
+	  }
+	  
+	  
+	boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var)
+	{
+	  return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_ref, &get_covg_indiv);
+	}
+
+
+
+	void print_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
+	{
+	  // determine ancestral allele by comparing with chimp, gorilla, macaca
+        }
+	
+
+
+
 
 
 
@@ -590,9 +750,9 @@ int main(int argc, char **argv){
 
 
 	printf("Finished making all calls\n");
-
-
-      }
+	  
+	  break;
+	}
       
       
 

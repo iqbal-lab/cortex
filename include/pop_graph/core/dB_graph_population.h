@@ -199,12 +199,15 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  boolean (*condition)( VariantBranchesAndFlanks*), 
                           void (*action_branches)(dBNode*),
                           void (*action_flanks)(dBNode*),
-			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) );
+			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*)
+			  );
 
 void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fout, int max_length, dBGraph * db_graph, 
 									boolean (*condition)(VariantBranchesAndFlanks*),
 									Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
-									Edges (*get_colour_indiv)(const dBNode*), int (*get_covg_indiv)(const dBNode*) );
+									Edges (*get_colour_indiv)(const dBNode*), int (*get_covg_indiv)(const dBNode*),
+									void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*));
 
 boolean detect_vars_condition_always_true(VariantBranchesAndFlanks*);
 boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesAndFlanks* var);

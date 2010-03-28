@@ -1970,7 +1970,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  boolean (*condition)(VariantBranchesAndFlanks*),
 			  void (*action_branches)(dBNode*),
 			  void (*action_flanks)(dBNode*),
-			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) )
+			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
 {
   printf("Start detect_vars\n");
   int count_vars = 0; 
@@ -2133,6 +2134,10 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 										     nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
 										     seq3p,
 										     db_graph->kmer_size,false, get_colour, get_covg);
+		sprintf(name,"variant_%i", count_vars);
+		fprintf(fout,"\n%s - extra information", name);
+		print_extra_info(&var, fout);
+
 		
 	      }
 	    //db_node_action_set_status_visited(path_nodes2[length2]);
@@ -2176,7 +2181,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fout, int max_length, dBGraph * db_graph, 
 									boolean (*condition)(VariantBranchesAndFlanks*),
 									Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
-									Edges (*get_colour_indiv)(const dBNode*), int (*get_covg_indiv)(const dBNode*) )
+									Edges (*get_colour_indiv)(const dBNode*), int (*get_covg_indiv)(const dBNode*),
+									void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*) )
 {
 
   //first detect bubbles in the ref colour, but do not print them out, so they get marked as visited
@@ -2184,7 +2190,7 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fo
 		       &detect_vars_condition_always_false,
 		       &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
 		       &db_node_action_set_status_visited, //mark everything else as visited
-		       get_colour_ref, get_covg_ref);
+		       get_colour_ref, get_covg_ref, print_extra_info);
 
   //unset the nodes marked as visited, but not those marked as to be ignored
   hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -2195,7 +2201,7 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fo
 		       &detect_vars_condition_branches_not_marked_to_be_ignored,//ignore anything you find that is marked to be ignored
 		       &db_node_action_set_status_visited,
 		       &db_node_action_set_status_visited,
-		       get_colour_indiv, get_covg_indiv);
+		       get_colour_indiv, get_covg_indiv, print_extra_info);
 
 
   //unset the nodes marked as visited, but not those marked as to be ignored
