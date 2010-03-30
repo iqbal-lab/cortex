@@ -1,11 +1,13 @@
 #this scripts generates "short-reads" from a fasta entry
 #it generates paired reads (in two files _1 & _2)
 use strict;
-use lib "/homes/marioc/perl-modules/bioperl-live";
+#use lib "/homes/marioc/perl-modules/bioperl-live";
+use lib "/home/zam/dev/perl/installed_modules/bioperl-live";
+
 use Getopt::Long;
 use  Bio::SeqIO;
 
-my ($file,$read_length,$coverage,$insert_size,$delta, $error_rate,$length);
+my ($file,$read_length,$coverage,$insert_size,$delta, $error_rate_main, $error_rate_end,$length);
 
 &GetOptions(
      	    'file|f:s'               => \$file,              #file contains one big fasta entry
@@ -13,8 +15,9 @@ my ($file,$read_length,$coverage,$insert_size,$delta, $error_rate,$length);
 	    'cov|c:i'                => \$coverage,
 	    'insert|i:i'             => \$insert_size,
 	    'delta|s:i'              => \$delta,             #range of insert size (ie real insert size will be between insert_size-delta .. insert_size+delta)
-            'error|r:i'          => \$error_rate,         #1 error every error_rate bases in the final 20% of the read
-	    'length|l:i'             => \$length,            #length of entry in file
+            'error_main|m:i'          => \$error_rate_main,         #1 error every error_rate_main bases in the first 80% of the read
+            'error_end|e:i'          => \$error_rate_end,         #1 error every error_rate_end bases in the final 20% of the read
+            'length|l:i'             => \$length,            #length of entry in file
            );
 
 
@@ -25,18 +28,27 @@ my $entry = <F>;
 chomp($entry);
 $entry =~s/>//;
 
-my $erate_for_printing;
-if ($error_rate>100000000000)
+my $erate_for_printing_main;
+my $erate_for_printing_end;
+if ($error_rate_main>100000000000)
 {
-    $erate_for_printing=0;
+    $erate_for_printing_main=0;
 }
 else
 {
-    $erate_for_printing=$error_rate;
+    $erate_for_printing_main=$error_rate_main;
+}
+if ($error_rate_end>100000000000)
+{
+    $erate_for_printing_end=0;
+}
+else
+{
+    $erate_for_printing_end=$error_rate_end;
 }
 
-open(F1,">reads_${entry}_1_read_len_".$read_length."coverage_".$coverage."_error_rate_".$erate_for_printing_end) || die "cannot open file 1\n";
-open(F2,">reads_${entry}_2_read_len_".$read_length."coverage_".$coverage."_error_rate_".$erate_for_printing_end) || die "cannot open file 2\n";
+open(F1,">reads_${entry}_1_read_len_".$read_length."coverage_".$coverage."_error_rate_main".$erate_for_printing_main."_error_rate_end".$erate_for_printing_end) || die "cannot open file 1\n";
+open(F2,">reads_${entry}_2_read_len_".$read_length."coverage_".$coverage."_error_rate_main".$erate_for_printing_main."_error_rate_end".$erate_for_printing_end) || die "cannot open file 2\n";
 
 
 print "entry:$entry length:$length coverage:$coverage read length: $read_length\n";
@@ -59,13 +71,23 @@ while($i<$number_reads){
 
 #print reads
 
-#every how many reads to introduce errors
-my $reads_rate = int($error_rate/(0.2*$read_length));
-print "print reads - introduce errors in the end of a read every $reads_rate reads ($error_rate)\n";
+#every how many reads to introduce errors, in the main body, and in the tail-end of the reads
+my $reads_rate_main = int($error_rate_main/(0.8*$read_length));
+my $reads_rate_end = int($error_rate_end/(0.2*$read_length));
+print "print reads - introduce errors in the body (first 80%) of a read every $reads_rate_main reads ($error_rate_main)\n";
+print "            - introduce errors in the end of a read every $reads_rate_end reads ($error_rate_end)\n";
 
-my $count_reads=0;
-my $index_error_1;
-my $index_error_2;
+if (($reads_rate_main==0) || ($reads_rate_end==0))
+{
+    die("Should not have 1 error every 0 reads");
+}
+
+my $count_reads_main = 0;#will keep count of reads, modulo the rate at which we want errors in main body
+my $count_reads_end  = 0; # will keep count of reads, modulo the rate at which we want errors in the end
+my $index_error_main_1;
+my $index_error_main_2;
+my $index_error_end_1;
+my $index_error_end_2;
 
 my $pos_1;
 my $pos_2;
@@ -97,18 +119,31 @@ for($pos_1=1;$pos_1<=@reads;$pos_1++){
     my $real_insert=$insert_size+$var;      
     my $pos_2 = $pos_1+$real_insert-$read_length;
     
-    if ($count_reads==0){#define where - wich reads to introduce error
-      $index_error_1 = int(rand($reads_rate+1));
-      $index_error_2 = int(rand($reads_rate+1));
+    if ($count_reads_main==0){#Specify which reads will put errors in in the main 80% of the read, in the next chunk of reads_rate_main reads
+      $index_error_main_1 = int(rand($reads_rate_main+1));
+      $index_error_main_2 = int(rand($reads_rate_main+1));
+    }
+
+    if ($count_reads_end==0){#Specify which reads will put errors in, at the tail end of the read,  in the next chunk of reads_rate_end reads
+      $index_error_end_1 = int(rand($reads_rate_end+1));
+      $index_error_end_2 = int(rand($reads_rate_end+1));
     }
     
+
+    ## First sort out left hand mate read - 
     my $seq_1 = substr($file_buf,$pos_1-$current_pos-1,$read_length);
     #print "TEST ",$pos_1-$current_pos,"\n";
-    my $suf1;
-    if ($count_reads == $index_error_1){
+    my $suf1="";
+    if ($count_reads_main == $index_error_main_1){
       my $base;
-      ($base,$seq_1) = change_base($seq_1);
+      ($base,$seq_1) = change_base_in_first_80percent($seq_1);
       $suf1="*_$base";
+    }
+
+    if ($count_reads_end == $index_error_end_1){
+      my $base;
+      ($base,$seq_1) = change_base_in_final_20percent($seq_1);
+      $suf1= $suf1."*_$base";
     }
     
     print F1 ">read_${i}_${pos_1}_${real_insert}_1$suf1\n";
@@ -117,21 +152,33 @@ for($pos_1=1;$pos_1<=@reads;$pos_1++){
     my $seq_2 =  substr($file_buf,$pos_2-$current_pos-1,$read_length);
     #print "TEST ",$pos_2-$current_pos,"\n";
 
-    my $suf2;
-    if ($count_reads == $index_error_2){
+    my $suf2="";
+    if ($count_reads_main == $index_error_main_2){
       my $base;
-      ($base,$seq_2) = change_base($seq_2);
+      ($base,$seq_2) = change_base_in_first_80percent($seq_2);
       $suf2="*_$base";
+    }
+
+    if ($count_reads_end == $index_error_end_2){
+      my $base;
+      ($base,$seq_2) = change_base_in_final_20percent($seq_2);
+      $suf2= $suf2."*_$base";
     }
     
     print F2 ">read_${i}_${pos_1}_${real_insert}_2$suf2\n";
     print F2 $seq_2,"\n";
     
-    $count_reads++;
+    $count_reads_main++;
+    $count_reads_end++;
     
-    if ($count_reads>$reads_rate){
-	$count_reads=0;
+    if ($count_reads_main>$reads_rate_main){
+	$count_reads_main=0;
       }
+
+    if ($count_reads_end>$reads_rate_end){
+	$count_reads_end=0;
+      }
+
   }
   
 }
@@ -154,14 +201,34 @@ sub read_file{
 }
 
 
-## Errors in the last 20% of a read
-sub change_base{
+
+sub change_base_in_final_20percent{
 
   my ($str) = @_;
 
   my %num2base = (0 => 'A', 1 => 'C', 2 => 'G', 3 => 'T');
 
   my $pos = int(0.8*$read_length + int(rand(0.2*$read_length)));
+
+  my @str = split //,$str;
+  my $index;
+  do {
+    $index = int(rand(4));
+  } until (uc $str[$pos] ne $num2base{$index});
+
+  $str[$pos] = $num2base{$index};
+
+  return ($pos+1,join("",@str));
+}
+
+
+sub change_base_in_first_80percent{
+
+  my ($str) = @_;
+
+  my %num2base = (0 => 'A', 1 => 'C', 2 => 'G', 3 => 'T');
+
+  my $pos = int(rand(0.8*$read_length));
 
   my @str = split //,$str;
   my $index;

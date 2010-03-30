@@ -26,7 +26,7 @@ int main(int argc, char **argv){
   char* detectvars_hom_nonref_filename;
   char* ref_assisted_filename;
   char* ref_fasta;
-
+  int low_cov_thresh;
 
   //command line arguments 
   filename         = argv[1];        //open file that lists one file per individual in the trio (population), and each of those gives list of files.
@@ -43,7 +43,7 @@ int main(int argc, char **argv){
   detectvars_hom_nonref_filename=argv[12];
   ref_assisted_filename=argv[13];
   ref_fasta = argv[14];
-
+  low_cov_thresh = atoi(argv[15]);
   int max_retries=10;
 
   fprintf(stdout,"Kmer size: %d hash_table_size (%d bits): %d\n",kmer_size,hash_key_bits,1 << hash_key_bits);
@@ -76,7 +76,7 @@ int main(int argc, char **argv){
       } 
     case 1:
       {
-	printf("remove low coverage nodes (<=1) \n");
+	printf("remove low coverage nodes (<= %d ) \n", low_cov_thresh);
 
 	void apply_reset_to_all_edges(dBNode* node, Orientation or, Nucleotide nuc)
 	{
@@ -95,7 +95,7 @@ int main(int argc, char **argv){
 	    }
 	}
 
-	db_graph_remove_low_coverage_nodes(1,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
+	db_graph_remove_low_coverage_nodes(low_cov_thresh,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
 					   &apply_reset_to_all_edges, &apply_reset_to_all_edges_2);
 	    
 	printf("dumping graph %s\n",dumped_binary);
@@ -611,8 +611,9 @@ int main(int argc, char **argv){
 
 	break;
       }
-      case 10
+    case 10:
 	{
+	  /*
 	  int get_covg_ref(dBNode* e)
 	  {
 	    return e->coverage[0];
@@ -639,16 +640,17 @@ int main(int argc, char **argv){
 	  }
 	  
 	  
-	boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var)
-	{
-	  return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_ref, &get_covg_indiv);
-	}
+	  boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var)
+	  {
+	    return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_ref, &get_covg_indiv);
+	  }
 
 
 
 	void print_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
 	{
 	  // determine ancestral allele by comparing with chimp, gorilla, macaca
+	  // determine which individual this variant is on, and print
         }
 	
 
@@ -750,7 +752,7 @@ int main(int argc, char **argv){
 
 
 	printf("Finished making all calls\n");
-	  
+	  */	  
 	  break;
 	}
       
