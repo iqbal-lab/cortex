@@ -62,14 +62,13 @@ void db_variant_action_do_nothing(VariantBranchesAndFlanks* var)
 }
 
 
-boolean  db_variant_precisely_one_allele_is_in_given_func_of_colours(VariantBranchesAndFlanks* var, Edges (*get_colour)(const dBNode*), dBGraph* db_graph, WhichAllele* which, 
-								     int num_bases_agreement_in_flank_required )
+boolean  db_variant_precisely_one_allele_is_in_given_func_of_colours(VariantBranchesAndFlanks* var, Edges (*get_colour)(const dBNode*), dBGraph* db_graph, WhichAllele* which)
+
 {
+  
   if ( (does_this_path_exist_in_this_colour(var->one_allele, var->one_allele_or, var->len_one_allele, get_colour, db_graph)==true)
        &&
        (does_this_path_exist_in_this_colour(var->other_allele, var->other_allele_or, var->len_other_allele, get_colour,db_graph)==false)
-       &&
-       (does_this_path_exist_in_this_colour(var->flank5p, var->flank5p_or, var->len_flank5p, get_colour,db_graph)==true)
        )
     {
       *which = allele_one;

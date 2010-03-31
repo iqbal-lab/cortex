@@ -1,4 +1,5 @@
 #include <element.h>
+#include <dB_graph.h>
 
 
 #ifndef DB_VARIANTS_H_
@@ -60,8 +61,7 @@ void copy_variant_branches_and_flanks_switching_branches(VariantBranchesAndFlank
 void action_set_flanks_and_branches_to_be_ignored(VariantBranchesAndFlanks* var);
 void db_variant_action_do_nothing(VariantBranchesAndFlanks* var);
 
-boolean  db_variant_precisely_one_allele_is_in_given_func_of_colours(VariantBranchesAndFlanks* var, Edges (*get_colour)(const dBNode*), dBGraph* db_graph, WhichAllele* which,
-                                                                     int num_bases_agreement_in_flank_required );
+boolean  db_variant_precisely_one_allele_is_in_given_func_of_colours(VariantBranchesAndFlanks* var, Edges (*get_colour)(const dBNode*), dBGraph* db_graph, WhichAllele* which);
 
 zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlanks* var, Edges (*get_colour)(const dBNode*), dBGraph* db_graph);
 #endif

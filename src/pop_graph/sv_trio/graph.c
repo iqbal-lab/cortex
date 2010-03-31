@@ -639,32 +639,32 @@ int main(int argc, char **argv){
 	  int colour_gorilla=4;
 	  int colour_macaca=5;
 	  
-	  int get_colour_human_ref(const dBNode* e)
+	  Edges get_colour_human_ref(const dBNode* e)
 	  {
 	    return get_edge_copy(*e, individual_edge_array, colour_human_ref);
 	  }
 
-	  int get_colour_na12878(const dBNode* e)
+	  Edges get_colour_na12878(const dBNode* e)
 	  {
 	    return get_edge_copy(*e, individual_edge_array, colour_na12878);
 	  }
 
-	  int get_colour_na19240(const dBNode* e)
+	  Edges get_colour_na19240(const dBNode* e)
 	  {
 	    return get_edge_copy(*e, individual_edge_array, colour_na19240);
 	  }
 
-	  int get_colour_chimp(const dBNode* e)
+	  Edges get_colour_chimp(const dBNode* e)
 	  {
 	    return get_edge_copy(*e, individual_edge_array, colour_chimp);
 	  }
 
-	  int get_colour_gorilla(const dBNode* e)
+	  Edges get_colour_gorilla(const dBNode* e)
 	  {
 	    return get_edge_copy(*e, individual_edge_array, colour_gorilla);
 	  }
 
-	  int get_colour_macaca(const dBNode* e)
+	  Edges get_colour_macaca(const dBNode* e)
 	  {
 	    return get_edge_copy(*e, individual_edge_array, colour_macaca);
 	  }
@@ -821,7 +821,7 @@ int main(int argc, char **argv){
 		    fprintf(fout, "branch2 matches gorilla\n");//and branch1 does not
 		  }
 	      }
-	    else if (which_allele_matches_macaca==true)
+	    else if (precisely_one_allele_matches_macaca==true)
 	      {
  		fprintf(fout, "ANCESTRAL ALLELE: ");
 		if (which_allele_matches_macaca==allele_one)
