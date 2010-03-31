@@ -3329,9 +3329,13 @@ void test_read_next_variant_from_full_flank_file()
     }
 
   int max_branch_len=10;
+  void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
+  {
+  }
+
   db_graph_detect_vars(fout_bubble, max_branch_len,db_graph, &detect_vars_condition_always_true, 
 		       &db_node_action_set_status_visited, &db_node_action_set_status_visited, 
-		       &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+		       &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info);
   fclose(fout_bubble);
 
 
