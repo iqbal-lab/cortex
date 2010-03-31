@@ -1886,7 +1886,7 @@ boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks* var)
 }
 
 
-boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(dBNode*), int (*get_covg_indiv)(dBNode*) )
+boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(const dBNode*), int (*get_covg_indiv)(const dBNode*) )
 {
   //Assumes the reference is colour 0 and the individual is colour 1
   int covg_threshold = 1;
@@ -5867,4 +5867,33 @@ void print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *
 
 
 
+boolean does_this_path_exist_in_this_colour(dBNode** array_nodes, Orientation* array_orientations,  int len, Edges (*get_colour)(const dBNode*), dBGraph* db_graph )
+{
+  boolean ret = true;
+  int i;
 
+  for (i=1; i<len; i++)
+    {
+      //get last base in kmer
+      Nucleotide n;
+      if (array_orientations[i]==forward)
+	{
+	  n = binary_kmer_get_last_nucleotide(&(array_nodes[i]->kmer));
+	}
+      else
+	{
+	  BinaryKmer tmp_kmer;
+	  n = binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(&(array_nodes[i]->kmer), db_graph->kmer_size, &tmp_kmer));
+	}
+      
+      if (!(db_node_edge_exist_within_specified_function_of_coloured_edges(array_nodes[i-1], n, array_orientations[i-1], get_colour)) )
+	{
+	  ret=false;
+	  break;
+	}
+      
+    }
+  return ret;
+  
+  
+}

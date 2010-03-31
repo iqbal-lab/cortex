@@ -27,6 +27,12 @@ int main(int argc, char **argv){
   char* ref_assisted_filename;
   char* ref_fasta;
   int low_cov_thresh;
+  int D_slx_na12878;//depth of covg
+  int D_slx_na19240;
+  int D_454_na12878;//depth of covg
+  int D_454_na19240;
+  int R_slx;//mean read length
+  int R_454;//mean read length
 
   //command line arguments 
   filename         = argv[1];        //open file that lists one file per individual in the trio (population), and each of those gives list of files.
@@ -44,6 +50,13 @@ int main(int argc, char **argv){
   ref_assisted_filename=argv[13];
   ref_fasta = argv[14];
   low_cov_thresh = atoi(argv[15]);
+  D_slx_na12878 = atoi(argv[16]);
+  D_slx_na19240 = atoi(argv[17]);
+  D_454_na12878 = atoi(argv[18]);
+  D_454_na19240 = atoi(argv[19]);
+  R_slx = atoi(argv[20]);
+  R_454 = atoi(argv[21]);
+
   int max_retries=10;
 
   fprintf(stdout,"Kmer size: %d hash_table_size (%d bits): %d\n",kmer_size,hash_key_bits,1 << hash_key_bits);
@@ -499,11 +512,11 @@ int main(int argc, char **argv){
 	{
         }
 	
-	int get_covg_ref(dBNode* e)
+	int get_covg_ref(const dBNode* e)
 	{
 	  return e->coverage[0];
 	}
-	int get_covg_indiv(dBNode* e)
+	int get_covg_indiv(const dBNode* e)
 	{
 	  return e->coverage[1];
 	}
@@ -613,73 +626,244 @@ int main(int argc, char **argv){
       }
     case 10:
 	{
-	  /*
-	  int get_covg_ref(dBNode* e)
+
+	  // Call variants on NA12878 and NA19240 jointly
+	  // first call "heterozygous" sites - means at least one individual is het, other may be hom ref/nonref - will be clear from output
+	  // then call hom non-ref sites, where both individuals are hom non-ref
+	  // Then use Ref Assisted caller on each individual separately. 
+
+	  int colour_human_ref=0;
+	  int colour_na12878=1;
+	  int colour_na19240=2;
+	  int colour_chimp =3;
+	  int colour_gorilla=4;
+	  int colour_macaca=5;
+	  
+	  int get_colour_human_ref(const dBNode* e)
+	  {
+	    return get_edge_copy(*e, individual_edge_array, colour_human_ref);
+	  }
+
+	  int get_colour_na12878(const dBNode* e)
+	  {
+	    return get_edge_copy(*e, individual_edge_array, colour_na12878);
+	  }
+
+	  int get_colour_na19240(const dBNode* e)
+	  {
+	    return get_edge_copy(*e, individual_edge_array, colour_na19240);
+	  }
+
+	  int get_colour_chimp(const dBNode* e)
+	  {
+	    return get_edge_copy(*e, individual_edge_array, colour_chimp);
+	  }
+
+	  int get_colour_gorilla(const dBNode* e)
+	  {
+	    return get_edge_copy(*e, individual_edge_array, colour_gorilla);
+	  }
+
+	  int get_colour_macaca(const dBNode* e)
+	  {
+	    return get_edge_copy(*e, individual_edge_array, colour_macaca);
+	  }
+
+	  int get_covg_human_ref(const dBNode* e)
 	  {
 	    return e->coverage[0];
 	  }
-	  int get_covg_na12878(dBNode* e)
+	  int get_covg_na12878(const dBNode* e)
 	  {
 	    return e->coverage[1];
 	  }
-	  int get_covg_na19240(dBNode* e)
+	  int get_covg_na19240(const dBNode* e)
 	  {
 	    return e->coverage[2];
 	  }
-	  int get_covg_chimp(dBNode* e)
+	  int get_covg_chimp(const dBNode* e)
 	  {
 	    return e->coverage[3];
 	  }
-	  int get_covg_gorilla(dBNode* e)
+	  int get_covg_gorilla(const dBNode* e)
 	  {
 	    return e->coverage[4];
 	  }
-	  int get_covg_macaca(dBNode* e)
+	  int get_covg_macaca(const dBNode* e)
 	  {
 	    return e->coverage[5];
 	  }
-	  
-	  
-	  boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var)
+
+	  int get_covg_union_ancestral_species(const dBNode* e)
 	  {
-	    return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_ref, &get_covg_indiv);
+	    return e->coverage[3] + e->coverage[4] + e->coverage[5];
+	  }
+	  
+	  Edges element_get_colour_human_ref(const Element* e)
+	  {
+	    return get_edge_copy(*e, individual_edge_array,0);
 	  }
 
+	  Edges element_get_union_human_colours(const Element* e)
+	  {
+	    Edges edges=0;
+	    Edges edges1=get_edge_copy(*e, individual_edge_array,1);
+	    edges |= edges1;
+	    Edges edges2=get_edge_copy(*e, individual_edge_array,2);
+	    edges |= edges2;
+	    return edges;
+	  }
+	  
+	  int get_joint_human_covg(const dBNode* e)
+	  {
+	    return e->coverage[1] + e->coverage[2];
+	  }
+	  
+	  boolean detect_vars_condition_is_hom_nonref_in_both_individuals(VariantBranchesAndFlanks* var)
+	  {
+	    return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_human_ref, &get_joint_human_covg );
+	  }
+	  
+	  //ensure both alleles have covg < 2* effective coverage expected for each individual
+	  boolean bubble_condition_coverage_on_both_individuals_not_too_high(VariantBranchesAndFlanks* var)
+	  {
+
+	    double eff_covg_na12878 = D_slx_na12878*    ((double)(R_slx - db_graph->kmer_size +1 ))/(double)R_slx
+                            	    + D_454_na12878*    ((double)(R_454 - db_graph->kmer_size +1 ))/(double)R_454;      //D (1-(k-1)/R )
+	    
+	    double eff_covg_na19240 = D_slx_na19240*    ((double)(R_slx - db_graph->kmer_size +1 ))/(double)R_slx
+                            	    + D_454_na19240*    ((double)(R_454 - db_graph->kmer_size +1 ))/(double)R_454;      //D (1-(k-1)/R )
+	    int i;
+	    boolean all_nodes_on_both_alleles_have_ok_covg_in_both_indivs = true;
+	    for (i=0; (i<var->len_one_allele) && all_nodes_on_both_alleles_have_ok_covg_in_both_indivs==true ; i++)
+	      {
+		if (  (get_covg_na12878((var->one_allele)[i]) > 2* eff_covg_na12878) 
+		      ||
+		      (get_covg_na19240((var->one_allele)[i]) > 2* eff_covg_na19240)
+		      )
+		  {
+		    all_nodes_on_both_alleles_have_ok_covg_in_both_indivs=false;
+		  }
+	      }
+
+	    for (i=0; (i<var->len_other_allele) && all_nodes_on_both_alleles_have_ok_covg_in_both_indivs==true ; i++)
+	      {
+		if (  (get_covg_na12878((var->other_allele)[i]) > 2* eff_covg_na12878) 
+		      ||
+		      (get_covg_na19240((var->other_allele)[i]) > 2* eff_covg_na19240)
+		      )
+		  {
+		    all_nodes_on_both_alleles_have_ok_covg_in_both_indivs=false;
+		  }
+	      }
 
 
-	void print_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
-	{
-	  // determine ancestral allele by comparing with chimp, gorilla, macaca
-	  // determine which individual this variant is on, and print
-        }
+	    return all_nodes_on_both_alleles_have_ok_covg_in_both_indivs;
+
+	  }
+
+	  void print_zygosity_string(zygosity z, FILE* fptr)
+	  {
+	    if (z==het)
+	      {
+		fprintf(fptr, "HET");
+	      }
+	    else if (z==hom_one)
+	      {
+		fprintf(fptr, "HOM branch1");
+	      }
+	    else if (z==hom_other)
+	      {
+		fprintf(fptr, "HOM branch2");
+	      }
+	    else
+	      {
+		fprintf(fptr, "BOTH_ALLELES_ABSENT");
+	      }
+	  }
+	  
+	  //boolean condition_ref_ass_call_..what?
+	  
+	  void print_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
+	  {
+	    // determine ancestral allele by comparing with chimp, gorilla, macaca
+	    fprintf(fout, "\n");
+	    
+	    WhichAllele which_allele_matches_human_ref;
+	    WhichAllele which_allele_matches_chimp;
+	    WhichAllele which_allele_matches_macaca;
+	    WhichAllele which_allele_matches_gorilla;
+	    boolean precisely_one_allele_matches_chimp=db_variant_precisely_one_allele_is_in_given_func_of_colours(var, &get_colour_chimp, db_graph, &which_allele_matches_chimp);
+	    boolean precisely_one_allele_matches_macaca=db_variant_precisely_one_allele_is_in_given_func_of_colours(var, &get_colour_macaca, db_graph, &which_allele_matches_macaca);
+	    boolean precisely_one_allele_matches_gorilla=db_variant_precisely_one_allele_is_in_given_func_of_colours(var, &get_colour_gorilla, db_graph, &which_allele_matches_gorilla); ;
+
+	    if (precisely_one_allele_matches_chimp==true)
+	      {
+		fprintf(fout, "ANCESTRAL ALLELE: ");
+		if (which_allele_matches_chimp==allele_one)
+		  {
+		    fprintf(fout, "branch1 matches chimp\n");//and branch2 does not
+		  }
+		else
+		  {
+		    fprintf(fout, "branch2 matches chimp\n");//and branch1 does not
+		  }
+	      }
+	    else if (precisely_one_allele_matches_gorilla==true)
+	      {
+		fprintf(fout, "ANCESTRAL ALLELE: ");
+		if (which_allele_matches_gorilla==allele_one)
+		  {
+		    fprintf(fout, "branch1 matches gorilla\n");//and branch2 does not
+		  }
+		else
+		  {
+		    fprintf(fout, "branch2 matches gorilla\n");//and branch1 does not
+		  }
+	      }
+	    else if (which_allele_matches_macaca==true)
+	      {
+ 		fprintf(fout, "ANCESTRAL ALLELE: ");
+		if (which_allele_matches_macaca==allele_one)
+		  {
+		    fprintf(fout, "branch1 matches macaca\n");//and branch2 does not
+		  }
+		else
+		  {
+		    fprintf(fout, "branch2 matches macaca\n");//and branch1 does not
+		  }
+	      }
+
+	    
+	    // determine which individual this variant is on, and print
+	    zygosity zygo_in_na12878 = db_variant_get_zygosity_in_given_func_of_colours(var, get_colour_na12878, db_graph);
+	    zygosity zygo_in_na19240 = db_variant_get_zygosity_in_given_func_of_colours(var, get_colour_na19240, db_graph);
+	    fprintf(fout, "NA12878:");
+	    print_zygosity_string(zygo_in_na12878, fout);
+	    fprintf(fout,"\n");
+	    fprintf(fout, "NA19240:");
+	    print_zygosity_string(zygo_in_na19240, fout);
+	    fprintf(fout,"\n");
+	    
+	    //determine which allele matches reference
+	    if (does_this_path_exist_in_this_colour(var->one_allele, var->one_allele_or, var->len_one_allele, get_colour_human_ref, db_graph)==true)
+	      {
+		fprintf(fout, "REF_ALLELE:branch1\n");
+	      }
+	    else if (does_this_path_exist_in_this_colour(var->other_allele, var->one_allele_or, var->len_one_allele, get_colour_human_ref, db_graph)==true)
+	      {
+		fprintf(fout, "REF_ALLELE:branch2\n");
+	      }
+	    else
+	      {
+		fprintf(fout, "BOTH_ALLELES_NOVEL\n");
+	      }
+	  }
+	  
+	  
+	  int max_allowed_branch_len=50000;
+	  
 	
-
-
-
-
-
-
-
-	// STEP1 - detect vars, calls hets, with no conditions
-
-	int max_allowed_branch_len=50000; 
-	FILE* detect_vars_fptr = fopen(detectvars_filename, "w");
-	if (detect_vars_fptr==NULL)
-	  {
-	    printf("Cannot open %s, so exit\n", detectvars_filename);
-	    exit(1);
-	  }
-	printf("Going to output ref free hets to %s\n", detectvars_filename);
-	db_graph_detect_vars(detect_vars_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_always_true,
-			     &db_node_action_set_status_visited,
-			     &db_node_action_set_status_visited,
-			     &element_get_colour1, &element_get_covg_colour1);
-	fclose(detect_vars_fptr);
-
-	//cleanu
-	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
-
-
 	//STEP2 - detect vars in the reference colour, and mark these branches as visited, so they are ignored. Then call vars in colour1
 	FILE* detect_vars_after_remv_ref_bub_fptr = fopen(detectvars_after_remv_ref_bubble_filename, "w");
 	if (detect_vars_after_remv_ref_bub_fptr==NULL)
@@ -687,15 +871,16 @@ int main(int argc, char **argv){
 	    printf("Cannot open %s so exit\n", detectvars_after_remv_ref_bubble_filename);
 	    exit(1);
 	  }
-	printf("Call het variants after marking off the bubbles in the ref\n");
+	printf("Call het variants jointly after marking off the bubbles in the ref\n");
 	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
 									   &detect_vars_condition_always_true,
-									   &element_get_colour0, &element_get_covg_colour0,
-									   &element_get_colour1, &element_get_covg_colour1);
+									   &element_get_colour_human_ref, &get_covg_human_ref,
+									   &element_get_union_human_colours, &get_joint_human_covg,
+									   &print_extra_info);
 	fclose(detect_vars_after_remv_ref_bub_fptr);
 	//no need to traverse and do cleanup, as db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored does it at the end
 
-	//STEP3 - detect hom non ref variants
+	//STEP3 - detect hom non ref variants jointly - ie these are hom-non-ref in both individuals
 	FILE* detect_vars_hom_nonref_fptr = fopen(detectvars_hom_nonref_filename, "w");
 	if (detect_vars_hom_nonref_fptr==NULL)
 	  {
@@ -704,16 +889,16 @@ int main(int argc, char **argv){
 	  }
 
 	printf("About to print hom nonref calls to %s\n", detectvars_hom_nonref_filename);
-	db_graph_detect_vars( detect_vars_hom_nonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref,
+	db_graph_detect_vars( detect_vars_hom_nonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref_in_both_individuals,
 			      &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
-			      &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+			      &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_extra_info);
 
 	//cleanup
 	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
 
 
 	//STEP 4 - detect homovariants using ref-assisted trusted-path algorithm
-
+	/*
 	int min_fiveprime_flank_anchor = 3;
 	int min_threeprime_flank_anchor= 3;
 	int max_anchor_span =  70000;
@@ -722,38 +907,78 @@ int main(int argc, char **argv){
 	int max_covg = 100000000;
 	int max_expected_size_of_supernode=70000;
 	
-
+	
 	//needs a filepointer to traverse the reference as it walks the graph
-	printf("Detect polymorphic sites using reference assisted caller, using this ref file %s\n", ref_fasta);
-
-	FILE* ref_ass_fptr = fopen(ref_assisted_filename, "w");
+	printf("Detect polymorphic sites in NA12878 using reference assisted caller, using this ref file %s\n", ref_fasta);
+	
+	char out_ra_na12878[500];
+	sprintf(out_ra_na12878, "%s_%s", ref_assisted_filename, "na12878");
+	char out_ra_na19240[500];
+	sprintf(out_ra_na19240, "%s_%s", ref_assisted_filename, "na19240");
+	
+	FILE* ref_ass_fptr = fopen(out_ra_na12878, "w");
 	if (ref_ass_fptr==NULL)
 	  {
-	    printf("Cnnot open %s, so exit", ref_assisted_filename);
+	    printf("Cnnot open %s, so exit",out_ra_na12878);
 	    exit(1);
 	  }
-
+	
 	FILE* ref_fptr = fopen(ref_fasta, "r");
 	if (ref_fptr==NULL)
 	  {
 	    printf("Cannot open %s, so exit", ref_fasta);
 	    exit(1);
 	  }
-
+	
 	db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 1, individual_edge_array, 0,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_fptr,
 						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
 	fclose(ref_ass_fptr);
-
-
+	fclose(ref_fptr);
+	
 	//cleanup
 	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
-
-
+	
+	
+	//Now do the same for NA19240
+	
+	printf("Detect polymorphic sites in NA19240 using reference assisted caller, using this ref file %s\n", ref_fasta);
+	
+	ref_ass_fptr = fopen(out_ra_na19240, "w");
+	if (ref_ass_fptr==NULL)
+	  {
+	    printf("Cnnot open %s, so exit",out_ra_na19240);
+	    exit(1);
+	  }
+	
+	ref_fptr = fopen(ref_fasta, "r");
+	if (ref_fptr==NULL)
+	  {
+	    printf("Cannot open %s, so exit", ref_fasta);
+	    exit(1);
+	  }
+	
+	db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 2, individual_edge_array, 0,
+						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_fptr,
+						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
+	fclose(ref_ass_fptr);
+	
+	
+	//cleanup
+	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+	
+	
+	*/	
+	
 	printf("Finished making all calls\n");
-	  */	  
-	  break;
+
+	printf("Now print supernodes of novel sequence tht does not match ancestral species\n");
+	printf("Now print supernodes of novel sequence that DOES match ancestral species");
+
+	
+	break;
 	}
       
       
