@@ -237,7 +237,7 @@ void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, 
     {
       if (index>=NUMBER_OF_INDIVIDUALS_PER_POPULATION)
 	{
-	  printf("in element's reset_one_edge function. index is %d,and should be at most %d", index, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+	  printf("in element's reset_one_edge function. index is %d,and should be at most %d - 1", index, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
 	  exit(1);
 	}
 
