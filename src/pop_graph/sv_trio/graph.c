@@ -856,7 +856,6 @@ int main(int argc, char **argv){
 	    // determine ancestral allele by comparing with chimp, gorilla
 	    fprintf(fout, "\n");
 	    
-	    WhichAllele which_allele_matches_human_ref;
 	    WhichAllele which_allele_matches_chimp;
 	    //    WhichAllele which_allele_matches_macaca;
 	    WhichAllele which_allele_matches_gorilla;
