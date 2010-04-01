@@ -13,6 +13,9 @@
 
 int main(int argc, char **argv){
 
+  boolean loading_colours_separately=true;//either we load a population, with a file listing individuals, and for each individual you have a list of binaries (enter 1)
+                                          // or we just load one single multicolour binary (in this case enter 0)
+  int number_colours_in_multicolour_binary=0;
   char* filename;
   int hash_key_bits, bucket_size;
   dBGraph * db_graph = NULL; 
@@ -35,27 +38,29 @@ int main(int argc, char **argv){
   int R_454;//mean read length
 
   //command line arguments 
-  filename         = argv[1];        //open file that lists one file per individual in the trio (population), and each of those gives list of files.
-  kmer_size        = atoi(argv[2]);  //global variable defined in element.h
-  hash_key_bits    = atoi(argv[3]);  //number of buckets: 2^hash_key_bits
-  bucket_size      = atoi(argv[4]);
-  action           = atoi(argv[5]);
-  DEBUG            = atoi(argv[6]);
-  dumped_binary   = argv[7];
-  list_of_fastq = argv[8];
-  remove_low_covg_nodes = (boolean) atoi(argv[9]);
-  detectvars_filename = argv[10];
-  detectvars_after_remv_ref_bubble_filename = argv[11];
-  detectvars_hom_nonref_filename=argv[12];
-  ref_assisted_filename=argv[13];
-  ref_fasta = argv[14];
-  low_cov_thresh = atoi(argv[15]);
-  D_slx_na12878 = atoi(argv[16]);
-  D_slx_na19240 = atoi(argv[17]);
-  D_454_na12878 = atoi(argv[18]);
-  D_454_na19240 = atoi(argv[19]);
-  R_slx = atoi(argv[20]);
-  R_454 = atoi(argv[21]);
+  loading_colours_separately = (boolean) atoi(argv[1]);
+  number_colours_in_multicolour_binary = atoi(argv[2]);
+  filename         = argv[3];        //open file that lists one file per individual in the trio (population), and each of those gives list of files.
+  kmer_size        = atoi(argv[4]);  //global variable defined in element.h
+  hash_key_bits    = atoi(argv[5]);  //number of buckets: 2^hash_key_bits
+  bucket_size      = atoi(argv[6]);
+  action           = atoi(argv[7]);
+  DEBUG            = atoi(argv[8]);
+  dumped_binary   = argv[9];
+  list_of_fastq = argv[10];
+  remove_low_covg_nodes = (boolean) atoi(argv[11]);
+  detectvars_filename = argv[12];
+  detectvars_after_remv_ref_bubble_filename = argv[13];
+  detectvars_hom_nonref_filename=argv[14];
+  ref_assisted_filename=argv[15];
+  ref_fasta = argv[16];
+  low_cov_thresh = atoi(argv[17]);
+  D_slx_na12878 = atoi(argv[18]);
+  D_slx_na19240 = atoi(argv[19]);
+  D_454_na12878 = atoi(argv[20]);
+  D_454_na19240 = atoi(argv[21]);
+  R_slx = atoi(argv[22]);
+  R_454 = atoi(argv[23]);
 
   int max_retries=10;
 
@@ -66,13 +71,33 @@ int main(int argc, char **argv){
   db_graph = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
   printf("table created: %d\n",1 << hash_key_bits);
 
- 
-  printf("Start loading population\n");
-  load_population_as_binaries_from_graph(filename, db_graph);
-  printf("Finished loading population\n");
-  printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));
-
-
+  if (loading_colours_separately==true)
+    {
+      printf("Start loading population\n");
+      load_population_as_binaries_from_graph(filename, db_graph);
+      printf("Finished loading population\n");
+      printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));
+    }
+  else
+    {
+      if (number_colours_in_multicolour_binary< NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+	{
+	  printf("Need to port this code from the _wth_genotyping repo\n");
+	  exit(1);
+	  // int kmers_loaded = load_multicolour_binary_with_strictly_less_colours_from_filename_into_graph(filename, db_graph, number_colours_in_multicolour_binary);
+	  //printf("Loaded the single multicolour binary %s, and got %d kmers\n", filename, kmers_loaded);
+	}
+      else if (number_colours_in_multicolour_binary==NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+	{
+	  int kmers_loaded = load_multicolour_binary_data_from_filename_into_graph(filename, db_graph);
+	  printf("Loaded the single multicolour binary %s, and got %d kmers\n", filename, kmers_loaded);
+	}
+      else
+	{
+	  printf("Trying to load a binary with too many colours");
+	  exit(1);
+	}
+    }
 
 
 
@@ -527,6 +552,33 @@ int main(int argc, char **argv){
 	}
 
 
+
+	void apply_reset_to_all_edges(dBNode* node, Orientation or, Nucleotide nuc)
+	{
+	  int j;
+	  for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
+	    {
+	      reset_one_edge(node, or, nuc, individual_edge_array, j);
+	    }
+	}
+	void apply_reset_to_all_edges_2(dBNode* node )
+	{
+	  int j;
+	  for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
+	    {
+	      db_node_reset_edges(node, individual_edge_array, j);
+	    }
+	}
+
+	if (remove_low_covg_nodes==true)
+	  {
+	    printf("remove low coverage nodes (<= %d ) \n", low_cov_thresh);
+	    db_graph_remove_low_coverage_nodes(low_cov_thresh,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
+					       &apply_reset_to_all_edges, &apply_reset_to_all_edges_2);
+	    
+	    printf("dumping graph %s\n",dumped_binary);
+	    db_graph_dump_binary(dumped_binary,&db_node_check_status_not_pruned,db_graph);
+	  }
 
 
 	// STEP1 - detect vars, calls hets, with no conditions
