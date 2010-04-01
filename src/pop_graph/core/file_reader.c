@@ -257,7 +257,7 @@ void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, S
 		printf("file_reader: we have a problem - prev kmer not found\n");
 		exit(1);
 	      }
-	    else if (! (db_node_edge_exist(previous_node, current_base, previous_orientation, individual_edge_array, colour) ) )
+	    else if ( (require_nodes_to_lie_in_given_colour==true) && (! (db_node_edge_exist(previous_node, current_base, previous_orientation, individual_edge_array, colour) )) )
 	      { 
 		printf("Missing edge");
 		exit(1);

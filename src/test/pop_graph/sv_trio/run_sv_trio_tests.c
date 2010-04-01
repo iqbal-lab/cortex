@@ -82,6 +82,12 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test checking if a path lies in a (function of) colours", test_does_this_path_exist_in_this_colour  )) 
+    {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
   if (NULL == CU_add_test(pPopGraphSuite, "Test dumping of cleaned fasta by aligning against a cleaned graph",test_dumping_of_clean_fasta )) {
     CU_cleanup_registry();
     return CU_get_error();

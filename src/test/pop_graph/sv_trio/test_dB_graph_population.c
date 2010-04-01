@@ -4273,3 +4273,156 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
   free(results_array);
   hash_table_free(&db_graph);
 }
+
+void test_does_this_path_exist_in_this_colour()
+{
+
+  if (NUMBER_OF_INDIVIDUALS_PER_POPULATION>=3)
+    {
+      //first set up the hash/graph                                                                                                                                                                            
+      int kmer_size = 7;
+      int number_of_bits = 10;
+      int bucket_size    = 8;
+      long long bad_reads = 0;
+      int max_retries=10;
+      int max_read_length=100;
+      
+      dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+      int seq_loaded = load_population_as_fasta("../data/test/pop_graph/three_colours", &bad_reads, db_graph);
+      
+      //annoyingly, I have called these file colour1 and colour2, but in the hash table they are colours 0 and 1. Sorry for this. From here on, I use colour0 colour1 - the original filenames irrelevant
+      /* in colour 0 we have
+	 
+	 >read1
+	 AAGCATAGACACAGTGAGAGAC
+	 >read2
+	 CCCCCTTTTCCCCCTTTTCCCC
+	 
+	 and in colour1 we have
+	 
+	 >read1
+	 AAGCATAGACACAGTGAGA
+	 >read3
+	 TTTGTGTTTTGTGTG
+	 
+	 
+	 and in colour2  - which is NOT loaded into th hgraph, we have
+	 >read4 bridges read2 and read3 - so if you mix colours 0 and 1, you'll get one long contig joining read2 and read3
+	 TTCCCCTTTGTGTTTTGTGTG
+	 
+      */
+      
+      //----------------------------------
+      // allocate the memory used to read the sequences
+      //----------------------------------
+      Sequence * seq = malloc(sizeof(Sequence));
+      if (seq == NULL){
+	fputs("Out of memory trying to allocate Sequence\n",stderr);
+	exit(1);
+      }
+      alloc_sequence(seq,max_read_length,LINE_MAX);
+      
+      //We are going to load all the bases into a single sliding window 
+      KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
+      if (kmer_window==NULL)
+	{
+	  printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
+	  exit(1);
+	}
+      
+      
+      kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
+      if (kmer_window->kmer==NULL)
+	{
+	  printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
+	  exit(1);
+	}
+      kmer_window->nkmers=0;
+      
+      //create file reader
+      int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
+	long long ret;
+	int offset = 0;
+	if (new_entry == false){
+	  printf("new_entry must be true in hsi test function");
+	  exit(1);
+	}
+	ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
+	
+	return ret;
+      }
+      
+      
+      dBNode* array_nodes[50];//in fact there are 43 17-mers in the first line of the fasta
+      Orientation array_or[50];
+      
+      //end of intialisation 
+      
+      
+      //so let's check read1 - should see it in colour1 and colour2, and the union of colours 1 and 2
+      
+      FILE* fp = fopen("../data/test/pop_graph/colour0.fasta", "r");
+      if (fp==NULL)
+	{
+	  printf("Cannot open ../data/test/pop_graph/colour0.fasta");
+	  exit(1);
+	}
+      int len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, file_reader, seq, kmer_window, db_graph, 0);
+      
+      //now the test
+      
+      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==true);
+      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==true);
+      
+      
+      //now read2:
+      len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, file_reader, seq, kmer_window, db_graph, 0);
+      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==true);
+      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==false);
+      
+      //now try the other fasta file and check read1 and 3
+      fclose(fp);
+      fp = fopen("../data/test/pop_graph/colour1.fasta", "r");
+      if (fp==NULL)
+	{
+	  printf("Cannot open ../data/test/pop_graph/colour1.fasta");
+	  exit(1);
+	}
+      
+      
+      //this read is in both colours
+      len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, file_reader, seq, kmer_window, db_graph, 0);
+      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==true);
+      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==true);
+      //this read is in colour1 only
+      len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, file_reader, seq, kmer_window, db_graph, 0);
+      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==false);
+      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==true);
+      
+      //now for the final test, take a read which is there in the union of two colours, but not in either
+      fclose(fp);
+      fp = fopen("../data/test/pop_graph/colour2.fasta", "r");
+      if (fp==NULL)
+	{
+	  printf("Cannot open ../data/test/pop_graph/colour2.fasta");
+	  exit(1);
+	}
+      len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, file_reader, seq, kmer_window, db_graph, 0);
+      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==false);
+      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==false);
+      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour_union_of_all_colours, db_graph)==false);
+      
+      
+      
+      free(kmer_window->kmer);
+      free(kmer_window);
+      free_sequence(&seq);
+      hash_table_free(&db_graph);
+      
+    }
+  else
+    {
+      printf("This test is NULL unless there are >=3 colours\n");
+    }
+  
+}

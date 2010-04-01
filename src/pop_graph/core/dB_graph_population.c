@@ -1886,7 +1886,7 @@ boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks* var)
 }
 
 
-boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(dBNode*), int (*get_covg_indiv)(dBNode*) )
+boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(const dBNode*), int (*get_covg_indiv)(const dBNode*) )
 {
   //Assumes the reference is colour 0 and the individual is colour 1
   int covg_threshold = 1;
@@ -1970,7 +1970,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  boolean (*condition)(VariantBranchesAndFlanks*),
 			  void (*action_branches)(dBNode*),
 			  void (*action_flanks)(dBNode*),
-			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) )
+			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
 {
   printf("Start detect_vars\n");
   int count_vars = 0; 
@@ -2133,6 +2134,10 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 										     nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
 										     seq3p,
 										     db_graph->kmer_size,false, get_colour, get_covg);
+		sprintf(name,"variant_%i", count_vars);
+		fprintf(fout,"\n%s - extra information", name);
+		print_extra_info(&var, fout);
+
 		
 	      }
 	    //db_node_action_set_status_visited(path_nodes2[length2]);
@@ -2176,7 +2181,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fout, int max_length, dBGraph * db_graph, 
 									boolean (*condition)(VariantBranchesAndFlanks*),
 									Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
-									Edges (*get_colour_indiv)(const dBNode*), int (*get_covg_indiv)(const dBNode*) )
+									Edges (*get_colour_indiv)(const dBNode*), int (*get_covg_indiv)(const dBNode*),
+									void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*) )
 {
 
   //first detect bubbles in the ref colour, but do not print them out, so they get marked as visited
@@ -2184,7 +2190,7 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fo
 		       &detect_vars_condition_always_false,
 		       &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
 		       &db_node_action_set_status_visited, //mark everything else as visited
-		       get_colour_ref, get_covg_ref);
+		       get_colour_ref, get_covg_ref, print_extra_info);
 
   //unset the nodes marked as visited, but not those marked as to be ignored
   hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -2195,7 +2201,7 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fo
 		       &detect_vars_condition_branches_not_marked_to_be_ignored,//ignore anything you find that is marked to be ignored
 		       &db_node_action_set_status_visited,
 		       &db_node_action_set_status_visited,
-		       get_colour_indiv, get_covg_indiv);
+		       get_colour_indiv, get_covg_indiv, print_extra_info);
 
 
   //unset the nodes marked as visited, but not those marked as to be ignored
@@ -2236,7 +2242,8 @@ void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArray
   
 }
 
-void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, char* filename_sings, int max_length, dBGraph * db_graph, EdgeArrayType type, int index){
+void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, char* filename_sings, int max_length, dBGraph * db_graph, EdgeArrayType type, int index, 
+							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*)){
 
   FILE * fout1; //file to which we will write all supernodes which are longer than 1 node in fasta format
   fout1= fopen(filename_sups, "w"); 
@@ -2289,6 +2296,8 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
 	if (length==max_length){
 	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
 	}
+	fprintf(fout1, "extra information:\n");
+	print_extra_info(path_nodes, path_orientations, length, fout1);
 	count_nodes++;
       }
       else{
@@ -2296,9 +2305,11 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
 	print_minimal_fasta_from_path_for_specific_person_or_pop(fout2,name,length,avg_coverage,min,max,
 								 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
 								 db_graph->kmer_size,true, type, index);
+	fprintf(fout2, "extra information:\n");
+	print_extra_info(path_nodes, path_orientations, length, fout2);
 	count_sing++;
       }
-    
+      
     }
   }
   
@@ -2315,7 +2326,8 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
 
 
 void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, char* filename_sings, int max_length, 
-							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)  ){
+							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*)){
 
   FILE * fout1; //file to which we will write all supernodes which are longer than 1 node in fasta format
   fout1= fopen(filename_sups, "w"); 
@@ -2363,6 +2375,8 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 	if (length==max_length){
 	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
 	}
+	fprintf(fout1, "extra information:\n");
+	print_extra_info(path_nodes, path_orientations, length, fout1);
 	count_nodes++;
       }
       else{
@@ -2370,6 +2384,9 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 	print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout2,name,length,avg_coverage,min,max,
 									     path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
 									     db_graph->kmer_size,true, get_colour, get_covg);
+	fprintf(fout2, "extra information:\n");
+	print_extra_info(path_nodes, path_orientations, length, fout2);
+
 	count_sing++;
       }
     
@@ -3794,6 +3811,7 @@ boolean make_reference_path_based_sv_calls_condition_is_hom_nonref(VariantBranch
       return false;
     }
 }
+
 
 boolean make_reference_path_based_sv_calls_condition_is_het(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv)
 {
@@ -5861,4 +5879,33 @@ void print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *
 
 
 
+boolean does_this_path_exist_in_this_colour(dBNode** array_nodes, Orientation* array_orientations,  int len, Edges (*get_colour)(const dBNode*), dBGraph* db_graph )
+{
+  boolean ret = true;
+  int i;
 
+  for (i=1; i<len; i++)
+    {
+      //get last base in kmer
+      Nucleotide n;
+      if (array_orientations[i]==forward)
+	{
+	  n = binary_kmer_get_last_nucleotide(&(array_nodes[i]->kmer));
+	}
+      else
+	{
+	  BinaryKmer tmp_kmer;
+	  n = binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(&(array_nodes[i]->kmer), db_graph->kmer_size, &tmp_kmer));
+	}
+      
+      if (!(db_node_edge_exist_within_specified_function_of_coloured_edges(array_nodes[i-1], n, array_orientations[i-1], get_colour)) )
+	{
+	  ret=false;
+	  break;
+	}
+      
+    }
+  return ret;
+  
+  
+}

@@ -199,25 +199,30 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  boolean (*condition)( VariantBranchesAndFlanks*), 
                           void (*action_branches)(dBNode*),
                           void (*action_flanks)(dBNode*),
-			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) );
+			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*)
+			  );
 
 void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fout, int max_length, dBGraph * db_graph, 
 									boolean (*condition)(VariantBranchesAndFlanks*),
 									Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
-									Edges (*get_colour_indiv)(const dBNode*), int (*get_covg_indiv)(const dBNode*) );
+									Edges (*get_colour_indiv)(const dBNode*), int (*get_covg_indiv)(const dBNode*),
+									void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*));
 
 boolean detect_vars_condition_always_true(VariantBranchesAndFlanks*);
 boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesAndFlanks* var);
 boolean detect_vars_condition_always_false(VariantBranchesAndFlanks*);
 boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks*);
-boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(dBNode*), int (*get_covg_indiv)(dBNode*) );
+boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(const dBNode*), int (*get_covg_indiv)(const dBNode*) );
 
 void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
 
-void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, char* filename_sings, int max_length, dBGraph * db_graph, EdgeArrayType type, int index);
+void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, char* filename_sings, int max_length, dBGraph * db_graph, EdgeArrayType type, int index,
+                                                          void (*print_extra_info)(dBNode**, Orientation*, int, FILE*));
 
 void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, char* filename_sings, int max_length, 
-							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*));
+							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*));
 
 void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
 
@@ -368,6 +373,7 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 						      int index
 						      );
 
+
 void print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(FILE *fout,
 									 char * name,
 									 int length,
@@ -395,5 +401,9 @@ void print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(FILE *f
 									 );
 
 
+
+
+
+boolean does_this_path_exist_in_this_colour(dBNode** array_nodes, Orientation* array_orientations,  int len, Edges (*get_colour)(const dBNode*), dBGraph* db_graph );
 
 #endif
