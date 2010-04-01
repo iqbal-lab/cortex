@@ -2242,7 +2242,8 @@ void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArray
   
 }
 
-void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, char* filename_sings, int max_length, dBGraph * db_graph, EdgeArrayType type, int index){
+void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, char* filename_sings, int max_length, dBGraph * db_graph, EdgeArrayType type, int index, 
+							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*)){
 
   FILE * fout1; //file to which we will write all supernodes which are longer than 1 node in fasta format
   fout1= fopen(filename_sups, "w"); 
@@ -2295,6 +2296,8 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
 	if (length==max_length){
 	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
 	}
+	fprintf(fout1, "extra information:\n");
+	print_extra_info(path_nodes, path_orientations, length, fout1);
 	count_nodes++;
       }
       else{
@@ -2302,9 +2305,11 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
 	print_minimal_fasta_from_path_for_specific_person_or_pop(fout2,name,length,avg_coverage,min,max,
 								 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
 								 db_graph->kmer_size,true, type, index);
+	fprintf(fout2, "extra information:\n");
+	print_extra_info(path_nodes, path_orientations, length, fout2);
 	count_sing++;
       }
-    
+      
     }
   }
   
@@ -2321,7 +2326,8 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
 
 
 void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, char* filename_sings, int max_length, 
-							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)  ){
+							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*)){
 
   FILE * fout1; //file to which we will write all supernodes which are longer than 1 node in fasta format
   fout1= fopen(filename_sups, "w"); 
@@ -2369,6 +2375,8 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 	if (length==max_length){
 	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
 	}
+	fprintf(fout1, "extra information:\n");
+	print_extra_info(path_nodes, path_orientations, length, fout1);
 	count_nodes++;
       }
       else{
@@ -2376,6 +2384,9 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 	print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout2,name,length,avg_coverage,min,max,
 									     path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
 									     db_graph->kmer_size,true, get_colour, get_covg);
+	fprintf(fout2, "extra information:\n");
+	print_extra_info(path_nodes, path_orientations, length, fout2);
+
 	count_sing++;
       }
     
@@ -3800,6 +3811,7 @@ boolean make_reference_path_based_sv_calls_condition_is_hom_nonref(VariantBranch
       return false;
     }
 }
+
 
 boolean make_reference_path_based_sv_calls_condition_is_het(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv)
 {
