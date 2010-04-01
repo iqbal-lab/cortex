@@ -671,23 +671,23 @@ int main(int argc, char **argv){
 
 	  int get_covg_human_ref(const dBNode* e)
 	  {
-	    return e->coverage[0];
+	    return e->coverage[colour_human_ref];
 	  }
 	  int get_covg_na12878(const dBNode* e)
 	  {
-	    return e->coverage[1];
+	    return e->coverage[colour_na12878];
 	  }
 	  int get_covg_na19240(const dBNode* e)
 	  {
-	    return e->coverage[2];
+	    return e->coverage[colour_na19240];
 	  }
 	  int get_covg_chimp(const dBNode* e)
 	  {
-	    return e->coverage[3];
+	    return e->coverage[colour_chimp];
 	  }
 	  int get_covg_gorilla(const dBNode* e)
 	  {
-	    return e->coverage[4];
+	    return e->coverage[colour_gorilla];
 	  }
 	  //  int get_covg_macaca(const dBNode* e)
 	  //{
@@ -696,7 +696,7 @@ int main(int argc, char **argv){
 
 	  int get_covg_union_ancestral_species(const dBNode* e)
 	  {
-	    return e->coverage[3] + e->coverage[4] + e->coverage[5];
+	    return e->coverage[colour_chimp] + e->coverage[colour_gorilla];
 	  }
 	  
 	  Edges element_get_colour_human_ref(const Element* e)
