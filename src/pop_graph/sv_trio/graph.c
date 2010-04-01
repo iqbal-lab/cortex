@@ -889,8 +889,8 @@ int main(int argc, char **argv){
 	  }
 	printf("Call het variants jointly after marking off the bubbles in the ref\n");
 	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
-									   &detect_vars_condition_always_true,
-									   //&bubble_condition_coverage_on_both_individuals_not_too_high,
+									   //&detect_vars_condition_always_true,
+									   &bubble_condition_coverage_on_both_individuals_not_too_high,
 									   &element_get_colour_human_ref, &get_covg_human_ref,
 									   &element_get_union_human_colours, &get_joint_human_covg,
 									   &print_extra_info);
