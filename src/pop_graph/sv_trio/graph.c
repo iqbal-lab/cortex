@@ -637,7 +637,7 @@ int main(int argc, char **argv){
 	  int colour_na19240=2;
 	  int colour_chimp =3;
 	  int colour_gorilla=4;
-	  int colour_macaca=5;
+	  //int colour_macaca=5;
 	  
 	  Edges get_colour_human_ref(const dBNode* e)
 	  {
@@ -664,10 +664,10 @@ int main(int argc, char **argv){
 	    return get_edge_copy(*e, individual_edge_array, colour_gorilla);
 	  }
 
-	  Edges get_colour_macaca(const dBNode* e)
-	  {
-	    return get_edge_copy(*e, individual_edge_array, colour_macaca);
-	  }
+	  //  Edges get_colour_macaca(const dBNode* e)
+	  //{
+	  //  return get_edge_copy(*e, individual_edge_array, colour_macaca);
+	  // }
 
 	  int get_covg_human_ref(const dBNode* e)
 	  {
@@ -689,10 +689,10 @@ int main(int argc, char **argv){
 	  {
 	    return e->coverage[4];
 	  }
-	  int get_covg_macaca(const dBNode* e)
-	  {
-	    return e->coverage[5];
-	  }
+	  //  int get_covg_macaca(const dBNode* e)
+	  //{
+	  //  return e->coverage[5];
+	  // }
 
 	  int get_covg_union_ancestral_species(const dBNode* e)
 	  {
@@ -786,15 +786,15 @@ int main(int argc, char **argv){
 	  
 	  void print_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
 	  {
-	    // determine ancestral allele by comparing with chimp, gorilla, macaca
+	    // determine ancestral allele by comparing with chimp, gorilla
 	    fprintf(fout, "\n");
 	    
 	    WhichAllele which_allele_matches_human_ref;
 	    WhichAllele which_allele_matches_chimp;
-	    WhichAllele which_allele_matches_macaca;
+	    //    WhichAllele which_allele_matches_macaca;
 	    WhichAllele which_allele_matches_gorilla;
 	    boolean precisely_one_allele_matches_chimp=db_variant_precisely_one_allele_is_in_given_func_of_colours(var, &get_colour_chimp, db_graph, &which_allele_matches_chimp);
-	    boolean precisely_one_allele_matches_macaca=db_variant_precisely_one_allele_is_in_given_func_of_colours(var, &get_colour_macaca, db_graph, &which_allele_matches_macaca);
+	    //boolean precisely_one_allele_matches_macaca=db_variant_precisely_one_allele_is_in_given_func_of_colours(var, &get_colour_macaca, db_graph, &which_allele_matches_macaca);
 	    boolean precisely_one_allele_matches_gorilla=db_variant_precisely_one_allele_is_in_given_func_of_colours(var, &get_colour_gorilla, db_graph, &which_allele_matches_gorilla); ;
 
 	    if (precisely_one_allele_matches_chimp==true)
@@ -821,18 +821,18 @@ int main(int argc, char **argv){
 		    fprintf(fout, "branch2 matches gorilla\n");//and branch1 does not
 		  }
 	      }
-	    else if (precisely_one_allele_matches_macaca==true)
-	      {
- 		fprintf(fout, "ANCESTRAL ALLELE: ");
-		if (which_allele_matches_macaca==allele_one)
-		  {
-		    fprintf(fout, "branch1 matches macaca\n");//and branch2 does not
-		  }
-		else
-		  {
-		    fprintf(fout, "branch2 matches macaca\n");//and branch1 does not
-		  }
-	      }
+	    //else if (precisely_one_allele_matches_macaca==true)
+	    //  {
+	    //	fprintf(fout, "ANCESTRAL ALLELE: ");
+	    //	if (which_allele_matches_macaca==allele_one)
+	    //	  {
+	    //	    fprintf(fout, "branch1 matches macaca\n");//and branch2 does not
+	    //	  }
+	    //	else
+	    //	  {
+	    //	    fprintf(fout, "branch2 matches macaca\n");//and branch1 does not
+	    //	  }
+	    // }
 
 	    
 	    // determine which individual this variant is on, and print
