@@ -858,6 +858,9 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
   return true;
 }
 
+
+
+
 //read a binary for an individual person, - sinlge colour only
 // the edge array type and index tell you which person you should load this data into
 boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index)
