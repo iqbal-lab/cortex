@@ -707,16 +707,16 @@ int main(int argc, char **argv){
 	  Edges element_get_union_human_colours(const Element* e)
 	  {
 	    Edges edges=0;
-	    Edges edges1=get_edge_copy(*e, individual_edge_array,1);
+	    Edges edges1=get_edge_copy(*e, individual_edge_array,colour_na12878);
 	    edges |= edges1;
-	    Edges edges2=get_edge_copy(*e, individual_edge_array,2);
+	    Edges edges2=get_edge_copy(*e, individual_edge_array,colour_na19240);
 	    edges |= edges2;
 	    return edges;
 	  }
 	  
 	  int get_joint_human_covg(const dBNode* e)
 	  {
-	    return e->coverage[1] + e->coverage[2];
+	    return e->coverage[colour_na12878] + e->coverage[colour_na19240];
 	  }
 	  
 	  boolean detect_vars_condition_is_hom_nonref_in_both_individuals(VariantBranchesAndFlanks* var)
@@ -724,22 +724,37 @@ int main(int argc, char **argv){
 	    return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_human_ref, &get_joint_human_covg );
 	  }
 	  
+	  int max(int a, int b)
+	  {
+	    if (a>b)
+	      {
+		return a;
+	      }
+	    else
+	      {
+		return b;
+	      }
+	  }
+
 	  //ensure both alleles have covg < 2* effective coverage expected for each individual
 	  boolean bubble_condition_coverage_on_both_individuals_not_too_high(VariantBranchesAndFlanks* var)
 	  {
 
-	    double eff_covg_na12878 = D_slx_na12878*    ((double)(R_slx - db_graph->kmer_size +1 ))/(double)R_slx
-                            	    + D_454_na12878*    ((double)(R_454 - db_graph->kmer_size +1 ))/(double)R_454;      //D (1-(k-1)/R )
+	    double eff_covg_na12878 = (double) D_slx_na12878*    ((double)(R_slx - db_graph->kmer_size +1 ))/(double)R_slx
+                            	    + (double) D_454_na12878*    ((double)(R_454 - db_graph->kmer_size +1 ))/(double)R_454;      //D (1-(k-1)/R )
 	    
-	    double eff_covg_na19240 = D_slx_na19240*    ((double)(R_slx - db_graph->kmer_size +1 ))/(double)R_slx
-                            	    + D_454_na19240*    ((double)(R_454 - db_graph->kmer_size +1 ))/(double)R_454;      //D (1-(k-1)/R )
+	    double eff_covg_na19240 = (double) D_slx_na19240*    ((double)(R_slx - db_graph->kmer_size +1 ))/(double)R_slx
+                            	    + (double) D_454_na19240*    ((double)(R_454 - db_graph->kmer_size +1 ))/(double)R_454;      //D (1-(k-1)/R )
 	    int i;
 	    boolean all_nodes_on_both_alleles_have_ok_covg_in_both_indivs = true;
 	    for (i=0; (i<var->len_one_allele) && all_nodes_on_both_alleles_have_ok_covg_in_both_indivs==true ; i++)
 	      {
-		if (  (get_covg_na12878((var->one_allele)[i]) > 2* eff_covg_na12878) 
+
+		int exp_mult = max(1, get_covg_human_ref((var->one_allele)[i]) );//we expect this kmer to occur as many times as in reference, or else once
+
+		if (  (get_covg_na12878((var->one_allele)[i]) > 2* eff_covg_na12878 * exp_mult) 
 		      ||
-		      (get_covg_na19240((var->one_allele)[i]) > 2* eff_covg_na19240)
+		      (get_covg_na19240((var->one_allele)[i]) > 2* eff_covg_na19240 * exp_mult )
 		      )
 		  {
 		    all_nodes_on_both_alleles_have_ok_covg_in_both_indivs=false;
@@ -748,9 +763,11 @@ int main(int argc, char **argv){
 
 	    for (i=0; (i<var->len_other_allele) && all_nodes_on_both_alleles_have_ok_covg_in_both_indivs==true ; i++)
 	      {
-		if (  (get_covg_na12878((var->other_allele)[i]) > 2* eff_covg_na12878) 
+		int exp_mult = max(1, get_covg_human_ref((var->other_allele)[i]) );//we expect this kmer to occur as many times as in reference, or else once
+
+		if (  (get_covg_na12878((var->other_allele)[i]) > 2* eff_covg_na12878 * exp_mult) 
 		      ||
-		      (get_covg_na19240((var->other_allele)[i]) > 2* eff_covg_na19240)
+		      (get_covg_na19240((var->other_allele)[i]) > 2* eff_covg_na19240 * exp_mult)
 		      )
 		  {
 		    all_nodes_on_both_alleles_have_ok_covg_in_both_indivs=false;
@@ -782,7 +799,6 @@ int main(int argc, char **argv){
 	      }
 	  }
 	  
-	  //boolean condition_ref_ass_call_..what?
 	  
 	  void print_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
 	  {
@@ -874,6 +890,7 @@ int main(int argc, char **argv){
 	printf("Call het variants jointly after marking off the bubbles in the ref\n");
 	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
 									   &detect_vars_condition_always_true,
+									   //&bubble_condition_coverage_on_both_individuals_not_too_high,
 									   &element_get_colour_human_ref, &get_covg_human_ref,
 									   &element_get_union_human_colours, &get_joint_human_covg,
 									   &print_extra_info);
@@ -898,7 +915,7 @@ int main(int argc, char **argv){
 
 
 	//STEP 4 - detect homovariants using ref-assisted trusted-path algorithm
-	/*
+
 	int min_fiveprime_flank_anchor = 3;
 	int min_threeprime_flank_anchor= 3;
 	int max_anchor_span =  70000;
@@ -970,7 +987,7 @@ int main(int argc, char **argv){
 	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 	
 	
-	*/	
+
 	
 	printf("Finished making all calls\n");
 
