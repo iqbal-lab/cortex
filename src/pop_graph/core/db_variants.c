@@ -96,11 +96,11 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
     {
       if (does_this_path_exist_in_this_colour(var->other_allele, var->other_allele_or, var->len_other_allele, get_colour,db_graph)==true)
 	{
-	  return hom_one;
+	  return het;
 	}
       else
 	{
-	  return het;
+	  return hom_one;
 	}
     }
   else if (does_this_path_exist_in_this_colour(var->other_allele, var->other_allele_or, var->len_other_allele, get_colour,db_graph)==true)
