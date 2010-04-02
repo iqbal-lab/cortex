@@ -871,31 +871,31 @@ int main(int argc, char **argv){
 	    int i;
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d\t", node_array[i]->coverage[colour_human_ref]);
+		fprintf(fout, "%d ", node_array[i]->coverage[colour_human_ref]);
 	      }
 	    fprintf(fout, "\n");
 	    fprintf(fout, "Covg in NA12878:\n");
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d\t", node_array[i]->coverage[colour_na12878]);
+		fprintf(fout, "%d ", node_array[i]->coverage[colour_na12878]);
 	      }
 	    fprintf(fout, "\n");
 	    fprintf(fout, "Covg in NA19240:\n");
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d\t", node_array[i]->coverage[colour_na19240]);
+		fprintf(fout, "%d ", node_array[i]->coverage[colour_na19240]);
 	      }
 	    fprintf(fout, "\n");
 	    fprintf(fout, "Mult in chimp:\n");
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d\t", node_array[i]->coverage[colour_chimp]);
+		fprintf(fout, "%d ", node_array[i]->coverage[colour_chimp]);
 	      }
 	    fprintf(fout, "\n");
 	    fprintf(fout, "Mult in gorilla:\n");
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d\t", node_array[i]->coverage[colour_gorilla]);
+		fprintf(fout, "%d ", node_array[i]->coverage[colour_gorilla]);
 	      }
 	    fprintf(fout, "\n");
 		    
@@ -992,7 +992,7 @@ int main(int argc, char **argv){
 	fclose(detect_vars_after_remv_ref_bub_fptr);
 	//no need to traverse and do cleanup, as db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored does it at the end
 
-
+	/*
 	char strict_het_bubbles[300];
 	sprintf(strict_het_bubbles, "%s.strict", detectvars_after_remv_ref_bubble_filename);
 	detect_vars_after_remv_ref_bub_fptr = fopen(strict_het_bubbles, "w");
@@ -1010,7 +1010,7 @@ int main(int argc, char **argv){
 									   &print_extra_info);
 	fclose(detect_vars_after_remv_ref_bub_fptr);
 	//no need to traverse and do cleanup, as db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored does it at the end
-
+	*/
 
 
 
@@ -1168,7 +1168,7 @@ int main(int argc, char **argv){
 	//cleanup
 	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 	
-	
+
 
 	
 	printf("Finished making all calls\n");
