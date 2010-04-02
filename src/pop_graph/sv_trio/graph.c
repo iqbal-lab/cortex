@@ -765,10 +765,28 @@ int main(int argc, char **argv){
 	    edges |= edges2;
 	    return edges;
 	  }
+
+	  Edges element_get_union_human_indiv_and_ref_colours(const Element* e)
+	  {
+	    Edges edges=0;
+	    Edges edges1=get_edge_copy(*e, individual_edge_array,colour_na12878);
+	    edges |= edges1;
+	    Edges edges2=get_edge_copy(*e, individual_edge_array,colour_na19240);
+	    edges |= edges2;
+	    Edges edges3=get_edge_copy(*e, individual_edge_array,colour_human_ref);
+	    edges |= edges3;
+
+	    return edges;
+	  }
 	  
 	  int get_joint_human_covg(const dBNode* e)
 	  {
 	    return e->coverage[colour_na12878] + e->coverage[colour_na19240];
+	  }
+
+	  int get_joint_human_indiv_and_ref_covg(const dBNode* e)
+	  {
+	    return e->coverage[colour_human_ref] + e->coverage[colour_na12878] + e->coverage[colour_na19240];
 	  }
 	  
 	  boolean detect_vars_condition_is_hom_nonref_in_both_individuals(VariantBranchesAndFlanks* var)
@@ -788,6 +806,7 @@ int main(int argc, char **argv){
 	      }
 	  }
 
+	  /*
 	  //ensure both alleles have covg < 2* effective coverage expected for each individual
 	  boolean bubble_condition_coverage_on_both_individuals_not_too_high(VariantBranchesAndFlanks* var)
 	  {
@@ -842,6 +861,7 @@ int main(int argc, char **argv){
 		return false;
 	      }
 	  }
+	  */
 
 	  void print_zygosity_string(zygosity z, FILE* fptr)
 	  {
@@ -897,7 +917,7 @@ int main(int argc, char **argv){
 	      {
 		fprintf(fout, "%d ", node_array[i]->coverage[colour_gorilla]);
 	      }
-	    fprintf(fout, "\n");
+	    fprintf(fout, "\n\n");
 		    
 	  }
 
@@ -909,10 +929,8 @@ int main(int argc, char **argv){
 	    fprintf(fout, "\n");
 	    
 	    WhichAllele which_allele_matches_chimp;
-	    //    WhichAllele which_allele_matches_macaca;
 	    WhichAllele which_allele_matches_gorilla;
 	    boolean precisely_one_allele_matches_chimp=db_variant_precisely_one_allele_is_in_given_func_of_colours(var, &get_colour_chimp, db_graph, &which_allele_matches_chimp);
-	    //boolean precisely_one_allele_matches_macaca=db_variant_precisely_one_allele_is_in_given_func_of_colours(var, &get_colour_macaca, db_graph, &which_allele_matches_macaca);
 	    boolean precisely_one_allele_matches_gorilla=db_variant_precisely_one_allele_is_in_given_func_of_colours(var, &get_colour_gorilla, db_graph, &which_allele_matches_gorilla); ;
 
 	    if (precisely_one_allele_matches_chimp==true)
@@ -959,7 +977,7 @@ int main(int argc, char **argv){
 	      {
 		fprintf(fout, "REF_ALLELE:branch1\n");
 	      }
-	    else if (does_this_path_exist_in_this_colour(var->other_allele, var->one_allele_or, var->len_one_allele, get_colour_human_ref, db_graph)==true)
+	    else if (does_this_path_exist_in_this_colour(var->other_allele, var->other_allele_or, var->len_other_allele, get_colour_human_ref, db_graph)==true)
 	      {
 		fprintf(fout, "REF_ALLELE:branch2\n");
 	      }
@@ -972,6 +990,7 @@ int main(int argc, char **argv){
 	    print_extra_supernode_info(var->one_allele, var->one_allele_or, var->len_one_allele, fout);
 	    fprintf(fout, "branch2 coverages\n");
 	    print_extra_supernode_info(var->other_allele, var->other_allele_or, var->len_other_allele, fout);
+	    fprintf(fout, "\n\n");
 	  }
 
 	  
@@ -981,7 +1000,7 @@ int main(int argc, char **argv){
 
 	  //initialise output files and chrom ref ptrs for the trusted path caller:
 
-	char** ref_chroms = malloc( sizeof(char*) * 24); //one for each chromosome, ignoring haplotypes like MHC
+	char** ref_chroms = malloc( sizeof(char*) * 24); //one for each chromosome, ignoring haplotypes like MHC, and the Y chrom
 	if (ref_chroms==NULL)
 	  {
 	    printf("OOM. Give up can't even allocate space for the names of the ref chromosome files\n");
@@ -1003,8 +1022,8 @@ int main(int argc, char **argv){
 	
 	// **** set up one output file per chromosome ***** //
 	
-	char** na12878_output_files = malloc( sizeof(char*) * 24); //one for each chromosome, ignoring haplotypes like MHC
-	char** na19240_output_files = malloc( sizeof(char*) * 24); //one for each chromosome, ignoring haplotypes like MHC
+	char** na12878_output_files = malloc( sizeof(char*) * 24); 
+	char** na19240_output_files = malloc( sizeof(char*) * 24); 
 	if ((na12878_output_files==NULL)||(na19240_output_files==NULL))
 	  {
 	    printf("OOM. Give up can't even allocate space for the names of the output  files \n");
@@ -1022,16 +1041,16 @@ int main(int argc, char **argv){
 	      }
 	  }
 	
-	na12878_output_files[0] = "sv_called_in_MT";
-	na19240_output_files[0] = "sv_called_in_MT";
+	sprintf(na12878_output_files[0],"na12878_ref_assisted_variants_called_in_MT");
+	sprintf(na19240_output_files[0],"na19240_ref_assisted_variants_called_in_MT");
 	
 	for (i=1; i<23; i++)
 	  {
 	    sprintf(na12878_output_files[i], "na12878_ref_assisted_variants_called_in_chrom_%i", i);
 	    sprintf(na19240_output_files[i], "na19240_ref_assisted_variants_called_in_chrom_%i", i);
 	  }
-	na12878_output_files[23]="na12878_ref_assisted_variants_called_in_chrom_X";
-	na19240_output_files[23]="na19240_ref_assisted_variants_called_in_chrom_X";
+	sprintf(na12878_output_files[23],"na12878_ref_assisted_variants_called_in_chrom_X");
+	sprintf(na19240_output_files[23],"na19240_ref_assisted_variants_called_in_chrom_X");
 	//na12878 and na19240 are women,so don't look for variants in the Y chromosome!!!
 
 	//***************************
@@ -1045,7 +1064,7 @@ int main(int argc, char **argv){
 	//CALL het bubbles in na12878
 
 	
-	char na12878_bubbles[300];
+	char na12878_bubbles[100];
 	sprintf(na12878_bubbles, "na12878_bubbles");
 	FILE* detect_vars_after_remv_ref_bub_fptr = fopen(na12878_bubbles, "w");
 	if (detect_vars_after_remv_ref_bub_fptr==NULL)
@@ -1065,7 +1084,7 @@ int main(int argc, char **argv){
        
 
 	//do it again, just na19240
-	char na19240_bubbles[300];
+	char na19240_bubbles[100];
 	sprintf(na19240_bubbles, "na19240_bubbles");
 	detect_vars_after_remv_ref_bub_fptr = fopen(na19240_bubbles, "w");
 	if (detect_vars_after_remv_ref_bub_fptr==NULL)
@@ -1080,22 +1099,24 @@ int main(int argc, char **argv){
 									   &get_colour_na19240, &get_covg_na19240,
 									   &print_extra_info);
 	fclose(detect_vars_after_remv_ref_bub_fptr);
-	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
 
 
 
 	//STEP3 - detect hom non ref variants jointly - ie these are hom-non-ref in both individuals
-	FILE* detect_vars_hom_nonref_fptr = fopen(detectvars_hom_nonref_filename, "w");
+	char joint_hom_nonref_bubbles[100];
+	sprintf(joint_hom_nonref_bubbles, "joint_hom_nonref_bubbles");
+	FILE* detect_vars_hom_nonref_fptr = fopen(joint_hom_nonref_bubbles, "w");
 	if (detect_vars_hom_nonref_fptr==NULL)
 	  {
-	    printf("Cannot open %s so exit\n", detectvars_hom_nonref_filename);
+	    printf("Cannot open %s so exit\n", joint_hom_nonref_bubbles);
 	    exit(1);
 	  }
 
-	printf("About to print hom nonref calls to %s\n", detectvars_hom_nonref_filename);
+	printf("About to print hom nonref calls to %s\n", joint_hom_nonref_bubbles);
 	db_graph_detect_vars( detect_vars_hom_nonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref_in_both_individuals,
 			      &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
-			      &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_extra_info);
+			      &element_get_union_human_indiv_and_ref_colours, &get_joint_human_indiv_and_ref_covg, &print_extra_info);
 
 	//cleanup
 	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
