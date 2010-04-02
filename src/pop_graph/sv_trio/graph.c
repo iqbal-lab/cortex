@@ -679,10 +679,10 @@ int main(int argc, char **argv){
     case 10:
 	{
 
-	  // Call variants on NA12878 and NA19240 jointly
-	  // first call "heterozygous" sites - means at least one individual is het, other may be hom ref/nonref - will be clear from output
-	  // then call hom non-ref sites, where both individuals are hom non-ref
+	  //Call bubbles on NA12878 and NA19240 separately, but for each, when you find a bubble, annotate how it lies in both.
+	  // Then call joint hom non-ref sites. 
 	  // Then use Ref Assisted caller on each individual separately. 
+	  // Then print supernodes.
 
 	  int colour_human_ref=0;
 	  int colour_na12878=1;
@@ -939,6 +939,10 @@ int main(int argc, char **argv){
 		    fprintf(fout, "branch2 matches gorilla\n");//and branch1 does not
 		  }
 	      }
+	    else
+	      {
+		fprintf(fout, "ANCESTRAL ALLELE: unknown\n");
+	      }
 	    
 	    // determine which individual this variant is on, and print
 	    zygosity zygo_in_na12878 = db_variant_get_zygosity_in_given_func_of_colours(var, get_colour_na12878, db_graph);
@@ -972,10 +976,72 @@ int main(int argc, char **argv){
 
 	  
 	  
-	  int max_allowed_branch_len=50000;
+	  int max_allowed_branch_len=5000;
+
+
+	  //initialise output files and chrom ref ptrs for the trusted path caller:
+
+	char** ref_chroms = malloc( sizeof(char*) * 24); //one for each chromosome, ignoring haplotypes like MHC
+	if (ref_chroms==NULL)
+	  {
+	    printf("OOM. Give up can't even allocate space for the names of the ref chromosome files\n");
+	    exit(1);
+	  }
+	int i;
+	for (i=0; i< 24; i++)
+	  {
+	    ref_chroms[i] = malloc(sizeof(char)*150); //filenames including path are about 100 characters. 50 characters of leeway
+	    if (ref_chroms[i]==NULL)
+	      {
+		printf("OOM. Giveup can't even allocate space for the names of the ref chromosome file i = %d\n",i);
+		exit(1);
+	      }
+	  }
+	
+	set_ref_chromosome_file_pointers(ref_chroms, 24);
+	
+	
+	// **** set up one output file per chromosome ***** //
+	
+	char** na12878_output_files = malloc( sizeof(char*) * 24); //one for each chromosome, ignoring haplotypes like MHC
+	char** na19240_output_files = malloc( sizeof(char*) * 24); //one for each chromosome, ignoring haplotypes like MHC
+	if ((na12878_output_files==NULL)||(na19240_output_files==NULL))
+	  {
+	    printf("OOM. Give up can't even allocate space for the names of the output  files \n");
+	    exit(1);
+	  }
+	
+	for (i=0; i< 24; i++)
+	  {
+	    na12878_output_files[i] = malloc(sizeof(char)*200); 
+	    na19240_output_files[i] = malloc(sizeof(char)*200); 
+	    if ((na12878_output_files[i]==NULL)||(na19240_output_files[i]==NULL))
+	      {
+		printf("OOM. Giveup can't even allocate space for the names of the ref chromosome file i = %d\n",i);
+		exit(1);
+	      }
+	  }
+	
+	na12878_output_files[0] = "sv_called_in_MT";
+	na19240_output_files[0] = "sv_called_in_MT";
+	
+	for (i=1; i<23; i++)
+	  {
+	    sprintf(na12878_output_files[i], "na12878_ref_assisted_variants_called_in_chrom_%i", i);
+	    sprintf(na19240_output_files[i], "na19240_ref_assisted_variants_called_in_chrom_%i", i);
+	  }
+	na12878_output_files[23]="na12878_ref_assisted_variants_called_in_chrom_X";
+	na19240_output_files[23]="na19240_ref_assisted_variants_called_in_chrom_X";
+	//na12878 and na19240 are women,so don't look for variants in the Y chromosome!!!
+
+	//***************************
+	//end of initialisation
+	// **************************
 	  
 	
-	//STEP1 - detect vars in the reference colour, and mark these branches as visited, so they are ignored. Then call vars in colour1
+	//STEP1 - detect vars in the reference colour, and mark these branches as to_be_ignored, so they are ignored. 
+	
+	/*
 	FILE* detect_vars_after_remv_ref_bub_fptr = fopen(detectvars_after_remv_ref_bubble_filename, "w");
 	if (detect_vars_after_remv_ref_bub_fptr==NULL)
 	  {
@@ -985,35 +1051,57 @@ int main(int argc, char **argv){
 	printf("Call het variants jointly after marking off the bubbles in the ref - no conditions\n");
 	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
 									   &detect_vars_condition_always_true,
-									   //&bubble_condition_coverage_on_both_individuals_not_too_high,
 									   &get_colour_human_ref, &get_covg_human_ref,
 									   &element_get_union_human_colours, &get_joint_human_covg,
 									   &print_extra_info);
 	fclose(detect_vars_after_remv_ref_bub_fptr);
 	//no need to traverse and do cleanup, as db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored does it at the end
-
-	/*
-	char strict_het_bubbles[300];
-	sprintf(strict_het_bubbles, "%s.strict", detectvars_after_remv_ref_bubble_filename);
-	detect_vars_after_remv_ref_bub_fptr = fopen(strict_het_bubbles, "w");
-	if (detect_vars_after_remv_ref_bub_fptr==NULL)
-	  {
-	    printf("Cannot open %s so exit\n", strict_het_bubbles);
-	    exit(1);
-	  }
-	printf("Call het variants jointly after marking off the bubbles in the ref -  condition on covg not too high\n");
-	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
-									   //&detect_vars_condition_always_true,
-									   &bubble_condition_coverage_on_both_individuals_not_too_high,
-									   &get_colour_human_ref, &get_covg_human_ref,
-									   &element_get_union_human_colours, &get_joint_human_covg,
-									   &print_extra_info);
-	fclose(detect_vars_after_remv_ref_bub_fptr);
-	//no need to traverse and do cleanup, as db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored does it at the end
+	//BUT LEAVES REF_BUBBLES TO BE IGNORED!!!!!!
 	*/
 
 
 
+
+
+	//CALL het bubbles in na12878
+
+	
+	char na12878_bubbles[300];
+	sprintf(na12878_bubbles, "na12878_bubbles");
+	FILE* detect_vars_after_remv_ref_bub_fptr = fopen(na12878_bubbles, "w");
+	if (detect_vars_after_remv_ref_bub_fptr==NULL)
+	  {
+	    printf("Cannot open %s so exit\n", na12878_bubbles);
+	    exit(1);
+	  }
+
+	printf("Call het variants on na12878 alone, after marking off the bubbles in the ref");
+	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
+									   &detect_vars_condition_always_true,
+									   &get_colour_human_ref, &get_covg_human_ref,
+									   &get_colour_na12878, &get_covg_na12878,
+									   &print_extra_info);
+	fclose(detect_vars_after_remv_ref_bub_fptr);
+	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
+       
+
+	//do it again, just na19240
+	char na19240_bubbles[300];
+	sprintf(na19240_bubbles, "na19240_bubbles");
+	detect_vars_after_remv_ref_bub_fptr = fopen(na19240_bubbles, "w");
+	if (detect_vars_after_remv_ref_bub_fptr==NULL)
+	  {
+	    printf("Cannot open %s so exit\n", na19240_bubbles);
+	    exit(1);
+	  }
+	printf("Call het variants on na19240 alone\n");
+	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
+									   &detect_vars_condition_always_true,
+									   &get_colour_human_ref, &get_covg_human_ref,
+									   &get_colour_na19240, &get_covg_na19240,
+									   &print_extra_info);
+	fclose(detect_vars_after_remv_ref_bub_fptr);
+	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 
 
 
@@ -1045,132 +1133,78 @@ int main(int argc, char **argv){
 	int max_expected_size_of_supernode=70000;
 	
 	
-	//needs a filepointer to traverse the reference as it walks the graph
-	printf("Detect polymorphic sites in NA12878 using reference assisted caller, using this ref file %s, putting no conditions on variant\n", ref_fasta);
+
+	printf("Detect polymorphic sites in NA12878 using reference assisted caller, putting no conditions on variant\n");
 	
-	char out_ra_na12878[500];
-	sprintf(out_ra_na12878, "%s_%s", ref_assisted_filename, "na12878");
-	char out_ra_na19240[500];
-	sprintf(out_ra_na19240, "%s_%s", ref_assisted_filename, "na19240");
-	
-	FILE* ref_ass_fptr = fopen(out_ra_na12878, "w");
-	if (ref_ass_fptr==NULL)
+	//ignore mitochondrion for now, so start with i=1
+	for (i=1; i<24; i++) 
 	  {
-	    printf("Cnnot open %s, so exit",out_ra_na12878);
-	    exit(1);
+	    printf("Call SV comparing NA12878 with chromosome %s\n", ref_chroms[i]);
+	    
+	    FILE* chrom_fptr = fopen(ref_chroms[i], "r");
+	    if (chrom_fptr==NULL)
+	      {
+		printf("Cannot open %s \n", ref_chroms[i]);
+		exit(1);
+	      }
+	    
+	    FILE* out_fptr = fopen(na12878_output_files[i], "w");
+	    if (out_fptr==NULL)
+	      {
+		printf("Cannot open %s for output\n", na12878_output_files[i]);
+		exit(1);
+	      }
+	    
+	    db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, colour_na12878, 
+							individual_edge_array, colour_human_ref,
+							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+							max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
+							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
+	    fclose(chrom_fptr);
+	    fclose(out_fptr);
 	  }
-	
-	FILE* ref_fptr = fopen(ref_fasta, "r");
-	if (ref_fptr==NULL)
-	  {
-	    printf("Cannot open %s, so exit", ref_fasta);
-	    exit(1);
-	  }
-	
-	db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 1, individual_edge_array, 0,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_fptr,
-						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
-	fclose(ref_ass_fptr);
-	fclose(ref_fptr);
-	
+
 	//cleanup
 	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 	
 	
 	//Now do the same for NA19240
 	
-	printf("Detect polymorphic sites in NA19240 using reference assisted caller, using this ref file %s, putting no conditions on variant\n", ref_fasta);
+	printf("Detect polymorphic sites in NA19240 using reference assisted caller, putting no conditions on variant\n");
 	
-	ref_ass_fptr = fopen(out_ra_na19240, "w");
-	if (ref_ass_fptr==NULL)
+	for (i=1; i<24; i++) 
 	  {
-	    printf("Cnnot open %s, so exit",out_ra_na19240);
-	    exit(1);
+	    printf("Call SV comparing NA19240 with chromosome %s\n", ref_chroms[i]);
+	    
+	    FILE* chrom_fptr = fopen(ref_chroms[i], "r");
+	    if (chrom_fptr==NULL)
+	      {
+		printf("Cannot open %s \n", ref_chroms[i]);
+		exit(1);
+	      }
+	    
+	    FILE* out_fptr = fopen(na19240_output_files[i], "w");
+	    if (out_fptr==NULL)
+	      {
+		printf("Cannot open %s for output\n", na19240_output_files[i]);
+		exit(1);
+	      }
+	    
+	    db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, colour_na19240, 
+							individual_edge_array, colour_human_ref,
+							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
+							max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
+							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
+	    fclose(chrom_fptr);
+	    fclose(out_fptr);
 	  }
-	
-	ref_fptr = fopen(ref_fasta, "r");
-	if (ref_fptr==NULL)
-	  {
-	    printf("Cannot open %s, so exit", ref_fasta);
-	    exit(1);
-	  }
-	
-	db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 2, individual_edge_array, 0,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_fptr,
-						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
-	fclose(ref_ass_fptr);
-	fclose(ref_fptr);
+
+
 	
 	//cleanup
 	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 	
 
-
-	printf("Detect polymorphic sites in NA12878 using reference assisted caller, using this ref file %s, putting strict hom nonref condition on\n", ref_fasta);
-	
-	char out_ra_na12878_strict[500];
-	sprintf(out_ra_na12878_strict, "%s_%s", ref_assisted_filename, "na12878_strict");
-	char out_ra_na19240_strict[500];
-	sprintf(out_ra_na19240_strict, "%s_%s", ref_assisted_filename, "na19240_strict");
-	
-	ref_ass_fptr = fopen(out_ra_na12878_strict, "w");
-	if (ref_ass_fptr==NULL)
-	  {
-	    printf("Cnnot open %s, so exit",out_ra_na12878_strict);
-	    exit(1);
-	  }
-	
-	ref_fptr = fopen(ref_fasta, "r");
-	if (ref_fptr==NULL)
-	  {
-	    printf("Cannot open %s, so exit", ref_fasta);
-	    exit(1);
-	  }
-	
-	db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 1, individual_edge_array, 0,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_fptr,
-						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_is_hom_nonref, &db_variant_action_do_nothing);
-	fclose(ref_ass_fptr);
-	fclose(ref_fptr);
-	
-	//cleanup
-	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
-	
-	
-	//Now do the same for NA19240
-	
-	printf("Detect polymorphic sites in NA19240 using reference assisted caller, using this ref file %s, putting strict hom nonref condition on variant\n", ref_fasta);
-	
-	ref_ass_fptr = fopen(out_ra_na19240_strict, "w");
-	if (ref_ass_fptr==NULL)
-	  {
-	    printf("Cnnot open %s, so exit",out_ra_na19240_strict);
-	    exit(1);
-	  }
-	
-	ref_fptr = fopen(ref_fasta, "r");
-	if (ref_fptr==NULL)
-	  {
-	    printf("Cannot open %s, so exit", ref_fasta);
-	    exit(1);
-	  }
-	
-	db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 2, individual_edge_array, 0,
-						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
-						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_fptr,
-						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_is_hom_nonref, &db_variant_action_do_nothing);
-	fclose(ref_ass_fptr);
-	fclose(ref_fptr);
-	
-	//cleanup
-	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
-	
-
-
-	
 	printf("Finished making all calls\n");
 
 	printf("Now print annotated supernodes of  NA12878\n");
