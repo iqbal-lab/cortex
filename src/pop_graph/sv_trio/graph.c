@@ -1039,28 +1039,7 @@ int main(int argc, char **argv){
 	// **************************
 	  
 	
-	//STEP1 - detect vars in the reference colour, and mark these branches as to_be_ignored, so they are ignored. 
-	
-	/*
-	FILE* detect_vars_after_remv_ref_bub_fptr = fopen(detectvars_after_remv_ref_bubble_filename, "w");
-	if (detect_vars_after_remv_ref_bub_fptr==NULL)
-	  {
-	    printf("Cannot open %s so exit\n", detectvars_after_remv_ref_bubble_filename);
-	    exit(1);
-	  }
-	printf("Call het variants jointly after marking off the bubbles in the ref - no conditions\n");
-	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
-									   &detect_vars_condition_always_true,
-									   &get_colour_human_ref, &get_covg_human_ref,
-									   &element_get_union_human_colours, &get_joint_human_covg,
-									   &print_extra_info);
-	fclose(detect_vars_after_remv_ref_bub_fptr);
-	//no need to traverse and do cleanup, as db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored does it at the end
-	//BUT LEAVES REF_BUBBLES TO BE IGNORED!!!!!!
-	*/
-
-
-
+	//not doing joint calling no more.
 
 
 	//CALL het bubbles in na12878
@@ -1122,7 +1101,7 @@ int main(int argc, char **argv){
 	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
 
 
-	//STEP 4 - detect homovariants using ref-assisted trusted-path algorithm
+	//STEP 4 - detect variants using ref-assisted trusted-path algorithm
 
 	int min_fiveprime_flank_anchor = 3;
 	int min_threeprime_flank_anchor= 3;
