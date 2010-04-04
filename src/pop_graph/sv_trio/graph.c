@@ -144,11 +144,6 @@ int main(int argc, char **argv){
     case 2:
       {
 
-	void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
-	{
-        }
-
-
 	//detect variants looking for bubbles in the union graph of all colours.
 	//apply no condition to whether one branch or other shoud be one colour or another
 	int max_allowed_branch_len=50000; //5000
@@ -346,12 +341,6 @@ int main(int argc, char **argv){
       {
 	//Make bubble calls for homozygous non-ref variants, using two colours (ref=0, individual=1)
 	
-	void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
-	{
-        }
-
-
-
 	boolean condition_is_hom_nonref(VariantBranchesAndFlanks* var)
 	{
 	  //Assumes the reference is colour 0 and the individual is colour 1
@@ -512,7 +501,8 @@ int main(int argc, char **argv){
 							individual_edge_array, 0,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
-							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
+							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing,
+							&print_no_extra_info);
 	    
 	    
 	    fclose(chrom_fptr);
@@ -533,10 +523,6 @@ int main(int argc, char **argv){
       {
 
 
-	void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
-	{
-        }
-	
 	int get_covg_ref(const dBNode* e)
 	{
 	  return e->coverage[0];
@@ -664,7 +650,8 @@ int main(int argc, char **argv){
 	db_graph_make_reference_path_based_sv_calls(ref_fptr, individual_edge_array, 1, individual_edge_array, 0,
 						    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 						    max_expected_size_of_supernode, length_of_arrays, db_graph, ref_ass_fptr,
-						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
+						    0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing,
+						    &print_no_extra_info);
 	fclose(ref_ass_fptr);
 
 
@@ -1159,7 +1146,8 @@ int main(int argc, char **argv){
 							individual_edge_array, colour_human_ref,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
-							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
+							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing,
+							&print_extra_info);
 	    fclose(chrom_fptr);
 	    fclose(out_fptr);
 	  }
@@ -1194,7 +1182,8 @@ int main(int argc, char **argv){
 							individual_edge_array, colour_human_ref,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
-							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing);
+							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &db_variant_action_do_nothing,
+							&print_extra_info);
 	    fclose(chrom_fptr);
 	    fclose(out_fptr);
 	  }
