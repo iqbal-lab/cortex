@@ -878,31 +878,66 @@ int main(int argc, char **argv){
 	    int i;
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d ", node_array[i]->coverage[colour_human_ref]);
+		if (node_array[i]!=NULL)
+		  {
+		    fprintf(fout, "%d ", node_array[i]->coverage[colour_human_ref]);
+		  }
+		else
+		  {
+		    fprintf(fout, "0 ");
+		  }
 	      }
 	    fprintf(fout, "\n");
 	    fprintf(fout, "Covg in NA12878:\n");
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d ", node_array[i]->coverage[colour_na12878]);
+		if (node_array[i]!=NULL)
+		  {
+		    fprintf(fout, "%d ", node_array[i]->coverage[colour_na12878]);
+		  }
+		else
+		  {
+		    fprintf(fout, "0 ");
+		  }
 	      }
 	    fprintf(fout, "\n");
 	    fprintf(fout, "Covg in NA19240:\n");
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d ", node_array[i]->coverage[colour_na19240]);
+		if (node_array[i]!=NULL)
+		  {
+		    fprintf(fout, "%d ", node_array[i]->coverage[colour_na19240]);
+		  }
+		else
+		  {
+		    fprintf(fout, "0 ");
+		  }
 	      }
 	    fprintf(fout, "\n");
 	    fprintf(fout, "Mult in chimp:\n");
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d ", node_array[i]->coverage[colour_chimp]);
+		if (node_array[i]!=NULL)
+		  {		    
+		    fprintf(fout, "%d ", node_array[i]->coverage[colour_chimp]);
+		  }
+		else
+		  {
+		    fprintf(fout, "0 ");
+		  }
 	      }
 	    fprintf(fout, "\n");
 	    fprintf(fout, "Mult in gorilla:\n");
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d ", node_array[i]->coverage[colour_gorilla]);
+		if (node_array[i]!=NULL)
+		  {
+		    fprintf(fout, "%d ", node_array[i]->coverage[colour_gorilla]);
+		  }
+		else
+		  {
+		    fprintf(fout, "0 ");
+		  }
 	      }
 	    fprintf(fout, "\n\n");
 		    
