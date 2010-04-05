@@ -3850,7 +3850,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
 						char** return_flank3p_array, int** return_variant_start_coord,
 						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
-						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var)
+						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
+						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
 						)
 {
 
@@ -5168,6 +5169,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      
 		      
 		    }
+		 
+		  fprintf(output_file, "var_%i - extra information\n", num_variants_found);
+		  print_extra_info(&var, output_file);
 		}
 	      
 	      
@@ -5225,7 +5229,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 
-
+/*
 int db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_ignored(char* chrom_fasta, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
 											EdgeArrayType which_array_holds_ref, int index_for_ref_in_edge_array,
 											int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, 
@@ -5272,6 +5276,7 @@ int db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_
   return num_vars_found;
   
 }
+*/
 
 
 void compute_label(dBNode * node, Orientation o, char * label, EdgeArrayType type, int index){
@@ -5433,6 +5438,11 @@ void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fa
 
 }
 
+
+
+void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
+{
+}
 
 
 

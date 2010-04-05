@@ -319,6 +319,7 @@ boolean make_reference_path_based_sv_calls_condition_always_true(VariantBranches
 boolean make_reference_path_based_sv_calls_condition_is_hom_nonref(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv);
 boolean make_reference_path_based_sv_calls_condition_is_het(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv);
 
+void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout);
 
 
 int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
@@ -329,7 +330,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
 						char** return_flank3p_array, int** return_variant_start_coord,
 						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
-						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var)
+						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
+						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
 						);
 
 int db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_ignored(char* chrom_fasta, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,
