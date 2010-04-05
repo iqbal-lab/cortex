@@ -1048,9 +1048,12 @@ int main(int argc, char **argv){
 	//not doing joint calling no more.
 
 
-	//CALL het bubbles in na12878
 
-	
+	//comment out the bubble calls temporarily - want to re-run js the ref-assisted calls and supernodes
+
+
+	/*
+	//CALL het bubbles in na12878
 	char na12878_bubbles[100];
 	sprintf(na12878_bubbles, "na12878_bubbles");
 	FILE* detect_vars_after_remv_ref_bub_fptr = fopen(na12878_bubbles, "w");
@@ -1107,7 +1110,7 @@ int main(int argc, char **argv){
 	fclose(detect_vars_hom_nonref_fptr);
 	//cleanup
 	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
-
+	*/
 
 	//STEP 4 - detect variants using ref-assisted trusted-path algorithm
 
@@ -1196,9 +1199,9 @@ int main(int argc, char **argv){
 
 	printf("Finished making all calls\n");
 
-	printf("Now print annotated supernodes of  NA12878\n");
-	db_graph_print_supernodes_for_specific_person_or_pop("na12878_sups", "na12878_sings", 3000, db_graph, individual_edge_array,colour_na12878, &print_extra_supernode_info);
-	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
+	//	printf("Now print annotated supernodes of  NA12878\n");
+	//db_graph_print_supernodes_for_specific_person_or_pop("na12878_sups", "na12878_sings", 3000, db_graph, individual_edge_array,colour_na12878, &print_extra_supernode_info);
+	//hash_table_traverse(&db_node_action_set_status_none, db_graph);	
 	printf("Now print annotated supernodes of  NA19240\n");
 	db_graph_print_supernodes_for_specific_person_or_pop("na19240_sups", "na19240_sings", 3000, db_graph, individual_edge_array,colour_na19240, &print_extra_supernode_info);
 	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
