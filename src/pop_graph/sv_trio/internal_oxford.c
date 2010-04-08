@@ -10,11 +10,11 @@
 
 void set_ref_chromosome_file_pointers(char** reference_chromosome_file_ptrs, int num_chromosomes)
 {
-  if (num_chromosomes != 25)
-    {
-      printf("Expected 25 ref chromosomes. Exit");
-      exit(1);
-    }
+  //  if ( (num_chromosomes != 25) && (num_chromosomes != 24) )
+  //  {
+  //    printf("Expected 24 or 25 ref chromosomes. Exit");
+  //    exit(1);
+  //  }
   
 
   reference_chromosome_file_ptrs[0] = "/data/zam/ref/hs/fasta/Homo_sapiens.NCBI36.52.dna.chromosome.MT.fa";
@@ -25,8 +25,11 @@ void set_ref_chromosome_file_pointers(char** reference_chromosome_file_ptrs, int
       sprintf(reference_chromosome_file_ptrs[i], "/data/zam/ref/hs/fasta/Homo_sapiens.NCBI36.52.dna.chromosome.%i.fa", i);
     }
   reference_chromosome_file_ptrs[23]="/data/zam/ref/hs/fasta/Homo_sapiens.NCBI36.52.dna.chromosome.X.fa";
-  reference_chromosome_file_ptrs[24]="/data/zam/ref/hs/fasta/Homo_sapiens.NCBI36.52.dna.chromosome.Y.fa";
 
+  //if (num_chromosomes==24)
+  //  {
+  //    reference_chromosome_file_ptrs[24]="/data/zam/ref/hs/fasta/Homo_sapiens.NCBI36.52.dna.chromosome.Y.fa";
+  //  }
 
 }
 
