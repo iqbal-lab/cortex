@@ -1207,6 +1207,7 @@ int main(int argc, char **argv){
 	}
     case 11:
       {
+	printf("Get covg distribution in colour 0\n");
 	db_graph_get_covg_distribution(db_graph, individual_edge_array, 0);
 
 	break;

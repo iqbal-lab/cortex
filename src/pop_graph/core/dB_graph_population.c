@@ -2624,6 +2624,8 @@ void db_graph_get_covg_distribution(dBGraph* db_graph, EdgeArrayType type, int i
       printf("multiplicity:%d\tNumber:%d\n",i,covgs[i]);
     }
 
+  free(covgs_ptrs);
+  free(covgs);
 }
 
 
