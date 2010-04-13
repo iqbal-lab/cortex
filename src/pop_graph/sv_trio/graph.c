@@ -1205,6 +1205,12 @@ int main(int argc, char **argv){
 	printf("FINISHED ALL\n");
 	break;
 	}
+    case 11:
+      {
+	db_graph_get_covg_distribution(db_graph, individual_edge_array, 0);
+
+	break;
+      }
       
       
 
