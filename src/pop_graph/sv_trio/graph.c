@@ -23,7 +23,7 @@ int main(int argc, char **argv){
   int action;
   char* dumped_binary;
   char* list_of_fastq;
-  boolean remove_low_covg_nodes;
+  int remove_low_covg_nodes;
   char* detectvars_filename;
   char* detectvars_after_remv_ref_bubble_filename;
   char* detectvars_hom_nonref_filename;
@@ -48,7 +48,7 @@ int main(int argc, char **argv){
   DEBUG            = atoi(argv[8]);
   dumped_binary   = argv[9];
   list_of_fastq = argv[10];
-  remove_low_covg_nodes = (boolean) atoi(argv[11]);
+  remove_low_covg_nodes = atoi(argv[11]);
   detectvars_filename = argv[12];
   detectvars_after_remv_ref_bubble_filename = argv[13];
   detectvars_hom_nonref_filename=argv[14];
@@ -550,7 +550,7 @@ int main(int argc, char **argv){
 	      db_node_reset_edges(node, individual_edge_array, 1);
 	}
 
-	if (remove_low_covg_nodes==true)
+	if (remove_low_covg_nodes>0)
 	  {
 	    printf("remove low coverage nodes (<= %d ) \n", low_cov_thresh);
 	    db_graph_remove_low_coverage_nodes(low_cov_thresh,db_graph, &element_get_covg_colour1, &element_get_colour0,
