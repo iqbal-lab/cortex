@@ -260,6 +260,7 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
 
 void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, EdgeArrayType, int),HashTable * hash_table, int** array, int length_of_array, EdgeArrayType type, int index);
  
+void db_graph_get_covg_distribution(dBGraph* db_graph, EdgeArrayType type, int index);
 
 void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Element* node, int** array_of_supernode_lengths, int length_of_array,
                                                          EdgeArrayType type, int index);
