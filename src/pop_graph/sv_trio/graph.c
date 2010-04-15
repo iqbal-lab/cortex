@@ -714,6 +714,15 @@ int main(int argc, char **argv){
 	  {
 	    return e->coverage[colour_na19240];
 	  }
+	  int get_covg_union_human_ref_and_na12878(const dBNode* e)
+	  {
+	    return  e->coverage[colour_human_ref] + e->coverage[colour_na12878];
+	  }
+	  int get_covg_union_human_ref_and_na19240(const dBNode* e)
+	  {
+	    return  e->coverage[colour_human_ref] + e->coverage[colour_na19240];
+	  }
+	  
 	  int get_covg_chimp(const dBNode* e)
 	  {
 	    return e->coverage[colour_chimp];
@@ -754,6 +763,27 @@ int main(int argc, char **argv){
 	    edges |= edges1;
 	    Edges edges2=get_edge_copy(*e, individual_edge_array,colour_na19240);
 	    edges |= edges2;
+	    Edges edges3=get_edge_copy(*e, individual_edge_array,colour_human_ref);
+	    edges |= edges3;
+
+	    return edges;
+	  }
+
+	  Edges element_get_union_human_ref_and_na12878_colours(const Element* e)
+	  {
+	    Edges edges=0;
+	    Edges edges1=get_edge_copy(*e, individual_edge_array,colour_na12878);
+	    edges |= edges1;
+	    Edges edges3=get_edge_copy(*e, individual_edge_array,colour_human_ref);
+	    edges |= edges3;
+
+	    return edges;
+	  }
+	  Edges element_get_union_human_ref_and_na19240_colours(const Element* e)
+	  {
+	    Edges edges=0;
+	    Edges edges1=get_edge_copy(*e, individual_edge_array,colour_na19240);
+	    edges |= edges1;
 	    Edges edges3=get_edge_copy(*e, individual_edge_array,colour_human_ref);
 	    edges |= edges3;
 
@@ -1106,7 +1136,7 @@ int main(int argc, char **argv){
 
 	db_graph_detect_vars( homnonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref_in_na12878,
 			      &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
-			      &get_colour_na12878, &get_covg_na12878, &print_extra_info);
+			      &element_get_union_human_ref_and_na12878_colours, &get_covg_union_human_ref_and_na12878, &print_extra_info);
 	fclose(homnonref_fptr);
 	//cleanup
 	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
@@ -1124,7 +1154,8 @@ int main(int argc, char **argv){
 
 	db_graph_detect_vars( homnonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref_in_na19240,
 			      &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
-			      &get_colour_na19240, &get_covg_na19240, &print_extra_info);
+			      &element_get_union_human_ref_and_na19240_colours, &get_covg_union_human_ref_and_na19240, &print_extra_info);
+
 	fclose(homnonref_fptr);
 	//cleanup
 	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
