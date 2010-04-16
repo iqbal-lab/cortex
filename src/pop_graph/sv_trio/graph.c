@@ -714,6 +714,15 @@ int main(int argc, char **argv){
 	  {
 	    return e->coverage[colour_na19240];
 	  }
+	  int get_covg_union_human_ref_and_na12878(const dBNode* e)
+	  {
+	    return  e->coverage[colour_human_ref] + e->coverage[colour_na12878];
+	  }
+	  int get_covg_union_human_ref_and_na19240(const dBNode* e)
+	  {
+	    return  e->coverage[colour_human_ref] + e->coverage[colour_na19240];
+	  }
+	  
 	  int get_covg_chimp(const dBNode* e)
 	  {
 	    return e->coverage[colour_chimp];
@@ -759,6 +768,27 @@ int main(int argc, char **argv){
 
 	    return edges;
 	  }
+
+	  Edges element_get_union_human_ref_and_na12878_colours(const Element* e)
+	  {
+	    Edges edges=0;
+	    Edges edges1=get_edge_copy(*e, individual_edge_array,colour_na12878);
+	    edges |= edges1;
+	    Edges edges3=get_edge_copy(*e, individual_edge_array,colour_human_ref);
+	    edges |= edges3;
+
+	    return edges;
+	  }
+	  Edges element_get_union_human_ref_and_na19240_colours(const Element* e)
+	  {
+	    Edges edges=0;
+	    Edges edges1=get_edge_copy(*e, individual_edge_array,colour_na19240);
+	    edges |= edges1;
+	    Edges edges3=get_edge_copy(*e, individual_edge_array,colour_human_ref);
+	    edges |= edges3;
+
+	    return edges;
+	  }
 	  
 	  int get_joint_human_covg(const dBNode* e)
 	  {
@@ -774,6 +804,16 @@ int main(int argc, char **argv){
 	  {
 	    return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_human_ref, &get_joint_human_covg );
 	  }
+
+	  boolean detect_vars_condition_is_hom_nonref_in_na12878(VariantBranchesAndFlanks* var)
+	  {
+	    return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_human_ref, &get_covg_na12878 );
+	  }
+
+	  boolean detect_vars_condition_is_hom_nonref_in_na19240(VariantBranchesAndFlanks* var)
+	  {
+	    return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_human_ref, &get_covg_na19240 );
+	  }
 	  
 	  int max(int a, int b)
 	  {
@@ -787,62 +827,6 @@ int main(int argc, char **argv){
 	      }
 	  }
 
-	  /*
-	  //ensure both alleles have covg < 2* effective coverage expected for each individual
-	  boolean bubble_condition_coverage_on_both_individuals_not_too_high(VariantBranchesAndFlanks* var)
-	  {
-
-	    double eff_covg_na12878 = (double) D_slx_na12878*    ((double)(R_slx - db_graph->kmer_size +1 ))/(double)R_slx
-                            	    + (double) D_454_na12878*    ((double)(R_454 - db_graph->kmer_size +1 ))/(double)R_454;      //D (1-(k-1)/R )
-	    
-	    double eff_covg_na19240 = (double) D_slx_na19240*    ((double)(R_slx - db_graph->kmer_size +1 ))/(double)R_slx
-                            	    + (double) D_454_na19240*    ((double)(R_454 - db_graph->kmer_size +1 ))/(double)R_454;      //D (1-(k-1)/R )
-	    int i;
-	    boolean all_nodes_on_both_alleles_have_ok_covg_in_both_indivs = true;
-	    for (i=0; (i<var->len_one_allele) && all_nodes_on_both_alleles_have_ok_covg_in_both_indivs==true ; i++)
-	      {
-
-		int exp_mult = max(1, get_covg_human_ref((var->one_allele)[i]) );//we expect this kmer to occur as many times as in reference, or else once
-
-		if (  (get_covg_na12878((var->one_allele)[i]) > 2* eff_covg_na12878 * exp_mult) 
-		      ||
-		      (get_covg_na19240((var->one_allele)[i]) > 2* eff_covg_na19240 * exp_mult )
-		      )
-		  {
-		    all_nodes_on_both_alleles_have_ok_covg_in_both_indivs=false;
-		  }
-	      }
-
-	    for (i=0; (i<var->len_other_allele) && all_nodes_on_both_alleles_have_ok_covg_in_both_indivs==true ; i++)
-	      {
-		int exp_mult = max(1, get_covg_human_ref((var->other_allele)[i]) );//we expect this kmer to occur as many times as in reference, or else once
-
-		if (  (get_covg_na12878((var->other_allele)[i]) > 2* eff_covg_na12878 * exp_mult) 
-		      ||
-		      (get_covg_na19240((var->other_allele)[i]) > 2* eff_covg_na19240 * exp_mult)
-		      )
-		  {
-		    all_nodes_on_both_alleles_have_ok_covg_in_both_indivs=false;
-		  }
-	      }
-
-
-	    return all_nodes_on_both_alleles_have_ok_covg_in_both_indivs;
-
-	  }
-
-	  boolean db_node_condition_is_novel(dBNode* e)
-	  {
-	    if (db_node_get_coverage(e, individual_edge_array, colour_human_ref)==0)
-	      {
-		return true;
-	      }
-	    else
-	      {
-		return false;
-	      }
-	  }
-	  */
 
 	  void print_zygosity_string(zygosity z, FILE* fptr)
 	  {
@@ -872,31 +856,66 @@ int main(int argc, char **argv){
 	    int i;
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d ", node_array[i]->coverage[colour_human_ref]);
+		if (node_array[i]!=NULL)
+		  {
+		    fprintf(fout, "%d ", node_array[i]->coverage[colour_human_ref]);
+		  }
+		else
+		  {
+		    fprintf(fout, "0 ");
+		  }
 	      }
 	    fprintf(fout, "\n");
 	    fprintf(fout, "Covg in NA12878:\n");
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d ", node_array[i]->coverage[colour_na12878]);
+		if (node_array[i]!=NULL)
+		  {
+		    fprintf(fout, "%d ", node_array[i]->coverage[colour_na12878]);
+		  }
+		else
+		  {
+		    fprintf(fout, "0 ");
+		  }
 	      }
 	    fprintf(fout, "\n");
 	    fprintf(fout, "Covg in NA19240:\n");
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d ", node_array[i]->coverage[colour_na19240]);
+		if (node_array[i]!=NULL)
+		  {
+		    fprintf(fout, "%d ", node_array[i]->coverage[colour_na19240]);
+		  }
+		else
+		  {
+		    fprintf(fout, "0 ");
+		  }
 	      }
 	    fprintf(fout, "\n");
 	    fprintf(fout, "Mult in chimp:\n");
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d ", node_array[i]->coverage[colour_chimp]);
+		if (node_array[i]!=NULL)
+		  {		    
+		    fprintf(fout, "%d ", node_array[i]->coverage[colour_chimp]);
+		  }
+		else
+		  {
+		    fprintf(fout, "0 ");
+		  }
 	      }
 	    fprintf(fout, "\n");
 	    fprintf(fout, "Mult in gorilla:\n");
 	    for (i=0; i<len; i++)
 	      {
-		fprintf(fout, "%d ", node_array[i]->coverage[colour_gorilla]);
+		if (node_array[i]!=NULL)
+		  {
+		    fprintf(fout, "%d ", node_array[i]->coverage[colour_gorilla]);
+		  }
+		else
+		  {
+		    fprintf(fout, "0 ");
+		  }
 	      }
 	    fprintf(fout, "\n\n");
 		    
@@ -1039,12 +1058,12 @@ int main(int argc, char **argv){
 	// **************************
 	  
 	
-	//not doing joint calling no more.
+	//comment out the bubble calls temporarily - want to re-run js the ref-assisted calls and supernodes
 
 
+	/*
 	//CALL het bubbles in na12878
 
-	
 	char na12878_bubbles[100];
 	sprintf(na12878_bubbles, "na12878_bubbles");
 	FILE* detect_vars_after_remv_ref_bub_fptr = fopen(na12878_bubbles, "w");
@@ -1101,6 +1120,47 @@ int main(int argc, char **argv){
 	fclose(detect_vars_hom_nonref_fptr);
 	//cleanup
 	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
+	*/
+
+
+	//Detect hom non ref in each individual separately
+	char hom_nonref_na12878[100];
+	sprintf(hom_nonref_na12878, "hom_nonref_na12878");
+	FILE* homnonref_fptr = fopen(hom_nonref_na12878, "w");
+
+	if (homnonref_fptr==NULL)
+	  {
+	    printf("Cannot open %s so exit\n", hom_nonref_na12878);
+	    exit(1);
+	  }
+
+	db_graph_detect_vars( homnonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref_in_na12878,
+			      &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
+			      &element_get_union_human_ref_and_na12878_colours, &get_covg_union_human_ref_and_na12878, &print_extra_info);
+	fclose(homnonref_fptr);
+	//cleanup
+	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
+
+
+	char hom_nonref_na19240[100];
+	sprintf(hom_nonref_na19240, "hom_nonref_na19240");
+	homnonref_fptr = fopen(hom_nonref_na19240, "w");
+
+	if (homnonref_fptr==NULL)
+	  {
+	    printf("Cannot open %s so exit\n", hom_nonref_na19240);
+	    exit(1);
+	  }
+
+	db_graph_detect_vars( homnonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref_in_na19240,
+			      &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
+			      &element_get_union_human_ref_and_na19240_colours, &get_covg_union_human_ref_and_na19240, &print_extra_info);
+
+	fclose(homnonref_fptr);
+	//cleanup
+	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
+
+	/*
 
 
 	//STEP 4 - detect variants using ref-assisted trusted-path algorithm
@@ -1186,13 +1246,16 @@ int main(int argc, char **argv){
 	
 	//cleanup
 	hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
-	
+	*/	
 
 	printf("Finished making all calls\n");
 
+
+	/*
 	printf("Now print annotated supernodes of  NA12878\n");
 	db_graph_print_supernodes_for_specific_person_or_pop("na12878_sups", "na12878_sings", 3000, db_graph, individual_edge_array,colour_na12878, &print_extra_supernode_info);
 	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
+
 	printf("Now print annotated supernodes of  NA19240\n");
 	db_graph_print_supernodes_for_specific_person_or_pop("na19240_sups", "na19240_sings", 3000, db_graph, individual_edge_array,colour_na19240, &print_extra_supernode_info);
 	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
@@ -1201,7 +1264,7 @@ int main(int argc, char **argv){
 							     db_graph, &element_get_union_human_colours, &get_joint_human_covg,
 							     &print_extra_supernode_info);
 	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
-
+	*/
 	printf("FINISHED ALL\n");
 	break;
 	}

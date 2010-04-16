@@ -5942,10 +5942,21 @@ boolean does_this_path_exist_in_this_colour(dBNode** array_nodes, Orientation* a
   boolean ret = true;
   int i;
 
+  if (array_nodes[0]==NULL)
+    {
+      return false;
+    }
+
   for (i=1; i<len; i++)
     {
       //get last base in kmer
       Nucleotide n;
+
+      if (array_nodes[i]==NULL)
+	{
+	  return false;
+	}
+
       if (array_orientations[i]==forward)
 	{
 	  n = binary_kmer_get_last_nucleotide(&(array_nodes[i]->kmer));
@@ -5963,6 +5974,7 @@ boolean does_this_path_exist_in_this_colour(dBNode** array_nodes, Orientation* a
 	}
       
     }
+
   return ret;
   
   
