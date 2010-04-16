@@ -259,6 +259,9 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
 
 
 void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, EdgeArrayType, int),HashTable * hash_table, int** array, int length_of_array, EdgeArrayType type, int index);
+
+void db_graph_traverse_with_array_of_longlongs(void (*f)(HashTable*, Element *, long long**, int, EdgeArrayType, int),
+					       HashTable * hash_table, long long** array, int length_of_array, EdgeArrayType type, int index);
  
 void db_graph_get_covg_distribution(dBGraph* db_graph, EdgeArrayType type, int index);
 

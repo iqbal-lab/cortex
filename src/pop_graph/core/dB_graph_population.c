@@ -2134,8 +2134,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 										     nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
 										     seq3p,
 										     db_graph->kmer_size,false, get_colour, get_covg);
-		sprintf(name,"variant_%i", count_vars);
-		fprintf(fout,"\n%s - extra information", name);
+		//ZAMZAM TEMPORARY FOR SIMS sprintf(name,"variant_%i", count_vars);
+		//ZAMZAM TEMPORARY FOR SIM PARSING OF OUTPUT fprintf(fout,"\n%s - extra information\n", name);
 		print_extra_info(&var, fout);
 
 		
@@ -2569,7 +2569,7 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
 
 
 
- void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, EdgeArrayType, int),HashTable * hash_table, int** array, int length_of_array, EdgeArrayType type, int index){
+void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, EdgeArrayType, int),HashTable * hash_table, int** array, int length_of_array, EdgeArrayType type, int index){
   
   long long i;
   for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
@@ -2582,19 +2582,29 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
 }
 
 
-
+void db_graph_traverse_with_array_of_longlongs(void (*f)(HashTable*, Element *, long long**, int, EdgeArrayType, int),
+					       HashTable * hash_table, long long** array, int length_of_array, EdgeArrayType type, int index)
+{
+  
+  long long i;
+  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
+    if (!db_node_check_status(&hash_table->table[i],unassigned)){
+      f(hash_table, &hash_table->table[i], array, length_of_array, type, index);
+    }
+  }
+}
 
 void db_graph_get_covg_distribution(dBGraph* db_graph, EdgeArrayType type, int index)
 {
   int i;
 
-  int* covgs = (int*) malloc(sizeof(int) * 10001);
+  long long* covgs = (long long*) malloc(sizeof(long long) * 10001);
   if (covgs==NULL)
     {
       printf("Could not alloc array to hold covg distrib\n");
       exit(1);
     }
-  int** covgs_ptrs = (int**) malloc(sizeof(int*) * 10001);
+  long long** covgs_ptrs = (long long**) malloc(sizeof(long long*) * 10001);
   if (covgs_ptrs==NULL)
     {
       printf("Could not alloc array to hold covg distrib\n");
@@ -2607,7 +2617,7 @@ void db_graph_get_covg_distribution(dBGraph* db_graph, EdgeArrayType type, int i
       covgs_ptrs[i]=&(covgs[i]);
     }
 
-  void bin_covg_and_add_to_array(HashTable* htable, Element * e , int** arr, int len, EdgeArrayType type, int colour)
+  void bin_covg_and_add_to_array(HashTable* htable, Element * e , long long** arr, int len, EdgeArrayType type, int colour)
   {
     int bin = e->coverage[colour];
     if (bin>10000)
@@ -2617,16 +2627,17 @@ void db_graph_get_covg_distribution(dBGraph* db_graph, EdgeArrayType type, int i
     *(arr[bin]) = *(arr[bin]) +1; 
   }
   
-  db_graph_traverse_with_array(&bin_covg_and_add_to_array, db_graph, covgs_ptrs, 10001, type, index);
+  db_graph_traverse_with_array_of_longlongs(&bin_covg_and_add_to_array, db_graph, covgs_ptrs, 10001, type, index);
 
   for (i=0; i<=10000; i++)
     {
-      printf("multiplicity:%d\tNumber:%d\n",i,covgs[i]);
+      printf("multiplicity:%d\tNumber:%qd\n",i,covgs[i]);
     }
 
   free(covgs_ptrs);
   free(covgs);
 }
+
 
 
 
@@ -5490,6 +5501,7 @@ void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fa
 
 void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
 {
+
 }
 
 
