@@ -532,30 +532,58 @@ int main(int argc, char **argv){
 	  return e->coverage[1];
 	}
 
+
+	boolean detect_vars_condition_covg_gtr_1(VariantBranchesAndFlanks* var)
+	{
+	  int i;
+	  for (i=0; i<var->len_one_allele; i++)
+	    {
+	      if (db_node_get_coverage((var->one_allele)[i], individual_edge_array, 1) <=1 )
+		{
+		  return false;
+		}
+	    }
+	  
+	  for (i=0; i<var->len_other_allele; i++)
+	    {
+	      if (db_node_get_coverage((var->other_allele)[i], individual_edge_array, 1) <=1)
+		{
+		  return false;
+		}
+	    }
+	  
+	  return true;
+	}
+	
+
 	boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var)
 	{
 	  return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_ref, &get_covg_indiv);
 	}
 
+	boolean detect_vars_condition_is_hom_nonref_with_covg_gtr_1(VariantBranchesAndFlanks* var)
+	{
+	  return detect_vars_condition_is_hom_nonref_with_covg_gtr_1_given_colour_funcs_for_ref_and_indiv(var, &get_covg_ref, &get_covg_indiv);
+	}
 
 
 	//I don't want to affect the nodes that are in the reference, but not the individual
 	//Also, if it has covg 1 in the individual, but also covg 1 in the reference, I dont want to touch the reference edge
 	void apply_reset_to_all_edges(dBNode* node, Orientation or, Nucleotide nuc)
 	{
-	  int j;
-	  for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
-	    {
+	  // int j;
+	  //for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
+	  //  {
 	      reset_one_edge(node, or, nuc, individual_edge_array, 1);
-	    }
+	      //  }
 	}
 	void apply_reset_to_all_edges_2(dBNode* node )
 	{
 	  int j;
-	  for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
-	    {
+	  //for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
+	  //  {
 	      db_node_reset_edges(node, individual_edge_array, 1);
-	    }
+	      //  }
 	}
 
 	if (remove_low_covg_nodes>0)
@@ -579,7 +607,7 @@ int main(int argc, char **argv){
 	    exit(1);
 	  }
 	printf("Going to output ref free hets to %s\n", detectvars_filename);
-	db_graph_detect_vars(detect_vars_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_always_true,
+	db_graph_detect_vars(detect_vars_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_covg_gtr_1,
 			     &db_node_action_set_status_visited,
 			     &db_node_action_set_status_visited,
 			     &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
@@ -598,7 +626,7 @@ int main(int argc, char **argv){
 	  }
 	printf("Call het variants after marking off the bubbles in the ref\n");
 	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
-									   &detect_vars_condition_always_true,
+									   &detect_vars_condition_covg_gtr_1,
 									   &element_get_colour0, &element_get_covg_colour0,
 									   &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
 	fclose(detect_vars_after_remv_ref_bub_fptr);
@@ -613,7 +641,7 @@ int main(int argc, char **argv){
 	  }
 
 	printf("About to print hom nonref calls to %s\n", detectvars_hom_nonref_filename);
-	db_graph_detect_vars( detect_vars_hom_nonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref,
+	db_graph_detect_vars( detect_vars_hom_nonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref_with_covg_gtr_1,
 			      &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
 			      &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info);
 
@@ -627,7 +655,7 @@ int main(int argc, char **argv){
 	int min_threeprime_flank_anchor= 3;
 	int max_anchor_span =  70000;
 	int length_of_arrays = 140000;
-	int min_covg =1;
+	int min_covg =2;
 	int max_covg = 100000000;
 	int max_expected_size_of_supernode=70000;
 	
