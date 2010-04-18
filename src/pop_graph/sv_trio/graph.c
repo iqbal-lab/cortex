@@ -36,6 +36,7 @@ int main(int argc, char **argv){
   int D_454_na19240;
   int R_slx;//mean read length
   int R_454;//mean read length
+  int min_covg;
 
   //command line arguments 
   loading_colours_separately = (boolean) atoi(argv[1]);
@@ -61,6 +62,7 @@ int main(int argc, char **argv){
   D_454_na19240 = atoi(argv[21]);
   R_slx = atoi(argv[22]);
   R_454 = atoi(argv[23]);
+  min_covg = atoi(argv[24]);
 
   int max_retries=10;
 
@@ -554,6 +556,28 @@ int main(int argc, char **argv){
 	  
 	  return true;
 	}
+
+	boolean detect_vars_condition_covg_gtr_2(VariantBranchesAndFlanks* var)
+	{
+	  int i;
+	  for (i=0; i<var->len_one_allele; i++)
+	    {
+	      if (db_node_get_coverage((var->one_allele)[i], individual_edge_array, 1) <=2 )
+		{
+		  return false;
+		}
+	    }
+	  
+	  for (i=0; i<var->len_other_allele; i++)
+	    {
+	      if (db_node_get_coverage((var->other_allele)[i], individual_edge_array, 1) <=2)
+		{
+		  return false;
+		}
+	    }
+	  
+	  return true;
+	}
 	
 
 	boolean detect_vars_condition_is_hom_nonref(VariantBranchesAndFlanks* var)
@@ -563,7 +587,12 @@ int main(int argc, char **argv){
 
 	boolean detect_vars_condition_is_hom_nonref_with_covg_gtr_1(VariantBranchesAndFlanks* var)
 	{
-	  return detect_vars_condition_is_hom_nonref_with_covg_gtr_1_given_colour_funcs_for_ref_and_indiv(var, &get_covg_ref, &get_covg_indiv);
+	  return detect_vars_condition_is_hom_nonref_with_min_covg_given_colour_funcs_for_ref_and_indiv(var, &get_covg_ref, &get_covg_indiv,2);
+	}
+
+	boolean detect_vars_condition_is_hom_nonref_with_covg_gtr_2(VariantBranchesAndFlanks* var)
+	{
+	  return detect_vars_condition_is_hom_nonref_with_min_covg_given_colour_funcs_for_ref_and_indiv(var, &get_covg_ref, &get_covg_indiv,3);
 	}
 
 
@@ -579,7 +608,7 @@ int main(int argc, char **argv){
 	}
 	void apply_reset_to_all_edges_2(dBNode* node )
 	{
-	  int j;
+	  // int j;
 	  //for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
 	  //  {
 	      db_node_reset_edges(node, individual_edge_array, 1);
@@ -607,10 +636,27 @@ int main(int argc, char **argv){
 	    exit(1);
 	  }
 	printf("Going to output ref free hets to %s\n", detectvars_filename);
-	db_graph_detect_vars(detect_vars_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_covg_gtr_1,
-			     &db_node_action_set_status_visited,
-			     &db_node_action_set_status_visited,
-			     &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
+	if (min_covg==2)
+	  {
+	    db_graph_detect_vars(detect_vars_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_covg_gtr_1,
+				 &db_node_action_set_status_visited,
+				 &db_node_action_set_status_visited,
+				 &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
+	  }
+	else if (min_covg==3)
+	  {
+	    db_graph_detect_vars(detect_vars_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_covg_gtr_2,
+				 &db_node_action_set_status_visited,
+				 &db_node_action_set_status_visited,
+				 &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
+	  }
+	else
+	  {
+	    db_graph_detect_vars(detect_vars_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_always_true,
+				 &db_node_action_set_status_visited,
+				 &db_node_action_set_status_visited,
+				 &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
+	  }
 	fclose(detect_vars_fptr);
 
 	//cleanu
@@ -624,11 +670,30 @@ int main(int argc, char **argv){
 	    printf("Cannot open %s so exit\n", detectvars_after_remv_ref_bubble_filename);
 	    exit(1);
 	  }
-	printf("Call het variants after marking off the bubbles in the ref\n");
-	db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
-									   &detect_vars_condition_covg_gtr_1,
-									   &element_get_colour0, &element_get_covg_colour0,
-									   &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
+	printf("Call het variants after marking off the bubbles in the ref. Condition in called variant is that both branches have covg > %d everywhere\n", min_covg);
+
+	if (min_covg==2)
+	  {
+	    db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
+									       &detect_vars_condition_covg_gtr_1,
+									       &element_get_colour0, &element_get_covg_colour0,
+									       &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
+	  }
+	else if (min_covg==3)
+	  {
+	    db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
+									       &detect_vars_condition_covg_gtr_2,
+									       &element_get_colour0, &element_get_covg_colour0,
+									       &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
+	  } 
+	else
+	  {
+	    db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
+									       &detect_vars_condition_always_true,
+									       &element_get_colour0, &element_get_covg_colour0,
+									       &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
+	  }
+
 	fclose(detect_vars_after_remv_ref_bub_fptr);
 	//no need to traverse and do cleanup, as db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored does it at the end
 
@@ -641,9 +706,18 @@ int main(int argc, char **argv){
 	  }
 
 	printf("About to print hom nonref calls to %s\n", detectvars_hom_nonref_filename);
-	db_graph_detect_vars( detect_vars_hom_nonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref_with_covg_gtr_1,
-			      &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
-			      &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info);
+	if (min_covg==2)
+	  {
+	    db_graph_detect_vars( detect_vars_hom_nonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref_with_covg_gtr_1,
+				  &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
+				  &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info);
+	  }
+	else if (min_covg==3)
+	  {
+	    db_graph_detect_vars( detect_vars_hom_nonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref_with_covg_gtr_2,
+				  &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
+				  &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info);
+	  }
 
 	//cleanup
 	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
@@ -655,7 +729,7 @@ int main(int argc, char **argv){
 	int min_threeprime_flank_anchor= 3;
 	int max_anchor_span =  70000;
 	int length_of_arrays = 140000;
-	int min_covg =2;
+	//int min_covg = 2;
 	int max_covg = 100000000;
 	int max_expected_size_of_supernode=70000;
 	

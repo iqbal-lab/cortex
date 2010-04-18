@@ -1962,10 +1962,10 @@ boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv
 
 
 
-boolean detect_vars_condition_is_hom_nonref_with_covg_gtr_1_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(const dBNode*), int (*get_covg_indiv)(const dBNode*) )
+boolean detect_vars_condition_is_hom_nonref_with_min_covg_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(const dBNode*), int (*get_covg_indiv)(const dBNode*), int min_covg )
 {
   //Assumes the reference is colour 0 and the individual is colour 1
-  int covg_threshold = 2;
+  int covg_threshold = min_covg;
   int i;
   int count_how_many_nodes_in_one_allele_have_covg_by_indiv=0;
   int count_how_many_nodes_in_other_allele_have_covg_by_indiv=0;
