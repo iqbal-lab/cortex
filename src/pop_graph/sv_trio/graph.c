@@ -543,19 +543,19 @@ int main(int argc, char **argv){
 	//Also, if it has covg 1 in the individual, but also covg 1 in the reference, I dont want to touch the reference edge
 	void apply_reset_to_all_edges(dBNode* node, Orientation or, Nucleotide nuc)
 	{
-	  int j;
-	  for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
-	    {
+	  //int j;
+	  //for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
+	  //  {
 	      reset_one_edge(node, or, nuc, individual_edge_array, 1);
-	    }
+	      //  }
 	}
 	void apply_reset_to_all_edges_2(dBNode* node )
 	{
-	  int j;
-	  for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
-	    {
+	  //int j;
+	  //for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
+	  //  {
 	      db_node_reset_edges(node, individual_edge_array, 1);
-	    }
+	      //  }
 	}
 
 	if (remove_low_covg_nodes>0)
