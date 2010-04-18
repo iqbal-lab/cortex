@@ -1867,6 +1867,9 @@ boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesA
 }
 
 
+
+
+
 boolean detect_vars_condition_always_false(VariantBranchesAndFlanks* var)
 {
   return false;
@@ -1890,6 +1893,79 @@ boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv
 {
   //Assumes the reference is colour 0 and the individual is colour 1
   int covg_threshold = 1;
+  int i;
+  int count_how_many_nodes_in_one_allele_have_covg_by_indiv=0;
+  int count_how_many_nodes_in_other_allele_have_covg_by_indiv=0;
+  int count_how_many_nodes_in_one_allele_have_covg_by_ref=0;
+  int count_how_many_nodes_in_other_allele_have_covg_by_ref=0;
+  
+  for (i=0; i< var->len_one_allele; i++)
+    {
+      if ( get_covg_indiv((var->one_allele)[i]) >= covg_threshold )
+	{
+	  count_how_many_nodes_in_one_allele_have_covg_by_indiv++;
+	}
+      if ( get_covg_ref((var->one_allele)[i]) > 0 )
+	{
+	  count_how_many_nodes_in_one_allele_have_covg_by_ref++;
+	}
+    }
+  for (i=0; i< var->len_other_allele; i++)
+    {
+      if ( get_covg_indiv((var->other_allele)[i]) >= covg_threshold )
+	{
+	  count_how_many_nodes_in_other_allele_have_covg_by_indiv++;
+	}
+      if ( get_covg_ref((var->other_allele)[i]) > 0 )
+	{
+	  count_how_many_nodes_in_other_allele_have_covg_by_ref++;
+	}
+    }
+
+
+  if (//individual has branch1 but not branch2 
+      (count_how_many_nodes_in_one_allele_have_covg_by_indiv==var->len_one_allele)
+      &&
+      (count_how_many_nodes_in_other_allele_have_covg_by_indiv<=1)//last node of the two branches is same
+      &&
+      //reference has branch2 only
+      (count_how_many_nodes_in_one_allele_have_covg_by_ref<=1)//Mario - do you agree?
+      &&
+      (count_how_many_nodes_in_other_allele_have_covg_by_ref==var->len_other_allele)
+      )
+    {
+      return true;
+    }
+  else if (//individual has branch2 but not branch1
+	   (count_how_many_nodes_in_one_allele_have_covg_by_indiv<=1)
+	   &&
+	   (count_how_many_nodes_in_other_allele_have_covg_by_indiv==var->len_other_allele)
+	   &&
+	   //reference has branch1 only
+	   (count_how_many_nodes_in_one_allele_have_covg_by_ref==var->len_one_allele)
+	   &&
+	   (count_how_many_nodes_in_other_allele_have_covg_by_ref<=1)
+	   )
+    {
+      //printf("Return true\n");
+      return true;
+    }
+  else
+    {
+      //printf("Return false\n");
+      return false;
+    }
+  
+}
+
+
+
+
+
+boolean detect_vars_condition_is_hom_nonref_with_min_covg_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(const dBNode*), int (*get_covg_indiv)(const dBNode*), int min_covg )
+{
+  //Assumes the reference is colour 0 and the individual is colour 1
+  int covg_threshold = min_covg;
   int i;
   int count_how_many_nodes_in_one_allele_have_covg_by_indiv=0;
   int count_how_many_nodes_in_other_allele_have_covg_by_indiv=0;
@@ -2208,6 +2284,8 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fo
   hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 
 }
+
+
 
 
 //do not export - discuss with Mario
