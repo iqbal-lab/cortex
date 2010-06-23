@@ -52,6 +52,10 @@ int db_graph_db_node_clip_tip_for_specific_person_or_pop(dBNode * node, int limi
 							 dBGraph * db_graph, EdgeArrayType type, int index);
 
 
+
+
+
+
 // 1. the argument sum_of_covgs_in_desired_colours allows you to choose which colour (or union of colours) you want to apply this to
 // eg you might want  to "remove" (as defined by the action) any node that has coverage <= your threshold in the UNION of all colours, or in colour red or whatever
 // SO - this func returns the sum of coverages in the colours you care about
@@ -70,6 +74,28 @@ boolean db_graph_db_node_prune_low_coverage(dBNode * node, int coverage,
 boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int coverage,
 							     void (*node_action)(dBNode * node),
 							     dBGraph * db_graph);
+
+
+
+
+//if the node have covg <= coverage (arg2) and its supernode has length <=kmer+1 AND all the interiro nodes of the supernode have this low covg, then
+//prune the whole of the interior of the supernode
+void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(dBNode* node, int coverage, dBGraph * db_graph,
+											      int (*sum_of_covgs_in_desired_colours)(const Element *), 
+											      Edges (*get_edge_of_interest)(const Element*), 
+											      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+											      void (*apply_reset_to_specified_edges_2)(dBNode*),
+											      dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, char* supernode_str);
+
+// traverse graph. At each node, if covg <= arg1, get its supernode. If that supernode length is <= kmer-length, and ALL interior nodes have covg <= arg1 
+// then prune the node, and the interior nodes of the supernode.
+void db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph * db_graph,
+							   int (*sum_of_covgs_in_desired_colours)(const Element *), 
+							   Edges (*get_edge_of_interest)(const Element*), 
+							   void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+							  void (*apply_reset_to_specified_edges_2)(dBNode*) );
+
+
 
 int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode * node, Orientation orientation, int limit, 
 									 Nucleotide fst_nucleotide,

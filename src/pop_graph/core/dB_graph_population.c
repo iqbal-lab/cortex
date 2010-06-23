@@ -2497,7 +2497,105 @@ void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, Edge
 }
 
 
+//if the node have covg <= coverage (arg2) and its supernode has length <=kmer+1 AND all the interiro nodes of the supernode have this low covg, then
+//prune the whole of the interior of the supernode
+void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(dBNode* node, int coverage, dBGraph * db_graph,
+											      int (*sum_of_covgs_in_desired_colours)(const Element *), 
+											      Edges (*get_edge_of_interest)(const Element*), 
+											      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+											      void (*apply_reset_to_specified_edges_2)(dBNode*),
+											      dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, char* supernode_str)
 
+{
+  int max_expected_supernode_len=2000;
+    if (sum_of_covgs_in_desired_colours(node)<=coverage)
+      {
+	//get the supernode, setting nodes to visited
+	double avg_cov;
+	int min_cov;
+	int max_cov;
+	boolean is_cycle;
+	
+	int length_sup =  db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_expected_supernode_len,
+										    &db_node_action_set_status_visited,
+										    path_nodes, path_orientations, path_labels, supernode_str,
+										    &avg_cov,&min_cov, &max_cov, &is_cycle,
+										    db_graph, 
+										    get_edge_of_interest,
+										    sum_of_covgs_in_desired_colours);
+	
+        if (length_sup>db_graph->kmer_size+1)
+	  {
+	    return;//do nothing. This is too long to look like a supernode induced by a single-base error
+	  }
+	else
+	  {
+	    int i;
+	    boolean all_interior_nodes_have_covg_below_thresh=true;
+	    for (i=1; (i<=length_sup-1) && (all_interior_nodes_have_covg_below_thresh==true); i++)
+	      {
+		if (sum_of_covgs_in_desired_colours(path_nodes[i])>coverage)
+		  {
+		    all_interior_nodes_have_covg_below_thresh=false;
+		  }
+	      }
+
+	    if (all_interior_nodes_have_covg_below_thresh==true)
+	      {
+		for (i=1; (i<=length_sup-1); i++)
+		  {
+
+		    db_graph_db_node_prune_low_coverage(path_nodes[i],coverage,
+							&db_node_action_set_status_pruned,
+							db_graph,
+							sum_of_covgs_in_desired_colours, get_edge_of_interest, apply_reset_to_specified_edges, apply_reset_to_specified_edges_2
+							);
+		  }
+	      }
+	  }
+      }
+    return;
+}
+
+
+// traverse graph. At each node, if covg <= arg1, get its supernode. If that supernode length is <= kmer-length, and ALL interior nodes have covg <= arg1 
+// then prune the node, and the interior nodes of the supernode.
+void db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph * db_graph,
+							   int (*sum_of_covgs_in_desired_colours)(const Element *), 
+							   Edges (*get_edge_of_interest)(const Element*), 
+							   void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+							  void (*apply_reset_to_specified_edges_2)(dBNode*) )
+{
+
+  int max_expected_sup = 2000;
+  dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*max_expected_sup); 
+  Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*max_expected_sup); 
+  Nucleotide*  path_labels       = (Nucleotide*) malloc(sizeof(Nucleotide)*max_expected_sup);
+  char*        supernode_string  = (char*) malloc(sizeof(char)*max_expected_sup+1); //+1 for \0
+
+  if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
+    {
+      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
+      exit(1);
+    }
+
+
+  void prune_supernodes_that_look_like_they_are_induced_by_singlebase_errors(dBNode* node)
+  {
+
+
+    db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(node, coverage, db_graph, 
+											     sum_of_covgs_in_desired_colours,
+											     get_edge_of_interest,
+											     apply_reset_to_specified_edges, 
+											     apply_reset_to_specified_edges_2,
+											     path_nodes, path_orientations, path_labels,supernode_string);
+
+  }
+  
+  hash_table_traverse(&prune_supernodes_that_look_like_they_are_induced_by_singlebase_errors, db_graph);
+}
+							  
 
 // 1. sum_of_covgs_in_desired_colours returns the sum of the coverages for the colours you are interested in
 // 1. the argument get_edge_of_interest is a function that gets the "edge" you are interested in - may be a single edge/colour from the graph, or might be a union of some edges 

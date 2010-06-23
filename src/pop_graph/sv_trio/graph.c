@@ -619,10 +619,10 @@ int main(int argc, char **argv){
 
 	if (remove_low_covg_nodes>0)
 	  {
-	    printf("remove low coverage nodes (<= %d ) \n", low_cov_thresh);
-	    db_graph_remove_low_coverage_nodes(low_cov_thresh,db_graph, &element_get_covg_colour1, &element_get_colour1,
-					       &apply_reset_to_all_edges, &apply_reset_to_all_edges_2);
-	    
+	    printf("remove low coverage nodes (<= %d BASED ON TOPOLOGY aswell  - must look like induced by a single base error) \n", low_cov_thresh);
+	    db_graph_remove_errors_considering_covg_and_topology(low_cov_thresh,db_graph, &element_get_covg_colour1, &element_get_colour1,
+								 &apply_reset_to_all_edges, &apply_reset_to_all_edges_2);
+
 	    printf("dumping graph %s\n",dumped_binary);
 	    db_graph_dump_binary(dumped_binary,&db_node_check_status_not_pruned,db_graph);
 	  }
