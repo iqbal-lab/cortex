@@ -617,7 +617,11 @@ int main(int argc, char **argv){
 
 	if (remove_low_covg_nodes>0)
 	  {
-	    printf("remove low coverage nodes (<= %d BASED ON TOPOLOGY aswell  - must look like induced by a single base error) \n", low_cov_thresh);
+	    //clip tips first
+	    printf("Clip tips first\n");
+	    db_graph_clip_tips_for_specific_person_or_pop(db_graph, individual_edge_array, 1);
+	    
+	    printf("Then remove low coverage nodes (<= %d BASED ON TOPOLOGY aswell  - must look like induced by a single base error) \n", low_cov_thresh);
 	    db_graph_remove_errors_considering_covg_and_topology(low_cov_thresh,db_graph, &element_get_covg_colour1, &element_get_colour1,
 								 &apply_reset_to_all_edges, &apply_reset_to_all_edges_2);
 

@@ -2311,8 +2311,9 @@ void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArray
   
   void clip_tips(dBNode * node){
     
+    //use max length k+1, which is what you would get with a single base error - a bubble of that length
     if (db_node_check_status_none(node)){
-      db_graph_db_node_clip_tip_for_specific_person_or_pop(node, db_graph->kmer_size*2,&db_node_action_set_status_pruned,db_graph, type, index);
+      db_graph_db_node_clip_tip_for_specific_person_or_pop(node, 1+db_graph->kmer_size,&db_node_action_set_status_pruned,db_graph, type, index);
     }
   }
 
