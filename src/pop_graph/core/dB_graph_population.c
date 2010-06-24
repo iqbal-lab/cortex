@@ -1,3 +1,4 @@
+
 /*
   dB_graph_population.c - implementation
  */
@@ -2509,7 +2510,9 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 
 {
   int max_expected_supernode_len=2000;
-    if (sum_of_covgs_in_desired_colours(node)<=coverage)
+
+  //note this is important - make sure has SOME covg in this person. Might be a node that is in the refernece colour, but not this person - dont want to clean off ref alleles.
+  if ( (sum_of_covgs_in_desired_colours(node)>0) && (sum_of_covgs_in_desired_colours(node)<=coverage) )
       {
 	//get the supernode, setting nodes to visited
 	double avg_cov;
@@ -2532,16 +2535,17 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 	else
 	  {
 	    int i;
-	    boolean all_interior_nodes_have_covg_below_thresh=true;
-	    for (i=1; (i<=length_sup-1) && (all_interior_nodes_have_covg_below_thresh==true); i++)
+	    //to look like an error, must all have actual coverage, caused by an actual errored read, BUT must have low covg, <=threshold
+	    boolean all_interior_nodes_have_nonzero_covg_below_or_equal_thresh=true;
+	    for (i=1; (i<=length_sup-1) && (all_interior_nodes_have_nonzero_covg_below_or_equal_thresh==true); i++)
 	      {
-		if (sum_of_covgs_in_desired_colours(path_nodes[i])>coverage)
+		if ( (sum_of_covgs_in_desired_colours(path_nodes[i])>coverage) || (sum_of_covgs_in_desired_colours(path_nodes[i])==0) )
 		  {
-		    all_interior_nodes_have_covg_below_thresh=false;
+		    all_interior_nodes_have_nonzero_covg_below_or_equal_thresh=false;
 		  }
 	      }
 
-	    if (all_interior_nodes_have_covg_below_thresh==true)
+	    if (all_interior_nodes_have_nonzero_covg_below_or_equal_thresh==true)
 	      {
 		for (i=1; (i<=length_sup-1); i++)
 		  {
