@@ -85,17 +85,18 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 											      Edges (*get_edge_of_interest)(const Element*), 
 											      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 											      void (*apply_reset_to_specified_edges_2)(dBNode*),
-											      dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, char* supernode_str);
+											      dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, char* supernode_str,
+											      boolean protect_reference, int colour_reference);
 
 // traverse graph. At each node, if covg <= arg1, get its supernode. If that supernode length is <= kmer-length, and ALL interior nodes have covg <= arg1 
 // then prune the node, and the interior nodes of the supernode.
+// protect th ereference from being pruned also
 void db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph * db_graph,
 							   int (*sum_of_covgs_in_desired_colours)(const Element *), 
 							   Edges (*get_edge_of_interest)(const Element*), 
 							   void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
-							  void (*apply_reset_to_specified_edges_2)(dBNode*) );
-
-
+							  void (*apply_reset_to_specified_edges_2)(dBNode*),
+							  int colour_reference);
 
 int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode * node, Orientation orientation, int limit, 
 									 Nucleotide fst_nucleotide,

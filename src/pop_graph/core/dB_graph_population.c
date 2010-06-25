@@ -2506,12 +2506,20 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 											      Edges (*get_edge_of_interest)(const Element*), 
 											      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 											      void (*apply_reset_to_specified_edges_2)(dBNode*),
-											      dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, char* supernode_str)
+											      dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, char* supernode_str,
+											      boolean protect_reference, int colour_reference)
 
 {
   int max_expected_supernode_len=2000;
 
   //note this is important - make sure has SOME covg in this person. Might be a node that is in the refernece colour, but not this person - dont want to clean off ref alleles.
+  
+  if ( (protect_reference==true) && (db_node_get_coverage(node, individual_edge_array, colour_reference)>0) )
+    {
+      return;
+    }
+  
+
   if ( (sum_of_covgs_in_desired_colours(node)>0) && (sum_of_covgs_in_desired_colours(node)<=coverage) )
       {
 	//get the supernode, setting nodes to visited
@@ -2536,16 +2544,16 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 	  {
 	    int i;
 	    //to look like an error, must all have actual coverage, caused by an actual errored read, BUT must have low covg, <=threshold
-	    boolean all_interior_nodes_have_nonzero_covg_below_or_equal_thresh=true;
-	    for (i=1; (i<=length_sup-1) && (all_interior_nodes_have_nonzero_covg_below_or_equal_thresh==true); i++)
+	    boolean interior_nodes_look_like_error=true;
+	    for (i=1; (i<=length_sup-1) && (interior_nodes_look_like_error==true); i++)
 	      {
-		if ( (sum_of_covgs_in_desired_colours(path_nodes[i])>coverage) || (sum_of_covgs_in_desired_colours(path_nodes[i])==0) )
+		if ( (sum_of_covgs_in_desired_colours(path_nodes[i])>coverage) || ( (protect_reference==true) && (db_node_get_coverage(path_nodes[i], individual_edge_array, colour_reference)>0) )     )
 		  {
-		    all_interior_nodes_have_nonzero_covg_below_or_equal_thresh=false;
+		    interior_nodes_look_like_error=false;
 		  }
 	      }
 
-	    if (all_interior_nodes_have_nonzero_covg_below_or_equal_thresh==true)
+	    if (interior_nodes_look_like_error==true)
 	      {
 		for (i=1; (i<=length_sup-1); i++)
 		  {
@@ -2565,11 +2573,13 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 
 // traverse graph. At each node, if covg <= arg1, get its supernode. If that supernode length is <= kmer-length, and ALL interior nodes have covg <= arg1 
 // then prune the node, and the interior nodes of the supernode.
+// protect th ereference from being pruned also
 void db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph * db_graph,
 							   int (*sum_of_covgs_in_desired_colours)(const Element *), 
 							   Edges (*get_edge_of_interest)(const Element*), 
 							   void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
-							  void (*apply_reset_to_specified_edges_2)(dBNode*) )
+							  void (*apply_reset_to_specified_edges_2)(dBNode*),
+							  int colour_reference)
 {
 
   int max_expected_sup = 2000;
@@ -2594,7 +2604,8 @@ void db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph 
 											     get_edge_of_interest,
 											     apply_reset_to_specified_edges, 
 											     apply_reset_to_specified_edges_2,
-											     path_nodes, path_orientations, path_labels,supernode_string);
+											     path_nodes, path_orientations, path_labels,supernode_string,
+											     true, colour_reference);
 
   }
   
