@@ -625,7 +625,7 @@ int main(int argc, char **argv){
 	    
 	    printf("Then remove low coverage nodes (<= %d BASED ON TOPOLOGY aswell  - must look like induced by a single base error) \n", low_cov_thresh);
 	    db_graph_remove_errors_considering_covg_and_topology(low_cov_thresh,db_graph, &element_get_covg_colour1, &element_get_colour1,
-								 &apply_reset_to_all_edges, &apply_reset_to_all_edges_2);
+								 &apply_reset_to_all_edges, &apply_reset_to_all_edges_2,0);//last argument is colour of ref, to be protected.
 
 	    printf("dumping graph %s\n",dumped_binary);
 	    db_graph_dump_binary(dumped_binary,&db_node_check_status_not_pruned,db_graph);
