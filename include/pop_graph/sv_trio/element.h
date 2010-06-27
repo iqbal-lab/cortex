@@ -159,6 +159,8 @@ void db_node_set_status_to_none(dBNode * node);
 //actions and conditions 
 
 void db_node_action_set_status_none(dBNode * node);
+void db_node_action_set_status_of_unpruned_to_none(dBNode * node);
+
 void db_node_action_set_status_pruned(dBNode * node);
 void db_node_action_set_status_visited(dBNode * node);
 void db_node_action_set_status_ignore_this_node(dBNode * node);

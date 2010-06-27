@@ -642,7 +642,15 @@ int main(int argc, char **argv){
 	    exit(1);
 	  }
 	printf("Going to output ref free hets to %s\n", detectvars_filename);
-	if (min_covg==2)
+	
+	if (min_covg==0)
+	  {
+	    db_graph_detect_vars(detect_vars_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_always_true,
+				 &db_node_action_set_status_visited,
+				 &db_node_action_set_status_visited,
+				 &element_get_colour1, &element_get_covg_colour1, &print_no_extra_info);
+	  }
+	else if (min_covg==2)
 	  {
 	    db_graph_detect_vars(detect_vars_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_covg_gtr_1,
 				 &db_node_action_set_status_visited,
@@ -678,6 +686,8 @@ int main(int argc, char **argv){
 	  }
 	printf("Call het variants after marking off the bubbles in the ref. Condition in called variant is that both branches have covg > %d everywhere\n", min_covg);
 
+
+
 	if (min_covg==2)
 	  {
 	    db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(detect_vars_after_remv_ref_bub_fptr, max_allowed_branch_len,db_graph, 
@@ -702,6 +712,7 @@ int main(int argc, char **argv){
 
 	fclose(detect_vars_after_remv_ref_bub_fptr);
 	//no need to traverse and do cleanup, as db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored does it at the end
+	// and also will not unset the pruned information
 
 	//STEP3 - detect hom non ref variants
 	FILE* detect_vars_hom_nonref_fptr = fopen(detectvars_hom_nonref_filename, "w");
@@ -724,9 +735,15 @@ int main(int argc, char **argv){
 				  &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
 				  &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info);
 	  }
+	else
+	  {
+	     db_graph_detect_vars( detect_vars_hom_nonref_fptr, max_allowed_branch_len,db_graph, &detect_vars_condition_is_hom_nonref,
+				  &db_node_action_set_status_visited,  &db_node_action_set_status_visited,
+				  &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info);
+	  }
 
-	//cleanup
-	hash_table_traverse(&db_node_action_set_status_none, db_graph);	
+	//cleanup, but don't delete the pruning information!
+	hash_table_traverse(&db_node_action_set_status_of_unpruned_to_none, db_graph);	
 
 
 	//STEP 4 - detect homovariants using ref-assisted trusted-path algorithm

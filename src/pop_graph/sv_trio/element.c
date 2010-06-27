@@ -906,6 +906,16 @@ void db_node_action_set_status_none(dBNode * node){
   db_node_set_status(node,none);
 }
 
+void db_node_action_set_status_of_unpruned_to_none(dBNode * node){
+
+  if (db_node_check_status(node, pruned)==false)
+    {
+      db_node_set_status(node,none);
+    }
+}
+
+
+
 void db_node_action_set_status_pruned(dBNode * node){
   db_node_set_status(node,pruned);
 }

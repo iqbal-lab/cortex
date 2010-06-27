@@ -2557,7 +2557,6 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 	      {
 		for (i=1; (i<=length_sup-1); i++)
 		  {
-
 		    db_graph_db_node_prune_low_coverage(path_nodes[i],coverage,
 							&db_node_action_set_status_pruned,
 							db_graph,
