@@ -2614,6 +2614,7 @@ void db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph 
   }
   
   hash_table_traverse(&prune_supernodes_that_look_like_they_are_induced_by_singlebase_errors, db_graph);
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
 }
 							  
 
