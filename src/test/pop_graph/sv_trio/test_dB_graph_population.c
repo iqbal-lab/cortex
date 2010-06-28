@@ -1237,7 +1237,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
 								  seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
 								  db_graph, individual_edge_array, 0));
   
-  db_node_set_status(test_element2, pruned);
+  db_node_set_status(test_element2, exists_in_reference);
   CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50,
 								   &db_node_check_status_none,
 								   &db_node_action_do_nothing, 

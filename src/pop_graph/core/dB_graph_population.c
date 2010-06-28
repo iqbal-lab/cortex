@@ -83,7 +83,7 @@ dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node
 
   BinaryKmer local_copy_of_kmer;
   binary_kmer_assignment_operator(local_copy_of_kmer, current_node->kmer);
-  
+
   BinaryKmer tmp_kmer;
   dBNode * next_node=NULL;
   
@@ -976,6 +976,7 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
       exit(1);
     }
   else if (! (db_node_is_this_node_in_subgraph_defined_by_func_of_colours(node, get_colour)))
+    // this will include pruned nodes
     {
       //printf("\nThis node is not in the graph of this person\n");
       return false;
@@ -2501,7 +2502,7 @@ void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, Edge
 
 //if the node have covg <= coverage (arg2) and its supernode has length <=kmer+1 AND all the interiro nodes of the supernode have this low covg, then
 //prune the whole of the interior of the supernode
-void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(dBNode* node, int coverage, dBGraph * db_graph,
+void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(dBNode* node, int coverage, dBGraph * db_graph, int max_expected_sup_len,
 											      int (*sum_of_covgs_in_desired_colours)(const Element *), 
 											      Edges (*get_edge_of_interest)(const Element*), 
 											      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
@@ -2510,10 +2511,14 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 											      boolean protect_reference, int colour_reference)
 
 {
-  int max_expected_supernode_len=2000;
 
-  //note this is important - make sure has SOME covg in this person. Might be a node that is in the refernece colour, but not this person - dont want to clean off ref alleles.
-  
+
+  if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
+    {
+      return;
+    }
+
+  //note this is important - Might be a node that is in the refernece colour, but not this person - dont want to clean off ref alleles.  
   if ( (protect_reference==true) && (db_node_get_coverage(node, individual_edge_array, colour_reference)>0) )
     {
       return;
@@ -2528,7 +2533,7 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 	int max_cov;
 	boolean is_cycle;
 	
-	int length_sup =  db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_expected_supernode_len,
+	int length_sup =  db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_expected_sup_len,
 										    &db_node_action_set_status_visited,
 										    path_nodes, path_orientations, path_labels, supernode_str,
 										    &avg_cov,&min_cov, &max_cov, &is_cycle,
@@ -2598,7 +2603,7 @@ void db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph 
   {
 
 
-    db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(node, coverage, db_graph, 
+    db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(node, coverage, db_graph, max_expected_sup,
 											     sum_of_covgs_in_desired_colours,
 											     get_edge_of_interest,
 											     apply_reset_to_specified_edges, 

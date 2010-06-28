@@ -80,7 +80,7 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int 
 
 //if the node have covg <= coverage (arg2) and its supernode has length <=kmer+1 AND all the interiro nodes of the supernode have this low covg, then
 //prune the whole of the interior of the supernode
-void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(dBNode* node, int coverage, dBGraph * db_graph,
+void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(dBNode* node, int coverage, dBGraph * db_graph, int max_expected_sup_len,
 											      int (*sum_of_covgs_in_desired_colours)(const Element *), 
 											      Edges (*get_edge_of_interest)(const Element*), 
 											      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 

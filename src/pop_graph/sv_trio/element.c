@@ -753,6 +753,11 @@ boolean db_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, E
       return false;
     }
 
+  if (db_node_check_status(node, pruned)==true)
+    {
+      return false;
+    }
+
   Edges edge_for_this_person_or_pop = get_edge_copy(*node, type, index);
 
   if (edge_for_this_person_or_pop == 0)
@@ -770,6 +775,10 @@ boolean db_node_is_this_node_in_subgraph_defined_by_func_of_colours(dBNode* node
 {
 
   if (node ==NULL)
+    {
+      return false;
+    }
+  if (db_node_check_status(node, pruned)==true)
     {
       return false;
     }
