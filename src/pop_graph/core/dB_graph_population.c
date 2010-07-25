@@ -2838,6 +2838,56 @@ void db_graph_get_covg_distribution(dBGraph* db_graph, EdgeArrayType type, int i
 
 
 
+
+
+
+void db_graph_get_covg_distribution_on_bubbles(dBGraph* db_graph, EdgeArrayType type, int index)
+{
+  int i;
+
+  long long* covgs = (long long*) malloc(sizeof(long long) * 10001);
+  if (covgs==NULL)
+    {
+      printf("Could not alloc array to hold covg distrib\n");
+      exit(1);
+    }
+  long long** covgs_ptrs = (long long**) malloc(sizeof(long long*) * 10001);
+  if (covgs_ptrs==NULL)
+    {
+      printf("Could not alloc array to hold covg distrib\n");
+      exit(1);
+    }
+
+  for (i=0; i<=10000; i++)
+    {
+      covgs[i]=0;
+      covgs_ptrs[i]=&(covgs[i]);
+    }
+
+  void bin_covg_and_add_to_array(HashTable* htable, Element * e , long long** arr, int len, EdgeArrayType type, int colour)
+  {
+    int bin = e->coverage[colour];
+    if (bin>10000)
+      {
+	bin = 10000;
+      }
+    *(arr[bin]) = *(arr[bin]) +1; 
+  }
+  
+  db_graph_traverse_with_array_of_longlongs(&bin_covg_and_add_to_array, db_graph, covgs_ptrs, 10001, type, index);
+
+  for (i=0; i<=10000; i++)
+    {
+      printf("multiplicity:%d\tNumber:%qd\n",i,covgs[i]);
+    }
+
+  free(covgs_ptrs);
+  free(covgs);
+}
+
+
+
+
 //TODO - update this to use db_graph_supernode
 /*
 //the length of the supernode is passed to the caller in the array of supernode lengths that is passed in.
