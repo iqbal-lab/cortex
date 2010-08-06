@@ -1891,62 +1891,63 @@ boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks* var)
 }
 
 
-boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(const dBNode*), int (*get_covg_indiv)(const dBNode*) )
+//typical usecase is, colourfunc1 = colour of ref, colourfunc2 = colour of individual ---> calling hom nonref
+boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, 
+										 int (*get_covg_colourfunc1)(const dBNode*), int (*get_covg_colourfunc2)(const dBNode*) )
 {
-  //Assumes the reference is colour 0 and the individual is colour 1
   int covg_threshold = 1;
   int i;
-  int count_how_many_nodes_in_one_allele_have_covg_by_indiv=0;
-  int count_how_many_nodes_in_other_allele_have_covg_by_indiv=0;
-  int count_how_many_nodes_in_one_allele_have_covg_by_ref=0;
-  int count_how_many_nodes_in_other_allele_have_covg_by_ref=0;
+  int count_how_many_nodes_in_one_allele_have_covg_by_colourfunc2=0;
+  int count_how_many_nodes_in_other_allele_have_covg_by_colourfunc2=0;
+  int count_how_many_nodes_in_one_allele_have_covg_by_colourfunc1=0;
+  int count_how_many_nodes_in_other_allele_have_covg_by_colourfunc1=0;
   
   for (i=0; i< var->len_one_allele; i++)
     {
-      if ( get_covg_indiv((var->one_allele)[i]) >= covg_threshold )
+      if ( get_covg_colourfunc2((var->one_allele)[i]) >= covg_threshold )
 	{
-	  count_how_many_nodes_in_one_allele_have_covg_by_indiv++;
+	  count_how_many_nodes_in_one_allele_have_covg_by_colourfunc2++;
 	}
-      if ( get_covg_ref((var->one_allele)[i]) > 0 )
+      if ( get_covg_colourfunc1((var->one_allele)[i]) > 0 )
 	{
-	  count_how_many_nodes_in_one_allele_have_covg_by_ref++;
+	  count_how_many_nodes_in_one_allele_have_covg_by_colourfunc1++;
 	}
     }
   for (i=0; i< var->len_other_allele; i++)
     {
-      if ( get_covg_indiv((var->other_allele)[i]) >= covg_threshold )
+      if ( get_covg_colourfunc2((var->other_allele)[i]) >= covg_threshold )
 	{
-	  count_how_many_nodes_in_other_allele_have_covg_by_indiv++;
+	  count_how_many_nodes_in_other_allele_have_covg_by_colourfunc2++;
 	}
-      if ( get_covg_ref((var->other_allele)[i]) > 0 )
+      if ( get_covg_colourfunc1((var->other_allele)[i]) > 0 )
 	{
-	  count_how_many_nodes_in_other_allele_have_covg_by_ref++;
+	  count_how_many_nodes_in_other_allele_have_covg_by_colourfunc1++;
 	}
     }
 
 
-  if (//individual has branch1 but not branch2 
-      (count_how_many_nodes_in_one_allele_have_covg_by_indiv==var->len_one_allele)
+  if (//colourfunc2/individual has branch1 but not branch2 
+      (count_how_many_nodes_in_one_allele_have_covg_by_colourfunc2==var->len_one_allele)
       &&
-      (count_how_many_nodes_in_other_allele_have_covg_by_indiv<=1)//last node of the two branches is same
+      (count_how_many_nodes_in_other_allele_have_covg_by_colourfunc2<=1)//last node of the two branches is same
       &&
-      //reference has branch2 only
-      (count_how_many_nodes_in_one_allele_have_covg_by_ref<=1)//Mario - do you agree?
+      //colourfunc1/reference has branch2 only
+      (count_how_many_nodes_in_one_allele_have_covg_by_colourfunc1<=1)//Mario - do you agree?
       &&
-      (count_how_many_nodes_in_other_allele_have_covg_by_ref==var->len_other_allele)
+      (count_how_many_nodes_in_other_allele_have_covg_by_colourfunc1==var->len_other_allele)
       )
     {
       return true;
     }
   else if (//individual has branch2 but not branch1
-	   (count_how_many_nodes_in_one_allele_have_covg_by_indiv<=1)
+	   (count_how_many_nodes_in_one_allele_have_covg_by_colourfunc2<=1)
 	   &&
-	   (count_how_many_nodes_in_other_allele_have_covg_by_indiv==var->len_other_allele)
+	   (count_how_many_nodes_in_other_allele_have_covg_by_colourfunc2==var->len_other_allele)
 	   &&
 	   //reference has branch1 only
-	   (count_how_many_nodes_in_one_allele_have_covg_by_ref==var->len_one_allele)
+	   (count_how_many_nodes_in_one_allele_have_covg_by_colourfunc1==var->len_one_allele)
 	   &&
-	   (count_how_many_nodes_in_other_allele_have_covg_by_ref<=1)
+	   (count_how_many_nodes_in_other_allele_have_covg_by_colourfunc1<=1)
 	   )
     {
       //printf("Return true\n");
@@ -1959,6 +1960,7 @@ boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv
     }
   
 }
+
 
 
 
@@ -2286,6 +2288,193 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fo
   hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 
 }
+
+
+
+//given two lists of colours, we want to call variants where one branch is entirely in the 
+// union of the colours of the first list, but not in the second, and vice-versa for the second branch
+void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBGraph * db_graph, 
+						 int* first_list, int len_first_list,
+						 int* second_list,  int len_second_list,
+						 boolean extra_condition(VariantBranchesAndFlanks* var),
+						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
+{
+
+  Edges get_union_first_list_colours(const dBNode* e)
+  {
+    int i;
+    Edges edges=0;
+    
+    for (i=0; i< len_first_list; i++)
+      {
+	edges |= e->individual_edges[first_list[i]];
+      }
+    return edges;    
+  }
+
+  Edges get_union_second_list_colours(const dBNode* e)
+  {
+    int i;
+    Edges edges=0;
+    
+    for (i=0; i< len_second_list; i++)
+      {
+	edges |= e->individual_edges[second_list[i]];
+      }
+    return edges;    
+  }
+
+  Edges get_union_first_and_second_list_colours(const dBNode* e)
+  {
+    int i;
+    Edges edges=0;
+    //in thise case, do not have to worry about intersection of lists, as is just OR-ing
+    for (i=0; i< len_first_list; i++)
+      {
+	edges |= e->individual_edges[first_list[i]];
+      }    
+    for (i=0; i< len_second_list; i++)
+      {
+	edges |= e->individual_edges[second_list[i]];
+      }
+    return edges;    
+  }
+
+  
+
+  int get_covg_of_union_first_list_colours(const dBNode*)
+  {
+    int i;
+    int covg=0;
+  
+    for (i=0; i< len_first_list; i++)
+      {
+	covg += e->coverage[first_list[i]];
+      }
+    return covg;
+  }
+  int get_covg_of_union_second_list_colours(const dBNode*)
+  {
+    int i;
+    int covg=0;
+  
+    for (i=0; i< len_second_list; i++)
+      {
+	covg += e->coverage[second_list[i]];
+      }
+    return covg;
+  }
+  int get_covg_of_union_first_and_second_list_colours(const dBNode*)
+  {
+    int i;
+    int covg=0;
+
+    printf("Got list 1:\n");
+    for (i=0; i< len_first_list; i++)
+      {
+	printf("%d ", first_list[i]);
+      }
+    print "\n";
+    printf("Got list 2:\n");
+    for (i=0; i< len_second_list; i++)
+      {
+	printf("%d ", second_list[i]);
+      }
+    print "\n";
+
+    //concatenate the two lists
+    int full_list[len_first_list+len_second_list];
+    for (i=0; i< len_first_list; i++)
+      {
+	full_list[i]=first_list[i];
+      }
+    for (i=0; i< len_second_list; i++)
+      {
+	full_list[len_first_list+i]=second_list[i];
+      }
+    //sort 
+    qsort(full_list,len_first_list+len_second_list, sizeof(int), int_cmp); 
+
+    for (i=0; i< len_first_list+len_second_list; i++)
+      {
+	if ( (i>0) && (full_list[i] != full_list[i-1]) )
+	  {
+	    printf("Sorted, merged lists 1 and 2 contains : %d\n", i);
+	    covg += e->coverage[full_list[i]];
+	  }
+	else if (i==0)
+	  {
+	    printf("Sorted, merged lists 1 and 2 contains : %d\n", i);
+	    covg += e->coverage[full_list[i]];
+	  }
+      }
+    return covg;
+  }
+
+  boolean condition_two_branches_lie_in_opposite_lists(VariantBranchesAndFlanks* var)
+  {
+    return detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(var, &get_covg_of_union_first_list_colours, &get_covg_of_union_second_list_colours);
+  }
+
+  boolean both_conditions(VariantBranchesAndFlanks* var)
+  {
+    if ( (condition_two_branches_lie_in_opposite_lists(var)==true) && (extra_condition(var)==true) )
+      {
+	return true;
+      }
+    else
+      {
+	return false;
+      }
+  }
+  
+
+  db_graph_detect_vars(fout, max_length, db_graph, 
+		       &both_conditions,
+		       &db_node_action_set_status_visited,
+                       &db_node_action_set_status_visited,
+		       &get_union_first_and_second_list_colours, &get_covg_of_union_first_and_second_list_colours,
+		       &print_extra_info);
+
+}
+
+
+
+//ie exclude bubbles found in the reference first, THEN find bubbles where the two branches lie in opposites lists
+void db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(FILE* fout, int max_length, dBGraph * db_graph, 
+									     int* first_list, int len_first_list,
+									     int* second_list,  int len_second_list,
+									     Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
+									     void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
+{
+
+  //first detect bubbles in the ref colour, but do not print them out, so they get marked as visited
+  db_graph_detect_vars(NULL, max_length, db_graph, 
+		       &detect_vars_condition_always_false,
+		       &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
+		       &db_node_action_set_status_visited, //mark everything else as visited
+		       get_colour_ref, get_covg_ref, print_extra_info);
+
+  //unset the nodes marked as visited, but not those marked as to be ignored
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+
+  //then start again, detecting variants.
+  db_graph_detect_vars_given_lists_of_colours(fout, max_length, db_graph, 
+					      first_list, len_first_list,
+					      second_list, len_second_list,
+					      &detect_vars_condition_branches_not_marked_to_be_ignored,//ignore anything you find that is marked to be ignored
+					      print_extra_info);
+
+  //unset the nodes marked as visited, but not those marked as to be ignored
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+  
+}
+
+
+
+
+
+
 
 
 
@@ -6237,4 +6426,42 @@ boolean does_this_path_exist_in_this_colour(dBNode** array_nodes, Orientation* a
   return ret;
   
   
+}
+
+
+void print_standard_extra_supernode_info(dBNode** node_array, Orientation* or_array, int len, FILE* fout)
+{
+  
+  int col;
+  for (col=0; col<NUMBER_OF_INDIVIDUALS_PER_POPULATION; col++)
+    {
+      
+      fprintf(fout, "Covg in Colour %d:\n", col);
+      int i;
+      for (i=0; i<len; i++)
+	{
+	  if (node_array[i]!=NULL)
+	    {
+	      fprintf(fout, "%d ", node_array[i]->coverage[col]);
+	    }
+	  else
+	    {
+	      fprintf(fout, "0 ");
+	    }
+	}
+      fprintf(fout, "\n");
+      
+    }
+  
+}
+
+void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
+{
+  fprintf(fout, "\n");
+  //print coverages:
+  fprintf(fout, "branch1 coverages\n");
+  print_standard_extra_supernode_info(var->one_allele, var->one_allele_or, var->len_one_allele, fout);
+  fprintf(fout, "branch2 coverages\n");
+  print_extra_supernode_info(var->other_allele, var->other_allele_or, var->len_other_allele, fout);
+  fprintf(fout, "\n\n");
 }

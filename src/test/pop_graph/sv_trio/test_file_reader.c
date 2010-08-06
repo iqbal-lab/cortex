@@ -1487,7 +1487,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   int max_read_length=100;
-  seq_length = load_paired_fastq_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
+  seq_length = load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
 										     &bad_reads, quality_cut_off, max_read_length,  
 										     &dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, 
 										     db_graph, individual_edge_array, 0);
@@ -1500,7 +1500,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   remove_duplicates=true;
-  seq_length = load_paired_fastq_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
+  seq_length = load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
 										     &bad_reads, quality_cut_off, max_read_length,  
 										     &dup_reads,remove_duplicates, break_homopolymers, homopolymer_cutoff, db_graph, individual_edge_array, 0);
   CU_ASSERT(seq_length==720);
@@ -1514,7 +1514,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
-  seq_length = load_paired_fastq_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file2_with_dup_1.fastq", "../data/test/graph/paired_end_file2_with_dup_2.fastq",
+  seq_length = load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file2_with_dup_1.fastq", "../data/test/graph/paired_end_file2_with_dup_2.fastq",
 										     &bad_reads, quality_cut_off, max_read_length, 
 										     &dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, db_graph, individual_edge_array, 0);
 
@@ -1537,7 +1537,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 
   int count_file_pairs=0;
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_list_of_paired_end_fastq_into_graph_of_specific_person_or_pop( "../data/test/graph/list_paired_end_file3_left", 
+  seq_length = load_list_of_paired_end_files_into_graph_of_specific_person_or_pop( "../data/test/graph/list_paired_end_file3_left", 
 										   "../data/test/graph/list_paired_end_file3_right", 
 										   quality_cut_off, max_read_length,
 										   &bad_reads, &dup_reads, &count_file_pairs, 

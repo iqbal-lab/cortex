@@ -415,7 +415,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 
 
       if ((char_to_binary_nucleotide(seq[i]) == Undefined) || 
-	  (quality_cut_off!=0 && qualities[i]<= quality_cut_off)){
+	  (quality_cut_off>0 && qualities[i]<= quality_cut_off)){
 	j=0; //restart the first kmer 
       }
       else if ( (break_homopolymers==true) && (hom_ct>=homopolymer_cutoff) )

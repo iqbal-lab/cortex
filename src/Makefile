@@ -6,13 +6,14 @@ IDIR_GRAPH =../include/graph
 IDIR_COUNT_KMERS = ../include/count_kmers
 IDIR_SV_TRIO = ../include/pop_graph/sv_trio 
 IDIR_POP_GRAPH_CORE = ../include/pop_graph/core
-
+IDIR_CORTEX_VAR_CMD_LINE = ../include/pop_graph/sv_trio
 
 IDIR_BASIC_TESTS =../include/test/basic
 IDIR_HASH_TABLE_TESTS =../include/test/hash_table
 IDIR_GRAPH_TESTS=../include/test/graph
 IDIR_COUNT_KMERS_TESTS =../include/test/count_kmers
 IDIR_SV_TRIO_TESTS=../include/test/pop_graph/sv_trio
+IDIR_CORTEX_VAR_CMD_LINE_TESTS=../include/test/pop_graph/sv_trio
 
 IDIR_CUNIT = /home/zam/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
 
@@ -26,7 +27,7 @@ IDIR_GRAPH =../include/graph
 IDIR_COUNT_KMERS =../include/count_kmers
 IDIR_POP_GRAPH_CORE = ../include/pop_graph/core
 IDIR_SV_TRIO = ../include/pop_graph/sv_trio
-
+IDIR_CORTEX_VAR_CMD_LINE=../include/pop_graph/sv_trio
 IDIR_CUNIT = /home/zam/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
 
 ifdef MAC
@@ -52,7 +53,7 @@ CFLAGS_HASH_TABLE_TESTS =  -I$(IDIR_HASH) -I$(IDIR_HASH_TABLE_TESTS) -I$(IDIR_CU
 CFLAGS_COUNT_KMERS_TESTS =  -I$(IDIR_COUNT_KMERS_TESTS)  -I$(IDIR_COUNT_KMERS) -I$(IDIR_BASIC)  -I$(IDIR_HASH) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
 CFLAGS_GRAPH_TESTS = -I$(IDIR_GRAPH_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_GRAPH) -I$(IDIR_CUNIT) -L/home/zam/bin/lib 
 CFLAGS_SV_TRIO_TESTS =  -I$(IDIR_SV_TRIO_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH)  -I$(IDIR_SV_TRIO) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
-CFLAGS_MANY_POP_TESTS =  -I$(IDIR_MANY_POP_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_HASH)  -I$(IDIR_MANY_POP_GRAPH) -I$(IDIR_POP_GRAPH_CORE) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
+CFLAGS_CORTEX_VAR_CMD_LINE_TESTS = -I$(IDIR_CORTEX_VAR_CMD_LINE_TESTS) -I$(IDIR_CORTEX_VAR_CMD_LINE) -I$(IDIR_BASIC) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
 
 
 
@@ -73,6 +74,7 @@ GRAPH_TESTS_OBJ = obj/basic/binary_kmer.o  obj/basic/seq.o obj/graph/element.o o
 
 SV_TRIO_TESTS_OBJ = obj/test/pop_graph/sv_trio/test_file_reader.o obj/test/pop_graph/sv_trio/test_pop_load_and_print.o  obj/test/pop_graph/sv_trio/run_sv_trio_tests.o obj/test/pop_graph/sv_trio/supernode_cmp.o obj/test/pop_graph/sv_trio/test_pop_supernode_consensus.o obj/test/pop_graph/sv_trio/test_pop_element.o  obj/test/pop_graph/sv_trio/test_dB_graph_population.o obj/pop_graph/sv_trio/binary_kmer.o obj/pop_graph/sv_trio/element.o obj/pop_graph/sv_trio/seq.o obj/pop_graph/sv_trio/hash_value.o obj/pop_graph/sv_trio/hash_table.o obj/pop_graph/sv_trio/dB_graph.o obj/pop_graph/sv_trio/file_reader.o  obj/pop_graph/sv_trio/dB_graph_population.o obj/pop_graph/sv_trio/db_variants.o
 
+CORTEX_VAR_CMD_LINE_TESTS_OBJ = obj/pop_graph/sv_trio/cmd_line.o obj/test/pop_graph/sv_trio/test_cmd_line.o obj/test/pop_graph/sv_trio/run_cmd_line_tests.o
 
 count_kmers: $(COUNT_OBJ) 
 	mkdir -p $(BIN); $(CC) $(OPT) -o $(BIN)/count_kmers $(COUNT_OBJ)
@@ -98,6 +100,8 @@ run_graph_tests : $(GRAPH_TESTS_OBJ)
 run_sv_trio_tests : $(SV_TRIO_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_SV_TRIO_TESTS) $(OPT)  -o $(BIN)/run_sv_trio_tests $(SV_TRIO_TESTS_OBJ) -lcunit
 
+run_cortex_var_cmdline_tests : $(CORTEX_VAR_CMD_LINE_TESTS_OBJ)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS) $(OPT)  -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) -lcunit
 
 #pattern rules
 
@@ -169,3 +173,6 @@ obj/pop_graph/sv_trio/%.o :  pop_graph/sv_trio/%.c
 
 obj/test/pop_graph/sv_trio/%.o :  test/pop_graph/sv_trio/%.c 
 	mkdir -p obj/test/pop_graph/sv_trio; $(CC)  $(CFLAGS_SV_TRIO_TESTS) $(OPT)  -c $? -o $@
+
+obj/test/pop_graph/sv_trio/%.o :  test/pop_graph/sv_trio/%.c 
+	mkdir -p obj/test/pop_graph/sv_trio; $(CC)  $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS) $(OPT)  -c $? -o $@

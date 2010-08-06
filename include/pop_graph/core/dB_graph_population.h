@@ -240,8 +240,25 @@ boolean detect_vars_condition_always_true(VariantBranchesAndFlanks*);
 boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesAndFlanks* var);
 boolean detect_vars_condition_always_false(VariantBranchesAndFlanks*);
 boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks*);
-boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(const dBNode*), int (*get_covg_indiv)(const dBNode*) );
-boolean detect_vars_condition_is_hom_nonref_with_min_covg_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, int (*get_covg_ref)(const dBNode*), int (*get_covg_indiv)(const dBNode*), int min_covg );
+boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, 
+										 int (*get_covg_colourfunc1)(const dBNode*), int (*get_covg_colourfunc2)(const dBNode*) );
+boolean detect_vars_condition_is_hom_nonref_with_min_covg_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, 
+											       int (*get_covg_ref)(const dBNode*), int (*get_covg_indiv)(const dBNode*), int min_covg );
+
+//given two lists of colours, we want to call variants where one branch is entirely in the 
+// union of the colours of the first list, but not in the second, and vice-versa for the second branch
+void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBGraph * db_graph, 
+						 int* first_list, int len_first_list,
+						 int* second_list,  int len_second_list,
+						 boolean extra_condition(VariantBranchesAndFlanks* var),
+						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
+
+void db_graph_detect_vars_given_lists_of_colours_excluding_reference(FILE* fout, int max_length, dBGraph * db_graph, 
+								     int* first_list, int len_first_list,
+								     int* second_list,  int len_second_list,
+								     Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
+								     void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*));
+
 
 
 
@@ -441,5 +458,12 @@ void print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(FILE *f
 
 
 boolean does_this_path_exist_in_this_colour(dBNode** array_nodes, Orientation* array_orientations,  int len, Edges (*get_colour)(const dBNode*), dBGraph* db_graph );
+
+
+
+
+
+void print_standard_extra_supernode_info(dBNode** node_array, Orientation* or_array, int len, FILE* fout);
+void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout);
 
 #endif
