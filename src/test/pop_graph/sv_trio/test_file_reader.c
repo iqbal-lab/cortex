@@ -1485,12 +1485,14 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 
   // first a test where the file contains no duplicates and you do not try to remove duplicates - does all the data get loaded?
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  
+
+  FileFormat format=FASTQ;
   int max_read_length=100;
   seq_length = load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
-										     &bad_reads, quality_cut_off, max_read_length,  
-										     &dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, 
-										     db_graph, individual_edge_array, 0);
+											format,
+											&bad_reads, quality_cut_off, max_read_length,  
+											&dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, 
+											db_graph, individual_edge_array, 0);
   CU_ASSERT(seq_length==720);
   CU_ASSERT(db_graph->unique_kmers == 243);
 
@@ -1501,8 +1503,9 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   remove_duplicates=true;
   seq_length = load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
-										     &bad_reads, quality_cut_off, max_read_length,  
-										     &dup_reads,remove_duplicates, break_homopolymers, homopolymer_cutoff, db_graph, individual_edge_array, 0);
+											format,
+											&bad_reads, quality_cut_off, max_read_length,  
+											&dup_reads,remove_duplicates, break_homopolymers, homopolymer_cutoff, db_graph, individual_edge_array, 0);
   CU_ASSERT(seq_length==720);
   CU_ASSERT(db_graph->unique_kmers == 243);
   CU_ASSERT(dup_reads==0);
@@ -1514,15 +1517,19 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
-  seq_length = load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file2_with_dup_1.fastq", "../data/test/graph/paired_end_file2_with_dup_2.fastq",
-										     &bad_reads, quality_cut_off, max_read_length, 
-										     &dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, db_graph, individual_edge_array, 0);
+  seq_length = load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file2_with_dup_1.fastq", 
+											"../data/test/graph/paired_end_file2_with_dup_2.fastq",
+											format,
+											&bad_reads, quality_cut_off, max_read_length, 
+											&dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, 
+											db_graph, individual_edge_array, 0);
 
   
   //as before, but with four more 36bp reads
   CU_ASSERT(seq_length==864);
   CU_ASSERT(db_graph->unique_kmers == 245);
-  CU_ASSERT(dup_reads==1);
+  CU_ASSERT(dup_reads==2);
+
 
   hash_table_free(&db_graph);
   dup_reads=0;
@@ -1539,6 +1546,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   seq_length = load_list_of_paired_end_files_into_graph_of_specific_person_or_pop( "../data/test/graph/list_paired_end_file3_left", 
 										   "../data/test/graph/list_paired_end_file3_right", 
+										   format,
 										   quality_cut_off, max_read_length,
 										   &bad_reads, &dup_reads, &count_file_pairs, 
 										   remove_duplicates, break_homopolymers, homopolymer_cutoff, 
@@ -1546,7 +1554,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   
 
   CU_ASSERT(seq_length==360); //five 36bp reads, left and right
-  CU_ASSERT(dup_reads==2);
+  CU_ASSERT(dup_reads==4);
   CU_ASSERT(count_file_pairs==1);
 
   hash_table_free(&db_graph);

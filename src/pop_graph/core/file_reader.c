@@ -68,14 +68,14 @@ long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean 
 	  
 	  if (format==FASTQ)
 	    {
-	      single_seq_length += load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(filename,&bad_se_reads, quality_thresh, &dup_se_reads, max_read_length, 
-												      rmv_dups_se,break_homopolymers, homopol_limit, 
+	      single_seq_length += load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(filename,&bad_se_reads, qual_thresh, &dup_se_reads, max_read_length, 
+												      remv_dups_se,break_homopolymers, homopol_limit, 
 												      db_graph, individual_edge_array, colour);
 	    }
 	  else if (format==FASTA)
 	    {
-	      single_seq_length += load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(filename,&bad_se_reads, &dup_reads_in_single_ended, max_read_length, 
-												      rmv_dups_se,break_homopolymers, homopol_limit, 
+	      single_seq_length += load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(filename,&bad_se_reads, &dup_se_reads, max_read_length, 
+												      remv_dups_se,break_homopolymers, homopol_limit, 
 												      db_graph, individual_edge_array, colour);
 	    }
 	  else
@@ -86,36 +86,35 @@ long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean 
 	  
 	  
 	  printf("\nNum SE files loaded:%i, kmers: %qd, cumulative bad reads: %qd, total SE seq: %qd, duplicates removed: %qd \n\n",
-		     num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_se_reads,single_seq_length, dup_reads_in_single_ended);
+		     num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_se_reads,single_seq_length, dup_se_reads);
 
 	    
 	}
       fclose(se_fp);
-
-      if (pe==true)
-	{
-	  printf("Load paired-end files\n");
-	  paired_seq_length = load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(pe_f1, pe_f2, format,
-												 quality_thresh, max_read_length, 
-												 &bad_pe_reads, &dup_pe_reads, &num_file_pairs_loaded, 
-												 remv_dups_pe, break_homopolymers, homopol_limit, db_graph, individual_edge_array, colour); 
-	  
-	  printf("\nNum PE files loaded:%i kmers: %qd cumulative bad reads: %qd total PE seq: %qd duplicates removed:%qd\n\n",
-		 num_file_pairs_loaded,hash_table_get_unique_kmers(db_graph),bad_pe_reads,paired_seq_length, dup_pe_reads);
-	  
-	}
-      
-      total_length = single_seq_length + paired_seq_length;
-      
-      printf("\n\nFinal total -  bases read in from file (so includes bases that were discarded as duplicates/bad reads): %lld\n", total_length);
-      printf("Total SE sequence read in: %d\n", single_seq_length);
-      printf("Total PE sequence read in: %d\n", paired_seq_length);
-      
-      
-      hash_table_print_stats(db_graph);
-      
-      
     }
+  if (pe==true)
+    {
+      printf("Load paired-end files\n");
+      paired_seq_length = load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(pe_f1, pe_f2, format,
+											     qual_thresh, max_read_length, 
+											     &bad_pe_reads, &dup_pe_reads, &num_file_pairs_loaded, 
+											     remv_dups_pe, break_homopolymers, homopol_limit, db_graph, individual_edge_array, colour); 
+      
+      printf("\nNum PE files loaded:%i kmers: %qd cumulative bad reads: %qd total PE seq: %qd duplicates removed:%qd\n\n",
+	     num_file_pairs_loaded,hash_table_get_unique_kmers(db_graph),bad_pe_reads,paired_seq_length, dup_pe_reads);
+	  
+    }
+  
+  total_length = single_seq_length + paired_seq_length;
+  
+  printf("\n\nFinal total -  bases read in from file (so includes bases that were discarded as duplicates/bad reads): %lld\n", total_length);
+  printf("Total SE sequence read in: %qd\n", single_seq_length);
+  printf("Total PE sequence read in: %qd\n", paired_seq_length);
+  
+  
+  hash_table_print_stats(db_graph);
+      
+  return single_seq_length + paired_seq_length;
   
 }
 
@@ -169,18 +168,21 @@ long long load_paired_end_data_from_filenames_into_graph_of_specific_person_or_p
       exit(1);
     }
 
+    int offset = 0; //because we assume new_entry==true
+
+
     if (format==FASTQ)
       {
 	return read_sequence_from_fastq(fp,seq,max_read_length);
       }
     else if (format==FASTA)
       {
-	return read_sequence_from_fasta(fp,seq,max_read_length);
+	return read_sequence_from_fasta(fp,seq,max_read_length, new_entry, full_entry, offset);
       }
     else
       {
 	printf("Format passed into load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop must be fasta or fastq");
-	exit();
+	exit(1);
       }
   }
 

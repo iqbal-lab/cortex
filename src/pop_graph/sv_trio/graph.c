@@ -6,7 +6,18 @@
 #include <dB_graph_population.h>
 #include <string.h>
 #include <internal_oxford.h>
+#include <cmd_line.h>
+
 //#include <internal_tgac.h>
+
+
+//TODO
+//1. set and check for binary type
+//2. loading multicol binary
+//3. trusted-path calls
+//4. handling illumina offset
+//5. output dir?
+
 
 int main(int argc, char **argv){
 
@@ -45,7 +56,7 @@ int main(int argc, char **argv){
       }
   }
 
-  void print_appropriate_extra_info(VariantBranchesAndFlanks* var, FILE* fp)
+  void print_appropriate_extra_variant_info(VariantBranchesAndFlanks* var, FILE* fp)
   {
     if (cmd_line.print_colour_coverages==true)
       {
@@ -53,7 +64,19 @@ int main(int argc, char **argv){
       }
     else
       {
-	print_no_extra_info(var_fp);
+	print_no_extra_info(var, fp);
+      }
+  }
+
+  void print_appropriate_extra_supernode_info(dBNode** node_array, Orientation* or_array, int len, FILE* fout)
+  {
+    if (cmd_line.print_colour_coverages==true)
+      {
+	print_standard_extra_supernode_info(node_array, or_array, len, fout);
+      }
+    else
+      {
+	print_no_extra_supernode_info(node_array, or_array, len, fout);
       }
   }
 
@@ -65,7 +88,12 @@ int main(int argc, char **argv){
       {
 	printf("Do not call get_colour_ref when --using_ref was not specified. Exiting - coding error\n");
       }
-    
+
+    if ( (cmd_line.ref_colour<0) || (cmd_line.ref_colour>NUMBER_OF_INDIVIDUALS_PER_POPULATION-1) )
+      {
+	printf("Calling get_colour_ref, but the reference colour %d has not been specified, or is > than the compile-time limit, of %d\n", 
+	       cmd_line.ref_colour, NUMBER_OF_INDIVIDUALS_PER_POPULATION-1);
+      }
     Edges ed = get_edge_copy(*e, individual_edge_array, cmd_line.ref_colour);
     return ed;
   }
@@ -102,11 +130,13 @@ int main(int argc, char **argv){
   printf("Maximum k-mer size (compile-time setting): %ld\n", (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1);
 
   if (cmd_line.kmer_size> (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1){
-    errx(1,"k-mer size is too big [%i]!",cmd_line.kmer_size);
+    printf("k-mer size is too big [%i]!",cmd_line.kmer_size);
+    exit(1);
   }
 
 
   //Create the de Bruijn graph/hash table
+  int max_retries=15;
   db_graph = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
   printf("table created: %d\n",1 << hash_key_bits);
 
@@ -134,7 +164,7 @@ int main(int argc, char **argv){
 	}
       if (cmd_line.quality_score_threshold>0)
 	{
-	  fprintf(stdout,"quality cut-off: %i\n",quality_cut_off);
+	  fprintf(stdout,"quality cut-off: %i\n",cmd_line.quality_score_threshold);
 	}
       else
 	{
@@ -154,7 +184,7 @@ int main(int argc, char **argv){
       boolean there_is_pe_data=false;
       if (strcmp(cmd_line.se_list, "")!=0)
 	{
-	  there_is_se_data==true;
+	  there_is_se_data=true;
 	}
       if (strcmp(cmd_line.pe_list_lh_mates, "") != 0)
 	{
@@ -163,7 +193,7 @@ int main(int argc, char **argv){
       
       //note, if we load fasta/fastq data it always goes into colour 0;
       load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(there_is_se_data, there_is_pe_data, 
-								    cmd_line.se_list, cmd_line.pe_list_lh_mates, cmd_line.pe_list_rh_mates
+								    cmd_line.se_list, cmd_line.pe_list_lh_mates, cmd_line.pe_list_rh_mates,
 								    cmd_line.quality_score_threshold, cmd_line.remove_pcr_dups, cmd_line.remove_pcr_dups,
 								    cmd_line.cut_homopolymers, cmd_line.homopolymer_limit, cmd_line.format_of_input_seq,
 								    cmd_line.max_read_length, 0, db_graph);
@@ -175,7 +205,7 @@ int main(int argc, char **argv){
       
       int first_colour_data_starts_going_into=0;
 
-      if (cmd_line.input_multicol==true)
+      if (cmd_line.input_multicol_bin==true)
 	{
       /*
       if (number_colours_in_multicolour_binary< NUMBER_OF_INDIVIDUALS_PER_POPULATION)
@@ -245,7 +275,7 @@ int main(int argc, char **argv){
 	}
       if (cmd_line.remove_low_coverage_nodes==true)
 	{
-	  printf("Removing nodes with coverage <= %d (from union graph of all colours)\n");
+	  printf("Removing nodes with coverage <= %d (from union graph of all colours)\n", cmd_line.node_coverage_threshold);
 	  db_graph_remove_low_coverage_nodes(cmd_line.node_coverage_threshold,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
 					     &apply_reset_to_all_edges, &apply_reset_to_all_edges_2);
 	}
@@ -271,9 +301,10 @@ int main(int argc, char **argv){
       printf("Print contigs(supernodes) in the graph created by the union of all colours.\n");
       printf("Cortex does allow doing this in any combination of colours, this just needs a command-line option. To come in a following release.\n");
       
-      db_graph_print_supernodes_defined_by_func_of_colours(cmd_line.output_supernodes_main, cmd_line.output_supernodes_sing, cmd_line.max_supernode,
+      db_graph_print_supernodes_defined_by_func_of_colours(cmd_line.output_supernodes, "", cmd_line.max_supernode,
 							   db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
 							   &print_appropriate_extra_supernode_info);
+
     }
 
 
@@ -294,23 +325,29 @@ int main(int argc, char **argv){
 	}
       printf("\n");
 
+      FILE* fp_db1 = fopen(cmd_line.output_detect_bubbles1, "w");
+      if (fp_db1==NULL)
+	{
+	  printf("Cannot open %s. Exit.", cmd_line.output_detect_bubbles1);
+	  exit(1);
+	}
 
       if (cmd_line.using_ref==false)
 	{
 
-	  db_graph_detect_vars_given_lists_of_colours(cmd_line.output_detect_bubbles1,cmd_line.max_supernode,db_graph, 
+	  db_graph_detect_vars_given_lists_of_colours(fp_db1,cmd_line.max_supernode,db_graph, 
 						      cmd_line.detect_bubbles1_first_colour_list, cmd_line.num_colours_in_detect_bubbles1_first_colour_list,
 						      cmd_line.detect_bubbles1_second_colour_list, cmd_line.num_colours_in_detect_bubbles1_second_colour_list,
-						      &detect_vars_condition_always_true, &print_appropriate_extra_info);
+						      &detect_vars_condition_always_true, &print_appropriate_extra_variant_info);
 	}
       else
 	{
 	  printf("(first exclude bubbles from ref colour %d) \n", cmd_line.ref_colour);
-	  db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(cmd_line.output_detect_bubbles1,cmd_line.max_supernode,db_graph, 
+	  db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(fp_db1,cmd_line.max_supernode,db_graph, 
 										  cmd_line.detect_bubbles1_first_colour_list, cmd_line.num_colours_in_detect_bubbles1_first_colour_list,
 										  cmd_line.detect_bubbles1_second_colour_list, cmd_line.num_colours_in_detect_bubbles1_second_colour_list,
-										  &get_colour_ref, &get_coverage_ref,
-										  &print_appropriate_extra_info);
+										  &get_colour_ref, &get_covg_ref,
+										  &print_appropriate_extra_variant_info);
 	}
     }
 
@@ -331,22 +368,31 @@ int main(int argc, char **argv){
 	}
       printf("\n");
 
+
+      FILE* fp_db2 = fopen(cmd_line.output_detect_bubbles2, "w");
+      if (fp_db2==NULL)
+	{
+	  printf("Cannot open %s. Exit.", cmd_line.output_detect_bubbles2);
+	  exit(1);
+	}
+
+
       if (cmd_line.using_ref==false)
 	{
 
-	  db_graph_detect_vars_given_lists_of_colours(cmd_line.output_detect_bubbles2,cmd_line.max_supernode,db_graph, 
+	  db_graph_detect_vars_given_lists_of_colours(fp_db2,cmd_line.max_supernode,db_graph, 
 						      cmd_line.detect_bubbles2_first_colour_list, cmd_line.num_colours_in_detect_bubbles2_first_colour_list,
 						      cmd_line.detect_bubbles2_second_colour_list, cmd_line.num_colours_in_detect_bubbles2_second_colour_list,
-						      &detect_vars_condition_always_true, &print_appropriate_extra_info);
+						      &detect_vars_condition_always_true, &print_appropriate_extra_variant_info);
 	}
       else
 	{
 	  printf("(first exclude bubbles from ref colour %d) \n", cmd_line.ref_colour);	  
-	  db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(cmd_line.output_detect_bubbles2,cmd_line.max_supernode,db_graph, 
+	  db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(fp_db2,cmd_line.max_supernode,db_graph, 
 										  cmd_line.detect_bubbles2_first_colour_list, cmd_line.num_colours_in_detect_bubbles2_first_colour_list,
 										  cmd_line.detect_bubbles2_second_colour_list, cmd_line.num_colours_in_detect_bubbles2_second_colour_list,
-										  &get_colour_ref, &get_coverage_ref,
-										  &print_appropriate_extra_info);
+										  &get_colour_ref, &get_covg_ref,
+										  &print_appropriate_extra_variant_info);
 	}
 
     }
@@ -355,9 +401,6 @@ int main(int argc, char **argv){
 
 
 
-  //9. Run everything for simulation???
-  // 10. Run variant calls for individuals??? I think no need, right? 
-  //11. Align fastq or fasta to graph???
 
 
 

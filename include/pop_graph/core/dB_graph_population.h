@@ -85,7 +85,8 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 											      Edges (*get_edge_of_interest)(const Element*), 
 											      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 											      void (*apply_reset_to_specified_edges_2)(dBNode*),
-											      dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, char* supernode_str,
+											      dBNode** path_nodes, Orientation* path_orientations, 
+											      Nucleotide* path_labels, char* supernode_str,
 											      boolean protect_reference, int colour_reference);
 
 // traverse graph. At each node, if covg <= arg1, get its supernode. If that supernode length is <= kmer-length, and ALL interior nodes have covg <= arg1 
@@ -250,15 +251,15 @@ boolean detect_vars_condition_is_hom_nonref_with_min_covg_given_colour_funcs_for
 void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBGraph * db_graph, 
 						 int* first_list, int len_first_list,
 						 int* second_list,  int len_second_list,
-						 boolean extra_condition(VariantBranchesAndFlanks* var),
-						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
+						 boolean (*extra_condition)(VariantBranchesAndFlanks* var),
+						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*));
 
-void db_graph_detect_vars_given_lists_of_colours_excluding_reference(FILE* fout, int max_length, dBGraph * db_graph, 
-								     int* first_list, int len_first_list,
-								     int* second_list,  int len_second_list,
-								     Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
-								     void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*));
-
+//ie exclude bubbles found in the reference first, THEN find bubbles where the two branches lie in opposites lists
+void db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(FILE* fout, int max_length, dBGraph * db_graph, 
+									     int* first_list, int len_first_list,
+									     int* second_list,  int len_second_list,
+									     Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
+									     void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*));
 
 
 
@@ -371,6 +372,7 @@ boolean make_reference_path_based_sv_calls_condition_is_hom_nonref(VariantBranch
 boolean make_reference_path_based_sv_calls_condition_is_het(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv);
 
 void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout);
+void print_no_extra_supernode_info(dBNode** node_array, Orientation* or_array, int len, FILE* fout);
 
 
 int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArrayType which_array_holds_indiv, int index_for_indiv_in_edge_array,

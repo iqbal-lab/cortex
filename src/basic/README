@@ -1,2 +1,0 @@
-splay.c is taken from Velvet, and is a SplayTable implementation - we do not use it
-recycleBin was written by Guy slater. and we do not use it

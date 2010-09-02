@@ -176,6 +176,17 @@ void hash_table_traverse(void (*f)(Element *),HashTable * hash_table){
   }
 }
 
+long long hash_table_traverse_returning_sum(long long (*f)(Element *),HashTable * hash_table){
+  long long i;
+  long long ret=0;
+  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
+    if (!db_node_check_status(&hash_table->table[i],unassigned)){
+      ret += f(&hash_table->table[i]);
+    }
+  }
+  return ret;
+}
+
 
 
 Element * hash_table_find(Key key, HashTable * hash_table)

@@ -2296,7 +2296,7 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fo
 void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBGraph * db_graph, 
 						 int* first_list, int len_first_list,
 						 int* second_list,  int len_second_list,
-						 boolean extra_condition(VariantBranchesAndFlanks* var),
+						 boolean (*extra_condition)(VariantBranchesAndFlanks* var),
 						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
 {
 
@@ -2342,7 +2342,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 
   
 
-  int get_covg_of_union_first_list_colours(const dBNode*)
+  int get_covg_of_union_first_list_colours(const dBNode* e)
   {
     int i;
     int covg=0;
@@ -2353,7 +2353,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
       }
     return covg;
   }
-  int get_covg_of_union_second_list_colours(const dBNode*)
+  int get_covg_of_union_second_list_colours(const dBNode* e)
   {
     int i;
     int covg=0;
@@ -2364,7 +2364,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
       }
     return covg;
   }
-  int get_covg_of_union_first_and_second_list_colours(const dBNode*)
+  int get_covg_of_union_first_and_second_list_colours(const dBNode* e)
   {
     int i;
     int covg=0;
@@ -2374,13 +2374,13 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
       {
 	printf("%d ", first_list[i]);
       }
-    print "\n";
+    printf("\n");
     printf("Got list 2:\n");
     for (i=0; i< len_second_list; i++)
       {
 	printf("%d ", second_list[i]);
       }
-    print "\n";
+    printf("\n");
 
     //concatenate the two lists
     int full_list[len_first_list+len_second_list];
@@ -2434,7 +2434,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 		       &db_node_action_set_status_visited,
                        &db_node_action_set_status_visited,
 		       &get_union_first_and_second_list_colours, &get_covg_of_union_first_and_second_list_colours,
-		       &print_extra_info);
+		       print_extra_info);
 
 }
 
@@ -2599,11 +2599,33 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
 							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*)){
 
+  boolean do_we_print_singletons=true;//singletons are supernodes consisting of ONE node.
+
   FILE * fout1; //file to which we will write all supernodes which are longer than 1 node in fasta format
   fout1= fopen(filename_sups, "w"); 
+  if (fout1==NULL)
+    {
+      printf("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours\n", filename_sups);
+      exit(1);
+    }
+
   FILE * fout2; //file to which we will write all "singleton" supernodes, that are just  1 node, in fasta format
-  fout2= fopen(filename_sings, "w"); 
-  
+  if ( strcmp(filename_sings, "")==0 )
+    {
+      printf("Only printing supernodes consisting of >1 node (ie contigs longer than %d bases)\n", db_graph->kmer_size);
+      do_we_print_singletons=false;
+    }
+  else
+    {
+      fout2= fopen(filename_sings, "w"); 
+      if (fout2==NULL)
+	{
+	  printf("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours\n", filename_sings);
+	  exit(1);
+	}
+    }
+
+
   int count_nodes=0;
   
   dBNode * *    path_nodes;
@@ -2650,14 +2672,18 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 	count_nodes++;
       }
       else{
-	sprintf(name,"node_%qd",count_sing);
-	print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout2,name,length,avg_coverage,min,max,
-									     path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
-									     db_graph->kmer_size,true, get_colour, get_covg);
-	fprintf(fout2, "extra information:\n");
-	print_extra_info(path_nodes, path_orientations, length, fout2);
-
 	count_sing++;
+	if (do_we_print_singletons==true)
+	  {
+	    sprintf(name,"node_%qd",count_sing);
+	    print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout2,name,length,avg_coverage,min,max,
+										 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
+										 db_graph->kmer_size,true, get_colour, get_covg);
+	    fprintf(fout2, "extra information:\n");
+	    print_extra_info(path_nodes, path_orientations, length, fout2);
+	  }
+	
+
       }
     
     }
@@ -5937,7 +5963,9 @@ void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fa
 
 void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
 {
-
+}
+void print_no_extra_supernode_info(dBNode** node_array, Orientation* or_array, int len, FILE* fout)
+{
 }
 
 
@@ -6462,6 +6490,6 @@ void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
   fprintf(fout, "branch1 coverages\n");
   print_standard_extra_supernode_info(var->one_allele, var->one_allele_or, var->len_one_allele, fout);
   fprintf(fout, "branch2 coverages\n");
-  print_extra_supernode_info(var->other_allele, var->other_allele_or, var->len_other_allele, fout);
+  print_standard_extra_supernode_info(var->other_allele, var->other_allele_or, var->len_other_allele, fout);
   fprintf(fout, "\n\n");
 }

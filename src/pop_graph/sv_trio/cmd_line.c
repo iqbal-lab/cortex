@@ -30,7 +30,7 @@ const char* usage=
 "   [-d | --pe_list FILENAME] = Two filenames, comma-separated: each is a list of paired-end fasta/q to be loaded into a single-colour graph. Lists are assumed to ordered so that corresponding paired-end fasta/q files are at the same positions in their lists. Currently Cortex only use paired-end information to remove PCR duplicate reads (if that flag is set). Cannot be used with --colour_list\n" \
 "   [-e | --kmer_size INT] = Kmer size (default 21). Must be an odd number.\n" \
 "   [-f | --bsize INT] = Size of hash table buckets (default 100).\n" \
-"   [-g | --hsize INT] = Number of buckets in hash table in bits (default 10). Actual number of buckets withh be 2^(the number you enter)\n" \
+"   [-g | --num_buckets INT] = Number of buckets in hash table in bits (default 10). Actual number of buckets withh be 2^(the number you enter)\n" \
 "   [-i | --ref_colour INT] = Colour of reference genome or homozygous/inbred line.\n" \
 "   [-j | --remove_pcr_duplicates] = Removes PCR duplicate reads by ignoring read pairs if both reads start at the same k-mer as a previous read, and single-ended reads if they start at the same k-mer as a previous read\n" \
 "   [-k | --cut_homopolymers INT] = Breaks reads at homopolymers of length > this threshold. (New read starts after homopolymer)\n" \
@@ -158,8 +158,6 @@ int default_opts(CmdLine * c)
 //inner loop called by the parse_cmdline function, which returns various error codes.
 int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmdline_ptr, char* error_string)
 {
-
-
   int opt;
   int longopt_index;
   
@@ -171,7 +169,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"pe_list",required_argument, NULL, 'd'},
     {"kmer_size", required_argument, NULL, 'e'},
     {"bsize", required_argument, NULL, 'f'},
-    {"hsize",required_argument, NULL, 'g'},
+    {"num_buckets",required_argument, NULL, 'g'},
     {"ref_colour",required_argument, NULL, 'i'},
     {"remove_pcr_duplicates",no_argument,NULL,'j'},
     {"cut_homopolymers",required_argument, NULL, 'k'},
@@ -179,8 +177,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"quality_score_threshold",required_argument, NULL, 'm'},
     {"node_coverage_threshold",required_argument, NULL, 'n'},
     {"remove_seq_errors",no_argument,NULL,'o'},
-    {"dump_binary",no_argument,NULL,'p'},
-    {"output_contigs",no_argument,NULL,'q'},
+    {"dump_binary",required_argument,NULL,'p'},
+    {"output_contigs",required_argument,NULL,'q'},
     {"detect_bubbles1",required_argument, NULL, 'r'},
     {"output_bubbles1",required_argument, NULL, 's'},    
     {"detect_bubbles2",required_argument, NULL, 't'},
@@ -192,9 +190,13 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   };
   
 
-
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:", long_options, &longopt_index);
-  printf("Opt is %d\n", opt);
+  //do not change this! Only really matters for testing, but getopt_long uses 
+  //variables which are not local to this function, so when we run tests, and call this function
+  // repeatedly, those variable values are carried across. The following line resets this.
+  optind=1;
+  
+ 
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:op:q:r:s:t:u:v:w:xy:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -238,7 +240,6 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	
 	if (strlen(optarg)<MAX_FILENAME_LEN)
 	  {
-	    printf("SET IT HERE\n");
 	    strcpy(cmdline_ptr->multicolour_bin,optarg);
 	  }
 	else
@@ -284,11 +285,14 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	if (optarg==NULL)
 	  errx(1,"[-d | --pe_list] option requires two filenames, comma separated, listing paired-end fasta/q files (in matching order)");
 	
-	if (strlen(optarg)<MAX_FILENAME_LEN)
+	if (strlen(optarg)<2*MAX_FILENAME_LEN)
 	  {
 	    char* filename=NULL;
 	    char delims[] = ",";
-	    filename = strtok( optarg, delims );
+	    char temp1[MAX_FILENAME_LEN];
+	    temp1[0]='\0';
+	    strcpy(temp1, optarg);
+	    filename = strtok(temp1, delims );
 	    if (filename==NULL)
 	      {
 		errx(1,"[-d | --pe_list] option requires two filenames, comma separated, listing paired-end fasta/q files (in matching order)");
@@ -349,7 +353,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'g': //number of buckets
       {
 	if (optarg==NULL)
-	  errx(1,"[-g | --hsize] option requires int argument [hash table,  number of buckets in bits - ie 2^(this number) is the number of buckets]");
+	  errx(1,"[-g | --num_buckets] option requires int argument [hash table,  number of buckets in bits - ie 2^(this number) is the number of buckets]");
 	cmdline_ptr->number_of_buckets_bits = atoi(optarg);      
 	break;
       }
@@ -414,7 +418,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       {
 	if (optarg==NULL)
 	  errx(1,"[-n | --node_coverage_threshold] option requires int argument [node coverage cut off]");
-	if (cmdline_ptr->node_coverage_threshold == 0)
+	if (optarg == 0)
 	  errx(1,"[-z | --node_coverage_threshold] option requires int argument bigger than 0");
 	
 	cmdline_ptr->node_coverage_threshold = atoi(optarg);
@@ -438,6 +442,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	if (strlen(optarg)<MAX_FILENAME_LEN)
 	  {
 	    strcpy(cmdline_ptr->output_binary_filename,optarg);
+	    cmdline_ptr->dump_binary=true;
 	  }
 	else
 	  {
@@ -485,6 +490,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  {
 	    errx(1, "Fix above issue in cmd line argument for [-r | --detect_bubbles1]");
 	  }
+	cmdline_ptr->detect_bubbles1=true;
+
 	break; 
       }
     case 's': //output file for detect_bubbles1
@@ -504,7 +511,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	if (access(optarg,F_OK)==0){
 	  errx(1,"[-s | --output_bubbles1] filename [%s] exists!",optarg);
 	}
-	
+	break;
       }
 
 
@@ -513,11 +520,13 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	if (optarg==NULL)
 	  errx(1,"[-t | --detect_bubbles2] option requires two sets of comma-separated integers, separated by a forward-slash. eg 1/1, or 1,2,3/3,4,5");
 	
-	int ret = parse_colourinfo_argument(cmdline_ptr, optarg, strlen(optarg), "[-r | --detect_bubbles2] ", 2);
+	int ret = parse_colourinfo_argument(cmdline_ptr, optarg, strlen(optarg), "[-t | --detect_bubbles2] ", 2);
 	if (ret==-1)
 	  {
 	    errx(1, "Fix above issue in cmd line argument for [-t | --detect_bubbles2]");
 	  }
+	cmdline_ptr->detect_bubbles2=true;
+
 	break; 
       }
     case 'u': //output file for detect_bubbles2
@@ -864,11 +873,12 @@ int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_f
 	    
 	    int left_colours[MAX_COLOURS_ALLOWED_TO_MERGE];
 	    int right_colours[MAX_COLOURS_ALLOWED_TO_MERGE];
-	    int num_left_colours =  get_numbers_from_comma_sep_list(left, posn_slash, left_colours, MAX_COLOURS_ALLOWED_TO_MERGE);
+	    int num_left_colours = get_numbers_from_comma_sep_list(left, posn_slash, left_colours, MAX_COLOURS_ALLOWED_TO_MERGE);
 	    int num_right_colours = get_numbers_from_comma_sep_list(right, posn_slash, right_colours, MAX_COLOURS_ALLOWED_TO_MERGE);
 
 	    if ( (num_left_colours==-1) || (num_right_colours==-1) )
 	      {
+		printf("Num of left or right colours is -1. They are %d and %d\n", num_left_colours, num_right_colours);
 		return -1; //error.
 	      }
 	    //printf("Num left colours is %d and num right is %d\n", num_left_colours, num_right_colours);

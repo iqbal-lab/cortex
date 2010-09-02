@@ -34,6 +34,7 @@ boolean hash_table_apply_or_insert(Key key, void (*f)(Element*), HashTable *);
 
 //applies f to every element of the table
 void hash_table_traverse(void (*f)(Element *),HashTable *);
+long long hash_table_traverse_returning_sum(long long (*f)(Element *),HashTable * hash_table);
 
 //if the element is not in table create an element with key and adds it
 Element * hash_table_find_or_insert(Key key, boolean * found, HashTable * hash_table);
