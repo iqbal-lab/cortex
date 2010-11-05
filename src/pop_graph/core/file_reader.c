@@ -1132,7 +1132,7 @@ long long load_population_as_fastq(char* filename, long long* bad_reads, char qu
       printf("Just loaded person number %d, and now have cumulative total of  %d bases with %lld bad_reads so far\n", people_so_far-1, total_seq_loaded, *bad_reads);
     }
 
-  printf("Finished loading population, witht total seq loaded %d\n",total_seq_loaded); 
+  //printf("Finished loading population, witht total seq loaded %d\n",total_seq_loaded); 
   fclose(fp);
   return total_seq_loaded;
 
@@ -1349,7 +1349,7 @@ long long load_population_as_binaries_from_graph(char* filename, dBGraph* db_gra
 
     }
 
-  printf("Finished loading population, with total seq loaded %d\n",total_seq_loaded); 
+  //printf("Finished loading population, with total seq loaded %d\n",total_seq_loaded); 
   return total_seq_loaded;
 
 

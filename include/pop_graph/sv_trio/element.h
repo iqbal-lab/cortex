@@ -213,6 +213,9 @@ boolean db_node_is_this_node_in_subgraph_defined_by_func_of_colours(dBNode* node
 //functions for binary format
 void db_node_print_multicolour_binary(FILE * fp, dBNode * node);
 
+void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node);
+
+
 //read a binary dumped by this module, sv_trio
 boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * node);
 

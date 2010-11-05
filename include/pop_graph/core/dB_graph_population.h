@@ -246,20 +246,21 @@ boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv
 boolean detect_vars_condition_is_hom_nonref_with_min_covg_given_colour_funcs_for_ref_and_indiv(VariantBranchesAndFlanks* var, 
 											       int (*get_covg_ref)(const dBNode*), int (*get_covg_indiv)(const dBNode*), int min_covg );
 
+
+
+
 //given two lists of colours, we want to call variants where one branch is entirely in the 
 // union of the colours of the first list, but not in the second, and vice-versa for the second branch
+//UNLESS both lists are identical, in which case we just call bubbles in the union
+//A consequence is that if you call bubbles on 1,2/1,3 you'll get nothing.
+//if exclude_ref_bubbles_first==false, just pass in NULL, NULL for the last two arguments
 void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBGraph * db_graph, 
 						 int* first_list, int len_first_list,
 						 int* second_list,  int len_second_list,
 						 boolean (*extra_condition)(VariantBranchesAndFlanks* var),
-						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*));
-
-//ie exclude bubbles found in the reference first, THEN find bubbles where the two branches lie in opposites lists
-void db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(FILE* fout, int max_length, dBGraph * db_graph, 
-									     int* first_list, int len_first_list,
-									     int* second_list,  int len_second_list,
-									     Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
-									     void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*));
+						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+						 boolean exclude_ref_bubbles_first, 
+						 Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*));
 
 
 
@@ -288,6 +289,7 @@ void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph *
 
 void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph);
 
+void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph);
 
 boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, EdgeArrayType edge_type, int edge_index, dBGraph* db_graph);
 

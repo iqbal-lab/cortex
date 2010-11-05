@@ -821,6 +821,24 @@ void db_node_print_multicolour_binary(FILE * fp, dBNode * node)
 }
 
 
+void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node)
+{
+
+  BinaryKmer kmer;
+  binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
+  int covg;
+  Edges individual_edges; 
+
+  covg             = db_node_get_coverage(node, individual_edge_array, 0);
+  individual_edges = get_edge_copy(*node, individual_edge_array, 0);
+  
+				  
+  fwrite(&kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
+  fwrite(&covg, sizeof(int), 1, fp); 
+  fwrite(&individual_edges, sizeof(Edges), 1, fp);
+
+  
+}
 
 boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * node){
 
@@ -838,13 +856,13 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 
     read = fread(covg, sizeof(int), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);    
     if (read==0){
-      puts("error with input file - failed to read covg in db_node_read_sv_trio_binary\n");
+      puts("error with input file - failed to read covg in db_node_read_sv_trio_binary. You have tried to read an incompatible binary - this error message should not happen - you should have hit other checks first.. Please contact mario.caccamo@bbsrc.ac.uk and zam@well.ox.ac.uk\n");
       exit(1);
     }
 
     read = fread(individual_edges, sizeof(Edges), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);
     if (read==0){
-      puts("error with input file - failed to read Edges in db_node_read_sv_trio_binary\n");
+      puts("error with input file - failed to read Edges in db_node_read_sv_trio_binary. You have tried to read an incompatible binary - this error message should not happen - you should have hit other checks first.. Please contact mario.caccamo@bbsrc.ac.uk and zam@well.ox.ac.uk\n");
       exit(1);
     }
 
@@ -891,12 +909,12 @@ boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * n
   if (read>0){
     read = fread(&coverage,sizeof(int),1,fp);    
     if (read==0){
-      puts("error with input file\n");
+      puts("error with input file - failed to read cvg, incompatible binary format?\n");
       exit(1);
     }
     read = fread(&edges,sizeof(Edges),1,fp);
     if (read==0){
-      puts("error with input file\n");
+      puts("error with input file - failed to read edges, incompatible binary format?\n");
       exit(1);
     }   
   }

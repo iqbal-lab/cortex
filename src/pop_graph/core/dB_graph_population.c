@@ -1843,6 +1843,7 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 
 boolean detect_vars_condition_always_true(VariantBranchesAndFlanks* var)
 {
+  printf("ZMA in confition\n");
   return true;
 }
 
@@ -2053,7 +2054,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
 			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
 {
-  printf("Start detect_vars\n");
+  printf("ZAMZAMZMA\n");
+
   int count_vars = 0; 
   int flanking_length = 1000; 
 
@@ -2172,9 +2174,10 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    //warning - array of 5prime nodes, oprientations is in reverse order to what you would expect - it is never used in what follows
 	    set_variant_branches_and_flanks(&var, nodes5p, orientations5p, length_flank5p, path_nodes1, path_orientations1, length1, 
 					    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p, unknown);
+	    printf("ZMA - checking condition\n");
 	    if (condition(&var)==true) 
 	      {
-
+		printf("CONDITION PASSED\n");
 		//printf("\nPassed condition - found VARIATION: %i\n",count_vars);
 		count_vars++;
 		
@@ -2291,14 +2294,58 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fo
 
 
 
+
+//utility function, do not export
+boolean are_two_lists_identical(const int const * list1, int len_list1, const int const * list2, int len_list2)
+{
+  if (len_list1 != len_list2)
+    {
+      return false;
+    }
+  //sort
+  
+  int copy_list1[len_list1];
+  int copy_list2[len_list2];
+  int i;
+  for (i=0; i< len_list1; i++)
+    {
+      copy_list1[i]=list1[i];
+    }
+  for (i=0; i< len_list2; i++)
+    {
+      copy_list2[i]=list2[i];
+    }
+  
+  qsort(copy_list1,len_list1, sizeof(int), int_cmp); 
+  qsort(copy_list2,len_list2, sizeof(int), int_cmp); 
+  
+  boolean ret=true;
+
+  for (i=0; i<len_list1; i++)
+    {
+      if (copy_list1[i] != copy_list2[i])
+	{
+	  ret = false;
+	}
+    }
+  
+  return ret;
+}
+
 //given two lists of colours, we want to call variants where one branch is entirely in the 
 // union of the colours of the first list, but not in the second, and vice-versa for the second branch
+//UNLESS both lists are identical, in which case we just call bubbles in the union
+//A consequence is that if you call bubbles on 1,2/1,3 you'll get nothing.
+//if exclude_ref_bubbles_first==false, just pass in NULL, NULL for the last two arguments
 void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBGraph * db_graph, 
 						 int* first_list, int len_first_list,
 						 int* second_list,  int len_second_list,
 						 boolean (*extra_condition)(VariantBranchesAndFlanks* var),
-						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
+						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+						 boolean exclude_ref_bubbles_first, 
+						 Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*))
 {
+
 
   Edges get_union_first_list_colours(const dBNode* e)
   {
@@ -2364,11 +2411,13 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
       }
     return covg;
   }
+
   int get_covg_of_union_first_and_second_list_colours(const dBNode* e)
   {
     int i;
     int covg=0;
 
+    /*
     printf("Got list 1:\n");
     for (i=0; i< len_first_list; i++)
       {
@@ -2381,6 +2430,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 	printf("%d ", second_list[i]);
       }
     printf("\n");
+    */
 
     //concatenate the two lists
     int full_list[len_first_list+len_second_list];
@@ -2399,12 +2449,12 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
       {
 	if ( (i>0) && (full_list[i] != full_list[i-1]) )
 	  {
-	    printf("Sorted, merged lists 1 and 2 contains : %d\n", i);
+	    //printf("Sorted, merged lists 1 and 2 contains : %d\n", i);
 	    covg += e->coverage[full_list[i]];
 	  }
 	else if (i==0)
 	  {
-	    printf("Sorted, merged lists 1 and 2 contains : %d\n", i);
+	    //printf("Sorted, merged lists 1 and 2 contains : %d\n", i);
 	    covg += e->coverage[full_list[i]];
 	  }
       }
@@ -2427,50 +2477,136 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 	return false;
       }
   }
-  
 
-  db_graph_detect_vars(fout, max_length, db_graph, 
-		       &both_conditions,
-		       &db_node_action_set_status_visited,
-                       &db_node_action_set_status_visited,
-		       &get_union_first_and_second_list_colours, &get_covg_of_union_first_and_second_list_colours,
-		       print_extra_info);
+  boolean both_conditions_and_avoid_branches_marked_ignore(VariantBranchesAndFlanks* var)
+  {
+    if ( (condition_two_branches_lie_in_opposite_lists(var)==true) && (extra_condition(var)==true) 
+	 && (detect_vars_condition_branches_not_marked_to_be_ignored(var)==true) )
+      {
+	return true;
+      }
+    else
+      {
+	return false;
+      }
+  }
 
+  boolean extra_condition_and_avoid_branches_marked_ignore(VariantBranchesAndFlanks* var)
+  {
+    if ( (extra_condition(var)==true) && (detect_vars_condition_branches_not_marked_to_be_ignored(var)==true) )
+      {
+        return true;
+      }
+    else
+      {
+        return false;
+      }
+  }
+
+
+
+  if (exclude_ref_bubbles_first==true)
+    {
+
+      //first detect bubbles in the ref colour, but do not print them out, so they get marked as visited
+      db_graph_detect_vars(NULL, max_length, db_graph, 
+			   &detect_vars_condition_always_false,
+			   &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
+			   &db_node_action_set_status_visited, //mark everything else as visited
+			   get_colour_ref, get_covg_ref, print_extra_info);
+      
+      //unset the nodes marked as visited, but not those marked as to be ignored
+      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+    }
+
+
+  if (are_two_lists_identical(first_list, len_first_list, second_list, len_second_list)==false)
+    {
+      
+      //then we do demand that a bubble must have one branch in first list and NOT second list, and vice versa.
+      if (exclude_ref_bubbles_first==false)
+	{
+	  db_graph_detect_vars(fout, max_length, db_graph, 
+			       &both_conditions,
+			       &db_node_action_set_status_visited,
+			       &db_node_action_set_status_visited,
+			       &get_union_first_and_second_list_colours, &get_covg_of_union_first_and_second_list_colours,
+			       print_extra_info);
+	}
+      else
+	{
+	  db_graph_detect_vars(fout, max_length, db_graph, 
+			       &both_conditions_and_avoid_branches_marked_ignore,
+			       &db_node_action_set_status_visited,
+			       &db_node_action_set_status_visited,
+			       &get_union_first_and_second_list_colours, &get_covg_of_union_first_and_second_list_colours,
+			       print_extra_info);
+	}
+    }
+  else//the two lists of colours are identical, so we don't demand the branches take different colours!
+    {
+      if (exclude_ref_bubbles_first==false)
+	{
+	  db_graph_detect_vars(fout, max_length, db_graph, 
+			       extra_condition,
+			       &db_node_action_set_status_visited,
+			       &db_node_action_set_status_visited,
+			       &get_union_first_and_second_list_colours, &get_covg_of_union_first_and_second_list_colours,
+			       print_extra_info);
+	}
+      else
+	{
+	  db_graph_detect_vars(fout, max_length, db_graph, 
+			       &extra_condition_and_avoid_branches_marked_ignore,
+			       &db_node_action_set_status_visited,
+			       &db_node_action_set_status_visited,
+			       &get_union_first_and_second_list_colours, &get_covg_of_union_first_and_second_list_colours,
+			       print_extra_info);
+	}
+    }
+
+
+
+  if (exclude_ref_bubbles_first==true)
+    {
+      //unset the nodes marked as visited, but not those marked as to be ignored
+      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+    }
 }
 
 
-
+/*
 //ie exclude bubbles found in the reference first, THEN find bubbles where the two branches lie in opposites lists
 void db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(FILE* fout, int max_length, dBGraph * db_graph, 
 									     int* first_list, int len_first_list,
 									     int* second_list,  int len_second_list,
 									     Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*) ,
+									     boolean (*extra_condition)(VariantBranchesAndFlanks* var),
 									     void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
 {
 
-  //first detect bubbles in the ref colour, but do not print them out, so they get marked as visited
-  db_graph_detect_vars(NULL, max_length, db_graph, 
-		       &detect_vars_condition_always_false,
-		       &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
-		       &db_node_action_set_status_visited, //mark everything else as visited
-		       get_colour_ref, get_covg_ref, print_extra_info);
 
-  //unset the nodes marked as visited, but not those marked as to be ignored
-  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+
+
+
+
 
   //then start again, detecting variants.
-  db_graph_detect_vars_given_lists_of_colours(fout, max_length, db_graph, 
-					      first_list, len_first_list,
-					      second_list, len_second_list,
-					      &detect_vars_condition_branches_not_marked_to_be_ignored,//ignore anything you find that is marked to be ignored
-					      print_extra_info);
+  if (are_two_lists_identical(first_list, len_first_list, second_list, len_second_list)==false)
+    {
 
-  //unset the nodes marked as visited, but not those marked as to be ignored
-  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+      //then we do demand that a bubble must have one branch in first list and NOT second list, and vice versa. 
+      db_graph_detect_vars_given_lists_of_colours(fout, max_length, db_graph, 
+						  first_list, len_first_list,
+						  second_list, len_second_list,
+						  &detect_vars_condition_branches_not_marked_to_be_ignored,//ignore anything you find that is marked to be ignored
+						  print_extra_info);
+    }
+
   
 }
 
-
+*/
 
 
 
@@ -2566,7 +2702,7 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
 	if (length==max_length){
 	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
 	}
-	fprintf(fout1, "extra information:\n");
+	//fprintf(fout1, "extra information:\n");
 	print_extra_info(path_nodes, path_orientations, length, fout1);
 	count_nodes++;
       }
@@ -2575,7 +2711,7 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
 	print_minimal_fasta_from_path_for_specific_person_or_pop(fout2,name,length,avg_coverage,min,max,
 								 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
 								 db_graph->kmer_size,true, type, index);
-	fprintf(fout2, "extra information:\n");
+	//fprintf(fout2, "extra information:\n");
 	print_extra_info(path_nodes, path_orientations, length, fout2);
 	count_sing++;
       }
@@ -2609,7 +2745,7 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
       exit(1);
     }
 
-  FILE * fout2; //file to which we will write all "singleton" supernodes, that are just  1 node, in fasta format
+  FILE * fout2=NULL; //file to which we will write all "singleton" supernodes, that are just  1 node, in fasta format
   if ( strcmp(filename_sings, "")==0 )
     {
       printf("Only printing supernodes consisting of >1 node (ie contigs longer than %d bases)\n", db_graph->kmer_size);
@@ -2667,7 +2803,7 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 	if (length==max_length){
 	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
 	}
-	fprintf(fout1, "extra information:\n");
+	//fprintf(fout1, "extra information:\n");
 	print_extra_info(path_nodes, path_orientations, length, fout1);
 	count_nodes++;
       }
@@ -2679,7 +2815,7 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 	    print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout2,name,length,avg_coverage,min,max,
 										 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
 										 db_graph->kmer_size,true, get_colour, get_covg);
-	    fprintf(fout2, "extra information:\n");
+	    //fprintf(fout2, "extra information:\n");
 	    print_extra_info(path_nodes, path_orientations, length, fout2);
 	  }
 	
@@ -2697,7 +2833,10 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
   free(path_labels);
   free(seq);
   fclose(fout1);
-  fclose(fout2);
+  if (fout2 != NULL)
+    {
+      fclose(fout2);
+    }
 }
 
 
@@ -2891,6 +3030,26 @@ void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), 
   printf("%qd kmers dumped\n",count);
 }
 
+
+
+void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph){
+  FILE * fout; //binary output
+  fout= fopen(filename, "w"); 
+  
+  long long count=0;
+  //routine to dump graph
+  void print_node_single_colour_binary_of_colour0(dBNode * node){   
+    if (condition(node)){
+      count++;
+      db_node_print_single_colour_binary_of_colour0(fout,node);
+    }
+  }
+
+  hash_table_traverse(&print_node_single_colour_binary_of_colour0,db_graph); 
+  fclose(fout);
+
+  printf("%qd kmers dumped\n",count);
+}
 
 
 
@@ -5691,7 +5850,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      
 		    }
 		 
-		  fprintf(output_file, "var_%i - extra information\n", num_variants_found);
+		  //fprintf(output_file, "var_%i - extra information\n", num_variants_found);
 		  print_extra_info(&var, output_file);
 		}
 	      

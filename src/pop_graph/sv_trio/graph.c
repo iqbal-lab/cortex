@@ -19,6 +19,128 @@
 //5. output dir?
 
 
+
+void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph, 
+		      void (*print_appropriate_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
+		      Edges(*get_col_ref) (const dBNode* e),
+		      int (*get_cov_ref)(const dBNode* e)
+		      )
+{
+  
+      printf("Detecting bubbles between colour list 1: ");
+      int k;
+      if (which==1)
+	{
+	  for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_first_colour_list; k++)
+	    {
+	      printf("%d, ", cmd_line->detect_bubbles1_first_colour_list[k]);
+	    }
+	}
+      else
+	{
+	  for (k=0; k<cmd_line->num_colours_in_detect_bubbles2_first_colour_list; k++)
+	    {
+	      printf("%d, ", cmd_line->detect_bubbles2_first_colour_list[k]);
+	    }
+	}
+      printf(" and colour list 2:");
+      if (which==1)
+	{
+	  for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_second_colour_list; k++)
+	    {
+	      printf("%d, ", cmd_line->detect_bubbles1_second_colour_list[k]);
+	    }
+	}
+      else
+	{
+	  for (k=0; k<cmd_line->num_colours_in_detect_bubbles2_second_colour_list; k++)
+	    {
+	      printf("%d, ", cmd_line->detect_bubbles2_second_colour_list[k]);
+	    }
+	  printf("\n");
+	}
+
+
+      FILE* fp;
+
+      if (which==1)
+	{
+	  fp = fopen(cmd_line->output_detect_bubbles1, "w");
+	}
+      else
+	{
+	  fp = fopen(cmd_line->output_detect_bubbles2, "w");
+	}
+
+      if (fp==NULL)
+	{
+	  if (which==1)
+	    {
+	      printf("Cannot open %s. Exit.", cmd_line->output_detect_bubbles1);
+	    }
+	  else
+	    {
+	      printf("Cannot open %s. Exit.", cmd_line->output_detect_bubbles2);
+	    }
+	  exit(1);
+	}
+
+      if (cmd_line->using_ref==false)
+	{
+	  if (which==1)
+	    {
+	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_supernode,db_graph, 
+							  cmd_line->detect_bubbles1_first_colour_list, 
+							  cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
+							  cmd_line->detect_bubbles1_second_colour_list, 
+							  cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
+							  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
+							  false, NULL, NULL);
+	    }
+	  else
+	    {
+	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_supernode,db_graph, 
+							  cmd_line->detect_bubbles2_first_colour_list, 
+							  cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
+							  cmd_line->detect_bubbles2_second_colour_list, 
+							  cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
+							  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
+							  false, NULL, NULL);
+	    }
+	}
+      else
+	{
+	  printf("(First exclude bubbles from ref colour %d) \n", cmd_line->ref_colour);
+	  if (which==1)
+	    {
+	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_supernode,db_graph, 
+							  cmd_line->detect_bubbles1_first_colour_list, 
+							  cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
+							  cmd_line->detect_bubbles1_second_colour_list, 
+							  cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
+							  &detect_vars_condition_always_true,
+							  print_appropriate_extra_var_info,
+							  true, get_col_ref, get_cov_ref);
+	    }
+	  else
+	    {
+	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_supernode,db_graph, 
+							  cmd_line->detect_bubbles2_first_colour_list, 
+							  cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
+							  cmd_line->detect_bubbles2_second_colour_list, 
+							  cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
+							  &detect_vars_condition_always_true,
+							  print_appropriate_extra_var_info,
+							  true, get_col_ref, get_cov_ref);
+	    }
+	}
+}
+
+
+
+
+
+
 int main(int argc, char **argv){
 
   CmdLine cmd_line = parse_cmdline(argc,argv,sizeof(Element));
@@ -87,12 +209,14 @@ int main(int argc, char **argv){
     if (cmd_line.using_ref==false)
       {
 	printf("Do not call get_colour_ref when --using_ref was not specified. Exiting - coding error\n");
+	exit(1);
       }
 
     if ( (cmd_line.ref_colour<0) || (cmd_line.ref_colour>NUMBER_OF_INDIVIDUALS_PER_POPULATION-1) )
       {
 	printf("Calling get_colour_ref, but the reference colour %d has not been specified, or is > than the compile-time limit, of %d\n", 
 	       cmd_line.ref_colour, NUMBER_OF_INDIVIDUALS_PER_POPULATION-1);
+	exit(1);
       }
     Edges ed = get_edge_copy(*e, individual_edge_array, cmd_line.ref_colour);
     return ed;
@@ -109,7 +233,7 @@ int main(int argc, char **argv){
   }
 
   //***************************************************************************
-  // end ocal functions
+  // end local functions
   //***************************************************************************
 
 
@@ -123,22 +247,19 @@ int main(int argc, char **argv){
   //zam - these are from Mario, want to check
   int number_of_bitfields = ((kmer_size * 2) / (sizeof(bitfield_of_64bits)*8))+1;
   
-  if (number_of_bitfields > NUMBER_OF_BITFIELDS_IN_BINARY_KMER){
-    printf("K-mer is too small for current range of kmers!\n");
-    exit(0); 
-  }
   printf("Maximum k-mer size (compile-time setting): %ld\n", (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1);
-
+  
   if (cmd_line.kmer_size> (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1){
     printf("k-mer size is too big [%i]!",cmd_line.kmer_size);
     exit(1);
   }
+  printf("Actual K-mer size is %d\n", cmd_line.kmer_size);
 
-
+  
   //Create the de Bruijn graph/hash table
   int max_retries=15;
   db_graph = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
-  printf("table created: %d\n",1 << hash_key_bits);
+  printf("Hash table created, number of buckets: %d\n",1 << hash_key_bits);
 
 
   // input data:
@@ -243,16 +364,6 @@ int main(int argc, char **argv){
       
   printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));	  
 
-  if (cmd_line.dump_binary==true)
-    {
-      	fprintf(stdout,"Will dump binary file: %s\n",cmd_line.output_binary_filename);
-    }
-
-  if (cmd_line.input_seq==true)
-    {
-      printf("Dumped binary will be single-colour, as we have loaded fasta/q\n");
-    }
-
 
   
   // Error Correction actions
@@ -287,12 +398,13 @@ int main(int argc, char **argv){
       if (cmd_line.input_seq==true)
 	{
 	  //dump single colour
-	  printf("Dump single col binary\n");
+	  printf("Input data was fasta/q, so dump single colour binary file: %s\n", cmd_line.output_binary_filename);
+	  db_graph_dump_single_colour_binary_of_colour0(cmd_line.output_binary_filename, &db_node_check_status_not_pruned,db_graph);
 	}
       else
 	{
-	  printf("Dump multicol binary with as many cols as have compiled in\n");
-	  // uncomment after testing cmdline db_graph_dump_binary(cmd_line.output_binary_filename, &db_node_check_status_not_pruned,db_graph);
+	  //printf("Dump multicolour binary with %d colours (compile-time setting), of which input data .......\n");
+	  //db_graph_dump_binary(cmd_line.output_binary_filename, &db_node_check_status_not_pruned,db_graph);
 	}
     }
 
@@ -312,99 +424,16 @@ int main(int argc, char **argv){
 
   if (cmd_line.detect_bubbles1==true)
     {
-      printf("Detecting bubbles between colour list 1: ");
-      int k;
-      for (k=0; k<cmd_line.num_colours_in_detect_bubbles1_first_colour_list; k++)
-	{
-	  printf("%d ", cmd_line.detect_bubbles1_first_colour_list[k]);
-	}
-      printf("\n and colour list 2:                     ");
-      for (k=0; k<cmd_line.num_colours_in_detect_bubbles1_second_colour_list; k++)
-	{
-	  printf("%d ", cmd_line.detect_bubbles1_second_colour_list[k]);
-	}
-      printf("\n");
-
-      FILE* fp_db1 = fopen(cmd_line.output_detect_bubbles1, "w");
-      if (fp_db1==NULL)
-	{
-	  printf("Cannot open %s. Exit.", cmd_line.output_detect_bubbles1);
-	  exit(1);
-	}
-
-      if (cmd_line.using_ref==false)
-	{
-
-	  db_graph_detect_vars_given_lists_of_colours(fp_db1,cmd_line.max_supernode,db_graph, 
-						      cmd_line.detect_bubbles1_first_colour_list, cmd_line.num_colours_in_detect_bubbles1_first_colour_list,
-						      cmd_line.detect_bubbles1_second_colour_list, cmd_line.num_colours_in_detect_bubbles1_second_colour_list,
-						      &detect_vars_condition_always_true, &print_appropriate_extra_variant_info);
-	}
-      else
-	{
-	  printf("(first exclude bubbles from ref colour %d) \n", cmd_line.ref_colour);
-	  db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(fp_db1,cmd_line.max_supernode,db_graph, 
-										  cmd_line.detect_bubbles1_first_colour_list, cmd_line.num_colours_in_detect_bubbles1_first_colour_list,
-										  cmd_line.detect_bubbles1_second_colour_list, cmd_line.num_colours_in_detect_bubbles1_second_colour_list,
-										  &get_colour_ref, &get_covg_ref,
-										  &print_appropriate_extra_variant_info);
-	}
+      run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref);
     }
 
   //second detect bubbles
   if (cmd_line.detect_bubbles2==true)
     {
-
-      printf("Detecting bubbles for second time, now between colour list 1: ");
-      int k;
-      for (k=0; k<cmd_line.num_colours_in_detect_bubbles2_first_colour_list; k++)
-	{
-	  printf("%d ", cmd_line.detect_bubbles2_first_colour_list[k]);
-	}
-      printf("\n and colour list 2:                     ");
-      for (k=0; k<cmd_line.num_colours_in_detect_bubbles2_second_colour_list; k++)
-	{
-	  printf("%d ", cmd_line.detect_bubbles2_second_colour_list[k]);
-	}
-      printf("\n");
-
-
-      FILE* fp_db2 = fopen(cmd_line.output_detect_bubbles2, "w");
-      if (fp_db2==NULL)
-	{
-	  printf("Cannot open %s. Exit.", cmd_line.output_detect_bubbles2);
-	  exit(1);
-	}
-
-
-      if (cmd_line.using_ref==false)
-	{
-
-	  db_graph_detect_vars_given_lists_of_colours(fp_db2,cmd_line.max_supernode,db_graph, 
-						      cmd_line.detect_bubbles2_first_colour_list, cmd_line.num_colours_in_detect_bubbles2_first_colour_list,
-						      cmd_line.detect_bubbles2_second_colour_list, cmd_line.num_colours_in_detect_bubbles2_second_colour_list,
-						      &detect_vars_condition_always_true, &print_appropriate_extra_variant_info);
-	}
-      else
-	{
-	  printf("(first exclude bubbles from ref colour %d) \n", cmd_line.ref_colour);	  
-	  db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(fp_db2,cmd_line.max_supernode,db_graph, 
-										  cmd_line.detect_bubbles2_first_colour_list, cmd_line.num_colours_in_detect_bubbles2_first_colour_list,
-										  cmd_line.detect_bubbles2_second_colour_list, cmd_line.num_colours_in_detect_bubbles2_second_colour_list,
-										  &get_colour_ref, &get_covg_ref,
-										  &print_appropriate_extra_variant_info);
-	}
-
+      run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref);
     }
 
   
-
-
-
-
-
-
-
   hash_table_free(&db_graph);
 
   return 0;

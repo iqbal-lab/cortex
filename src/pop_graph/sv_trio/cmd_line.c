@@ -42,7 +42,7 @@ const char* usage=
 "   [-q | --output_contigs FILENAME] = Dump a fasta file of all the supernodes (after applying all specified actions on graph).\n" \
 "   [-r | --detect_bubbles1 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] = Output to standard output all the bubbles in the graph where the two branches lie in the specified colours (after applying all specified actions on graph). Typical use would be --detect_bubbles1 1/1 to find hets in colour 1, or --detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch is in colour 0 (and not colour1) and the other branch is in colour1 (but not colour 0), However, one can do more complex things: e.g.  --detect_het_bubbles 1,2,3/4,5,6 to find bubbles where one branch is in 1,2 or 3 (and not 4,5 or 6) and the other branch in colour 4,5 or 6 (but not 1,2, or 3).\n" \
 "   [-s | --output_bubbles1 FILENAME] = Bubbles called in detect_bubbles1 are dumped to this file.\n" \
-"   [-t | --detect_bubbles2 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] = exactly the same as detect_bubbles1, but allows you to make a second set of bubble calls immediately afterwards. This is to accomodate the common use-case where one loads a reference and an individual, cleans, then wants to call homs, and hets.\n" \
+"   [-t | --detect_bubbles2 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] = exactly the same as detect_bubbles1, but allows you to make a second set of bubble calls immediately afterwards. This is to accomodate the common use-case where one loads a reference and an individual, and then wants to call homs, and hets.\n" \
 "   [-u | --output_bubbles2 FILENAME] = Bubbles called in detect_bubbles2 are dumped to this file.\n" \
 "   [-v | --format] = File format for input in se_list and pe_list. All files assumed to be of the same format\n" \
 "   [-w | --max_read_len] = Maximum read length over all input files\n" \
@@ -227,7 +227,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	if (access(optarg,R_OK)==-1){
 	  errx(1,"[-a | --colour_list] filename [%s] cannot be accessed",optarg);
 	}
-	printf("Set to true\n");
+
 	cmdline_ptr->input_colours = true;
 	break; 
       }
@@ -410,7 +410,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	cmdline_ptr->format_of_input_seq = FASTQ;
 	
 	if (cmdline_ptr->quality_score_threshold == 0)
-	  errx(1,"[-q | --quality_score_threshold] option requires int argument bigger than 0");
+	  errx(1,"[-m | --quality_score_threshold] option requires int argument bigger than 0");
 	break;    
       }
 
@@ -474,7 +474,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	
 	if (access(optarg,F_OK)==0)
 	  {
-	    errx(1,"[-q/--output_contigs] filename [%s] does not exist!",optarg);
+	    errx(1,"[-q/--output_contigs] filename [%s] already exists. Exiting, to prevent overwriting.",optarg);
 	  }
 	break; 
       }
@@ -488,7 +488,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	int ret = parse_colourinfo_argument(cmdline_ptr, optarg, strlen(optarg), "[-r | --detect_bubbles1] ", 1);
 	if (ret==-1)
 	  {
-	    errx(1, "Fix above issue in cmd line argument for [-r | --detect_bubbles1]");
+	    errx(1, "Problem with  cmd line argument for [-r | --detect_bubbles1]");
 	  }
 	cmdline_ptr->detect_bubbles1=true;
 
@@ -523,7 +523,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	int ret = parse_colourinfo_argument(cmdline_ptr, optarg, strlen(optarg), "[-t | --detect_bubbles2] ", 2);
 	if (ret==-1)
 	  {
-	    errx(1, "Fix above issue in cmd line argument for [-t | --detect_bubbles2]");
+	    errx(1, "Problem with  cmd line argument for [-t | --detect_bubbles2]");
 	  }
 	cmdline_ptr->detect_bubbles2=true;
 
@@ -552,6 +552,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'v': //file format - either fasta, fastq or ctx.
       {
 
+	printf("GOT HERE\n");
 	if (optarg==NULL)
 	  errx(1,"[-v | --format] option requires argument FASTQ, FASTA or CTX");
 
@@ -564,6 +565,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	if (strcmp(optarg, "FASTA") ==0)
 	  {
 	    cmdline_ptr->format_of_input_seq=FASTA;
+	    printf("input format fasta set\n");
 	  }
 	else if (strcmp(optarg, "FASTQ") ==0)
 	  {
@@ -697,7 +699,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
     }
   
   
-  
+  //check only call detect_bubbles2 if already have called detect_bubbles1
   if ( (cmd_ptr->detect_bubbles2==true) && (cmd_ptr->detect_bubbles1==false) )
     {
 
@@ -710,6 +712,35 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       strcpy(error_string, tmp);
       return -1;
     }
+
+
+  //if specify detect_bubbles, must give output file
+  if ( (cmd_ptr->detect_bubbles1==true) && (cmd_ptr->output_detect_bubbles1[0]=='\0') )
+    {
+
+      char tmp[]="If you specify --detect_bubbles1, you must also specify an output file with --output_bubbles1";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+    }
+  if ( (cmd_ptr->detect_bubbles2==true) && (cmd_ptr->output_detect_bubbles2[0]=='\0') )
+    {
+
+      char tmp[]="If you specify --detect_bubbles2, you must also specify an output file with --output_bubbles2";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+    }
+
+
   
   if ( (cmd_ptr->input_seq==true) && (cmd_ptr->max_read_length==0) )
     {
