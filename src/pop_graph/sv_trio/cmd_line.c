@@ -476,6 +476,10 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  {
 	    errx(1,"[-q/--output_contigs] filename [%s] already exists. Exiting, to prevent overwriting.",optarg);
 	  }
+	if (optarg[0]=='-')
+	  {
+	    errx(1, "[-q/--output_contigs] requires a filename, but finds this: [%s] starts with -. Have you omitted the filename?\n", optarg);
+	  }
 	break; 
       }
 
@@ -526,7 +530,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    errx(1, "Problem with  cmd line argument for [-t | --detect_bubbles2]");
 	  }
 	cmdline_ptr->detect_bubbles2=true;
-
+	printf("Zam set to true\n");
 	break; 
       }
     case 'u': //output file for detect_bubbles2
@@ -552,7 +556,6 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'v': //file format - either fasta, fastq or ctx.
       {
 
-	printf("GOT HERE\n");
 	if (optarg==NULL)
 	  errx(1,"[-v | --format] option requires argument FASTQ, FASTA or CTX");
 
@@ -703,7 +706,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
   if ( (cmd_ptr->detect_bubbles2==true) && (cmd_ptr->detect_bubbles1==false) )
     {
 
-      char tmp[]="Do not call --detect_bubbles2 unless you have already called --detect_bubbles1. They do the same thing, just allowing you to run two sets of variant calls (eg looking for homs and hets) immediately on having loaded the binary/binaries. ie you can use detect_bubbles1 to look for homs and detect_bubbles2 to look for hets, or more complex things (see manual). However, to keep things clean, if you only want to use one, use detect_bubbles1\n";
+      char tmp[]="Do not specify --detect_bubbles2 unless you have already specified --detect_bubbles1. Consult manual for further information\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
 	  printf("coding error - this string is too long:\n%s\n", tmp);

@@ -27,7 +27,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 		      )
 {
   
-      printf("Detecting bubbles between colour list 1: ");
+      printf("Detecting bubbles between first colour list: ");
       int k;
       if (which==1)
 	{
@@ -43,7 +43,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	      printf("%d, ", cmd_line->detect_bubbles2_first_colour_list[k]);
 	    }
 	}
-      printf(" and colour list 2:");
+      printf(" and second colour list:");
       if (which==1)
 	{
 	  for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_second_colour_list; k++)
@@ -99,6 +99,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	    }
 	  else
 	    {
+	      printf("Zam here - about to call vars\n");
 	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_supernode,db_graph, 
 							  cmd_line->detect_bubbles2_first_colour_list, 
 							  cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
@@ -354,7 +355,8 @@ int main(int argc, char **argv){
 
       if (cmd_line.input_colours==true)
 	{
-	  printf("Start loading single-colour binaries from %s into consecutive colours starting at %d\n", cmd_line.colour_list, first_colour_data_starts_going_into);
+	  printf("Use this list of colours: %s to find one filelist per colour. Load data into consecutive colours starting at %d\n", 
+		 cmd_line.colour_list, first_colour_data_starts_going_into);
 	  load_population_as_binaries_from_graph(cmd_line.colour_list, db_graph);
 	  printf("Finished loading single_colour binaries\n");
 	}
@@ -425,12 +427,20 @@ int main(int argc, char **argv){
   if (cmd_line.detect_bubbles1==true)
     {
       run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref);
+
+      //unset the nodes marked as visited, but not those marked as to be ignored
+      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
     }
 
   //second detect bubbles
   if (cmd_line.detect_bubbles2==true)
     {
       run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref);
+
+      //unset the nodes marked as visited, but not those marked as to be ignored
+      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+      
+
     }
 
   

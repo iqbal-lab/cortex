@@ -1232,6 +1232,7 @@ int load_multicolour_binary_data_from_filename_into_graph(char* filename,  dBGra
 int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
+  //printf("Open single colour binary: %s\n", filename);
 
   FILE* fp_bin = fopen(filename, "r");
   int seq_length = 0;
@@ -1294,6 +1295,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
       if ((p = strchr(line, '\n')) != NULL)
 	*p = '\0';
       
+      printf("Load this binary: %s, into this colour : %d\n", line, index);
       total_seq_loaded = total_seq_loaded + 
 	load_single_colour_binary_data_from_filename_into_graph(line, db_graph, individual_edge_array, index);
 
@@ -1316,6 +1318,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 long long load_population_as_binaries_from_graph(char* filename, dBGraph* db_graph)
 {
 
+  //printf("Open this list of colours: %s\n", filename);
   FILE* fp = fopen(filename, "r");
   if (fp == NULL){
     printf("load_population_as_binaries_from_graph cannot open file:%s\n",filename);
@@ -1344,6 +1347,8 @@ long long load_population_as_binaries_from_graph(char* filename, dBGraph* db_gra
 	exit(1);
       }
 
+      //printf("Open this filelist of binaries, %s,  all corresponding to the same colour:%d\n",
+      //	     line, people_so_far-1);
       total_seq_loaded = total_seq_loaded + 
 	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph, individual_edge_array, people_so_far-1);
 

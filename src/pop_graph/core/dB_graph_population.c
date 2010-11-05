@@ -1843,7 +1843,6 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 
 boolean detect_vars_condition_always_true(VariantBranchesAndFlanks* var)
 {
-  printf("ZMA in confition\n");
   return true;
 }
 
@@ -2054,7 +2053,6 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
 			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
 {
-  printf("ZAMZAMZMA\n");
 
   int count_vars = 0; 
   int flanking_length = 1000; 
@@ -2101,6 +2099,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
    
       do{
 	
+
 	//The idea is that db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours will mark anything is sees with action_flanks
 	//However if it does find a bubble, and if you want it to (penultimate argument=true)  then the branches are  marked with action_branches
 	if (db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(current_node,orientation,max_length,action_flanks,
@@ -2174,11 +2173,11 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    //warning - array of 5prime nodes, oprientations is in reverse order to what you would expect - it is never used in what follows
 	    set_variant_branches_and_flanks(&var, nodes5p, orientations5p, length_flank5p, path_nodes1, path_orientations1, length1, 
 					    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p, unknown);
-	    printf("ZMA - checking condition\n");
+	    
+
 	    if (condition(&var)==true) 
 	      {
-		printf("CONDITION PASSED\n");
-		//printf("\nPassed condition - found VARIATION: %i\n",count_vars);
+		printf("\nPassed condition - found VARIATION: %i\n",count_vars);
 		count_vars++;
 		
 		//printf("length 5p flank: %i avg_coverage:%5.2f \n",length_flank5p,avg_coverage5p);	    
@@ -2222,6 +2221,10 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		print_extra_info(&var, fout);
 
 		
+	      }
+	    else//debug
+	      {
+		printf("Zam failed condition\n");
 	      }
 	    //db_node_action_set_status_visited(path_nodes2[length2]);
 	    action_branches(path_nodes2[length2]);
@@ -2547,6 +2550,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
     {
       if (exclude_ref_bubbles_first==false)
 	{
+	  printf("Calling detect vars as if noth lists are identical\n");
 	  db_graph_detect_vars(fout, max_length, db_graph, 
 			       extra_condition,
 			       &db_node_action_set_status_visited,
