@@ -146,16 +146,9 @@ int main(int argc, char **argv){
 
   CmdLine cmd_line = parse_cmdline(argc,argv,sizeof(Element));
 
-  char* colour_list; 
-  char* multicol_binary;
-  char* se_filename;
-  char* pe_filename;
   int hash_key_bits, bucket_size;
-  dBGraph * db_graph = NULL; 
+  dBGraph * db_graph = NULL;
   short kmer_size;
-  int quality_thresh;
-  int homopolymer_limit;
-  char* dumped_binary;
 
 
   //***************************************************************************
@@ -246,7 +239,7 @@ int main(int argc, char **argv){
   bucket_size      = cmd_line.bucket_size;
 
   //zam - these are from Mario, want to check
-  int number_of_bitfields = ((kmer_size * 2) / (sizeof(bitfield_of_64bits)*8))+1;
+  //int number_of_bitfields = ((kmer_size * 2) / (sizeof(bitfield_of_64bits)*8))+1;
   
   printf("Maximum k-mer size (compile-time setting): %ld\n", (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1);
   
@@ -254,7 +247,7 @@ int main(int argc, char **argv){
     printf("k-mer size is too big [%i]!",cmd_line.kmer_size);
     exit(1);
   }
-  printf("Actual K-mer size is %d\n", cmd_line.kmer_size);
+  printf("Actual K-mer size: %d\n", cmd_line.kmer_size);
 
   
   //Create the de Bruijn graph/hash table
@@ -297,6 +290,10 @@ int main(int argc, char **argv){
 	  printf("Removing duplicates from single-ended files single-endedly - ie if any read starts with same k-mer as a previous read\n");
 	  printf("Removing duplicates from the paired end files when both mates start with the same kmer\n");
 	}
+      else
+	{
+	  printf("No PCR duplicate removal\n");
+	}
       if (cmd_line.cut_homopolymers==true)
 	{
 	  printf("Breaking reads at homopolymer runs of length %d or greater. Read restarts at first base after the run\n", cmd_line.homopolymer_limit);
@@ -329,28 +326,8 @@ int main(int argc, char **argv){
 
       if (cmd_line.input_multicol_bin==true)
 	{
-      /*
-      if (number_colours_in_multicolour_binary< NUMBER_OF_INDIVIDUALS_PER_POPULATION)
-	{
-	  printf("Need to port this code from the _wth_genotyping repo\n");
-	  exit(1);
-	  // int kmers_loaded = load_multicolour_binary_with_strictly_less_colours_from_filename_into_graph(filename, db_graph, number_colours_in_multicolour_binary);
-	  //printf("Loaded the single multicolour binary %s, and got %d kmers\n", filename, kmers_loaded);
-	}
-      else if (number_colours_in_multicolour_binary==NUMBER_OF_INDIVIDUALS_PER_POPULATION)
-	{
-	  int kmers_loaded = load_multicolour_binary_data_from_filename_into_graph(filename, db_graph);
-	  printf("Loaded the single multicolour binary %s, and got %d kmers\n", filename, kmers_loaded);
-	}
-      else
-	{
-	  printf("Trying to load a binary with too many colours");
-	  exit(1);
-	}
-
-      */
-
-	  printf("Add code to cover loading multicol binaries and icrement first_colour_data_starts_going_into\n");
+	  int kmers_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line.multicolour_bin,db_graph, &first_colour_data_starts_going_into);
+	  printf("Loaded the multicolour binary %s, and got %d kmers\n", cmd_line.multicolour_bin, kmers_loaded);
 	}
 
       if (cmd_line.input_colours==true)

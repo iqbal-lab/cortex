@@ -63,12 +63,19 @@ long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean 
 
       while (!feof(se_fp))
 	{
-	  fscanf(se_fp, "%s\n", filename);
+	  int ret_fscan_se = fscanf(se_fp, "%s\n", filename);
+	  if (ret_fscan_se==EOF)
+	    {
+	      printf("Unable to read from %s\n", se_f);
+	      exit(1);
+	    }
+
 	  num_single_ended_files_loaded++;
 	  
 	  if (format==FASTQ)
 	    {
-	      single_seq_length += load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(filename,&bad_se_reads, qual_thresh, &dup_se_reads, max_read_length, 
+	      single_seq_length += load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(filename,&bad_se_reads, qual_thresh, &dup_se_reads, 
+												      max_read_length, 
 												      remv_dups_se,break_homopolymers, homopol_limit, 
 												      db_graph, individual_edge_array, colour);
 	    }
@@ -433,7 +440,6 @@ long long load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* fi
   int entry_length;
   boolean full_entry = true;
   boolean prev_full_entry = true;
-  Element * previous_node = NULL;
 
   
   while ((entry_length = file_reader(fp,seq,max_read_length,full_entry,&full_entry))){
@@ -889,7 +895,8 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   Element * current_node  = NULL;
   Element * previous_node = NULL;
   
-  Orientation current_orientation,previous_orientation;
+  Orientation current_orientation=forward;
+  Orientation previous_orientation=forward;
   BinaryKmer tmp_kmer;
 
   //if num_kmers=0 (ie have hit end of file), then kmer_window->nkmers=0, so will skip this next "for" loop
@@ -913,7 +920,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	  continue;
 	}
       
-      boolean found = false;
+      //boolean found = false;
       current_node = hash_table_find(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph);	  
 
       if (current_node == NULL){
@@ -1182,7 +1189,7 @@ int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_f
 
 
 
-
+/*
 //returns number of kmers loaded
 int load_multicolour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph)
 {
@@ -1190,22 +1197,28 @@ int load_multicolour_binary_data_from_filename_into_graph(char* filename,  dBGra
   int seq_length = 0;
   dBNode node_from_file;
   boolean found;
-  int count=0;
 
   if (fp_bin == NULL){
     printf("load_multicolour_binary_data_from_filename_into_graph cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
   
+  int num_cols_in_binary=NUMBER_OF_INDIVIDUALS_PER_POPULATION+1;//initialise to something that prevents binary from being loaded
+  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, &num_cols_in_binary) ) )
+    {
+      printf("Cannot load this binary. Exiting.\n");
+      exit(1);
+    }
+  elsif (num_cols_in_binary != NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+    {
+      printf("Expected a binary with precisely the same number of colours as our graph (%d) but instead it has %d colours. Exiting.\n",
+	     NUMBER_OF_INDIVIDUALS_PER_POPULATION, num_cols_in_binary);
+      exit(1);
+    }
+
   //Go through all the entries in the binary file
   while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file)){
-    count++;
     
-    //if (count % 100000000 == 0 ){
-    // printf("loaded %i\n",count);
-
-    //}
-   
     dBNode * current_node  = NULL;
     BinaryKmer tmp_kmer;
     current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
@@ -1224,7 +1237,58 @@ int load_multicolour_binary_data_from_filename_into_graph(char* filename,  dBGra
   fclose(fp_bin);
   return seq_length;
 }
+*/
 
+
+
+//returns number of kmers loaded
+int load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, int* num_cols_in_loaded_binary)
+{
+
+  printf("Load this binary - %s\n", filename);
+  FILE* fp_bin = fopen(filename, "r");
+  int seq_length = 0;
+  dBNode node_from_file;
+  boolean found;
+  int count=0;
+
+  if (fp_bin == NULL){
+    printf("load_multicolour_binary_from_filename_into_graph cannot open file:%s\n",filename);
+    exit(1); 
+  }
+
+
+  int num_cols_in_binary;
+  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, &num_cols_in_binary) ) )
+    {
+      printf("Cannot load this binary. Exiting.\n");
+      exit(1);
+    }
+  *num_cols_in_loaded_binary=num_cols_in_binary;
+
+
+  //always reads the multicol binary into successive colours starting from 0
+  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, num_cols_in_binary)){
+    count++;
+    
+    dBNode * current_node  = NULL;
+    BinaryKmer tmp_kmer;
+    current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
+    
+    seq_length+=db_graph->kmer_size;
+   
+    int i;
+    for (i=0; i<num_cols_in_binary ; i++)
+      {
+	add_edges(current_node,individual_edge_array, i, get_edge_copy(node_from_file, individual_edge_array, i));
+	db_node_update_coverage(current_node, individual_edge_array, i, db_node_get_coverage(&node_from_file, individual_edge_array,i));
+      }
+
+  }
+  
+  fclose(fp_bin);
+  return seq_length;
+}
 
 
 
@@ -2139,7 +2203,6 @@ int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length
 {
   
   boolean full_entry = true;
-  boolean prev_full_entry = true;
 
   //get next read as a C string and put it in seq. Entry_length is the length of the read.
   int entry_length = file_reader(fp,seq,max_read_length,full_entry,&full_entry);
@@ -2240,3 +2303,88 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 }
 					   
 
+
+
+void print_binary_signature(FILE * fp,int kmer_size, int num_cols){
+  char magic_number[6];
+  int version = BINVERSION;
+  
+  magic_number[0]='C';
+  magic_number[1]='O';
+  magic_number[2]='R';
+  magic_number[3]='T';
+  magic_number[4]='E';
+  magic_number[5]='X';
+  
+
+  int num_bitfields = NUMBER_OF_BITFIELDS_IN_BINARY_KMER;
+
+  fwrite(&magic_number,sizeof(char),6,fp);
+  fwrite(&version,sizeof(int),1,fp);
+  fwrite(&kmer_size,sizeof(int),1,fp);
+  fwrite(&num_bitfields, sizeof(int),1,fp);
+  fwrite(&num_cols, sizeof(int), 1, fp);
+}
+
+
+//return yes if signature is consistent
+boolean check_binary_signature(FILE * fp,int kmer_size, int* number_of_colours_in_binary){
+  int read;
+  char magic_number[6];
+  boolean ret = false;
+
+  read = fread(magic_number,sizeof(char),6,fp);
+  if (read>0 &&
+      magic_number[0]=='C' &&
+      magic_number[1]=='O' &&
+      magic_number[2]=='R' &&
+      magic_number[3]=='T' &&
+      magic_number[4]=='E' &&
+      magic_number[5]=='X' ){
+
+    int version;
+    read = fread(&version,sizeof(int),1,fp);
+    if (read>0 && version==BINVERSION)
+      {
+	int kmer_size2;
+	read = fread(&kmer_size2,sizeof(int),1,fp);
+	if ((read>0) && (kmer_size2 == kmer_size) )
+	  {
+	    int num_bitfields;
+	    read = fread(&num_bitfields,sizeof(int),1,fp);
+
+	    if ( (read>0) && (num_bitfields==NUMBER_OF_BITFIELDS_IN_BINARY_KMER) )
+	      {
+		int num_cols;
+		read = fread(&num_cols,sizeof(int),1,fp);
+		
+		if ( (read>0) && (num_cols<=NUMBER_OF_INDIVIDUALS_PER_POPULATION) && (num_cols>0)  )
+		  { 
+		    *number_of_colours_in_binary = num_cols;
+		    ret = true;
+		  }
+		else
+		  {
+		    printf("You are loading  binary with %d colours into a graph with %d colours - incompatible\n",
+			   num_cols, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+		  }
+	      }
+	    else
+	      {
+		printf("Kmer of binary matches the current graph. However this binary was dumped with a different max_kmer size to that of the current graph\n");
+		printf("This binary uses %d bitfields, and current graph uses %d\n", num_bitfields, NUMBER_OF_BITFIELDS_IN_BINARY_KMER);
+	      }
+	  }
+	else
+	  {
+	    printf("You are loading a binary with kmer=%d into a graph with kmer=%d - incompatible\n", kmer_size2, kmer_size);
+	  }
+      }
+    else
+      {
+	printf("Binary versions do not match.\n");
+      }
+  }
+
+  return ret;
+}

@@ -3019,6 +3019,8 @@ void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), 
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   
+  print_binary_signature(fout, db_graph->kmer_size, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+
   long long count=0;
   //routine to dump graph
   void print_node_multicolour_binary(dBNode * node){   
@@ -3040,6 +3042,9 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*co
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   
+  print_binary_signature(fout, db_graph->kmer_size, 1);
+  
+
   long long count=0;
   //routine to dump graph
   void print_node_single_colour_binary_of_colour0(dBNode * node){   

@@ -840,6 +840,7 @@ void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node)
   
 }
 
+/*
 boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * node){
 
   BinaryKmer kmer;
@@ -884,11 +885,71 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 
   return true;
 }
+*/
+
+
+
+// assumes we have the same NUMBER_OF_BITFIELDS_IN_BINARY_KMER in both this hash table and the binary we are loading
+// this is checked when first opening the binary file
+boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * node, int num_colours_in_binary)
+{
+
+  if ( (num_colours_in_binary>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+    ||
+       (num_colours_in_binary<=0)
+       )
+    {
+      printf("You should not call db_node_read_multicolour_binary with %d as final argument.\n", num_colours_in_binary);
+      printf("NUMBER_OF_INDIVIDUALS_PER_POPULATION is %d\n", NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+      exit(1);
+    }
+
+  
+  BinaryKmer kmer;
+
+  int covg_reading_from_binary[num_colours_in_binary];
+  Edges individual_edges_reading_from_binary[num_colours_in_binary];
+ 
+  int read;
+
+  read = fread(&kmer,sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER,1,fp);  
+
+  if (read>0){
+
+    read = fread(covg_reading_from_binary, sizeof(int), num_colours_in_binary, fp);    
+    if (read==0){
+      puts("error with input file - failed to read covg in db_node_read_multicolour_binary\n");
+      exit(1);
+    }
+
+    read = fread(individual_edges_reading_from_binary, sizeof(Edges), num_colours_in_binary, fp);
+    if (read==0){
+      puts("error with input file - failed to read Edges in db_node_read_multicolour_binary\n");
+      exit(1);
+    }
+
+
+
+  }
+  else{
+    return false;
+  }
+
+  element_initialise(node,&kmer,kmer_size);
+
+  int i;
+  for (i=0; i< num_colours_in_binary; i++)
+    {
+      node->coverage[i]         = covg_reading_from_binary[i];
+      node->individual_edges[i] = individual_edges_reading_from_binary[i];
+    }
+
+  return true;
+}
 
 
 
 
-//read a binary for an individual person, - sinlge colour only
 // the edge array type and index tell you which person you should load this data into
 boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index)
 {

@@ -6,7 +6,7 @@
 #include <pop_globals.h>
 #include <file_format.h>
 
-
+#define BINVERSION 1
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;
 
@@ -44,8 +44,10 @@ int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_f
 
 int load_chromosome_overlap_data(char* f_name,  dBGraph* db_graph, int which_chromosome);
 
-//functions for loading graphs from sv_trio
-int load_multicolour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph);
+//functions for loading multicolour graphs
+int load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, int* num_cols_in_loaded_binary);
+//int load_multicolour_binary_with_strictly_less_colours_from_filename_into_graph(char* filename,  dBGraph* db_graph, int num_colours_in_binary);
+
 
 //functions for loading binaries for graph/ target
 int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index);
@@ -114,6 +116,9 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
                                            dBNode** flank3p,    Orientation* flank3p_or,    int* len_flank3p,
                                            dBGraph* db_graph, int colour);
 
+
+void print_binary_signature(FILE * fp,int kmer_size, int num_cols);
+boolean check_binary_signature(FILE * fp,int kmer_size, int* number_of_colours_in_binary);
 
 
 
