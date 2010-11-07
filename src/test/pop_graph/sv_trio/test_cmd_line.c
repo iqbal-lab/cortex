@@ -489,9 +489,7 @@ void test_parse_cmdline_inner_loop_are_basic_variables_correctly_set()
   CU_ASSERT(err23==0);
   CU_ASSERT(test23.print_colour_coverages==true);
   
-
-  
-
-
 }
+
+
 

@@ -92,7 +92,7 @@ long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean 
 	    }
 	  
 	  
-	  printf("\nNum SE files loaded:%i, kmers: %qd, cumulative bad reads: %qd, total SE seq: %qd, duplicates removed: %qd \n\n",
+	  printf("\nNum SE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal SE seq:%qd\n\tDuplicates removed:%qd\n",
 		     num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_se_reads,single_seq_length, dup_se_reads);
 
 	    
@@ -107,7 +107,7 @@ long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean 
 											     &bad_pe_reads, &dup_pe_reads, &num_file_pairs_loaded, 
 											     remv_dups_pe, break_homopolymers, homopol_limit, db_graph, individual_edge_array, colour); 
       
-      printf("\nNum PE files loaded:%i kmers: %qd cumulative bad reads: %qd total PE seq: %qd duplicates removed:%qd\n\n",
+      printf("\nNum PE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal PE seq:%qd\n\tDuplicates removed:%qd\n\n",
 	     num_file_pairs_loaded,hash_table_get_unique_kmers(db_graph),bad_pe_reads,paired_seq_length, dup_pe_reads);
 	  
     }
@@ -1245,7 +1245,7 @@ int load_multicolour_binary_data_from_filename_into_graph(char* filename,  dBGra
 int load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, int* num_cols_in_loaded_binary)
 {
 
-  printf("Load this binary - %s\n", filename);
+  //printf("Load this binary - %s\n", filename);
   FILE* fp_bin = fopen(filename, "r");
   int seq_length = 0;
   dBNode node_from_file;
@@ -1308,6 +1308,21 @@ int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBG
     printf("load_single_colour_binary_data_from_filename_into_graph cannot open file:%s\n",filename);
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
+
+
+
+  int num_cols_in_binary;
+  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, &num_cols_in_binary) ) )
+    {
+      printf("Cannot load this binary. Exiting.\n");
+      exit(1);
+    }
+  if (num_cols_in_binary!=1)
+    {
+      printf("Expecting a single colour binary, but instead this one has %d colours\n. Exiting.\n", num_cols_in_binary);
+      exit(1);
+    }
+
   
   //Go through all the entries in the binary file
   while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&node_from_file, type, index))
@@ -1359,7 +1374,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
       if ((p = strchr(line, '\n')) != NULL)
 	*p = '\0';
       
-      printf("Load this binary: %s, into this colour : %d\n", line, index);
+      //printf("Load this binary: %s, into this colour : %d\n", line, index);
       total_seq_loaded = total_seq_loaded + 
 	load_single_colour_binary_data_from_filename_into_graph(line, db_graph, individual_edge_array, index);
 
@@ -2319,7 +2334,7 @@ void print_binary_signature(FILE * fp,int kmer_size, int num_cols){
 
   int num_bitfields = NUMBER_OF_BITFIELDS_IN_BINARY_KMER;
 
-  fwrite(&magic_number,sizeof(char),6,fp);
+  fwrite(magic_number,sizeof(char),6,fp);
   fwrite(&version,sizeof(int),1,fp);
   fwrite(&kmer_size,sizeof(int),1,fp);
   fwrite(&num_bitfields, sizeof(int),1,fp);
@@ -2360,6 +2375,7 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int* number_of_colours_i
 		
 		if ( (read>0) && (num_cols<=NUMBER_OF_INDIVIDUALS_PER_POPULATION) && (num_cols>0)  )
 		  { 
+
 		    *number_of_colours_in_binary = num_cols;
 		    ret = true;
 		  }

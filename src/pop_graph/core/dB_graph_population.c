@@ -2177,7 +2177,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
 	    if (condition(&var)==true) 
 	      {
-		printf("\nPassed condition - found VARIATION: %i\n",count_vars);
+		//printf("\nPassed condition - found VARIATION: %i\n",count_vars);
 		count_vars++;
 		
 		//printf("length 5p flank: %i avg_coverage:%5.2f \n",length_flank5p,avg_coverage5p);	    
@@ -2222,10 +2222,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
 		
 	      }
-	    else//debug
-	      {
-		printf("Zam failed condition\n");
-	      }
+
 	    //db_node_action_set_status_visited(path_nodes2[length2]);
 	    action_branches(path_nodes2[length2]);
 

@@ -12,11 +12,10 @@
 
 
 //TODO
-//1. set and check for binary type
-//2. loading multicol binary
+
 //3. trusted-path calls
 //4. handling illumina offset
-//5. output dir?
+
 
 
 
@@ -332,10 +331,10 @@ int main(int argc, char **argv){
 
       if (cmd_line.input_colours==true)
 	{
-	  printf("Use this list of colours: %s to find one filelist per colour. Load data into consecutive colours starting at %d\n", 
+	  printf("List of colours: %s (contains one filelist per colour). Load data into consecutive colours starting at %d\n", 
 		 cmd_line.colour_list, first_colour_data_starts_going_into);
 	  load_population_as_binaries_from_graph(cmd_line.colour_list, db_graph);
-	  printf("Finished loading single_colour binaries\n");
+	  //printf("Finished loading single_colour binaries\n");
 	}
 
 
@@ -349,7 +348,7 @@ int main(int argc, char **argv){
   if (cmd_line.remove_seq_errors==true)
     {
       printf("Remove nodes that look like sequencing errors. Clip tips first\n");
-      db_graph_clip_tips_for_specific_person_or_pop(db_graph, individual_edge_array, 1);
+      db_graph_clip_tips_for_specific_person_or_pop(db_graph, individual_edge_array, 0);
       
       printf("Then remove low coverage nodes (<= 1) based on topology as well as covg  -  must look like induced by a single base error) \n");
       db_graph_remove_errors_considering_covg_and_topology(1,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
@@ -390,7 +389,6 @@ int main(int argc, char **argv){
   if (cmd_line.print_contig_fasta==true)
     {
       printf("Print contigs(supernodes) in the graph created by the union of all colours.\n");
-      printf("Cortex does allow doing this in any combination of colours, this just needs a command-line option. To come in a following release.\n");
       
       db_graph_print_supernodes_defined_by_func_of_colours(cmd_line.output_supernodes, "", cmd_line.max_supernode,
 							   db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
