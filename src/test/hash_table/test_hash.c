@@ -87,7 +87,7 @@ void test_hash_table_find_or_insert()
 
   for (kmer_size=3; kmer_size<6; kmer_size+=2)//changed from 10 to 6
     {
-      num_bits=15;
+      num_bits=20;//debig changed from 15 to 20
       bucket=100;
       max_tries=10;
       step=1;

@@ -896,7 +896,11 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
     k = j+1;
     while (!ret && k<i){
       
-      if (path_nodes[j][lengths[j]] == path_nodes[k][lengths[k]]){
+      if ( (path_nodes[j][lengths[j]] == path_nodes[k][lengths[k]])
+	   &&
+	   (path_orientations[j][lengths[j]] == path_orientations[k][lengths[k]])
+	   )
+	{
 	*length1 = lengths[j];
 	*length2 = lengths[k];
 
@@ -2547,7 +2551,6 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
     {
       if (exclude_ref_bubbles_first==false)
 	{
-	  printf("Calling detect vars as if noth lists are identical\n");
 	  db_graph_detect_vars(fout, max_length, db_graph, 
 			       extra_condition,
 			       &db_node_action_set_status_visited,
@@ -2855,30 +2858,37 @@ void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, Edge
 }
 
 
-//if the node have covg <= coverage (arg2) and its supernode has length <=kmer+1 AND all the interiro nodes of the supernode have this low covg, then
+//if the node has covg <= coverage (arg2) and its supernode has length <=kmer+1 AND all the interiro nodes of the supernode have this low covg, then
 //prune the whole of the interior of the supernode
-void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(dBNode* node, int coverage, dBGraph * db_graph, int max_expected_sup_len,
-											      int (*sum_of_covgs_in_desired_colours)(const Element *), 
-											      Edges (*get_edge_of_interest)(const Element*), 
-											      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
-											      void (*apply_reset_to_specified_edges_2)(dBNode*),
-											      dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, char* supernode_str,
-											      boolean protect_reference, int colour_reference)
+//note the argument supernode_len is set to -1 if the passed in node has status != none
+// returns true if the supernode is pruned, otherwise false
+// if returns false, cannot assume path_nodes etc contain anything useful
+boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(dBNode* node, int coverage, dBGraph * db_graph, int max_expected_sup_len,
+											       int (*sum_of_covgs_in_desired_colours)(const Element *), 
+											       Edges (*get_edge_of_interest)(const Element*), 
+											       void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+											       void (*apply_reset_to_specified_edges_2)(dBNode*),
+											       dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, 
+											       char* supernode_str, int* supernode_len)
 
 {
 
+  boolean is_supernode_pruned=true;
+
+  if (node==NULL)
+    {
+      printf("Called db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error with a NULL node. Programming error\n");
+      exit(1);
+    }
 
   if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
     {
-      return;
+      //printf("Ignore as status us not none\n\n");
+      *supernode_len=-1;//caller can check this
+      is_supernode_pruned=false;
+      return is_supernode_pruned;
     }
 
-  //note this is important - Might be a node that is in the refernece colour, but not this person - dont want to clean off ref alleles.  
-  if ( (protect_reference==true) && (db_node_get_coverage(node, individual_edge_array, colour_reference)>0) )
-    {
-      return;
-    }
-  
 
   if ( (sum_of_covgs_in_desired_colours(node)>0) && (sum_of_covgs_in_desired_colours(node)<=coverage) )
       {
@@ -2888,6 +2898,7 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 	int max_cov;
 	boolean is_cycle;
 	
+	//length_sup is the number of edges in the supernode
 	int length_sup =  db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_expected_sup_len,
 										    &db_node_action_set_status_visited,
 										    path_nodes, path_orientations, path_labels, supernode_str,
@@ -2895,10 +2906,18 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 										    db_graph, 
 										    get_edge_of_interest,
 										    sum_of_covgs_in_desired_colours);
-	
+
+	*supernode_len=length_sup;
+
         if (length_sup>db_graph->kmer_size+1)
 	  {
-	    return;//do nothing. This is too long to look like a supernode induced by a single-base error
+	    is_supernode_pruned=false;
+	    return is_supernode_pruned;//do nothing. This is too long to look like a supernode induced by a single-base error
+	  }
+	else if (length_sup <=1)
+	  {
+	    is_supernode_pruned=false;
+	    return is_supernode_pruned;//do nothing. This supernode has no interior, is just 1 or 2 nodes, so cannot prune it
 	  }
 	else
 	  {
@@ -2907,7 +2926,7 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 	    boolean interior_nodes_look_like_error=true;
 	    for (i=1; (i<=length_sup-1) && (interior_nodes_look_like_error==true); i++)
 	      {
-		if ( (sum_of_covgs_in_desired_colours(path_nodes[i])>coverage) || ( (protect_reference==true) && (db_node_get_coverage(path_nodes[i], individual_edge_array, colour_reference)>0) )     )
+		if (sum_of_covgs_in_desired_colours(path_nodes[i])>coverage)
 		  {
 		    interior_nodes_look_like_error=false;
 		  }
@@ -2917,6 +2936,7 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 	      {
 		for (i=1; (i<=length_sup-1); i++)
 		  {
+		    printf("Zam Prune supernodes\n");
 		    db_graph_db_node_prune_low_coverage(path_nodes[i],coverage,
 							&db_node_action_set_status_pruned,
 							db_graph,
@@ -2924,24 +2944,34 @@ void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_sin
 							);
 		  }
 	      }
+	    else//interior nodes do not look like error
+	      {
+		//don't prune - some interior ode has high coverage
+		is_supernode_pruned=false;
+	      }
 	  }
       }
-    return;
+  else//debug only
+    {
+      //printf("OK - query node has too much covg to consider removing\n");
+      is_supernode_pruned=false;
+    }
+    return is_supernode_pruned;
 }
 
 
 // traverse graph. At each node, if covg <= arg1, get its supernode. If that supernode length is <= kmer-length, and ALL interior nodes have covg <= arg1 
 // then prune the node, and the interior nodes of the supernode.
-// protect th ereference from being pruned also
-void db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph * db_graph,
-							   int (*sum_of_covgs_in_desired_colours)(const Element *), 
-							   Edges (*get_edge_of_interest)(const Element*), 
-							   void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
-							  void (*apply_reset_to_specified_edges_2)(dBNode*),
-							  int colour_reference)
+// returns the number of pruned supernodes
+long long db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph * db_graph,
+							       int (*sum_of_covgs_in_desired_colours)(const Element *), 
+							       Edges (*get_edge_of_interest)(const Element*), 
+							       void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+							       void (*apply_reset_to_specified_edges_2)(dBNode*),
+							       int max_expected_sup)
 {
 
-  int max_expected_sup = 2000;
+  //int max_expected_sup = 10000;
   dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*max_expected_sup); 
   Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*max_expected_sup); 
   Nucleotide*  path_labels       = (Nucleotide*) malloc(sizeof(Nucleotide)*max_expected_sup);
@@ -2954,23 +2984,35 @@ void db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph 
     }
 
 
-  void prune_supernodes_that_look_like_they_are_induced_by_singlebase_errors(dBNode* node)
+  long long prune_supernode_if_it_looks_like_is_induced_by_singlebase_errors(dBNode* node)
   {
 
-
-    db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(node, coverage, db_graph, max_expected_sup,
-											     sum_of_covgs_in_desired_colours,
-											     get_edge_of_interest,
-											     apply_reset_to_specified_edges, 
-											     apply_reset_to_specified_edges_2,
-											     path_nodes, path_orientations, path_labels,supernode_string,
-											     true, colour_reference);
+    int len;
+    boolean is_sup_pruned;
+    
+    is_sup_pruned = db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(node, coverage, db_graph, max_expected_sup,
+													     sum_of_covgs_in_desired_colours,
+													     get_edge_of_interest,
+													     apply_reset_to_specified_edges, 
+													     apply_reset_to_specified_edges_2,
+													     path_nodes, path_orientations, path_labels,supernode_string,&len);
+    if (is_sup_pruned==true)
+      {
+	return 1;
+      }
+    else
+      {
+	return 0;
+      }
 
   }
   
-  hash_table_traverse(&prune_supernodes_that_look_like_they_are_induced_by_singlebase_errors, db_graph);
+
+  long long number_of_pruned_supernodes  = hash_table_traverse_returning_sum(&prune_supernode_if_it_looks_like_is_induced_by_singlebase_errors, db_graph);
   hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+  return number_of_pruned_supernodes;
 }
+
 							  
 
 // 1. sum_of_covgs_in_desired_colours returns the sum of the coverages for the colours you are interested in

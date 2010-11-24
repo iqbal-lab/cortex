@@ -9,12 +9,83 @@
 #include <getopt.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <file_reader.h>
 #include <file_format.h>
 #include <err.h>
 #include <pop_globals.h>
 
 #define MAX_NUM_DIGITS_IN_COLOUR_ENTERED_ON_CMDLINE_COMMASEP 4
 #define LEN_ERROR_STRING 200
+#define MAX_LINE 500
+
+
+boolean more_than_one_colour_in_list(char* file)
+{
+
+  if (file[0]=='\0')
+    {
+      return false;
+    }
+
+  FILE* fp = fopen(file, "w");
+  if (fp==NULL)
+    {
+      printf("Cannot open %s\n", file);
+      exit(1);
+    }
+
+  char filename[MAX_LINE];
+  int count=0;
+  while (feof(fp) ==0)
+    {
+      if (fgets(filename,MAX_LINE, fp) !=NULL)
+        {
+	  count++;
+	}
+    }
+  fclose(fp);
+
+  if (count>1)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+
+
+boolean more_than_one_colour_in_multicol_binary(char* file, int kmer_size)
+{
+
+  if (file[0]=='\0')
+    {
+      return false;
+    }
+
+  FILE* fp = fopen(file, "r");
+  if (fp==NULL)
+    {
+      printf("Cannot open %s\n", file);
+      exit(1);
+    }
+
+  int num_cols=0;
+  check_binary_signature(fp, kmer_size, &num_cols);
+  fclose(fp);
+
+  if (num_cols>1)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+
+}
 
 
 const char* usage=
@@ -29,8 +100,8 @@ const char* usage=
 "   [-c | --se_list FILENAME] = List of single-end fasta/q to be loaded into a single-colour graph. Cannot be used with --colour_list\n" \
 "   [-d | --pe_list FILENAME] = Two filenames, comma-separated: each is a list of paired-end fasta/q to be loaded into a single-colour graph. Lists are assumed to ordered so that corresponding paired-end fasta/q files are at the same positions in their lists. Currently Cortex only use paired-end information to remove PCR duplicate reads (if that flag is set). Cannot be used with --colour_list\n" \
 "   [-e | --kmer_size INT] = Kmer size (default 21). Must be an odd number.\n" \
-"   [-f | --bsize INT] = Size of hash table buckets (default 100).\n" \
-"   [-g | --num_buckets INT] = Number of buckets in hash table in bits (default 10). Actual number of buckets withh be 2^(the number you enter)\n" \
+"   [-f | --mem_width INT] = Size of hash table buckets (default 100).\n" \
+"   [-g | --mem_height INT] = Number of buckets in hash table in bits (default 10). Actual number of buckets withh be 2^(the number you enter)\n" \
 "   [-i | --ref_colour INT] = Colour of reference genome or homozygous/inbred line.\n" \
 "   [-j | --remove_pcr_duplicates] = Removes PCR duplicate reads by ignoring read pairs if both reads start at the same k-mer as a previous read, and single-ended reads if they start at the same k-mer as a previous read\n" \
 "   [-k | --cut_homopolymers INT] = Breaks reads at homopolymers of length > this threshold. (New read starts after homopolymer)\n" \
@@ -340,20 +411,20 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'f': //--bsize = bucket size
       {
 	if (optarg==NULL)
-	  errx(1,"[-f | --bsize] option requires int argument [hash table bucket size]");
+	  errx(1,"[-f | --mem_width] option requires int argument [hash table bucket size]");
 	cmdline_ptr->bucket_size = atoi(optarg);
 	
 	if (cmdline_ptr->bucket_size == 0) 
-	  errx(1,"[-f | --bsize] option requires argument bigger than 0");
+	  errx(1,"[-f | --mem_width] option requires argument bigger than 0");
 	if (cmdline_ptr->bucket_size > 32000) 
-	  errx(1,"[-f | --bsize] option requires argument less than 32000 - recommend increasing the number of buckets instead of making each one very deep");
+	  errx(1,"[-f | --mem_width] option requires argument less than 32000 - recommend increasing the number of buckets instead of making each one very deep");
 	break;
       }
 
     case 'g': //number of buckets
       {
 	if (optarg==NULL)
-	  errx(1,"[-g | --num_buckets] option requires int argument [hash table,  number of buckets in bits - ie 2^(this number) is the number of buckets]");
+	  errx(1,"[-g | --mem_height] option requires int argument [hash table,  number of buckets in bits - ie 2^(this number) is the number of buckets]");
 	cmdline_ptr->number_of_buckets_bits = atoi(optarg);      
 	break;
       }
@@ -568,7 +639,6 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	if (strcmp(optarg, "FASTA") ==0)
 	  {
 	    cmdline_ptr->format_of_input_seq=FASTA;
-	    printf("input format fasta set\n");
 	  }
 	else if (strcmp(optarg, "FASTQ") ==0)
 	  {
@@ -700,6 +770,35 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       strcpy(error_string, tmp);
       return -1;
     }
+
+
+
+  //prevent removal of sequencing errors if we are loading incto >1 colour, or loading a binary with >1 colour
+  if ( ( (more_than_one_colour_in_list(cmd_ptr->colour_list)==true)
+	 ||
+	 (more_than_one_colour_in_multicol_binary(cmd_ptr->multicolour_bin, cmd_ptr->kmer_size)==true)
+	 )
+       &&
+       (  (cmd_ptr->remove_low_coverage_nodes==true)
+	  ||
+	  (cmd_ptr->clip_tips==true)
+	  ||
+	  (cmd_ptr->remove_seq_errors==true)
+	  )
+       )
+    {
+      char tmp[]="Incompatible cmd line arguments. Error cleaning options only allowed on single-colour graphs\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+
+    }
+
+
   
   
   //check only call detect_bubbles2 if already have called detect_bubbles1
@@ -940,5 +1039,4 @@ int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_f
   return 0;
 }
   
-
 

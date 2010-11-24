@@ -7,6 +7,8 @@
 #define BINARY_KMER_H_
 #include <global.h>
 
+#define BINVERSION 3
+
 // *** Basic constants to allow compile-time configuration of what kmer-sizes we support ****
 #define ALLOW_KMERS_UP_TO_31 1
 #define ALLOW_KMERS_UP_TO_63 2

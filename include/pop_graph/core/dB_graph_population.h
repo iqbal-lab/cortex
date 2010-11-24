@@ -78,26 +78,28 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int 
 
 
 
-//if the node have covg <= coverage (arg2) and its supernode has length <=kmer+1 AND all the interiro nodes of the supernode have this low covg, then
+//if the node has covg <= coverage (arg2) and its supernode has length <=kmer+1 AND all the interiro nodes of the supernode have this low covg, then
 //prune the whole of the interior of the supernode
-void db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(dBNode* node, int coverage, dBGraph * db_graph, int max_expected_sup_len,
-											      int (*sum_of_covgs_in_desired_colours)(const Element *), 
-											      Edges (*get_edge_of_interest)(const Element*), 
-											      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
-											      void (*apply_reset_to_specified_edges_2)(dBNode*),
-											      dBNode** path_nodes, Orientation* path_orientations, 
-											      Nucleotide* path_labels, char* supernode_str,
-											      boolean protect_reference, int colour_reference);
+//note the argument supernode_len is set to -1 if the passed in node has status != none
+// returns true if the supernode is pruned, otherwise false
+// if returns false, cannot assume path_nodes etc contain anything useful
+boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(dBNode* node, int coverage, dBGraph * db_graph, int max_expected_sup_len,
+											       int (*sum_of_covgs_in_desired_colours)(const Element *), 
+											       Edges (*get_edge_of_interest)(const Element*), 
+											       void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+											       void (*apply_reset_to_specified_edges_2)(dBNode*),
+											       dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, 
+												 char* supernode_str, int* supernode_len);
 
 // traverse graph. At each node, if covg <= arg1, get its supernode. If that supernode length is <= kmer-length, and ALL interior nodes have covg <= arg1 
 // then prune the node, and the interior nodes of the supernode.
-// protect th ereference from being pruned also
-void db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph * db_graph,
-							   int (*sum_of_covgs_in_desired_colours)(const Element *), 
-							   Edges (*get_edge_of_interest)(const Element*), 
-							   void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
-							  void (*apply_reset_to_specified_edges_2)(dBNode*),
-							  int colour_reference);
+// returns the number of pruned supernodes
+long long db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph * db_graph,
+							       int (*sum_of_covgs_in_desired_colours)(const Element *), 
+							       Edges (*get_edge_of_interest)(const Element*), 
+							       void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+							       void (*apply_reset_to_specified_edges_2)(dBNode*),
+							       int max_expected_sup);
 
 int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode * node, Orientation orientation, int limit, 
 									 Nucleotide fst_nucleotide,

@@ -75,8 +75,8 @@ graph_dump : $(GRAPH_OBJ) obj/graph/graph_dump.o
 graph : $(GRAPH_OBJ) obj/graph/graph.o
 	mkdir -p $(BIN); $(CC) $(OPT) -o $(BIN)/graph $(GRAPH_OBJ) obj/graph/graph.o
 
-sv_trio : $(SV_TRIO_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_SV_TRIO) $(OPT) -o $(BIN)/sv_trio $(SV_TRIO_OBJ)
+cortex_var : $(SV_TRIO_OBJ)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_SV_TRIO) $(OPT) -o $(BIN)/cortex_var $(SV_TRIO_OBJ)
 
 run_basic_tests : $(BASIC_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(OPT) $(CFLAGS_CUNIT) -o $(BIN)/run_basic_tests $(BASIC_TESTS_OBJ) -lcunit

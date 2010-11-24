@@ -1072,6 +1072,21 @@ boolean db_node_check_status_none(dBNode * node){
   return db_node_check_status(node,none);
 }
 
+
+//wrapper - in future this will be part of the flags introduced by Mario et al
+boolean db_node_check_for_flag_ALL_OFF(dBNode * node) {
+
+  if (db_node_check_status(node, unassigned)==true)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+
 boolean db_node_check_status_visited(dBNode * node){
   return db_node_check_status(node,visited);
 }

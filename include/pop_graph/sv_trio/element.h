@@ -175,6 +175,8 @@ void db_node_action_unset_status_visited_or_visited_and_exists_in_reference_or_i
 void db_node_action_do_nothing(dBNode * node);
 
 boolean db_node_check_status_none(dBNode * node);
+boolean db_node_check_for_flag_ALL_OFF(dBNode * node);
+
 
 boolean db_node_check_status_visited(dBNode * node);
 

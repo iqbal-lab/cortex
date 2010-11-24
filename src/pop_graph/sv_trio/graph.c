@@ -352,7 +352,7 @@ int main(int argc, char **argv){
       
       printf("Then remove low coverage nodes (<= 1) based on topology as well as covg  -  must look like induced by a single base error) \n");
       db_graph_remove_errors_considering_covg_and_topology(1,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
-							   &apply_reset_to_all_edges, &apply_reset_to_all_edges_2,0);//last argument is colour of ref, to be protected.
+							   &apply_reset_to_all_edges, &apply_reset_to_all_edges_2,cmd_line.max_supernode);
 
     }
   else

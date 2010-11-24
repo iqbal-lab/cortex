@@ -6,7 +6,6 @@
 #include <pop_globals.h>
 #include <file_format.h>
 
-#define BINVERSION 1
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;
 
