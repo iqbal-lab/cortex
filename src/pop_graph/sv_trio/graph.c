@@ -26,7 +26,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 		      )
 {
   
-      printf("Detecting bubbles between first colour list: ");
+      printf("Detecting bubbles between the union of this set of colours: ");
       int k;
       if (which==1)
 	{
@@ -42,7 +42,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	      printf("%d, ", cmd_line->detect_bubbles2_first_colour_list[k]);
 	    }
 	}
-      printf(" and second colour list:");
+      printf(" and the union of this set of colours: ");
       if (which==1)
 	{
 	  for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_second_colour_list; k++)

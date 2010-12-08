@@ -87,7 +87,7 @@ long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean 
 	    }
 	  else
 	    {
-	      printf("Format passed in must be fastq or fasta, and this is neither\n");
+	      printf("SE data is being passed in, so Format in must be specified as fastq or fasta\n");
 	      exit(1);
 	    }
 	  
@@ -1261,7 +1261,7 @@ int load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* d
   int num_cols_in_binary;
   if (!(check_binary_signature(fp_bin, db_graph->kmer_size, &num_cols_in_binary) ) )
     {
-      printf("Cannot load this binary. Exiting.\n");
+      printf("Cannot load this binary - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting.\n");
       exit(1);
     }
   *num_cols_in_loaded_binary=num_cols_in_binary;

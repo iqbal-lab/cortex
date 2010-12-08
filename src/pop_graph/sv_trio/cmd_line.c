@@ -105,6 +105,7 @@ const char* usage=
 "   [-i | --ref_colour INT] = Colour of reference genome or homozygous/inbred line.\n" \
 "   [-j | --remove_pcr_duplicates] = Removes PCR duplicate reads by ignoring read pairs if both reads start at the same k-mer as a previous read, and single-ended reads if they start at the same k-mer as a previous read\n" \
 "   [-k | --cut_homopolymers INT] = Breaks reads at homopolymers of length > this threshold. (New read starts after homopolymer)\n" \
+  // list of ref chroms for PD caller, max sv looking for. will output calls to same dir as input? or to cwd?
 "   [-l | --tip_clip] = Removes tips from the graph.\n" \
 "   [-m | --quality_score_threshold INT] = Filter for quality scores in the input file (default 0).\n" \
 "   [-n | --node_coverage_threshold INT] = Remove nodes (k-mers) from graph with coverage <= this threshold\n" \

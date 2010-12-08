@@ -448,7 +448,7 @@ void print_hash_table_signature(FILE * fp,HashTable * hash_table){
 HashTable * hash_table_load_from_dump(FILE * fp, int max_rehash_tries){
 
   int read;
-  char magic_number[6];
+  char magic_number[7];
   int kmer_size;
   long long number_buckets;
   int bucket_size;
