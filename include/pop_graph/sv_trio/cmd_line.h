@@ -34,10 +34,11 @@ typedef struct
   int ref_colour;
   int homopolymer_limit;
   int quality_score_threshold;
-  int node_coverage_threshold;
+  //int node_coverage_threshold;
   int quality_score_offset;
   int max_read_length;
-  int max_supernode;
+  int max_var_len;
+
   int detect_bubbles1_first_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];//these are a set of colours to be considered as merged, for purposes of bubble calling
   int num_colours_in_detect_bubbles1_first_colour_list;
   int detect_bubbles1_second_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];// these are another set of colours to be considered as merged, for purposes of bubble calling
@@ -48,8 +49,15 @@ typedef struct
   int detect_bubbles2_second_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
   int num_colours_in_detect_bubbles2_second_colour_list;
 
+
+  int pd_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
+  int num_colours_in_pd_colour_list;
+
   char colour_list[MAX_FILENAME_LEN];
+  int num_colours_in_input_colour_list;
   char multicolour_bin[MAX_FILENAME_LEN];
+  int num_colours_in_multicol_bin;
+
   char se_list[MAX_FILENAME_LEN];
   char pe_list_lh_mates[MAX_FILENAME_LEN];
   char pe_list_rh_mates[MAX_FILENAME_LEN];
@@ -62,14 +70,15 @@ typedef struct
 
   boolean cut_homopolymers;
   boolean remove_pcr_dups;
-  boolean clip_tips;
+  //boolean clip_tips;
   boolean remove_seq_errors;
   boolean print_colour_coverages;
   boolean dump_binary;
   boolean print_contig_fasta;
-  boolean remove_low_coverage_nodes;
+  //boolean remove_low_coverage_nodes;
   boolean detect_bubbles1;
   boolean detect_bubbles2;
+  boolean make_pd_calls;
   boolean using_ref;  
   boolean seq_file_format_known; 
   boolean input_colours;
@@ -88,7 +97,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 int check_cmdline(CmdLine* cmd_ptr, char* error_string);
 CmdLine parse_cmdline( int argc, char* argv[],int unit_size); 
 int default_opts(CmdLine *);
-int get_numbers_from_comma_sep_list(char* list, int len, int* return_list, int max_len_return_list);
+int get_numbers_from_comma_sep_list(char* list,  int* return_list, int max_len_return_list);
 int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is, int which_detect_bubbles);
+int parse_commasep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is);
 
 #endif /* CMD_LINE_H_ */

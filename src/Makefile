@@ -61,7 +61,7 @@ HASH_TABLE_TESTS_OBJ = obj/test/hash_table/run_hash_table_tests.o obj/pop_graph/
 
 SV_TRIO_TESTS_OBJ = obj/test/pop_graph/sv_trio/test_file_reader.o obj/test/pop_graph/sv_trio/test_pop_load_and_print.o obj/test/pop_graph/sv_trio/run_sv_trio_tests.o obj/test/pop_graph/sv_trio/supernode_cmp.o obj/test/pop_graph/sv_trio/test_pop_supernode_consensus.o obj/test/pop_graph/sv_trio/test_pop_element.o obj/test/pop_graph/sv_trio/test_dB_graph_population.o obj/pop_graph/sv_trio/binary_kmer.o obj/pop_graph/sv_trio/element.o obj/pop_graph/sv_trio/seq.o obj/pop_graph/sv_trio/hash_value.o obj/pop_graph/sv_trio/hash_table.o obj/pop_graph/sv_trio/dB_graph.o obj/pop_graph/sv_trio/file_reader.o obj/pop_graph/sv_trio/dB_graph_population.o obj/pop_graph/sv_trio/db_variants.o
 
-CORTEX_VAR_CMD_LINE_TESTS_OBJ = obj/pop_graph/sv_trio/cmd_line.o obj/test/pop_graph/sv_trio/test_cmd_line.o obj/test/pop_graph/sv_trio/run_cmd_line_tests.o
+CORTEX_VAR_CMD_LINE_TESTS_OBJ = obj/pop_graph/sv_trio/cmd_line.o obj/test/pop_graph/sv_trio/test_cmd_line.o obj/test/pop_graph/sv_trio/run_cmd_line_tests.o obj/pop_graph/sv_trio/binary_kmer.o obj/pop_graph/sv_trio/element.o obj/pop_graph/sv_trio/seq.o obj/pop_graph/sv_trio/hash_value.o obj/pop_graph/sv_trio/hash_table.o obj/pop_graph/sv_trio/dB_graph.o obj/pop_graph/sv_trio/file_reader.o obj/pop_graph/sv_trio/dB_graph_population.o obj/pop_graph/sv_trio/db_variants.o 
 
 run_sv_trio_tests : $(SV_TRIO_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_SV_TRIO_TESTS) $(OPT)  -o $(BIN)/run_sv_trio_tests $(SV_TRIO_TESTS_OBJ) -lcunit

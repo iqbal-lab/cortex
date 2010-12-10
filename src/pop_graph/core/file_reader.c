@@ -13,6 +13,7 @@
 #include <string.h>
 #include <dB_graph_supernode.h>
 #include <file_format.h>
+#include <unistd.h>
 
 int MAX_FILENAME_LENGTH=500;
 int MAX_READ_LENGTH=10000;
@@ -2401,6 +2402,294 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int* number_of_colours_i
 	printf("Binary versions do not match.\n");
       }
   }
+  else
+    {
+      printf("Binary does not have magic number in header. Corrupt, or not a Cortex binary\n");
+    }
 
   return ret;
+}
+
+
+//return true if signature is readable
+boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* number_of_bitfields, int* number_of_colours_in_binary){
+  int read;
+  char magic_number[6];
+  
+
+  read = fread(magic_number,sizeof(char),6,fp);
+  if (read>0 &&
+      magic_number[0]=='C' &&
+      magic_number[1]=='O' &&
+      magic_number[2]=='R' &&
+      magic_number[3]=='T' &&
+      magic_number[4]=='E' &&
+      magic_number[5]=='X' ){
+
+    int version;
+    read = fread(&version,sizeof(int),1,fp);
+    if (read>0)
+      {
+	int kmer_size2;
+	read = fread(&kmer_size2,sizeof(int),1,fp);
+	if (read>0)
+	  {
+	    int num_bitfields;
+	    read = fread(&num_bitfields,sizeof(int),1,fp);
+
+	    if ( read>0 )
+	      {
+		int num_cols;
+		read = fread(&num_cols,sizeof(int),1,fp);
+		
+		if ( read>0  )
+		  { 
+		    //int* binary_version, int* kmer_size, int* num_bitfields, int* number_of_colours_in_binar
+		    *binary_version = version;
+		    *kmer_size = kmer_size2;
+		    *number_of_bitfields = num_bitfields;
+		    *number_of_colours_in_binary = num_cols;
+		  }
+		else
+		  {
+		    return false;
+		  }
+	      }
+	    else
+	      {
+		return false;
+	      }
+	  }
+	else
+	  {
+	    return false;
+	  }
+      }
+    else
+      {
+	return false;
+      }
+  }
+  else
+    {
+      return false;
+    }
+
+  return true;
+}
+
+
+
+//given a list of filenames, check they all exist, and return the number of them
+int get_number_of_files_and_check_existence_from_filelist(char* filelist)
+{
+
+  int count=0;
+
+  FILE* fp = fopen(filelist, "r");
+  if (fp==NULL)
+    {
+      printf("Cannot open %s\n", filelist);
+      exit(1);
+    }
+
+  char file[MAX_FILENAME_LENGTH+1];
+  file[0]='\0';
+  
+  while (feof(fp)==0)
+    {
+      if (fgets(file, MAX_FILENAME_LENGTH, fp) != NULL)
+	{
+	  //remove newline from end of line - replace with \0
+	  char* p;
+	  if ((p = strchr(file, '\n')) != NULL)
+	    {
+	      *p = '\0';
+	    }
+	  if (access(file, R_OK)==-1)
+	    {
+	      printf("Cannot access file %s listed in %s\n", file, filelist);
+	      exit(1);
+	    }
+	  else
+	    {
+	      count++;
+	    }
+
+	}
+    }
+  fclose(fp);
+
+  return count;
+}
+
+//assumes we already know how many files in the list, and have preallocated an array to hold the filenames
+void get_filenames_from_list(char* filelist, char** array, int len)
+{
+  int count=0;
+
+  FILE* fp = fopen(filelist, "r");
+  if (fp==NULL)
+    {
+      printf("Cannot open %s\n", filelist);
+      exit(1);
+    }
+
+  char file[MAX_FILENAME_LENGTH+1];
+  file[0]='\0';
+  
+  while ( (feof(fp)==0) && (count<len) )
+    {
+      if (fgets(file, MAX_FILENAME_LENGTH, fp) != NULL)
+	{
+	  //remove newline from end of line - replace with \0
+	  char* p;
+	  if ((p = strchr(file, '\n')) != NULL)
+	    {
+	      *p = '\0';
+	    }
+
+	  strcpy(array[count], file);
+	  count++;
+	}
+    }
+  fclose(fp);
+
+
+  
+}
+
+// filename is a list of files, one for each colour. Check they all exists, there are not too many,
+// ad that each of them contains a alist of valid binaries.
+boolean check_colour_list(char* filename, int kmer)
+{
+  int num_cols_in_list = get_number_of_files_and_check_existence_from_filelist(filename);
+
+
+  char** list_cols = malloc( sizeof(char*) * num_cols_in_list);
+  if (list_cols==NULL)
+    {
+      printf("OOM. Give up can't even allocate space for the names of colourss\n");
+      exit(1);
+    }
+  int i;
+  for (i=0; i< num_cols_in_list; i++)
+    {
+      list_cols[i] = malloc(sizeof(char)*500);
+      if (list_cols[i]==NULL)
+	{
+	  printf("OOM. Giveup can't even allocate space for the names of the colour file i = %d\n",i);
+	  exit(1);
+	}
+    }
+
+  get_filenames_from_list(filename, list_cols,num_cols_in_list);
+
+  //first - none of these files should be a cortex binary - typical mistake, and worth checking for
+  for (i=0; i< num_cols_in_list; i++)
+    {
+      FILE* fptr = fopen(list_cols[i], "r");
+      if (fptr==NULL)
+	{
+	  printf("Cannot open %s from list %s\n", list_cols[i], filename);
+	  exit(1);
+	}
+      int bv;
+      int k;
+      int num_b;
+      int num_c;
+      int check = query_binary(fptr, &bv, &k, &num_b, &num_c);
+      if (check==true)
+	{
+	  printf("Error with input arguments.\n --colour_list requires a list of files, each of which represent a colour.\n Inside each of those ");
+	  printf("should be a list of cortex binaries. \nHowever your colour list %s contains this file %s which is itself a cortex binary not a list of binaries\n", filename, list_cols[i]);
+	  exit(1);
+	}
+      else
+	{
+	  //check it contains only cortex binaries.
+
+	  int count=0;
+
+	  FILE* fp = fopen(list_cols[i], "r");
+	  if (fp==NULL)
+	    {
+	      printf("Cannot open %s\n", list_cols[i]);
+	      exit(1);
+	    }
+
+	  char file[MAX_FILENAME_LENGTH+1];
+	  file[0]='\0';
+	  
+	  while ( feof(fp)==0 )
+	    {
+	      if (fgets(file, MAX_FILENAME_LENGTH, fp) != NULL)
+		{
+		  //remove newline from end of line - replace with \0
+		  char* p;
+		  if ((p = strchr(file, '\n')) != NULL)
+		    {
+		      *p = '\0';
+		    }
+		  FILE* fp_putative_binary=fopen(file, "r");
+		  if (fp_putative_binary==NULL)
+		    {
+		      printf("Cannot open this file %s\n", file);
+		      exit(1);
+		    }
+		  int bv2;
+		  int k2;
+		  int num_b2;
+		  int num_c2;
+
+		  int check2 = query_binary(fp_putative_binary, &bv2, &k2, &num_b2, &num_c2);
+		  fclose(fp_putative_binary);
+		  if (check2==false)
+		    {
+		      printf("Error with input arguments. --colour_list requires a list of files, each of which represent a colour. Inside each of those ");
+		      printf("should be a list of cortex binaries. Therefore your colour list %s contains this file %s which should be a list of cortex binaries\n", filename, list_cols[i]);
+		      printf("However it contains %s, which is not a cortex binary\n", file);
+		      exit(1);
+		    }
+		  else if (k2 != kmer)
+		    {
+		      printf("This binary %s is a kmer %d binary, and cannot be loaded into the main graph which has kmer %d\n", file,k2, kmer);
+		      exit(1);
+		    }
+		  else if (num_b2!=NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
+		    {
+		      printf("Cannot load this binary %s, as it was built with max_kmer_size=%d, whereas the current graph has this set to %d. Incompatible binary.\n",
+			     file, num_b2, NUMBER_OF_BITFIELDS_IN_BINARY_KMER);
+		      exit(1);
+		    }
+		  else if (num_c2 !=1)
+		    {
+		      printf("Input error. --colour_list requires a list of colour files, each one containing a list of single-colour binaries\n");
+		      printf("This binary %s is not a single colour binary - it has %d colours.\n", file, num_c2);
+		      exit(1);
+		    }
+		  count++;
+
+		}
+	    }
+	  fclose(fp);
+
+
+
+
+	}
+
+
+      fclose(fptr);
+    }
+
+
+  //cleanup
+  for (i=0; i<num_cols_in_list; i++)
+    {
+      free(list_cols[i]);
+    }
+  free(list_cols);
+
+  return true;
 }

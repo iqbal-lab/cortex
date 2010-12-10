@@ -19,6 +19,123 @@
 
 
 
+void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph, 
+		  void (*print_some_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp))
+{
+  printf("Calling variants using Path Divergence Caller.\n");
+  printf("Calls are made between the reference path as specified by the fasta in %s\n", cmd_line->ref_chrom_fasta_list);
+  printf(" and the sample, which is the union of the following colour(s): ");
+  int i;
+  for (i=0; i< cmd_line->num_colours_in_pd_colour_list-1; i++)
+    {
+      printf("%d,", cmd_line->pd_colour_list[i]);
+    }
+  printf("%d\n", cmd_line->pd_colour_list[cmd_line->num_colours_in_pd_colour_list-1]);
+  printf("The reference colour is %d\n", cmd_line->ref_colour);
+
+  //this will also check that all the ref chrom fasta files exist
+  int num_ref_chroms = get_number_of_files_and_check_existence_from_filelist(cmd_line->ref_chrom_fasta_list);
+
+  char** ref_chroms = malloc( sizeof(char*) * num_ref_chroms);
+  if (ref_chroms==NULL)
+    {
+      printf("OOM. Give up can't even allocate space for the names of the ref chromosome files\n");
+      exit(1);
+    }
+
+  for (i=0; i< num_ref_chroms; i++)
+    {
+      ref_chroms[i] = malloc(sizeof(char)*500);
+      if (ref_chroms[i]==NULL)
+	{
+	  printf("OOM. Giveup can't even allocate space for the names of the ref chromosome file i = %d\n",i);
+	  exit(1);
+	}
+    }
+
+  get_filenames_from_list(cmd_line->ref_chrom_fasta_list, ref_chroms, num_ref_chroms);
+
+  //now set up output files
+
+  char** output_files = malloc( sizeof(char*) * num_ref_chroms); //one for each chromosome
+  if (output_files==NULL)
+    {
+      printf("OOM. Give up can't even allocate space for the names of the output  files \n");
+      exit(1);
+    }
+	
+  for (i=0; i< num_ref_chroms; i++)
+    {
+      output_files[i] = malloc(sizeof(char)*100); 
+      if (output_files[i]==NULL)
+	{
+	  printf("OOM. Giveup can't even allocate space for the names of the ref chromosome file i = %d\n",i);
+	  exit(1);
+	}
+    }
+  
+  
+  for (i=0; i<num_ref_chroms; i++)
+    {
+      sprintf(output_files[i], "sv_called_in_chrom_%i", i+1);
+    }
+
+
+  int min_fiveprime_flank_anchor = 2;
+  int min_threeprime_flank_anchor= cmd_line->kmer_size;
+  int max_anchor_span =  cmd_line -> max_var_len;
+  int length_of_arrays = 2*max_anchor_span;
+  int min_covg =1;
+  int max_covg = 10000000;//this is ignored. will be changing API
+  int max_expected_size_of_supernode=cmd_line -> max_var_len;
+	
+      
+  for (i=0; i<num_ref_chroms; i++) 
+    {
+      printf("Call SV comparing individual with chromosome %s\n", ref_chroms[i]);
+	    
+      FILE* chrom_fptr = fopen(ref_chroms[i], "r");
+      if (chrom_fptr==NULL)
+	{
+	  printf("Cannot open %s \n", ref_chroms[i]);
+	  exit(1);
+	}
+      
+      FILE* out_fptr = fopen(output_files[i], "w");
+      if (out_fptr==NULL)
+	{
+	  printf("Cannot open %s for output\n", output_files[i]);
+	  exit(1);
+	}
+      
+      
+      db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(cmd_line->pd_colour_list, cmd_line->num_colours_in_pd_colour_list,
+										  chrom_fptr, cmd_line->ref_colour,
+										  min_fiveprime_flank_anchor, min_threeprime_flank_anchor, 
+										  max_anchor_span, min_covg, max_covg, 
+										  max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
+										  0, NULL, NULL, NULL, NULL, NULL, 
+										  &make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours, 
+										  &db_variant_action_do_nothing,
+										  print_some_extra_var_info);
+      
+      
+      fclose(chrom_fptr);
+      fclose(out_fptr);
+    }
+  //cleanup
+  for(i=0; i<num_ref_chroms; i++)
+    {
+      free(ref_chroms[i]);
+      free(output_files[i]);
+    }
+  free(ref_chroms);
+  free(output_files);
+
+  
+
+}
+
 void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph, 
 		      void (*print_appropriate_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
 		      Edges(*get_col_ref) (const dBNode* e),
@@ -88,7 +205,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	{
 	  if (which==1)
 	    {
-	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_supernode,db_graph, 
+	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
 							  cmd_line->detect_bubbles1_first_colour_list, 
 							  cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
 							  cmd_line->detect_bubbles1_second_colour_list, 
@@ -99,7 +216,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	  else
 	    {
 	      printf("Zam here - about to call vars\n");
-	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_supernode,db_graph, 
+	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
 							  cmd_line->detect_bubbles2_first_colour_list, 
 							  cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
 							  cmd_line->detect_bubbles2_second_colour_list, 
@@ -113,7 +230,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	  printf("(First exclude bubbles from ref colour %d) \n", cmd_line->ref_colour);
 	  if (which==1)
 	    {
-	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_supernode,db_graph, 
+	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
 							  cmd_line->detect_bubbles1_first_colour_list, 
 							  cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
 							  cmd_line->detect_bubbles1_second_colour_list, 
@@ -124,7 +241,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	    }
 	  else
 	    {
-	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_supernode,db_graph, 
+	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
 							  cmd_line->detect_bubbles2_first_colour_list, 
 							  cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
 							  cmd_line->detect_bubbles2_second_colour_list, 
@@ -352,22 +469,7 @@ int main(int argc, char **argv){
       
       printf("Then remove low coverage nodes (<= 1) based on topology as well as covg  -  must look like induced by a single base error) \n");
       db_graph_remove_errors_considering_covg_and_topology(1,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
-							   &apply_reset_to_all_edges, &apply_reset_to_all_edges_2,cmd_line.max_supernode);
-
-    }
-  else
-    {
-      if (cmd_line.clip_tips==true)
-	{
-	  printf("Clipping tips from colour0 graph.\n");
-	  db_graph_clip_tips_for_specific_person_or_pop(db_graph, individual_edge_array, 0);
-	}
-      if (cmd_line.remove_low_coverage_nodes==true)
-	{
-	  printf("Removing nodes with coverage <= %d (from union graph of all colours)\n", cmd_line.node_coverage_threshold);
-	  db_graph_remove_low_coverage_nodes(cmd_line.node_coverage_threshold,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
-					     &apply_reset_to_all_edges, &apply_reset_to_all_edges_2);
-	}
+							   &apply_reset_to_all_edges, &apply_reset_to_all_edges_2,cmd_line.max_var_len);
 
     }
 
@@ -390,7 +492,7 @@ int main(int argc, char **argv){
     {
       printf("Print contigs(supernodes) in the graph created by the union of all colours.\n");
       
-      db_graph_print_supernodes_defined_by_func_of_colours(cmd_line.output_supernodes, "", cmd_line.max_supernode,
+      db_graph_print_supernodes_defined_by_func_of_colours(cmd_line.output_supernodes, "", cmd_line.max_var_len,// max_var_len is the public face of maximum expected supernode size
 							   db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
 							   &print_appropriate_extra_supernode_info);
 
@@ -417,6 +519,13 @@ int main(int argc, char **argv){
       
 
     }
+
+  if (cmd_line.make_pd_calls==true)
+    {
+      run_pd_calls(&cmd_line, db_graph, &print_appropriate_extra_variant_info);
+      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+    }
+
 
   
   hash_table_free(&db_graph);

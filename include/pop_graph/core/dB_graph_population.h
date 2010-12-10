@@ -398,6 +398,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						);
 
 boolean make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours(VariantBranchesAndFlanks* var, 
+													int colour_of_ref,
 													Edges (*get_colour)(const dBNode*),
 													int (*get_covg)(const dBNode*));
 
@@ -417,6 +418,20 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
 										       );
 
+
+void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(int* list, int len_list,
+										 FILE* chrom_fasta_fptr, int ref_colour,
+										 int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, 
+										 int max_anchor_span, int min_covg, int max_covg, 
+										 int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
+										 int max_desired_returns,
+										 char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
+										 char** return_flank3p_array, int** return_variant_start_coord,
+										 boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
+												      Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
+										 void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
+										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
+										 );
 
 boolean condition_always_true(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
 			      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv);

@@ -36,6 +36,11 @@ int  main()
     return CU_get_error();
   }
 
+  if (NULL == CU_add_test(pCortexVar_CmdLine_Test_Suite, "Test utility function for parsing args (lists of colours separated by ,) for path divergence call specification", test_parse_commasep_list)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
 
 
   if (NULL == CU_add_test(pCortexVar_CmdLine_Test_Suite, "Test that when given good input, internal variables are correctly set", test_parse_cmdline_inner_loop_are_basic_variables_correctly_set )) {

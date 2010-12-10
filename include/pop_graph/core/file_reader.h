@@ -118,7 +118,9 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
 void print_binary_signature(FILE * fp,int kmer_size, int num_cols);
 boolean check_binary_signature(FILE * fp,int kmer_size, int* number_of_colours_in_binary);
+boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* num_bitfields, int* number_of_colours_in_binary); //return true if binary header readable and has magic number
 
-
-
+int get_number_of_files_and_check_existence_from_filelist(char* filelist);
+void get_filenames_from_list(char* filelist, char** array, int len);
+boolean check_colour_list(char* filename, int kmer);
 #endif /* FILE_READER_H_ */

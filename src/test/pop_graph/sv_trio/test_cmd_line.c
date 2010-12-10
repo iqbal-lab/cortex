@@ -9,10 +9,10 @@ void test_get_numbers_from_comma_sep_list()
 
   //simple list
   char list[]="1,2,3";
-  int len = strlen(list);
+
   int return_list[10];
   int max=10;
-  int ans =  get_numbers_from_comma_sep_list(list, len, return_list, max);
+  int ans =  get_numbers_from_comma_sep_list(list, return_list, max);
 
   CU_ASSERT(return_list[0]==1);
   CU_ASSERT(return_list[1]==2);
@@ -21,10 +21,10 @@ void test_get_numbers_from_comma_sep_list()
 
   //list of just one number
   char list2[]="100";
-  int len2=1;
+
   int return_list2[10];
   int max2=10;
-  int ans2=get_numbers_from_comma_sep_list(list2, len2, return_list2, max2);
+  int ans2=get_numbers_from_comma_sep_list(list2, return_list2, max2);
   
   CU_ASSERT(ans2==1);
   printf("ans is %d \n", ans);
@@ -33,30 +33,30 @@ void test_get_numbers_from_comma_sep_list()
 
   //list containing negative number
   char list3[]="-17";
-  int len3=1;
+
   int return_list3[10];
   int max3=10;
-  int ans3=get_numbers_from_comma_sep_list(list3, len3, return_list3, max3);
+  int ans3=get_numbers_from_comma_sep_list(list3,  return_list3, max3);
   
   CU_ASSERT(ans3==-1);
 
 
   //list containing negative number and other numbers
   char list4[]="10,1,2,3,4,-17";
-  int len4=1;
+
   int return_list4[10];
   int max4=10;
-  int ans4=get_numbers_from_comma_sep_list(list4, len4, return_list4, max4);
+  int ans4=get_numbers_from_comma_sep_list(list4,  return_list4, max4);
   
   CU_ASSERT(ans4==-1);
 
   
   //list containing too many numbers
   char list5[]="2,3,2,3,2,3,2,3,2,3,2,3,2,3,2,3,2,3,2,3";
-  int len5=1;
+
   int return_list5[10];
   int max5=10;
-  int ans5=get_numbers_from_comma_sep_list(list5, len5, return_list5, max5);
+  int ans5=get_numbers_from_comma_sep_list(list5,  return_list5, max5);
   
   CU_ASSERT(ans5==-1);
 
@@ -64,10 +64,10 @@ void test_get_numbers_from_comma_sep_list()
 
   //list containing a non-number
   char list6[]="10,1,2,3,6,a,2,132";
-  int len6=1;
+
   int return_list6[10];
   int max6=10;
-  int ans6=get_numbers_from_comma_sep_list(list6, len6, return_list6, max6);
+  int ans6=get_numbers_from_comma_sep_list(list6,  return_list6, max6);
   
   CU_ASSERT(ans6==-1);
 
@@ -137,6 +137,52 @@ void test_parse_colourinfo_argument()
 
 
 }
+
+
+void test_parse_commasep_list()
+{
+
+  CmdLine cmd_line;
+
+  char arg[]="1,2";
+  int len_arg = strlen(arg);
+  char text[]="dummy text";
+  int which=1;
+  int ret = parse_commasep_list(&cmd_line, arg, len_arg, text);
+
+  CU_ASSERT(cmd_line.num_colours_in_pd_colour_list==2);
+  CU_ASSERT(cmd_line.pd_colour_list[0]==1);
+  CU_ASSERT(cmd_line.pd_colour_list[1]==2);
+  CU_ASSERT(ret==0);
+
+  CmdLine cmd_line2;
+  char arg2[]="234";
+  int len_arg2=strlen(arg2);
+  
+  ret = parse_commasep_list(&cmd_line2, arg2, len_arg2, text);
+
+  CU_ASSERT(cmd_line2.num_colours_in_pd_colour_list==1);
+  CU_ASSERT(cmd_line2.pd_colour_list[0]==234);
+  CU_ASSERT(ret==0);
+  
+
+
+  CmdLine cmd_line3;
+  char arg3[]="1,28,19,278,8888";
+  int len_arg3=strlen(arg3);
+  ret=parse_commasep_list(&cmd_line3, arg3, len_arg3, text);
+
+  CU_ASSERT(cmd_line3.num_colours_in_pd_colour_list==5);
+  CU_ASSERT(cmd_line3.pd_colour_list[0]==1);
+  CU_ASSERT(cmd_line3.pd_colour_list[1]==28);
+  CU_ASSERT(cmd_line3.pd_colour_list[2]==19);
+  CU_ASSERT(cmd_line3.pd_colour_list[3]==278);
+  CU_ASSERT(cmd_line3.pd_colour_list[4]==8888);
+  CU_ASSERT(ret==0);
+
+
+}
+
 
 
 void test_parse_cmdline_inner_loop_are_basic_variables_correctly_set()
@@ -286,18 +332,6 @@ void test_parse_cmdline_inner_loop_are_basic_variables_correctly_set()
   CU_ASSERT(test10.homopolymer_limit==4);
 
   
-  // TIP CLIPPING
-
-  char* argv11[] = {"cortex", "--tip_clip"};
-  
-  //set up a default cmdline
-  CmdLine test11;
-  default_opts(&test11);
-
-  char error_string11[LEN_ERROR_STRING];
-  int err11 = parse_cmdline_inner_loop(2, argv11, sizeof(Element), &test11, error_string11);
-  
-  CU_ASSERT(test11.clip_tips==true);
 
   
   // QUALITY SCORE THRESHOLD
@@ -313,20 +347,6 @@ void test_parse_cmdline_inner_loop_are_basic_variables_correctly_set()
   
   CU_ASSERT(test12.quality_score_threshold==47);
 
-
-  // COVERAGE CUTOFF / NODE COVERAGE THRESHOLD
-
-  char* argv13[] = {"cortex", "--node_coverage_threshold=7"};
-  
-  //set up a default cmdline
-  CmdLine test13;
-  default_opts(&test13);
-
-  char error_string13[LEN_ERROR_STRING];
-  int err13 = parse_cmdline_inner_loop(2, argv13, sizeof(Element), &test13, error_string13);
-  
-  CU_ASSERT(test13.node_coverage_threshold==7);
-  CU_ASSERT(test13.remove_low_coverage_nodes==true);
 
 
   // REMOVE SEQ ERRORS USING COVG AND TOPOLOGY OF GRAPH

@@ -6189,6 +6189,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 boolean make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours(VariantBranchesAndFlanks* var, 
+													int colour_of_ref,
 													Edges (*get_colour)(const dBNode*),
 													int (*get_covg)(const dBNode*))
 {
@@ -7572,6 +7573,67 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 
 }
+
+
+
+
+void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(int* list, int len_list,
+										 FILE* chrom_fasta_fptr, int ref_colour,
+										 int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, 
+										 int max_anchor_span, int min_covg, int max_covg, 
+										 int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
+										 int max_desired_returns,
+										 char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
+										 char** return_flank3p_array, int** return_variant_start_coord,
+										 boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
+												      Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
+										 void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
+										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
+										 )
+{
+
+
+  Edges get_union_list_colours(const dBNode* e)
+  {
+    int i;
+    Edges edges=0;
+    
+    for (i=0; i< len_list; i++)
+      {
+	edges |= e->individual_edges[list[i]];
+      }
+    return edges;    
+  }
+
+  int get_covg_of_union_first_list_colours(const dBNode* e)
+  {
+    int i;
+    int covg=0;
+  
+    for (i=0; i< len_list; i++)
+      {
+	covg += e->coverage[list[i]];
+      }
+    return covg;
+  }
+
+  db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_colours(chrom_fasta_fptr,
+										     &get_union_list_colours, &get_covg_of_union_first_list_colours,
+										     ref_colour,
+										     min_fiveprime_flank_anchor, min_threeprime_flank_anchor,
+										     max_anchor_span, min_covg, max_covg,
+										     max_expected_size_of_supernode, length_of_arrays, db_graph, output_file,
+										     max_desired_returns,
+										     return_flank5p_array, return_trusted_branch_array, return_variant_branch_array,
+										     return_flank3p_array, return_variant_start_coord,
+										     condition, action_for_branches_of_called_variants, print_extra_info);
+										     
+
+
+
+}
+
+
 
 
 
