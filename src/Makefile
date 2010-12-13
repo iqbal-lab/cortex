@@ -112,14 +112,17 @@ cortex_con : remove_objects $(GRAPH_OBJ)
 cortex_var : remove_objects $(SV_TRIO_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_SV_TRIO) -lm $(OPT) -o $(BIN)/cortex_var_$(MAXK) $(SV_TRIO_OBJ)
 
-run_basic_tests : $(BASIC_TESTS_OBJ)
+run_basic_tests : remove_objects $(BASIC_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(OPT) $(CFLAGS_CUNIT) -o $(BIN)/run_basic_tests_$(MAXK) $(BASIC_TESTS_OBJ) -lcunit
 
-run_hash_table_tests : $(HASH_TABLE_TESTS_OBJ)
+run_hash_table_tests : remove_objects $(HASH_TABLE_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(OPT) $(CFLAGS_CUNIT) $(CFLAGS_HASH_TABLE_TESTS) -o $(BIN)/run_hash_table_tests_$(MAXK) $(HASH_TABLE_TESTS_OBJ) -lcunit
 
-run_cortex_var_cmdline_tests : $(CORTEX_VAR_CMD_LINE_TESTS_OBJ)
+run_cortex_var_cmdline_tests : remove_objects $(CORTEX_VAR_CMD_LINE_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS) $(OPT)  -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) -lcunit
+
+run_cortex_var_tests : remove_objects $(SV_TRIO_TESTS_OBJ)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_SV_TRIO_TESTS) $(OPT)  -o $(BIN)/run_cortex_var_tests_$(MAXK) $(SV_TRIO_TESTS_OBJ) -lcunit
 
 .PHONY : clean
 clean :
@@ -130,8 +133,6 @@ remove_objects:
 	rm -rf obj/*
 
 
-#run_sv_trio_tests : $(SV_TRIO_TESTS_OBJ)
-#	mkdir -p $(BIN); $(CC) $(CFLAGS_SV_TRIO_TESTS) $(OPT)  -o $(BIN)/run_sv_trio_tests $(SV_TRIO_TESTS_OBJ) -lcunit
 
 
 

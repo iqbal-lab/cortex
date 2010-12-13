@@ -4436,7 +4436,7 @@ void test_does_this_path_exist_in_this_colour()
       len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, file_reader, seq, kmer_window, db_graph, 0);
       CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==false);
       CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==false);
-      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour_union_of_all_colours, db_graph)==false);
+      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour_union_of_all_colours, db_graph)==true);
       
       
       

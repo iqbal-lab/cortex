@@ -66,7 +66,7 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (NULL == CU_add_test(pPopGraphSuite, "Test loading of a binary as dumped by graph, not sv_trio",test_load_graph_binary )) {
+  if (NULL == CU_add_test(pPopGraphSuite, "Test loading of a binary as dumped by graph, not sv_trio",test_load_singlecolour_binary )) {
     CU_cleanup_registry();
     return CU_get_error();
   }

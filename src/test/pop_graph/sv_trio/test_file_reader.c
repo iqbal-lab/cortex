@@ -1,4 +1,4 @@
-\#include <CUnit.h>
+#include <CUnit.h>
 #include <Basic.h>
 #include <file_reader.h>
 #include <dB_graph_population.h>
@@ -19,14 +19,14 @@ void test_dump_load_sv_trio_binary(){
   int max_retries=10;
   int max_chunk_len_reading_from_fasta = 200;
 
-  FILE * fout = fopen("../data/test/pop_graph/dump_sv_trio_graph.bin", "w");
+  //FILE * fout = fopen("../data/test/pop_graph/dump_cortex_var_graph.bin", "w");
   int seq_length_pre,seq_length_post;
   dBGraph * db_graph_pre;
   dBGraph * db_graph_post;
 
-  void print_node_binary(dBNode * node){
-    db_node_print_multicolour_binary(fout,node);
-  }
+  //void print_node_binary(dBNode * node){
+  //  db_node_print_multicolour_binary(fout,node);
+  //}
 
   db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
 
@@ -42,21 +42,28 @@ void test_dump_load_sv_trio_binary(){
 
   CU_ASSERT(seq_length_pre==16);
 
-  if (fout == NULL){
-    fprintf(stderr,"cannot open ../data/test/pop_graph/dump_sv_trio_graph.bin");
-    exit(1);
-  }
+  //  if (fout == NULL){
+  //  fprintf(stderr,"cannot open ../data/test/pop_graph/dump_sv_trio_graph.bin");
+  //  exit(1);
+  //}
 
-  hash_table_traverse(&print_node_binary,db_graph_pre);
-  
+  //hash_table_traverse(&print_node_binary,db_graph_pre);
+  db_graph_dump_binary("../data/test/pop_graph/dump_cortex_var_graph.bin", &db_node_condition_always_true, db_graph_pre);
+
+
   hash_table_free(&db_graph_pre);
   CU_ASSERT(db_graph_pre==NULL);
 
-  fclose(fout);
+  //fclose(fout);
 
   db_graph_post = hash_table_new(number_of_bits_post,bucket_size,10,kmer_size);
-  seq_length_post = load_multicolour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_sv_trio_graph.bin", db_graph_post);
+  int num_cols_in_binary=-1;
 
+
+  seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph.bin", db_graph_post, &num_cols_in_binary);
+
+
+  CU_ASSERT(num_cols_in_binary==NUMBER_OF_INDIVIDUALS_PER_POPULATION);
 
   //load_multicolour_binary_data_from_filename_into_graph returns total number of unique kmers loaded, times kmer_length
   CU_ASSERT_EQUAL(seq_length_post,15);
@@ -207,33 +214,40 @@ void test_dump_load_sv_trio_binary(){
 											  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 											  db_graph_pre, individual_edge_array, 0);
       
-      /*
-	> 6 unique 33-mers
-	TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC
-	> 13 unique 33-mers
-	ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
-	> 12 unique 33-mers
-	GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
-      */
-
-      fout = fopen("../data/test/pop_graph/dump_graph_2.bin", "w");
       
-      if (fout == NULL){
-	fprintf(stderr,"cannot open ../data/test/pop_graph/dump_graph_2.bin");
-	exit(1);
-      }
+//	> 6 unique 33-mers
+//	TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC
+//	> 13 unique 33-mers
+//	ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
+//	> 12 unique 33-mers
+//	GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
 
-      hash_table_traverse(&print_node_binary,db_graph_pre);
+
+      //fout = fopen("../data/test/pop_graph/dump_graph_2.bin", "w");
+      
+      //if (fout == NULL){
+      //fprintf(stderr,"cannot open ../data/test/pop_graph/dump_graph_2.bin");
+      //	exit(1);
+      //
+      //}
+      db_graph_dump_binary("../data/test/pop_graph/dump_cortex_var_graph_2.bin", &db_node_condition_always_true, db_graph_pre);
+      //hash_table_traverse(&print_node_binary,db_graph_pre);
   
       hash_table_free(&db_graph_pre);
       CU_ASSERT(db_graph_pre==NULL);
       
-      fclose(fout);
+      //fclose(fout);
       
   
       db_graph_post = hash_table_new(number_of_bits_post,bucket_size,max_retries,kmer_size);
 
-      seq_length_post = load_multicolour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_graph_2.bin", db_graph_post);
+      //seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph_2.bin", db_graph_post);
+
+
+      seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph_2.bin", db_graph_post, &num_cols_in_binary);
+
+
+      CU_ASSERT(num_cols_in_binary==NUMBER_OF_INDIVIDUALS_PER_POPULATION);
 
       CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post),31);
   
@@ -341,41 +355,48 @@ void test_dump_load_sv_trio_binary(){
   
 
 
-  /*
-    >read1 overlaps human chrom 1 
-    TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC
-    > read 2 overlaps human chrom 1
-    ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
-    > read 3 does not
-    GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
-    > read 3 does not
-    GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
-    > read 3 does not
-    GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
-    > read 4 does not, but has too low coverage
-    TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+
+//    >read1 overlaps human chrom 1 
+ //   TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC
+//    > read 2 overlaps human chrom 1
+//    ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
+//    > read 3 does not
+//    GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
+//    > read 3 does not
+//    GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
+//    > read 3 does not
+//    GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
+//    > read 4 does not, but has too low coverage
+//    TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
     
-  */
+
   
-  fout = fopen("../data/test/graph/dump_graph.bin", "w");
+//  fout = fopen("../data/test/graph/dump_graph.bin", "w");
   
-  if (fout == NULL){
-    fprintf(stderr,"cannot open ../data/test/graph/dump_graph.bin");
-    exit(1);
-  }
+  // if (fout == NULL){
+  //  fprintf(stderr,"cannot open ../data/test/graph/dump_graph.bin");
+  // exit(1);
+  //}
   
-  hash_table_traverse(&print_node_binary,db_graph_pre);//remember print_node_binary was defined locally, above, and prints to fout.
-  
+  //hash_table_traverse(&print_node_binary,db_graph_pre);//remember print_node_binary was defined locally, above, and prints to fout.
+
+  db_graph_dump_binary("../data/test/pop_graph/dump_cortex_var_graph_3.bin", &db_node_condition_always_true, db_graph_pre);
+
+
   hash_table_free(&db_graph_pre);
   CU_ASSERT(db_graph_pre==NULL);
   
-  fclose(fout);
+  //fclose(fout);
   
   
   db_graph_post = hash_table_new(number_of_bits_post,bucket_size,max_retries,kmer_size);
-  
-  seq_length_post = load_multicolour_binary_data_from_filename_into_graph("../data/test/graph/dump_graph.bin", db_graph_post);
-  
+
+
+  seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph_3.bin", db_graph_post, &num_cols_in_binary);
+
+
+  CU_ASSERT(num_cols_in_binary==NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+
   //now try to traverse a supernode. This is effectively a regressiontest for a bug in graph/element.c: print_binary/read_binary
   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TAACCCTAACCCTAACC", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2) ,db_graph_post);
   
@@ -415,7 +436,7 @@ void test_dump_load_sv_trio_binary(){
 
 
 
-void test_load_graph_binary()
+void test_load_singlecolour_binary()
 {
 
   int kmer_size = 5;
@@ -426,9 +447,10 @@ void test_load_graph_binary()
   int max_retries=10;
   BinaryKmer tmp_kmer1, tmp_kmer2;
   
-  dBGraph* db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* db_graph_pre = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
 
-  //pre-prepared binary file built from this fasta
+
+
   // 
   // >read
   // AACGTTCC
@@ -444,64 +466,54 @@ void test_load_graph_binary()
   // note this contains 5 unique kmers.read 1 seems to contain 4 unique kmers but only contains 3, as AACGTT is just one kmer looped back on itself
 
 
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==1)
-    {
-      //seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_to_load_and_dump_as_graph_bin_kmer5.bin", db_graph, individual_edge_array, 0);
-      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_1.ctx", db_graph, individual_edge_array, 0);
-    }
-  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==2)
-    {
-      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_2.ctx", db_graph, individual_edge_array, 0);
-    }
-  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==3)
-    {
-      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_3.ctx", db_graph, individual_edge_array, 0);
-    }
-  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==4)
-    {
-      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_4.ctx", db_graph, individual_edge_array, 0);
-    }
-  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==5)
-    {
-      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_5.ctx", db_graph, individual_edge_array, 0);
-    }
-  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==6)
-    {
-      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_6.ctx", db_graph, individual_edge_array, 0);
-    }
-  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==7)
-    {
-      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_7.ctx", db_graph, individual_edge_array, 0);
-    }
-  else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==8)
-    {
-      seq_len = load_single_colour_binary_data_from_filename_into_graph("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_kmer5_NUM_BITFIELDS_8.ctx", db_graph, individual_edge_array, 0);
-    }
 
-  CU_ASSERT(seq_len==25);//kmers loaded * length of kmer
-  CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph), 5);
+
+  //we need the following arguments for the API but we will not use them - for duplicate removal and homopolymer breaking
+  boolean remove_duplicates_single_endedly=false;
+  boolean break_homopolymers=false;
+  long long dup_reads=0;
+  long long bad_reads=0;
+  
+  int homopolymer_cutoff=0;
+
+  int seq_length_pre = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio.fasta", 
+										      &bad_reads, &dup_reads, 20, 
+										      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+										      db_graph_pre, individual_edge_array,0);
+
+  db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/dump_single_colour_cortex_var_graph.bin", &db_node_condition_always_true, db_graph_pre);
+
+
+  hash_table_free(&db_graph_pre);
+  CU_ASSERT(db_graph_pre==NULL);
+  dBGraph* db_graph_post = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+
+  int seq_length_post = load_single_colour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_single_colour_cortex_var_graph.bin", db_graph_post, individual_edge_array,0);
+
+  CU_ASSERT(seq_length_post==25);//kmers loaded * length of kmer
+  CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post), 5);
 
 
   //all the nodes and their rev complements from the graph
-  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AACGT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("ACGTT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element3 = hash_table_find(element_get_key(seq_to_binary_kmer("CGTTC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element4 = hash_table_find(element_get_key(seq_to_binary_kmer("GAACG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element5 = hash_table_find(element_get_key(seq_to_binary_kmer("GTTCC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element6 = hash_table_find(element_get_key(seq_to_binary_kmer("GGAAC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element7 = hash_table_find(element_get_key(seq_to_binary_kmer("GTTCA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element8 = hash_table_find(element_get_key(seq_to_binary_kmer("TGAAC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element9 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element10 = hash_table_find(element_get_key(seq_to_binary_kmer("TTTTT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AACGT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("ACGTT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element3 = hash_table_find(element_get_key(seq_to_binary_kmer("CGTTC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element4 = hash_table_find(element_get_key(seq_to_binary_kmer("GAACG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element5 = hash_table_find(element_get_key(seq_to_binary_kmer("GTTCC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element6 = hash_table_find(element_get_key(seq_to_binary_kmer("GGAAC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element7 = hash_table_find(element_get_key(seq_to_binary_kmer("GTTCA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element8 = hash_table_find(element_get_key(seq_to_binary_kmer("TGAAC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element9 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element10 = hash_table_find(element_get_key(seq_to_binary_kmer("TTTTT",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
 
   // nodes that should not be in the graph
-  dBNode* test_element11 = hash_table_find(element_get_key(seq_to_binary_kmer("ATATA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element12 = hash_table_find(element_get_key(seq_to_binary_kmer("TGGGG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element13 = hash_table_find(element_get_key(seq_to_binary_kmer("AATAG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element14 = hash_table_find(element_get_key(seq_to_binary_kmer("CTCTC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element15 = hash_table_find(element_get_key(seq_to_binary_kmer("GGCGG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element16 = hash_table_find(element_get_key(seq_to_binary_kmer("GGGGA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
-  dBNode* test_element17 = hash_table_find(element_get_key(seq_to_binary_kmer("TACTA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph);
+  dBNode* test_element11 = hash_table_find(element_get_key(seq_to_binary_kmer("ATATA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element12 = hash_table_find(element_get_key(seq_to_binary_kmer("TGGGG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element13 = hash_table_find(element_get_key(seq_to_binary_kmer("AATAG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element14 = hash_table_find(element_get_key(seq_to_binary_kmer("CTCTC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element15 = hash_table_find(element_get_key(seq_to_binary_kmer("GGCGG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element16 = hash_table_find(element_get_key(seq_to_binary_kmer("GGGGA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
+  dBNode* test_element17 = hash_table_find(element_get_key(seq_to_binary_kmer("TACTA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,db_graph_post);
 
 
   CU_ASSERT(test_element1 != NULL);
@@ -537,7 +549,7 @@ void test_load_graph_binary()
   CU_ASSERT(test_element16 == NULL);
   CU_ASSERT(test_element17 == NULL);
 
-  hash_table_free(&db_graph);
+  hash_table_free(&db_graph_post);
 
 }
 
@@ -549,7 +561,7 @@ void test_load_individual_binaries_into_sv_trio()
 
   if (NUMBER_OF_INDIVIDUALS_PER_POPULATION<3)
     {
-      printf("This test is redundant unless the compile-tme flag NUMBER_OF_INDIVIDUALS_PER_POPULATIONzam is set to a vlaue >=3\n");
+      printf("This test is redundant unless the compile-time flag NUMBER_OF_INDIVIDUALS_PER_POPULATION is set to a value >=3\n");
       return;
     }
   else
@@ -568,8 +580,9 @@ void test_load_individual_binaries_into_sv_trio()
       dBGraph* db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
       
       
-      
-      //prior to this test, using graph/ target, created 3 graph/ binaries which we will load into sv_trio.
+
+
+     //first dump 3 single-colour graphs
       
       //Person 0: created binary from this fasta
       //  >read1 taken from an Alu
@@ -582,41 +595,49 @@ void test_load_individual_binaries_into_sv_trio()
       //Person2:
       //  > read1 matches first kmer of person 0, followed by a final A not G
       //  GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGA
+
+
+     boolean remove_duplicates_single_endedly=false;
+     boolean break_homopolymers=false;
+     long long dup_reads=0;
+     int homopolymer_cutoff=0;
+     long long bad_reads=0;
+
+     int seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person0.fasta", 
+											 &bad_reads, &dup_reads, 200,
+											 remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+											 db_graph, individual_edge_array,0);
+     db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person0_kmer31.ctx", 
+						   &db_node_condition_always_true, db_graph);
+     hash_table_free(&db_graph);
+
+
+     db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+     seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person1.fasta", 
+										     &bad_reads, &dup_reads, 200,
+										     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+										     db_graph, individual_edge_array,0);
+     db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person1_kmer31.ctx", 
+						   &db_node_condition_always_true, db_graph);
+     hash_table_free(&db_graph);
+
+
+
+
+     db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+     seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person2.fasta", 
+										     &bad_reads, &dup_reads, 200,
+										     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+										     db_graph, individual_edge_array,0);
+     db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person2_kmer31.ctx", 
+						   &db_node_condition_always_true, db_graph);
+     hash_table_free(&db_graph);
+
+
+     
+     db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_singlecolour_bins_into_multicol_bin", db_graph);
       
-      
-      
-      if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==1)
-	{
-	  load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_1", db_graph);
-	}
-      else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==2)
-	{
-	  load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_2", db_graph);
-	}
-      else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==3)
-	{
-	  load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_3", db_graph);
-	}
-      else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==4)
-	{
-	  load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_4", db_graph);
-	}
-      else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==5)
-	{
-	  load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_5", db_graph);
-	}
-      else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==6)
-	{
-	  load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_6", db_graph);
-	}
-      else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==7)
-	{
-	  load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_7", db_graph);
-	}
-      else if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==8)
-	{
-	  load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_graph_bins_to_sv_trio_if_num_bitfields_8", db_graph);
-	}
       
       CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph), 41);
       
@@ -873,7 +894,8 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
   //number of possible kmers in a 'perfect' read
   int max_kmers   = max_read_length-kmer_size+1;
 
-  
+  int fq_ascii_offset = 33;
+
 
   //----------------------------------
   //preallocate the space of memory used to keep the sliding_windows. NB: this space of memory is reused for every call -- with the view 
@@ -894,7 +916,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
 
 
   // GET READ 1 - this si full of sequencing errors, and it should be impossible to find any kmers that are in the graph
-  int len = read_sequence_from_fastq(fp, seq, max_read_length);
+  int len = read_sequence_from_fastq(fp, seq, max_read_length, fq_ascii_offset);
   int quality_cutoff=0;
   get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph);  
@@ -903,7 +925,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
 
 
   // GET READ 2 - this one lies entirely in the graph
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length, fq_ascii_offset);
   get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph);  
   CU_ASSERT(windows->nwindows==1);
@@ -954,7 +976,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
 
 
   // GET READ 3 - lots of errors again
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length,fq_ascii_offset);
   get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph);  
   CU_ASSERT(windows->nwindows==0);
@@ -962,7 +984,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
 
   // GET fourth read - this one has a single base in the middle which means kmers containing it won't be in thr graph. Otherwise the same as read3 in person3.fasta
 
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length,fq_ascii_offset);
   get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph);  
   CU_ASSERT(windows->nwindows==2);
@@ -999,7 +1021,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
 
   // GET FIFTH READ - lies entirely in graph, so should just get one window
   
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length,fq_ascii_offset);
   get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph);  
   CU_ASSERT(windows->nwindows==1);
@@ -1025,7 +1047,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
   
 
   // READ 6 - entirely in graph
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length,fq_ascii_offset);
   get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph);  
   CU_ASSERT(windows->nwindows==1);
@@ -1039,7 +1061,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
     }
 
   // READ 7 - first character wrong. Vital test this one. Slightly different code path if the first kmer of all is bad.
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length,fq_ascii_offset);
   get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph);  
   CU_ASSERT(windows->nwindows==1);
@@ -1063,7 +1085,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
 
   // READ 7 - errors spaces such that precisely two kmers can be pulled out, each in their own window
 
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length,fq_ascii_offset);
   get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph);  
   CU_ASSERT(windows->nwindows==2);
@@ -1082,7 +1104,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
   // last read contains two kmers that are in the graph, but which have no edge between them. This function is not sensitive to that, and should just get one window
 
   printf("Start interesting\n");
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length,fq_ascii_offset);
   get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph);  
   CU_ASSERT(windows->nwindows==1);
@@ -1171,11 +1193,11 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   //allocate memory for the sliding windows 
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
 
-
+  int fq_ascii_offset=33; 
 
 
   // GET READ 1 - this si full of sequencing errors, and it should be impossible to find any kmers that are in the graph
-  int len = read_sequence_from_fastq(fp, seq, max_read_length);
+  int len = read_sequence_from_fastq(fp, seq, max_read_length,fq_ascii_offset);
   int quality_cutoff=0;
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);  
@@ -1184,7 +1206,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
 
 
   // GET READ 2 - this one lies entirely in the graph
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length,fq_ascii_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);  
   CU_ASSERT(windows->nwindows==1);
@@ -1235,7 +1257,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
 
 
   // GET READ 3 - lots of errors again
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length,fq_ascii_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);  
   CU_ASSERT(windows->nwindows==0);
@@ -1243,7 +1265,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
 
   // GET fourth read - this one has a single base in the middle which means kmers containing it won't be in thr graph. Otherwise the same as read3 in person3.fasta
 
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length, fq_ascii_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										   windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);  
   CU_ASSERT(windows->nwindows==2);
@@ -1279,7 +1301,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
 
   // GET FIFTH READ - lies entirely in graph, so should just get one window
   
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length, fq_ascii_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);  
   CU_ASSERT(windows->nwindows==1);
@@ -1305,7 +1327,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   
 
   // READ 6 - entirely in graph
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length, fq_ascii_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);  
   CU_ASSERT(windows->nwindows==1);
@@ -1319,7 +1341,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
     }
 
   // READ 7 - first character wrong. Vital test this one. Slightly different code path if the first kmer of all is bad.
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length, fq_ascii_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);  
   CU_ASSERT(windows->nwindows==1);
@@ -1342,13 +1364,13 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
 
   // READ 7 - errors spaced apart
 
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length, fq_ascii_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);  
   CU_ASSERT(windows->nwindows==2);
 
   //last read - we shoud get two separate windows, as the kmers have no edge joining them
-  len = read_sequence_from_fastq(fp, seq, max_read_length);
+  len = read_sequence_from_fastq(fp, seq, max_read_length, fq_ascii_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);  
   CU_ASSERT(windows->nwindows==2);
@@ -1405,6 +1427,7 @@ void test_dumping_of_clean_fasta()
       exit(1);
     }
 
+  int fq_ascii_offset=33; 
   int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
     * full_entry = true;
 
@@ -1413,7 +1436,7 @@ void test_dumping_of_clean_fasta()
       exit(1);
     }
 
-    return read_sequence_from_fastq(fp,seq,max_read_length);
+    return read_sequence_from_fastq(fp,seq,max_read_length, fq_ascii_offset);
   }
 
 
@@ -1478,7 +1501,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   boolean remove_duplicates=false;
   boolean break_homopolymers=false;
   int homopolymer_cutoff=0;
-  itn ascii_offset=33;
+  int ascii_offset=33;
   char quality_cut_off=1; 
 
 
@@ -1550,7 +1573,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 										   format,
 										   quality_cut_off, max_read_length,
 										   &bad_reads, &dup_reads, &count_file_pairs, 
-										   remove_duplicates, break_homopolymers, homopolymer_cutoff, 
+										   remove_duplicates, break_homopolymers, homopolymer_cutoff, ascii_offset, 
 										   db_graph, individual_edge_array, 0);
   
 
@@ -3164,7 +3187,7 @@ void test_align_next_read_to_graph_and_return_node_array()
 
   int seq_length;
   dBGraph * db_graph;
-  int ascii_offset=33;
+
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, 

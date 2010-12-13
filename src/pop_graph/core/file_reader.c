@@ -1250,7 +1250,7 @@ int load_multicolour_binary_data_from_filename_into_graph(char* filename,  dBGra
 
 
 
-//returns number of kmers loaded
+//returns number of kmers loaded*kmer_length
 int load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, int* num_cols_in_loaded_binary)
 {
 
