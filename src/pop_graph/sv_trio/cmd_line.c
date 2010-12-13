@@ -88,56 +88,56 @@ boolean more_than_one_colour_in_multicol_binary(char* file, int kmer_size)
 
 
 const char* usage=
-"Cortex, multicoloured target, cortex_var by M. Caccamo (mario.caccamo@bbsrc.ac.uk) and Z. Iqbal (zam@well.ox.ac.uk)\n" \
-"\nusage: to build a single-colour binary: cortex_var --se_list <filename> --pe_list <filename> --fastq --quality_score_threshold 10 --remove_pcr_duplicates --remove_seq_errors -o binary_output \n" \
-"\nusage: to build a multicolour graph from single-colour graphs and call variants between colours 1 and 2: cortex_var --colour_list <filename> -o binary_output --detect_bubbles1 1/2 \n" \
-"\nusage: to load a multicolour graph from single-colour graphs and call heterozygous variants in colour 0: cortex_var --colour_list <filename> --multicolour_bin <filename> --detect_bubbles1 0/0 \n" \
+"Cortex, multicoloured target, cortex_var by Z. Iqbal (primary contact for cortex_var: zam@well.ox.ac.uk) and M. Caccamo (mario.caccamo@bbsrc.ac.uk)\n" \
+"\nusage: to build a single-colour binary:\ncortex_var --se_list <filename> --pe_list <filename> --format FASTQ --quality_score_threshold 5 --remove_pcr_duplicates --remove_seq_errors --dump_binary some_name.ctx\n" \
+"\nusage: to build a multicolour graph from single-colour graphs and call variants between colours 1 and 2:\ncortex_var --colour_list <filename> --detect_bubbles1 1/2 --output_bubbles1 vars_between_cols1_and_2\n" \
+"\nusage: to load a multicolour graph from single-colour graphs and call heterozygous variants in colour 0:\ncortex_var --colour_list <filename> --detect_bubbles1 0/0 --output_bubbles1 hets_in_colour_0\n" \
 "\n" \
-"   [--help] = This help screen.\n" \
-"   [--colour_list FILENAME] = File of filenames, one per colour. n-th file is a list of single-colour binaries to be loaded into colour n. Cannot be used with --se_list or --pe_list \n" \
-"   [--multicolour_bin FILENAME] = Filename of a multicolour binary, will be loaded first, into colours 0..n. If using --colour_list also, those will be loaded into subsequent colours, after this.\n" \
-"   [--se_list FILENAME] = List of single-end fasta/q to be loaded into a single-colour graph. Cannot be used with --colour_list\n" \
-"   [--pe_list FILENAME] = Two filenames, comma-separated: each is a list of paired-end fasta/q to be loaded into a single-colour graph. Lists are assumed to ordered so that corresponding paired-end fasta/q files are at the same positions in their lists. Currently Cortex only use paired-end information to remove PCR duplicate reads (if that flag is set). Cannot be used with --colour_list\n" \
-"   [--kmer_size INT] = Kmer size (default 21). Must be an odd number.\n" \
-"   [--mem_width INT] = Size of hash table buckets (default 100).\n" \
+"   [--help] \t\t\t\t\t\t\t=\t This help screen.\n" \
+"   [--colour_list FILENAME] \t\t\t\t\t=\t File of filenames, one per colour. n-th file is a list of\n\t\t\t\t\t\t\t\t\t single-colour binaries to be loaded into colour n.\n\t\t\t\t\t\t\t\t\t Cannot be used with --se_list or --pe_list \n" \
+"   [--multicolour_bin FILENAME] \t\t\t\t=\t Filename of a multicolour binary, will be loaded first, into colours 0..n.\n\t\t\t\t\t\t\t\t\t If using --colour_list also, those will be loaded into subsequent colours, after this.\n" \
+"   [--se_list FILENAME] \t\t\t\t\t=\t List of single-end fasta/q to be loaded into a single-colour graph.\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n" \
+"   [--pe_list FILENAME] \t\t\t\t\t=\t Two filenames, comma-separated: each is a list of paired-end fasta/q to be loaded into a single-colour graph.\n\t\t\t\t\t\t\t\t\t Lists are assumed to ordered so that corresponding paired-end fasta/q files are at the same positions in their lists.\n\t\t\t\t\t\t\t\t\t Currently Cortex only use paired-end information to remove PCR duplicate reads (if that flag is set).\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n" \
+"   [--kmer_size INT] \t\t\t\t\t\t=\t Kmer size (default 21). Must be an odd number.\n" \
+"   [--mem_width INT] \t\t\t\t\t\t=\t Size of hash table buckets (default 100).\n" \
   //-g 
-"   [--mem_height INT] = Number of buckets in hash table in bits (default 10). Actual number of buckets withh be 2^(the number you enter)\n" \
+"   [--mem_height INT] \t\t\t\t\t\t=\t Number of buckets in hash table in bits (default 10). Actual number of buckets withh be 2^(the number you enter)\n" \
   // -i
-"   [--ref_colour INT] = Colour of reference genome or homozygous/inbred line.\n" \
+"   [--ref_colour INT] \t\t\t\t\t\t=\t Colour of reference genome or homozygous/inbred line.\n" \
   // -j
-"   [--remove_pcr_duplicates] = Removes PCR duplicate reads by ignoring read pairs if both reads start at the same k-mer as a previous read, and single-ended reads if they start at the same k-mer as a previous read\n" \
+"   [--remove_pcr_duplicates] \t\t\t\t\t=\t Removes PCR duplicate reads by ignoring read pairs if both reads start at the same k-mer as a previous read,\n\t\t\t\t\t\t\t\t\t and single-ended reads if they start at the same k-mer as a previous read\n" \
   // -k
-"   [--cut_homopolymers INT] = Breaks reads at homopolymers of length > this threshold. (New read starts after homopolymer)\n" \
+"   [--cut_homopolymers INT] \t\t\t\t\t=\t Breaks reads at homopolymers of length > this threshold. (New read starts after homopolymer)\n" \
   // -l
-"   [--path_divergence_caller COMMA_SEP_COLOURS] = Make Path Divergence variant calls. Must specify colour of sample in which you want to find variants compared with the reference. This sample colour can be a union of colours (comma-separated list). Must also specify --ref_colour and --list_ref_fasta\n" \
+"   [--path_divergence_caller COMMA_SEP_COLOURS] \t\t=\t Make Path Divergence variant calls.\n\t\t\t\t\t\t\t\t\t Must specify colour of sample in which you want to find\n\t\t\t\t\t\t\t\t\t variants compared with the reference.\n\t\t\t\t\t\t\t\t\t This sample colour can be a union of colours (comma-separated list). Must also specify --ref_colour and --list_ref_fasta\n" \
   // -m
-"   [--quality_score_threshold INT] = Filter for quality scores in the input file (default 0).\n" \
+"   [--quality_score_threshold INT] \t\t\t\t=\t Filter for quality scores in the input file (default 0).\n" \
   // -n 
-"   [--fastq_offset INT] = Default 33, for standard fastq. Some fastq directly from different versions of Illumina machines require different offsets.\n" \
+"   [--fastq_offset INT] \t\t\t\t\t=\t Default 33, for standard fastq. Some fastq directly from different versions of Illumina machines require different offsets.\n" \
   // -o
-"   [--remove_seq_errors] = Remove tips, and supernodes if they have coverage =1 AND they are the right length for a single-base sequencing error.\n" \
+"   [--remove_seq_errors] \t\t\t\t\t=\t Remove tips, and supernodes if they have coverage =1 AND they are\n\t\t\t\t\t\t\t\t\t the right length for a single-base sequencing error.\n" \
   // -p
-"   [--dump_binary FILENAME] = Dump a binary file, with this name, after applying all specified actions on graph.\n" \
+"   [--dump_binary FILENAME] \t\t\t\t\t=\t Dump a binary file, with this name (after applying error-cleaning, if specified).\n" \
   // -q
-"   [--output_contigs FILENAME] = Dump a fasta file of all the supernodes (after applying all specified actions on graph).\n" \
+"   [--output_contigs FILENAME] \t\t\t\t\t=\t Dump a fasta file of all the supernodes (after applying all specified actions on graph).\n" \
   // -r
-"   [--detect_bubbles1 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] = Output to standard output all the bubbles in the graph where the two branches lie in the specified colours (after applying all specified actions on graph). Typical use would be --detect_bubbles1 1/1 to find hets in colour 1, or --detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch is in colour 0 (and not colour1) and the other branch is in colour1 (but not colour 0), However, one can do more complex things: e.g.  --detect_het_bubbles 1,2,3/4,5,6 to find bubbles where one branch is in 1,2 or 3 (and not 4,5 or 6) and the other branch in colour 4,5 or 6 (but not 1,2, or 3).\n" \
+"   [--detect_bubbles1 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Output to standard output all the bubbles in the graph where the two branches lie in the specified colours\n\t\t\t\t\t\t\t\t\t (after applying all specified actions on graph).\n\t\t\t\t\t\t\t\t\t Typical use would be --detect_bubbles1 1/1 to find hets in colour 1,\n\t\t\t\t\t\t\t\t\t or --detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch is in colour 0 (and not colour1)\n\t\t\t\t\t\t\t\t\t and the other branch is in colour1 (but not colour 0).\n\t\t\t\t\t\t\t\t\t However, one can do more complex things:\n\t\t\t\t\t\t\t\t\t e.g.  --detect_het_bubbles 1,2,3/4,5,6 to find bubbles where one branch is in 1,2 or 3 (and not 4,5 or 6)\n\t\t\t\t\t\t\t\t\t and the other branch in colour 4,5 or 6 (but not 1,2, or 3).\n" \
   // -s
-"   [--output_bubbles1 FILENAME] = Bubbles called in detect_bubbles1 are dumped to this file.\n" \
+"   [--output_bubbles1 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles1 are dumped to this file.\n" \
   // -t
-"   [--detect_bubbles2 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] = exactly the same as detect_bubbles1, but allows you to make a second set of bubble calls immediately afterwards. This is to accomodate the common use-case where one loads a reference and an individual, and then wants to call homs, and hets.\n" \
+"   [--detect_bubbles2 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Exactly the same as detect_bubbles1, but allows you to make\n\t\t\t\t\t\t\t\t\t a second set of bubble calls immediately afterwards.\n\t\t\t\t\t\t\t\t\t This is to accomodate the common use-case where one loads a reference\n\t\t\t\t\t\t\t\t\t and an individual, and then wants to call homs, and hets.\n" \
   // -u
-"   [--output_bubbles2 FILENAME] = Bubbles called in detect_bubbles2 are dumped to this file.\n" \
+"   [--output_bubbles2 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles2 are dumped to this file.\n" \
   // -v
-"   [--format TYPE] = File format for input in se_list and pe_list. All files assumed to be of the same format. Type must be FASTQ, FASTA or CTX\n" \
+"   [--format TYPE] \t\t\t\t\t\t=\t File format for input in se_list and pe_list. All files assumed to be of the same format.\n\t\t\t\t\t\t\t\t\t Type must be FASTQ, FASTA or CTX\n" \
   // -w
-"   [--max_read_len] = Maximum read length over all input files. This is mandatory if fastq or fasta files are input.\n" \
+"   [--max_read_len] \t\t\t\t\t\t=\t Maximum read length over all input files. (Mandatory if fastq or fasta files are input.)\n" \
   // -x
-"   [ --print_colour_coverages] = Print coverages in all colours for supernodes and variants.\n" \
+"   [--print_colour_coverages]\t\t\t\t\t=\t Print coverages in all colours for supernodes and variants.\n" \
   // -y
-"   [--max_var_len INT] = Maximum variant size searched for. Default 10kb. \n" \
+"   [--max_var_len INT] \t\t\t\t\t\t=\t Maximum variant size searched for. Default 10kb. \n" \
  // -z
-"   [--list_ref_fasta FILENAME] = File listing reference chromosome fasta file(s); needed for path-divergence calls. \n" \
+"   [--list_ref_fasta FILENAME] \t\t\t\t\t=\t File listing reference chromosome fasta file(s); needed for path-divergence calls. \n" \
   "\n";
 
 
