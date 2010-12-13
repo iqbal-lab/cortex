@@ -263,7 +263,7 @@ void test_parse_cmdline_inner_loop_are_basic_variables_correctly_set()
 
   // HASH TABLE NUMBER OF BUCKETS
 
-  char* argv6[] = {"cortex", "--num_buckets=20"};
+  char* argv6[] = {"cortex", "--mem_height=20"};
   
   //set up a default cmdline
   CmdLine test6;
@@ -277,7 +277,7 @@ void test_parse_cmdline_inner_loop_are_basic_variables_correctly_set()
 
   // DEPTH OF HASH TABLE BUCKETS
   
-  char* argv7[] = {"cortex", "--bsize=100"};
+  char* argv7[] = {"cortex", "--mem_height=100"};
   
   //set up a default cmdline
   CmdLine test7;

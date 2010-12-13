@@ -15,31 +15,34 @@ long long load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(cha
                                                                              dBGraph* db_graph, EdgeArrayType type, int index);
 long long load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads,  char quality_cut_off, long long* dup_reads, int max_read_length,
                                                                              boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff,
-                                                                             dBGraph* db_graph, EdgeArrayType type, int index);
+									     int fastq_ascii_offset,
+									     dBGraph* db_graph, EdgeArrayType type, int index);
 
 
 
 long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, boolean pe, char* se_f, char* pe_f1, char* pe_f2,
 									int qual_thresh,  boolean remv_dups_se, int remv_dups_pe, 
-									boolean break_homopolymers, int homopol_limit, FileFormat format, 
+									boolean break_homopolymers, int homopol_limit, int ascii_fq_offset, FileFormat format, 
 									int max_read_length, int colour, dBGraph* db_graph);
 
 long long load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(char* filename1, char* filename2, FileFormat format,
-										long long * bad_reads,  char quality_cut_off, int max_read_length, 
-										long long* dup_reads, boolean remove_duplicates, boolean break_homopolymers, int homopolymer_cutoff, 
+										   long long * bad_reads,  char quality_cut_off, int max_read_length, 
+										   long long* dup_reads, boolean remove_duplicates, boolean break_homopolymers, int homopolymer_cutoff, 
+										   int fastq_ascii_offset,
 										   dBGraph* db_graph, EdgeArrayType type, int index );
 
 long long load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* list_of_left_mates, char* list_of_right_mates, FileFormat format,
 									     char quality_cut_off, int max_read_length, 
 									     long long* bad_reads, long long* num_dups, int* count_file_pairs, boolean remove_dups, 
-									     boolean break_homopolymers, int homopolymer_cutoff,dBGraph* db_graph, EdgeArrayType type, int index);
+									     boolean break_homopolymers, int homopolymer_cutoff,int fq_ascii_cutoff,
+									     dBGraph* db_graph, EdgeArrayType type, int index);
 
 
 long long load_population_as_fasta(char* filename, long long* bad_reads, dBGraph* db_graph);
 int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bad_reads, dBGraph* db_graph, int index);
 
-long long load_population_as_fastq(char* filename, long long* bad_reads, char quality_cutoff, dBGraph* db_graph);
-int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(char* f_name, long long* bad_reads, char quality_cutoff, dBGraph* db_graph, int index);
+long long load_population_as_fastq(char* filename, long long* bad_reads, char quality_cutoff, int fastq_ascii_offset, dBGraph* db_graph);
+int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(char* f_name, long long* bad_reads, char quality_cutoff, int fq_ascii_offset, dBGraph* db_graph, int index);
 
 int load_chromosome_overlap_data(char* f_name,  dBGraph* db_graph, int which_chromosome);
 

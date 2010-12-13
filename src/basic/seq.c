@@ -175,7 +175,7 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_chunk_length,bool
    read with bad chars are skipped -- this is a different behaviour to read_sequence_from_fasta
 */
 
-int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
+int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length, int fastq_ascii_offset){
 
   char line[LINE_MAX]; //LINE_MAX is defined in limits.h
   int i;
@@ -183,7 +183,7 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length){
   int q = 0; //length of qualities
   long file_pointer;
   boolean good_read = true;
-  int offset = 33; // this is the offset to convert from the ascii in a fastq code, to quality value in standard Sanger format
+  int offset = fastq_ascii_offset; // this is usually 33, the offset to convert from the ascii in a fastq code, to quality value in standard Sanger format
   
 
   if (fp == NULL){

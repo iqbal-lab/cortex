@@ -1478,7 +1478,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   boolean remove_duplicates=false;
   boolean break_homopolymers=false;
   int homopolymer_cutoff=0;
-  
+  itn ascii_offset=33;
   char quality_cut_off=1; 
 
 
@@ -1491,7 +1491,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   seq_length = load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
 											format,
 											&bad_reads, quality_cut_off, max_read_length,  
-											&dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, 
+											&dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, ascii_offset, 
 											db_graph, individual_edge_array, 0);
   CU_ASSERT(seq_length==720);
   CU_ASSERT(db_graph->unique_kmers == 243);
@@ -1505,7 +1505,8 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   seq_length = load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
 											format,
 											&bad_reads, quality_cut_off, max_read_length,  
-											&dup_reads,remove_duplicates, break_homopolymers, homopolymer_cutoff, db_graph, individual_edge_array, 0);
+											&dup_reads,remove_duplicates, break_homopolymers, homopolymer_cutoff, 
+											ascii_offset, db_graph, individual_edge_array, 0);
   CU_ASSERT(seq_length==720);
   CU_ASSERT(db_graph->unique_kmers == 243);
   CU_ASSERT(dup_reads==0);
@@ -1521,7 +1522,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 											"../data/test/graph/paired_end_file2_with_dup_2.fastq",
 											format,
 											&bad_reads, quality_cut_off, max_read_length, 
-											&dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, 
+											&dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, ascii_offset, 
 											db_graph, individual_edge_array, 0);
 
   
@@ -1583,9 +1584,11 @@ void test_loading_of_single_ended_reads_removing_duplicates()
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   int max_read_length=100;
+  int ascii_offset=33;
   seq_length = load_fastq_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq",
 										  &bad_reads, quality_cut_off, &dup_reads, max_read_length, 
 										  remove_duplicates, break_homopolymers, homopolymer_cutoff,
+										  ascii_offset,
 										  db_graph, individual_edge_array, 0);
 
   CU_ASSERT(seq_length==360);
@@ -1599,9 +1602,9 @@ void test_loading_of_single_ended_reads_removing_duplicates()
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   remove_duplicates=true;
   seq_length = load_fastq_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq",
-									     &bad_reads, quality_cut_off, &dup_reads, max_read_length, 
-									     remove_duplicates, break_homopolymers, homopolymer_cutoff,
-									     db_graph, individual_edge_array, 0);
+										  &bad_reads, quality_cut_off, &dup_reads, max_read_length, 
+										  remove_duplicates, break_homopolymers, homopolymer_cutoff,ascii_offset,
+										  db_graph, individual_edge_array, 0);
 
 
 
@@ -1616,6 +1619,7 @@ void test_loading_of_single_ended_reads_removing_duplicates()
   seq_length = load_fastq_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file2_with_dup_1.fastq", 
 										  &bad_reads, quality_cut_off, &dup_reads, max_read_length, 
 										  remove_duplicates, break_homopolymers, homopolymer_cutoff, 
+										  ascii_offset,
 										  db_graph,  individual_edge_array, 0);
 						   
   
@@ -3160,6 +3164,7 @@ void test_align_next_read_to_graph_and_return_node_array()
 
   int seq_length;
   dBGraph * db_graph;
+  int ascii_offset=33;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, 

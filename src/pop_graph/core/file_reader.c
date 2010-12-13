@@ -31,7 +31,7 @@ long long load_paired_end_seq_into_graph_of_specific_person_or_pop(FILE* fp1, FI
 
 long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, boolean pe, char* se_f, char* pe_f1, char* pe_f2,
 									int qual_thresh, boolean remv_dups_se, int remv_dups_pe, 
-									boolean break_homopolymers, int homopol_limit, FileFormat format, 
+									boolean break_homopolymers, int homopol_limit, int ascii_fq_offset, FileFormat format, 
 									int max_read_length, int colour, dBGraph* db_graph)
 {
 
@@ -77,7 +77,7 @@ long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean 
 	    {
 	      single_seq_length += load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(filename,&bad_se_reads, qual_thresh, &dup_se_reads, 
 												      max_read_length, 
-												      remv_dups_se,break_homopolymers, homopol_limit, 
+												      remv_dups_se,break_homopolymers, homopol_limit, ascii_fq_offset, 
 												      db_graph, individual_edge_array, colour);
 	    }
 	  else if (format==FASTA)
@@ -106,7 +106,8 @@ long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean 
       paired_seq_length = load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(pe_f1, pe_f2, format,
 											     qual_thresh, max_read_length, 
 											     &bad_pe_reads, &dup_pe_reads, &num_file_pairs_loaded, 
-											     remv_dups_pe, break_homopolymers, homopol_limit, db_graph, individual_edge_array, colour); 
+											     remv_dups_pe, break_homopolymers, homopol_limit, ascii_fq_offset,
+											     db_graph, individual_edge_array, colour); 
       
       printf("\nNum PE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal PE seq:%qd\n\tDuplicates removed:%qd\n\n",
 	     num_file_pairs_loaded,hash_table_get_unique_kmers(db_graph),bad_pe_reads,paired_seq_length, dup_pe_reads);
@@ -129,6 +130,7 @@ long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean 
 
 long long load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads,  char quality_cut_off, long long* dup_reads, int max_read_length, 
 									     boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff,
+									     int fastq_ascii_offset,
 									     dBGraph* db_graph, EdgeArrayType type, int index)
 {
   
@@ -140,7 +142,7 @@ long long load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(cha
       exit(1);
     }
 
-    return read_sequence_from_fastq(fp,seq,max_read_length);
+    return read_sequence_from_fastq(fp,seq,max_read_length,fastq_ascii_offset);
   }
 
   FILE* fp = fopen(filename, "r");
@@ -161,9 +163,10 @@ long long load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(cha
  
 //renamed load_paired_fastq_from_filenames_into_graph_of_specific_person_or_pop as 
 long long load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(char* filename1, char* filename2, FileFormat format,
-										long long * bad_reads,  char quality_cut_off, int max_read_length, 
-										long long* dup_reads, boolean remove_duplicates, boolean break_homopolymers, int homopolymer_cutoff, 
-										dBGraph* db_graph, EdgeArrayType type, int index )
+										   long long * bad_reads,  char quality_cut_off, int max_read_length, 
+										   long long* dup_reads, boolean remove_duplicates, boolean break_homopolymers, int homopolymer_cutoff, 
+										   int fastq_ascii_offset,
+										   dBGraph* db_graph, EdgeArrayType type, int index )
  {
 
 
@@ -181,7 +184,7 @@ long long load_paired_end_data_from_filenames_into_graph_of_specific_person_or_p
 
     if (format==FASTQ)
       {
-	return read_sequence_from_fastq(fp,seq,max_read_length);
+	return read_sequence_from_fastq(fp,seq,max_read_length,fastq_ascii_offset);
       }
     else if (format==FASTA)
       {
@@ -716,7 +719,8 @@ long long load_paired_end_seq_into_graph_of_specific_person_or_pop(FILE* fp1, FI
 long long load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* list_of_left_mates, char* list_of_right_mates, FileFormat format,
 									     char quality_cut_off, int max_read_length, 
 									     long long* bad_reads, long long* num_dups, int* count_file_pairs, boolean remove_dups, 
-									     boolean break_homopolymers, int homopolymer_cutoff,dBGraph* db_graph, EdgeArrayType type, int index)
+									     boolean break_homopolymers, int homopolymer_cutoff, int fq_ascii_cutoff, 
+									     dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
   FILE* f1 = fopen(list_of_left_mates, "r");
@@ -762,7 +766,8 @@ long long load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(cha
 	  
 	  seq_length += load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(filename1, filename2, format,
 												 bad_reads, quality_cut_off, max_read_length, num_dups, remove_dups, 
-												 break_homopolymers, homopolymer_cutoff, db_graph, type, index);
+												 break_homopolymers, homopolymer_cutoff, fq_ascii_cutoff,
+												 db_graph, type, index);
 	  (*count_file_pairs)++;
 	 
 	}
@@ -1104,7 +1109,7 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
 
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
-long long load_population_as_fastq(char* filename, long long* bad_reads, char quality_cutoff, dBGraph* db_graph)
+long long load_population_as_fastq(char* filename, long long* bad_reads, char quality_cutoff, int fastq_ascii_offset, dBGraph* db_graph)
 {
 
   FILE* fp = fopen(filename, "r");
@@ -1135,7 +1140,8 @@ long long load_population_as_fastq(char* filename, long long* bad_reads, char qu
 	exit(1);
       }
 
-      total_seq_loaded = total_seq_loaded + load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(line, bad_reads, quality_cutoff, db_graph, people_so_far-1);
+      total_seq_loaded = total_seq_loaded + load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(line, bad_reads, quality_cutoff, 
+															     fastq_ascii_offset, db_graph, people_so_far-1);
 
       printf("Just loaded person number %d, and now have cumulative total of  %d bases with %lld bad_reads so far\n", people_so_far-1, total_seq_loaded, *bad_reads);
     }
@@ -1149,7 +1155,8 @@ long long load_population_as_fastq(char* filename, long long* bad_reads, char qu
 
 
 //index tells you which person within a population it is
-int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(char* f_name, long long* bad_reads, char quality_cutoff,  dBGraph* db_graph, int index)
+int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(char* f_name, long long* bad_reads, char quality_cutoff,  
+										     int fq_ascii_offset, dBGraph* db_graph, int index)
 {
   FILE* fptr = fopen(f_name, "r");
   if (fptr == NULL)
@@ -1178,6 +1185,7 @@ int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_f
       total_seq_loaded = total_seq_loaded + 
 	load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(line, bad_reads, quality_cutoff, &dup_reads,  MAX_READ_LENGTH, 
 									   remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+									   fq_ascii_offset, 
 									   db_graph, individual_edge_array, index);
 
     }
