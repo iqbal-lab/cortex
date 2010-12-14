@@ -237,67 +237,67 @@ int  main()
 	return CU_get_error();
       }
 
-    if (NULL == CU_add_test(pPopGraphSuite, "Another null test of the trusted-path/supernode SV caller. Reference and individual are identical again.\n\t In this case they are both equal to an Alu, some N's, and then the same Alu again. Algorithm should find no variants.\n\t Note this is testing something new - since the reference is essentially a repeat of an Alu, there is the risk that our algorithm would map the 3prime anchor onto the wrong copy of the repeat,\n\t and falsely call an insertion between the start of the first copy, and the end of the second.",  test_db_graph_make_reference_path_based_sv_calls_null_test_3))
+    if (NULL == CU_add_test(pPopGraphSuite, "Another null test of the Path Divergence/supernode SV caller. Reference and individual are identical again.\n\t In this case they are both equal to an Alu, some N's, and then the same Alu again. Algorithm should find no variants.\n\t Note this is testing something new - since the reference is essentially a repeat of an Alu, there is the risk that our algorithm would map the 3prime anchor onto the wrong copy of the repeat,\n\t and falsely call an insertion between the start of the first copy, and the end of the second.",  test_db_graph_make_reference_path_based_sv_calls_null_test_3))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-   if (NULL == CU_add_test(pPopGraphSuite, "Another null test of the trusted-path/supernode SV caller. Reference and individual are identical - this time they are both equal to around 10kb taken from the start of Human chromosome 1.\n\t Algorithm should find nothing.",  test_db_graph_make_reference_path_based_sv_calls_null_test_4))
+   if (NULL == CU_add_test(pPopGraphSuite, "Another null test of the Path Divergence/supernode SV caller. Reference and individual are identical - this time they are both equal to around 10kb taken from the start of Human chromosome 1.\n\t Algorithm should find nothing.",  test_db_graph_make_reference_path_based_sv_calls_null_test_4))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-   if (NULL == CU_add_test(pPopGraphSuite, "A targeted null test of the trusted-path/supernode SV caller. The reference is a tandem repeat of about 36 bases; the individual has an Alu inserted between the two copies of the repeat. \n\tSince the supernode in the individual has one copy of the repeat, then the Alu, and then stops, the algorithm should fail to attach a 3prime anchor, and fail to call the insertion.",  
+   if (NULL == CU_add_test(pPopGraphSuite, "A targeted null test of the Path Divergence/supernode SV caller. The reference is a tandem repeat of about 36 bases; the individual has an Alu inserted between the two copies of the repeat. \n\tSince the supernode in the individual has one copy of the repeat, then the Alu, and then stops, the algorithm should fail to attach a 3prime anchor, and fail to call the insertion.",  
 			   test_db_graph_make_reference_path_based_sv_calls_null_test_5))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
 
-   if (NULL == CU_add_test(pPopGraphSuite, "First simple (positive) test of the trusted-path SV caller. Reference and individual are identical except for a single SNP. \n\tTest that caller finds the SNP, correctly gives the coordinates in the reference, and gives the sequence of the 5prime, and 3prime anchors, and the two alternative branches (reference and individual).",  test_db_graph_make_reference_path_based_sv_calls_test_1))
+   if (NULL == CU_add_test(pPopGraphSuite, "First simple (positive) test of the Path Divergence SV caller. Reference and individual are identical except for a single SNP. \n\tTest that caller finds the SNP, correctly gives the coordinates in the reference, and gives the sequence of the 5prime, and 3prime anchors, and the two alternative branches (reference and individual).",  test_db_graph_make_reference_path_based_sv_calls_test_1))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
 
-   if (NULL == CU_add_test(pPopGraphSuite, "Test of the trusted-path SV caller. Reference has two copies of the same Alu (genome is just those two Alu's plus some N's - nothing else) and the individual differs by a single base in one copy of the Alu. \n\tAlgorithm should call the SNP despite being in the Alu. \n\t(Further, this is an example where we walk the supernode in the opposite direction to that in which it lies in our array - this therefore covers the other main code path in our implementation.)",  test_db_graph_make_reference_path_based_sv_calls_test_2))
+   if (NULL == CU_add_test(pPopGraphSuite, "Test of the Path Divergence SV caller. Reference has two copies of the same Alu (genome is just those two Alu's plus some N's - nothing else) and the individual differs by a single base in one copy of the Alu. \n\tAlgorithm should call the SNP despite being in the Alu. \n\t(Further, this is an example where we walk the supernode in the opposite direction to that in which it lies in our array - this therefore covers the other main code path in our implementation.)",  test_db_graph_make_reference_path_based_sv_calls_test_2))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
 
-   if (NULL == CU_add_test(pPopGraphSuite, "Test of the trusted-path SV caller. Reference is a short sequence, and individual has a 2-base deletion.\n\tCaller should spot this and correctly identify the coordinates in the reference, the flanking regions, and the sequence for the two branches",  test_db_graph_make_reference_path_based_sv_calls_test_3))
+   if (NULL == CU_add_test(pPopGraphSuite, "Test of the Path Divergence SV caller. Reference is a short sequence, and individual has a 2-base deletion.\n\tCaller should spot this and correctly identify the coordinates in the reference, the flanking regions, and the sequence for the two branches",  test_db_graph_make_reference_path_based_sv_calls_test_3))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-   if (NULL == CU_add_test(pPopGraphSuite, "Test of the trusted-path SV caller. Reverse the roles of reference and individual in the previous test. Caller should spot the 2 base insertion\n\tIdentify the coordinates of variant start, and the relevant flank and branch sequences",  test_db_graph_make_reference_path_based_sv_calls_test_4))
+   if (NULL == CU_add_test(pPopGraphSuite, "Test of the Path Divergence SV caller. Reverse the roles of reference and individual in the previous test. Caller should spot the 2 base insertion\n\tIdentify the coordinates of variant start, and the relevant flank and branch sequences",  test_db_graph_make_reference_path_based_sv_calls_test_4))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-   if (NULL == CU_add_test(pPopGraphSuite, "Test of the trusted-path SV caller. Reference is a single supernode, and individual has a complete Alu inserted within the supernode. Find the insertion.\n\t",  test_db_graph_make_reference_path_based_sv_calls_test_5))
+   if (NULL == CU_add_test(pPopGraphSuite, "Test of the Path Divergence SV caller. Reference is a single supernode, and individual has a complete Alu inserted within the supernode. Find the insertion.\n\t",  test_db_graph_make_reference_path_based_sv_calls_test_5))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-   if (NULL == CU_add_test(pPopGraphSuite, "Test of the trusted-path SV caller. Reverse roles of reference/individual in previous test, and call deletion of Alu.",  test_db_graph_make_reference_path_based_sv_calls_test_6))
+   if (NULL == CU_add_test(pPopGraphSuite, "Test of the Path Divergence SV caller. Reverse roles of reference/individual in previous test, and call deletion of Alu.",  test_db_graph_make_reference_path_based_sv_calls_test_6))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-   if (NULL == CU_add_test(pPopGraphSuite, "Test of the trusted-path SV caller. Reference has an Alu inserted within another Alu. Individual lacks the insertion.\n\tCall the Alu insertion and correctly identify the coordinates of the variant, flanking sequences, and sequences of the two branches",  test_db_graph_make_reference_path_based_sv_calls_test_7))
+   if (NULL == CU_add_test(pPopGraphSuite, "Test of the Path Divergence SV caller. Reference has an Alu inserted within another Alu. Individual lacks the insertion.\n\tCall the Alu insertion and correctly identify the coordinates of the variant, flanking sequences, and sequences of the two branches",  test_db_graph_make_reference_path_based_sv_calls_test_7))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-   if (NULL == CU_add_test(pPopGraphSuite, "Test of the trusted-path SV caller. Reference is about 10kb ofHuman chromosome 1, with about 1 kb of Human chromosome 2 inserted in the middle. Individual lacks the 1kb insertion.\n\tCall the deletion, and correctly find maximal flanking regions, and identfy the sequence of the two branches",  test_db_graph_make_reference_path_based_sv_calls_test_8))
+   if (NULL == CU_add_test(pPopGraphSuite, "Test of the Path Divergence SV caller. Reference is about 10kb ofHuman chromosome 1, with about 1 kb of Human chromosome 2 inserted in the middle. Individual lacks the 1kb insertion.\n\tCall the deletion, and correctly find maximal flanking regions, and identfy the sequence of the two branches",  test_db_graph_make_reference_path_based_sv_calls_test_8))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
 
-   if (NULL == CU_add_test(pPopGraphSuite, "Test of the trusted-path SV caller. Identical to above test, but with 30kb of Human chromosome 12 added before sequence of above test\n\tThis test is purely to check that the code which loads chunks of data from the trusted-path fasta bit by bit, works properly, and allows accurate determining of the correct variant location in the trusted fasta file.",  test_db_graph_make_reference_path_based_sv_calls_test_9))
+   if (NULL == CU_add_test(pPopGraphSuite, "Test of the Path Divergence SV caller. Identical to above test, but with 30kb of Human chromosome 12 added before sequence of above test\n\tThis test is purely to check that the code which loads chunks of data from the Path Divergence fasta bit by bit, works properly, and allows accurate determining of the correct variant location in the trusted fasta file.",  test_db_graph_make_reference_path_based_sv_calls_test_9))
       {
 	CU_cleanup_registry();
 	return CU_get_error();

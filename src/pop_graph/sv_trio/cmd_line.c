@@ -301,6 +301,10 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
     case 'h':
       {
+	printf("***********************\n");
+	printf("Cortex version %d.%d.%d\n", VERSION, SUBVERSION, SUBSUBVERSION);
+	printf("***********************\n");
+
 	printf("%s",usage);
 	exit(0);
 	break;
