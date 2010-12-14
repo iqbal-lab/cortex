@@ -1,0 +1,6 @@
+#ifndef RUN_HASH_TABLE_TESTS_H_
+#define RUN_HASH_TABLE_TESTS_H_
+
+
+
+#endif /* RUN_HASH_TABLE_TESTS_H_ */

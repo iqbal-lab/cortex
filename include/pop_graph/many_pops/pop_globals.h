@@ -1,9 +1,0 @@
-#ifndef _POP_GLOBALS_H_
-#define _POP_GLOBALS_H_
-
-
-#define NUMBER_OF_INDIVIDUALS_PER_POPULATION 5
-#define NUMBER_OF_POPULATIONS 2
-
-
-#endif
