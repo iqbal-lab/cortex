@@ -433,19 +433,21 @@ int main(int argc, char **argv){
       //if there is a multicolour binary, load that in first
       
       int first_colour_data_starts_going_into=0;
+      boolean graph_has_had_no_other_binaries_loaded=true;
 
       if (cmd_line.input_multicol_bin==true)
 	{
 	  int kmers_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line.multicolour_bin,db_graph, &first_colour_data_starts_going_into);
 	  printf("Loaded the multicolour binary %s, and got %d kmers\n", cmd_line.multicolour_bin, kmers_loaded/db_graph->kmer_size);
+	  graph_has_had_no_other_binaries_loaded=false;
 	}
 
       if (cmd_line.input_colours==true)
 	{
 	  printf("List of colours: %s (contains one filelist per colour). Load data into consecutive colours starting at %d\n", 
 		 cmd_line.colour_list, first_colour_data_starts_going_into);
-	  load_population_as_binaries_from_graph(cmd_line.colour_list, db_graph);
-	  //printf("Finished loading single_colour binaries\n");
+	  load_population_as_binaries_from_graph(cmd_line.colour_list, graph_has_had_no_other_binaries_loaded, db_graph);
+	  printf("Finished loading single_colour binaries\n");
 	}
 
 
@@ -461,7 +463,7 @@ int main(int argc, char **argv){
       printf("Remove nodes that look like sequencing errors. Clip tips first\n");
       db_graph_clip_tips_for_specific_person_or_pop(db_graph, individual_edge_array, 0);
       
-      printf("Then remove low coverage nodes (<= 1) based on topology as well as covg  -  must look like induced by a single base error) \n");
+      printf("Then remove low coverage nodes (<= 1) based on topology as well as covg  -  must be more likely to be single base error than due to sampling\n");
       db_graph_remove_errors_considering_covg_and_topology(1,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
 							   &apply_reset_to_all_edges, &apply_reset_to_all_edges_2,cmd_line.max_var_len);
 
@@ -477,8 +479,8 @@ int main(int argc, char **argv){
 	}
       else
 	{
-	  //printf("Dump multicolour binary with %d colours (compile-time setting), of which input data .......\n");
-	  //db_graph_dump_binary(cmd_line.output_binary_filename, &db_node_check_status_not_pruned,db_graph);
+	  printf("Dump multicolour binary with %d colours (compile-time setting)\n", NUMBER_OF_COLOURS);
+	  db_graph_dump_binary(cmd_line.output_binary_filename, &db_node_check_status_not_pruned,db_graph);
 	}
     }
 

@@ -1227,13 +1227,14 @@ int load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* d
   *num_cols_in_loaded_binary=num_cols_in_binary;
 
 
-  //always reads the multicol binary into successive colours starting from 0
+  //always reads the multicol binary into successive colours starting from 0 - assumes the hash table is empty prior to this
   while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, num_cols_in_binary)){
     count++;
     
     dBNode * current_node  = NULL;
     BinaryKmer tmp_kmer;
-    current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
+    //current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
+    current_node = hash_table_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer),db_graph);
     
     seq_length+=db_graph->kmer_size;
    
@@ -1253,7 +1254,7 @@ int load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* d
 
 
 
-int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index)
+int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, boolean all_entries_are_unique, EdgeArrayType type, int index)
 {
 
   //printf("Open single colour binary: %s\n", filename);
@@ -1295,8 +1296,15 @@ int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBG
 
       dBNode * current_node  = NULL;
       BinaryKmer tmp_kmer;
-      current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
-      
+      if (!all_entries_are_unique)
+	{
+	  current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
+	}
+      else
+	{
+	  current_node = hash_table_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer), db_graph);
+	}
+
       seq_length+=db_graph->kmer_size;//todo - maybe only increment if had to insert, not if was already in graph?
       
       add_edges(current_node,individual_edge_array, index, get_edge_copy(node_from_file, individual_edge_array, index));
@@ -1311,7 +1319,8 @@ int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBG
 
 
 
-long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, EdgeArrayType type, int index)
+long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, 
+											   boolean all_entries_are_unique, EdgeArrayType type, int index)
 {
 
   FILE* fptr = fopen(filename, "r");
@@ -1335,8 +1344,9 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 	*p = '\0';
       
       //printf("Load this binary: %s, into this colour : %d\n", line, index);
-      total_seq_loaded = total_seq_loaded + 
-	load_single_colour_binary_data_from_filename_into_graph(line, db_graph, individual_edge_array, index);
+      total_seq_loaded += 
+	load_single_colour_binary_data_from_filename_into_graph(line, db_graph, all_entries_are_unique, individual_edge_array, index);
+      all_entries_are_unique=false;
 
     }
 
@@ -1354,7 +1364,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of binaries for that individual).
-long long load_population_as_binaries_from_graph(char* filename, dBGraph* db_graph)
+long long load_population_as_binaries_from_graph(char* filename, boolean about_to_load_first_binary_into_empty_graph, dBGraph* db_graph)
 {
 
   //printf("Open this list of colours: %s\n", filename);
@@ -1368,6 +1378,8 @@ long long load_population_as_binaries_from_graph(char* filename, dBGraph* db_gra
 
   int total_seq_loaded=0;
   int people_so_far=0;
+
+
 
   while(fgets(line,MAX_FILENAME_LENGTH, fp) !=NULL)
     {
@@ -1389,8 +1401,9 @@ long long load_population_as_binaries_from_graph(char* filename, dBGraph* db_gra
       //printf("Open this filelist of binaries, %s,  all corresponding to the same colour:%d\n",
       //	     line, people_so_far-1);
       total_seq_loaded = total_seq_loaded + 
-	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph, individual_edge_array, people_so_far-1);
-
+	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph,about_to_load_first_binary_into_empty_graph, 
+											 individual_edge_array, people_so_far-1);
+      about_to_load_first_binary_into_empty_graph=false;
     }
 
   //printf("Finished loading population, with total seq loaded %d\n",total_seq_loaded); 

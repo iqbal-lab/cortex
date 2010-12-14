@@ -37,7 +37,7 @@
 
 const char* usage=
 "\nusage: cortex_con [-h] [--input file_of_files] [--mem_height 14] [--dump_binary bin_output] [--input_format fastq|fasta|binary] [--output_contigs contigs.fa] \n" \
-"by M. Caccamo (primary contact for cortex_con: mario.caccamo@bbsrc.ac.uk) and Z. Iqbal (zam@well.ox.ac.uk)\n" \
+"by M. Caccamo (mario.caccamo@bbsrc.ac.uk) (primary contact for cortex_con), and Z. Iqbal (zam@well.ox.ac.uk)\n" \
 "\n" \
 "   [-h | --help] = This help screen.\n" \
 "   [--input FILENAME] = File of filenames to be processed (start and end read is optional, format <filename>  <start read index>  <end read index> ).\n" \

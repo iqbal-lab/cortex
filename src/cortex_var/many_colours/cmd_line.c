@@ -87,7 +87,7 @@ boolean more_than_one_colour_in_multicol_binary(char* file, int kmer_size)
 
 
 const char* usage=
-"Cortex, multicoloured target, cortex_var by Z. Iqbal (primary contact for cortex_var: zam@well.ox.ac.uk) and M. Caccamo (mario.caccamo@bbsrc.ac.uk)\n" \
+"Cortex, multicoloured target, cortex_var by Z. Iqbal (zam@well.ox.ac.uk) (primary contact for cortex_var) and M. Caccamo (mario.caccamo@bbsrc.ac.uk)\n" \
 "\nusage: to build a single-colour binary:\ncortex_var --se_list <filename> --pe_list <filename> --format FASTQ --quality_score_threshold 5 --remove_pcr_duplicates --remove_seq_errors --dump_binary some_name.ctx\n" \
 "\nusage: to build a multicolour graph from single-colour graphs and call variants between colours 1 and 2:\ncortex_var --colour_list <filename> --detect_bubbles1 1/2 --output_bubbles1 vars_between_cols1_and_2\n" \
 "\nusage: to load a multicolour graph from single-colour graphs and call heterozygous variants in colour 0:\ncortex_var --colour_list <filename> --detect_bubbles1 0/0 --output_bubbles1 hets_in_colour_0\n" \

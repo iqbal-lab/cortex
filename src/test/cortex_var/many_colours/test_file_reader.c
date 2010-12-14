@@ -488,7 +488,8 @@ void test_load_singlecolour_binary()
   CU_ASSERT(db_graph_pre==NULL);
   dBGraph* db_graph_post = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
 
-  int seq_length_post = load_single_colour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_single_colour_cortex_var_graph.bin", db_graph_post, individual_edge_array,0);
+  int seq_length_post = load_single_colour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_single_colour_cortex_var_graph.bin", db_graph_post, 
+										true, individual_edge_array,0);
 
   CU_ASSERT(seq_length_post==25);//kmers loaded * length of kmer
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post), 5);
@@ -636,7 +637,7 @@ void test_load_individual_binaries_into_sv_trio()
 
      
      db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_singlecolour_bins_into_multicol_bin", db_graph);
+     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_singlecolour_bins_into_multicol_bin", true, db_graph);
       
       
       CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph), 41);
