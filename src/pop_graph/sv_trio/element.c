@@ -27,7 +27,7 @@ Element* new_element()
   binary_kmer_initialise_to_zero(&(e->kmer));
 
   int i;
-  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+  for (i=0; i< NUMBER_OF_COLOURS; i++)
     {
       e->individual_edges[i]=0;
       e->coverage[i]=0;
@@ -51,7 +51,7 @@ void element_assign(Element* e1, Element* e2)
 
   binary_kmer_assignment_operator( (*e1).kmer, (*e2).kmer);
   int i;
-  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+  for (i=0; i< NUMBER_OF_COLOURS; i++)
     {
       e1->individual_edges[i] = e2->individual_edges[i];
       e1->coverage[i]         = e2->coverage[i];
@@ -65,9 +65,9 @@ Edges* get_edge(Element e, EdgeArrayType type,int index)
 {
   if (type == individual_edge_array)
     {
-      if (index>=NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      if (index>=NUMBER_OF_COLOURS)
 	{
-	  printf("Called get_edge with index %d which is >= NUMBER_OF_INDIVIDUALS_PER_POPULATION which is %d. Exist\n", index, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+	  printf("Called get_edge with index %d which is >= NUMBER_OF_COLOURS which is %d. Exist\n", index, NUMBER_OF_COLOURS);
 	  exit(1);
 	}
       return &e.individual_edges[index];//compiler thinks this is returning a local variable, but assuming e is in the hash table, it has a lifetime beyond that of this function.
@@ -88,7 +88,7 @@ Edges get_edge_copy(const Element e, EdgeArrayType type,int index)
 
   if (type == individual_edge_array)
     {
-      if (index>=NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      if (index>=NUMBER_OF_COLOURS)
 	{
 	  exit(1);
 	}
@@ -111,7 +111,7 @@ Edges get_union_of_edges(Element e)
   int i;
   Edges edges=0;
 
-  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+  for (i=0; i< NUMBER_OF_COLOURS; i++)
     {
       edges |= e.individual_edges[i];
     }
@@ -124,7 +124,7 @@ Edges element_get_colour_union_of_all_colours(const Element* e)
   int i;
   Edges edges=0;
   
-  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+  for (i=0; i< NUMBER_OF_COLOURS; i++)
     {
       edges |= e->individual_edges[i];
     }
@@ -153,7 +153,7 @@ int element_get_covg_union_of_all_covgs(const dBNode* e)
   int i;
   int covg=0;
   
-  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+  for (i=0; i< NUMBER_OF_COLOURS; i++)
     {
       covg += e->coverage[i];
     }
@@ -182,9 +182,9 @@ void add_edges(Element* e, EdgeArrayType type, int index, Edges edge_char)
 {
   if (type == individual_edge_array)
     {
-      if (index>=NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      if (index>=NUMBER_OF_COLOURS)
 	{
-	  printf("in element's add_edges function. index is %d, and should be at most %d", index, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+	  printf("in element's add_edges function. index is %d, and should be at most %d", index, NUMBER_OF_COLOURS);
 	  exit(1);
 	}
       e->individual_edges[index] |= edge_char;
@@ -203,9 +203,9 @@ void set_edges(Element* e, EdgeArrayType type, int index, Edges edge_char)
 {
   if (type == individual_edge_array)
     {
-      if (index>=NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      if (index>=NUMBER_OF_COLOURS)
 	{
-	  printf("in element's set_edges function. index is %d,and should be at most %d", index, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+	  printf("in element's set_edges function. index is %d,and should be at most %d", index, NUMBER_OF_COLOURS);
 	  exit(1);
 	}
       e->individual_edges[index] = edge_char;
@@ -224,7 +224,7 @@ void db_node_reset_all_edges_for_all_people_and_pops_to_zero(Element* e)
 {
   int i;
 
-    for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       e->individual_edges[i]=0;
     }
@@ -235,9 +235,9 @@ void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, 
 {
   if (type == individual_edge_array)
     {
-      if (index>=NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      if (index>=NUMBER_OF_COLOURS)
 	{
-	  printf("in element's reset_one_edge function. index is %d,and should be at most %d - 1", index, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+	  printf("in element's reset_one_edge function. index is %d,and should be at most %d - 1", index, NUMBER_OF_COLOURS);
 	  exit(1);
 	}
 
@@ -267,7 +267,7 @@ int element_get_number_of_people_or_pops_containing_this_element(Element* e, Edg
   int count=0;
   if (type == individual_edge_array)
     {
-      for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+      for (i=0; i< NUMBER_OF_COLOURS; i++)
 	{
 	  if ( (e->individual_edges)[i] != 0)
 	    {
@@ -339,7 +339,7 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
   //however this function is used to reset to 0 Elements that are reused,
   // - see below in the read_binary functions. Also in tests.
   int i;
-  for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       e->individual_edges[i]=0;
       e->coverage[i]=0;
@@ -803,19 +803,19 @@ void db_node_print_multicolour_binary(FILE * fp, dBNode * node)
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
-  int covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
-  Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; 
+  int covg[NUMBER_OF_COLOURS];
+  Edges individual_edges[NUMBER_OF_COLOURS]; 
 
   int i;
-  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)                                                     
+  for (i=0; i< NUMBER_OF_COLOURS; i++)                                                     
     {                                                                                                         
       covg[i] = db_node_get_coverage(node, individual_edge_array, i);
       individual_edges[i]= get_edge_copy(*node, individual_edge_array, i);
     }      
 				  
   fwrite(&kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
-  fwrite(covg, sizeof(int), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp); 
-  fwrite(individual_edges, sizeof(Edges), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);
+  fwrite(covg, sizeof(int), NUMBER_OF_COLOURS, fp); 
+  fwrite(individual_edges, sizeof(Edges), NUMBER_OF_COLOURS, fp);
 
   
 }
@@ -845,8 +845,8 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *(element_get_kmer(node)) );
-  int covg[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
-  Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION]; 
+  int covg[NUMBER_OF_COLOURS];
+  Edges individual_edges[NUMBER_OF_COLOURS]; 
 
   int read;
 
@@ -855,13 +855,13 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
   if (read>0){
 
 
-    read = fread(covg, sizeof(int), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);    
+    read = fread(covg, sizeof(int), NUMBER_OF_COLOURS, fp);    
     if (read==0){
       puts("error with input file - failed to read covg in db_node_read_sv_trio_binary. You have tried to read an incompatible binary - this error message should not happen - you should have hit other checks first.. Please contact mario.caccamo@bbsrc.ac.uk and zam@well.ox.ac.uk\n");
       exit(1);
     }
 
-    read = fread(individual_edges, sizeof(Edges), NUMBER_OF_INDIVIDUALS_PER_POPULATION, fp);
+    read = fread(individual_edges, sizeof(Edges), NUMBER_OF_COLOURS, fp);
     if (read==0){
       puts("error with input file - failed to read Edges in db_node_read_sv_trio_binary. You have tried to read an incompatible binary - this error message should not happen - you should have hit other checks first.. Please contact mario.caccamo@bbsrc.ac.uk and zam@well.ox.ac.uk\n");
       exit(1);
@@ -877,7 +877,7 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
   element_initialise(node,&kmer,kmer_size);
 
   int i;
-  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+  for (i=0; i< NUMBER_OF_COLOURS; i++)
     {
       node->coverage[i]         = covg[i];
       node->individual_edges[i] = individual_edges[i];
@@ -894,13 +894,13 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * node, int num_colours_in_binary)
 {
 
-  if ( (num_colours_in_binary>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+  if ( (num_colours_in_binary>NUMBER_OF_COLOURS)
     ||
        (num_colours_in_binary<=0)
        )
     {
       printf("You should not call db_node_read_multicolour_binary with %d as final argument.\n", num_colours_in_binary);
-      printf("NUMBER_OF_INDIVIDUALS_PER_POPULATION is %d\n", NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+      printf("NUMBER_OF_COLOURS is %d\n", NUMBER_OF_COLOURS);
       exit(1);
     }
 
@@ -954,7 +954,7 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index)
 {
 
-  if ( (index<0) || (index>=NUMBER_OF_INDIVIDUALS_PER_POPULATION))
+  if ( (index<0) || (index>=NUMBER_OF_COLOURS))
     {
       printf("Invalid index for which person to load binary into: %d. Exiting.", index);
       exit(1);

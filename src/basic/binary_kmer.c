@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <binary_kmer.h>
+#include <event_encoding.h>
 #include <global.h>
 #include <string.h>
 
@@ -236,32 +237,6 @@ void binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(BinaryKmer
 
 
 
-//returns Undefined if given non AGCT character
-Nucleotide char_to_binary_nucleotide(char c)
-{
-	switch (c)
-	{
-	case 'A':
-	  return Adenine;
-	case 'C':
-	  return Cytosine;
-	case 'G':
-	  return Guanine;
-	case 'T':
-	  return Thymine;
-	case 'a':
-	  return Adenine;
-	case 'c':
-	  return Cytosine;
-	case 'g':
-	  return Guanine;
-	case 't':
-	  return Thymine;
-	default:
-	  return Undefined;
-	}
-}
-
 char reverse_char_nucleotide(char c)
 {
   switch (c)
@@ -303,7 +278,7 @@ char * seq_reverse_complement(char * in, int length, char * out){
 }
 
 
-
+/*
 Nucleotide reverse_binary_nucleotide(Nucleotide n)
 {
   switch (n)
@@ -321,24 +296,7 @@ Nucleotide reverse_binary_nucleotide(Nucleotide n)
       exit(1);
     }
 }
-
-char binary_nucleotide_to_char(Nucleotide n)
-{
-	switch (n) {
-	case Adenine:
-	  return 'A';
-	case Cytosine:
-	  return 'C';
-	case Guanine:
-	  return 'G';
-	case Thymine:
-	  return 'T';
-	default:
-	  printf("Non existent binary nucleotide %d\n",n);
-	  assert(0); 
-	  return 'N'; //Don't really return this, must fail before this point. But stops compiler warning.
-	}
-}
+*/
 
 
 char * nucleotides_to_string(Nucleotide * nucleotides, int length, char * string){
@@ -855,6 +813,16 @@ void nucleotide_iterator(void (*f)(Nucleotide)){
   int i;
   for (i=0;i<4;i++){
     f(i);
+  }
+  
+}
+
+void nucleotide_iterator_orientation(void (*f)(Nucleotide n,Orientation o)){
+  
+  int i;
+  for (i=0;i<4;i++){
+    f(i,forward);
+    f(i,reverse);
   }
   
 }

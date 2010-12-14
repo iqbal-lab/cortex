@@ -72,7 +72,7 @@ boolean more_than_one_colour_in_multicol_binary(char* file, int kmer_size)
     }
 
   int num_cols=0;
-  check_binary_signature(fp, kmer_size, &num_cols);
+  check_binary_signature(fp, kmer_size, BINVERSION, &num_cols);
   fclose(fp);
 
   if (num_cols>1)
@@ -319,10 +319,10 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	      {
 		errx(1, "[--colour_list] filename %s contains nothing", optarg);
 	      }
-	    else if (num_cols_in_input_list>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+	    else if (num_cols_in_input_list>NUMBER_OF_COLOURS)
 	      {
 		errx(1, "[--colour_list] filename %s contains %d files, but cortex_ar is currently compiled to suppoer a maximum of %d colours\n", 
-		     optarg, num_cols_in_input_list, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+		     optarg, num_cols_in_input_list, NUMBER_OF_COLOURS);
 	      }
 
 	    cmdline_ptr ->num_colours_in_input_colour_list=num_cols_in_input_list;
@@ -475,7 +475,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  errx(1,"[-i | --ref_colour] option requires int argument [which colour is the reference - i.e. what position in colour_list (count starts from 0)]");
 	if (optarg<0)
 	  errx(1,"[-i | --ref_colour] option requires positive argument [which colour is the reference - i.e. what position in colour_list (count starts from 0)]");
-	if (atoi(optarg)>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+	if (atoi(optarg)>NUMBER_OF_COLOURS)
 	  errx(1,"[-i | --ref_colour] requires you specify the colour of the reference, and this must be less than the maximum number of colours allowed by Cortex. This maximum number is fixed at compile-time. See the Manual to find how to reset this, and check the number you have entered : %s is correct.", optarg);
 
 	cmdline_ptr->using_ref=true;
@@ -937,7 +937,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  printf("Unable to open multicolour bin %s for checks\n", cmd_ptr->multicolour_bin);
 	  exit(1);
 	}
-      boolean is_multicol_bin_ok = check_binary_signature(fp, cmd_ptr->kmer_size, &num_m_cols);
+      boolean is_multicol_bin_ok = check_binary_signature(fp, cmd_ptr->kmer_size, BINVERSION, &num_m_cols);
       fclose(fp);
       
       if (is_multicol_bin_ok==false)
@@ -951,16 +951,16 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  printf("Corrupt binary %s - signatire claims to have <=0 colours within\n", cmd_ptr->multicolour_bin);
 	  exit(1);
 	}
-      if (num_m_cols>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      if (num_m_cols>NUMBER_OF_COLOURS)
 	{
 	  printf("Multicolour binary %s contains %d colours, but cortex_var is compiled to support a maximum of %d colours\n", 
-		 cmd_ptr->multicolour_bin, num_m_cols, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+		 cmd_ptr->multicolour_bin, num_m_cols, NUMBER_OF_COLOURS);
 	  exit(1);
 	}
-      else if (num_m_cols+cmd_ptr->num_colours_in_input_colour_list > NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      else if (num_m_cols+cmd_ptr->num_colours_in_input_colour_list > NUMBER_OF_COLOURS)
 	{
 	  printf("Between %s (containing %d colours) and %s (containing %d colours), you have exceeded the compile-time limit on colours, %d\n",
-		 cmd_ptr->multicolour_bin, num_m_cols, cmd_ptr->colour_list, cmd_ptr->num_colours_in_pd_colour_list, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+		 cmd_ptr->multicolour_bin, num_m_cols, cmd_ptr->colour_list, cmd_ptr->num_colours_in_pd_colour_list, NUMBER_OF_COLOURS);
 	  exit(1);
 	}
       

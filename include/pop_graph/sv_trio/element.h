@@ -44,8 +44,8 @@ typedef enum{
 
 typedef struct{
   BinaryKmer kmer;
-  int coverage[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
-  Edges individual_edges[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
+  int coverage[NUMBER_OF_COLOURS];
+  Edges individual_edges[NUMBER_OF_COLOURS];
   char status; //will case a NodeStatus to char
 } Element;
 
@@ -53,10 +53,6 @@ typedef struct{
 typedef Element dBNode;
 typedef BinaryKmer*  Key;
 
-typedef enum{
-  forward = 0,
-  reverse = 1
-} Orientation;
 
 //typedef enum{
 //  overlaps_forwards_only=0,

@@ -63,7 +63,7 @@ void test_dump_load_sv_trio_binary(){
   seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph.bin", db_graph_post, &num_cols_in_binary);
 
 
-  CU_ASSERT(num_cols_in_binary==NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+  CU_ASSERT(num_cols_in_binary==NUMBER_OF_COLOURS);
 
   //load_multicolour_binary_data_from_filename_into_graph returns total number of unique kmers loaded, times kmer_length
   CU_ASSERT_EQUAL(seq_length_post,15);
@@ -247,7 +247,7 @@ void test_dump_load_sv_trio_binary(){
       seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph_2.bin", db_graph_post, &num_cols_in_binary);
 
 
-      CU_ASSERT(num_cols_in_binary==NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+      CU_ASSERT(num_cols_in_binary==NUMBER_OF_COLOURS);
 
       CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post),31);
   
@@ -395,7 +395,7 @@ void test_dump_load_sv_trio_binary(){
   seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph_3.bin", db_graph_post, &num_cols_in_binary);
 
 
-  CU_ASSERT(num_cols_in_binary==NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+  CU_ASSERT(num_cols_in_binary==NUMBER_OF_COLOURS);
 
   //now try to traverse a supernode. This is effectively a regressiontest for a bug in graph/element.c: print_binary/read_binary
   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TAACCCTAACCCTAACC", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2) ,db_graph_post);
@@ -559,9 +559,9 @@ void test_load_individual_binaries_into_sv_trio()
 {
 
 
-  if (NUMBER_OF_INDIVIDUALS_PER_POPULATION<3)
+  if (NUMBER_OF_COLOURS<3)
     {
-      printf("This test is redundant unless the compile-time flag NUMBER_OF_INDIVIDUALS_PER_POPULATION is set to a value >=3\n");
+      printf("This test is redundant unless the compile-time flag NUMBER_OF_COLOURS is set to a value >=3\n");
       return;
     }
   else

@@ -432,7 +432,7 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int 
   void apply_reset_to_specified_edges(dBNode* node , Orientation or , Nucleotide nuc)
   {
       int i;
-      for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+      for (i=0; i< NUMBER_OF_COLOURS; i++)
 	{
 	  reset_one_edge(node, or, nuc, individual_edge_array, i);
 	}
@@ -441,7 +441,7 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int 
   void apply_reset_to_specified_edges_2(dBNode* node)
   {
       int i;
-      for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+      for (i=0; i< NUMBER_OF_COLOURS; i++)
 	{
 	  db_node_reset_edges(node, individual_edge_array, i);
 	}
@@ -451,7 +451,7 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int 
   {
     int total=0;
     int i;
-    for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+    for (i=0; i< NUMBER_OF_COLOURS; i++)
       {
 	total += db_node_get_coverage(node, individual_edge_array,i);
       }
@@ -3165,7 +3165,7 @@ void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), 
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   
-  print_binary_signature(fout, db_graph->kmer_size, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+  print_binary_signature(fout, db_graph->kmer_size, NUMBER_OF_COLOURS);
 
   long long count=0;
   //routine to dump graph
@@ -3845,17 +3845,17 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
   //  printf("Reimplement using db_graph_supernode\n");
 
 
-  int length_of_best_sub_supernode_in_each_person[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
-  int index_of_start_of_best_sub_supernode_in_each_person[NUMBER_OF_INDIVIDUALS_PER_POPULATION];
+  int length_of_best_sub_supernode_in_each_person[NUMBER_OF_COLOURS];
+  int index_of_start_of_best_sub_supernode_in_each_person[NUMBER_OF_COLOURS];
 
   int i;
-  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+  for (i=0; i< NUMBER_OF_COLOURS; i++)
     {
       length_of_best_sub_supernode_in_each_person[i]=0;
       index_of_start_of_best_sub_supernode_in_each_person[i]=0;
     }
 
-  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+  for (i=0; i< NUMBER_OF_COLOURS; i++)
     {
         //get the first node in the supernode for this edge, within this person't graph
       dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, i, db_graph);
@@ -3880,7 +3880,7 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
   
   //check that at least one person has a subsupernode that matches criteria
   boolean noone_has_decent_sub_supernode=true;
-  for (i=0; (i< NUMBER_OF_INDIVIDUALS_PER_POPULATION) && (noone_has_decent_sub_supernode==true); i++)
+  for (i=0; (i< NUMBER_OF_COLOURS) && (noone_has_decent_sub_supernode==true); i++)
     {
       if ( length_of_best_sub_supernode_in_each_person[i] >0 )
 	{
@@ -3899,7 +3899,7 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
   //Now find which person has the bext sub_supernode nucleated at this node 
   int person_with_best_sub_supernode=-1;
   int max=0;
-  for (i=0; i< NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+  for (i=0; i< NUMBER_OF_COLOURS; i++)
     {
       if ( length_of_best_sub_supernode_in_each_person[i] > max )
 	{
@@ -4232,7 +4232,7 @@ void print_node_to_file_according_to_how_many_people_share_it(HashTable* db_grap
   
   int number_of_individuals_with_this_node=0;
 
-  for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       if (get_edge_copy(*node, individual_edge_array, i) ==0 )
 	{
@@ -4257,9 +4257,9 @@ void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTab
   //  char tmp_seq[db_graph->kmer_size];
   int i;
 
-  if (number_of_people>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+  if (number_of_people>NUMBER_OF_COLOURS)
     {
-      printf("Cannot call find_out_how_many_individuals_share_this_node_and_add_to_statistics with number_of_people = %d, as it's bigger than the NUMBER per pop, %d", number_of_people,NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+      printf("Cannot call find_out_how_many_individuals_share_this_node_and_add_to_statistics with number_of_people = %d, as it's bigger than the NUMBER per pop, %d", number_of_people,NUMBER_OF_COLOURS);
       exit(1);
     }
   int number_of_individuals_with_this_node=0;
@@ -8467,7 +8467,7 @@ void print_standard_extra_supernode_info(dBNode** node_array, Orientation* or_ar
 {
   
   int col;
-  for (col=0; col<NUMBER_OF_INDIVIDUALS_PER_POPULATION; col++)
+  for (col=0; col<NUMBER_OF_COLOURS; col++)
     {
       
       fprintf(fout, "Covg in Colour %d:\n", col);

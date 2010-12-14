@@ -4303,7 +4303,7 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
 void test_does_this_path_exist_in_this_colour()
 {
 
-  if (NUMBER_OF_INDIVIDUALS_PER_POPULATION>=3)
+  if (NUMBER_OF_COLOURS>=3)
     {
       //first set up the hash/graph                                                                                                                                                                            
       int kmer_size = 7;

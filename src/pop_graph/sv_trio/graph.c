@@ -274,7 +274,7 @@ int main(int argc, char **argv){
   void apply_reset_to_all_edges(dBNode* node, Orientation or, Nucleotide nuc)
   {
     int j;
-    for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
+    for (j=0; j<NUMBER_OF_COLOURS; j++)
       {
 	reset_one_edge(node, or, nuc, individual_edge_array, j);
       }
@@ -282,7 +282,7 @@ int main(int argc, char **argv){
   void apply_reset_to_all_edges_2(dBNode* node )
   {
     int j;
-    for (j=0; j<NUMBER_OF_INDIVIDUALS_PER_POPULATION; j++)
+    for (j=0; j<NUMBER_OF_COLOURS; j++)
       {
 	      db_node_reset_edges(node, individual_edge_array, j);
       }
@@ -322,10 +322,10 @@ int main(int argc, char **argv){
 	exit(1);
       }
 
-    if ( (cmd_line.ref_colour<0) || (cmd_line.ref_colour>NUMBER_OF_INDIVIDUALS_PER_POPULATION-1) )
+    if ( (cmd_line.ref_colour<0) || (cmd_line.ref_colour>NUMBER_OF_COLOURS-1) )
       {
 	printf("Calling get_colour_ref, but the reference colour %d has not been specified, or is > than the compile-time limit, of %d\n", 
-	       cmd_line.ref_colour, NUMBER_OF_INDIVIDUALS_PER_POPULATION-1);
+	       cmd_line.ref_colour, NUMBER_OF_COLOURS-1);
 	exit(1);
       }
     Edges ed = get_edge_copy(*e, individual_edge_array, cmd_line.ref_colour);

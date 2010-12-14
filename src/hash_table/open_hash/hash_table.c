@@ -216,7 +216,7 @@ long long hash_table_traverse_returning_sum(long long (*f)(Element *),HashTable 
   long long i;
   long long ret=0;
   for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
-    if (!db_node_check_status(&hash_table->table[i],unassigned)){
+    if (!db_node_check_for_flag_ALL_OFF(&hash_table->table[i])){
       ret += f(&hash_table->table[i]);
     }
   }

@@ -91,13 +91,13 @@ void test_increment_coverage()
   db_node_increment_coverage(e,individual_edge_array,0);
   CU_ASSERT(e->coverage[0]==6);
 
-  if (NUMBER_OF_INDIVIDUALS_PER_POPULATION>1)
+  if (NUMBER_OF_COLOURS>1)
     {
       CU_ASSERT(e->coverage[1]==0);
       db_node_increment_coverage(e,individual_edge_array,1);
       CU_ASSERT(e->coverage[1]==1);
     }
-  if (NUMBER_OF_INDIVIDUALS_PER_POPULATION>2)
+  if (NUMBER_OF_COLOURS>2)
     {
       CU_ASSERT(e->coverage[2]==0);
     }

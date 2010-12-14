@@ -6,6 +6,7 @@
 #ifndef BINARY_KMER_H_
 #define BINARY_KMER_H_
 #include <global.h>
+#include <event_encoding.h>
 
 #define BINVERSION 3
 
@@ -24,7 +25,7 @@
 
 
 
-typedef enum
+/*typedef enum
  {
     Adenine   = 0,
     Cytosine  = 1,
@@ -32,7 +33,7 @@ typedef enum
     Thymine   = 3,
     Undefined = 4,
   } Nucleotide ;
-
+*/
 
 //platform specific
 typedef unsigned long long bitfield_of_64bits;
@@ -69,13 +70,13 @@ void       binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(Bina
 
 
 
-Nucleotide char_to_binary_nucleotide(char c);
+//Nucleotide char_to_binary_nucleotide(char c);
 
-char binary_nucleotide_to_char(Nucleotide n);
+//char binary_nucleotide_to_char(Nucleotide n);
 
 char * nucleotides_to_string(Nucleotide * nucleotides, int length, char * string);
 
-Nucleotide reverse_binary_nucleotide(Nucleotide n);
+//Nucleotide reverse_binary_nucleotide(Nucleotide n);
 
 //get overlapping kmers from sequence
 //int get_sliding_windows_from_sequence(char * sequence,char * qualities, int length, char quality_cutoff, short kmer_size, KmerSlidingWindowSet * windows, int max_windows, int max_kmers); 
@@ -106,5 +107,6 @@ void binary_kmer_free_kmers(KmerSlidingWindow * *);
 void binary_kmer_free_kmers_set(KmerSlidingWindowSet * *);
 
 void nucleotide_iterator(void (*f)(Nucleotide));
+void nucleotide_iterator_orientation(void (*f)(Nucleotide n,Orientation o));
 
 #endif /* BINARY_KMER_H_ */

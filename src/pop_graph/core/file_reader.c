@@ -1043,7 +1043,7 @@ long long load_population_as_fasta(char* filename, long long* bad_reads, dBGraph
 
 
       people_so_far++;
-      if (people_so_far>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      if (people_so_far>NUMBER_OF_COLOURS)
       {
         printf("This filelist contains too many people for a single population, %d", people_so_far);
 	exit(1);
@@ -1134,7 +1134,7 @@ long long load_population_as_fastq(char* filename, long long* bad_reads, char qu
 
 
       people_so_far++;
-      if (people_so_far>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      if (people_so_far>NUMBER_OF_COLOURS)
       {
         printf("This filelist contains too many people for a single population, %d", people_so_far);
 	exit(1);
@@ -1198,55 +1198,6 @@ int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_f
 
 
 
-/*
-//returns number of kmers loaded
-int load_multicolour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph)
-{
-  FILE* fp_bin = fopen(filename, "r");
-  int seq_length = 0;
-  dBNode node_from_file;
-  boolean found;
-
-  if (fp_bin == NULL){
-    printf("load_multicolour_binary_data_from_filename_into_graph cannot open file:%s\n",filename);
-    exit(1); //TODO - prefer to print warning and skip file and return an error code?
-  }
-  
-  int num_cols_in_binary=NUMBER_OF_INDIVIDUALS_PER_POPULATION+1;//initialise to something that prevents binary from being loaded
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, &num_cols_in_binary) ) )
-    {
-      printf("Cannot load this binary. Exiting.\n");
-      exit(1);
-    }
-  elsif (num_cols_in_binary != NUMBER_OF_INDIVIDUALS_PER_POPULATION)
-    {
-      printf("Expected a binary with precisely the same number of colours as our graph (%d) but instead it has %d colours. Exiting.\n",
-	     NUMBER_OF_INDIVIDUALS_PER_POPULATION, num_cols_in_binary);
-      exit(1);
-    }
-
-  //Go through all the entries in the binary file
-  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file)){
-    
-    dBNode * current_node  = NULL;
-    BinaryKmer tmp_kmer;
-    current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
-    
-    seq_length+=db_graph->kmer_size;
-   
-    int i;
-    for (i=0; i<NUMBER_OF_INDIVIDUALS_PER_POPULATION; i++)
-      {
-	add_edges(current_node,individual_edge_array, i, get_edge_copy(node_from_file, individual_edge_array, i));
-	db_node_update_coverage(current_node, individual_edge_array, i, db_node_get_coverage(&node_from_file, individual_edge_array,i));
-      }
-
-  }
-  
-  fclose(fp_bin);
-  return seq_length;
-}
-*/
 
 
 
@@ -1268,7 +1219,7 @@ int load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* d
 
 
   int num_cols_in_binary;
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, &num_cols_in_binary) ) )
+  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary) ) )
     {
       printf("Cannot load this binary - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting.\n");
       exit(1);
@@ -1321,7 +1272,7 @@ int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBG
 
 
   int num_cols_in_binary;
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, &num_cols_in_binary) ) )
+  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary) ) )
     {
       printf("Cannot load this binary. Exiting.\n");
       exit(1);
@@ -1428,10 +1379,10 @@ long long load_population_as_binaries_from_graph(char* filename, dBGraph* db_gra
 
 
       people_so_far++;
-      if (people_so_far>NUMBER_OF_INDIVIDUALS_PER_POPULATION)
+      if (people_so_far>NUMBER_OF_COLOURS)
       {
-        printf("This filelist contains too many people, %d, remember we have set a population limit of %d in variable NUMBER_OF_INDIVIDUALS_PER_POPULATION", 
-	       people_so_far,NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+        printf("This filelist contains too many people, %d, remember we have set a population limit of %d in variable NUMBER_OF_COLOURS", 
+	       people_so_far,NUMBER_OF_COLOURS);
 	exit(1);
       }
 
@@ -2352,7 +2303,7 @@ void print_binary_signature(FILE * fp,int kmer_size, int num_cols){
 
 
 //return yes if signature is consistent
-boolean check_binary_signature(FILE * fp,int kmer_size, int* number_of_colours_in_binary){
+boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary){
   int read;
   char magic_number[6];
   boolean ret = false;
@@ -2382,7 +2333,7 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int* number_of_colours_i
 		int num_cols;
 		read = fread(&num_cols,sizeof(int),1,fp);
 		
-		if ( (read>0) && (num_cols<=NUMBER_OF_INDIVIDUALS_PER_POPULATION) && (num_cols>0)  )
+		if ( (read>0) && (num_cols<=NUMBER_OF_COLOURS) && (num_cols>0)  )
 		  { 
 
 		    *number_of_colours_in_binary = num_cols;
@@ -2391,7 +2342,7 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int* number_of_colours_i
 		else
 		  {
 		    printf("You are loading  binary with %d colours into a graph with %d colours - incompatible\n",
-			   num_cols, NUMBER_OF_INDIVIDUALS_PER_POPULATION);
+			   num_cols, NUMBER_OF_COLOURS);
 		  }
 	      }
 	    else
