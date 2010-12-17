@@ -22,10 +22,10 @@
  * along with CORTEX.  If not, see <http://www.gnu.org/licenses/>.
  *
  * **********************************************************************
- *//
+ */
 
 
-*
+/*
   dB_graph_supernode.h defines the interface for dealing with supernodes
 */
 

@@ -144,9 +144,9 @@ const char* usage=
   // -p
 "   [--dump_binary FILENAME] \t\t\t\t\t=\t Dump a binary file, with this name (after applying error-cleaning, if specified).\n" \
   // -q
-"   [--output_contigs FILENAME] \t\t\t\t\t=\t Dump a fasta file of all the supernodes (after applying all specified actions on graph).\n" \
+"   [--output_supernodes FILENAME] \t\t\t\t\t=\t Dump a fasta file of all the supernodes (after applying all specified actions on graph).\n" \
   // -r
-"   [--detect_bubbles1 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Output to standard output all the bubbles in the graph where the two branches lie in the specified colours\n\t\t\t\t\t\t\t\t\t (after applying all specified actions on graph).\n\t\t\t\t\t\t\t\t\t Typical use would be --detect_bubbles1 1/1 to find hets in colour 1,\n\t\t\t\t\t\t\t\t\t or --detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch is in colour 0 (and not colour1)\n\t\t\t\t\t\t\t\t\t and the other branch is in colour1 (but not colour 0).\n\t\t\t\t\t\t\t\t\t However, one can do more complex things:\n\t\t\t\t\t\t\t\t\t e.g.  --detect_het_bubbles 1,2,3/4,5,6 to find bubbles where one branch is in 1,2 or 3 (and not 4,5 or 6)\n\t\t\t\t\t\t\t\t\t and the other branch in colour 4,5 or 6 (but not 1,2, or 3).\n" \
+"   [--detect_bubbles1 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Output to standard output all the bubbles in the graph where the two branches lie in the specified colours\n\t\t\t\t\t\t\t\t\t (after applying all specified actions on graph).\n\t\t\t\t\t\t\t\t\t Typical use would be --detect_bubbles1 1/1 to find hets in colour 1,\n\t\t\t\t\t\t\t\t\t or --detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch is in colour 0 (and not colour1)\n\t\t\t\t\t\t\t\t\t and the other branch is in colour1 (but not colour 0).\n\t\t\t\t\t\t\t\t\t However, one can do more complex things:\n\t\t\t\t\t\t\t\t\t e.g.  --detect_bubbles1 1,2,3/4,5,6 to find bubbles where one branch is in 1,2 or 3 (and not 4,5 or 6)\n\t\t\t\t\t\t\t\t\t and the other branch in colour 4,5 or 6 (but not 1,2, or 3).\n" \
   // -s
 "   [--output_bubbles1 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles1 are dumped to this file.\n" \
   // -t
@@ -163,6 +163,11 @@ const char* usage=
 "   [--max_var_len INT] \t\t\t\t\t\t=\t Maximum variant size searched for. Default 10kb. \n" \
  // -z
 "   [--list_ref_fasta FILENAME] \t\t\t\t\t=\t File listing reference chromosome fasta file(s); needed for path-divergence calls. \n" \
+  // -A
+"   [--dump_covg_distribution FILENAME] \t\t\t\t=\t Print k-mer coverage distribution to the file specified\n" \
+  // -B
+"   [--remove_low_coverage_kmers INT] \t\t\t\t=\t Filter for kmers with coverage less than or equal to  threshold.\n"  \
+
   "\n";
 
 
@@ -216,7 +221,7 @@ int default_opts(CmdLine * c)
   c->ref_colour=-1;
   c->homopolymer_limit=-1;
   c->quality_score_threshold=0;
-  //c->node_coverage_threshold=0;
+  c->node_coverage_threshold=0;
   c->quality_score_offset = 33;//standard fastq, not illumina v-whatever fastq  
   c->max_read_length = 0;
   c->max_var_len = 10000;
@@ -248,7 +253,8 @@ int default_opts(CmdLine * c)
   set_string_to_null(c->output_detect_bubbles2,MAX_FILENAME_LEN);
   set_string_to_null(c->ref_chrom_fasta_list,MAX_FILENAME_LEN);
   set_string_to_null(c->config,MAX_FILENAME_LEN);
-
+  set_string_to_null(c->covg_distrib_outfile,MAX_FILENAME_LEN);
+  
 
   //booleans
   c->cut_homopolymers = false;
@@ -257,8 +263,8 @@ int default_opts(CmdLine * c)
   c->remove_seq_errors=false;
   c->print_colour_coverages=false;
   c->dump_binary=false;
-  c->print_contig_fasta=false;
-  //c->remove_low_coverage_nodes=false;
+  c->print_supernode_fasta=false;
+  c->remove_low_coverage_nodes=false;
   c->detect_bubbles1=false;
   c->detect_bubbles2=false;
   c->make_pd_calls=false;
@@ -268,7 +274,7 @@ int default_opts(CmdLine * c)
   c->input_multicol_bin = false;
   c->input_seq = false;
   c->format_of_input_seq=UNSPECIFIED;
-
+  c->dump_covg_distrib=false;
 
   return 1;
 }
@@ -297,7 +303,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"fastq_offset",required_argument, NULL, 'n'},
     {"remove_seq_errors",no_argument,NULL,'o'},
     {"dump_binary",required_argument,NULL,'p'},
-    {"output_contigs",required_argument,NULL,'q'},
+    {"output_supernodes",required_argument,NULL,'q'},
     {"detect_bubbles1",required_argument, NULL, 'r'},
     {"output_bubbles1",required_argument, NULL, 's'},    
     {"detect_bubbles2",required_argument, NULL, 't'},
@@ -307,6 +313,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"print_colour_coverages",no_argument,NULL,'x'},
     {"max_var_len",required_argument,NULL,'y'},
     {"list_ref_fasta",required_argument,NULL,'z'},
+    {"dump_covg_distribution",required_argument,NULL,'A'},
+    {"remove_low_coverage_kmers",required_argument,NULL,'B'},
     {0,0,0,0}	
   };
   
@@ -317,7 +325,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -376,7 +384,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'b'://multicolour bin
       {
 	if (optarg==NULL)
-	  errx(1,"[-b | --multicolour_bin] option requires a filename (of a multicolour binary)");
+	  errx(1,"[--multicolour_bin] option requires a filename (of a multicolour binary)");
 	
 	if (strlen(optarg)<MAX_FILENAME_LEN)
 	  {
@@ -384,11 +392,11 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  }
 	else
 	  {
-	    errx(1,"[-a | --multicolour_bin] filename too long [%s]",optarg);
+	    errx(1,"[--multicolour_bin] filename too long [%s]",optarg);
 	  }
 	
 	if (access(optarg,R_OK)==-1){
-	  errx(1,"[-a | --multicolour_bin] filename [%s] cannot be accessed",optarg);
+	  errx(1,"[--multicolour_bin] filename [%s] cannot be accessed",optarg);
 	}
 	cmdline_ptr->input_multicol_bin = true;
 	//we set num_colours_in_multicol_bin later on - need to open the file and check signature, and cant do that til we know what kmer, and cant be sure in this case 
@@ -403,7 +411,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'c': //se_list
       {
 	if (optarg==NULL)
-	  errx(1,"[-c | --se_list] option requires a filename (listing single_ended fasta/q)");
+	  errx(1,"[--se_list] option requires a filename (listing single_ended fasta/q)");
 	
 	if (strlen(optarg)<MAX_FILENAME_LEN)
 	  {
@@ -411,11 +419,11 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  }
 	else
 	  {
-	    errx(1,"[-c | --se_list] filename too long [%s]",optarg);
+	    errx(1,"[--se_list] filename too long [%s]",optarg);
 	  }
 	
 	if (access(optarg,R_OK)==-1){
-	  errx(1,"[-c | --se_list] filename [%s] cannot be accessed",optarg);
+	  errx(1,"[--se_list] filename [%s] cannot be accessed",optarg);
 	}
 	cmdline_ptr->input_seq = true;
 	break; 
@@ -425,7 +433,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'd': //pe_list, comma separated - two files, listing matched pairs in the same order
       {
 	if (optarg==NULL)
-	  errx(1,"[-d | --pe_list] option requires two filenames, comma separated, listing paired-end fasta/q files (in matching order)");
+	  errx(1,"[--pe_list] option requires two filenames, comma separated, listing paired-end fasta/q files (in matching order)");
 	
 	if (strlen(optarg)<2*MAX_FILENAME_LEN)
 	  {
@@ -437,27 +445,27 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    filename = strtok(temp1, delims );
 	    if (filename==NULL)
 	      {
-		errx(1,"[-d | --pe_list] option requires two filenames, comma separated, listing paired-end fasta/q files (in matching order)");
+		errx(1,"[--pe_list] option requires two filenames, comma separated, listing paired-end fasta/q files (in matching order)");
 	      }
 	    strcpy(cmdline_ptr->pe_list_lh_mates,filename);
 	    filename = strtok( NULL, delims );
 	    if (filename==NULL)
 	      {
-		errx(1,"[-d | --pe_list] option requires two filenames, comma separated, listing paired-end fasta/q files (in matching order)");
+		errx(1,"[--pe_list] option requires two filenames, comma separated, listing paired-end fasta/q files (in matching order)");
 	      }
 	    strcpy(cmdline_ptr->pe_list_rh_mates,filename);
 
 	  }
 	else
 	  {
-	    errx(1,"[-d | --pe_list] filename too long [%s]",optarg);
+	    errx(1,"[--pe_list] filename too long [%s]",optarg);
 	  }
 	
 	if (access(cmdline_ptr->pe_list_lh_mates,R_OK)==-1){
-	  errx(1,"[-d | --pe_list] filename [%s] cannot be accessed",cmdline_ptr->pe_list_lh_mates);
+	  errx(1,"[--pe_list] filename [%s] cannot be accessed",cmdline_ptr->pe_list_lh_mates);
 	}
 	if (access(cmdline_ptr->pe_list_rh_mates,R_OK)==-1){
-	  errx(1,"[-d | --pe_list] filename [%s] cannot be accessed",cmdline_ptr->pe_list_rh_mates);
+	  errx(1,"[--pe_list] filename [%s] cannot be accessed",cmdline_ptr->pe_list_rh_mates);
 	}
 	cmdline_ptr->input_seq = true;
 	break; 
@@ -466,14 +474,14 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       case 'e': //kmer size
 	{
 	  if (optarg==NULL)
-	    errx(1,"[-e | --kmer_size] option requires int argument [kmer size]");	    
+	    errx(1,"[--kmer_size] option requires int argument [kmer size]");	    
 	  cmdline_ptr->kmer_size = atoi(optarg);
 	  
 	  if (cmdline_ptr->kmer_size == 0)
-	    errx(1,"[-e | --kmer_size] option requires int argument bigger than 0");
+	    errx(1,"[--kmer_size] option requires int argument bigger than 0");
 
 	  if (cmdline_ptr->kmer_size % 2 == 0)
-	    errx(1,"[-e | --kmer_size] option requires int argument which is not divisible by 2");
+	    errx(1,"[--kmer_size] option requires int argument which is not divisible by 2");
 	  
 	  break;
 	}
@@ -494,7 +502,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'g': //mem_height = number of buckets
       {
 	if (optarg==NULL)
-	  errx(1,"[-g | --mem_height] option requires int argument [hash table,  number of buckets in bits - ie 2^(this number) is the number of buckets]");
+	  errx(1,"[--mem_height] option requires int argument [hash table,  number of buckets in bits - ie 2^(this number) is the number of buckets]");
 	cmdline_ptr->number_of_buckets_bits = atoi(optarg);      
 	break;
       }
@@ -502,11 +510,11 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'i': //ref_colour
       {
 	if (optarg==NULL)
-	  errx(1,"[-i | --ref_colour] option requires int argument [which colour is the reference - i.e. what position in colour_list (count starts from 0)]");
+	  errx(1,"[--ref_colour] option requires int argument [which colour is the reference - i.e. what position in colour_list (count starts from 0)]");
 	if (optarg<0)
-	  errx(1,"[-i | --ref_colour] option requires positive argument [which colour is the reference - i.e. what position in colour_list (count starts from 0)]");
+	  errx(1,"[--ref_colour] option requires positive argument [which colour is the reference - i.e. what position in colour_list (count starts from 0)]");
 	if (atoi(optarg)>NUMBER_OF_COLOURS)
-	  errx(1,"[-i | --ref_colour] requires you specify the colour of the reference, and this must be less than the maximum number of colours allowed by Cortex. This maximum number is fixed at compile-time. See the Manual to find how to reset this, and check the number you have entered : %s is correct.", optarg);
+	  errx(1,"[--ref_colour] requires you specify the colour of the reference, and this must be less than the maximum number of colours allowed by Cortex. This maximum number is fixed at compile-time. See the Manual to find how to reset this, and check the number you have entered : %s is correct.", optarg);
 
 	cmdline_ptr->using_ref=true;
 	cmdline_ptr->ref_colour = atoi(optarg);      
@@ -523,9 +531,9 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       {
 
 	if (optarg==NULL)
-	  errx(1,"[-k | --cut_homopolymers] option requires positive integer  argument [maximum allowed length of homopolymer in read]");
+	  errx(1,"[--cut_homopolymers] option requires positive integer  argument [maximum allowed length of homopolymer in read]");
 	if (optarg<0)
-	  errx(1,"[-k | --cut_homopolymers] option requires positive integer  argument [maximum allowed length of homopolymer in read]");
+	  errx(1,"[--cut_homopolymers] option requires positive integer  argument [maximum allowed length of homopolymer in read]");
 
 	cmdline_ptr->cut_homopolymers  = true;
 	cmdline_ptr->homopolymer_limit = atoi(optarg);      
@@ -547,18 +555,18 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'm'://quality threshold
       {
 	if (optarg==NULL)
-	  errx(1,"[-m  | --quality_score_threshold] option requires int argument [quality score threshold]");
+	  errx(1,"[--quality_score_threshold] option requires int argument [quality score threshold]");
 	cmdline_ptr->quality_score_threshold = atoi(optarg);
 
 	
 	if ( (cmdline_ptr->format_of_input_seq != FASTQ) && (cmdline_ptr->format_of_input_seq != UNSPECIFIED) )
 	  {
-	    errx(1,"[-m  | --quality_score_threshold] has been called, implying the input format is FASTQ, but another command-line input has specified the input format is NOT FASTQ. Inconsistent args");
+	    errx(1,"[--quality_score_threshold] has been called, implying the input format is FASTQ, but another command-line input has specified the input format is NOT FASTQ. Inconsistent args");
 	  }
 	cmdline_ptr->format_of_input_seq = FASTQ;
 	
 	if (cmdline_ptr->quality_score_threshold == 0)
-	  errx(1,"[-m | --quality_score_threshold] option requires int argument bigger than 0");
+	  errx(1,"[--quality_score_threshold] option requires int argument bigger than 0");
 	break;    
       }
 
@@ -583,7 +591,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       {
 	cmdline_ptr->dump_binary=true;
 	if (optarg==NULL)
-	  errx(1,"[-p/--dump_binary] option requires a filename");
+	  errx(1,"[--dump_binary] option requires a filename");
 	
 	if (strlen(optarg)<MAX_FILENAME_LEN)
 	  {
@@ -592,11 +600,11 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  }
 	else
 	  {
-	    errx(1,"[-o/--dump_binary] filename too long [%s]",optarg);
+	    errx(1,"[--dump_binary] filename too long [%s]",optarg);
 	  }
 	
 	if (access(optarg,F_OK)==0){
-	  errx(1,"[-o/--dump_binary] filename [%s] exists!",optarg);
+	  errx(1,"[--dump_binary] filename [%s] exists!",optarg);
 	}
 	
 	break; 
@@ -605,9 +613,9 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
     case 'q': //output supernode contigs
       {
-	cmdline_ptr->print_contig_fasta = true;
+	cmdline_ptr->print_supernode_fasta = true;
 	if (optarg==NULL)
-	  errx(1,"[-q/--output_contigs] option requires a filename");
+	  errx(1,"[--output_supernodes] option requires a filename");
 	
 	if (strlen(optarg)<MAX_FILENAME_LEN)
 	  {
@@ -615,16 +623,16 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  }
 	else
 	  {
-	    errx(1,"[-q/--output_contigs] filename too long [%s]",optarg);
+	    errx(1,"[--output_supernodes] filename too long [%s]",optarg);
 	  }
 	
 	if (access(optarg,F_OK)==0)
 	  {
-	    errx(1,"[-q/--output_contigs] filename [%s] already exists. Exiting, to prevent overwriting.",optarg);
+	    errx(1,"[--output_supernodes] filename [%s] already exists. Exiting, to prevent overwriting.",optarg);
 	  }
 	if (optarg[0]=='-')
 	  {
-	    errx(1, "[-q/--output_contigs] requires a filename, but finds this: [%s] starts with -. Have you omitted the filename?\n", optarg);
+	    errx(1, "[--output_supernodes] requires a filename, but finds this: [%s] starts with -. Have you omitted the filename?\n", optarg);
 	  }
 	break; 
       }
@@ -633,7 +641,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'r': //detect_bubbles1 - will give something of this form 1,2,3/5,1,7 to show the colours it wants to distinguish
       {
 	if (optarg==NULL)
-	  errx(1,"[-r | --detect_bubbles1] option requires two sets of comma-separated integers, separated by a forward-slash. eg 1/1, or 1,2,3/3,4,5");
+	  errx(1,"[--detect_bubbles1] option requires two sets of comma-separated integers, separated by a forward-slash. eg 1/1, or 1,2,3/3,4,5");
 	
 	int ret = parse_colourinfo_argument(cmdline_ptr, optarg, strlen(optarg), "[-r | --detect_bubbles1] ", 1);
 	if (ret==-1)
@@ -647,7 +655,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 's': //output file for detect_bubbles1
       {
 	if (optarg==NULL)
-	  errx(1,"[-s | --output_bubbles1] option requires a filename");
+	  errx(1,"[--output_bubbles1] option requires a filename");
 
 	if (strlen(optarg)<MAX_FILENAME_LEN)
 	  {
@@ -655,11 +663,11 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  }
 	else
 	  {
-	    errx(1,"[-s | --output_bubbles1] filename too long [%s]",optarg);
+	    errx(1,"[--output_bubbles1] filename too long [%s]",optarg);
 	  }
 	
 	if (access(optarg,F_OK)==0){
-	  errx(1,"[-s | --output_bubbles1] filename [%s] exists!",optarg);
+	  errx(1,"[--output_bubbles1] filename [%s] exists!",optarg);
 	}
 	break;
       }
@@ -668,7 +676,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 't': //detect_bubbles2 - will give something of this form 1,2,3/5,1,7 to show the colours it wants to distinguish
       {
 	if (optarg==NULL)
-	  errx(1,"[-t | --detect_bubbles2] option requires two sets of comma-separated integers, separated by a forward-slash. eg 1/1, or 1,2,3/3,4,5");
+	  errx(1,"[--detect_bubbles2] option requires two sets of comma-separated integers, separated by a forward-slash. eg 1/1, or 1,2,3/3,4,5");
 	
 	int ret = parse_colourinfo_argument(cmdline_ptr, optarg, strlen(optarg), "[-t | --detect_bubbles2] ", 2);
 	if (ret==-1)
@@ -681,7 +689,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'u': //output file for detect_bubbles2
       {
 	if (optarg==NULL)
-	  errx(1,"[-u | --output_bubbles2] option requires a filename");
+	  errx(1,"[--output_bubbles2] option requires a filename");
 
 	if (strlen(optarg)<MAX_FILENAME_LEN)
 	  {
@@ -689,11 +697,11 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  }
 	else
 	  {
-	    errx(1,"[-u | --output_bubbles2] filename too long [%s]",optarg);
+	    errx(1,"[--output_bubbles2] filename too long [%s]",optarg);
 	  }
 	
 	if (access(optarg,F_OK)==0){
-	  errx(1,"[-s | --output_bubbles2] filename [%s] exists!",optarg);
+	  errx(1,"[--output_bubbles2] filename [%s] exists!",optarg);
 	}
 	break;        
       } 
@@ -702,11 +710,11 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       {
 
 	if (optarg==NULL)
-	  errx(1,"[-v | --format] option requires argument FASTQ, FASTA or CTX");
+	  errx(1,"[--format] option requires argument FASTQ, FASTA or CTX");
 
 	if ( (strcmp(optarg, "FASTA") !=0) && (strcmp(optarg, "FASTQ") !=0) && (strcmp(optarg, "CTX") !=0)  )
 	  {
-	    errx(1,"[-v | --format] option requires argument FASTQ, FASTA or CTX");
+	    errx(1,"[--format] option requires argument FASTQ, FASTA or CTX");
 	  }
 	cmdline_ptr->seq_file_format_known=true;
 	
@@ -729,10 +737,10 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'w'://max_read_length
       {
 	if (optarg==NULL)
-	  errx(1,"[-w | --max_read_len] option requires (positive) integer argument");
+	  errx(1,"[--max_read_len] option requires (positive) integer argument");
 	if (atoi(optarg)<0)
 	  {
-	    errx(1,"[-w | --max_read_len] option requires (positive) integer argument");
+	    errx(1,"[--max_read_len] option requires (positive) integer argument");
 	  }
 	cmdline_ptr->max_read_length = atoi(optarg);
 
@@ -746,10 +754,10 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'y':
       {
 	if (optarg==NULL)
-	  errx(1,"[-y | --max_var_len] option requires (positive) integer argument");
+	  errx(1,"[--max_var_len] option requires (positive) integer argument");
 	if (atoi(optarg)<0)
 	  {
-	    errx(1,"[-y | --max_var_len] option requires (positive) integer argument");
+	    errx(1,"[--max_var_len] option requires (positive) integer argument");
 	  }
 	cmdline_ptr->max_var_len = atoi(optarg);
 
@@ -779,13 +787,51 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	break ;
       }
 
+    case 'A':
+      {
 
+	if (optarg==NULL)
+	  errx(1,"[--dump_covg_distribution] option requires a filename");
+	
+	if (strlen(optarg)<MAX_FILENAME_LEN)
+	  {
+	    strcpy(cmdline_ptr->covg_distrib_outfile,optarg);
+	    cmdline_ptr->dump_covg_distrib=true;
+	  }
+	else
+	  {
+	    errx(1,"[--dump_covg_distribution] filename too long [%s]",optarg);
+	  }
+	
+	if (access(optarg,F_OK)==0){
+	  errx(1,"[--dump_covg_distribution] filename [%s] already exists",optarg);
+	}
+
+
+	break ;
+      }
+
+    case 'B':
+      {
+
+	if (optarg==NULL)
+	  {
+	    errx(1,"[--remove_low_coverage_kmers] option requires int argument [node coverage cut off]");
+	  }
+	cmdline_ptr->node_coverage_threshold = atoi(optarg);
+	cmdline_ptr->remove_low_coverage_nodes = true;
+	
+	if (cmdline_ptr->node_coverage_threshold == 0)
+	  errx(1,"[--remove_low_coverage_kmers] option requires int argument bigger than 0");
+	break;    
+	
+      }
       
+   
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:", long_options, &longopt_index);
+
   }
-
-
   return 0;
 }
 
@@ -1025,6 +1071,7 @@ CmdLine parse_cmdline( int argc, char* argv[], int unit_size)
   char error_string[LEN_ERROR_STRING]="";
   int err = parse_cmdline_inner_loop(argc, argv, unit_size, &cmd_line, error_string);
 
+
   if (err==-1) 
     {
       printf("Error in cmd-line input: %s\n", error_string);
@@ -1227,5 +1274,5 @@ int parse_commasep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_err
 
   return 0;
 }
-  
+
 

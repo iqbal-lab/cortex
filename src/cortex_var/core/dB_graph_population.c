@@ -3068,7 +3068,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 	      {
 		for (i=1; (i<=length_sup-1); i++)
 		  {
-		    printf("Zam Prune supernodes\n");
+
 		    db_graph_db_node_prune_low_coverage(path_nodes[i],coverage,
 							&db_node_action_set_status_pruned,
 							db_graph,
@@ -3345,9 +3345,17 @@ void db_graph_traverse_with_array_of_longlongs(void (*f)(HashTable*, Element *, 
   }
 }
 
-void db_graph_get_covg_distribution(dBGraph* db_graph, EdgeArrayType type, int index)
+void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArrayType type, int index, boolean (*condition)(dBNode* elem) )
 {
   int i;
+
+  FILE* fout=fopen(filename, "w");
+  if (fout==NULL)
+    {
+      printf("Cannot open %s\n", filename);
+      exit(1);
+    }
+
 
   long long* covgs = (long long*) malloc(sizeof(long long) * 10001);
   if (covgs==NULL)
@@ -3370,21 +3378,24 @@ void db_graph_get_covg_distribution(dBGraph* db_graph, EdgeArrayType type, int i
 
   void bin_covg_and_add_to_array(HashTable* htable, Element * e , long long** arr, int len, EdgeArrayType type, int colour)
   {
-    int bin = e->coverage[colour];
-    if (bin>10000)
+    if (condition(e)==true)
       {
-	bin = 10000;
+	int bin = e->coverage[colour];
+	if (bin>10000)
+	  {
+	    bin = 10000;
+	  }
+	*(arr[bin]) = *(arr[bin]) +1; 
       }
-    *(arr[bin]) = *(arr[bin]) +1; 
   }
   
   db_graph_traverse_with_array_of_longlongs(&bin_covg_and_add_to_array, db_graph, covgs_ptrs, 10001, type, index);
 
   for (i=0; i<=10000; i++)
     {
-      printf("multiplicity:%d\tNumber:%qd\n",i,covgs[i]);
+      fprintf(fout, "multiplicity:%d\tNumber:%qd\n",i,covgs[i]);
     }
-
+  fclose(fout);
   free(covgs_ptrs);
   free(covgs);
 }

@@ -54,6 +54,8 @@ const char* usage=
 "   [--print_coverages] = Print coverages for contigs/supernodes in a different file with _cov suffix.\n" \
 "   [--remove_seq_errors] = remove sequence of kmers induced by errors.\n"\
 "   [--remove_bubbles] = Removes the bubbles in the graph.\n"\
+"   [--max_read_len] = Maximum read length over all input files.\n"\
+
 "\n";
 
 

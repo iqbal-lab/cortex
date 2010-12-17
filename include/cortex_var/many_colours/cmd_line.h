@@ -34,7 +34,7 @@ typedef struct
   int ref_colour;
   int homopolymer_limit;
   int quality_score_threshold;
-  //int node_coverage_threshold;
+  int node_coverage_threshold;
   int quality_score_offset;
   int max_read_length;
   int max_var_len;
@@ -67,15 +67,15 @@ typedef struct
   char output_detect_bubbles2[MAX_FILENAME_LEN];
   char ref_chrom_fasta_list[MAX_FILENAME_LEN];
   char config[MAX_FILENAME_LEN];
-
+  char covg_distrib_outfile[MAX_FILENAME_LEN];
   boolean cut_homopolymers;
   boolean remove_pcr_dups;
   //boolean clip_tips;
   boolean remove_seq_errors;
   boolean print_colour_coverages;
   boolean dump_binary;
-  boolean print_contig_fasta;
-  //boolean remove_low_coverage_nodes;
+  boolean print_supernode_fasta;
+  boolean remove_low_coverage_nodes;
   boolean detect_bubbles1;
   boolean detect_bubbles2;
   boolean make_pd_calls;
@@ -84,6 +84,7 @@ typedef struct
   boolean input_colours;
   boolean input_multicol_bin;//flag - has it been input
   boolean input_seq; //flag - has it been input
+  boolean dump_covg_distrib; //flag - shoud we dump covg distrib
 
   //int detect_vars_delta;
   //int detect_vars_branch_length;

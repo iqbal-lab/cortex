@@ -33,8 +33,11 @@
 #include <string.h>
 #include <internal_oxford.h>
 #include <cmd_line.h>
+#include <time.h>
 
-//#include <internal_tgac.h>
+void timestamp();
+
+
 
 
 
@@ -279,6 +282,9 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 
 int main(int argc, char **argv){
 
+  printf("Starting Cortex\n");
+  timestamp();
+
   CmdLine cmd_line = parse_cmdline(argc,argv,sizeof(Element));
 
   int hash_key_bits, bucket_size;
@@ -389,6 +395,7 @@ int main(int argc, char **argv){
   int max_retries=15;
   db_graph = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
   printf("Hash table created, number of buckets: %d\n",1 << hash_key_bits);
+  timestamp();
 
 
   // input data:
@@ -452,6 +459,8 @@ int main(int argc, char **argv){
 								    cmd_line.cut_homopolymers, cmd_line.homopolymer_limit, cmd_line.quality_score_offset,
 								    cmd_line.format_of_input_seq,
 								    cmd_line.max_read_length, 0, db_graph);
+      printf("Fasta/q data loaded\n");
+      timestamp();
       
     }
   else
@@ -466,6 +475,7 @@ int main(int argc, char **argv){
 	  int kmers_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line.multicolour_bin,db_graph, &first_colour_data_starts_going_into);
 	  printf("Loaded the multicolour binary %s, and got %d kmers\n", cmd_line.multicolour_bin, kmers_loaded/db_graph->kmer_size);
 	  graph_has_had_no_other_binaries_loaded=false;
+	  timestamp();
 	}
 
       if (cmd_line.input_colours==true)
@@ -474,6 +484,7 @@ int main(int argc, char **argv){
 		 cmd_line.colour_list, first_colour_data_starts_going_into);
 	  load_population_as_binaries_from_graph(cmd_line.colour_list, graph_has_had_no_other_binaries_loaded, db_graph);
 	  printf("Finished loading single_colour binaries\n");
+	  timestamp();
 	}
 
 
@@ -492,8 +503,18 @@ int main(int argc, char **argv){
       printf("Then remove low coverage nodes (<= 1) based on topology as well as covg  -  must be more likely to be single base error than due to sampling\n");
       db_graph_remove_errors_considering_covg_and_topology(1,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
 							   &apply_reset_to_all_edges, &apply_reset_to_all_edges_2,cmd_line.max_var_len);
-
+      printf("Error correction done\n");
+      timestamp();
     }
+  else if (cmd_line.remove_low_coverage_nodes==true)
+    {
+      printf("Remove noes with covg <= %d\n", cmd_line.node_coverage_threshold);
+      db_graph_remove_low_coverage_nodes_ignoring_colours(cmd_line.node_coverage_threshold, db_graph);
+      printf("Error correction done\n");
+      timestamp();
+      
+    }
+
 
   if (cmd_line.dump_binary==true)
     {
@@ -502,24 +523,40 @@ int main(int argc, char **argv){
 	  //dump single colour
 	  printf("Input data was fasta/q, so dump single colour binary file: %s\n", cmd_line.output_binary_filename);
 	  db_graph_dump_single_colour_binary_of_colour0(cmd_line.output_binary_filename, &db_node_check_status_not_pruned,db_graph);
+	  printf("Binary dumped\n");
+	  timestamp();
+
 	}
       else
 	{
 	  printf("Dump multicolour binary with %d colours (compile-time setting)\n", NUMBER_OF_COLOURS);
 	  db_graph_dump_binary(cmd_line.output_binary_filename, &db_node_check_status_not_pruned,db_graph);
+	  printf("Binary dumped\n");
+	  timestamp();
+
 	}
     }
 
-  if (cmd_line.print_contig_fasta==true)
+  if (cmd_line.print_supernode_fasta==true)
     {
       printf("Print contigs(supernodes) in the graph created by the union of all colours.\n");
       
       db_graph_print_supernodes_defined_by_func_of_colours(cmd_line.output_supernodes, "", cmd_line.max_var_len,// max_var_len is the public face of maximum expected supernode size
 							   db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
 							   &print_appropriate_extra_supernode_info);
+      printf("Supernodes dumped\n");
+      timestamp();
 
     }
 
+
+  if (cmd_line.dump_covg_distrib==true)
+    {
+      printf("Dump kmer coverage distribution for colour 0 to file %s\n", cmd_line.covg_distrib_outfile);
+      db_graph_get_covg_distribution(cmd_line.covg_distrib_outfile, db_graph, individual_edge_array, 0, &db_node_check_status_not_pruned);
+      printf("Covg distribution dumped\n");
+      timestamp();
+    }
 
   // DETECT BUBBLES
 
@@ -529,6 +566,8 @@ int main(int argc, char **argv){
 
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+      printf("Detect Bubbles 1, completed\n");
+      timestamp();
     }
 
   //second detect bubbles
@@ -538,6 +577,8 @@ int main(int argc, char **argv){
 
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+      printf("Detect Bubbles 2, completed\n");
+      timestamp();
       
 
     }
@@ -546,6 +587,9 @@ int main(int argc, char **argv){
     {
       run_pd_calls(&cmd_line, db_graph, &print_appropriate_extra_variant_info);
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+      printf("Finished Path Divergence calls\n");
+      timestamp();
+
     }
 
 
@@ -553,4 +597,13 @@ int main(int argc, char **argv){
   hash_table_free(&db_graph);
 
   return 0;
+}
+
+
+
+void timestamp(){
+ time_t ltime;
+ ltime = time(NULL);
+ printf("\n-----\n%s",asctime(localtime(&ltime)));
+ fflush(stdout);
 }

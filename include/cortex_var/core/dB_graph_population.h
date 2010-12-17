@@ -350,7 +350,7 @@ void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, E
 void db_graph_traverse_with_array_of_longlongs(void (*f)(HashTable*, Element *, long long**, int, EdgeArrayType, int),
 					       HashTable * hash_table, long long** array, int length_of_array, EdgeArrayType type, int index);
  
-void db_graph_get_covg_distribution(dBGraph* db_graph, EdgeArrayType type, int index);
+void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArrayType type, int index,  boolean (*condition)(dBNode* elem) );
 
 void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Element* node, int** array_of_supernode_lengths, int length_of_array,
                                                          EdgeArrayType type, int index);
