@@ -315,6 +315,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"list_ref_fasta",required_argument,NULL,'z'},
     {"dump_covg_distribution",required_argument,NULL,'A'},
     {"remove_low_coverage_kmers",required_argument,NULL,'B'},
+    {"health_check",no_argument,NULL,'C'},
     {0,0,0,0}	
   };
   
@@ -325,7 +326,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -816,20 +817,30 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 	if (optarg==NULL)
 	  {
-	    errx(1,"[--remove_low_coverage_kmers] option requires int argument [node coverage cut off]");
+	    printf("[--remove_low_coverage_kmers] option requires int argument [node coverage cut off]");
+	    exit(1);
 	  }
 	cmdline_ptr->node_coverage_threshold = atoi(optarg);
 	cmdline_ptr->remove_low_coverage_nodes = true;
 	
-	if (cmdline_ptr->node_coverage_threshold == 0)
-	  errx(1,"[--remove_low_coverage_kmers] option requires int argument bigger than 0");
+	if (cmdline_ptr->node_coverage_threshold <= 0)
+	  {
+	    printf("[--remove_low_coverage_kmers] option requires int argument bigger than 0");
+	    exit(1);
+	  }
 	break;    
 	
+      }
+
+    case 'C':
+      {
+	cmdline_ptr->health_check=true;
+	break;    
       }
       
    
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:", long_options, &longopt_index);
 
   }
   return 0;

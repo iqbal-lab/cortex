@@ -387,6 +387,120 @@ int db_graph_db_node_clip_tip_for_specific_person_or_pop(dBNode * node, int limi
 
 
 
+
+int db_graph_db_node_clip_tip_with_orientation_in_subgraph_defined_by_func_of_colours(dBNode * node, Orientation orientation, int limit,
+										       void (*node_action)(dBNode * node),dBGraph * db_graph, 
+										       Edges (*get_colour)(const dBNode*),
+										      void (*apply_reset_to_specific_edge_in_colour)(dBNode*, Orientation, Nucleotide),
+										       void (*apply_reset_to_colour)(dBNode*)
+										       )
+{ 
+
+  Nucleotide nucleotide, reverse_nucleotide;
+  int length = 0;
+  int i;
+  dBNode * nodes[limit];
+  Orientation next_orientation;
+  dBNode * next_node;
+  char seq[db_graph->kmer_size+1];
+  
+  //starting in a blunt end also prevents full loops 
+  if (db_node_is_blunt_end_in_subgraph_given_by_func_of_colours(node, opposite_orientation(orientation), get_colour))
+    {
+      boolean join_main_trunk = false;
+
+      while(db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(node,orientation,&nucleotide, get_colour)) 
+	{
+	  nodes[length] = node;
+	  
+	  next_node = db_graph_get_next_node_in_subgraph_defined_by_func_of_colours(node,orientation,&next_orientation,nucleotide,&reverse_nucleotide,db_graph, get_colour);
+	  
+	  if(next_node == NULL){
+	    printf("dB_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
+	    exit(1);
+	  }	           
+	  
+	  length ++;
+	  
+	  
+	  if (length>limit){
+	    break;
+	  }
+	  
+	  //want to stop when we join another trunk
+	  if (!db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(next_node,opposite_orientation(next_orientation),&nucleotide, get_colour)){
+	    join_main_trunk = true;
+	    break;
+	  }
+
+	  //keep track of node
+	  
+	  node = next_node;
+	  orientation = next_orientation;        
+	}
+      
+      if (! join_main_trunk)
+	{
+	  length = 0;
+	}
+      else
+	{//clear edges and mark nodes as pruned
+	  for(i=0;i<length;i++)
+	    {
+	      if (DEBUG){
+		printf("CLIPPING node: %s\n",binary_kmer_to_seq(element_get_kmer(nodes[i]),db_graph->kmer_size,seq));
+	      }
+	      
+	      node_action(nodes[i]);
+	      //perhaps we want to move this inside the node action?
+	      apply_reset_to_colour(nodes[i]);
+	    }
+	  
+	  if (DEBUG){
+	    printf("RESET %c BACK\n",binary_nucleotide_to_char(reverse_nucleotide));
+	  }
+	  apply_reset_to_specific_edge_in_colour(next_node,opposite_orientation(next_orientation),reverse_nucleotide);
+     }
+      
+    }
+  
+  return length;
+}
+
+
+
+
+// clip a tip in the graph (the tip starts in node)
+// limit is max length for tip
+// node_action is applied to all the elements in the tip
+// returns the length of the tip (0 means no length)
+int db_graph_db_node_clip_tip_in_subgraph_defined_by_func_of_colours(dBNode * node, int limit,
+								     void (*node_action)(dBNode * node),
+								     dBGraph * db_graph, 
+								     Edges (*get_colour)(const dBNode*),
+								     void (*apply_reset_to_specific_edge_in_colour)(dBNode*, Orientation, Nucleotide),
+								     void (*apply_reset_to_colour)(dBNode*)
+								     )
+{
+
+  int length_tip = 0;
+
+  
+  length_tip = db_graph_db_node_clip_tip_with_orientation_in_subgraph_defined_by_func_of_colours(node,forward,limit,node_action,db_graph, get_colour, apply_reset_to_specific_edge_in_colour, apply_reset_to_colour );
+  
+  if (length_tip==0){
+    length_tip = db_graph_db_node_clip_tip_with_orientation_in_subgraph_defined_by_func_of_colours(node,reverse,limit,node_action,db_graph, get_colour, apply_reset_to_specific_edge_in_colour, apply_reset_to_colour);
+    
+  }
+  
+  return length_tip;
+}
+
+
+
+
+
+
 // 1. the argument sum_of_covgs_in_desired_colours allows you to choose which colour (or union of colours) you want to apply this to
 // eg you might want  to "remove" (as defined by the action) any node that has coverage <= your threshold in the UNION of all colours, or in colour red or whatever
 // SO - this func returns the sum of coverages in the colours you care about
@@ -484,10 +598,10 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int 
   }
 
   return db_graph_db_node_prune_low_coverage(node, coverage, node_action, db_graph,
-					     sum_of_covgs_in_desired_colours,
-					     get_edge_of_interest,
-					     apply_reset_to_specified_edges,
-					     apply_reset_to_specified_edges_2);
+					     &sum_of_covgs_in_desired_colours,
+					     &get_edge_of_interest,
+					     &apply_reset_to_specified_edges,
+					     &apply_reset_to_specified_edges_2);
 
 
 }
@@ -2784,6 +2898,59 @@ void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArray
   
 }
 
+
+
+
+
+void db_graph_clip_tips_in_subgraph_defined_by_func_of_colours(dBGraph * db_graph,
+							       Edges (*get_colour)(const dBNode*),
+							       void (*apply_reset_to_specific_edge_in_colour)(dBNode*, Orientation, Nucleotide),
+							       void (*apply_reset_to_colour)(dBNode*))
+{
+  
+  void clip_tips(dBNode * node){
+    
+    //use max length k+1, which is what you would get with a single base error - a bubble of that length
+    if (db_node_check_status_none(node)){
+      db_graph_db_node_clip_tip_in_subgraph_defined_by_func_of_colours(node, 1+db_graph->kmer_size,&db_node_action_set_status_pruned,db_graph, 
+								       get_colour, apply_reset_to_specific_edge_in_colour, apply_reset_to_colour);
+    }
+  }
+
+  hash_table_traverse(&clip_tips,db_graph);
+  
+}
+
+
+void apply_reset_to_specific_edge_in_union_of_all_colours(dBNode* node, Orientation or, Nucleotide nuc)
+{
+  int j;
+  for (j=0; j<NUMBER_OF_COLOURS; j++)
+    {
+      reset_one_edge(node, or, nuc, individual_edge_array, j);
+    }
+}
+
+void apply_reset_to_all_edges_in_union_of_all_colours(dBNode* node )
+{
+  int j;
+  for (j=0; j<NUMBER_OF_COLOURS; j++)
+    {
+      db_node_reset_edges(node, individual_edge_array, j);
+    }
+}
+
+
+void db_graph_clip_tips_in_union_of_all_colours(dBGraph* db_graph)
+{
+  db_graph_clip_tips_in_subgraph_defined_by_func_of_colours(db_graph,
+							    &element_get_colour_union_of_all_colours,
+							    &apply_reset_to_specific_edge_in_union_of_all_colours,
+							    &apply_reset_to_all_edges_in_union_of_all_colours);
+}
+
+
+
 void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, char* filename_sings, int max_length, dBGraph * db_graph, EdgeArrayType type, int index, 
 							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*)){
 
@@ -3167,7 +3334,7 @@ void db_graph_remove_low_coverage_nodes(int coverage, dBGraph * db_graph,
   }
 
   hash_table_traverse(&prune_node,db_graph); 
-}
+} 
 
 
 void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph * db_graph)
@@ -8535,3 +8702,72 @@ void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
   print_standard_extra_supernode_info(var->other_allele, var->other_allele_or, var->len_other_allele, fout);
   fprintf(fout, "\n\n");
 }
+
+
+
+//check all edges in graph
+long long db_graph_health_check(boolean fix, dBGraph * db_graph){
+  dBNode * next_node;
+  Nucleotide reverse_nucleotide;
+  Orientation next_orientation;
+  long long count_nodes;
+  char tmp_seq[db_graph->kmer_size+1]; 
+
+  void check_node_with_orientation(dBNode * node, Orientation orientation){
+
+    int j;
+    for (j=0; j< NUMBER_OF_COLOURS; j++)
+      {
+
+	void check_base(Nucleotide n)
+	{     
+	  if (db_node_edge_exist(node,n,orientation, individual_edge_array, j)==true){
+
+	    next_node = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,n,&reverse_nucleotide,db_graph, individual_edge_array, j);
+	    
+	    if(next_node == NULL)
+	      {
+		printf("Health check problem -  didnt find node in hash table: %s %c %s\n",
+		       binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,tmp_seq),
+		       binary_nucleotide_to_char(n), 
+		       orientation == forward ? "forward" : "reverse");
+		if (fix)
+		  {
+		    db_node_reset_edge(node,n,orientation, individual_edge_array, j);
+		  }
+	      }
+	    else
+	      {
+		if (db_node_edge_exist(next_node,reverse_nucleotide,opposite_orientation(next_orientation), individual_edge_array, j)==false)
+		  {
+		    printf("Health check problem - inconsitency return arrow missing: %s %c %s\n",
+			   binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,tmp_seq),
+			   binary_nucleotide_to_char(n), 
+			   orientation == forward ? "forward" : "reverse");
+		    if (fix)
+		      {
+			db_node_reset_edge(node,orientation, n, individual_edge_array, j);
+		      }
+		  }
+	      }
+	    
+	  }
+	}
+
+	nucleotide_iterator(&check_base);
+      }
+  }
+
+
+  void check_node(dBNode * node){
+    check_node_with_orientation(node,forward);
+    check_node_with_orientation(node,reverse);
+    count_nodes++;
+  }
+
+
+  hash_table_traverse(&check_node,db_graph); 
+  printf("%qd nodes checked\n",count_nodes);
+  return count_nodes;
+}
+

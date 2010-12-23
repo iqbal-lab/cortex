@@ -735,6 +735,28 @@ boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayTy
   return edges == 0;
 }
 
+
+
+boolean db_node_is_blunt_end_in_subgraph_given_by_func_of_colours(dBNode * node, Orientation orientation,  Edges (*get_colour)(const dBNode*) ){
+  
+  Edges edges = get_colour(node);
+
+
+  if (orientation == reverse){
+    edges >>= 4;
+  }
+  
+  edges &= 15; // AND with 00001111 so that we only look at the 4 least significant bits
+  
+  return edges == 0;
+}
+
+
+
+
+
+
+
 boolean db_node_check_status(dBNode * node, NodeStatus status){
   return node->status == (char) status;
 }

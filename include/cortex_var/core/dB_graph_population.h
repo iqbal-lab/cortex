@@ -79,6 +79,30 @@ int db_graph_db_node_clip_tip_for_specific_person_or_pop(dBNode * node, int limi
 
 
 
+int db_graph_db_node_clip_tip_in_subgraph_defined_by_func_of_colours(dBNode * node, int limit,
+								     void (*node_action)(dBNode * node),
+								     dBGraph * db_graph, 
+								     Edges (*get_colour)(const dBNode*),
+								     void (*apply_reset_to_specific_edge_in_colour)(dBNode*, Orientation, Nucleotide),
+								     void (*apply_reset_to_colour)(dBNode*)
+								     );
+
+
+
+void apply_reset_to_specific_edge_in_union_of_all_colours(dBNode* node, Orientation or, Nucleotide nuc);
+void apply_reset_to_all_edges_in_union_of_all_colours(dBNode* node );
+
+
+void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
+
+void db_graph_clip_tips_in_subgraph_defined_by_func_of_colours(dBGraph * db_graph,
+							       Edges (*get_colour)(const dBNode*),
+							       void (*apply_reset_to_specific_edge_in_colour)(dBNode*, Orientation, Nucleotide),
+							       void (*apply_reset_to_colour)(dBNode*));
+
+void db_graph_clip_tips_in_union_of_all_colours(dBGraph* db_graph);
+
+
 
 
 
@@ -301,7 +325,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 
 
 
-void db_graph_clip_tips_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
+
 
 void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, char* filename_sings, int max_length, dBGraph * db_graph, EdgeArrayType type, int index,
                                                           void (*print_extra_info)(dBNode**, Orientation*, int, FILE*));
@@ -528,4 +552,5 @@ boolean does_this_path_exist_in_this_colour(dBNode** array_nodes, Orientation* a
 void print_standard_extra_supernode_info(dBNode** node_array, Orientation* or_array, int len, FILE* fout);
 void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout);
 
+long long db_graph_health_check(boolean fix, dBGraph * db_graph);
 #endif

@@ -85,6 +85,7 @@ typedef struct
   boolean input_multicol_bin;//flag - has it been input
   boolean input_seq; //flag - has it been input
   boolean dump_covg_distrib; //flag - shoud we dump covg distrib
+  boolean health_check;
 
   //int detect_vars_delta;
   //int detect_vars_branch_length;

@@ -295,7 +295,7 @@ int main(int argc, char **argv){
   //***************************************************************************
   //define local functions
   //***************************************************************************
-
+  /*
   void apply_reset_to_all_edges(dBNode* node, Orientation or, Nucleotide nuc)
   {
     int j;
@@ -312,6 +312,7 @@ int main(int argc, char **argv){
 	      db_node_reset_edges(node, individual_edge_array, j);
       }
   }
+  */
 
   void print_appropriate_extra_variant_info(VariantBranchesAndFlanks* var, FILE* fp)
   {
@@ -379,8 +380,6 @@ int main(int argc, char **argv){
   hash_key_bits    = cmd_line.number_of_buckets_bits; //number of buckets: 2^hash_key_bits
   bucket_size      = cmd_line.bucket_size;
 
-  //zam - these are from Mario, want to check
-  //int number_of_bitfields = ((kmer_size * 2) / (sizeof(bitfield_of_64bits)*8))+1;
   
   printf("Maximum k-mer size (compile-time setting): %ld\n", (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1);
   
@@ -459,6 +458,13 @@ int main(int argc, char **argv){
 								    cmd_line.cut_homopolymers, cmd_line.homopolymer_limit, cmd_line.quality_score_offset,
 								    cmd_line.format_of_input_seq,
 								    cmd_line.max_read_length, 0, db_graph);
+
+      if (cmd_line.remove_pcr_dups==true)
+	{
+	  //need to clean off marks on nodes about whether they are read_start or not (used during removal of duplicates)
+	  hash_table_traverse(&db_node_set_status_to_none, db_graph);
+	}
+
       printf("Fasta/q data loaded\n");
       timestamp();
       
@@ -493,28 +499,42 @@ int main(int argc, char **argv){
   printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));	  
 
 
+  if (cmd_line.health_check==true)
+    {
+      printf("Run health check on loaded graph\n");
+      db_graph_health_check(false, db_graph);
+    }
+  printf("ZAM\n");
+
   
   // Error Correction actions
   if (cmd_line.remove_seq_errors==true)
     {
       printf("Remove nodes that look like sequencing errors. Clip tips first\n");
-      db_graph_clip_tips_for_specific_person_or_pop(db_graph, individual_edge_array, 0);
+      db_graph_clip_tips_in_union_of_all_colours(db_graph);
       
       printf("Then remove low coverage nodes (<= 1) based on topology as well as covg  -  must be more likely to be single base error than due to sampling\n");
       db_graph_remove_errors_considering_covg_and_topology(1,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
-							   &apply_reset_to_all_edges, &apply_reset_to_all_edges_2,cmd_line.max_var_len);
+							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,
+							   cmd_line.max_var_len);
       printf("Error correction done\n");
       timestamp();
     }
   else if (cmd_line.remove_low_coverage_nodes==true)
     {
-      printf("Remove noes with covg <= %d\n", cmd_line.node_coverage_threshold);
-      db_graph_remove_low_coverage_nodes_ignoring_colours(cmd_line.node_coverage_threshold, db_graph);
-      printf("Error correction done\n");
       timestamp();
+      printf("Start to to remove nodes with covg (in union of all colours)  <= %d\n", cmd_line.node_coverage_threshold);
+      db_graph_remove_low_coverage_nodes_ignoring_colours(cmd_line.node_coverage_threshold, db_graph);
+      timestamp();
+      printf("Error correction done\n");
       
     }
-
+  printf("IQBAL\n");
+  if (cmd_line.health_check==true)
+    {
+      printf("Run health check on cleaned graph\n");
+      db_graph_health_check(false, db_graph);
+    }
 
   if (cmd_line.dump_binary==true)
     {
@@ -562,6 +582,8 @@ int main(int argc, char **argv){
 
   if (cmd_line.detect_bubbles1==true)
     {
+      printf("Start first set of bubble calls\n");
+      timestamp();
       run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref);
 
       //unset the nodes marked as visited, but not those marked as to be ignored
@@ -573,6 +595,9 @@ int main(int argc, char **argv){
   //second detect bubbles
   if (cmd_line.detect_bubbles2==true)
     {
+      printf("Start second set of bubble calls\n");
+      timestamp();
+
       run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref);
 
       //unset the nodes marked as visited, but not those marked as to be ignored

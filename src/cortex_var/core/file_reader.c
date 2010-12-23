@@ -1315,10 +1315,6 @@ int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBG
     {
       count++;
 
-      //if (count % 100000000 == 0 ){
-      // printf("loaded %i\n",count);
-      //}
-
       dBNode * current_node  = NULL;
       BinaryKmer tmp_kmer;
       if (!all_entries_are_unique)
