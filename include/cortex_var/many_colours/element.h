@@ -94,6 +94,10 @@ BinaryKmer* element_get_kmer(Element *);
 boolean element_is_key(Key,Element, short kmer_size);
 Key element_get_key(BinaryKmer*,short kmer_size, Key preallocated_key);
 void element_initialise(Element *,Key, short kmer_size);
+void element_initialise_kmer_covgs_edges_and_status_to_zero(Element * e);
+
+void element_set_kmer(Element * e, Key kmer, short kmer_size);
+
 
 //reverse orientation
 Orientation opposite_orientation(Orientation);

@@ -1234,6 +1234,8 @@ int load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* d
   FILE* fp_bin = fopen(filename, "r");
   int seq_length = 0;
   dBNode node_from_file;
+  element_initialise_kmer_covgs_edges_and_status_to_zero(&node_from_file);
+
   boolean found;
   int count=0;
 
@@ -1286,7 +1288,9 @@ int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBG
 
   FILE* fp_bin = fopen(filename, "r");
   int seq_length = 0;
-  dBNode node_from_file;
+  dBNode tmp_node;
+  element_initialise_kmer_covgs_edges_and_status_to_zero(&tmp_node);
+
   boolean found;
   int count=0;
 
@@ -1300,7 +1304,7 @@ int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBG
   int num_cols_in_binary;
   if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary) ) )
     {
-      printf("Cannot load this binary. Exiting.\n");
+        printf("Cannot load this binary. Exiting.\n");
       exit(1);
     }
   if (num_cols_in_binary!=1)
@@ -1311,7 +1315,7 @@ int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBG
 
   
   //Go through all the entries in the binary file
-  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&node_from_file, type, index))
+  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, type, index))
     {
       count++;
 
@@ -1319,17 +1323,17 @@ int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBG
       BinaryKmer tmp_kmer;
       if (!all_entries_are_unique)
 	{
-	  current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
+	  current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&tmp_node),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
 	}
       else
 	{
-	  current_node = hash_table_insert(element_get_key(element_get_kmer(&node_from_file),db_graph->kmer_size, &tmp_kmer), db_graph);
+	  current_node = hash_table_insert(element_get_key(element_get_kmer(&tmp_node),db_graph->kmer_size, &tmp_kmer), db_graph);
 	}
 
       seq_length+=db_graph->kmer_size;//todo - maybe only increment if had to insert, not if was already in graph?
       
-      add_edges(current_node,individual_edge_array, index, get_edge_copy(node_from_file, individual_edge_array, index));
-      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&node_from_file, individual_edge_array,index) );
+      add_edges(current_node,individual_edge_array, index, get_edge_copy(tmp_node, individual_edge_array, index));
+      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&tmp_node, individual_edge_array,index) );
     }
   
   fclose(fp_bin);

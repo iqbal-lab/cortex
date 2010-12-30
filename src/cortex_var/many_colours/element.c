@@ -376,6 +376,55 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
 }
 
 
+
+
+
+void element_initialise_kmer_covgs_edges_and_status_to_zero(Element * e){
+
+  if (e==NULL)
+    {
+      printf("Called element_initialise_covgs_and_edges_to_zero  on NULL ptr");
+      exit(1);
+    }
+
+  BinaryKmer tmp_kmer;
+  binary_kmer_initialise_to_zero(&(e->kmer));
+  //binary_kmer_assignment_operator( e->kmer, &tmp_kmer);
+
+  int i;
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      e->individual_edges[i]=0;
+      e->coverage[i]=0;
+    }
+
+  db_node_set_status(e, none);
+
+}
+
+
+
+
+void element_set_kmer(Element * e, Key kmer, short kmer_size){
+
+  if (e==NULL)
+    {
+      printf("Called element_set_kmer on NULL ptr");
+      exit(1);
+    }
+
+  BinaryKmer tmp_kmer;
+  binary_kmer_initialise_to_zero(&tmp_kmer);
+  binary_kmer_assignment_operator( e->kmer, *(element_get_key(kmer, kmer_size, &tmp_kmer)));
+
+}
+
+
+
+
+
+
+
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
 {
   if (e==NULL)
@@ -939,6 +988,8 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 
 // assumes we have the same NUMBER_OF_BITFIELDS_IN_BINARY_KMER in both this hash table and the binary we are loading
 // this is checked when first opening the binary file
+// assumes we ar loading a single multicolour binary into an empty hash table, so initialises each node to 0 before 
+// adding info from the binary
 boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * node, int num_colours_in_binary)
 {
 
@@ -983,7 +1034,8 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
     return false;
   }
 
-  element_initialise(node,&kmer,kmer_size);
+  //element_initialise(node,&kmer,kmer_size);
+  element_set_kmer(node,&kmer,kmer_size);
 
   int i;
   for (i=0; i< num_colours_in_binary; i++)
@@ -1031,9 +1083,12 @@ boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * n
     return false;
   }
 
-  element_initialise(node,&kmer,kmer_size);
+  element_set_kmer(node,&kmer,kmer_size);
+  //element_initialise(node,&kmer,kmer_size);
   node->individual_edges[index]    = edges;
   node->coverage[index] = coverage;
+  db_node_action_set_status_none(node);
+ 
   return true;
 }
 
