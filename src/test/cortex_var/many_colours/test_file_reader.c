@@ -46,7 +46,10 @@ void test_dump_load_sv_trio_binary(){
   int max_chunk_len_reading_from_fasta = 200;
 
   //FILE * fout = fopen("../data/test/pop_graph/dump_cortex_var_graph.bin", "w");
-  int seq_length_pre,seq_length_post;
+  long long  seq_length_parsed_pre=0;
+  long long seq_length_loaded_pre=0;
+
+
   dBGraph * db_graph_pre;
   dBGraph * db_graph_post;
 
@@ -62,11 +65,12 @@ void test_dump_load_sv_trio_binary(){
   long long dup_reads=0;
   int homopolymer_cutoff=0;
 
-  seq_length_pre = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_dB_graph.fasta", &bad_reads, &dup_reads, 20, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_dB_graph.fasta", &seq_length_parsed_pre, &seq_length_loaded_pre, &bad_reads, &dup_reads, 20, 
 										      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 										      db_graph_pre, individual_edge_array,0);
 
-  CU_ASSERT(seq_length_pre==16);
+  CU_ASSERT(seq_length_parsed_pre==16);
+  CU_ASSERT(seq_length_loaded_pre==16);
 
   //  if (fout == NULL){
   //  fprintf(stderr,"cannot open ../data/test/pop_graph/dump_sv_trio_graph.bin");
@@ -86,7 +90,7 @@ void test_dump_load_sv_trio_binary(){
   int num_cols_in_binary=-1;
 
 
-  seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph.bin", db_graph_post, &num_cols_in_binary);
+  long long seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph.bin", db_graph_post, &num_cols_in_binary);
 
 
   CU_ASSERT(num_cols_in_binary==NUMBER_OF_COLOURS);
@@ -236,18 +240,19 @@ void test_dump_load_sv_trio_binary(){
       db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
 
 
-      seq_length_pre = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person2.fasta", &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta, 
-											  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
-											  db_graph_pre, individual_edge_array, 0);
+      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person2.fasta", &seq_length_parsed_pre, &seq_length_loaded_pre,
+									 &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta, 
+									 remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+									 db_graph_pre, individual_edge_array, 0);
       
       
-//	> 6 unique 33-mers
-//	TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC
-//	> 13 unique 33-mers
-//	ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
-//	> 12 unique 33-mers
-//	GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
-
+      //	> 6 unique 33-mers
+      //	TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC
+      //	> 13 unique 33-mers
+      //	ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
+      //	> 12 unique 33-mers
+      //	GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
+      
 
       //fout = fopen("../data/test/pop_graph/dump_graph_2.bin", "w");
       
@@ -375,9 +380,10 @@ void test_dump_load_sv_trio_binary(){
   db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
   
   
-  seq_length_pre = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta,
-										      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
-										      db_graph_pre, individual_edge_array,0);
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_length_parsed_pre, &seq_length_loaded_pre,
+								     &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta,
+								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+								     db_graph_pre, individual_edge_array,0);
   
 
 
@@ -469,7 +475,7 @@ void test_load_singlecolour_binary()
   int number_of_bits = 7;
   int bucket_size = 5;
   // long long bad_reads = 0;
-  int seq_len=0;
+  //int seq_len=0;
   int max_retries=10;
   BinaryKmer tmp_kmer1, tmp_kmer2;
   
@@ -501,11 +507,12 @@ void test_load_singlecolour_binary()
   long long bad_reads=0;
   
   int homopolymer_cutoff=0;
-
-  int seq_length_pre = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio.fasta", 
-										      &bad_reads, &dup_reads, 20, 
-										      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
-										      db_graph_pre, individual_edge_array,0);
+  long long seq_length_parsed_pre, seq_length_loaded_pre;
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio.fasta", 
+								     &seq_length_parsed_pre, &seq_length_loaded_pre,
+								     &bad_reads, &dup_reads, 20, 
+								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+								     db_graph_pre, individual_edge_array,0);
 
   db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/dump_single_colour_cortex_var_graph.bin", &db_node_condition_always_true, db_graph_pre);
 
@@ -588,7 +595,7 @@ void test_load_individual_binaries_into_sv_trio()
 
   if (NUMBER_OF_COLOURS<3)
     {
-      printf("This test is redundant unless the compile-time flag NUMBER_OF_COLOURS is set to a value >=3\n");
+      printf("This test is redundant unless the compile-time flag NUMBER_OF_COLOURS is set to a value >=3. This is set by typing make NUM_COLS=3 blah\n");
       return;
     }
   else
@@ -600,7 +607,7 @@ void test_load_individual_binaries_into_sv_trio()
       int kmer_size = 31;
       int number_of_bits = 0;
       int bucket_size = 41;
-      int seq_len=0;
+      //int seq_len=0;
       int max_retries=82;
       BinaryKmer tmp_kmer1, tmp_kmer2;
       
@@ -629,21 +636,21 @@ void test_load_individual_binaries_into_sv_trio()
      long long dup_reads=0;
      int homopolymer_cutoff=0;
      long long bad_reads=0;
-
-     int seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person0.fasta", 
-											 &bad_reads, &dup_reads, 200,
-											 remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
-											 db_graph, individual_edge_array,0);
+     long long seq_read, seq_loaded;
+     load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person0.fasta", &seq_read, &seq_loaded,
+									&bad_reads, &dup_reads, 200,
+									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+									db_graph, individual_edge_array,0);
      db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person0_kmer31.ctx", 
 						   &db_node_condition_always_true, db_graph);
      hash_table_free(&db_graph);
 
 
      db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-     seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person1.fasta", 
-										     &bad_reads, &dup_reads, 200,
-										     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
-										     db_graph, individual_edge_array,0);
+     load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person1.fasta", &seq_read,&seq_loaded,
+									&bad_reads, &dup_reads, 200,
+									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+									db_graph, individual_edge_array,0);
      db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person1_kmer31.ctx", 
 						   &db_node_condition_always_true, db_graph);
      hash_table_free(&db_graph);
@@ -652,10 +659,10 @@ void test_load_individual_binaries_into_sv_trio()
 
 
      db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-     seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person2.fasta", 
-										     &bad_reads, &dup_reads, 200,
-										     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
-										     db_graph, individual_edge_array,0);
+     load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person2.fasta", &seq_read,&seq_loaded,
+									&bad_reads, &dup_reads, 200,
+									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+									db_graph, individual_edge_array,0);
      db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person2_kmer31.ctx", 
 						   &db_node_condition_always_true, db_graph);
      hash_table_free(&db_graph);
@@ -666,12 +673,12 @@ void test_load_individual_binaries_into_sv_trio()
      load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_singlecolour_bins_into_multicol_bin", true, db_graph);
       
       
-      CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph), 41);
-      
-      
-      //start with a kmer that should be in person0 and person 2 only
-      
-      dBNode* test_element1_person0 = db_graph_find_node_restricted_to_specific_person_or_population(
+     CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph), 41);
+     
+     
+     //start with a kmer that should be in person0 and person 2 only
+     
+     dBNode* test_element1_person0 = db_graph_find_node_restricted_to_specific_person_or_population(
 												     element_get_key(seq_to_binary_kmer("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
 												     db_graph, individual_edge_array, 0);
       
@@ -809,7 +816,7 @@ void test_coverage_is_correctly_counted_on_loading_from_file()
   int kmer_size = 3;
   int number_of_bits=4;
   int bucket_size   = 10;
-  int seq_length;
+  long long seq_read, seq_loaded;
   long long bad_reads = 0; long long dup_reads=0;
   boolean remove_duplicates_single_endedly=false; 
   boolean break_homopolymers=false;
@@ -819,9 +826,11 @@ void test_coverage_is_correctly_counted_on_loading_from_file()
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   int max_chunk_length=100;
-  seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/file_to_test_covg_of_reads.fasta", &bad_reads,&dup_reads,max_chunk_length,  
-										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
-										  db_graph, individual_edge_array, 0);
+  
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/file_to_test_covg_of_reads.fasta", &seq_read, &seq_loaded,
+								     &bad_reads,&dup_reads,max_chunk_length,  
+								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+								     db_graph, individual_edge_array, 0);
 
   /*
     >occurs once
@@ -834,7 +843,8 @@ void test_coverage_is_correctly_counted_on_loading_from_file()
     TTTTTTTTTT
   */
 
-  CU_ASSERT_EQUAL(seq_length,59);
+  CU_ASSERT_EQUAL(seq_read,59);
+  CU_ASSERT_EQUAL(seq_loaded,59);
 
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),12);
   CU_ASSERT_EQUAL(bad_reads,0);
@@ -883,13 +893,15 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
   boolean break_homopolymers=false;
   int homopolymer_cutoff=0;
 
-  int seq_length;
+  long long seq_read=0;
+  long long seq_loaded=0;
   dBGraph * db_graph;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, 
-										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-										  db_graph, individual_edge_array, 0);
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded,
+								     &bad_reads,&dup_reads, 200, 
+								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
+								     db_graph, individual_edge_array, 0);
 
 
   //OK - we have graph. Now test getting sliding windows from 
@@ -1165,13 +1177,15 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   boolean break_homopolymers=false;
   int homopolymer_cutoff=0;
 
-  int seq_length;
+  long long seq_read=0;
+  long long seq_loaded=0;
   dBGraph * db_graph;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, 
-										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-										  db_graph, individual_edge_array, 0);
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded,
+								     &bad_reads,&dup_reads, 200, 
+								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
+								     db_graph, individual_edge_array, 0);
 
 
   //OK - we have graph. Now test getting sliding windows from 
@@ -1436,13 +1450,15 @@ void test_dumping_of_clean_fasta()
   boolean break_homopolymers=false;
   int homopolymer_cutoff=0;
 
-  int seq_length;
+  long long seq_read=0;
+  long long seq_loaded=0;
   dBGraph * db_graph;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, 
-										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-										  db_graph, individual_edge_array, 0);
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded,
+								     &bad_reads,&dup_reads, 200, 
+								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
+								     db_graph, individual_edge_array, 0);
 
 
   //OK, we now have a graph. Let's see if dumping a clean fasta gives the right answers. 
@@ -1523,7 +1539,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   int kmer_size = 21;
   int number_of_bits=10;
   int bucket_size   = 10;
-  int seq_length;
+
   long long bad_reads = 0; long long dup_reads=0;
   boolean remove_duplicates=false;
   boolean break_homopolymers=false;
@@ -1531,19 +1547,22 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   int ascii_offset=33;
   char quality_cut_off=1; 
 
-
+  long long seq_read=0;
+  long long seq_loaded=0;
 
   // first a test where the file contains no duplicates and you do not try to remove duplicates - does all the data get loaded?
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
 
   FileFormat format=FASTQ;
   int max_read_length=100;
-  seq_length = load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
-											format,
-											&bad_reads, quality_cut_off, max_read_length,  
-											&dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, ascii_offset, 
-											db_graph, individual_edge_array, 0);
-  CU_ASSERT(seq_length==720);
+  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
+									   format,
+									   &seq_read, &seq_loaded,
+									   &bad_reads, quality_cut_off, max_read_length,  
+									   &dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, ascii_offset, 
+									   db_graph, individual_edge_array, 0);
+  CU_ASSERT(seq_read==720);
+  CU_ASSERT(seq_loaded==720);
   CU_ASSERT(db_graph->unique_kmers == 243);
 
   hash_table_free(&db_graph);
@@ -1552,12 +1571,16 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   remove_duplicates=true;
-  seq_length = load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
-											format,
-											&bad_reads, quality_cut_off, max_read_length,  
-											&dup_reads,remove_duplicates, break_homopolymers, homopolymer_cutoff, 
-											ascii_offset, db_graph, individual_edge_array, 0);
-  CU_ASSERT(seq_length==720);
+  seq_read=0;
+  seq_loaded=0;
+  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq", "../data/test/graph/paired_end_file1_2.fastq",
+									   format,
+									   &seq_read, &seq_loaded,
+									   &bad_reads, quality_cut_off, max_read_length,  
+									   &dup_reads,remove_duplicates, break_homopolymers, homopolymer_cutoff, 
+									   ascii_offset, db_graph, individual_edge_array, 0);
+  CU_ASSERT(seq_read==720);
+  CU_ASSERT(seq_loaded==720);
   CU_ASSERT(db_graph->unique_kmers == 243);
   CU_ASSERT(dup_reads==0);
   hash_table_free(&db_graph);
@@ -1567,17 +1590,19 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   // only the former pair of reads should be discarded
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  
-  seq_length = load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file2_with_dup_1.fastq", 
-											"../data/test/graph/paired_end_file2_with_dup_2.fastq",
-											format,
-											&bad_reads, quality_cut_off, max_read_length, 
-											&dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, ascii_offset, 
-											db_graph, individual_edge_array, 0);
+  seq_read=0;
+  seq_loaded=0;
+  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file2_with_dup_1.fastq", 
+									   "../data/test/graph/paired_end_file2_with_dup_2.fastq",
+									   format,&seq_read, &seq_loaded,
+									   &bad_reads, quality_cut_off, max_read_length, 
+									   &dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, ascii_offset, 
+									   db_graph, individual_edge_array, 0);
 
   
   //as before, but with four more 36bp reads
-  CU_ASSERT(seq_length==864);
+  CU_ASSERT(seq_read==864);
+  CU_ASSERT(seq_loaded==792);//all the sequence we have read is loaded except for 2 reads
   CU_ASSERT(db_graph->unique_kmers == 245);
   CU_ASSERT(dup_reads==2);
 
@@ -1595,16 +1620,20 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 
   int count_file_pairs=0;
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_list_of_paired_end_files_into_graph_of_specific_person_or_pop( "../data/test/graph/list_paired_end_file3_left", 
-										   "../data/test/graph/list_paired_end_file3_right", 
-										   format,
-										   quality_cut_off, max_read_length,
-										   &bad_reads, &dup_reads, &count_file_pairs, 
-										   remove_duplicates, break_homopolymers, homopolymer_cutoff, ascii_offset, 
-										   db_graph, individual_edge_array, 0);
+  seq_read=0;
+  seq_loaded=0;
+  load_list_of_paired_end_files_into_graph_of_specific_person_or_pop( "../data/test/graph/list_paired_end_file3_left", 
+								      "../data/test/graph/list_paired_end_file3_right", 
+								      format,
+								      quality_cut_off, max_read_length,
+								      &seq_read, &seq_loaded,
+								      &bad_reads, &dup_reads, &count_file_pairs, 
+								      remove_duplicates, break_homopolymers, homopolymer_cutoff, ascii_offset, 
+								      db_graph, individual_edge_array, 0);
   
 
-  CU_ASSERT(seq_length==360); //five 36bp reads, left and right
+  CU_ASSERT(seq_read==360); //five 36bp reads, left and right
+  CU_ASSERT(seq_loaded==216);
   CU_ASSERT(dup_reads==4);
   CU_ASSERT(count_file_pairs==1);
 
@@ -1620,7 +1649,8 @@ void test_loading_of_single_ended_reads_removing_duplicates()
   int kmer_size = 21;
   int number_of_bits=10;
   int bucket_size   = 10;
-  int seq_length;
+  long long seq_read=0;
+  long long seq_loaded=0;
   long long bad_reads = 0; long long dup_reads=0;
   boolean remove_duplicates=false;
   boolean break_homopolymers=false;
@@ -1635,13 +1665,14 @@ void test_loading_of_single_ended_reads_removing_duplicates()
   
   int max_read_length=100;
   int ascii_offset=33;
-  seq_length = load_fastq_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq",
-										  &bad_reads, quality_cut_off, &dup_reads, max_read_length, 
-										  remove_duplicates, break_homopolymers, homopolymer_cutoff,
-										  ascii_offset,
-										  db_graph, individual_edge_array, 0);
+  load_fastq_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq",&seq_read, &seq_loaded,
+								     &bad_reads, quality_cut_off, &dup_reads, max_read_length, 
+								     remove_duplicates, break_homopolymers, homopolymer_cutoff,
+								     ascii_offset,
+								     db_graph, individual_edge_array, 0);
 
-  CU_ASSERT(seq_length==360);
+  CU_ASSERT(seq_read==360);
+  CU_ASSERT(seq_loaded==360);
   CU_ASSERT(db_graph->unique_kmers == 105);
   CU_ASSERT(dup_reads==0);
   hash_table_free(&db_graph);
@@ -1651,14 +1682,17 @@ void test_loading_of_single_ended_reads_removing_duplicates()
   dup_reads=0;
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   remove_duplicates=true;
-  seq_length = load_fastq_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq",
-										  &bad_reads, quality_cut_off, &dup_reads, max_read_length, 
-										  remove_duplicates, break_homopolymers, homopolymer_cutoff,ascii_offset,
-										  db_graph, individual_edge_array, 0);
+  seq_read=0;
+  seq_loaded=0;
+  load_fastq_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file1_1.fastq",&seq_read, &seq_loaded,
+								     &bad_reads, quality_cut_off, &dup_reads, max_read_length, 
+								     remove_duplicates, break_homopolymers, homopolymer_cutoff,ascii_offset,
+								     db_graph, individual_edge_array, 0);
 
 
 
-  CU_ASSERT(seq_length==360);
+  CU_ASSERT(seq_read==360);
+  CU_ASSERT(seq_loaded==360);
   CU_ASSERT(db_graph->unique_kmers == 105);
   CU_ASSERT(dup_reads==0);
   hash_table_free(&db_graph);
@@ -1666,15 +1700,18 @@ void test_loading_of_single_ended_reads_removing_duplicates()
 
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_fastq_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file2_with_dup_1.fastq", 
-										  &bad_reads, quality_cut_off, &dup_reads, max_read_length, 
-										  remove_duplicates, break_homopolymers, homopolymer_cutoff, 
-										  ascii_offset,
-										  db_graph,  individual_edge_array, 0);
+  seq_read=0;
+  seq_loaded=0;
+  load_fastq_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/paired_end_file2_with_dup_1.fastq", &seq_read, &seq_loaded,
+								     &bad_reads, quality_cut_off, &dup_reads, max_read_length, 
+								     remove_duplicates, break_homopolymers, homopolymer_cutoff, 
+								     ascii_offset,
+								     db_graph,  individual_edge_array, 0);
 						   
   
   //as before, but with four more 36bp reads
-  CU_ASSERT(seq_length==432);
+  CU_ASSERT(seq_read==432);
+  CU_ASSERT(seq_loaded==360);
   CU_ASSERT(dup_reads==2);
 
   hash_table_free(&db_graph);
@@ -1713,8 +1750,11 @@ void test_load_seq_into_array()
     }
 
   long long seq_loaded=0;
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson1really", &bad_reads, db_graph);
+  long long seq_read=0;
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson1really", &seq_read, &seq_loaded, &bad_reads, db_graph);
   
+  //yes, only 4 bases in this fasta!
+  CU_ASSERT(seq_read==4);
   CU_ASSERT(seq_loaded==4);
 
   
@@ -1806,8 +1846,11 @@ void test_load_seq_into_array()
 
   //deliberately do not clean up db_graph. Should make no difference what other paths/nodes/edges there are in th graph, so long as the fasta whose path we are following
   // has itself been loaded - we are only ever following one  path.
-  
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson2really", &bad_reads, db_graph);
+
+  seq_read=0;
+  seq_loaded = 0;
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson2really", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  CU_ASSERT(seq_read==4);
   CU_ASSERT(seq_loaded==4);
   fptr = fopen("../data/test/pop_graph/simple2.fasta", "r");
   if (fptr==NULL)
@@ -1875,8 +1918,9 @@ void test_load_seq_into_array()
   // Example 3: read contains only GNGNGNGNGNG
 
 
-  
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson3really", &bad_reads, db_graph);
+  seq_read=0;
+  seq_loaded=0;
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson3really", &seq_read, &seq_loaded, &bad_reads, db_graph);
   CU_ASSERT(seq_loaded==11);
   fptr = fopen("../data/test/pop_graph/simple3.fasta", "r");
   if (fptr==NULL)
@@ -1952,9 +1996,12 @@ void test_load_seq_into_array()
 
 
   // Example 4: fasta file contains: ACGCGCGTTTACG
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson4really", &bad_reads, db_graph);
+  seq_read=0;
+  seq_loaded=0;
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson4really", &seq_read, &seq_loaded, &bad_reads, db_graph);
   CU_ASSERT(seq_loaded==13);
+  CU_ASSERT(seq_read==13);
+  
   fptr = fopen("../data/test/pop_graph/simple4.fasta", "r");
   if (fptr==NULL)
     {
@@ -2151,9 +2198,13 @@ void test_load_seq_into_array()
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
+  
+  seq_read=0;
+  seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson5really", &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson5really", &seq_read, &seq_loaded, &bad_reads, db_graph);
   CU_ASSERT(seq_loaded==360);
+  CU_ASSERT(seq_read==360);
   fptr = fopen("../data/test/pop_graph/simple5.fasta", "r");
   if (fptr==NULL)
     {
@@ -2274,8 +2325,10 @@ void test_load_seq_into_array()
 
   //Deliberately do not cleanup, as we do not want a new graph - we want to be sure we can follow our path without other stuff in graqph distracting
 
+  seq_read=0;
+  seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson6really", &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson6really", &seq_read, &seq_loaded,&bad_reads, db_graph);
   CU_ASSERT(seq_loaded==68);
   fptr = fopen("../data/test/pop_graph/simple6.fasta", "r");
   if (fptr==NULL)
@@ -2354,8 +2407,9 @@ void test_load_seq_into_array()
 
   //Deliberately do not cleanup, as we do not want a new graph - we want to be sure we can follow our path without other stuff in graqph distracting
 
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson7really", &bad_reads, db_graph);
+  seq_read=0;
+  seq_loaded=0;
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson7really", &seq_read, &seq_loaded, &bad_reads, db_graph);
   CU_ASSERT(seq_loaded==72);
   fptr = fopen("../data/test/pop_graph/simple7.fasta", "r");
   if (fptr==NULL)
@@ -2497,8 +2551,9 @@ void test_load_seq_into_array()
     }
   path_string[length_of_arrays+max_kmer_size_used_in_this_test]='\0';
 
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson8really", &bad_reads, db_graph);
+  seq_read=0;
+  seq_loaded=0;
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson8really", &seq_read, &seq_loaded,&bad_reads, db_graph);
   CU_ASSERT(seq_loaded==10);
   fptr = fopen("../data/test/pop_graph/simple8.fasta", "r");
   if (fptr==NULL)
@@ -2556,8 +2611,9 @@ void test_load_seq_into_array()
   }
   alloc_sequence(seq, num_of_nodes_to_read+db_graph->kmer_size, 10);
 
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson9really", &bad_reads, db_graph);
+  seq_read=0;
+  seq_loaded=0;
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson9really", &seq_read, &seq_loaded, &bad_reads, db_graph);
   CU_ASSERT(seq_loaded==22);
   fptr = fopen("../data/test/pop_graph/simple9.fasta", "r");
   if (fptr==NULL)
@@ -2689,8 +2745,9 @@ void test_load_seq_into_array()
   path_string[length_of_arrays+max_kmer_size_used_in_this_test]='\0';
 
 
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson10really", &bad_reads, db_graph);
+  seq_read=0;
+  seq_loaded = 0;
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson10really", &seq_read, &seq_loaded, &bad_reads, db_graph);
   CU_ASSERT(seq_loaded==16);
   fptr = fopen("../data/test/pop_graph/simple10.fasta", "r");
   if (fptr==NULL)
@@ -2908,8 +2965,9 @@ void test_load_seq_into_array()
 
 
 
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson11really", &bad_reads, db_graph);
+  seq_read=0;
+  seq_loaded = 0;
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson11really", &seq_read, &seq_loaded, &bad_reads, db_graph);
   CU_ASSERT(seq_loaded==1140);
   fptr = fopen("../data/test/pop_graph/simple11.fasta", "r");
   if (fptr==NULL)
@@ -3212,12 +3270,13 @@ void test_align_next_read_to_graph_and_return_node_array()
   boolean break_homopolymers=false;
   int homopolymer_cutoff=0;
 
-  int seq_length;
+  long long seq_read=0;
+  long long seq_loaded=0;
   dBGraph * db_graph;
 
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &bad_reads,&dup_reads, 200, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded, &bad_reads,&dup_reads, 200, 
 										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 										  db_graph, individual_edge_array, 0);
 
@@ -3369,7 +3428,9 @@ void test_read_next_variant_from_full_flank_file()
   int kmer_size = 5;
   int number_of_bits=6;
   int bucket_size   = 10;
-  int seq_length;
+  long long seq_read=0;
+  long long seq_loaded=0;
+
   long long bad_reads = 0; 
   long long dup_reads=0;
   boolean remove_duplicates_single_endedly=false; 
@@ -3380,9 +3441,11 @@ void test_read_next_variant_from_full_flank_file()
   dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   
   int max_chunk_length=100;
-  seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/one_person_with_SNP.fasta", &bad_reads,&dup_reads,max_chunk_length,  
-										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
-										  db_graph, individual_edge_array, 0);
+
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/one_person_with_SNP.fasta", &seq_read, &seq_loaded,
+								     &bad_reads,&dup_reads,max_chunk_length,  
+								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+								     db_graph, individual_edge_array, 0);
 
   FILE* fout_bubble       = fopen("tmp_test.fff", "w");
   if (fout_bubble==NULL)

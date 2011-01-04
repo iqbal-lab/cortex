@@ -77,10 +77,12 @@ void test_find_first_node_in_supernode()
 
 
   long long seq_loaded=0;
+  long long seq_read=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 44);
+  CU_ASSERT(seq_read == 44);
   CU_ASSERT(bad_reads==0);
 
   // Now just see if it can correctly find the first node in a supernode
@@ -257,10 +259,11 @@ void test_find_next_node_in_supernode()
 
 
   long long seq_loaded=0;
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &bad_reads, hash_table);
+  long long seq_read=0;
+  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 44);
+  CU_ASSERT(seq_read == 44);
 
   // Now just see if it can correctly find the first node in a supernode, and then walk along to the end. Work with person 2 for the moment (=index 1 in the array)
 
@@ -355,10 +358,11 @@ void test_correctly_find_subsection_of_supernode()
     }
 
   long long seq_loaded=0;
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/two_people_test_consensus.txt", &bad_reads, hash_table);
+  long long seq_read=0;
+  load_population_as_fasta("../data/test/pop_graph/two_people_test_consensus.txt", &seq_read, &seq_loaded, &bad_reads, hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 23);
+  CU_ASSERT(seq_read == 23);
 
   
   //have just loaded the following
@@ -489,8 +493,8 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
     }
 
   long long seq_loaded=0;
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/two_people_test_consensus.txt", &bad_reads, hash_table);
+  long long seq_read=0;
+  load_population_as_fasta("../data/test/pop_graph/two_people_test_consensus.txt", &seq_read, &seq_loaded, &bad_reads, hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 23);
 
@@ -576,8 +580,8 @@ void test_get_population_consensus_supernode()
     }
 
   long long seq_loaded=0;
-
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/five_people_test.txt", &bad_reads, hash_table);
+  long long seq_read=0;
+  load_population_as_fasta("../data/test/pop_graph/five_people_test.txt", &seq_read, &seq_loaded, &bad_reads, hash_table);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 155);
 

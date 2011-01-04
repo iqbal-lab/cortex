@@ -452,9 +452,13 @@ int main(int argc, char **argv){
 	}
       
       //note, if we load fasta/fastq data it always goes into colour 0;
+      long long bases_parsed=0;
+      long long bases_pass_filters_and_loaded=0;
+
       load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(there_is_se_data, there_is_pe_data, 
 								    cmd_line.se_list, cmd_line.pe_list_lh_mates, cmd_line.pe_list_rh_mates,
-								    cmd_line.quality_score_threshold, cmd_line.remove_pcr_dups, cmd_line.remove_pcr_dups,
+								    &bases_parsed, &bases_pass_filters_and_loaded,
+								    cmd_line.quality_score_threshold, false, cmd_line.remove_pcr_dups,
 								    cmd_line.cut_homopolymers, cmd_line.homopolymer_limit, cmd_line.quality_score_offset,
 								    cmd_line.format_of_input_seq,
 								    cmd_line.max_read_length, 0, db_graph);
@@ -465,7 +469,7 @@ int main(int argc, char **argv){
 	  hash_table_traverse(&db_node_set_status_to_none, db_graph);
 	}
 
-      printf("Fasta/q data loaded\n");
+      printf("Fasta/q data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\n", bases_parsed, bases_pass_filters_and_loaded);
       timestamp();
       
     }
@@ -478,8 +482,8 @@ int main(int argc, char **argv){
 
       if (cmd_line.input_multicol_bin==true)
 	{
-	  int kmers_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line.multicolour_bin,db_graph, &first_colour_data_starts_going_into);
-	  printf("Loaded the multicolour binary %s, and got %d kmers\n", cmd_line.multicolour_bin, kmers_loaded/db_graph->kmer_size);
+	  long long  bp_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line.multicolour_bin,db_graph, &first_colour_data_starts_going_into);
+	  printf("Loaded the multicolour binary %s, and got %qd kmers\n", cmd_line.multicolour_bin, bp_loaded/db_graph->kmer_size);
 	  graph_has_had_no_other_binaries_loaded=false;
 	  timestamp();
 	}

@@ -24,7 +24,7 @@
  * **********************************************************************
  */
 /*
-  routines to load files into dB Graph that is aware of multiple people
+  routines to load files into dB Graph 
  */
 
 #include <binary_kmer.h>
@@ -41,31 +41,41 @@
 #include <unistd.h>
 
 int MAX_FILENAME_LENGTH=500;
-int MAX_READ_LENGTH=10000;
-
-long long load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
-							     long long * bad_reads, char qualiy_cut_off, long long* dup_reads,
-							     int max_read_length, boolean remove_dups_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, 
-							     dBGraph* db_graph, EdgeArrayType type, int index);
-
-long long load_paired_end_seq_into_graph_of_specific_person_or_pop(FILE* fp1, FILE* fp2, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry),
-								   long long * bad_reads, char quality_cut_off, int max_read_length, long long* dup_reads, boolean remove_dups, 
-								   boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph, EdgeArrayType type, int index);
+int MAX_READ_LENGTH=10000;//should ONLY be used by test code
 
 
 
-long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, boolean pe, char* se_f, char* pe_f1, char* pe_f2,
-									int qual_thresh, boolean remv_dups_se, int remv_dups_pe, 
-									boolean break_homopolymers, int homopol_limit, int ascii_fq_offset, FileFormat format, 
-									int max_read_length, int colour, dBGraph* db_graph)
+void load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, long long* bases_read, long long* bases_pass_filters_and_loaded,
+							int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
+							long long * bad_reads, char quality_cut_off, long long* dup_reads, 
+							int max_read_length, boolean remove_dups_single_endedly, 
+							boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph, EdgeArrayType type, int index);
+
+void  load_paired_end_seq_into_graph_of_specific_person_or_pop(FILE* fp1, FILE* fp2, int (* file_reader)(FILE * fp, Sequence * seq, 
+													 int max_read_length,boolean new_entry, boolean * full_entry), 
+							       long long* bases_read, long long* bases_pass_filters_and_loaded, 
+							       long long * bad_reads, char quality_cut_off, int max_read_length, long long* dup_reads, boolean remove_dups, 
+							       boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph, EdgeArrayType type, int index);
+
+
+//pass in bases_read to track amount of sequence read in, and bases_pass_filters_and_loaded to see how much passed filters and got into the graph
+void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, boolean pe, char* se_f, char* pe_f1, char* pe_f2,
+								   long long* bases_read, long long* bases_pass_filters_and_loaded,
+								   int qual_thresh, boolean remv_dups_se, int remv_dups_pe, 
+								   boolean break_homopolymers, int homopol_limit, int ascii_fq_offset, FileFormat format, 
+								   int max_read_length, int colour, dBGraph* db_graph)
 {
 
   char filename[MAX_FILENAME_LENGTH];
   int num_single_ended_files_loaded   = 0;
   int num_file_pairs_loaded   = 0;
-  long long total_length = 0; //total sequence length
-  long long single_seq_length = 0;
-  long long paired_seq_length = 0;
+
+
+  long long single_seq_bases_read = 0;
+  long long single_seq_bases_loaded = 0;
+  long long paired_seq_bases_read = 0;
+  long long paired_seq_bases_loaded = 0;
+
 
   long long bad_se_reads=0;
   long long dup_se_reads=0;
@@ -100,16 +110,18 @@ long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean 
 	  
 	  if (format==FASTQ)
 	    {
-	      single_seq_length += load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(filename,&bad_se_reads, qual_thresh, &dup_se_reads, 
-												      max_read_length, 
-												      remv_dups_se,break_homopolymers, homopol_limit, ascii_fq_offset, 
-												      db_graph, individual_edge_array, colour);
+	      load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(filename, &single_seq_bases_read, &single_seq_bases_loaded,
+										 &bad_se_reads, qual_thresh, &dup_se_reads, 
+										 max_read_length, 
+										 remv_dups_se,break_homopolymers, homopol_limit, ascii_fq_offset, 
+										 db_graph, individual_edge_array, colour);
 	    }
 	  else if (format==FASTA)
 	    {
-	      single_seq_length += load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(filename,&bad_se_reads, &dup_se_reads, max_read_length, 
-												      remv_dups_se,break_homopolymers, homopol_limit, 
-												      db_graph, individual_edge_array, colour);
+	      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(filename,&single_seq_bases_read, &single_seq_bases_loaded,
+										 &bad_se_reads, &dup_se_reads, max_read_length, 
+										 remv_dups_se,break_homopolymers, homopol_limit, 
+										 db_graph, individual_edge_array, colour);
 	    }
 	  else
 	    {
@@ -118,8 +130,8 @@ long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean 
 	    }
 	  
 	  
-	  printf("\nNum SE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal SE seq:%qd\n\tDuplicates removed:%qd\n",
-		     num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_se_reads,single_seq_length, dup_se_reads);
+	    printf("\nNum SE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal SE sequence parsed:%qd\tTotal SE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n",
+	  	 num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_se_reads,single_seq_bases_read, single_seq_bases_loaded, dup_se_reads);
 
 	    
 	}
@@ -128,32 +140,33 @@ long long load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean 
   if (pe==true)
     {
       printf("Load paired-end files\n");
-      paired_seq_length = load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(pe_f1, pe_f2, format,
-											     qual_thresh, max_read_length, 
-											     &bad_pe_reads, &dup_pe_reads, &num_file_pairs_loaded, 
-											     remv_dups_pe, break_homopolymers, homopol_limit, ascii_fq_offset,
-											     db_graph, individual_edge_array, colour); 
+      load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(pe_f1, pe_f2, format,
+									 qual_thresh, max_read_length, 
+									 &paired_seq_bases_read, &paired_seq_bases_loaded,
+									 &bad_pe_reads, &dup_pe_reads, &num_file_pairs_loaded, 
+									 remv_dups_pe, break_homopolymers, homopol_limit, ascii_fq_offset,
+									 db_graph, individual_edge_array, colour); 
       
-      printf("\nNum PE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal PE seq:%qd\n\tDuplicates removed:%qd\n\n",
-	     num_file_pairs_loaded,hash_table_get_unique_kmers(db_graph),bad_pe_reads,paired_seq_length, dup_pe_reads);
+      printf("\nNum PE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal PE sequence parsed:%qd\tTotal PE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n\n",
+      	     num_file_pairs_loaded,hash_table_get_unique_kmers(db_graph),bad_pe_reads,paired_seq_bases_read,paired_seq_bases_loaded, dup_pe_reads);
 	  
     }
   
-  total_length = single_seq_length + paired_seq_length;
-  
-  printf("\n\nFinal total -  bases read in from file (so includes bases that were discarded as duplicates/bad reads): %lld\n", total_length);
-  printf("Total SE sequence read in: %qd\n", single_seq_length);
-  printf("Total PE sequence read in: %qd\n", paired_seq_length);
+
+
+  *bases_read                    = *bases_read                    + single_seq_bases_read   +paired_seq_bases_read;
+  *bases_pass_filters_and_loaded = *bases_pass_filters_and_loaded + single_seq_bases_loaded + paired_seq_bases_loaded;
   
   
   hash_table_print_stats(db_graph);
       
-  return single_seq_length + paired_seq_length;
+
   
 }
 
 
-long long load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads,  char quality_cut_off, long long* dup_reads, int max_read_length, 
+void load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded, 
+									     long long * bad_reads,  char quality_cut_off, long long* dup_reads, int max_read_length, 
 									     boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff,
 									     int fastq_ascii_offset,
 									     dBGraph* db_graph, EdgeArrayType type, int index)
@@ -176,22 +189,22 @@ long long load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(cha
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  long long ret;
 
-  ret =  load_seq_data_into_graph_of_specific_person_or_pop(fp,&file_reader,bad_reads,quality_cut_off,dup_reads, max_read_length,remove_duplicates_single_endedly, 
-							    break_homopolymers, homopolymer_cutoff, db_graph, type, index);
-
+  load_seq_data_into_graph_of_specific_person_or_pop(fp,bases_read, bases_pass_filters_and_loaded,
+						     &file_reader,bad_reads,quality_cut_off,dup_reads, max_read_length,remove_duplicates_single_endedly, 
+						     break_homopolymers, homopolymer_cutoff, db_graph, type, index);
+  
   fclose(fp);
 
-  return ret;
 }
  
-//renamed load_paired_fastq_from_filenames_into_graph_of_specific_person_or_pop as 
-long long load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(char* filename1, char* filename2, FileFormat format,
-										   long long * bad_reads,  char quality_cut_off, int max_read_length, 
-										   long long* dup_reads, boolean remove_duplicates, boolean break_homopolymers, int homopolymer_cutoff, 
-										   int fastq_ascii_offset,
-										   dBGraph* db_graph, EdgeArrayType type, int index )
+
+void  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(char* filename1, char* filename2, FileFormat format,
+									       long long* bases_read, long long* bases_pass_filters_and_loaded,
+									       long long * bad_reads,  char quality_cut_off, int max_read_length, 
+									       long long* dup_reads, boolean remove_duplicates, boolean break_homopolymers, int homopolymer_cutoff, 
+									       int fastq_ascii_offset,
+									       dBGraph* db_graph, EdgeArrayType type, int index )
  {
 
 
@@ -233,20 +246,22 @@ long long load_paired_end_data_from_filenames_into_graph_of_specific_person_or_p
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  long long ret =  load_paired_end_seq_into_graph_of_specific_person_or_pop(fp1, fp2, &file_reader,bad_reads,quality_cut_off,max_read_length, dup_reads, remove_duplicates, 
-									    break_homopolymers, homopolymer_cutoff, db_graph, type, index);
+  load_paired_end_seq_into_graph_of_specific_person_or_pop(fp1, fp2, &file_reader, bases_read, bases_pass_filters_and_loaded, 
+							   bad_reads,quality_cut_off,max_read_length, dup_reads, remove_duplicates, 
+							   break_homopolymers, homopolymer_cutoff, db_graph, type, index);
   fclose(fp1);
   fclose(fp2);
 
-  printf("Finished loading. Total duplicate reads in %s and %s: %lld\n", filename1, filename2, *dup_reads);
-  return ret;
+  //printf("Finished loading. Total duplicate reads in %s and %s: %lld\n", filename1, filename2, *dup_reads);
+
 }
 
 
 //this routine supports big fasta entries (chromosome length for example)
-long long load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long * bad_reads, long long* dup_reads, int max_chunk_length, 
-									     boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, 
-									     dBGraph* db_graph, EdgeArrayType type, int index)
+void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded,
+									long long * bad_reads, long long* dup_reads, int max_chunk_length, 
+									boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, 
+									dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
   int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
@@ -266,35 +281,36 @@ long long load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(cha
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  long long ret;
-  ret =  load_seq_data_into_graph_of_specific_person_or_pop(fp,&file_reader,bad_reads,0,dup_reads, max_chunk_length,remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-								db_graph, type, index);
+  load_seq_data_into_graph_of_specific_person_or_pop(fp,bases_read, bases_pass_filters_and_loaded,
+							    &file_reader,bad_reads,0,dup_reads, max_chunk_length,remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
+							    db_graph, type, index);
   
   fclose(fp);
 
 
-  return ret;
 }
 
 
 
 //do not export the folloiwing internal function
 void load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
-											     boolean* full_ent, long long* seq_len, boolean mark_read_starts, 
+											     boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
 											     dBGraph* db_graph, EdgeArrayType type, int index)
 {
+  long long total_bases_loaded=0;
 
-      Element * current_node  = NULL;
-      Element * previous_node  = NULL;
-      Orientation current_orientation=forward;
-      Orientation previous_orientation=forward;
-      BinaryKmer tmp_kmer;
-      int i,j;
-      for(i=0;i<windows->nwindows;i++){ //for each window
-	KmerSlidingWindow * current_window = &(windows->window[i]);
-	
-	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
-	  boolean found = false;
+  Element * current_node  = NULL;
+  Element * previous_node  = NULL;
+  Orientation current_orientation=forward;
+  Orientation previous_orientation=forward;
+  BinaryKmer tmp_kmer;
+  int i,j;
+  for(i=0;i<windows->nwindows;i++){ //for each window
+    KmerSlidingWindow * current_window = &(windows->window[i]);
+    total_bases_loaded+=current_window->nkmers+db_graph->kmer_size-1;
+
+    for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
+      boolean found = false;
 	  current_node = hash_table_find_or_insert(element_get_key(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),&found,db_graph);	  
 	  if (current_node == NULL){
 	    fputs("file_reader: problem - current kmer not found\n",stderr);
@@ -304,10 +320,10 @@ void load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_p
 	  if (! (i==0 && j==0 && *prev_full_ent == false && current_node == previous_node)){ //otherwise is the same old last entry
 	    db_node_update_coverage(current_node,type, index, 1);
 	  }
-
+	  
 	  current_orientation = db_node_get_orientation(&(current_window->kmer[j]),current_node, db_graph->kmer_size);
-
-
+	  
+	  
 	  if (mark_read_starts==true)
 	    {
 	      if ( (i==0) && (j==0) && (current_orientation==forward))
@@ -319,7 +335,7 @@ void load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_p
 		  db_node_set_read_start_status(current_node, reverse);
 		}
 	    }
-
+	  
 	  
 	  if (DEBUG){
 	    char kmer_seq[db_graph->kmer_size];
@@ -333,7 +349,7 @@ void load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_p
 	  if (j>0){
 	    
 	    if (previous_node == NULL){
-	      printf("PROBLEM i:%i j:%i seq_length:%qd nkmers:%i prev_full_entry:%s\n",i,j,*(seq_len),current_window->nkmers,*prev_full_ent == true ? "true" : "false");
+	      printf("PROBLEM i:%i j:%i bases loaded:%qd nkmers:%i prev_full_entry:%s\n",i,j,*(bases_loaded),current_window->nkmers,*prev_full_ent == true ? "true" : "false");
 	      fputs("file_reader: problem - prev kmer not found\n",stderr);
 	      exit(1);
 	    }
@@ -344,9 +360,11 @@ void load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_p
 	  previous_node = current_node;
 	  previous_orientation = current_orientation;
 	  
-	}
-      }
-     
+    }
+  }
+
+  *bases_loaded = *bases_loaded + total_bases_loaded;
+
 }
 
 
@@ -418,15 +436,16 @@ void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, S
 
 
 
-//returns length of sequence loaded
+
 //penultimate argument is to specify whether to discard potential PCR duplicate reads single-endedly - ie if read starts at same kmer
 // as a previous read, then discard it. This is a pretty harsh filter, and if ppssible, prefer to use paired end info.
 // So in general when calling this function, would expect that boolean remove_dups_single_endedly to be set to false, unless you know you have low coverage, so have
 // low probability of two reads starting at the same point.
-long long load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
-							     long long * bad_reads, char quality_cut_off, long long* dup_reads, 
-							     int max_read_length, boolean remove_dups_single_endedly, 
-							     boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph, EdgeArrayType type, int index){
+void load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, long long* bases_read, long long* bases_pass_filters_and_loaded,
+							int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
+							long long * bad_reads, char quality_cut_off, long long* dup_reads, 
+							int max_read_length, boolean remove_dups_single_endedly, 
+							boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph, EdgeArrayType type, int index){
 
  
   //----------------------------------
@@ -440,7 +459,7 @@ long long load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* fi
   alloc_sequence(seq,max_read_length,LINE_MAX);
   
   
-  long long seq_length=0;
+  //long long seq_length=0;
   short kmer_size = db_graph->kmer_size;
 
   //max_read_length/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
@@ -481,7 +500,7 @@ long long load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* fi
     }
     
 
-    seq_length += (long long) (entry_length - (prev_full_entry==false ? db_graph->kmer_size : 0));
+    *bases_read = *bases_read + (long long) (entry_length - (prev_full_entry==false ? db_graph->kmer_size : 0));
    
     //printf("Length %qd %i %s %i %i\n",seq_length,entry_length, seq->name, seq->start, seq->end);
 
@@ -524,7 +543,7 @@ long long load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* fi
 	}
       
       //if remove_dups_single_endedly==true/false, then we are passing in true/false for the mark_read_starts argument
-      load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows, &prev_full_entry, &full_entry, &seq_length, remove_dups_single_endedly, 
+      load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows, &prev_full_entry, &full_entry, bases_pass_filters_and_loaded, remove_dups_single_endedly, 
 											      db_graph, type, index);
 
     }
@@ -541,7 +560,7 @@ long long load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, int (* fi
  
   free_sequence(&seq);
   binary_kmer_free_kmers_set(&windows);
-  return seq_length;    
+
 }
 
 
@@ -552,7 +571,7 @@ void paired_end_sequence_core_loading_loop_of_specific_person_or_pop(FILE* fp1 ,
 											 ,boolean new_entry, boolean * full_entry),
 								     Sequence* seq1, Sequence* seq2, char quality_cut_off, int max_read_length, int max_kmers, int max_windows, 
 								     KmerSlidingWindowSet * windows1, KmerSlidingWindowSet * windows2, 
-								     long long* seq_len, long long* dup_reads, long long* bad_reads, 
+								     long long* bases_read, long long* bases_pass_filters_and_loaded, long long* dup_reads, long long* bad_reads, 
 								     boolean remove_dups, boolean break_homopolymers, int homopolymer_cutoff, 
 								     dBGraph* db_graph, EdgeArrayType type, int index )
 {
@@ -586,10 +605,10 @@ void paired_end_sequence_core_loading_loop_of_specific_person_or_pop(FILE* fp1 ,
       printf ("\nsequence 2 of pair %s - kmer size: %i - entry length: %i - max kmers:%i\n",seq2->seq,db_graph->kmer_size, entry_length2, max_kmers);
     }
     
-    //seq_len is ampount fo sequence read in from files, not necessarily loaded into graph
-    (*seq_len) += (long long) (entry_length1 - (prev_full_entry1==false ? db_graph->kmer_size : 0));
-    (*seq_len) += (long long) (entry_length2 - (prev_full_entry2==false ? db_graph->kmer_size : 0));
-   
+    //bases_read is ampount fo sequence read in from files, not necessarily loaded into graph
+    (*bases_read) += (long long) (entry_length1 - (prev_full_entry1==false ? db_graph->kmer_size : 0));
+    (*bases_read) += (long long) (entry_length2 - (prev_full_entry2==false ? db_graph->kmer_size : 0));
+
  
     int nkmers1 = get_sliding_windows_from_sequence(seq1->seq,seq1->qual,
 						    entry_length1,quality_cut_off,db_graph->kmer_size,windows1,max_windows, max_kmers, break_homopolymers, homopolymer_cutoff);
@@ -632,17 +651,17 @@ void paired_end_sequence_core_loading_loop_of_specific_person_or_pop(FILE* fp1 ,
     else if ((nkmers1==0)&&(nkmers2!=0))
       {
 	(*bad_reads)++;
-	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows2, &prev_full_entry2, &full_entry2, seq_len, true, db_graph, type, index);
+	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows2, &prev_full_entry2, &full_entry2, bases_pass_filters_and_loaded, true, db_graph, type, index);
       }
     else if ((nkmers1!=0)&&(nkmers2==0))
       {
 	(*bad_reads)++;
-	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows1, &prev_full_entry1, &full_entry1, seq_len, true, db_graph, type, index);
+	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows1, &prev_full_entry1, &full_entry1, bases_pass_filters_and_loaded, true, db_graph, type, index);
       }
     else 
       {
-	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows1, &prev_full_entry1, &full_entry1, seq_len, true, db_graph, type, index);
-	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows2, &prev_full_entry2, &full_entry2, seq_len, true, db_graph, type, index);
+	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows1, &prev_full_entry1, &full_entry1, bases_pass_filters_and_loaded, true, db_graph, type, index);
+	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows2, &prev_full_entry2, &full_entry2, bases_pass_filters_and_loaded, true, db_graph, type, index);
       }
 
     }
@@ -663,11 +682,12 @@ void paired_end_sequence_core_loading_loop_of_specific_person_or_pop(FILE* fp1 ,
   
 
 //do not export
-//returns length of sequence loaded
-long long load_paired_end_seq_into_graph_of_specific_person_or_pop(FILE* fp1, FILE* fp2, int (* file_reader)(FILE * fp, Sequence * seq, 
-													     int max_read_length,boolean new_entry, boolean * full_entry), 
-								   long long * bad_reads, char quality_cut_off, int max_read_length, long long* dup_reads, boolean remove_dups, 
-								   boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph, EdgeArrayType type, int index){
+
+void  load_paired_end_seq_into_graph_of_specific_person_or_pop(FILE* fp1, FILE* fp2, int (* file_reader)(FILE * fp, Sequence * seq, 
+													 int max_read_length,boolean new_entry, boolean * full_entry), 
+							       long long* bases_read, long long* bases_pass_filters_and_loaded, 
+							       long long * bad_reads, char quality_cut_off, int max_read_length, long long* dup_reads, boolean remove_dups, 
+							       boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph, EdgeArrayType type, int index){
 
  
 
@@ -689,7 +709,7 @@ long long load_paired_end_seq_into_graph_of_specific_person_or_pop(FILE* fp1, FI
   alloc_sequence(seq2,max_read_length,LINE_MAX);
   
   
-  long long seq_length=0;
+
   short kmer_size = db_graph->kmer_size;
 
   //max_read_length/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
@@ -726,7 +746,9 @@ long long load_paired_end_seq_into_graph_of_specific_person_or_pop(FILE* fp1, FI
 
   //work through the paired files, loading sequence into the graph. If remove_dups==true, then for each pair, discard both mate reads if they both start at a read_start kmer
   paired_end_sequence_core_loading_loop_of_specific_person_or_pop(fp1, fp2, file_reader, seq1, seq2, quality_cut_off,  max_read_length, max_kmers, max_windows, 
-								  windows1, windows2,  &(seq_length), dup_reads, bad_reads, remove_dups, break_homopolymers, homopolymer_cutoff,
+								  windows1, windows2,  
+								  bases_read, bases_pass_filters_and_loaded, 
+								  dup_reads, bad_reads, remove_dups, break_homopolymers, homopolymer_cutoff,
 								  db_graph, type, index);
   
 
@@ -735,17 +757,18 @@ long long load_paired_end_seq_into_graph_of_specific_person_or_pop(FILE* fp1, FI
   free_sequence(&seq2);
   binary_kmer_free_kmers_set(&windows1);
   binary_kmer_free_kmers_set(&windows2);
-  return seq_length;    
+
 }
 
 
 
 //assume we have two lists of equal length, of mate files in the same order in each file
-long long load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* list_of_left_mates, char* list_of_right_mates, FileFormat format,
-									     char quality_cut_off, int max_read_length, 
-									     long long* bad_reads, long long* num_dups, int* count_file_pairs, boolean remove_dups, 
-									     boolean break_homopolymers, int homopolymer_cutoff, int fq_ascii_cutoff, 
-									     dBGraph* db_graph, EdgeArrayType type, int index)
+void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* list_of_left_mates, char* list_of_right_mates, FileFormat format,
+									char quality_cut_off, int max_read_length, 
+									long long* bases_read, long long* bases_loaded,
+									long long* bad_reads, long long* num_dups, int* count_file_pairs, boolean remove_dups, 
+									boolean break_homopolymers, int homopolymer_cutoff, int fq_ascii_cutoff, 
+									dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
   FILE* f1 = fopen(list_of_left_mates, "r");
@@ -789,10 +812,11 @@ long long load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(cha
 	      *p = '\0';
 	    }
 	  
-	  seq_length += load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(filename1, filename2, format,
-												 bad_reads, quality_cut_off, max_read_length, num_dups, remove_dups, 
-												 break_homopolymers, homopolymer_cutoff, fq_ascii_cutoff,
-												 db_graph, type, index);
+	  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(filename1, filename2, format,
+										   bases_read, bases_loaded,
+										   bad_reads, quality_cut_off, max_read_length, num_dups, remove_dups, 
+										   break_homopolymers, homopolymer_cutoff, fq_ascii_cutoff,
+										   db_graph, type, index);
 	  (*count_file_pairs)++;
 	 
 	}
@@ -802,8 +826,6 @@ long long load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(cha
     fclose(f1);
     fclose(f2);
 
-
-    return seq_length;
 
 }
 
@@ -1041,9 +1063,10 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
 
 
+// Only used for test code
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
-long long load_population_as_fasta(char* filename, long long* bad_reads, dBGraph* db_graph)
+void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded, long long* bad_reads, dBGraph* db_graph)
 {
 
   FILE* fp = fopen(filename, "r");
@@ -1055,7 +1078,7 @@ long long load_population_as_fasta(char* filename, long long* bad_reads, dBGraph
 
   char line[MAX_FILENAME_LENGTH+1];
 
-  int total_seq_loaded=0;
+
   int people_so_far=0;
 
   while(fgets(line,MAX_FILENAME_LENGTH, fp) !=NULL)
@@ -1076,21 +1099,24 @@ long long load_population_as_fasta(char* filename, long long* bad_reads, dBGraph
 
       //printf("About to try and load fasta for this person %s\n",line);
 
-      total_seq_loaded = total_seq_loaded + load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, bad_reads, db_graph, people_so_far-1);
+      load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, bases_read, bases_loaded, bad_reads, db_graph, people_so_far-1);
 
 
     }
 
   fclose(fp);
   //printf("Finished loading population, witht total seq loaded %d\n",total_seq_loaded); 
-  return total_seq_loaded;
+
 
 
 }
 
 
 //index tells you which person within a population it is
-int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bad_reads, dBGraph* db_graph, int index)
+//bases_read is passed in to find out how much sequence there was in the files read-in.
+//bases_loaded is passed in to find out how much sequence passed filters (qual, PCR dup, homopol) and was loaded into the graph
+void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bases_read, long long* bases_loaded,
+										      long long* bad_reads, dBGraph* db_graph, int index)
 {
   FILE* fptr = fopen(f_name, "r");
   if (fptr == NULL)
@@ -1102,7 +1128,6 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
   //file contains a list of fasta file names
   char line[MAX_FILENAME_LENGTH+1];
   
-  int total_seq_loaded=0;
   
   boolean remove_duplicates_single_endedly=false;
   long long dup_reads = 0;
@@ -1117,24 +1142,24 @@ int load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_f
       if ((p = strchr(line, '\n')) != NULL)
 	*p = '\0';
       
-      total_seq_loaded = total_seq_loaded + 
-	load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(line, bad_reads, &dup_reads, MAX_READ_LENGTH, 
-									   remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
-									   db_graph, individual_edge_array, index);
-
+      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(line, bases_read, bases_loaded, bad_reads, &dup_reads, MAX_READ_LENGTH, 
+									 remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+									 db_graph, individual_edge_array, index);
+      
     }
 
   fclose(fptr);
-  return total_seq_loaded;
+
 
 }
 
 
 
 
+/*
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
-long long load_population_as_fastq(char* filename, long long* bad_reads, char quality_cutoff, int fastq_ascii_offset, dBGraph* db_graph)
+void load_population_as_fastq(char* filename, long long* bases_read, long long bases_loaded, long long* bad_reads, char quality_cutoff, int fastq_ascii_offset, dBGraph* db_graph)
 {
 
   FILE* fp = fopen(filename, "r");
@@ -1165,61 +1190,18 @@ long long load_population_as_fastq(char* filename, long long* bad_reads, char qu
 	exit(1);
       }
 
-      total_seq_loaded = total_seq_loaded + load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(line, bad_reads, quality_cutoff, 
-															     fastq_ascii_offset, db_graph, people_so_far-1);
+      load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(line, bases_read, bases_loaded, bad_reads, quality_cutoff, 
+										       fastq_ascii_offset, db_graph, people_so_far-1);
 
-      printf("Just loaded person number %d, and now have cumulative total of  %d bases with %lld bad_reads so far\n", people_so_far-1, total_seq_loaded, *bad_reads);
+      printf("Loaded person number %d\nCumulative total bases parsed:%qd\nCumulative total bases passing filters and loaded:%qd\nBad reads:%qd\n", people_so_far-1, *bases_read, *bad_reads);
     }
 
   //printf("Finished loading population, witht total seq loaded %d\n",total_seq_loaded); 
   fclose(fp);
-  return total_seq_loaded;
 
 
 }
-
-
-//index tells you which person within a population it is
-int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_files(char* f_name, long long* bad_reads, char quality_cutoff,  
-										     int fq_ascii_offset, dBGraph* db_graph, int index)
-{
-  FILE* fptr = fopen(f_name, "r");
-  if (fptr == NULL)
-    {
-      //printf("cannot open person-specific fasta file:%s\n",f_name);
-    exit(1); 
-    }
-
-  //file contains a list of fasta file names
-  char line[MAX_FILENAME_LENGTH+1];
-
-  long long dup_reads=0;
-  int total_seq_loaded=0;
-  boolean remove_duplicates_single_endedly=false;
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
-  
-  while(fgets(line,MAX_FILENAME_LENGTH, fptr) !=NULL)
-    {
-
-      //remove newline from endof line- replace with \0
-      char* p;
-      if ((p = strchr(line, '\n')) != NULL)
-	*p = '\0';
-      
-      total_seq_loaded = total_seq_loaded + 
-	load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(line, bad_reads, quality_cutoff, &dup_reads,  MAX_READ_LENGTH, 
-									   remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
-									   fq_ascii_offset, 
-									   db_graph, individual_edge_array, index);
-
-    }
-
-  fclose(fptr);
-  return total_seq_loaded;
-
-}
-
+*/
 
 
 
@@ -1227,12 +1209,12 @@ int load_all_fastq_for_given_person_given_filename_of_file_listing_their_fastq_f
 
 
 //returns number of kmers loaded*kmer_length
-int load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, int* num_cols_in_loaded_binary)
+long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, int* num_cols_in_loaded_binary)
 {
 
   //printf("Load this binary - %s\n", filename);
   FILE* fp_bin = fopen(filename, "r");
-  int seq_length = 0;
+  long long  seq_length = 0;
   dBNode node_from_file;
   element_initialise_kmer_covgs_edges_and_status_to_zero(&node_from_file);
 
@@ -1281,13 +1263,13 @@ int load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* d
 
 
 
-int load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, boolean all_entries_are_unique, EdgeArrayType type, int index)
+long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, boolean all_entries_are_unique, EdgeArrayType type, int index)
 {
 
   //printf("Open single colour binary: %s\n", filename);
 
   FILE* fp_bin = fopen(filename, "r");
-  int seq_length = 0;
+  long long  seq_length = 0;
   dBNode tmp_node;
   element_initialise_kmer_covgs_edges_and_status_to_zero(&tmp_node);
 
