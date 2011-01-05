@@ -536,7 +536,8 @@ void test_get_perfect_path_in_one_colour()
 								      db_graph, individual_edge_array,0);
 
 
-   CU_ASSERT_EQUAL(seq_length,13);
+   CU_ASSERT_EQUAL(seq_read,13);
+   CU_ASSERT_EQUAL(seq_loaded,13);
    CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),5);
    CU_ASSERT_EQUAL(bad_reads,0);
    
@@ -601,7 +602,8 @@ void test_get_perfect_path_in_one_colour()
 								      db_graph, individual_edge_array,0);
    
 
-   CU_ASSERT_EQUAL(seq_length,25);
+   CU_ASSERT_EQUAL(seq_read,25);
+   CU_ASSERT_EQUAL(seq_loaded,25);
    CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),1);
    CU_ASSERT_EQUAL(bad_reads,0);
 
@@ -2581,7 +2583,8 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
 
 
   
-  CU_ASSERT(seq_loaded==1462);
+  CU_ASSERT(seq_read==1462);
+  CU_ASSERT(seq_loaded==31);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fasta", "r");
   if (chrom_fptr==NULL)
@@ -2752,8 +2755,9 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
   
   
   CU_ASSERT(seq_read==697);
-  CU_ASSERT(seq_loaded==679);//not a typo - removing Ns
-  
+  CU_ASSERT(seq_loaded==678);//not a typo - removing Ns
+
+
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu.fasta", "r");
   if (chrom_fptr==NULL)
     {

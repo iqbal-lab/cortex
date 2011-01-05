@@ -816,7 +816,8 @@ void test_coverage_is_correctly_counted_on_loading_from_file()
   int kmer_size = 3;
   int number_of_bits=4;
   int bucket_size   = 10;
-  long long seq_read, seq_loaded;
+  long long seq_read=0;
+  long long seq_loaded=0;
   long long bad_reads = 0; long long dup_reads=0;
   boolean remove_duplicates_single_endedly=false; 
   boolean break_homopolymers=false;
@@ -1545,7 +1546,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   boolean break_homopolymers=false;
   int homopolymer_cutoff=0;
   int ascii_offset=33;
-  char quality_cut_off=1; 
+  char quality_cut_off=0; 
 
   long long seq_read=0;
   long long seq_loaded=0;
@@ -1562,7 +1563,8 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 									   &dup_reads, remove_duplicates, break_homopolymers, homopolymer_cutoff, ascii_offset, 
 									   db_graph, individual_edge_array, 0);
   CU_ASSERT(seq_read==720);
-  CU_ASSERT(seq_loaded==720);
+  CU_ASSERT(seq_loaded==665);//because there are various N's in the sequence, we lose some bases
+
   CU_ASSERT(db_graph->unique_kmers == 243);
 
   hash_table_free(&db_graph);
@@ -1580,7 +1582,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 									   &dup_reads,remove_duplicates, break_homopolymers, homopolymer_cutoff, 
 									   ascii_offset, db_graph, individual_edge_array, 0);
   CU_ASSERT(seq_read==720);
-  CU_ASSERT(seq_loaded==720);
+  CU_ASSERT(seq_loaded==665);
   CU_ASSERT(db_graph->unique_kmers == 243);
   CU_ASSERT(dup_reads==0);
   hash_table_free(&db_graph);
@@ -1602,7 +1604,8 @@ void test_loading_of_paired_end_reads_removing_duplicates()
   
   //as before, but with four more 36bp reads
   CU_ASSERT(seq_read==864);
-  CU_ASSERT(seq_loaded==792);//all the sequence we have read is loaded except for 2 reads
+  CU_ASSERT(seq_loaded==737);//all the sequence we have read is loaded except for 2 reads, plus the effect of the Ns
+
   CU_ASSERT(db_graph->unique_kmers == 245);
   CU_ASSERT(dup_reads==2);
 
@@ -1672,7 +1675,7 @@ void test_loading_of_single_ended_reads_removing_duplicates()
 								     db_graph, individual_edge_array, 0);
 
   CU_ASSERT(seq_read==360);
-  CU_ASSERT(seq_loaded==360);
+  CU_ASSERT(seq_loaded==311);//just lose 1 read plus part of another due to Ns
   CU_ASSERT(db_graph->unique_kmers == 105);
   CU_ASSERT(dup_reads==0);
   hash_table_free(&db_graph);
@@ -1692,7 +1695,7 @@ void test_loading_of_single_ended_reads_removing_duplicates()
 
 
   CU_ASSERT(seq_read==360);
-  CU_ASSERT(seq_loaded==360);
+  CU_ASSERT(seq_loaded==311);
   CU_ASSERT(db_graph->unique_kmers == 105);
   CU_ASSERT(dup_reads==0);
   hash_table_free(&db_graph);
@@ -1711,7 +1714,8 @@ void test_loading_of_single_ended_reads_removing_duplicates()
   
   //as before, but with four more 36bp reads
   CU_ASSERT(seq_read==432);
-  CU_ASSERT(seq_loaded==360);
+
+  CU_ASSERT(seq_loaded==311);//basically same as previous fastq - the extra reads are ignored
   CU_ASSERT(dup_reads==2);
 
   hash_table_free(&db_graph);
@@ -1851,7 +1855,7 @@ void test_load_seq_into_array()
   seq_loaded = 0;
   load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson2really", &seq_read, &seq_loaded, &bad_reads, db_graph);
   CU_ASSERT(seq_read==4);
-  CU_ASSERT(seq_loaded==4);
+  CU_ASSERT(seq_loaded==0);
   fptr = fopen("../data/test/pop_graph/simple2.fasta", "r");
   if (fptr==NULL)
     {
@@ -1921,7 +1925,8 @@ void test_load_seq_into_array()
   seq_read=0;
   seq_loaded=0;
   load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson3really", &seq_read, &seq_loaded, &bad_reads, db_graph);
-  CU_ASSERT(seq_loaded==11);
+  CU_ASSERT(seq_read==11);
+  CU_ASSERT(seq_loaded==0);
   fptr = fopen("../data/test/pop_graph/simple3.fasta", "r");
   if (fptr==NULL)
     {
@@ -2329,7 +2334,8 @@ void test_load_seq_into_array()
   seq_loaded=0;
 
   load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson6really", &seq_read, &seq_loaded,&bad_reads, db_graph);
-  CU_ASSERT(seq_loaded==68);
+  CU_ASSERT(seq_read==68);
+  CU_ASSERT(seq_loaded==67);//one N
   fptr = fopen("../data/test/pop_graph/simple6.fasta", "r");
   if (fptr==NULL)
     {
@@ -2410,7 +2416,8 @@ void test_load_seq_into_array()
   seq_read=0;
   seq_loaded=0;
   load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson7really", &seq_read, &seq_loaded, &bad_reads, db_graph);
-  CU_ASSERT(seq_loaded==72);
+  CU_ASSERT(seq_read==72);
+  CU_ASSERT(seq_loaded==67);//5 N's
   fptr = fopen("../data/test/pop_graph/simple7.fasta", "r");
   if (fptr==NULL)
     {
@@ -2554,7 +2561,8 @@ void test_load_seq_into_array()
   seq_read=0;
   seq_loaded=0;
   load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson8really", &seq_read, &seq_loaded,&bad_reads, db_graph);
-  CU_ASSERT(seq_loaded==10);
+  CU_ASSERT(seq_read==10);
+  CU_ASSERT(seq_loaded==6);
   fptr = fopen("../data/test/pop_graph/simple8.fasta", "r");
   if (fptr==NULL)
     {
@@ -2614,7 +2622,9 @@ void test_load_seq_into_array()
   seq_read=0;
   seq_loaded=0;
   load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson9really", &seq_read, &seq_loaded, &bad_reads, db_graph);
-  CU_ASSERT(seq_loaded==22);
+  CU_ASSERT(seq_read==22);
+  CU_ASSERT(seq_loaded==5);//kmer is 5 and there are many Ns
+
   fptr = fopen("../data/test/pop_graph/simple9.fasta", "r");
   if (fptr==NULL)
     {
@@ -2748,6 +2758,7 @@ void test_load_seq_into_array()
   seq_read=0;
   seq_loaded = 0;
   load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson10really", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  CU_ASSERT(seq_read==16);
   CU_ASSERT(seq_loaded==16);
   fptr = fopen("../data/test/pop_graph/simple10.fasta", "r");
   if (fptr==NULL)
@@ -2968,6 +2979,7 @@ void test_load_seq_into_array()
   seq_read=0;
   seq_loaded = 0;
   load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson11really", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  CU_ASSERT(seq_read==1140);
   CU_ASSERT(seq_loaded==1140);
   fptr = fopen("../data/test/pop_graph/simple11.fasta", "r");
   if (fptr==NULL)
