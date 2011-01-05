@@ -275,7 +275,7 @@ int default_opts(CmdLine * c)
   c->input_seq = false;
   c->format_of_input_seq=UNSPECIFIED;
   c->dump_covg_distrib=false;
-
+  c->health_check=true;
   return 1;
 }
 

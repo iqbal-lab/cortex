@@ -34,6 +34,7 @@
 #include <internal_oxford.h>
 #include <cmd_line.h>
 #include <time.h>
+#include <graph_info.h>
 
 void timestamp();
 
@@ -394,6 +395,9 @@ int main(int argc, char **argv){
   int max_retries=15;
   db_graph = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
   printf("Hash table created, number of buckets: %d\n",1 << hash_key_bits);
+  GraphInfo db_graph_info;
+  initialise(&db_graph_info);
+
   timestamp();
 
 
@@ -454,10 +458,25 @@ int main(int argc, char **argv){
       //note, if we load fasta/fastq data it always goes into colour 0;
       long long bases_parsed=0;
       long long bases_pass_filters_and_loaded=0;
+      //get read-len distribution (after filters):
+      long long* readlen_distrib=(long long*) malloc(sizeof(long long) * (cmd_line.max_read_length+1));
+      long long** readlen_distrib_ptrs = (long long**) malloc(sizeof(long long*) * (cmd_line.max_read_length+1));
+
+      if (readlen_distrib==NULL)
+	{
+	  printf("Unable to malloc array to hold readlen distirbution!Exit.\n");
+	  exit(1);
+	}
+      int i;
+      for (i=0; i<=cmd_line.max_read_length; i++)
+	{
+	  readlen_distrib[i]=0;
+	  readlen_distrib_ptrs[i]=&readlen_distrib[i];
+	}
 
       load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(there_is_se_data, there_is_pe_data, 
 								    cmd_line.se_list, cmd_line.pe_list_lh_mates, cmd_line.pe_list_rh_mates,
-								    &bases_parsed, &bases_pass_filters_and_loaded,
+								    &bases_parsed, &bases_pass_filters_and_loaded,readlen_distrib_ptrs,
 								    cmd_line.quality_score_threshold, false, cmd_line.remove_pcr_dups,
 								    cmd_line.cut_homopolymers, cmd_line.homopolymer_limit, cmd_line.quality_score_offset,
 								    cmd_line.format_of_input_seq,
@@ -470,6 +489,17 @@ int main(int argc, char **argv){
 	}
 
       printf("Fasta/q data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\n", bases_parsed, bases_pass_filters_and_loaded);
+      increment_seq(&db_graph_info, 0, bases_pass_filters_and_loaded);
+      
+      for (i=db_graph->kmer_size; i<=cmd_line.max_read_length; i++)
+	{
+	  printf("%d\t%qd\n", i, readlen_distrib[i]);
+	}
+
+      
+      free(readlen_distrib_ptrs);
+      free(readlen_distrib);
+
       timestamp();
       
     }
@@ -508,7 +538,7 @@ int main(int argc, char **argv){
       printf("Run health check on loaded graph\n");
       db_graph_health_check(false, db_graph);
     }
-  printf("ZAM\n");
+
 
   
   // Error Correction actions
@@ -624,7 +654,6 @@ int main(int argc, char **argv){
 
   
   hash_table_free(&db_graph);
-
   return 0;
 }
 

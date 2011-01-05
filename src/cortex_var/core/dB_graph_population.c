@@ -8710,7 +8710,7 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph){
   dBNode * next_node;
   Nucleotide reverse_nucleotide;
   Orientation next_orientation;
-  long long count_nodes;
+  long long count_nodes=0;
   char tmp_seq[db_graph->kmer_size+1]; 
 
   void check_node_with_orientation(dBNode * node, Orientation orientation){
