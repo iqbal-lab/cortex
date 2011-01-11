@@ -3352,12 +3352,27 @@ void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph *
 
 
 
-
-void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph){
+//if you don't want to/care about graph_info, pass in NULL
+void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   
-  print_binary_signature(fout, db_graph->kmer_size, NUMBER_OF_COLOURS);
+  if (db_graph_info==NULL)
+    {
+      int i;
+      int means[NUMBER_OF_COLOURS];
+      long long tots[NUMBER_OF_COLOURS];
+      for (i=0; i<NUMBER_OF_COLOURS; i++)
+	{
+	  means[i]=0;
+	  tots[i]=0;
+	}
+      print_binary_signature(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, means, tots);
+    }
+  else
+    {
+      print_binary_signature(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, db_graph_info->mean_read_length, db_graph_info->total_sequence);
+    }
 
   long long count=0;
   //routine to dump graph
@@ -3376,12 +3391,24 @@ void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), 
 
 
 
-void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph){
+void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   
-  print_binary_signature(fout, db_graph->kmer_size, 1);
-  
+
+  if (db_graph_info==NULL)
+    {
+      int i;
+      int means=0;
+      long long tots=0;
+
+      print_binary_signature(fout, db_graph->kmer_size,1, &means, &tots);
+    }
+  else
+    {
+      print_binary_signature(fout, db_graph->kmer_size, 1, &(db_graph_info->mean_read_length[0]), &(db_graph_info->total_sequence[0]) );
+    }
+
 
   long long count=0;
   //routine to dump graph

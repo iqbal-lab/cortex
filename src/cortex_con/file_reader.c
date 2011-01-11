@@ -277,7 +277,7 @@ long long load_binary_from_filename_into_graph(char* filename,  int binary_versi
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
   
-  int num_colours_in_binary;
+  int num_colours_in_binary=1;
   if (check_binary && !check_binary_signature(fp_bin,db_graph->kmer_size, BINVERSION, &num_colours_in_binary)){
     errx(1,"binary version or kmer_size are inconsistent");
   }

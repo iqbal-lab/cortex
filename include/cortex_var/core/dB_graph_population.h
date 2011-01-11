@@ -41,6 +41,8 @@
 #include <dB_graph.h>
 #include <dB_graph_supernode.h>
 #include <db_variants.h>
+#include <graph_info.h>
+
 
 dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node, Orientation current_orientation,
                                                            Orientation * next_orientation,
@@ -348,9 +350,9 @@ void db_graph_remove_low_coverage_nodes(int coverage, dBGraph * db_graph,
 
 void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph * db_graph);
 
-void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph);
+void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info);
 
-void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph);
+void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info);
 
 boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, EdgeArrayType edge_type, int edge_index, dBGraph* db_graph);
 

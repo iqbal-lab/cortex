@@ -40,7 +40,18 @@ void timestamp();
 
 
 
-
+long long calculate_mean(long long* array, long long len)
+{
+  long long sum=0;
+  long long num=0;
+  long long i;
+  for (i=0; i<len; i++)
+    {
+      sum += i*array[i];
+      num += array[i];
+    }
+  return  (sum/num);
+}
 
 void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph, 
 		  void (*print_some_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp))
@@ -283,8 +294,8 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 
 int main(int argc, char **argv){
 
-  printf("Starting Cortex\n");
   timestamp();
+  printf("Starting Cortex\n");
 
   CmdLine cmd_line = parse_cmdline(argc,argv,sizeof(Element));
 
@@ -398,7 +409,6 @@ int main(int argc, char **argv){
   GraphInfo db_graph_info;
   initialise(&db_graph_info);
 
-  timestamp();
 
 
   // input data:
@@ -474,6 +484,8 @@ int main(int argc, char **argv){
 	  readlen_distrib_ptrs[i]=&readlen_distrib[i];
 	}
 
+      timestamp();
+
       load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(there_is_se_data, there_is_pe_data, 
 								    cmd_line.se_list, cmd_line.pe_list_lh_mates, cmd_line.pe_list_rh_mates,
 								    &bases_parsed, &bases_pass_filters_and_loaded,readlen_distrib_ptrs,
@@ -482,61 +494,110 @@ int main(int argc, char **argv){
 								    cmd_line.format_of_input_seq,
 								    cmd_line.max_read_length, 0, db_graph);
 
+      //update the graph info object
+      update_mean_readlen_and_total_seq(&db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line.max_read_length+1)), bases_pass_filters_and_loaded);
+
       if (cmd_line.remove_pcr_dups==true)
 	{
 	  //need to clean off marks on nodes about whether they are read_start or not (used during removal of duplicates)
 	  hash_table_traverse(&db_node_set_status_to_none, db_graph);
 	}
 
-      printf("Fasta/q data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\n", bases_parsed, bases_pass_filters_and_loaded);
-      increment_seq(&db_graph_info, 0, bases_pass_filters_and_loaded);
+      timestamp();
+      printf("Fasta/q data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\nMean read length after filters applied:%d\n", 
+	     bases_parsed, bases_pass_filters_and_loaded, db_graph_info.mean_read_length[0]);
       
-      for (i=db_graph->kmer_size; i<=cmd_line.max_read_length; i++)
+
+      if (cmd_line.dump_readlen_distrib==true)
 	{
-	  printf("%d\t%qd\n", i, readlen_distrib[i]);
+	  FILE* rd_distrib_fptr = fopen(cmd_line.readlen_distrib_outfile, "w");
+	  if (rd_distrib_fptr==NULL)
+	    {
+	      printf("Cannot open %s, so will dumping distribution of filtered read-lengths to stdout\n", cmd_line.readlen_distrib_outfile);
+	      for (i=db_graph->kmer_size; i<=cmd_line.max_read_length; i++)
+		{
+		  printf("%d\t%qd\n", i, readlen_distrib[i]);
+		}
+	    }
+	  else
+	    {
+	      printf("Dumping distribution of effective read lengths (ie after quality, homopolymer and/or PCR duplicate filters to file %s.\n", cmd_line.readlen_distrib_outfile);
+	      for (i=db_graph->kmer_size; i<=cmd_line.max_read_length; i++)
+		{
+		  fprintf(rd_distrib_fptr, "%d\t%qd\n", i, readlen_distrib[i]);
+		}
+	      fclose(rd_distrib_fptr);
+	    }
+	  
 	}
 
-      
+
       free(readlen_distrib_ptrs);
       free(readlen_distrib);
-
-      timestamp();
       
     }
   else
     {
       //if there is a multicolour binary, load that in first
-      
+      timestamp();      
       int first_colour_data_starts_going_into=0;
       boolean graph_has_had_no_other_binaries_loaded=true;
 
       if (cmd_line.input_multicol_bin==true)
 	{
-	  long long  bp_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line.multicolour_bin,db_graph, &first_colour_data_starts_going_into);
+	  int mean_readlens[NUMBER_OF_COLOURS];
+	  int* mean_readlens_ptrs[NUMBER_OF_COLOURS];
+	  long long total_seq_in_that_colour[NUMBER_OF_COLOURS];
+	  long long* total_seq_in_that_colour_ptrs[NUMBER_OF_COLOURS];
+	  int j;
+	  for (j=0; j<NUMBER_OF_COLOURS; j++)
+	    {
+	      mean_readlens[j]=0;
+	      mean_readlens_ptrs[j]=&(mean_readlens[j]);
+	      total_seq_in_that_colour[j]=0;
+	      total_seq_in_that_colour_ptrs[j]=&(total_seq_in_that_colour[j]);
+	    }
+	  long long  bp_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line.multicolour_bin,db_graph, &first_colour_data_starts_going_into,
+										  mean_readlens_ptrs, total_seq_in_that_colour_ptrs);
+	  //update graph_info object
+	  for (j=0; j<first_colour_data_starts_going_into; j++)
+            {
+	      update_mean_readlen_and_total_seq(&db_graph_info, j, mean_readlens[j], total_seq_in_that_colour[j]);
+	    }
+	  timestamp();
 	  printf("Loaded the multicolour binary %s, and got %qd kmers\n", cmd_line.multicolour_bin, bp_loaded/db_graph->kmer_size);
 	  graph_has_had_no_other_binaries_loaded=false;
-	  timestamp();
 	}
 
       if (cmd_line.input_colours==true)
 	{
+	  timestamp();
 	  printf("List of colours: %s (contains one filelist per colour). Load data into consecutive colours starting at %d\n", 
 		 cmd_line.colour_list, first_colour_data_starts_going_into);
-	  load_population_as_binaries_from_graph(cmd_line.colour_list, graph_has_had_no_other_binaries_loaded, db_graph);
-	  printf("Finished loading single_colour binaries\n");
+	  load_population_as_binaries_from_graph(cmd_line.colour_list, first_colour_data_starts_going_into, 
+						 graph_has_had_no_other_binaries_loaded, db_graph, &db_graph_info);
 	  timestamp();
+	  printf("Finished loading single_colour binaries\n");
 	}
-
-
     }
       
   printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));	  
-
+  printf("****************************************\n");
+  printf("SUMMARY:\nColour:\tMeanReadLen\tTotalSeq\n");
+  int j;
+  for (j=0; j<NUMBER_OF_COLOURS; j++)
+    {
+      printf("%d\t%d\t%qd\n", j, db_graph_info.mean_read_length[j], db_graph_info.total_sequence[j]);
+    }
+  printf("****************************************\n");
 
   if (cmd_line.health_check==true)
     {
+      timestamp();
       printf("Run health check on loaded graph\n");
       db_graph_health_check(false, db_graph);
+      printf("End of health check\n");
+      timestamp();
     }
 
 
@@ -544,6 +605,7 @@ int main(int argc, char **argv){
   // Error Correction actions
   if (cmd_line.remove_seq_errors==true)
     {
+      timestamp();
       printf("Remove nodes that look like sequencing errors. Clip tips first\n");
       db_graph_clip_tips_in_union_of_all_colours(db_graph);
       
@@ -551,8 +613,9 @@ int main(int argc, char **argv){
       db_graph_remove_errors_considering_covg_and_topology(1,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
 							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,
 							   cmd_line.max_var_len);
-      printf("Error correction done\n");
       timestamp();
+      printf("Error correction done\n");
+
     }
   else if (cmd_line.remove_low_coverage_nodes==true)
     {
@@ -563,11 +626,14 @@ int main(int argc, char **argv){
       printf("Error correction done\n");
       
     }
-  printf("IQBAL\n");
+
   if (cmd_line.health_check==true)
     {
+      timestamp();
       printf("Run health check on cleaned graph\n");
       db_graph_health_check(false, db_graph);
+      printf("Health check done\n");
+      timestamp();
     }
 
   if (cmd_line.dump_binary==true)
@@ -575,85 +641,89 @@ int main(int argc, char **argv){
       if (cmd_line.input_seq==true)
 	{
 	  //dump single colour
-	  printf("Input data was fasta/q, so dump single colour binary file: %s\n", cmd_line.output_binary_filename);
-	  db_graph_dump_single_colour_binary_of_colour0(cmd_line.output_binary_filename, &db_node_check_status_not_pruned,db_graph);
-	  printf("Binary dumped\n");
 	  timestamp();
+	  printf("Input data was fasta/q, so dump single colour binary file: %s\n", cmd_line.output_binary_filename);
+	  db_graph_dump_single_colour_binary_of_colour0(cmd_line.output_binary_filename, &db_node_check_status_not_pruned,db_graph, &db_graph_info);
+	  timestamp();
+	  printf("Binary dumped\n");
+
 
 	}
       else
 	{
-	  printf("Dump multicolour binary with %d colours (compile-time setting)\n", NUMBER_OF_COLOURS);
-	  db_graph_dump_binary(cmd_line.output_binary_filename, &db_node_check_status_not_pruned,db_graph);
-	  printf("Binary dumped\n");
 	  timestamp();
-
+	  printf("Dump multicolour binary with %d colours (compile-time setting)\n", NUMBER_OF_COLOURS);
+	  db_graph_dump_binary(cmd_line.output_binary_filename, &db_node_check_status_not_pruned,db_graph, &db_graph_info);
+	  timestamp();
+	  printf("Binary dumped\n");
 	}
     }
 
   if (cmd_line.print_supernode_fasta==true)
     {
+      timestamp();
       printf("Print contigs(supernodes) in the graph created by the union of all colours.\n");
       
       db_graph_print_supernodes_defined_by_func_of_colours(cmd_line.output_supernodes, "", cmd_line.max_var_len,// max_var_len is the public face of maximum expected supernode size
 							   db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
 							   &print_appropriate_extra_supernode_info);
-      printf("Supernodes dumped\n");
       timestamp();
+      printf("Supernodes dumped\n");
+
 
     }
 
 
   if (cmd_line.dump_covg_distrib==true)
     {
+      timestamp();
       printf("Dump kmer coverage distribution for colour 0 to file %s\n", cmd_line.covg_distrib_outfile);
       db_graph_get_covg_distribution(cmd_line.covg_distrib_outfile, db_graph, individual_edge_array, 0, &db_node_check_status_not_pruned);
-      printf("Covg distribution dumped\n");
       timestamp();
+      printf("Covg distribution dumped\n");
     }
 
   // DETECT BUBBLES
 
   if (cmd_line.detect_bubbles1==true)
     {
-      printf("Start first set of bubble calls\n");
       timestamp();
+      printf("Start first set of bubble calls\n");
       run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref);
 
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
-      printf("Detect Bubbles 1, completed\n");
       timestamp();
+      printf("Detect Bubbles 1, completed\n");
     }
 
   //second detect bubbles
   if (cmd_line.detect_bubbles2==true)
     {
-      printf("Start second set of bubble calls\n");
       timestamp();
-
+      printf("Start second set of bubble calls\n");
       run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref);
-
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
-      printf("Detect Bubbles 2, completed\n");
       timestamp();
-      
-
+      printf("Detect Bubbles 2, completed\n");
     }
 
   if (cmd_line.make_pd_calls==true)
     {
+      timestamp();
+      printf("Run Path-Divergence Calls\n");
       run_pd_calls(&cmd_line, db_graph, &print_appropriate_extra_variant_info);
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
-      printf("Finished Path Divergence calls\n");
       timestamp();
-
+      printf("Finished Path Divergence calls\n");
     }
 
 
   
   hash_table_free(&db_graph);
+  timestamp();
+  printf("Cortex completed\n");
   return 0;
 }
 

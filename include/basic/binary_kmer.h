@@ -8,7 +8,7 @@
 #include <global.h>
 #include <event_encoding.h>
 
-#define BINVERSION 3
+#define BINVERSION 4
 
 // *** Basic constants to allow compile-time configuration of what kmer-sizes we support ****
 #define ALLOW_KMERS_UP_TO_31 1

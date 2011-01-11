@@ -30,6 +30,7 @@
 #include <seq.h>
 #include <dB_graph.h>
 #include <file_format.h>
+#include <graph_info.h>
 
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;
@@ -110,14 +111,16 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
 
 //functions for loading multicolour graphs
-long long  load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, int* num_cols_in_loaded_binary);
+long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
+							   int* num_cols_in_loaded_binary, int** array_mean_readlens, long long** array_total_seqs);
 
 
-long long  load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, boolean all_entries_are_unique, EdgeArrayType type, int index);
-long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph,
+long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
+								  int* mean_readlen, long long* total_seq,
+								  boolean all_entries_are_unique, EdgeArrayType type, int index);
+long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, GraphInfo* db_graph_info,
 											   boolean all_entries_are_unique, EdgeArrayType type, int index);
-long long load_population_as_binaries_from_graph(char* filename, boolean about_to_load_first_binary_into_empty_graph, dBGraph* db_graph);
-
+long long load_population_as_binaries_from_graph(char* filename, int first_colour,boolean about_to_load_first_binary_into_empty_graph, dBGraph* db_graph, GraphInfo* db_graph_info);
 
 //functions for comparing graph with reference, or comparing reads with the graph
 void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
@@ -181,8 +184,9 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
                                            dBGraph* db_graph, int colour);
 
 
-void print_binary_signature(FILE * fp,int kmer_size, int num_cols);
-boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary);
+void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_mean_readlens, long long* array_total_seq);
+boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary, int** array_mean_readlens, long long** array_total_seqs);
+
 boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* num_bitfields, int* number_of_colours_in_binary); //return true if binary header readable and has magic number
 
 int get_number_of_files_and_check_existence_from_filelist(char* filelist);

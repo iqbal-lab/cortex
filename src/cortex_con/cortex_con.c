@@ -224,9 +224,9 @@ int main(int argc, char **argv){
     int count_double_Ys = db_graph_find_double_Ys(ctg_length, db_graph);
     printf("%i double Ys found\n",count_double_Ys);
     timestamp();
-    printf("dumping contigs %s -- coverage threshold %i\n",cmd_line.output_paths_fasta_filename,cmd_line.coverage_threshold);
-    fflush(stdout);
-    db_graph_print_paths(cmd_line.output_paths_fasta_filename,ctg_length,cmd_line.print_coverages,cmd_line.coverage_threshold,db_graph);    
+    //printf("dumping contigs %s -- coverage threshold %i\n",cmd_line.output_paths_fasta_filename,cmd_line.coverage_threshold);
+    //fflush(stdout);
+    //db_graph_print_paths(cmd_line.output_paths_fasta_filename,ctg_length,cmd_line.print_coverages,cmd_line.coverage_threshold,db_graph);    
   }
 
  if (cmd_line.print_supernodes_fasta){

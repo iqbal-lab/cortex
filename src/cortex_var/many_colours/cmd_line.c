@@ -97,7 +97,19 @@ boolean more_than_one_colour_in_multicol_binary(char* file, int kmer_size)
     }
 
   int num_cols=0;
-  check_binary_signature(fp, kmer_size, BINVERSION, &num_cols);
+  int mean_readlens[NUMBER_OF_COLOURS];
+  long long total_seqs[NUMBER_OF_COLOURS];
+  int* mean_readlens_ptrs[NUMBER_OF_COLOURS];
+  long long* total_seqs_ptrs[NUMBER_OF_COLOURS];
+  int i;
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      mean_readlens[i]=0;
+      mean_readlens_ptrs[i]=&(mean_readlens[i]);
+      total_seqs[i]=0;
+      total_seqs_ptrs[i]=&(total_seqs[i]);
+    }
+  check_binary_signature(fp, kmer_size, BINVERSION, &num_cols, mean_readlens_ptrs, total_seqs_ptrs);
   fclose(fp);
 
   if (num_cols>1)
@@ -167,6 +179,8 @@ const char* usage=
 "   [--dump_covg_distribution FILENAME] \t\t\t\t=\t Print k-mer coverage distribution to the file specified\n" \
   // -B
 "   [--remove_low_coverage_kmers INT] \t\t\t\t=\t Filter for kmers with coverage less than or equal to  threshold.\n"  \
+  // -C
+"   [--dump_filtered_read_len_distribution FILENAME] \t\t\t\t=\t Dump to file the distribution of \"effective\" read lengths after quality/homopolymer/PCR dup filters \n"  \
 
   "\n";
 
@@ -254,6 +268,7 @@ int default_opts(CmdLine * c)
   set_string_to_null(c->ref_chrom_fasta_list,MAX_FILENAME_LEN);
   set_string_to_null(c->config,MAX_FILENAME_LEN);
   set_string_to_null(c->covg_distrib_outfile,MAX_FILENAME_LEN);
+  set_string_to_null(c->readlen_distrib_outfile,MAX_FILENAME_LEN);
   
 
   //booleans
@@ -275,7 +290,8 @@ int default_opts(CmdLine * c)
   c->input_seq = false;
   c->format_of_input_seq=UNSPECIFIED;
   c->dump_covg_distrib=false;
-  c->health_check=true;
+  c->dump_readlen_distrib=false;
+  c->health_check=false;
   return 1;
 }
 
@@ -315,7 +331,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"list_ref_fasta",required_argument,NULL,'z'},
     {"dump_covg_distribution",required_argument,NULL,'A'},
     {"remove_low_coverage_kmers",required_argument,NULL,'B'},
-    {"health_check",no_argument,NULL,'C'},
+    {"health_check",no_argument,NULL,'C'},//hidden
+    {"dump_filtered_read_len_distribution",required_argument,NULL,'D'},
     {0,0,0,0}	
   };
   
@@ -326,7 +343,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -787,32 +804,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 	break ;
       }
-
-    case 'A':
-      {
-
-	if (optarg==NULL)
-	  errx(1,"[--dump_covg_distribution] option requires a filename");
-	
-	if (strlen(optarg)<MAX_FILENAME_LEN)
-	  {
-	    strcpy(cmdline_ptr->covg_distrib_outfile,optarg);
-	    cmdline_ptr->dump_covg_distrib=true;
-	  }
-	else
-	  {
-	    errx(1,"[--dump_covg_distribution] filename too long [%s]",optarg);
-	  }
-	
-	if (access(optarg,F_OK)==0){
-	  errx(1,"[--dump_covg_distribution] filename [%s] already exists",optarg);
-	}
-
-
-	break ;
-      }
-
-    case 'B':
+ 
+   case 'B':
       {
 
 	if (optarg==NULL)
@@ -837,10 +830,33 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	cmdline_ptr->health_check=true;
 	break;    
       }
+    case 'D':
+      {
+
+	if (optarg==NULL)
+	  errx(1,"[--dump_filtered_read_len_distribution FILENAME] option requires a filename");
+	
+	if (strlen(optarg)<MAX_FILENAME_LEN)
+	  {
+	    strcpy(cmdline_ptr->readlen_distrib_outfile,optarg);
+	    cmdline_ptr->dump_readlen_distrib=true;
+	  }
+	else
+	  {
+	    errx(1,"[--dump_filtered_read_len_distribution] filename too long [%s]",optarg);
+	  }
+	
+	if (access(optarg,F_OK)==0){
+	  errx(1,"[--dump_filtered_read_len_distribution] filename [%s] already exists",optarg);
+	}
+
+	break ;
+      }
+
       
    
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:", long_options, &longopt_index);
 
   }
   return 0;
@@ -1024,7 +1040,20 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  printf("Unable to open multicolour bin %s for checks\n", cmd_ptr->multicolour_bin);
 	  exit(1);
 	}
-      boolean is_multicol_bin_ok = check_binary_signature(fp, cmd_ptr->kmer_size, BINVERSION, &num_m_cols);
+
+      int mean_readlens[NUMBER_OF_COLOURS];
+      long long total_seqs[NUMBER_OF_COLOURS];
+      int* mean_readlens_ptrs[NUMBER_OF_COLOURS];
+      long long* total_seqs_ptrs[NUMBER_OF_COLOURS];
+      int i;
+      for (i=0; i<NUMBER_OF_COLOURS; i++)
+	{
+	  mean_readlens[i]=0;
+	  mean_readlens_ptrs[i]=&(mean_readlens[i]);
+	  total_seqs[i]=0;
+	  total_seqs_ptrs[i]=&(total_seqs[i]);
+	}
+      boolean is_multicol_bin_ok = check_binary_signature(fp, cmd_ptr->kmer_size, BINVERSION, &num_m_cols, mean_readlens_ptrs, total_seqs_ptrs);
       fclose(fp);
       
       if (is_multicol_bin_ok==false)

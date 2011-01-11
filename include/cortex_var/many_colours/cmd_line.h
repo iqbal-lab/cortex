@@ -68,6 +68,7 @@ typedef struct
   char ref_chrom_fasta_list[MAX_FILENAME_LEN];
   char config[MAX_FILENAME_LEN];
   char covg_distrib_outfile[MAX_FILENAME_LEN];
+  char readlen_distrib_outfile[MAX_FILENAME_LEN];
   boolean cut_homopolymers;
   boolean remove_pcr_dups;
   //boolean clip_tips;
@@ -85,6 +86,7 @@ typedef struct
   boolean input_multicol_bin;//flag - has it been input
   boolean input_seq; //flag - has it been input
   boolean dump_covg_distrib; //flag - shoud we dump covg distrib
+  boolean dump_readlen_distrib; //flag - shoud we dump distrib of filtered read lengths
   boolean health_check;
 
   //int detect_vars_delta;

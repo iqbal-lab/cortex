@@ -293,9 +293,14 @@ void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fi
 
 
 //do not export the folloiwing internal function
-void load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
-											     boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
-											     dBGraph* db_graph, EdgeArrayType type, int index, long long** read_len_count_array)
+// this is called repeatedly in a loop.  read_len_count_array is used to collect statistics on the length of reads,
+// and needs to allow for the fact that we CUT reads at N's, low quality bases, and that reads can be very long.
+// So, the return value is the length of the final window. The length_final_window_of_prev_call argument is the length
+// of the final window in the LAST call of this, provided that that last call was not a full entry.
+long long load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
+												  boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
+												  dBGraph* db_graph, EdgeArrayType type, int index, long long** read_len_count_array,
+												  int length_final_window_of_prev_call)
 {
   long long total_bases_loaded=0;
 
@@ -305,12 +310,39 @@ void load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_p
   Orientation previous_orientation=forward;
   BinaryKmer tmp_kmer;
   int i,j;
+  long long length_final_window;
+
   for(i=0;i<windows->nwindows;i++){ //for each window
     KmerSlidingWindow * current_window = &(windows->window[i]);
+
     //update total bases loaded
-    total_bases_loaded+=current_window->nkmers+db_graph->kmer_size-1;
-    //log that we have loaded a "read" of this length
-    *(read_len_count_array[current_window->nkmers+db_graph->kmer_size-1]) = *(read_len_count_array[current_window->nkmers+db_graph->kmer_size-1])+1;
+    long long length_this_window = (long long) (current_window->nkmers+db_graph->kmer_size-1);
+    total_bases_loaded+=length_this_window;
+
+    //log that we have loaded a "read" of this length, provided it is not the last window - the last window lenth we will return, so  it can be cumulated, in case this is a long read
+
+    if ( (i==0) && (i<windows->nwindows-1) )//is the first window, and there is >1 window, so it is not also the last. Log the window/read length
+      {
+	(*(read_len_count_array[length_final_window_of_prev_call + length_this_window]))++;
+      }
+    else if (i==0)//is the one and only window, add the length passed in, and return this from this function
+      {
+	length_final_window = length_final_window_of_prev_call + length_this_window;
+      }
+    else if (i<windows->nwindows-1)//not first or last - window in middle
+      {
+	(*(read_len_count_array[length_this_window]))++;
+      }
+    else if (i==windows->nwindows-1)//last window, and there was >1 window
+      {
+	length_final_window = length_this_window;
+      }
+    else 
+      {
+	printf("Error in load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop. Bad index for sliding window\n");
+	exit(1);
+      }
+
 
     for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
       boolean found = false;
@@ -367,6 +399,8 @@ void load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_p
   }
 
   *bases_loaded = *bases_loaded + total_bases_loaded;
+
+  return length_final_window;
 
 }
 
@@ -440,7 +474,7 @@ void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, S
 
 
 
-//penultimate argument is to specify whether to discard potential PCR duplicate reads single-endedly - ie if read starts at same kmer
+// remove_dups_single_endedly argument is to specify whether to discard potential PCR duplicate reads single-endedly - ie if read starts at same kmer
 // as a previous read, then discard it. This is a pretty harsh filter, and if ppssible, prefer to use paired end info.
 // So in general when calling this function, would expect that boolean remove_dups_single_endedly to be set to false, unless you know you have low coverage, so have
 // low probability of two reads starting at the same point.
@@ -491,7 +525,8 @@ void load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, long long* bas
   int entry_length;
   boolean full_entry = true;
   boolean prev_full_entry = true;
-
+  long long len_last_window=0; //will repeatedly read a chunk from file, break it into windows. The length of the final window
+                             // needs to be added to the length of the first window of the next chunk if this chunk was not the end of an entry
   
   while ((entry_length = file_reader(fp,seq,max_read_length,full_entry,&full_entry))){
    
@@ -546,15 +581,30 @@ void load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, long long* bas
 	}
       
       //if remove_dups_single_endedly==true/false, then we are passing in true/false for the mark_read_starts argument
-      load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows, &prev_full_entry, &full_entry, bases_pass_filters_and_loaded, remove_dups_single_endedly, 
-											      db_graph, type, index,readlen_count_array);
+      len_last_window = load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows, &prev_full_entry, &full_entry, bases_pass_filters_and_loaded, 
+														remove_dups_single_endedly, 
+														db_graph, type, index,readlen_count_array, len_last_window);
 
     }
 
-    if (full_entry == false){
-      shift_last_kmer_to_start_of_sequence(seq,entry_length,db_graph->kmer_size);
-    }
-
+    if (full_entry == false)
+      {
+	shift_last_kmer_to_start_of_sequence(seq,entry_length,db_graph->kmer_size);
+      }
+    else
+      {
+	if (len_last_window<=max_read_length)
+	  {
+	    (*(readlen_count_array[len_last_window]))++;
+	  }
+	else
+	  {
+	    (*(readlen_count_array[max_read_length]))++;//this is slightly meaningless. For fasta with enormous reads, "max_read_length" is treated NOT as the max read length
+	                                                // but instead as the chunk size with which you read through the entry. In such cases, this code does not support
+	                                                //getting a read length distribution.
+	  }
+	len_last_window=0;
+      }
     prev_full_entry = full_entry;
    
 
@@ -587,7 +637,9 @@ void paired_end_sequence_core_loading_loop_of_specific_person_or_pop(FILE* fp1 ,
   boolean prev_full_entry1 = true;
   boolean prev_full_entry2 = true;
 
- 
+  long long len_last_window_1 = 0;
+  long long len_last_window_2 = 0;
+
   //we assume that both files are the same length
   while ((entry_length1 = file_reader(fp1,seq1,max_read_length,full_entry1,&full_entry1))){
    
@@ -654,17 +706,25 @@ void paired_end_sequence_core_loading_loop_of_specific_person_or_pop(FILE* fp1 ,
     else if ((nkmers1==0)&&(nkmers2!=0))
       {
 	(*bad_reads)++;
-	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows2, &prev_full_entry2, &full_entry2, bases_pass_filters_and_loaded, true, db_graph, type, index, readlen_count_array);
+	len_last_window_2 = load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows2, &prev_full_entry2, &full_entry2, 
+														    bases_pass_filters_and_loaded, true, db_graph, type, index, 
+														    readlen_count_array, len_last_window_2);
       }
     else if ((nkmers1!=0)&&(nkmers2==0))
       {
 	(*bad_reads)++;
-	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows1, &prev_full_entry1, &full_entry1, bases_pass_filters_and_loaded, true, db_graph, type, index, readlen_count_array);
+	len_last_window_1 = load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows1, &prev_full_entry1, &full_entry1, 
+														    bases_pass_filters_and_loaded, true, db_graph, type, index, 
+														    readlen_count_array,len_last_window_1);
       }
     else 
       {
-	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows1, &prev_full_entry1, &full_entry1, bases_pass_filters_and_loaded, true, db_graph, type, index, readlen_count_array);
-	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows2, &prev_full_entry2, &full_entry2, bases_pass_filters_and_loaded, true, db_graph, type, index, readlen_count_array);
+	len_last_window_1 = load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows1, &prev_full_entry1, &full_entry1, 
+														    bases_pass_filters_and_loaded, true, db_graph, type, index, 
+														    readlen_count_array, len_last_window_1);
+	len_last_window_2 = load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows2, &prev_full_entry2, &full_entry2, 
+														    bases_pass_filters_and_loaded, true, db_graph, type, index, 
+														    readlen_count_array, len_last_window_2);
       }
 
     }
@@ -672,9 +732,19 @@ void paired_end_sequence_core_loading_loop_of_specific_person_or_pop(FILE* fp1 ,
     if (full_entry1 == false){
       shift_last_kmer_to_start_of_sequence(seq1,entry_length1,db_graph->kmer_size);
     }
+    else
+      {
+	(*(readlen_count_array[len_last_window_1]))++;
+	len_last_window_1=0;
+      }
     if (full_entry2 == false){
       shift_last_kmer_to_start_of_sequence(seq2,entry_length2,db_graph->kmer_size);
     }
+    else
+      {
+	(*(readlen_count_array[len_last_window_2]))++;
+	len_last_window_2=0;
+      }
 
 
     prev_full_entry1 = full_entry1;
@@ -1212,7 +1282,9 @@ void load_population_as_fastq(char* filename, long long* bases_read, long long b
 
 
 //returns number of kmers loaded*kmer_length
-long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, int* num_cols_in_loaded_binary)
+ //array_mean_readlens and array_total_seqs are arrays of length NUMBER_OF_COLOURS, so they can hold the mean read length+total seq in every colour
+long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
+							   int* num_cols_in_loaded_binary, int** array_mean_readlens, long long** array_total_seqs)
 {
 
   //printf("Load this binary - %s\n", filename);
@@ -1230,17 +1302,16 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
   }
 
 
-  int num_cols_in_binary;
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary) ) )
+  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, num_cols_in_loaded_binary, array_mean_readlens, array_total_seqs) ) )
     {
       printf("Cannot load this binary - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting.\n");
       exit(1);
     }
-  *num_cols_in_loaded_binary=num_cols_in_binary;
+
 
 
   //always reads the multicol binary into successive colours starting from 0 - assumes the hash table is empty prior to this
-  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, num_cols_in_binary)){
+  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, *num_cols_in_loaded_binary)){
     count++;
     
     dBNode * current_node  = NULL;
@@ -1251,7 +1322,7 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
     seq_length+=db_graph->kmer_size;
    
     int i;
-    for (i=0; i<num_cols_in_binary ; i++)
+    for (i=0; i<(*num_cols_in_loaded_binary) ; i++)
       {
 	add_edges(current_node,individual_edge_array, i, get_edge_copy(node_from_file, individual_edge_array, i));
 	db_node_update_coverage(current_node, individual_edge_array, i, db_node_get_coverage(&node_from_file, individual_edge_array,i));
@@ -1266,7 +1337,9 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
 
 
 
-long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, boolean all_entries_are_unique, EdgeArrayType type, int index)
+long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
+								  int* mean_readlen, long long* total_seq,
+								  boolean all_entries_are_unique, EdgeArrayType type, int index)
 {
 
   //printf("Open single colour binary: %s\n", filename);
@@ -1287,9 +1360,9 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 
 
   int num_cols_in_binary;
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary) ) )
+  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary, &mean_readlen, &total_seq) ) )
     {
-        printf("Cannot load this binary. Exiting.\n");
+      printf("Cannot load this binary. Exiting.\n");
       exit(1);
     }
   if (num_cols_in_binary!=1)
@@ -1329,7 +1402,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 
 
 
-long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, 
+long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, GraphInfo* db_graph_info, 
 											   boolean all_entries_are_unique, EdgeArrayType type, int index)
 {
 
@@ -1354,9 +1427,14 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 	*p = '\0';
       
       //printf("Load this binary: %s, into this colour : %d\n", line, index);
+      int mean_read_len_in_this_binary=0;
+      long long total_seq_in_this_binary=0;
       total_seq_loaded += 
-	load_single_colour_binary_data_from_filename_into_graph(line, db_graph, all_entries_are_unique, individual_edge_array, index);
+	load_single_colour_binary_data_from_filename_into_graph(line, db_graph, &mean_read_len_in_this_binary,&total_seq_in_this_binary,
+								all_entries_are_unique, individual_edge_array, index);
       all_entries_are_unique=false;
+
+      update_mean_readlen_and_total_seq(db_graph_info, index,mean_read_len_in_this_binary, total_seq_in_this_binary);
 
     }
 
@@ -1374,7 +1452,8 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of binaries for that individual).
-long long load_population_as_binaries_from_graph(char* filename, boolean about_to_load_first_binary_into_empty_graph, dBGraph* db_graph)
+// these go into successive colours, starting with first_colour
+long long load_population_as_binaries_from_graph(char* filename, int first_colour,boolean about_to_load_first_binary_into_empty_graph, dBGraph* db_graph, GraphInfo* db_graph_info)
 {
 
   //printf("Open this list of colours: %s\n", filename);
@@ -1387,7 +1466,7 @@ long long load_population_as_binaries_from_graph(char* filename, boolean about_t
   char line[MAX_FILENAME_LENGTH+1];
 
   int total_seq_loaded=0;
-  int people_so_far=0;
+  int which_colour=first_colour;
 
 
 
@@ -1400,19 +1479,20 @@ long long load_population_as_binaries_from_graph(char* filename, boolean about_t
 	*p = '\0';
 
 
-      people_so_far++;
-      if (people_so_far>NUMBER_OF_COLOURS)
+      if (which_colour>NUMBER_OF_COLOURS-1)
       {
-        printf("This filelist contains too many people, %d, remember we have set a population limit of %d in variable NUMBER_OF_COLOURS", 
-	       people_so_far,NUMBER_OF_COLOURS);
+        printf("This filelist contains too many people, remember we have set a population limit of %d in variable NUMBER_OF_COLOURS. Cannot load into colour %d", 
+	       NUMBER_OF_COLOURS, which_colour);
 	exit(1);
       }
 
       //printf("Open this filelist of binaries, %s,  all corresponding to the same colour:%d\n",
-      //	     line, people_so_far-1);
+      //	     line, which_colour-1);
+
+      
       total_seq_loaded = total_seq_loaded + 
-	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph,about_to_load_first_binary_into_empty_graph, 
-											 individual_edge_array, people_so_far-1);
+	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph,db_graph_info, about_to_load_first_binary_into_empty_graph, 
+											 individual_edge_array, which_colour);
       about_to_load_first_binary_into_empty_graph=false;
     }
 
@@ -2302,8 +2382,9 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 					   
 
 
-
-void print_binary_signature(FILE * fp,int kmer_size, int num_cols){
+//array_mean_readlens is an array of length num_cols, giving the mean read length of data loaded into each colour
+//array_total_seq is an array of length num_cols, giving the total amount of sequence in each colour (ie sequence loaded, AFTER filtering out by quality, PCR dups, homopolymers etc)
+void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_mean_readlens, long long* array_total_seq){
   char magic_number[6];
   int version = BINVERSION;
   
@@ -2322,11 +2403,24 @@ void print_binary_signature(FILE * fp,int kmer_size, int num_cols){
   fwrite(&kmer_size,sizeof(int),1,fp);
   fwrite(&num_bitfields, sizeof(int),1,fp);
   fwrite(&num_cols, sizeof(int), 1, fp);
+
+  int i;
+  for (i=0; i<num_cols; i++)
+    {
+      fwrite(&(array_mean_readlens[i]), sizeof(int), 1, fp);
+    }
+  for (i=0; i<num_cols; i++)
+    {
+      fwrite(&(array_total_seq[i]), sizeof(long long), 1, fp);
+    }
+  fwrite(magic_number,sizeof(char),6,fp);
+
 }
 
 
 //return yes if signature is consistent
-boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary){
+boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary, int** array_mean_readlens, long long** array_total_seqs)
+{
   int read;
   char magic_number[6];
   boolean ret = false;
@@ -2358,40 +2452,94 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* nu
 		
 		if ( (read>0) && (num_cols<=NUMBER_OF_COLOURS) && (num_cols>0)  )
 		  { 
-
+		    
 		    *number_of_colours_in_binary = num_cols;
-		    ret = true;
+		    
+		    int i;
+		    boolean problem=false;
+		    for (i=0; (i<num_cols) && (problem==false); i++)
+		      {
+			int mean_read_len;
+			read = fread(&mean_read_len,sizeof(int),1,fp);
+			if (read==0)
+			  {
+			    problem=true;
+			  }
+			else
+			  {
+			    *(array_mean_readlens[i]) = mean_read_len;
+			  }
+		      }
+		    if (problem==false)
+		      {
+			for (i=0; (i<num_cols) && (problem==false); i++)
+			  {
+			    long long total_seq;
+			    read = fread(&total_seq,sizeof(long long),1,fp);
+			    if (read==0)
+			      {
+				problem=true;
+			      }
+			    else
+			      {
+				*(array_total_seqs[i]) = total_seq;
+			      }
+			  }
+			
+			magic_number[0]='\0';
+			magic_number[1]='\0';
+			magic_number[2]='\0';
+			magic_number[3]='\0';
+			magic_number[4]='\0';
+			magic_number[5]='\0';
+			read = fread(magic_number,sizeof(char),6,fp);
+			if ( (problem==false)&&
+			     (read>0)&&
+			     magic_number[0]=='C' &&
+			     magic_number[1]=='O' &&
+			     magic_number[2]=='R' &&
+			     magic_number[3]=='T' &&
+			     magic_number[4]=='E' &&
+			     magic_number[5]=='X' )
+			  {
+			    ret = true;
+			  }
+			else
+			  {
+			    printf("Binary is missing read-length/sequence info, or the end-of-header magic number.\n");
+			  }
+		      }
+		    else
+		      {
+			printf("You are loading  binary with %d colours into a graph with %d colours - incompatible\n",
+			       num_cols, NUMBER_OF_COLOURS);
+		      }
 		  }
 		else
 		  {
-		    printf("You are loading  binary with %d colours into a graph with %d colours - incompatible\n",
-			   num_cols, NUMBER_OF_COLOURS);
+		    printf("Kmer of binary matches the current graph. However this binary was dumped with a different max_kmer size to that of the current graph\n");
+		    printf("This binary uses %d bitfields, and current graph uses %d\n", num_bitfields, NUMBER_OF_BITFIELDS_IN_BINARY_KMER);
 		  }
 	      }
 	    else
 	      {
-		printf("Kmer of binary matches the current graph. However this binary was dumped with a different max_kmer size to that of the current graph\n");
-		printf("This binary uses %d bitfields, and current graph uses %d\n", num_bitfields, NUMBER_OF_BITFIELDS_IN_BINARY_KMER);
+		printf("You are loading a binary with kmer=%d into a graph with kmer=%d - incompatible\n", kmer_size2, kmer_size);
 	      }
 	  }
 	else
 	  {
-	    printf("You are loading a binary with kmer=%d into a graph with kmer=%d - incompatible\n", kmer_size2, kmer_size);
+	    printf("Binary versions do not match.\n");
 	  }
       }
     else
       {
-	printf("Binary versions do not match.\n");
+	printf("Binary does not have magic number in header. Corrupt, or not a Cortex binary\n");
       }
+    
   }
-  else
-    {
-      printf("Binary does not have magic number in header. Corrupt, or not a Cortex binary\n");
-    }
-
   return ret;
-}
 
+}
 
 //return true if signature is readable
 boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* number_of_bitfields, int* number_of_colours_in_binary){
