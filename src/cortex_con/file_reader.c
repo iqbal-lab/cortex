@@ -278,7 +278,9 @@ long long load_binary_from_filename_into_graph(char* filename,  int binary_versi
   }
   
   int num_colours_in_binary=1;
-  if (check_binary && !check_binary_signature(fp_bin,db_graph->kmer_size, BINVERSION, &num_colours_in_binary)){
+  int mean_read_len;
+  long long total_seq;
+  if (check_binary && !check_binary_signature(fp_bin,db_graph->kmer_size, BINVERSION, &num_colours_in_binary, &mean_read_len, &total_seq)){
     errx(1,"binary version or kmer_size are inconsistent");
   }
   if (num_colours_in_binary!=1)
@@ -597,7 +599,7 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
 }
 
 
-void print_binary_signature(FILE * fp,int kmer_size, int num_cols){
+void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int mean_read_len, long long total_seq){
   char magic_number[6];
   int version = BINVERSION;
   
@@ -616,13 +618,17 @@ void print_binary_signature(FILE * fp,int kmer_size, int num_cols){
   fwrite(&kmer_size,sizeof(int),1,fp);
   fwrite(&num_bitfields, sizeof(int),1,fp);
   fwrite(&num_cols, sizeof(int), 1, fp);
+  fwrite(&mean_read_len, sizeof(int), 1, fp);
+  fwrite(&total_seq, sizeof(long long), 1, fp);
+  fwrite(magic_number,sizeof(char),6,fp);
+  
 }
 
 
 
 //return yes if signature is consistent
 //third argument is ignored for now.
-boolean check_binary_signature(FILE * fp,int kmer_size, int binary_version, int* number_of_colours_in_binary){
+boolean check_binary_signature(FILE * fp,int kmer_size, int binary_version, int* number_of_colours_in_binary, int* mean_read_len, long long* total_seq){
   int read;
   char magic_number[6];
   boolean ret = false;
@@ -655,7 +661,47 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int binary_version, int*
 		if ( (read>0) && (num_cols==1)  )
 		  { 
 		    *number_of_colours_in_binary = num_cols;
-		    ret = true;
+
+		    read = fread(mean_read_len,sizeof(int),1,fp);
+		    if (read>0)
+		      {
+			read = fread(total_seq,sizeof(long long),1,fp);
+			if (read>0)
+			  {
+			    magic_number[0]='\0';
+			    magic_number[1]='\0';
+			    magic_number[2]='\0';
+			    magic_number[3]='\0';
+			    magic_number[4]='\0';
+			    magic_number[5]='\0';
+			    read = fread(magic_number,sizeof(char),6,fp);
+			    if ( (read>0)&&
+				 magic_number[0]=='C' &&
+				 magic_number[1]=='O' &&
+				 magic_number[2]=='R' &&
+				 magic_number[3]=='T' &&
+				 magic_number[4]=='E' &&
+				 magic_number[5]=='X' 
+				 )
+			      {
+				ret = true;
+			      }
+			    else
+			      {
+				printf("Binary header is missing the final magic number; we read %s, mean read len %d and total seq %qd\n", magic_number, *mean_read_len, *total_seq);
+			      }
+			    
+			  }
+			else
+			  {
+			    printf("Binary header does not contain total seq\n");
+			  }
+		      }
+		    else
+		      {
+			printf("Binary header does not contain a mean read length\n");
+		      }
+
 		  }
 		else
 		  {

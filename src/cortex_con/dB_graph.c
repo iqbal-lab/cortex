@@ -1816,7 +1816,10 @@ void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), 
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   
-  print_binary_signature(fout,db_graph->kmer_size,1);
+  int mean_read_len=0;//Mario - you can plumb this in if you want. See cortex_var/core/graph_info.c, and how the GraphInfo object is used in my file_reader * cprtex_var.c, 
+                      // for how I did it.
+  long long total_seq=0;
+  print_binary_signature(fout,db_graph->kmer_size,1, mean_read_len, total_seq);
 
   
 

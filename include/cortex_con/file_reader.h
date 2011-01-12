@@ -68,8 +68,8 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
 //for binary
 long long  load_binary_from_filename_into_graph(char* filename, int binary_version,dBGraph* db_graph, boolean all_entries_are_unique, boolean check_binary);
 
-void print_binary_signature(FILE * fp,int kmer_size, int num_cols);
-boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary);
+void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int mean_read_len, long long total_seq);
+boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary,int* mean_read_len, long long* total_seq);
 
 
 
