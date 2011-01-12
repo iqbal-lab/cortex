@@ -392,6 +392,14 @@ int main(int argc, char **argv){
   hash_key_bits    = cmd_line.number_of_buckets_bits; //number of buckets: 2^hash_key_bits
   bucket_size      = cmd_line.bucket_size;
 
+  int number_of_bitfields = ((kmer_size * 2) / (sizeof(bitfield_of_64bits)*8))+1;
+  int max_kmer_size = (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1;
+  int min_kmer_size = ((NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1) * sizeof(bitfield_of_64bits) * 4) + 1;
+
+  if (number_of_bitfields != NUMBER_OF_BITFIELDS_IN_BINARY_KMER){
+    printf("K-mer %i  is not in current range of kmers [%i - %i] required for this executable.!\n",kmer_size,min_kmer_size,max_kmer_size);
+    exit(0);
+  }
   
   printf("Maximum k-mer size (compile-time setting): %ld\n", (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1);
   
@@ -499,7 +507,8 @@ int main(int argc, char **argv){
 
       if (cmd_line.remove_pcr_dups==true)
 	{
-	  //need to clean off marks on nodes about whether they are read_start or not (used during removal of duplicates)
+	  //need to clean off marks on nodes about whether they are read_start or not 
+	  //(used during removal of duplicates)
 	  hash_table_traverse(&db_node_set_status_to_none, db_graph);
 	}
 

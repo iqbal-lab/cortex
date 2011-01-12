@@ -3398,7 +3398,6 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*co
 
   if (db_graph_info==NULL)
     {
-      int i;
       int means=0;
       long long tots=0;
 

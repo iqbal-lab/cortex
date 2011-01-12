@@ -130,7 +130,7 @@ void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, b
 	    }
 	  
 	  
-	    printf("\nNum SE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal SE sequence parsed:%qd\tTotal SE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n",
+	    printf("\nNum SE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal SE sequence parsed:%qd\nTotal SE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n",
 	  	 num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_se_reads,single_seq_bases_read, single_seq_bases_loaded, dup_se_reads);
 
 	    
@@ -147,7 +147,7 @@ void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, b
 									 remv_dups_pe, break_homopolymers, homopol_limit, ascii_fq_offset,
 									 db_graph, individual_edge_array, colour); 
       
-      printf("\nNum PE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal PE sequence parsed:%qd\tTotal PE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n\n",
+      printf("\nNum PE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal PE sequence parsed:%qd\nTotal PE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n\n",
       	     num_file_pairs_loaded,hash_table_get_unique_kmers(db_graph),bad_pe_reads,paired_seq_bases_read,paired_seq_bases_loaded, dup_pe_reads);
 	  
     }
@@ -1434,6 +1434,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 								all_entries_are_unique, individual_edge_array, index);
       all_entries_are_unique=false;
 
+      printf("Add mean read len %d and seq %qd to colour %d\n", mean_read_len_in_this_binary, total_seq_in_this_binary, index);
       update_mean_readlen_and_total_seq(db_graph_info, index,mean_read_len_in_this_binary, total_seq_in_this_binary);
 
     }
@@ -1494,6 +1495,7 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph,db_graph_info, about_to_load_first_binary_into_empty_graph, 
 											 individual_edge_array, which_colour);
       about_to_load_first_binary_into_empty_graph=false;
+      which_colour++;
     }
 
   //printf("Finished loading population, with total seq loaded %d\n",total_seq_loaded); 

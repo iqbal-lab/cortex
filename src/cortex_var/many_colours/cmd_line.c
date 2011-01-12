@@ -931,8 +931,9 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
     }
 
 
-
+  /*
   //prevent removal of sequencing errors if we are loading incto >1 colour, or loading a binary with >1 colour
+
   if ( ( (more_than_one_colour_in_list(cmd_ptr->colour_list)==true)
 	 ||
 	 (more_than_one_colour_in_multicol_binary(cmd_ptr->multicolour_bin, cmd_ptr->kmer_size)==true)
@@ -951,7 +952,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       return -1;
 
     }
-
+  */
 
   
   
