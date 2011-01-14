@@ -649,11 +649,15 @@ void test_load_individual_binaries_into_sv_trio()
      long long dup_reads=0;
      int homopolymer_cutoff=0;
      long long bad_reads=0;
-     long long seq_read, seq_loaded1, seq_loaded2, seq_loaded3;
+     long long seq_read=0;
+     long long seq_loaded1=0;
+     long long seq_loaded2=0;
+     long long seq_loaded3=0;
      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person0.fasta", &seq_read, &seq_loaded1,
 									&bad_reads, &dup_reads, 200,
 									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 									db_graph, individual_edge_array,0);
+
      GraphInfo ginfo;
      initialise(&ginfo);
      set_seq(&ginfo, 0, seq_loaded1);
@@ -3697,22 +3701,20 @@ void test_getting_readlength_distribution()
       correct_answers_readlens[p][7]=0;
       correct_answers_readlens[p][8]=0;
     }
-  //for k=15, with homopol 5 and q10 filter we get reads of lengths:  28, 11 , 18,17   12, 29, 36    13, 16, 39 ,16
+  //for k=15, with homopol 5 and q10 filter we get reads of lengths:  27, 11 , 18,17   12, 29, 36    13, 16, 39 ,16
   correct_answers_readlens[39][6]=1;
-  correct_answers_readlens[28][6]=1;
-  correct_answers_readlens[11][6]=1;
+  correct_answers_readlens[27][6]=1;
   correct_answers_readlens[18][6]=1;
   correct_answers_readlens[17][6]=1;
-  correct_answers_readlens[12][6]=1;
   correct_answers_readlens[29][6]=1;
   correct_answers_readlens[36][6]=1;
   correct_answers_readlens[16][6]=2;
   //for k=19, with homopol5 and q10 filter, we get reads of lengths:  39, 41, 36 , 39
-  correct_answers_readlens[28][7]=1;
+  correct_answers_readlens[27][7]=1;
   correct_answers_readlens[29][7]=1;
   correct_answers_readlens[36][7]=1;
   correct_answers_readlens[39][7]=1;
-  //for k=39, wuth homopol5 and q10 filter we get reads of lengths: 39,41,39
+  //for k=39, with homopol5 and q10 filter we get reads of lengths: 39,41,39
   correct_answers_readlens[39][8]=1;
 
 
@@ -3725,10 +3727,6 @@ void test_getting_readlength_distribution()
   int homopolymer_cutoff=0;
   int qfilter=0;
   
-  
-
-  
-
   void setup_hashtable_and_test(int j, int k_mer)
   {
     //prepare a hash table
@@ -3759,6 +3757,7 @@ void test_getting_readlength_distribution()
 	break_homopolymers=true;
 	homopolymer_cutoff=5;
       }
+    //breakpoint:
     load_fastq_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/test_readlen_distrib.fastq", &seq_read, &seq_loaded, readlen_counts_ptrs,
 									&bad_reads, qfilter, &dup_reads, 200, remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 								       33,db_graph, individual_edge_array, 0);
@@ -3769,6 +3768,10 @@ void test_getting_readlength_distribution()
 
     for (n=0; n<=99; n++)
       {
+	if (correct_answers_readlens[n][j] != *(readlen_counts_ptrs[n]) )
+	  {
+	    printf("n is %d and we expect %qd but get %qd\n", n, correct_answers_readlens[n][j], *(readlen_counts_ptrs[n]) );
+	  }
 	CU_ASSERT(correct_answers_readlens[n][j]==*(readlen_counts_ptrs[n]) );
       }
     
@@ -3780,23 +3783,204 @@ void test_getting_readlength_distribution()
 
   setup_hashtable_and_test(0, kmerlist[0]);
   setup_hashtable_and_test(1,kmerlist[1]);
-
   if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
     {
       setup_hashtable_and_test(2, kmerlist[2]);
     }
-
-
-
   setup_hashtable_and_test(3, kmerlist[0]);
-
-    setup_hashtable_and_test(4, kmerlist[1]);
+  setup_hashtable_and_test(4, kmerlist[1]);
   if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
     {
       setup_hashtable_and_test(5, kmerlist[2]);
     }
 
+  setup_hashtable_and_test(6, kmerlist[0]);
+
+  setup_hashtable_and_test(7, kmerlist[1]);
+  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
+    {
+      setup_hashtable_and_test(8, kmerlist[2]);
+    }
+
   
+
+
+  //******************************************************************************************
+  //2. Check that with PAIRED-END parsing of fastq, when we get the read length distribution it correctly does so when there are
+  //   low quality bases below threshold, homopolymers, Ns
+  //******************************************************************************************
+
+
+  long long paired_end_answers[100][9];
+  for (p=0; p<=99; p++)
+    {
+      paired_end_answers[p][0]=0;
+      paired_end_answers[p][1]=0;
+      paired_end_answers[p][2]=0;
+      paired_end_answers[p][3]=0;
+      paired_end_answers[p][4]=0;
+      paired_end_answers[p][5]=0;
+      paired_end_answers[p][6]=0;
+      paired_end_answers[p][7]=0;
+      paired_end_answers[p][8]=0;
+    }
+
+  // we are going to load 2 files. One is the same as the previous fastq we loaded, with an extra copy of the third read, and the other is its mate.
+  // file1: read1, read2, read3, copy of read3
+  // file2: read4, read5, copy of read5, copy of read5
+  // so actually only the final pair will be removed by dup removal
+
+  //first, what answers do you get with no quality or homopolymer filters, just the effects of Ns?
+  //
+
+  //for k=15, with no quality/homopol (ie jist due to Ns), we get reads of these lengths:41,  26, 17, 95, 41,39, 17 from lh read and 99,99,99 from the rh
+  paired_end_answers[41][0]=3;
+  paired_end_answers[26][0]=1;
+  paired_end_answers[17][0]=3;
+  paired_end_answers[95][0]=1;
+  paired_end_answers[39][0]=2;
+  paired_end_answers[99][0]=4;//from rh read
+  //for k=19, we get reads of tlength: 41, 11, 26, 17, 3, 95, 41,39, 17
+  paired_end_answers[41][1]=3;
+  paired_end_answers[26][1]=1;
+  paired_end_answers[95][1]=1;
+  paired_end_answers[39][1]=2;
+  paired_end_answers[99][1]=4;//from rh read
+  //for k=39, we get reads of tlength: 41,39,41, 95
+  paired_end_answers[41][2]=3;
+  paired_end_answers[95][2]=1;
+  paired_end_answers[39][2]=2;
+  paired_end_answers[99][2]=4;//from rh read
+
+
+  //for k=15, with q10 filte,r we get reads of lengths:  39, 18,17  |  41,36 |   39,16,16 |   39,16,16  and on rhs: 45,36,  99  99 99  
+  paired_end_answers[39][3]=3;
+  paired_end_answers[18][3]=1;
+  paired_end_answers[16][3]=4;
+  paired_end_answers[17][3]=1;
+  paired_end_answers[41][3]=1;
+  paired_end_answers[36][3]=2;//2nd one from rh read
+  paired_end_answers[45][3]=1;//from rh read
+  paired_end_answers[99][3]=3;//from rh read
+  //for k=19, with q10 filter, we get reads of lengths:  39, 41, 36 , 39, 39 and on rhs: 45,36,99,99,99
+  paired_end_answers[39][4]=3;
+  paired_end_answers[41][4]=1;
+  paired_end_answers[36][4]=2;//2nd one from rh read
+  paired_end_answers[45][4]=1;//from rh read 
+  paired_end_answers[99][4]=3;//from rh read 
+  //for k=39, we get reads of lengths: 39,41,39,39  and on rhs: 45,99,99,99
+  paired_end_answers[39][5]=3;
+  paired_end_answers[41][5]=1;
+  paired_end_answers[45][5]=1;//from rh read 
+  paired_end_answers[99][5]=3;//from rh read 
+
+
+  //and now with the homopolymer filter
+
+  //for k=15, with homopol 5 and q10 filter we get reads of lengths:  27, 18,17 |    29, 36 |    16, 39 ,16  |  16,39,16, and on rhs: 36,45,99,99,99
+  paired_end_answers[16][6]=4;
+  paired_end_answers[17][6]=1;
+  paired_end_answers[18][6]=1;
+  paired_end_answers[27][6]=1;
+  paired_end_answers[29][6]=1;
+  paired_end_answers[36][6]=2;//2nd from rh read
+  paired_end_answers[39][6]=2;
+
+  paired_end_answers[45][6]=1;//from rh read
+  paired_end_answers[99][6]=3;//from rh read   
+  //for k=19, with homopol5 and q10 filter, we get reads of lengths:  39, 41, 36 , 39   and on rhs: 36,99
+  paired_end_answers[27][7]=1;
+  paired_end_answers[29][7]=1;
+  paired_end_answers[36][7]=2;//2nd from rh read
+  paired_end_answers[39][7]=2;
+  paired_end_answers[45][7]=1;//from rh read 
+  paired_end_answers[99][7]=3;//from rh read
+  //for k=39, wuth homopol5 and q10 filter we get reads of lengths: 39,41,39   and on rhs: 45,99
+  paired_end_answers[39][8]=2;
+  paired_end_answers[45][8]=1;//from rh read 
+  paired_end_answers[99][8]=3;//from rh read   
+
+
+  boolean remove_duplicates_paired_endedly=false;
+  break_homopolymers=false;
+  homopolymer_cutoff=0;
+  qfilter=0;
+  
+  void paired_setup_hashtable_and_test(int j, int k_mer)
+  {
+    //prepare a hash table
+      
+    int number_of_bits = 10;
+    int bucket_size = 100;
+    int max_retries=82;
+
+    dBGraph* db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,k_mer);
+    
+    long long dup_reads=0;
+    long long bad_reads=0;
+    long long seq_read, seq_loaded;
+    int i;
+    long long readlen_counts[100];
+    long long* readlen_counts_ptrs[100];
+    for (i=0; i<=99; i++)
+      {
+	readlen_counts[i]=0;
+	readlen_counts_ptrs[i]=&readlen_counts[i];
+      }
+    if (j>2)
+      {
+	qfilter=10;
+      }
+    if (j>5)
+      {
+	break_homopolymers=true;
+	homopolymer_cutoff=5;
+      }
+
+    load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop("../data/test/pop_graph/test_readlen_distrib.pair1.fastq",
+									     "../data/test/pop_graph/test_readlen_distrib.pair2.fastq",
+									     FASTQ,
+									     &seq_read, &seq_loaded, readlen_counts_ptrs,
+									     &bad_reads, qfilter, 200, &dup_reads, remove_duplicates_paired_endedly, break_homopolymers, homopolymer_cutoff,
+									     33,db_graph, individual_edge_array, 0);
+    int n;
+    for (n=0; n<=99; n++)
+      {
+	CU_ASSERT(paired_end_answers[n][j]==*(readlen_counts_ptrs[n]) );
+	if (paired_end_answers[n][j] != *(readlen_counts_ptrs[n]) )
+	  {
+	    printf("n is %d and we expec %qd and we get %qd\n", n, paired_end_answers[n][j], *(readlen_counts_ptrs[n]) );
+	  }
+      }
+     hash_table_free(&db_graph);
+  }
+
+
+
+
+
+  paired_setup_hashtable_and_test(0, kmerlist[0]);
+
+  paired_setup_hashtable_and_test(1,kmerlist[1]);
+  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
+    {
+      paired_setup_hashtable_and_test(2, kmerlist[2]);
+    }
+  
+  paired_setup_hashtable_and_test(3, kmerlist[0]);
+  paired_setup_hashtable_and_test(4, kmerlist[1]);
+  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
+    {
+      paired_setup_hashtable_and_test(5, kmerlist[2]);
+    }
+     paired_setup_hashtable_and_test(6, kmerlist[0]);
+
+  paired_setup_hashtable_and_test(7, kmerlist[1]);
+  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
+    {
+      paired_setup_hashtable_and_test(8, kmerlist[2]);
+    }
+    
 
 
 

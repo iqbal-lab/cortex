@@ -521,7 +521,6 @@ void load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, long long* bas
     
 
     *bases_read = *bases_read + (long long) (entry_length - (prev_full_entry==false ? db_graph->kmer_size : 0));
-   
     //printf("Length %qd %i %s %i %i\n",seq_length,entry_length, seq->name, seq->start, seq->end);
 
  
@@ -637,6 +636,7 @@ void paired_end_sequence_core_loading_loop_of_specific_person_or_pop(FILE* fp1 ,
 						    entry_length1,quality_cut_off,db_graph->kmer_size,windows1,max_windows, max_kmers, break_homopolymers, homopolymer_cutoff);
     int nkmers2 = get_sliding_windows_from_sequence(seq2->seq,seq2->qual,
 						    entry_length2,quality_cut_off,db_graph->kmer_size,windows2,max_windows, max_kmers, break_homopolymers, homopolymer_cutoff);
+
 
 
     //check whether first kmer of both reads is a read-start. If yes, then discard read as duplicate.
@@ -1324,7 +1324,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
   int num_cols_in_binary;
   if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary, &mean_readlen, &total_seq) ) )
     {
-      printf("Cannot load this binary. Exiting.\n");
+      printf("Cannot load this binary - fails signature check. Exiting.\n");
       exit(1);
     }
   if (num_cols_in_binary!=1)
@@ -2401,21 +2401,23 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* nu
     read = fread(&version,sizeof(int),1,fp);
     if (read>0 && version==BINVERSION)
       {
+
 	int kmer_size2;
 	read = fread(&kmer_size2,sizeof(int),1,fp);
 	if ((read>0) && (kmer_size2 == kmer_size) )
 	  {
+
 	    int num_bitfields;
 	    read = fread(&num_bitfields,sizeof(int),1,fp);
 
 	    if ( (read>0) && (num_bitfields==NUMBER_OF_BITFIELDS_IN_BINARY_KMER) )
+	    
 	      {
 		int num_cols;
 		read = fread(&num_cols,sizeof(int),1,fp);
 		
 		if ( (read>0) && (num_cols<=NUMBER_OF_COLOURS) && (num_cols>0)  )
 		  { 
-		    
 		    *number_of_colours_in_binary = num_cols;
 		    
 		    int i;

@@ -3394,7 +3394,11 @@ void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), 
 void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
-  
+  if (fout==NULL)
+    {
+      printf("Unable to open output file %s\n", filename);
+      exit(1);
+    }
 
   if (db_graph_info==NULL)
     {
@@ -3421,7 +3425,7 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*co
   hash_table_traverse(&print_node_single_colour_binary_of_colour0,db_graph); 
   fclose(fout);
 
-  printf("%qd kmers dumped\n",count);
+  //printf("%qd kmers dumped\n",count);
 }
 
 
