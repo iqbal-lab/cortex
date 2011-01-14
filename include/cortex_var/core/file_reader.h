@@ -56,7 +56,7 @@ void  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(c
 									       int fastq_ascii_offset,
 									       dBGraph* db_graph, EdgeArrayType type, int index );
 
-void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded,long long** readlen_count_array,
+void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded,
 									long long * bad_reads, long long* dup_reads, int max_chunk_length, 
 									boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, 
 									dBGraph* db_graph, EdgeArrayType type, int index);
@@ -89,11 +89,11 @@ void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* li
 //index tells you which person within a population it is
 //bases_read is passed in to find out how much sequence there was in the files read-in.
 //bases_loaded is passed in to find out how much sequence passed filters (qual, PCR dup, homopol) and was loaded into the graph
-void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bases_read, long long* bases_loaded,long long** readlen_count_array,
+void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bases_read, long long* bases_loaded,
 										      long long* bad_reads, dBGraph* db_graph, int index);
 
 
-void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded, long long** readlen_count_array,long long* bad_reads, dBGraph* db_graph);
+void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded, long long* bad_reads, dBGraph* db_graph);
 
 
 // gets the next number_of_bases_to_load bases from fasta file, and returns them in the array of nodes.

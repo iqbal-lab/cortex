@@ -108,6 +108,13 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test function for getting length distribution of filtered/effective reads after N's, low quality, PCR duplicates and homopolymers have been cut or filtered",test_getting_readlength_distribution )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+
+
+
   if (NULL == CU_add_test(pPopGraphSuite, "Test checking if a path lies in a (function of) colours", test_does_this_path_exist_in_this_colour  )) 
     {
     CU_cleanup_registry();

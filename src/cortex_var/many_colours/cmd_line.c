@@ -179,8 +179,8 @@ const char* usage=
 "   [--dump_covg_distribution FILENAME] \t\t\t\t=\t Print k-mer coverage distribution to the file specified\n" \
   // -B
 "   [--remove_low_coverage_kmers INT] \t\t\t\t=\t Filter for kmers with coverage less than or equal to  threshold.\n"  \
-  // -C
-"   [--dump_filtered_read_len_distribution FILENAME] \t\t\t\t=\t Dump to file the distribution of \"effective\" read lengths after quality/homopolymer/PCR dup filters \n"  \
+  // -D
+"   [--dump_filtered_readlen_distribution FILENAME] \t\t\t\t=\t Dump to file the distribution of \"effective\" read lengths after quality/homopolymer/PCR dup filters \n"  \
 
   "\n";
 
@@ -332,7 +332,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"dump_covg_distribution",required_argument,NULL,'A'},
     {"remove_low_coverage_kmers",required_argument,NULL,'B'},
     {"health_check",no_argument,NULL,'C'},//hidden
-    {"dump_filtered_read_len_distribution",required_argument,NULL,'D'},
+    {"dump_filtered_readlen_distribution",required_argument,NULL,'D'},
     {0,0,0,0}	
   };
   
@@ -834,7 +834,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       {
 
 	if (optarg==NULL)
-	  errx(1,"[--dump_filtered_read_len_distribution FILENAME] option requires a filename");
+	  errx(1,"[--dump_filtered_readlen_distribution FILENAME] option requires a filename");
 	
 	if (strlen(optarg)<MAX_FILENAME_LEN)
 	  {
@@ -843,11 +843,11 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  }
 	else
 	  {
-	    errx(1,"[--dump_filtered_read_len_distribution] filename too long [%s]",optarg);
+	    errx(1,"[--dump_filtered_readlen_distribution] filename too long [%s]",optarg);
 	  }
 	
 	if (access(optarg,F_OK)==0){
-	  errx(1,"[--dump_filtered_read_len_distribution] filename [%s] already exists",optarg);
+	  errx(1,"[--dump_filtered_readlen_distribution] filename [%s] already exists",optarg);
 	}
 
 	break ;
@@ -921,6 +921,19 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
     {
 
       char tmp[]="Error-correction techniques should not be used on a graph including a reference genome.\nWe recommend error-correcting single-colour binaries of sequencing data, and then loading them into a multicolour graph including a reference\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+    }
+
+
+  if ( (cmd_ptr->dump_readlen_distrib==true) && (cmd_ptr->format_of_input_seq!=FASTQ) )
+    {
+      char tmp[]="--dump_filtered_readlen_distribution is only supported for fastq input";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
 	  printf("coding error - this string is too long:\n%s\n", tmp);

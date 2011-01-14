@@ -450,7 +450,6 @@ int main(int argc, char **argv){
 	}
       if (cmd_line.remove_pcr_dups==true)
 	{
-	  printf("Removing duplicates from single-ended files single-endedly - ie if any read starts with same k-mer as a previous read\n");
 	  printf("Removing duplicates from the paired end files when both mates start with the same kmer\n");
 	}
       else
@@ -503,7 +502,14 @@ int main(int argc, char **argv){
 								    cmd_line.max_read_length, 0, db_graph);
 
       //update the graph info object
-      update_mean_readlen_and_total_seq(&db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line.max_read_length+1)), bases_pass_filters_and_loaded);
+      if (cmd_line.format_of_input_seq==FASTQ)
+	{
+	  update_mean_readlen_and_total_seq(&db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line.max_read_length+1)), bases_pass_filters_and_loaded);
+	}
+      else//for FASTA we do not get read length distribution
+	{
+	  increment_seq(&db_graph_info, 0, bases_pass_filters_and_loaded);
+	}
 
       if (cmd_line.remove_pcr_dups==true)
 	{
@@ -513,9 +519,16 @@ int main(int argc, char **argv){
 	}
 
       timestamp();
-      printf("Fasta/q data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\nMean read length after filters applied:%d\n", 
-	     bases_parsed, bases_pass_filters_and_loaded, db_graph_info.mean_read_length[0]);
-      
+      if (cmd_line.format_of_input_seq==FASTQ)
+	{
+	  printf("Fastq data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\nMean read length after filters applied:%d\n", 
+		 bases_parsed, bases_pass_filters_and_loaded, db_graph_info.mean_read_length[0]);
+	}
+      else
+	{
+	  printf("Fasta data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\n", 
+		 bases_parsed, bases_pass_filters_and_loaded);
+	}
 
       if (cmd_line.dump_readlen_distrib==true)
 	{

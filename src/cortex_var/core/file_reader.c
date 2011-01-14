@@ -118,7 +118,7 @@ void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, b
 	    }
 	  else if (format==FASTA)
 	    {
-	      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(filename,&single_seq_bases_read, &single_seq_bases_loaded,readlen_count_array,
+	      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(filename,&single_seq_bases_read, &single_seq_bases_loaded,
 										 &bad_se_reads, &dup_se_reads, max_read_length, 
 										 remv_dups_se,break_homopolymers, homopol_limit, 
 										 db_graph, individual_edge_array, colour);
@@ -258,11 +258,14 @@ void  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(c
 
 
 //this routine supports big fasta entries (chromosome length for example)
-void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded,long long** readlen_count_array,
+
+void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded,
 									long long * bad_reads, long long* dup_reads, int max_chunk_length, 
 									boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, 
 									dBGraph* db_graph, EdgeArrayType type, int index)
 {
+
+
 
   int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
     long long ret;
@@ -281,7 +284,8 @@ void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fi
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  load_seq_data_into_graph_of_specific_person_or_pop(fp,bases_read, bases_pass_filters_and_loaded,readlen_count_array,
+  //pass NULL in instead of an array for read length distribution - do not support getting read-length distribution for fasta
+  load_seq_data_into_graph_of_specific_person_or_pop(fp,bases_read, bases_pass_filters_and_loaded,NULL,
 							    &file_reader,bad_reads,0,dup_reads, max_chunk_length,remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 							    db_graph, type, index);
   
@@ -294,13 +298,10 @@ void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fi
 
 //do not export the folloiwing internal function
 // this is called repeatedly in a loop.  read_len_count_array is used to collect statistics on the length of reads,
-// and needs to allow for the fact that we CUT reads at N's, low quality bases, and that reads can be very long.
-// So, the return value is the length of the final window. The length_final_window_of_prev_call argument is the length
-// of the final window in the LAST call of this, provided that that last call was not a full entry.
-long long load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
-												  boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
-												  dBGraph* db_graph, EdgeArrayType type, int index, long long** read_len_count_array,
-												  int length_final_window_of_prev_call)
+// and needs to allow for the fact that we CUT reads at N's, low quality bases
+void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
+											      boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
+											      dBGraph* db_graph, EdgeArrayType type, int index, long long** read_len_count_array)
 {
   long long total_bases_loaded=0;
 
@@ -310,8 +311,7 @@ long long load_kmers_from_sliding_window_into_graph_marking_read_starts_of_speci
   Orientation previous_orientation=forward;
   BinaryKmer tmp_kmer;
   int i,j;
-  long long length_final_window;
-
+ 
   for(i=0;i<windows->nwindows;i++){ //for each window
     KmerSlidingWindow * current_window = &(windows->window[i]);
 
@@ -319,28 +319,11 @@ long long load_kmers_from_sliding_window_into_graph_marking_read_starts_of_speci
     long long length_this_window = (long long) (current_window->nkmers+db_graph->kmer_size-1);
     total_bases_loaded+=length_this_window;
 
-    //log that we have loaded a "read" of this length, provided it is not the last window - the last window lenth we will return, so  it can be cumulated, in case this is a long read
-
-    if ( (i==0) && (i<windows->nwindows-1) )//is the first window, and there is >1 window, so it is not also the last. Log the window/read length
+    if (read_len_count_array !=NULL)
       {
-	(*(read_len_count_array[length_final_window_of_prev_call + length_this_window]))++;
-      }
-    else if (i==0)//is the one and only window, add the length passed in, and return this from this function
-      {
-	length_final_window = length_final_window_of_prev_call + length_this_window;
-      }
-    else if (i<windows->nwindows-1)//not first or last - window in middle
-      {
+	//log that we have loaded a "read" of this length, provided it is not the last window - the last window length we will return, so  it can be cumulated, in case this is a long read
+	// this should never happen with fastq,as we have set the file_reader not to allow this
 	(*(read_len_count_array[length_this_window]))++;
-      }
-    else if (i==windows->nwindows-1)//last window, and there was >1 window
-      {
-	length_final_window = length_this_window;
-      }
-    else 
-      {
-	printf("Error in load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop. Bad index for sliding window\n");
-	exit(1);
       }
 
 
@@ -400,7 +383,6 @@ long long load_kmers_from_sliding_window_into_graph_marking_read_starts_of_speci
 
   *bases_loaded = *bases_loaded + total_bases_loaded;
 
-  return length_final_window;
 
 }
 
@@ -581,30 +563,17 @@ void load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, long long* bas
 	}
       
       //if remove_dups_single_endedly==true/false, then we are passing in true/false for the mark_read_starts argument
-      len_last_window = load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows, &prev_full_entry, &full_entry, bases_pass_filters_and_loaded, 
-														remove_dups_single_endedly, 
-														db_graph, type, index,readlen_count_array, len_last_window);
-
+      load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows, &prev_full_entry, &full_entry, bases_pass_filters_and_loaded, 
+											      remove_dups_single_endedly, 
+											      db_graph, type, index,readlen_count_array);
+      
     }
 
     if (full_entry == false)
       {
 	shift_last_kmer_to_start_of_sequence(seq,entry_length,db_graph->kmer_size);
       }
-    else
-      {
-	if (len_last_window<=max_read_length)
-	  {
-	    (*(readlen_count_array[len_last_window]))++;
-	  }
-	else
-	  {
-	    (*(readlen_count_array[max_read_length]))++;//this is slightly meaningless. For fasta with enormous reads, "max_read_length" is treated NOT as the max read length
-	                                                // but instead as the chunk size with which you read through the entry. In such cases, this code does not support
-	                                                //getting a read length distribution.
-	  }
-	len_last_window=0;
-      }
+
     prev_full_entry = full_entry;
    
 
@@ -624,7 +593,8 @@ void paired_end_sequence_core_loading_loop_of_specific_person_or_pop(FILE* fp1 ,
 											 ,boolean new_entry, boolean * full_entry),
 								     Sequence* seq1, Sequence* seq2, char quality_cut_off, int max_read_length, int max_kmers, int max_windows, 
 								     KmerSlidingWindowSet * windows1, KmerSlidingWindowSet * windows2, 
-								     long long* bases_read, long long* bases_pass_filters_and_loaded, long long** readlen_count_array, long long* dup_reads, long long* bad_reads, 
+								     long long* bases_read, long long* bases_pass_filters_and_loaded, long long** readlen_count_array, 
+								     long long* dup_reads, long long* bad_reads, 
 								     boolean remove_dups, boolean break_homopolymers, int homopolymer_cutoff, 
 								     dBGraph* db_graph, EdgeArrayType type, int index )
 {
@@ -637,8 +607,6 @@ void paired_end_sequence_core_loading_loop_of_specific_person_or_pop(FILE* fp1 ,
   boolean prev_full_entry1 = true;
   boolean prev_full_entry2 = true;
 
-  long long len_last_window_1 = 0;
-  long long len_last_window_2 = 0;
 
   //we assume that both files are the same length
   while ((entry_length1 = file_reader(fp1,seq1,max_read_length,full_entry1,&full_entry1))){
@@ -706,46 +674,40 @@ void paired_end_sequence_core_loading_loop_of_specific_person_or_pop(FILE* fp1 ,
     else if ((nkmers1==0)&&(nkmers2!=0))
       {
 	(*bad_reads)++;
-	len_last_window_2 = load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows2, &prev_full_entry2, &full_entry2, 
-														    bases_pass_filters_and_loaded, true, db_graph, type, index, 
-														    readlen_count_array, len_last_window_2);
+	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows2, &prev_full_entry2, &full_entry2, 
+												bases_pass_filters_and_loaded, true, db_graph, type, index, 
+												readlen_count_array);
       }
     else if ((nkmers1!=0)&&(nkmers2==0))
       {
 	(*bad_reads)++;
-	len_last_window_1 = load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows1, &prev_full_entry1, &full_entry1, 
-														    bases_pass_filters_and_loaded, true, db_graph, type, index, 
-														    readlen_count_array,len_last_window_1);
+	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows1, &prev_full_entry1, &full_entry1, 
+												bases_pass_filters_and_loaded, true, db_graph, type, index, 
+												readlen_count_array);
       }
     else 
       {
-	len_last_window_1 = load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows1, &prev_full_entry1, &full_entry1, 
-														    bases_pass_filters_and_loaded, true, db_graph, type, index, 
-														    readlen_count_array, len_last_window_1);
-	len_last_window_2 = load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows2, &prev_full_entry2, &full_entry2, 
-														    bases_pass_filters_and_loaded, true, db_graph, type, index, 
-														    readlen_count_array, len_last_window_2);
+	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows1, &prev_full_entry1, &full_entry1, 
+												bases_pass_filters_and_loaded, true, db_graph, type, index, 
+												readlen_count_array);
+	load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows2, &prev_full_entry2, &full_entry2, 
+												bases_pass_filters_and_loaded, true, db_graph, type, index, 
+												readlen_count_array);
       }
 
     }
 
     if (full_entry1 == false){
-      shift_last_kmer_to_start_of_sequence(seq1,entry_length1,db_graph->kmer_size);
+      printf("We only support paired-end files for fastq, where we mandate that read-length <= max_read length. ie no reference chromosomes\n");
+      exit(1);
+      //shift_last_kmer_to_start_of_sequence(seq1,entry_length1,db_graph->kmer_size);
     }
-    else
-      {
-	(*(readlen_count_array[len_last_window_1]))++;
-	len_last_window_1=0;
-      }
-    if (full_entry2 == false){
-      shift_last_kmer_to_start_of_sequence(seq2,entry_length2,db_graph->kmer_size);
-    }
-    else
-      {
-	(*(readlen_count_array[len_last_window_2]))++;
-	len_last_window_2=0;
-      }
 
+    if (full_entry2 == false){
+      printf("We only support paired-end files for fastq, where we mandate that read-length <= max_read length. ie no reference chromosomes\n");
+      exit(1);
+      //      shift_last_kmer_to_start_of_sequence(seq2,entry_length2,db_graph->kmer_size);
+    }
 
     prev_full_entry1 = full_entry1;
     prev_full_entry2 = full_entry2;
@@ -1139,7 +1101,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 // Only used for test code
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
-void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded, long long** readlen_count_array, long long* bad_reads, dBGraph* db_graph)
+void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded,  long long* bad_reads, dBGraph* db_graph)
 {
 
   FILE* fp = fopen(filename, "r");
@@ -1172,7 +1134,7 @@ void load_population_as_fasta(char* filename, long long* bases_read, long long* 
 
       //printf("About to try and load fasta for this person %s\n",line);
 
-      load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, bases_read, bases_loaded,readlen_count_array, bad_reads, db_graph, people_so_far-1);
+      load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, bases_read, bases_loaded, bad_reads, db_graph, people_so_far-1);
 
 
     }
@@ -1188,7 +1150,7 @@ void load_population_as_fasta(char* filename, long long* bases_read, long long* 
 //index tells you which person within a population it is
 //bases_read is passed in to find out how much sequence there was in the files read-in.
 //bases_loaded is passed in to find out how much sequence passed filters (qual, PCR dup, homopol) and was loaded into the graph
-void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bases_read, long long* bases_loaded, long long** readlen_count_array,
+void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bases_read, long long* bases_loaded, 
 										      long long* bad_reads, dBGraph* db_graph, int index)
 {
   FILE* fptr = fopen(f_name, "r");
@@ -1215,7 +1177,7 @@ void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_
       if ((p = strchr(line, '\n')) != NULL)
 	*p = '\0';
       
-      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(line, bases_read, bases_loaded, readlen_count_array, bad_reads, &dup_reads, MAX_READ_LENGTH, 
+      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(line, bases_read, bases_loaded,  bad_reads, &dup_reads, MAX_READ_LENGTH, 
 									 remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 									 db_graph, individual_edge_array, index);
       
@@ -1434,7 +1396,6 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 								all_entries_are_unique, individual_edge_array, index);
       all_entries_are_unique=false;
 
-      printf("Add mean read len %d and seq %qd to colour %d\n", mean_read_len_in_this_binary, total_seq_in_this_binary, index);
       update_mean_readlen_and_total_seq(db_graph_info, index,mean_read_len_in_this_binary, total_seq_in_this_binary);
 
     }
