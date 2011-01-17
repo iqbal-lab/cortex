@@ -1411,7 +1411,7 @@ void db_graph_print_paths(char * filename, int max_length,boolean with_coverages
      
       //printf("F: %s\n",seq_aux);
       strcat(seq,seq_aux);
-      if (count_fresh_nodes>db_graph->kmer_size+1){
+      if ( true || (count_fresh_nodes>db_graph->kmer_size+1)){
 
 	if (with_coverages){
 	  fprintf(fout_cov,">%s length:%i length_string:%i\n",name,length_r+length_f+1,strlen(seq));
@@ -1503,7 +1503,7 @@ void db_graph_print_supernodes(char * filename, int max_length, boolean with_cov
     
 
     if (db_node_check_flag_visited(node) == false){
-      if (db_node_has_precisely_one_edge(node,forward,&n)==false || db_node_has_precisely_one_edge(node,forward,&n)==false){
+      if (db_node_has_precisely_one_edge(node,forward,&n)==false || db_node_has_precisely_one_edge(node,reverse,&n)==false){
 	db_node_set_flag(node,STOP_PATH);
 	db_node_set_flag(node,VISITED);
       }
