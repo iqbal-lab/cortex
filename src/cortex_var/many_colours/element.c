@@ -87,6 +87,7 @@ void element_assign(Element* e1, Element* e2)
 
 
 //gets you a pointer to the edge you are referring to
+//Don't use this if you can use get_edge_copy instead
 Edges* get_edge(Element e, EdgeArrayType type,int index)
 {
   if (type == individual_edge_array)

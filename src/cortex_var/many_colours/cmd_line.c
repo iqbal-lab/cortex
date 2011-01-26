@@ -804,7 +804,31 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 	break ;
       }
- 
+    case 'A':
+      {
+	
+	if (optarg==NULL)
+	  errx(1,"[--dump_covg_distribution] option requires a filename");
+	
+	if (strlen(optarg)<MAX_FILENAME_LEN)
+	  {
+	    strcpy(cmdline_ptr->covg_distrib_outfile,optarg);
+	    cmdline_ptr->dump_covg_distrib=true;
+	  }
+	else
+	  {
+	    errx(1,"[--dump_covg_distribution] filename too long [%s]",optarg);
+	  }
+	
+	if (access(optarg,F_OK)==0){
+	  errx(1,"[--dump_covg_distribution] filename [%s] already exists",optarg);
+	}
+	
+
+	break ;
+       }
+
+
    case 'B':
       {
 

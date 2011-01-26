@@ -413,6 +413,11 @@ int main(int argc, char **argv){
   //Create the de Bruijn graph/hash table
   int max_retries=15;
   db_graph = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
+  if (db_graph==NULL)
+    {
+      printf("Giving up - unable to allocate memory for the hash table\n");
+      exit(1);
+    }
   printf("Hash table created, number of buckets: %d\n",1 << hash_key_bits);
   GraphInfo db_graph_info;
   initialise(&db_graph_info);
