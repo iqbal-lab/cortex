@@ -117,6 +117,7 @@ Edges get_edge_copy(const Element e, EdgeArrayType type,int index)
     {
       if (index>=NUMBER_OF_COLOURS)
 	{
+	  printf("Trying to access a colour beyond the compile-time limit. Exit.\n");
 	  exit(1);
 	}
       return e.individual_edges[index];

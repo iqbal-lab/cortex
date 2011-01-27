@@ -117,10 +117,16 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
 
 long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
 								  int* mean_readlen, long long* total_seq,
-								  boolean all_entries_are_unique, EdgeArrayType type, int index);
+								  boolean all_entries_are_unique, EdgeArrayType type, int index,
+								  boolean only_load_kmers_already_in_hash, int colour_clean);
+
 long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, GraphInfo* db_graph_info,
-											   boolean all_entries_are_unique, EdgeArrayType type, int index);
-long long load_population_as_binaries_from_graph(char* filename, int first_colour,boolean about_to_load_first_binary_into_empty_graph, dBGraph* db_graph, GraphInfo* db_graph_info);
+											   boolean all_entries_are_unique, EdgeArrayType type, int index,
+											   boolean only_load_kmers_already_in_hash, int colour_clean);
+
+long long load_population_as_binaries_from_graph(char* filename, int first_colour,boolean about_to_load_first_binary_into_empty_graph, 
+						 dBGraph* db_graph, GraphInfo* db_graph_info,
+						 boolean only_load_kmers_already_in_hash, int colour_clean);
 
 //functions for comparing graph with reference, or comparing reads with the graph
 void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),

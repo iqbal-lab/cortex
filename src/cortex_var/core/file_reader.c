@@ -1298,11 +1298,21 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
 
 
 
-
+// In some special cases (eg if you have pooled individuals and cleaned the graph, dumped a binary, and then reloaded  that in colour 0,
+// and now want to load binaries into colour 1 only if the kmer is in the (cleaned) colour 0),
+// then we set only_load_kmers_already_in_hash==true. In this case, we only load edges in that overlap with the cleaned graph, in colour_clean
 long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
 								  int* mean_readlen, long long* total_seq,
-								  boolean all_entries_are_unique, EdgeArrayType type, int index)
+								  boolean all_entries_are_unique, EdgeArrayType type, int index,
+								  boolean only_load_kmers_already_in_hash, int colour_clean)
 {
+
+  if (colour_clean>=NUMBER_OF_COLOURS)
+    {
+      printf("Called load_single_colour_binary_data_from_filename_into_graph and specified as clean-colour, colour %d, when this executable is compiled for %d colours only. Exit.\n", colour_clean, NUMBER_OF_COLOURS);
+      exit(1);
+    }
+
 
   //printf("Open single colour binary: %s\n", filename);
 
@@ -1335,25 +1345,40 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 
   
   //Go through all the entries in the binary file
+  // each time you load the info into a temporary node, and load them *** into colour number index ***
   while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, type, index))
     {
       count++;
 
       dBNode * current_node  = NULL;
       BinaryKmer tmp_kmer;
-      if (!all_entries_are_unique)
+      if (only_load_kmers_already_in_hash==false)
 	{
-	  current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&tmp_node),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
+	  if (!all_entries_are_unique)
+	    {
+	      current_node = hash_table_find_or_insert(element_get_key(element_get_kmer(&tmp_node),db_graph->kmer_size, &tmp_kmer),&found,db_graph);
+	    }
+	  else
+	    {
+	      current_node = hash_table_insert(element_get_key(element_get_kmer(&tmp_node),db_graph->kmer_size, &tmp_kmer), db_graph);
+	    }
+	  seq_length+=db_graph->kmer_size;//todo - maybe only increment if had to insert, not if was already in graph?
+	  add_edges(current_node,individual_edge_array, index, get_edge_copy(tmp_node, individual_edge_array, index));
+	  db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&tmp_node, individual_edge_array,index) );
 	}
       else
-	{
-	  current_node = hash_table_insert(element_get_key(element_get_kmer(&tmp_node),db_graph->kmer_size, &tmp_kmer), db_graph);
+	{//check if node exists in hash already. If yes, then load edge and covg info into the appropriate colour
+	  current_node = hash_table_find(element_get_key(element_get_kmer(&tmp_node),db_graph->kmer_size, &tmp_kmer), db_graph);
+	  if (current_node !=NULL)
+	    {
+	      Edges pre_existing_edge = get_edge_copy(*current_node, individual_edge_array, colour_clean);
+	      Edges edge_from_binary  = get_edge_copy(tmp_node, individual_edge_array, index);
+	      Edges edge_to_load = pre_existing_edge & edge_from_binary;
+	      add_edges(current_node,individual_edge_array, index,edge_to_load);
+	      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&tmp_node, individual_edge_array,index));
+	    }
 	}
 
-      seq_length+=db_graph->kmer_size;//todo - maybe only increment if had to insert, not if was already in graph?
-      
-      add_edges(current_node,individual_edge_array, index, get_edge_copy(tmp_node, individual_edge_array, index));
-      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&tmp_node, individual_edge_array,index) );
     }
   
   fclose(fp_bin);
@@ -1363,9 +1388,13 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 
 
 
-
+//ordinarily, only_load_kmers_already_in_hash==false, and colour_clean is ignored.
+// If you have a clean graph in colour 0, and you only want to load nodes from the binaries that overlap with this,
+// then set only_load_kmers_already_in_hash==true, and specify colour_clean to be that clean graph colour. Usually this is zero,
+// we compile for 2 colours only, and we are loading into colour 1.
 long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, GraphInfo* db_graph_info, 
-											   boolean all_entries_are_unique, EdgeArrayType type, int index)
+											   boolean all_entries_are_unique, EdgeArrayType type, int index,
+											   boolean only_load_kmers_already_in_hash, int colour_clean)
 {
 
   FILE* fptr = fopen(filename, "r");
@@ -1393,7 +1422,8 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
       long long total_seq_in_this_binary=0;
       total_seq_loaded += 
 	load_single_colour_binary_data_from_filename_into_graph(line, db_graph, &mean_read_len_in_this_binary,&total_seq_in_this_binary,
-								all_entries_are_unique, individual_edge_array, index);
+								all_entries_are_unique, individual_edge_array, index,
+								only_load_kmers_already_in_hash, colour_clean);
       all_entries_are_unique=false;
 
       update_mean_readlen_and_total_seq(db_graph_info, index,mean_read_len_in_this_binary, total_seq_in_this_binary);
@@ -1415,8 +1445,15 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of binaries for that individual).
 // these go into successive colours, starting with first_colour
-long long load_population_as_binaries_from_graph(char* filename, int first_colour,boolean about_to_load_first_binary_into_empty_graph, dBGraph* db_graph, GraphInfo* db_graph_info)
+long long load_population_as_binaries_from_graph(char* filename, int first_colour,boolean about_to_load_first_binary_into_empty_graph, 
+						 dBGraph* db_graph, GraphInfo* db_graph_info, boolean only_load_kmers_already_in_hash, int colour_clean)
 {
+
+  if ( (about_to_load_first_binary_into_empty_graph==true) && (only_load_kmers_already_in_hash==true) )
+    {
+      printf("You are trying to load binaries into an empty hash table, but are specifying that they should be compared with the existing hash table. User error\n");
+      exit(1);
+    }
 
   //printf("Open this list of colours: %s\n", filename);
   FILE* fp = fopen(filename, "r");
@@ -1453,8 +1490,10 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 
       
       total_seq_loaded = total_seq_loaded + 
-	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph,db_graph_info, about_to_load_first_binary_into_empty_graph, 
-											 individual_edge_array, which_colour);
+	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph,db_graph_info, 
+											 about_to_load_first_binary_into_empty_graph, 
+											 individual_edge_array, which_colour,
+											 only_load_kmers_already_in_hash, colour_clean);
       about_to_load_first_binary_into_empty_graph=false;
       which_colour++;
     }

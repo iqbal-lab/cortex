@@ -88,11 +88,15 @@ int  main()
     return CU_get_error();
   }
 
-  if (NULL == CU_add_test(pPopGraphSuite, "Test dumping and reloading of sv_trio binary", test_dump_load_sv_trio_binary)) {
+  if (NULL == CU_add_test(pPopGraphSuite, "Test dumping and reloading of multicolour binary", test_dump_load_sv_trio_binary)) {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  if (NULL == CU_add_test(pPopGraphSuite, "Test loading of a binary as dumped by graph, not sv_trio",test_load_singlecolour_binary )) {
+  if (NULL == CU_add_test(pPopGraphSuite, "Test loading of a singlecolour binary",test_load_singlecolour_binary )) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test loading of a single-colour binary where nodes are only loaded if they already exist in a predefined \"clean\" colour, and if so, only taking the edges that overlap both colours", test_loading_binary_data_iff_it_overlaps_a_fixed_colour  )) {
     CU_cleanup_registry();
     return CU_get_error();
   }

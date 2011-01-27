@@ -181,6 +181,8 @@ const char* usage=
 "   [--remove_low_coverage_kmers INT] \t\t\t\t=\t Filter for kmers with coverage less than or equal to  threshold.\n"  \
   // -D
 "   [--dump_filtered_readlen_distribution FILENAME] \t\t\t\t=\t Dump to file the distribution of \"effective\" read lengths after quality/homopolymer/PCR dup filters \n"  \
+  // -E
+"   [--load_colours_only_where_overlap_clean_colour INT] \t\t\t\t=\t Only load nodes from binary files in the colour-list when they overlap a specific colour (e.g. that contains a cleaned pooled graph); requires you to specify this particular colour. You must have loaded that colour beforehand, using --multicolour_bin\n"  \
 
   "\n";
 
@@ -239,6 +241,7 @@ int default_opts(CmdLine * c)
   c->quality_score_offset = 33;//standard fastq, not illumina v-whatever fastq  
   c->max_read_length = 0;
   c->max_var_len = 10000;
+  c->clean_colour=NUMBER_OF_COLOURS+1;//default to an impossible value
   c->num_colours_in_detect_bubbles1_first_colour_list=0;
   initialise_int_list(c->detect_bubbles1_first_colour_list, MAX_COLOURS_ALLOWED_TO_MERGE);
   c->num_colours_in_detect_bubbles1_second_colour_list=0;
@@ -292,6 +295,7 @@ int default_opts(CmdLine * c)
   c->dump_covg_distrib=false;
   c->dump_readlen_distrib=false;
   c->health_check=false;
+  c->load_colours_only_where_overlap_clean_colour=false;
   return 1;
 }
 
@@ -333,6 +337,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"remove_low_coverage_kmers",required_argument,NULL,'B'},
     {"health_check",no_argument,NULL,'C'},//hidden
     {"dump_filtered_readlen_distribution",required_argument,NULL,'D'},
+    {"load_colours_only_where_overlap_clean_colour",required_argument,NULL,'E'},
     {0,0,0,0}	
   };
   
@@ -343,7 +348,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -876,11 +881,33 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 	break ;
       }
+    case 'E':
+      {
+        if (optarg==NULL)
+	  {
+            printf("[--load_colours_only_where_overlap_clean_colour] option requires int argument [which is the clean/preferred colour]");
+            exit(1);
+          }
+	cmdline_ptr->load_colours_only_where_overlap_clean_colour=true;
+	cmdline_ptr->clean_colour=atoi(optarg);
 
+        if (cmdline_ptr->clean_colour<0)
+          {
+            printf("[--load_colour_list_only_where_overlap_clean_colour] option requires int argument bigger than 0");
+            exit(1);
+          }
+	else if  (cmdline_ptr->clean_colour>=NUMBER_OF_COLOURS)
+          {
+            printf("[--load_colour_list_only_where_overlap_clean_colour] option requires int argument <=  max colour limit");
+            exit(1);
+          }
+        break;
+
+      }
       
    
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:", long_options, &longopt_index);
 
   }
   return 0;
@@ -907,7 +934,20 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       check_colour_list(cmd_ptr->colour_list, cmd_ptr->kmer_size);
     }
 
-  
+  if ( (cmd_ptr->load_colours_only_where_overlap_clean_colour==true)
+       &&
+       (cmd_ptr->input_multicol_bin==false)
+       )
+    {
+     	  char tmp[]="If you want to specify --load_colours_only_where_overlap_clean_colour, then you need to have a prespecified colour already in the graph before you load your colour list. This must therefore be loaded by --multicolour_bin, but you have not specified that.\n";
+	  if (strlen(tmp)>LEN_ERROR_STRING)
+	    {
+	      printf("coding error - this string is too long:\n%s\n", tmp);
+	      exit(1);
+	    }
+	  strcpy(error_string, tmp);
+	  return -1;
+    }
   
   if (cmd_ptr->input_seq ==false) 
     {

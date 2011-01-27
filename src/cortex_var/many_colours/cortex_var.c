@@ -602,7 +602,8 @@ int main(int argc, char **argv){
 	  printf("List of colours: %s (contains one filelist per colour). Load data into consecutive colours starting at %d\n", 
 		 cmd_line.colour_list, first_colour_data_starts_going_into);
 	  load_population_as_binaries_from_graph(cmd_line.colour_list, first_colour_data_starts_going_into, 
-						 graph_has_had_no_other_binaries_loaded, db_graph, &db_graph_info);
+						 graph_has_had_no_other_binaries_loaded, db_graph, &db_graph_info,
+						 cmd_line.load_colours_only_where_overlap_clean_colour, cmd_line.clean_colour);
 	  timestamp();
 	  printf("Finished loading single_colour binaries\n");
 	}
