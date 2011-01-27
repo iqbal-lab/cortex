@@ -182,7 +182,7 @@ const char* usage=
   // -D
 "   [--dump_filtered_readlen_distribution FILENAME] \t\t\t\t=\t Dump to file the distribution of \"effective\" read lengths after quality/homopolymer/PCR dup filters \n"  \
   // -E
-"   [--load_colours_only_where_overlap_clean_colour INT] \t\t\t\t=\t Only load nodes from binary files in the colour-list when they overlap a specific colour (e.g. that contains a cleaned pooled graph); requires you to specify this particular colour. You must have loaded that colour beforehand, using --multicolour_bin\n"  \
+"   [--load_colours_only_where_overlap_clean_colour INT] \t\t=\t Only load nodes from binary files in the colour-list\n\t\t\t\t when they overlap a specific colour (e.g. that contains a cleaned pooled graph); requires you to specify this particular colour. You must have loaded that colour beforehand, using --multicolour_bin\n"  \
 
   "\n";
 
@@ -949,6 +949,8 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  return -1;
     }
   
+
+
   if (cmd_ptr->input_seq ==false) 
     {
       if ( (cmd_ptr->input_colours==false) && (cmd_ptr->input_multicol_bin==false) )

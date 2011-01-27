@@ -1307,7 +1307,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 								  boolean only_load_kmers_already_in_hash, int colour_clean)
 {
 
-  if (colour_clean>=NUMBER_OF_COLOURS)
+  if ( (only_load_kmers_already_in_hash==true) && (colour_clean>=NUMBER_OF_COLOURS) )
     {
       printf("Called load_single_colour_binary_data_from_filename_into_graph and specified as clean-colour, colour %d, when this executable is compiled for %d colours only. Exit.\n", colour_clean, NUMBER_OF_COLOURS);
       exit(1);

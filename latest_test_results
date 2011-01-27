@@ -13,10 +13,11 @@ Suite: Test main functionality of Cortex
   Test: Test element -increment coverage for different people ... passed
   Test: Test function checking number of edges to nodes with specified status ... passed
   Test: Sanity test for hash_table_find - adding kmers to graph and finding them ... passed
-  Test: Test dumping and reloading of sv_trio binary ... 5 kmers dumped  passed
-  Test: Test loading of a binary as dumped by graph, not sv_trio ... passed
+  Test: Test dumping and reloading of multicolour binary ... passed
+  Test: Test loading of a singlecolour binary ... passed
+  Test: Test loading of a single-colour binary where nodes are only loaded if they already exist in a predefined "clean" colour, and if so, only taking the edges that overlap both colours ... passed
   Test: Test that coverage of kmers are correcty counted as reads are loaded from a file ... passed
-  Test: Test getting sliding windows, breaking when kmer is not in graph - internal function ... passed
+  Test: Test getting sliding windows, breaking when kmer is not in graph - internal function ...passed
   Test: Test getting sliding windows breaking when kner or edge is not in graph - internal function ... passed
   Test: Test function for getting length distribution of filtered/effective reads after N's, low quality, PCR duplicates and homopolymers have been cut or filtered ... passed
   Test: Test checking if a path lies in a (function of) colours ... passed
@@ -75,5 +76,5 @@ Suite: Test main functionality of Cortex
 
 --Run Summary: Type      Total     Ran  Passed  Failed
                suites        1       1     n/a       0
-               tests        55      55      55       0
-               asserts    5120    5120    5120       0
+               tests        56      56      56       0
+               asserts    4571    4571    4571       0
