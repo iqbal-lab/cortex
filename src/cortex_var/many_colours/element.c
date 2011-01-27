@@ -939,6 +939,26 @@ void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node)
   
 }
 
+
+void db_node_print_single_colour_binary_of_specified_colour(FILE * fp, dBNode * node, int colour)
+{
+
+  BinaryKmer kmer;
+  binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
+  int covg;
+  Edges individual_edges; 
+
+  covg             = db_node_get_coverage(node, individual_edge_array, colour);
+  individual_edges = get_edge_copy(*node, individual_edge_array, colour);
+  
+				  
+  fwrite(&kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
+  fwrite(&covg, sizeof(int), 1, fp); 
+  fwrite(&individual_edges, sizeof(Edges), 1, fp);
+
+  
+}
+
 /*
 boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * node){
 

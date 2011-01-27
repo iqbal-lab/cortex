@@ -128,6 +128,10 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 						 dBGraph* db_graph, GraphInfo* db_graph_info,
 						 boolean only_load_kmers_already_in_hash, int colour_clean);
 
+void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_colour, char* suffix, dBGraph* db_graph, GraphInfo* db_graph_info );
+
+
+
 //functions for comparing graph with reference, or comparing reads with the graph
 void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
                                                                             int max_read_length, dBGraph * db_graph);

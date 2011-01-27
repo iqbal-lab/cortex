@@ -353,6 +353,7 @@ void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph *
 void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info);
 
 void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info);
+void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info, int colour);
 
 boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, EdgeArrayType edge_type, int edge_index, dBGraph* db_graph);
 
@@ -555,4 +556,8 @@ void print_standard_extra_supernode_info(dBNode** node_array, Orientation* or_ar
 void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout);
 
 long long db_graph_health_check(boolean fix, dBGraph * db_graph);
+
+void db_graph_wipe_colour(int colour, dBGraph* db_graph);
+
+
 #endif

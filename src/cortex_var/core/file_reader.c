@@ -37,6 +37,7 @@
 #include <global.h>
 #include <string.h>
 #include <dB_graph_supernode.h>
+#include <dB_graph_population.h>
 #include <file_format.h>
 #include <unistd.h>
 
@@ -1503,6 +1504,60 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 
 
 }
+
+
+// takes a filename (a colour_list)
+// this file contains a list of filenames (one per colour), each of these represents an individual (and contains a list of single-colour binaries for that individual).
+// Also takes two colour numbers. clean_colour is the clean colour, and in_colour is the colour ALL of these individuals are loaded into, thus:
+// First take person 0's list of binaries and load them all into colour in_colour, BUT only load nodes that are already in the hash,
+//  and only load those edges that are in the clean colour. Then dump a single-colour binary of colour in_colour,
+// with filename = colour name PLUS a suffix added on the end.
+void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_colour, char* suffix, dBGraph* db_graph, GraphInfo* db_graph_info )
+{
+
+  if (in_colour==clean_colour)
+    {
+      printf("In dump_successive_cleaned_binaries You cannot specify the same colour as both clean_colour and in_colour\n");
+      exit(1);
+    }
+
+  //printf("Open this list of colours: %s\n", filename);
+  FILE* fp = fopen(filename, "r");
+  if (fp == NULL){
+    printf("dump_successive_cleaned_binaries cannot open file:%s\n",filename);
+    exit(1);
+  }
+
+  char line[MAX_FILENAME_LENGTH+1];
+
+  int total_seq_loaded=0;
+
+  while(fgets(line,MAX_FILENAME_LENGTH, fp) !=NULL)
+    {
+      
+      //remove newline from end of line - replace with \0
+      char* p;
+      if ((p = strchr(line, '\n')) != NULL)
+	*p = '\0';
+
+      total_seq_loaded = total_seq_loaded + 
+	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph,db_graph_info, false,
+											 individual_edge_array, in_colour,
+											 true, clean_colour);
+      char outfile[1000];
+      outfile[0]='\0';
+      sprintf(outfile,"%s_%s",line,suffix);
+      db_graph_dump_single_colour_binary_of_specified_colour(outfile, &db_node_condition_always_true,db_graph,db_graph_info,in_colour);
+      //reset that colour:
+      db_graph_wipe_colour(in_colour,db_graph);
+      set_seq(db_graph_info, in_colour,0);
+      set_mean_readlen(db_graph_info, in_colour, 0);
+    }
+
+  fclose(fp);
+}
+
+
 
 
 

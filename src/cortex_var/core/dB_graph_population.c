@@ -3430,6 +3430,55 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*co
 
 
 
+
+
+void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info, int colour){
+
+  if ( (colour<0) || (colour>=NUMBER_OF_COLOURS) )
+    {
+      printf("Cannot call db_graph_dump_single_colour_binary_of_specified_colour and try to dump a colour not in 0....%d when %d is the compile time max number of colours supported\n",
+	     NUMBER_OF_COLOURS-1, NUMBER_OF_COLOURS);
+      exit(1);
+    }
+
+  FILE * fout; //binary output
+  fout= fopen(filename, "w"); 
+  if (fout==NULL)
+    {
+      printf("Unable to open output file %s\n", filename);
+      exit(1);
+    }
+
+  if (db_graph_info==NULL)
+    {
+      int means=0;
+      long long tots=0;
+
+      print_binary_signature(fout, db_graph->kmer_size,1, &means, &tots);
+    }
+  else
+    {
+      print_binary_signature(fout, db_graph->kmer_size, 1, &(db_graph_info->mean_read_length[colour]), &(db_graph_info->total_sequence[colour]) );
+    }
+
+
+  long long count=0;
+  //routine to dump graph
+  void print_node_single_colour_binary_of_specified_colour(dBNode * node){   
+    if (condition(node)){
+      count++;
+      db_node_print_single_colour_binary_of_specified_colour(fout,node, colour);
+    }
+  }
+
+  hash_table_traverse(&print_node_single_colour_binary_of_specified_colour,db_graph); 
+  fclose(fout);
+
+  //printf("%qd kmers dumped\n",count);
+}
+
+
+
 boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, EdgeArrayType edge_type, int edge_index, dBGraph* db_graph)
 {
   if (element==NULL)
@@ -8801,3 +8850,15 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph){
   return count_nodes;
 }
 
+
+
+//wipes a colour clean - for all nodes, sets covg=0, edge=0.
+void db_graph_wipe_colour(int colour, dBGraph* db_graph)
+{
+  void wipe_node(dBNode* node)
+  {
+    node->individual_edges[colour]=0;
+    node->coverage[colour]=0;
+  }
+  hash_table_traverse(&wipe_node, db_graph);
+}

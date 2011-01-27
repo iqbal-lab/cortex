@@ -144,7 +144,7 @@ const char* usage=
   // -j
 "   [--remove_pcr_duplicates] \t\t\t\t\t=\t Removes PCR duplicate reads by ignoring read pairs if both \n\t\t\t\t\t\t\t\t\t reads start at the same k-mer as a previous read,\n\t\t\t\t\t\t\t\t\t and single-ended reads if they start at the same k-mer as a previous read\n" \
   // -k
-"   [--cut_homopolymers INT] \t\t\t\t\t=\t Breaks reads at homopolymers of length >= this threshold. (i.e. max homopolymer in filtered read==threshold-1, and New read starts after homopolymer)\n" \
+"   [--cut_homopolymers INT] \t\t\t\t\t=\t Breaks reads at homopolymers of length >= this threshold.\n\t\t\t\t\t\t (i.e. max homopolymer in filtered read==threshold-1, and New read starts after homopolymer)\n" \
   // -l
 "   [--path_divergence_caller COMMA_SEP_COLOURS] \t\t=\t Make Path Divergence variant calls.\n\t\t\t\t\t\t\t\t\t Must specify colour of sample in which you want to find\n\t\t\t\t\t\t\t\t\t variants compared with the reference.\n\t\t\t\t\t\t\t\t\t This sample colour can be a union of colours (comma-separated list). \n\t\t\t\t\t\t\t\t\t Must also specify --ref_colour and --list_ref_fasta\n" \
   // -m
@@ -180,9 +180,11 @@ const char* usage=
   // -B
 "   [--remove_low_coverage_kmers INT] \t\t\t\t=\t Filter for kmers with coverage less than or equal to  threshold.\n"  \
   // -D
-"   [--dump_filtered_readlen_distribution FILENAME] \t\t\t\t=\t Dump to file the distribution of \"effective\" read lengths after quality/homopolymer/PCR dup filters \n"  \
+"   [--dump_filtered_readlen_distribution FILENAME] \t\t=\t Dump to file the distribution of \"effective\" read lengths after quality/homopolymer/PCR dup filters \n"  \
   // -E
-"   [--load_colours_only_where_overlap_clean_colour INT] \t\t=\t Only load nodes from binary files in the colour-list\n\t\t\t\t when they overlap a specific colour (e.g. that contains a cleaned pooled graph); requires you to specify this particular colour. You must have loaded that colour beforehand, using --multicolour_bin\n"  \
+"   [--load_colours_only_where_overlap_clean_colour INT] \t=\t Only load nodes from binary files in the colour-list when they overlap a\n\t\t\t\t\t\t\t\t\t specific colour (e.g. that contains a cleaned pooled graph);\n\t\t\t\t\t\t\t\t\t requires you to specify this particular colour. You must have loaded that colour beforehand, using --multicolour_bin\n"  \
+  // -F
+"   [--successively_dump_cleaned_colours TEXT] \t\t\t=\t Only to be used when also using --load_colours_only_where_overlap_clean_colour and --multicolour_bin\n\t\t\t\t\t\t\t\t\t Used to allow error-correction of low-coverage data on large numbers of individuals with large genomes.\n\t\t\t\t\t\t\t\t\t See manual for details.\n"  \
 
   "\n";
 
@@ -272,7 +274,7 @@ int default_opts(CmdLine * c)
   set_string_to_null(c->config,MAX_FILENAME_LEN);
   set_string_to_null(c->covg_distrib_outfile,MAX_FILENAME_LEN);
   set_string_to_null(c->readlen_distrib_outfile,MAX_FILENAME_LEN);
-  
+  set_string_to_null(c->successively_dump_cleaned_colours_suffix, MAX_SUFFIX_LEN);
 
   //booleans
   c->cut_homopolymers = false;
@@ -296,6 +298,7 @@ int default_opts(CmdLine * c)
   c->dump_readlen_distrib=false;
   c->health_check=false;
   c->load_colours_only_where_overlap_clean_colour=false;
+  c->successively_dump_cleaned_colours=false;
   return 1;
 }
 
@@ -338,6 +341,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"health_check",no_argument,NULL,'C'},//hidden
     {"dump_filtered_readlen_distribution",required_argument,NULL,'D'},
     {"load_colours_only_where_overlap_clean_colour",required_argument,NULL,'E'},
+    {"successively_dump_cleaned_colours",required_argument,NULL,'F'},
     {0,0,0,0}	
   };
   
@@ -348,7 +352,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -904,10 +908,27 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
         break;
 
       }
-      
+    case 'F':
+      {
+	
+	if (optarg==NULL)
+	  errx(1,"[--successively_dump_cleaned_colours] option requires a suffix - one cleaned binary will be dumped per colour in your colourlist, and this suffix will be added to the filename");
+	
+	if (strlen(optarg)<MAX_SUFFIX_LEN)
+	  {
+	    strcpy(cmdline_ptr->successively_dump_cleaned_colours_suffix,optarg);
+	    cmdline_ptr->successively_dump_cleaned_colours=true;
+	  }
+	else
+	  {
+	    errx(1,"[--successively_dump_cleaned_colours] suffix too long [%s]",optarg);
+	  }
+	break ;
+       }
+
    
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:", long_options, &longopt_index);
 
   }
   return 0;
@@ -949,6 +970,57 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  return -1;
     }
   
+
+  if ( (cmd_ptr->successively_dump_cleaned_colours==true) && (cmd_ptr->load_colours_only_where_overlap_clean_colour==false) )
+    {
+     	  char tmp[]="If you specify --successively_dump_cleaned_colours, you must also specify --load_colours_only_where_overlap_clean_colour\n";
+	  if (strlen(tmp)>LEN_ERROR_STRING)
+	    {
+	      printf("coding error - this string is too long:\n%s\n", tmp);
+	      exit(1);
+	    }
+	  strcpy(error_string, tmp);
+	  return -1;
+      
+    }
+
+  if ( (cmd_ptr->load_colours_only_where_overlap_clean_colour==true)
+       &&
+       (cmd_ptr->input_multicol_bin==true)
+       )
+    {
+      //check that the clean_colour specified is consistent with having to be loaded from multicolour_bin
+      // ie if the multicolour_bin has n colours, then clean_colour must be in [0,n-1]
+      FILE* fp = fopen(cmd_ptr->multicolour_bin, "r");
+      if (fp==NULL)
+	{
+	  char tmp[]="Cannot open the specified multicolour binary\n";
+	  if (strlen(tmp)>LEN_ERROR_STRING)
+	    {
+	      printf("coding error - this string is too long:\n%s\n", tmp);
+	      exit(1);
+	    }
+	  strcpy(error_string, tmp);
+	  return -1;
+	}
+
+      int binary_version_in_header;
+      int kmer_in_header;
+      int num_bf;
+      int num_cols;
+      boolean check = query_binary(fp, &binary_version_in_header, &kmer_in_header, &num_bf, &num_cols);
+      if (cmd_ptr->clean_colour >= num_cols)
+	{
+	  char tmp[]="Specified clean colour number is > number of colours in the multicolour binary. Consult the manual.\n";
+	  if (strlen(tmp)>LEN_ERROR_STRING)
+	    {
+	      printf("coding error - this string is too long:\n%s\n", tmp);
+	      exit(1);
+	    }
+	  strcpy(error_string, tmp);
+	  return -1;
+	}
+    }
 
 
   if (cmd_ptr->input_seq ==false) 

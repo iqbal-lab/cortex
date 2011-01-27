@@ -12,6 +12,7 @@
 #include <file_format.h>
 
 #define MAX_FILENAME_LEN 1000
+#define MAX_SUFFIX_LEN 100
 #define  MAX_LEN_DETECT_BUB_COLOURINFO 500 //will be info of form 1,2,3/5,6,7,8,9 specifying how you call vars between colours
 #define  MAX_COLOURS_ALLOWED_TO_MERGE 100 //arbitrary limit, can be increased
 #define LEN_ERROR_STRING 200
@@ -70,12 +71,15 @@ typedef struct
   char config[MAX_FILENAME_LEN];
   char covg_distrib_outfile[MAX_FILENAME_LEN];
   char readlen_distrib_outfile[MAX_FILENAME_LEN];
+  char successively_dump_cleaned_colours_suffix[MAX_SUFFIX_LEN];
+
   boolean cut_homopolymers;
   boolean remove_pcr_dups;
   //boolean clip_tips;
   boolean remove_seq_errors;
   boolean print_colour_coverages;
   boolean load_colours_only_where_overlap_clean_colour;
+  boolean successively_dump_cleaned_colours;
   boolean dump_binary;
   boolean print_supernode_fasta;
   boolean remove_low_coverage_nodes;

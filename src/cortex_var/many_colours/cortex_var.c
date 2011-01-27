@@ -599,18 +599,41 @@ int main(int argc, char **argv){
       if (cmd_line.input_colours==true)
 	{
 	  timestamp();
-	  printf("List of colours: %s (contains one filelist per colour). Load data into consecutive colours starting at %d\n", 
-		 cmd_line.colour_list, first_colour_data_starts_going_into);
-	  if (cmd_line.load_colours_only_where_overlap_clean_colour==true)
+
+	  //normal use
+	  if (cmd_line.successively_dump_cleaned_colours==false)
 	    {
-	      printf("When loading the binaries specified in %s, we only load nodes that are already in colour %d\n", 
-		     cmd_line.colour_list, cmd_line.clean_colour);
+	      
+	      printf("List of colours: %s (contains one filelist per colour). Load data into consecutive colours starting at %d\n", 
+		     cmd_line.colour_list, first_colour_data_starts_going_into);
+	      if (cmd_line.load_colours_only_where_overlap_clean_colour==true)
+		{
+		  printf("When loading the binaries specified in %s, we only load nodes that are already in colour %d\n", 
+			 cmd_line.colour_list, cmd_line.clean_colour);
+		}
+	      load_population_as_binaries_from_graph(cmd_line.colour_list, first_colour_data_starts_going_into, 
+						     graph_has_had_no_other_binaries_loaded, db_graph, &db_graph_info,
+						     cmd_line.load_colours_only_where_overlap_clean_colour, cmd_line.clean_colour);
+	      timestamp();
+	      printf("Finished loading single_colour binaries\n");
 	    }
-	  load_population_as_binaries_from_graph(cmd_line.colour_list, first_colour_data_starts_going_into, 
-						 graph_has_had_no_other_binaries_loaded, db_graph, &db_graph_info,
-						 cmd_line.load_colours_only_where_overlap_clean_colour, cmd_line.clean_colour);
-	  timestamp();
-	  printf("Finished loading single_colour binaries\n");
+	  else
+	    {
+	      //we have loaded a multicolour binary, and we have checked that the clean_colour is one of the colours in that binary
+	      if (cmd_line.load_colours_only_where_overlap_clean_colour==false)
+		{
+		  printf("If you specify --successively_dump_cleaned_colours, you must also specify --load_colours_only_where_overlap_clean_colour\n");
+		  printf("However, this should have been caught earlier. Please inform Zam Iqbal (zam@well.ox.ac.uk)\n");
+		  exit(1);
+		}
+
+	      dump_successive_cleaned_binaries(cmd_line.colour_list, first_colour_data_starts_going_into,cmd_line.clean_colour,
+					       cmd_line.successively_dump_cleaned_colours_suffix, db_graph, &db_graph_info);
+	      
+	    }
+
+
+
 	}
     }
       
