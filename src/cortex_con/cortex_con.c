@@ -219,10 +219,10 @@ int main(int argc, char **argv){
   }
   if (cmd_line.print_paths_fasta){
     timestamp();
-    printf("check double Ys\n");
+    //printf("check double Ys\n");
     fflush(stdout);
     int count_double_Ys = db_graph_find_double_Ys(ctg_length, db_graph);
-    printf("%i double Ys found\n",count_double_Ys);
+    //printf("%i double Ys found\n",count_double_Ys);
     timestamp();
     printf("dumping contigs %s -- coverage threshold %i\n",cmd_line.output_paths_fasta_filename,cmd_line.coverage_threshold);
     fflush(stdout);

@@ -384,12 +384,6 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	      {
 		errx(1, "[--colour_list] filename %s contains nothing", optarg);
 	      }
-	    else if (num_cols_in_input_list>NUMBER_OF_COLOURS)
-	      {
-		errx(1, "[--colour_list] filename %s contains %d files, but cortex_ar is currently compiled to suppoer a maximum of %d colours\n", 
-		     optarg, num_cols_in_input_list, NUMBER_OF_COLOURS);
-	      }
-
 	    cmdline_ptr ->num_colours_in_input_colour_list=num_cols_in_input_list;
 	    strcpy(cmdline_ptr->colour_list,optarg);
 	    printf("colour list is set to %s\n", cmdline_ptr->colour_list);
@@ -953,7 +947,17 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
   if (cmd_ptr->input_colours ==true)
     {
       check_colour_list(cmd_ptr->colour_list, cmd_ptr->kmer_size);
-    }
+      
+      if ( (cmd_ptr->successively_dump_cleaned_colours==false) && (cmd_ptr->num_colours_in_input_colour_list>NUMBER_OF_COLOURS) )
+	{
+	  printf("You are trying to load more colours than you have compiled cortex for. Your colour_list contains %d colours, but cortex_var is compiled for a maximum of %d\n",
+		 cmd_ptr->num_colours_in_input_colour_list, NUMBER_OF_COLOURS);
+	  exit(1);
+	}
+
+   }
+
+  
 
   if ( (cmd_ptr->load_colours_only_where_overlap_clean_colour==true)
        &&
