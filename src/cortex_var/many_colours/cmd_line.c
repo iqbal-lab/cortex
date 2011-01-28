@@ -1228,7 +1228,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       else if (num_m_cols+cmd_ptr->num_colours_in_input_colour_list > NUMBER_OF_COLOURS)
 	{
 	  printf("Between %s (containing %d colours) and %s (containing %d colours), you have exceeded the compile-time limit on colours, %d\n",
-		 cmd_ptr->multicolour_bin, num_m_cols, cmd_ptr->colour_list, cmd_ptr->num_colours_in_pd_colour_list, NUMBER_OF_COLOURS);
+		 cmd_ptr->multicolour_bin, num_m_cols, cmd_ptr->colour_list, cmd_ptr->num_colours_in_input_colour_list, NUMBER_OF_COLOURS);
 	  exit(1);
 	}
       

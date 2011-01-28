@@ -626,10 +626,11 @@ int main(int argc, char **argv){
 		  printf("However, this should have been caught earlier. Please inform Zam Iqbal (zam@well.ox.ac.uk)\n");
 		  exit(1);
 		}
-
+	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
+		     cmd_line.colour_list,cmd_line.clean_colour);
 	      dump_successive_cleaned_binaries(cmd_line.colour_list, first_colour_data_starts_going_into,cmd_line.clean_colour,
 					       cmd_line.successively_dump_cleaned_colours_suffix, db_graph, &db_graph_info);
-	      
+	      printf("Completed dumping of clean binaries\n");
 	    }
 
 

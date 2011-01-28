@@ -1546,7 +1546,7 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_c
 											 true, clean_colour);
       char outfile[1000];
       outfile[0]='\0';
-      sprintf(outfile,"%s_%s",line,suffix);
+      sprintf(outfile,"%s_%s.ctx",line,suffix);
       db_graph_dump_single_colour_binary_of_specified_colour(outfile, &db_node_condition_always_true,db_graph,db_graph_info,in_colour);
       //reset that colour:
       db_graph_wipe_colour(in_colour,db_graph);
