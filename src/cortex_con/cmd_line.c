@@ -361,10 +361,10 @@ CmdLine parse_cmdline( int argc, char* argv[], int unit_size)
       
       if (cmd_line.remove_low_coverage_supernodes_threshold <= 0)
 	errx(1,"[-s | --remove_low_coverage_supernodes] option requires intint argument bigger than 0");
-      break;    
+      //break;    
       
       cmd_line.remove_low_coverage_supernodes=true;
-      cmd_line.remove_low_coverage_supernodes_threshold=1;
+      //cmd_line.remove_low_coverage_supernodes_threshold=1;
       break;  
     
     case 't':

@@ -111,7 +111,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
   
   for (i=0; i<num_ref_chroms; i++)
     {
-      sprintf(output_files[i], "sv_called_in_chrom_%i", i+1);
+      sprintf(output_files[i], "path_divergence_calls_in_chrom_%i", i+1);
     }
 
 

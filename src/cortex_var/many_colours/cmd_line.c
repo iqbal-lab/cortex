@@ -185,6 +185,8 @@ const char* usage=
 "   [--load_colours_only_where_overlap_clean_colour INT] \t=\t Only load nodes from binary files in the colour-list when they overlap a\n\t\t\t\t\t\t\t\t\t specific colour (e.g. that contains a cleaned pooled graph);\n\t\t\t\t\t\t\t\t\t requires you to specify this particular colour. You must have loaded that colour beforehand, using --multicolour_bin\n"  \
   // -F
 "   [--successively_dump_cleaned_colours TEXT] \t\t\t=\t Only to be used when also using --load_colours_only_where_overlap_clean_colour and --multicolour_bin\n\t\t\t\t\t\t\t\t\t Used to allow error-correction of low-coverage data on large numbers of individuals with large genomes.\n\t\t\t\t\t\t\t\t\t See manual for details.\n"  \
+  // -G
+"   [--align_fasta FILENAME] \t\t\t=\t Aligns a fasta file to the graph, and prints coverage of each kmer in each read in each colour.\n"  \
 
   "\n";
 
