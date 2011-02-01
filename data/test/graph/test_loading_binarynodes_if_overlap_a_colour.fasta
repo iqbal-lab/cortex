@@ -1,0 +1,14 @@
+>read1
+GATCGGGTGT
+>read1 copy
+GATCGGGTGT
+>read2
+GGCT
+>read2 copy
+GGCT
+>read3
+TAGG
+>read3 copy
+TAGG
+>read4=read 1 with a single base error
+GATCGGGAGT

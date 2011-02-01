@@ -31,10 +31,10 @@
 #include <dB_graph.h>
 #include <dB_graph_population.h>
 #include <string.h>
-#include <internal_oxford.h>
 #include <cmd_line.h>
 #include <time.h>
 #include <graph_info.h>
+#include <db_differentiation.h>
 
 void timestamp();
 
@@ -775,7 +775,34 @@ int main(int argc, char **argv){
       timestamp();
       printf("Finished Path Divergence calls\n");
     }
-
+  if (cmd_line.align_given_list==true)
+    {
+      timestamp();
+      printf("Start aligning the fasta/q listed in this file: %s\n", cmd_line.list_fastaq_to_align);
+      int array_of_colours[NUMBER_OF_COLOURS];
+      int j;
+      char* array_of_colournames[NUMBER_OF_COLOURS];
+      for (j=0; j<NUMBER_OF_COLOURS; j++)
+	{
+	  array_of_colours[j]=j;
+	  array_of_colournames[j]=(char*)malloc(sizeof(char) * 50);
+	  if (array_of_colournames[j]==NULL)
+	    {
+	      printf("Severe lack of memory. Cannot even allocate 50 chars. Give up\n");
+	      exit(1);
+	    }
+	  sprintf(array_of_colournames[j], "colour_%d", j);
+	}
+      align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(cmd_line.format_of_files_to_align, cmd_line.list_fastaq_to_align,
+								       cmd_line.max_read_length, array_of_colours, array_of_colournames,
+								       NUMBER_OF_COLOURS,db_graph,cmd_line.quality_score_offset,
+								       false, NULL, NULL);
+      for (j=0; j<NUMBER_OF_COLOURS; j++)
+	{
+	  free(array_of_colournames[j]);
+	}
+      printf("Completed alignment of fasta/q to graph to print coverages in all colours\n");
+    }
 
   
   hash_table_free(&db_graph);

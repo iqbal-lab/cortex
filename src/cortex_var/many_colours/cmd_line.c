@@ -186,7 +186,9 @@ const char* usage=
   // -F
 "   [--successively_dump_cleaned_colours TEXT] \t\t\t=\t Only to be used when also using --load_colours_only_where_overlap_clean_colour and --multicolour_bin\n\t\t\t\t\t\t\t\t\t Used to allow error-correction of low-coverage data on large numbers of individuals with large genomes.\n\t\t\t\t\t\t\t\t\t See manual for details.\n"  \
   // -G
-"   [--align_fasta FILENAME] \t\t\t=\t Aligns a fasta file to the graph, and prints coverage of each kmer in each read in each colour.\n"  \
+"   [--align FILENAME] \t\t\t\t\t\t=\t Aligns a list of fasta/q files to the graph, and prints coverage of each kmer in each read in each colour.\n\t\t\t\t\t\t\t\t\t Must also specify --align_input_format, and --max_read_len\n"  \
+  // -H
+"   [--align_input_format TYPE] \t\t\t\t\t=\t --align requires a list of fasta or fastq. This option specifies for format as LIST_OF_FASTQ or LIST_OF_FASTA\n"  \
 
   "\n";
 
@@ -277,6 +279,7 @@ int default_opts(CmdLine * c)
   set_string_to_null(c->covg_distrib_outfile,MAX_FILENAME_LEN);
   set_string_to_null(c->readlen_distrib_outfile,MAX_FILENAME_LEN);
   set_string_to_null(c->successively_dump_cleaned_colours_suffix, MAX_SUFFIX_LEN);
+  set_string_to_null(c->list_fastaq_to_align, MAX_FILENAME_LEN);
 
   //booleans
   c->cut_homopolymers = false;
@@ -301,6 +304,8 @@ int default_opts(CmdLine * c)
   c->health_check=false;
   c->load_colours_only_where_overlap_clean_colour=false;
   c->successively_dump_cleaned_colours=false;
+  c->align_given_list=false;
+  c->format_of_files_to_align=UNSPECIFIED;
   return 1;
 }
 
@@ -344,6 +349,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"dump_filtered_readlen_distribution",required_argument,NULL,'D'},
     {"load_colours_only_where_overlap_clean_colour",required_argument,NULL,'E'},
     {"successively_dump_cleaned_colours",required_argument,NULL,'F'},
+    {"align",required_argument,NULL,'G'},
+    {"align_input_format",required_argument,NULL,'H'},
     {0,0,0,0}	
   };
   
@@ -354,7 +361,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -922,9 +929,53 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	break ;
        }
 
-   
-    }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:", long_options, &longopt_index);
+    case 'G'://align a list of fasta/q to the graph and print colour coverages
+      {
+	
+	if (optarg==NULL)
+	  errx(1,"[--align FILENAME] option requires a filename");
+	
+	if (strlen(optarg)<MAX_FILENAME_LEN)
+	  {
+	    strcpy(cmdline_ptr->list_fastaq_to_align,optarg);
+	    cmdline_ptr->align_given_list=true;
+	  }
+	else
+	  {
+	    errx(1,"[--align] filename too long [%s]",optarg);
+	  }
+	
+	if (access(optarg,F_OK)!=0){
+	  errx(1,"[--align_fasta] filename [%s] cannot be found/opened",optarg);
+	}
+	
+	break ;
+      }
+    case 'H': //file format of files that we will align to the graph - either fasta or  fastq
+      {
+	
+	if (optarg==NULL)
+	  errx(1,"[--align_input_format] option requires argument LIST_OF_FASTA or LIST_OF_FASTQ");
+	
+	if ( (strcmp(optarg, "LIST_OF_FASTA") !=0) && (strcmp(optarg, "LIST_OF_FASTQ") !=0)  )
+	  {
+	    errx(1,"[--align_input_format] option requires argument LIST_OF_FASTA or LIST_OF_FASTQ");
+	  }
+	
+	if (strcmp(optarg, "LIST_OF_FASTA") ==0)
+	  {
+	    cmdline_ptr->format_of_files_to_align=FASTA;
+	  }
+	else if (strcmp(optarg, "LIST_OF_FASTQ") ==0)
+	  {
+	    cmdline_ptr->format_of_files_to_align=FASTQ;
+	  } 
+	break ;
+      }
+    }      
+
+
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:", long_options, &longopt_index);
 
   }
   return 0;
@@ -1195,8 +1246,10 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       FILE* fp = fopen(cmd_ptr->multicolour_bin, "r");
       if (fp==NULL)
 	{
-	  printf("Unable to open multicolour bin %s for checks\n", cmd_ptr->multicolour_bin);
-	  exit(1);
+	  char tmp[LEN_ERROR_STRING];
+	  sprintf(tmp,"Unable to open multicolour bin %s for initial sanity checks\n", cmd_ptr->multicolour_bin) ;
+	  strcpy(error_string, tmp);
+          return -1;
 	}
 
       int mean_readlens[NUMBER_OF_COLOURS];
@@ -1213,29 +1266,37 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	}
       boolean is_multicol_bin_ok = check_binary_signature(fp, cmd_ptr->kmer_size, BINVERSION, &num_m_cols, mean_readlens_ptrs, total_seqs_ptrs);
       fclose(fp);
-      
+
+      char tmp[LEN_ERROR_STRING];
       if (is_multicol_bin_ok==false)
 	{
-	  printf("This binary %s is not compatible with the current de Bruijn graph parameters\n", cmd_ptr->multicolour_bin);
-	  exit(1);
+	  sprintf(tmp,"This binary %s is not compatible with the current de Bruijn graph parameters\n", cmd_ptr->multicolour_bin);
+          strcpy(error_string, tmp);
+          return -1;
+	  
 	}
       
       if (num_m_cols<=0)
 	{
-	  printf("Corrupt binary %s - signatire claims to have <=0 colours within\n", cmd_ptr->multicolour_bin);
-	  exit(1);
+	  sprintf(tmp,"Corrupt binary %s - signatire claims to have <=0 colours within\n", cmd_ptr->multicolour_bin);
+          strcpy(error_string, tmp);
+          return -1;
+
 	}
       if (num_m_cols>NUMBER_OF_COLOURS)
 	{
-	  printf("Multicolour binary %s contains %d colours, but cortex_var is compiled to support a maximum of %d colours\n", 
-		 cmd_ptr->multicolour_bin, num_m_cols, NUMBER_OF_COLOURS);
-	  exit(1);
+	  sprintf(tmp,"Multicolour binary %s contains %d colours, but cortex_var is compiled to support a maximum of %d colours\n", 
+		  cmd_ptr->multicolour_bin, num_m_cols, NUMBER_OF_COLOURS);
+          strcpy(error_string, tmp);
+          return -1;
+
 	}
       else if ( (cmd_ptr->successively_dump_cleaned_colours==false) && (num_m_cols+cmd_ptr->num_colours_in_input_colour_list > NUMBER_OF_COLOURS) )
 	{
-	  printf("Between %s (containing %d colours) and %s (containing %d colours), you have exceeded the compile-time limit on colours, %d\n",
+	  sprintf(tmp,"Between %s (containing %d colours) and %s (containing %d colours), you have exceeded the compile-time limit on colours, %d\n",
 		 cmd_ptr->multicolour_bin, num_m_cols, cmd_ptr->colour_list, cmd_ptr->num_colours_in_input_colour_list, NUMBER_OF_COLOURS);
-	  exit(1);
+          strcpy(error_string, tmp);
+          return -1;
 	}
 
       
@@ -1245,10 +1306,25 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 
 
   
-  
-  //check mem usage is reasonable
-  
-  //print what  mem usage will be, and output cmd line and what it means
+  if (cmd_ptr->align_given_list==true)
+    {
+      char tmp[LEN_ERROR_STRING];
+
+      if (cmd_ptr->format_of_files_to_align==UNSPECIFIED)
+	{
+	  sprintf(tmp, "If --align is specified, then --align_input_format must also be specified\n");
+	  strcpy(error_string, tmp);
+          return -1;
+	}
+
+      if (cmd_ptr->max_read_length==0)
+	{
+	  sprintf(tmp, "If --align is specified, then --max_read_len must also be specified\n");
+          strcpy(error_string, tmp);
+	  return -1;
+	}
+    }
+
 
   return 0;
 }

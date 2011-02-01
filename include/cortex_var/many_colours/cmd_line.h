@@ -72,6 +72,7 @@ typedef struct
   char covg_distrib_outfile[MAX_FILENAME_LEN];
   char readlen_distrib_outfile[MAX_FILENAME_LEN];
   char successively_dump_cleaned_colours_suffix[MAX_SUFFIX_LEN];
+  char list_fastaq_to_align[MAX_FILENAME_LEN];
 
   boolean cut_homopolymers;
   boolean remove_pcr_dups;
@@ -94,12 +95,12 @@ typedef struct
   boolean dump_covg_distrib; //flag - shoud we dump covg distrib
   boolean dump_readlen_distrib; //flag - shoud we dump distrib of filtered read lengths
   boolean health_check;
-
+  boolean align_given_list;
   //int detect_vars_delta;
   //int detect_vars_branch_length;
   //int quality_score_offset;
   FileFormat format_of_input_seq;
-
+  FileFormat format_of_files_to_align;
 } CmdLine;
 
 

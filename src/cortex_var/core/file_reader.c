@@ -413,8 +413,8 @@ void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, S
       for(j=0;j<kmer_window->nkmers;j++){ //for each kmer in window
 	current_node = hash_table_find(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph);	  
 	if (current_node == NULL){
-	  printf("load_kmers_from_sliding_window_into_array: problem - current kmer not found\n");
-	  exit(1);
+	  //printf("load_kmers_from_sliding_window_into_array: problem - current kmer not found\n");
+	  //exit(1);
 	}
 	if ( (require_nodes_to_lie_in_given_colour==true) && 
 	     (db_node_is_this_node_in_this_person_or_populations_graph(current_node, individual_edge_array, colour)==false) )
@@ -424,28 +424,18 @@ void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, S
 	  }
 
 	  
-	//if not adding the checks for edges, then can dlete all the orientation stuff.
-	current_orientation = db_node_get_orientation(&(kmer_window->kmer[j]),current_node, db_graph->kmer_size);
-
+	if (current_node !=NULL)
+	  {
+	    current_orientation = db_node_get_orientation(&(kmer_window->kmer[j]),current_node, db_graph->kmer_size);
+	  }
+	else
+	  {
+	    current_orientation = forward;
+	  }
 	//add to array
 	array_nodes[j]        = current_node;
 	array_orientations[j] = current_orientation;
-
-	if (j>0)
-	  {
-	    current_base = char_to_binary_nucleotide(seq->seq[db_graph->kmer_size -1+j ]);
-	    if (previous_node == NULL)
-	      {
-		printf("PROBLEM j:%i nkmers:%i \n",j, kmer_window->nkmers);
-		printf("file_reader: we have a problem - prev kmer not found\n");
-		exit(1);
-	      }
-	    else if ( (require_nodes_to_lie_in_given_colour==true) && (! (db_node_edge_exist(previous_node, current_base, previous_orientation, individual_edge_array, colour) )) )
-	      { 
-		printf("Missing edge");
-		exit(1);
-	      }
-	  }
+	    
 	previous_node = current_node;
 	previous_orientation = current_orientation;
 	  
@@ -2288,7 +2278,7 @@ int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length
   int entry_length = file_reader(fp,seq,max_read_length,full_entry,&full_entry);
   //turn it into a sliding window 
   int nkmers = get_single_kmer_sliding_window_from_sequence(seq->seq,entry_length, db_graph->kmer_size, kmer_window);
-  //work through the sliding window and put nodes into the array you pass in.
+  //work through the sliding window and put nodes into the array you pass in. Note this may find NULL nodes if the kmer is not in the graph
   load_kmers_from_sliding_window_into_array(kmer_window, seq, db_graph, array_nodes, array_orientations, 
 					    max_read_length-db_graph->kmer_size+1, require_nodes_to_lie_in_given_colour, colour);
 
