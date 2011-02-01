@@ -41,7 +41,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
       exit(1);
     }
   
-  printf("Max read length is %d , ad ABOUT TO ALLOC %d BIN KMERS\N",max_read_length, (max_read_length-db_graph->kmer_size-1));
+
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
   if (kmer_window->kmer==NULL)
     {
