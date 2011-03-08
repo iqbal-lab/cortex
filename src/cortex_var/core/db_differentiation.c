@@ -207,7 +207,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 		}
 
 	    }
-	}while(num_kmers>0);
+	}while((num_kmers>0)||(!feof(fp)) );
       
       
       fclose(out);

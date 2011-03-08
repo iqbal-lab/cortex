@@ -19,7 +19,7 @@ my $type = shift; # het or hom
 my $prefix = shift; #give prefix to make varnames globally unique
 my $outdir = shift;
 my $outvcf_filename_stub = shift;
-my $mercurial_changeset = shift;#used for making the calls --> vcf header
+my $cortex_version = shift;#used for making the calls --> vcf header
 my $indiv = shift;
 my $reference = shift; #text to go into VCF header to describe this callset
 
@@ -164,7 +164,7 @@ my $decomp_vcf_name = $outdir.$outvcf_filename_stub.".decomp.vcf";
 open($fh_decomp_vcf, "> $decomp_vcf_name")||die("Cannot open $decomp_vcf_name");
 
 ##print vcf header
-my $header = get_vcf_header($mercurial_changeset, $reference, $indiv);
+my $header = get_vcf_header($cortex_version, $reference, $indiv);
 print $fh_simple_vcf $header;
 print $fh_decomp_vcf $header;
 
