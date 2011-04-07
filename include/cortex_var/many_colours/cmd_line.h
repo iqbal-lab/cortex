@@ -51,6 +51,11 @@ typedef struct
   int detect_bubbles2_second_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
   int num_colours_in_detect_bubbles2_second_colour_list;
 
+  int colour_overlap_first_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
+  int num_colours_in_colour_overlap_first_list;
+  int colour_overlap_second_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
+  int num_colours_in_colour_overlap_second_list;
+
 
   int pd_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
   int num_colours_in_pd_colour_list;
@@ -67,6 +72,7 @@ typedef struct
   char output_supernodes[MAX_FILENAME_LEN];
   char output_detect_bubbles1[MAX_FILENAME_LEN];
   char output_detect_bubbles2[MAX_FILENAME_LEN];
+  char path_divergence_caller_output_stub[MAX_FILENAME_LEN];
   char ref_chrom_fasta_list[MAX_FILENAME_LEN];
   char config[MAX_FILENAME_LEN];
   char covg_distrib_outfile[MAX_FILENAME_LEN];
@@ -96,6 +102,7 @@ typedef struct
   boolean dump_readlen_distrib; //flag - shoud we dump distrib of filtered read lengths
   boolean health_check;
   boolean align_given_list;
+  boolean print_colour_overlap_matrix;
   //int detect_vars_delta;
   //int detect_vars_branch_length;
   //int quality_score_offset;

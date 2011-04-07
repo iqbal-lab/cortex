@@ -559,5 +559,8 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph);
 
 void db_graph_wipe_colour(int colour, dBGraph* db_graph);
 
+void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
+                                          int* second_col_list, int num2,
+					  dBGraph* db_graph);
 
 #endif

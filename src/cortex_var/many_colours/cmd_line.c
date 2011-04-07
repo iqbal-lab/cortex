@@ -184,12 +184,15 @@ const char* usage=
   // -E
 "   [--load_colours_only_where_overlap_clean_colour INT] \t=\t Only load nodes from binary files in the colour-list when they overlap a\n\t\t\t\t\t\t\t\t\t specific colour (e.g. that contains a cleaned pooled graph);\n\t\t\t\t\t\t\t\t\t requires you to specify this particular colour. You must have loaded that colour beforehand, using --multicolour_bin\n"  \
   // -F
-"   [--successively_dump_cleaned_colours TEXT] \t\t\t=\t Only to be used when also using --load_colours_only_where_overlap_clean_colour and --multicolour_bin\n\t\t\t\t\t\t\t\t\t Used to allow error-correction of low-coverage data on large numbers of individuals with large genomes.\n\t\t\t\t\t\t\t\t\t See manual for details.\n"  \
+"   [--successively_dump_cleaned_colours SUFFIX_FOR_DUMPED_BINARY_NAMES] \t\t\t=\t Only to be used when also using --load_colours_only_where_overlap_clean_colour and --multicolour_bin\n\t\t\t\t\t\t\t\t\t Used to allow error-correction of low-coverage data on large numbers of individuals with large genomes.\n\t\t\t\t\t\t\t\t\t Requires the user specify a suffix which will be added to the names of cleaned binaries. See manual for details.\n"  \
   // -G
 "   [--align FILENAME] \t\t\t\t\t\t=\t Aligns a list of fasta/q files to the graph, and prints coverage of each kmer in each read in each colour.\n\t\t\t\t\t\t\t\t\t Must also specify --align_input_format, and --max_read_len\n"  \
   // -H
 "   [--align_input_format TYPE] \t\t\t\t\t=\t --align requires a list of fasta or fastq. This option specifies for format as LIST_OF_FASTQ or LIST_OF_FASTA\n"  \
-
+  // -I
+"   [--path_divergence_caller_output PATH_STUB]\t\t\t=\t Specifies the path and beginning of filenames of Path Divergence caller output files.\n\t\t\t\t\t\t\t\t\t One output file will be created per reference fasta listed in --list_ref_fasta\n" \
+  // -J
+"   [--colour_overlaps COMMA_SEP_COLOURS/COMMA_SEP_COLOURS]\t=\t Compares each coloured subgraph in the first list with all of the \n\t\t\t\t\t\t\t\t\t coloured subgraphs in the second list. Outputs a matrix to stdout;\n\t\t\t\t\t\t\t\t\t (i,j)-element is the number of nodes in both colour-i (on first list)\n\t\t\t\t\t\t\t\t\t and colour-j (on second list).\n" \
   "\n";
 
 
@@ -231,6 +234,16 @@ void initialise_int_list(int* list, int len)
 }
 
 
+void initialise_longlong_list(long long* list, int len)
+{
+  int i;
+  for (i=0; i<len; i++)
+    {
+      list[i]=-1;
+    }
+}
+
+
 
 
 
@@ -258,6 +271,11 @@ int default_opts(CmdLine * c)
   c->num_colours_in_detect_bubbles2_second_colour_list=0;
   initialise_int_list(c->detect_bubbles2_second_colour_list, MAX_COLOURS_ALLOWED_TO_MERGE);
 
+  c->num_colours_in_colour_overlap_first_list=0;
+  initialise_int_list(c->colour_overlap_first_colour_list, MAX_COLOURS_ALLOWED_TO_MERGE);
+  c->num_colours_in_colour_overlap_second_list=0;
+  initialise_int_list(c->colour_overlap_second_colour_list, MAX_COLOURS_ALLOWED_TO_MERGE);
+
   c->num_colours_in_pd_colour_list=0;
   initialise_int_list(c->pd_colour_list, MAX_COLOURS_ALLOWED_TO_MERGE);
   
@@ -274,6 +292,7 @@ int default_opts(CmdLine * c)
   set_string_to_null(c->output_supernodes,MAX_FILENAME_LEN);
   set_string_to_null(c->output_detect_bubbles1,MAX_FILENAME_LEN);
   set_string_to_null(c->output_detect_bubbles2,MAX_FILENAME_LEN);
+  set_string_to_null(c->path_divergence_caller_output_stub, MAX_FILENAME_LEN);
   set_string_to_null(c->ref_chrom_fasta_list,MAX_FILENAME_LEN);
   set_string_to_null(c->config,MAX_FILENAME_LEN);
   set_string_to_null(c->covg_distrib_outfile,MAX_FILENAME_LEN);
@@ -305,6 +324,7 @@ int default_opts(CmdLine * c)
   c->load_colours_only_where_overlap_clean_colour=false;
   c->successively_dump_cleaned_colours=false;
   c->align_given_list=false;
+  c->print_colour_overlap_matrix=false;
   c->format_of_files_to_align=UNSPECIFIED;
   return 1;
 }
@@ -351,6 +371,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"successively_dump_cleaned_colours",required_argument,NULL,'F'},
     {"align",required_argument,NULL,'G'},
     {"align_input_format",required_argument,NULL,'H'},
+    {"path_divergence_caller_output",required_argument,NULL,'I'},
+    {"colour_overlaps",required_argument,NULL,'J'},
     {0,0,0,0}	
   };
   
@@ -361,7 +383,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -673,10 +695,10 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	if (optarg==NULL)
 	  errx(1,"[--detect_bubbles1] option requires two sets of comma-separated integers, separated by a forward-slash. eg 1/1, or 1,2,3/3,4,5");
 	
-	int ret = parse_colourinfo_argument(cmdline_ptr, optarg, strlen(optarg), "[-r | --detect_bubbles1] ", 1);
+	int ret = parse_colourinfo_argument(cmdline_ptr, optarg, strlen(optarg), "[--detect_bubbles1] ", 1);
 	if (ret==-1)
 	  {
-	    errx(1, "Problem with  cmd line argument for [-r | --detect_bubbles1]");
+	    errx(1, "Problem with  cmd line argument for [--detect_bubbles1]");
 	  }
 	cmdline_ptr->detect_bubbles1=true;
 
@@ -972,10 +994,42 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  } 
 	break ;
       }
+    case 'I':
+	{
+	  if (optarg==NULL)
+	    errx(1,"[--path_divergence_caller_output] option requires a filename");
+
+	  if (strlen(optarg)<MAX_FILENAME_LEN-30)
+	    {
+	      strcpy(cmdline_ptr->path_divergence_caller_output_stub,optarg);
+	    }
+	  else
+	    {
+	      errx(1,"[--path_divergence_caller_output] filename too long [%s]",optarg);
+	    }
+
+	  break;
+	}
+    case 'J':
+	{
+	  if (optarg==NULL)
+	    errx(1,"[--colour_overlaps] option requires two sets of comma-separated integers, separated by a forward-slash. eg 1/1, or 1,2,3/3,4,5");
+
+
+	  int ret = parse_colourinfo_argument(cmdline_ptr, optarg, strlen(optarg), "[--colour_overlaps] ", 3);
+	if (ret==-1)
+	  {
+	    errx(1, "Problem with  cmd line argument for [--colour_overlaps]");
+	  }
+	cmdline_ptr->print_colour_overlap_matrix=true;
+
+	  break;
+	}
+
     }      
 
 
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:", long_options, &longopt_index);
 
   }
   return 0;
@@ -1235,8 +1289,31 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  strcpy(error_string, tmp);
 	  return -1;
 	}
+      
+      if (cmd_ptr->path_divergence_caller_output_stub[0]=='\0')
+	{
+	  char tmp[]="If --path_divergence_caller is specified, then must also specify --path_divergence_caller_output";
+          if (strlen(tmp)>LEN_ERROR_STRING)
+            {
+              printf("coding error - this string is too long:\n%s\n", tmp);
+              exit(1);
+            }
+          strcpy(error_string, tmp);
+          return -1;
+	}      
     }
 
+  if ((cmd_ptr->path_divergence_caller_output_stub[0]!='\0') && (cmd_ptr->make_pd_calls==false) )
+    {
+      char tmp[]="If --path_divergence_caller_output is specified, then must also specify --path_divergence_caller";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+    }
 
   // check multicolour binary  
 
@@ -1323,6 +1400,36 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
           strcpy(error_string, tmp);
 	  return -1;
 	}
+    }
+
+
+  if (cmd_ptr->print_colour_overlap_matrix==true)
+    {
+      int n;
+
+      for (n=0; n<cmd_ptr->num_colours_in_colour_overlap_first_list; n++)
+	{
+	  if (cmd_ptr->colour_overlap_first_colour_list[n]>NUMBER_OF_COLOURS-1)
+	    {
+	      char tmp[LEN_ERROR_STRING];
+	      sprintf(tmp, "One of the colours you listed in --colour_overlaps is greater than the maximum allowed number of colours for this executable - you specified this at compile time. Either adjust your command-line (typo?) or recompile for more colours\n");
+	      strcpy(error_string, tmp);
+	      return -1;
+	    }
+	}
+
+      for (n=0; n<cmd_ptr->num_colours_in_colour_overlap_second_list; n++)
+	{
+	  if (cmd_ptr->colour_overlap_second_colour_list[n]>NUMBER_OF_COLOURS-1)
+	    {
+	      char tmp[LEN_ERROR_STRING];
+	      sprintf(tmp, "One of the colours you listed in --colour_overlaps is greater than the maximum allowed number of colours for this executable - you specified this at compile time. Either adjust your command-line (typo?) or recompile for more colours\n");
+	      strcpy(error_string, tmp);
+	      return -1;
+	    }
+	}
+
+
     }
 
 
@@ -1485,12 +1592,24 @@ int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_f
 		copy_list(left_colours, num_left_colours, cmd->detect_bubbles1_first_colour_list, cmd->num_colours_in_detect_bubbles1_first_colour_list);
 		copy_list(right_colours, num_right_colours, cmd->detect_bubbles1_second_colour_list, cmd->num_colours_in_detect_bubbles1_second_colour_list);
 	      }
-	    else
+	    else if (which_detect_bubbles==2)
 	      {
 		cmd->num_colours_in_detect_bubbles2_first_colour_list=num_left_colours;
 		cmd->num_colours_in_detect_bubbles2_second_colour_list=num_right_colours;
 		copy_list(left_colours, num_left_colours, cmd->detect_bubbles2_first_colour_list, cmd->num_colours_in_detect_bubbles2_first_colour_list);
 		copy_list(right_colours, num_right_colours, cmd->detect_bubbles2_second_colour_list, cmd->num_colours_in_detect_bubbles2_second_colour_list);
+	      }
+	    else if (which_detect_bubbles==3)
+	      {
+		cmd->num_colours_in_colour_overlap_first_list=num_left_colours;
+		cmd->num_colours_in_colour_overlap_second_list=num_right_colours;
+		copy_list(left_colours, num_left_colours, cmd->colour_overlap_first_colour_list, cmd->num_colours_in_colour_overlap_first_list);
+		copy_list(right_colours, num_right_colours, cmd->colour_overlap_second_colour_list, cmd->num_colours_in_colour_overlap_second_list);
+	      }
+	    else
+	      {
+		printf("Unexpected argument to parse_colourinfo_argument, which_detect_bubbles is not 1,2 or 3");
+		exit(1);
 	      }
 	    
 	  }

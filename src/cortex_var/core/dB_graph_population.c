@@ -8862,3 +8862,58 @@ void db_graph_wipe_colour(int colour, dBGraph* db_graph)
   }
   hash_table_traverse(&wipe_node, db_graph);
 }
+
+void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
+					  int* second_col_list, int num2,
+					  dBGraph* db_graph)
+{
+  int i;
+  int j;
+  
+  printf("\t");
+  for (i=0; i<num1; i++)
+    {
+      printf("%d", first_col_list[i]);
+      if (i<num1-1)
+	{
+	  printf("\t");
+	}
+      else
+	{
+	  printf("\n");
+	}      
+    }
+  for (j=0; j<num2; j++)
+    {
+      printf("%d\t", second_col_list[j]);
+      for (i=0; i<num1; i++)
+	{
+	  long long overlap_cols_i_and_j(Element* node)
+	  {
+	    if ( 
+		(db_node_is_this_node_in_this_person_or_populations_graph(node, individual_edge_array, first_col_list[i])==true)
+		&&
+		(db_node_is_this_node_in_this_person_or_populations_graph(node, individual_edge_array, second_col_list[j])==true)
+		 )
+	      {
+		return 1;
+	      }
+	    else
+	      {
+		return 0;
+	      }
+	  }
+
+	  long long  overlap = hash_table_traverse_returning_sum(&overlap_cols_i_and_j, db_graph);
+	  printf("%qd", overlap);
+	  if (i<num1-1)
+	    {
+	      printf("\t");
+	    }
+	  else
+	    {
+	      printf("\n");
+	    }
+	}
+    }
+}

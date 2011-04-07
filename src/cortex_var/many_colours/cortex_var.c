@@ -100,7 +100,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 	
   for (i=0; i< num_ref_chroms; i++)
     {
-      output_files[i] = malloc(sizeof(char)*100); 
+      output_files[i] = malloc(sizeof(char)*1000); 
       if (output_files[i]==NULL)
 	{
 	  printf("OOM. Giveup can't even allocate space for the names of the ref chromosome file i = %d\n",i);
@@ -111,7 +111,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
   
   for (i=0; i<num_ref_chroms; i++)
     {
-      sprintf(output_files[i], "path_divergence_calls_in_chrom_%i", i+1);
+      sprintf(output_files[i], "%s_pd_chr_%i", cmd_line->path_divergence_caller_output_stub, i+1);
     }
 
 
@@ -623,7 +623,7 @@ int main(int argc, char **argv){
 	      if (cmd_line.load_colours_only_where_overlap_clean_colour==false)
 		{
 		  printf("If you specify --successively_dump_cleaned_colours, you must also specify --load_colours_only_where_overlap_clean_colour\n");
-		  printf("However, this should have been caught earlier. Please inform Zam Iqbal (zam@well.ox.ac.uk)\n");
+		  printf("That should fix your problem, however, this should have been caught as soon as Cortex parsed your command-line. Please inform Zam Iqbal (zam@well.ox.ac.uk) so he can fix that bug\n");
 		  exit(1);
 		}
 	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
@@ -802,6 +802,18 @@ int main(int argc, char **argv){
 	  free(array_of_colournames[j]);
 	}
       printf("Completed alignment of fasta/q to graph to print coverages in all colours\n");
+    }
+  if (cmd_line.print_colour_overlap_matrix==true)
+    {
+      timestamp();
+      printf("Do a direct graph comparison of each colour x,y,z.. listed in --colour_subgraph_overlap_matrix a,b,c../x,y,z... against the colours a,b,c.. (process is symmetrical)\n");
+      
+      db_graph_print_colour_overlap_matrix(cmd_line.colour_overlap_first_colour_list,
+					   cmd_line.num_colours_in_colour_overlap_first_list,
+					   cmd_line.colour_overlap_second_colour_list,
+					   cmd_line.num_colours_in_colour_overlap_second_list,
+					   db_graph);
+      printf("\nCompleted graph overlap matrix printing\n");
     }
 
   
