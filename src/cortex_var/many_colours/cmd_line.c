@@ -1277,7 +1277,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
   //if making path divergence calls, must have >=2 colours, and must specify the ref colour, and give a ref_fasta list
   if (cmd_ptr->make_pd_calls==true)
     {
-      if ((cmd_ptr->using_ref==false)||(cmd_ptr->ref_colour==-1) )
+      if ((cmd_ptr->using_ref==false)||(cmd_ptr->ref_colour==-1) || (strlen(cmd_ptr->ref_chrom_fasta_list)==0)  )
 	{
 	  char tmp[]="If --path_divergence_caller is specified, then must also specify --ref_colour and --list_ref_fasta";
 
