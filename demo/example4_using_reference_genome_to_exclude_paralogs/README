@@ -1,0 +1,368 @@
+
+Example 4
+
+This is an toy example of how you can use the reference genome
+to exclude paralogs.
+
+reference.fasta  is our reference genome, sequence taken from human chromosome 1.
+Two of the lines in this fasta are identical (I cut and paste the second line in,
+that second copy isn't naturally there in chr1), EXCEPT for a single base change.
+So these will create a bubble in the graph of the reference.
+
+indiv.fasta is our individual's genome, each haploype as a single read.
+The first read is identical to the reference.
+The second read/haplotype is identical to the reference EXCEPT for a SNP in the penultimate line.
+
+
+
+What will we do?
+1)Build the individual only and call variants, and we will find 2 SNPs are called. The paralog has been mistaken for a SNP
+2)Build the reference graph also, and make a 2-colour graph of reference and individual. Call variants telling Cortex to ignore
+  bubbles that are there in the reference (they must be paralogs)..and we get just the correct SNP called.
+
+
+### 0. Make sure you have a compiled 2-colour maxk31 version of Cortex.
+The command to do it is (at the root of the tree
+
+make MAXK=31 NUM_COLS=2 cortex_var
+
+
+
+### 1. Build the individual, dump a binary (will be useful in the next step) and call variants:
+
+Here's the commandline
+
+../../bin/cortex_var_31_c2 --kmer_size 17 --format FASTA --max_read_len 1000 --detect_bubbles1 0/0 --output_bubbles1 bub1 --se_list list_ref_fasta --dump_binary ref.ctx
+
+
+Output should look like this
+
+
+>>>>>>>>> start output
+
+
+-----
+Fri Apr  8 13:45:02 2011
+Starting Cortex
+Command: ../../bin/cortex_var_31_c2 --kmer_size 17 --format FASTA --max_read_len 1000 --detect_bubbles1 0/0 --output_bubbles1 bub1 --se_list list_ref_fasta --dump_binary ref.ctx 
+Maximum k-mer size (compile-time setting): 31
+Actual K-mer size: 17
+Hash table created, number of buckets: 1024
+Input file of single ended data filenames: list_ref_fasta
+No paired-end data
+No quality filtering
+No PCR duplicate removal
+
+-----
+Fri Apr  8 13:45:02 2011
+Load single-ended files
+
+Num SE files loaded:1
+    kmers:917
+    Cumulative bad reads:0
+    Total SE sequence parsed:960
+Total SE sequence passed filters and loaded:960
+      Duplicates removed:0
+Collisions:
+	 tries 0: 944
+
+-----
+Fri Apr  8 13:45:02 2011
+Fasta data loaded
+Total bases parsed:960
+Total bases passing filters and loaded into graph:960
+Total kmers in table: 917
+****************************************
+SUMMARY:
+Colour:	MeanReadLen	TotalSeq
+0	0		960
+1	0		0
+****************************************
+
+-----
+Fri Apr  8 13:45:02 2011
+Input data was fasta/q, so dump single colour binary file: ref.ctx
+
+-----
+Fri Apr  8 13:45:03 2011
+Binary dumped
+
+-----
+Fri Apr  8 13:45:03 2011
+Start first set of bubble calls
+Detecting bubbles between the union of this set of colours: 0,  and the union of this set of colours: 0, 
+-----
+Fri Apr  8 13:45:03 2011
+Detect Bubbles 1, completed
+
+-----
+Fri Apr  8 13:45:03 2011
+Cortex completed
+
+
+>>>>> end output 
+
+
+and if we look inside the bub1 file we see this:
+
+>var_1_5p_flank length:27 average_coverage: 2.00 min_coverage:2 max_coverage:2 fst_coverage:2 fst_kmer:TTTTGAATTATTTATTC fst_r:AG fst_f:T lst_coverage:2 lst_kmer:TTTATTCTAATACCAGT lst_r:T lst_f:GT 
+TTTTGAATTATTTATTCTAATACCAGT
+>branch_1_1 length:18 average_coverage: 1.00 min_coverage:1 max_coverage:1 fst_coverage:2 fst_kmer:TTTATTCTAATACCAGT fst_r:T fst_f:GT lst_coverage:2 lst_kmer:TTAATTCTGACACAAAA lst_r:AC lst_f:T 
+GTTAATTCTGACACAAAA
+>branch_1_2 length:18 average_coverage: 1.00 min_coverage:1 max_coverage:1 fst_coverage:2 fst_kmer:TTTATTCTAATACCAGT fst_r:T fst_f:GT lst_coverage:2 lst_kmer:TTAATTCTGACACAAAA lst_r:AC lst_f:T 
+TTTAATTCTGACACAAAA
+>var_1_3p_flank length:15 average_coverage: 2.00 min_coverage:2 max_coverage:2 fst_coverage:2 fst_kmer:TTAATTCTGACACAAAA fst_r:AC fst_f:T lst_coverage:2 lst_kmer:AATCATGGGAGTTCTAA lst_r:T lst_f:GT 
+TCATGGGAGTTCTAA
+
+
+So Cortex has been fooled by a paralog in the reference, and called it as a variant. 
+So far so good.
+
+
+
+##### 2. Build a binary of the individual, and then load both binaries into a 2colour graph and call variants excluding reference-bubbles.
+
+ ../../bin/cortex_var_31_c2 --kmer_size 17 --format FASTA --max_read_len 1000 --se_list list_indiv_fasta --dump_binary indiv.ctx
+
+-----
+Fri Apr  8 13:48:30 2011
+Starting Cortex
+Command: ../../bin/cortex_var_31_c2 --kmer_size 17 --format FASTA --max_read_len 1000 --se_list list_indiv_fasta --dump_binary indiv.ctx 
+Maximum k-mer size (compile-time setting): 31
+Actual K-mer size: 17
+Hash table created, number of buckets: 1024
+Input file of single ended data filenames: list_indiv_fasta
+No paired-end data
+No quality filtering
+No PCR duplicate removal
+
+-----
+Fri Apr  8 13:48:30 2011
+Load single-ended files
+Invalid symbol [?] pos:60 in entry indiv_haplotype_one_identical_to_reference
+Invalid symbol [?] pos:61 in entry indiv_haplotype_one_identical_to_reference
+
+Num SE files loaded:1
+    kmers:934
+    Cumulative bad reads:0
+    Total SE sequence parsed:1922
+Total SE sequence passed filters and loaded:1920
+      Duplicates removed:0
+Collisions:
+	 tries 0: 1888
+
+-----
+Fri Apr  8 13:48:30 2011
+Fasta data loaded
+Total bases parsed:1922
+Total bases passing filters and loaded into graph:1920
+Total kmers in table: 934
+****************************************
+SUMMARY:
+Colour:	MeanReadLen	TotalSeq
+0	0		1920
+1	0		0
+****************************************
+
+-----
+Fri Apr  8 13:48:30 2011
+Input data was fasta/q, so dump single colour binary file: indiv.ctx
+
+-----
+Fri Apr  8 13:48:30 2011
+Binary dumped
+
+-----
+Fri Apr  8 13:48:30 2011
+Cortex completed
+
+>>>>>>>>>>> end of output
+
+
+
+Now we are ready to call variants on a 2-colour graph. We need to be able to tell Cortex which binaries go into which colour:
+
+Type the following:
+ cat colours 
+and you should see this:
+
+reference_colour
+individual_colour
+
+This tells Cortex there are 2 colours, and those are the filelists of binaries to be merged into each
+
+
+cat reference_colour 
+ref.ctx
+
+Just one binary going into the reference colour
+
+and
+
+cat individual_colour 
+indiv.ctx
+
+
+Just one binary going into the individual colour.
+
+So, let's make the calls! We'll do it twice. Once, we just say call bubbles in the individual. Then we try again excluding ref bubbles
+
+
+
+First commandline
+
+ ../../bin/cortex_var_31_c2 --kmer_size 17 --colour_list colours --detect_bubbles1 1/1 --output_bubbles1 bubbles_called_in_individual
+
+
+--detect_bubbles1 1/1 <<<< this means detect bubbles in colour 1
+
+
+
+>>>>> output starts
+
+-----
+Fri Apr  8 13:57:35 2011
+Starting Cortex
+Command: ../../bin/cortex_var_31_c2 --kmer_size 17 --colour_list colours --detect_bubbles1 1/1 --output_bubbles1 bubbles_called_in_individual 
+colour list is set to colours
+Maximum k-mer size (compile-time setting): 31
+Actual K-mer size: 17
+Hash table created, number of buckets: 1024
+
+-----
+Fri Apr  8 13:57:35 2011
+
+-----
+Fri Apr  8 13:57:35 2011
+List of colours: colours (contains one filelist per colour). Load data into consecutive colours starting at 0
+
+-----
+Fri Apr  8 13:57:35 2011
+Finished loading single_colour binaries
+Total kmers in table: 934
+****************************************
+SUMMARY:
+Colour:	MeanReadLen	TotalSeq
+0	0		960
+1	0		1920
+****************************************
+
+-----
+Fri Apr  8 13:57:35 2011
+Start first set of bubble calls
+Detecting bubbles between the union of this set of colours: 1,  and the union of this set of colours: 1, 
+-----
+Fri Apr  8 13:57:35 2011
+Detect Bubbles 1, completed
+
+-----
+Fri Apr  8 13:57:35 2011
+Cortex completed
+
+>>>>> output ends
+
+And if you look in the output bubbles file you see:
+
+
+
+
+>var_1_5p_flank 
+TTTTGAATTATTTATTCTAATACCAGT
+>branch_1_1
+GTTAATTCTGACACAAAA
+>branch_1_2
+TTTAATTCTGACACAAAA
+>var_1_3p_flank
+TCATGGGAGTTCTAA
+>var_2_5p_flank
+AATCATGGGAGTTCTAAGCCTTCAAGTTCACCCCCTTTTTTTTTTTTTTTTGAGATGCAGTTTTGCTCTTGTCACCCAGGCTGGAGTGTACTGGTGAGATCTCTGCTCACTGCAACCTCCACCTTCAGGGTTCAAGTGATTCTCCTGCCTCAGCCTCCCAAGTAGCTGTGATTACAGGTCCCAGCCACCACGCCTAGCTAATTTTTGTATTTTTAGTAGAGACAGCGTTTCATCATGCTGGTCAGGCTGGTCTCGAACTCCTAACCTCAG
+>branch_2_1 
+ATAGTCGACCCACCTCGG
+>branch_2_2 
+GTAGTCGACCCACCTCGG
+>var_2_3p_flank
+CCTCCCACAGTGCTGAGATTACAGGCATGAGCCACCACGCCCTGCTAGGAGTTCACGCTTTAGTTGGGGAAAATATACAATAAGCAAGC
+
+
+(actually, I've deleted some of the excess text that appears in the read-id's for clarity here)
+
+
+OK, so we have called 2 bubbles as expected. The first is the paralog that exists in the reference (scroll up and you ca check the alleles match)
+The second is the real SNP
+
+
+
+Now call again, telling Cortex to exclude the ref:
+
+
+ ../../bin/cortex_var_31_c2 --kmer_size 17 --colour_list colours --detect_bubbles1 1/1 --output_bubbles1 bubbles_called_in_individual_EXCLUDING_REF_BUBBLES --ref_colour 0
+
+
+Note we have added --ref_colour 0; if Cortex sees that it assumes you want to exclude bubbles in the reference.
+
+>>> output starts
+-----
+Fri Apr  8 13:57:56 2011
+Starting Cortex
+Command: ../../bin/cortex_var_31_c2 --kmer_size 17 --colour_list colours --detect_bubbles1 1/1 --output_bubbles1 bubbles_called_in_individual_EXCLUDING_REF_BUBBLES --ref_colour 0 
+colour list is set to colours
+Maximum k-mer size (compile-time setting): 31
+Actual K-mer size: 17
+Hash table created, number of buckets: 1024
+
+-----
+Fri Apr  8 13:57:56 2011
+
+-----
+Fri Apr  8 13:57:56 2011
+List of colours: colours (contains one filelist per colour). Load data into consecutive colours starting at 0
+
+-----
+Fri Apr  8 13:57:56 2011
+Finished loading single_colour binaries
+Total kmers in table: 934
+****************************************
+SUMMARY:
+Colour:	MeanReadLen	TotalSeq
+0	0		960
+1	0		1920
+****************************************
+
+-----
+Fri Apr  8 13:57:56 2011
+Start first set of bubble calls
+Detecting bubbles between the union of this set of colours: 1,  and the union of this set of colours: 1, (First exclude bubbles from ref colour 0) 
+
+-----
+Fri Apr  8 13:57:56 2011
+Detect Bubbles 1, completed
+
+-----
+Fri Apr  8 13:57:56 2011
+Cortex completed
+
+
+>>>> output ends
+
+
+And if we look in the bubbles file, we see
+
+
+>var_1_5p_flank
+AATCATGGGAGTTCTAAGCCTTCAAGTTCACCCCCTTTTTTTTTTTTTTTTGAGATGCAGTTTTGCTCTTGTCACCCAGGCTGGAGTGTACTGGTGAGATCTCTGCTCACTGCAACCTCCACCTTCAGGGTTCAAGTGATTCTCCTGCCTCAGCCTCCCAAGTAGCTGTGATTACAGGTCCCAGCCACCACGCCTAGCTAATTTTTGTATTTTTAGTAGAGACAGCGTTTCATCATGCTGGTCAGGCTGGTCTCGAACTCCTAACCTCAG
+>branch_1_1 
+ATAGTCGACCCACCTCGG
+>branch_1_2 
+GTAGTCGACCCACCTCGG
+>var_1_3p_flank
+CCTCCCACAGTGCTGAGATTACAGGCATGAGCCACCACGCCCTGCTAGGAGTTCACGCTTTAGTTGGGGAAAATATACAATAAGCAAGC
+
+
+It's just called the real SNP (in the reverse complement direction to how you see it in indiv.fasta/reference.fasta).
+
+
+That ends this example.
+
+
+
+

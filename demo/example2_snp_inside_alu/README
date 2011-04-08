@@ -1,0 +1,106 @@
+
+This is another demo example, much like Example 1, but this time the SNP is inside
+an Alu retrotransposon. This isn't a very realistic example - a normal human genome
+contains about 1 million of these repeats, and this example contains 2.
+However it is an example you can look at manually. 
+
+The genome, consisting of just 1 pseudo chromosome, split into two haplotypes 
+is in genome_with_alu_snp.fasta
+
+####  Here's the command to build a de Bruijn graph from the "assembled" full genome:
+
+../../bin/cortex_var_31_c1 --se_list list_genome_fasta --kmer_size 31 --max_read_len 100 --format FASTA --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_genome
+
+
+Here's what the output should look like
+
+
+>>> start output
+
+
+-----
+Thu Apr  7 12:12:37 2011
+Starting Cortex
+Command: ../../bin/cortex_var_31_c1 --se_list list_genome_fasta --kmer_size 31 --max_read_len 100 --format FASTA --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_genome 
+Maximum k-mer size (compile-time setting): 31
+Actual K-mer size: 31
+Hash table created, number of buckets: 1024
+Input file of single ended data filenames: list_genome_fasta
+No paired-end data
+No quality filtering
+No PCR duplicate removal
+
+-----
+Thu Apr  7 12:12:37 2011
+Load single-ended files
+
+Num SE files loaded:1
+    kmers:340
+    Cumulative bad reads:0
+    Total SE sequence parsed:678
+Total SE sequence passed filters and loaded:926
+      Duplicates removed:0
+Collisions:
+	 tries 0: 626
+
+-----
+Thu Apr  7 12:12:37 2011
+Fasta data loaded
+Total bases parsed:678
+Total bases passing filters and loaded into graph:926
+Total kmers in table: 340
+****************************************
+SUMMARY:
+Colour:	MeanReadLen	TotalSeq
+0	0		926
+****************************************
+
+-----
+Thu Apr  7 12:12:37 2011
+Start first set of bubble calls
+Detecting bubbles between the union of this set of colours: 0,  and the union of this set of colours: 0, 
+-----
+Thu Apr  7 12:12:37 2011
+Detect Bubbles 1, completed
+
+-----
+Thu Apr  7 12:12:37 2011
+Cortex completed
+
+
+
+>>> end output
+
+
+
+
+
+The bubble file contains this
+
+>var_1_5p_flank length:58 average_coverage: 2.00 min_coverage:2 max_coverage:2 fst_coverage:2 fst_kmer:GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCT fst_r: fst_f:G lst_coverage:2 lst_kmer:GCCTGTAGTCCCAGCTACTCGGGAGGCTGAG lst_r:A lst_f:CG 
+GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
+>branch_1_1 length:32 average_coverage: 1.00 min_coverage:1 max_coverage:1 fst_coverage:2 fst_kmer:GCCTGTAGTCCCAGCTACTCGGGAGGCTGAG fst_r:A fst_f:CG lst_coverage:2 lst_kmer:TGGGAGGATCGCTTGAGTCCAGGAGTTCTGG lst_r:CG lst_f:G 
+CTGGGAGGATCGCTTGAGTCCAGGAGTTCTGG
+>branch_1_2 length:32 average_coverage: 1.00 min_coverage:1 max_coverage:1 fst_coverage:2 fst_kmer:GCCTGTAGTCCCAGCTACTCGGGAGGCTGAG fst_r:A fst_f:CG lst_coverage:2 lst_kmer:TGGGAGGATCGCTTGAGTCCAGGAGTTCTGG lst_r:CG lst_f:G 
+GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGG
+>var_1_3p_flank length:249 average_coverage: 2.03 min_coverage:2 max_coverage:4 fst_coverage:2 fst_kmer:TGGGAGGATCGCTTGAGTCCAGGAGTTCTGG fst_r:CG fst_f:G lst_coverage:2 lst_kmer:AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG lst_r:A lst_f: 
+GCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGCGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
+
+
+and comparing with the original genome fasta, you will find the two branches (alleles) precisely pull out the SNP.
+
+
+
+
+#### This time do it from the reads:
+
+
+../../bin/cortex_var_31_c1 --se_list list_reads --kmer_size 31 --max_read_len 100 --format FASTA --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_reads
+
+
+and you should find it calls the bubble again, in the same way.
+
+
+
+
+

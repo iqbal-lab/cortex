@@ -1,0 +1,303 @@
+
+Example 3:
+
+This is an example of the Path Divergence Caller in use.
+reference.fasta contains a reference genome which is 
+an Alu with a second Alu inserted within, surrounded by some padding N's - 
+again, this is not meant necessarily to be realistic, but it is an example
+of the kind of thing the PD caller can do.
+The N's are there just to avoid end-effects from when we slide a window across the reference.
+
+individual_homozygous_for_alu_insertion_inside_alu.fasta contains an individual's genome,
+which is just the "outer" Alu, without the inner one inserted. 
+We will call the homozygous deletion of the Alu.
+
+
+
+
+### Compile cortex for 2 colours
+
+Change directory to the root directory of the relese (you should be able to see src/ and bin/ etc when you do ls)
+Then type this
+
+make NUM_COLS=2 MAXK=63 cortex_var
+
+This should compile without problem - please contact us if not.
+We do not currently support the Intel compiler, icc, but we do support
+gcc and have tested this on variants of Linux and Mac OSX.
+
+
+### Overall plan
+
+We will build a single-colour binary of the reference, and 
+a single-colour binary of the sample/individual. (In a real-world
+setting we would probably do some error-cleaning after loading the fasta,
+and then dump clean binaries. In this case we don't bother with that as
+we want to demonstrate  something else.) 
+We will then load these binaries into a 2-colour graph, and align the reference
+genome to that graph, and call variants using the path-divergence algorithm
+
+### 1. Build a binary of the reference
+
+../../bin/cortex_var_63_c2 --se_list list_reference_fasta --kmer_size 55 --format FASTA --max_read_len 1000 --dump_binary ref.ctx
+
+Output should look like this
+
+
+>>>>>>>>>>>> start of output
+-----
+Thu Apr  7 14:57:50 2011
+Starting Cortex
+Command: ../../bin/cortex_var_63_c2 --se_list list_reference_fasta --kmer_size 55 --format FASTA --max_read_len 1000 --dump_binary ref.ctx 
+Maximum k-mer size (compile-time setting): 63
+Actual K-mer size: 55
+Hash table created, number of buckets: 1024
+Input file of single ended data filenames: list_reference_fasta
+No paired-end data
+No quality filtering
+No PCR duplicate removal
+
+-----
+Thu Apr  7 14:57:50 2011
+Load single-ended files
+
+Num SE files loaded:1
+    kmers:577
+    Cumulative bad reads:1
+    Total SE sequence parsed:2131
+Total SE sequence passed filters and loaded:686
+      Duplicates removed:0
+Collisions:
+	 tries 0: 578
+
+-----
+Thu Apr  7 14:57:50 2011
+Fasta data loaded
+Total bases parsed:2131
+Total bases passing filters and loaded into graph:686
+Total kmers in table: 577
+****************************************
+SUMMARY:
+Colour:	MeanReadLen	TotalSeq
+0	0		686
+1	0		0
+****************************************
+
+-----
+Thu Apr  7 14:57:50 2011
+Input data was fasta/q, so dump single colour binary file: ref.ctx
+
+-----
+Thu Apr  7 14:57:52 2011
+Binary dumped
+
+-----
+Thu Apr  7 14:57:52 2011
+Cortex completed
+>>>>>>>>>>>>>>>>>>>>> end of output
+
+
+### 2. Build a binary of the sample/individual:
+
+
+../../bin/cortex_var_63_c2 --se_list list_individual_fasta --kmer_size 55 --format FASTA --max_read_len 1000 --dump_binary indiv.ctx
+
+
+This command-line is very much like what we saw in examples 1 and 2. The only new thing is the --dump_binary option, which is self-explanatory.
+Note that even though we are using an executable which supports 2 colours (the _c2 in cortex_var_63_c2), if cortex is loading fasta or fastq,
+it always loads it into one colour, and dumps a single-colour binary.
+
+
+
+Output should look like this
+
+>>>>> start output
+
+-----
+Thu Apr  7 14:59:26 2011
+Starting Cortex
+Command: ../../bin/cortex_var_63_c2 --se_list list_individual_fasta --kmer_size 55 --format FASTA --max_read_len 1000 --dump_binary indiv.ctx 
+Maximum k-mer size (compile-time setting): 63
+Actual K-mer size: 55
+Hash table created, number of buckets: 1024
+Input file of single ended data filenames: list_individual_fasta
+No paired-end data
+No quality filtering
+No PCR duplicate removal
+
+-----
+Thu Apr  7 14:59:26 2011
+Load single-ended files
+
+Num SE files loaded:1
+    kmers:266
+    Cumulative bad reads:0
+    Total SE sequence parsed:1820
+Total SE sequence passed filters and loaded:375
+      Duplicates removed:0
+Collisions:
+	 tries 0: 267
+
+-----
+Thu Apr  7 14:59:26 2011
+Fasta data loaded
+Total bases parsed:1820
+Total bases passing filters and loaded into graph:375
+Total kmers in table: 266
+****************************************
+SUMMARY:
+Colour:	MeanReadLen	TotalSeq
+0	0		375
+1	0		0
+****************************************
+
+-----
+Thu Apr  7 14:59:26 2011
+Input data was fasta/q, so dump single colour binary file: indiv.ctx
+
+-----
+Thu Apr  7 14:59:26 2011
+Binary dumped
+
+-----
+Thu Apr  7 14:59:26 2011
+Cortex completed
+
+>>>> end of output
+
+
+
+##### Now build a 2-colour graph, and align the reference to the graph, calling variants with the Path Divergence caller
+
+Cortex in the real world expects the user to be loading fastq files from a variety of libraries, potentially with different error-correction on each.
+i.e. in general one might take all the fastq for one library, dump a clean binary, take 
+all the fastq for the next library, dump a second binary etc. After doing this, one would then want to merge all of these binaries into
+a single colour, representing that individual.
+So, Cortex expects one filelist per colour, listing the binaries that get merged into that colour.
+Then, it also expects a single filelist specifying which of the above filelists represents which colour.
+This is a lot clearer with an example:
+
+Type this:
+
+     cat colours 
+
+you should see this
+
+list_of_binaries_to_get_merged_into_reference_colour   <<<<<<<<<<<<< this is a list of what will go in colour 0
+list_of_binaries_to_get_merged_into_individual_colour  <<<<<<<<<<<<  this is a list of what will go in colour 1
+
+And if you cat each of these, you should see the two binaries you have built, ref.ctx and indiv.ctx.
+
+Now we're ready to run the command:
+
+ ../../bin/cortex_var_63_c2 --colour_list colours --kmer_size 55 --ref_colour 0 --path_divergence_caller 1 --path_divergence_caller_output calls --list_ref_fasta list_reference_fasta --max_var_len 500
+
+
+ --ref_colour 0 - this tells Cortex which colour is the reference
+ --path_divergence_caller 1  - this tells Cortex that we're using colour 1 as the sample graph
+ --list_ref_fasta list_reference_fasta - this is needed so Cortex can walk the path of the reference graph by reading the fasta
+ --max_var_len 500 - by default the PD caller looks for variants up to 10kb in size and tries to read in chunks of that size; since we have a tiny tiny reference here,
+                     it would fail to find anything. So we tell it we're looking for things at most this 500bp long.
+ --path_divergence_caller_output calls - Cortex will produce one output file per reference fasta file listed, and will prepend "calls" on the front of the filename		  
+
+The output should look like this:
+
+
+
+
+>>>>> start of output
+
+-----
+Thu Apr  7 15:53:22 2011
+Starting Cortex
+Command: ../../bin/cortex_var_63_c2 --colour_list colours --kmer_size 55 --ref_colour 0 --path_divergence_caller 1 --path_divergence_caller_output calls --list_ref_fasta list_reference_fasta --max_var_len 500 
+colour list is set to colours
+Maximum k-mer size (compile-time setting): 63
+Actual K-mer size: 55
+Hash table created, number of buckets: 1024
+
+-----
+Thu Apr  7 15:53:22 2011
+
+-----
+Thu Apr  7 15:53:22 2011
+List of colours: colours (contains one filelist per colour). Load data into consecutive colours starting at 0
+
+-----
+Thu Apr  7 15:53:22 2011
+Finished loading single_colour binaries
+Total kmers in table: 631
+****************************************
+SUMMARY:
+Colour:	MeanReadLen	TotalSeq
+0	0		686
+1	0		375
+****************************************
+
+-----
+Thu Apr  7 15:53:22 2011
+Run Path-Divergence Calls
+Calling variants using Path Divergence Caller.
+Calls are made between the reference path as specified by the fasta in list_reference_fasta
+ and the sample, which is the union of the following colour(s): 1
+The reference colour is 0
+Call SV comparing individual with chromosome reference.fasta
+
+-----
+Thu Apr  7 15:53:23 2011
+Finished Path Divergence calls
+
+-----
+Thu Apr  7 15:53:23 2011
+Cortex completed
+
+>>>> end of output
+
+
+
+You should find a file called calls_pd_chr_1 (Cortex has appended pd_chr_1 on the end of the stub you specified),which correctly
+identifies the deletion:
+
+
+
+>var_1_5p_flank length:150 average_coverage: 1.00 min_coverage:1 max_coverage:1 mode_coverage: 1 percent_nodes_with_modal_covg: 100.00 percent_novel:  0.00 fst_coverage:1 fst_kmer:GCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGTGGG fst_r: fst_f:A lst_coverage:1 lst_kmer:TATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGA lst_r:G lst_f:G 
+GCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+>var_1_trusted_branch length:366 average_coverage: 0.00 min_coverage:0 max_coverage:1 mode_coverage: 0 percent_nodes_with_modal_covg: 99.00 percent_novel:  0.00 fst_coverage:0 fst_kmer:TGCCGATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAGG fst_r: fst_f: lst_coverage:1 lst_kmer:CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGA lst_r:C lst_f:G covgs of trusted not variant nodes:  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 number_of_such_nodes: 366
+GCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGAGGATCGCTTGAGCCCAGGAGTTCGAGACCAGCCTGGGCAACATAGCGAGACCCCGTCTCTACAAAAAATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGGATCGCTTGAGCCCAGGAGTTCGAGGCTGCAGTGAGCTATGATCGCGCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGA
+>var_1_variant_branch length:55 average_coverage: 1.00 min_coverage:1 max_coverage:1 mode_coverage: 1 percent_nodes_with_modal_covg: 100.00 percent_novel: 98.00 fst_coverage:1 fst_kmer:CTCCCGGGAGGTCACCATATTGATGCCGAACTTAGTGCGGACACCCGATCGGCAT fst_r:C fst_f:A lst_coverage:1 lst_kmer:TCCGTTTCCGACCTGGGCCGGTTCACCCCTCCTTAGGCAACCTGGTGGTCCCCCG lst_r:G lst_f:C covgs of variant not trusted nodes:  1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 number_of_such_nodes: 55
+CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGA
+>var_1_3p_flank length:115 average_coverage: 1.00 min_coverage:1 max_coverage:2 mode_coverage: 1 percent_nodes_with_modal_covg: 99.00 percent_novel:  0.00 fst_coverage:1 fst_kmer:CGGGGGACCACCAGGTTGCCTAAGGAGGGGTGAACCGGCCCAGGTCGGAAACGGA fst_r:C fst_f:G lst_coverage:1 lst_kmer:TCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAA lst_r:G lst_f: 
+GCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGTGAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTTAAAAAAAAAAAAAAAAAAAA
+
+
+
+So what have we got here: flank, the "trusted branch" which is the reference allele, and the variant branch (alternate allele) and the 3p flank.
+Also there is this surprising bunch of zeroes:
+
+covgs of trusted not variant nodes:  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+cortex has found the nodes which are on the reference allele but not the alternate allele, and printed coverage on those nodes - those are the most informative nodes.
+
+
+
+#### What happens if we reverse the roles of reference and individual?
+
+Here's the commandline:
+
+ ../../bin/cortex_var_63_c2 --colour_list colours --kmer_size 55 --ref_colour 1 --path_divergence_caller 0 --path_divergence_caller_output calls_reverse --list_ref_fasta list_individual_fasta --max_var_len 500
+
+We have changed 2 things
+1) we have switched the 0 and 1 so reference and individual's roles are switched
+2) We now have --list_ref_fasta list_individual_fasta
+
+you should find a file called calls_reverse_pd_chr_1, which is empty.
+
+The PD caller is unable to call the insertion. The reason for this is that the two breakpoints no longer lie within a single supernode (uninterrupted arc) within the sample graph.
+In general we expect this bias towards calling deletions, as mentioned in the paper - the PD caller needs both breakpoints to be within a supernode, and that is less likely
+the longer it would need the supernode to be.
+
+
+
+Would this work with reads, not the fully assembled chromosomes? Yes, just as we did explicitly in Examples 1 and 2.
+You just need enough coverage - we leave this as an exercise for the interested reader. In essence, since it works for the 
+assembled chromosomes, it will work with reads provided there is enough coverage that there is no gap in a critical place.

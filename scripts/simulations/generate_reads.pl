@@ -27,6 +27,11 @@ open(F,"$file") || die "cannot open file $file\n";
 my $entry = <F>;
 chomp($entry);
 $entry =~s/>//;
+if ($entry =~ /^(\S+)/)
+{
+    $entry=$1;
+}
+
 
 my $erate_for_printing_main;
 my $erate_for_printing_end;

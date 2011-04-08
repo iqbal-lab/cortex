@@ -1,0 +1,216 @@
+This is a simple example which allows you to manually examine what is going on.
+genome.fasta contains the genome of a pseudo-individual with a tiny genome containing one chromosome.
+The file contains two reads, each one representing a full haplotype; the actual sequence is taken from a chunk
+of human chromosome 1. The two haplotypes are identical, except for a single SNP difference.
+
+
+
+## 0. Compile Cortex!
+   Change directory to the root of the release. If you do ls, you should see src/, bin/, etc.
+   Type these commands
+
+   make clean
+   make MAXK=31 NUM_COLS=1 cortex_var
+
+   This should complete without errors, and create a file in the bin directory called cortex_var_31_c1
+   If this does not work, please contact us. Cortex currently has been tested with gcc on Linux and MacOS X.
+   However we do NOT yet support the Intel compiler icc.
+   The binary thus created supports kmers<=31 and one colour only. You could have specified any number of the form 32n-1 for MAXK.
+   We have tried kmers up to about 10000.
+
+## 1. Build a de Bruijn graph of the "fully assembled" genome and call bubbles.
+
+Run this command from the directory in which you find this README
+
+  ../../bin/cortex_var_31_c1 --se_list list_full_genome_fasta --kmer_size 31 --max_read_len 100 --format FASTA --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_genome
+
+(Because this is a tiny dataset, the default settings for how big to build the hash table are fine.
+In general you would need to specify the length and width of the hash table, with --mem_width and mem_height,
+which is explained in detail in the manual.)
+
+Just to explain the command line
+
+--se_list - this is a list of all the input fasta files. se stands for single-ended. cortex_var does not truly support paired-end reads yet,
+            although if you pass in paired-end reads using --pe_list list1,list2, then it can on-the-fly remove PCR duplicates
+
+--kmer_size - self explanatory. Must be odd.
+
+--format  - self explanatory. FASTA or FASTQ allowed.
+
+--detect_bubbles1 0/0 - looks for bubbles in colour 0 . This will make more sense in later examples when we go multicoloured.
+
+
+This should produce the following output:
+
+
+
+>>>>>> output begins
+
+Maximum k-mer size (compile-time setting): 31
+Actual K-mer size: 31
+Hash table created, number of buckets: 1024
+Input file of single ended data filenames: list_full_genome_fasta
+No paired-end data
+No quality filtering
+No PCR duplicate removal
+
+-----
+Thu Apr  7 11:09:05 2011
+Load single-ended files
+
+Num SE files loaded:1
+    kmers:661
+    Cumulative bad reads:0
+    Total SE sequence parsed:1320
+Total SE sequence passed filters and loaded:1878
+      Duplicates removed:0
+Collisions:
+	 tries 0: 1278
+
+-----
+Thu Apr  7 11:09:05 2011
+Fasta data loaded
+Total bases parsed:1320
+Total bases passing filters and loaded into graph:1878
+Total kmers in table: 661
+****************************************
+SUMMARY:
+Colour:	MeanReadLen	TotalSeq
+0	0		1878                               <<<<<<<<<   Just FYI, the reason it says mean read-length zero is that this feature is only really for fastq files,
+****************************************                               where we allow reads to be cut at low quality bases or at homopolymers, and also PCR duplicates to be removed.
+                                                                       The end result of this is that Cortex ends up getting a distribution of shorter read lengths, and lower coverage
+-----                                                                  than one would estimate by multiplying total reads * read_length. i.e this is mean read length/covg after filtering.
+Thu Apr  7 11:09:05 2011
+Start first set of bubble calls
+Detecting bubbles between the union of this set of colours: 0,  and the union of this set of colours: 0, 
+-----
+Thu Apr  7 11:09:05 2011
+Detect Bubbles 1, completed
+
+-----
+Thu Apr  7 11:09:05 2011
+Cortex completed
+
+
+
+>>>>>>>>>>>>>> end of output
+
+
+
+If you now look inside the new file bubbles_called_from_genome, you will see that Cortex has called the single bubble between the chromosomes:
+
+
+>var_1_5p_flank length:276 average_coverage: 2.03 min_coverage:2 max_coverage:4 fst_coverage:2 fst_kmer:ACTAGCAATGAATATGCTGAGTCACTGCATA fst_r: fst_f:T lst_coverage:2 lst_kmer:ATATAATTATGAGTCATTATTTTTGTTTTGC lst_r:G lst_f:AC 
+ACTAGCAATGAATATGCTGAGTCACTGCATATACATACTCACAACTTTATTCTATAATGTAATATTCTATAAAGTAGCTGTATCAGTTTATACTTTAACCAGTAATGGACAAGATTTTCTATTACTTCCCATCTTTGTTATTACTTTTAGACTCTAACTTTTATCAGGCTCATGGATGTAAAAAGCATCTCAGGGTGGTTTTAATTTGCATTTATCTGCTCATCTATGAAGATGAGCTTCTTTTCATATAATTATGAGTCATTATTTTTGTTTTGC
+>branch_1_1 length:32 average_coverage: 1.00 min_coverage:1 max_coverage:1 fst_coverage:2 fst_kmer:ATATAATTATGAGTCATTATTTTTGTTTTGC fst_r:G fst_f:AC lst_coverage:2 lst_kmer:TTCTTTTGTTTATGCATTTTGCTTGTTCTAT lst_r:GT lst_f:G 
+ATTCTTTTGTTTATGCATTTTGCTTGTTCTAT
+>branch_1_2 length:32 average_coverage: 1.00 min_coverage:1 max_coverage:1 fst_coverage:2 fst_kmer:ATATAATTATGAGTCATTATTTTTGTTTTGC fst_r:G fst_f:AC lst_coverage:2 lst_kmer:TTCTTTTGTTTATGCATTTTGCTTGTTCTAT lst_r:GT lst_f:G 
+CTTCTTTTGTTTATGCATTTTGCTTGTTCTAT
+>var_1_3p_flank length:352 average_coverage: 2.03 min_coverage:2 max_coverage:4 fst_coverage:2 fst_kmer:TTCTTTTGTTTATGCATTTTGCTTGTTCTAT fst_r:GT fst_f:G lst_coverage:2 lst_kmer:ACCACTTGTTCTATTACTGCTGTAACAAATT lst_r:T lst_f: 
+GTCTTATTTTTCCTGTTGATTTTTGGGAGTTCATATATATTCTAAATGTATATTTATTCACTTATATATATGTTGTAAATATTACAGTTTATGATTTGTCACCTTATGATATCTTCCAAATAGAGAAGCTTTATATTTTGATGTAGTCATATGTTCATTTTTCCTCCTTAATGTTTGTTTTTCTTGGTTCTATGACCTACCAAAAGTAACAAAAATTCTCATTTATTTTTAATCTAAATGTTTTAAGTATTTTCCTGGAATTCACCTTGAATTGATTTCTATTGGAGATAGGTATCCAATCTAATTTGCCTCATATGGATAACCACTTGTTCTATTACTGCTGTAACAAATT
+
+
+
+There are 4 reads - the 5prime flank, two alleles (which are identical except for differing at the first base - they are k+1 bases long), and the 3prime flank.
+In this case Cortex has printed the alleles in the reverse complement direction to that in the genome fasta - we have deliberately used long reads with no
+carriage-returns so you can reverse complement the bubble branches and search for them (eg with emacs) in the original fasta and find them without carriage returns 
+getting in the way.
+
+The read-id lines are a bit busy and can be ignored for now.
+
+
+
+
+
+### Build a de Bruijn graph of reads generated from the genome and call bubbles:
+
+
+
+Run this command from the directory in which you find this README
+
+  ../../bin/cortex_var_31_c1 --se_list list_reads --kmer 31 --max_read_len 100 --format FASTA --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_reads
+
+You should get output that looks like this:
+
+
+>>>>>>> start output
+
+-----
+Thu Apr  7 11:19:07 2011
+Starting Cortex
+Command: ../../bin/cortex_var_31_c1 --se_list list_reads --kmer 31 --max_read_len 100 --format FASTA --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_reads 
+Maximum k-mer size (compile-time setting): 31
+Actual K-mer size: 31
+Hash table created, number of buckets: 1024
+Input file of single ended data filenames: list_reads
+No paired-end data
+No quality filtering
+No PCR duplicate removal
+
+-----
+Thu Apr  7 11:19:07 2011
+Load single-ended files
+
+Num SE files loaded:1
+    kmers:644
+    Cumulative bad reads:0
+    Total SE sequence parsed:39600
+Total SE sequence passed filters and loaded:39600
+      Duplicates removed:0
+Collisions:
+	 tries 0: 15840
+
+-----
+Thu Apr  7 11:19:07 2011
+Fasta data loaded
+Total bases parsed:39600
+Total bases passing filters and loaded into graph:39600
+Total kmers in table: 644
+****************************************
+SUMMARY:
+Colour:	MeanReadLen	TotalSeq
+0	0		39600
+****************************************
+
+-----
+Thu Apr  7 11:19:07 2011
+Start first set of bubble calls
+Detecting bubbles between the union of this set of colours: 0,  and the union of this set of colours: 0, 
+-----
+Thu Apr  7 11:19:07 2011
+Detect Bubbles 1, completed
+
+-----
+Thu Apr  7 11:19:07 2011
+Cortex completed
+
+
+>>>>>>> end output
+
+
+
+If you now look at the bubble file that has been printed off, you get:
+
+
+>var_1_5p_flank length:259 average_coverage:18.47 min_coverage:1 max_coverage:46 fst_coverage:1 fst_kmer:TGAGTCACTGCATATACATACTCACAACTTT fst_r: fst_f:A lst_coverage:35 lst_kmer:ATATAATTATGAGTCATTATTTTTGTTTTGC lst_r:G lst_f:AC 
+TGAGTCACTGCATATACATACTCACAACTTTATTCTATAATGTAATATTCTATAAAGTAGCTGTATCAGTTTATACTTTAACCAGTAATGGACAAGATTTTCTATTACTTCCCATCTTTGTTATTACTTTTAGACTCTAACTTTTATCAGGCTCATGGATGTAAAAAGCATCTCAGGGTGGTTTTAATTTGCATTTATCTGCTCATCTATGAAGATGAGCTTCTTTTCATATAATTATGAGTCATTATTTTTGTTTTGC
+>branch_1_1 length:32 average_coverage:22.81 min_coverage:14 max_coverage:32 fst_coverage:35 fst_kmer:ATATAATTATGAGTCATTATTTTTGTTTTGC fst_r:G fst_f:AC lst_coverage:47 lst_kmer:TTCTTTTGTTTATGCATTTTGCTTGTTCTAT lst_r:GT lst_f:G 
+ATTCTTTTGTTTATGCATTTTGCTTGTTCTAT
+>branch_1_2 length:32 average_coverage:15.32 min_coverage:12 max_coverage:20 fst_coverage:35 fst_kmer:ATATAATTATGAGTCATTATTTTTGTTTTGC fst_r:G fst_f:AC lst_coverage:47 lst_kmer:TTCTTTTGTTTATGCATTTTGCTTGTTCTAT lst_r:GT lst_f:G 
+CTTCTTTTGTTTATGCATTTTGCTTGTTCTAT
+>var_1_3p_flank length:352 average_coverage:29.58 min_coverage:3 max_coverage:53 fst_coverage:47 fst_kmer:TTCTTTTGTTTATGCATTTTGCTTGTTCTAT fst_r:GT fst_f:G lst_coverage:2 lst_kmer:ACCACTTGTTCTATTACTGCTGTAACAAATT lst_r:T lst_f: 
+GTCTTATTTTTCCTGTTGATTTTTGGGAGTTCATATATATTCTAAATGTATATTTATTCACTTATATATATGTTGTAAATATTACAGTTTATGATTTGTCACCTTATGATATCTTCCAAATAGAGAAGCTTTATATTTTGATGTAGTCATATGTTCATTTTTCCTCCTTAATGTTTGTTTTTCTTGGTTCTATGACCTACCAAAAGTAACAAAAATTCTCATTTATTTTTAATCTAAATGTTTTAAGTATTTTCCTGGAATTCACCTTGAATTGATTTCTATTGGAGATAGGTATCCAATCTAATTTGCCTCATATGGATAACCACTTGTTCTATTACTGCTGTAACAAATT
+
+This is almost identical to the bubble called from the genome. The alleles are identical. The differences are
+ - different coverage logged on the read-id lines - as expected, as we have loaded 30x of coverage
+  (again, we suggest you ignore this for now - there are better ways of looking at covg, discussed in the manual)
+ - The 5prime flank is shorter, presumably due to a coverage gap.
+
+
+
+
+
+
+That completes this simple example, finding a SNP bubble.
+
+
