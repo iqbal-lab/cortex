@@ -1,4 +1,5 @@
 /*
+ * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo
  * 
  * CORTEX project contacts:  
  * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
@@ -148,7 +149,7 @@ void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, b
 									 remv_dups_pe, break_homopolymers, homopol_limit, ascii_fq_offset,
 									 db_graph, individual_edge_array, colour); 
       
-      printf("\nNum PE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal PE sequence parsed:%qd\nTotal PE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n\n",
+      printf("\nNum PE pairs of files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal PE sequence parsed:%qd\nTotal PE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n\n",
       	     num_file_pairs_loaded,hash_table_get_unique_kmers(db_graph),bad_pe_reads,paired_seq_bases_read,paired_seq_bases_loaded, dup_pe_reads);
 	  
     }
