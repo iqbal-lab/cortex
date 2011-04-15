@@ -8889,14 +8889,18 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
       printf("%d\t", second_col_list[j]);
       for (i=0; i<num1; i++)
 	{
+	  //local function
 	  long long overlap_cols_i_and_j(Element* node)
 	  {
+	    char str[db_graph->kmer_size];
+
 	    if ( 
 		(db_node_is_this_node_in_this_person_or_populations_graph(node, individual_edge_array, first_col_list[i])==true)
 		&&
 		(db_node_is_this_node_in_this_person_or_populations_graph(node, individual_edge_array, second_col_list[j])==true)
 		 )
 	      {
+
 		return 1;
 	      }
 	    else

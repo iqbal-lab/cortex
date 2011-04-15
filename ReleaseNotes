@@ -1,0 +1,15 @@
+
++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5
+First public/post-beta release of cortex_var.
+Supports: 
+ - arbitrary kmer
+ - removal of PCR duplicates, cutting reads at low quality bases or homopolymers on the fly
+ - de novo assembly of variants
+ - aligning of reads/references to population graph
+See manual for details!
+
+Open issues:
+ - does not compile for Intel compiler on IA64. 
+
+April 8th 2010

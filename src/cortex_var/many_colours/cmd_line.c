@@ -185,7 +185,7 @@ const char* usage=
   // -E
 "   [--load_colours_only_where_overlap_clean_colour INT] \t=\t Only load nodes from binary files in the colour-list when they overlap a\n\t\t\t\t\t\t\t\t\t specific colour (e.g. that contains a cleaned pooled graph);\n\t\t\t\t\t\t\t\t\t requires you to specify this particular colour. You must have loaded that colour beforehand, using --multicolour_bin\n"  \
   // -F
-"   [--successively_dump_cleaned_colours SUFFIX_FOR_DUMPED_BINARY_NAMES] \t\t\t=\t Only to be used when also using --load_colours_only_where_overlap_clean_colour and --multicolour_bin\n\t\t\t\t\t\t\t\t\t Used to allow error-correction of low-coverage data on large numbers of individuals with large genomes.\n\t\t\t\t\t\t\t\t\t Requires the user specify a suffix which will be added to the names of cleaned binaries. See manual for details.\n"  \
+"   [--successively_dump_cleaned_colours SUFFIX] \t\t\t=\t Only to be used when also using --load_colours_only_where_overlap_clean_colour and --multicolour_bin\n\t\t\t\t\t\t\t\t\t Used to allow error-correction of low-coverage data on large numbers of individuals with large genomes.\n\t\t\t\t\t\t\t\t\t Requires the user specify a suffix which will be added to the names of cleaned binaries. See manual for details.\n"  \
   // -G
 "   [--align FILENAME] \t\t\t\t\t\t=\t Aligns a list of fasta/q files to the graph, and prints coverage of each kmer in each read in each colour.\n\t\t\t\t\t\t\t\t\t Must also specify --align_input_format, and --max_read_len\n"  \
   // -H
@@ -394,7 +394,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'h':
       {
 	printf("***********************\n");
-	printf("Cortex version %d.%d.%d\n", VERSION, SUBVERSION, SUBSUBVERSION);
+	printf("Cortex version %d.%d.%d.%d\n", VERSION, SUBVERSION, SUBSUBVERSION,SUBSUBSUBVERSION);
 	printf("Compiled with support for %d colours\n", NUMBER_OF_COLOURS);
 	printf("***********************\n");
 
@@ -1534,7 +1534,7 @@ int get_numbers_from_comma_sep_list(char* list, int* return_list, int max_len_re
 int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is, int which_detect_bubbles)
 {
 
-  if ( (which_detect_bubbles!=1) && (which_detect_bubbles!=2) )
+  if ( (which_detect_bubbles!=1) && (which_detect_bubbles!=2) && (which_detect_bubbles!=3) )
     {
       printf("Called parse_colourinfo_argument with last argument %d - should be 1 or 2\n", which_detect_bubbles);
       return -1;
