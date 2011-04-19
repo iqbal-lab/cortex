@@ -218,7 +218,7 @@ void test_read_sequence_from_long_fasta(){
   CU_ASSERT_EQUAL(length_seq, 0);
 
   fclose(fp1);
-
+  free_sequence(&seq);
 
 }
 
@@ -406,6 +406,7 @@ void test_shift_last_kmer_to_start_of_sequence(){
   
   CU_ASSERT(full_entry==false);
   fclose(fp1);
+  free_sequence(&seq);
 }
 
 void test_read_sequence_from_fastq(){

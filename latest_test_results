@@ -1,4 +1,65 @@
 
+********************************************************
+****** 1.  Basic Unit tests
+********************************************************
+
+
+     CUnit - A Unit testing framework for C - Version 2.1-0
+     http://cunit.sourceforge.net/
+
+
+Suite: Suite_1
+  Test: Check that bitfield as defined really is 64bits on this platform ... passed
+  Test: Test the assignment operator for BinaryKmers ... passed
+  Test: Test the comparison operator for binary kmers ... passed
+  Test: Test the less than operator for binary kmers ... passed
+  Test: Test the left shift operator for big binary kmers that are encoded in multiple long integers ... passed
+  Test: Test the right shift operator for big binary kmers that are encoded in multiple long integers ... passed
+  Test: test reading of fasta file ... passed
+  Test: test reading of long fasta file ... passed
+  Test: test reading of fastq file ... passed
+  Test: test reading of fastq file when some reads are too long or have bad characters ... passed
+  Test: test conversion from binary nucleotide to C string ... passed
+  Test: test binary kmer reverse complement ... passed
+  Test: test seq reverse complement ... passed
+  Test: test nucleotide iterator ... passed
+  Test: test creation of binary kmers from sequence - sliding window ... passed
+  Test: test creation of binary kmers from sequence - breaking at homopolymers ... passed
+  Test: test shift last kmer to start ... passed
+
+--Run Summary: Type      Total     Ran  Passed  Failed
+               suites        1       1     n/a       0
+               tests        17      17      17       0
+               asserts    1424    1424    1424       0
+
+
+
+********************************************************
+****   Hash table Tests
+********************************************************
+
+
+     CUnit - A Unit testing framework for C - Version 2.1-0
+     http://cunit.sourceforge.net/
+
+
+Suite: Suite_1
+  Test: test hash_table_find_or_insert using Element from graph/ ... passed
+  Test: test hash_table_apply_or_insert using Element from graph/. This test takes a little while - do not panic if it takes a minute or two ... passed
+
+--Run Summary: Type      Total     Ran  Passed  Failed
+               suites        1       1     n/a       0
+               tests         2       2       2       0
+               asserts  562219  562219  562219       0
+
+
+
+
+********************************************************
+**** Cortex_var unit tests
+********************************************************
+
+
 
      CUnit - A Unit testing framework for C - Version 2.1-0
      http://cunit.sourceforge.net/
@@ -13,11 +74,11 @@ Suite: Test main functionality of Cortex
   Test: Test element -increment coverage for different people ... passed
   Test: Test function checking number of edges to nodes with specified status ... passed
   Test: Sanity test for hash_table_find - adding kmers to graph and finding them ... passed
-  Test: Test dumping and reloading of multicolour binary ... passed
+  Test: Test dumping and reloading of multicolour binary ...passed
   Test: Test loading of a singlecolour binary ... passed
   Test: Test loading of a single-colour binary where nodes are only loaded if they already exist in a predefined "clean" colour, and if so, only taking the edges that overlap both colours ... passed
   Test: Test that coverage of kmers are correcty counted as reads are loaded from a file ... passed
-  Test: Test getting sliding windows, breaking when kmer is not in graph - internal function ...passed
+  Test: Test getting sliding windows, breaking when kmer is not in graph - internal function ... passed
   Test: Test getting sliding windows breaking when kner or edge is not in graph - internal function ... passed
   Test: Test function for getting length distribution of filtered/effective reads after N's, low quality, PCR duplicates and homopolymers have been cut or filtered ... passed
   Test: Test checking if a path lies in a (function of) colours ... passed
@@ -34,8 +95,7 @@ Suite: Test main functionality of Cortex
   Test: Test (currently unused) function for smoothing bubbles ... passed
   Test: Test utility function for applying some other function to all nodes in a path defined by a fasta ... passed
   Test: Test get_perfect_path (maximal path without branches) in single colour of graph ... passed
-  Test: Load three people in one population, each consists of one toy chromosome.
-	 Find their individual supernodes correctly ... passed
+  Test: Load three people in one population, each consists of one toy chromosome. Find their individual supernodes correctly ... passed
   Test: Load two people sharing an Alu, differing by sequence before and after the Alu. Find supernodes. ... passed
   Test: Check that correctly get stats on how many kmers are shared by 1,2,3,... people in a population ... passed
   Test: Unit test of utilty function to produce array of nodes corresponding to a given path through graph, as specified by a fasta file ... passed
