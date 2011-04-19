@@ -1263,7 +1263,6 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
     }
 
 
-
   //always reads the multicol binary into successive colours starting from 0 - assumes the hash table is empty prior to this
   while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, *num_cols_in_loaded_binary)){
     count++;
@@ -1329,6 +1328,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
       printf("Cannot load this binary - fails signature check. Exiting.\n");
       exit(1);
     }
+
   if (num_cols_in_binary!=1)
     {
       printf("Expecting a single colour binary, but instead this one has %d colours\n. Exiting.\n", num_cols_in_binary);
@@ -1344,7 +1344,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 
       dBNode * current_node  = NULL;
       BinaryKmer tmp_kmer;
-      if (only_load_kmers_already_in_hash==false)
+      if (only_load_kmers_already_in_hash==false) //normal case
 	{
 	  if (!all_entries_are_unique)
 	    {
@@ -1354,7 +1354,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 	    {
 	      current_node = hash_table_insert(element_get_key(element_get_kmer(&tmp_node),db_graph->kmer_size, &tmp_kmer), db_graph);
 	    }
-	  seq_length+=db_graph->kmer_size;//todo - maybe only increment if had to insert, not if was already in graph?
+	  seq_length+=db_graph->kmer_size;
 	  add_edges(current_node,individual_edge_array, index, get_edge_copy(tmp_node, individual_edge_array, index));
 	  db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&tmp_node, individual_edge_array,index) );
 	}
@@ -1372,7 +1372,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 	}
 
     }
-  
+
   fclose(fp_bin);
   return seq_length;
 
@@ -1418,7 +1418,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 								only_load_kmers_already_in_hash, colour_clean);
       all_entries_are_unique=false;
 
-      update_mean_readlen_and_total_seq(db_graph_info, index,mean_read_len_in_this_binary, total_seq_in_this_binary);
+      graph_info_update_mean_readlen_and_total_seq(db_graph_info, index,mean_read_len_in_this_binary, total_seq_in_this_binary);
 
     }
 
@@ -1541,8 +1541,8 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_c
       db_graph_dump_single_colour_binary_of_specified_colour(outfile, &db_node_condition_always_true,db_graph,db_graph_info,in_colour);
       //reset that colour:
       db_graph_wipe_colour(in_colour,db_graph);
-      set_seq(db_graph_info, in_colour,0);
-      set_mean_readlen(db_graph_info, in_colour, 0);
+      graph_info_set_seq(db_graph_info, in_colour,0);
+      graph_info_set_mean_readlen(db_graph_info, in_colour, 0);
     }
 
   fclose(fp);
@@ -2449,7 +2449,7 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* nu
 		if ( (read>0) && (num_cols<=NUMBER_OF_COLOURS) && (num_cols>0)  )
 		  { 
 		    *number_of_colours_in_binary = num_cols;
-		    
+
 		    int i;
 		    boolean problem=false;
 		    for (i=0; (i<num_cols) && (problem==false); i++)
@@ -2532,6 +2532,10 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* nu
       }
     
   }
+  else
+    {
+      printf("Binary fails signature check - was build for different kmer, or with different binary version. (For debug purposes: Magic number is %s and read is %d)\n", magic_number, read);
+    }
   return ret;
 
 }

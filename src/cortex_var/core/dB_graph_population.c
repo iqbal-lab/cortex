@@ -3405,7 +3405,6 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*co
     {
       int means=0;
       long long tots=0;
-
       print_binary_signature(fout, db_graph->kmer_size,1, &means, &tots);
     }
   else
@@ -3417,7 +3416,7 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*co
   long long count=0;
   //routine to dump graph
   void print_node_single_colour_binary_of_colour0(dBNode * node){   
-    if (condition(node)){
+    if (condition(node) ){
       count++;
       db_node_print_single_colour_binary_of_colour0(fout,node);
     }

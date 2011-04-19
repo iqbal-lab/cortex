@@ -35,17 +35,17 @@ typedef struct{
   int mean_read_length[NUMBER_OF_COLOURS];
 }GraphInfo;
 
-void initialise(GraphInfo* ginfo);
+void graph_info_initialise(GraphInfo* ginfo);
 
 //set total amount of sequence in a colour
-void set_seq(GraphInfo* ginfo, int colour, long long num_bp);
+void graph_info_set_seq(GraphInfo* ginfo, int colour, long long num_bp);
 //increment total amoutn of sequence in a colour (eg when you merge in a new binary)
-long long increment_seq(GraphInfo* ginfo, int colour, long long num_bp);
+long long graph_info_increment_seq(GraphInfo* ginfo, int colour, long long num_bp);
 //set mean read length in a colour
-void set_mean_readlen(GraphInfo* ginfo, int colour, int len);
+void graph_info_set_mean_readlen(GraphInfo* ginfo, int colour, int len);
 //update mean read length in a colour, eg when you merge a new binary
-int update_mean_readlen(GraphInfo* ginfo, int colour, int previous_mean, long long previous_seq, int mean_readlen_in_added_data, long long added_seq);
-void update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,int mean_readlen_in_added_data, long long added_seq);
+int graph_info_update_mean_readlen(GraphInfo* ginfo, int colour, int previous_mean, long long previous_seq, int mean_readlen_in_added_data, long long added_seq);
+void graph_info_update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,int mean_readlen_in_added_data, long long added_seq);
 
 
 #endif

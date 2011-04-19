@@ -932,11 +932,10 @@ void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node)
   covg             = db_node_get_coverage(node, individual_edge_array, 0);
   individual_edges = get_edge_copy(*node, individual_edge_array, 0);
   
-				  
   fwrite(&kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
   fwrite(&covg, sizeof(int), 1, fp); 
   fwrite(&individual_edges, sizeof(Edges), 1, fp);
-
+  fflush(fp); //zahara - debug only
   
 }
 
@@ -1109,7 +1108,7 @@ boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * n
   element_set_kmer(node,&kmer,kmer_size);
   //element_initialise(node,&kmer,kmer_size);
   node->individual_edges[index]    = edges;
-  node->coverage[index] = coverage;
+  node->coverage[index]            = coverage;
   db_node_action_set_status_none(node);
  
   return true;

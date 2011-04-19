@@ -28,32 +28,32 @@
 #include <dB_graph.h>
 #include <graph_info.h>
 
-void initialise(GraphInfo* ginfo)
+void graph_info_initialise(GraphInfo* ginfo)
 {
   int i;
 
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
-      set_seq(ginfo, i, 0);
-      set_mean_readlen(ginfo, i, 0);
+      graph_info_set_seq(ginfo, i, 0);
+      graph_info_set_mean_readlen(ginfo, i, 0);
     }
 }
 
 
 
-void set_seq(GraphInfo* ginfo, int colour, long long num_bp)
+void graph_info_set_seq(GraphInfo* ginfo, int colour, long long num_bp)
 {
   ginfo->total_sequence[colour]=num_bp;
 }
 
 
-long long increment_seq(GraphInfo* ginfo, int colour, long long num_bp)
+long long graph_info_increment_seq(GraphInfo* ginfo, int colour, long long num_bp)
 {
   ginfo->total_sequence[colour]+=num_bp;
   return ginfo->total_sequence[colour];
 }
 
-void set_mean_readlen(GraphInfo* ginfo, int colour, int len)
+void graph_info_set_mean_readlen(GraphInfo* ginfo, int colour, int len)
 {
   ginfo->mean_read_length[colour]=len;
 }
@@ -62,7 +62,7 @@ void set_mean_readlen(GraphInfo* ginfo, int colour, int len)
 //note if you are updating both mean read len AND total seq, 
 // then do this one first (once you update the total seq, you no longer know 
 //  what it used to be, ie the previous_seq)
-int update_mean_readlen(GraphInfo* ginfo, int colour, int previous_mean, long long previous_seq, 
+int graph_info_update_mean_readlen(GraphInfo* ginfo, int colour, int previous_mean, long long previous_seq, 
 			int mean_readlen_in_added_data, long long added_seq)
 {
   if (added_seq==0)
@@ -87,11 +87,11 @@ int update_mean_readlen(GraphInfo* ginfo, int colour, int previous_mean, long lo
   return new_mean;
 }
 
-void update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,int mean_readlen_in_added_data, 
+void graph_info_update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,int mean_readlen_in_added_data, 
 				       long long added_seq)
 {
-  update_mean_readlen(ginfo, colour, 
+  graph_info_update_mean_readlen(ginfo, colour, 
 		      ginfo->mean_read_length[colour], ginfo->total_sequence[colour], 
 		      mean_readlen_in_added_data, added_seq);
-  increment_seq(ginfo, colour, added_seq);
+  graph_info_increment_seq(ginfo, colour, added_seq);
 }

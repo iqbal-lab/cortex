@@ -1343,6 +1343,8 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  total_seqs_ptrs[i]=&(total_seqs[i]);
 	}
       boolean is_multicol_bin_ok = check_binary_signature(fp, cmd_ptr->kmer_size, BINVERSION, &num_m_cols, mean_readlens_ptrs, total_seqs_ptrs);
+
+      
       fclose(fp);
 
       char tmp[LEN_ERROR_STRING];

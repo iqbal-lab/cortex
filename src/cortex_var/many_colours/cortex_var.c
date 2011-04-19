@@ -421,7 +421,7 @@ int main(int argc, char **argv){
     }
   printf("Hash table created, number of buckets: %d\n",1 << hash_key_bits);
   GraphInfo db_graph_info;
-  initialise(&db_graph_info);
+  graph_info_initialise(&db_graph_info);
 
 
 
@@ -510,19 +510,18 @@ int main(int argc, char **argv){
       //update the graph info object
       if (cmd_line.format_of_input_seq==FASTQ)
 	{
-	  update_mean_readlen_and_total_seq(&db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line.max_read_length+1)), bases_pass_filters_and_loaded);
+	  graph_info_update_mean_readlen_and_total_seq(&db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line.max_read_length+1)), bases_pass_filters_and_loaded);
 	}
       else//for FASTA we do not get read length distribution
 	{
-	  increment_seq(&db_graph_info, 0, bases_pass_filters_and_loaded);
+	  graph_info_increment_seq(&db_graph_info, 0, bases_pass_filters_and_loaded);
 	}
 
-      if (cmd_line.remove_pcr_dups==true)
-	{
-	  //need to clean off marks on nodes about whether they are read_start or not 
-	  //(used during removal of duplicates)
-	  hash_table_traverse(&db_node_set_status_to_none, db_graph);
-	}
+
+
+      //cleanup marks left on nodes by loading process (for PE reads)
+      hash_table_traverse(&db_node_set_status_to_none, db_graph);
+
 
       timestamp();
       if (cmd_line.format_of_input_seq==FASTQ)
@@ -590,7 +589,7 @@ int main(int argc, char **argv){
 	  //update graph_info object
 	  for (j=0; j<first_colour_data_starts_going_into; j++)
             {
-	      update_mean_readlen_and_total_seq(&db_graph_info, j, mean_readlens[j], total_seq_in_that_colour[j]);
+	      graph_info_update_mean_readlen_and_total_seq(&db_graph_info, j, mean_readlens[j], total_seq_in_that_colour[j]);
 	    }
 	  timestamp();
 	  printf("Loaded the multicolour binary %s, and got %qd kmers\n", cmd_line.multicolour_bin, bp_loaded/db_graph->kmer_size);
