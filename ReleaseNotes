@@ -14,6 +14,8 @@ See latest_test_results for details.
 Open issues:
  - does not compile for Intel compiler on IA64.
 
+For internal use: matches changeset 403:514335d0e73d
+
 April 19th 2011
 
 +++++++++++++++++++++++++++++++++++++++++++++
