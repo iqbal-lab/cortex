@@ -292,7 +292,9 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
                           void (*action_branches)(dBNode*),
                           void (*action_flanks)(dBNode*),
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
-			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*)
+			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+			  boolean apply_model_selection, 
+			  boolean (*model_selection_condition)(VariantBranchesAndFlanks*, float*,float*,float*,float*,float*,float*)
 			  );
 
 void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fout, int max_length, dBGraph * db_graph, 
@@ -324,7 +326,8 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 						 boolean (*extra_condition)(VariantBranchesAndFlanks* var),
 						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
 						 boolean exclude_ref_bubbles_first, 
-						 Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*));
+						 Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*),
+						 boolean apply_model_selection, boolean (*model_selection_condition)(VariantBranchesAndFlanks* var));
 
 
 

@@ -40,7 +40,7 @@
 #include <string.h>
 #include <limits.h>
 #include <file_reader.h>
-
+#include <model_selection.h>
 
 void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 						      char * name,
@@ -2294,15 +2294,17 @@ boolean detect_vars_condition_is_hom_nonref_with_min_covg_given_colour_funcs_for
 // "condition" argument is a condition which you apply to the flanks and branches to decide whether to call.
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
-// last argument get_colour specifies some combination of colours, defining the graph within which we look for bubbles.
+// argument get_colour specifies some combination of colours, defining the graph within which we look for bubbles.
 // most obvious choices are: colour/edge with index (say)2, or union of all edges, or union of ll except that which is the reference genome
-
+// model_selection_condition compartes likelihoods of repeat, variation and error models to decide if it is a variant.
 void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph, 
 			  boolean (*condition)(VariantBranchesAndFlanks*),
 			  void (*action_branches)(dBNode*),
 			  void (*action_flanks)(dBNode*),
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
-			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
+			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+			  boolean apply_model_selection, 
+			  boolean (*model_selection_condition)(VariantBranchesAndFlanks*, float*,float*,float*,float*,float*,float*) )
 {
 
   int count_vars = 0; 
@@ -2428,6 +2430,38 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
 	    if (condition(&var)==true) 
 	      {
+
+		float log_likelihood_repeat_model=1;
+		float log_likelihood_variation_model=1;
+		float log_likelihood_error_model=1;
+		float log_bayesfactor_var_over_repeat=1;
+		float log_bayesfactor_var_over_error=1;
+		float log_bayesfactor_repeat_over_error=1;
+		boolean site_is_variant=true;
+		if (apply_model_selection==true)
+		  {
+		    site_is_variant = model_selection_condition(&var, 
+								&log_likelihood_repeat_model, &log_likelihood_variation_model, &log_likelihood_error_model,
+								&log_bayesfactor_var_over_repeat, &log_bayesfactor_var_over_error, &log_bayesfactor_repeat_over_error);
+		    if (site_is_variant==true)
+		      {
+			printf("PASSES MODEL SELECTION\n");
+		      }
+		    else
+		      {
+			printf("FAILS MODEL SELECTION\n");
+		      }
+		    printf("log BF var/repeat   = %.2f\n", log_bayesfactor_var_over_repeat);
+		    printf("log BF var/error    = %.2f\n", log_bayesfactor_var_over_error);
+		    printf("log BF repeat/error = %.2f\n", log_bayesfactor_repeat_over_error);
+		    printf("log likelihood repeat model    = %.2f\n", log_likelihood_repeat_model);
+		    printf("log likelihood variation model = %.2f\n", log_likelihood_variation_model);
+		    printf("log likelihood error model     = %.2f\n", log_likelihood_error_model);
+		    
+		    
+		  }
+
+		
 		//printf("\nPassed condition - found VARIATION: %i\n",count_vars);
 		count_vars++;
 		
@@ -2435,11 +2469,11 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		//printf("length branch 1: %i - avg_coverage: %5.2f\n",length1,avg_coverage1);
 		//printf("length branch 2: %i - avg_coverage: %5.2f\n",length2,avg_coverage2);
 		//printf("length 3p flank: %i avg_coverage:%5.2f\n",length_flank3p,avg_coverage3p);
-
-
+		
+		
 		//print flank5p - 
 		sprintf(name,"var_%i_5p_flank",count_vars);
-
+		
 		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length_flank5p,avg_coverage5p,min5p,max5p,
 										     nodes5p[0],orientations5p[0],			
 										     nodes5p[length_flank5p],orientations5p[length_flank5p],				
@@ -2470,13 +2504,14 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		//ZAMZAM TEMPORARY FOR SIMS sprintf(name,"variant_%i", count_vars);
 		//ZAMZAM TEMPORARY FOR SIM PARSING OF OUTPUT fprintf(fout,"\n%s - extra information\n", name);
 		print_extra_info(&var, fout);
-
 		
+		    
 	      }
-
+	      
+	    
 	    //db_node_action_set_status_visited(path_nodes2[length2]);
 	    action_branches(path_nodes2[length2]);
-
+	    
 	    current_node = path_nodes2[length2];
 	    orientation = path_orientations2[length2];
 	  }
@@ -2524,7 +2559,7 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fo
 		       &detect_vars_condition_always_false,
 		       &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
 		       &db_node_action_set_status_visited, //mark everything else as visited
-		       get_colour_ref, get_covg_ref, print_extra_info);
+		       get_colour_ref, get_covg_ref, print_extra_info, false, NULL);
 
   //unset the nodes marked as visited, but not those marked as to be ignored
   hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -2535,7 +2570,7 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fo
 		       &detect_vars_condition_branches_not_marked_to_be_ignored,//ignore anything you find that is marked to be ignored
 		       &db_node_action_set_status_visited,
 		       &db_node_action_set_status_visited,
-		       get_colour_indiv, get_covg_indiv, print_extra_info);
+		       get_colour_indiv, get_covg_indiv, print_extra_info, false, NULL);
 
 
   //unset the nodes marked as visited, but not those marked as to be ignored
@@ -2587,16 +2622,52 @@ boolean are_two_lists_identical(const int const * list1, int len_list1, const in
 // union of the colours of the first list, but not in the second, and vice-versa for the second branch
 //UNLESS both lists are identical, in which case we just call bubbles in the union
 //A consequence is that if you call bubbles on 1,2/1,3 you'll get nothing.
-//if exclude_ref_bubbles_first==false, just pass in NULL, NULL for the last two arguments
+//if exclude_ref_bubbles_first==false, just pass in NULL, NULL for get_colour_ref and get_covg_ref
+//if apply_model_selection==true then  exclude_ref_bubbles_first must be FALSE.
 void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBGraph * db_graph, 
 						 int* first_list, int len_first_list,
 						 int* second_list,  int len_second_list,
 						 boolean (*extra_condition)(VariantBranchesAndFlanks* var),
 						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
 						 boolean exclude_ref_bubbles_first, 
-						 Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*))
+						 Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*),
+						 boolean apply_model_selection, 
+						 boolean (*model_selection_condition)(VariantBranchesAndFlanks*, PrecalculatedTables*, float*, float*, float*, float*, float*, float* ) ,
+						 GraphInfo* g_info, uint64_t genome_size)
 {
 
+  if ( (exclude_ref_bubbles_first==true) && (apply_model_selection==true) )
+    {
+      printf("Cannot call db_graph_detect_vars_given_lists_of_colours and simultaneoulsy have exclude_ref_bubbles_first=true AND apply_model_selection=true\n");
+      exit(1);
+    }
+
+
+  //if we are going to calculate likelihoods at each bubble/site, we precalculate some tables in advance to improve
+  //performance. These tables incorporate information about how much coverage there is in each colour/sample, which is carried through
+  //from the headers of the binary files loaded into the graph
+  PrecalculatedTables* tables=NULL;
+  if (apply_model_selection==true)
+    {
+      //malloc tables and fill them
+      tables = alloc_and_initialise_precalculated_tables(1,1,1,1,1,1,g_info, genome_size);
+      if (tables==NULL)
+	{
+	  printf("Insufficient memory to detect  variants - unable to alloc tables for likelihood calculations\n");
+	  exit(1);
+	}
+    }
+  
+  
+  boolean model_selection_condition_using_sample_info(VariantBranchesAndFlanks* var, 
+						      float* log_lik_rep, float* log_lik_var, float* log_lik_err,
+						      float* log_bf_VR, float* log_bf_VE, float* log_bf_RE)
+  {
+	return model_selection_condition(var, tables, 
+					 log_lik_rep, log_lik_var, log_lik_err, 
+					 log_bf_VR, log_bf_VE, log_bf_RE);
+  }
+  
 
   Edges get_union_first_list_colours(const dBNode* e)
   {
@@ -2719,7 +2790,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 
   boolean both_conditions(VariantBranchesAndFlanks* var)
   {
-    if ( (condition_two_branches_lie_in_opposite_lists(var)==true) && (extra_condition(var)==true) )
+    if ( (condition_two_branches_lie_in_opposite_lists(var)==true) && (extra_condition(var)==true)  )
       {
 	return true;
       }
@@ -2734,7 +2805,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
     if ( (condition_two_branches_lie_in_opposite_lists(var)==true) && (extra_condition(var)==true) 
 	 && (detect_vars_condition_branches_not_marked_to_be_ignored(var)==true) )
       {
-	return true;
+            return true;
       }
     else
       {
@@ -2746,7 +2817,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
   {
     if ( (extra_condition(var)==true) && (detect_vars_condition_branches_not_marked_to_be_ignored(var)==true) )
       {
-        return true;
+            return true;
       }
     else
       {
@@ -2764,7 +2835,8 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 			   &detect_vars_condition_always_false,
 			   &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
 			   &db_node_action_set_status_visited, //mark everything else as visited
-			   get_colour_ref, get_covg_ref, print_extra_info);
+			   get_colour_ref, get_covg_ref, print_extra_info, 
+			   apply_model_selection, &model_selection_condition_using_sample_info);
       
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -2781,8 +2853,10 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 			       &both_conditions,
 			       &db_node_action_set_status_visited,
 			       &db_node_action_set_status_visited,
-			       &get_union_first_and_second_list_colours, &get_covg_of_union_first_and_second_list_colours,
-			       print_extra_info);
+			       &get_union_first_and_second_list_colours, 
+			       &get_covg_of_union_first_and_second_list_colours,
+			       print_extra_info,
+			       apply_model_selection, model_selection_condition_using_sample_info);
 	}
       else
 	{
@@ -2790,8 +2864,10 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 			       &both_conditions_and_avoid_branches_marked_ignore,
 			       &db_node_action_set_status_visited,
 			       &db_node_action_set_status_visited,
-			       &get_union_first_and_second_list_colours, &get_covg_of_union_first_and_second_list_colours,
-			       print_extra_info);
+			       &get_union_first_and_second_list_colours, &
+			       get_covg_of_union_first_and_second_list_colours,
+			       print_extra_info, 
+			       apply_model_selection, model_selection_condition_using_sample_info);
 	}
     }
   else//the two lists of colours are identical, so we don't demand the branches take different colours!
@@ -2802,8 +2878,10 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 			       extra_condition,
 			       &db_node_action_set_status_visited,
 			       &db_node_action_set_status_visited,
-			       &get_union_first_and_second_list_colours, &get_covg_of_union_first_and_second_list_colours,
-			       print_extra_info);
+			       &get_union_first_and_second_list_colours, 
+			       &get_covg_of_union_first_and_second_list_colours,
+			       print_extra_info, 
+			       apply_model_selection, model_selection_condition_using_sample_info);
 	}
       else
 	{
@@ -2811,8 +2889,10 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 			       &extra_condition_and_avoid_branches_marked_ignore,
 			       &db_node_action_set_status_visited,
 			       &db_node_action_set_status_visited,
-			       &get_union_first_and_second_list_colours, &get_covg_of_union_first_and_second_list_colours,
-			       print_extra_info);
+			       &get_union_first_and_second_list_colours, 
+			       &get_covg_of_union_first_and_second_list_colours,
+			       print_extra_info, 
+			       apply_model_selection, model_selection_condition_using_sample_info);
 	}
     }
 
@@ -2822,6 +2902,11 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
     {
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+    }
+
+  if (apply_model_selection==true)
+    {
+      dealloc_precalculated_tables(tables); 
     }
 }
 
@@ -3465,7 +3550,15 @@ void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boo
   long long count=0;
   //routine to dump graph
   void print_node_single_colour_binary_of_specified_colour(dBNode * node){   
-    if (condition(node)){
+
+    //no need to dump a node which has no coverage or edge - no information
+    boolean flag=true;
+    if ((node->coverage[colour]==0) && (node->individual_edges[colour]==0))
+      {
+	flag=false;
+      }
+
+    if (condition(node) && (flag==true)){
       count++;
       db_node_print_single_colour_binary_of_specified_colour(fout,node, colour);
     }

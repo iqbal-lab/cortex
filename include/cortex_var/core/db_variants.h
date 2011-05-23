@@ -75,6 +75,19 @@ typedef struct{
   WhichAlleleIsRef which;
 } VariantBranchesAndFlanks;
 
+//contains a VariantBranchesAndFlanks object, plus info that we do not want to keep recalculating:
+//covg on both alleles, and also, is sometimes useful only to look at the "breakpoint"/start - since
+//one branch can be longer than the other, define the breakpoint to be the whole of the shorter
+//branch, and the same length, of the longer branch. ie take min(len(br1), len(br2)) length of both branches
+typedef struct {
+  VariantBranchesAndFlanks* var;
+  int br1_covg[NUMBER_OF_COLOURS];//covg on first interior kmer + read jumps
+  int br2_covg[NUMBER_OF_COLOURS];
+  int len_start;// = min of length(br1) and length(br2)
+  int theta1[NUMBER_OF_COLOURS];//coverage on start of branch1 
+  int theta2[NUMBER_OF_COLOURS];//coverage on start of branch2
+} AnnotatedPutativeVariant;
+
 
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,

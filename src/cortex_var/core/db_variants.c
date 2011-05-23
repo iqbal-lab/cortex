@@ -140,3 +140,23 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
     }
   
 }
+
+
+//returns true if was able to initialise
+boolean initialise(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var)
+{
+  annovar->var=var;
+  get_branch_coverage(annovar->br1_covg, var->one_allele, var->len_one_allele);
+  get_branch_coverage(annovar->br2_covg, var->other_allele, var->len_other_allele);
+  if (var->len_one_allele < var->len_other_allele)
+    {
+      annovar->len_start=var->len_one_allele;
+    }
+  else
+    {
+      annovar->len_start=var->len_other_allele;
+    }
+  get_branch_coverage(annovar->theta1, var->one_allele, len_start);
+  get_branch_coverage(annovar->theta2, var->other_allele, len_start);
+
+}

@@ -46,6 +46,6 @@ void graph_info_set_mean_readlen(GraphInfo* ginfo, int colour, int len);
 //update mean read length in a colour, eg when you merge a new binary
 int graph_info_update_mean_readlen(GraphInfo* ginfo, int colour, int previous_mean, long long previous_seq, int mean_readlen_in_added_data, long long added_seq);
 void graph_info_update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,int mean_readlen_in_added_data, long long added_seq);
-
+uint64_t get_total_coverage_across_colours(GraphInfo* ginfo, uint64_t genome_length);
 
 #endif

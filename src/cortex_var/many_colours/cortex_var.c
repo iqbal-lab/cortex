@@ -210,7 +210,20 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	    }
 	  printf("\n");
 	}
-
+      
+      
+      if (cmd_line->apply_model_selection_at_bubbles==true)
+	{
+	  printf("Will compare likelihoods of repeat, error, and variation (Hardy-Weinberg) models at all bubbles\n");
+	  if (cmd_line->using_ref==true)
+	    {
+	      printf("Note that specifying the reference colour on the command-line has no effect if you use --require_hw \n");
+	      printf(" - i.e. Cortex will assume the colour lists you passed into detect_bubbles are of colours representing single diploid individuals\n");
+	      printf("Cortex will NOT look for bubbles in the reference and exclude them. \n");
+	      printf("  If you can see a strong need for being able to remove bubbles in a reference genome AND apply \n");
+	      printf(" these population genetic filters also, email Zam Iqbal and he will make the modification\n");
+	    }
+	}
 
       FILE* fp;
 
@@ -236,6 +249,14 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	  exit(1);
 	}
 
+      boolean (*mod_sel_criterion)(VariantBranchesAndFlanks* var)=NULL;
+
+      if (cmd_line->apply_model_selection_at_bubbles==true)
+	{
+	  mod_sel_criterion = &basic_model_selection_condition; 
+	}
+
+
       if (cmd_line->using_ref==false)
 	{
 	  if (which==1)
@@ -246,18 +267,18 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 							  cmd_line->detect_bubbles1_second_colour_list, 
 							  cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
 							  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
-							  false, NULL, NULL);
+							  false, NULL, NULL, cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion);
 	    }
 	  else
 	    {
-	      printf("Zam here - about to call vars\n");
+
 	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
 							  cmd_line->detect_bubbles2_first_colour_list, 
 							  cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
 							  cmd_line->detect_bubbles2_second_colour_list, 
 							  cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
 							  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
-							  false, NULL, NULL);
+							  false, NULL, NULL, cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion);
 	    }
 	}
       else
@@ -272,7 +293,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 							  cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
 							  &detect_vars_condition_always_true,
 							  print_appropriate_extra_var_info,
-							  true, get_col_ref, get_cov_ref);
+							  true, get_col_ref, get_cov_ref, false, NULL);
 	    }
 	  else
 	    {
@@ -283,7 +304,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 							  cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
 							  &detect_vars_condition_always_true,
 							  print_appropriate_extra_var_info,
-							  true, get_col_ref, get_cov_ref);
+							  true, get_col_ref, get_cov_ref, false, NULL);
 	    }
 	}
 }

@@ -1365,7 +1365,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 	    {
 	      Edges pre_existing_edge = get_edge_copy(*current_node, individual_edge_array, colour_clean);
 	      Edges edge_from_binary  = get_edge_copy(tmp_node, individual_edge_array, index);
-	      Edges edge_to_load = pre_existing_edge & edge_from_binary;
+	      Edges edge_to_load = pre_existing_edge & edge_from_binary; //only load edge from binary if is in the cleaned colour also.
 	      add_edges(current_node,individual_edge_array, index,edge_to_load);
 	      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&tmp_node, individual_edge_array,index));
 	    }

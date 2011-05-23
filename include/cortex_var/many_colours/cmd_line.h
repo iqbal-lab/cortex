@@ -131,6 +131,7 @@ typedef struct
   boolean health_check;
   boolean align_given_list;
   boolean print_colour_overlap_matrix;
+  boolean apply_model_selection_at_bubbles;
   //int detect_vars_delta;
   //int detect_vars_branch_length;
   //int quality_score_offset;

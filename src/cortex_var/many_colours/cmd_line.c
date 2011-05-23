@@ -194,6 +194,8 @@ const char* usage=
 "   [--path_divergence_caller_output PATH_STUB]\t\t\t=\t Specifies the path and beginning of filenames of Path Divergence caller output files.\n\t\t\t\t\t\t\t\t\t One output file will be created per reference fasta listed in --list_ref_fasta\n" \
   // -J
 "   [--colour_overlaps COMMA_SEP_COLOURS/COMMA_SEP_COLOURS]\t=\t Compares each coloured subgraph in the first list with all of the \n\t\t\t\t\t\t\t\t\t coloured subgraphs in the second list. Outputs a matrix to stdout;\n\t\t\t\t\t\t\t\t\t (i,j)-element is the number of nodes in both colour-i (on first list)\n\t\t\t\t\t\t\t\t\t and colour-j (on second list).\n" \
+  // -K
+"   [--require_hw]\t=\t For each bubble found, calculate likelihood of observed coverage \n\t\t\t\t\t\t\t\t\t under 3 models (repeat, error, variation obeying Hardy-Weinberg)\n\t\t\t\t\t\t\t\t\t Only call variants where the bubble is more likely (according to these models) to be a variant.\n" \
   "\n";
 
 
@@ -327,6 +329,7 @@ int default_opts(CmdLine * c)
   c->align_given_list=false;
   c->print_colour_overlap_matrix=false;
   c->format_of_files_to_align=UNSPECIFIED;
+  c->apply_model_selection_at_bubbles=false;
   return 1;
 }
 
@@ -374,6 +377,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"align_input_format",required_argument,NULL,'H'},
     {"path_divergence_caller_output",required_argument,NULL,'I'},
     {"colour_overlaps",required_argument,NULL,'J'},
+    {"require_hw",no_argument,NULL,'K'},
     {0,0,0,0}	
   };
   
@@ -384,7 +388,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:K", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1026,11 +1030,16 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 	  break;
 	}
+    case 'K':
+	{
+	  cmdline_ptr->apply_model_selection_at_bubbles=true;
+	  break;
+	}
 
-    }      
+    }
 
 
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:K", long_options, &longopt_index);
 
   }
   return 0;
@@ -1233,6 +1242,19 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       return -1;
     }
 
+  //if specify apply model selection at bubbles, must call bubbles!
+  if ( (cmd_ptr->detect_bubbles1==false) && (cmd_ptr->apply_model_selection_at_bubbles==true) )
+    {
+      char tmp[]="If you specify --require_hw, you must also specify --detect_bubbles1";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
 
   //if specify detect_bubbles, must give output file
   if ( (cmd_ptr->detect_bubbles1==true) && (cmd_ptr->output_detect_bubbles1[0]=='\0') )
@@ -1274,7 +1296,6 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       return -1;
     }
   
-
   //if making path divergence calls, must have >=2 colours, and must specify the ref colour, and give a ref_fasta list
   if (cmd_ptr->make_pd_calls==true)
     {
