@@ -144,8 +144,8 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
 }
 
 
-float get_log_bayes_factor_comparing_genotypes_at_bubble_call(zygosity genotype1, zygosity genotype2, VariantBranchesAndFlanks* var, 
-							      float seq_error_rate_per_base, float sequencing_depth_of_coverage, int read_length, int colour)
+double get_log_bayes_factor_comparing_genotypes_at_bubble_call(zygosity genotype1, zygosity genotype2, VariantBranchesAndFlanks* var, 
+							      double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
 {
   boolean too_short = false;
   int initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(var->one_allele, var->len_one_allele, colour, &too_short);
@@ -155,13 +155,13 @@ float get_log_bayes_factor_comparing_genotypes_at_bubble_call(zygosity genotype1
       return 0;
     }
 
-  float theta_one = ((float)(sequencing_depth_of_coverage * var->len_one_allele))/( (float) read_length );
-  float theta_other = ((float)(sequencing_depth_of_coverage * var->len_other_allele))/( (float) read_length );
+  double theta_one = ((double)(sequencing_depth_of_coverage * var->len_one_allele))/( (double) read_length );
+  double theta_other = ((double)(sequencing_depth_of_coverage * var->len_other_allele))/( (double) read_length );
 
-  float log_prob_data_given_genotype1 = get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(genotype1, seq_error_rate_per_base, 
+  double log_prob_data_given_genotype1 = get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(genotype1, seq_error_rate_per_base, 
 																       initial_covg_plus_upward_jumps_branch1, 
 																       initial_covg_plus_upward_jumps_branch2, theta_one, theta_other, var);
-  float log_prob_data_given_genotype2 = get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(genotype2, seq_error_rate_per_base, 
+  double log_prob_data_given_genotype2 = get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(genotype2, seq_error_rate_per_base, 
 																       initial_covg_plus_upward_jumps_branch1, 
 																       initial_covg_plus_upward_jumps_branch2, theta_one, theta_other, var);
 
@@ -173,8 +173,8 @@ float get_log_bayes_factor_comparing_genotypes_at_bubble_call(zygosity genotype1
 //under the model described in our paper (eg used for HLA)
 //theta here is as used in the paper: (D/R) * length of branch/allele. NOT the same theta as seen in model_selection.c
 //assumes called by BubbleCaller, so no overlaps between alleles.
-float get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(zygosity genotype, float error_rate_per_base, int covg_branch_1, int covg_branch_2, 
-												     float theta_one, float theta_other, VariantBranchesAndFlanks* v)
+double get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2, 
+												     double theta_one, double theta_other, VariantBranchesAndFlanks* v)
 {
 
   if (genotype==hom_one)
@@ -211,7 +211,7 @@ float get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_cal
 //if you do not know what sequencing_error_per_base is, enter -1, will use default of 0.01
 //if you do not knwo what genome length is, enter -1, will use default of 3 billion (human)
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var, DiscoveryMethod caller, 
-				    GraphInfo* ginfo, float seq_error_rate_per_base, long long genome_length)
+				    GraphInfo* ginfo, double seq_error_rate_per_base, long long genome_length)
 {
   annovar->caller = caller;
   annovar->var=var;
@@ -271,7 +271,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
   //determine genotype (under assumption/model that this is a variant) for each colour
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
-      float sequencing_depth_of_coverage=0;
+      double sequencing_depth_of_coverage=0;
       if (seq_error_rate_per_base==-1)
 	{
 	  seq_error_rate_per_base=0.01;//default
@@ -283,7 +283,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
       int mean_read_len=100;
       if (ginfo !=NULL)
 	{
-	  sequencing_depth_of_coverage=(float) ginfo->total_sequence[i]/genome_length;
+	  sequencing_depth_of_coverage=(double) ginfo->total_sequence[i]/genome_length;
 	  mean_read_len = ginfo->mean_read_length[i];
 	}
       if (sequencing_depth_of_coverage==0)
@@ -292,11 +292,11 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
 	}
       else
 	{
-	  float log_bf_hom1_over_het= get_log_bayes_factor_comparing_genotypes_at_bubble_call(hom_one, het,  var, seq_error_rate_per_base, sequencing_depth_of_coverage,
+	  double log_bf_hom1_over_het= get_log_bayes_factor_comparing_genotypes_at_bubble_call(hom_one, het,  var, seq_error_rate_per_base, sequencing_depth_of_coverage,
 											     mean_read_len,i);
-	  float log_bf_hom1_over_hom2= get_log_bayes_factor_comparing_genotypes_at_bubble_call(hom_one, hom_other,  var, seq_error_rate_per_base, sequencing_depth_of_coverage,
+	  double log_bf_hom1_over_hom2= get_log_bayes_factor_comparing_genotypes_at_bubble_call(hom_one, hom_other,  var, seq_error_rate_per_base, sequencing_depth_of_coverage,
 											      mean_read_len,i);
-	  float log_bf_het_over_hom2= get_log_bayes_factor_comparing_genotypes_at_bubble_call(het, hom_other,  var, seq_error_rate_per_base, sequencing_depth_of_coverage,
+	  double log_bf_het_over_hom2= get_log_bayes_factor_comparing_genotypes_at_bubble_call(het, hom_other,  var, seq_error_rate_per_base, sequencing_depth_of_coverage,
 											     mean_read_len,i);
 	  
 	  if ( ( log_bf_hom1_over_het >0 ) && (log_bf_hom1_over_hom2>0) )

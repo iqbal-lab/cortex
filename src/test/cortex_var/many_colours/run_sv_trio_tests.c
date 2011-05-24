@@ -32,6 +32,7 @@
 #include "test_pop_load_and_print.h"
 #include "test_pop_supernode_consensus.h"
 #include "test_db_genotyping.h"
+#include "test_db_variants.h"
 #include <test_file_reader.h>
 
 #include <CUnit.h>
@@ -342,6 +343,11 @@ int  main()
       }
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for finding coverages of nodes that lie  on one allele but not the other, in a variant.",  test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for calculating Bayes Factors for genotypes at a fixed site in all colours, using the model from our paper",  test_get_log_bayes_factor_comparing_genotypes_at_bubble_call))
       {
 	CU_cleanup_registry();
 	return CU_get_error();

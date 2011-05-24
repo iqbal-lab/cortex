@@ -127,17 +127,17 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
 
 
 //genotyping of a site known to be a variant
-float get_log_bayes_factor_comparing_genotypes_at_bubble_call(zygosity genotype1, zygosity genotype2, VariantBranchesAndFlanks* var,
-							      float seq_error_rate_per_kmer, float sequencing_depth_of_coverage, int read_length, int colour);
+double get_log_bayes_factor_comparing_genotypes_at_bubble_call(zygosity genotype1, zygosity genotype2, VariantBranchesAndFlanks* var,
+							      double seq_error_rate_per_kmer, double sequencing_depth_of_coverage, int read_length, int colour);
 
-float get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(zygosity genotype, float error_rate_per_base, int covg_branch_1, int covg_branch_2,
-												    float theta_one, float theta_other, VariantBranchesAndFlanks* v);
+double get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2,
+												    double theta_one, double theta_other, VariantBranchesAndFlanks* v);
 
 
 
 //set up of Putative Variant object
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var, DiscoveryMethod caller,
-				    GraphInfo* ginfo, float seq_error_per_base, long long genome_length);
+				    GraphInfo* ginfo, double seq_error_per_base, long long genome_length);
 long long get_big_theta(AnnotatedPutativeVariant* annovar);
 
 

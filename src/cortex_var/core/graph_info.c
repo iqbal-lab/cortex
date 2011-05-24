@@ -112,7 +112,6 @@ uint64_t get_total_coverage_across_colours(GraphInfo* ginfo, uint64_t genome_len
       printf("Warning - total sequence contained in union of all colours is less than 1x coverage of your genome. Is this really what you intend?\n");
     }
 
-  printf("Total coverage is %qd\n", total_seq/genome_length);
   return total_seq/genome_length;
 }
 
