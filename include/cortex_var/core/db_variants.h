@@ -25,12 +25,16 @@
  * **********************************************************************
  */
 
-#include <element.h>
-#include <dB_graph.h>
 
 
 #ifndef DB_VARIANTS_H_
 #define DB_VARIANTS_H_
+
+#include <element.h>
+#include <dB_graph.h>
+#include <graph_info.h>
+
+
 
 //a variant can be hom for oen allele or the other, het or absent in an individual
 typedef enum
@@ -75,20 +79,34 @@ typedef struct{
   WhichAlleleIsRef which;
 } VariantBranchesAndFlanks;
 
+typedef enum{
+  BubbleCaller=0,
+  SimplePathDivergenceCaller=1,
+} DiscoveryMethod;
+
 //contains a VariantBranchesAndFlanks object, plus info that we do not want to keep recalculating:
 //covg on both alleles, and also, is sometimes useful only to look at the "breakpoint"/start - since
 //one branch can be longer than the other, define the breakpoint to be the whole of the shorter
 //branch, and the same length, of the longer branch. ie take min(len(br1), len(br2)) length of both branches
 typedef struct {
+  boolean too_short; //if one or both alleles are too short (containing no interior nodes), this is set to true and a call is not made
+  DiscoveryMethod caller;
   VariantBranchesAndFlanks* var;
   int br1_covg[NUMBER_OF_COLOURS];//covg on first interior kmer + read jumps
   int br2_covg[NUMBER_OF_COLOURS];
   int len_start;// = min of length(br1) and length(br2)
   int theta1[NUMBER_OF_COLOURS];//coverage on start of branch1 
   int theta2[NUMBER_OF_COLOURS];//coverage on start of branch2
+  long long BigTheta; // total coverage of all colours over both branches (sum of all elements of theta1 and theta2)
+  long long BigThetaStart; // total coverage of all colours over start of
+                           //  both branches (sum of all elements of theta1 and theta2)
+
+  //under the model that this IS a variant, compare likelihoods of being hom-br1, het, hom-br2
+  zygosity genotype[NUMBER_OF_COLOURS]; //for each colour, genotype calls. determine this by comparing BayesFactors of standard model as used for HLA etc
 } AnnotatedPutativeVariant;
 
 
+//functions for VariantBranchesAndFlanks
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
 				     dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, 
@@ -99,9 +117,33 @@ void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var,
 void exact_copy_variant_branches_and_flanks(VariantBranchesAndFlanks copy_to, const VariantBranchesAndFlanks copy_from);
 void copy_variant_branches_and_flanks_switching_branches(VariantBranchesAndFlanks copy_to, const VariantBranchesAndFlanks copy_from);
 void action_set_flanks_and_branches_to_be_ignored(VariantBranchesAndFlanks* var);
-void db_variant_action_do_nothing(VariantBranchesAndFlanks* var);
 
+
+void db_variant_action_do_nothing(VariantBranchesAndFlanks* var);
 boolean  db_variant_precisely_one_allele_is_in_given_func_of_colours(VariantBranchesAndFlanks* var, Edges (*get_colour)(const dBNode*), dBGraph* db_graph, WhichAllele* which);
 
+//toy function - do not use
 zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlanks* var, Edges (*get_colour)(const dBNode*), dBGraph* db_graph);
+
+
+//genotyping of a site known to be a variant
+float get_log_bayes_factor_comparing_genotypes_at_bubble_call(zygosity genotype1, zygosity genotype2, VariantBranchesAndFlanks* var,
+							      float seq_error_rate_per_kmer, float sequencing_depth_of_coverage, int read_length, int colour);
+
+float get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(zygosity genotype, float error_rate_per_base, int covg_branch_1, int covg_branch_2,
+												    float theta_one, float theta_other, VariantBranchesAndFlanks* v);
+
+
+
+//set up of Putative Variant object
+boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var, DiscoveryMethod caller,
+				    GraphInfo* ginfo, float seq_error_per_base, long long genome_length);
+long long get_big_theta(AnnotatedPutativeVariant* annovar);
+
+
+
+//utility functions
+boolean get_num_effective_reads_on_branch(int* array, dBNode** allele, int how_many_nodes);
+int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colour, boolean* too_short);
+
 #endif

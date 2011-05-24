@@ -36,6 +36,7 @@
 #include <time.h>
 #include <graph_info.h>
 #include <db_differentiation.h>
+#include <model_selection.h>
 
 void timestamp();
 
@@ -174,10 +175,17 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph, 
 		      void (*print_appropriate_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
 		      Edges(*get_col_ref) (const dBNode* e),
-		      int (*get_cov_ref)(const dBNode* e)
+		      int (*get_cov_ref)(const dBNode* e),
+		      GraphInfo* db_graph_info
 		      )
 {
-  
+
+  GraphAndModelInfo model_info;
+  float repeat_geometric_param_mu = 0.8;
+  float seq_err_rate_per_base = 0.01;
+
+    initialise_model_info(&model_info, db_graph_info, cmd_line->genome_size, repeat_geometric_param_mu, seq_err_rate_per_base);
+
       printf("Detecting bubbles between the union of this set of colours: ");
       int k;
       if (which==1)
@@ -249,7 +257,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	  exit(1);
 	}
 
-      boolean (*mod_sel_criterion)(VariantBranchesAndFlanks* var)=NULL;
+      boolean (*mod_sel_criterion)(AnnotatedPutativeVariant* annovar, LogLikelihoodsAndBayesFactors* stats,  GraphAndModelInfo* model_info)=NULL;
 
       if (cmd_line->apply_model_selection_at_bubbles==true)
 	{
@@ -267,7 +275,8 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 							  cmd_line->detect_bubbles1_second_colour_list, 
 							  cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
 							  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
-							  false, NULL, NULL, cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion);
+							  false, NULL, NULL, cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion, 
+							  &model_info);
 	    }
 	  else
 	    {
@@ -278,7 +287,8 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 							  cmd_line->detect_bubbles2_second_colour_list, 
 							  cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
 							  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
-							  false, NULL, NULL, cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion);
+							  false, NULL, NULL, cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion,
+							  &model_info);
 	    }
 	}
       else
@@ -293,7 +303,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 							  cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
 							  &detect_vars_condition_always_true,
 							  print_appropriate_extra_var_info,
-							  true, get_col_ref, get_cov_ref, false, NULL);
+							  true, get_col_ref, get_cov_ref, false, NULL, NULL);
 	    }
 	  else
 	    {
@@ -304,7 +314,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 							  cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
 							  &detect_vars_condition_always_true,
 							  print_appropriate_extra_var_info,
-							  true, get_col_ref, get_cov_ref, false, NULL);
+							  true, get_col_ref, get_cov_ref, false, NULL, NULL);
 	    }
 	}
 }
@@ -767,7 +777,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Start first set of bubble calls\n");
-      run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref);
+      run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info);
 
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -780,7 +790,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Start second set of bubble calls\n");
-      run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref);
+      run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info);
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
       timestamp();

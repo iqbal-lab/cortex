@@ -43,6 +43,7 @@
 #include <dB_graph_supernode.h>
 #include <db_variants.h>
 #include <graph_info.h>
+#include <model_selection.h>
 
 
 dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node, Orientation current_orientation,
@@ -294,8 +295,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
 			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
 			  boolean apply_model_selection, 
-			  boolean (*model_selection_condition)(VariantBranchesAndFlanks*, float*,float*,float*,float*,float*,float*)
-			  );
+			  boolean (*model_selection_condition)(AnnotatedPutativeVariant*, LogLikelihoodsAndBayesFactors*),
+			  GraphAndModelInfo* model_info);
 
 void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fout, int max_length, dBGraph * db_graph, 
 									boolean (*condition)(VariantBranchesAndFlanks*),
@@ -327,7 +328,9 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
 						 boolean exclude_ref_bubbles_first, 
 						 Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*),
-						 boolean apply_model_selection, boolean (*model_selection_condition)(VariantBranchesAndFlanks* var));
+						 boolean apply_model_selection, 
+						 boolean (*model_selection_condition)(AnnotatedPutativeVariant*, LogLikelihoodsAndBayesFactors*, GraphAndModelInfo*),
+						 GraphAndModelInfo* model_info);
 
 
 

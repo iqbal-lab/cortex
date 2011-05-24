@@ -56,7 +56,7 @@
 
 typedef struct
 {
-
+  long long genome_size;
   int kmer_size;
   int bucket_size;
   int number_of_buckets_bits;

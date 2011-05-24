@@ -196,6 +196,8 @@ const char* usage=
 "   [--colour_overlaps COMMA_SEP_COLOURS/COMMA_SEP_COLOURS]\t=\t Compares each coloured subgraph in the first list with all of the \n\t\t\t\t\t\t\t\t\t coloured subgraphs in the second list. Outputs a matrix to stdout;\n\t\t\t\t\t\t\t\t\t (i,j)-element is the number of nodes in both colour-i (on first list)\n\t\t\t\t\t\t\t\t\t and colour-j (on second list).\n" \
   // -K
 "   [--require_hw]\t=\t For each bubble found, calculate likelihood of observed coverage \n\t\t\t\t\t\t\t\t\t under 3 models (repeat, error, variation obeying Hardy-Weinberg)\n\t\t\t\t\t\t\t\t\t Only call variants where the bubble is more likely (according to these models) to be a variant.\n" \
+  // -L
+"   [--genome_size]\t=\t If you specify --require_hw, you must also specify the (estimated) genome size in bp." \
   "\n";
 
 
@@ -253,6 +255,7 @@ void initialise_longlong_list(long long* list, int len)
 int default_opts(CmdLine * c)
 {
 
+  c->genome_size=0;
   c->kmer_size = 21;
   c->bucket_size = 100;
   c->number_of_buckets_bits = 10;
@@ -378,6 +381,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"path_divergence_caller_output",required_argument,NULL,'I'},
     {"colour_overlaps",required_argument,NULL,'J'},
     {"require_hw",no_argument,NULL,'K'},
+    {"genome_size",required_argument,NULL,'L'},
+
     {0,0,0,0}	
   };
   
@@ -388,7 +393,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:K", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1035,11 +1040,19 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  cmdline_ptr->apply_model_selection_at_bubbles=true;
 	  break;
 	}
+    case 'L':
+	{
+	  if (optarg==NULL)
+	    errx(1,"[--genome_size] option requires an integer argument, the genome size in bp");
+	  cmdline_ptr->genome_size = atoll(optarg);
 
+	  break;
+	}
+	
     }
 
 
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:K", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:", long_options, &longopt_index);
 
   }
   return 0;
@@ -1048,7 +1061,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
-  //must have specified either sequence input, or binary. Binary may be colour_list, or a multicolour graph, or both
+
   if ( (cmd_ptr->input_seq ==true) && ( (cmd_ptr->input_colours==true) || (cmd_ptr->input_multicol_bin==true) ) )
     {
       char tmp[] = "Cannot pass in both binary and sequence (fasta/fastq) data\n";
@@ -1255,6 +1268,22 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       return -1;
       
     }
+
+
+  if ( (cmd_ptr->apply_model_selection_at_bubbles==true) && (cmd_ptr->genome_size==0) )
+    {
+      char tmp[]="If you specify --require_hw, you must also specify --genome_size";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+        {
+          printf("coding error - this string is too long:\n%s\n", tmp);
+          exit(1);
+        }
+      strcpy(error_string, tmp);
+      return -1;
+    }
+
+
+
 
   //if specify detect_bubbles, must give output file
   if ( (cmd_ptr->detect_bubbles1==true) && (cmd_ptr->output_detect_bubbles1[0]=='\0') )

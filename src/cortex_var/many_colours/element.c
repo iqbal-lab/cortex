@@ -445,7 +445,7 @@ void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, int updat
 
 }
 
-//coverage stored as short, but we want to deal with it as an int. So access it via this getter
+
 int db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index)
 {
 
@@ -459,19 +459,21 @@ int db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index)
     }
 }
 
-/*
-short db_node_get_coverage_as_short(dBNode* e, EdgeArrayType type, int index)
+
+void db_node_set_coverage(dBNode* e, EdgeArrayType type, int colour, int covg)
 {
+
   if (e==NULL)
-    { 
-      return 0;
+    {
+      return;
     }
   else
     {
-      return e->coverage[index];
+      e->coverage[colour] = covg;
+      return;
     }
 }
-*/
+
 
 
 int db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, int (*get_covg)(const dBNode*) )

@@ -25,10 +25,12 @@
  * **********************************************************************
  */
 
+#include <math.h>
 #include <db_variants.h>
 #include <dB_graph.h>
 #include <dB_graph_population.h>
-
+#include <maths.h>
+#include <stdlib.h>
 
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
@@ -142,12 +144,84 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
 }
 
 
-//returns true if was able to initialise
-boolean initialise(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var)
+float get_log_bayes_factor_comparing_genotypes_at_bubble_call(zygosity genotype1, zygosity genotype2, VariantBranchesAndFlanks* var, 
+							      float seq_error_rate_per_base, float sequencing_depth_of_coverage, int read_length, int colour)
 {
+  boolean too_short = false;
+  int initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(var->one_allele, var->len_one_allele, colour, &too_short);
+  int initial_covg_plus_upward_jumps_branch2 = count_reads_on_allele_in_specific_colour(var->other_allele, var->len_other_allele, colour, &too_short);
+  if (too_short==true)
+    {
+      return 0;
+    }
+
+  float theta_one = ((float)(sequencing_depth_of_coverage * var->len_one_allele))/( (float) read_length );
+  float theta_other = ((float)(sequencing_depth_of_coverage * var->len_other_allele))/( (float) read_length );
+
+  float log_prob_data_given_genotype1 = get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(genotype1, seq_error_rate_per_base, 
+																       initial_covg_plus_upward_jumps_branch1, 
+																       initial_covg_plus_upward_jumps_branch2, theta_one, theta_other, var);
+  float log_prob_data_given_genotype2 = get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(genotype2, seq_error_rate_per_base, 
+																       initial_covg_plus_upward_jumps_branch1, 
+																       initial_covg_plus_upward_jumps_branch2, theta_one, theta_other, var);
+
+  return log_prob_data_given_genotype1 - log_prob_data_given_genotype2;
+}
+
+
+//assuming a pair of branches really do make up a variant, calculate the log likelihood of a genotype
+//under the model described in our paper (eg used for HLA)
+//theta here is as used in the paper: (D/R) * length of branch/allele. NOT the same theta as seen in model_selection.c
+//assumes called by BubbleCaller, so no overlaps between alleles.
+float get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(zygosity genotype, float error_rate_per_base, int covg_branch_1, int covg_branch_2, 
+												     float theta_one, float theta_other, VariantBranchesAndFlanks* v)
+{
+
+  if (genotype==hom_one)
+    {
+      return 2* (covg_branch_1*log(theta_one/2) - theta_one/2 - log_factorial(covg_branch_1) + covg_branch_2 *log(error_rate_per_base) );
+    }
+  else if (genotype==hom_other)
+    {
+      return 2* (covg_branch_2*log(theta_other/2) - theta_other/2 - log_factorial(covg_branch_2) + covg_branch_1 *log(error_rate_per_base)  );
+    }
+  else if (genotype==het)
+    {
+      return (covg_branch_1*log(theta_one/2) - theta_one/2 - log_factorial(covg_branch_1) )
+        + (covg_branch_2*log(theta_other/2) - theta_other/2 - log_factorial(covg_branch_2) );
+    }
+  else
+    {
+      printf("Programming error. called get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller with bad genotype");
+      exit(1);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+//returns true if was able to initialise
+// if you have no GraphInfo, enter NULL
+//if you do not know what sequencing_error_per_base is, enter -1, will use default of 0.01
+//if you do not knwo what genome length is, enter -1, will use default of 3 billion (human)
+boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var, DiscoveryMethod caller, 
+				    GraphInfo* ginfo, float seq_error_rate_per_base, long long genome_length)
+{
+  annovar->caller = caller;
   annovar->var=var;
-  get_branch_coverage(annovar->br1_covg, var->one_allele, var->len_one_allele);
-  get_branch_coverage(annovar->br2_covg, var->other_allele, var->len_other_allele);
+
+  boolean flag1=false;
+  boolean flag2=false;
+
+  flag1=get_num_effective_reads_on_branch(annovar->br1_covg, var->one_allele, var->len_one_allele);
+  flag2=get_num_effective_reads_on_branch(annovar->br2_covg, var->other_allele, var->len_other_allele);
+  
   if (var->len_one_allele < var->len_other_allele)
     {
       annovar->len_start=var->len_one_allele;
@@ -156,7 +230,148 @@ boolean initialise(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* 
     {
       annovar->len_start=var->len_other_allele;
     }
-  get_branch_coverage(annovar->theta1, var->one_allele, len_start);
-  get_branch_coverage(annovar->theta2, var->other_allele, len_start);
+  if (annovar->len_start<2)
+    {
+      annovar->too_short = true;
+    }
+  else
+    {
+      annovar->too_short = false;
+    }
 
+  if (    (( (flag1==false) || (flag2==false) ) && (annovar->too_short==true))
+	  ||
+	  (( (flag1==true) || (flag2==true) ) && (annovar->too_short==false))
+	  )
+    {
+      printf("Unexpected inconsistency in initialise_putative_variant - coding error\n");
+      exit(1);
+    }
+
+ get_num_effective_reads_on_branch(annovar->theta1, var->one_allele, annovar->len_start);
+ get_num_effective_reads_on_branch(annovar->theta2, var->other_allele, annovar->len_start);
+  
+  int i;
+  annovar->BigTheta = 0;
+  annovar->BigThetaStart = 0;
+  for (i=0; i<var->len_one_allele; i++)
+    {
+      annovar->BigTheta += annovar->br1_covg[i];
+    }
+  for (i=0; i<var->len_other_allele; i++)
+    {
+      annovar->BigTheta += annovar->br2_covg[i];
+    }
+
+  for (i=0; i<annovar->len_start; i++)
+    {
+      annovar->BigThetaStart += annovar->theta1[i] + annovar->theta2[i];
+    }
+
+  //determine genotype (under assumption/model that this is a variant) for each colour
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      float sequencing_depth_of_coverage=0;
+      if (seq_error_rate_per_base==-1)
+	{
+	  seq_error_rate_per_base=0.01;//default
+	}
+      if (genome_length==-1)
+	{
+	  genome_length=3000000000;//default
+	}
+      int mean_read_len=100;
+      if (ginfo !=NULL)
+	{
+	  sequencing_depth_of_coverage=(float) ginfo->total_sequence[i]/genome_length;
+	  mean_read_len = ginfo->mean_read_length[i];
+	}
+      if (sequencing_depth_of_coverage==0)
+	{
+	  annovar->genotype[i]=absent;
+	}
+      else
+	{
+	  float log_bf_hom1_over_het= get_log_bayes_factor_comparing_genotypes_at_bubble_call(hom_one, het,  var, seq_error_rate_per_base, sequencing_depth_of_coverage,
+											     mean_read_len,i);
+	  float log_bf_hom1_over_hom2= get_log_bayes_factor_comparing_genotypes_at_bubble_call(hom_one, hom_other,  var, seq_error_rate_per_base, sequencing_depth_of_coverage,
+											      mean_read_len,i);
+	  float log_bf_het_over_hom2= get_log_bayes_factor_comparing_genotypes_at_bubble_call(het, hom_other,  var, seq_error_rate_per_base, sequencing_depth_of_coverage,
+											     mean_read_len,i);
+	  
+	  if ( ( log_bf_hom1_over_het >0 ) && (log_bf_hom1_over_hom2>0) )
+	    {
+	      annovar->genotype[i]=hom_one;
+	    }
+	  else if ( ( log_bf_hom1_over_het <0 ) && (log_bf_het_over_hom2>0) )
+	    {
+	      annovar->genotype[i]=het;
+	    }
+	  else if ( ( log_bf_hom1_over_het <0 ) && (log_bf_het_over_hom2<0) )
+	    {
+	      annovar->genotype[i]=hom_other;
+	    }
+	  else
+	    {
+	      printf("Coding error - get incompatible combination of bates factors: %f, %f, %f\n", log_bf_hom1_over_het, log_bf_hom1_over_hom2, log_bf_hom1_over_het);
+	      exit(1);
+	    }
+	}
+    }
+
+  return true;
 }
+
+//first argument is an array of length NUMBER_OF_COLOURS, into which results go.
+//If you want the number of reads on the entire branch, enter the length of that branch in arg3 (eg var->len_one-allele)
+//Sometimes we want to take just the start of the branch (if one branch is longer than the other, we may just take the length of the shorter one)
+//and so you enter that in arg3 in that case
+//note these are effective reads, as counting covg in the de Bruijn graph
+//returns false if branch is too short (1 or 2 nodes) to do this
+boolean get_num_effective_reads_on_branch(int* array, dBNode** allele, int how_many_nodes)
+{
+  int i;
+  boolean too_short=false;
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      array[i] = count_reads_on_allele_in_specific_colour(allele, how_many_nodes, i, &too_short);
+      if (too_short==true)
+	{
+	  return too_short;
+	}
+    }
+  return too_short;
+}
+
+
+
+
+//does not count covg on first or last nodes, as they are bifurcation nodes
+//if length==0 or 1  returns -1.
+int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colour, boolean* too_short)
+{
+
+  if ( (len==0) || (len==1) )
+    {
+      *too_short=true;
+      return -1;
+    }
+
+  //note start at node 1, avoid first node
+  int total= db_node_get_coverage(allele[1], individual_edge_array, colour);
+
+  int i;
+
+  //note we do not go as far as the final node, which is where the two branches rejoin
+  for (i=2; i<len-1; i++)
+    {
+      if (db_node_get_coverage(allele[i], individual_edge_array, i) 
+	  > db_node_get_coverage(allele[i-1], individual_edge_array, i-1) )
+        {
+          total++;
+        }
+    }
+
+  return total;
+}
+
