@@ -33,6 +33,7 @@
 #include "test_pop_supernode_consensus.h"
 #include "test_db_genotyping.h"
 #include "test_db_variants.h"
+#include "test_model_selection.h"
 #include <test_file_reader.h>
 
 #include <CUnit.h>
@@ -347,7 +348,17 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for calculating Bayes Factors for genotypes at a fixed site in all colours, using the model from our paper",  test_get_log_bayes_factor_comparing_genotypes_at_bubble_call))
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for calculating read-arrivals on an allele",  test_count_reads_on_allele_in_specific_colour))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+   if (NULL == CU_add_test(pPopGraphSuite, "Test calculation of genotype likelihoods for sites called by Bubble Caller", test_get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+   if (NULL == CU_add_test(pPopGraphSuite, "Test classification of bubble as variant or repeat, comparing Hardy-Weinberg model with a repeat model", test_get_log_bayesfactor_varmodel_over_repeatmodel ))
       {
 	CU_cleanup_registry();
 	return CU_get_error();

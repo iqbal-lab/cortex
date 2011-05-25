@@ -144,28 +144,42 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
 }
 
 
-double get_log_bayes_factor_comparing_genotypes_at_bubble_call(zygosity genotype1, zygosity genotype2, VariantBranchesAndFlanks* var, 
-							      double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
+void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
 {
   boolean too_short = false;
-  int initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(var->one_allele, var->len_one_allele, colour, &too_short);
-  int initial_covg_plus_upward_jumps_branch2 = count_reads_on_allele_in_specific_colour(var->other_allele, var->len_other_allele, colour, &too_short);
+  int initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
+  int initial_covg_plus_upward_jumps_branch2 = count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
+
   if (too_short==true)
     {
-      return 0;
+      annovar->too_short=true;
+      int j;
+      //set all the log likelihoods to zero.
+      for (j=0; j<NUMBER_OF_COLOURS; j++)
+	{
+	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[j]));
+	}
+      return ;
     }
 
-  double theta_one = ((double)(sequencing_depth_of_coverage * var->len_one_allele))/( (double) read_length );
-  double theta_other = ((double)(sequencing_depth_of_coverage * var->len_other_allele))/( (double) read_length );
+  double theta_one = ((double)(sequencing_depth_of_coverage * annovar->var->len_one_allele))/( (double) read_length );
+  double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
 
-  double log_prob_data_given_genotype1 = get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(genotype1, seq_error_rate_per_base, 
-																       initial_covg_plus_upward_jumps_branch1, 
-																       initial_covg_plus_upward_jumps_branch2, theta_one, theta_other, var);
-  double log_prob_data_given_genotype2 = get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(genotype2, seq_error_rate_per_base, 
-																       initial_covg_plus_upward_jumps_branch1, 
-																       initial_covg_plus_upward_jumps_branch2, theta_one, theta_other, var);
+  annovar->gen_log_lh[colour].log_lh[hom_one]   = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
+													    initial_covg_plus_upward_jumps_branch1, 
+													    initial_covg_plus_upward_jumps_branch2, theta_one, theta_other);
+  annovar->gen_log_lh[colour].log_lh[het]       = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, seq_error_rate_per_base, 
+													    initial_covg_plus_upward_jumps_branch1, 
+													    initial_covg_plus_upward_jumps_branch2, theta_one, theta_other);
+  annovar->gen_log_lh[colour].log_lh[hom_other] = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
+													    initial_covg_plus_upward_jumps_branch1, 
+													    initial_covg_plus_upward_jumps_branch2, theta_one, theta_other);
+ 
+  //  printf("Log likelihood of data under hom_one is %f\n", annovar->gen_log_lh[colour].log_lh[hom_one]);
+  //  printf("Log likelihood of data under het is %f\n", annovar->gen_log_lh[colour].log_lh[het] );
+  //  printf("Log likelihood of data under hom_other is %f\n", annovar->gen_log_lh[colour].log_lh[hom_other] );
 
-  return log_prob_data_given_genotype1 - log_prob_data_given_genotype2;
+
 }
 
 
@@ -173,26 +187,29 @@ double get_log_bayes_factor_comparing_genotypes_at_bubble_call(zygosity genotype
 //under the model described in our paper (eg used for HLA)
 //theta here is as used in the paper: (D/R) * length of branch/allele. NOT the same theta as seen in model_selection.c
 //assumes called by BubbleCaller, so no overlaps between alleles.
-double get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2, 
-												     double theta_one, double theta_other, VariantBranchesAndFlanks* v)
+double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2, 
+									double theta_one, double theta_other)
 {
 
   if (genotype==hom_one)
     {
-      return 2* (covg_branch_1*log(theta_one/2) - theta_one/2 - log_factorial(covg_branch_1) + covg_branch_2 *log(error_rate_per_base) );
+      //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no unique segment, one shared segment
+      return covg_branch_1*log(theta_one) - theta_one - log_factorial(covg_branch_1)  + covg_branch_2 *log(error_rate_per_base) ;
     }
   else if (genotype==hom_other)
     {
-      return 2* (covg_branch_2*log(theta_other/2) - theta_other/2 - log_factorial(covg_branch_2) + covg_branch_1 *log(error_rate_per_base)  );
+      //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no unique segment, one shared segment
+      return covg_branch_2*log(theta_other) - theta_other - log_factorial(covg_branch_2) + covg_branch_1 *log(error_rate_per_base)  ;
     }
   else if (genotype==het)
     {
+      //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no shared segment, TWO unique segments
       return (covg_branch_1*log(theta_one/2) - theta_one/2 - log_factorial(covg_branch_1) )
         + (covg_branch_2*log(theta_other/2) - theta_other/2 - log_factorial(covg_branch_2) );
     }
   else
     {
-      printf("Programming error. called get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller with bad genotype");
+      printf("Programming error. called get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller with bad genotype");
       exit(1);
     }
 }
@@ -203,13 +220,20 @@ double get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_ca
 
 
 
-
+void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl)
+{
+  int i;
+  gl->log_lh[hom_one]=0;
+  gl->log_lh[het]=0;
+  gl->log_lh[hom_other]=0;
+}
 
 
 //returns true if was able to initialise
 // if you have no GraphInfo, enter NULL
 //if you do not know what sequencing_error_per_base is, enter -1, will use default of 0.01
 //if you do not knwo what genome length is, enter -1, will use default of 3 billion (human)
+// NOTE THIS GENOTYPES THE SITE
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var, DiscoveryMethod caller, 
 				    GraphInfo* ginfo, double seq_error_rate_per_base, long long genome_length)
 {
@@ -269,6 +293,12 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
     }
 
   //determine genotype (under assumption/model that this is a variant) for each colour
+
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[i]));
+    }
+
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       double sequencing_depth_of_coverage=0;
@@ -279,6 +309,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
       if (genome_length==-1)
 	{
 	  genome_length=3000000000;//default
+	  printf("ZAM test - I think this check can be removed - this code should never be hit\n");
 	}
       int mean_read_len=100;
       if (ginfo !=NULL)
@@ -286,36 +317,54 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
 	  sequencing_depth_of_coverage=(double) ginfo->total_sequence[i]/genome_length;
 	  mean_read_len = ginfo->mean_read_length[i];
 	}
-      if (sequencing_depth_of_coverage==0)
+      if ( (sequencing_depth_of_coverage==0)|| (annovar->too_short==true) )
 	{
 	  annovar->genotype[i]=absent;
 	}
       else
 	{
-	  double log_bf_hom1_over_het= get_log_bayes_factor_comparing_genotypes_at_bubble_call(hom_one, het,  var, seq_error_rate_per_base, sequencing_depth_of_coverage,
-											     mean_read_len,i);
-	  double log_bf_hom1_over_hom2= get_log_bayes_factor_comparing_genotypes_at_bubble_call(hom_one, hom_other,  var, seq_error_rate_per_base, sequencing_depth_of_coverage,
-											      mean_read_len,i);
-	  double log_bf_het_over_hom2= get_log_bayes_factor_comparing_genotypes_at_bubble_call(het, hom_other,  var, seq_error_rate_per_base, sequencing_depth_of_coverage,
-											     mean_read_len,i);
-	  
-	  if ( ( log_bf_hom1_over_het >0 ) && (log_bf_hom1_over_hom2>0) )
+
+	  get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+
+	  if (annovar->gen_log_lh[i].log_lh[hom_one]> annovar->gen_log_lh[i].log_lh[het])
 	    {
-	      annovar->genotype[i]=hom_one;
+	      if (annovar->gen_log_lh[i].log_lh[hom_one]>annovar->gen_log_lh[i].log_lh[hom_other])
+		{
+		  annovar->genotype[i]=hom_one;
+		}
+	      else
+		{
+		  annovar->genotype[i]=hom_other;
+		}
 	    }
-	  else if ( ( log_bf_hom1_over_het <0 ) && (log_bf_het_over_hom2>0) )
+	  else if (annovar->gen_log_lh[i].log_lh[het]>annovar->gen_log_lh[i].log_lh[hom_other])
 	    {
 	      annovar->genotype[i]=het;
 	    }
-	  else if ( ( log_bf_hom1_over_het <0 ) && (log_bf_het_over_hom2<0) )
+	  else
 	    {
 	      annovar->genotype[i]=hom_other;
 	    }
+
+	  /*
+	  if ( (annovar->gen_log_lh[i].log_lh[hom_one]> annovar->gen_log_lh[i].log_lh[het]) && (annovar->gen_log_lh[i].log_lh[hom_one]>annovar->gen_log_lh[i].log_lh[hom_other]) )
+	    {
+	      annovar->genotype[i]=hom_one;
+	    }
+	  elsif ( (annovar->gen_log_lh[i].log_lh[hom_other]> annovar->gen_log_lh[i].log_lh[het]) && (annovar->gen_log_lh[i].log_lh[hom_other]>annovar->gen_log_lh[i].log_lh[hom_one]) )
+	    {
+	      annovar->genotype[i]=hom_other;
+	    }
+	  elsif ( (annovar->gen_log_lh[i].log_lh[het]> annovar->gen_log_lh[i].log_lh[hom_one]) && (annovar->gen_log_lh[i].log_lh[het]>annovar->gen_log_lh[i].log_lh[hom_other]) )
+	    {
+	      annovar->genotype[i]=het;
+	    }
+
 	  else
 	    {
 	      printf("Coding error - get incompatible combination of bates factors: %f, %f, %f\n", log_bf_hom1_over_het, log_bf_hom1_over_hom2, log_bf_hom1_over_het);
 	      exit(1);
-	    }
+	      }*/
 	}
     }
 
@@ -365,10 +414,10 @@ int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colou
   //note we do not go as far as the final node, which is where the two branches rejoin
   for (i=2; i<len-1; i++)
     {
-      if (db_node_get_coverage(allele[i], individual_edge_array, i) 
-	  > db_node_get_coverage(allele[i-1], individual_edge_array, i-1) )
+      int jump = db_node_get_coverage(allele[i], individual_edge_array, colour) - db_node_get_coverage(allele[i-1], individual_edge_array, colour);
+      if ( jump>0)
         {
-          total++;
+          total=total+jump;
         }
     }
 

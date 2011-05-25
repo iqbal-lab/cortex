@@ -40,8 +40,8 @@
 typedef enum
   {
     hom_one = 0,
-    hom_other = 1,
-    het = 2,
+    het = 1,
+    hom_other = 2,
     absent =3
   }zygosity;
 
@@ -60,7 +60,8 @@ typedef enum
 typedef enum
   {
     first = 0,
-    unknown = 1,
+    second = 1,
+    unknown = 2,
   } WhichAlleleIsRef ;
 
 typedef struct{
@@ -84,7 +85,12 @@ typedef enum{
   SimplePathDivergenceCaller=1,
 } DiscoveryMethod;
 
-//contains a VariantBranchesAndFlanks object, plus info that we do not want to keep recalculating:
+typedef struct {
+  double log_lh[3];// hom_one, het and hom_other. Use zygosity as index to ensure this
+} GenotypeLogLikelihoods;
+
+
+// AnnotatedPutativeVariant contains a VariantBranchesAndFlanks object, plus info that we do not want to keep recalculating:
 //covg on both alleles, and also, is sometimes useful only to look at the "breakpoint"/start - since
 //one branch can be longer than the other, define the breakpoint to be the whole of the shorter
 //branch, and the same length, of the longer branch. ie take min(len(br1), len(br2)) length of both branches
@@ -102,8 +108,11 @@ typedef struct {
                            //  both branches (sum of all elements of theta1 and theta2)
 
   //under the model that this IS a variant, compare likelihoods of being hom-br1, het, hom-br2
-  zygosity genotype[NUMBER_OF_COLOURS]; //for each colour, genotype calls. determine this by comparing BayesFactors of standard model as used for HLA etc
+  zygosity genotype[NUMBER_OF_COLOURS]; //for each colour, genotype calls. determine this by comparing Log Likelihoods of standard model as used for HLA etc
+  GenotypeLogLikelihoods gen_log_lh[NUMBER_OF_COLOURS];
 } AnnotatedPutativeVariant;
+
+
 
 
 //functions for VariantBranchesAndFlanks
@@ -127,11 +136,10 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
 
 
 //genotyping of a site known to be a variant
-double get_log_bayes_factor_comparing_genotypes_at_bubble_call(zygosity genotype1, zygosity genotype2, VariantBranchesAndFlanks* var,
-							      double seq_error_rate_per_kmer, double sequencing_depth_of_coverage, int read_length, int colour);
-
-double get_log_likelihood_of_genotype_under_poisson_model_for_covg_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2,
-												    double theta_one, double theta_other, VariantBranchesAndFlanks* v);
+void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl);
+void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour);
+double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2, 
+									double theta_one, double theta_other);
 
 
 
