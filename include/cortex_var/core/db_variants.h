@@ -95,6 +95,7 @@ typedef struct {
 //one branch can be longer than the other, define the breakpoint to be the whole of the shorter
 //branch, and the same length, of the longer branch. ie take min(len(br1), len(br2)) length of both branches
 typedef struct {
+  int kmer;
   boolean too_short; //if one or both alleles are too short (containing no interior nodes), this is set to true and a call is not made
   DiscoveryMethod caller;
   VariantBranchesAndFlanks* var;
@@ -103,7 +104,7 @@ typedef struct {
   int len_start;// = min of length(br1) and length(br2)
   int theta1[NUMBER_OF_COLOURS];//coverage on start of branch1 
   int theta2[NUMBER_OF_COLOURS];//coverage on start of branch2
-  long long BigTheta; // total coverage of all colours over both branches (sum of all elements of theta1 and theta2)
+  long long BigTheta; // total coverage of all colours over both branches (sum of all elements of br1_covg and br2_covg)
   long long BigThetaStart; // total coverage of all colours over start of
                            //  both branches (sum of all elements of theta1 and theta2)
 
@@ -139,13 +140,13 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
 void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl);
 void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour);
 double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2, 
-									double theta_one, double theta_other);
+									double theta_one, double theta_other, int kmer);
 
 
 
 //set up of Putative Variant object
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var, DiscoveryMethod caller,
-				    GraphInfo* ginfo, double seq_error_per_base, long long genome_length);
+				    GraphInfo* ginfo, double seq_error_per_base, long long genome_length, int kmer);
 long long get_big_theta(AnnotatedPutativeVariant* annovar);
 
 

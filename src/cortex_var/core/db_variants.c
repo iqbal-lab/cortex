@@ -166,14 +166,14 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
   double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
 
   annovar->gen_log_lh[colour].log_lh[hom_one]   = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
-													    initial_covg_plus_upward_jumps_branch1, 
-													    initial_covg_plus_upward_jumps_branch2, theta_one, theta_other);
+														   initial_covg_plus_upward_jumps_branch1, 
+														   initial_covg_plus_upward_jumps_branch2, theta_one, theta_other, annovar->kmer);
   annovar->gen_log_lh[colour].log_lh[het]       = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, seq_error_rate_per_base, 
-													    initial_covg_plus_upward_jumps_branch1, 
-													    initial_covg_plus_upward_jumps_branch2, theta_one, theta_other);
+														   initial_covg_plus_upward_jumps_branch1, 
+														   initial_covg_plus_upward_jumps_branch2, theta_one, theta_other, annovar->kmer);
   annovar->gen_log_lh[colour].log_lh[hom_other] = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
-													    initial_covg_plus_upward_jumps_branch1, 
-													    initial_covg_plus_upward_jumps_branch2, theta_one, theta_other);
+														   initial_covg_plus_upward_jumps_branch1, 
+														   initial_covg_plus_upward_jumps_branch2, theta_one, theta_other, annovar->kmer);
  
   //  printf("Log likelihood of data under hom_one is %f\n", annovar->gen_log_lh[colour].log_lh[hom_one]);
   //  printf("Log likelihood of data under het is %f\n", annovar->gen_log_lh[colour].log_lh[het] );
@@ -188,18 +188,18 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
 //theta here is as used in the paper: (D/R) * length of branch/allele. NOT the same theta as seen in model_selection.c
 //assumes called by BubbleCaller, so no overlaps between alleles.
 double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2, 
-									double theta_one, double theta_other)
+									double theta_one, double theta_other, int kmer)
 {
 
   if (genotype==hom_one)
     {
       //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no unique segment, one shared segment
-      return covg_branch_1*log(theta_one) - theta_one - log_factorial(covg_branch_1)  + covg_branch_2 *log(error_rate_per_base) ;
+      return covg_branch_1*log(theta_one) - theta_one - log_factorial(covg_branch_1)  + (covg_branch_2/kmer) *log(error_rate_per_base) ;
     }
   else if (genotype==hom_other)
     {
       //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no unique segment, one shared segment
-      return covg_branch_2*log(theta_other) - theta_other - log_factorial(covg_branch_2) + covg_branch_1 *log(error_rate_per_base)  ;
+      return covg_branch_2*log(theta_other) - theta_other - log_factorial(covg_branch_2) + (covg_branch_1/kmer) *log(error_rate_per_base)  ;
     }
   else if (genotype==het)
     {
@@ -235,8 +235,9 @@ void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl)
 //if you do not knwo what genome length is, enter -1, will use default of 3 billion (human)
 // NOTE THIS GENOTYPES THE SITE
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var, DiscoveryMethod caller, 
-				    GraphInfo* ginfo, double seq_error_rate_per_base, long long genome_length)
+				    GraphInfo* ginfo, double seq_error_rate_per_base, long long genome_length, int kmer)
 {
+  annovar->kmer = kmer;
   annovar->caller = caller;
   annovar->var=var;
 
@@ -415,9 +416,19 @@ int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colou
   for (i=2; i<len-1; i++)
     {
       int jump = db_node_get_coverage(allele[i], individual_edge_array, colour) - db_node_get_coverage(allele[i-1], individual_edge_array, colour);
-      if ( jump>0)
+
+      //we add a little check to ensure that we ignore isolated nodes with higher covg - we count jumps only if they are signifiers of a new read arriving
+      // and one node does not a read make
+      int diff_between_next_and_prev=-1;
+      if (i<len-2)
+	{
+	  diff_between_next_and_prev=    db_node_get_coverage(allele[i+1], individual_edge_array, colour)
+	                               - db_node_get_coverage(allele[i-1], individual_edge_array, colour);
+	}
+      
+      if ( (jump>0) && (diff_between_next_and_prev!=0) )
         {
-          total=total+jump;
+	      total=total+jump;
         }
     }
 

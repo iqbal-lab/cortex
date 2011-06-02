@@ -209,7 +209,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   double err = 0.01;
   initialise_model_info(&model_info, &ginfo, genome_len, mu, err);
   AnnotatedPutativeVariant annovar;
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len);
+  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len, kmer_size);
 
 
   clean_up(db_graph);
@@ -227,7 +227,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(10, 10, &var, i);
     }
   
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len);
+  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size);
   
   double ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   printf("when everyone is het, bayes factor of var/rep - %f - if this is <0 this has correctly called it as a repeat\n", ret);
@@ -261,13 +261,12 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(0,10, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len);
+  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size);
 
   printf("START interesting\n");
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret>0);//called as a variant
   printf("\n\nNow we have a HW example, and the bf is %f - should be positive\n", ret);
-  /*
   for (i=0; i<50; i++)
     {
       CU_ASSERT(annovar.genotype[i]==het); 
@@ -276,12 +275,12 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
     {
       CU_ASSERT(annovar.genotype[i]==hom_one); 
     }
-  for (i=50; i<75; i++)
+  for (i=75; i<100; i++)
     {
       CU_ASSERT(annovar.genotype[i]==hom_other); 
     }
   clean_up(db_graph);
-
+  /*
 
 
 
@@ -307,7 +306,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(10,0, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len);
+  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size);
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret>0);//called as a variant
@@ -343,7 +342,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
     }
   set_coverage_on_bubble(0,10, &var, 99);
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len);
+  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size);
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret>0);//called as a variant
@@ -388,7 +387,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
     }
 
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len);
+  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size);
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret<0);//called as a repeat
