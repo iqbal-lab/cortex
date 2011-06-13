@@ -68,7 +68,9 @@ boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, LogLi
 
   double log_bf_var_over_rep = get_log_bayesfactor_varmodel_over_repeatmodel(annovar, model_info); 
 
-  if  (log_bf_var_over_rep>0) 
+  int thresh = 100; //demand variant is 100 times as likely as repeat
+  int lthresh = log(100);
+  if  (log_bf_var_over_rep> lthresh) 
     {
       set_BF_var_over_rep(stats, log_bf_var_over_rep);
       return true;

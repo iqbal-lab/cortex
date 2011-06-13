@@ -236,7 +236,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   
   double ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
 
-  CU_ASSERT(ret<0);//called as a repeat
+  CU_ASSERT(ret< log(100));//called as a repeat if prob var not  100x  greater than porb repeat
   clean_up(db_graph);
 
 
@@ -266,7 +266,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
 
-  CU_ASSERT(ret>0);//called as a variant
+  CU_ASSERT(ret> log(100));//called as a variant
 
   for (i=0; i<50; i++)
     {
@@ -307,7 +307,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
 
-  CU_ASSERT(ret>0);//called as a variant
+  CU_ASSERT(ret> log(100));//called as a variant
   for (i=0; i<90; i++)
     {
       CU_ASSERT(annovar.genotype[i]==hom_one); 
@@ -342,7 +342,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size, ref_col);
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
-  CU_ASSERT(ret>0);//called as a variant
+  CU_ASSERT(ret> log(100) );//called as a variant
   for (i=0; i<90; i++)
     {
       CU_ASSERT(annovar.genotype[i]==hom_one); 
@@ -388,7 +388,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size, ref_col);
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
-  CU_ASSERT(ret<0);//called as a repeat
+  CU_ASSERT(ret< log(100) );//called as a repeat
 
 
 
