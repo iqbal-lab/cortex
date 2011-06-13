@@ -2444,13 +2444,13 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
 		    if (site_is_variant==true)
 		      {
-			printf("PASSES MODEL SELECTION\n");
+			fprintf(fout, "PASSES MODEL SELECTION\n");
 		      }
 		    else
 		      {
-			printf("FAILS MODEL SELECTION\n");
+			fprintf(fout, "FAILS MODEL SELECTION\n");
 		      }
-		    printf("log BF var/repeat   = %.2f\n", stats.log_bayes_factor_var_over_rep);
+		    fprintf(fout, "log BF var/repeat   = %.2f\n", stats.log_bayes_factor_var_over_rep);
 		    
 		    
 		  }
