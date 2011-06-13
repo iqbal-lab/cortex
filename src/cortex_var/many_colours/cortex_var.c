@@ -184,7 +184,8 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
   float repeat_geometric_param_mu = 0.8;
   float seq_err_rate_per_base = 0.01;
   
-  initialise_model_info(&model_info, db_graph_info, cmd_line->genome_size, repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line->ref_colour);
+  initialise_model_info(&model_info, db_graph_info, cmd_line->genome_size, 
+			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line->ref_colour);
 
   printf("Detecting bubbles between the union of this set of colours: ");
   int k;

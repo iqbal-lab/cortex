@@ -49,13 +49,15 @@ void initialise_stats(LogLikelihoodsAndBayesFactors* stats)
   stats->log_bayes_factor_rep_over_error = 0;
 }
 
-void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo, long long genome_len, double mu, double seq_err_rate_per_base)
+void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo, 
+			   long long genome_len, double mu, double seq_err_rate_per_base,
+			   int ref_colour)
 {
   model_info->ginfo = ginfo;
   model_info->genome_len = genome_len;
   model_info->mu = mu;
   model_info->seq_error_rate_per_base = seq_err_rate_per_base;
-  model_info->ref_colour=-1; //means no ref colour
+  model_info->ref_colour=ref_colour; //if -1, that means no ref colour
 }
 
 void set_BF_var_over_rep(LogLikelihoodsAndBayesFactors* stats, double val)

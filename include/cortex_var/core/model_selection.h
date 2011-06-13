@@ -50,7 +50,7 @@ typedef struct{
 } GraphAndModelInfo;
 
 void initialise_stats(LogLikelihoodsAndBayesFactors* stats);
-void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo, long long genome_len, double mu, double seq_err_rate_per_base);
+void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo, long long genome_len, double mu, double seq_err_rate_per_base, int ref_colour);
 
 void set_BF_var_over_rep(LogLikelihoodsAndBayesFactors* stats, double val);
 
