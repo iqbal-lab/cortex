@@ -41,7 +41,7 @@
 void test_count_reads_on_allele_in_specific_colour()
 {
   dBNode* node_array[10];
-  boolean too_short;
+  boolean too_short=false;
 
   int i;
   for (i=0; i<10; i++)

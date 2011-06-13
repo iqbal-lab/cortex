@@ -2435,7 +2435,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		LogLikelihoodsAndBayesFactors stats;//results of bayes factor calcs go in here
 		initialise_stats(&stats);
 		AnnotatedPutativeVariant annovar;
-		initialise_putative_variant(&annovar, &var, BubbleCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, db_graph->kmer_size);
+		initialise_putative_variant(&annovar, &var, BubbleCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
+					    db_graph->kmer_size, model_info->ref_colour);
 		boolean site_is_variant=true;
 		if (apply_model_selection==true)
 		  {

@@ -165,19 +165,27 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
   double theta_one = ((double)(sequencing_depth_of_coverage * annovar->var->len_one_allele))/( (double) read_length );
   double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
 
-  annovar->gen_log_lh[colour].log_lh[hom_one]   = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
-														   initial_covg_plus_upward_jumps_branch1, 
-														   initial_covg_plus_upward_jumps_branch2, theta_one, theta_other, annovar->kmer);
-  annovar->gen_log_lh[colour].log_lh[het]       = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, seq_error_rate_per_base, 
-														   initial_covg_plus_upward_jumps_branch1, 
-														   initial_covg_plus_upward_jumps_branch2, theta_one, theta_other, annovar->kmer);
-  annovar->gen_log_lh[colour].log_lh[hom_other] = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
-														   initial_covg_plus_upward_jumps_branch1, 
-														   initial_covg_plus_upward_jumps_branch2, theta_one, theta_other, annovar->kmer);
+
+  annovar->gen_log_lh[colour].log_lh[hom_one]   = 
+    get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
+								     initial_covg_plus_upward_jumps_branch1, 
+								     initial_covg_plus_upward_jumps_branch2, 
+								     theta_one, theta_other, annovar->kmer);
+  annovar->gen_log_lh[colour].log_lh[het]       = 
+    get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, seq_error_rate_per_base, 
+								     initial_covg_plus_upward_jumps_branch1, 
+								     initial_covg_plus_upward_jumps_branch2, 
+								     theta_one, theta_other, annovar->kmer);
+
+  annovar->gen_log_lh[colour].log_lh[hom_other] = 
+    get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
+								     initial_covg_plus_upward_jumps_branch1, 
+								     initial_covg_plus_upward_jumps_branch2, 
+								     theta_one, theta_other, annovar->kmer);
  
-  //  printf("Log likelihood of data under hom_one is %f\n", annovar->gen_log_lh[colour].log_lh[hom_one]);
-  //  printf("Log likelihood of data under het is %f\n", annovar->gen_log_lh[colour].log_lh[het] );
-  //  printf("Log likelihood of data under hom_other is %f\n", annovar->gen_log_lh[colour].log_lh[hom_other] );
+//  printf("Log likelihood of data in colour %d under hom_one is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_one]);
+//  printf("Log likelihood of data in colour %d under het is %f\n", colour, annovar->gen_log_lh[colour].log_lh[het] );
+//  printf("Log likelihood of dat ain colour %d under hom_other is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_other] );
 
 
 }
@@ -234,9 +242,23 @@ void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl)
 //if you do not know what sequencing_error_per_base is, enter -1, will use default of 0.01
 //if you do not knwo what genome length is, enter -1, will use default of 3 billion (human)
 // NOTE THIS GENOTYPES THE SITE
+// if you enter ref_colour=-1, there is no ref. Otherwise, the ref colour will be ignored for calculations like theta, where
+// we are aggregating covg.
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var, DiscoveryMethod caller, 
-				    GraphInfo* ginfo, double seq_error_rate_per_base, long long genome_length, int kmer)
+				    GraphInfo* ginfo, double seq_error_rate_per_base, long long genome_length, int kmer,
+				    int ref_colour)
 {
+  int number_individals=NUMBER_OF_COLOURS;
+  if ( (ref_colour !=-1) && ( (ref_colour<0) || (ref_colour>=NUMBER_OF_COLOURS) ) )
+    {
+      printf("Called initialise_putative_variant with a ref_colour which is not -1, nor one of the colours this executable is compiled for. Coding error - call Zam\n");
+      exit(1);
+    }
+  if (ref_colour != -1)
+    {
+      number_individals--;
+    }
+
   annovar->kmer = kmer;
   annovar->caller = caller;
   annovar->var=var;
@@ -249,7 +271,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
   
   if (var->len_one_allele < var->len_other_allele)
     {
-      annovar->len_start=var->len_one_allele;
+      annovar->len_start=var->len_one_allele ;
     }
   else
     {
@@ -275,18 +297,25 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
 
  get_num_effective_reads_on_branch(annovar->theta1, var->one_allele, annovar->len_start);
  get_num_effective_reads_on_branch(annovar->theta2, var->other_allele, annovar->len_start);
-  
-  int i;
-  annovar->BigTheta = 0;
-  annovar->BigThetaStart = 0;
-  for (i=0; i<var->len_one_allele; i++)
-    {
-      annovar->BigTheta += annovar->br1_covg[i];
-    }
-  for (i=0; i<var->len_other_allele; i++)
-    {
-      annovar->BigTheta += annovar->br2_covg[i];
-    }
+
+ int i;
+ annovar->BigTheta = 0;
+ annovar->BigThetaStart = 0;
+
+ for (i=0; i<var->len_one_allele; i++)
+   {
+     if (i==ref_colour)
+       {
+	 continue;
+       }
+     annovar->BigTheta += annovar->br1_covg[i];
+   }
+
+ for (i=0; i<var->len_other_allele; i++)
+   {
+     annovar->BigTheta     += annovar->br2_covg[i];
+   }
+
 
   for (i=0; i<annovar->len_start; i++)
     {
@@ -327,9 +356,9 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
 
 	  get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
 
-	  if (annovar->gen_log_lh[i].log_lh[hom_one]> annovar->gen_log_lh[i].log_lh[het])
+	  if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
 	    {
-	      if (annovar->gen_log_lh[i].log_lh[hom_one]>annovar->gen_log_lh[i].log_lh[hom_other])
+	      if (annovar->gen_log_lh[i].log_lh[hom_one]>=annovar->gen_log_lh[i].log_lh[hom_other])
 		{
 		  annovar->genotype[i]=hom_one;
 		}
@@ -338,7 +367,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
 		  annovar->genotype[i]=hom_other;
 		}
 	    }
-	  else if (annovar->gen_log_lh[i].log_lh[het]>annovar->gen_log_lh[i].log_lh[hom_other])
+	  else if (annovar->gen_log_lh[i].log_lh[het]>=annovar->gen_log_lh[i].log_lh[hom_other])
 	    {
 	      annovar->genotype[i]=het;
 	    }
@@ -431,7 +460,6 @@ int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colou
 	      total=total+jump;
         }
     }
-
   return total;
 }
 

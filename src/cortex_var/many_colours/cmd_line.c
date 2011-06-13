@@ -259,7 +259,7 @@ int default_opts(CmdLine * c)
   c->kmer_size = 21;
   c->bucket_size = 100;
   c->number_of_buckets_bits = 10;
-  c->ref_colour=-1;
+  c->ref_colour=-1;//there are places where I specifically check to see if this is -1, and if so, assume there is no reference
   c->homopolymer_limit=-1;
   c->quality_score_threshold=0;
   c->node_coverage_threshold=0;

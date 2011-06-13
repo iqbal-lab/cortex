@@ -183,140 +183,132 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
   GraphAndModelInfo model_info;
   float repeat_geometric_param_mu = 0.8;
   float seq_err_rate_per_base = 0.01;
+  
+  initialise_model_info(&model_info, db_graph_info, cmd_line->genome_size, repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line->ref_colour);
 
-    initialise_model_info(&model_info, db_graph_info, cmd_line->genome_size, repeat_geometric_param_mu, seq_err_rate_per_base);
-
-      printf("Detecting bubbles between the union of this set of colours: ");
-      int k;
-      if (which==1)
+  printf("Detecting bubbles between the union of this set of colours: ");
+  int k;
+  if (which==1)
 	{
 	  for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_first_colour_list; k++)
 	    {
 	      printf("%d, ", cmd_line->detect_bubbles1_first_colour_list[k]);
 	    }
 	}
-      else
+  else
+    {
+      for (k=0; k<cmd_line->num_colours_in_detect_bubbles2_first_colour_list; k++)
 	{
-	  for (k=0; k<cmd_line->num_colours_in_detect_bubbles2_first_colour_list; k++)
-	    {
-	      printf("%d, ", cmd_line->detect_bubbles2_first_colour_list[k]);
-	    }
+	  printf("%d, ", cmd_line->detect_bubbles2_first_colour_list[k]);
 	}
-      printf(" and the union of this set of colours: ");
+    }
+  printf(" and the union of this set of colours: ");
+  if (which==1)
+    {
+      for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_second_colour_list; k++)
+	{
+	  printf("%d, ", cmd_line->detect_bubbles1_second_colour_list[k]);
+	}
+    }
+  else
+    {
+      for (k=0; k<cmd_line->num_colours_in_detect_bubbles2_second_colour_list; k++)
+	{
+	  printf("%d, ", cmd_line->detect_bubbles2_second_colour_list[k]);
+	}
+      printf("\n");
+    }
+  
+  
+  if (cmd_line->apply_model_selection_at_bubbles==true)
+    {
+      printf("Will compare likelihoods of repeat,  and variation (Hardy-Weinberg) models at all bubbles\n");
+    }
+  
+  FILE* fp;
+  
+  if (which==1)
+    {
+      fp = fopen(cmd_line->output_detect_bubbles1, "w");
+    }
+  else
+    {
+      fp = fopen(cmd_line->output_detect_bubbles2, "w");
+    }
+  
+  if (fp==NULL)
+    {
       if (which==1)
 	{
-	  for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_second_colour_list; k++)
-	    {
-	      printf("%d, ", cmd_line->detect_bubbles1_second_colour_list[k]);
-	    }
+	  printf("Cannot open %s. Exit.", cmd_line->output_detect_bubbles1);
 	}
       else
 	{
-	  for (k=0; k<cmd_line->num_colours_in_detect_bubbles2_second_colour_list; k++)
-	    {
-	      printf("%d, ", cmd_line->detect_bubbles2_second_colour_list[k]);
-	    }
-	  printf("\n");
+	  printf("Cannot open %s. Exit.", cmd_line->output_detect_bubbles2);
 	}
-      
-      
-      if (cmd_line->apply_model_selection_at_bubbles==true)
-	{
-	  printf("Will compare likelihoods of repeat, error, and variation (Hardy-Weinberg) models at all bubbles\n");
-	  if (cmd_line->using_ref==true)
-	    {
-	      printf("Note that specifying the reference colour on the command-line has no effect if you use --require_hw \n");
-	      printf(" - i.e. Cortex will assume the colour lists you passed into detect_bubbles are of colours representing single diploid individuals\n");
-	      printf("Cortex will NOT look for bubbles in the reference and exclude them. \n");
-	      printf("  If you can see a strong need for being able to remove bubbles in a reference genome AND apply \n");
-	      printf(" these population genetic filters also, email Zam Iqbal and he will make the modification\n");
-	    }
-	}
-
-      FILE* fp;
-
+      exit(1);
+    }
+  
+  boolean (*mod_sel_criterion)(AnnotatedPutativeVariant* annovar, LogLikelihoodsAndBayesFactors* stats,  GraphAndModelInfo* model_info)=NULL;
+  
+  if (cmd_line->apply_model_selection_at_bubbles==true)
+    {
+      mod_sel_criterion = &basic_model_selection_condition; 
+    }
+  
+  
+  if (cmd_line->using_ref==false)
+    {
       if (which==1)
 	{
-	  fp = fopen(cmd_line->output_detect_bubbles1, "w");
+	  db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
+						      cmd_line->detect_bubbles1_first_colour_list, 
+						      cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
+						      cmd_line->detect_bubbles1_second_colour_list, 
+						      cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
+						      &detect_vars_condition_always_true, print_appropriate_extra_var_info,
+						      false, NULL, NULL, cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion, 
+						      &model_info);
 	}
       else
 	{
-	  fp = fopen(cmd_line->output_detect_bubbles2, "w");
+	  
+	  db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
+						      cmd_line->detect_bubbles2_first_colour_list, 
+						      cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
+						      cmd_line->detect_bubbles2_second_colour_list, 
+						      cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
+						      &detect_vars_condition_always_true, print_appropriate_extra_var_info,
+						      false, NULL, NULL, cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion,
+						      &model_info);
 	}
-
-      if (fp==NULL)
+    }
+  else
+    {
+      printf("(First exclude bubbles from ref colour %d) \n", cmd_line->ref_colour);
+      if (which==1)
 	{
-	  if (which==1)
-	    {
-	      printf("Cannot open %s. Exit.", cmd_line->output_detect_bubbles1);
-	    }
-	  else
-	    {
-	      printf("Cannot open %s. Exit.", cmd_line->output_detect_bubbles2);
-	    }
-	  exit(1);
-	}
-
-      boolean (*mod_sel_criterion)(AnnotatedPutativeVariant* annovar, LogLikelihoodsAndBayesFactors* stats,  GraphAndModelInfo* model_info)=NULL;
-
-      if (cmd_line->apply_model_selection_at_bubbles==true)
-	{
-	  mod_sel_criterion = &basic_model_selection_condition; 
-	}
-
-
-      if (cmd_line->using_ref==false)
-	{
-	  if (which==1)
-	    {
-	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
-							  cmd_line->detect_bubbles1_first_colour_list, 
-							  cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
-							  cmd_line->detect_bubbles1_second_colour_list, 
-							  cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
-							  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
-							  false, NULL, NULL, cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion, 
-							  &model_info);
-	    }
-	  else
-	    {
-
-	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
-							  cmd_line->detect_bubbles2_first_colour_list, 
-							  cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
-							  cmd_line->detect_bubbles2_second_colour_list, 
-							  cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
-							  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
-							  false, NULL, NULL, cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion,
-							  &model_info);
-	    }
+	  db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
+						      cmd_line->detect_bubbles1_first_colour_list, 
+						      cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
+						      cmd_line->detect_bubbles1_second_colour_list, 
+						      cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
+						      &detect_vars_condition_always_true,
+						      print_appropriate_extra_var_info,
+						      true, get_col_ref, get_cov_ref, false, NULL, NULL);
 	}
       else
 	{
-	  printf("(First exclude bubbles from ref colour %d) \n", cmd_line->ref_colour);
-	  if (which==1)
-	    {
-	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
-							  cmd_line->detect_bubbles1_first_colour_list, 
-							  cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
-							  cmd_line->detect_bubbles1_second_colour_list, 
-							  cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
-							  &detect_vars_condition_always_true,
-							  print_appropriate_extra_var_info,
-							  true, get_col_ref, get_cov_ref, false, NULL, NULL);
-	    }
-	  else
-	    {
-	      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
-							  cmd_line->detect_bubbles2_first_colour_list, 
-							  cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
-							  cmd_line->detect_bubbles2_second_colour_list, 
-							  cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
-							  &detect_vars_condition_always_true,
-							  print_appropriate_extra_var_info,
-							  true, get_col_ref, get_cov_ref, false, NULL, NULL);
-	    }
+	  db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
+						      cmd_line->detect_bubbles2_first_colour_list, 
+						      cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
+						      cmd_line->detect_bubbles2_second_colour_list, 
+						      cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
+						      &detect_vars_condition_always_true,
+						      print_appropriate_extra_var_info,
+						      true, get_col_ref, get_cov_ref, false, NULL, NULL);
 	}
+    }
 }
 
 

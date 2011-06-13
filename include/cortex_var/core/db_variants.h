@@ -146,7 +146,7 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity
 
 //set up of Putative Variant object
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var, DiscoveryMethod caller,
-				    GraphInfo* ginfo, double seq_error_per_base, long long genome_length, int kmer);
+				    GraphInfo* ginfo, double seq_error_per_base, long long genome_length, int kmer, int ref_colour);
 long long get_big_theta(AnnotatedPutativeVariant* annovar);
 
 

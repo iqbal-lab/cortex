@@ -55,6 +55,7 @@ IDIR_CORTEX_CON = include/cortex_con
 IDIR_CORTEX_VAR =include/cortex_var/many_colours 
 IDIR_CORTEX_VAR_CORE = include/cortex_var/core
 IDIR_CORTEX_VAR_CMD_LINE =include/cortex_var/many_colours
+IDIR_GSL=gsl-1.15/gsl
 
 ## test code includes
 IDIR_BASIC_TESTS =include/test/basic
@@ -89,13 +90,13 @@ CFLAGS_CUNIT          = -L/home/zam/bin/lib
 
 CFLAGS_BASIC          = -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING)
 CFLAGS_GRAPH          = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_BASE_ENCODING)
-CFLAGS_CORTEX_VAR = -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_CORTEX_VAR) -I$(IDIR_BASE_ENCODING) 
+CFLAGS_CORTEX_VAR = -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_CORTEX_VAR) -I$(IDIR_BASE_ENCODING) -I$(IDIR_GSL)
 
 
 CFLAGS_BASIC_TESTS = -I$(IDIR_BASIC_TESTS)  -I$(IDIR_BASIC)  -I$(IDIR_BASE_ENCODING) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
 CFLAGS_HASH_TABLE_TESTS =  -I$(IDIR_HASH) -I$(IDIR_HASH_TABLE_TESTS) -I$(IDIR_CUNIT)  -I$(IDIR_CORTEX_VAR) -L/home/zam/bin/lib
 CFLAGS_GRAPH_TESTS = -I$(IDIR_GRAPH_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_CUNIT) -L/home/zam/bin/lib 
-CFLAGS_CORTEX_VAR_TESTS = -I$(IDIR_CORTEX_VAR_TESTS) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_HASH) -I$(IDIR_CORTEX_VAR) -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
+CFLAGS_CORTEX_VAR_TESTS = -I$(IDIR_CORTEX_VAR_TESTS) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_HASH) -I$(IDIR_CORTEX_VAR) -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_CUNIT) -I$(IDIR_GSL) -L/home/zam/bin/lib
 CFLAGS_CORTEX_VAR_CMD_LINE_TESTS = -I$(IDIR_CORTEX_VAR_TESTS) -I$(IDIR_CORTEX_VAR_CMD_LINE) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
 
 
@@ -119,7 +120,7 @@ cortex_con : remove_objects $(GRAPH_OBJ)
 	mkdir -p $(BIN); $(CC) -lm $(OPT) $(OPT_COLS) -o $(BIN)/cortex_con_$(MAXK) $(GRAPH_OBJ)
 
 cortex_var : remove_objects $(CORTEX_VAR_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR) -lm $(OPT) $(OPT_COLS) -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR) -lm -lgsl -lgslcblas $(OPT) $(OPT_COLS) -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ)
 
 run_basic_tests : remove_objects $(BASIC_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(OPT) $(CFLAGS_BASIC) $(CFLAGS_CUNIT) -o $(BIN)/run_basic_tests_$(MAXK) $(BASIC_TESTS_OBJ) -lcunit
@@ -131,7 +132,7 @@ run_cortex_var_cmdline_tests : remove_objects $(CORTEX_VAR_CMD_LINE_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS) $(OPT)  -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) -lcunit
 
 run_cortex_var_tests : remove_objects $(CORTEX_VAR_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_TESTS) -lm $(OPT)  -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) -lcunit
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_TESTS) -lm -lgsl -lgslcblas $(OPT)  -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) -lcunit
 
 .PHONY : clean
 clean :

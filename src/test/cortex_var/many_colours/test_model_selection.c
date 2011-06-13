@@ -138,7 +138,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   //----------------------------------
   // allocate the memory used to read the sequences
   //----------------------------------
-  int max_read_length = 26;
+  int max_read_length = 30;
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
     fputs("Out of memory trying to allocate Sequence\n",stderr);
@@ -188,7 +188,8 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 							       seq, kmer_window, db_graph, 0);
   int br2len = align_next_read_to_graph_and_return_node_array(br2_fptr, max_read_length, br2_path, br2_or,  true, file_reader,
 							       seq, kmer_window, db_graph, 0);
-
+  fclose(br1_fptr);
+  fclose(br2_fptr);
   VariantBranchesAndFlanks var;
   var.one_allele     = br1_path;
   var.len_one_allele = br1len;
@@ -200,8 +201,10 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   graph_info_initialise(&ginfo);
   for (i=0; i<100; i++)
     {
-      graph_info_set_seq(&ginfo, i, 2000);
-      graph_info_set_mean_readlen(&ginfo, i, 12);
+      long long total_seq = 4000;
+      int mean_read_len = 24; //these choices explained below
+      graph_info_set_seq(&ginfo, i, total_seq);
+      graph_info_set_mean_readlen(&ginfo, i, mean_read_len);
     }
   GraphAndModelInfo model_info;
   long long genome_len=100;
@@ -209,7 +212,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   double err = 0.01;
   initialise_model_info(&model_info, &ginfo, genome_len, mu, err);
   AnnotatedPutativeVariant annovar;
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len, kmer_size);
+  int ref_col=-1; //no reference
 
 
   clean_up(db_graph);
@@ -217,25 +220,23 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 
   //Now we are ready to start
 
-  //1. Set up so all colours have both alleles with coverage 10
-  //   We tell it read_length was 12, depth was 20, so expected depth at hom site is 10.
-  //   Genome length? Total covg? Fix them so total covg/genome length = 20
-  // say genome length=100, sequence covg = 2000;
+  // 1. Repeat. Every haplotype has two copies. Lets say read length is 24, depth is 40x, k is 13. Then expected depth on a single
+  //    allele is 20*(24-13+1)/24 = 10.
+  //    Set up so all colours have both alleles with coverage 20
+
+  //   Genome length? Total covg? Fix them so total covg/genome length = 40
+  // say genome length=100, sequence covg = 4000;
 
   for (i=0; i<100; i++)
     {
-      set_coverage_on_bubble(10, 10, &var, i);
+      set_coverage_on_bubble(20, 20, &var, i);
     }
   
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size);
+  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size,-1);
   
   double ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
-  printf("when everyone is het, bayes factor of var/rep - %f - if this is <0 this has correctly called it as a repeat\n", ret);
+
   CU_ASSERT(ret<0);//called as a repeat
-  for (i=0; i<100; i++)
-    {
-      CU_ASSERT(annovar.genotype[i]==het); //if it WERE a variant, would call het
-    }
   clean_up(db_graph);
 
 
@@ -261,12 +262,12 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(0,10, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size);
+  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size,ref_col);
 
-  printf("START interesting\n");
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
+
   CU_ASSERT(ret>0);//called as a variant
-  printf("\n\nNow we have a HW example, and the bf is %f - should be positive\n", ret);
+
   for (i=0; i<50; i++)
     {
       CU_ASSERT(annovar.genotype[i]==het); 
@@ -280,7 +281,6 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       CU_ASSERT(annovar.genotype[i]==hom_other); 
     }
   clean_up(db_graph);
-  /*
 
 
 
@@ -290,69 +290,66 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 
   // 3.  Allele1 has 95% frequency, so 10% of people are hets, 90% of people are hom_one, and 0.2% of people are hom_other
   //     which we treat as zero.
-  //     We tell it read_length was 12, depth was 20, so expected depth at hom site is 10.
-  //     Genome length? Total covg? Fix them so total covg/genome length = 20
-  //     say genome length=100, sequence covg = 2000;  
 
-  //   Colours 0 to 89 will be het. Give both alleles covg 5 for these
-  //   Colours 90 to 99 will be hom_one, covg 10 on first allele and 0 on the other
+  //   Colours 0 to 89 will be hom_one. Give both alleles covg 5 for these
+  //   Colours 90 to 99 will be het, covg 10 on first allele and 0 on the other
 
   for (i=0; i<90; i++)
-    {
-      set_coverage_on_bubble(5,5, &var, i);
-    }
-  for (i=90; i<100; i++)
     {
       set_coverage_on_bubble(10,0, &var, i);
     }
+  for (i=90; i<100; i++)
+    {
+      set_coverage_on_bubble(5,5, &var, i);
+    }
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size);
+  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size, ref_col);
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
+
   CU_ASSERT(ret>0);//called as a variant
   for (i=0; i<90; i++)
     {
-      CU_ASSERT(annovar.genotype[i]==het); 
+      CU_ASSERT(annovar.genotype[i]==hom_one); 
     }
   for (i=90; i<100; i++)
     {
-      CU_ASSERT(annovar.genotype[i]==hom_one); 
+      CU_ASSERT(annovar.genotype[i]==het); 
     }
   clean_up(db_graph);
 
 
 
 
+
   // 4.  Allele1 has 95% frequency, so 10% of people are hets, 90% of people are hom_one, and 0.2% of people are hom_other
   //     which we treat as ONE PERSON <<<< this is the only difference with the last test
-  //     We tell it read_length was 12, depth was 20, so expected depth at hom site is 10.
-  //     Genome length? Total covg? Fix them so total covg/genome length = 20
-  //     say genome length=100, sequence covg = 2000;  
 
-  //   Colours 0 to 89 will be het. Give both alleles covg 5 for these
-  //   Colours 90 to 98 will be hom_one, covg 10 on first allele and 0 on the other
+
+  //   Colours 0 to 89 will be hom_one. Give both alleles covg 5 for these
+  //   Colours 90 to 98 will be het, covg 10 on first allele and 0 on the other
   //   Colour 99 will be hom_other, given covg 10 on second allele and 0 on first
   for (i=0; i<90; i++)
     {
-      set_coverage_on_bubble(5,5, &var, i);
+      set_coverage_on_bubble(10,0, &var, i);
     }
   for (i=90; i<99; i++)
     {
-      set_coverage_on_bubble(10,0, &var, i);
+      set_coverage_on_bubble(5,5, &var, i);
     }
   set_coverage_on_bubble(0,10, &var, 99);
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size);
+  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size, ref_col);
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret>0);//called as a variant
   for (i=0; i<90; i++)
     {
-      CU_ASSERT(annovar.genotype[i]==het); 
+      CU_ASSERT(annovar.genotype[i]==hom_one); 
     }
   for (i=90; i<99; i++)
     {
-      CU_ASSERT(annovar.genotype[i]==hom_one); 
+      CU_ASSERT(annovar.genotype[i]==het); 
     }
   CU_ASSERT(annovar.genotype[i]==hom_other); 
 
@@ -361,50 +358,56 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 
   // 5.  Repeat, everybody has some covg of both alleles
   //   
-  //     We tell it read_length was 12, depth was 20, so expected depth at hom site is 10.
-  //     Genome length? Total covg? Fix them so total covg/genome length = 20
-  //     say genome length=100, sequence covg = 2000;  
 
   for (i=0; i<20; i++)
     {
-      set_coverage_on_bubble(10,10, &var, i);
+      set_coverage_on_bubble(20,20, &var, i);
     }
   for (i=21; i<40; i++)
     {
-      set_coverage_on_bubble(6,1, &var, i);
+      set_coverage_on_bubble(16,11, &var, i);
     }
   for (i=41; i<60; i++)
     {
-      set_coverage_on_bubble(7,8, &var, i);
+      set_coverage_on_bubble(17,18, &var, i);
     }
   for (i=61; i<80; i++)
     {
-      set_coverage_on_bubble(100,23000, &var, i);
+      set_coverage_on_bubble(20,20, &var, i);
     }
-  for (i=81; i<100; i++)
+  for (i=81; i<90; i++)
     {
-      set_coverage_on_bubble(5,5, &var, i);
+      set_coverage_on_bubble(12,20, &var, i);
+    }
+  for (i=91; i<100; i++)
+    {
+      set_coverage_on_bubble(2,5, &var, i);
     }
 
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size);
-  
+  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size, ref_col);
+
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret<0);//called as a repeat
-  for (i=0; i<100; i++)
-    {
-      CU_ASSERT(annovar.genotype[i]==het); 
-    }
 
 
 
 
 
   clean_up(db_graph);
-  */
-
-  
 
 
+ 
+
+  //cleanup
+  free_sequence(&seq);
+
+  free(kmer_window->kmer);
+  free(kmer_window);
+  free(br1_path);
+  free(br2_path);
+  free(br1_or);
+  free(br2_or);
+  hash_table_free(&db_graph);
 
 }

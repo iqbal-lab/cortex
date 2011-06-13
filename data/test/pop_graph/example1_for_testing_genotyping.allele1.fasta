@@ -1,2 +1,2 @@
->branch1 -  ref allele - variant base is 13 bases in from start
-GAATTTGTTACAGCAGTAATAGAACA
+>branch1 -  ref allele - variant base is 14 bases in from start. ie first 13mer is same as in allele2
+AGAATTTGTTACAGCAGTAATAGAACA
