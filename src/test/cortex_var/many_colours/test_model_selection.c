@@ -391,11 +391,30 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret< log(100) );//called as a repeat
 
+  clean_up(db_graph);
+
+
+
+  // 6. Suppose we have a repeat that occurs a huge number of times, such as in a reptrotransposon
+
+  for (i=0; i<100; i++)
+    {
+      set_coverage_on_bubble(2000,2000, &var, i);
+    }
+
+
+  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size, ref_col);
+
+  ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
+
+  CU_ASSERT(ret< log(100) );//called as a repeat
+
 
 
 
 
   clean_up(db_graph);
+
 
 
  

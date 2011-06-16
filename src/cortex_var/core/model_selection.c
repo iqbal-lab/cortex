@@ -42,13 +42,6 @@
 #include <db_variants.h>
 
 
-void initialise_stats(LogLikelihoodsAndBayesFactors* stats)
-{
-  stats->log_bayes_factor_var_over_rep = 0;
-  stats->log_bayes_factor_var_over_error = 0;
-  stats->log_bayes_factor_rep_over_error = 0;
-}
-
 void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo, 
 			   long long genome_len, double mu, double seq_err_rate_per_base,
 			   int ref_colour)
@@ -60,21 +53,28 @@ void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo,
   model_info->ref_colour=ref_colour; //if -1, that means no ref colour
 }
 
-void set_BF_var_over_rep(LogLikelihoodsAndBayesFactors* stats, double val)
+/*
+void set_BF_var_over_rep(ModelLogLikelihoodsAndBayesFactors* stats, double val)
 {
   stats->log_bayes_factor_var_over_rep = val;
 }
-
-boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, LogLikelihoodsAndBayesFactors* stats, GraphAndModelInfo* model_info)
+*/
+boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info)
 {
-
-  double log_bf_var_over_rep = get_log_bayesfactor_varmodel_over_repeatmodel(annovar, model_info); 
-
-  int thresh = 100; //demand variant is 100 times as likely as repeat
+  //demand variant is 100 times as likely as repeat
+  int thresh = 100; 
   int lthresh = log(100);
+  double allele_balance_prior = 5;
+
+  //calling these functions sets the values of the likelihoods inside the annovar object/struct
+  calculate_integrated_loglikelihood_of_snp_model_given_data(annovar, model_info);
+  calculate_integrated_loglikelihood_of_repeat_model_given_data(annovar, model_info, allele_balance_prior);
+  
+  double log_bf_var_over_rep = annovar->model_llks.llk_var - annovar->model_llks.llk_rep;
+
   if  (log_bf_var_over_rep> lthresh) 
     {
-      set_BF_var_over_rep(stats, log_bf_var_over_rep);
+      //set_BF_var_over_rep(stats, log_bf_var_over_rep);
       return true;
     }
   else
@@ -133,13 +133,25 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
   //**********
   double len = (double) annovar->len_start - 2; // IMPORTANT   - subtract 2, so you ignore the first and last nodes
 
-  long long  lambda_s[NUMBER_OF_COLOURS];//expected Poisson parameter for depth of covg, for each sample, haploid (ie per allele)
+  if (len<=0)
+    {
+      printf("Should not call calculate_integrated_loglikelihood_of_snp_model_given_data when len_start <=2. Coding error somewhere");
+      exit(1);
+    }
+
+  double  lambda_s[NUMBER_OF_COLOURS];//expected Poisson parameter for depth of covg, for each sample, haploid (ie per allele)
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       //lambda_s = depth of covg * len /2R 
-      long long depth = model_info->ginfo->total_sequence[i] / model_info->genome_len;
+      double depth = model_info->ginfo->total_sequence[i] / model_info->genome_len;
       int  read_len = model_info->ginfo->mean_read_length[i];
+      if (read_len<=0)
+	{
+	  printf("Exiting - you seem to have read length <0\n");
+	  exit(1);
+	}
       lambda_s[i]=  (depth * len /(2*read_len)) ;
+
     }
 
   
@@ -172,22 +184,25 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
 	      llk_samples_b1[j][i]=0;
 	      llk_samples_b2[j][i]=0;
 	    }
-	  continue;
 	}
-      for (j=0; j<3; j++)
+      else
 	{
-	  //read count on allele 1 annovar->theta1[i]
-	  //expected depth of covg on one copy is:lambda_s[i]
-	  //genotype tells you how many copies, so you have 
-	  // on br1 --> Poisson rate es[j]*lambda_s[i] taking value annovar->theta1[i]
-	  // on br2 ->  Poisson rate (2-es[j])*lambda_s[i] taking value annovar->theta2[i]
-	  llk_samples_b1[j][i] = -es[j]*lambda_s[i] + annovar->theta1[i] * log(es[j]*lambda_s[i]) - log_factorial(annovar->theta1[i]);
-	  llk_samples_b2[j][i] = - (2-es[j])*lambda_s[i] + annovar->theta2[i] * log((2-es[j])*lambda_s[i]) - log_factorial(annovar->theta2[i]);
-
-
-	  if ( (llk_samples_b1[j][i]+ llk_samples_b2[j][i] > max[i]) || (max[i]>0) )
+	  for (j=0; j<3; j++)
 	    {
-	      max[i] = llk_samples_b1[j][i] + llk_samples_b2[j][i];
+	      //read count on allele 1 annovar->theta1[i]
+	      //expected depth of covg on one copy is:lambda_s[i]
+	      //genotype tells you how many copies, so you have 
+	      // on br1 --> Poisson rate es[j]*lambda_s[i] taking value annovar->theta1[i]
+	      // on br2 ->  Poisson rate (2-es[j])*lambda_s[i] taking value annovar->theta2[i]
+
+	      llk_samples_b1[j][i] = -es[j]*lambda_s[i] + annovar->theta1[i] * log(es[j]*lambda_s[i]) - gsl_sf_lnfact(annovar->theta1[i]);
+	      llk_samples_b2[j][i] = - (2-es[j])*lambda_s[i] + annovar->theta2[i] * log((2-es[j])*lambda_s[i]) - gsl_sf_lnfact(annovar->theta2[i]);
+	      
+	      
+	      if ( (llk_samples_b1[j][i]+ llk_samples_b2[j][i] > max[i]) || (max[i]>0) )
+		{
+		  max[i] = llk_samples_b1[j][i] + llk_samples_b2[j][i];
+		}
 	    }
 	}
     }
@@ -197,7 +212,9 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
     {
       for (j=0; j<3; j++)
 	{
+
 	  likelihoods[j][i]=exp(llk_samples_b1[j][i] + llk_samples_b2[j][i] - max[i]);
+
 	}
       maxsum +=max[i];
     }
@@ -240,6 +257,9 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
     }
   double llk = maxf + log(local_sum);
 
+  //set the value in the annovar
+  annovar->model_llks.llk_var=llk;
+  //and return it also
   return llk;
 
 }
@@ -324,10 +344,10 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
   double len = (double) annovar->len_start - 2;//ignoring first and last nodes
 
   int r;
-  int max=0;
+  int max=1;
 
   //int mean_observed_cov = (annovar->BigThetaStart)/2;
-  int lambda_per_copy[NUMBER_OF_COLOURS];
+  double lambda_per_copy[NUMBER_OF_COLOURS];
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       if (i==model_info->ref_colour)
@@ -336,10 +356,11 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
 	}
       else
 	{
-	  long long depth = model_info->ginfo->total_sequence[i] / model_info->genome_len;
+	  double depth = model_info->ginfo->total_sequence[i] / model_info->genome_len;
 	  int  read_len = model_info->ginfo->mean_read_length[i];
 	  lambda_per_copy[i]=  (depth * len /(2*read_len)) ;
 	}
+
     }
 
 
@@ -355,8 +376,17 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
 	    }
 	  double pois_rate = lambda_per_copy[i]*2*r; // r copies on each haplotype
 
-	  //add probability that of seeing what we see for idividual i, assuming r copies
-	  copy_number_arr[r] += (annovar->theta1[i]+annovar->theta2[i])*log(pois_rate) - log_factorial(annovar->theta1[i]+annovar->theta2[i])  -pois_rate;
+	  //add log probability of seeing what we see for idividual i, assuming r copies
+	  copy_number_arr[r] += (annovar->theta1[i]+annovar->theta2[i])*log(pois_rate) - gsl_sf_lnfact(annovar->theta1[i]+annovar->theta2[i])  -pois_rate;
+	}
+      if (max>0)//will only happen the first time
+	{
+	  max = copy_number_arr[r];
+	  if (r>1)
+	    {
+	      printf("Should never happen - had positive maximum after the first step\n");
+	      exit(1);
+	    }
 	}
       if (copy_number_arr[r]>max)
 	{
@@ -369,9 +399,12 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
     {
       sum += prior_vec[r-1] * exp(copy_number_arr[r]-max);
     }
+
   double llk_cov = log(sum)+max;
 
-
+  //set the value inside the annovar
+  annovar->model_llks.llk_rep = llk_bal + llk_cov;
+  //but also return it
   return llk_bal + llk_cov;
   
 
@@ -382,9 +415,6 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
 double get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info)
 {
   double allele_balance_prior=5;//goes into symmetric Beta
-  
-  
-
   return calculate_integrated_loglikelihood_of_snp_model_given_data(annovar, model_info)
     - calculate_integrated_loglikelihood_of_repeat_model_given_data(annovar, model_info, allele_balance_prior);
 }
@@ -426,13 +456,13 @@ double ignore_get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVar
       theta2_bar += annovar->theta2[i];
     }
 
-  double log_prob_repeat = log(mu) + log_factorial(theta1_bar) + log_factorial(theta2_bar)
+  double log_prob_repeat = log(mu) + gsl_sf_lnfact(theta1_bar) + gsl_sf_lnfact(theta2_bar)
     - log(annovar->BigThetaStart + 1) - log(alpha) ; //(annovar->BigThetaStart + 1)*log(alpha);
 
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       int thet = annovar->theta1[i]+ annovar->theta2[i];
-      log_prob_repeat +=  thet * log(lambda_s[i]/alpha) - log_factorial(annovar->theta1[i]) - log_factorial(annovar->theta2[i]);
+      log_prob_repeat +=  thet * log(lambda_s[i]/alpha) - gsl_sf_lnfact(annovar->theta1[i]) - gsl_sf_lnfact(annovar->theta2[i]);
     }
   
 

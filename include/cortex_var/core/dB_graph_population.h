@@ -295,7 +295,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
 			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
 			  boolean apply_model_selection, 
-			  boolean (*model_selection_condition)(AnnotatedPutativeVariant*, LogLikelihoodsAndBayesFactors*),
+			  boolean (*model_selection_condition)(AnnotatedPutativeVariant*),
 			  GraphAndModelInfo* model_info);
 
 void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(FILE* fout, int max_length, dBGraph * db_graph, 
@@ -329,7 +329,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 						 boolean exclude_ref_bubbles_first, 
 						 Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*),
 						 boolean apply_model_selection, 
-						 boolean (*model_selection_condition)(AnnotatedPutativeVariant*, LogLikelihoodsAndBayesFactors*, GraphAndModelInfo*),
+						 boolean (*model_selection_condition)(AnnotatedPutativeVariant*, GraphAndModelInfo*),
 						 GraphAndModelInfo* model_info);
 
 

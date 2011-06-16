@@ -111,6 +111,7 @@ typedef struct
   boolean cut_homopolymers;
   boolean remove_pcr_dups;
   //boolean clip_tips;
+  boolean exclude_ref_bubbles;
   boolean remove_seq_errors;
   boolean print_colour_coverages;
   boolean load_colours_only_where_overlap_clean_colour;

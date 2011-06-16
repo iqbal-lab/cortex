@@ -2304,7 +2304,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
 			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
 			  boolean apply_model_selection, 
-			  boolean (*model_selection_condition)(AnnotatedPutativeVariant*, LogLikelihoodsAndBayesFactors*),
+			  boolean (*model_selection_condition)(AnnotatedPutativeVariant*),
 			  GraphAndModelInfo* model_info)
 {
 
@@ -2432,15 +2432,15 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    if (condition(&var)==true) 
 	      {
 
-		LogLikelihoodsAndBayesFactors stats;//results of bayes factor calcs go in here
-		initialise_stats(&stats);
+		//ModelLogLikelihoodsAndBayesFactors stats;//results of bayes factor calcs go in here
+		//initialise_stats(&stats);
 		AnnotatedPutativeVariant annovar;
 		initialise_putative_variant(&annovar, &var, BubbleCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
 					    db_graph->kmer_size, model_info->ref_colour);
 		boolean site_is_variant=true;
 		if (apply_model_selection==true)
 		  {
-		    site_is_variant = model_selection_condition(&annovar, &stats);
+		    site_is_variant = model_selection_condition(&annovar);
 
 		    if (site_is_variant==true)
 		      {
@@ -2450,9 +2450,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		      {
 			fprintf(fout, "FAILS MODEL SELECTION\n");
 		      }
-		    fprintf(fout, "log BF var/repeat   = %.2f\n", stats.log_bayes_factor_var_over_rep);
-		    
-		    
+		    fprintf(fout, "LOG_LIKELIHOODS:\tVAR_MODEL\tREPEAT_MODEL\n\tllk_var:%.2f\tllk_rep:%.2f\n", 
+			    annovar.model_llks.llk_var, annovar.model_llks.llk_rep);
 		  }
 
 		
@@ -2617,7 +2616,6 @@ boolean are_two_lists_identical(const int const * list1, int len_list1, const in
 //UNLESS both lists are identical, in which case we just call bubbles in the union
 //A consequence is that if you call bubbles on 1,2/1,3 you'll get nothing.
 //if exclude_ref_bubbles_first==false, just pass in NULL, NULL for get_colour_ref and get_covg_ref
-//if apply_model_selection==true then  exclude_ref_bubbles_first must be FALSE.
 void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBGraph * db_graph, 
 						 int* first_list, int len_first_list,
 						 int* second_list,  int len_second_list,
@@ -2626,7 +2624,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 						 boolean exclude_ref_bubbles_first, 
 						 Edges (*get_colour_ref)(const dBNode*), int (*get_covg_ref)(const dBNode*),
 						 boolean apply_model_selection, 
-						 boolean (*model_selection_condition)(AnnotatedPutativeVariant*, LogLikelihoodsAndBayesFactors*, GraphAndModelInfo*) ,
+						 boolean (*model_selection_condition)(AnnotatedPutativeVariant*, GraphAndModelInfo*) ,
 						 GraphAndModelInfo* model_info)
 {
 
@@ -2636,13 +2634,13 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
       exit(1);
     }
 
-  boolean model_selection_condition_including_modelinfo(AnnotatedPutativeVariant* annovar, LogLikelihoodsAndBayesFactors* logliks)
+  boolean model_selection_condition_including_modelinfo(AnnotatedPutativeVariant* annovar)
   {
-    return model_selection_condition(annovar, logliks, model_info);
+    return model_selection_condition(annovar, model_info);
   }
 
-  LogLikelihoodsAndBayesFactors stats;
-  initialise_stats(&stats);
+  //  ModelLogLikelihoodsAndBayesFactors stats;
+  // initialise_stats(&stats);
 
 
   Edges get_union_first_list_colours(const dBNode* e)
@@ -2819,16 +2817,18 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 			       print_extra_info,
 			       apply_model_selection, model_selection_condition_including_modelinfo, model_info);
 	}
-      else
+      else// note this if and else is purely for performance. I could just pass &both_conditions_and_avoid_branches_marked_ignore in,
+	  // whether or not we are excludign ref bubbles - if we re not excluding ref bubbles, this is equivalent to &both_conditions
+	  // however it would have a performance cost.
 	{
 	  db_graph_detect_vars(fout, max_length, db_graph, 
 			       &both_conditions_and_avoid_branches_marked_ignore,
 			       &db_node_action_set_status_visited,
 			       &db_node_action_set_status_visited,
-			       &get_union_first_and_second_list_colours, &
-			       get_covg_of_union_first_and_second_list_colours,
+			       &get_union_first_and_second_list_colours, 
+			       &get_covg_of_union_first_and_second_list_colours,
 			       print_extra_info, 
-			       false, NULL, NULL);
+			       apply_model_selection, model_selection_condition_including_modelinfo, model_info);
 	}
     }
   else//the two lists of colours are identical, so we don't demand the branches take different colours!
@@ -2853,7 +2853,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 			       &get_union_first_and_second_list_colours, 
 			       &get_covg_of_union_first_and_second_list_colours,
 			       print_extra_info, 
-			       false, NULL, NULL);
+			       apply_model_selection, model_selection_condition_including_modelinfo, model_info);
 
 	}
     }

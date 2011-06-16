@@ -169,7 +169,7 @@ const char* usage=
   // -v
 "   [--format TYPE] \t\t\t\t\t\t=\t File format for input in se_list and pe_list. All files assumed to be of the same format.\n\t\t\t\t\t\t\t\t\t Type must be FASTQ, FASTA or CTX\n" \
   // -w
-"   [--max_read_len] \t\t\t\t\t\t=\t Maximum read length over all input files. (Mandatory if fastq or fasta files are input.)\n" \
+"   [--max_read_len] \t\t\t\t\t\t=\t For fastq, this is the Maximum read length over all input files.\n\t\t\t\t\t\t\tFor fasta it is the size of chunk in which the reads are read (if reading a whole chromosome a typical value to use is 10000\n\t\t\t\t\t\t\t(Mandatory if fastq or fasta files are input.)\n" \
   // -x
 "   [--print_colour_coverages]\t\t\t\t\t=\t Print coverages in all colours for supernodes and variants.\n" \
   // -y
@@ -198,6 +198,8 @@ const char* usage=
 "   [--require_hw]\t=\t For each bubble found, calculate likelihood of observed coverage \n\t\t\t\t\t\t\t\t\t under 3 models (repeat, error, variation obeying Hardy-Weinberg)\n\t\t\t\t\t\t\t\t\t Only call variants where the bubble is more likely (according to these models) to be a variant.\n" \
   // -L
 "   [--genome_size]\t=\t If you specify --require_hw, you must also specify the (estimated) genome size in bp." \
+  // -M
+"   [--exclude_ref_bubbles]\t=\t If you have specified --ref_colour, this will exclude any bubble in that colour from being called by the Bubble Caller." \
   "\n";
 
 
@@ -307,6 +309,7 @@ int default_opts(CmdLine * c)
   set_string_to_null(c->list_fastaq_to_align, MAX_FILENAME_LEN);
 
   //booleans
+  c->exclude_ref_bubbles=false;
   c->cut_homopolymers = false;
   c->remove_pcr_dups=false;
   //c->clip_tips=false;
@@ -382,6 +385,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"colour_overlaps",required_argument,NULL,'J'},
     {"require_hw",no_argument,NULL,'K'},
     {"genome_size",required_argument,NULL,'L'},
+    {"exclude_ref_bubbles",no_argument,NULL,'M'},
 
     {0,0,0,0}	
   };
@@ -393,7 +397,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:M", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -804,6 +808,10 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  {
 	    errx(1,"[--max_read_len] option requires (positive) integer argument");
 	  }
+	if (atoi(optarg)>20000)
+	  {
+	    errx(1,"You cannot enter a value >20000 for the max_read_len.\n");
+	  }
 	cmdline_ptr->max_read_length = atoi(optarg);
 
 	break ;
@@ -1048,11 +1056,16 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 	  break;
 	}
+    case 'M':
+      {
+	cmdline_ptr->exclude_ref_bubbles=true;
+	break;
+      }
 	
     }
 
 
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:M", long_options, &longopt_index);
 
   }
   return 0;
@@ -1061,6 +1074,18 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
+  
+  if ( (cmd_ptr->exclude_ref_bubbles==true) && (cmd_ptr->ref_colour==-1) )
+    {
+      char tmp[] = "If you specify --exclude_ref_bubbles, then you must specify a reference colour with --ref_colour\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+    }
 
   if ( (cmd_ptr->input_seq ==true) && ( (cmd_ptr->input_colours==true) || (cmd_ptr->input_multicol_bin==true) ) )
     {

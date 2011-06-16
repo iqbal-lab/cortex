@@ -186,7 +186,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
   
   initialise_model_info(&model_info, db_graph_info, cmd_line->genome_size, 
 			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line->ref_colour);
-
+  printf("check - mean read len of colour 1 is %d\n", model_info.ginfo->mean_read_length[1]);
   printf("Detecting bubbles between the union of this set of colours: ");
   int k;
   if (which==1)
@@ -203,7 +203,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	  printf("%d, ", cmd_line->detect_bubbles2_first_colour_list[k]);
 	}
     }
-  printf(" and the union of this set of colours: ");
+  printf("\n and the union of this set of colours: ");
   if (which==1)
     {
       for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_second_colour_list; k++)
@@ -250,7 +250,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
       exit(1);
     }
   
-  boolean (*mod_sel_criterion)(AnnotatedPutativeVariant* annovar, LogLikelihoodsAndBayesFactors* stats,  GraphAndModelInfo* model_info)=NULL;
+  boolean (*mod_sel_criterion)(AnnotatedPutativeVariant* annovar,  GraphAndModelInfo* model_info)=NULL;
   
   if (cmd_line->apply_model_selection_at_bubbles==true)
     {
@@ -258,58 +258,37 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
     }
   
   
-  if (cmd_line->using_ref==false)
+  if (cmd_line->exclude_ref_bubbles==false)
     {
-      if (which==1)
-	{
-	  db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
-						      cmd_line->detect_bubbles1_first_colour_list, 
-						      cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
-						      cmd_line->detect_bubbles1_second_colour_list, 
-						      cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
-						      &detect_vars_condition_always_true, print_appropriate_extra_var_info,
-						      false, NULL, NULL, cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion, 
-						      &model_info);
-	}
-      else
-	{
-	  
-	  db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
-						      cmd_line->detect_bubbles2_first_colour_list, 
-						      cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
-						      cmd_line->detect_bubbles2_second_colour_list, 
-						      cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
-						      &detect_vars_condition_always_true, print_appropriate_extra_var_info,
-						      false, NULL, NULL, cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion,
-						      &model_info);
-	}
+      printf("(First exclude bubbles from ref colour %d) \n", cmd_line->ref_colour);
+    }
+  if (which==1)
+    {
+      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
+						  cmd_line->detect_bubbles1_first_colour_list, 
+						  cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
+						  cmd_line->detect_bubbles1_second_colour_list, 
+						  cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
+						  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
+						  cmd_line->exclude_ref_bubbles, get_col_ref, get_cov_ref, 
+						  cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion, 
+						  &model_info);
     }
   else
     {
-      printf("(First exclude bubbles from ref colour %d) \n", cmd_line->ref_colour);
-      if (which==1)
-	{
-	  db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
-						      cmd_line->detect_bubbles1_first_colour_list, 
-						      cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
-						      cmd_line->detect_bubbles1_second_colour_list, 
-						      cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
-						      &detect_vars_condition_always_true,
-						      print_appropriate_extra_var_info,
-						      true, get_col_ref, get_cov_ref, false, NULL, NULL);
-	}
-      else
-	{
-	  db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
-						      cmd_line->detect_bubbles2_first_colour_list, 
-						      cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
-						      cmd_line->detect_bubbles2_second_colour_list, 
-						      cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
-						      &detect_vars_condition_always_true,
-						      print_appropriate_extra_var_info,
-						      true, get_col_ref, get_cov_ref, false, NULL, NULL);
-	}
+      
+      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
+						  cmd_line->detect_bubbles2_first_colour_list, 
+						  cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
+						  cmd_line->detect_bubbles2_second_colour_list, 
+						  cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
+						  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
+						  cmd_line->exclude_ref_bubbles, get_col_ref, get_cov_ref, 
+						  cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion,
+						  &model_info);
     }
+
+
 }
 
 
@@ -538,6 +517,15 @@ int main(int argc, char **argv){
 	}
       else//for FASTA we do not get read length distribution
 	{
+	  printf("When binaries are built, Cortex calculates the lenth distribution of reads\n");
+	  printf("after quality filters, Ns, PCR duplicates, homopolymer filters have been taked into account\n");
+	  printf("This data is saved in the binary header, if you dump a binary file.\n");
+	  printf("However Cortex does not calculate mean read length of input data if it is FASTA, as it is too\n");
+	  printf("difficult to support arbitrary read lengths (fasta may be an entire chromosome).\n");
+	  printf("This data is primarily used for \"real\" data from fastq files\n");
+	  printf("We therefore just use the value you entered for --max_read_len\n");
+	  printf("Set mean read len in colour 0 to %d\n", cmd_line.max_read_length);
+	  graph_info_set_mean_readlen(&db_graph_info, 0, cmd_line.max_read_length);
 	  graph_info_increment_seq(&db_graph_info, 0, bases_pass_filters_and_loaded);
 	}
 

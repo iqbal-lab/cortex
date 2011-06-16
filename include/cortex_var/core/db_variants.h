@@ -35,6 +35,19 @@
 #include <graph_info.h>
 
 
+typedef struct {
+  double llk_var;
+  double llk_rep;
+  double llk_err;
+  //  double log_bayes_factor_var_over_rep;
+  // double log_bayes_factor_var_over_error;
+  // double log_bayes_factor_rep_over_error;
+} ModelLogLikelihoodsAndBayesFactors;// this is for deciding if a site is variant or repeat or error
+
+void initialise_stats(ModelLogLikelihoodsAndBayesFactors* stats);
+
+
+
 
 //a variant can be hom for oen allele or the other, het or absent in an individual
 typedef enum
@@ -111,6 +124,7 @@ typedef struct {
   //under the model that this IS a variant, compare likelihoods of being hom-br1, het, hom-br2
   zygosity genotype[NUMBER_OF_COLOURS]; //for each colour, genotype calls. determine this by comparing Log Likelihoods of standard model as used for HLA etc
   GenotypeLogLikelihoods gen_log_lh[NUMBER_OF_COLOURS];
+  ModelLogLikelihoodsAndBayesFactors model_llks;
 } AnnotatedPutativeVariant;
 
 
