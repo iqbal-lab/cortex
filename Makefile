@@ -110,7 +110,7 @@ HASH_TABLE_TESTS_OBJ = src/obj/test/hash_table/run_hash_table_tests.o src/obj/co
 
 CORTEX_VAR_TESTS_OBJ = src/obj/test/cortex_var/many_colours/test_db_variants.o src/obj/test/cortex_var/many_colours/test_model_selection.o src/obj/test/cortex_var/many_colours/test_file_reader.o src/obj/test/cortex_var/many_colours/test_pop_load_and_print.o src/obj/test/cortex_var/many_colours/run_sv_trio_tests.o src/obj/test/cortex_var/many_colours/supernode_cmp.o src/obj/test/cortex_var/many_colours/test_pop_supernode_consensus.o src/obj/test/cortex_var/many_colours/test_pop_element.o src/obj/test/cortex_var/many_colours/test_dB_graph_population.o src/obj/cortex_var/many_colours/binary_kmer.o src/obj/cortex_var/many_colours/element.o src/obj/cortex_var/many_colours/seq.o src/obj/cortex_var/many_colours/hash_value.o src/obj/cortex_var/many_colours/hash_table.o src/obj/cortex_var/many_colours/dB_graph.o src/obj/cortex_var/many_colours/file_reader.o src/obj/cortex_var/many_colours/dB_graph_population.o src/obj/cortex_var/many_colours/db_variants.o src/obj/cortex_var/many_colours/event_encoding.o src/obj/cortex_var/many_colours/graph_info.o src/obj/cortex_var/many_colours/model_selection.o src/obj/cortex_var/many_colours/maths.o
 
-CORTEX_VAR_CMD_LINE_TESTS_OBJ = src/obj/cortex_var/many_colours/cmd_line.o src/obj/test/cortex_var/many_colours/test_cmd_line.o src/obj/test/cortex_var/many_colours/run_cmd_line_tests.o src/obj/cortex_var/many_colours/binary_kmer.o src/obj/cortex_var/many_colours/element.o src/obj/cortex_var/many_colours/seq.o src/obj/cortex_var/many_colours/hash_value.o src/obj/cortex_var/many_colours/hash_table.o src/obj/cortex_var/many_colours/dB_graph.o src/obj/cortex_var/many_colours/file_reader.o src/obj/cortex_var/many_colours/dB_graph_population.o src/obj/cortex_var/many_colours/db_variants.o src/obj/cortex_var/many_colours/event_encoding.o
+CORTEX_VAR_CMD_LINE_TESTS_OBJ = src/obj/cortex_var/many_colours/cmd_line.o src/obj/test/cortex_var/many_colours/test_cmd_line.o src/obj/test/cortex_var/many_colours/run_cmd_line_tests.o src/obj/cortex_var/many_colours/binary_kmer.o src/obj/cortex_var/many_colours/element.o src/obj/cortex_var/many_colours/seq.o src/obj/cortex_var/many_colours/hash_value.o src/obj/cortex_var/many_colours/hash_table.o src/obj/cortex_var/many_colours/dB_graph.o src/obj/cortex_var/many_colours/file_reader.o src/obj/cortex_var/many_colours/dB_graph_population.o src/obj/cortex_var/many_colours/db_variants.o src/obj/cortex_var/many_colours/event_encoding.o src/obj/cortex_var/many_colours/graph_info.o src/obj/cortex_var/many_colours/model_selection.o src/obj/cortex_var/many_colours/maths.o
 
 MAXK_AND_TEXT = $(join "", $(MAXK))
 NUMCOLS_AND_TEST = $(join "_c", $(NUM_COLS))
@@ -129,7 +129,7 @@ run_hash_table_tests : remove_objects $(HASH_TABLE_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(OPT) $(CFLAGS_CUNIT) $(CFLAGS_HASH_TABLE_TESTS) -o $(BIN)/run_hash_table_tests_$(MAXK) $(HASH_TABLE_TESTS_OBJ) -lcunit
 
 run_cortex_var_cmdline_tests : remove_objects $(CORTEX_VAR_CMD_LINE_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS) $(OPT)  -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) -lcunit
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS) -lm -lgsl -lgslcblas $(OPT)  -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) -lcunit
 
 run_cortex_var_tests : remove_objects $(CORTEX_VAR_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_TESTS) -lm -lgsl -lgslcblas $(OPT)  -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) -lcunit

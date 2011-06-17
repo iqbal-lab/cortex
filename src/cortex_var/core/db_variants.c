@@ -268,6 +268,15 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
 
   flag1=get_num_effective_reads_on_branch(annovar->br1_covg, var->one_allele, var->len_one_allele);
   flag2=get_num_effective_reads_on_branch(annovar->br2_covg, var->other_allele, var->len_other_allele);
+
+  if ( (flag1==true)||(flag2==true) )
+    {
+      annovar->too_short = true;
+    }
+  else
+    {
+      annovar->too_short = false;
+    }
   
   if (var->len_one_allele < var->len_other_allele)
     {
@@ -277,124 +286,115 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
     {
       annovar->len_start=var->len_other_allele;
     }
-  if (annovar->len_start<2)
+
+  if (annovar->too_short==true)
     {
-      annovar->too_short = true;
+      //deliberately not setting values to zero, for performance reasons.
+      //this annovar should be discarded as soon as this function returns.
     }
-  else
+  else//is a valid putative site
     {
-      annovar->too_short = false;
-    }
-
-  if (    (( (flag1==false) || (flag2==false) ) && (annovar->too_short==true))
-	  ||
-	  (( (flag1==true) || (flag2==true) ) && (annovar->too_short==false))
-	  )
-    {
-      printf("Unexpected inconsistency in initialise_putative_variant - coding error\n");
-      exit(1);
-    }
-
- get_num_effective_reads_on_branch(annovar->theta1, var->one_allele, annovar->len_start);
- get_num_effective_reads_on_branch(annovar->theta2, var->other_allele, annovar->len_start);
-
- int i;
- annovar->BigTheta = 0;
- annovar->BigThetaStart = 0;
-
- for (i=0; i<var->len_one_allele; i++)
-   {
-     if (i==ref_colour)
-       {
-	 continue;
-       }
-     annovar->BigTheta += annovar->br1_covg[i];
-   }
-
- for (i=0; i<var->len_other_allele; i++)
-   {
-     annovar->BigTheta     += annovar->br2_covg[i];
-   }
-
-
-  for (i=0; i<annovar->len_start; i++)
-    {
-      annovar->BigThetaStart += annovar->theta1[i] + annovar->theta2[i];
-    }
-
-  //determine genotype (under assumption/model that this is a variant) for each colour
-
-  for (i=0; i<NUMBER_OF_COLOURS; i++)
-    {
-      initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[i]));
-    }
-
-  for (i=0; i<NUMBER_OF_COLOURS; i++)
-    {
-      double sequencing_depth_of_coverage=0;
-      if (seq_error_rate_per_base==-1)
+      get_num_effective_reads_on_branch(annovar->theta1, var->one_allele, annovar->len_start);
+      get_num_effective_reads_on_branch(annovar->theta2, var->other_allele, annovar->len_start);
+      
+      int i;
+      annovar->BigTheta = 0;
+      annovar->BigThetaStart = 0;
+      
+      for (i=0; i<var->len_one_allele; i++)
 	{
-	  seq_error_rate_per_base=0.01;//default
-	}
-      if (genome_length==-1)
-	{
-	  genome_length=3000000000;//default
-	  printf("ZAM test - I think this check can be removed - this code should never be hit\n");
-	}
-      int mean_read_len=100;
-      if (ginfo !=NULL)
-	{
-	  sequencing_depth_of_coverage=(double) ginfo->total_sequence[i]/genome_length;
-	  mean_read_len = ginfo->mean_read_length[i];
-	}
-      if ( (sequencing_depth_of_coverage==0)|| (annovar->too_short==true) )
-	{
-	  annovar->genotype[i]=absent;
-	}
-      else
-	{
-
-	  get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
-
-	  if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
+	  if (i==ref_colour)
 	    {
-	      if (annovar->gen_log_lh[i].log_lh[hom_one]>=annovar->gen_log_lh[i].log_lh[hom_other])
+	      continue;
+	    }
+	  annovar->BigTheta += annovar->br1_covg[i];
+	}
+      
+      for (i=0; i<var->len_other_allele; i++)
+	{
+	  annovar->BigTheta     += annovar->br2_covg[i];
+	}
+      
+      
+      for (i=0; i<annovar->len_start; i++)
+	{
+	  annovar->BigThetaStart += annovar->theta1[i] + annovar->theta2[i];
+	}
+      
+      //determine genotype (under assumption/model that this is a variant) for each colour
+      
+      for (i=0; i<NUMBER_OF_COLOURS; i++)
+	{
+	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[i]));
+	}
+      
+      for (i=0; i<NUMBER_OF_COLOURS; i++)
+	{
+	  double sequencing_depth_of_coverage=0;
+	  if (seq_error_rate_per_base==-1)
+	    {
+	      seq_error_rate_per_base=0.01;//default
+	    }
+	  if (genome_length==-1)
+	    {
+	      genome_length=3000000000;//default
+	      printf("ZAM test - I think this check can be removed - this code should never be hit\n");
+	    }
+	  int mean_read_len=100;
+	  if (ginfo !=NULL)
+	    {
+	      sequencing_depth_of_coverage=(double) ginfo->total_sequence[i]/genome_length;
+	      mean_read_len = ginfo->mean_read_length[i];
+	    }
+	  if ( (sequencing_depth_of_coverage==0)|| (annovar->too_short==true) )
+	    {
+	      annovar->genotype[i]=absent;
+	    }
+	  else
+	    {
+	      
+	      get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+	      
+	      if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
 		{
-		  annovar->genotype[i]=hom_one;
+		  if (annovar->gen_log_lh[i].log_lh[hom_one]>=annovar->gen_log_lh[i].log_lh[hom_other])
+		    {
+		      annovar->genotype[i]=hom_one;
+		    }
+		  else
+		    {
+		      annovar->genotype[i]=hom_other;
+		    }
+		}
+	      else if (annovar->gen_log_lh[i].log_lh[het]>=annovar->gen_log_lh[i].log_lh[hom_other])
+		{
+		  annovar->genotype[i]=het;
 		}
 	      else
 		{
 		  annovar->genotype[i]=hom_other;
 		}
+	      
+	      /*
+		if ( (annovar->gen_log_lh[i].log_lh[hom_one]> annovar->gen_log_lh[i].log_lh[het]) && (annovar->gen_log_lh[i].log_lh[hom_one]>annovar->gen_log_lh[i].log_lh[hom_other]) )
+		{
+		annovar->genotype[i]=hom_one;
+		}
+		elsif ( (annovar->gen_log_lh[i].log_lh[hom_other]> annovar->gen_log_lh[i].log_lh[het]) && (annovar->gen_log_lh[i].log_lh[hom_other]>annovar->gen_log_lh[i].log_lh[hom_one]) )
+		{
+		annovar->genotype[i]=hom_other;
+		}
+		elsif ( (annovar->gen_log_lh[i].log_lh[het]> annovar->gen_log_lh[i].log_lh[hom_one]) && (annovar->gen_log_lh[i].log_lh[het]>annovar->gen_log_lh[i].log_lh[hom_other]) )
+		{
+		annovar->genotype[i]=het;
+		}
+		
+		else
+		{
+		printf("Coding error - get incompatible combination of bates factors: %f, %f, %f\n", log_bf_hom1_over_het, log_bf_hom1_over_hom2, log_bf_hom1_over_het);
+		exit(1);
+		}*/
 	    }
-	  else if (annovar->gen_log_lh[i].log_lh[het]>=annovar->gen_log_lh[i].log_lh[hom_other])
-	    {
-	      annovar->genotype[i]=het;
-	    }
-	  else
-	    {
-	      annovar->genotype[i]=hom_other;
-	    }
-
-	  /*
-	  if ( (annovar->gen_log_lh[i].log_lh[hom_one]> annovar->gen_log_lh[i].log_lh[het]) && (annovar->gen_log_lh[i].log_lh[hom_one]>annovar->gen_log_lh[i].log_lh[hom_other]) )
-	    {
-	      annovar->genotype[i]=hom_one;
-	    }
-	  elsif ( (annovar->gen_log_lh[i].log_lh[hom_other]> annovar->gen_log_lh[i].log_lh[het]) && (annovar->gen_log_lh[i].log_lh[hom_other]>annovar->gen_log_lh[i].log_lh[hom_one]) )
-	    {
-	      annovar->genotype[i]=hom_other;
-	    }
-	  elsif ( (annovar->gen_log_lh[i].log_lh[het]> annovar->gen_log_lh[i].log_lh[hom_one]) && (annovar->gen_log_lh[i].log_lh[het]>annovar->gen_log_lh[i].log_lh[hom_other]) )
-	    {
-	      annovar->genotype[i]=het;
-	    }
-
-	  else
-	    {
-	      printf("Coding error - get incompatible combination of bates factors: %f, %f, %f\n", log_bf_hom1_over_het, log_bf_hom1_over_hom2, log_bf_hom1_over_het);
-	      exit(1);
-	      }*/
 	}
     }
 
@@ -406,7 +406,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
 //Sometimes we want to take just the start of the branch (if one branch is longer than the other, we may just take the length of the shorter one)
 //and so you enter that in arg3 in that case
 //note these are effective reads, as counting covg in the de Bruijn graph
-//returns false if branch is too short (1 or 2 nodes) to do this
+//returns TRUE if branch is too short (1 or 2 nodes) to do this
 boolean get_num_effective_reads_on_branch(int* array, dBNode** allele, int how_many_nodes)
 {
   int i;

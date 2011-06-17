@@ -99,6 +99,54 @@ void test_get_numbers_from_comma_sep_list()
   CU_ASSERT(ans6==-1);
 
 
+  //list which is just -1 - this means ALL colours
+  char list7[]="-1";
+  int return_list7[NUMBER_OF_COLOURS];
+  int max7 = NUMBER_OF_COLOURS;
+  int ans7=get_numbers_from_comma_sep_list(list7,  return_list7, max7);
+  int i;
+
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      CU_ASSERT(return_list7[i]==i);
+    }
+
+
+  //list which is just one number with a * on the front, means ignore this colour, but take all others
+  char list8[]="*0";
+  int return_list8[NUMBER_OF_COLOURS];
+  int max8 = NUMBER_OF_COLOURS;
+  int ans8=get_numbers_from_comma_sep_list(list8,  return_list8, max8);
+
+  CU_ASSERT(ans8==NUMBER_OF_COLOURS-1);
+  for (i=1; i<NUMBER_OF_COLOURS; i++)
+    {
+      CU_ASSERT(return_list8[i-1]==i);
+    }
+
+
+
+
+  if (NUMBER_OF_COLOURS<10)
+    {
+      printf("We need NUMBER_OF_COLOURS>=10 to run all these cmdline tests - recompile please!\n");
+      exit(1);
+    }
+  //list which is *1,3,4
+  char list9[]="*1,3,4";
+  int return_list9[NUMBER_OF_COLOURS];
+  int max9 = NUMBER_OF_COLOURS;
+  int ans9=get_numbers_from_comma_sep_list(list9,  return_list9, max9);
+
+  CU_ASSERT(ans9==NUMBER_OF_COLOURS-3);
+  CU_ASSERT(return_list9[0]==0);
+  CU_ASSERT(return_list9[1]==2);
+
+  for (i=2; i<NUMBER_OF_COLOURS-3; i++)
+    {
+      CU_ASSERT(return_list9[i]==5+i-2);
+    }
+  
 
 }
 
@@ -161,6 +209,34 @@ void test_parse_colourinfo_argument()
   CU_ASSERT(cmd_line3.detect_bubbles2_second_colour_list[1]==17);
   CU_ASSERT(cmd_line3.detect_bubbles2_second_colour_list[2]==8);
 
+
+
+
+
+
+
+  CmdLine cmd_line4;
+  char arg4[]="-1/*2,3";
+  int len_arg4=strlen(arg4);
+  which=2;
+  parse_colourinfo_argument(&cmd_line4, arg4, len_arg4, text, which);
+
+
+  CU_ASSERT(cmd_line4.num_colours_in_detect_bubbles2_first_colour_list ==NUMBER_OF_COLOURS);
+  int i;
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      CU_ASSERT(cmd_line4.detect_bubbles2_first_colour_list[i]==i);
+    }
+
+  CU_ASSERT(cmd_line4.num_colours_in_detect_bubbles2_second_colour_list==NUMBER_OF_COLOURS-2);
+  
+  CU_ASSERT(cmd_line4.detect_bubbles2_second_colour_list[0]==0);
+  CU_ASSERT(cmd_line4.detect_bubbles2_second_colour_list[1]==1);
+  for (i=2; i<NUMBER_OF_COLOURS-2; i++)
+    {
+      CU_ASSERT(cmd_line4.detect_bubbles2_second_colour_list[i]==4+i-2);
+    }
 
 
 }
@@ -407,19 +483,6 @@ void test_parse_cmdline_inner_loop_are_basic_variables_correctly_set()
   CU_ASSERT_STRING_EQUAL(test15.output_binary_filename, "/path/to/nonexistent/file");
 
   
-  //OUTPUT CONTIGS
-
-  char* argv16[] = {"cortex", "--output_contigs=/nonexistent_file"};
-  
-  //set up a default cmdline
-  CmdLine test16;
-  default_opts(&test16);
-
-  char error_string16[LEN_ERROR_STRING];
-  int err16 = parse_cmdline_inner_loop(2, argv16, sizeof(Element), &test16, error_string16);
-  
-  CU_ASSERT(test16.print_contig_fasta==true);
-  CU_ASSERT_STRING_EQUAL(test16.output_supernodes, "/nonexistent_file");
 
 
   // DETECT_BUBBLES_1

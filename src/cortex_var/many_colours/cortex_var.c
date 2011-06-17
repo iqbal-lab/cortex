@@ -186,7 +186,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
   
   initialise_model_info(&model_info, db_graph_info, cmd_line->genome_size, 
 			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line->ref_colour);
-  printf("check - mean read len of colour 1 is %d\n", model_info.ginfo->mean_read_length[1]);
+
   printf("Detecting bubbles between the union of this set of colours: ");
   int k;
   if (which==1)
@@ -203,7 +203,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	  printf("%d, ", cmd_line->detect_bubbles2_first_colour_list[k]);
 	}
     }
-  printf("\n and the union of this set of colours: ");
+  printf("\nand the union of this set of colours: ");
   if (which==1)
     {
       for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_second_colour_list; k++)
@@ -220,10 +220,15 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
       printf("\n");
     }
   
+
+  if (cmd_line->exclude_ref_bubbles==true)
+    {
+      printf("Will remove bubbles in the reference colour %d before doing any calling\n", cmd_line->ref_colour);
+    }
   
   if (cmd_line->apply_model_selection_at_bubbles==true)
     {
-      printf("Will compare likelihoods of repeat,  and variation (Hardy-Weinberg) models at all bubbles\n");
+      printf("Will compare likelihoods of two models (Repeat and  Variation (Hardy-Weinberg)) at all bubbles,\nand mark those more likely to be repeats for filtering\n");
     }
   
   FILE* fp;
@@ -649,11 +654,23 @@ int main(int argc, char **argv){
 
 	}
     }
+  
+  printf("The following mod is for the sims for the paper only: i need the graphinfo to contain read lengths for the fasta based sim binaries\n");
+  int j;
+  for (j=0; j<NUMBER_OF_COLOURS; j++)
+    {
+      if (db_graph_info.mean_read_length[j]==0)
+	{
+	  graph_info_set_mean_readlen(&db_graph_info, j, cmd_line.max_read_length);
+	}
+    }
+
+
       
   printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));	  
   printf("****************************************\n");
   printf("SUMMARY:\nColour:\tMeanReadLen\tTotalSeq\n");
-  int j;
+
   for (j=0; j<NUMBER_OF_COLOURS; j++)
     {
       printf("%d\t%d\t%qd\n", j, db_graph_info.mean_read_length[j], db_graph_info.total_sequence[j]);

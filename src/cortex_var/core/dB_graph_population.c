@@ -2437,68 +2437,87 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		AnnotatedPutativeVariant annovar;
 		initialise_putative_variant(&annovar, &var, BubbleCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
 					    db_graph->kmer_size, model_info->ref_colour);
-		boolean site_is_variant=true;
-		if (apply_model_selection==true)
+		if (annovar.too_short==false)
 		  {
-		    site_is_variant = model_selection_condition(&annovar);
 
-		    if (site_is_variant==true)
+		    boolean site_is_variant=true;
+		    if (apply_model_selection==true)
 		      {
-			fprintf(fout, "PASSES MODEL SELECTION\n");
+			site_is_variant = model_selection_condition(&annovar);
+			
+			if (site_is_variant==true)
+			  {
+			    fprintf(fout, "PASSES MODEL SELECTION\n");
+			  }
+			else
+			  {
+			    fprintf(fout, "FAILS MODEL SELECTION\n");
+			  }
+			fprintf(fout, "SITE VARIANT vs REPEAT MODEL LOG_LIKELIHOODS:\tllk_var:%.2f\tllk_rep:%.2f\n", 
+				annovar.model_llks.llk_var, annovar.model_llks.llk_rep);
+			int z;
+			fprintf(fout,"Colour/sample\tGT_call\tllk_hom_br1\tllk_het\tllk_hom_br2\n");
+			for (z=0; z<NUMBER_OF_COLOURS; z++)
+			  {
+			    fprintf(fout,"%d\t", z);
+			    if (annovar.genotype[z]==hom_one)
+			      {
+				fprintf(fout,"HOM1\t");
+			      }
+			    else if (annovar.genotype[z]==het)
+			      {
+				fprintf(fout,"HET\t");
+			      }
+			    else if (annovar.genotype[z]==hom_other)
+			      {
+				fprintf(fout,"HOM2\t");
+			      }
+			    else
+			      {
+				fprintf(fout,"NO_CALL\t");
+			      }
+			    fprintf(fout, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
+			    
+			  }
 		      }
-		    else
-		      {
-			fprintf(fout, "FAILS MODEL SELECTION\n");
-		      }
-		    fprintf(fout, "LOG_LIKELIHOODS:\tVAR_MODEL\tREPEAT_MODEL\n\tllk_var:%.2f\tllk_rep:%.2f\n", 
-			    annovar.model_llks.llk_var, annovar.model_llks.llk_rep);
-		  }
-
-		
-		//printf("\nPassed condition - found VARIATION: %i\n",count_vars);
-		count_vars++;
-		
-		//printf("length 5p flank: %i avg_coverage:%5.2f \n",length_flank5p,avg_coverage5p);	    
-		//printf("length branch 1: %i - avg_coverage: %5.2f\n",length1,avg_coverage1);
-		//printf("length branch 2: %i - avg_coverage: %5.2f\n",length2,avg_coverage2);
-		//printf("length 3p flank: %i avg_coverage:%5.2f\n",length_flank3p,avg_coverage3p);
-		
-		
-		//print flank5p - 
-		sprintf(name,"var_%i_5p_flank",count_vars);
-		
-		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length_flank5p,avg_coverage5p,min5p,max5p,
-										     nodes5p[0],orientations5p[0],			
-										     nodes5p[length_flank5p],orientations5p[length_flank5p],				
-										     seq5p,
-										     db_graph->kmer_size,true, get_colour, get_covg);	
-		
-		//print branches
-		sprintf(name,"branch_%i_1",count_vars);
-		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length1,
-										     avg_coverage1,min_coverage1,max_coverage1,
-										     path_nodes1[0],path_orientations1[0],path_nodes1[length1],path_orientations1[length1],
-										     seq1,
-										     db_graph->kmer_size,false, get_colour, get_covg);
-		
-		sprintf(name,"branch_%i_2",count_vars);
-		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length2,
-										     avg_coverage2,min_coverage2,max_coverage2,
-										     path_nodes2[0],path_orientations2[0],path_nodes2[length2],path_orientations2[length2],
-										     seq2,
-										     db_graph->kmer_size,false, get_colour, get_covg);
-		
-		//print flank3p
-		sprintf(name,"var_%i_3p_flank",count_vars);
-		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length_flank3p,avg_coverage3p,min3p,max3p,
-										     nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
-										     seq3p,
-										     db_graph->kmer_size,false, get_colour, get_covg);
-		//ZAMZAM TEMPORARY FOR SIMS sprintf(name,"variant_%i", count_vars);
-		//ZAMZAM TEMPORARY FOR SIM PARSING OF OUTPUT fprintf(fout,"\n%s - extra information\n", name);
-		print_extra_info(&var, fout);
-		
 		    
+		    
+		    count_vars++;
+		
+		    //print flank5p - 
+		    sprintf(name,"var_%i_5p_flank",count_vars);
+		    
+		    print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length_flank5p,avg_coverage5p,min5p,max5p,
+											 nodes5p[0],orientations5p[0],			
+											 nodes5p[length_flank5p],orientations5p[length_flank5p],				
+											 seq5p,
+											 db_graph->kmer_size,true, get_colour, get_covg);	
+		    
+		    //print branches
+		    sprintf(name,"branch_%i_1",count_vars);
+		    print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length1,
+											 avg_coverage1,min_coverage1,max_coverage1,
+											 path_nodes1[0],path_orientations1[0],path_nodes1[length1],path_orientations1[length1],
+											 seq1,
+											 db_graph->kmer_size,false, get_colour, get_covg);
+		    
+		    sprintf(name,"branch_%i_2",count_vars);
+		    print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length2,
+											 avg_coverage2,min_coverage2,max_coverage2,
+											 path_nodes2[0],path_orientations2[0],path_nodes2[length2],path_orientations2[length2],
+											 seq2,
+											 db_graph->kmer_size,false, get_colour, get_covg);
+		    
+		    //print flank3p
+		    sprintf(name,"var_%i_3p_flank",count_vars);
+		    print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length_flank3p,avg_coverage3p,min3p,max3p,
+											 nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
+											 seq3p,
+											 db_graph->kmer_size,false, get_colour, get_covg);
+		    print_extra_info(&var, fout);
+		    
+		    
+		  }
 	      }
 	      
 	    
@@ -2628,11 +2647,11 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 						 GraphAndModelInfo* model_info)
 {
 
-  if ( (exclude_ref_bubbles_first==true) && (apply_model_selection==true) )
-    {
-      printf("Cannot call db_graph_detect_vars_given_lists_of_colours and simultaneoulsy have exclude_ref_bubbles_first=true AND apply_model_selection=true\n");
-      exit(1);
-    }
+  //if ( (exclude_ref_bubbles_first==true) && (apply_model_selection==true) )
+  //  {
+  //    printf("Cannot call db_graph_detect_vars_given_lists_of_colours and simultaneoulsy have exclude_ref_bubbles_first=true AND apply_model_selection=true\n");
+  //    exit(1);
+  //  }
 
   boolean model_selection_condition_including_modelinfo(AnnotatedPutativeVariant* annovar)
   {

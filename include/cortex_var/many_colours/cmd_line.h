@@ -42,7 +42,7 @@
 #define MAX_FILENAME_LEN 1000
 #define MAX_SUFFIX_LEN 100
 #define  MAX_LEN_DETECT_BUB_COLOURINFO 500 //will be info of form 1,2,3/5,6,7,8,9 specifying how you call vars between colours
-#define  MAX_COLOURS_ALLOWED_TO_MERGE 100 //arbitrary limit, can be increased
+#define  MAX_COLOURS_ALLOWED_TO_MERGE 200 //arbitrary limit, can be increased
 #define LEN_ERROR_STRING 200
 
 //typedef enum

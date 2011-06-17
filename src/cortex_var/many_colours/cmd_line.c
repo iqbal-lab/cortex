@@ -159,7 +159,7 @@ const char* usage=
   // -q
 "   [--output_supernodes FILENAME] \t\t\t\t\t=\t Dump a fasta file of all the supernodes (after applying all specified actions on graph).\n" \
   // -r
-"   [--detect_bubbles1 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Find all the bubbles in the graph where the two branches lie in the specified colours\n\t\t\t\t\t\t\t\t\t (after applying all specified actions on graph).\n\t\t\t\t\t\t\t\t\t Typical use would be --detect_bubbles1 1/1 to find hets in colour 1,\n\t\t\t\t\t\t\t\t\t or --detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch is in colour 0 (and not colour1)\n\t\t\t\t\t\t\t\t\t and the other branch is in colour1 (but not colour 0).\n\t\t\t\t\t\t\t\t\t However, one can do more complex things:\n\t\t\t\t\t\t\t\t\t e.g.  --detect_bubbles1 1,2,3/4,5,6 to find bubbles where one branch is in 1,2 or 3 (and not 4,5 or 6)\n\t\t\t\t\t\t\t\t\t and the other branch in colour 4,5 or 6 (but not 1,2, or 3).\n" \
+"   [--detect_bubbles1 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Find all the bubbles in the graph where the two branches lie in the specified colours\n\t\t\t\t\t\t\t\t\t (after applying all specified actions on graph).\n\t\t\t\t\t\t\t\t\t Typical use would be --detect_bubbles1 1/1 to find hets in colour 1,\n\t\t\t\t\t\t\t\t\t or --detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch is in colour 0 (and not colour1)\n\t\t\t\t\t\t\t\t\t and the other branch is in colour1 (but not colour 0).\n\t\t\t\t\t\t\t\t\t However, one can do more complex things:\n\t\t\t\t\t\t\t\t\t e.g.  --detect_bubbles1 1,2,3/4,5,6 to find bubbles where one branch is in 1,2 or 3 (and not 4,5 or 6)\n\t\t\t\t\t\t\t\t\t and the other branch in colour 4,5 or 6 (but not 1,2, or 3).\n\t\t\t\t\t\t\t\t\tSee the manual for a detailed description of the syntax. It is possible to specify \"all colour\" rather than enumerate them eplicitly, and also to exclude colours\n" \
   // -s
 "   [--output_bubbles1 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles1 are dumped to this file.\n" \
   // -t
@@ -1561,43 +1561,119 @@ CmdLine parse_cmdline( int argc, char* argv[], int unit_size)
 
 
 //RELIES on the list (arg1) ending in '\0'.
-    //returns -1 on error
+//returns -1 on error
+//returns -2 if the "list" was just the number -1, which is short-hand for ALL colours please.
 int get_numbers_from_comma_sep_list(char* list, int* return_list, int max_len_return_list)
 {
   int number[max_len_return_list];
 
-  int i;
-  int current=0;
-  number[current]=0;
 
+  //exceptional case - if the list is just "-1" - no commas, just "-1", then this means ALL colours
+  if (strcmp(list, "-1")==0)
+    {
+      int j;
+      if (max_len_return_list<NUMBER_OF_COLOURS)
+	{
+	  printf("Passing array limit of %d int get_numbers_from_comma_sep_list which is less than the number of colours\n", max_len_return_list);
+	  exit(1);
+	}
+      for (j=0; j<NUMBER_OF_COLOURS; j++)
+	{
+	  return_list[j]=j;
+	}
+      
+      return NUMBER_OF_COLOURS;
+    }
 
-  for(i=0;i<strlen(list);i++){
-    if (list[i]==',')
-      {
-	current++;
-	number[current]=0;
-	if (current>=max_len_return_list)
+  //exceptional case - if the list starts with "*," then all the numbers are to be EXCLUDED,
+  if (list[0]=='*')
+    {
+      int colours_to_ignore[MAX_COLOURS_ALLOWED_TO_MERGE];
+
+      int i;
+      int current=0;
+      colours_to_ignore[current]=0;
+
+      for(i=1;i<strlen(list);i++){//start at 1!
+	if (list[i]==',')
 	  {
-	    printf("Too many colours in list\n");
+	    current++;
+	    colours_to_ignore[current]=0;
+	    if (current>=max_len_return_list)
+	      {
+		printf("Too many colours in list\n");
+		return -1;
+	      }
+	  }
+	else{
+	  if ( (list[i]>='0' && list[i]<='9') ||  (i+1 == strlen(list))   ){
+	    colours_to_ignore[current]=colours_to_ignore[current]*10 + (list[i]-'0');
+	  }
+	  else{
+	    printf("This part of cmd-line argument is badly formatted: %s\n", list);
 	    return -1;
 	  }
+	}
       }
-    else{
-      if ( (list[i]>='0' && list[i]<='9') ||  (i+1 == strlen(list))   ){
-	number[current]=number[current]*10 + (list[i]-'0');
-      }
-      else{
-	printf("This part of cmd-line argument is badly formatted: %s\n", list);
-	return -1;
-      }
-    }
-  }
+      
+      int index_in_returnlist=0;
+      //this isn't very efficient but you only doing it once when you parse the cmd-line
+      for (i=0; i<NUMBER_OF_COLOURS; i++)
+	{
+	  int k;
+	  boolean should_we_ignore=false;
+	  for(k=0;k<=current;k++)
+	    {
+	      if (i==colours_to_ignore[k])
+		{
+		  should_we_ignore=true;
+		}
+	    }
+	  if (should_we_ignore==false)
+	    {
+	      return_list[index_in_returnlist]=i;
+	      index_in_returnlist++;
+	    }
 
-  
-  for(i=0;i<=current;i++){
-    return_list[i]=number[i];
-  }
-  return current+1;
+	}
+      return index_in_returnlist;
+    }
+
+  else
+    {
+      int i;
+      int current=0;
+      number[current]=0;
+      
+      
+      for(i=0;i<strlen(list);i++){
+	if (list[i]==',')
+	  {
+	    current++;
+	    number[current]=0;
+	    if (current>=max_len_return_list)
+	      {
+		printf("Too many colours in list\n");
+		return -1;
+	      }
+	  }
+	else{
+	  if ( (list[i]>='0' && list[i]<='9') ||  (i+1 == strlen(list))   ){
+	    number[current]=number[current]*10 + (list[i]-'0');
+	  }
+	  else{
+	    printf("This part of cmd-line argument is badly formatted: %s\n", list);
+	    return -1;
+	  }
+	}
+      }
+      
+      
+      for(i=0;i<=current;i++){
+	return_list[i]=number[i];
+      }
+      return current+1;
+    }
 }
 
 
@@ -1656,6 +1732,27 @@ int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_f
 	    int num_left_colours = get_numbers_from_comma_sep_list(left, left_colours, MAX_COLOURS_ALLOWED_TO_MERGE);
 	    int num_right_colours = get_numbers_from_comma_sep_list(right, right_colours, MAX_COLOURS_ALLOWED_TO_MERGE);
 
+	    /*
+	    if (num_left_colours==-2)//this means you have to merge ALL colours;
+	      {
+		int j;
+		num_left_colours=NUMBER_OF_COLOURS;
+		for (j=0; j<NUMBER_OF_COLOURS; j++)
+		  {
+		    left_colours[j]=j;
+		  }
+	      }
+	    if (num_right_colours==-2)//this means you have to merge ALL colours;
+	      {
+		num_right_colours=NUMBER_OF_COLOURS;
+		int j;
+		for (j=0; j<NUMBER_OF_COLOURS; j++)
+		  {
+		    right_colours[j]=j;
+		  }
+	      }
+	    */
+	    
 
 	    if ( (num_left_colours==-1) || (num_right_colours==-1) )
 	      {
