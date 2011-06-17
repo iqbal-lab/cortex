@@ -137,25 +137,25 @@ void test_get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller()
   CU_ASSERT(t2<t1);
 
 
-  /*
+
   //4. Confidence in a het increases as we increase covg on one of the alleles up from 1
-  t1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,1, 20,20,kmer);
-  t2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,3, 20,20,kmer);
-  t3 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,5, 20,20,kmer);
-  t4 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,10, 20,20,kmer);
+  t1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,1, 20,20,kmer);
+  t2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,3, 20,20,kmer);
+  t3 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,5, 20,20,kmer);
+  t4 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,10, 20,20,kmer);
   CU_ASSERT(t4>t3);
   CU_ASSERT(t3>t2);
   CU_ASSERT(t2>t1);
   
   //5. as we increase the sequencing error rate, confidence in hets with low covg on one allele go down
-  t1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.04, 10,1, 20,20,kmer);
-  t2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.03, 10,1, 20,20,kmer);
-  t3 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.02, 10,1, 20,20,kmer);
+  t1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het,     0.04, 10,1, 20,20,kmer);
+  t2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.04, 10,1, 20,20,kmer);
+  t3 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het,     0.01, 10,1, 20,20,kmer);
   t4 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,1, 20,20,kmer);
-  CU_ASSERT(t4>t3);
-  CU_ASSERT(t3>t2);
-  CU_ASSERT(t2>t1);
-  */
+
+  //higher sequencing error gives lower CONFIDENCE (gap between likelihood of het and hom models)
+  CU_ASSERT(t1-t2 < t3-t4);
+
 
 }
 

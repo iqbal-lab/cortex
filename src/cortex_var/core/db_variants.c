@@ -31,6 +31,8 @@
 #include <dB_graph_population.h>
 #include <maths.h>
 #include <stdlib.h>
+#include <gsl_sf_gamma.h>
+
 
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
@@ -202,18 +204,18 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity
   if (genotype==hom_one)
     {
       //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no unique segment, one shared segment
-      return covg_branch_1*log(theta_one) - theta_one - log_factorial(covg_branch_1)  + (covg_branch_2/kmer) *log(error_rate_per_base) ;
+      return covg_branch_1*log(theta_one) - theta_one - gsl_sf_lnfact(covg_branch_1)  + covg_branch_2 *log(error_rate_per_base) ;
     }
   else if (genotype==hom_other)
     {
       //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no unique segment, one shared segment
-      return covg_branch_2*log(theta_other) - theta_other - log_factorial(covg_branch_2) + (covg_branch_1/kmer) *log(error_rate_per_base)  ;
+      return covg_branch_2*log(theta_other) - theta_other - gsl_sf_lnfact(covg_branch_2) + covg_branch_1 *log(error_rate_per_base)  ;
     }
   else if (genotype==het)
     {
       //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no shared segment, TWO unique segments
-      return (covg_branch_1*log(theta_one/2) - theta_one/2 - log_factorial(covg_branch_1) )
-        + (covg_branch_2*log(theta_other/2) - theta_other/2 - log_factorial(covg_branch_2) );
+      return (covg_branch_1*log(theta_one/2) - theta_one/2 - gsl_sf_lnfact(covg_branch_1) )
+        + (covg_branch_2*log(theta_other/2) - theta_other/2 - gsl_sf_lnfact(covg_branch_2) );
     }
   else
     {
