@@ -168,5 +168,5 @@ long long get_big_theta(AnnotatedPutativeVariant* annovar);
 //utility functions
 boolean get_num_effective_reads_on_branch(int* array, dBNode** allele, int how_many_nodes);
 int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colour, boolean* too_short);
-
+int count_reads_on_allele_in_specific_func_of_colours(dBNode** allele, int len, int (*sum_of_covgs_in_desired_colours)(const Element *), boolean* too_short);
 #endif

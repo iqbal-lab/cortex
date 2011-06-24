@@ -1419,7 +1419,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
       all_entries_are_unique=false;
 
       graph_info_update_mean_readlen_and_total_seq(db_graph_info, index,mean_read_len_in_this_binary, total_seq_in_this_binary);
-
+      printf("Loaded next binary; total kmers in graph is now %qd\n",  hash_table_get_unique_kmers(db_graph) );
     }
 
   fclose(fptr);
@@ -1487,6 +1487,7 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 											 individual_edge_array, which_colour,
 											 only_load_kmers_already_in_hash, colour_clean);
       about_to_load_first_binary_into_empty_graph=false;
+      //printf("Loaded person %d, total kmers in graph %qd\n", which_colour, hash_table_get_unique_kmers(db_graph) );
       which_colour++;
     }
 

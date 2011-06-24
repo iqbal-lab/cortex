@@ -86,8 +86,9 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
     long long ret;
     int offset = 0;
     if (new_entry == false){
-      printf("new_entry must be true in hsi test function");
-      exit(1);
+      offset = db_graph->kmer_size;
+      //printf("new_entry must be true in hsi test function");
+      //exit(1);
     }
     ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
     

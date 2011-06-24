@@ -68,6 +68,7 @@ typedef struct
   int quality_score_offset;
   int max_read_length;
   int max_var_len;
+  int remv_low_covg_sups_threshold;
 
   int detect_bubbles1_first_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];//these are a set of colours to be considered as merged, for purposes of bubble calling
   int num_colours_in_detect_bubbles1_first_colour_list;

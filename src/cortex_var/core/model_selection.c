@@ -66,6 +66,14 @@ boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, Graph
   int lthresh = log(100);
   double allele_balance_prior = 5;
 
+  if (annovar->len_start<=2)
+    {
+      //one of these branches is just too short. Fail this
+      annovar->model_llks.llk_var=12345;
+      annovar->model_llks.llk_rep=12345;
+      return false;
+    }
+
   //calling these functions sets the values of the likelihoods inside the annovar object/struct
   calculate_integrated_loglikelihood_of_snp_model_given_data(annovar, model_info);
   calculate_integrated_loglikelihood_of_repeat_model_given_data(annovar, model_info, allele_balance_prior);
@@ -131,7 +139,9 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
   //*************
   //Expected covg per allele on each sample
   //**********
-  double len = (double) annovar->len_start - 2; // IMPORTANT   - subtract 2, so you ignore the first and last nodes
+  //len is the number of nodes on this branch we are cconsidering as informative
+  double len = (double) annovar->len_start+ 1 - 2; // IMPORTANT   - +1 because number of nodes is var->len_one/other_allele +1, and subtract 2, so you ignore the first and last nodes
+  //double len = (double) annovar->len_start - 2; // IMPORTANT   -  subtract 2, so you ignore the first and last nodes
 
   if (len<=0)
     {
@@ -145,9 +155,9 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
       //lambda_s = depth of covg * len /2R 
       double depth = model_info->ginfo->total_sequence[i] / model_info->genome_len;
       int  read_len = model_info->ginfo->mean_read_length[i];
-      if (read_len<=0)
+      if ( (read_len<=0) && (i != model_info->ref_colour ) )
 	{
-	  printf("Exiting - you seem to have read length <0\n");
+	  printf("Exiting - you seem to have read length %d in colour %d \n", read_len, i);
 	  exit(1);
 	}
       lambda_s[i]=  (depth * len /(2*read_len)) ;
@@ -341,7 +351,7 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
     }
 
   double copy_number_arr[MAX_EXPECTED_REPEAT_COPIES+1];//index j corresponds to j copies
-  double len = (double) annovar->len_start - 2;//ignoring first and last nodes
+  double len = (double) annovar->len_start +1 - 2;//ignoring first and last nodes
 
   int r;
   int max=1;

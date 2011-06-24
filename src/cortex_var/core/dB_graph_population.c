@@ -41,6 +41,9 @@
 #include <limits.h>
 #include <file_reader.h>
 #include <model_selection.h>
+#include <maths.h>
+#include <math.h> //we need both!
+#include <gsl_sf_gamma.h>
 
 void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 						      char * name,
@@ -550,6 +553,47 @@ boolean db_graph_db_node_prune_low_coverage(dBNode * node, int coverage,
 
   }
 
+  return ret;
+}
+
+
+
+boolean db_graph_db_node_prune_without_condition(dBNode * node, 
+						 void (*node_action)(dBNode * node),
+						 dBGraph * db_graph, 
+						 Edges (*get_edge_of_interest)(const Element*),
+						 void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide),
+						 void (*apply_reset_to_specified_edges_2)(dBNode*) )
+{
+
+  boolean ret = true;
+  
+  void nucleotide_action(Nucleotide nucleotide){
+    Orientation next_orientation;
+    Nucleotide reverse_nucleotide;
+    dBNode * next_node;
+    
+
+    //remove evidence in adjacent nodes where they point to this one
+    if (db_node_edge_exist_within_specified_function_of_coloured_edges(node,nucleotide,forward, get_edge_of_interest)){
+      next_node = db_graph_get_next_node(node,forward,&next_orientation,nucleotide,&reverse_nucleotide,db_graph);
+      db_node_reset_specified_edges(next_node,opposite_orientation(next_orientation),reverse_nucleotide, apply_reset_to_specified_edges);
+      
+    }
+    
+    if (db_node_edge_exist_within_specified_function_of_coloured_edges(node,nucleotide,reverse, get_edge_of_interest)){
+      next_node = db_graph_get_next_node(node,reverse,&next_orientation,nucleotide,&reverse_nucleotide,db_graph);
+      db_node_reset_specified_edges(next_node,opposite_orientation(next_orientation),reverse_nucleotide, apply_reset_to_specified_edges);
+      
+    }
+  }
+  
+  nucleotide_iterator(&nucleotide_action);
+  
+  node_action(node);
+  //remove all edges from this node, in colours we care about
+  apply_reset_to_specified_edges_2(node);   
+  
   return ret;
 }
 
@@ -3220,6 +3264,263 @@ void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, Edge
 }
 
 
+//suppose we have a dataset with a lot fo covg. Let's dump graphs at timestamps (1x,2x,10,20x, etc)
+// and then make a multicol graph of it, with the final colour being the final graph with full coverage
+//assumes the last colour is the final timestamp, so gets supernodes in that colour
+void print_covg_stats_for_timestamps_for_supernodes(char* outfile, dBGraph * db_graph, int max_expected_sup)                                         
+{
+
+  FILE* fout = fopen(outfile, "w");
+  if (fout==NULL)
+    {
+      printf("Cannot open output file %s in print_covg_stats_for_timestamps_for_supernodes. Exit\n", outfile);
+      exit(1);
+    }
+
+  dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*max_expected_sup); 
+  Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*max_expected_sup); 
+  Nucleotide*  path_labels       = (Nucleotide*) malloc(sizeof(Nucleotide)*max_expected_sup);
+  char*        supernode_string  = (char*) malloc(sizeof(char)*max_expected_sup+1); //+1 for \0
+
+  if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
+    {
+      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
+      exit(1);
+    }
+
+
+  void print_sup_stats(dBNode* node)
+  {
+    if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
+      {
+	return;
+      }
+    //get the supernode, setting nodes to visited
+    double avg_cov;
+    int min_cov;
+    int max_cov;
+    boolean is_cycle;
+    
+    //length_sup is the number of edges in the supernode
+    int length_sup =  db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_expected_sup,
+										&db_node_action_set_status_visited,
+										path_nodes, path_orientations, path_labels, supernode_string,
+										&avg_cov,&min_cov, &max_cov, &is_cycle,
+										db_graph, 
+										&element_get_last_colour,
+										&element_get_covg_last_colour);
+    
+    long long num_sing=0;
+    long long num_doub=0;
+    long long num_proper = 0;
+    //just get stats on length, and covg at each timestamp (colour)
+    if (length_sup>1)
+      {
+	int i;
+	fprintf(fout, "PROPER_SUP\t%d\t", length_sup);
+	for (i=0; i<NUMBER_OF_COLOURS; i++)
+	  {
+	    boolean too_short=false; // we know it won't be too short
+	    int covg=count_reads_on_allele_in_specific_colour(path_nodes, length_sup, i, &too_short);
+	    fprintf(fout, "%d", covg);
+	    if (i<NUMBER_OF_COLOURS-1)
+	      {
+		fprintf(fout, "\t");
+	      }
+	    else
+	      {
+		fprintf(fout, "\n");
+	      }
+	  }
+	num_proper++;
+      }
+    else if (length_sup==1)
+      {
+	num_doub++;
+      }
+    else if (length_sup==0)
+      {
+	num_sing++;
+      }
+    return;
+  }
+
+
+  //traverse graph and get stats:
+
+  hash_table_traverse(&print_sup_stats, db_graph);
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+
+  
+  
+}
+
+
+
+/*
+//this is written for the situation where each colour is a snapshot of the graph with progressivle ymore coverage.
+//the final colour (index NUMBER_OF_COLOURS-1) is the final (presumably uncleaned) graph
+void print_likelihoods_of_realseq_and_error_models_for_supernodes(dBGraph * db_graph, GraphInfo* ginfo, GraphAndModelInfo* model_info,
+								  int max_expected_sup_len)
+{
+  //get distrib of sup lengths and make rough estimate of error rate as 
+  double estimate_e = 0.001;
+
+
+
+
+  dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*max_expected_sup); 
+  Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*max_expected_sup); 
+  Nucleotide*  path_labels       = (Nucleotide*) malloc(sizeof(Nucleotide)*max_expected_sup);
+  char*        supernode_string  = (char*) malloc(sizeof(char)*max_expected_sup+1); //+1 for \0
+
+  if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
+    {
+      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
+      exit(1);
+    }
+
+
+
+  double get_llk_under_trueseq_model(dBNode** supernode, int len)
+  {
+    
+  }
+  double get_llk_under_error_model(dBNode** supernode, int len)
+  {
+    
+  }
+
+  
+
+  void check_supernode(dBNode* node)
+  {
+    if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
+      {
+	return;
+      }
+    //get the supernode, setting nodes to visited
+    double avg_cov;
+    int min_cov;
+    int max_cov;
+    boolean is_cycle;
+    
+    //length_sup is the number of edges in the supernode
+    int length_sup =  db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_expected_sup_len,
+										&db_node_action_set_status_visited,
+										path_nodes, path_orientations, path_labels, supernode_str,
+										&avg_cov,&min_cov, &max_cov, &is_cycle,
+										db_graph, 
+										&element_get_last_colour,
+										&element_get_covg_last_colour);
+    double llk_error = get_llk_under_error_model(path_nodes, length_sup);
+    double llk_trueseq = get_llk_under_trueseq_model(path_nodes, length_sup);
+    printf("SUP\t%.2f\t%.2f\n",llk_trueseq, llk_error);
+    return;
+  }
+  
+  hash_table_traverse(&check_supernode, db_graph);
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+
+}
+
+*/
+
+
+
+/*
+
+//pass in a function which returns false if "to few" colours have any evidence of this supernode. Thus we can remove low frequency
+//variants and in the process, errors.
+boolean db_graph_clean_multicoloured_graph_by_frequency(dBGraph * db_graph, boolean (*do_enough_colours_have_this_supernode)(dBNode**, int), int max_expected_sup )
+{
+
+  dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*max_expected_sup); 
+  Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*max_expected_sup); 
+  Nucleotide*  path_labels       = (Nucleotide*) malloc(sizeof(Nucleotide)*max_expected_sup);
+  char*        supernode_string  = (char*) malloc(sizeof(char)*max_expected_sup+1); //+1 for \0
+
+  if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
+    {
+      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
+      exit(1);
+    }
+  
+  boolean remove_low_freq_sups(dBNode* node)
+  {
+    boolean is_supernode_pruned=true;
+    
+    if (node==NULL)
+      {
+	printf("Called remove_low_freq_sups in db_graph_clean_multicoloured_graph_by_frequency  with a NULL node. Programming error\n");
+	exit(1);
+      }
+
+    if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
+      {
+	//printf("Ignore as status us not none\n\n");
+	is_supernode_pruned=false;
+	return is_supernode_pruned;
+      }
+    
+
+    
+    //get the supernode, setting nodes to visited
+    double avg_cov;
+    int min_cov;
+    int max_cov;
+    boolean is_cycle;
+    
+    //length_sup is the number of edges in the supernode
+    int length_sup =  db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_expected_sup_len,
+										&db_node_action_set_status_visited,
+										path_nodes, path_orientations, path_labels, supernode_str,
+										&avg_cov,&min_cov, &max_cov, &is_cycle,
+										db_graph, 
+										&element_get_colour_union_of_all_colours,
+										&element_get_covg_union_of_all_covgs);
+    
+    
+    if (length_sup <=1)
+      {
+	is_supernode_pruned=false;
+	return is_supernode_pruned;//do nothing. This supernode has no interior, is just 1 or 2 nodes, so cannot prune it
+      }
+    else
+      {
+	int i;
+	if (do_enough_colours_have_this_supernode(path_nodes, length_sup)==false)
+	  {
+	    for (i=1; (i<=length_sup-1); i++)
+	      {
+
+		db_graph_db_node_prune_without_condition(path_nodes[i], 
+							 &db_node_action_set_status_pruned,
+							 db_graph,
+							 &element_get_covg_union_of_all_covgs,&element_get_colour_union_of_all_colours,  apply_reset_to_specified_edges, apply_reset_to_specified_edges_2
+							 );
+		
+	      }
+	  }
+	else
+	  {
+	    //don't prune
+	    is_supernode_pruned=false;
+	  }
+      }
+
+
+    return is_supernode_pruned;
+
+  }
+  
+
+
+}
+
+*/
+
+
 //if the node has covg <= coverage (arg2) and its supernode has length <=kmer+1 AND all the interiro nodes of the supernode have this low covg, then
 //prune the whole of the interior of the supernode
 //note the argument supernode_len is set to -1 if the passed in node has status != none
@@ -3320,6 +3621,178 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
     }
     return is_supernode_pruned;
 }
+
+
+/*
+
+
+
+
+//depth of covg = bp of covg/genome length
+boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than_sampling(dBNode* node, int num_haploid_chroms, 
+											  double total_depth_of_covg, int read_len, 
+											  double error_rate_per_base,
+											  int max_length_allowed_to_prune,
+											  dBGraph* db_graph, int max_expected_sup,
+											  int (*sum_of_covgs_in_desired_colours)(const Element *), 
+											  Edges (*get_edge_of_interest)(const Element*), 
+											  void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+											  void (*apply_reset_to_specified_edges_2)(dBNode*),
+											  dBNode** path_nodes, 
+											  Orientations* path_orientations, 
+											  Nucleotide* path_labels,
+											  char* supernode_string, int* supernode_len)
+{
+
+
+  boolean condition_error_more_likely(dBNode** p_nodes, int len_sp, int num_hap_chroms, 
+				      double  total_dep_of_covg, int rd_len, double err_rate_per_base)
+  {
+    boolean too_short = false;
+    int cov = count_reads_on_allele_in_specific_func_of_colours(p_nodes, len_sp, sum_of_covgs_in_desired_colours, &too_short);
+    if (too_short==true)
+      {
+	return false;
+      }
+    // log of      dpois(c, D_over_R*e*k/3)  * exp(-D_over_R*e*len/3
+    double llk_cov_under_error_model = -total_dep_of_covg*err_rate_per_base*k/3 
+                                       + cov*log(total_dep_of_covg*err_rate_per_base*k/3) 
+                                       - total_dep_of_covg*err_rate_per_base*sp_len/rd_len
+                                       - gsl_sf_lnfact(cov);
+
+    // dpois(c, total_covg*f*(R-k+1)/R)*exp(-total_covg*f*len/R)
+    double llk_cov_under_pop_var_model = -total_dep_of_covg*f
+
+
+
+  }
+
+  boolean is_supernode_pruned=true;
+
+  if (node==NULL)
+    {
+       printf("Called db_graph_remove_supernode_containing_this_node_if_more_likely_error_than_sampling  with a NULL node. Programming error\n");
+      exit(1);
+    }
+
+  if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
+    {
+      //printf("Ignore as status us not none\n\n");
+      *supernode_len=-1;//caller can check this
+      is_supernode_pruned=false;
+      return is_supernode_pruned;
+    }
+
+
+  if (sum_of_covgs_in_desired_colours(node)>0)
+      {
+	//get the supernode, setting nodes to visited
+	double avg_cov;
+	int min_cov;
+	int max_cov;
+	boolean is_cycle;
+	
+	//length_sup is the number of edges in the supernode
+	int length_sup =  db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_expected_sup_len,
+										    &db_node_action_set_status_visited,
+										    path_nodes, path_orientations, path_labels, supernode_str,
+										    &avg_cov,&min_cov, &max_cov, &is_cycle,
+										    db_graph, 
+										    get_edge_of_interest,
+										    sum_of_covgs_in_desired_colours);
+
+	*supernode_len=length_sup;
+
+        if (length_sup > max_length_allowed_to_prune)
+	  {
+	    is_supernode_pruned=false;
+	    return is_supernode_pruned;//do nothing. This is too long 
+	  }
+	else if (length_sup <=1)
+	  {
+	    is_supernode_pruned=false;
+	    return is_supernode_pruned;//do nothing. This supernode has no interior, is just 1 or 2 nodes, so cannot prune it
+	  }
+	else if ( condition_error_more_likely(path_nodes, length_sup, num_haploid_chroms, 
+					      total_depth_of_covg, read_len, error_rate_per_base)==true)
+	  {
+	    for (i=1; (i<=length_sup-1); i++)
+	      {
+		
+		db_graph_db_node_prune_without_condition(path_nodes[i], 
+							 &db_node_action_set_status_pruned,
+							 db_graph,
+							 get_edge_of_interest, apply_reset_to_specified_edges, apply_reset_to_specified_edges_2
+							 );
+	      }
+	  }
+      }
+  else//debug only
+    {
+      //printf("OK - query node has too much covg to consider removing\n");
+      is_supernode_pruned=false;
+    }
+    return is_supernode_pruned;
+
+}
+
+
+
+
+// this can be applied to an individual, or to a pool of low covg individuals
+long long db_graph_remove_errors_from_pool_according_to_model(dBGraph * db_graph, int num_haploid_chroms, long long total_covg,
+							      int read_len, double error_rate_per_base, int max_length_allowed_to_prune,
+							      int (*sum_of_covgs_in_desired_colours)(const Element *), 
+							      Edges (*get_edge_of_interest)(const Element*), 
+							      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+							      void (*apply_reset_to_specified_edges_2)(dBNode*),
+							      int max_expected_sup)
+{
+
+  dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*max_expected_sup); 
+  Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*max_expected_sup); 
+  Nucleotide*  path_labels       = (Nucleotide*) malloc(sizeof(Nucleotide)*max_expected_sup);
+  char*        supernode_string  = (char*) malloc(sizeof(char)*max_expected_sup+1); //+1 for \0
+
+  if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
+    {
+      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
+      exit(1);
+    }
+
+
+  long long prune_supernode_if_it_looks_like_is_more_likely_to_be_error_than_sampling(dBNode* node)
+  {
+
+    int len;
+    boolean is_sup_pruned;
+    
+    is_sup_pruned = db_graph_remove_supernode_containing_this_node_if_more_likely_error_than_sampling(node, num_haploid_chroms, total_covg, read_len, error_rate_per_base,
+												      max_length_allowed_to_prune,
+												      db_graph, max_expected_sup,
+												      sum_of_covgs_in_desired_colours,
+												      get_edge_of_interest,
+												      apply_reset_to_specified_edges, 
+												      apply_reset_to_specified_edges_2,
+												      path_nodes, path_orientations, path_labels,supernode_string,&len);
+    if (is_sup_pruned==true)
+      {
+	return 1;
+      }
+    else
+      {
+	return 0;
+      }
+
+  long long number_of_pruned_supernodes  = hash_table_traverse_returning_sum(&prune_supernode_if_it_looks_like_is_more_likely_to_be_error_than_sampling, db_graph);
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+  return number_of_pruned_supernodes;
+
+  
+}
+*/
+
+
 
 
 // traverse graph. At each node, if covg <= arg1, get its supernode. If that supernode length is <= kmer-length, and ALL interior nodes have covg <= arg1 

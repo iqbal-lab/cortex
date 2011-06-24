@@ -292,8 +292,8 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   // 3.  Allele1 has 95% frequency, so 10% of people are hets, 90% of people are hom_one, and 0.2% of people are hom_other
   //     which we treat as zero.
 
-  //   Colours 0 to 89 will be hom_one. Give both alleles covg 5 for these
-  //   Colours 90 to 99 will be het, covg 10 on first allele and 0 on the other
+  //   Colours 0 to 89 will be hom_one. covg 10 on first allele and 0 on the other
+  //   Colours 90 to 99 will be het, Give both alleles covg 5 for these
 
   for (i=0; i<90; i++)
     {
@@ -307,7 +307,6 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size, ref_col);
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
-
   CU_ASSERT(ret> log(100));//called as a variant
   for (i=0; i<90; i++)
     {

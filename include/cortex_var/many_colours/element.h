@@ -103,13 +103,15 @@ Edges* get_edge(Element, EdgeArrayType, int); //gets pointer to actual edge, so 
 Edges get_edge_copy(const Element e, EdgeArrayType type,int index); //gets copy of edge
 Edges get_union_of_edges(Element e);
 Edges element_get_colour_union_of_all_colours(const Element*);
+
 Edges element_get_colour0(const Element* e);
 Edges element_get_colour1(const Element* e);
+Edges element_get_last_colour(const Element* e);
 
 int element_get_covg_union_of_all_covgs(const dBNode*);
 int element_get_covg_colour0(const dBNode* e);
 int element_get_covg_colour1(const dBNode* e);
-
+int element_get_covg_last_colour(const dBNode* e);
 
 void add_edges(Element*, EdgeArrayType, int, Edges);
 void set_edges(Element*, EdgeArrayType, int, Edges);

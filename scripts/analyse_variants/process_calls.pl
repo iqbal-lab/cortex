@@ -943,7 +943,7 @@ sub get_simple_vcf_entry_pos_and_alleles
 	    else
 	    {
 		$vcf_entry_ref_allele =  substr($flank5p, -1).substr($br2_seq, 0, length($br2_seq) - $align_num_bp_agreement_at_end);
-		$vcf_entry_alt_allele = substr($flank5p, -1).substr($br1_seq, 0, length($br1_seq) - $align_num_bp_agreement_at_end);
+		$vcf_entry_alt_allele =  substr($flank5p, -1).substr($br1_seq, 0, length($br1_seq) - $align_num_bp_agreement_at_end);
 	    }
 	}
 	else
@@ -971,11 +971,13 @@ sub get_simple_vcf_entry_pos_and_alleles
 
 	    if ($what_type eq "snp")
 	    {
-		$vcf_entry_pos        =  $pos-length($br1_seq) + $align_num_bp_agreement_at_end ;
+		$vcf_entry_pos        =  $pos + $align_num_bp_agreement_at_end ;
+		## use this if mapping 5p fank + br1: $vcf_entry_pos        =  $pos-length($br1_seq) + $align_num_bp_agreement_at_end ;
 	    }
 	    else
 	    {
-		$vcf_entry_pos        =  $pos-length($br1_seq)-1 + $align_num_bp_agreement_at_end;
+		$vcf_entry_pos        =  $pos -1 + $align_num_bp_agreement_at_end;
+		## use this if mapping 5p fank + br1:$vcf_entry_pos        =  $pos-length($br1_seq)-1 + $align_num_bp_agreement_at_end;
 	    }
 
 
@@ -1008,6 +1010,7 @@ sub get_simple_vcf_entry_pos_and_alleles
 
 	    if ($what_type eq "snp")
 	    {
+		
 		$vcf_entry_pos        =  $pos-length($br2_seq) + $align_num_bp_agreement_at_end;
 	    }
 	    else

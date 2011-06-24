@@ -129,6 +129,12 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, int 
 							     void (*node_action)(dBNode * node),
 							     dBGraph * db_graph);
 
+boolean db_graph_db_node_prune_without_condition(dBNode * node, 
+						 void (*node_action)(dBNode * node),
+						 dBGraph * db_graph, 
+						 Edges (*get_edge_of_interest)(const Element*),
+						 void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide),
+						 void (*apply_reset_to_specified_edges_2)(dBNode*) );
 
 
 
@@ -344,6 +350,10 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*));
 
 void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
+
+void print_covg_stats_for_timestamps_for_supernodes(char* outfile, dBGraph * db_graph, int max_expected_sup_len);
+
+
 
 // 1. sum_of_covgs_in_desired_colours returns the sum of the coverages for the colours you are interested in
 // 1. the argument get_edge_of_interest is a function that gets the "edge" you are interested in - may be a single edge/colour from the graph, or might be a union of some edges 

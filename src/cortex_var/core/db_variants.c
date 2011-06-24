@@ -465,3 +465,41 @@ int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colou
   return total;
 }
 
+
+//does not count covg on first or last nodes, as they are bifurcation nodes
+//if length==0 or 1  returns -1.
+int count_reads_on_allele_in_specific_func_of_colours(dBNode** allele, int len, int (*sum_of_covgs_in_desired_colours)(const Element *), boolean* too_short)
+{
+
+  if ( (len==0) || (len==1) )
+    {
+      *too_short=true;
+      return -1;
+    }
+
+  //note start at node 1, avoid first node
+  int total= sum_of_covgs_in_desired_colours(allele[1]);
+
+  int i;
+
+  //note we do not go as far as the final node, which is where the two branches rejoin
+  for (i=2; i<len-1; i++)
+    {
+      int jump = sum_of_covgs_in_desired_colours(allele[i]) - sum_of_covgs_in_desired_colours(allele[i-1]);
+
+      //we add a little check to ensure that we ignore isolated nodes with higher covg - we count jumps only if they are signifiers of a new read arriving
+      // and one node does not a read make
+      int diff_between_next_and_prev=-1;
+      if (i<len-2)
+	{
+	  diff_between_next_and_prev=    sum_of_covgs_in_desired_colours(allele[i+1])- sum_of_covgs_in_desired_colours(allele[i-1]);
+	}
+      
+      if ( (jump>0) && (diff_between_next_and_prev!=0) )
+        {
+	      total=total+jump;
+        }
+    }
+  return total;
+}
+

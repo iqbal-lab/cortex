@@ -263,7 +263,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
     }
   
   
-  if (cmd_line->exclude_ref_bubbles==false)
+  if (cmd_line->exclude_ref_bubbles==true)
     {
       printf("(First exclude bubbles from ref colour %d) \n", cmd_line->ref_colour);
     }
@@ -695,8 +695,18 @@ int main(int argc, char **argv){
       printf("Remove nodes that look like sequencing errors. Clip tips first\n");
       db_graph_clip_tips_in_union_of_all_colours(db_graph);
       
-      printf("Then remove low coverage nodes (<= 1) based on topology as well as covg  -  must be more likely to be single base error than due to sampling\n");
-      db_graph_remove_errors_considering_covg_and_topology(1,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
+      printf("Then remove low coverage supernodes covg (<= %d) \n", cmd_line.remv_low_covg_sups_threshold);
+      db_graph_remove_errors_considering_covg_and_topology(cmd_line.remv_low_covg_sups_threshold,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
+							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,
+							   cmd_line.max_var_len);
+      timestamp();
+      printf("Error correction done\n");
+
+    }
+  else if (cmd_line.remv_low_covg_sups_threshold!=1)
+    {
+      printf("Remove low coverage supernodes covg (<= %d) \n", cmd_line.remv_low_covg_sups_threshold);
+      db_graph_remove_errors_considering_covg_and_topology(cmd_line.remv_low_covg_sups_threshold,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
 							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,
 							   cmd_line.max_var_len);
       timestamp();
@@ -748,11 +758,16 @@ int main(int argc, char **argv){
   if (cmd_line.print_supernode_fasta==true)
     {
       timestamp();
+      /* DEBUG ONLY
       printf("Print contigs(supernodes) in the graph created by the union of all colours.\n");
       
       db_graph_print_supernodes_defined_by_func_of_colours(cmd_line.output_supernodes, "", cmd_line.max_var_len,// max_var_len is the public face of maximum expected supernode size
 							   db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
 							   &print_appropriate_extra_supernode_info);
+      */
+      printf("For prototyping: look at covg on supernodes across timestamps (colours)\n");
+      print_covg_stats_for_timestamps_for_supernodes(cmd_line.output_supernodes, db_graph, cmd_line.max_var_len);
+
       timestamp();
       printf("Supernodes dumped\n");
 

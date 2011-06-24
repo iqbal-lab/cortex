@@ -191,7 +191,7 @@ const char* usage=
   // -H
 "   [--align_input_format TYPE] \t\t\t\t\t=\t --align requires a list of fasta or fastq. This option specifies for format as LIST_OF_FASTQ or LIST_OF_FASTA\n"  \
   // -I
-"   [--path_divergence_caller_output PATH_STUB]\t\t\t=\t Specifies the path and beginning of filenames of Path Divergence caller output files.\n\t\t\t\t\t\t\t\t\t One output file will be created per reference fasta listed in --list_ref_fasta\n" \
+"   [--path_divergence_caller_output PATH_STUB]\t\t\t=\t Specifies the path and beginning of filenames of Path Divergence caller output files.\n\t\t\t\t\t\t\t\t\t One output file will be created per  reference fasta listed in --list_ref_fasta\n" \
   // -J
 "   [--colour_overlaps COMMA_SEP_COLOURS/COMMA_SEP_COLOURS]\t=\t Compares each coloured subgraph in the first list with all of the \n\t\t\t\t\t\t\t\t\t coloured subgraphs in the second list. Outputs a matrix to stdout;\n\t\t\t\t\t\t\t\t\t (i,j)-element is the number of nodes in both colour-i (on first list)\n\t\t\t\t\t\t\t\t\t and colour-j (on second list).\n" \
   // -K
@@ -200,6 +200,8 @@ const char* usage=
 "   [--genome_size]\t=\t If you specify --require_hw, you must also specify the (estimated) genome size in bp." \
   // -M
 "   [--exclude_ref_bubbles]\t=\t If you have specified --ref_colour, this will exclude any bubble in that colour from being called by the Bubble Caller." \
+  // -O
+"   [--remove_low_coverage_supernodes]\t=\t Remove all supernodes where max coverage is <= the limit you set. Overrides --remove_seq_errors." \
   "\n";
 
 
@@ -268,6 +270,7 @@ int default_opts(CmdLine * c)
   c->quality_score_offset = 33;//standard fastq, not illumina v-whatever fastq  
   c->max_read_length = 0;
   c->max_var_len = 10000;
+  c->remv_low_covg_sups_threshold=1;
   c->clean_colour=NUMBER_OF_COLOURS+1;//default to an impossible value
   c->num_colours_in_detect_bubbles1_first_colour_list=0;
   initialise_int_list(c->detect_bubbles1_first_colour_list, MAX_COLOURS_ALLOWED_TO_MERGE);
@@ -386,6 +389,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"require_hw",no_argument,NULL,'K'},
     {"genome_size",required_argument,NULL,'L'},
     {"exclude_ref_bubbles",no_argument,NULL,'M'},
+    {"remove_low_coverage_supernodes",required_argument,NULL,'O'},
 
     {0,0,0,0}	
   };
@@ -397,7 +401,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:M", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1061,11 +1065,23 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	cmdline_ptr->exclude_ref_bubbles=true;
 	break;
       }
+    case 'O':
+	{
+	  if (optarg==NULL)
+	    errx(1,"[--remove_low_coverage_supernodes] option requires an integer argument; supernodes with covg<= this limit will be cleaned/removed");
+
+	  cmdline_ptr->remv_low_covg_sups_threshold = atoi(optarg);
+
+	  break;
+	}
 	
+
+
+
     }
 
 
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:M", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:", long_options, &longopt_index);
 
   }
   return 0;

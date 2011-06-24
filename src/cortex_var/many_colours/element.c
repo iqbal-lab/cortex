@@ -163,6 +163,15 @@ Edges element_get_colour_union_of_all_colours(const Element* e)
 }
 
 
+
+Edges element_get_last_colour(const Element* e)
+{
+  int i;
+  Edges edges =  get_edge_copy(*e, individual_edge_array, NUMBER_OF_COLOURS-1);
+  return edges;
+}
+
+
 Edges element_get_colour0(const Element* e)
 {
   Edges edges=get_edge_copy(*e, individual_edge_array,0);
@@ -195,6 +204,11 @@ int element_get_covg_union_of_all_covgs(const dBNode* e)
 int element_get_covg_colour0(const dBNode* e)
 {
   return e->coverage[0];
+}
+
+int element_get_covg_last_colour(const dBNode* e)
+{
+  return e->coverage[NUMBER_OF_COLOURS-1];
 }
 
 int element_get_covg_colour1(const dBNode* e)
