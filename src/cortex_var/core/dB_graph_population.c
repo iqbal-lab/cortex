@@ -2491,11 +2491,11 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			
 			if (site_is_variant==true)
 			  {
-			    fprintf(fout, "PASSES MODEL SELECTION\n");
+			    fprintf(fout, "PASSES CLASSIFIER: fits variation model better than repeat model\n");
 			  }
 			else
 			  {
-			    fprintf(fout, "FAILS MODEL SELECTION\n");
+			    fprintf(fout, "FAILS CLASSIFIER: fits repeat model better than variation model\n");
 			  }
 			fprintf(fout, "SITE VARIANT vs REPEAT MODEL LOG_LIKELIHOODS:\tllk_var:%.2f\tllk_rep:%.2f\n", 
 				annovar.model_llks.llk_var, annovar.model_llks.llk_rep);
@@ -2504,29 +2504,53 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		    if (model_info->expt_type != Unspecified)
 		      {
 			int z;
-			fprintf(fout,"Colour/sample\tGT_call\tllk_hom_br1\tllk_het\tllk_hom_br2\n");
-			for (z=0; z<NUMBER_OF_COLOURS; z++)
+			
+			if ( (model_info->expt_type == EachColourADiploidSample) || (model_info->expt_type ==EachColourADiploidSampleExceptTheRefColour) )
 			  {
-			    fprintf(fout,"%d\t", z);
-			    if (annovar.genotype[z]==hom_one)
+			    fprintf(fout,"Colour/sample\tGT_call\tllk_hom_br1\tllk_het\tllk_hom_br2\n");
+			    for (z=0; z<NUMBER_OF_COLOURS; z++)
 			      {
-				fprintf(fout,"HOM1\t");
+				fprintf(fout,"%d\t", z);
+				if (annovar.genotype[z]==hom_one)
+				  {
+				    fprintf(fout,"HOM1\t");
+				  }
+				else if (annovar.genotype[z]==het)
+				  {
+				    fprintf(fout,"HET\t");
+				  }
+				else if (annovar.genotype[z]==hom_other)
+				  {
+				    fprintf(fout,"HOM2\t");
+				  }
+				else
+				  {
+				    fprintf(fout,"NO_CALL\t");
+				  }
+				fprintf(fout, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
 			      }
-			    else if (annovar.genotype[z]==het)
-			      {
-				fprintf(fout,"HET\t");
-			      }
-			    else if (annovar.genotype[z]==hom_other)
-			      {
-				fprintf(fout,"HOM2\t");
-			      }
-			    else
-			      {
-				fprintf(fout,"NO_CALL\t");
-			      }
-			    fprintf(fout, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
 			  }
-		      }
+			else if ( (model_info->expt_type == EachColourAHaploidSample) || (model_info->expt_type ==EachColourAHaploidSampleExceptTheRefColour) )
+			  {
+			    fprintf(fout,"Colour/sample\tGT_call\tllk_hom_br1\tllk_hom_br2\n");
+			    for (z=0; z<NUMBER_OF_COLOURS; z++)
+			      {
+				fprintf(fout,"%d\t", z);
+				if (annovar.genotype[z]==hom_one)
+				  {
+				    fprintf(fout,"HOM1\t");
+				  }
+				else if (annovar.genotype[z]==hom_other)
+				  {
+				    fprintf(fout,"HOM2\t");
+				  }
+				else
+				  {
+				    fprintf(fout,"NO_CALL\t");
+				  }
+				fprintf(fout, "%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[hom_other]);
+			      }
+			  }
 		      
 		    
 		    
@@ -3666,17 +3690,17 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
     double llk_cov_under_pop_var_model = -total_dep_of_covg*f
     */
 
-    if ((len_sp <= db_graph->kmer_size +1 ) && (cov<=covg_thresh-1))
+    if ((len_sp <= db_graph->kmer_size +1 ) && (cov<=covg_thresh))
       {
 	return true;
       }
-    else if ((len_sp > db_graph->kmer_size +1 ) && (cov<= covg_thresh))
+    else if ((len_sp > db_graph->kmer_size +1 ) && (cov<= covg_thresh+1))
       {
 	return true;
       }
     else
       {
-	return true;
+	return false;
       }
 
 
@@ -3764,6 +3788,7 @@ long long db_graph_remove_supernodes_more_likely_errors_than_sampling(dBGraph * 
 								      int max_expected_sup, int manual_threshold)
 {
 
+  printf("Thesh is %d\n", manual_threshold);
 
   dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*max_expected_sup); 
   Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*max_expected_sup); 

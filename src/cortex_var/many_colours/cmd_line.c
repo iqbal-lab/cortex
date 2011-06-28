@@ -44,6 +44,16 @@
 #define MAX_LINE 500
 
 
+int isNumeric (const char * s)
+{
+  if (s == NULL || *s == '\0')
+    return 0;
+  char * p;
+  strtod (s, &p);
+  return *p == '\0';
+}
+
+
 boolean more_than_one_colour_in_list(char* file)
 {
 
@@ -202,9 +212,10 @@ const char* usage=
 "   [--exclude_ref_bubbles]\t\t\t\t\t=\t If you have specified --ref_colour, this will exclude any bubble in that colour from being called by the Bubble Caller.\n" \
   // -O
 "   [--remove_low_coverage_supernodes]\t\t\t\t=\t Remove all supernodes where max coverage is <= the limit you set. Overrides --remove_seq_errors.\n" \
-  // -P
+  // -P  
 "   [--experiment_type]\t\t\t\t\t\t=\t The statistical models for determining genotype likelihoods, and for deciding if bubbles are repeat or variants,\n\t\t\t\t\t\t\t\t\t require knowledge of whether each sample is a separate diploid/haploid individual. \n\t\t\t\t\t\t\t\t\tEnter type of experiment (EachColourADiploidSample, EachColourADiploidSampleExceptTheRefColour, \n\t\t\t\t\t\t\t\t\tEachColourAHaploidSample,EachColourAHaploidSampleExceptTheRefColour). \n\t\t\t\t\t\t\t\t\tThis is only needed for determining likelihoods, so ignore this is you are pooling samples within a colour (support to be added for this later).\n" \
-  "\n";
+  // Q
+"   [--estimated_error_rate]\t\t\t\t\t\t=\t If you have some idea of the sequencing error rate (per base-pair), enter it here. eg 0.01. Currently used in calculating likelihoods\n";
 
 
 
@@ -260,7 +271,8 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
-
+  c->manually_entered_seq_error_rate=-1;
+  c->manually_override_error_rate=false;
   c->expt_type = Unspecified;
   c->genome_size=0;
   c->kmer_size = 21;
@@ -394,6 +406,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"exclude_ref_bubbles",no_argument,NULL,'M'},
     {"remove_low_coverage_supernodes",required_argument,NULL,'O'},
     {"experiment_type", required_argument, NULL, 'P'},
+    {"estimated_error_rate", required_argument, NULL, 'Q'},
     {0,0,0,0}	
   };
   
@@ -404,7 +417,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1101,28 +1114,115 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	      }
 	    else
 	      {
-	    errx(1,"[--experiment_type] option requires a string argument - the type of experiment. Acceptable options are EachColourADiploidSample, EachColourADiploidSampleExceptTheRefColour, EachColourAHaploidSample, EachColourAHaploidSampleExceptTheRefColour. Your entry was not one of these options");
+		errx(1,"[--experiment_type] option requires a string argument - the type of experiment. Acceptable options are EachColourADiploidSample, EachColourADiploidSampleExceptTheRefColour, EachColourAHaploidSample, EachColourAHaploidSampleExceptTheRefColour. Your entry was not one of these options");
 		
 	      }
-
-	  break;
+	    break;
 	}
+    case 'Q':
+      {
+	if (optarg==NULL)
+	  errx(1,"[--estimated_error_rate] option requires an argument, the per base-pair error rate.");
 	
+	if (isNumeric(optarg))
+	  {
+	    cmdline_ptr->manually_override_error_rate=true;
+	    cmdline_ptr->manually_entered_seq_error_rate = strtod(optarg,NULL);
+	  }
+	else
+	  {
+	    errx(1,"[--estimated_error_rate] option requires an argument, the per base-pair error rate. You have entered a non-numeric value");
+	  }
+	break;
+      }
+      
+    }
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:", long_options, &longopt_index);
+  }   
+  
+  return 0;
+}
+  
 
+int check_cmdline(CmdLine* cmd_ptr, char* error_string)
+{
+  //all colours in detect_bubbles must be less than NUMBER_OF_COLOURS!
+  if (cmd_ptr->detect_bubbles1==true)
+    {
+      int i;
+      for (i=0; i<cmd_ptr->num_colours_in_detect_bubbles1_first_colour_list; i++)
+	{
+	  if (cmd_ptr->detect_bubbles1_first_colour_list[i]>=NUMBER_OF_COLOURS)
+	    {
+	      char tmp[] = "in detect_bubbles1 Cannot specify a number > %d, which you specified at compile time as the number of colours supported. Recompile/see manual.\n";
+	      if (strlen(tmp)>LEN_ERROR_STRING)
+		{
+		  printf("coding error - this string is too long:\n%s\n", tmp);
+		  exit(1);
+		}
+	      strcpy(error_string, tmp);
+	      return -1;
+	    }
+	}
+
+
+      for (i=0; i<cmd_ptr->num_colours_in_detect_bubbles1_second_colour_list; i++)
+	{
+	  if (cmd_ptr->detect_bubbles1_second_colour_list[i]>=NUMBER_OF_COLOURS)
+	    {
+	      char tmp[] = "In detect_bubbles1 , you cannot specify a number > %d, which you specified at compile time as the number of colours supported. Recompile/see manual.\n";
+	      if (strlen(tmp)>LEN_ERROR_STRING)
+		{
+		  printf("coding error - this string is too long:\n%s\n", tmp);
+		  exit(1);
+		}
+	      strcpy(error_string, tmp);
+	      return -1;
+	    }
+	}
 
 
     }
 
 
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:", long_options, &longopt_index);
+    if (cmd_ptr->detect_bubbles2==true)
+    {
+      int i;
+      for (i=0; i<cmd_ptr->num_colours_in_detect_bubbles2_first_colour_list; i++)
+	{
+	  if (cmd_ptr->detect_bubbles2_first_colour_list[i]>=NUMBER_OF_COLOURS)
+	    {
+	      char tmp[] = "in detect_bubbles2, you cannot specify a number > %d, which you specified at compile time as the number of colours supported. Recompile/see manual.\n";
+	      if (strlen(tmp)>LEN_ERROR_STRING)
+		{
+		  printf("coding error - this string is too long:\n%s\n", tmp);
+		  exit(1);
+		}
+	      strcpy(error_string, tmp);
+	      return -1;
+	    }
+	}
 
-  }
-  return 0;
-}
+
+      for (i=0; i<cmd_ptr->num_colours_in_detect_bubbles2_second_colour_list; i++)
+	{
+	  if (cmd_ptr->detect_bubbles2_second_colour_list[i]>=NUMBER_OF_COLOURS)
+	    {
+	      char tmp[] = "In detect_bubbles2, you cannot specify a number > %d, which you specified at compile time as the number of colours supported. Recompile/see manual.\n";
+	      if (strlen(tmp)>LEN_ERROR_STRING)
+		{
+		  printf("coding error - this string is too long:\n%s\n", tmp);
+		  exit(1);
+		}
+	      strcpy(error_string, tmp);
+	      return -1;
+	    }
+	}
 
 
-int check_cmdline(CmdLine* cmd_ptr, char* error_string)
-{
+    }
+
+
 
   if ( (cmd_ptr->expt_type==EachColourADiploidSampleExceptTheRefColour) && (cmd_ptr->ref_colour==-1) )
     {

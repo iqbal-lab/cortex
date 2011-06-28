@@ -90,6 +90,8 @@ typedef struct
   int pd_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
   int num_colours_in_pd_colour_list;
 
+  double manually_entered_seq_error_rate;
+  boolean manually_override_error_rate;
   ExperimentType expt_type;
   
   char colour_list[MAX_FILENAME_LEN];

@@ -673,19 +673,30 @@ int main(int argc, char **argv){
 
   GraphAndModelInfo model_info;
   float repeat_geometric_param_mu = 0.8;
-  float seq_err_rate_per_base = 0.01;
+  float seq_err_rate_per_base;
 
-  if (cmd_line.genome_size !=0)
+  if (cmd_line.manually_override_error_rate==false)
     {
-      long long num_cov1_kmers = db_graph_count_covg1_kmers_in_func_of_colours(db_graph, &get_covg_in_union_all_colours_except_ref);
-      double estim_err = num_cov1_kmers/(cmd_line.genome_size*(db_graph->kmer_size));
-      if (estim_err<1)
+      seq_err_rate_per_base= 0.01;//default, but this may change below
+
+      if (cmd_line.genome_size !=0)
 	{
-	  printf("Estimating sequencing error rate of %f, from number of unique kmers %qd and genome length %qd\n", estim_err, num_cov1_kmers, cmd_line.genome_size);
-	  printf("This is used in error-cleaning (unless you override with --remove_low_covg_supernodes) and likelihood calcs\n");
-	  seq_err_rate_per_base=estim_err;
+	  long long num_cov1_kmers = db_graph_count_covg1_kmers_in_func_of_colours(db_graph, &get_covg_in_union_all_colours_except_ref);
+	  double estim_err = num_cov1_kmers/(cmd_line.genome_size*(db_graph->kmer_size));
+	  if (estim_err<1)
+	    {
+	      printf("Estimating sequencing error rate of %f, from number of unique kmers %qd and genome length %qd\n", estim_err, num_cov1_kmers, cmd_line.genome_size);
+	      printf("This is used in error-cleaning and likelihood calcs. Remember you can override this with --estimated_error_rate\n");
+	      seq_err_rate_per_base=estim_err;
+	    }
 	}
+
     }
+  else
+    {
+      seq_err_rate_per_base=cmd_line.manually_entered_seq_error_rate;
+    }
+
 
   int num_chroms_in_expt;
   if (cmd_line.expt_type==EachColourADiploidSample)
