@@ -28,8 +28,14 @@
 
 // model_selection.h
 
+
 #ifndef MODEL_SELECTION_H_
 #define MODEL_SELECTION_H_
+
+
+#include <graph_info.h>
+#include <db_variants.h>
+#include <experiment.h>
 
 
 #define MAX_EXPECTED_REPEAT_COPIES 10
@@ -42,13 +48,15 @@ typedef struct{
   double mu; //parameter of geometric distirb describing prior for repeat copy number
   double seq_error_rate_per_base;
   int ref_colour;
+  int num_haploid_chromosomes;
+  ExperimentType expt_type;
 } GraphAndModelInfo;
 
 
-void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo, long long genome_len, double mu, double seq_err_rate_per_base, int ref_colour);
 
-//void set_BF_var_over_rep(ModelLogLikelihoodsAndBayesFactors* stats, double val);
 
+
+void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo, long long genome_len, double mu, double seq_err_rate_per_base, int ref_colour, int num_chroms, ExperimentType expt_type);
 
 
 boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info);

@@ -145,7 +145,7 @@ const char* usage=
   // -j
 "   [--remove_pcr_duplicates] \t\t\t\t\t=\t Removes PCR duplicate reads by ignoring read pairs if both \n\t\t\t\t\t\t\t\t\t reads start at the same k-mer as a previous read,\n\t\t\t\t\t\t\t\t\t and single-ended reads if they start at the same k-mer as a previous read\n" \
   // -k
-"   [--cut_homopolymers INT] \t\t\t\t\t=\t Breaks reads at homopolymers of length >= this threshold.\n\t\t\t\t\t\t (i.e. max homopolymer in filtered read==threshold-1, and New read starts after homopolymer)\n" \
+"   [--cut_homopolymers INT] \t\t\t\t\t=\t Breaks reads at homopolymers of length >= this threshold.\n\t\t\t\t\t\t\t\t\t (i.e. max homopolymer in filtered read==threshold-1, and New read starts after homopolymer)\n" \
   // -l
 "   [--path_divergence_caller COMMA_SEP_COLOURS] \t\t=\t Make Path Divergence variant calls.\n\t\t\t\t\t\t\t\t\t Must specify colour of sample in which you want to find\n\t\t\t\t\t\t\t\t\t variants compared with the reference.\n\t\t\t\t\t\t\t\t\t This sample colour can be a union of colours (comma-separated list). \n\t\t\t\t\t\t\t\t\t Must also specify --ref_colour and --list_ref_fasta\n" \
   // -m
@@ -169,7 +169,7 @@ const char* usage=
   // -v
 "   [--format TYPE] \t\t\t\t\t\t=\t File format for input in se_list and pe_list. All files assumed to be of the same format.\n\t\t\t\t\t\t\t\t\t Type must be FASTQ, FASTA or CTX\n" \
   // -w
-"   [--max_read_len] \t\t\t\t\t\t=\t For fastq, this is the Maximum read length over all input files.\n\t\t\t\t\t\t\tFor fasta it is the size of chunk in which the reads are read (if reading a whole chromosome a typical value to use is 10000\n\t\t\t\t\t\t\t(Mandatory if fastq or fasta files are input.)\n" \
+"   [--max_read_len] \t\t\t\t\t\t=\t\t For fastq, this is the Maximum read length over all input files.\n\t\t\t\t\t\t\t\t\tFor fasta it is the size of chunk in which the reads are read (if reading a whole chromosome a typical value to use is 10000. Values above 20000 forbidden.\n\t\t\t\t\t\t\t\t\t(Mandatory if fastq or fasta files are input.)\n" \
   // -x
 "   [--print_colour_coverages]\t\t\t\t\t=\t Print coverages in all colours for supernodes and variants.\n" \
   // -y
@@ -185,7 +185,7 @@ const char* usage=
   // -E
 "   [--load_colours_only_where_overlap_clean_colour INT] \t=\t Only load nodes from binary files in the colour-list when they overlap a\n\t\t\t\t\t\t\t\t\t specific colour (e.g. that contains a cleaned pooled graph);\n\t\t\t\t\t\t\t\t\t requires you to specify this particular colour. You must have loaded that colour beforehand, using --multicolour_bin\n"  \
   // -F
-"   [--successively_dump_cleaned_colours SUFFIX] \t\t\t=\t Only to be used when also using --load_colours_only_where_overlap_clean_colour and --multicolour_bin\n\t\t\t\t\t\t\t\t\t Used to allow error-correction of low-coverage data on large numbers of individuals with large genomes.\n\t\t\t\t\t\t\t\t\t Requires the user specify a suffix which will be added to the names of cleaned binaries. See manual for details.\n"  \
+"   [--successively_dump_cleaned_colours SUFFIX] \t\t=\t Only to be used when also using --load_colours_only_where_overlap_clean_colour and --multicolour_bin\n\t\t\t\t\t\t\t\t\t Used to allow error-correction of low-coverage data on large numbers of individuals with large genomes.\n\t\t\t\t\t\t\t\t\t Requires the user specify a suffix which will be added to the names of cleaned binaries. See manual for details.\n"  \
   // -G
 "   [--align FILENAME] \t\t\t\t\t\t=\t Aligns a list of fasta/q files to the graph, and prints coverage of each kmer in each read in each colour.\n\t\t\t\t\t\t\t\t\t Must also specify --align_input_format, and --max_read_len\n"  \
   // -H
@@ -195,13 +195,15 @@ const char* usage=
   // -J
 "   [--colour_overlaps COMMA_SEP_COLOURS/COMMA_SEP_COLOURS]\t=\t Compares each coloured subgraph in the first list with all of the \n\t\t\t\t\t\t\t\t\t coloured subgraphs in the second list. Outputs a matrix to stdout;\n\t\t\t\t\t\t\t\t\t (i,j)-element is the number of nodes in both colour-i (on first list)\n\t\t\t\t\t\t\t\t\t and colour-j (on second list).\n" \
   // -K
-"   [--require_hw]\t=\t For each bubble found, calculate likelihood of observed coverage \n\t\t\t\t\t\t\t\t\t under 3 models (repeat, error, variation obeying Hardy-Weinberg)\n\t\t\t\t\t\t\t\t\t Only call variants where the bubble is more likely (according to these models) to be a variant.\n" \
+"   [--require_hw]\t\t\t\t\t\t=\t For each bubble found, calculate likelihood of observed coverage \n\t\t\t\t\t\t\t\t\t under 3 models (repeat, error, variation obeying Hardy-Weinberg)\n\t\t\t\t\t\t\t\t\t Only call variants where the bubble is more likely (according to these models) to be a variant.\n" \
   // -L
-"   [--genome_size]\t=\t If you specify --require_hw, you must also specify the (estimated) genome size in bp." \
+"   [--genome_size]\t\t\t\t\t\t=\t If you specify --require_hw, you must also specify the (estimated) genome size in bp.\n" \
   // -M
-"   [--exclude_ref_bubbles]\t=\t If you have specified --ref_colour, this will exclude any bubble in that colour from being called by the Bubble Caller." \
+"   [--exclude_ref_bubbles]\t\t\t\t\t=\t If you have specified --ref_colour, this will exclude any bubble in that colour from being called by the Bubble Caller.\n" \
   // -O
-"   [--remove_low_coverage_supernodes]\t=\t Remove all supernodes where max coverage is <= the limit you set. Overrides --remove_seq_errors." \
+"   [--remove_low_coverage_supernodes]\t\t\t\t=\t Remove all supernodes where max coverage is <= the limit you set. Overrides --remove_seq_errors.\n" \
+  // -P
+"   [--experiment_type]\t\t\t\t\t\t=\t The statistical models for determining genotype likelihoods, and for deciding if bubbles are repeat or variants,\n\t\t\t\t\t\t\t\t\t require knowledge of whether each sample is a separate diploid/haploid individual. \n\t\t\t\t\t\t\t\t\tEnter type of experiment (EachColourADiploidSample, EachColourADiploidSampleExceptTheRefColour, \n\t\t\t\t\t\t\t\t\tEachColourAHaploidSample,EachColourAHaploidSampleExceptTheRefColour). \n\t\t\t\t\t\t\t\t\tThis is only needed for determining likelihoods, so ignore this is you are pooling samples within a colour (support to be added for this later).\n" \
   "\n";
 
 
@@ -259,6 +261,7 @@ void initialise_longlong_list(long long* list, int len)
 int default_opts(CmdLine * c)
 {
 
+  c->expt_type = Unspecified;
   c->genome_size=0;
   c->kmer_size = 21;
   c->bucket_size = 100;
@@ -270,7 +273,7 @@ int default_opts(CmdLine * c)
   c->quality_score_offset = 33;//standard fastq, not illumina v-whatever fastq  
   c->max_read_length = 0;
   c->max_var_len = 10000;
-  c->remv_low_covg_sups_threshold=1;
+  c->remv_low_covg_sups_threshold=-1;
   c->clean_colour=NUMBER_OF_COLOURS+1;//default to an impossible value
   c->num_colours_in_detect_bubbles1_first_colour_list=0;
   initialise_int_list(c->detect_bubbles1_first_colour_list, MAX_COLOURS_ALLOWED_TO_MERGE);
@@ -390,7 +393,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"genome_size",required_argument,NULL,'L'},
     {"exclude_ref_bubbles",no_argument,NULL,'M'},
     {"remove_low_coverage_supernodes",required_argument,NULL,'O'},
-
+    {"experiment_type", required_argument, NULL, 'P'},
     {0,0,0,0}	
   };
   
@@ -401,7 +404,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -654,6 +657,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'o': //use coverage and topology to remove sequencing errors. Not compatible with any other error correction
       {
 	cmdline_ptr->remove_seq_errors = true;
+	cmdline_ptr->remv_low_covg_sups_threshold = 1;
 	break;
       }
 
@@ -1074,6 +1078,35 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 	  break;
 	}
+    case 'P':
+	{
+	  if (optarg==NULL)
+	    errx(1,"[--experiment_type] option requires a string argument - the type of experiment. Acceptable options are EachColourADiploidSample, EachColourADiploidSampleExceptTheRefColour, EachColourAHaploidSample, EachColourAHaploidSampleExceptTheRefColour.");
+
+	    if (strcmp(optarg, "EachColourADiploidSample")==0)
+	      {
+		cmdline_ptr->expt_type = EachColourADiploidSample;
+	      }
+	    else if (strcmp(optarg, "EachColourADiploidSampleExceptTheRefColour")==0)
+	      {
+		cmdline_ptr->expt_type = EachColourADiploidSampleExceptTheRefColour;
+	      } 
+	    else if (strcmp(optarg, "EachColourAHaploidSample")==0)
+	      {
+		cmdline_ptr->expt_type = EachColourAHaploidSample;
+	      }
+	    else if (strcmp(optarg, "EachColourAHaploidSampleExceptTheRefColour")==0)
+	      {
+		cmdline_ptr->expt_type = EachColourAHaploidSampleExceptTheRefColour;
+	      }
+	    else
+	      {
+	    errx(1,"[--experiment_type] option requires a string argument - the type of experiment. Acceptable options are EachColourADiploidSample, EachColourADiploidSampleExceptTheRefColour, EachColourAHaploidSample, EachColourAHaploidSampleExceptTheRefColour. Your entry was not one of these options");
+		
+	      }
+
+	  break;
+	}
 	
 
 
@@ -1081,7 +1114,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     }
 
 
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:", long_options, &longopt_index);
 
   }
   return 0;
@@ -1090,7 +1123,59 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
-  
+
+  if ( (cmd_ptr->expt_type==EachColourADiploidSampleExceptTheRefColour) && (cmd_ptr->ref_colour==-1) )
+    {
+      char tmp[] = "If you specify the experiment as EachColourADiploidSampleExceptTheRefColour, then you need to specify the ref colour\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+    }
+
+  if ( (cmd_ptr->expt_type==EachColourAHaploidSampleExceptTheRefColour) && (cmd_ptr->ref_colour==-1) )
+    {
+      char tmp[] = "If you specify the experiment as EachColourAHaploidSampleExceptTheRefColour, then you need to specify the ref colour\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+    }
+
+  if ( (cmd_ptr->expt_type==EachColourADiploidSample) && (cmd_ptr->ref_colour!=-1) )
+    {
+      char tmp[] = "You have specified a reference colour, and yet also set experiment type to EachColourADiploidSample. Surely you meant EachColourADiploidSampleExceptTheRefColour\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+    }
+
+  if ( (cmd_ptr->expt_type==EachColourAHaploidSample) && (cmd_ptr->ref_colour!=-1) )
+    {
+      char tmp[] = "You have specified a reference colour, and yet also set experiment type to EachColourAHaploidSample. Surely you meant EachColourAHaploidSampleExceptTheRefColour\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+    }
+
+
+
+
+
   if ( (cmd_ptr->exclude_ref_bubbles==true) && (cmd_ptr->ref_colour==-1) )
     {
       char tmp[] = "If you specify --exclude_ref_bubbles, then you must specify a reference colour with --ref_colour\n";
@@ -1557,6 +1642,8 @@ CmdLine parse_cmdline( int argc, char* argv[], int unit_size)
 
   char error_string2[LEN_ERROR_STRING]="";
     
+  //  extra_cmd_line_settings(&cmd_line);//some cmd_line settings depend on other options, and we need to wait til all parsing is done
+
   err = check_cmdline(&cmd_line, error_string2);
 
   if (err == -1)
@@ -1568,8 +1655,6 @@ CmdLine parse_cmdline( int argc, char* argv[], int unit_size)
   return cmd_line;
   
 }
-
-
 
 
 

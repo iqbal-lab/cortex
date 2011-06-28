@@ -161,6 +161,33 @@ long long db_graph_remove_errors_considering_covg_and_topology(int coverage, dBG
 							       void (*apply_reset_to_specified_edges_2)(dBNode*),
 							       int max_expected_sup);
 
+
+boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than_sampling(dBNode* node, int num_haploid_chroms, 
+											  double total_depth_of_covg, int read_len, 
+											  double error_rate_per_base,
+											  int max_length_allowed_to_prune,
+											  dBGraph* db_graph, int max_expected_sup,
+											  int (*sum_of_covgs_in_desired_colours)(const Element *), 
+											  Edges (*get_edge_of_interest)(const Element*), 
+											  void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+											  void (*apply_reset_to_specified_edges_2)(dBNode*),
+											  dBNode** path_nodes, 
+											  Orientation* path_orientations, 
+											  Nucleotide* path_labels,
+											  char* supernode_string, int* supernode_len, int covg_thresh);
+
+
+long long db_graph_remove_supernodes_more_likely_errors_than_sampling(dBGraph * db_graph, GraphInfo* ginfo, GraphAndModelInfo* model_info,
+								       int max_length_allowed_to_prune, 
+								      int (*sum_of_covgs_in_desired_colours)(const Element *), 
+								      Edges (*get_edge_of_interest)(const Element*), 
+								      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+								      void (*apply_reset_to_specified_edges_2)(dBNode*),
+								      int max_expected_sup, int manual_threshold);
+
+
+
+
 int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode * node, Orientation orientation, int limit, 
 									 Nucleotide fst_nucleotide,
 									 void (*node_action)(dBNode * node),

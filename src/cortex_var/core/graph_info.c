@@ -98,10 +98,10 @@ void graph_info_update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,i
 
 
 
-uint64_t get_total_coverage_across_colours(GraphInfo* ginfo, uint64_t genome_length)
+double get_total_depth_of_coverage_across_colours(GraphInfo* ginfo, long long genome_length)
 {
   int i;
-  uint64_t total_seq =0;
+  long long total_seq =0;
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       total_seq += ginfo->total_sequence[i];
@@ -112,7 +112,7 @@ uint64_t get_total_coverage_across_colours(GraphInfo* ginfo, uint64_t genome_len
       printf("Warning - total sequence contained in union of all colours is less than 1x coverage of your genome. Is this really what you intend?\n");
     }
 
-  return total_seq/genome_length;
+  return ((double) total_seq)/ ((double) genome_length);
 }
 
 

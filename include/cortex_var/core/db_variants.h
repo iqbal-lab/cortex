@@ -33,7 +33,7 @@
 #include <element.h>
 #include <dB_graph.h>
 #include <graph_info.h>
-
+#include <experiment.h>
 
 typedef struct {
   double llk_var;
@@ -152,6 +152,7 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
 
 //genotyping of a site known to be a variant
 void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl);
+void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour);
 void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour);
 double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2, 
 									double theta_one, double theta_other, int kmer);
@@ -160,7 +161,7 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity
 
 //set up of Putative Variant object
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var, DiscoveryMethod caller,
-				    GraphInfo* ginfo, double seq_error_per_base, long long genome_length, int kmer, int ref_colour);
+				    GraphInfo* ginfo, double seq_error_per_base, long long genome_length, int kmer, int ref_colour, ExperimentType type);
 long long get_big_theta(AnnotatedPutativeVariant* annovar);
 
 

@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <global.h>
 #include <file_format.h>
+#include <model_selection.h>
 
 #define MAX_FILENAME_LEN 1000
 #define MAX_SUFFIX_LEN 100
@@ -89,6 +90,8 @@ typedef struct
   int pd_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
   int num_colours_in_pd_colour_list;
 
+  ExperimentType expt_type;
+  
   char colour_list[MAX_FILENAME_LEN];
   int num_colours_in_input_colour_list;
   char multicolour_bin[MAX_FILENAME_LEN];

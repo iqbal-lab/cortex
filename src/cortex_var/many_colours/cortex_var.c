@@ -37,6 +37,7 @@
 #include <graph_info.h>
 #include <db_differentiation.h>
 #include <model_selection.h>
+#include <experiment.h>
 
 void timestamp();
 
@@ -176,16 +177,10 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 		      void (*print_appropriate_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
 		      Edges(*get_col_ref) (const dBNode* e),
 		      int (*get_cov_ref)(const dBNode* e),
-		      GraphInfo* db_graph_info
+		      GraphInfo* db_graph_info, ExperimentType expt, GraphAndModelInfo* model_info
 		      )
 {
 
-  GraphAndModelInfo model_info;
-  float repeat_geometric_param_mu = 0.8;
-  float seq_err_rate_per_base = 0.01;
-  
-  initialise_model_info(&model_info, db_graph_info, cmd_line->genome_size, 
-			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line->ref_colour);
 
   printf("Detecting bubbles between the union of this set of colours: ");
   int k;
@@ -231,6 +226,10 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
       printf("Will compare likelihoods of two models (Repeat and  Variation (Hardy-Weinberg)) at all bubbles,\nand mark those more likely to be repeats for filtering\n");
     }
   
+  if (model_info->expt_type==Unspecified)
+    {
+      printf("Since you did not use --experiment_type, Cortex does not know how if each colour is a diploid/haploid sample or pool, so\nwill not calculate genotypes or likelihoods\n");
+    }
   FILE* fp;
   
   if (which==1)
@@ -277,7 +276,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 						  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
 						  cmd_line->exclude_ref_bubbles, get_col_ref, get_cov_ref, 
 						  cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion, 
-						  &model_info);
+						  model_info);
     }
   else
     {
@@ -290,7 +289,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 						  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
 						  cmd_line->exclude_ref_bubbles, get_col_ref, get_cov_ref, 
 						  cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion,
-						  &model_info);
+						  model_info);
     }
 
 
@@ -428,8 +427,41 @@ int main(int argc, char **argv){
       exit(1);
     }
   printf("Hash table created, number of buckets: %d\n",1 << hash_key_bits);
+
+
+  //set up graph and model info:
   GraphInfo db_graph_info;
   graph_info_initialise(&db_graph_info);
+
+  GraphAndModelInfo model_info;
+  float repeat_geometric_param_mu = 0.8;
+  float seq_err_rate_per_base = 0.01;
+  
+  int num_chroms_in_expt;
+  if (cmd_line.expt_type==EachColourADiploidSample)
+    {
+      num_chroms_in_expt=2*NUMBER_OF_COLOURS;
+    }
+  else if (cmd_line.expt_type==EachColourADiploidSampleExceptTheRefColour)
+    {
+      num_chroms_in_expt=2*NUMBER_OF_COLOURS-2;
+    }
+  else if (cmd_line.expt_type==EachColourAHaploidSample)
+    {
+      num_chroms_in_expt=NUMBER_OF_COLOURS;
+    }
+  else if (cmd_line.expt_type==EachColourAHaploidSampleExceptTheRefColour)
+    {
+      num_chroms_in_expt=NUMBER_OF_COLOURS-1;
+    }
+  else if (cmd_line.expt_type==Unspecified)
+    {
+      num_chroms_in_expt=NUMBER_OF_COLOURS;
+    }
+
+
+  initialise_model_info(&model_info, &db_graph_info, cmd_line.genome_size, 
+			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line.ref_colour, num_chroms_in_expt, cmd_line.expt_type);
 
 
 
@@ -695,16 +727,26 @@ int main(int argc, char **argv){
       printf("Remove nodes that look like sequencing errors. Clip tips first\n");
       db_graph_clip_tips_in_union_of_all_colours(db_graph);
       
-      printf("Then remove low coverage supernodes covg (<= %d) \n", cmd_line.remv_low_covg_sups_threshold);
+      /*
+	printf("Then remove low coverage supernodes covg (<= %d) \n", cmd_line.remv_low_covg_sups_threshold);
       db_graph_remove_errors_considering_covg_and_topology(cmd_line.remv_low_covg_sups_threshold,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
-							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,
-							   cmd_line.max_var_len);
+							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,      
+						   cmd_line.max_var_len);
+      */
+      db_graph_remove_supernodes_more_likely_errors_than_sampling(db_graph, &db_graph_info, &model_info,
+								  cmd_line.max_var_len, 
+								  &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
+								  &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,      
+								  cmd_line.max_var_len, cmd_line.remv_low_covg_sups_threshold);
       timestamp();
       printf("Error correction done\n");
 
     }
-  else if (cmd_line.remv_low_covg_sups_threshold!=1)
+  else if (cmd_line.remv_low_covg_sups_threshold!=-1)
     {
+      printf("Clip tips first\n");
+      db_graph_clip_tips_in_union_of_all_colours(db_graph);
+
       printf("Remove low coverage supernodes covg (<= %d) \n", cmd_line.remv_low_covg_sups_threshold);
       db_graph_remove_errors_considering_covg_and_topology(cmd_line.remv_low_covg_sups_threshold,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
 							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,
@@ -790,7 +832,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Start first set of bubble calls\n");
-      run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info);
+      run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, cmd_line.expt_type, &model_info);
 
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -803,7 +845,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Start second set of bubble calls\n");
-      run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info);
+      run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, cmd_line.expt_type, &model_info);
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
       timestamp();

@@ -2480,7 +2480,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		//initialise_stats(&stats);
 		AnnotatedPutativeVariant annovar;
 		initialise_putative_variant(&annovar, &var, BubbleCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
-					    db_graph->kmer_size, model_info->ref_colour);
+					    db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
 		if (annovar.too_short==false)
 		  {
 
@@ -2499,6 +2499,10 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  }
 			fprintf(fout, "SITE VARIANT vs REPEAT MODEL LOG_LIKELIHOODS:\tllk_var:%.2f\tllk_rep:%.2f\n", 
 				annovar.model_llks.llk_var, annovar.model_llks.llk_rep);
+		      }
+
+		    if (model_info->expt_type != Unspecified)
+		      {
 			int z;
 			fprintf(fout,"Colour/sample\tGT_call\tllk_hom_br1\tllk_het\tllk_hom_br2\n");
 			for (z=0; z<NUMBER_OF_COLOURS; z++)
@@ -2521,13 +2525,13 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 				fprintf(fout,"NO_CALL\t");
 			      }
 			    fprintf(fout, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
-			    
 			  }
 		      }
+		      
 		    
 		    
 		    count_vars++;
-		
+		    
 		    //print flank5p - 
 		    sprintf(name,"var_%i_5p_flank",count_vars);
 		    
@@ -3623,7 +3627,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 }
 
 
-/*
+
 
 
 
@@ -3639,9 +3643,10 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
 											  void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 											  void (*apply_reset_to_specified_edges_2)(dBNode*),
 											  dBNode** path_nodes, 
-											  Orientations* path_orientations, 
+											  Orientation* path_orientations, 
 											  Nucleotide* path_labels,
-											  char* supernode_string, int* supernode_len)
+											  char* supernode_string, int* supernode_len,
+											  int covg_thresh)
 {
 
 
@@ -3654,15 +3659,30 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
       {
 	return false;
       }
-    // log of      dpois(c, D_over_R*e*k/3)  * exp(-D_over_R*e*len/3
-    double llk_cov_under_error_model = -total_dep_of_covg*err_rate_per_base*k/3 
-                                       + cov*log(total_dep_of_covg*err_rate_per_base*k/3) 
-                                       - total_dep_of_covg*err_rate_per_base*sp_len/rd_len
+
+    /*
+    // log of      dpois(c, D_over_R*e*k/3)  * exp(-D_over_R*e*len/3)
+    double llk_cov_under_error_model = -total_dep_of_covg*err_rate_per_base*k/(3*rd_len) 
+                                       + cov*log(total_dep_of_covg*err_rate_per_base*k/(3*rd_len)) 
+                                       - total_dep_of_covg*err_rate_per_base*sp_len/(3*rd_len)
                                        - gsl_sf_lnfact(cov);
 
     // dpois(c, total_covg*f*(R-k+1)/R)*exp(-total_covg*f*len/R)
     double llk_cov_under_pop_var_model = -total_dep_of_covg*f
+    */
 
+    if ((len_sp <= db_graph->kmer_size +1 ) && (cov<=covg_thresh-1))
+      {
+	return true;
+      }
+    else if ((len_sp > db_graph->kmer_size +1 ) && (cov<= covg_thresh))
+      {
+	return true;
+      }
+    else
+      {
+	return true;
+      }
 
 
   }
@@ -3693,9 +3713,9 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
 	boolean is_cycle;
 	
 	//length_sup is the number of edges in the supernode
-	int length_sup =  db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_expected_sup_len,
+	int length_sup =  db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_expected_sup,
 										    &db_node_action_set_status_visited,
-										    path_nodes, path_orientations, path_labels, supernode_str,
+										    path_nodes, path_orientations, path_labels, supernode_string,
 										    &avg_cov,&min_cov, &max_cov, &is_cycle,
 										    db_graph, 
 										    get_edge_of_interest,
@@ -3716,6 +3736,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
 	else if ( condition_error_more_likely(path_nodes, length_sup, num_haploid_chroms, 
 					      total_depth_of_covg, read_len, error_rate_per_base)==true)
 	  {
+	    int i;
 	    for (i=1; (i<=length_sup-1); i++)
 	      {
 		
@@ -3738,6 +3759,72 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
 
 
 
+
+long long db_graph_remove_supernodes_more_likely_errors_than_sampling(dBGraph * db_graph, GraphInfo* ginfo, GraphAndModelInfo* model_info,
+								       int max_length_allowed_to_prune, 
+								      int (*sum_of_covgs_in_desired_colours)(const Element *), 
+								      Edges (*get_edge_of_interest)(const Element*), 
+								      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+								      void (*apply_reset_to_specified_edges_2)(dBNode*),
+								      int max_expected_sup, int manual_threshold)
+{
+
+
+  dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*max_expected_sup); 
+  Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*max_expected_sup); 
+  Nucleotide*  path_labels       = (Nucleotide*) malloc(sizeof(Nucleotide)*max_expected_sup);
+  char*        supernode_string  = (char*) malloc(sizeof(char)*max_expected_sup+1); //+1 for \0
+
+  if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
+    {
+      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
+      exit(1);
+    }
+
+
+  long long prune_supernode_if_it_looks_like_is_induced_by_singlebase_errors(dBNode* node)
+  {
+
+    int len;
+    boolean is_sup_pruned;
+
+    is_sup_pruned = db_graph_remove_supernode_containing_this_node_if_more_likely_error_than_sampling(node, model_info->num_haploid_chromosomes,
+												      get_total_depth_of_coverage_across_colours(ginfo, model_info->genome_len),
+												      get_mean_readlen_across_colours(ginfo),
+												      model_info->seq_error_rate_per_base, max_length_allowed_to_prune,
+												      db_graph, max_expected_sup,
+												      sum_of_covgs_in_desired_colours,
+												      get_edge_of_interest,
+												      apply_reset_to_specified_edges, 
+												      apply_reset_to_specified_edges_2,
+												      path_nodes, path_orientations, path_labels,supernode_string,&len, manual_threshold);
+    if (is_sup_pruned==true)
+      {
+	return 1;
+      }
+    else
+      {
+	return 0;
+      }
+
+  }
+  
+
+  long long number_of_pruned_supernodes  = hash_table_traverse_returning_sum(&prune_supernode_if_it_looks_like_is_induced_by_singlebase_errors, db_graph);
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+
+
+  free(path_nodes);
+  free(path_orientations);
+  free(path_labels);
+  free(supernode_string);
+  return number_of_pruned_supernodes;
+}
+
+
+
+
+/*
 
 // this can be applied to an individual, or to a pool of low covg individuals
 long long db_graph_remove_errors_from_pool_according_to_model(dBGraph * db_graph, int num_haploid_chroms, long long total_covg,
@@ -3845,6 +3932,13 @@ long long db_graph_remove_errors_considering_covg_and_topology(int coverage, dBG
 
   long long number_of_pruned_supernodes  = hash_table_traverse_returning_sum(&prune_supernode_if_it_looks_like_is_induced_by_singlebase_errors, db_graph);
   hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+
+
+  free(path_nodes);
+  free(path_orientations);
+  free(path_labels);
+  free(supernode_string);
+
   return number_of_pruned_supernodes;
 }
 
