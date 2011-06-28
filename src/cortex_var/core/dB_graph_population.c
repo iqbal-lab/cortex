@@ -2497,7 +2497,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  {
 			    fprintf(fout, "FAILS CLASSIFIER: fits repeat model better than variation model\n");
 			  }
-			fprintf(fout, "SITE VARIANT vs REPEAT MODEL LOG_LIKELIHOODS:\tllk_var:%.2f\tllk_rep:%.2f\n", 
+			fprintf(fout, "DISCOVERY PHASE:  VARIANT vs REPEAT MODEL LOG_LIKELIHOODS:\tllk_var:%.2f\tllk_rep:%.2f\n", 
 				annovar.model_llks.llk_var, annovar.model_llks.llk_rep);
 		      }
 
@@ -2551,8 +2551,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 				fprintf(fout, "%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[hom_other]);
 			      }
 			  }
-		      
-		    
+		      }
+		  
 		    
 		    count_vars++;
 		    
@@ -2601,7 +2601,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	  }
       } while (current_node != node //to avoid cycles
 	       && db_node_check_status_none(current_node));
-    }
+      }
     
     
     if (db_node_check_status_none(node)){     
