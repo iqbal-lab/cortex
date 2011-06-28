@@ -143,15 +143,15 @@ boolean db_graph_db_node_prune_without_condition(dBNode * node,
 //note the argument supernode_len is set to -1 if the passed in node has status != none
 // returns true if the supernode is pruned, otherwise false
 // if returns false, cannot assume path_nodes etc contain anything useful
-boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_singlebase_error(dBNode* node, int coverage, dBGraph * db_graph, int max_expected_sup_len,
-											       int (*sum_of_covgs_in_desired_colours)(const Element *), 
-											       Edges (*get_edge_of_interest)(const Element*), 
-											       void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
-											       void (*apply_reset_to_specified_edges_2)(dBNode*),
-											       dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, 
-												 char* supernode_str, int* supernode_len);
+boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_error(dBNode* node, int coverage, dBGraph * db_graph, int max_expected_sup_len,
+										      int (*sum_of_covgs_in_desired_colours)(const Element *), 
+										      Edges (*get_edge_of_interest)(const Element*), 
+										      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+										      void (*apply_reset_to_specified_edges_2)(dBNode*),
+										      dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, 
+										      char* supernode_str, int* supernode_len);
 
-// traverse graph. At each node, if covg <= arg1, get its supernode. If that supernode length is <= kmer-length, and ALL interior nodes have covg <= arg1 
+// traverse graph. At each node, if covg <= arg1, get its supernode. If ALL interior nodes have covg <= arg1 
 // then prune the node, and the interior nodes of the supernode.
 // returns the number of pruned supernodes
 long long db_graph_remove_errors_considering_covg_and_topology(int coverage, dBGraph * db_graph,
@@ -422,6 +422,8 @@ void db_graph_traverse_with_array_of_longlongs(void (*f)(HashTable*, Element *, 
 					       HashTable * hash_table, long long** array, int length_of_array, EdgeArrayType type, int index);
  
 void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArrayType type, int index,  boolean (*condition)(dBNode* elem) );
+
+long long  db_graph_count_covg1_kmers_in_func_of_colours(dBGraph* db_graph, int (*get_covg)(const dBNode*) );
 
 void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Element* node, int** array_of_supernode_lengths, int length_of_array,
                                                          EdgeArrayType type, int index);

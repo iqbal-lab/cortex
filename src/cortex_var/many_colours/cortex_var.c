@@ -388,6 +388,17 @@ int main(int argc, char **argv){
     return e->coverage[cmd_line.ref_colour];
   }
 
+
+  int get_covg_in_union_all_colours_except_ref(const dBNode* e)
+  {
+    int cov = element_get_covg_union_of_all_covgs(e);
+    if (cmd_line.ref_colour!=-1)
+      {
+	cov -= e->coverage[cmd_line.ref_colour];
+      }
+    return cov;
+  }
+
   //***************************************************************************
   // end local functions
   //***************************************************************************
@@ -429,39 +440,9 @@ int main(int argc, char **argv){
   printf("Hash table created, number of buckets: %d\n",1 << hash_key_bits);
 
 
-  //set up graph and model info:
+
   GraphInfo db_graph_info;
   graph_info_initialise(&db_graph_info);
-
-  GraphAndModelInfo model_info;
-  float repeat_geometric_param_mu = 0.8;
-  float seq_err_rate_per_base = 0.01;
-  
-  int num_chroms_in_expt;
-  if (cmd_line.expt_type==EachColourADiploidSample)
-    {
-      num_chroms_in_expt=2*NUMBER_OF_COLOURS;
-    }
-  else if (cmd_line.expt_type==EachColourADiploidSampleExceptTheRefColour)
-    {
-      num_chroms_in_expt=2*NUMBER_OF_COLOURS-2;
-    }
-  else if (cmd_line.expt_type==EachColourAHaploidSample)
-    {
-      num_chroms_in_expt=NUMBER_OF_COLOURS;
-    }
-  else if (cmd_line.expt_type==EachColourAHaploidSampleExceptTheRefColour)
-    {
-      num_chroms_in_expt=NUMBER_OF_COLOURS-1;
-    }
-  else if (cmd_line.expt_type==Unspecified)
-    {
-      num_chroms_in_expt=NUMBER_OF_COLOURS;
-    }
-
-
-  initialise_model_info(&model_info, &db_graph_info, cmd_line.genome_size, 
-			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line.ref_colour, num_chroms_in_expt, cmd_line.expt_type);
 
 
 
@@ -686,6 +667,53 @@ int main(int argc, char **argv){
 
 	}
     }
+
+
+
+
+  GraphAndModelInfo model_info;
+  float repeat_geometric_param_mu = 0.8;
+  float seq_err_rate_per_base = 0.01;
+
+  if (cmd_line.genome_size !=0)
+    {
+      long long num_cov1_kmers = db_graph_count_covg1_kmers_in_func_of_colours(db_graph, &get_covg_in_union_all_colours_except_ref);
+      double estim_err = num_cov1_kmers/(cmd_line.genome_size*(db_graph->kmer_size));
+      if (estim_err<1)
+	{
+	  printf("Estimating sequencing error rate of %f, from number of unique kmers %qd and genome length %qd\n", estim_err, num_cov1_kmers, cmd_line.genome_size);
+	  printf("This is used in error-cleaning (unless you override with --remove_low_covg_supernodes) and likelihood calcs\n");
+	  seq_err_rate_per_base=estim_err;
+	}
+    }
+
+  int num_chroms_in_expt;
+  if (cmd_line.expt_type==EachColourADiploidSample)
+    {
+      num_chroms_in_expt=2*NUMBER_OF_COLOURS;
+    }
+  else if (cmd_line.expt_type==EachColourADiploidSampleExceptTheRefColour)
+    {
+      num_chroms_in_expt=2*NUMBER_OF_COLOURS-2;
+    }
+  else if (cmd_line.expt_type==EachColourAHaploidSample)
+    {
+      num_chroms_in_expt=NUMBER_OF_COLOURS;
+    }
+  else if (cmd_line.expt_type==EachColourAHaploidSampleExceptTheRefColour)
+    {
+      num_chroms_in_expt=NUMBER_OF_COLOURS-1;
+    }
+  else if (cmd_line.expt_type==Unspecified)
+    {
+      num_chroms_in_expt=NUMBER_OF_COLOURS;
+    }
+
+
+  initialise_model_info(&model_info, &db_graph_info, cmd_line.genome_size, 
+			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line.ref_colour, num_chroms_in_expt, cmd_line.expt_type);
+
+
   
   printf("The following mod is for the sims for the paper only: i need the graphinfo to contain read lengths for the fasta based sim binaries\n");
   int j;
