@@ -3606,7 +3606,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 	    is_supernode_pruned=false;
 	    return is_supernode_pruned;//do nothing. This supernode has no interior, is just 1 or 2 nodes, so cannot prune it
 	  }
-	else
+	else if (length_sup <= 2*db_graph->kmer_size +2)
 	  {
 	    int i;
 	    //to look like an error, must all have actual coverage, caused by an actual errored read, BUT must have low covg, <=threshold
@@ -3694,7 +3694,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
       {
 	return true;
       }
-    else if ((len_sp > db_graph->kmer_size +1 ) && (cov<= covg_thresh+1))
+    else if ((len_sp > db_graph->kmer_size +1 ) && (len_sp <= 2* (db_graph->kmer_size +1) ) && (cov<= covg_thresh+1))
       {
 	return true;
       }
@@ -4316,6 +4316,25 @@ long long  db_graph_count_covg1_kmers_in_func_of_colours(dBGraph* db_graph, int 
   void count_unique(Element * e)
   {
     if (get_covg(e)==1)
+      {
+	count++;
+      }
+  }
+  
+  hash_table_traverse(&count_unique, db_graph);
+  return count;
+}
+
+
+
+long long  db_graph_count_covg2_kmers_in_func_of_colours(dBGraph* db_graph, int (*get_covg)(const dBNode*) )
+{
+
+  long long count = 0;
+
+  void count_unique(Element * e)
+  {
+    if (get_covg(e)==2)
       {
 	count++;
       }

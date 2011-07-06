@@ -424,6 +424,7 @@ void db_graph_traverse_with_array_of_longlongs(void (*f)(HashTable*, Element *, 
 void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArrayType type, int index,  boolean (*condition)(dBNode* elem) );
 
 long long  db_graph_count_covg1_kmers_in_func_of_colours(dBGraph* db_graph, int (*get_covg)(const dBNode*) );
+long long  db_graph_count_covg2_kmers_in_func_of_colours(dBGraph* db_graph, int (*get_covg)(const dBNode*) );
 
 void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Element* node, int** array_of_supernode_lengths, int length_of_array,
                                                          EdgeArrayType type, int index);

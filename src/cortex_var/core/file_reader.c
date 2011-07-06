@@ -304,6 +304,7 @@ void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fi
 void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
 											      boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
 											      dBGraph* db_graph, EdgeArrayType type, int index, long long** read_len_count_array)
+											      
 {
   long long total_bases_loaded=0;
 
@@ -313,24 +314,24 @@ void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_
   Orientation previous_orientation=forward;
   BinaryKmer tmp_kmer;
   int i,j;
- 
-  for(i=0;i<windows->nwindows;i++){ //for each window
-    KmerSlidingWindow * current_window = &(windows->window[i]);
 
-    //update total bases loaded
-    long long length_this_window = (long long) (current_window->nkmers+db_graph->kmer_size-1);
-    total_bases_loaded+=length_this_window;
-
-    if (read_len_count_array !=NULL)
-      {
-	//log that we have loaded a "read" of this length, provided it is not the last window - the last window length we will return, so  it can be cumulated, in case this is a long read
-	// this should never happen with fastq,as we have set the file_reader not to allow this
-	(*(read_len_count_array[length_this_window]))++;
-      }
-
-
-    for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
-      boolean found = false;
+      for(i=0;i<windows->nwindows;i++){ //for each window
+	KmerSlidingWindow * current_window = &(windows->window[i]);
+	
+	//update total bases loaded
+	long long length_this_window = (long long) (current_window->nkmers+db_graph->kmer_size-1);
+	total_bases_loaded+=length_this_window;
+	
+	if (read_len_count_array !=NULL)
+	  {
+	    //log that we have loaded a "read" of this length, provided it is not the last window - the last window length we will return, so  it can be cumulated, in case this is a long read
+	    // this should never happen with fastq,as we have set the file_reader not to allow this
+	    (*(read_len_count_array[length_this_window]))++;
+	  }
+	
+	
+	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
+	  boolean found = false;
 	  current_node = hash_table_find_or_insert(element_get_key(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),&found,db_graph);	  
 	  if (current_node == NULL){
 	    fputs("file_reader: problem - current kmer not found\n",stderr);
@@ -380,11 +381,11 @@ void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_
 	  previous_node = current_node;
 	  previous_orientation = current_orientation;
 	  
-    }
-  }
-
-  *bases_loaded = *bases_loaded + total_bases_loaded;
-
+	}
+      }
+      
+      *bases_loaded = *bases_loaded + total_bases_loaded;
+    
 
 }
 
@@ -457,6 +458,7 @@ void load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, long long* bas
 							long long * bad_reads, char quality_cut_off, long long* dup_reads, 
 							int max_read_length, boolean remove_dups_single_endedly, 
 							boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph, EdgeArrayType type, int index){
+							
 
  
   //----------------------------------

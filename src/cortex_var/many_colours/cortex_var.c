@@ -682,12 +682,18 @@ int main(int argc, char **argv){
       if (cmd_line.genome_size !=0)
 	{
 	  long long num_cov1_kmers = db_graph_count_covg1_kmers_in_func_of_colours(db_graph, &get_covg_in_union_all_colours_except_ref);
-	  double estim_err = num_cov1_kmers/(cmd_line.genome_size*(db_graph->kmer_size));
-	  if (estim_err<1)
+	  long long num_cov2_kmers = db_graph_count_covg2_kmers_in_func_of_colours(db_graph, &get_covg_in_union_all_colours_except_ref);
+
+	  double estim_err = num_cov1_kmers/(num_cov2_kmers*(db_graph->kmer_size) );
+	  if ((estim_err<0.1) && (estim_err>0.001) )
 	    {
-	      printf("Estimating sequencing error rate of %f, from number of unique kmers %qd and genome length %qd\n", estim_err, num_cov1_kmers, cmd_line.genome_size);
+	      printf("Estimating sequencing error rate of %f, using estimate num_kmers_covg_1/(kmer_size * num_kmers_covg_2), where num_kmers_covg1 = %qd, num_kmers_covg2 = %qd\n", estim_err, num_cov1_kmers, num_cov2_kmers);
 	      printf("This is used in error-cleaning and likelihood calcs. Remember you can override this with --estimated_error_rate\n");
 	      seq_err_rate_per_base=estim_err;
+	    }
+	  else
+	    {
+	      printf("Attempted to estimate the sequencing error rate, using estimate num_kmers_covg_1/(kmer_size * num_kmers_covg_2), where num_kmers_covg1 = %qd, num_kmers_covg2 = %qd. However the estimate we got, %f, was not believable so fell back on default value of 0.01. This is used in error-cleaning and likelihood calcs. Remember you can override this with --estimated_error_rate\n",  num_cov1_kmers, num_cov2_kmers, estim_err);
 	    }
 	}
 
@@ -696,7 +702,6 @@ int main(int argc, char **argv){
     {
       seq_err_rate_per_base=cmd_line.manually_entered_seq_error_rate;
     }
-
 
   int num_chroms_in_expt;
   if (cmd_line.expt_type==EachColourADiploidSample)
