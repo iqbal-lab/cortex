@@ -230,6 +230,10 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
     {
       printf("Since you did not use --experiment_type, Cortex does not know how if each colour is a diploid/haploid sample or pool, so\nwill not calculate genotypes or likelihoods\n");
     }
+  else if (cmd_line->genome_size==0)
+    {
+      printf("Since you did not specify the genome size/length, Cortex cannot calculate genotype likelihoods\n");
+    }
   FILE* fp;
   
   if (which==1)

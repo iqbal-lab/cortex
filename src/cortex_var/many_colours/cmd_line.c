@@ -1204,6 +1204,8 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	}
 
 
+
+
       for (i=0; i<cmd_ptr->num_colours_in_detect_bubbles2_second_colour_list; i++)
 	{
 	  if (cmd_ptr->detect_bubbles2_second_colour_list[i]>=NUMBER_OF_COLOURS)
@@ -1222,7 +1224,18 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 
     }
 
-
+    if ( (cmd_ptr->expt_type!=Unspecified) && (cmd_ptr->genome_size==0) )
+      {
+      char tmp[] = "Experiment type is specified to allow genotyping, but to do that we also need genome length. Please also specify --genome_size\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+	
+      }
 
   if ( (cmd_ptr->expt_type==EachColourADiploidSampleExceptTheRefColour) && (cmd_ptr->ref_colour==-1) )
     {
