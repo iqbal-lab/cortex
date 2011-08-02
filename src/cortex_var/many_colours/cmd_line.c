@@ -146,7 +146,7 @@ const char* usage=
 "   [--multicolour_bin FILENAME] \t\t\t\t=\t Filename of a multicolour binary, will be loaded first, into colours 0..n.\n\t\t\t\t\t\t\t\t\t If using --colour_list also, those will be loaded into subsequent colours, after this.\n" \
 "   [--se_list FILENAME] \t\t\t\t\t=\t List of single-end fasta/q to be loaded into a single-colour graph.\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n" \
 "   [--pe_list FILENAME] \t\t\t\t\t=\t Two filenames, comma-separated: each is a list of paired-end fasta/q to be \n\t\t\t\t\t\t\t\t\t loaded into a single-colour graph. Lists are assumed to ordered so that \n\t\t\t\t\t\t\t\t\t corresponding paired-end fasta/q files are at the same positions in their lists.\n\t\t\t\t\t\t\t\t\t Currently Cortex only use paired-end information to remove\n\t\t\t\t\t\t\t\t\t PCR duplicate reads (if that flag is set).\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n" \
-"   [--kmer_size INT] \t\t\t\t\t\t=\t Kmer size (default 21). Must be an odd number.\n" \
+"   [--kmer_size INT] \t\t\t\t\t\t=\t Kmer size. Must be an odd number.\n" \
 "   [--mem_width INT] \t\t\t\t\t\t=\t Size of hash table buckets (default 100).\n" \
   //-g 
 "   [--mem_height INT] \t\t\t\t\t\t=\t Number of buckets in hash table in bits (default 10). \n\t\t\t\t\t\t\t\t\t Actual number of buckets will be 2^(the number you enter)\n" \
@@ -215,7 +215,13 @@ const char* usage=
   // -P  
 "   [--experiment_type]\t\t\t\t\t\t=\t The statistical models for determining genotype likelihoods, and for deciding if bubbles are repeat or variants,\n\t\t\t\t\t\t\t\t\t require knowledge of whether each sample is a separate diploid/haploid individual. \n\t\t\t\t\t\t\t\t\tEnter type of experiment (EachColourADiploidSample, EachColourADiploidSampleExceptTheRefColour, \n\t\t\t\t\t\t\t\t\tEachColourAHaploidSample,EachColourAHaploidSampleExceptTheRefColour). \n\t\t\t\t\t\t\t\t\tThis is only needed for determining likelihoods, so ignore this is you are pooling samples within a colour (support to be added for this later).\n" \
   // Q
-"   [--estimated_error_rate]\t\t\t\t\t\t=\t If you have some idea of the sequencing error rate (per base-pair), enter it here. eg 0.01. Currently used in calculating likelihoods\n";
+"   [--estimated_error_rate]\t\t\t\t\t\t=\t If you have some idea of the sequencing error rate (per base-pair), enter it here. eg 0.01. Currently used in calculating likelihoods\n"
+  // R
+"   [--genotype_site]\t\t\t\t\t\t=\t Genotype a single (typically multiallelic) site. Syntax is slightly complex - see manual\n"
+
+
+
+;
 
 
 
@@ -275,7 +281,7 @@ int default_opts(CmdLine * c)
   c->manually_override_error_rate=false;
   c->expt_type = Unspecified;
   c->genome_size=0;
-  c->kmer_size = 21;
+  c->kmer_size = -1;
   c->bucket_size = 100;
   c->number_of_buckets_bits = 10;
   c->ref_colour=-1;//there are places where I specifically check to see if this is -1, and if so, assume there is no reference
@@ -354,6 +360,15 @@ int default_opts(CmdLine * c)
   c->print_colour_overlap_matrix=false;
   c->format_of_files_to_align=UNSPECIFIED;
   c->apply_model_selection_at_bubbles=false;
+
+
+  c->num_colours_to_genotype=0;
+  initialise_int_list(c->list_colours_to_genotype, NUMBER_OF_COLOURS);
+  c->colour_of_reference_with_site_excised=-1;
+  c->num_alleles_of_site=0;
+  c->first_genotype_to_calc_likelihoods_for=0;
+  c->last_genotype_to_calc_likelihoods_for=0;
+  c->genotype_complex_site=false;
   return 1;
 }
 
@@ -407,6 +422,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"remove_low_coverage_supernodes",required_argument,NULL,'O'},
     {"experiment_type", required_argument, NULL, 'P'},
     {"estimated_error_rate", required_argument, NULL, 'Q'},
+    {"genotype_site", required_argument, NULL, 'R'},
     {0,0,0,0}	
   };
   
@@ -417,7 +433,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -631,7 +647,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	if (optarg==NULL)
 	  errx(1,"[--path_divergence_caller] option requires at least one colour. If >1, must be comma separated.");
 	
-	parse_commasep_list(cmdline_ptr, optarg, strlen(optarg), "[--path_divergence_caller]");
+	parse_commasep_list(cmdline_ptr, //->num_colours_in_pd_colour_list, cmdline_ptr->pd_colour_list, 
+			    optarg, strlen(optarg), "[--path_divergence_caller]");
 	cmdline_ptr->make_pd_calls = true;
 	break; 
 
@@ -1135,9 +1152,19 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  }
 	break;
       }
+
+    case 'R':
+      {
+	if (optarg==NULL)
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y;z;A..B;fasta.  x,y is a comma-sep list of colours to genotype. z is the reference-minus-site colour. If there are N alleles, we will genotype combinations A through B of the N choose 2 possible genotypes (allows parallelisation); fasta is the file listing one read per allele. See manual for details.");
+
+
+	break;
+      }
       
+
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:", long_options, &longopt_index);
   }   
   
   return 0;
@@ -1146,6 +1173,18 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
+  if (cmd_ptr->kmer_size==-1)
+    {
+      char tmp[] = "You must specify kmer_size\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
   //all colours in detect_bubbles must be less than NUMBER_OF_COLOURS!
   if (cmd_ptr->detect_bubbles1==true)
     {
@@ -1724,6 +1763,29 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 
     }
 
+  if (cmd_ptr->genotype_complex_site==true)
+    {
+      if (cmd_ptr->num_colours_to_genotype + cmd_ptr->num_alleles_of_site >NUMBER_OF_COLOURS)
+	{
+	  printf("There is an inconsistency in your compile + command line specifications.\n");
+	  printf("You want to genotype %d colours/samples, at a site with %d alleles, but cortex_var is only compiled for %d colours.\n", 
+		 cmd_ptr->num_colours_to_genotype, cmd_ptr->num_alleles_of_site, NUMBER_OF_COLOURS
+		 );
+	  printf("cortex_var expects colours 0...%d-1 should each contain one of these alleles, and then you need one colour per sample and then perhaps one\n", cmd_ptr->num_colours_to_genotype);
+	  printf(" more if you have a reference-minus-site colour. \n");
+	  char tmp[LEN_ERROR_STRING];
+	  sprintf(tmp, "These samples and alleles you have specified won't all fit in - recompile with more colours\n");
+	  strcpy(error_string, tmp);
+	  return -1;
+	  
+	}
+
+    }
+
+
+
+
+
 
   return 0;
 }
@@ -1776,7 +1838,7 @@ CmdLine parse_cmdline( int argc, char* argv[], int unit_size)
 
 //RELIES on the list (arg1) ending in '\0'.
 //returns -1 on error
-//returns -2 if the "list" was just the number -1, which is short-hand for ALL colours please.
+// the list -1 is short hand for ALL colours, and a list prefixed by * means ALL colours except those on this list
 int get_numbers_from_comma_sep_list(char* list, int* return_list, int max_len_return_list)
 {
   int number[max_len_return_list];
@@ -1889,6 +1951,139 @@ int get_numbers_from_comma_sep_list(char* list, int* return_list, int max_len_re
       return current+1;
     }
 }
+
+
+
+
+//RELIES on the arg ending in '\0'.
+//returns -1 on error
+
+//note we implicitly assume colours 0...num_alleles are going to be one colour for each allele. So the ref-minus-site colour must be > this, etc
+int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* num_colours_to_genotype , int* ref_minus_site_colour, int* num_alleles,
+				 int* start_gt_combin_num, int* end_gt_combin_num, char* fasta_file)
+{
+
+  // we expect arg to be of this format: x,y;z;N;A,B;fasta   where z and A,B may be -1
+  // x,y is a comma sep list of colours to genotype. z is the ref-minus-site colour. N is the number of alleles at the site (must be same as number of reads in the fasta)
+  // A..B means genotype combinations A to B of the N choose 2 possible genotypes.
+
+
+  char delims[] = ";";
+  char temp1[MAX_FILENAME_LEN];
+  temp1[0]='\0';
+  strcpy(temp1, arg);
+  char* commaseplist = strtok(temp1, delims );
+  if (commaseplist==NULL)
+    {
+      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta - you do not appear to have any semicolons - consult the manual");
+    }
+  
+  if (strcmp(commaseplist, "-1")==0)
+    {
+      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta where x,y denotes a comma-separated list of colours (eg 0,2,45) which are to be genotyped. In other parts of the cortex_var cmdline syntax, a \"-1\" is allowed to denote ALL colours. That makes no sense here. --genotype_site is designed for complex multiallelic sites, where the known alleles are loaded into colours 0..N-1 with --multicolour_bin, and then (optionally) another colour is used to refer to the reference-minus-site (see manual). So by definition, not all the colours in the graph are samples to be genotyped. In short, don't use -1 for A,B\n");
+    }
+  else
+    {
+
+      *num_colours_to_genotype  = get_numbers_from_comma_sep_list(commaseplist, colours_to_genotype_list, NUMBER_OF_COLOURS);
+      if (*num_colours_to_genotype==-1)
+	{
+	  printf("cmdline error - Failed to parse out the colours which we should genotype in --genotype_site");
+	  exit(1);
+	}
+
+    }
+  
+  char* refminussite_as_char  = strtok( NULL, delims );
+  if (refminussite_as_char==NULL)
+    {
+      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta - you do not appear to have a \"z\" - consult the manual");
+    }
+  else
+    {
+      *ref_minus_site_colour = atoi(refminussite_as_char);
+    }
+
+  char* numalleles_as_char = strtok( NULL, delims );
+  if (numalleles_as_char==NULL)
+    {
+      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta. You have omitted the N, which is not permitted - consult the manual");
+    }
+  else
+    {
+      int num_a = atoi(numalleles_as_char);
+      if (num_a<=0)
+	{
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta - you have entered a negative value for N (the number of alleles), which is not permitted\n");
+	}
+      int num_cols_required_by_this_cmdline = *num_colours_to_genotype + num_a;
+      if (*ref_minus_site_colour != -1)
+	{
+	  num_cols_required_by_this_cmdline++;
+	}
+      if (num_cols_required_by_this_cmdline>NUMBER_OF_COLOURS)
+	{
+	  printf("You have compiled for %d colours, but your commandline arg --genotype_site has arguments that together require at least %d\n", NUMBER_OF_COLOURS, num_cols_required_by_this_cmdline);
+	}
+      *num_alleles = atoi(numalleles_as_char);
+    }
+
+  char* startend_as_char = strtok( NULL, delims );
+
+  if (startend_as_char==NULL)
+    {
+      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta - cortex cannot parse/find A,B\n");
+    }
+  else
+    {
+      // I am now ready to split out A,B but I'd rather finish strtokking my main string first.
+      char* fa  = strtok( NULL, delims );
+      if (fa==NULL)
+	{
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta  - unable to find a fasta in that string\n");
+	}
+      else
+	{
+	  fasta_file[0]='\0';
+	  strcpy(fasta_file, fa);
+	}
+      
+      if (strcmp(startend_as_char, "-1")==0)
+	{
+	  *start_gt_combin_num = 1;
+	  *end_gt_combin_num = (*num_alleles) * (*num_alleles -1) /2;  // N choose 2
+	}
+      else
+	{
+	  char delims2[] = ",";
+	  char temp2[MAX_FILENAME_LEN];
+	  temp2[0]='\0';
+	  strcpy(temp2, startend_as_char);
+	  char* startaschar = strtok(temp2, delims2);
+	  if (startaschar==NULL)
+	    {
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta  - unable to split A,B out\n");
+	    }
+	  else
+	    {
+	      *start_gt_combin_num = atoi(startaschar);
+	    }
+	  char* endaschar = strtok( NULL, delims2 );
+	  if (endaschar==NULL)
+	    {
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta  - unable to split A,B out to get B\n");
+	    }
+	  else
+	    {
+	      *end_gt_combin_num = atoi(endaschar);
+	    }
+	}
+    }
+
+
+  return 0;
+}
+
 
 
 
@@ -2014,9 +2209,8 @@ int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_f
 
 
 
-
-  //returns -1 on error, 0 otherwise. Parses argument2 and gets the colours into arg1
-int parse_commasep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is)
+  //returns -1 on error, 0 otherwise. Parses argument3 and gets the colours into arg1 and arg2 
+ int parse_commasep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is)
 {
 
   if (len_arg<MAX_LEN_DETECT_BUB_COLOURINFO)
@@ -2044,7 +2238,17 @@ int parse_commasep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_err
 	      {
 		return -1; //error.
 	      }
+	    int j;
+	    for (j=0; j<num_list_colours; j++)
+	      {
+		if (list_colours[j]<0)
+		  {
+		    printf("Not allowed negative numbers in list, except for special case where there is just one number, and it is -1, which means \"all colours\". ");
+		  }
+	      }
 
+	    //*num_cols= num_list_colours;
+	    //copy_list(list_colours, num_list_colours, list_of_colours, num_list_colours);
 	    cmd->num_colours_in_pd_colour_list=num_list_colours;
 	    copy_list(list_colours, num_list_colours, cmd->pd_colour_list, cmd->num_colours_in_pd_colour_list);
 	    

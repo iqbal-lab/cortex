@@ -30,6 +30,7 @@
 #include <cmd_line.h>
 #include <string.h>
 #include <element.h>
+#include <stdlib.h>
 
 void test_get_numbers_from_comma_sep_list()
 {
@@ -287,6 +288,105 @@ void test_parse_commasep_list()
 }
 
 
+
+void test_parse_genotype_site_argument()
+{
+  
+  char arg[]="1,2;3;3;2,4;zam/iqbal"; //means gt colours 1 and 2, and that 3 is the ref-minus-site colours, and there are 3 alleles, and that we must gt genotypes 2 to 4 of the 3 choose 2  = 6 possible genotypes.
+  int len_arg = strlen(arg);
+  int list_cols[NUMBER_OF_COLOURS];
+  int num_cols_to_gt=0;
+  int ref_min_site_col = -1;
+  int num_alleles = 0;
+  int start_gt_combin_num = -1;
+  int end_gt_combin_num = -1;
+  char fasta[MAX_FILENAME_LEN];
+
+  int ret = parse_genotype_site_argument(arg, list_cols, &num_cols_to_gt, &ref_min_site_col, &num_alleles, &start_gt_combin_num, &end_gt_combin_num, fasta);
+  
+  CU_ASSERT(num_cols_to_gt==2);
+  CU_ASSERT(list_cols[0]==1);
+  CU_ASSERT(list_cols[1]==2);
+  CU_ASSERT(ref_min_site_col==3);
+  CU_ASSERT(num_alleles==3);
+  CU_ASSERT(start_gt_combin_num==2);
+  CU_ASSERT(end_gt_combin_num==4);
+  CU_ASSERT(strcmp(fasta, "zam/iqbal")==0);
+  
+
+
+
+
+
+
+  char arg2[]="*0,1,2,3,4,5;5;5;-1;zam/iqbal"; //means gt all colours except 0,1,2,3,4,5 and that 5 is the ref-minus-site colours, and there are 5 alleles,
+                                       //and that we must gt all of the 5 choose 2  = 10 possible genotypes
+
+  int list_cols2[NUMBER_OF_COLOURS];
+  int num_cols_to_gt2=0;
+  int ref_min_site_col2 = -1;
+  int num_alleles2 = 0;
+  int start_gt_combin_num2 = -1;
+  int end_gt_combin_num2 = -1;
+  char fasta2[MAX_FILENAME_LEN];
+
+  
+  int ret2 = parse_genotype_site_argument(arg2, list_cols2, &num_cols_to_gt2, &ref_min_site_col2, &num_alleles2, &start_gt_combin_num2, &end_gt_combin_num2, fasta2);
+  
+  if (NUMBER_OF_COLOURS-6<=0)
+    {
+      printf("We need >6 colours to run the cmdline tests. Recompile.\n");
+      exit(1);
+    }
+  CU_ASSERT(num_cols_to_gt2==(NUMBER_OF_COLOURS-6));
+  int j;
+  for (j=6; j<NUMBER_OF_COLOURS; j++)
+    {
+      CU_ASSERT(list_cols2[j-6]==j);
+    }
+
+  CU_ASSERT(ref_min_site_col2==5);
+  CU_ASSERT(num_alleles2==5);
+  CU_ASSERT(start_gt_combin_num2==1);
+  CU_ASSERT(end_gt_combin_num2==10);
+  CU_ASSERT(strcmp(fasta2, "zam/iqbal")==0);
+
+
+
+  char arg3[]="3,4,5;6;3;1,4;zam2/iqbal"; //means gt colours 3,4,5 and that 6 is the ref-minus-site colours, and there are 3 alleles,
+                                       //and that we must gt genotypes numbered 1 to 4 out of the 3 choose 2 = 6.
+
+  int list_cols3[NUMBER_OF_COLOURS];
+  int num_cols_to_gt3=0;
+  int ref_min_site_col3 = -1;
+  int num_alleles3 = 0;
+  int start_gt_combin_num3 = -1;
+  int end_gt_combin_num3 = -1;
+  char fasta3[MAX_FILENAME_LEN];
+
+  
+  int ret3 = parse_genotype_site_argument(arg3, list_cols3, &num_cols_to_gt3, &ref_min_site_col3, &num_alleles3, &start_gt_combin_num3, &end_gt_combin_num3, fasta3);
+  
+  if (NUMBER_OF_COLOURS-7<=0)
+    {
+      printf("We need >7 colours to run the cmdline tests. Recompile.\n");
+      exit(1);
+    }
+  CU_ASSERT(num_cols_to_gt3==3);
+
+  CU_ASSERT(list_cols3[0]==3);
+  CU_ASSERT(list_cols3[1]==4);
+  CU_ASSERT(list_cols3[2]==5);
+  CU_ASSERT(ref_min_site_col3==6);
+  CU_ASSERT(num_alleles3==3);
+  CU_ASSERT(start_gt_combin_num3==1);
+  CU_ASSERT(end_gt_combin_num3==4);
+  CU_ASSERT(strcmp(fasta3, "zam2/iqbal")==0);
+
+
+
+
+}
 
 void test_parse_cmdline_inner_loop_are_basic_variables_correctly_set()
 {

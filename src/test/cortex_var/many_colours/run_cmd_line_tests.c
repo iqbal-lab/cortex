@@ -67,6 +67,10 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pCortexVar_CmdLine_Test_Suite, "Test utility function for parsing  argument of --genotype_site", test_parse_genotype_site_argument)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
 
 
 

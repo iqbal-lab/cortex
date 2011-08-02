@@ -707,7 +707,7 @@ int main(int argc, char **argv){
       seq_err_rate_per_base=cmd_line.manually_entered_seq_error_rate;
     }
 
-  int num_chroms_in_expt;
+  int num_chroms_in_expt=NUMBER_OF_COLOURS;
   if (cmd_line.expt_type==EachColourADiploidSample)
     {
       num_chroms_in_expt=2*NUMBER_OF_COLOURS;
@@ -728,7 +728,11 @@ int main(int argc, char **argv){
     {
       num_chroms_in_expt=NUMBER_OF_COLOURS;
     }
-
+  else
+    {
+      printf("Coding error - expt type not specified - not even as Unspecified");
+      exit(1);
+    }
 
   initialise_model_info(&model_info, &db_graph_info, cmd_line.genome_size, 
 			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line.ref_colour, num_chroms_in_expt, cmd_line.expt_type);
@@ -948,6 +952,22 @@ int main(int argc, char **argv){
 					   cmd_line.num_colours_in_colour_overlap_second_list,
 					   db_graph);
       printf("\nCompleted graph overlap matrix printing\n");
+    }
+
+  if (cmd_line.genotype_complex_site==true)
+    {
+      printf("Genotyping a complex site with %d known alleles\n", cmd_line.num_alleles_of_site);
+      printf("Of the %d choose 2 = %d possible genotypes, We will calculate likelihoods for those numbered %d to %d",
+	     cmd_line.num_alleles_of_site, (cmd_line.num_alleles_of_site * (cmd_line.num_alleles_of_site -1) )/2,
+	     cmd_line.first_genotype_to_calc_likelihoods_for, cmd_line.last_genotype_to_calc_likelihoods_for);
+      printf("We do this for these samples (which we assume are diploid): colours ");
+      int k;
+      for (k=0; k<cmd_line.num_colours_to_genotype; k++)
+	{
+	  printf("%d,", cmd_line.list_colours_to_genotype[k]);
+	}
+      printf("\n");
+
     }
 
   
