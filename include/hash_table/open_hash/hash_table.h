@@ -61,7 +61,7 @@ boolean hash_table_apply_or_insert(Key key, void (*f)(Element*), HashTable *);
 //applies f to every element of the table
 void hash_table_traverse(void (*f)(Element *),HashTable *);
 long long hash_table_traverse_returning_sum(long long (*f)(Element *),HashTable * hash_table);
-
+void hash_table_traverse_passing_int(void (*f)(Element *, int*),HashTable * hash_table, int* num);
 
 
 

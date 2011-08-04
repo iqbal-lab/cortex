@@ -224,6 +224,15 @@ long long hash_table_traverse_returning_sum(long long (*f)(Element *),HashTable 
   return ret;
 }
 
+void hash_table_traverse_passing_int(void (*f)(Element *, int*),HashTable * hash_table, int* num){
+  long long i;
+  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
+    if (!db_node_check_status(&hash_table->table[i],unassigned)){
+      f(&hash_table->table[i], num);
+    }
+  }
+}
+
 
 Element * hash_table_find(Key key, HashTable * hash_table)
 {

@@ -35,6 +35,7 @@
 #include "test_db_variants.h"
 #include "test_model_selection.h"
 #include <test_file_reader.h>
+#include <test_db_complex_genotyping.h>
 
 #include <CUnit.h>
 #include <Basic.h>
@@ -359,6 +360,12 @@ int  main()
 	return CU_get_error();
       }
    if (NULL == CU_add_test(pPopGraphSuite, "Test classification of bubble as variant or repeat, comparing Hardy-Weinberg model with a repeat model", test_get_log_bayesfactor_varmodel_over_repeatmodel ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for comparing overlap of alleles with each other and selves", test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles ))
       {
 	CU_cleanup_registry();
 	return CU_get_error();

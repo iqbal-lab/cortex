@@ -477,6 +477,9 @@ boolean get_num_effective_reads_on_branch(int* array, dBNode** allele, int how_m
 
 //does not count covg on first or last nodes, as they are bifurcation nodes
 //if length==0 or 1  returns -1.
+//note I do not want to create an array on the stack - these things can be very long
+// so relies on the prealloced array of dBNode* 's passed in
+// annoying that can't use templates or something - see below for a similar function with different input
 int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colour, boolean* too_short)
 {
 
@@ -512,6 +515,45 @@ int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colou
     }
   return total;
 }
+
+
+
+//WARNING - this is for use when we dissect an allele into subchunks, so here we do not want to be ignoring first and last elements (cf above)
+int count_reads_on_allele_in_specific_colour_given_array_of_cvgs(int* covgs, int len, boolean* too_short)
+{
+
+  if ( (len==0) || (len==1) )
+    {
+      *too_short=true;
+      return -1;
+    }
+
+
+  int total= covgs[0];
+
+  int i;
+
+  for (i=1; i<len; i++)
+    {
+      int jump = covgs[i] - covgs[i-1];
+
+      //we add a little check to ensure that we ignore isolated nodes with higher covg - we count jumps only if they are signifiers of a new read arriving
+      // and one node does not a read make
+      int diff_between_next_and_prev=-1;
+      if (i<len-1)
+	{
+	  diff_between_next_and_prev=  covgs[i+1]-covgs[i-1];
+	}
+      
+      if ( (jump>0) && (diff_between_next_and_prev!=0) )
+        {
+	      total=total+jump;
+        }
+    }
+  return total;
+}
+
+
 
 
 //does not count covg on first or last nodes, as they are bifurcation nodes

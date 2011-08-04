@@ -60,6 +60,7 @@ typedef enum
     read_start_reverse = 8,//used when removing duplicate reads
     read_start_forward_and_reverse = 9,//used when removing duplicate reads  
     ignore_this_node = 10,
+    in_desired_genotype = 11,
   } NodeStatus;
 
 

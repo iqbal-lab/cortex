@@ -683,7 +683,7 @@ int main(int argc, char **argv){
     {
       seq_err_rate_per_base= 0.01;//default, but this may change below
 
-      if (cmd_line.genome_size !=0)
+      /*      if (cmd_line.genome_size !=0)
 	{
 	  long long num_cov1_kmers = db_graph_count_covg1_kmers_in_func_of_colours(db_graph, &get_covg_in_union_all_colours_except_ref);
 	  long long num_cov2_kmers = db_graph_count_covg2_kmers_in_func_of_colours(db_graph, &get_covg_in_union_all_colours_except_ref);
@@ -697,10 +697,10 @@ int main(int argc, char **argv){
 	    }
 	  else
 	    {
-	      printf("Attempted to estimate the sequencing error rate, using estimate num_kmers_covg_1/(kmer_size * num_kmers_covg_2), where num_kmers_covg1 = %qd, num_kmers_covg2 = %qd. However the estimate we got, %f, was not believable so fell back on default value of 0.01. This is used in error-cleaning and likelihood calcs. Remember you can override this with --estimated_error_rate\n",  num_cov1_kmers, num_cov2_kmers, estim_err);
+	      printf("Attempted to estimate the sequencing error rate, using estimate num_kmers_covg_1/(kmer_size * num_kmers_covg_2), where num_kmers_covg1 = %qd, num_kmers_covg2 = %qd. However the estimate we got, %f, was not believable so fell back on default value of 0.01. This is used in error-cleaning and likelihood calcs. Remember you can override this with --estimated_error_rate. One reason why this estimate may have failed is if the loaded binary was already cleaned\n",  num_cov1_kmers, num_cov2_kmers, estim_err);
 	    }
 	}
-
+      */
     }
   else
     {
@@ -967,6 +967,32 @@ int main(int argc, char **argv){
 	  printf("%d,", cmd_line.list_colours_to_genotype[k]);
 	}
       printf("\n");
+
+      //sanity check before we start
+      //check that we have read lengths for the colours we want to genotype
+      int k;
+      for (k=0; k<cmd_line.num_colours_to_genotype; k++)
+	{
+	  if (db_graph_info->mean_read_length[cmd_line.list_colours_to_genotype[k]] < db_graph->kmer_size )
+	    {
+	      printf("This will not work. If you scroll up to the summary of read-lengths and covgs in your colours, you will see that\n");
+	      printf("at least one of the colours you want to genotype has mean read length < kmer_size. We only know of one way this can happen:\n");
+	      printf("If you load fastA files, then cortex does not store read-length/covg data, essentially because the only real use-cases for\n");
+	      printf("fasta files are a)testing of code and b) reference genomes. So I suggest that either you are\n");
+	      printf("running a test on fasta files (in which case please use fastq) or you have accidentally specified the wrong colour to be genotyped\n");
+	      exit(1);
+	    }
+
+	  if (db_graph_info->total_sequence[cmd_line.list_colours_to_genotype[k]]==0)
+	    {
+	      printf("This will not work. If you scroll up to the summary of read-lengths and covgs in your colours, you will see that\n");
+	      printf("at least one of the colours you want to genotype has total sequence 0. We only know of one way this can happen:\n");
+	      printf("If you load fastA files, then cortex does not store read-length/covg data, essentially because the only real use-cases for\n");
+	      printf("fasta files are a)testing of code and b) reference genomes. So I suggest that either you are\n");
+	      printf("running a test on fasta files (in which case please use fastq) or you have accidentally specified the wrong colour to be genotyped\n");
+	      exit(1);
+	    }
+	}
 
     }
 

@@ -1779,6 +1779,14 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  return -1;
 	  
 	}
+      if (cmd_ptr->genome_size==0)
+	{
+	  char tmp[LEN_ERROR_STRING];
+	  sprintf(tmp, "If you specify --genotype-site then you must also specify --genome_size\n");
+	  strcpy(error_string, tmp);
+	  return -1;
+	  
+	}
 
     }
 
