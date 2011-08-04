@@ -92,6 +92,7 @@ typedef struct
 
   double manually_entered_seq_error_rate;
   boolean manually_override_error_rate;
+  boolean specified_max_var_len;
   ExperimentType expt_type;
   
   char colour_list[MAX_FILENAME_LEN];

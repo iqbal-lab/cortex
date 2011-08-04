@@ -217,7 +217,7 @@ const char* usage=
   // Q
 "   [--estimated_error_rate]\t\t\t\t\t\t=\t If you have some idea of the sequencing error rate (per base-pair), enter it here. eg 0.01. Currently used in calculating likelihoods\n"
   // R
-"   [--genotype_site]\t\t\t\t\t\t=\t Genotype a single (typically multiallelic) site. Syntax is slightly complex - see manual\n"
+"   [--genotype_site]\t\t\t\t\t\t=\t Genotype a single (typically multiallelic) site. Syntax is slightly complex - see manual. Must also specify --max_var_len to give the length of the longest allele\n"
 
 
 
@@ -291,6 +291,7 @@ int default_opts(CmdLine * c)
   c->quality_score_offset = 33;//standard fastq, not illumina v-whatever fastq  
   c->max_read_length = 0;
   c->max_var_len = 10000;
+  c->specified_max_var_len = false;
   c->remv_low_covg_sups_threshold=-1;
   c->clean_colour=NUMBER_OF_COLOURS+1;//default to an impossible value
   c->num_colours_in_detect_bubbles1_first_colour_list=0;
@@ -868,7 +869,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    errx(1,"[--max_var_len] option requires (positive) integer argument");
 	  }
 	cmdline_ptr->max_var_len = atoi(optarg);
-
+	cmdline_ptr->specified_max_var_len = true;
 	break ;
       }
 
@@ -1765,6 +1766,14 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 
   if (cmd_ptr->genotype_complex_site==true)
     {
+      if (cmd_ptr->specified_max_var_len==false)
+	{
+	  char tmp[LEN_ERROR_STRING];
+	  sprintf(tmp, "If you use --genotype_site, you must also specify --max_var_len and give the length of the longest allele in the (presumably multillelic) site you are genotyping\n");
+	  strcpy(error_string, tmp);
+	  return -1;
+	  
+	}
       if (cmd_ptr->num_colours_to_genotype + cmd_ptr->num_alleles_of_site >NUMBER_OF_COLOURS)
 	{
 	  printf("There is an inconsistency in your compile + command line specifications.\n");
