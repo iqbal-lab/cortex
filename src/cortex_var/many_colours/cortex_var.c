@@ -970,10 +970,9 @@ int main(int argc, char **argv){
 
       //sanity check before we start
       //check that we have read lengths for the colours we want to genotype
-      int k;
       for (k=0; k<cmd_line.num_colours_to_genotype; k++)
 	{
-	  if (db_graph_info->mean_read_length[cmd_line.list_colours_to_genotype[k]] < db_graph->kmer_size )
+	  if (db_graph_info.mean_read_length[cmd_line.list_colours_to_genotype[k]] < db_graph->kmer_size )
 	    {
 	      printf("This will not work. If you scroll up to the summary of read-lengths and covgs in your colours, you will see that\n");
 	      printf("at least one of the colours you want to genotype has mean read length < kmer_size. We only know of one way this can happen:\n");
@@ -983,7 +982,7 @@ int main(int argc, char **argv){
 	      exit(1);
 	    }
 
-	  if (db_graph_info->total_sequence[cmd_line.list_colours_to_genotype[k]]==0)
+	  if (db_graph_info.total_sequence[cmd_line.list_colours_to_genotype[k]]==0)
 	    {
 	      printf("This will not work. If you scroll up to the summary of read-lengths and covgs in your colours, you will see that\n");
 	      printf("at least one of the colours you want to genotype has total sequence 0. We only know of one way this can happen:\n");
@@ -993,6 +992,23 @@ int main(int argc, char **argv){
 	      exit(1);
 	    }
 	}
+
+      double* current_max_lik_array         = alloc_ML_results_array(cmd_line.num_colours_to_genotype);
+      double* current_max_but_one_lik_array = alloc_ML_results_array(cmd_line.num_colours_to_genotype);
+      char** name_current_max_lik_array             = alloc_ML_results_names_array(cmd_line.num_colours_to_genotype);
+      char** name_current_max_but_one_lik_array     = alloc_ML_results_names_array(cmd_line.num_colours_to_genotype);
+
+      calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(cmd_line.list_colours_to_genotype, cmd_line.num_colours_to_genotype,
+										       cmd_line.colour_of_reference_with_site_excised,
+										       cmd_line.num_alleles_of_site,
+										       cmd_line.first_genotype_to_calc_likelihoods_for,
+										       cmd_line.last_genotype_to_calc_likelihoods_for,
+										       cmd_line.max_var_len, cmd_line.fasta_alleles_for_complex_genotyping,
+										       cmd_line.assump_for_genotyping,
+										       current_max_lik_array, current_max_but_one_lik_array,
+										       name_current_max_lik_array, name_current_max_but_one_lik_array,
+										       true, &model_info, db_graph);
+
 
     }
 

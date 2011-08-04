@@ -56,6 +56,21 @@ void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var,
   var->which         = which;
 }
 
+void set_status_of_nodes_in_branches(VariantBranchesAndFlanks* var, NodeStatus status)
+{
+  int i;
+
+  for (i=0; i<var->len_one_allele; i++)
+    {
+      db_node_set_status( (var->one_allele)[i], status);
+    }
+
+  for (i=0; i<var->len_other_allele; i++)
+    {
+      db_node_set_status( (var->other_allele)[i], status);
+    }
+
+}
 
 /*
 void print_both_alleles(VariantBranchesAndFlanks* var)
@@ -86,6 +101,25 @@ void action_set_flanks_and_branches_to_be_ignored(VariantBranchesAndFlanks* var)
     }
 }
 
+void set_variant_branches_but_flanks_to_null(VariantBranchesAndFlanks* var, 
+					     dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, 
+					     dBNode** other_allele, Orientation* other_allele_or, int len_other_allele, 
+					     WhichAlleleIsRef which)
+{
+  var->flank5p       = NULL;
+  var->flank5p_or    = NULL;
+  var->len_flank5p   = 0;
+  var->one_allele    = one_allele;
+  var->one_allele_or = one_allele_or;
+  var->len_one_allele= len_one_allele;
+  var->other_allele    = other_allele;
+  var->other_allele_or = other_allele_or;
+  var->len_other_allele= len_other_allele;
+  var->flank3p       = NULL;
+  var->flank3p_or    = NULL;
+  var->len_flank3p   = 0;
+  var->which         = which;
+}
 
 void db_variant_action_do_nothing(VariantBranchesAndFlanks* var)
 {

@@ -50,6 +50,7 @@ typedef enum{
 } Orientation;
 
 
+#define MAX_READ_NAME_LEN 300
 #define LENGTH_FILENAME 300
 #define VERSION 1
 #define SUBVERSION 0

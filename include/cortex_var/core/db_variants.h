@@ -137,6 +137,13 @@ void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var,
 				     dBNode** other_allele, Orientation* other_allele_or, int len_other_allele, 
 				     dBNode** flank3p,    Orientation* flank3p_or,    int len_flank3p, WhichAlleleIsRef which);
 
+void set_variant_branches_but_flanks_to_null(VariantBranchesAndFlanks* var, 
+					     dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, 
+					     dBNode** other_allele, Orientation* other_allele_or, int len_other_allele, 
+					     WhichAlleleIsRef which);
+
+void set_status_of_nodes_in_branches(VariantBranchesAndFlanks* var, NodeStatus status);
+
 
 void exact_copy_variant_branches_and_flanks(VariantBranchesAndFlanks copy_to, const VariantBranchesAndFlanks copy_from);
 void copy_variant_branches_and_flanks_switching_branches(VariantBranchesAndFlanks copy_to, const VariantBranchesAndFlanks copy_from);
