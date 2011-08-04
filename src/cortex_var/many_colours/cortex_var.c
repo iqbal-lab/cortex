@@ -852,15 +852,13 @@ int main(int argc, char **argv){
   if (cmd_line.print_supernode_fasta==true)
     {
       timestamp();
-      /* DEBUG ONLY
+
       printf("Print contigs(supernodes) in the graph created by the union of all colours.\n");
       
       db_graph_print_supernodes_defined_by_func_of_colours(cmd_line.output_supernodes, "", cmd_line.max_var_len,// max_var_len is the public face of maximum expected supernode size
 							   db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
 							   &print_appropriate_extra_supernode_info);
-      */
-      printf("For prototyping: look at covg on supernodes across timestamps (colours)\n");
-      print_covg_stats_for_timestamps_for_supernodes(cmd_line.output_supernodes, db_graph, cmd_line.max_var_len);
+
 
       timestamp();
       printf("Supernodes dumped\n");

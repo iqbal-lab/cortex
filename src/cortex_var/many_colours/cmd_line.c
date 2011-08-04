@@ -1986,24 +1986,24 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 				 int* start_gt_combin_num, int* end_gt_combin_num, char* fasta_file, AssumptionsOnGraphCleaning* assump)
 {
 
-  // we expect arg to be of this format: x,y;z;N;A,B;fasta;[CLEANED|UNCLEANED]   where z and A,B may be -1
+  // we expect arg to be of this format: x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>   where z and A,B may be -1
   // x,y is a comma sep list of colours to genotype. z is the ref-minus-site colour. N is the number of alleles at the site (must be same as number of reads in the fasta)
   // A..B means genotype combinations A to B of the N choose 2 possible genotypes.
 
 
-  char delims[] = ";";
+  char delims[] = "[";
   char temp1[MAX_FILENAME_LEN];
   temp1[0]='\0';
   strcpy(temp1, arg);
   char* commaseplist = strtok(temp1, delims );
   if (commaseplist==NULL)
     {
-      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta;[CLEANED|UNCLEANED] - you do not appear to have any semicolons - consult the manual");
+      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>, using the \"[\" character as a delimiter. you do not appear to have any of these delimiters - consult the manual");
     }
   
   if (strcmp(commaseplist, "-1")==0)
     {
-      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta;[CLEANED|UNCLEANED] where x,y denotes a comma-separated list of colours (eg 0,2,45) which are to be genotyped. In other parts of the cortex_var cmdline syntax, a \"-1\" is allowed to denote ALL colours. That makes no sense here. --genotype_site is designed for complex multiallelic sites, where the known alleles are loaded into colours 0..N-1 with --multicolour_bin, and then (optionally) another colour is used to refer to the reference-minus-site (see manual). So by definition, not all the colours in the graph are samples to be genotyped. In short, don't use -1 for A,B\n");
+      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED> where x,y denotes a comma-separated list of colours (eg 0,2,45) which are to be genotyped. In other parts of the cortex_var cmdline syntax, a \"-1\" is allowed to denote ALL colours. That makes no sense here. --genotype_site is designed for complex multiallelic sites, where the known alleles are loaded into colours 0..N-1 with --multicolour_bin, and then (optionally) another colour is used to refer to the reference-minus-site (see manual). So by definition, not all the colours in the graph are samples to be genotyped. In short, don't use -1 for A,B\n");
     }
   else
     {
@@ -2020,7 +2020,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
   char* refminussite_as_char  = strtok( NULL, delims );
   if (refminussite_as_char==NULL)
     {
-      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta;[CLEANED|UNCLEANED] - you do not appear to have a \"z\" - consult the manual");
+      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED> - you do not appear to have a \"z\" - consult the manual");
     }
   else
     {
@@ -2030,14 +2030,14 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
   char* numalleles_as_char = strtok( NULL, delims );
   if (numalleles_as_char==NULL)
     {
-      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta;[CLEANED|UNCLEANED]. You have omitted the N, which is not permitted - consult the manual");
+      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>. You have omitted the N, which is not permitted - consult the manual");
     }
   else
     {
       int num_a = atoi(numalleles_as_char);
       if (num_a<=0)
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta;[CLEANED|UNCLEANED] - you have entered a negative value for N (the number of alleles), which is not permitted\n");
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED> - you have entered a negative value for N (the number of alleles), which is not permitted\n");
 	}
       int num_cols_required_by_this_cmdline = *num_colours_to_genotype + num_a;
       if (*ref_minus_site_colour != -1)
@@ -2055,7 +2055,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 
   if (startend_as_char==NULL)
     {
-      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta;[CLEANED|UNCLEANED] - cortex cannot parse/find A,B\n");
+      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED> - cortex cannot parse-find A,B\n");
     }
   else
     {
@@ -2063,7 +2063,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
       char* fa  = strtok( NULL, delims );
       if (fa==NULL)
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta;[CLEANED|UNCLEANED]  - unable to find a fasta in that string\n");
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>  - unable to find a fasta in that string\n");
 	}
       else
 	{
@@ -2081,7 +2081,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	}
       else
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta;[CLEANED|UNCLEANED] - after the final semicolon, you appear to have writting something that is neither \"CLEANED\" nor \"UNCLEANED\" \n");	  
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED> - after the final semicolon, you appear to have writting something that is neither \"CLEANED\" nor \"UNCLEANED\" \n");	  
 	}
 
 
@@ -2101,7 +2101,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	  char* startaschar = strtok(temp2, delims2);
 	  if (startaschar==NULL)
 	    {
-	      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta;[CLEANED|UNCLEANED]  - unable to split A,B out\n");
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>  - unable to split A,B out\n");
 	    }
 	  else
 	    {
@@ -2110,7 +2110,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	  char* endaschar = strtok( NULL, delims2 );
 	  if (endaschar==NULL)
 	    {
-	      errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A,B;fasta;[CLEANED|UNCLEANED]  - unable to split A,B out to get B\n");
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>  - unable to split A,B out to get B\n");
 	    }
 	  else
 	    {

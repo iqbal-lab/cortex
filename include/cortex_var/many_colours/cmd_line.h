@@ -115,6 +115,7 @@ typedef struct
   char readlen_distrib_outfile[MAX_FILENAME_LEN];
   char successively_dump_cleaned_colours_suffix[MAX_SUFFIX_LEN];
   char list_fastaq_to_align[MAX_FILENAME_LEN];
+  char fasta_alleles_for_complex_genotyping[MAX_FILENAME_LEN];
 
   boolean cut_homopolymers;
   boolean remove_pcr_dups;
@@ -156,7 +157,7 @@ typedef struct
   int num_alleles_of_site;
   int first_genotype_to_calc_likelihoods_for;
   int last_genotype_to_calc_likelihoods_for;
-  char* fasta_alleles_for_complex_genotyping;
+
   AssumptionsOnGraphCleaning assump_for_genotyping;
 } CmdLine;
 
