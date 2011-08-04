@@ -40,7 +40,7 @@
 #include <file_reader.h>
 
 // Lowest log likelihood, at which we just cutoff
-MIN_LLK = -999999999;
+int MIN_LLK = -999999999;
 
 MultiplicitiesAndOverlapsOfBiallelicVariant*  alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(int len_allele1, int len_allele2)
 {

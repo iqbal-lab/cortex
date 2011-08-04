@@ -55,7 +55,8 @@ IDIR_CORTEX_CON = include/cortex_con
 IDIR_CORTEX_VAR =include/cortex_var/many_colours 
 IDIR_CORTEX_VAR_CORE = include/cortex_var/core
 IDIR_CORTEX_VAR_CMD_LINE =include/cortex_var/many_colours
-IDIR_GSL=gsl-1.15/gsl
+IDIR_GSL=gsl-1.15
+IDIR_GSL_ALSO=gsl-1.15/gsl
 
 ## test code includes
 IDIR_BASIC_TESTS =include/test/basic
@@ -90,7 +91,7 @@ CFLAGS_CUNIT          = -L/home/zam/bin/lib
 
 CFLAGS_BASIC          = -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING)
 CFLAGS_GRAPH          = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_BASE_ENCODING)
-CFLAGS_CORTEX_VAR = -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_CORTEX_VAR) -I$(IDIR_BASE_ENCODING) -I$(IDIR_GSL)
+CFLAGS_CORTEX_VAR = -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_CORTEX_VAR) -I$(IDIR_BASE_ENCODING) -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO)
 
 
 CFLAGS_BASIC_TESTS = -I$(IDIR_BASIC_TESTS)  -I$(IDIR_BASIC)  -I$(IDIR_BASE_ENCODING) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
