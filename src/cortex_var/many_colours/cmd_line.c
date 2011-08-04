@@ -1165,7 +1165,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 				     &(cmdline_ptr->first_genotype_to_calc_likelihoods_for),
 				     &(cmdline_ptr->last_genotype_to_calc_likelihoods_for),
 				     cmdline_ptr->fasta_alleles_for_complex_genotyping, &(cmdline_ptr->assump_for_genotyping));
-
+	cmdline_ptr->genotype_complex_site=true;
 	break;
       }
       

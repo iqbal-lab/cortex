@@ -35,6 +35,8 @@
 #include <graph_info.h>
 #include <model_selection.h>
 
+extern int MIN_LLK;
+
 typedef struct {
   int* mult11; //multiplicity of allele 1 nodes in allele 1
   int* mult12; //multiplicity of allele 1 nodes in allele 2,   etc

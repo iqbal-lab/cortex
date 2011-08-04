@@ -39,6 +39,8 @@
 #include <global.h>
 #include <file_reader.h>
 
+// Lowest log likelihood, at which we just cutoff
+MIN_LLK = -999999999;
 
 MultiplicitiesAndOverlapsOfBiallelicVariant*  alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(int len_allele1, int len_allele2)
 {
@@ -177,8 +179,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   //initialisation
   initialise_multiplicities_of_allele_nodes_wrt_both_alleles(var, var_mults, true, &element_get_colour_indiv, &element_get_covg_indiv);
 
-  // Lowest log likelihood, at which we just cutoff
-  int MIN_LLK = -999999999;
+  //int MIN_LLK = -999999999;
 
 
   // 1. Count number of errors:
@@ -443,17 +444,26 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
     }
   else
     {
-      if (log_prob_data + log_prob_error > *current_max_lik)
+      if (log_prob_data + log_prob_error > (*current_max_lik) )
 	{
+	  //this is the new ML genotype
+	  //sort out new names for top and next best genotype:
 	  current_max_but_one_lik_name[0]='\0';
 	  strcat(current_max_but_one_lik_name, current_max_lik_name);
 	  current_max_lik_name[0]='\0';
 	  strcat(current_max_lik_name, name_of_this_genotype);
+	  //and do the likelihoods themselves
+	  *current_max_but_one_lik = *current_max_lik;
+	  *current_max_lik= log_prob_data + log_prob_error;
 	}
       else if (log_prob_data + log_prob_error > *current_max_but_one_lik)
 	{
+	  //this is the new second best genotype
+	  //sort out name
 	  current_max_but_one_lik_name[0]='\0';
           strcat(current_max_but_one_lik_name, name_of_this_genotype);
+	  //..and the likelihood
+	  *current_max_but_one_lik = log_prob_data + log_prob_error;
 	}
 
       return log_prob_data + log_prob_error;
@@ -681,8 +691,8 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
       int z;
       for (z=0; z<num_colours_to_genotype; z++)
 	{
-	  printf("Colour %d, GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_lik_array[z], current_max_lik_array[z]);
-	  printf("Colour %d, GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_but_one_lik_array[z], current_max_but_one_lik_array[z]);
+	  printf("Colour %d, MAX_LIKELIHOOD GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_lik_array[z], current_max_lik_array[z]);
+	  printf("Colour %d, NEXT BEST GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_but_one_lik_array[z], current_max_but_one_lik_array[z]);
 	}
 
       dealloc_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
@@ -698,6 +708,11 @@ double* alloc_ML_results_array(int num_samples_to_genotype)
     {
       printf("UNable to malloc %d colours in alloc_ML_results_array\n",num_samples_to_genotype);
       exit(1);
+    }
+  int i;
+  for (i=0; i<num_samples_to_genotype; i++)
+    {
+      retarray[i]=MIN_LLK;
     }
   return retarray;
 }
@@ -718,6 +733,10 @@ char** alloc_ML_results_names_array(int num_samples_to_genotype)
 	{
 	  printf("Unable to malloc name array in alloc_ML_results_names_array\n");
 	  exit(1);
+	}
+      else
+	{
+	  retarray[i][0]='\0';
 	}
     }
   return retarray;
