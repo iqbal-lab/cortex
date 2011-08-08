@@ -177,7 +177,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   }
 
   //initialisation
-  initialise_multiplicities_of_allele_nodes_wrt_both_alleles(var, var_mults, true, &element_get_colour_indiv, &element_get_covg_indiv);
+  initialise_multiplicities_of_allele_nodes_wrt_both_alleles(var, var_mults, false, NULL, NULL);
+  //initialise_multiplicities_of_allele_nodes_wrt_both_alleles(var, var_mults, true, &element_get_colour_indiv, &element_get_covg_indiv);
 
   //int MIN_LLK = -999999999;
 
@@ -299,9 +300,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 		k++;
 		working_array_shared_count++;
 	      }
-	    while ( ( db_node_get_coverage( (var->one_allele)[k], individual_edge_array, colour_ref_minus_our_site)>0 ) &&
-		    (k<var->len_one_allele)
-		    )
+	    while ( (k<var->len_one_allele) && ( db_node_get_coverage( (var->one_allele)[k], individual_edge_array, colour_ref_minus_our_site)>0 ) )
 	      {
 		k++;
 	      }
@@ -335,14 +334,17 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 		    (check_covg_in_ref_with_site_excised(var->one_allele[k])==0)
 		    )
 	      {
+		if (var_mults->mult11[k]==0)
+		  {
+		    printf("At k= %d get zero\n", k);
+		  }
 		working_array_self[working_array_self_count]=db_node_get_coverage(var->one_allele[k], individual_edge_array, colour_indiv)/var_mults->mult11[k];
 		k++;
 		working_array_self_count++;
 	      }
 
-	    while ( ( check_covg_in_ref_with_site_excised(var->one_allele[k])>0 ) &&
-		    (k < var->len_one_allele)
-		    )
+	    while ( (k < var->len_one_allele) &&( check_covg_in_ref_with_site_excised(var->one_allele[k])>0 ) )
+
 	      { 
 		k++;
               }
@@ -476,7 +478,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 //we ASSUME colours 0 to number_alleles are the various alternate alleles, loading in multicolour_bin
 void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(int* colours_to_genotype, int num_colours_to_genotype,
 										      int colour_ref_minus_site, int number_alleles,
-										      int first_gt, int last_gt, // of the number_alleles choose 2
+										      int first_gt, int last_gt, // of all the possible gt's
 										      int max_allele_length, char* fasta,//one read per allele
 										      AssumptionsOnGraphCleaning assump,
 										      double* current_max_lik_array, double* current_max_but_one_lik_array,
@@ -485,6 +487,8 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 										      GraphAndModelInfo* model_info, dBGraph* db_graph
 										      )
 {
+
+
   //----------------------------------
   // allocate the memory used to read the sequences
   //----------------------------------
@@ -591,6 +595,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
     }
 
   int index_alleles_with_nonzero_covg=0;
+
   for (j=0; j<= number_alleles-1; j++)
     {
       int num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_allele_length, 
@@ -624,7 +629,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	}
       
     }
-  
+  fclose(fp);
 
   int num_alleles_with_nonzero_covg = index_alleles_with_nonzero_covg;
 
@@ -632,6 +637,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
   // then go ahead and check it out
 
   int genotype_count=0;
+
   for (i=0; i<num_alleles_with_nonzero_covg; i++)
     {
       for (j=i; j<num_alleles_with_nonzero_covg; j++) 
@@ -646,7 +652,8 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	    {
 	      continue;
 	    }
-	  
+
+
 	  VariantBranchesAndFlanks var;
 	  set_variant_branches_but_flanks_to_null(&var, 
 						  array_of_node_arrays[list_alleles_with_covg[i]], 
@@ -667,6 +674,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	    {
 	      char name[400];
 	      sprintf(name, "%s/%s", array_of_allele_names[i], array_of_allele_names[j]); 
+
 	      double llk= calc_log_likelihood_of_genotype_with_complex_alleles(&var, name,
 									       mobv, model_info, colours_to_genotype[z],
 									       colour_ref_minus_site, db_graph, 
@@ -686,19 +694,22 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	}
       
 
-      //finished this set
-      printf("Finished calculating likelihoods of genotypes %d to %d\n", first_gt, last_gt);
-      int z;
-      for (z=0; z<num_colours_to_genotype; z++)
-	{
-	  printf("Colour %d, MAX_LIKELIHOOD GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_lik_array[z], current_max_lik_array[z]);
-	  printf("Colour %d, NEXT BEST GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_but_one_lik_array[z], current_max_but_one_lik_array[z]);
-	}
 
-      dealloc_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
-      //many other things you should free here.
 
     }
+
+  //finished this set
+  printf("Finished calculating likelihoods of genotypes %d to %d\n", first_gt, last_gt);
+  int z;
+  for (z=0; z<num_colours_to_genotype; z++)
+    {
+      printf("Colour %d, MAX_LIKELIHOOD GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_lik_array[z], current_max_lik_array[z]);
+      printf("Colour %d, NEXT BEST GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_but_one_lik_array[z], current_max_but_one_lik_array[z]);
+    }
+
+  dealloc_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
+  //many other things you should free here.
+
 }
 
 double* alloc_ML_results_array(int num_samples_to_genotype)

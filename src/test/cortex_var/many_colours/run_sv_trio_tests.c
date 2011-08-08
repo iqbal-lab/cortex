@@ -370,6 +370,11 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
+   if (NULL == CU_add_test(pPopGraphSuite, "Test genotyping of complex sites - very simple case", test_calc_log_likelihood_of_genotype_with_complex_alleles1 ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
 
 
 
