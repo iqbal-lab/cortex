@@ -142,6 +142,65 @@ void initialise_multiplicities_of_allele_nodes_wrt_both_alleles(VariantBranchesA
   get_mult(var->other_allele, var->len_other_allele, var->one_allele, var->len_one_allele,  mult->mult21);
 }
 
+void utility_set_one_array_equal_to_another(dBNode** src, int len, dBNode** target)
+{
+  int i;
+  for (i=0; i<len; i++)
+    {
+      target[i]=src[i];
+    }
+}
+
+//Utility function - only exported so I can test it.
+void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(VariantBranchesAndFlanks* var, MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
+									 boolean only_count_nodes_with_edge_in_specified_colour_func,
+									 Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) )
+{
+
+  void get_mult(dBNode** br_src, int len_br_src, dBNode** br_target, int len_br_target, int* mult_array,
+		dBNode** br_src_working, dBNode** br_target_working)
+  {
+
+    //make copies of the arrays so we can quicksort
+    utility_set_one_array_equal_to_another(br_src, len_br_src, br_src_working);
+    utility_set_one_array_equal_to_another(br_target, len_br_target, br_target_working);
+    qsort(br_src_working, len_br_src, sizeof(dBNode*), addr_cmp);
+    qsort(br_target_working, len_br_target, sizeof(dBNode*), addr_cmp);
+
+
+    int i,j;
+    int count_occurrences=0; //will be number of things we have put in this array
+
+    for (i=0; i<len_br_src ; i++)
+      {
+	count_occurrences=0;
+	
+	for (j=0 ; j<len_br_target; j++)
+	  {
+	    //if i-th and j-th elements are the same, AND they exist in the colour (or function of colours) we are interested in
+	    if (db_node_addr_cmp(&br_src[i], &br_target[j])==0 )
+	      {
+		if ( (only_count_nodes_with_edge_in_specified_colour_func==true) && 
+		     (!db_node_is_this_node_in_subgraph_defined_by_func_of_colours(br_src[i], get_colour)) )
+		  {
+		    //does not count if node does not exist in the specified subgraph
+		  }
+		else
+		  {
+		    count_occurrences++;
+		  }
+	      }
+	  }
+	
+	mult_array[i]=count_occurrences;
+      }
+  }
+  get_mult(var->one_allele, var->len_one_allele, var->one_allele, var->len_one_allele,  mult->mult11);
+  get_mult(var->other_allele, var->len_other_allele, var->other_allele, var->len_other_allele,  mult->mult22);
+  get_mult(var->one_allele, var->len_one_allele, var->other_allele, var->len_other_allele,  mult->mult12);
+  get_mult(var->other_allele, var->len_other_allele, var->one_allele, var->len_one_allele,  mult->mult21);
+}
+
 
 
 // WARNING - the implicit assumption here is that the graph/hash table ONLY contains nodes in the union of all known alleles for 
@@ -488,7 +547,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 										      )
 {
 
-
+  printf("Start calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site\n");
   //----------------------------------
   // allocate the memory used to read the sequences
   //----------------------------------
@@ -667,7 +726,9 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	  set_status_of_nodes_in_branches(&var, in_desired_genotype);
 	  reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
 
+	  printf("Call initialise_multiplicities_of_allele_nodes_wrt_both_alleles\n");
 	  initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, mobv, false, NULL, NULL);
+	  printf("returns from initialise_multiplicities_of_allele_nodes_wrt_both_alleles\n");
 
 	  int z;
 	  for (z=0; z<num_colours_to_genotype; z++)
@@ -675,6 +736,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	      char name[400];
 	      sprintf(name, "%s/%s", array_of_allele_names[i], array_of_allele_names[j]); 
 
+	      printf("Call the actual calc\n");
 	      double llk= calc_log_likelihood_of_genotype_with_complex_alleles(&var, name,
 									       mobv, model_info, colours_to_genotype[z],
 									       colour_ref_minus_site, db_graph, 
@@ -682,7 +744,8 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 									       &(current_max_lik_array[z]), &(current_max_but_one_lik_array[z]),
 									       name_current_max_lik_array[z], name_current_max_but_one_lik_array[z],
 									       assump);
-	     
+	      printf("Got the actual calc\n");
+
 
 	      if (print_all_liks_calculated==true)
 		{
