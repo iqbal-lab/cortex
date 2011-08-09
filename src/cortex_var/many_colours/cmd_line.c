@@ -1158,13 +1158,14 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'R':
       {
 	if (optarg==NULL)
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y;z;N;A..B;fasta.  x,y is a comma-sep list of colours to genotype. z is the reference-minus-site colour. N is the number of alleles for this site (which cortex assumes are loaded in a multicolour_bin containing precisely and only those alleles, one per colour). Cortex will genotype combinations A through B of the N choose 2 possible genotypes (allows parallelisation); fasta is the file listing one read per allele. See manual for details.");
+	  errx(1,"[--genotype_site] option requires an argument of the form xx,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q.  x,y is a comma-sep list of colours to genotype. z is the reference-minus-site colour. N is the number of alleles for this site (which cortex assumes are loaded in a multicolour_bin containing precisely and only those alleles, one per colour). Cortex will genotype combinations A through B of the N choose 2 possible genotypes (allows parallelisation); fasta is the file listing one read per allele. CLEANED or UNCLEANED allow Cortex to tailor its genotyping model. p,q are two free/unused colours that Cortex will use internally. See manual for details.");
 
 	parse_genotype_site_argument(optarg, cmdline_ptr->list_colours_to_genotype, &(cmdline_ptr->num_colours_to_genotype),
 				     &(cmdline_ptr->colour_of_reference_with_site_excised), &(cmdline_ptr->num_alleles_of_site),
 				     &(cmdline_ptr->first_genotype_to_calc_likelihoods_for),
 				     &(cmdline_ptr->last_genotype_to_calc_likelihoods_for),
-				     cmdline_ptr->fasta_alleles_for_complex_genotyping, &(cmdline_ptr->assump_for_genotyping));
+				     cmdline_ptr->fasta_alleles_for_complex_genotyping, &(cmdline_ptr->assump_for_genotyping),
+				     &(cmdline_ptr->working_colour1), &(cmdline_ptr->working_colour2) );
 	cmdline_ptr->genotype_complex_site=true;
 	break;
       }
@@ -1983,7 +1984,8 @@ int get_numbers_from_comma_sep_list(char* list, int* return_list, int max_len_re
 
 //note we implicitly assume colours 0...num_alleles are going to be one colour for each allele. So the ref-minus-site colour must be > this, etc
 int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* num_colours_to_genotype , int* ref_minus_site_colour, int* num_alleles,
-				 int* start_gt_combin_num, int* end_gt_combin_num, char* fasta_file, AssumptionsOnGraphCleaning* assump)
+				 int* start_gt_combin_num, int* end_gt_combin_num, char* fasta_file, AssumptionsOnGraphCleaning* assump,
+				 int* wk_col1, int* wk_col2)
 {
 
   // we expect arg to be of this format: x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>   where z and A,B may be -1
@@ -2081,10 +2083,22 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	}
       else
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED> - after the final semicolon, you appear to have writting something that is neither \"CLEANED\" nor \"UNCLEANED\" \n");	  
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q - after the fasta name, you appear to have writting something that is neither \"CLEANED\" nor \"UNCLEANED\" \n");	  
 	}
 
-
+      int working_col1 = atoi(strtok(NULL, delims));
+      if ( (working_col1>NUMBER_OF_COLOURS) || (working_col1<0) )
+	{
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for, but also should be unused - ie you have not loaded binaries into these colours\n");
+	}
+      int working_col2 = atoi(strtok(NULL, delims));
+      if ( (working_col2>NUMBER_OF_COLOURS) || (working_col2<0) )
+	{
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for, but also should be unused - ie you have not loaded binaries into these colours\n");
+	}
+      *wk_col1 = working_col1;
+      *wk_col2 = working_col2;
+      
 
 
       if (strcmp(startend_as_char, "-1")==0)

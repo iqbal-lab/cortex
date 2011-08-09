@@ -172,9 +172,9 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* fasta_allele1,
 							    char* fasta_allele1_then_allele2, int read_len, int kmer, int genome_size, int number_of_bits, int bucket_size,
 							    int number_repeats_of_sim)
 {
-  if (NUMBER_OF_COLOURS<4)
+  if (NUMBER_OF_COLOURS<6)
     {
-      printf("Need >=4 colouyrs for test_calc_log_likelihood_of_genotype_with_complex_alleles1 - recompile\n");
+      printf("Need >=6 colouyrs for test_calc_log_likelihood_of_genotype_with_complex_alleles - recompile\n");
       exit(1);
     }
 
@@ -212,7 +212,9 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* fasta_allele1,
   int colour_allele2 =1;
   int colour_ref_minus_site=2;
   int colour_indiv = 3;
-  
+  int working_colour1 = 4;
+  int working_colour2 = 5;
+
   //for all of these fix read length and kmer
   read_len=50;
   kmer = 31;
@@ -387,7 +389,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* fasta_allele1,
       printf("Call simulator\n");
       simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		&var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site  fasta_allele1_then_allele2
-		is_true_hom,mobv, &model_info, fasta_allele1_then_allele2, true_gt, db_graph);
+		is_true_hom,mobv, &model_info, fasta_allele1_then_allele2, true_gt, db_graph, working_colour1, working_colour2);
 
       /*      
       seq_err_per_base=0.02;

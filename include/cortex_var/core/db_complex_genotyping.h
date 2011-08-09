@@ -61,6 +61,12 @@ void initialise_multiplicities_of_allele_nodes_wrt_both_alleles(VariantBranchesA
 								boolean only_count_nodes_with_edge_in_specified_colour_func,
 								Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) );
 
+void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(VariantBranchesAndFlanks* var, MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
+									 boolean only_count_nodes_with_edge_in_specified_colour_func,
+									 Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+									 int working_colour1, int working_colour2, dBGraph* db_graph);
+
+
 double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFlanks* var,
 							    char* name_of_this_genotype,
 							    MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults,
@@ -81,7 +87,8 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 										      double* current_max_lik_array, double* current_max_but_one_lik_array,
 										      char** name_current_max_lik_array, char** name_current_max_but_one_lik_array,
 										      boolean print_all_liks_calculated, //not just the top two
-										      GraphAndModelInfo* model_info, dBGraph* db_graph
+										      GraphAndModelInfo* model_info, dBGraph* db_graph,
+										      int working_colour1, int working_colour2
 										      );
 
 double* alloc_ML_results_array(int num_samples_to_genotype);

@@ -1005,7 +1005,7 @@ int main(int argc, char **argv){
 										       cmd_line.assump_for_genotyping,
 										       current_max_lik_array, current_max_but_one_lik_array,
 										       name_current_max_lik_array, name_current_max_but_one_lik_array,
-										       true, &model_info, db_graph);
+										       true, &model_info, db_graph, cmd_line.working_colour1, cmd_line.working_colour2);
 
 
     }
