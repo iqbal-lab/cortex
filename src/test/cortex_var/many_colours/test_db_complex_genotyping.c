@@ -506,7 +506,8 @@ void test_calc_log_likelihood_of_genotype_with_complex_alleles1()
 							 "../data/test/pop_graph/variations/complex_genotyping/simple_allele2.fa",
 							 "../data/test/pop_graph/variations/complex_genotyping/simple_rest_of_genome.fa",
 							 "../data/test/pop_graph/variations/complex_genotyping/simple_alleles_then_ref_minus_site.fa",
-							 "../data/test/pop_graph/variations/complex_genotyping/simple_alleles.fa", 50,31,554,15,100,10, true);
+							 "../data/test/pop_graph/variations/complex_genotyping/simple_alleles.fa", 50,31,554,15,100,1, true);
+  // I have run this with 10 iterations, and it works, but is slow
 }
 
 

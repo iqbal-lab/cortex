@@ -757,12 +757,12 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
     }
 
   //finished this set
-  //printf("Finished calculating likelihoods of genotypes %d to %d\n", first_gt, last_gt);
+  printf("Finished calculating likelihoods of genotypes %d to %d\n", first_gt, last_gt);
   int z;
   for (z=0; z<num_colours_to_genotype; z++)
     {
-      //     printf("Colour %d, MAX_LIKELIHOOD GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_lik_array[z], current_max_lik_array[z]);
-      //     printf("Colour %d, NEXT BEST GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_but_one_lik_array[z], current_max_but_one_lik_array[z]);
+           printf("Colour %d, MAX_LIKELIHOOD GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_lik_array[z], current_max_lik_array[z]);
+           printf("Colour %d, NEXT BEST GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_but_one_lik_array[z], current_max_but_one_lik_array[z]);
     }
 
   dealloc_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
