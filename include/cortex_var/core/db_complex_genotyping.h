@@ -64,7 +64,7 @@ void initialise_multiplicities_of_allele_nodes_wrt_both_alleles(VariantBranchesA
 void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(VariantBranchesAndFlanks* var, MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
 									 boolean only_count_nodes_with_edge_in_specified_colour_func,
 									 Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
-									 int working_colour1, int working_colour2, dBGraph* db_graph);
+									 int working_colour1, int working_colour2);
 
 
 double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFlanks* var,

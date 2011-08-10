@@ -155,7 +155,7 @@ void utility_set_one_array_equal_to_another(dBNode** src, int len, dBNode** targ
 void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(VariantBranchesAndFlanks* var, MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
 									 boolean only_count_nodes_with_edge_in_specified_colour_func,
 									 Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
-									 int working_colour1, int working_colour2, dBGraph* db_graph)
+									 int working_colour1, int working_colour2)
 {
   // *** ASSUME THE WORKING COLOURS ARE CLEAN ***
 
@@ -188,9 +188,11 @@ void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(Variant
   for (i=0; i<var->len_one_allele; i++)
     {
       db_node_set_coverage(var->one_allele[i], individual_edge_array, working_colour1, 0);
+      db_node_set_coverage(var->one_allele[i], individual_edge_array, working_colour2, 0);
     }
   for (i=0; i<var->len_other_allele; i++)
     {
+      db_node_set_coverage(var->other_allele[i], individual_edge_array, working_colour1,0);
       db_node_set_coverage(var->other_allele[i], individual_edge_array, working_colour2,0);
     }
 
@@ -605,7 +607,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 
 
 
-  MultiplicitiesAndOverlapsOfBiallelicVariant* mobv = alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(max_allele_length, max_allele_length);
+  MultiplicitiesAndOverlapsOfBiallelicVariant* mobv= alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(max_allele_length, max_allele_length);
   
   int* working_array_self = (int*) malloc(sizeof(int) * max_allele_length);
   int* working_array_shared = (int*) malloc(sizeof(int) * max_allele_length);
@@ -721,7 +723,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 
 	  set_status_of_nodes_in_branches(&var, in_desired_genotype);
 	  reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
-	  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, mobv, false, NULL, NULL, working_colour1, working_colour2, db_graph);
+	  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, mobv, false, NULL, NULL, working_colour1, working_colour2);
 
 
 	  int z;

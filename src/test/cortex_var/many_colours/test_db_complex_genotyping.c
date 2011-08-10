@@ -13,9 +13,16 @@
 
 void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
 {
-  //create a bunch of nodes, all o which have non-zero edges in colour 0.
-  //don't make any effort to create them properly - this function we are testing
-  //only looks at the memory address of the node, and whether it has an edge in the right colour
+
+  if (NUMBER_OF_COLOURS<6)
+    {
+      printf("Must compile for >=6 colours. recompile\n");
+      exit(1);
+    }
+  
+  int working_colour1 = 2;
+  int working_colour2 = 3;
+  
 
   dBNode* e1 = new_element();
   e1->individual_edges[0]=1;
@@ -51,16 +58,21 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
 				  unknown);
 
   
-  int mult11[4];
-  int mult22[4];
-  int mult12[4];
-  int mult21[4];
+  int mult11[4]={0,0,0,0};
+  int mult22[4]={0,0,0,0};
+  int mult12[4]={0,0,0,0};
+  int mult21[4]={0,0,0,0};
+  //  MultiplicitiesAndOverlapsOfBiallelicVariant* mobv= alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(10,10);//no allele loinger than 10 in this test
+  //reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
   MultiplicitiesAndOverlapsOfBiallelicVariant mobv;
   mobv.mult11=mult11;
   mobv.mult22=mult22;
   mobv.mult12=mult12;
   mobv.mult21=mult21;
-  initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, &mobv, true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+  mobv.len1=4;
+  mobv.len2=4;
+  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, &mobv, true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
+								      working_colour1, working_colour2);
 
   int p;
   for (p=0; p<3; p++)
@@ -78,7 +90,8 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
 
   //second test - two branches of equal length, one branch containing a repeated node
   array1[1]=e1;//so array1[0]==array1[1]
-  initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, &mobv, true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+  reset_MultiplicitiesAndOverlapsOfBiallelicVariant(&mobv);
+  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, &mobv, true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, working_colour1, working_colour2);
 
   CU_ASSERT(mobv.mult11[0]==2);
   CU_ASSERT(mobv.mult11[1]==2);
@@ -116,15 +129,18 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
 				  unknown);
 
   
-  int mult3_11[4];
-  int mult3_22[7];
-  int mult3_12[4];
-  int mult3_21[7];
+  int mult3_11[4]={0,0,0,0};
+  int mult3_22[7]={0,0,0,0,0,0,0};
+  int mult3_12[4]={0,0,0,0};
+  int mult3_21[7]={0,0,0,0,0,0,0};
   mobv.mult11=mult3_11;
   mobv.mult22=mult3_22;
   mobv.mult12=mult3_12;
   mobv.mult21=mult3_21;
-  initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, &mobv, true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs);
+  mobv.len1 = 4;
+  mobv.len2 = 7;
+
+  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, &mobv, true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, working_colour1, working_colour2);
 
 
 
@@ -301,16 +317,17 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 
 
 
-  MultiplicitiesAndOverlapsOfBiallelicVariant* mobv = alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(max_allele_length, max_allele_length);
-  if (mobv==NULL)
-    {
-      printf("Failed to alloc mobv\n");
-      exit(1);
-    }
+  //  MultiplicitiesAndOverlapsOfBiallelicVariant* mobv = alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(max_allele_length, max_allele_length);
+  //if (mobv==NULL)
+  //  {
+  //    printf("Failed to alloc mobv\n");
+  //    exit(1);
+  //  }
   int* working_array_self = (int*) malloc(sizeof(int) * max_allele_length);
   int* working_array_shared = (int*) malloc(sizeof(int) * max_allele_length);
   
-  if ( (mobv==NULL)||(working_array_self==NULL) || (working_array_shared==NULL))
+// if ( (mobv==NULL)||(working_array_self==NULL) || (working_array_shared==NULL))
+  if ( (working_array_self==NULL) || (working_array_shared==NULL))
     {
       printf("Cannot alloc all the arrays in calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site.  Give up and exit.");
       exit(1);
@@ -407,7 +424,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 
       simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		&var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site  fasta_allele1_then_allele2
-		is_true_hom,mobv, &model_info, fasta_allele1_then_allele2, true_gt, db_graph, working_colour1, working_colour2);
+		is_true_hom, &model_info, fasta_allele1_then_allele2, true_gt, db_graph, working_colour1, working_colour2);
 
       if (try_multiple_seq_errors==true)
 	{
@@ -417,7 +434,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 	  
 	  simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		    &var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
-		    is_true_hom,mobv, &model_info, fasta_allele1_then_allele2, true_gt, db_graph, working_colour1, working_colour2);
+		    is_true_hom, &model_info, fasta_allele1_then_allele2, true_gt, db_graph, working_colour1, working_colour2);
 	  
 	  seq_err_per_base=0.001;
 	  model_info.seq_error_rate_per_base=seq_err_per_base;
@@ -425,12 +442,12 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 	  
 	  simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		    &var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
-		    is_true_hom,mobv, &model_info, fasta_allele1_then_allele2, true_gt, db_graph,working_colour1, working_colour2);
+		    is_true_hom, &model_info, fasta_allele1_then_allele2, true_gt, db_graph,working_colour1, working_colour2);
 	}
       
 
       // now re-run for a true hom
-      /*
+
       printf("Now for true hom\n");
       is_true_hom=true;
       set_variant_branches_but_flanks_to_null(&var, 
@@ -454,7 +471,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 
       simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		&var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
-		is_true_hom, mobv, &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2);
+		is_true_hom,  &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2);
 
       if (try_multiple_seq_errors==true)
 	{      
@@ -464,16 +481,16 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 	  
 	  simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		    &var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
-		    is_true_hom, mobv, &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2);
+		    is_true_hom,  &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2);
 	  seq_err_per_base=0.001;
 	  model_info.seq_error_rate_per_base=seq_err_per_base;
 
 	  
 	  simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		    &var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
-		    is_true_hom, mobv, &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2);
+		    is_true_hom,  &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2);
 	}
-      */
+
     }
 
 }
@@ -489,7 +506,7 @@ void test_calc_log_likelihood_of_genotype_with_complex_alleles1()
 							 "../data/test/pop_graph/variations/complex_genotyping/simple_allele2.fa",
 							 "../data/test/pop_graph/variations/complex_genotyping/simple_rest_of_genome.fa",
 							 "../data/test/pop_graph/variations/complex_genotyping/simple_alleles_then_ref_minus_site.fa",
-							 "../data/test/pop_graph/variations/complex_genotyping/simple_alleles.fa", 50,31,554,15,100,10, false);
+							 "../data/test/pop_graph/variations/complex_genotyping/simple_alleles.fa", 50,31,554,15,100,10, true);
 }
 
 
