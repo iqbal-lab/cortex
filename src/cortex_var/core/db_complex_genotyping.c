@@ -157,9 +157,9 @@ void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(Variant
 									 Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
 									 int working_colour1, int working_colour2, dBGraph* db_graph)
 {
-  //wipe the working colours:
-  db_graph_wipe_colour(working_colour1, db_graph);
-  db_graph_wipe_colour(working_colour2, db_graph);
+  // *** ASSUME THE WORKING COLOURS ARE CLEAN ***
+
+
   //walk through allele1, and as you do so, add multicplicity counts to working_colour1
   int i;
   for (i=0; i<var->len_one_allele; i++)
@@ -182,6 +182,16 @@ void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(Variant
     {
       mult->mult21[i] += db_node_get_coverage(var->other_allele[i], individual_edge_array, working_colour1);
       mult->mult22[i] += db_node_get_coverage(var->other_allele[i], individual_edge_array, working_colour2);
+    }
+
+  //cleanup
+  for (i=0; i<var->len_one_allele; i++)
+    {
+      db_node_set_coverage(var->one_allele[i], individual_edge_array, working_colour1, 0);
+    }
+  for (i=0; i<var->len_other_allele; i++)
+    {
+      db_node_set_coverage(var->other_allele[i], individual_edge_array, working_colour2,0);
     }
 
 }
@@ -314,6 +324,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 		boolean too_short = 0;
 		int covg_on_self_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_self, working_array_self_count, 
 													      &too_short);
+
 		if (too_short==false)
 		  {
  		    // add log dpois ( hap_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
@@ -353,6 +364,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 		boolean too_short = 0;
 		int covg_on_shared_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_shared, working_array_shared_count, 
 														&too_short);
+
 		if (too_short==false)
 		  {
 		    //            NOTE  2*  - diploid covg
@@ -373,10 +385,6 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 		    (check_covg_in_ref_with_site_excised(var->one_allele[k])==0)
 		    )
 	      {
-		if (var_mults->mult11[k]==0)
-		  {
-		    printf("At k= %d get zero\n", k);
-		  }
 		working_array_self[working_array_self_count]=db_node_get_coverage(var->one_allele[k], individual_edge_array, colour_indiv)/var_mults->mult11[k];
 		k++;
 		working_array_self_count++;
@@ -396,6 +404,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
       boolean too_short = 0;
       int covg_on_self_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_self, working_array_self_count,
 												    &too_short);
+
+
       if (too_short==false)
 	{
 	  // add log dpois ( hap_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
@@ -413,6 +423,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
       boolean too_short = 0;
       int covg_on_shared_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_shared, working_array_shared_count, 
 												      &too_short);
+
       if (too_short==false)
 	{
 	  //            NOTE  2*  - diploid covg
@@ -528,7 +539,11 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 										      )
 {
 
-  printf("Start calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site\n");
+  //wipe the working colours:
+  //db_graph_wipe_colour(working_colour1, db_graph);
+  //db_graph_wipe_colour(working_colour2, db_graph);
+
+
   //----------------------------------
   // allocate the memory used to read the sequences
   //----------------------------------
@@ -706,18 +721,15 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 
 	  set_status_of_nodes_in_branches(&var, in_desired_genotype);
 	  reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
-
-	  printf("Call initialise_multiplicities_of_allele_nodes_wrt_both_alleles\n");
 	  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, mobv, false, NULL, NULL, working_colour1, working_colour2, db_graph);
-	  printf("returns from initialise_multiplicities_of_allele_nodes_wrt_both_alleles\n");
+
 
 	  int z;
 	  for (z=0; z<num_colours_to_genotype; z++)
 	    {
-	      char name[400];
+	      char name[50];
 	      sprintf(name, "%s/%s", array_of_allele_names[i], array_of_allele_names[j]); 
 
-	      printf("Call the actual calc\n");
 	      double llk= calc_log_likelihood_of_genotype_with_complex_alleles(&var, name,
 									       mobv, model_info, colours_to_genotype[z],
 									       colour_ref_minus_site, db_graph, 
@@ -725,7 +737,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 									       &(current_max_lik_array[z]), &(current_max_but_one_lik_array[z]),
 									       name_current_max_lik_array[z], name_current_max_but_one_lik_array[z],
 									       assump);
-	      printf("Got the actual calc\n");
+
 
 
 	      if (print_all_liks_calculated==true)
@@ -743,17 +755,32 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
     }
 
   //finished this set
-  printf("Finished calculating likelihoods of genotypes %d to %d\n", first_gt, last_gt);
+  //printf("Finished calculating likelihoods of genotypes %d to %d\n", first_gt, last_gt);
   int z;
   for (z=0; z<num_colours_to_genotype; z++)
     {
-      printf("Colour %d, MAX_LIKELIHOOD GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_lik_array[z], current_max_lik_array[z]);
-      printf("Colour %d, NEXT BEST GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_but_one_lik_array[z], current_max_but_one_lik_array[z]);
+      //     printf("Colour %d, MAX_LIKELIHOOD GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_lik_array[z], current_max_lik_array[z]);
+      //     printf("Colour %d, NEXT BEST GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_but_one_lik_array[z], current_max_but_one_lik_array[z]);
     }
 
   dealloc_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
   //many other things you should free here.
-
+  free_sequence(&seq);
+  free(kmer_window->kmer);
+  free(kmer_window);
+  for (i=0; i<number_alleles; i++)
+    {
+      free(array_of_node_arrays[i]);
+      free(array_of_or_arrays[i]);
+      free(array_of_allele_names[i]);
+    }
+  
+  free(array_of_node_arrays);
+  free(array_of_or_arrays);
+  free(lengths_of_alleles);
+  free(array_of_allele_names);
+  free(working_array_self);
+  free(working_array_shared);
 }
 
 double* alloc_ML_results_array(int num_samples_to_genotype)
