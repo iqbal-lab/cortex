@@ -58,6 +58,8 @@
 
 typedef struct
 {
+  int working_colour1;
+  int working_colour2;
   long long genome_size;
   int kmer_size;
   int bucket_size;
@@ -170,5 +172,6 @@ int get_numbers_from_comma_sep_list(char* list,  int* return_list, int max_len_r
 int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is, int which_detect_bubbles);
 int parse_commasep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is);
 int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* num_colours_to_genotype , int* ref_minus_site_colour, int* num_alleles,
-				 int* start_gt_combin_num, int* end_gt_combin_num, char* fasta_file, AssumptionsOnGraphCleaning* assump);
+				 int* start_gt_combin_num, int* end_gt_combin_num, char* fasta_file, AssumptionsOnGraphCleaning* assump,
+				 int* wk_col1, int* wk_col2);
 #endif /* CMD_LINE_H_ */

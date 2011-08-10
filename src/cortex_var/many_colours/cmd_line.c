@@ -217,7 +217,7 @@ const char* usage=
   // Q
 "   [--estimated_error_rate]\t\t\t\t\t\t=\t If you have some idea of the sequencing error rate (per base-pair), enter it here. eg 0.01. Currently used in calculating likelihoods\n"
   // R
-"   [--genotype_site]\t\t\t\t\t\t=\t Genotype a single (typically multiallelic) site. Syntax is slightly complex - see manual. Must also specify --max_var_len to give the length of the longest allele\n"
+"   [--genotype_site]\t\t\t\t\t\t=\t Genotype a single (typically multiallelic) site. Syntax is slightly complex. requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q.  x,y is a comma-sep list of colours to genotype. z is the reference-minus-site colour. N is the number of alleles for this site (which cortex assumes are loaded in a multicolour_bin containing precisely and only those alleles, one per colour). Cortex will genotype combinations A through B of the N choose 2 possible genotypes (allows parallelisation); fasta is the file listing one read per allele. CLEANED or UNCLEANED allow Cortex to tailor its genotyping model. p,q are two free/unused colours that Cortex will use internally. See manual for details.Must also specify --max_var_len to give the length of the longest allele\n"
 
 
 
@@ -277,6 +277,8 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
+  c->working_colour1 = -1;
+  c->working_colour2 = -1;
   c->manually_entered_seq_error_rate=-1;
   c->manually_override_error_rate=false;
   c->expt_type = Unspecified;
@@ -1158,7 +1160,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'R':
       {
 	if (optarg==NULL)
-	  errx(1,"[--genotype_site] option requires an argument of the form xx,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q.  x,y is a comma-sep list of colours to genotype. z is the reference-minus-site colour. N is the number of alleles for this site (which cortex assumes are loaded in a multicolour_bin containing precisely and only those alleles, one per colour). Cortex will genotype combinations A through B of the N choose 2 possible genotypes (allows parallelisation); fasta is the file listing one read per allele. CLEANED or UNCLEANED allow Cortex to tailor its genotyping model. p,q are two free/unused colours that Cortex will use internally. See manual for details.");
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q.  x,y is a comma-sep list of colours to genotype. z is the reference-minus-site colour. N is the number of alleles for this site (which cortex assumes are loaded in a multicolour_bin containing precisely and only those alleles, one per colour). Cortex will genotype combinations A through B of the N choose 2 possible genotypes (allows parallelisation); fasta is the file listing one read per allele. CLEANED or UNCLEANED allow Cortex to tailor its genotyping model. p,q are two free/unused colours that Cortex will use internally. See manual for details.");
 
 	parse_genotype_site_argument(optarg, cmdline_ptr->list_colours_to_genotype, &(cmdline_ptr->num_colours_to_genotype),
 				     &(cmdline_ptr->colour_of_reference_with_site_excised), &(cmdline_ptr->num_alleles_of_site),
