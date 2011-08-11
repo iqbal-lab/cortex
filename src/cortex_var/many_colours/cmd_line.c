@@ -2088,12 +2088,24 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q - after the fasta name, you appear to have writting something that is neither \"CLEANED\" nor \"UNCLEANED\" \n");	  
 	}
 
-      int working_col1 = atoi(strtok(NULL, delims));
+      char* working_col1_as_char = strtok(NULL, delims);
+      if (working_col1_as_char==NULL)
+	{
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for) - ypu appear to have left off p and q from your commandline\n");
+	}
+      int working_col1 = atoi(working_col1_as_char);
       if ( (working_col1>NUMBER_OF_COLOURS) || (working_col1<0) )
 	{
 	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for, but also should be unused - ie you have not loaded binaries into these colours\n");
 	}
-      int working_col2 = atoi(strtok(NULL, delims));
+      char* working_col2_as_char = strtok(NULL, delims);
+      if (working_col2_as_char==NULL)
+	{
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for) - ypu appear to have left off q from your commandline\n");
+	}
+      int working_col2 = atoi(working_col2_as_char);
+
+
       if ( (working_col2>NUMBER_OF_COLOURS) || (working_col2<0) )
 	{
 	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for, but also should be unused - ie you have not loaded binaries into these colours\n");

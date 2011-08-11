@@ -955,8 +955,7 @@ int main(int argc, char **argv){
   if (cmd_line.genotype_complex_site==true)
     {
       printf("Genotyping a complex site with %d known alleles\n", cmd_line.num_alleles_of_site);
-      printf("Of the %d choose 2 = %d possible genotypes, we will calculate likelihoods for those numbered %d to %d\n",
-	     cmd_line.num_alleles_of_site, (cmd_line.num_alleles_of_site) * ((cmd_line.num_alleles_of_site) -1)/2,
+      printf("Of all possible genotypes, we will calculate likelihoods for those numbered %d to %d\n",
 	     cmd_line.first_genotype_to_calc_likelihoods_for, cmd_line.last_genotype_to_calc_likelihoods_for);
       printf("We do this for these samples (which we assume are diploid): colours ");
       int k;

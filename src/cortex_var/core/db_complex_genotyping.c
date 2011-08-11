@@ -266,6 +266,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   int total_len_alleles = (var->len_one_allele + var->len_other_allele);
   hash_table_traverse_passing_int(&get_number_nodes_outside_our_expected_two_alleles_with_covg  ,db_graph, &number_errors);
 
+  printf("DEBUG - Zam - number errors is %d\n", number_errors);
   // Errors on union of two alleles occur as a Poisson process with rate = sequencing_error_rate_per_base * kmer * length of two alleles
   double poisson_error_rate;
   if (assump==AssumeUncleaned)
@@ -746,9 +747,10 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 		{
 		  printf("Colour %d, GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name, llk);
 		}
-	      set_status_of_nodes_in_branches(&var, none);
 	      
 	    }
+	  set_status_of_nodes_in_branches(&var, none);
+
 	}
       
 
