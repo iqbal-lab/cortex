@@ -62,6 +62,9 @@ boolean hash_table_apply_or_insert(Key key, void (*f)(Element*), HashTable *);
 void hash_table_traverse(void (*f)(Element *),HashTable *);
 long long hash_table_traverse_returning_sum(long long (*f)(Element *),HashTable * hash_table);
 void hash_table_traverse_passing_int(void (*f)(Element *, int*),HashTable * hash_table, int* num);
+void hash_table_traverse_passing_ints_and_path(void (*f)(Element *, int*, int*, dBNode**, Orientation*, Nucleotide*, char*, int),
+					       HashTable * hash_table, int* num1, int* num2, 
+					       dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len);
 
 
 

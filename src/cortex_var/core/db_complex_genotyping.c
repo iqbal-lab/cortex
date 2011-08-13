@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo  
  * 
@@ -250,30 +251,60 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 	return db_node_get_coverage(n, individual_edge_array, colour_ref_minus_our_site);
       }
   }
-  
-  void get_number_nodes_outside_our_expected_two_alleles_with_covg( dBNode* e, int* total)
+
+  void get_number_nodes_outside_our_expected_two_alleles_with_covg( dBNode* e, int* total) 
+  {                                                                                                                                                                                                                                  if (db_node_check_status(e, in_desired_genotype)==true) 
+      {                                                                                                                                                                                                                                }                                                                                                                                                                                                                              else if ( (db_node_get_coverage(e, individual_edge_array,colour_indiv)>0) && (check_covg_in_ref_with_site_excised(e)==0) ) 
+      {                                                                                                                                                                                                                                  //*total = (*total) + 1;                                                                                                                                                                                                         //char zam[db_graph->kmer_size +1];                                                                                                                                                                                              //printf("Error node is %s, with covg %d\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, zam), db_node_get_coverage(e, individual_edge_array, colour_indiv) );                                                           (*total) = (*total) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
+      }
+  }
+  void count_errors_1bp_and_further_from_desired_genotype( dBNode* e, int* total_1bp_away, int* total_further,
+							   dBNode** p_nodes, Orientation* p_or, Nucleotide* p_lab, char* p_str, int max_len)
   {
-    if (db_node_check_status(e, in_desired_genotype)==true)
+    if ( (db_node_check_status(e, in_desired_genotype)==true) || (db_node_check_status(e, visited)==true) )
       {
       }
     else if ( (db_node_get_coverage(e, individual_edge_array,colour_indiv)>0) && (check_covg_in_ref_with_site_excised(e)==0) )
       {
-	*total = (*total) + 1;
-	//char zam[db_graph->kmer_size +1];
-	//printf("Error node is %s, with covg %d\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, zam), db_node_get_coverage(e, individual_edge_array, colour_indiv) );
-	//(*total) = (*total) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
+	double avg_coverage=0;
+	int min=0; int max=0;
+	boolean is_cycle=false;
+	//get the whole supernode. If any of them are in_desired, then is 1bp away, else not
+	int length = db_graph_supernode_for_specific_person_or_pop(e,max_len,&db_node_action_set_status_visited,
+								   p_nodes,p_or,p_lab, p_str,
+								   &avg_coverage,&min,&max,&is_cycle,
+								   db_graph, individual_edge_array, colour_indiv);
+	int i;
+	boolean at_least_one_node_in_sup_is_in_desired=false;
+	for (i=0; i<length; i++)
+	  {
+	    if (db_node_check_status(p_nodes[i], in_desired_genotype)==true)
+	      {
+		at_least_one_node_in_sup_is_in_desired=true;
+		i=length+1;
+		printf("ZAMZAMZAM********\n");
+	      }
+	  }
+	if (at_least_one_node_in_sup_is_in_desired==true)
+	  {
+	    *total_1bp_away = (*total_1bp_away)+1;
+	  }
+	else
+	  {
+	    *total_further = (*total_further)+1;
+	  }
       }
-
+    
     return;
   }
-
+  
   boolean condition_is_error_supernode(dBNode** path, int len,  int* count_error_nodes, int* count_error_covg)
   {
     boolean sup_is_error=false;
     if (len>0)
       {
 	int i;
-
+	
 	*count_error_nodes=0;
 	*count_error_covg=0;
 	int total_covg=0;
@@ -303,19 +334,28 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
       }
     return sup_is_error;
   }
-
-
-
-
+  
+  
+  
+  
   
   int number_errors=0;//get number of nodes that are (in the union of all known alleles but) outside our genotype alleles, and are not in the rest of the genome
   int total_len_alleles = (var->len_one_allele + var->len_other_allele);
   //removed next for debug - trying better error counting
-  hash_table_traverse_passing_int(&get_number_nodes_outside_our_expected_two_alleles_with_covg  ,db_graph, &number_errors);
-  //number_errors=number_errors/db_graph->kmer_size;
-  /*
+  //hash_table_traverse_passing_int(&get_number_nodes_outside_our_expected_two_alleles_with_covg  ,db_graph, &number_errors);
 
-  long long better_number_errors = db_graph_count_error_supernodes(max_allele_length, db_graph, individual_edge_array, colour_indiv, 
+
+  //new option - look at errors more closely
+  int number_bad_errors=0; //errors >1bp from genotype
+  hash_table_traverse_passing_ints_and_path(&count_errors_1bp_and_further_from_desired_genotype  ,db_graph, &number_errors, &number_bad_errors,
+					    p_nodes, p_orientations, p_labels, p_string, max_allele_length);
+  hash_table_traverse(&db_node_action_set_status_none, db_graph); 
+  set_status_of_nodes_in_branches(var, in_desired_genotype);
+  
+  //number_errors=number_errors/db_graph->kmer_size;
+  
+  /*
+    long long better_number_errors = db_graph_count_error_supernodes(max_allele_length, db_graph, individual_edge_array, colour_indiv, 
 								   p_nodes, p_orientations, p_labels, p_string,
 								   &db_node_check_status_is_not_visited, &condition_is_error_supernode,&db_node_action_set_status_visited);
   number_errors=(int)better_number_errors;
@@ -325,7 +365,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   set_status_of_nodes_in_branches(var, in_desired_genotype);
   */
 
-  printf("Genotype %s - number errors is %d\n", name_of_this_genotype, number_errors);
+  printf("Genotype %s - number errors is %d, number bad errors in %d\n", name_of_this_genotype, number_errors, number_bad_errors);
   // Errors on union of two alleles occur as a Poisson process with rate = sequencing_error_rate_per_base * kmer * length of two alleles
   double poisson_error_rate;
   if (assump==AssumeUncleaned)
@@ -343,6 +383,10 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   if (number_errors>0)
     {
       log_prob_error = -poisson_error_rate + number_errors*log(poisson_error_rate) - gsl_sf_lnfact(number_errors);
+    }
+  if (number_bad_errors>0)
+    {
+      log_prob_error = -poisson_error_rate*poisson_error_rate + number_bad_errors*log(poisson_error_rate*poisson_error_rate) - gsl_sf_lnfact(number_bad_errors);
     }
 
   if (log_prob_error < *current_max_but_one_lik)
