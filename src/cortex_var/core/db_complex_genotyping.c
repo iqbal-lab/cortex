@@ -287,11 +287,33 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 	  }
 	if (at_least_one_node_in_sup_is_in_desired==true)
 	  {
-	    *total_1bp_away = (*total_1bp_away)+1;
+	    /*//the following seems like  a good idea, but it fails my unit tests on carefuly checked test cases
+	      // should examine why
+	    boolean too_short=false;
+	    int ct = count_reads_on_allele_in_specific_colour(p_nodes, length, colour_indiv, &too_short);
+	    if (too_short==false)
+	      {
+		*total_1bp_away = (*total_1bp_away)+ct;
+	      }
+	    */
+	
+	     *total_1bp_away = (*total_1bp_away)+1;
 	  }
 	else
 	  {
-	    *total_further = (*total_further)+1;
+	    /*
+	    //the following seems like  a good idea, but it fails my unit tests on carefuly checked test cases
+	      // should examine why
+
+	    boolean too_short=false;
+	    int ct = count_reads_on_allele_in_specific_colour(p_nodes, length, colour_indiv, &too_short);
+	    if (too_short==false)
+	      {
+		*total_further = (*total_further)+ct;
+	      }
+	    */
+
+	     *total_further = (*total_further)+1;
 	  }
       }
     
