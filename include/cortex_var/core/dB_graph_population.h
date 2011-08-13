@@ -372,6 +372,14 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, char* filename_sings, int max_length, dBGraph * db_graph, EdgeArrayType type, int index,
                                                           void (*print_extra_info)(dBNode**, Orientation*, int, FILE*));
 
+
+long long  db_graph_count_error_supernodes( int max_length, dBGraph * db_graph, EdgeArrayType type, int index, 
+					    dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, char* seq,
+					    boolean (*condition_node_not_visited)(dBNode* n) , 
+					    boolean (*condition_is_error_supernode)(dBNode** path, int len,  int* count_error_nodes, int* count_error_covg),
+					    void (*action_set_visited)(dBNode* e) );
+
+
 void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, char* filename_sings, int max_length, 
 							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
 							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*));

@@ -44,6 +44,7 @@
 #include <maths.h>
 #include <math.h> //we need both!
 #include <gsl_sf_gamma.h>
+#include <db_variants.h>
 
 void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 						      char * name,
@@ -1997,6 +1998,8 @@ void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernod
 
 
 
+
+
 void db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, FILE* fout, 
 											  boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index, 
 											  EdgeArrayType type, int index)
@@ -3167,6 +3170,63 @@ void db_graph_print_supernodes_for_specific_person_or_pop(char * filename_sups, 
   fclose(fout1);
   fclose(fout2);
 }
+
+
+long long  db_graph_count_error_supernodes( int max_length, dBGraph * db_graph, EdgeArrayType type, int index, 
+					    dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, char* seq,
+					    boolean (*condition_node_not_visited)(dBNode* n) , 
+					    boolean (*condition_is_error_supernode)(dBNode** path, int len,  int* count_error_nodes, int* count_error_covg),
+					    void (*action_set_visited)(dBNode* e) )
+{
+  boolean is_cycle;
+  double avg_coverage;
+  int min,max;
+
+  long long check_supernode_and_count_reads_if_error(dBNode * node)
+  {
+    
+    //condition passed - i expect this to check if is none or in_desired_genotype  - not visited essentially
+    if (condition_node_not_visited(node) == true)
+      {
+	int length = db_graph_supernode_for_specific_person_or_pop(node,max_length,&db_node_action_set_status_visited,
+								   path_nodes,path_orientations,path_labels,
+								   seq,&avg_coverage,&min,&max,&is_cycle,
+								   db_graph, type, index);
+	
+	int count_error_nodes=0;
+	int count_error_covg=0;
+	
+	
+	if (length>=max_length)
+	  {
+	    printf("contig length equals max length [%i] - will ignore\n",max_length);
+	  }
+	else if (condition_is_error_supernode(path_nodes, length,  &count_error_nodes, &count_error_covg)==true)
+	  {
+	    if (count_error_nodes>=0)
+	      {
+		boolean too_short = true;
+		int num_err_reads =  count_reads_on_allele_in_specific_colour(path_nodes, length, index, &too_short);
+		if (too_short==false)
+		  {
+		    return num_err_reads;
+		  }
+		else
+		  {
+		    return db_node_get_coverage(path_nodes[0], individual_edge_array, index);
+		  }
+		//return count_error_covg;
+	      }
+	  }
+      }
+    return 0;
+  }
+  
+  return hash_table_traverse_returning_sum(&check_supernode_and_count_reads_if_error,db_graph); 
+
+
+}
+
 
 
 void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, char* filename_sings, int max_length, 

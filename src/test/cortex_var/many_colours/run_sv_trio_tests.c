@@ -59,6 +59,7 @@ int  main()
   /* add the tests to the suites */
 
 
+  /*
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
     CU_cleanup_registry();
@@ -263,18 +264,6 @@ int  main()
 
 
 
-
-
-  //    /*
-  //  if (NULL == CU_add_test(pPopGraphSuite, "Tests of new algorithm to find variants using paths AND supernodes",  test_db_graph_make_reference_path_based_sv_calls))
-  //    {
-  //	CU_cleanup_registry();
-  //	return CU_get_error();
-  //  }
-  //  */
-
-
-
     if (NULL == CU_add_test(pPopGraphSuite, "Simple null test of new algorithm to find variants using trusted paths AND supernodes. Take a person whose genome is a single read, and a reference genome which is identical.\n\tAlgorithm should find no variants!",  test_db_graph_make_reference_path_based_sv_calls_null_test_1))
       {
 	CU_cleanup_registry();
@@ -379,7 +368,7 @@ int  main()
 	return CU_get_error();
       }
 
-
+  */
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test algorithm for genotyping of complex site at a simple site (repeat for different coverages and sequencing error rates, simulating real coverage coording to our model, 100 iterations each time)", test_calc_log_likelihood_of_genotype_with_complex_alleles1 ))
       {
@@ -392,7 +381,7 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-   
+
 
 
 

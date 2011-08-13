@@ -76,7 +76,9 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 							    int* working_array_self, int* working_array_shared,
 							    double* current_max_lik, double* current_max_but_one_lik,
 							    char* current_max_lik_name, char* current_max_but_one_lik_name,
-							    AssumptionsOnGraphCleaning assump);
+							    AssumptionsOnGraphCleaning assump,
+							    dBNode** p_nodes, Orientation* p_orientations, Nucleotide* p_labels, char* p_string, int max_allele_length//for supernodes for counting errors
+							    );
 
 //we ASSUME colours 0 to number_alleles are the various alternate alleles, loading in multicolour_bin
 void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(int* colours_to_genotype, int num_colours_to_genotype,
