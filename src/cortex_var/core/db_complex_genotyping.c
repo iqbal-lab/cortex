@@ -41,7 +41,7 @@
 #include <file_reader.h>
 
 // Lowest log likelihood, at which we just cutoff
-int MIN_LLK = -999999999;
+int MIN_LLK = -9999999999999;
 
 MultiplicitiesAndOverlapsOfBiallelicVariant*  alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(int len_allele1, int len_allele2)
 {
@@ -339,14 +339,14 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   
   
   
-  int number_errors=0;//get number of nodes that are (in the union of all known alleles but) outside our genotype alleles, and are not in the rest of the genome
+  int number_errors=0;//get number of nodes that are (in the union of all known alleles but) outside our genotype alleles, and are not in the rest of the genome, and are a SNP away from the genotype
   int total_len_alleles = (var->len_one_allele + var->len_other_allele);
-  //removed next for debug - trying better error counting
+  //removed next line - trying better error counting
   //hash_table_traverse_passing_int(&get_number_nodes_outside_our_expected_two_alleles_with_covg  ,db_graph, &number_errors);
 
 
   //new option - look at errors more closely
-  int number_bad_errors=0; //errors >1bp from genotype
+  int number_bad_errors=0; //errors > 1 SNP from genotype
   hash_table_traverse_passing_ints_and_path(&count_errors_1bp_and_further_from_desired_genotype  ,db_graph, &number_errors, &number_bad_errors,
 					    p_nodes, p_orientations, p_labels, p_string, max_allele_length);
   hash_table_traverse(&db_node_action_set_status_none, db_graph); 
@@ -368,25 +368,34 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   printf("Genotype %s - number errors is %d, number bad errors in %d\n", name_of_this_genotype, number_errors, number_bad_errors);
   // Errors on union of two alleles occur as a Poisson process with rate = sequencing_error_rate_per_base * kmer * length of two alleles
   double poisson_error_rate;
+  double poisson_bad_error_rate;
+  double m=(model_info->seq_error_rate_per_base) ;
+  int kmer=(db_graph->kmer_size);
+  double prop = max_allele_length/(model_info->genome_len);
   if (assump==AssumeUncleaned)
     {
-      poisson_error_rate = (model_info->seq_error_rate_per_base) * (db_graph->kmer_size) *total_len_alleles;
+      poisson_error_rate = m * kmer *total_len_alleles;
+      //poisson_error_rate =     m*0.15 * prop *total_len_alleles;
+      poisson_bad_error_rate = m*m*kmer*kmer*total_len_alleles; 
     }
   else if (assump==AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice)
     {
-      poisson_error_rate = (model_info->seq_error_rate_per_base)*(model_info->seq_error_rate_per_base) * (db_graph->kmer_size) *total_len_alleles;
+      poisson_error_rate = m*m* kmer*kmer* total_len_alleles;
+      //poisson_error_rate = (model_info->seq_error_rate_per_base)*m* (db_graph->kmer_size) *total_len_alleles;
+      poisson_bad_error_rate = m*m*m*m*kmer*kmer*kmer*kmer ;
     }
   double log_prob_error = 0;
-
+  printf("Poisson error rate is %.20f\n", poisson_error_rate);
 
   //log of (exp(-poisson_error_rate) (poisson_error_rate^number_errors)/(number_errors!) ) = -poisson_error_rate + number_errors*log(poisson_error_rate) - log(number_errors!)
   if (number_errors>0)
     {
-      log_prob_error = -poisson_error_rate + number_errors*log(poisson_error_rate) - gsl_sf_lnfact(number_errors);
+      log_prob_error += -poisson_error_rate + number_errors*log(poisson_error_rate) - gsl_sf_lnfact(number_errors);
     }
   if (number_bad_errors>0)
     {
-      log_prob_error = -poisson_error_rate*poisson_error_rate + number_bad_errors*log(poisson_error_rate*poisson_error_rate) - gsl_sf_lnfact(number_bad_errors);
+      //log_prob_error = -poisson_error_rate*poisson_error_rate + number_bad_errors*log(poisson_error_rate*poisson_error_rate) - gsl_sf_lnfact(number_bad_errors);
+      log_prob_error += -poisson_bad_error_rate + number_bad_errors*log(poisson_bad_error_rate) - gsl_sf_lnfact(number_bad_errors);
     }
 
   if (log_prob_error < *current_max_but_one_lik)
@@ -444,8 +453,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 	      }
 
 	    working_array_self_count=0;
-	    //zam thinks below is wrong, remove it - debug
-	    //working_array_shared_count=0;// - REMOVED!// DECIDE!!! THIS HAS A BIG EFFECT WHEN WE TURN THE ERROR PART OF THE MODEL OFF
+
 	    while ( (var_mults->mult12[k] > 0) && 
 		    (k < var->len_one_allele) && 
 		    (check_covg_in_ref_with_site_excised(var->one_allele[k])==0 )//automatically handles case when there is no colour for ref-minus-site     
