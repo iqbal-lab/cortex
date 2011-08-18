@@ -58,8 +58,6 @@
 
 typedef struct
 {
-  int working_colour1;
-  int working_colour2;
   long long genome_size;
   int kmer_size;
   int bucket_size;
@@ -159,6 +157,12 @@ typedef struct
   int num_alleles_of_site;
   int first_genotype_to_calc_likelihoods_for;
   int last_genotype_to_calc_likelihoods_for;
+  int working_colour1;
+  int working_colour2;
+  int working_colour3_for_1net;
+  int working_colour4_for_2net;
+  char* filelist_1net_binaries_for_alleles;
+  char* filelist_2net_binaries_for_alleles;
 
   AssumptionsOnGraphCleaning assump_for_genotyping;
 } CmdLine;

@@ -244,6 +244,18 @@ void hash_table_traverse_passing_ints_and_path(void (*f)(Element *, int*, int*, 
 }
 
 
+void hash_table_traverse_passing_3ints_and_path(void (*f)(Element *, int*, int*, int*, dBNode**, Orientation*, Nucleotide*, char*, int),
+						HashTable * hash_table, int* num1, int* num2, int* num3, 
+					       dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len){
+  long long i;
+  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
+    if (!db_node_check_status(&hash_table->table[i],unassigned)){
+      f(&hash_table->table[i], num1, num2, num3, p_n, p_o, p_lab, p_str, len);
+    }
+  }
+}
+
+
 Element * hash_table_find(Key key, HashTable * hash_table)
 {
   if (hash_table == NULL) 

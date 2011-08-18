@@ -65,7 +65,9 @@ void hash_table_traverse_passing_int(void (*f)(Element *, int*),HashTable * hash
 void hash_table_traverse_passing_ints_and_path(void (*f)(Element *, int*, int*, dBNode**, Orientation*, Nucleotide*, char*, int),
 					       HashTable * hash_table, int* num1, int* num2, 
 					       dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len);
-
+void hash_table_traverse_passing_3ints_and_path(void (*f)(Element *, int*, int*, int*, dBNode**, Orientation*, Nucleotide*, char*, int),
+						HashTable * hash_table, int* num1, int* num2, int* num3, 
+						dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len);
 
 
 //if the element is not in table create an element with key and adds it

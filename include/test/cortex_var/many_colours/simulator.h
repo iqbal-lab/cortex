@@ -14,6 +14,8 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
 	       int colour_indiv, int colour_allele1, int colour_allele2, int colour_ref_minus_site,
 	       VariantBranchesAndFlanks* var, dBNode** genome_minus_site, int len_genome_minus_site,
 	       boolean are_the_two_alleles_identical,
-	       //MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults, 
 	       GraphAndModelInfo* model_info,
-	       char* fasta, char* true_ml_gt_name, dBGraph* db_graph,int working_colour1, int working_colour2);
+	       char* fasta, char* true_ml_gt_name, dBGraph* db_graph, int working_colour1, int working_colour2,
+	       boolean using_1and2_nets, 
+	       char* filelist_1nets_binaries, char* filelist_2nets_binaries,
+	       int working_colour_1net, int working_colour_2net);

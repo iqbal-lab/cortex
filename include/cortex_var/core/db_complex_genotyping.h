@@ -67,6 +67,9 @@ void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(Variant
 									 int working_colour1, int working_colour2);
 
 
+void alloc_array_and_get_files_from_list(char** array_files, char* filelist, int num_files_in_list);
+void dealloc_array_of_files(char** array_files, int num_files_in_list);
+
 double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFlanks* var,
 							    char* name_of_this_genotype,
 							    MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults,
@@ -77,21 +80,30 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 							    double* current_max_lik, double* current_max_but_one_lik,
 							    char* current_max_lik_name, char* current_max_but_one_lik_name,
 							    AssumptionsOnGraphCleaning assump,
-							    dBNode** p_nodes, Orientation* p_orientations, Nucleotide* p_labels, char* p_string, int max_allele_length//for supernodes for counting errors
-							    );
+							    dBNode** p_nodes, Orientation* p_orientations, Nucleotide* p_labels, char* p_string, int max_allele_length,
+							    boolean using_1net, int (*get_covg_in_1net_of_genotype)(dBNode*), 
+							    boolean using_2net, int (*get_covg_in_2net_of_genotype)(dBNode*) );
+
+void dealloc_array_of_files(char** array_files, int num_files_in_list);
+void alloc_array_and_get_files_from_list(char** array_files, char* filelist, int num_files_in_list);
+void wipe_colour_and_load_binaries(dBGraph* db_graph, int colour, char* bin1, char* bin2);
+void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int colour2,
+					    char* binary11, char* binary12, char* binary21, char* binary22);
 
 //we ASSUME colours 0 to number_alleles are the various alternate alleles, loading in multicolour_bin
 void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(int* colours_to_genotype, int num_colours_to_genotype,
 										      int colour_ref_minus_site, int number_alleles,
-										      int first_gt, int last_gt, // of the number_alleles choose 2
+										      int first_gt, int last_gt, // of all the possible gt's
 										      int max_allele_length, char* fasta,//one read per allele
 										      AssumptionsOnGraphCleaning assump,
 										      double* current_max_lik_array, double* current_max_but_one_lik_array,
 										      char** name_current_max_lik_array, char** name_current_max_but_one_lik_array,
-										      boolean print_all_liks_calculated, //not just the top two
+										      boolean print_all_liks_calculated,//not just the top two
 										      GraphAndModelInfo* model_info, dBGraph* db_graph,
-										      int working_colour1, int working_colour2
-										      );
+										      int working_colour1, int working_colour2,
+										      boolean using_1net, boolean using_2net,
+										      char* filelist_1net_binaries, char* filelist_2net_binaries,
+										      int working_colour_1net, int working_colour_2net);
 
 double* alloc_ML_results_array(int num_samples_to_genotype);
 char** alloc_ML_results_names_array(int num_samples_to_genotype);

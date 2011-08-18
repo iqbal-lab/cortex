@@ -59,6 +59,6 @@ typedef enum{
 boolean DEBUG;
 
 
-
+boolean test_file_existence(char* file);
 
 #endif /* GLOBAL_H_ */

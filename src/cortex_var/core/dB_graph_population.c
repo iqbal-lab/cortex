@@ -9621,6 +9621,22 @@ void db_graph_wipe_colour(int colour, dBGraph* db_graph)
   hash_table_traverse(&wipe_node, db_graph);
 }
 
+
+
+
+//wipes two colours clean - for all nodes, sets covg=0, edge=0 - but only traverses the hash once
+void db_graph_wipe_two_colours_in_one_traversal(int colour1, int colour2, dBGraph* db_graph)
+{
+  void wipe_node(dBNode* node)
+  {
+    node->individual_edges[colour1]=0;
+    node->coverage[colour1]=0;
+    node->individual_edges[colour2]=0;
+    node->coverage[colour2]=0;
+  }
+  hash_table_traverse(&wipe_node, db_graph);
+}
+
 void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 					  int* second_col_list, int num2,
 					  dBGraph* db_graph)
