@@ -2131,60 +2131,64 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
       char* working_col3_as_char = strtok(NULL, delims);
       if (working_col3_as_char==NULL)
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net - r and s should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for) - you appear to have left off r from your commandline\n");
-	}
-      int working_col3 = atoi(working_col3_as_char);
-      if ( (working_col3NUMBER_OF_COLOURS) || (working_col3<0) )
-	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q - r should be a colour in the graph (ie less than the max allowed number of colours that you compiled cortex for, but also should be unused - ie you have not loaded binaries into these colours\n");
-	}
-      char* working_col4_as_char = strtok(NULL, delims);
-      if (working_col4_as_char==NULL)
-	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net - p,q,r,s should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for) - ypu appear to have left off s from your commandline\n");
-	}
-      int working_col4 = atoi(working_col4_as_char);
-
-
-      if ( (working_col4>NUMBER_OF_COLOURS) || (working_col4<0) )
-	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net - r and s should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for, but also should be unused - ie you have not loaded binaries into these colours\n");
-	}
-      *wk_col3 = working_col3;
-      *wk_col4 = working_col4;
-
-      //now get the two file-lists of 1-net binaries and 2-net binaries
-      char* filelist_1net  = strtok( NULL, delims );
-      if (filelist_1net==NULL)
-	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net  - unable to find a file_1net in that string\n");
-	}
-      else if (test_file_existence(filelist_1net)==false)
-	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net  - unable to find/open the filelist_1net file you mention");
+	  //ignore the rest - assume the user has entered [[[[ at the end and is not using nets.
+	  printf("[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net. Since we did not find r, we assume r,s,file_1net, file_2net are not being used - this is a legitimate use-case, just printing so the user can check if they have mistyped their commandline. Anything after q is being ignored.If you dont want to use the 1-net and 2-net error model, the correct way to avoid it is to use a commandline of the form : x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[[[[\n");
+	  
 	}
       else
 	{
-	  file_1net_bins[0]='\0';
-	  strcpy(file_1net_bins, fa);
+	  int working_col3 = atoi(working_col3_as_char);
+	  if ( (working_col3>NUMBER_OF_COLOURS) || (working_col3<0) )
+	    {
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q - r should be a colour in the graph (ie less than the max allowed number of colours that you compiled cortex for, but also should be unused - ie you have not loaded binaries into these colours\n");
+	    }
+	  char* working_col4_as_char = strtok(NULL, delims);
+	  if (working_col4_as_char==NULL)
+	    {
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net - p,q,r,s should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for) - ypu appear to have left off s from your commandline\n");
+	    }
+	  int working_col4 = atoi(working_col4_as_char);
+	  
+	  
+	  if ( (working_col4>NUMBER_OF_COLOURS) || (working_col4<0) )
+	    {
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net - r and s should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for, but also should be unused - ie you have not loaded binaries into these colours\n");
+	    }
+	  *wk_col3 = working_col3;
+	  *wk_col4 = working_col4;
+	  
+	  //now get the two file-lists of 1-net binaries and 2-net binaries
+	  char* filelist_1net  = strtok( NULL, delims );
+	  if (filelist_1net==NULL)
+	    {
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net  - unable to find a file_1net in that string\n");
+	    }
+	  else if (test_file_existence(filelist_1net)==false)
+	    {
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net  - unable to find/open the filelist_1net file you mention");
+	    }
+	  else
+	    {
+	      file_1net_bins[0]='\0';
+	      strcpy(file_1net_bins, fa);
+	    }
+	  char* filelist_2net  = strtok( NULL, delims );
+	  if (filelist_2net==NULL)
+	    {
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net  - unable to find a file_2net in that string\n");
+	    }
+	  else if (test_file_existence(filelist_2net)==false)
+	    {
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net  - unable to find/open the filelist_2net file you mention");
+	    }
+	  else
+	    {
+	      file_1net_bins[0]='\0';
+	      strcpy(file_1net_bins, fa);
+	    }
 	}
-      char* filelist_2net  = strtok( NULL, delims );
-      if (filelist_2net==NULL)
-	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net  - unable to find a file_2net in that string\n");
-	}
-      else if (test_file_existence(filelist_2net)==false)
-	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[file_1net[file_2net  - unable to find/open the filelist_2net file you mention");
-	}
-      else
-	{
-	  file_1net_bins[0]='\0';
-	  strcpy(file_1net_bins, fa);
-	}
-      
-
-
+	  
+	  
       if (strcmp(startend_as_char, "-1")==0)
 	{
 	  *start_gt_combin_num = 1;
@@ -2216,8 +2220,8 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	    }
 	}
     }
-
-
+  
+  
   return 0;
 }
 
