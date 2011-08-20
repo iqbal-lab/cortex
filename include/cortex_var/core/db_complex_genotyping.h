@@ -67,7 +67,7 @@ void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(Variant
 									 int working_colour1, int working_colour2);
 
 
-void alloc_array_and_get_files_from_list(char** array_files, char* filelist, int num_files_in_list);
+char** alloc_array_and_get_files_from_list(char* filelist, int num_files_in_list);
 void dealloc_array_of_files(char** array_files, int num_files_in_list);
 
 double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFlanks* var,
@@ -84,8 +84,6 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 							    boolean using_1net, int (*get_covg_in_1net_of_genotype)(dBNode*), 
 							    boolean using_2net, int (*get_covg_in_2net_of_genotype)(dBNode*) );
 
-void dealloc_array_of_files(char** array_files, int num_files_in_list);
-void alloc_array_and_get_files_from_list(char** array_files, char* filelist, int num_files_in_list);
 void wipe_colour_and_load_binaries(dBGraph* db_graph, int colour, char* bin1, char* bin2);
 void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int colour2,
 					    char* binary11, char* binary12, char* binary21, char* binary22);

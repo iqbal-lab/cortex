@@ -17,5 +17,5 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
 	       GraphAndModelInfo* model_info,
 	       char* fasta, char* true_ml_gt_name, dBGraph* db_graph, int working_colour1, int working_colour2,
 	       boolean using_1and2_nets, 
-	       char* filelist_1nets_binaries, char* filelist_2nets_binaries,
+	       char* filelist_net1, char* filelist_net2,
 	       int working_colour_1net, int working_colour_2net);

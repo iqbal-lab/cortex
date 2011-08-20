@@ -947,9 +947,10 @@ void dealloc_array_of_files(char** array_files, int num_files_in_list)
   free(array_files);
 }
 
-void alloc_array_and_get_files_from_list(char** array_files, char* filelist, int num_files_in_list)
+//alloc and make a list of binaries, one per allele
+char** alloc_array_and_get_files_from_list(char* filelist, int num_files_in_list)
 {
-  array_files=(char**) malloc(num_files_in_list*sizeof(char*));
+  char** array_files=(char**) malloc(num_files_in_list*sizeof(char*));
   if (array_files==NULL)
     {
       printf("Unable to malloc a filelist array! Either your machine is critically OOM, or you have trying to use an obscene number of colours accidentally\n");
@@ -997,6 +998,7 @@ void alloc_array_and_get_files_from_list(char** array_files, char* filelist, int
 	}
     }
   fclose(fp);
+  return array_files;
 }
 
 
@@ -1006,12 +1008,18 @@ void wipe_colour_and_load_binaries(dBGraph* db_graph, int colour, char* bin1, ch
   db_graph_wipe_colour(colour, db_graph);
   int mean_readlen=0;
   long long seq=0;
-  load_single_colour_binary_data_from_filename_into_graph(bin1, db_graph, &mean_readlen, &seq,
-							  false, individual_edge_array, colour,
-							  false, 0);
-  load_single_colour_binary_data_from_filename_into_graph(bin2, db_graph, &mean_readlen, &seq,
-							  false, individual_edge_array, colour,
-							  false, 0);
+  if (bin1 != NULL)
+    {
+      load_single_colour_binary_data_from_filename_into_graph(bin1, db_graph, &mean_readlen, &seq,
+							      false, individual_edge_array, colour,
+							      false, 0);
+    }
+  if ( (bin2 !=NULL) && (strcmp(bin2, bin1) !=0) )
+    {
+      load_single_colour_binary_data_from_filename_into_graph(bin2, db_graph, &mean_readlen, &seq,
+							      false, individual_edge_array, colour,
+							      false, 0);
+    }
 }
 
 void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int colour2,
@@ -1021,19 +1029,31 @@ void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int 
   int mean_readlen=0;
   long long seq=0;
   //normal use case - load two binaryies into th 1net colour,  for the 1net of each allele in the genotype
-  load_single_colour_binary_data_from_filename_into_graph(binary11, db_graph, &mean_readlen, &seq,
-							  false, individual_edge_array, colour1,
-							  false, 0);
-  load_single_colour_binary_data_from_filename_into_graph(binary12, db_graph, &mean_readlen, &seq,
-							  false, individual_edge_array, colour1,
-							  false, 0);
+  if (binary11 !=NULL)
+    {
+      load_single_colour_binary_data_from_filename_into_graph(binary11, db_graph, &mean_readlen, &seq,
+							      false, individual_edge_array, colour1,
+							      false, 0);
+    }
+  if ( (binary12 != NULL) && (strcmp(binary12, binary11)!=0) )
+    {
+      load_single_colour_binary_data_from_filename_into_graph(binary12, db_graph, &mean_readlen, &seq,
+							      false, individual_edge_array, colour1,
+							      false, 0);
+    }
   //same for 2net
-  load_single_colour_binary_data_from_filename_into_graph(binary21, db_graph, &mean_readlen, &seq,
-							  false, individual_edge_array, colour2,
-							  false, 0);
-  load_single_colour_binary_data_from_filename_into_graph(binary22, db_graph, &mean_readlen, &seq,
-							  false, individual_edge_array, colour2,
-							  false, 0);
+  if (binary21 != NULL)
+    {
+      load_single_colour_binary_data_from_filename_into_graph(binary21, db_graph, &mean_readlen, &seq,
+							      false, individual_edge_array, colour2,
+							      false, 0);
+    }
+  if ( (binary22 != NULL) && (strcmp(binary22, binary21) !=0) )
+    {
+      load_single_colour_binary_data_from_filename_into_graph(binary22, db_graph, &mean_readlen, &seq,
+							      false, individual_edge_array, colour2,
+							      false, 0);
+    }
 
 
 }
@@ -1169,11 +1189,11 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
   char** array_files_2net_binaries=NULL;
   if (using_1net==true)
     {
-      alloc_array_and_get_files_from_list(array_files_1net_binaries, filelist_1net_binaries, num_colours_to_genotype);
+      array_files_1net_binaries = alloc_array_and_get_files_from_list(filelist_1net_binaries, number_alleles);
     }
   if (using_2net==true)
     {
-      alloc_array_and_get_files_from_list(array_files_2net_binaries, filelist_2net_binaries, num_colours_to_genotype);
+      array_files_2net_binaries = alloc_array_and_get_files_from_list(filelist_2net_binaries, number_alleles);
     }
 
 
@@ -1290,10 +1310,13 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	    }
 	  else if ((using_2net==true)&&(using_1net==false))
 	    {
-	      wipe_colour_and_load_binaries(db_graph, working_colour_2net, array_files_2net_binaries[i], array_files_2net_binaries[j]);
+	      printf("Using 2net and not 1net? SHould have caight this earlier\n");
+	      exit(1);
+	      //wipe_colour_and_load_binaries(db_graph, working_colour_2net, array_files_2net_binaries[i], array_files_2net_binaries[j]);
 	    }
 	  else if ((using_1net==true)&& (using_2net==true) )
 	    {
+	      printf("Going to load these 2 binaries: %s and %s\n", array_files_1net_binaries[i], array_files_1net_binaries[j] );
 	      wipe_two_colours_and_load_two_binaries(db_graph, working_colour_1net, working_colour_2net, 
 						     array_files_1net_binaries[i], array_files_1net_binaries[j],
 						     array_files_2net_binaries[i], array_files_2net_binaries[j]);

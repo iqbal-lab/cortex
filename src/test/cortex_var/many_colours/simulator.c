@@ -98,7 +98,7 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
 	       GraphAndModelInfo* model_info,
 	       char* fasta, char* true_ml_gt_name, dBGraph* db_graph, int working_colour1, int working_colour2,
 	       boolean using_1and2_nets, 
-	       char* filelist_1nets_binaries, char* filelist_2nets_binaries,
+	       char* filelist_net1, char* filelist_net2, 
 	       int working_colour_1net, int working_colour_2net)
 {
 
@@ -115,7 +115,8 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
   ///********* local function **********
   void test(VariantBranchesAndFlanks* var, //MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults, 
 	    GraphAndModelInfo* model_info, int colour_allele1, int colour_allele2, 
-	    int colour_ref_minus_site, int colour_indiv)
+	    int colour_ref_minus_site, int colour_indiv,
+	    boolean use_1_and_2net, char* flist_net1, char* flist_net2)
   {
 
     int max_allele_length=100000;
@@ -144,7 +145,7 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
 										     &ml_genotype_lik, &ml_but_one_genotype_lik,
 										     ml_genotype_name_array, ml_but_one_genotype_name_array,
 										     false, model_info, db_graph, working_colour1, working_colour2,
-										     using_1and2_nets, using_1and2_nets, filelist_1nets_binaries, filelist_2nets_binaries, 
+										     use_1_and_2net, use_1_and_2net, flist_net1, flist_net2,
 										     working_colour_1net, working_colour_2net);
 
     //printf("We get max lik gt %s and we expect %s\n", ml_genotype_name, true_ml_gt_name);
@@ -203,7 +204,7 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
       update_allele(var->one_allele, var->len_one_allele,     colour_indiv, sampled_covg_allele1,read_len-kmer+1);
       update_allele(var->other_allele, var->len_other_allele, colour_indiv, sampled_covg_allele2, read_len-kmer+1);
       //update_allele(genome_minus_site,len_genome_minus_site,  colour_indiv, sampled_covg_rest_of_genome);
-      test(var,  model_info, colour_allele1, colour_allele2, colour_ref_minus_site, colour_indiv);
+      test(var,  model_info, colour_allele1, colour_allele2, colour_ref_minus_site, colour_indiv, using_1and2_nets, filelist_net1, filelist_net2);
 
     }
 

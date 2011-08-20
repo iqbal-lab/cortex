@@ -382,6 +382,12 @@ int  main()
 	return CU_get_error();
       }
 
+   if (NULL == CU_add_test(pPopGraphSuite, "Test genotyping of complex sites - test with two HLA-B alleles, using 1-net and 2-net error model", test_calc_log_likelihood_of_genotype_with_complex_alleles3 ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
 
 
 
