@@ -972,7 +972,7 @@ char** alloc_array_and_get_files_from_list(char* filelist, int num_files_in_list
   FILE* fp = fopen(filelist, "r");
   if (fp==NULL)
     {
-      printf("Unable to open %s - surprised this did not get caught by checks of the commandline\n", filelist);
+      printf("Unable to open the filelist of 1net or2net binaries %s - surprised this did not get caught by checks of the commandline\n", filelist);
       exit(1);
     }
 

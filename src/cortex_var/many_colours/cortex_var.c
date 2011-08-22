@@ -1005,6 +1005,7 @@ int main(int argc, char **argv){
 	{
 	  using_2net=true;
 	}
+      printf("Have been given this 1net filelist %s and this 2net filelist %s\n", cmd_line.filelist_1net_binaries_for_alleles, cmd_line.filelist_2net_binaries_for_alleles);
       calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(cmd_line.list_colours_to_genotype, cmd_line.num_colours_to_genotype,
 										       cmd_line.colour_of_reference_with_site_excised,
 										       cmd_line.num_alleles_of_site,

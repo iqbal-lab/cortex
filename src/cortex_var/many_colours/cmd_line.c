@@ -2170,7 +2170,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	  else
 	    {
 	      file_1net_bins[0]='\0';
-	      strcpy(file_1net_bins, fa);
+	      strcpy(file_1net_bins, filelist_1net);
 	    }
 	  char* filelist_2net  = strtok( NULL, delims );
 	  if (filelist_2net==NULL)
@@ -2183,8 +2183,8 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	    }
 	  else
 	    {
-	      file_1net_bins[0]='\0';
-	      strcpy(file_1net_bins, fa);
+	      file_2net_bins[0]='\0';
+	      strcpy(file_2net_bins, filelist_2net);
 	    }
 	}
 	  
