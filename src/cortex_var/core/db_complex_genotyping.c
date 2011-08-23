@@ -326,41 +326,61 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 
 	boolean too_short=false;
 	int ct = count_reads_on_allele_in_specific_colour(p_nodes, length, colour_indiv, &too_short);
+	int extra=0;
+	if (length>db_graph->kmer_size)
+	  {
+	    extra=length-db_graph->kmer_size;
+	  }//tells us if >1 SNP
 	if (wor==worst_is_1net)
 	  {
+	    /*
 	    if (too_short==false)
 	      {
 		*total_1net = (*total_1net) + ct;
 	      }
 	    else
 	      {
-		*total_1net = (*total_1net) + 1;
+		*total_1net = (*total_1net) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
 	      }
-	    // *total_1net = (*total_1net) + 1;
+	    */
+	    //*total_1net = (*total_1net) + 1;
+	    //*total_1net = (*total_1net) + db_node_get_coverage(e, individual_edge_array,colour_indiv) ;
+	    *total_1net = (*total_1net) + extra+1;
+	    //*total_1net = (*total_1net) + length;
 	  }
 	else if (wor==worst_is_2net)
 	  {
+	    /*
 	    if (too_short==false)
 	      {
 		*total_2net = (*total_2net) + ct;	
 	      }
 	    else
 	      {
-		*total_2net = (*total_2net) + 1;
+		*total_2net = (*total_2net) + db_node_get_coverage(e, individual_edge_array,colour_indiv) * (extra + 1);
 	      }
+	    */
+	    *total_2net = (*total_2net) + 1+extra;
 	    //*total_2net = (*total_2net) + 1;
+	    //*total_2net = (*total_2net) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
+	    //*total_2net = (*total_2net) + length;
 	  }
 	else
 	  {
+	    /*
 	    if (too_short==false)
 	      {
 		*total_3net = (*total_3net) + ct;	
 	      }
 	    else
 	      {
-		*total_3net = (*total_3net) + 1;
+		*total_3net = (*total_3net) + db_node_get_coverage(e, individual_edge_array,colour_indiv) * (extra + 1);
 	      }
+	    */
+	    *total_3net = (*total_3net) + 1 + extra;
 	    //*total_3net = (*total_3net) + 1;
+	    //*total_3net = (*total_3net) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
+	    //*total_3net = (*total_3net) + length;
 	  }
       }
     
@@ -595,9 +615,9 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
       //commented out
       // poisson_error_rate = m * kmer *total_len_alleles;
       //poisson_bad_error_rate = m*m*m*kmer*kmer*kmer*total_len_alleles; 
-      poisson_1net_err_rate= m*kmer*total_len_alleles;
-      poisson_2net_err_rate= m*m*kmer*total_len_alleles;
-      poisson_3net_err_rate= m*m*m*kmer*total_len_alleles;
+      poisson_1net_err_rate= m*total_len_alleles;
+      poisson_2net_err_rate= m*m*total_len_alleles;
+      poisson_3net_err_rate= m*m*m*total_len_alleles;
     }
   else if (assump==AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice)
     {
@@ -666,7 +686,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   double hap_D  = (double) (model_info->ginfo->total_sequence[colour_indiv])/(double) (2*model_info->genome_len) ;
   double hap_D_over_R = hap_D/(model_info->ginfo->mean_read_length[colour_indiv]);
   int eff_r_plus_one = model_info->ginfo->mean_read_length[colour_indiv] - db_graph->kmer_size;
-  //  printf("total sequence is %qd and genome len is %qd , and hapD is %f and hapD over R is %f\n", model_info->ginfo->total_sequence[colour_indiv], model_info->genome_len, hap_D, hap_D_over_R);
+  printf("total sequence is %qd and genome len is %qd , and hapD is %f and hapD over R is %f\n", model_info->ginfo->total_sequence[colour_indiv], model_info->genome_len, hap_D, hap_D_over_R);
 
   //break allele into intervals that only lie on allele1, and those shared with allele2.
   int k=0;
@@ -1060,6 +1080,87 @@ void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int 
 
 
 
+
+void modify_character(char* str, int which_base, int which_mutant)
+{
+  int mutants[3];
+  if (str[which_base]=='A')
+    {
+      mutants[0]='C';
+      mutants[1]='G';
+      mutants[2]='T';
+    }
+  else if (str[which_base]=='C')
+    {
+      mutants[0]='A';
+      mutants[1]='G';
+      mutants[2]='T';
+    }
+  else if (str[which_base]=='G')
+    {
+      mutants[0]='A';
+      mutants[1]='C';
+      mutants[2]='T';
+    }
+  else if (str[which_base]=='T')
+    {
+      mutants[0]='A';
+      mutants[1]='C';
+      mutants[2]='G';
+    }
+  else
+    {
+      printf("Bug - str[which_base] is %c\n", str[which_base]);
+      exit(1);
+    }
+
+  str[which_base]=mutants[which_mutant];
+
+}
+
+
+boolean is_this_kmer_beyond_the_2net(dBNode* n, dBGraph* db_graph, int (*get_covg_1net)(dBNode* e) )
+{
+  int i;
+
+  char orig_seq[db_graph->kmer_size+1];
+  binary_kmer_to_seq(&(n->kmer), db_graph->kmer_size, orig_seq);
+
+  for (i=0; i<db_graph->kmer_size; i++)
+    {
+      //there are 3 possible kmers created by changing position i 
+      int p;
+      for (p=0; p<=2; p++)
+	{
+	  char copy_orig[db_graph->kmer_size+1];
+	  strcpy(copy_orig, orig_seq);
+	  modify_character(copy_orig, i,p);//modify the i-th character and change it to the p-th of the other 3. eg if the base is C, and p=2 change it to the second one of A,G,T.
+	  BinaryKmer tmp_kmer1, tmp_kmer2;
+	  dBNode* found_node = hash_table_find(element_get_key(seq_to_binary_kmer(copy_orig, db_graph->kmer_size, &tmp_kmer1), db_graph->kmer_size, &tmp_kmer2), db_graph);
+	  if (found_node==NULL)
+	    {
+	      //this particular edit of 1 base does not take you back to the desired genotype or to the 1net, but maybe some other edit does
+	    }
+	  else if (db_node_check_status(found_node, in_desired_genotype)==true)
+	    {
+	      //ignore
+	      //return false;
+	    }
+	  else if (get_covg_1net(found_node)>0)
+	    {
+	      return false;
+	    }
+	  else
+	    {
+
+	    }
+	}
+
+    }
+  //all possible edits have failed to hit the genotype or 1net
+  return true;
+}
+
 //we ASSUME colours 0 to number_alleles are the various alternate alleles, loading in multicolour_bin
 void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(int* colours_to_genotype, int num_colours_to_genotype,
 										      int colour_ref_minus_site, int number_alleles,
@@ -1071,12 +1172,13 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 										      boolean print_all_liks_calculated,//not just the top two
 										      GraphAndModelInfo* model_info, dBGraph* db_graph,
 										      int working_colour1, int working_colour2,
-										      boolean using_1net, boolean using_2net,
-										      char* filelist_1net_binaries, char* filelist_2net_binaries,
-										      int working_colour_1net, int working_colour_2net)
+										      boolean using_1net, boolean using_2net)
+//										      char* filelist_1net_binaries )
 										      
 {
-
+  printf("Starting to calc genotypes");
+  fflush(stdout);
+  
   int get_covg_in_union_of_colours_to_genotype(dBNode* e)
   {
     int i;
@@ -1184,17 +1286,13 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
   
 
 
-  
+  /*
   char** array_files_1net_binaries=NULL;
-  char** array_files_2net_binaries=NULL;
   if (using_1net==true)
     {
       array_files_1net_binaries = alloc_array_and_get_files_from_list(filelist_1net_binaries, number_alleles);
     }
-  if (using_2net==true)
-    {
-      array_files_2net_binaries = alloc_array_and_get_files_from_list(filelist_2net_binaries, number_alleles);
-    }
+  */
 
 
 
@@ -1291,7 +1389,11 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
     {
       for (j=i; j<number_alleles; j++) // **** now that i and j are specified, we have specified a genotype
 	{
+	  
 	  genotype_count++;
+
+	  printf("Start genotype number %d. i is %d and j is %d\n", genotype_count, i,j);
+	  fflush(stdout);
 	  
 	  if (genotype_count<first_gt)
 	    {
@@ -1301,7 +1403,8 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	    {
 	      continue;
 	    }
-
+	  
+	  /*
 	  //it's a bit messier having these if's and elses but it's more efficient to ensure you only traverse the hash once since we're inside
 	  // a loop that will run many times
 	  if ((using_1net==true)&& (using_2net==false))
@@ -1320,19 +1423,28 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	      wipe_two_colours_and_load_two_binaries(db_graph, working_colour_1net, working_colour_2net, 
 						     array_files_1net_binaries[i], array_files_1net_binaries[j],
 						     array_files_2net_binaries[i], array_files_2net_binaries[j]);
-	    }
+						     }*/
+	
 
-
+	  
 	  int get_covg_in_1net_errors_from_genotype(dBNode* n)
 	  {
-	    return db_node_get_coverage(n, individual_edge_array, working_colour_1net);
+	    //return db_node_get_coverage(n, individual_edge_array, working_colour_1net);
+	    return db_node_get_coverage(n, individual_edge_array, i+number_alleles) + db_node_get_coverage(n, individual_edge_array, j+number_alleles);
 	  }
 	  int get_covg_in_2net_errors_from_genotype(dBNode* n)
 	  {
-	    return db_node_get_coverage(n, individual_edge_array, working_colour_2net);
+	    if (is_this_kmer_beyond_the_2net(n, db_graph, &get_covg_in_1net_errors_from_genotype)==false)
+	      {
+		return 1;
+	      }
+	    else
+	      {
+		return 0;
+	      }
 	  }
-
-
+	  
+	  
 	  VariantBranchesAndFlanks var;
 	  set_variant_branches_but_flanks_to_null(&var, 
 						  array_of_node_arrays[i], 
@@ -1342,13 +1454,16 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 						  array_of_or_arrays[j],
 						  lengths_of_alleles[j],
 						  unknown);
-
+	  
 	  set_status_of_nodes_in_branches(&var, in_desired_genotype);
 	  reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
 	  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, mobv, false, NULL, NULL, working_colour1, working_colour2);
 	  int z;
 	  for (z=0; z<num_colours_to_genotype; z++)
 	    {
+	      printf("Start next sample - this time z is %d", z);
+	      fflush(stdout);
+
 	      char name[100];
 	      if (strlen(array_of_allele_names[i]) + strlen(array_of_allele_names[j])>100 )
 		{
@@ -1357,7 +1472,12 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 		  exit(1);
 		}
 	      sprintf(name, "%s/%s", array_of_allele_names[i], array_of_allele_names[j]); 
-
+	      
+	      if (using_2net==false)
+		{
+		  printf("ZAM it is false\n");
+		  exit(1);
+		}
 	      double llk= calc_log_likelihood_of_genotype_with_complex_alleles(&var, name,
 									       mobv, model_info, colours_to_genotype[z],
 									       colour_ref_minus_site, db_graph, 
@@ -1366,20 +1486,20 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 									       name_current_max_lik_array[z], name_current_max_but_one_lik_array[z],
 									       assump, path_nodes, path_orientations, path_labels, path_string, max_allele_length,
 									       using_1net, get_covg_in_1net_errors_from_genotype, using_2net, get_covg_in_2net_errors_from_genotype);
-
-
-
+	      
+	      
+	      
 	      if (print_all_liks_calculated==true)
 		{
 		  printf("Colour %d, GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name, llk);
 		}
-
+	      
 	    }
 	  set_status_of_nodes_in_branches(&var, none);
 	}
-
+      
     }
-
+  
   //finished this set
   printf("Finished calculating likelihoods of genotypes %d to %d\n", first_gt, last_gt);
   int z;
@@ -1408,19 +1528,15 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
   free(working_array_self);
   free(working_array_shared);
   
-  
+  /*
   if (using_1net==true)
     {
       dealloc_array_of_files(array_files_1net_binaries, num_colours_to_genotype);
     }
-  if (using_2net==true)
-    {
-      dealloc_array_of_files(array_files_2net_binaries, num_colours_to_genotype);
-    }
+  */
   
   
-  
-    }
+}
   
 double* alloc_ML_results_array(int num_samples_to_genotype)
 {

@@ -995,17 +995,7 @@ int main(int argc, char **argv){
       char** name_current_max_lik_array             = alloc_ML_results_names_array(cmd_line.num_colours_to_genotype);
       char** name_current_max_but_one_lik_array     = alloc_ML_results_names_array(cmd_line.num_colours_to_genotype);
 
-      boolean using_1net=false;
-      if (cmd_line.working_colour3_for_1net!=-1)
-	{
-	  using_1net=true;
-	}
-      boolean using_2net=false;
-      if (cmd_line.working_colour4_for_2net!=-1)
-	{
-	  using_2net=true;
-	}
-      printf("Have been given this 1net filelist %s and this 2net filelist %s\n", cmd_line.filelist_1net_binaries_for_alleles, cmd_line.filelist_2net_binaries_for_alleles);
+      printf("Have been given this 1net filelist %s\n", cmd_line.filelist_1net_binaries_for_alleles);
       calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(cmd_line.list_colours_to_genotype, cmd_line.num_colours_to_genotype,
 										       cmd_line.colour_of_reference_with_site_excised,
 										       cmd_line.num_alleles_of_site,
@@ -1016,10 +1006,7 @@ int main(int argc, char **argv){
 										       current_max_lik_array, current_max_but_one_lik_array,
 										       name_current_max_lik_array, name_current_max_but_one_lik_array,
 										       true, &model_info, db_graph, cmd_line.working_colour1, cmd_line.working_colour2,
-										       using_1net, using_2net, 
-										       cmd_line.filelist_1net_binaries_for_alleles, 
-										       cmd_line.filelist_2net_binaries_for_alleles,
-										       cmd_line.working_colour3_for_1net, cmd_line.working_colour4_for_2net
+										       cmd_line.using_1net, cmd_line.using_2net
 										       );
 
 

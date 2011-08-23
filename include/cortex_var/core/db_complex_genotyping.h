@@ -99,9 +99,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 										      boolean print_all_liks_calculated,//not just the top two
 										      GraphAndModelInfo* model_info, dBGraph* db_graph,
 										      int working_colour1, int working_colour2,
-										      boolean using_1net, boolean using_2net,
-										      char* filelist_1net_binaries, char* filelist_2net_binaries,
-										      int working_colour_1net, int working_colour_2net);
+										      boolean using_1net, boolean using_2net);
 
 double* alloc_ML_results_array(int num_samples_to_genotype);
 char** alloc_ML_results_names_array(int num_samples_to_genotype);
