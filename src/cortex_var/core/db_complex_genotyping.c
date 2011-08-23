@@ -713,11 +713,13 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 		    // - gsl_sf_lnfact(covg_on_self_in_this_chunk);
 
 
-
+		    
+		    /*
 		    if (log_prob_error + log_prob_data < *current_max_but_one_lik)
 		      {
 			return MIN_LLK;
 		      }
+		    */
 		  }
 	      }
 
@@ -769,11 +771,13 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 
 
 
-
+		    /*
 		    if (log_prob_error + log_prob_data < *current_max_but_one_lik)
 		      {
 			return MIN_LLK;
 		      }
+		    */
+
 		  }
               }
 
@@ -821,11 +825,12 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 
 
 
-
+	  /*
 	  if (log_prob_error + log_prob_data < *current_max_but_one_lik)
 	    {
 	      return MIN_LLK;
 	    }
+	  */
 	}
 
     }
@@ -849,11 +854,12 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 	  // add log dpois ( 2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one) , covg_on_shared_in_this_chunk)
 	  //log_prob_data += -2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one) + covg_on_shared_in_this_chunk * log(2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one)) - gsl_sf_lnfact(covg_on_shared_in_this_chunk);
 
-
+	  /*
 	  if (log_prob_error + log_prob_data < *current_max_but_one_lik)
 	    {
 	      return MIN_LLK;
 	    }
+	  */
 	}
     }
 
@@ -888,10 +894,13 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 		  //log_prob_data += -hap_D_over_R * (working_array_self_count+eff_r_plus_one)
 		  //  + covg_on_self_in_this_chunk * log(hap_D_over_R * (working_array_self_count+eff_r_plus_one)) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
 		  
+		  /*
 		  if (log_prob_error + log_prob_data < *current_max_but_one_lik)
 		    {
 		      return MIN_LLK;
 		    }
+		  */
+
 		}
 	    }
 	  //** end of moved out from next if
@@ -922,12 +931,14 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
       
     }
 
+  /*
   if (log_prob_error + log_prob_data < *current_max_but_one_lik)
     {
       return MIN_LLK;
     }
   else
     {
+  */
       if (log_prob_data + log_prob_error > (*current_max_lik) )
 	{
 	  //this is the new ML genotype
@@ -951,7 +962,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 	}
 
       return log_prob_data + log_prob_error;
-    }
+      /*   }  */
   
     
 }
