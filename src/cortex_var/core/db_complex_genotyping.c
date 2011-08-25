@@ -686,7 +686,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   double hap_D  = (double) (model_info->ginfo->total_sequence[colour_indiv])/(double) (2*model_info->genome_len) ;
   double hap_D_over_R = hap_D/(model_info->ginfo->mean_read_length[colour_indiv]);
   int eff_r_plus_one = model_info->ginfo->mean_read_length[colour_indiv] - db_graph->kmer_size;
-  printf("total sequence is %qd and genome len is %qd , and hapD is %f and hapD over R is %f\n", model_info->ginfo->total_sequence[colour_indiv], model_info->genome_len, hap_D, hap_D_over_R);
+  //printf("total sequence is %qd and genome len is %qd , and hapD is %f and hapD over R is %f\n", model_info->ginfo->total_sequence[colour_indiv], model_info->genome_len, hap_D, hap_D_over_R);
 
   //break allele into intervals that only lie on allele1, and those shared with allele2.
   int k=0;
@@ -962,7 +962,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 	}
 
       return log_prob_data + log_prob_error;
-      /*   }  */
+      /*     }  */
   
     
 }
@@ -1187,8 +1187,6 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 //										      char* filelist_1net_binaries )
 										      
 {
-  printf("Starting to calc genotypes");
-  fflush(stdout);
   
   int get_covg_in_union_of_colours_to_genotype(dBNode* e)
   {
@@ -1403,8 +1401,8 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	  
 	  genotype_count++;
 
-	  printf("Start genotype number %d. i is %d and j is %d\n", genotype_count, i,j);
-	  fflush(stdout);
+	  //printf("Start genotype number %d. i is %d and j is %d\n", genotype_count, i,j);
+	  //fflush(stdout);
 	  
 	  if (genotype_count<first_gt)
 	    {
@@ -1472,8 +1470,8 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	  int z;
 	  for (z=0; z<num_colours_to_genotype; z++)
 	    {
-	      printf("Start next sample - this time z is %d", z);
-	      fflush(stdout);
+	      //printf("Start next sample - this time z is %d", z);
+	      //fflush(stdout);
 
 	      char name[100];
 	      if (strlen(array_of_allele_names[i]) + strlen(array_of_allele_names[j])>100 )
@@ -1484,11 +1482,6 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 		}
 	      sprintf(name, "%s/%s", array_of_allele_names[i], array_of_allele_names[j]); 
 	      
-	      if (using_2net==false)
-		{
-		  printf("ZAM it is false\n");
-		  exit(1);
-		}
 	      double llk= calc_log_likelihood_of_genotype_with_complex_alleles(&var, name,
 									       mobv, model_info, colours_to_genotype[z],
 									       colour_ref_minus_site, db_graph, 
