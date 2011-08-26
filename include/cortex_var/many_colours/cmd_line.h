@@ -161,7 +161,8 @@ typedef struct
   int working_colour2;
   boolean using_1net;
   boolean using_2net;
-  
+  double min_acceptable_llk;
+
   //  int working_colour3_for_1net;
   //int working_colour4_for_2net;
   char filelist_1net_binaries_for_alleles[MAX_FILENAME_LEN];
@@ -180,7 +181,7 @@ int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_f
 int parse_commasep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is);
 int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* num_colours_to_genotype , int* ref_minus_site_colour, int* num_alleles,
 				 int* start_gt_combin_num, int* end_gt_combin_num, char* fasta_file, AssumptionsOnGraphCleaning* assump,
-				 int* wk_col1, int* wk_col2, boolean* using_1net, boolean* using_2net, char* file_1net_bins);
+				 int* wk_col1, int* wk_col2, boolean* using_1net, boolean* using_2net, char* file_1net_bins, double* min_llk);
 
 
 #endif /* CMD_LINE_H_ */

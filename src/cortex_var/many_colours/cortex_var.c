@@ -1005,7 +1005,8 @@ int main(int argc, char **argv){
 										       current_max_lik_array, current_max_but_one_lik_array,
 										       name_current_max_lik_array, name_current_max_but_one_lik_array,
 										       true, &model_info, db_graph, cmd_line.working_colour1, cmd_line.working_colour2,
-										       cmd_line.using_1net, cmd_line.using_2net
+										       cmd_line.using_1net, cmd_line.using_2net,
+										       cmd_line.min_acceptable_llk
 										       );
 
 

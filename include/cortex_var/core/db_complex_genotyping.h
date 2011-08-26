@@ -82,7 +82,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 							    AssumptionsOnGraphCleaning assump,
 							    dBNode** p_nodes, Orientation* p_orientations, Nucleotide* p_labels, char* p_string, int max_allele_length,
 							    boolean using_1net, int (*get_covg_in_1net_of_genotype)(dBNode*), 
-							    boolean using_2net, int (*get_covg_in_2net_of_genotype)(dBNode*) );
+							    boolean using_2net, int (*get_covg_in_2net_of_genotype)(dBNode*),
+							    double min_acceptable_llk);
 
 void wipe_colour_and_load_binaries(dBGraph* db_graph, int colour, char* bin1, char* bin2);
 void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int colour2,
@@ -99,7 +100,8 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 										      boolean print_all_liks_calculated,//not just the top two
 										      GraphAndModelInfo* model_info, dBGraph* db_graph,
 										      int working_colour1, int working_colour2,
-										      boolean using_1net, boolean using_2net);
+										      boolean using_1net, boolean using_2net,
+										      double min_acceptable_llk);
 
 double* alloc_ML_results_array(int num_samples_to_genotype);
 char** alloc_ML_results_names_array(int num_samples_to_genotype);

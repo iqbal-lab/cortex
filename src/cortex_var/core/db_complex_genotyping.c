@@ -39,6 +39,64 @@
 #include <global.h>
 #include <file_reader.h>
 
+/*
+//assumes 3 colour graph, colour 0 is the union of all alleles, colour 1 is the ref-minus site. colour 2 will be which ever allele has just been loaded
+//for each allele, create all 86000*3 possible SNPs and see what % of them touch the union/reference intersect union/allele.
+// repeat for 2bp changes.
+// once you have
+void calculate_edit_probabilities(dBGraph* db_graph, char** array_allele_names, dBNode** array_alleles, int* array_allele_lens, FILE* fout, char* list_allele_binaries, int colour_union)
+{
+  //wipe colour 2
+
+  //load j-th allele binary
+  int i;
+
+  for (i=0; i<array_allele_lens[j]; i+=50)
+    {
+
+  char orig_seq[db_graph->kmer_size+1];
+  binary_kmer_to_seq(&(n->kmer), db_graph->kmer_size, orig_seq);
+
+  for (i=0; i<db_graph->kmer_size; i++)
+    {
+      //there are 3 possible kmers created by changing position i 
+      int p;
+      for (p=0; p<=2; p++)
+	{
+	  char copy_orig[db_graph->kmer_size+1];
+	  strcpy(copy_orig, orig_seq);
+	  modify_character(copy_orig, i,p);//modify the i-th character and change it to the p-th of the other 3. eg if the base is C, and p=2 change it to the second one of A,G,T.
+	  BinaryKmer tmp_kmer1, tmp_kmer2;
+	  dBNode* found_node = hash_table_find(element_get_key(seq_to_binary_kmer(copy_orig, db_graph->kmer_size, &tmp_kmer1), db_graph->kmer_size, &tmp_kmer2), db_graph);
+	  if (found_node==NULL)
+	    {
+	      //this particular edit of 1 base does not take you back to the desired genotype, but maybe some other edit does
+	    }
+	  else if (db_node_check_status(found_node, in_desired_genotype)==true)
+	    {
+	      return true;
+	    }
+	  else
+	    {
+	      //this particular edit of 1 base does not take you back to the desired genotype, but maybe some other edit does
+	    }
+	}
+
+    }
+  //all possible edits have failed to hit the genotype
+  return false;
+
+
+
+
+}
+
+*/
+
+
+
+
+
 // Lowest log likelihood, at which we just cutoff
 int MIN_LLK = -9999999;
 
@@ -220,7 +278,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 							    AssumptionsOnGraphCleaning assump,
 							    dBNode** p_nodes, Orientation* p_orientations, Nucleotide* p_labels, char* p_string, int max_allele_length,
 							    boolean using_1net, int (*get_covg_in_1net_of_genotype)(dBNode*), 
-							    boolean using_2net, int (*get_covg_in_2net_of_genotype)(dBNode*) )
+							    boolean using_2net, int (*get_covg_in_2net_of_genotype)(dBNode*),
+							    double min_acceptable_llk)
 //assume the  2 working arrays have length = max read length
 {
     
@@ -603,9 +662,9 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   // Errors on union of two alleles occur as a Poisson process with rate = sequencing_error_rate_per_base * kmer * length of two alleles
   //double poisson_error_rate;
   //double poisson_bad_error_rate;
-  double poisson_1net_err_rate;
-  double poisson_2net_err_rate;
-  double poisson_3net_err_rate;
+  double poisson_1net_err_rate=0;
+  double poisson_2net_err_rate=0;
+  double poisson_3net_err_rate=0;
 
   double m=(model_info->seq_error_rate_per_base) ;
   int kmer=(db_graph->kmer_size);
@@ -615,26 +674,23 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
       //commented out
       // poisson_error_rate = m * kmer *total_len_alleles;
       //poisson_bad_error_rate = m*m*m*kmer*kmer*kmer*total_len_alleles; 
+
       poisson_1net_err_rate= m*total_len_alleles;
       poisson_2net_err_rate= m*m*total_len_alleles;
       poisson_3net_err_rate= m*m*m*total_len_alleles;
+
     }
   else if (assump==AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice)
     {
-      printf("ZAM tidy/implement this for CLKEANED  this");
-      exit(1);
+
       //next line is the one I had
       //poisson_error_rate = m*m* kmer*kmer* total_len_alleles;
       
-
-      //poisson_error_rate = (model_info->seq_error_rate_per_base)*m* (db_graph->kmer_size) *total_len_alleles;
-  
-      //the next line is the normal one ZAMZAMZAM
-      //poisson_bad_error_rate = m*m*m*m*kmer*kmer*kmer*kmer ;
-
-      //next line for debug - HARD penalty on bad errors
-      //poisson_bad_error_rate = m*m*m ;
+      poisson_1net_err_rate= m*m*total_len_alleles;
+      poisson_2net_err_rate= m*m*m*m*total_len_alleles;
+      poisson_3net_err_rate= m*m*m*m*m*m*total_len_alleles;
     }
+
   double log_prob_error = 0;
   //printf("Poisson error rate is %.20f\n", poisson_error_rate);
 
@@ -714,12 +770,14 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 
 
 		    
-		    /*
-		    if (log_prob_error + log_prob_data < *current_max_but_one_lik)
+		    
+		    if ( (log_prob_error + log_prob_data < *current_max_but_one_lik)
+		      ||
+			 (log_prob_error + log_prob_data < min_acceptable_llk) )
 		      {
 			return MIN_LLK;
 		      }
-		    */
+		    
 		  }
 	      }
 
@@ -771,12 +829,14 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 
 
 
-		    /*
-		    if (log_prob_error + log_prob_data < *current_max_but_one_lik)
+		    
+		    if (  (log_prob_error + log_prob_data < *current_max_but_one_lik)
+			  ||
+			 (log_prob_error + log_prob_data < min_acceptable_llk) )
 		      {
 			return MIN_LLK;
 		      }
-		    */
+		    
 
 		  }
               }
@@ -825,12 +885,14 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 
 
 
-	  /*
-	  if (log_prob_error + log_prob_data < *current_max_but_one_lik)
+	  
+	  if (  (log_prob_error + log_prob_data < *current_max_but_one_lik)
+		||
+		(log_prob_error + log_prob_data < min_acceptable_llk) )
 	    {
 	      return MIN_LLK;
 	    }
-	  */
+	  
 	}
 
     }
@@ -854,12 +916,14 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 	  // add log dpois ( 2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one) , covg_on_shared_in_this_chunk)
 	  //log_prob_data += -2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one) + covg_on_shared_in_this_chunk * log(2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one)) - gsl_sf_lnfact(covg_on_shared_in_this_chunk);
 
-	  /*
-	  if (log_prob_error + log_prob_data < *current_max_but_one_lik)
+	  
+	  if ( (log_prob_error + log_prob_data < *current_max_but_one_lik)
+	       ||
+	       (log_prob_error + log_prob_data < min_acceptable_llk) )
 	    {
 	      return MIN_LLK;
 	    }
-	  */
+	  
 	}
     }
 
@@ -894,12 +958,14 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 		  //log_prob_data += -hap_D_over_R * (working_array_self_count+eff_r_plus_one)
 		  //  + covg_on_self_in_this_chunk * log(hap_D_over_R * (working_array_self_count+eff_r_plus_one)) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
 		  
-		  /*
-		  if (log_prob_error + log_prob_data < *current_max_but_one_lik)
+		  
+		  if ( (log_prob_error + log_prob_data < *current_max_but_one_lik)
+		       ||
+		       (log_prob_error + log_prob_data < min_acceptable_llk) )
 		    {
 		      return MIN_LLK;
 		    }
-		  */
+		  
 
 		}
 	    }
@@ -931,14 +997,16 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
       
     }
 
-  /*
-  if (log_prob_error + log_prob_data < *current_max_but_one_lik)
+  
+  if ( (log_prob_error + log_prob_data < *current_max_but_one_lik)
+       ||
+       (log_prob_error + log_prob_data < min_acceptable_llk) )
     {
       return MIN_LLK;
     }
   else
     {
-  */
+  
       if (log_prob_data + log_prob_error > (*current_max_lik) )
 	{
 	  //this is the new ML genotype
@@ -962,7 +1030,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 	}
 
       return log_prob_data + log_prob_error;
-      /*     }  */
+    }  
   
     
 }
@@ -1129,7 +1197,7 @@ void modify_character(char* str, int which_base, int which_mutant)
 
 }
 
-
+//idea is: first check if is in 1net, and if not, call this. It is now either in the 2net or beyond and this return from this tells you which
 boolean is_this_kmer_beyond_the_2net(dBNode* n, dBGraph* db_graph, int (*get_covg_1net)(dBNode* e) )
 {
   int i;
@@ -1172,6 +1240,46 @@ boolean is_this_kmer_beyond_the_2net(dBNode* n, dBGraph* db_graph, int (*get_cov
   return true;
 }
 
+
+
+boolean is_this_kmer_in_the_1net(dBNode* n, dBGraph* db_graph, int (*get_covg_1net)(dBNode* e) )
+{
+  int i;
+
+  char orig_seq[db_graph->kmer_size+1];
+  binary_kmer_to_seq(&(n->kmer), db_graph->kmer_size, orig_seq);
+
+  for (i=0; i<db_graph->kmer_size; i++)
+    {
+      //there are 3 possible kmers created by changing position i 
+      int p;
+      for (p=0; p<=2; p++)
+	{
+	  char copy_orig[db_graph->kmer_size+1];
+	  strcpy(copy_orig, orig_seq);
+	  modify_character(copy_orig, i,p);//modify the i-th character and change it to the p-th of the other 3. eg if the base is C, and p=2 change it to the second one of A,G,T.
+	  BinaryKmer tmp_kmer1, tmp_kmer2;
+	  dBNode* found_node = hash_table_find(element_get_key(seq_to_binary_kmer(copy_orig, db_graph->kmer_size, &tmp_kmer1), db_graph->kmer_size, &tmp_kmer2), db_graph);
+	  if (found_node==NULL)
+	    {
+	      //this particular edit of 1 base does not take you back to the desired genotype, but maybe some other edit does
+	    }
+	  else if (db_node_check_status(found_node, in_desired_genotype)==true)
+	    {
+	      return true;
+	    }
+	  else
+	    {
+	      //this particular edit of 1 base does not take you back to the desired genotype, but maybe some other edit does
+	    }
+	}
+
+    }
+  //all possible edits have failed to hit the genotype
+  return false;
+}
+
+
 //we ASSUME colours 0 to number_alleles are the various alternate alleles, loading in multicolour_bin
 void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(int* colours_to_genotype, int num_colours_to_genotype,
 										      int colour_ref_minus_site, int number_alleles,
@@ -1183,7 +1291,8 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 										      boolean print_all_liks_calculated,//not just the top two
 										      GraphAndModelInfo* model_info, dBGraph* db_graph,
 										      int working_colour1, int working_colour2,
-										      boolean using_1net, boolean using_2net)
+										      boolean using_1net, boolean using_2net,
+										      double min_acceptable_llk)
 //										      char* filelist_1net_binaries )
 										      
 {
@@ -1489,7 +1598,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 									       &(current_max_lik_array[z]), &(current_max_but_one_lik_array[z]),
 									       name_current_max_lik_array[z], name_current_max_but_one_lik_array[z],
 									       assump, path_nodes, path_orientations, path_labels, path_string, max_allele_length,
-									       using_1net, get_covg_in_1net_errors_from_genotype, using_2net, get_covg_in_2net_errors_from_genotype);
+									       using_1net, get_covg_in_1net_errors_from_genotype, using_2net, get_covg_in_2net_errors_from_genotype, min_acceptable_llk);
 	      
 	      
 	      

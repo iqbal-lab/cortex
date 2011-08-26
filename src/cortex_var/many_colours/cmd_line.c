@@ -380,6 +380,7 @@ int default_opts(CmdLine * c)
   c->using_1net=false;
   c->using_2net=false;
   c->assump_for_genotyping=AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice;
+  c->min_acceptable_llk=-999999999;
   return 1;
 }
 
@@ -1176,7 +1177,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 				     cmdline_ptr->fasta_alleles_for_complex_genotyping, &(cmdline_ptr->assump_for_genotyping),
 				     &(cmdline_ptr->working_colour1), &(cmdline_ptr->working_colour2),
 				     &(cmdline_ptr->using_1net), &(cmdline_ptr->using_2net),
-				     cmdline_ptr->filelist_1net_binaries_for_alleles);
+				     cmdline_ptr->filelist_1net_binaries_for_alleles, &(cmdline_ptr->min_acceptable_llk) );
 
 	cmdline_ptr->genotype_complex_site=true;
 	break;
@@ -1997,7 +1998,7 @@ int get_numbers_from_comma_sep_list(char* list, int* return_list, int max_len_re
 //note we implicitly assume colours 0...num_alleles are going to be one colour for each allele. So the ref-minus-site colour must be > this, etc
 int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* num_colours_to_genotype , int* ref_minus_site_colour, int* num_alleles,
 				 int* start_gt_combin_num, int* end_gt_combin_num, char* fasta_file, AssumptionsOnGraphCleaning* assump,
-				 int* wk_col1, int* wk_col2, boolean* using_1net, boolean* using_2net, char* file_1net_bins)
+				 int* wk_col1, int* wk_col2, boolean* using_1net, boolean* using_2net, char* file_1net_bins, double* min_llk)
 {
 
   // we expect arg to be of this format: x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>   where z and A,B may be -1
@@ -2147,6 +2148,22 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	{
 	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no> - the final yes/no determines whether cortex uses  the full error model using edit distances of kmers from the expected genotype (yes) or not (no). You do not seem to have specified either\n");	  
 	}
+
+
+      char* min_llk_as_char = strtok(NULL, delims);
+      if (min_llk_as_char==NULL)
+	{
+	  //do nothing, leave the min log likelihood as default
+	}
+      else
+	{
+	  int min_llk_as_int = atoi(min_llk_as_char);
+	  if (min_llk_as_int<0)
+	    {
+	      *min_llk = (double) min_llk_as_int; zahara
+	    }
+	}
+
 
       /*
       //now get the file-list of 1-net binaries
