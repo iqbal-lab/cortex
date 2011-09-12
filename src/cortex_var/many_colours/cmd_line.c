@@ -2160,7 +2160,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	  int min_llk_as_int = atoi(min_llk_as_char);
 	  if (min_llk_as_int<0)
 	    {
-	      *min_llk = (double) min_llk_as_int; zahara
+	      *min_llk = (double) min_llk_as_int; 
 	    }
 	}
 
