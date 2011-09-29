@@ -97,6 +97,13 @@ void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_
 void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded, long long* bad_reads, dBGraph* db_graph);
 
 
+//use preallocated sliding window, and get all the kmers from the passed-in sequence. Any kmer that would have contained an N is returned as NULL
+int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short kmer_size, KmerSlidingWindow* kmer_window, dBGraph* db_graph);
+
+
+
+
+
 // gets the next number_of_bases_to_load bases from fasta file, and returns them in the array of nodes.
 // assumes this file has already been loaded into the graph.
 // returns the number of nodes loaded. If this is less than what you asked for, you know it has hit the end of the file.

@@ -112,8 +112,6 @@ char * nucleotides_to_string(Nucleotide * nucleotides, int length, char * string
 int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length, char quality_cut_off, short kmer_size, KmerSlidingWindowSet * windows,
                                       int max_windows, int max_kmers, boolean break_homopolymers, int homopolymer_cutoff);
 
-//use preallocated sliding window, and get all the kmers from the passed-in sequence. Any kmer that would have contained an N is returned as NULL
-int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short kmer_size, KmerSlidingWindow* kmer_window);
 
 char * binary_kmer_to_seq(BinaryKmer* kmer, short kmer_size, char * seq);
 

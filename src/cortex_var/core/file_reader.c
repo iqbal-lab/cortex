@@ -861,6 +861,7 @@ void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* li
 
 
 
+
 void set_binary_kmer_to_something_not_in_the_hash_table(BinaryKmer* bkmer, dBGraph* db_graph)
 {
   BinaryKmer b;
@@ -887,6 +888,158 @@ void set_binary_kmer_to_something_not_in_the_hash_table(BinaryKmer* bkmer, dBGra
   
   binary_kmer_assignment_operator(*bkmer, b);
 }
+
+//The first argument - seq - is a C string in A,C,G,T,N format. (Function handles bad characters)
+//The second argument - length - is the length in bases of the sequence.
+//we want a single sliding window, using a kmer that does not exists in the hash where the kmer would include an N, or Undefined nucleotide
+//this seems not ideal - but the caller is presumably going to break the kmer at N's, and here we force them to break at AAAAAA also.
+// but would only happen if kmer_size = NUMBER_OF_BITFIELDS_IN_BINARY_KMER*32 - ie is even - which we never do.
+int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short kmer_size, KmerSlidingWindow* kmer_window, dBGraph* db_graph)
+{  
+
+  if ( (kmer_window==NULL) || (seq==NULL))
+    {
+      printf("Do not pass NULL pointer to get_single_kmer_sliding_window_from_sequence\n");
+      exit(1);
+    }
+  
+  int number_of_steps_before_current_kmer_is_good=0; //good means free of bad characters. 
+  int latest_base_we_have_read=0;
+  int num_kmers=0;
+  char first_kmer[kmer_size+1]; //as string
+  first_kmer[kmer_size]='\0';
+  Nucleotide current_base;
+
+  BinaryKmer marked_kmer; 
+  set_binary_kmer_to_something_not_in_the_hash_table(&marked_kmer, db_graph);
+  int i;
+  /*
+
+  for (i=0; i<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      marked_kmer[i]=~0;
+    }
+  */
+  BinaryKmer current_good_kmer;
+  //binary_kmer_assignment_operator(current_good_kmer, marked_kmer); //initialisation
+  binary_kmer_initialise_to_zero(&current_good_kmer); //zam DEBUG
+
+  //long long current_good_kmer=~0;
+  
+  // don't think need this given new API --> BinaryKmer mask = (( (BinaryKmer) 1 << (2*kmer_size)) - 1); // mask binary 00..0011..11 as many 1's as kmer_size * 2 (every base takes 2 bits)
+
+  if (length < kmer_size )
+    {
+      return 0;
+    }
+
+
+  //set up first kmer
+  for (i=0; i<kmer_size; i++)
+    {
+
+      first_kmer[i]=seq[latest_base_we_have_read];
+      current_base = char_to_binary_nucleotide(seq[latest_base_we_have_read]);
+
+      if (current_base==Undefined)
+	{
+	  //we will ignore contents of the string  first_kmer as it contains a bad character
+	  binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, Adenine, kmer_size );
+	  number_of_steps_before_current_kmer_is_good=i+1;
+	}      
+      else
+	{
+	  binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, current_base, kmer_size );
+	}
+
+      latest_base_we_have_read++;
+    }
+
+
+  //add first kmer to window
+  num_kmers++;
+
+  BinaryKmer tmp_bin_kmer;
+  binary_kmer_assignment_operator(tmp_bin_kmer, marked_kmer);
+  //binary_kmer_initialise_to_zero(&tmp_bin_kmer);//zam debug
+
+  if (number_of_steps_before_current_kmer_is_good==0)
+    {
+      seq_to_binary_kmer(first_kmer,kmer_size, &tmp_bin_kmer);
+    }
+  else
+    {
+      number_of_steps_before_current_kmer_is_good--;
+    }
+  binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1], tmp_bin_kmer);
+
+
+
+  while (latest_base_we_have_read<length)
+    {
+
+      while ( (latest_base_we_have_read<length) && (number_of_steps_before_current_kmer_is_good>0))
+	{
+	  current_base = char_to_binary_nucleotide(seq[latest_base_we_have_read]);
+
+	  if (current_base==Undefined)
+	    {
+	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, Adenine, kmer_size );
+	      number_of_steps_before_current_kmer_is_good=kmer_size;
+	    }
+	  else
+	    {
+	      //add new base
+	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, current_base, kmer_size );
+	    }
+
+	  num_kmers++;
+
+	  //add a marked kmer to the window
+	  binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1], marked_kmer);
+
+	  number_of_steps_before_current_kmer_is_good--;
+	  latest_base_we_have_read++; 
+
+	}
+
+      //as long as previous kmer was good, you loop through this while loop
+      while (latest_base_we_have_read<length)
+	{
+	  current_base = char_to_binary_nucleotide(seq[latest_base_we_have_read]);
+
+	  if (current_base==Undefined)
+	    {
+	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, Adenine, kmer_size );
+	      number_of_steps_before_current_kmer_is_good=kmer_size;
+
+	      //add a marked kmer to the window 
+	      num_kmers++;
+	      binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1], marked_kmer);
+
+	      number_of_steps_before_current_kmer_is_good--; 
+	      latest_base_we_have_read++;
+	      break;
+	    }
+	  else
+	    {
+	  
+	      //add new base
+	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, current_base, kmer_size );
+	      num_kmers++;
+	      binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1],current_good_kmer);      
+	      latest_base_we_have_read++;	      
+	    }
+
+	}
+  
+    }
+    
+  kmer_window->nkmers=num_kmers;
+  return num_kmers;
+
+}
+
 
 
 
@@ -974,7 +1127,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   seq_length += (long long) chunk_length;
   
   //number of nodes may be less than what we asked for, if we hit the end of the file
-  int num_nodes = get_single_kmer_sliding_window_from_sequence(seq->seq,chunk_length,db_graph->kmer_size, kmer_window);
+  int num_nodes = get_single_kmer_sliding_window_from_sequence(seq->seq,chunk_length,db_graph->kmer_size, kmer_window, db_graph);
   
   //sanity
   if (expecting_new_fasta_entry==true)
@@ -2304,7 +2457,7 @@ int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length
   //get next read as a C string and put it in seq. Entry_length is the length of the read.
   int entry_length = file_reader(fp,seq,max_read_length,full_entry,&full_entry);
   //turn it into a sliding window 
-  int nkmers = get_single_kmer_sliding_window_from_sequence(seq->seq,entry_length, db_graph->kmer_size, kmer_window);
+  int nkmers = get_single_kmer_sliding_window_from_sequence(seq->seq,entry_length, db_graph->kmer_size, kmer_window, db_graph);
   //work through the sliding window and put nodes into the array you pass in. Note this may find NULL nodes if the kmer is not in the graph
   load_kmers_from_sliding_window_into_array(kmer_window, seq, db_graph, array_nodes, array_orientations, 
 					    max_read_length-db_graph->kmer_size+1, require_nodes_to_lie_in_given_colour, colour);

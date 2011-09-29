@@ -145,8 +145,7 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
 										     &ml_genotype_lik, &ml_but_one_genotype_lik,
 										     ml_genotype_name_array, ml_but_one_genotype_name_array,
 										     false, model_info, db_graph, working_colour1, working_colour2,
-										     use_1_and_2net, use_1_and_2net, flist_net1, flist_net2,
-										     working_colour_1net, working_colour_2net);
+										     use_1_and_2net, use_1_and_2net, MIN_LLK);
 
     //printf("We get max lik gt %s and we expect %s\n", ml_genotype_name, true_ml_gt_name);
     if (strcmp(ml_genotype_name, true_ml_gt_name)==0) 
