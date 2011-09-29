@@ -861,6 +861,32 @@ void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* li
 
 
 
+void set_binary_kmer_to_something_not_in_the_hash_table(BinaryKmer* bkmer, dBGraph* db_graph)
+{
+  BinaryKmer b;
+  binary_kmer_initialise_to_zero(&b);
+  boolean found=true;
+  int count=0;
+  int i=1;
+  while (found==true)
+    {
+      i++;
+      b[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]=(bitfield_of_64bits) i;
+
+      dBNode* e = hash_table_find(element_get_key(&b, db_graph->kmer_size, &b), db_graph);
+      if (e==NULL)
+	{
+	  found=false;
+	}
+      count++;
+      if ((count>10000) && (found==true) )
+	{
+	  printf("Cortex needs, for non-obvious reasons, to find a kmer which is NOT in your graph, but after %d random tries, has failed to find one. Still looking.\nIf you are using a very small k, so the graph is saturating the kmer-space, this will go on forever....\n", count);
+	}
+    }
+  
+  binary_kmer_assignment_operator(*bkmer, b);
+}
 
 
 
@@ -913,12 +939,9 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   int chunk_length;
   int j;
 
-  BinaryKmer marked_kmer; //will have all longlongs in array being ~0
-  //  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
-  //    {
-  //      marked_kmer[j]=~0;
-  //    }
-  binary_kmer_set_all_bitfields(marked_kmer, ~( (bitfield_of_64bits) 0) );
+  BinaryKmer marked_kmer; 
+  set_binary_kmer_to_something_not_in_the_hash_table(&marked_kmer, db_graph);
+  //  binary_kmer_set_all_bitfields(marked_kmer, ~( (bitfield_of_64bits) 0) );//will have all longlongs in array being ~0
   
 
 
@@ -985,8 +1008,8 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   for(j=0;j<kmer_window->nkmers;j++)
     { //for each kmer in window
 
-      if ( binary_kmer_comparison_operator(kmer_window->kmer[j], marked_kmer) ) //encoding as  1's in all 64 bits of all bitfields in BineryKmer, 
-	                                                                        //a non-kmer - ie anything that would have had an N in it
+      if ( binary_kmer_comparison_operator(kmer_window->kmer[j], marked_kmer) ) //a non-kmer - ie anything that would have had an N in it
+	                                                                        
 	{
 	  //corresponds to a kmer that contains an N
 	  path_nodes[offset+j]        =NULL;
