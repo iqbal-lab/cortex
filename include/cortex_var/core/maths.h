@@ -34,5 +34,6 @@
 
 float log_factorial(int number);
 float log_factorial_ll(long long number);
+int min_of_ints(int a, int b);
 
 #endif
