@@ -41,19 +41,22 @@
 #include <limits.h>
 
 
-boolean does_allele_lie_in_graph(dBNode** array_nodes, int number_kmers_read, int colour_cleaned_genome)
+boolean does_allele_lie_in_graph(dBNode** array_nodes, int len, int colour_cleaned_genome)
 {
   int i;
   boolean ret = true;
-  for (i=0; (ret==true) && (i<number_kmers_read); i++)
+  for (i=0; (ret==true) && (i<len); i++)
     {
-      if (db_node_is_this_node_in_this_person_or_populations_graph(array_nodes[i], individual_edge_array, colour_cleaned_genome)==false)
+      if (db_node_is_this_node_in_this_person_or_populations_graph(array_nodes[i], 
+								   individual_edge_array, 
+								   colour_cleaned_genome)==false)
 	{
 	  ret=false;
 	}
     }
   return ret;
 }
+
 //I don't care if the nodes exist in the hash, nor if it is in this colour. 
 //but if it is in the graph and in the colour, none of the interior nodes are 
 //allowed to have in/out degree>1
@@ -89,7 +92,7 @@ boolean allele_is_clean(dBNode** array_nodes,Orientation* array_or,
 //then randomly mutate the central base, and that makes the alt allele
 //If both ref and alt alleles are clean supernodes, increment total_errors_forming_clean_bubbles
 void get_clean_and_unclean_counts(dBGraph* db_graph, char* fasta, boolean allow_reads_shorter_than_2k_plus_one, 
-				  int colour_cleaned_genome, int colour_working,
+				  int colour_cleaned_genome,
 				  int* total_errors_tested, int* total_errors_forming_clean_bubbles,
 				  int (*file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
 				  dBNode** array_nodes, Orientation* array_or, //assume these are length max_read_length+k+1 - plenty of space
@@ -180,7 +183,7 @@ void get_clean_and_unclean_counts(dBGraph* db_graph, char* fasta, boolean allow_
 //will only use reads where entire read (ar at least the 2k bases around the error) lies in the pre-existing graph
 double estimate_genome_complexity(dBGraph* db_graph, char* filename_list_fastaq,
 				  boolean allow_reads_shorter_than_2k_plus_one, 
-				  int colour_cleaned_genome, int colour_working,
+				  int colour_cleaned_genome, 
 				  int max_read_length, FileFormat format,
 				  int fastq_ascii_offset
 				  )
@@ -292,14 +295,16 @@ double estimate_genome_complexity(dBGraph* db_graph, char* filename_list_fastaq,
 
       if (format==FASTA)
 	{
-	  get_clean_and_unclean_counts(db_graph, fastaq, allow_reads_shorter_than_2k_plus_one, colour_cleaned_genome, colour_working,
+	  get_clean_and_unclean_counts(db_graph, fastaq, allow_reads_shorter_than_2k_plus_one, 
+				       colour_cleaned_genome, 
 				       &total_errors_tested, &total_errors_form_clean_bubbles,
 				       file_reader_fasta, array_nodes, array_or, 
 				       seq, kmer_window, max_read_length);
 	}
       else if (format==FASTQ)
 	{
-	  get_clean_and_unclean_counts(db_graph, fastaq, allow_reads_shorter_than_2k_plus_one, colour_cleaned_genome, colour_working,
+	  get_clean_and_unclean_counts(db_graph, fastaq, allow_reads_shorter_than_2k_plus_one, 
+				       colour_cleaned_genome,
 				       &total_errors_tested, &total_errors_form_clean_bubbles,
 				       file_reader_fastq, array_nodes, array_or, 
 				       seq, kmer_window, max_read_length);

@@ -46,7 +46,7 @@ boolean allele_is_clean(dBNode** array_nodes,Orientation* array_or,
 
 
 void get_clean_and_unclean_counts(dBGraph* db_graph, char* fasta, boolean allow_reads_shorter_than_2k_plus_one, 
-				  int colour_cleaned_genome, int colour_working,
+				  int colour_cleaned_genome, 
 				  int* total_errors_tested, int* total_errors_forming_clean_bubbles,
 				  int (*file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
 				  dBNode** array_nodes, Orientation* array_or, //assume these are length max_read_length+k+1 - plenty of space
@@ -55,7 +55,7 @@ void get_clean_and_unclean_counts(dBGraph* db_graph, char* fasta, boolean allow_
 
 double estimate_genome_complexity(dBGraph* db_graph, char* filename_list_fastaq,
 				  boolean allow_reads_shorter_than_2k_plus_one, 
-				  int colour_cleaned_genome, int colour_working,
+				  int colour_cleaned_genome,
 				  int max_read_length, FileFormat format,
 				  int fastq_ascii_offset
 				  );
