@@ -45,15 +45,15 @@ boolean allele_is_clean(dBNode** array_nodes,Orientation* array_or,
 			int len, int colour_cleaned_genome, int kmer);
 
 
-void get_clean_and_unclean_counts(dBGraph* db_graph, char* fasta, boolean allow_reads_shorter_than_2k_plus_one, 
-				  int colour_cleaned_genome, 
-				  int* total_errors_tested, int* total_errors_forming_clean_bubbles,
-				  int (*file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
-				  dBNode** array_nodes, Orientation* array_or, //assume these are length max_read_length+k+1 - plenty of space
-				  Sequence* seq, KmerSlidingWindow* kmer_window, int max_read_length);
+void count_reads_where_snp_makes_clean_bubble(dBGraph* db_graph, char* fasta, boolean allow_reads_shorter_than_2k_plus_one, 
+					      int colour_cleaned_genome, 
+					      int* total_errors_tested, int* total_errors_forming_clean_bubbles,
+					      int (*file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
+					      dBNode** array_nodes, Orientation* array_or, //assume these are length max_read_length+k+1 - plenty of space
+					      Sequence* seq, KmerSlidingWindow* kmer_window, int max_read_length);
 
 
-double estimate_genome_complexity(dBGraph* db_graph, char* filename_list_fastaq,
+double estimate_genome_complexity(dBGraph* db_graph, char* filename_fastaq,
 				  boolean allow_reads_shorter_than_2k_plus_one, 
 				  int colour_cleaned_genome,
 				  int max_read_length, FileFormat format,

@@ -36,7 +36,7 @@
 #include "test_model_selection.h"
 #include <test_file_reader.h>
 #include <test_db_complex_genotyping.h>
-
+#include <test_genome_complexity.h>
 #include <CUnit.h>
 #include <Basic.h>
 
@@ -367,14 +367,20 @@ int  main()
 	return CU_get_error();
       }
 
+   if (NULL == CU_add_test(pPopGraphSuite, "Test function for estimating genome complexity - first test", test_count_reads_where_snp_makes_clean_bubble1 ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
 
 
+   /*
    if (NULL == CU_add_test(pPopGraphSuite, "Test algorithm for genotyping of complex site at a simple site (repeat for different coverages and sequencing error rates, simulating real coverage coording to our model, 100 iterations each time)", test_calc_log_likelihood_of_genotype_with_complex_alleles1 ))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
 	}
-
+   
    if (NULL == CU_add_test(pPopGraphSuite, "Test genotyping of complex sites - test with two HLA-B alleles", test_calc_log_likelihood_of_genotype_with_complex_alleles2 ))
       {
 	CU_cleanup_registry();
@@ -387,7 +393,7 @@ int  main()
 	return CU_get_error();
       }
 
-
+   */
 
 
  

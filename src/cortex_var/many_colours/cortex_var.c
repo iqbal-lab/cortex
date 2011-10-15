@@ -38,6 +38,7 @@
 #include <db_differentiation.h>
 #include <model_selection.h>
 #include <experiment.h>
+#include <genome_complexity.h>
 
 void timestamp();
 
@@ -738,9 +739,10 @@ int main(int argc, char **argv){
 			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line.ref_colour, num_chroms_in_expt, cmd_line.expt_type);
 
 
-  
-  printf("The following mod is for the sims for the paper only: i need the graphinfo to contain read lengths for the fasta based sim binaries\n");
   int j;
+  /*
+  printf("The following mod is for the sims for the paper only: i need the graphinfo to contain read lengths for the fasta based sim binaries\n");
+
   for (j=0; j<NUMBER_OF_COLOURS; j++)
     {
       if (db_graph_info.mean_read_length[j]==0)
@@ -748,7 +750,7 @@ int main(int argc, char **argv){
 	  graph_info_set_mean_readlen(&db_graph_info, j, cmd_line.max_read_length);
 	}
     }
-
+  */
 
       
   printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));	  
@@ -1011,11 +1013,18 @@ int main(int argc, char **argv){
 
 
     }
+  if (cmd_line.estimate_genome_complexity==true)
+    {
+	  double g = estimate_genome_complexity(db_graph, cmd_line.fastaq_for_estimating_genome_complexity,
+						true, 0, cmd_line.max_read_length, cmd_line.format_of_input_seq,
+						cmd_line.quality_score_offset);
+	  printf("We estimate genome complexity as %f\n", g);
 
+    }
   
   hash_table_free(&db_graph);
   timestamp();
-  printf("Cortex completed\n");
+  printf("Cortex completed - have a nice day!\n");
   return 0;
 }
 

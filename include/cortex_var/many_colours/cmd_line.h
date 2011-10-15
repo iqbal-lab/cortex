@@ -116,6 +116,7 @@ typedef struct
   char successively_dump_cleaned_colours_suffix[MAX_SUFFIX_LEN];
   char list_fastaq_to_align[MAX_FILENAME_LEN];
   char fasta_alleles_for_complex_genotyping[MAX_FILENAME_LEN];
+  char fastaq_for_estimating_genome_complexity[MAX_FILENAME_LEN];
 
   boolean cut_homopolymers;
   boolean remove_pcr_dups;
@@ -142,6 +143,8 @@ typedef struct
   boolean align_given_list;
   boolean print_colour_overlap_matrix;
   boolean apply_model_selection_at_bubbles;
+  boolean estimate_genome_complexity;
+
   //int detect_vars_delta;
   //int detect_vars_branch_length;
   //int quality_score_offset;

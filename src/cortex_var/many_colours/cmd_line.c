@@ -218,7 +218,8 @@ const char* usage=
 "   [--estimated_error_rate]\t\t\t\t\t\t=\t If you have some idea of the sequencing error rate (per base-pair), enter it here. eg 0.01. Currently used in calculating likelihoods\n"
   // R
 "   [--genotype_site]\t\t\t\t\t\t=\t Genotype a single (typically multiallelic) site. Syntax is slightly complex. requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[filelist1[filelist2.  x,y is a comma-sep list of colours to genotype. z is the reference-minus-site colour. N is the number of alleles for this site (which cortex assumes are loaded in a multicolour_bin containing precisely and only those alleles, one per colour). Cortex will genotype combinations A through B of the N choose 2 possible genotypes (allows parallelisation); fasta is the file listing one read per allele. CLEANED or UNCLEANED allow Cortex to tailor its genotyping model. p,q,r,s are four free/unused colours that Cortex will use internally. filelist1 is a list of binaries, one per allele, in the same order that they are in the fasta file, but these are binaries of kmers caused by 1 base-pair errors in alleles, and filelist2 is the same for 2bp errors. See manual for details.Must also specify --max_var_len to give the length of the longest allele\n"
-
+  // T
+"   [--estimate_genome_complexity FILENAME]\t\t\t\t\t\t=\t Print estimated genome complexity by reading up to 10,000 reads from the given file\n"
 
 
 ;
@@ -338,6 +339,7 @@ int default_opts(CmdLine * c)
   set_string_to_null(c->list_fastaq_to_align, MAX_FILENAME_LEN);
   set_string_to_null(c->fasta_alleles_for_complex_genotyping, MAX_FILENAME_LEN);
   set_string_to_null(c->filelist_1net_binaries_for_alleles, MAX_FILENAME_LEN);
+  set_string_to_null(c->fastaq_for_estimating_genome_complexity, MAX_FILENAME_LEN);
   // set_string_to_null(c->filelist_2net_binaries_for_alleles, MAX_FILENAME_LEN);
 
   //booleans
@@ -368,7 +370,7 @@ int default_opts(CmdLine * c)
   c->print_colour_overlap_matrix=false;
   c->format_of_files_to_align=UNSPECIFIED;
   c->apply_model_selection_at_bubbles=false;
-
+  c->estimate_genome_complexity=false;
 
   c->num_colours_to_genotype=0;
   initialise_int_list(c->list_colours_to_genotype, NUMBER_OF_COLOURS);
@@ -435,6 +437,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"experiment_type", required_argument, NULL, 'P'},
     {"estimated_error_rate", required_argument, NULL, 'Q'},
     {"genotype_site", required_argument, NULL, 'R'},
+    {"estimate_genome_complexity", required_argument, NULL, 'T'},
     {0,0,0,0}	
   };
   
@@ -445,7 +448,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:T:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1182,10 +1185,32 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	cmdline_ptr->genotype_complex_site=true;
 	break;
       }
+    case 'T'://estimate_genome_complexity
+	{
+	  if (optarg==NULL)
+	    errx(1,"[--estimate_genome_complexity] option requires a filename");
+
+	  if (strlen(optarg)<MAX_FILENAME_LEN)
+	    {
+	      if (access(optarg,R_OK)==-1)
+		{
+		  errx(1,"[--estimate_genome_complexity] filename [%s] cannot be accessed",optarg);
+		}
+
+	      cmdline_ptr->estimate_genome_complexity=true;
+	      strcpy(cmdline_ptr->fastaq_for_estimating_genome_complexity,optarg);
+	    }
+	  else
+	    {
+	      errx(1,"[--estimate_genome_complexity] filename too long [%s]",optarg);
+	    }
+
+	  break;
+	}
       
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:T:", long_options, &longopt_index);
   }   
   
   return 0;
@@ -1194,6 +1219,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
+  
   if (cmd_ptr->kmer_size==-1)
     {
       char tmp[] = "You must specify kmer_size\n";
@@ -1818,7 +1844,21 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	}
 
     }
-
+  if ( (cmd_ptr->estimate_genome_complexity==true) && (cmd_ptr->format_of_input_seq==UNSPECIFIED) )
+    {
+	  char tmp[LEN_ERROR_STRING];
+	  sprintf(tmp, "If you specify --estimate_genome_complexity then you must also specify --format\n");
+	  strcpy(error_string, tmp);
+	  return -1;
+    }
+  if ( (cmd_ptr->estimate_genome_complexity==true) && (cmd_ptr->max_read_length==0)  )
+    {
+	  char tmp[LEN_ERROR_STRING];
+	  sprintf(tmp, "If you specify --estimate_genome_complexity then you must also specify --max_read_len\n");
+	  strcpy(error_string, tmp);
+	  return -1;
+    }
+  
 
 
 

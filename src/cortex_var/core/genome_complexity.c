@@ -69,8 +69,8 @@ boolean allele_is_clean(dBNode** array_nodes,Orientation* array_or,
       exit(1);
     }
   int i;
-  boolean all_interior_nodes_look_ok=true;
-  for (i=1; (i<len) && (i<kmer) ; i++)//interior nodes
+  boolean all_nodes_look_ok=true;
+  for (i=0; (i<len) && (i<=kmer) ; i++)//interior nodes
     {
       if (db_node_is_this_node_in_this_person_or_populations_graph(array_nodes[i],
 								   individual_edge_array,
@@ -79,24 +79,24 @@ boolean allele_is_clean(dBNode** array_nodes,Orientation* array_or,
 	  Nucleotide nuc;
 	  if (db_node_has_precisely_one_edge(array_nodes[i], forward, &nuc, individual_edge_array, colour_cleaned_genome)==false)
 	    {
-	      all_interior_nodes_look_ok=false;
+	      all_nodes_look_ok=false;
 	    }
 	}
     }
 
-  return all_interior_nodes_look_ok;
+  return all_nodes_look_ok;
 }
 
 //given a fasta file, get one read at a time, and take a chunk 2*k+1 long from it,
 //that becomes our notional ref-allele. If the ref-allele does not lie in the graph, ignore this read.
 //then randomly mutate the central base, and that makes the alt allele
 //If both ref and alt alleles are clean supernodes, increment total_errors_forming_clean_bubbles
-void get_clean_and_unclean_counts(dBGraph* db_graph, char* fasta, boolean allow_reads_shorter_than_2k_plus_one, 
-				  int colour_cleaned_genome,
-				  int* total_errors_tested, int* total_errors_forming_clean_bubbles,
-				  int (*file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
-				  dBNode** array_nodes, Orientation* array_or, //assume these are length max_read_length+k+1 - plenty of space
-				  Sequence* seq, KmerSlidingWindow* kmer_window, int max_read_length)				  
+void count_reads_where_snp_makes_clean_bubble(dBGraph* db_graph, char* fasta, boolean allow_reads_shorter_than_2k_plus_one, 
+					      int colour_cleaned_genome,
+					      int* total_errors_tested, int* total_errors_forming_clean_bubbles,
+					      int (*file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
+					      dBNode** array_nodes, Orientation* array_or, //assume these are length max_read_length+k+1 - plenty of space
+					      Sequence* seq, KmerSlidingWindow* kmer_window, int max_read_length)				  
 {
   FILE* fp = fopen(fasta, "r");
   if (fp == NULL){
@@ -158,7 +158,7 @@ void get_clean_and_unclean_counts(dBGraph* db_graph, char* fasta, boolean allow_
 			  //also note seq is not used
 			  load_kmers_from_sliding_window_into_array(kmer_window, seq, 
 								    db_graph, array_nodes, array_or, 
-								    len, false, -1);
+								    2*db_graph->kmer_size+1, false, -1);
 			  if (allele_is_clean(array_nodes, array_or, len, colour_cleaned_genome, db_graph->kmer_size)==true)
 			    {
 			      *total_errors_forming_clean_bubbles = *total_errors_forming_clean_bubbles+1; 
@@ -181,7 +181,7 @@ void get_clean_and_unclean_counts(dBGraph* db_graph, char* fasta, boolean allow_
 
 //assume graph contains cleaned genome, plus empty colour for working with
 //will only use reads where entire read (ar at least the 2k bases around the error) lies in the pre-existing graph
-double estimate_genome_complexity(dBGraph* db_graph, char* filename_list_fastaq,
+double estimate_genome_complexity(dBGraph* db_graph, char* filename_fastaq,
 				  boolean allow_reads_shorter_than_2k_plus_one, 
 				  int colour_cleaned_genome, 
 				  int max_read_length, FileFormat format,
@@ -272,52 +272,30 @@ double estimate_genome_complexity(dBGraph* db_graph, char* filename_list_fastaq,
 
 
 
-  FILE* fp = fopen(filename_list_fastaq, "r");
-  if (fp == NULL){
-    printf("estimate_genome_complexity  cannot open file:%s\n",filename_list_fastaq);
-    exit(1);
-  }
-
   int total_errors_tested=0;//num of "alt alleles" tested 
   int total_errors_form_clean_bubbles=0; //number of these where both ref and alt allele form clean supernodes,
-  char fastaq[MAX_FILENAME_LENGTH+1];
-
-
-  while(fgets(fastaq,MAX_FILENAME_LENGTH, fp) !=NULL)
+  if (format==FASTA)
     {
-
-      //remove newline from end of line - replace with \0
-      char* p;
-      if ((p = strchr(fastaq, '\n')) != NULL)
-	{
-	  *p = '\0';
-	}
-
-      if (format==FASTA)
-	{
-	  get_clean_and_unclean_counts(db_graph, fastaq, allow_reads_shorter_than_2k_plus_one, 
-				       colour_cleaned_genome, 
-				       &total_errors_tested, &total_errors_form_clean_bubbles,
-				       file_reader_fasta, array_nodes, array_or, 
-				       seq, kmer_window, max_read_length);
-	}
-      else if (format==FASTQ)
-	{
-	  get_clean_and_unclean_counts(db_graph, fastaq, allow_reads_shorter_than_2k_plus_one, 
-				       colour_cleaned_genome,
-				       &total_errors_tested, &total_errors_form_clean_bubbles,
-				       file_reader_fastq, array_nodes, array_or, 
-				       seq, kmer_window, max_read_length);
-	  
-	}
- 
+      count_reads_where_snp_makes_clean_bubble(db_graph, filename_fastaq, allow_reads_shorter_than_2k_plus_one, 
+					       colour_cleaned_genome, 
+					       &total_errors_tested, &total_errors_form_clean_bubbles,
+					       file_reader_fasta, array_nodes, array_or, 
+					       seq, kmer_window, max_read_length);
     }
-  close(fp);
-
+  else if (format==FASTQ)
+    {
+      count_reads_where_snp_makes_clean_bubble(db_graph, filename_fastaq, allow_reads_shorter_than_2k_plus_one, 
+					       colour_cleaned_genome,
+					       &total_errors_tested, &total_errors_form_clean_bubbles,
+					       file_reader_fastq, array_nodes, array_or, 
+					       seq, kmer_window, max_read_length);
+      
+    }
+ 
   if (total_errors_tested==0)
     {
       printf("Unable to estimate genome complexity, returning zero. There are various possible reasons\n");
-      printf("a) none of the reads in the fastaq you listed lay within the graph. That only happens if you specify fastaq/binary that do not sorrespond to each other, or possibly if you have done excessively brutal cleaning on the graph\n");
+      printf("a) none of the reads in the fastaq you listed lay within the graph. That only happens if you specify fastaq/binary that do not correspond to each other, or possibly if you have done excessively brutal cleaning on the graph\n");
       if (allow_reads_shorter_than_2k_plus_one==false)
 	{
 	  printf("b) Your fastaq has reads <2*kmer length, so you can't put an error in the middle of a read and work out a full bubble branch. See Manual and our paper\n");

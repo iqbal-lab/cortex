@@ -392,7 +392,8 @@ void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_
 
 //pass in a single kmer sliding window and the Sequence* it was derived from. Will find the nodes correspinding to this seqeunce
 //and put them in array. Also will check that edges exist as expected from the Sequence*
-void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, Sequence* seq, dBGraph* db_graph, dBNode** array_nodes, Orientation* array_orientations, 
+void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, Sequence* seq, dBGraph* db_graph, 
+					       dBNode** array_nodes, Orientation* array_orientations, 
 					       int max_array_size, 
 					       boolean require_nodes_to_lie_in_given_colour, int colour)
 
@@ -892,8 +893,6 @@ void set_binary_kmer_to_something_not_in_the_hash_table(BinaryKmer* bkmer, dBGra
 //The first argument - seq - is a C string in A,C,G,T,N format. (Function handles bad characters)
 //The second argument - length - is the length in bases of the sequence.
 //we want a single sliding window, using a kmer that does not exists in the hash where the kmer would include an N, or Undefined nucleotide
-//this seems not ideal - but the caller is presumably going to break the kmer at N's, and here we force them to break at AAAAAA also.
-// but would only happen if kmer_size = NUMBER_OF_BITFIELDS_IN_BINARY_KMER*32 - ie is even - which we never do.
 int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short kmer_size, KmerSlidingWindow* kmer_window, dBGraph* db_graph)
 {  
 
