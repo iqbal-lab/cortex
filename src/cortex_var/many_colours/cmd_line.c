@@ -1858,6 +1858,14 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  strcpy(error_string, tmp);
 	  return -1;
     }
+
+  if ( (cmd_ptr->estimate_genome_complexity==true) && (NUMBER_OF_COLOURS<2)  )
+    {
+	  char tmp[LEN_ERROR_STRING];
+	  sprintf(tmp, "If you specify --estimate_genome_complexity then you must also compile Cortex for at least 2 colours. Colour 0 should have your graph, and colour 1 is used internally by cortex\n");
+	  strcpy(error_string, tmp);
+	  return -1;
+    }
   
 
 

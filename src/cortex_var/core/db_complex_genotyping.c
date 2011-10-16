@@ -1189,7 +1189,7 @@ void modify_character(char* str, int which_base, int which_mutant)
     }
   else
     {
-      printf("Bug - str[which_base] is %c\n", str[which_base]);
+      printf("Bug - str[which_base] is %c, whole string is %s, which_base is %d\n", str[which_base], str, which_base);
       exit(1);
     }
 

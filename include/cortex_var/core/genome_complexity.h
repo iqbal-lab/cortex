@@ -54,10 +54,10 @@ void count_reads_where_snp_makes_clean_bubble(dBGraph* db_graph, char* fasta, bo
 
 
 double estimate_genome_complexity(dBGraph* db_graph, char* filename_fastaq,
-				  boolean allow_reads_shorter_than_2k_plus_one, 
-				  int colour_cleaned_genome,
-				  int max_read_length, FileFormat format,
-				  int fastq_ascii_offset
-				  );
+				   boolean allow_reads_shorter_than_2k_plus_one, 
+				   int colour_cleaned_genome, int working_colour,
+				   int max_read_length, FileFormat format,
+				   int fastq_ascii_offset
+				   );
 
 #endif

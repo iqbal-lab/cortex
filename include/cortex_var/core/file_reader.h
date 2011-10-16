@@ -62,6 +62,12 @@ void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fi
 									boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, 
 									dBGraph* db_graph, EdgeArrayType type, int index);
 
+
+void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
+											      boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
+											      dBGraph* db_graph, EdgeArrayType type, int index, long long** read_len_count_array);
+
+
 //pass in a single kmer sliding window and the Sequence* it was derived from. Will find the nodes correspinding to this seqeunce
 //and put them in array. Also will check that edges exist as expected from the Sequence*
 void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, Sequence* seq, dBGraph* db_graph, dBNode** array_nodes, Orientation* array_orientations, 

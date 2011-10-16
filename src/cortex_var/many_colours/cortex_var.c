@@ -1016,9 +1016,9 @@ int main(int argc, char **argv){
   if (cmd_line.estimate_genome_complexity==true)
     {
 	  double g = estimate_genome_complexity(db_graph, cmd_line.fastaq_for_estimating_genome_complexity,
-						true, 0, cmd_line.max_read_length, cmd_line.format_of_input_seq,
+						true, 0, 1,cmd_line.max_read_length, cmd_line.format_of_input_seq,
 						cmd_line.quality_score_offset);
-	  printf("We estimate genome complexity as %f\n", g);
+	  printf("We estimate genome complexity at k=%d (for SNPs) as %f\n", db_graph->kmer_size, g);
 
     }
   

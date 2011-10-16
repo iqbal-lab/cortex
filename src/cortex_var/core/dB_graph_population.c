@@ -1176,10 +1176,10 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 								      Orientation orientation,
 								      int limit,
 								      void (*node_action)(dBNode * node), 
-								      int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,
-								      char * seq1, double * avg_coverage1, int * min_coverage1, int * max_coverage1,
-								      int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,
-								      char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
+								      int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,char * seq1, 
+								      double * avg_coverage1, int * min_coverage1, int * max_coverage1,
+								      int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,char * seq2, 
+								      double * avg_coverage2, int * min_coverage2, int * max_coverage2,
 								      dBGraph * db_graph, Edges (*get_colour)(const dBNode*),  int (*get_covg)(const dBNode*),
 								      boolean apply_special_action_to_branches, void (*special_action)(dBNode * node))
 {
