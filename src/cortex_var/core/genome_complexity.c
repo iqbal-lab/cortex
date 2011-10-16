@@ -452,9 +452,37 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 
   if (max_read_length>MAX_READLEN_FOR_GEN_COMPLEXITY)
     {
-      printf("estime_genome_complexity is set up to handle short reads, and you have used max_read_lengh %d - not permitted\n", max_read_length);
+      printf("estime_genome_complexity is set up to handle relatively short reads, and you have used max_read_lengh %d - not permitted\n", max_read_length);
+      printf("Remove any reads longer than %d and retry. Sorry - this is not very graceful.\n", MAX_READLEN_FOR_GEN_COMPLEXITY);
       exit(1);
     }
+
+  
+
+
+  dBNode** array_nodes = (dBNode**) malloc(sizeof(dBNode*)*(max_read_length+db_graph->kmer_size+1));
+  Orientation* array_or= (Orientation*) malloc(sizeof(Orientation)*(max_read_length+db_graph->kmer_size+1));  
+  dBNode** array_nodes_mut = (dBNode**) malloc(sizeof(dBNode*)*(max_read_length+db_graph->kmer_size+1));
+  Orientation* array_or_mut= (Orientation*) malloc(sizeof(Orientation)*(max_read_length+db_graph->kmer_size+1));  
+
+  dBNode** p1_nodes  = (dBNode**) malloc(sizeof(dBNode*)*(max_read_length+db_graph->kmer_size+1));
+  Orientation* p1_or = (Orientation*) malloc(sizeof(Orientation)*(max_read_length+db_graph->kmer_size+1));  
+  Nucleotide* p1_lab = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_read_length+db_graph->kmer_size+1));
+  char* p1_str       = (char*) malloc(sizeof(char)*(max_read_length+db_graph->kmer_size+1) );
+  dBNode** p2_nodes  = (dBNode**) malloc(sizeof(dBNode*)*(max_read_length+db_graph->kmer_size+1));
+  Orientation* p2_or = (Orientation*) malloc(sizeof(Orientation)*(max_read_length+db_graph->kmer_size+1));  
+  Nucleotide* p2_lab = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_read_length+db_graph->kmer_size+1));
+  char* p2_str       = (char*) malloc(sizeof(char)*(max_read_length+db_graph->kmer_size+1) );
+
+  if ( (array_nodes==NULL) || (array_or==NULL) || (array_nodes_mut==NULL) || (array_or_mut==NULL) 
+       || (p1_nodes==NULL) || (p1_or==NULL) || (p1_lab==NULL) || (p1_str==NULL)
+       || (p2_nodes==NULL) || (p2_or==NULL) || (p2_lab==NULL) || (p2_str==NULL) )
+    {
+      printf("Cannot malloc node arrays for estimating genome complexity - you must be very short of memor\n");
+      exit(1);
+    }
+       
+  /*
   dBNode* array_nodes[max_read_length+db_graph->kmer_size+1];
   Orientation array_or[max_read_length+db_graph->kmer_size+1];
   dBNode* array_nodes_mut[max_read_length+db_graph->kmer_size+1];
@@ -467,7 +495,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
   Orientation p2_or[max_read_length+db_graph->kmer_size+1];
   Nucleotide p2_lab[max_read_length+db_graph->kmer_size+1];
   char p2_str[max_read_length+db_graph->kmer_size+1];
-
+  */
   
   //will ignore contents of this - needed for API - get read-len distribution (after filters):
   long long* readlen_distrib=(long long*) malloc(sizeof(long long) * (max_read_length+1));
@@ -664,6 +692,18 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
   free(windows);
   free(readlen_distrib);
   free(readlen_distrib_ptrs);
-
+  free(array_nodes);
+  free(array_or);
+  free(array_nodes_mut);
+  free(array_or_mut);
+  free(p1_nodes);
+  free(p1_or);
+  free(p1_lab);
+  free(p1_str);
+  free(p2_nodes);
+  free(p2_or);
+  free(p2_lab);
+  free(p2_str);
+  
   return (double)total_errors_form_clean_bubbles / (double) total_errors_tested;
 }

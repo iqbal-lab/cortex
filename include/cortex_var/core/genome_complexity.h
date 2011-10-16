@@ -38,7 +38,7 @@
 #include <file_format.h>
 
 
-#define MAX_READLEN_FOR_GEN_COMPLEXITY 1000
+#define MAX_READLEN_FOR_GEN_COMPLEXITY 10000
 #define MAX_NUM_READS_USED_FOR_ESTIMATE 10000
 
 boolean allele_is_clean(dBNode** array_nodes,Orientation* array_or, 
