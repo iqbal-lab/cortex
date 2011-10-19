@@ -349,22 +349,17 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 				   boolean allow_reads_shorter_than_2k_plus_one, 
 				   int colour_cleaned_genome, int working_colour,
 				   int max_read_length, FileFormat format,
-				   int fastq_ascii_offset
+				  int fastq_ascii_offset, int* number_reads_used_in_estimate
 				   )
 {
 
 
-  if (max_read_length>200)
-    {
-      printf("Estimate genome complexity does some things on the stack that only support read lengths <=200. Have you\n");
-      printf("accidentally mis-set --max_read_len? If you have a genuine use-case, call Zam, it's not hard to fix, but not a priority now\n");
-      exit(1);
-    }
 
   //***********************************************
   //   initialise stuff for reading of fastaq;
   //***********************************************
   
+  *number_reads_used_in_estimate=0;
 
   //----------------------------------
   // allocate the memory used to read the sequences
@@ -516,6 +511,11 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
   // ***********
   // end of init/malloc
   // ***********
+
+  //  if (genome_graph_built_from_seq_data==true)
+  //  {
+  //       db_graph_smooth_bubbles_for_specific_person_or_pop(6,db_graph->kmer_size+1, db_graph, individual_edge_array, colour_cleaned_genome);
+      //  }
   
 
   //load the fasta into the working colour
@@ -589,6 +589,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 	//not end of file & reasonable length read 
 	{
 	  boolean no_N_in_first_2k_plus_1=true;
+	  boolean quality_above_10=true;
 	  int j;
 	  for (j=0; (j<2*db_graph->kmer_size +1) && (j<strlen(seq->seq)); j++)
 	    {
@@ -596,6 +597,10 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 		{
 		  no_N_in_first_2k_plus_1=false; 
 		}
+	      //if (seq->qual[j]<10)
+	      //	{
+	      //	  quality_above_10=false;
+	      //	}
 	    }
 	  
 
@@ -611,6 +616,9 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 	      //ignore
 	      //printf("Ignore this read %s\n", seq->seq);
 
+	    }
+	  else if (quality_above_10==false)
+	    {
 	    }
 	  else
 	    {
@@ -661,6 +669,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 												       &element_get_covg_union_of_all_covgs, false, NULL);
 
 	      total_errors_tested++;
+	      *number_reads_used_in_estimate = *number_reads_used_in_estimate +1;
 	      if (forms_clean_bubble==true) 
 		{
 		  total_errors_form_clean_bubbles++;

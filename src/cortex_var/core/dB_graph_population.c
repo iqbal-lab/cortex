@@ -1304,10 +1304,6 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 
 
 
-//clip the branch with smaller coverage in the first kmer --> this can be more sophisticated
-//dont want to flatten repeats -- use coverage_limit for this
-
-
 boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(dBNode * node, Orientation orientation, 
 								  int limit,int coverage_limit,
 								  void (*node_action)(dBNode * node),

@@ -57,7 +57,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* filename_fastaq,
 				   boolean allow_reads_shorter_than_2k_plus_one, 
 				   int colour_cleaned_genome, int working_colour,
 				   int max_read_length, FileFormat format,
-				   int fastq_ascii_offset
+				  int fastq_ascii_offset, int* number_reads_used_in_estimate
 				   );
 
 #endif
