@@ -2478,7 +2478,9 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		//ModelLogLikelihoodsAndBayesFactors stats;//results of bayes factor calcs go in here
 		//initialise_stats(&stats);
 		AnnotatedPutativeVariant annovar;
-		initialise_putative_variant(&annovar, &var, BubbleCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
+		initialise_putative_variant(&annovar, &var, BubbleCaller, 
+					    model_info->ginfo, model_info->seq_error_rate_per_base, 
+					    model_info->genome_len, 
 					    db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
 		if (annovar.too_short==false)
 		  {
@@ -2509,24 +2511,31 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			    fprintf(fout,"Colour/sample\tGT_call\tllk_hom_br1\tllk_het\tllk_hom_br2\n");
 			    for (z=0; z<NUMBER_OF_COLOURS; z++)
 			      {
-				fprintf(fout,"%d\t", z);
-				if (annovar.genotype[z]==hom_one)
+				if (z==model_info->ref_colour)
 				  {
-				    fprintf(fout,"HOM1\t");
-				  }
-				else if (annovar.genotype[z]==het)
-				  {
-				    fprintf(fout,"HET\t");
-				  }
-				else if (annovar.genotype[z]==hom_other)
-				  {
-				    fprintf(fout,"HOM2\t");
+				    fprintf(fout, "%d=REF\tNO_CALL\t0\t0\t0\n", z);
 				  }
 				else
 				  {
-				    fprintf(fout,"NO_CALL\t");
+				    fprintf(fout,"%d\t", z);
+				    if (annovar.genotype[z]==hom_one)
+				      {
+					fprintf(fout,"HOM1\t");
+				      }
+				    else if (annovar.genotype[z]==het)
+				      {
+					fprintf(fout,"HET\t");
+				      }
+				    else if (annovar.genotype[z]==hom_other)
+				      {
+					fprintf(fout,"HOM2\t");
+				      }
+				    else
+				      {
+					fprintf(fout,"NO_CALL\t");
+				      }
+				    fprintf(fout, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
 				  }
-				fprintf(fout, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
 			      }
 			  }
 			else if ( (model_info->expt_type == EachColourAHaploidSample) || (model_info->expt_type ==EachColourAHaploidSampleExceptTheRefColour) )
@@ -2534,20 +2543,27 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			    fprintf(fout,"Colour/sample\tGT_call\tllk_hom_br1\tllk_hom_br2\n");
 			    for (z=0; z<NUMBER_OF_COLOURS; z++)
 			      {
-				fprintf(fout,"%d\t", z);
-				if (annovar.genotype[z]==hom_one)
+				if (z==model_info->ref_colour)
 				  {
-				    fprintf(fout,"HOM1\t");
-				  }
-				else if (annovar.genotype[z]==hom_other)
-				  {
-				    fprintf(fout,"HOM2\t");
+				    fprintf(fout, "%d=REF\tNO_CALL\t0\t0\n", z);
 				  }
 				else
 				  {
-				    fprintf(fout,"NO_CALL\t");
+				    fprintf(fout,"%d\t", z);
+				    if (annovar.genotype[z]==hom_one)
+				      {
+					fprintf(fout,"HOM1\t");
+				      }
+				    else if (annovar.genotype[z]==hom_other)
+				      {
+					fprintf(fout,"HOM2\t");
+				      }
+				    else
+				      {
+					fprintf(fout,"NO_CALL\t");
+				      }
+				    fprintf(fout, "%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[hom_other]);
 				  }
-				fprintf(fout, "%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[hom_other]);
 			      }
 			  }
 		      }
@@ -5848,7 +5864,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						char** return_flank3p_array, int** return_variant_start_coord,
 						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
 						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
+						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+						GraphAndModelInfo* model_info
 						)
 {
 
@@ -7052,6 +7069,82 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  if (output_file != NULL)
 		    {
+
+		      //if the user has asked for it, then print out genotype likelihoods
+		      AnnotatedPutativeVariant annovar;
+		      if (model_info!=NULL)
+			{
+			  initialise_putative_variant(&annovar, &var, SimplePathDivergenceCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
+						      db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
+			  
+			  
+			  if (model_info->expt_type != Unspecified)
+			    {
+			      int z;
+			      
+			      if ( (model_info->expt_type == EachColourADiploidSample) || (model_info->expt_type ==EachColourADiploidSampleExceptTheRefColour) )
+				{
+				  fprintf(output_file,"Colour/sample\tGT_call\tllk_hom_br1\tllk_het\tllk_hom_br2\n");
+				  for (z=0; z<NUMBER_OF_COLOURS; z++)
+				    {
+				      if (z==model_info->ref_colour)
+					{
+					  fprintf(output_file, "%d=REF\tNO_CALL\t0\t0\t0\n", z);
+					}
+				      else
+					{
+					  fprintf(output_file,"%d\t", z);
+					  if (annovar.genotype[z]==hom_one)
+					    {
+					      fprintf(output_file,"HOM1\t");
+					    }
+					  else if (annovar.genotype[z]==het)
+					    {
+					      fprintf(output_file,"HET\t");
+					    }
+					  else if (annovar.genotype[z]==hom_other)
+					    {
+					      fprintf(output_file,"HOM2\t");
+					    }
+					  else
+					    {
+					      fprintf(output_file,"NO_CALL\t");
+					    }
+					  fprintf(output_file, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
+					}
+				    }
+				}
+			      else if ( (model_info->expt_type == EachColourAHaploidSample) || (model_info->expt_type ==EachColourAHaploidSampleExceptTheRefColour) )
+				{
+				  fprintf(output_file,"Colour/sample\tGT_call\tllk_hom_br1\tllk_hom_br2\n");
+				  for (z=0; z<NUMBER_OF_COLOURS; z++)
+				    {
+				      if (z==model_info->ref_colour)
+					{
+					  fprintf(output_file, "%d=REF\tNO_CALL\t0\t0\t0\n", z);
+					}
+				      else
+					{
+					  fprintf(output_file,"%d\t", z);
+					  if (annovar.genotype[z]==hom_one)
+					    {
+					      fprintf(output_file,"HOM1\t");
+					    }
+					  else if (annovar.genotype[z]==hom_other)
+					    {
+					      fprintf(output_file,"HOM2\t");
+					    }
+					  else
+					    {
+					      fprintf(output_file,"NO_CALL\t");
+					    }
+					  fprintf(output_file, "%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[hom_other]);
+					}
+				    }
+				}
+			    }
+			}
+		      
 		      
 		      char name[300]; 
 		      sprintf(name,"var_%i_5p_flank",num_variants_found);
@@ -7261,7 +7354,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 										       boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
 													    Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										       void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
+										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+										       GraphAndModelInfo* model_info
 										       )
 {
 
@@ -8439,6 +8533,81 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		  if (output_file != NULL)
 		    {
 		      
+		      //if the user has asked for it, then print out genotype likelihoods
+		      AnnotatedPutativeVariant annovar;
+		      if (model_info!=NULL)
+			{
+			  initialise_putative_variant(&annovar, &var, SimplePathDivergenceCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
+						      db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
+			  
+			  
+			  if (model_info->expt_type != Unspecified)
+			    {
+			      int z;
+			      
+			      if ( (model_info->expt_type == EachColourADiploidSample) || (model_info->expt_type ==EachColourADiploidSampleExceptTheRefColour) )
+				{
+				  fprintf(output_file,"Colour/sample\tGT_call\tllk_hom_br1\tllk_het\tllk_hom_br2\n");
+				  for (z=0; z<NUMBER_OF_COLOURS; z++)
+				    {
+				      if (z==model_info->ref_colour)
+					{
+					  fprintf(output_file, "%d=REF\tNO_CALL\t0\t0\t0\n", z);
+					}
+				      else
+					{					  
+					  fprintf(output_file,"%d\t", z);
+					  if (annovar.genotype[z]==hom_one)
+					    {
+					      fprintf(output_file,"HOM1\t");
+					    }
+					  else if (annovar.genotype[z]==het)
+					    {
+					      fprintf(output_file,"HET\t");
+					    }
+					  else if (annovar.genotype[z]==hom_other)
+					    {
+					      fprintf(output_file,"HOM2\t");
+					    }
+					  else
+					    {
+					      fprintf(output_file,"NO_CALL\t");
+					    }
+					  fprintf(output_file, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
+					}
+				    }
+				}
+			      else if ( (model_info->expt_type == EachColourAHaploidSample) || (model_info->expt_type ==EachColourAHaploidSampleExceptTheRefColour) )
+				{
+				  fprintf(output_file,"Colour/sample\tGT_call\tllk_hom_br1\tllk_hom_br2\n");
+				  for (z=0; z<NUMBER_OF_COLOURS; z++)
+				    {
+				      if (z==model_info->ref_colour)
+					{
+					  fprintf(output_file, "%d=REF\tNO_CALL\t0\t0\n", z);
+					}
+				      else
+					{
+					  fprintf(output_file,"%d\t", z);
+					  if (annovar.genotype[z]==hom_one)
+					    {
+					      fprintf(output_file,"HOM1\t");
+					    }
+					  else if (annovar.genotype[z]==hom_other)
+					    {
+					      fprintf(output_file,"HOM2\t");
+					    }
+					  else
+					    {
+					      fprintf(output_file,"NO_CALL\t");
+					    }
+					  fprintf(output_file, "%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[hom_other]);
+					}
+				    }
+				}
+			    }
+			}
+		    
 
 		      char name[300]; 
 		      sprintf(name,"var_%i_5p_flank",num_variants_found);
@@ -8624,7 +8793,8 @@ void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv
 										 boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
 												      Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										 void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
+										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+										 GraphAndModelInfo* model_info
 										 )
 {
 
@@ -8662,7 +8832,7 @@ void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv
 										     max_desired_returns,
 										     return_flank5p_array, return_trusted_branch_array, return_variant_branch_array,
 										     return_flank3p_array, return_variant_start_coord,
-										     condition, action_for_branches_of_called_variants, print_extra_info);
+										     condition, action_for_branches_of_called_variants, print_extra_info, model_info);
 										     
 
 

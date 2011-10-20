@@ -58,7 +58,8 @@ long long calculate_mean(long long* array, long long len)
 }
 
 void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph, 
-		  void (*print_some_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp))
+		  void (*print_some_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
+		  GraphAndModelInfo* model_info)
 {
   printf("Calling variants using Path Divergence Caller.\n");
   printf("Calls are made between the reference path as specified by the fasta in %s\n", cmd_line->ref_chrom_fasta_list);
@@ -70,6 +71,14 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
     }
   printf("%d\n", cmd_line->pd_colour_list[cmd_line->num_colours_in_pd_colour_list-1]);
   printf("The reference colour is %d\n", cmd_line->ref_colour);
+  if (model_info->expt_type==Unspecified)
+    {
+      printf("Since you did not use --experiment_type, Cortex does not know how if each colour is a diploid/haploid sample or pool, so\nwill not calculate genotypes or likelihoods\n");
+    }
+  else if (cmd_line->genome_size==0)
+    {
+      printf("Since you did not specify the genome size/length, Cortex cannot calculate genotype likelihoods or call genotypes\n");
+    }
 
   //this will also check that all the ref chrom fasta files exist
   int num_ref_chroms = get_number_of_files_and_check_existence_from_filelist(cmd_line->ref_chrom_fasta_list);
@@ -155,7 +164,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 										  0, NULL, NULL, NULL, NULL, NULL, 
 										  &make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours, 
 										  &db_variant_action_do_nothing,
-										  print_some_extra_var_info);
+										  print_some_extra_var_info, model_info);
       
       
       fclose(chrom_fptr);
@@ -178,7 +187,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 		      void (*print_appropriate_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
 		      Edges(*get_col_ref) (const dBNode* e),
 		      int (*get_cov_ref)(const dBNode* e),
-		      GraphInfo* db_graph_info, ExperimentType expt, GraphAndModelInfo* model_info
+		      GraphInfo* db_graph_info, GraphAndModelInfo* model_info
 		      )
 {
 
@@ -884,7 +893,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Start first set of bubble calls\n");
-      run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, cmd_line.expt_type, &model_info);
+      run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, &model_info);
 
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -897,7 +906,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Start second set of bubble calls\n");
-      run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, cmd_line.expt_type, &model_info);
+      run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, &model_info);
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
       timestamp();
@@ -908,7 +917,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Run Path-Divergence Calls\n");
-      run_pd_calls(&cmd_line, db_graph, &print_appropriate_extra_variant_info);
+      run_pd_calls(&cmd_line, db_graph, &print_appropriate_extra_variant_info, &model_info);
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
       timestamp();
       printf("Finished Path Divergence calls\n");

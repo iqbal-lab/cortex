@@ -228,6 +228,37 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
 
 
 
+void get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
+{
+  boolean too_short = false;
+  int initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
+  int initial_covg_plus_upward_jumps_branch2 = count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
+
+  if (too_short==true)
+    {
+      annovar->too_short=true;
+      int j;
+      //set all the log likelihoods to zero.
+      for (j=0; j<NUMBER_OF_COLOURS; j++)
+	{
+	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[j]));
+	}
+      return ;
+    }
+  
+  else //assume caller has checked is not a SNP
+    {
+      //set to hom_other (the variant allele)
+      annovar->gen_log_lh[colour].log_lh[hom_one]=-999;
+      annovar->gen_log_lh[colour].log_lh[het]=-999;
+      annovar->gen_log_lh[colour].log_lh[hom_other]=0;
+      return;
+    }
+
+}
+
+
+
 
 
 void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
@@ -266,6 +297,57 @@ void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(Anno
 
   //this is not allowed by the model
   annovar->gen_log_lh[colour].log_lh[het]       = annovar->gen_log_lh[colour].log_lh[hom_one] + annovar->gen_log_lh[colour].log_lh[hom_other] - 9999999999;
+
+
+
+}
+
+
+void get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
+{
+  boolean too_short = false;
+  int initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
+  int initial_covg_plus_upward_jumps_branch2 = count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
+
+  if (too_short==true)
+    {
+      annovar->too_short=true;
+      int j;
+      //set all the log likelihoods to zero.
+      for (j=0; j<NUMBER_OF_COLOURS; j++)
+	{
+	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[j]));
+	}
+      return ;
+    }
+  //if not a SNP
+  else if ( (annovar->var->len_one_allele != annovar->var->len_other_allele) || (annovar->var->len_one_allele>annovar->kmer+1) )
+    {
+      //set to hom_other (the variant allele)
+      annovar->gen_log_lh[colour].log_lh[hom_one]=-999;
+      annovar->gen_log_lh[colour].log_lh[het]=-9999999;
+      annovar->gen_log_lh[colour].log_lh[hom_other]=0;
+      return;
+    }
+
+  double theta_one = ((double)(sequencing_depth_of_coverage * annovar->var->len_one_allele))/( (double) read_length );
+  double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
+
+
+  annovar->gen_log_lh[colour].log_lh[hom_one]   = 
+    get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
+								     initial_covg_plus_upward_jumps_branch1, 
+								     initial_covg_plus_upward_jumps_branch2, 
+								     theta_one, theta_other, annovar->kmer);
+
+  annovar->gen_log_lh[colour].log_lh[hom_other] = 
+    get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
+								     initial_covg_plus_upward_jumps_branch1, 
+								     initial_covg_plus_upward_jumps_branch2, 
+								     theta_one, theta_other, annovar->kmer);
+
+  //this is not allowed by the model
+  annovar->gen_log_lh[colour].log_lh[het] = annovar->gen_log_lh[colour].log_lh[hom_one] + annovar->gen_log_lh[colour].log_lh[hom_other] - 999999;
 
 
 
@@ -434,8 +516,19 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
 	  else if ( (expt==EachColourADiploidSample) || (expt==EachColourADiploidSampleExceptTheRefColour) )
 	    {
 	      
-	      get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
-	      
+	      //do standard genotyping according to our model for bubble calls and SNP calls from PD
+	      if ( (caller==BubbleCaller) 
+		   || 
+		   ( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) )
+		{
+		  get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+		}
+	      else
+		{
+		  get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+		}
+
+		  
 	      if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
 		{
 		  if (annovar->gen_log_lh[i].log_lh[hom_one]>=annovar->gen_log_lh[i].log_lh[hom_other])
@@ -456,10 +549,21 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBr
 		  annovar->genotype[i]=hom_other;
 		}
 	      
+	      
 	    }
 	  else if ( (expt==EachColourAHaploidSample) || (expt==EachColourAHaploidSampleExceptTheRefColour) )
 	    {
-	      get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+	      
+	      if ( (caller==BubbleCaller) 
+		   || 
+		   ( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) )
+		{
+		  get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+		}
+	      else
+		{
+		  get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+		}
 	      
 	      
 	      if (annovar->gen_log_lh[i].log_lh[hom_one]> annovar->gen_log_lh[i].log_lh[hom_other])
