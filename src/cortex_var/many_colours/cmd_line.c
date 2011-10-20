@@ -216,7 +216,7 @@ const char* usage=
   // Q
 "   [--estimated_error_rate]\t\t\t\t\t=\t If you have some idea of the sequencing error rate (per base-pair), enter it here. eg 0.01. Currently used in calculating likelihoods\n"\
   // -L
-"   [--genome_size]\t\t\t\t\t\t=\t If you specify --require_hw, you must also specify the (estimated) genome size in bp.\n" \
+"   [--genome_size]\t\t\t\t\t\t=\t If you specify --experiment_type, and therefore want to calculate likelihoods, you must also specify the (estimated) genome size in bp.\n" \
 
   // -G
 "   [--align FILENAME] \t\t\t\t\t\t=\t Aligns a list of fasta/q files to the graph, and prints coverage of each kmer in each read in each colour.\n\t\t\t\t\t\t\t\t\t Must also specify --align_input_format, and --max_read_len\n"  \
