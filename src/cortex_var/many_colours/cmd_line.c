@@ -141,7 +141,12 @@ const char* usage=
 "\nusage: to build a multicolour graph from single-colour graphs and call variants between colours 1 and 2:\ncortex_var --colour_list <filename> --detect_bubbles1 1/2 --output_bubbles1 vars_between_cols1_and_2\n" \
 "\nusage: to load a multicolour graph from single-colour graphs and call heterozygous variants in colour 0:\ncortex_var --colour_list <filename> --detect_bubbles1 0/0 --output_bubbles1 hets_in_colour_0\n" \
 "\n" \
-"   [--help] \t\t\t\t\t\t\t=\t This help screen.\n" \
+
+
+"   [--help] \t\t\t\t\t\t\t=\t This help screen.\n\n" \
+" \n ** DATA LOADING ** \n\n"\
+  // -v
+"   [--format TYPE] \t\t\t\t\t\t=\t File format for input in se_list and pe_list. All files assumed to be of the same format.\n\t\t\t\t\t\t\t\t\t Type must be FASTQ or FASTA\n" \
 "   [--colour_list FILENAME] \t\t\t\t\t=\t File of filenames, one per colour. n-th file is a list of\n\t\t\t\t\t\t\t\t\t single-colour binaries to be loaded into colour n.\n\t\t\t\t\t\t\t\t\t Cannot be used with --se_list or --pe_list \n" \
 "   [--multicolour_bin FILENAME] \t\t\t\t=\t Filename of a multicolour binary, will be loaded first, into colours 0..n.\n\t\t\t\t\t\t\t\t\t If using --colour_list also, those will be loaded into subsequent colours, after this.\n" \
 "   [--se_list FILENAME] \t\t\t\t\t=\t List of single-end fasta/q to be loaded into a single-colour graph.\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n" \
@@ -150,77 +155,85 @@ const char* usage=
 "   [--mem_width INT] \t\t\t\t\t\t=\t Size of hash table buckets (default 100).\n" \
   //-g 
 "   [--mem_height INT] \t\t\t\t\t\t=\t Number of buckets in hash table in bits (default 10). \n\t\t\t\t\t\t\t\t\t Actual number of buckets will be 2^(the number you enter)\n" \
-  // -i
-"   [--ref_colour INT] \t\t\t\t\t\t=\t Colour of reference genome.\n" \
+  // -n 
+"   [--fastq_offset INT] \t\t\t\t\t=\t Default 33, for standard fastq.\n\t\t\t\t\t\t\t\t\t Some fastq directly from different versions of Illumina machines require different offsets.\n" \
+  // -p
+"   [--dump_binary FILENAME] \t\t\t\t\t=\t Dump a binary file, with this name (after applying error-cleaning, if specified).\n" \
+  // -w
+"   [--max_read_len] \t\t\t\t\t\t=\t For fastq, this is the Maximum read length over all input files.\n\t\t\t\t\t\t\t\t\t For fasta it is the size of chunk in which the reads are read (if reading a whole chromosome\n\t\t\t\t\t\t\t\t\t a typical value to use is 10000. Values above 20000 forbidden.\n\t\t\t\t\t\t\t\t\t (Mandatory if fastq or fasta files are input.)\n" \
+" \n**** FILTERING AND ERROR CLEANING OPTIONS ****\n\n"\
+  // -m
+"   [--quality_score_threshold INT] \t\t\t\t=\t Filter for quality scores in the input file (default 0).\n" \
   // -j
 "   [--remove_pcr_duplicates] \t\t\t\t\t=\t Removes PCR duplicate reads by ignoring read pairs if both \n\t\t\t\t\t\t\t\t\t reads start at the same k-mer as a previous read,\n\t\t\t\t\t\t\t\t\t and single-ended reads if they start at the same k-mer as a previous read\n" \
   // -k
 "   [--cut_homopolymers INT] \t\t\t\t\t=\t Breaks reads at homopolymers of length >= this threshold.\n\t\t\t\t\t\t\t\t\t (i.e. max homopolymer in filtered read==threshold-1, and New read starts after homopolymer)\n" \
-  // -l
-"   [--path_divergence_caller COMMA_SEP_COLOURS] \t\t=\t Make Path Divergence variant calls.\n\t\t\t\t\t\t\t\t\t Must specify colour of sample in which you want to find\n\t\t\t\t\t\t\t\t\t variants compared with the reference.\n\t\t\t\t\t\t\t\t\t This sample colour can be a union of colours (comma-separated list). \n\t\t\t\t\t\t\t\t\t Must also specify --ref_colour and --list_ref_fasta\n" \
-  // -m
-"   [--quality_score_threshold INT] \t\t\t\t=\t Filter for quality scores in the input file (default 0).\n" \
-  // -n 
-"   [--fastq_offset INT] \t\t\t\t\t=\t Default 33, for standard fastq.\n\t\t\t\t\t\t\t\t\t Some fastq directly from different versions of Illumina machines require different offsets.\n" \
-  // -o
+  // -O
+"   [--remove_low_coverage_supernodes]\t\t\t\t=\t Remove all supernodes where max coverage is <= the limit you set. Overrides --remove_seq_errors.\n" \
+   // -o
 "   [--remove_seq_errors] \t\t\t\t\t=\t Remove tips + remove nodes if their coverage is more likely\n\t\t\t\t\t\t\t\t\t to be due to single-base sequencing error than sampling.\n" \
-  // -p
-"   [--dump_binary FILENAME] \t\t\t\t\t=\t Dump a binary file, with this name (after applying error-cleaning, if specified).\n" \
-  // -q
-"   [--output_supernodes FILENAME] \t\t\t\t\t=\t Dump a fasta file of all the supernodes (after applying all specified actions on graph).\n" \
-  // -r
-"   [--detect_bubbles1 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Find all the bubbles in the graph where the two branches lie in the specified colours\n\t\t\t\t\t\t\t\t\t (after applying all specified actions on graph).\n\t\t\t\t\t\t\t\t\t Typical use would be --detect_bubbles1 1/1 to find hets in colour 1,\n\t\t\t\t\t\t\t\t\t or --detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch is in colour 0 (and not colour1)\n\t\t\t\t\t\t\t\t\t and the other branch is in colour1 (but not colour 0).\n\t\t\t\t\t\t\t\t\t However, one can do more complex things:\n\t\t\t\t\t\t\t\t\t e.g.  --detect_bubbles1 1,2,3/4,5,6 to find bubbles where one branch is in 1,2 or 3 (and not 4,5 or 6)\n\t\t\t\t\t\t\t\t\t and the other branch in colour 4,5 or 6 (but not 1,2, or 3).\n\t\t\t\t\t\t\t\t\tSee the manual for a detailed description of the syntax. It is possible to specify \"all colour\" rather than enumerate them eplicitly, and also to exclude colours\n" \
-  // -s
-"   [--output_bubbles1 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles1 are dumped to this file.\n" \
-  // -t
-"   [--detect_bubbles2 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Exactly the same as detect_bubbles1, but allows you to make\n\t\t\t\t\t\t\t\t\t a second set of bubble calls immediately afterwards.\n\t\t\t\t\t\t\t\t\t This is to accomodate the common use-case where one loads a reference\n\t\t\t\t\t\t\t\t\t and an individual, and then wants to call homs, and hets.\n" \
-  // -u
-"   [--output_bubbles2 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles2 are dumped to this file.\n" \
-  // -v
-"   [--format TYPE] \t\t\t\t\t\t=\t File format for input in se_list and pe_list. All files assumed to be of the same format.\n\t\t\t\t\t\t\t\t\t Type must be FASTQ, FASTA or CTX\n" \
-  // -w
-"   [--max_read_len] \t\t\t\t\t\t=\t\t For fastq, this is the Maximum read length over all input files.\n\t\t\t\t\t\t\t\t\tFor fasta it is the size of chunk in which the reads are read (if reading a whole chromosome a typical value to use is 10000. Values above 20000 forbidden.\n\t\t\t\t\t\t\t\t\t(Mandatory if fastq or fasta files are input.)\n" \
-  // -x
-"   [--print_colour_coverages]\t\t\t\t\t=\t Print coverages in all colours for supernodes and variants.\n" \
-  // -y
-"   [--max_var_len INT] \t\t\t\t\t\t=\t Maximum variant size searched for. Default 10kb. \n" \
- // -z
-"   [--list_ref_fasta FILENAME] \t\t\t\t\t=\t File listing reference chromosome fasta file(s); needed for path-divergence calls. \n" \
-  // -A
-"   [--dump_covg_distribution FILENAME] \t\t\t\t=\t Print k-mer coverage distribution to the file specified\n" \
   // -B
-"   [--remove_low_coverage_kmers INT] \t\t\t\t=\t Filter for kmers with coverage less than or equal to  threshold.\n"  \
-  // -D
-"   [--dump_filtered_readlen_distribution FILENAME] \t\t=\t Dump to file the distribution of \"effective\" read lengths after quality/homopolymer/PCR dup filters \n"  \
+"   [--remove_low_coverage_kmers INT] \t\t\t\t=\t Filter for kmers with coverage less than or equal to  threshold. Not recommended. See manual and our paper for why\n"  \
   // -E
 "   [--load_colours_only_where_overlap_clean_colour INT] \t=\t Only load nodes from binary files in the colour-list when they overlap a\n\t\t\t\t\t\t\t\t\t specific colour (e.g. that contains a cleaned pooled graph);\n\t\t\t\t\t\t\t\t\t requires you to specify this particular colour. You must have loaded that colour beforehand, using --multicolour_bin\n"  \
   // -F
 "   [--successively_dump_cleaned_colours SUFFIX] \t\t=\t Only to be used when also using --load_colours_only_where_overlap_clean_colour and --multicolour_bin\n\t\t\t\t\t\t\t\t\t Used to allow error-correction of low-coverage data on large numbers of individuals with large genomes.\n\t\t\t\t\t\t\t\t\t Requires the user specify a suffix which will be added to the names of cleaned binaries. See manual for details.\n"  \
+" \n\n**** OUTPUT STATISTICS AND SUPERNODES****\n\n" \
+  // -A
+"   [--dump_covg_distribution FILENAME] \t\t\t\t=\t Print k-mer coverage distribution to the file specified\n" \
+
+  // -D
+"   [--dump_filtered_readlen_distribution FILENAME] \t\t=\t Dump to file the distribution of \"effective\" read lengths after quality/homopolymer/PCR dup filters \n"  \
+  // -q
+"   [--output_supernodes FILENAME] \t\t\t\t=\t Dump a fasta file of all the supernodes (after applying all specified actions on graph).\n" \
+"\n\n** VARIANT CALLING **\n\n"\
+  // -y
+"   [--max_var_len INT] \t\t\t\t\t\t=\t Maximum variant size searched for. Default 10kb. \n" \
+  // -r
+"   [--detect_bubbles1 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Find all the bubbles in the graph where the two branches lie in the specified colours\n\t\t\t\t\t\t\t\t\t (after applying all specified actions on graph).\n\t\t\t\t\t\t\t\t\t Typical use would be --detect_bubbles1 1/1 to find hets in colour 1,\n\t\t\t\t\t\t\t\t\t or --detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch is in colour 0 (and not colour1)\n\t\t\t\t\t\t\t\t\t and the other branch is in colour1 (but not colour 0).\n\t\t\t\t\t\t\t\t\t However, one can do more complex things:\n\t\t\t\t\t\t\t\t\t e.g.  --detect_bubbles1 1,2,3/4,5,6 to find bubbles where one branch is in 1,2 or 3 (and not 4,5 or 6)\n\t\t\t\t\t\t\t\t\t and the other branch in colour 4,5 or 6 (but not 1,2, or 3).\n\t\t\t\t\t\t\t\t\t See the manual for a detailed description of the syntax. It is possible to\n\t\t\t\t\t\t\t\t\t specify \"all colour\" rather than enumerate them eplicitly, and also to exclude colours\n" \
+  // -s
+"   [--output_bubbles1 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles1 are dumped to this file.\n" \
+  // -x
+"   [--print_colour_coverages]\t\t\t\t\t=\t Print coverages in all colours for supernodes and variants.\n" \
+  // -M
+"   [--exclude_ref_bubbles]\t\t\t\t\t=\t If you have specified --ref_colour, this will exclude any bubble in that colour from being called by the Bubble Caller.\n" \
+  // -t
+"   [--detect_bubbles2 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Exactly the same as detect_bubbles1, but allows you to make\n\t\t\t\t\t\t\t\t\t a second set of bubble calls immediately afterwards.\n\t\t\t\t\t\t\t\t\t This is to accomodate the common use-case where one loads a reference\n\t\t\t\t\t\t\t\t\t and an individual, and then wants to call homs, and hets.\n" \
+  // -u
+"   [--output_bubbles2 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles2 are dumped to this file.\n" \
+
+  // -l
+"   [--path_divergence_caller COMMA_SEP_COLOURS] \t\t=\t Make Path Divergence variant calls.\n\t\t\t\t\t\t\t\t\t Must specify colour of sample in which you want to find\n\t\t\t\t\t\t\t\t\t variants compared with the reference.\n\t\t\t\t\t\t\t\t\t This sample colour can be a union of colours (comma-separated list). \n\t\t\t\t\t\t\t\t\t Must also specify --ref_colour and --list_ref_fasta\n" \
+  // -I
+"   [--path_divergence_caller_output PATH_STUB]\t\t\t=\t Specifies the path and beginning of filenames of Path Divergence caller output files.\n\t\t\t\t\t\t\t\t\t One output file will be created per  reference fasta listed in --list_ref_fasta\n" \
+  // -i
+"   [--ref_colour INT] \t\t\t\t\t\t=\t Colour of reference genome.\n" \
+ // -z
+"   [--list_ref_fasta FILENAME] \t\t\t\t\t=\t File listing reference chromosome fasta file(s); needed for path-divergence calls. \n" \
+"\n\n **** ADVANCED OPTIONS **** \n\n"\
+  // -P  
+"   [--experiment_type]\t\t\t\t\t\t=\t The statistical models for determining genotype likelihoods, and for deciding if bubbles are repeat or variants,\n\t\t\t\t\t\t\t\t\t require knowledge of whether each sample is a separate diploid/haploid individual. \n\t\t\t\t\t\t\t\t\t Enter type of experiment (EachColourADiploidSample, EachColourADiploidSampleExceptTheRefColour, \n\t\t\t\t\t\t\t\t\t EachColourAHaploidSample,EachColourAHaploidSampleExceptTheRefColour). \n\t\t\t\t\t\t\t\t\t This is only needed for determining likelihoods, so ignore this is you are pooling samples within a colour (support to be added for this later).\n" \
+  // Q
+"   [--estimated_error_rate]\t\t\t\t\t=\t If you have some idea of the sequencing error rate (per base-pair), enter it here. eg 0.01. Currently used in calculating likelihoods\n"\
+  // -L
+"   [--genome_size]\t\t\t\t\t\t=\t If you specify --require_hw, you must also specify the (estimated) genome size in bp.\n" \
+
   // -G
 "   [--align FILENAME] \t\t\t\t\t\t=\t Aligns a list of fasta/q files to the graph, and prints coverage of each kmer in each read in each colour.\n\t\t\t\t\t\t\t\t\t Must also specify --align_input_format, and --max_read_len\n"  \
   // -H
-"   [--align_input_format TYPE] \t\t\t\t\t=\t --align requires a list of fasta or fastq. This option specifies for format as LIST_OF_FASTQ or LIST_OF_FASTA\n"  \
-  // -I
-"   [--path_divergence_caller_output PATH_STUB]\t\t\t=\t Specifies the path and beginning of filenames of Path Divergence caller output files.\n\t\t\t\t\t\t\t\t\t One output file will be created per  reference fasta listed in --list_ref_fasta\n" \
+"   [--align_input_format TYPE] \t\t\t\t\t=\t --align requires a list of fasta or fastq. This option specifies the input format as LIST_OF_FASTQ or LIST_OF_FASTA\n"  \
+
+  // T
+"   [--estimate_genome_complexity FILENAME]\t\t\t=\t Print estimated genome complexity by reading up to 10,000 reads from the given file\n"\
+"\n\n **** OPTIONS THAT I MAY REMOVE - NOT CLEAR ANYONE HAS A GOOD USE FOR THEM - EMAIL ME IF YOU LIKE IT\n\n"\
   // -J
 "   [--colour_overlaps COMMA_SEP_COLOURS/COMMA_SEP_COLOURS]\t=\t Compares each coloured subgraph in the first list with all of the \n\t\t\t\t\t\t\t\t\t coloured subgraphs in the second list. Outputs a matrix to stdout;\n\t\t\t\t\t\t\t\t\t (i,j)-element is the number of nodes in both colour-i (on first list)\n\t\t\t\t\t\t\t\t\t and colour-j (on second list).\n" \
+
+"\n\n**** EARLY ACCESS/BETA OPTIONS **** \n\n"\
+  // R
+"   [--genotype_site]\t\t\t\t\t\t=\t (Beta code!) Genotype a single (typically multiallelic) site. Syntax is slightly complex. \n\t\t\t\t\t\t\t\t\t Requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN.\n\t\t\t\t\t\t\t\t\t x,y is a comma-sep pair of colours to genotype.\n\t\t\t\t\t\t\t\t\t z is the reference-minus-site colour.\n\t\t\t\t\t\t\t\t\t N is the number of alleles for this site (which cortex assumes are loaded\n\t\t\t\t\t\t\t\t\t in a multicolour_bin containing precisely and only those alleles, one per colour).\n\t\t\t\t\t\t\t\t\t Cortex will genotype combinations A through B of the N choose 2 possible genotypes (allows parallelisation);\n\t\t\t\t\t\t\t\t\t fasta is the file listing one read per allele.\n\t\t\t\t\t\t\t\t\t CLEANED or UNCLEANED allows Cortex to tailor its genotyping model.\n\t\t\t\t\t\t\t\t\t p,q are two free/unused colours that Cortex will use internally. \n\t\t\t\t\t\t\t\t\t yes/no specifies whether to use the more sophisticated error model, which is still in development. \n\t\t\t\t\t\t\t\t\t I recommend you stick with \"no\" for now.\n\t\t\t\t\t\t\t\t\t The final argument, MIN, is optional and allows performance speedup\n\t\t\t\t\t\t\t\t\t by disarding any genotype with log-likelihood<MIN.\n\t\t\t\t\t\t\t\t\t See manual for details.Must also specify --max_var_len to give the length of the longest allele\n"\
   // -K
 "   [--require_hw]\t\t\t\t\t\t=\t For each bubble found, calculate likelihood of observed coverage \n\t\t\t\t\t\t\t\t\t under 3 models (repeat, error, variation obeying Hardy-Weinberg)\n\t\t\t\t\t\t\t\t\t Only call variants where the bubble is more likely (according to these models) to be a variant.\n" \
-  // -L
-"   [--genome_size]\t\t\t\t\t\t=\t If you specify --require_hw, you must also specify the (estimated) genome size in bp.\n" \
-  // -M
-"   [--exclude_ref_bubbles]\t\t\t\t\t=\t If you have specified --ref_colour, this will exclude any bubble in that colour from being called by the Bubble Caller.\n" \
-  // -O
-"   [--remove_low_coverage_supernodes]\t\t\t\t=\t Remove all supernodes where max coverage is <= the limit you set. Overrides --remove_seq_errors.\n" \
-  // -P  
-"   [--experiment_type]\t\t\t\t\t\t=\t The statistical models for determining genotype likelihoods, and for deciding if bubbles are repeat or variants,\n\t\t\t\t\t\t\t\t\t require knowledge of whether each sample is a separate diploid/haploid individual. \n\t\t\t\t\t\t\t\t\tEnter type of experiment (EachColourADiploidSample, EachColourADiploidSampleExceptTheRefColour, \n\t\t\t\t\t\t\t\t\tEachColourAHaploidSample,EachColourAHaploidSampleExceptTheRefColour). \n\t\t\t\t\t\t\t\t\tThis is only needed for determining likelihoods, so ignore this is you are pooling samples within a colour (support to be added for this later).\n" \
-  // Q
-"   [--estimated_error_rate]\t\t\t\t\t\t=\t If you have some idea of the sequencing error rate (per base-pair), enter it here. eg 0.01. Currently used in calculating likelihoods\n"
-  // R
-"   [--genotype_site]\t\t\t\t\t\t=\t Genotype a single (typically multiallelic) site. Syntax is slightly complex. requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[filelist1[filelist2.  x,y is a comma-sep list of colours to genotype. z is the reference-minus-site colour. N is the number of alleles for this site (which cortex assumes are loaded in a multicolour_bin containing precisely and only those alleles, one per colour). Cortex will genotype combinations A through B of the N choose 2 possible genotypes (allows parallelisation); fasta is the file listing one read per allele. CLEANED or UNCLEANED allow Cortex to tailor its genotyping model. p,q,r,s are four free/unused colours that Cortex will use internally. filelist1 is a list of binaries, one per allele, in the same order that they are in the fasta file, but these are binaries of kmers caused by 1 base-pair errors in alleles, and filelist2 is the same for 2bp errors. See manual for details.Must also specify --max_var_len to give the length of the longest allele\n"
-  // T
-"   [--estimate_genome_complexity FILENAME]\t\t\t\t\t\t=\t Print estimated genome complexity by reading up to 10,000 reads from the given file\n"
-
 
 ;
 
@@ -2049,9 +2062,10 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 				 int* wk_col1, int* wk_col2, boolean* using_1net, boolean* using_2net, char* file_1net_bins, double* min_llk)
 {
 
-  // we expect arg to be of this format: x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>   where z and A,B may be -1
+  // we expect arg to be of this format: x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN   where z and A,B may be -1
   // x,y is a comma sep list of colours to genotype. z is the ref-minus-site colour. N is the number of alleles at the site (must be same as number of reads in the fasta)
-  // A..B means genotype combinations A to B of the N choose 2 possible genotypes., p,q are spare colours, and file_1net is a list of binaries of 1nets of alleles
+  // A..B means genotype combinations A to B of the N choose 2 possible genotypes, p,q are spare colours, and yes/no specifies whether or not to use the 1net/2net form of likelihood,
+  // and MIN is an optional argument to say ignore any genotype with log likelihood below MIN
 
 
 
@@ -2062,12 +2076,12 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
   char* commaseplist = strtok(temp1, delims );
   if (commaseplist==NULL)
     {
-      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>, using the \"[\" character as a delimiter. you do not appear to have any of these delimiters - consult the manual");
+      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN, using the \"[\" character as a delimiter. you do not appear to have any of these delimiters - consult the manual");
     }
   
   if (strcmp(commaseplist, "-1")==0)
     {
-      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no> where x,y denotes a comma-separated list of colours (eg 0,2,45) which are to be genotyped. In other parts of the cortex_var cmdline syntax, a \"-1\" is allowed to denote ALL colours. That makes no sense here. --genotype_site is designed for complex multiallelic sites, where the known alleles are loaded into colours 0..N-1 with --multicolour_bin, and then (optionally) another colour is used to refer to the reference-minus-site (see manual). So by definition, not all the colours in the graph are samples to be genotyped. In short, don't use -1 for A,B\n");
+      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN where x,y denotes a comma-separated list of colours (eg 0,2,45) which are to be genotyped. In other parts of the cortex_var cmdline syntax, a \"-1\" is allowed to denote ALL colours. That makes no sense here. --genotype_site is designed for complex multiallelic sites, where the known alleles are loaded into colours 0..N-1 with --multicolour_bin, and then (optionally) another colour is used to refer to the reference-minus-site (see manual). So by definition, not all the colours in the graph are samples to be genotyped. In short, don't use -1 for A,B\n");
     }
   else
     {
@@ -2084,7 +2098,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
   char* refminussite_as_char  = strtok( NULL, delims );
   if (refminussite_as_char==NULL)
     {
-      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no> - you do not appear to have a \"z\" - consult the manual");
+      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN - you do not appear to have a \"z\" - consult the manual");
     }
   else
     {
@@ -2094,14 +2108,14 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
   char* numalleles_as_char = strtok( NULL, delims );
   if (numalleles_as_char==NULL)
     {
-      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>. You have omitted the N, which is not permitted - consult the manual");
+      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN. You have omitted the N, which is not permitted - consult the manual");
     }
   else
     {
       int num_a = atoi(numalleles_as_char);
       if (num_a<=0)
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no> - you have entered a negative value for N (the number of alleles), which is not permitted\n");
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN - you have entered a negative value for N (the number of alleles), which is not permitted\n");
 	}
       int num_cols_required_by_this_cmdline = *num_colours_to_genotype + num_a;
       if (*ref_minus_site_colour != -1)
@@ -2119,7 +2133,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 
   if (startend_as_char==NULL)
     {
-      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no> - cortex cannot parse-find A,B\n");
+      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN - cortex cannot parse-find A,B\n");
     }
   else
     {
@@ -2127,11 +2141,11 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
       char* fa  = strtok( NULL, delims );
       if (fa==NULL)
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>  - unable to find a fasta in that string\n");
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN  - unable to find a fasta in that string\n");
 	}
       else if (test_file_existence(fa)==false)
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>  - unable to find/open the fasta file you mention");
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN  - unable to find/open the fasta file you mention");
 	}
       else
 	{
@@ -2149,30 +2163,30 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	}
       else
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no> - after the fasta name, you appear to have writting something that is neither \"CLEANED\" nor \"UNCLEANED\" \n");	  
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN - after the fasta name, you appear to have writting something that is neither \"CLEANED\" nor \"UNCLEANED\" \n");	  
 	}
 
       char* working_col1_as_char = strtok(NULL, delims);
       if (working_col1_as_char==NULL)
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no> - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for) - ypu appear to have left off p and q from your commandline\n");
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for) - ypu appear to have left off p and q from your commandline\n");
 	}
       int working_col1 = atoi(working_col1_as_char);
       if ( (working_col1>NUMBER_OF_COLOURS) || (working_col1<0) )
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no> - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for, but also should be unused - ie you have not loaded binaries into these colours\n");
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for, but also should be unused - ie you have not loaded binaries into these colours\n");
 	}
       char* working_col2_as_char = strtok(NULL, delims);
       if (working_col2_as_char==NULL)
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no> - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for) - ypu appear to have left off q from your commandline\n");
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for) - ypu appear to have left off q from your commandline\n");
 	}
       int working_col2 = atoi(working_col2_as_char);
 
 
       if ( (working_col2>NUMBER_OF_COLOURS) || (working_col2<0) )
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no> - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for, but also should be unused - ie you have not loaded binaries into these colours\n");
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN - p and q should be colours in the graph (ie less than the max allowed number of colours that you compiled cortex for, but also should be unused - ie you have not loaded binaries into these colours\n");
 	}
       *wk_col1 = working_col1;
       *wk_col2 = working_col2;
@@ -2180,7 +2194,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
       char* using_1net_as_char = strtok(NULL, delims);
       if (using_1net_as_char==NULL)
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no> - the final yes/no determines whether cortex uses  the full error model using edit distances of kmers from the expected genotype (yes) or not (no). You do not seem to have specified either\n");
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN - the final yes/no determines whether cortex uses  the full error model using edit distances of kmers from the expected genotype (yes) or not (no). You do not seem to have specified either\n");
 	}
       else if (strcmp(using_1net_as_char, "yes")==0)
 	{
@@ -2194,7 +2208,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	}
       else
 	{
-	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no> - the final yes/no determines whether cortex uses  the full error model using edit distances of kmers from the expected genotype (yes) or not (no). You do not seem to have specified either\n");	  
+	  errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN - the yes/no determines whether cortex uses  the full error model using edit distances of kmers from the expected genotype (yes) or not (no). You do not seem to have specified either\n");	  
 	}
 
 
@@ -2218,7 +2232,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
       char* filelist_1net  = strtok( NULL, delims );
       if (filelist_1net==NULL)
 	{
-	  printf("[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>  - unable to find a file_1net in that string, so cortex interprets this as an active choice to use the simple error model (without the 1net etc). This is a valid choice to make! Just printing this to notify you, in case you have a typo.\n");
+	  printf("[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN  - unable to find a file_1net in that string, so cortex interprets this as an active choice to use the simple error model (without the 1net etc). This is a valid choice to make! Just printing this to notify you, in case you have a typo.\n");
 	}
       else if (test_file_existence(filelist_1net)==false)
 	{
@@ -2247,7 +2261,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	  char* startaschar = strtok(temp2, delims2);
 	  if (startaschar==NULL)
 	    {
-	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>  - unable to split A,B out\n");
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN  - unable to split A,B out\n");
 	    }
 	  else
 	    {
@@ -2256,7 +2270,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 	  char* endaschar = strtok( NULL, delims2 );
 	  if (endaschar==NULL)
 	    {
-	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>  - unable to split A,B out to get B\n");
+	      errx(1,"[--genotype_site] option requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN  - unable to split A,B out to get B\n");
 	    }
 	  else
 	    {
