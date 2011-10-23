@@ -46,6 +46,10 @@
 #include <model_selection.h>
 
 
+typedef struct {
+  double mean;
+}BasicStats;
+
 dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node, Orientation current_orientation,
                                                            Orientation * next_orientation,
                                                            Nucleotide edge, Nucleotide * reverse_edge,dBGraph * db_graph, EdgeArrayType type, int index);
@@ -618,5 +622,9 @@ void db_graph_wipe_two_colours_in_one_traversal(int colour1, int colour2, dBGrap
 void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
                                           int* second_col_list, int num2,
 					  dBGraph* db_graph);
+
+void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int colour1, int colour2,
+							    dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+							    boolean (*condition)(dBNode**, int, int*), int* bins_1_not_2, int* bins_2_not_1);
 
 #endif

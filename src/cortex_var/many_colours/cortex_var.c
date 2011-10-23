@@ -42,6 +42,37 @@
 void timestamp();
 
 
+double  get_histogram_for_kmers_in_just_one_haplotype(long long** arr, int max, int in_colour, int not_in_colour, int data_colour, dBGraph* db_graph)
+{
+  long long total_kmers_possible=0;
+  long long total_kmers_hit=0; 
+
+
+  void analyse_kmer(dBGraph* db_graph, dBNode* node, int** array, int len, EdgeArrayType type, int colour)
+  {
+    if ( (node->coverage[in_colour]>0) && (node->coverage[not_in_colour]==0) )
+      {
+	total_kmers_possible++;
+	//this node is informative about haplotype in_colour, so see how much covg it has in your sample data
+	long long num = (long long) (node->coverage[data_colour]);
+	if (num>0)
+	  {
+	    total_kmers_hit++;
+	  }
+	if (num<len)
+	  {
+	    *(array[num]) = *(array[num]) + 1;
+	  }
+	else
+	  {
+	    *(array[len]) = *(array[len]) + 1;
+	  }
+      }
+  }
+  db_graph_traverse_with_array_of_longlongs(&analyse_kmer, (HashTable*) db_graph, arr, max , individual_edge_array, -1);//the -1 is ignored
+  return ((double) total_kmers_possible)/((double) total_kmers_hit);
+}
+
 
 long long calculate_mean(long long* array, long long len)
 {
@@ -853,15 +884,86 @@ int main(int argc, char **argv){
     {
       timestamp();
 
-      printf("Print contigs(supernodes) in the graph created by the union of all colours.\n");
+
+      boolean condition_splits_COX_and_PGF(dBNode** path, int length, int* which_col)
+      {
+	boolean all_nodes_in_COX=true;
+	boolean no_nodes_in_COX = true;
+	boolean all_nodes_in_PGF=true;
+	boolean no_nodes_in_PGF=true;
+	int p;
+	for (p=1; p<length; p++)
+	  {
+	    if (db_node_get_coverage(path[p], individual_edge_array, 0)==0)
+	      {
+		all_nodes_in_PGF=false;
+	      }
+	    if (db_node_get_coverage(path[p], individual_edge_array, 1)==0)
+	      {
+		all_nodes_in_COX=false;
+	      }
+	    if (db_node_get_coverage(path[p], individual_edge_array, 0)>0)
+	      {
+		no_nodes_in_PGF=false;
+	      }
+	    if (db_node_get_coverage(path[p], individual_edge_array, 1)>0)
+	      {
+		no_nodes_in_COX=false;
+	      }
+	  }
+	if ( (all_nodes_in_COX==true) && (no_nodes_in_PGF==true) )
+	  {
+	    *which_col = 1;
+	    return true;
+	  }
+	else if ( (all_nodes_in_PGF==true) && (no_nodes_in_COX==true) )
+	  {
+	    *which_col=0;
+	    return true;
+	  }
+	else
+	  {
+	    *which_col=-1;
+	    return false;
+	  }
+
+      }
+
+      printf("Get histograms of covg on supernodes specific to either PGF or COX. Calculate number of reads/length for each sup, and put in bins\n");
       
-      db_graph_print_supernodes_defined_by_func_of_colours(cmd_line.output_supernodes, "", cmd_line.max_var_len,// max_var_len is the public face of maximum expected supernode size
-							   db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
-							   &print_appropriate_extra_supernode_info);
+      int* bins_PGF = (int*) malloc( sizeof(int) * 10000);
+      int* bins_COX = (int*) malloc( sizeof(int) * 10000);
+      if ( (bins_PGF==NULL) || (bins_COX==NULL) )
+	{
+	  printf("Unable to alloc bins for PGF and COX\n");
+	  exit(1);
+	}
+      int p;
+      for (p=0; p<10000; p++)
+	{
+	  bins_PGF[p]=0;
+	  bins_COX[p]=0;
+	}
+
+      db_graph_get_stats_of_supernodes_that_split_two_colour(cmd_line.max_var_len, 0,1, db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs,
+							     &condition_splits_COX_and_PGF, bins_PGF, bins_COX);
 
 
+      FILE* fout = fopen(cmd_line.knight_output, "w");
+      if (fout==NULL)
+	{
+	  printf("Cannot open output fule for knight\n");
+	  exit(1);
+	}
+      fprintf(fout, "Covg\tPGF_not_COX\tCOX_not_PGF\n");
+
+      for (p=0; p<10000; p++)
+	{
+	  fprintf(fout, "%d\t%d\t%d\n", p, bins_PGF[p], bins_COX[p]);
+	}
+      fclose(fout);
       timestamp();
-      printf("Supernodes dumped\n");
+      printf("Finished COX PGF Julian Knight analysis\n");
 
 
     }
@@ -951,6 +1053,65 @@ int main(int argc, char **argv){
 					   db_graph);
       printf("\nCompleted graph overlap matrix printing\n");
     }
+
+  if (cmd_line.knight_expt==true)
+    {
+      //assume colours 0 and 1 are the reference with the two alternate haplotypes, and colour 3 is the RNA-seq sequence data
+      //collect histograms of coverage on  kmers that are unique to each haplotype
+      printf("Binaries loaded - start J Knight analysis\n");
+      long long** phist1 = (long long**) malloc( sizeof(long long*)*100000000);
+      long long** phist2 = (long long**) malloc( sizeof(long long*)*100000000);
+      if ( (phist1==NULL) || (phist2==NULL) )
+	{
+	  printf("Unable to malloc arrays for Julian K expot");
+	  exit(1);
+	}
+      long long* hist1 = (long long*) malloc( sizeof(long long)*100000000);
+      long long* hist2 = (long long*) malloc( sizeof(long long)*100000000);
+      if ( (hist1==NULL) || (hist2==NULL) )
+	{
+	  printf("Unable to malloc arrays for Julian K expot");
+	  exit(1);
+	}
+      int k;
+      for (k=0; k<100000000; k++)
+	{
+	  hist1[k]=0;
+	  hist2[k]=0;
+	  phist1[k]=&(hist1[k]);
+	  phist2[k]=&(hist2[k]);
+	}
+
+      double prop_kmers_in_pgf_not_cox = get_histogram_for_kmers_in_just_one_haplotype(phist1,99999999,0,1,2, db_graph);//in PGF but not COX
+      double prop_kmers_in_cox_not_pgf = get_histogram_for_kmers_in_just_one_haplotype(phist2,99999999,1,0,2, db_graph);//in COX but not PGF
+
+      long long max_val=0;
+      for (k=0;k<100000000; k++)
+	{
+	  if ( (hist1[k]>0)||(hist2[k]>0) )
+	    {
+	      max_val=k;
+	    }
+	}
+
+      FILE* fout = fopen(cmd_line.knight_output, "w");
+      if (fout==NULL)
+	{
+	  printf("Cannot open output fule for knight\n");
+	  exit(1);
+	}
+      fprintf(fout, "Covg\tPGF_not_COX\tCOX_not_PGF\n");
+      for (k=0;k<=max_val; k++)
+	{
+	  fprintf(fout, "%d\t%qd\t%qd\n", k, hist1[k], hist2[k]);
+	}
+      fclose(fout);
+      printf("Proportion of kmers in PGF but not COX which are hit: %f\n", prop_kmers_in_pgf_not_cox);
+      printf("Proportion of kmers in COX but not PGF: %f\n", prop_kmers_in_cox_not_pgf);
+
+      printf("Finished J Knight analysis\n");
+    }
+  
 
   if (cmd_line.genotype_complex_site==true)
     {

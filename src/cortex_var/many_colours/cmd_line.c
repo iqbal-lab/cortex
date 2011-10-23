@@ -218,6 +218,8 @@ const char* usage=
 "   [--estimated_error_rate]\t\t\t\t\t\t=\t If you have some idea of the sequencing error rate (per base-pair), enter it here. eg 0.01. Currently used in calculating likelihoods\n"
   // R
 "   [--genotype_site]\t\t\t\t\t\t=\t Genotype a single (typically multiallelic) site. Syntax is slightly complex. requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[r[s[filelist1[filelist2.  x,y is a comma-sep list of colours to genotype. z is the reference-minus-site colour. N is the number of alleles for this site (which cortex assumes are loaded in a multicolour_bin containing precisely and only those alleles, one per colour). Cortex will genotype combinations A through B of the N choose 2 possible genotypes (allows parallelisation); fasta is the file listing one read per allele. CLEANED or UNCLEANED allow Cortex to tailor its genotyping model. p,q,r,s are four free/unused colours that Cortex will use internally. filelist1 is a list of binaries, one per allele, in the same order that they are in the fasta file, but these are binaries of kmers caused by 1 base-pair errors in alleles, and filelist2 is the same for 2bp errors. See manual for details.Must also specify --max_var_len to give the length of the longest allele\n"
+  // S
+"   [--detect_alleles]\t\t\t\t\t\t=\t Julian Knight experiment\n"
 
 
 
@@ -277,6 +279,7 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
+  c->knight_expt=false;
   c->working_colour1 = -1;
   c->working_colour2 = -1;
   // c->working_colour3_for_1net=-1;
@@ -435,6 +438,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"experiment_type", required_argument, NULL, 'P'},
     {"estimated_error_rate", required_argument, NULL, 'Q'},
     {"genotype_site", required_argument, NULL, 'R'},
+    {"detect_alleles", required_argument, NULL, 'S'},
     {0,0,0,0}	
   };
   
@@ -445,7 +449,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:S:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1182,10 +1186,31 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	cmdline_ptr->genotype_complex_site=true;
 	break;
       }
+    case 'S':
+      {
+	if (optarg==NULL)
+	  errx(1,"Must enter output filename");
+
+	if (strlen(optarg)<MAX_FILENAME_LEN)
+	  {
+	    strcpy(cmdline_ptr->knight_output,optarg);
+	  }
+	else
+	  {
+	    errx(1,"[--detect_alleles] filename too long [%s]",optarg);
+	  }
+	
+	if (access(optarg,F_OK)==0){
+	  errx(1,"[--detect_alleles] filename [%s] exists!",optarg);
+	}
+
+	cmdline_ptr->knight_expt=true;
+	break;
+      }
       
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:S:", long_options, &longopt_index);
   }   
   
   return 0;

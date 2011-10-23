@@ -116,7 +116,8 @@ typedef struct
   char successively_dump_cleaned_colours_suffix[MAX_SUFFIX_LEN];
   char list_fastaq_to_align[MAX_FILENAME_LEN];
   char fasta_alleles_for_complex_genotyping[MAX_FILENAME_LEN];
-
+  char knight_output[MAX_FILENAME_LEN];
+  boolean knight_expt;
   boolean cut_homopolymers;
   boolean remove_pcr_dups;
   //boolean clip_tips;

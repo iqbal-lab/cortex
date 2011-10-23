@@ -3338,6 +3338,110 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 }
 
 
+//get supernodes in union of two colours. for each supernode, calculate (num reads arrived)/length
+// if sup is in colour 1 and not 2, then increment the bin corresponding to that number in historgram1
+// if sup is in colour 2 and not 1, then increment the bin corresponding to that number in historgram2
+void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int colour1, int colour2,
+							    dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+							    boolean (*condition)(dBNode**, int, int*), int* bins_1_not_2, int* bins_2_not_1){
+
+
+  int count_nodes=0;
+  
+  dBNode * *    path_nodes;
+  Orientation * path_orientations;
+  Nucleotide *  path_labels;
+  char * seq;
+  boolean is_cycle;
+  double avg_coverage;
+  int min,max;
+  
+  
+  path_nodes        = calloc(max_length,sizeof(dBNode*));
+  path_orientations = calloc(max_length,sizeof(Orientation));
+  path_labels       = calloc(max_length,sizeof(Nucleotide));
+  seq               = calloc(max_length+1+db_graph->kmer_size,sizeof(char));
+  
+  
+
+  void parse_supernode(dBNode * node){
+    
+    char name[100];
+
+    if (db_node_check_status(node, none) == true)
+      {
+	int length = db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_length,&db_node_action_set_status_visited,
+									       path_nodes,path_orientations,path_labels,
+									       seq,&avg_coverage,&min,&max,&is_cycle,
+									       db_graph, get_colour, get_covg);
+	
+	int which_colour=-1; //if the supernode exists in colour1 not colour2, this will be set to colour1, and vice-versa
+	if (condition(path_nodes, length, &which_colour)==true)
+	  {
+	    if (length>1)
+	      {	
+		if (length==max_length)
+		  {
+		    printf("contig length equals max length [%i] \n",max_length);
+		  }
+		boolean too_short=false;
+		int num_reads = count_reads_on_allele_in_specific_colour(path_nodes, length, which_colour, &too_short);
+		double ratio = (double)num_reads/(double)length;
+		//put in bins from 0, 0.01, ...up to 100. That's 10,000 bins. n-th bin means number is n*0.01
+		int bin = (int) (ratio*100);
+		if (which_colour==colour1)
+		  {
+		    if ((bin<9999) && (bin>=0) )
+		      {
+			bins_1_not_2[bin] =bins_1_not_2[bin]+1;
+
+		      }
+		    else if (bin>9999)
+		      {
+			bins_1_not_2[9999] = bins_1_not_2[9999]+1;
+		      }
+		    else if (bin<0)
+		      {
+			printf("Negative bin. num reads is %d, length is %d and bin is %d\n", num_reads, bin, length);
+			exit(1);
+		      }
+		  }
+		else if (which_colour==colour2)
+		  {
+		    if ((bin<9999) && (bin>=0) )
+		      {
+			bins_2_not_1[bin] =bins_2_not_1[bin]+1;
+
+		      }
+		    else if (bin>9999)
+		      {
+			bins_2_not_1[9999] = bins_2_not_1[9999]+1;
+		      }
+		    else if (bin<0)
+		      {
+			printf("Negative bin. num reads is %d, length is %d and bin is %d\n", num_reads, bin, length);
+			exit(1);
+		      }
+		  }
+
+	      }
+	    
+	    
+	  }
+	
+      }
+  }
+  
+  hash_table_traverse(&parse_supernode,db_graph); 
+
+  free(path_nodes);
+  free(path_orientations);
+  free(path_labels);
+  free(seq);
+}
+
+
+
 
 void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index){
   long long count_kmers=0;
@@ -4307,6 +4411,8 @@ void db_graph_traverse_with_array_of_longlongs(void (*f)(HashTable*, Element *, 
     }
   }
 }
+
+
 
 void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArrayType type, int index, boolean (*condition)(dBNode* elem) )
 {
@@ -9698,3 +9804,62 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 
 
 
+
+
+
+
+/*
+//given a function func, which takes a supernode and gives an int, calculate statistics of it (min, max, median, std dev)
+void calculate_statistics_of_some_function_of_supernodes(dBGraph * db_graph, GraphInfo* ginfo, GraphAndModelInfo* model_info,
+							 int max_expected_sup, BasicStats stats,
+							 int (*sum_of_covgs_in_desired_colours)(const Element *), 
+							 Edges (*get_edge_of_interest)(const Element*) )
+{
+
+  dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*max_expected_sup); 
+  Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*max_expected_sup); 
+  Nucleotide*  path_labels       = (Nucleotide*) malloc(sizeof(Nucleotide)*max_expected_sup);
+  char*        supernode_string  = (char*) malloc(sizeof(char)*max_expected_sup+1); //+1 for \0
+
+  if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
+    {
+      printf("Cannot malloc arrays for db_graph_remove_supernodes_more_likely_errors_than_sampling");
+      exit(1);
+    }
+
+
+  long long analyse_supernode(dBNode* node)
+  {
+
+    int len;
+    double avg_cov;
+    int min_cov;
+    int max_cov;
+    boolean is_cycle;
+    
+    //length_sup is the number of edges in the supernode
+    int length_sup =  db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_expected_sup,
+										&db_node_action_set_status_visited,
+										path_nodes, path_orientations, path_labels, supernode_string,
+										&avg_cov,&min_cov, &max_cov, &is_cycle,
+										db_graph, 
+										get_edge_of_interest,
+										sum_of_covgs_in_desired_colours);
+
+    long long val - func
+
+
+  }
+  
+
+  long long number_of_pruned_supernodes  = hash_table_traverse_returning_sum(&prune_supernode_if_it_looks_like_is_induced_by_singlebase_errors, db_graph);
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
+
+
+  free(path_nodes);
+  free(path_orientations);
+  free(path_labels);
+  free(supernode_string);
+  return number_of_pruned_supernodes;
+}
+*/
