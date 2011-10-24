@@ -627,4 +627,12 @@ void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int 
 							    dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
 							    boolean (*condition)(dBNode**, int, int*), int* bins_1_not_2, int* bins_2_not_1);
 
+void db_graph_get_covgs_in_all_colours_of_col0union1_sups(int max_length, dBGraph * db_graph,
+							  int* pgf, int* cox, 
+							  int* data1, int* data2, int* data3, int* data4, int* data5);
+
+void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_graph,
+						int tot_pgf, int tot_cox, 
+						int tot_data1, int tot_data2, int tot_data3, int tot_data4, int tot_data5,
+						boolean (*condition)(dBNode**, int, int*), FILE* fout);
 #endif

@@ -3443,6 +3443,279 @@ void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int 
 
 
 
+void traverse_hash_collecting_sums(void (*f)(Element *, int*, int*, int*, int*, int*, int*, int*),HashTable * hash_table, 
+				   int* pgf, int* cox, int* data1, int* data2, int* data3, int* data4, int* data5){
+  long long i;
+  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
+    if (!db_node_check_status(&hash_table->table[i],unassigned)){
+      f(&hash_table->table[i], pgf, cox, data1, data2, data3, data4, data5);
+    }
+  }
+}
+
+
+//get supernodes in union of colour 0 and 1.Traverse just these supernodes, and collect total covg in all colours
+void db_graph_get_covgs_in_all_colours_of_col0union1_sups(int max_length, dBGraph * db_graph,
+							  int* pgf, int* cox, 
+							  int* data1, int* data2, int* data3, int* data4, int* data5)
+{
+
+  Edges get_colour(const dBNode* e)
+  {
+    Edges edges=0;
+    edges |= e->individual_edges[0];
+    edges |= e->individual_edges[1];
+    return edges;
+  }
+
+  int get_covg(const dBNode* e)  
+  {
+    int cov= e->coverage[0] + e->coverage[1];
+    return cov;
+  }
+
+  int count_nodes=0;
+  
+  dBNode * *    path_nodes;
+  Orientation * path_orientations;
+  Nucleotide *  path_labels;
+  char * seq;
+  boolean is_cycle;
+  double avg_coverage;
+  int min,max;
+  
+  
+  path_nodes        = calloc(max_length,sizeof(dBNode*));
+  path_orientations = calloc(max_length,sizeof(Orientation));
+  path_labels       = calloc(max_length,sizeof(Nucleotide));
+  seq               = calloc(max_length+1+db_graph->kmer_size,sizeof(char));
+  
+  
+
+  void parse_supernode(dBNode * node, int* pgf, int* cox, int* data1, int* data2, int* data3, int* data4, int* data5){
+    
+    char name[100];
+
+    if (db_node_check_status(node, none) == true)
+      {
+	int length = db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_length,&db_node_action_set_status_visited,
+									       path_nodes,path_orientations,path_labels,
+									       seq,&avg_coverage,&min,&max,&is_cycle,
+									       db_graph, get_colour, get_covg);
+	
+
+	if (length>1)
+	  {	
+	    if (length==max_length)
+	      {
+		printf("contig length equals max length [%i] \n",max_length);
+	      }
+	    boolean too_short=false;
+	    *pgf += count_reads_on_allele_in_specific_colour(path_nodes, length, 0, &too_short);
+	    *cox += count_reads_on_allele_in_specific_colour(path_nodes, length, 1, &too_short);
+	    *data1 += count_reads_on_allele_in_specific_colour(path_nodes, length, 2, &too_short);
+	    *data2 += count_reads_on_allele_in_specific_colour(path_nodes, length, 3, &too_short);
+	    *data3 += count_reads_on_allele_in_specific_colour(path_nodes, length, 4, &too_short);
+	    *data4 += count_reads_on_allele_in_specific_colour(path_nodes, length, 5, &too_short);
+	    *data5 += count_reads_on_allele_in_specific_colour(path_nodes, length, 6, &too_short);
+	  }
+      }
+  }
+  
+  traverse_hash_collecting_sums(&parse_supernode, db_graph, pgf, cox, data1, data2, data3, data4, data5);
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
+
+  free(path_nodes);
+  free(path_orientations);
+  free(path_labels);
+  free(seq);
+}
+
+
+
+void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_graph,
+						int tot_pgf, int tot_cox, 
+						int tot_data1, int tot_data2, int tot_data3, int tot_data4, int tot_data5,
+						boolean (*condition)(dBNode**, int, int*), FILE* fout)
+{
+
+  Edges get_colour(const dBNode* e)
+  {
+    Edges edges=0;
+    edges |= e->individual_edges[0];
+    edges |= e->individual_edges[1];
+    return edges;
+  }
+
+  int get_covg(const dBNode* e)  
+  {
+    int cov= e->coverage[0] + e->coverage[1];
+    return cov;
+  }
+
+  int count_nodes=0;
+  
+  dBNode * *    path_nodes;
+  Orientation * path_orientations;
+  Nucleotide *  path_labels;
+  char * seq;
+  boolean is_cycle;
+  double avg_coverage;
+  int min,max;
+  
+  
+  path_nodes        = calloc(max_length,sizeof(dBNode*));
+  path_orientations = calloc(max_length,sizeof(Orientation));
+  path_labels       = calloc(max_length,sizeof(Nucleotide));
+  seq               = calloc(max_length+1+db_graph->kmer_size,sizeof(char));
+  
+  int count_pgf_specific=0;
+  int count_cox_specific=0;
+
+
+  void parse_supernode(dBNode * node){
+    
+    char name[100];
+
+    if (db_node_check_status(node, none) == true)
+      {
+	int length = db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_length,&db_node_action_set_status_visited,
+									       path_nodes,path_orientations,path_labels,
+									       seq,&avg_coverage,&min,&max,&is_cycle,
+									       db_graph, get_colour, get_covg);
+	
+
+	int which_haplotype=-1; //condition will be  true iff the supernode is specific to one haplotype or the other (ie distinguishes the two)
+	if ( (length>1) && (condition(path_nodes, length, &which_haplotype)==true) )
+	  {	
+
+	    if (length==max_length)
+	      {
+		printf("contig length equals max length [%i] \n",max_length);
+	      }
+	    if (which_haplotype==0)
+	      {
+		count_pgf_specific++;
+	      }
+	    else if (which_haplotype==1)
+	      {
+		count_cox_specific++;		
+	      }
+	    else
+	      {
+		printf("imposdible. specific to %d\n", which_haplotype);
+		exit(1);
+	      }
+	    boolean too_short=false;
+	    int pgf = count_reads_on_allele_in_specific_colour(path_nodes, length, 0, &too_short);
+	    int cox = count_reads_on_allele_in_specific_colour(path_nodes, length, 1, &too_short);
+	    int data1 = count_reads_on_allele_in_specific_colour(path_nodes, length, 2, &too_short);
+	    int data2 = count_reads_on_allele_in_specific_colour(path_nodes, length, 3, &too_short);
+	    int data3 = count_reads_on_allele_in_specific_colour(path_nodes, length, 4, &too_short);
+	    int data4 = count_reads_on_allele_in_specific_colour(path_nodes, length, 5, &too_short);
+	    int data5 = count_reads_on_allele_in_specific_colour(path_nodes, length, 6, &too_short);
+	    
+
+	    fprintf(fout,"Supernode_");
+	    if (which_haplotype==0)
+	      {
+		fprintf(fout,"PGF_specific_%d\t", count_pgf_specific);
+	      }
+	    else if (which_haplotype==1)
+	      {
+		fprintf(fout,"COX_specific_%d\t", count_cox_specific);
+	      }
+	    float log_ratio_pgf=-1;
+	    if ((pgf>0) && (tot_pgf>0))
+	      {
+		log_ratio_pgf = log(pgf)-log(tot_pgf);
+	      }
+	    else if (tot_pgf>0)
+	      {
+		log_ratio_pgf = -log(tot_pgf);
+	      }
+	    float log_ratio_cox=-1;
+	    if ( (cox>0) && (tot_cox>0))
+	      {
+		log_ratio_cox = log(cox)-log(tot_cox);
+	      }
+	    else if (tot_cox>0)
+	      {
+		log_ratio_cox = -log(tot_cox);
+	      }
+
+	    float log_ratio_data1=-1;
+	    if ((data1>0) && (tot_data1>0) )
+	      {
+		log_ratio_data1 = log(data1)-log(tot_data1);
+	      }
+	    else if (tot_data1>0)
+	      {
+		log_ratio_data1 = -log(tot_data1);
+	      }
+	    float log_ratio_data2=-1;
+	    if ((data2>0) &&(tot_data2>0))
+	      {
+		log_ratio_data2 = log(data2)-log(tot_data2);
+	      }
+	    else if (tot_data2>0)
+	      {
+		log_ratio_data2 = -log(tot_data2);
+	      }
+
+	    float log_ratio_data3=-1;
+	    if ((data3>0) &&(tot_data3>0))
+	      {
+		log_ratio_data3 = log(data3)-log(tot_data3);
+	      }
+	    else if (tot_data3>0)
+	      {
+		log_ratio_data3 = -log(tot_data3);
+	      }
+
+	    float log_ratio_data4=-1;
+	    if ((data4>0) &&(tot_data4>0))
+	      {
+		log_ratio_data4 = log(data4)-log(tot_data4);
+	      }
+	    else if (tot_data4>0)
+	      {
+		log_ratio_data4 = -log(tot_data4);
+	      }
+
+	    float log_ratio_data5=-1;
+	    if ((data5>0) &&(tot_data5>0))
+	      {
+		log_ratio_data5 = log(data5)-log(tot_data5);
+	      }
+	    else if (tot_data5>0)
+	      {
+		log_ratio_data5 = -log(tot_data5);
+	      }
+
+
+	    
+	    fprintf(fout,"%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", log_ratio_pgf, log_ratio_cox, log_ratio_data1,log_ratio_data2,log_ratio_data3,log_ratio_data4,log_ratio_data5);
+	    
+	  }
+      }
+  }
+
+  fprintf(fout, "Supernode(COX_or_PGF_specific)\tPure_PGF_log_ratio\tPure_COX_log_ratio\tdata1_log_ratio\tdata2_log_ratio\tdata3_log_ratio\tdata4_log_ratio\tdata5_log_ratio\n");
+  hash_table_traverse(&parse_supernode, db_graph);
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph); 
+
+  free(path_nodes);
+  free(path_orientations);
+  free(path_labels);
+  free(seq);
+}
+
+
+
+
+
+
 void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index){
   long long count_kmers=0;
 
