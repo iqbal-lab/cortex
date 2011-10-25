@@ -120,7 +120,8 @@ boolean more_than_one_colour_in_multicol_binary(char* file, int kmer_size)
       total_seqs[i]=0;
       total_seqs_ptrs[i]=&(total_seqs[i]);
     }
-  check_binary_signature(fp, kmer_size, BINVERSION, &num_cols, mean_readlens_ptrs, total_seqs_ptrs);
+  int binversion_in_header;
+  check_binary_signature(fp, kmer_size, BINVERSION, &num_cols, mean_readlens_ptrs, total_seqs_ptrs, &binversion_in_header);
   fclose(fp);
 
   if (num_cols>1)
@@ -1730,7 +1731,8 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  total_seqs[i]=0;
 	  total_seqs_ptrs[i]=&(total_seqs[i]);
 	}
-      boolean is_multicol_bin_ok = check_binary_signature(fp, cmd_ptr->kmer_size, BINVERSION, &num_m_cols, mean_readlens_ptrs, total_seqs_ptrs);
+      int binversion_in_header;
+      boolean is_multicol_bin_ok = check_binary_signature(fp, cmd_ptr->kmer_size, BINVERSION, &num_m_cols, mean_readlens_ptrs, total_seqs_ptrs, &binversion_in_header);
 
       
       fclose(fp);

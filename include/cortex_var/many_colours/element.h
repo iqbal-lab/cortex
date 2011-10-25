@@ -42,6 +42,7 @@
 #include <binary_kmer.h>
 #include <global.h>
 #include <stdio.h>
+#include <stdint.h>
 
 //type definitions
 
@@ -73,9 +74,9 @@ typedef enum{
 
 typedef struct{
   BinaryKmer kmer;
-  int coverage[NUMBER_OF_COLOURS];
-  Edges individual_edges[NUMBER_OF_COLOURS];
-  char status; //will case a NodeStatus to char
+  int        coverage[NUMBER_OF_COLOURS];
+  Edges      individual_edges[NUMBER_OF_COLOURS];
+  char       status; //will case a NodeStatus to char
 } Element;
 
 
@@ -251,14 +252,14 @@ void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node);
 void db_node_print_single_colour_binary_of_specified_colour(FILE * fp, dBNode * node, int colour);
 
 //reading multicolour binaries
-boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * node, int num_colours_in_binary);
+boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * node, int num_colours_in_binary, int binversion_in_binheader);
 //boolean db_node_read_multicolour_binary_with_less_colours(FILE * fp, short kmer_size, dBNode * node, int num_colours_in_binary);
 
 
 
 //read a binary for an individual person, as dumped by the target "graph"
 // the edge array type and index tell you which person you should load this data into
-boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index);
+boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index, int binversion_in_binheader);
 
 
 boolean db_node_check_read_start(dBNode* node, Orientation ori);
