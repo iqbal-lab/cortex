@@ -1025,8 +1025,11 @@ int main(int argc, char **argv){
 	  printf("Cannot open output fule for knight\n");
 	  exit(1);
 	}
+      
+      call_bubbles_distinguishing_cox_pgf(db_graph, 10000, fout);
+      fclose(fout);
 
-
+      /*
       //this supernode is seen in pure COX RNA but not in pure PGF RNA, or vice-versa
       //PGF pure RNA is colour 0, and pure COX RNA is colour 1
       boolean condition_splits_COX_and_PGF_RNA(dBNode** path, int length, int* which_col)
@@ -1103,60 +1106,8 @@ int main(int argc, char **argv){
 						 &condition_splits_COX_and_PGF_RNA, fout);
       fclose(fout);
 
-      /*
-      //assume colours 0 and 1 are the reference with the two alternate haplotypes, and colour 3 is the RNA-seq sequence data
-      //collect histograms of coverage on  kmers that are unique to each haplotype
-      printf("Binaries loaded - start J Knight analysis\n");
-      long long** phist1 = (long long**) malloc( sizeof(long long*)*100000000);
-      long long** phist2 = (long long**) malloc( sizeof(long long*)*100000000);
-      if ( (phist1==NULL) || (phist2==NULL) )
-	{
-	  printf("Unable to malloc arrays for Julian K expot");
-	  exit(1);
-	}
-      long long* hist1 = (long long*) malloc( sizeof(long long)*100000000);
-      long long* hist2 = (long long*) malloc( sizeof(long long)*100000000);
-      if ( (hist1==NULL) || (hist2==NULL) )
-	{
-	  printf("Unable to malloc arrays for Julian K expot");
-	  exit(1);
-	}
-      int k;
-      for (k=0; k<100000000; k++)
-	{
-	  hist1[k]=0;
-	  hist2[k]=0;
-	  phist1[k]=&(hist1[k]);
-	  phist2[k]=&(hist2[k]);
-	}
-
-      double prop_kmers_in_pgf_not_cox = get_histogram_for_kmers_in_just_one_haplotype(phist1,99999999,0,1,2, db_graph);//in PGF but not COX
-      double prop_kmers_in_cox_not_pgf = get_histogram_for_kmers_in_just_one_haplotype(phist2,99999999,1,0,2, db_graph);//in COX but not PGF
-
-      long long max_val=0;
-      for (k=0;k<100000000; k++)
-	{
-	  if ( (hist1[k]>0)||(hist2[k]>0) )
-	    {
-	      max_val=k;
-	    }
-	}
-
-      FILE* fout = fopen(cmd_line.knight_output, "w");
-      if (fout==NULL)
-	{
-	  printf("Cannot open output fule for knight\n");
-	  exit(1);
-	}
-      fprintf(fout, "Covg\tPGF_not_COX\tCOX_not_PGF\n");
-      for (k=0;k<=max_val; k++)
-	{
-	  fprintf(fout, "%d\t%qd\t%qd\n", k, hist1[k], hist2[k]);
-	}
-      fclose(fout);
-      printf("Proportion of kmers in PGF but not COX which are hit: %f\n", prop_kmers_in_pgf_not_cox);
-      printf("Proportion of kmers in COX but not PGF: %f\n", prop_kmers_in_cox_not_pgf);
       */
+
       printf("Finished J Knight analysis\n");
     }
   
