@@ -46,7 +46,7 @@ ifndef NUM_COLS
   NUM_COLS = 1
 endif
 
-#ifeq ($(BITFIELDS),0)
+##ifeq ($(BITFIELDS),0)
 #$(error Invalid value for MAXK - either omit or use 32*x-1)
 #endif
 
