@@ -46,6 +46,13 @@ ifndef NUM_COLS
   NUM_COLS = 1
 endif
 
+#ifeq ($(BITFIELDS),0)
+#$(error Invalid value for MAXK - either omit or use 32*x-1)
+#endif
+
+
+
+
 #main program includes
 IDIR_BASIC =include/basic
 IDIR_BASE_ENCODING = ${IDIR_BASIC}/event_encoding/base_encoding

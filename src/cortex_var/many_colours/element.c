@@ -829,6 +829,17 @@ boolean db_node_check_status(dBNode * node, NodeStatus status){
   return node->status == (char) status;
 }
 
+boolean db_node_check_status_to_be_dumped(dBNode * node){
+  if ( db_node_check_status(node, to_be_dumped)==true )
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
 boolean db_node_check_status_not_pruned(dBNode * node){
   if ( db_node_check_status(node, none) || db_node_check_status(node,visited))
     {

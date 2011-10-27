@@ -1235,7 +1235,12 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
     k = j+1;
     while (!ret && k<i){
       
-      if (path_nodes[j][lengths[j]] == path_nodes[k][lengths[k]]){
+      if ( 
+	  (path_nodes[j][lengths[j]]        == path_nodes[k][lengths[k]])
+	  &&
+	  (path_orientations[j][lengths[j]] == path_orientations[k][lengths[k]]) 
+	   )
+	{
 	*length1 = lengths[j];
 	*length2 = lengths[k];
 
@@ -4075,7 +4080,7 @@ void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph *
 
 
 //if you don't want to/care about graph_info, pass in NULL
-void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
+int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   
@@ -4109,6 +4114,7 @@ void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), 
   fclose(fout);
 
   printf("%qd kmers dumped\n",count);
+  return count;
 }
 
 
@@ -9736,7 +9742,7 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph){
 		       orientation == forward ? "forward" : "reverse");
 		if (fix)
 		  {
-		    db_node_reset_edge(node,n,orientation, individual_edge_array, j);
+		    db_node_reset_edge(node,orientation,n, individual_edge_array, j);
 		  }
 	      }
 	    else
@@ -9773,6 +9779,60 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph){
   printf("%qd nodes checked\n",count_nodes);
   return count_nodes;
 }
+
+
+//clean off edges that point nowhere - caused when you dump a subgraph
+long long db_graph_clean_orphan_edges(dBGraph * db_graph){
+  dBNode * next_node;
+  Nucleotide reverse_nucleotide;
+  Orientation next_orientation;
+  long long count_nodes=0;
+  char tmp_seq[db_graph->kmer_size+1]; 
+
+  void check_node_with_orientation(dBNode * node, Orientation orientation){
+
+    int j;
+    for (j=0; j< NUMBER_OF_COLOURS; j++)
+      {
+
+	void check_base(Nucleotide n)
+	{     
+	  if (db_node_edge_exist(node,n,orientation, individual_edge_array, j)==true){
+
+	    next_node = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,n,&reverse_nucleotide,db_graph, individual_edge_array, j);
+	    
+	    if(next_node == NULL)
+	      {
+		db_node_reset_edge(node,orientation,n, individual_edge_array, j);
+	      }
+	    else
+	      {
+		if (db_node_edge_exist(next_node,reverse_nucleotide,opposite_orientation(next_orientation), individual_edge_array, j)==false)
+		  {
+		    db_node_reset_edge(node,orientation, n, individual_edge_array, j);
+		  }
+	      }
+	    
+	  }
+	}
+
+	nucleotide_iterator(&check_base);
+      }
+  }
+
+
+  void check_node(dBNode * node){
+    check_node_with_orientation(node,forward);
+    check_node_with_orientation(node,reverse);
+    count_nodes++;
+  }
+
+
+  hash_table_traverse(&check_node,db_graph); 
+  return count_nodes;
+}
+
+
 
 
 

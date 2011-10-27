@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo
  * 
@@ -93,6 +92,7 @@ typedef struct
 
   double manually_entered_seq_error_rate;
   boolean manually_override_error_rate;
+  boolean dump_aligned_overlap_binary;
   boolean specified_max_var_len;
   ExperimentType expt_type;
   
@@ -117,6 +117,7 @@ typedef struct
   char list_fastaq_to_align[MAX_FILENAME_LEN];
   char fasta_alleles_for_complex_genotyping[MAX_FILENAME_LEN];
   char fastaq_for_estimating_genome_complexity[MAX_FILENAME_LEN];
+  char output_aligned_overlap_binname[MAX_FILENAME_LEN];
 
   boolean cut_homopolymers;
   boolean remove_pcr_dups;

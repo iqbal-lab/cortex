@@ -39,6 +39,8 @@
 #include <model_selection.h>
 #include <experiment.h>
 #include <genome_complexity.h>
+#include <math.h>
+#include <maths.h>
 
 void timestamp();
 
@@ -324,6 +326,10 @@ int main(int argc, char **argv){
   int hash_key_bits, bucket_size;
   dBGraph * db_graph = NULL;
   short kmer_size;
+
+  //next two needed much later
+  int num_kmers_dumped_after_alignment=0;
+  char tmp_dump[300];
 
 
   //***************************************************************************
@@ -667,7 +673,7 @@ int main(int argc, char **argv){
 	      if (cmd_line.load_colours_only_where_overlap_clean_colour==false)
 		{
 		  printf("If you specify --successively_dump_cleaned_colours, you must also specify --load_colours_only_where_overlap_clean_colour\n");
-		  printf("That should fix your problem, however, this should have been caught as soon as Cortex parsed your command-line. Please inform Zam Iqbal (zam@well.ox.ac.uk) so he can fix that bug\n");
+		  printf("That should fix your problem, however, this should have been caught as soon as Cortex parsed your command-line. Please inform Zam Iqbal (zam@well.ox.ac.uk) so he can fix that UI bug\n");
 		  exit(1);
 		}
 	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
@@ -943,12 +949,19 @@ int main(int argc, char **argv){
       align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(cmd_line.format_of_files_to_align, cmd_line.list_fastaq_to_align,
 								       cmd_line.max_read_length, array_of_colours, array_of_colournames,
 								       NUMBER_OF_COLOURS,db_graph,cmd_line.quality_score_offset,
-								       false, NULL, NULL);
+								       false, NULL, NULL, cmd_line.dump_aligned_overlap_binary);
       for (j=0; j<NUMBER_OF_COLOURS; j++)
 	{
 	  free(array_of_colournames[j]);
 	}
       printf("Completed alignment of fasta/q to graph to print coverages in all colours\n");
+      printf("Dumping a binary, %s,  of all the nodes which were hit by the alignment process\n", cmd_line.output_aligned_overlap_binname);
+      sprintf(tmp_dump, "%s.temporary_delete_me", cmd_line.output_aligned_overlap_binname);
+      printf("In the process we have to create a temporary file, %s, which you can/should delete when cortex has completed\n", tmp_dump);
+
+      num_kmers_dumped_after_alignment = db_graph_dump_binary(tmp_dump, &db_node_check_status_to_be_dumped, db_graph, &db_graph_info);
+      hash_table_traverse(&db_node_action_set_status_of_unpruned_to_none, db_graph);	
+
     }
   if (cmd_line.print_colour_overlap_matrix==true)
     {
@@ -1035,6 +1048,65 @@ int main(int argc, char **argv){
   
   hash_table_free(&db_graph);
   timestamp();
+
+  if (cmd_line.dump_aligned_overlap_binary==true)
+    {
+
+      //reload the binary you dumped, clean off the edges, and then dump again.
+      //malloc a new hash table. Only needs to be as large as you need.
+      float s = log(num_kmers_dumped_after_alignment/100)/log(2); //make width 100
+      // now 2^s = num_kmers_dumped_after_alignment/100, so s is my height
+      dBGraph* db_graph2;
+      if (1.5*num_kmers_dumped_after_alignment < pow(2,hash_key_bits) * bucket_size)
+	{
+	  db_graph2 = hash_table_new(s,150, max_retries, kmer_size);
+	  if (db_graph2==NULL)
+	    {
+	      printf("Giving up - unable to allocate memory for the second, tiny hash table\n");
+	      exit(1);
+	    }
+	}
+      else
+	{
+	  db_graph2 = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
+	  if (db_graph2==NULL)
+	    {
+	      printf("Cortex has nearly finished. It's done everything you asked it to do, and has dumped a binary of the overlap of your alignment with the graph. However, by \"ripping out\" nodes from the main graph, that dumped binary now has edges pointing out to nodes that are not in the binary. So the idea is that we have deallocated the main graph now, and we were going to load the dumped binary, clean it up and re-dump it. However that has failed, becaause we could not malloc the memory to do it - the most likely reason is that someone else is sharing your server and their mempory use has gone up.\n");
+	      exit(1);
+	    }
+	}	  
+      
+      //this is all for the API - we wont use this info
+      int mean_readlens2[NUMBER_OF_COLOURS];
+      int* mean_readlens_ptrs2[NUMBER_OF_COLOURS];
+      long long total_seq_in_that_colour2[NUMBER_OF_COLOURS];
+      long long* total_seq_in_that_colour_ptrs2[NUMBER_OF_COLOURS];
+      int j;
+      for (j=0; j<NUMBER_OF_COLOURS; j++)
+	{
+	  mean_readlens2[j]=0;
+	  mean_readlens_ptrs2[j]=&(mean_readlens2[j]);
+	  total_seq_in_that_colour2[j]=0;
+	  total_seq_in_that_colour_ptrs2[j]=&(total_seq_in_that_colour2[j]);
+	}
+      int num_c;//number of colours in binary
+      
+      long long  n  = load_multicolour_binary_from_filename_into_graph(tmp_dump,db_graph2, &num_c,
+								       mean_readlens_ptrs2, total_seq_in_that_colour_ptrs2);
+      printf("Loaded the temporary binary %s and found %qd kmers\n", tmp_dump, n);
+      //this is why we are going to all this bother - cleaning edges
+      db_graph_clean_orphan_edges(db_graph2);
+      db_graph_dump_binary(cmd_line.output_aligned_overlap_binname, 
+			   &db_node_condition_always_true,
+			   db_graph2, &db_graph_info);//deliberately using original graph info - we want the same info
+      hash_table_free(&db_graph2);
+    }
+  
+
+
+
+
+
   printf("Cortex completed - have a nice day!\n");
   return 0;
 }

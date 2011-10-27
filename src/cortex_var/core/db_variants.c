@@ -407,8 +407,10 @@ void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl)
 // NOTE THIS GENOTYPES THE SITE
 // if you enter ref_colour=-1, there is no ref. Otherwise, the ref colour will be ignored for calculations like theta, where
 // we are aggregating covg.
-boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var, DiscoveryMethod caller, 
-				    GraphInfo* ginfo, double seq_error_rate_per_base, long long genome_length, int kmer,
+boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, 
+				    VariantBranchesAndFlanks* var, DiscoveryMethod caller, 
+				    GraphInfo* ginfo, double seq_error_rate_per_base, 
+				    long long genome_length, int kmer,
 				    int ref_colour, ExperimentType expt)
 {
   int number_individals=NUMBER_OF_COLOURS;

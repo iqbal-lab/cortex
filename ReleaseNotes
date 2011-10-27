@@ -24,21 +24,30 @@ New features:
 The error cleaning method described in our paper, gives better
 sensitivity than a simple coverage cutoff for kmers.
 
- - Genotype calling with likelihoods
+-- Genotype calling with likelihoods
 If you specify the type of experiment (each colour is
 a diploid sample, or each colour is haploid), and
 also specify the genome length, Cortex will make genotype 
 calls and give a genotype confidence (difference between
 maximum log likelihood and next one).
 
- - Allows user to enter estimated sequencing error rate
+-- Allows user to enter estimated sequencing error rate
 
- --exclude_ref_bubbles
+--exclude_ref_bubbles
 New option which allows you to explicitly say you want to
 remove bubbles found in the reference; previously this was inferred
 to be true if you specified the reference colour with --ref_colour,
 but now there are situations when you might want to specify the reference
 colour without excluding ref-bubbles. See manual for details.
+
+--dumping of aligned subgraph
+Previous versions already supported aligning fasta/q to a graph and printing our coverage
+in the different colours. This version also allows the user to choose to dumpa new binary graph,
+just of the subgraph which is touched by the alignment process. Suppose you have a particular
+pair of alleles of interest, or gene, and you have a big whole-genome graph which is sometimes
+cumbersome. All you need to do is make a fasta of the regions you are interested in, and align it,
+and Cortex can dump the subgraph just of the region touched by the alignment.
+Future releases will allow you to dump "the region around" the aligned bit also.
 
 --genotype_site - This is beta code, used for the proof of concept
 genotyping of HLA-B in our paper. The syntax is ugly, and both the UI and 
@@ -60,6 +69,15 @@ then ask your sysadmin to install:
 gsl-bin
 libgsl0ldbl
 libgsl0-dev
+
+
+
+Thanks to:
+Isaac Turner for very many bug reports and usability suggestions.
+Alex Dilthey for a neat Makefile change
+Ian Streeter for pointing out a bug I thought I had fixed (now really fixed)
+
+
 
 
 +++++++++++++++++++++++++++++++++++++++++++++

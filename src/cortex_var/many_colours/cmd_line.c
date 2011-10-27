@@ -1035,27 +1035,63 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	break ;
        }
 
-    case 'G'://align a list of fasta/q to the graph and print colour coverages
+    case 'G'://align a list of fasta/q to the graph and print colour coverages, and optionally dump binary of subgraph which is touched by alignment
       {
-	
 	if (optarg==NULL)
-	  errx(1,"[--align FILENAME] option requires a filename");
-	
-	if (strlen(optarg)<MAX_FILENAME_LEN)
+	  errx(1,"[--align FILENAME,[output binary name|no]] option requires a filename, a comma, then either an output binary name or \"no\", depending on whether you want to dump a single-colour binary of the part of the graph that is aligned to.\n");
+
+	if (strlen(optarg)<MAX_FILENAME_LEN*2)
 	  {
-	    strcpy(cmdline_ptr->list_fastaq_to_align,optarg);
+	
+	    char* filename = NULL;
+	    char delims[] = ",";
+	    char temp[MAX_FILENAME_LEN*2];
+	    temp[0]='\0';
+	    strcpy(temp, optarg);
+	    filename = strtok(temp, delims );
+	    if (filename==NULL)
+	      {
+		errx(1,"[--align] option requires a filename, a comma, then either an output binaryname or \"no\", depending on whether you want to dump a binary of part ofthe graph that is aligned to - i.e. the overlap of your sequences and the graph\n");
+	      }
+	    else if (access(filename,F_OK)!=0){
+	      errx(1,"[--align]   - Cannot open this filelist of files to align  [%s] . Abort.\n", filename);
+	    }
+
+	    strcpy(cmdline_ptr->list_fastaq_to_align,filename);
 	    cmdline_ptr->align_given_list=true;
+
+	    char* dump_bin=NULL;
+	    dump_bin = strtok(NULL, delims);
+	    if (dump_bin==NULL)
+	      {
+		//do nothing - default is dump no binary
+		printf("No output file specified, so will not dump binary of overlap of alignment and graph\n");
+	      }
+	    else if (strcmp(dump_bin, "no")==0)
+	      {
+		//do nothing - default is dump no binary
+		printf("User has specified NOT to dump binary of overlap of alignment and graph\n");
+
+	      }
+	    else if (access(dump_bin,F_OK)==0){
+	      errx(1,"[--align] output binary name [%s] already exists - will not overwrite. Abort.\n",dump_bin);
+	    }
+	    else
+	      {
+		cmdline_ptr->dump_aligned_overlap_binary=true;
+		strcpy(cmdline_ptr->output_aligned_overlap_binname, dump_bin);
+		printf("Will dump binary of overlap of sequences with graph in file %s\n", cmdline_ptr->output_aligned_overlap_binname);
+	      }
+
 	  }
 	else
 	  {
-	    errx(1,"[--align] filename too long [%s]",optarg);
+	    errx(1,"[--align] filename(s) too long [%s]",optarg);
 	  }
 	
-	if (access(optarg,F_OK)!=0){
-	  errx(1,"[--align_fasta] filename [%s] cannot be found/opened",optarg);
-	}
 	
 	break ;
+
       }
     case 'H': //file format of files that we will align to the graph - either fasta or  fastq
       {
