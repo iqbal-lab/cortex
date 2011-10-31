@@ -1582,10 +1582,10 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	      //printf("Start next sample - this time z is %d", z);
 	      //fflush(stdout);
 
-	      char name[100];
-	      if (strlen(array_of_allele_names[i]) + strlen(array_of_allele_names[j])>100 )
+	      char name[300];
+	      if (strlen(array_of_allele_names[i]) + strlen(array_of_allele_names[j])>300 )
 		{
-		  printf("Names of alleles %s and %s are too long (%d) - concatenated, Cortex requires them to be less than 100 characters", 
+		  printf("Names of alleles %s and %s are too long (%d) - concatenated, Cortex requires them to be less than 300 characters", 
 			 array_of_allele_names[i], array_of_allele_names[j],(int)( strlen(array_of_allele_names[i]) + strlen(array_of_allele_names[j])) );
 		  exit(1);
 		}

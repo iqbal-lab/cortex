@@ -74,7 +74,6 @@ libgsl0-dev
 
 Thanks to:
 Isaac Turner for very many bug reports and usability suggestions.
-Alex Dilthey for a neat Makefile change
 Ian Streeter for pointing out a bug I thought I had fixed (now really fixed)
 
 

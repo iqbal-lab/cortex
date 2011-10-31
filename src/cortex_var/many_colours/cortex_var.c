@@ -1057,16 +1057,16 @@ int main(int argc, char **argv){
       float s = log(num_kmers_dumped_after_alignment/100)/log(2); //make width 100
       // now 2^s = num_kmers_dumped_after_alignment/100, so s is my height
       dBGraph* db_graph2;
-      if (1.5*num_kmers_dumped_after_alignment < pow(2,hash_key_bits) * bucket_size)
+      boolean try_smaller_hash=true;
+      if (2*num_kmers_dumped_after_alignment < pow(2,hash_key_bits) * bucket_size)
 	{
-	  db_graph2 = hash_table_new(s,150, max_retries, kmer_size);
+	  db_graph2 = hash_table_new(s+1,100, max_retries, kmer_size);
 	  if (db_graph2==NULL)
 	    {
-	      printf("Giving up - unable to allocate memory for the second, tiny hash table\n");
-	      exit(1);
+	      try_smaller_hash=false;
 	    }
 	}
-      else
+      if (try_smaller_hash==false)
 	{
 	  db_graph2 = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
 	  if (db_graph2==NULL)

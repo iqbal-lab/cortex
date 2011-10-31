@@ -987,3 +987,123 @@ Colour:	MeanReadLen	TotalSeq
     }
 
 }
+
+
+
+void regression_test_2_genotyping_of_PD_SNP_call()
+{
+  if (NUMBER_OF_COLOURS<2)
+    {
+      printf("This test requires >=2 colours, skipping\n");
+      return;
+    }
+
+  VariantBranchesAndFlanks var;
+  dBNode* branch1[56];
+  dBNode* branch2[56];
+  int i,j;
+  for (i=0; i<56; i++)
+    {
+      branch1[i]=new_element();
+      branch2[i]=new_element();
+    }
+
+  int br1_covg_0[]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2};
+
+  for (j=0; j<56; j++)
+    {
+      branch1[j]->coverage[0]=br1_covg_0[j];
+    }
+  int br1_covg_1[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,11};
+  for (j=0; j<56; j++)
+    {
+      branch1[j]->coverage[1]=br1_covg_1[j];
+    }
+
+
+zahara
+
+  int br2_covg_0[]={3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+
+  for (j=0; j<56; j++)
+    {
+      branch1[j]->coverage[0]=br2_covg_0[j];
+    }
+  int br2_covg_1[]={18,15,14,15,14,14,14,14,14,14,15,14,14,14,16,16,15,13,13,12,11,11,11,11,10,10,9,9,8,9,10,10,4,5,6,7,7,7,8,7,7,8,8,10,10,10,8,8,8,8,9,9,9,9,9,9};
+  for (j=0; j<56; j++)
+    {
+      branch1[j]->coverage[1]=br2_covg_1[j];
+    }
+  
+  /*
+
+The above site was called by the PD caller on NA12878 with k=55 - this is the graph info:
+Colour 0 = reference
+
+****************************************
+  SUMMARY:
+  Colour: MeanReadLen     TotalSeq
+0       100     200
+1       90     
+****************************************
+*/
+
+  GraphInfo ginfo;
+  graph_info_initialise(&ginfo);
+  graph_info_set_seq(&ginfo, 0, 2912760135);
+  graph_info_set_seq(&ginfo, 1, 18286122352 );
+  graph_info_set_seq(&ginfo, 2, 16816361244);
+  graph_info_set_seq(&ginfo, 3, 18039181209);
+  graph_info_set_seq(&ginfo, 4, 15879192506);
+  graph_info_set_seq(&ginfo, 5, 17729089947);
+  graph_info_set_seq(&ginfo, 6, 15750659112);
+  graph_info_set_seq(&ginfo, 7, 26196361173);
+  graph_info_set_seq(&ginfo, 8, 20202087523);
+  graph_info_set_seq(&ginfo, 9, 18907785783);
+  graph_info_set_seq(&ginfo, 10, 16870486574);
+  graph_info_set_mean_readlen(&ginfo, 0, 0);
+  graph_info_set_mean_readlen(&ginfo, 1, 50);
+  graph_info_set_mean_readlen(&ginfo, 2, 50);
+  graph_info_set_mean_readlen(&ginfo, 3, 50);
+  graph_info_set_mean_readlen(&ginfo, 4, 50);
+  graph_info_set_mean_readlen(&ginfo, 5, 50);
+  graph_info_set_mean_readlen(&ginfo, 6, 50);
+  graph_info_set_mean_readlen(&ginfo, 7, 50);
+  graph_info_set_mean_readlen(&ginfo, 8, 52);
+  graph_info_set_mean_readlen(&ginfo, 9, 50);
+  graph_info_set_mean_readlen(&ginfo, 10, 50);
+ 
+
+  GraphAndModelInfo model_info;
+  double mu=0.8;
+  double seq_err_rate_per_base=0.01;
+  int ref_colour=0;
+  int num_chroms=20; 
+  long long genome_len = 3000000000;
+  initialise_model_info(&model_info, &ginfo, genome_len, mu, seq_err_rate_per_base, 
+			ref_colour, num_chroms, EachColourADiploidSampleExceptTheRefColour);
+
+  var.one_allele       = branch1;
+  var.len_one_allele   = 22;
+  var.other_allele     = branch2;
+  var.len_other_allele = 134;
+
+  AnnotatedPutativeVariant annovar;
+  initialise_putative_variant(&annovar, &var, BubbleCaller, 
+			      model_info.ginfo, model_info.seq_error_rate_per_base, 
+			      model_info.genome_len, 
+			      31, model_info.ref_colour, model_info.expt_type);
+
+
+  // Since none of the colours except colour 3 has any coverage AT ALL on branch1, I simply
+  // cannot accept a genotype call which is het or hom_one for those colours
+
+  CU_ASSERT(annovar.genotype[0]!=hom_one);
+
+
+
+
+
+
+
+}

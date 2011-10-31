@@ -183,8 +183,10 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
 void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
 {
   boolean too_short = false;
-  int initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
-  int initial_covg_plus_upward_jumps_branch2 = count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
+  int initial_covg_plus_upward_jumps_branch1 = 
+    count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
+  int initial_covg_plus_upward_jumps_branch2 = 
+    count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
 
   if (too_short==true)
     {
@@ -198,7 +200,7 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
       return ;
     }
 
-  double theta_one = ((double)(sequencing_depth_of_coverage * annovar->var->len_one_allele))/( (double) read_length );
+  double theta_one   = ((double)(sequencing_depth_of_coverage * annovar->var->len_one_allele))  /( (double) read_length );
   double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
 
 
@@ -231,6 +233,7 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
 void get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
 {
   boolean too_short = false;
+  //next two lines are an expenseive way of setting too_short!!
   int initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
   int initial_covg_plus_upward_jumps_branch2 = count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
 
@@ -249,9 +252,9 @@ void get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(Annotate
   else //assume caller has checked is not a SNP
     {
       //set to hom_other (the variant allele)
-      annovar->gen_log_lh[colour].log_lh[hom_one]=-999;
-      annovar->gen_log_lh[colour].log_lh[het]=-999;
-      annovar->gen_log_lh[colour].log_lh[hom_other]=0;
+      annovar->gen_log_lh[colour].log_lh[hom_one]   =-999;
+      annovar->gen_log_lh[colour].log_lh[het]       =-999;
+      annovar->gen_log_lh[colour].log_lh[hom_other] = 0;
       return;
     }
 
@@ -523,11 +526,17 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar,
 		   || 
 		   ( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) )
 		{
-		  get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+		  get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  
+										 seq_error_rate_per_base, 
+										 sequencing_depth_of_coverage,
+										 mean_read_len,i);
 		}
 	      else
 		{
-		  get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+		  get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(annovar,  
+										     seq_error_rate_per_base, 
+										     sequencing_depth_of_coverage,
+										     mean_read_len,i);
 		}
 
 		  
