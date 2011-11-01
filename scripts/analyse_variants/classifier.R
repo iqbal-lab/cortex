@@ -262,7 +262,7 @@ colnames(op)<-c("ID", "LLk.G1", "LLk.SNP", "LLk.ERR", "LLk.REP", "REF.BUBBLE", "
 for (i in 1:to.do) {
 
 	cat("\rDoing site ", i);
-	d1<-t(array(as.integer(d[i,7:ncol(d)]), c(2, 10)));
+	d1<-t(array(as.integer(d[i,7:ncol(d)]), c(2, num_samples)));
 
 	k.cov.emp<-(d[i,3]+d[i,4])*mn.cov/2;
 

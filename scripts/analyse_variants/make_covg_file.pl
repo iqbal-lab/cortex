@@ -104,7 +104,18 @@ while (<CALLS>)
 	    print OUT "NOT_IN_REF\t";
 	}
 	print OUT $lenbr1."\t".$lenbr2."\t";
-	print OUT $array_counts_for_each_colour[$ref_colour];
+	if ($ref_colour>=0)
+	{
+	    print OUT $array_counts_for_each_colour[$ref_colour];
+	}
+	elsif ($ref_colour==-1)
+	{
+	    print OUT "0";
+	}
+	else
+	{
+	    die("Ref colour is not -1 and yet is not positive\n");
+	}
 	print OUT "\t";
 	for ($i=0; $i<$number_of_colours; $i++)
 	{
