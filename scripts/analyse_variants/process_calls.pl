@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Basename;
-use lib "/home/zam/installed_apps/Statistics-Descriptive-2.6";
+use lib Statistics-Descriptive-2.6;
 use Descriptive;
 
 
@@ -9,28 +9,40 @@ use Descriptive;
 # branches against each other to determine variant type,
 # splits out SNPs from clusters so we have precise loci,
 # applies any of the following filters
-#  - demand 5prime flank maps with quality> some threshold
-#  - for ref-assisted calls, insist that the normalised covg on the ref-allele is close to zero.
+#  - demand 5prime flank maps with quality> 30
 # dumps to VCF4.0
 
+####  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+### The following are the Command line arguments you must enter:
 my $callfile = shift;
-my $algo = "bubble";
-my $prefix = "zam";
+my $algo = shift; #"bubble" or "pd"
 my $outdir = shift;
 my $outvcf_filename_stub = shift;
-my $cortex_version = "version";#used for making the calls --> vcf header
 my $colours = shift;#list of names of colours/sample,s one per line
-my $reference = shift; #text to go into VCF header to describe this callset
 my $number_of_colours = shift;
 my $reference_colour = shift;# -1 if unknown, ignore this colour for the VCF - dont print out anything
-my $pooled_colour = shift; #-1 if unknown, ignore this colour for the VCF - dont print out anything
-#my $list_output_files_for_colour_bins = shift; #one output file per colour - use it to get covg and read len per colour - isa hack
+my $pooled_colour = shift;   #-1 if unknown, ignore this colour for the VCF - dont print out anything
 my $kmer = shift;
-my $apply_filter_one_allele_must_be_ref = shift; #yes or no
-my $stampy_hash_stub = "/Net/birch/data/zam/ref/pt/stampy/pan";
-#my $stampy_hash_stub = "/Net/birch/data/zam/results/zi_20110706_chimp_sim/stampy/human_ch22_with_Ns_cropped"; #name for reference hash file created by Stampy
-#my $stampy_hash_stub = "/Net/birch//data/zam/ref/hs/stampy/ncbi36_female"; #name for reference hash file created by Stampy
+my $apply_filter_one_allele_must_be_ref = shift; ##  "yes" if one of your colours is the reference
+                                                 ##  otherwise "no" - will produce VCF-like output
 
+
+
+####  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+## The following all require you to modify them for your system
+
+## build a Stampy hash of the genome to whiich you want to map, and give the path here
+my $stampy_hash_stub = "/path/to/stampyhash";
+my $stampy_bin = "/path/to/stampy.py";
+my $flank_bin = "/path/to/cortex dir/scripts/analyse_variants/make_5p_flank_file.pl";
+my $process_bubbles_bin = "/path/to/cortex dir/scripts/analyse_variants/process_bubbles.pl";
+
+
+
+
+
+
+my $prefix = "cortex_".$algo;
 print "Using reference colour $reference_colour\n";
 
 if ( ($apply_filter_one_allele_must_be_ref eq "yes") && ($reference_colour==-1) )
@@ -38,14 +50,8 @@ if ( ($apply_filter_one_allele_must_be_ref eq "yes") && ($reference_colour==-1) 
     die("If you say yes to apply_filter_one_allele_must_be_ref then you must specify the ref colour");
 }
 
-my $genome_length = 3000000000;
 
-### initialisation
-my $stampy_bin = "/home/zam/installed_apps/stampy-1.0.13/stampy.py";
 
-my $flank_bin = "/home/zam/dev/hg/scripts/cortex/make_5p_flank_file.pl";
-my $flank_and_br1_bin = "/home/zam/dev/hg/scripts/cortex/make_5p_flank_plus_branch1_file.pl";
-my $process_bubbles_bin = "/home/zam/dev/hg/CORTEX_release/scripts/analyse_variants/process_bubbles.pl";
 
 ########
 #### checks
@@ -56,16 +62,11 @@ if (!(-e $flank_bin) )
 {
     die("Cannot find $flank_bin");
 }
-if (!(-e $flank_and_br1_bin) )
-{
-    die("Cannot find $flank_and_br1_bin");
-}
 
 if (!(-e $process_bubbles_bin))
 {
     die("Cannot find $process_bubbles_bin");
 }
-
 
 if (!(-e $callfile))
 {
@@ -78,16 +79,15 @@ if ($outdir !~ /\/$/)
 {
     $outdir = $outdir.'/';
 }
-
-#my @readlens_for_each_colour=();
-#my @covgs_for_each_colour=();
-#get_readlen_covg_data_from_file_of_files($list_output_files_for_colour_bins, \@readlens_for_each_colour, \@covgs_for_each_colour);
-
+if (!(-e $outdir))
+{
+    die("Output directory $outdir does not exist");
+}
 
 ## 1. Map 5p flanks
 my $bname = basename($callfile);
 my $flankfile = $outdir.$bname.".5pflanks";
-#my $flankbr1file = $outdir.$bname.".5pflank_and_br1";
+
 
 if (!-e $flankfile)
 {
@@ -96,22 +96,11 @@ if (!-e $flankfile)
     my $flank_ret = qx{$flank_cmd};
     print "$flank_ret\n";
 }
-#if (!-e $flankbr1file)
-#{
-#    my $flank_cmd = "perl $flank_and_br1_bin $callfile > $flankbr1file";
-#    print "$flank_cmd\n";
-#    my $flank_ret = qx{$flank_cmd};
-#    print "$flank_ret\n";
-#}
 
 if ( (!(-e $flankfile)) || (-z $flankfile))
 {
     die("$flankfile either failed to be created, or was created with size zero");
 }
-#if ( (!(-e $flankbr1file)) || (-z $flankbr1file))
-#{
-#    die("$flankbr1file either failed to be created, or was created with size zero");
-#}
 
 my $mapped_flanks = $flankfile.".sam";
 if (-e $mapped_flanks)
@@ -125,19 +114,6 @@ else
     my $map_flanks_ret = qx{$map_flanks_cmd};
     print "$map_flanks_ret\n";
 }
-
-#my $mapped_flankbr1 = $flankbr1file.".sam";
-#if (-e $mapped_flankbr1)
-#{
-#    print ("$mapped_flankbr1 already exists, so wont re-do it\n");
-#}
-#else
-#{
-#    my $map_flanks_cmd = "$stampy_bin -g $stampy_hash_stub -h $stampy_hash_stub --norefoutput --inputformat=fasta -M $flankbr1file -o $mapped_flankbr1";
-#    print "$map_flanks_cmd\n";
-#    my $map_flanks_ret = qx{$map_flanks_cmd};
-#    print "$map_flanks_ret\n";
-#}
 
 my %var_name_to_cut_flank=();
 get_list_vars_with_cut_flanks($mapped_flanks, \%var_name_to_cut_flank);
@@ -162,13 +138,11 @@ else
 ##  3. Apply filters, and collect a list of good calls.
 
 my %var_name_to_flank_mq_filter=();
-my %var_name_to_PD_normalisation_filter=();
 my %var_name_to_covg_and_branch_filter=();
 my %var_name_to_combined_filtering_result=();
 
 
 filter_by_flank_mapqual($mapped_flanks, \%var_name_to_flank_mq_filter);
-#filter_by_flank_mapqual($mapped_flankbr1, \%var_name_to_flank_mq_filter);
 
 combine_all_filters(\%var_name_to_covg_and_branch_filter, \%var_name_to_flank_mq_filter, \%var_name_to_combined_filtering_result);
 
@@ -181,7 +155,6 @@ my $fh_decomp_vcf;
 
 open($fh_calls, $callfile)||die("Cannot open $callfile");
 open($fh_map_flanks, $mapped_flanks)||die("Cannot open $mapped_flanks");
-#open($fh_map_flanks, $mapped_flankbr1)||die("Cannot open $mapped_flankbr1");
 open($fh_proc_bub, $proc_bub_output)||die("Cannot open $proc_bub_output");
 my $simple_vcf_name = $outdir.$outvcf_filename_stub.".raw.vcf";
 open($fh_simple_vcf, "> $simple_vcf_name")||die("Cannot open ");
@@ -189,7 +162,7 @@ my $decomp_vcf_name = $outdir.$outvcf_filename_stub.".decomp.vcf";
 open($fh_decomp_vcf, "> $decomp_vcf_name")||die("Cannot open $decomp_vcf_name");
 
 ##print vcf header
-my $header = get_vcf_header($cortex_version, $reference, $colours);
+my $header = get_vcf_header($colours);
 print $fh_simple_vcf $header;
 print $fh_decomp_vcf $header;
 
@@ -208,48 +181,10 @@ close($fh_map_flanks);
 close($fh_proc_bub);
 
 
-sub get_readlen_covg_data_from_file_of_files
-{
-    my ($file, $aref_readlens, $aref_covgs) = @_;
 
-    open(FILE, $file)||die();
-    my $col = 0;
-    while (<FILE>)
-    {
-	my $line = $_;
-	chomp $line;
-	($aref_readlens->[$col], $aref_covgs->[$col])=get_readlen_covg_data_from_file($line);
-	$col++;
-    }
-    close(FILE);
-}
-
-sub get_readlen_covg_data_from_file
-{
-    my ($file) = @_;
-    if ($file =~ /ignore/)
-    {
-	return (1,0);
-    }
-
-    open(FILE2, $file)||die();
-    my $line = "";
-    while ($line !~ /SUMMARY/)
-    {
-	$line = <FILE2>;
-    }
-    <FILE2>;
-    $line = <FILE2>;
-    chomp $line;
-    my @sp = split(/\s+/, $line);
-    my $readlen = $sp[1];
-    my $covg = $sp[2];
-    close(FILE2);
-    return ($readlen, int($covg/$genome_length));
-}
 sub get_vcf_header
 {
-    my ($changeset, $reference, $colourfile) = @_;
+    my ($colourfile) = @_;
 
     my $date_cmd = "date \'+\%d\/\%m\/\%y\'";
     my $date = qx{$date_cmd};
@@ -259,8 +194,6 @@ sub get_vcf_header
     
     $head = $head. "##fileformat=VCFv4.0\n";
     $head = $head. "##fileDate=$date\n";
-    $head = $head. "##source=Cortex changeset $changeset\n";
-    $head = $head. "##reference=$reference\n";
     $head = $head. "##phasing=none, though some calls involve phasing clustered variants\n";
     $head = $head. "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
     $head = $head. "##FORMAT=<ID=COV,Number=2,Type=Integer,Description=\"Median coverage on ref and alt alleles\">\n";
@@ -273,15 +206,13 @@ sub get_vcf_header
     $head = $head. "##ALT=<ID=INS,Description=\"Insertion of novel sequence\">\n";
     $head = $head. "##ALT=<ID=INDEL,Description=\"Insertion-deletion\">\n";
     $head = $head. "##ALT=<ID=INV,Description=\"Inversion\">\n";
-    $head = $head. "##ALT=<ID=INV_INDEL,Description=\"Inversion+indel\">\n";
+    $head = $head. "##ALT=<ID=INV_INDEL,Description=\"Inversion+indel - this script overcalls these, so worth checking\">\n";
     $head = $head. "##ALT=<ID=DEL_INV,Description=\"Deletion + Inversion\">\n";
     $head = $head. "##ALT=<ID=INS_INV,Description=\"Insertion + Inversion\">\n";
     $head = $head. "##ALT=<ID=PH_SNPS,Description=\"Phased SNPs\">\n";
     $head = $head. "##ALT=<ID=COMPLEX, Description=\"Complex variant, collection of SNPs and indels\">\n";
     $head = $head. "##FILTER=<ID=MAPQ,Description=\"5prime flank maps to reference with mapping quality below 30\">\n";
  
-#    $head = $head. "##FILTER=<ID=path_div,Description=\"Nodes in ref allele of Path-divergence hom-non-ref call which are on the ref allele but not alt allele have median covg>0\">\n";
-#    $head = $head. "##FILTER=<ID=path_div,Description=\"All nodes in ref allele of Path-divergence call occur more than once in reference\">\n";
     $head =  $head."#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t";
     open(COLOURS, $colourfile)||die("Cannot open $colours");
     my $z;
