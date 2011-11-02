@@ -1433,7 +1433,8 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
   }
 
 
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, num_cols_in_loaded_binary, array_mean_readlens, array_total_seqs) ) )
+  int binversion_in_binheader;
+  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, num_cols_in_loaded_binary, array_mean_readlens, array_total_seqs, &binversion_in_binheader) ) )
     {
       printf("Cannot load this binary - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting.\n");
       exit(1);
@@ -1441,7 +1442,7 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
 
 
   //always reads the multicol binary into successive colours starting from 0 - assumes the hash table is empty prior to this
-  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, *num_cols_in_loaded_binary)){
+  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, *num_cols_in_loaded_binary, binversion_in_binheader)){
     count++;
     
     dBNode * current_node  = NULL;
@@ -1498,9 +1499,9 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
   }
 
 
-
+  int binversion_in_header;
   int num_cols_in_binary;
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary, &mean_readlen, &total_seq) ) )
+  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary, &mean_readlen, &total_seq, &binversion_in_header) ) )
     {
       printf("Cannot load this binary - fails signature check. Exiting.\n");
       exit(1);
@@ -1515,7 +1516,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
   
   //Go through all the entries in the binary file
   // each time you load the info into a temporary node, and load them *** into colour number index ***
-  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, type, index))
+  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, type, index, binversion_in_header))
     {
       count++;
 
@@ -2590,7 +2591,12 @@ void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_me
 
 
 //return yes if signature is consistent
-boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary, int** array_mean_readlens, long long** array_total_seqs)
+boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, 
+			       int* number_of_colours_in_binary, 
+			       int** array_mean_readlens, 
+			       long long** array_total_seqs,
+			       int *return_binversion
+			       )
 {
   int read;
   char magic_number[6];
@@ -2607,7 +2613,10 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* nu
 
     int version;
     read = fread(&version,sizeof(int),1,fp);
-    if (read>0 && version==BINVERSION)
+    *return_binversion = version;
+
+    //version 4 was the version I had for ages, up until I moved to using Uint32 in the binary
+    if (read>0 && ( (version==BINVERSION)|| (version==4)) )
       {
 
 	int kmer_size2;
@@ -2684,29 +2693,30 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* nu
 		      }
 		    else
 		      {
-			printf("You are loading  binary with %d colours into a graph with %d colours - incompatible\n",
-			       num_cols, NUMBER_OF_COLOURS);
+			printf("Problem reading chunk from binary. \n");
 		      }
 		  }
 		else
 		  {
-		    printf("Kmer of binary matches the current graph. However this binary was dumped with a different max_kmer size to that of the current graph\n");
-		    printf("This binary uses %d bitfields, and current graph uses %d\n", num_bitfields, NUMBER_OF_BITFIELDS_IN_BINARY_KMER);
+		    printf("You are loading  binary with %d colours into a graph with %d colours - incompatible\n",
+			   num_cols, NUMBER_OF_COLOURS);
 		  }
 	      }
 	    else
 	      {
-		printf("You are loading a binary with kmer=%d into a graph with kmer=%d - incompatible\n", kmer_size2, kmer_size);
+		printf("Kmer of binary matches the current graph. However this binary was dumped with a different max_kmer size to that of the current graph\n");
+		printf("This binary uses %d bitfields, and current graph uses %d\n", num_bitfields, NUMBER_OF_BITFIELDS_IN_BINARY_KMER);
+
 	      }
 	  }
 	else
 	  {
-	    printf("Binary versions do not match.\n");
+	printf("You are loading a binary with kmer=%d into a graph with kmer=%d - incompatible\n", kmer_size2, kmer_size);
 	  }
       }
     else
       {
-	printf("Binary does not have magic number in header. Corrupt, or not a Cortex binary\n");
+
       }
     
   }
@@ -2714,6 +2724,8 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* nu
     {
       printf("Binary fails signature check - was build for different kmer, or with different binary version. (For debug purposes: Magic number is %s and read is %d)\n", magic_number, read);
     }
+
+
   return ret;
 
 }

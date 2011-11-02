@@ -34,7 +34,7 @@
 #include <global.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <stdint.h>
 
 //currently noone calls this in normal use
 // In normal use, the priority queue allocates space to put the eloement directly within,
@@ -930,18 +930,18 @@ void db_node_print_multicolour_binary(FILE * fp, dBNode * node)
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
-  int covg[NUMBER_OF_COLOURS];
+  uint32_t covg[NUMBER_OF_COLOURS];
   Edges individual_edges[NUMBER_OF_COLOURS]; 
 
   int i;
   for (i=0; i< NUMBER_OF_COLOURS; i++)                                                     
     {                                                                                                         
-      covg[i] = db_node_get_coverage(node, individual_edge_array, i);
+      covg[i]            = (uint32_t) db_node_get_coverage(node, individual_edge_array, i);
       individual_edges[i]= get_edge_copy(*node, individual_edge_array, i);
     }      
 				  
   fwrite(&kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
-  fwrite(covg, sizeof(int), NUMBER_OF_COLOURS, fp); 
+  fwrite(covg, sizeof(uint32_t), NUMBER_OF_COLOURS, fp); 
   fwrite(individual_edges, sizeof(Edges), NUMBER_OF_COLOURS, fp);
 
   
@@ -953,14 +953,14 @@ void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node)
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
-  int covg;
+  uint32_t covg;
   Edges individual_edges; 
 
-  covg             = db_node_get_coverage(node, individual_edge_array, 0);
+  covg             = (uint32_t) db_node_get_coverage(node, individual_edge_array, 0);
   individual_edges = get_edge_copy(*node, individual_edge_array, 0);
   
   fwrite(&kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
-  fwrite(&covg, sizeof(int), 1, fp); 
+  fwrite(&covg, sizeof(uint32_t), 1, fp); 
   fwrite(&individual_edges, sizeof(Edges), 1, fp);
   fflush(fp); //zahara - debug only
   
@@ -972,15 +972,15 @@ void db_node_print_single_colour_binary_of_specified_colour(FILE * fp, dBNode * 
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
-  int covg;
-  Edges individual_edges; 
+  uint32_t covg;
+  Edges    individual_edges; 
 
-  covg             = db_node_get_coverage(node, individual_edge_array, colour);
+  covg             = (uint32_t) db_node_get_coverage(node, individual_edge_array, colour);
   individual_edges = get_edge_copy(*node, individual_edge_array, colour);
   
 				  
   fwrite(&kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
-  fwrite(&covg, sizeof(int), 1, fp); 
+  fwrite(&covg, sizeof(uint32_t), 1, fp); 
   fwrite(&individual_edges, sizeof(Edges), 1, fp);
 
   
@@ -1039,7 +1039,7 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 // this is checked when first opening the binary file
 // assumes we ar loading a single multicolour binary into an empty hash table, so initialises each node to 0 before 
 // adding info from the binary
-boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * node, int num_colours_in_binary)
+boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * node, int num_colours_in_binary, int binversion_in_binheader)
 {
 
   if ( (num_colours_in_binary>NUMBER_OF_COLOURS)
@@ -1053,44 +1053,79 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
     }
 
   
-  BinaryKmer kmer;
-
-  int covg_reading_from_binary[num_colours_in_binary];
-  Edges individual_edges_reading_from_binary[num_colours_in_binary];
- 
-  int read;
-
-  read = fread(&kmer,sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER,1,fp);  
-
-  if (read>0){
-
-    read = fread(covg_reading_from_binary, sizeof(int), num_colours_in_binary, fp);    
-    if (read==0){
-      puts("error with input file - failed to read covg in db_node_read_multicolour_binary\n");
-      exit(1);
-    }
-
-    read = fread(individual_edges_reading_from_binary, sizeof(Edges), num_colours_in_binary, fp);
-    if (read==0){
-      puts("error with input file - failed to read Edges in db_node_read_multicolour_binary\n");
-      exit(1);
-    }
-
-
-
-  }
-  else{
-    return false;
-  }
-
-  //element_initialise(node,&kmer,kmer_size);
-  element_set_kmer(node,&kmer,kmer_size);
-
-  int i;
-  for (i=0; i< num_colours_in_binary; i++)
+  if (binversion_in_binheader==4)//legacy
     {
-      node->coverage[i]         = covg_reading_from_binary[i];
-      node->individual_edges[i] = individual_edges_reading_from_binary[i];
+      BinaryKmer kmer;
+      int covg_reading_from_binary[num_colours_in_binary];
+      Edges    individual_edges_reading_from_binary[num_colours_in_binary];
+      int read;
+      read = fread(&kmer,sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER,1,fp);  
+      
+      if (read>0){
+	
+	read = fread(covg_reading_from_binary, sizeof(int), num_colours_in_binary, fp);    
+	if (read==0){
+	  puts("error with input file - failed to read covg in db_node_read_multicolour_binary\n");
+	  exit(1);
+	}
+	
+	read = fread(individual_edges_reading_from_binary, sizeof(Edges), num_colours_in_binary, fp);
+	if (read==0){
+	  puts("error with input file - failed to read Edges in db_node_read_multicolour_binary\n");
+	  exit(1);
+	}
+      }
+      else{
+	return false;
+      }
+
+      //element_initialise(node,&kmer,kmer_size);
+      element_set_kmer(node,&kmer,kmer_size);
+      
+      int i;
+      for (i=0; i< num_colours_in_binary; i++)
+	{
+	  node->coverage[i]         = covg_reading_from_binary[i];
+	  node->individual_edges[i] = individual_edges_reading_from_binary[i];
+	}
+    }
+  else
+    {
+      BinaryKmer kmer;
+      uint32_t covg_reading_from_binary[num_colours_in_binary];
+      Edges    individual_edges_reading_from_binary[num_colours_in_binary];
+      
+      int read;
+      
+      read = fread(&kmer,sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER,1,fp);  
+      
+      if (read>0){
+	
+	read = fread(covg_reading_from_binary, sizeof(uint32_t), num_colours_in_binary, fp);    
+	if (read==0){
+	  puts("error with input file - failed to read covg in db_node_read_multicolour_binary\n");
+	  exit(1);
+	}
+	
+	read = fread(individual_edges_reading_from_binary, sizeof(Edges), num_colours_in_binary, fp);
+	if (read==0){
+	  puts("error with input file - failed to read Edges in db_node_read_multicolour_binary\n");
+	  exit(1);
+	}
+      }
+      else{
+	return false;
+      }
+
+      //element_initialise(node,&kmer,kmer_size);
+      element_set_kmer(node,&kmer,kmer_size);
+      
+      int i;
+      for (i=0; i< num_colours_in_binary; i++)
+	{
+	  node->coverage[i]         = (int) covg_reading_from_binary[i];
+	  node->individual_edges[i] = individual_edges_reading_from_binary[i];
+	}
     }
 
   return true;
@@ -1100,7 +1135,7 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 
 
 // the edge array type and index tell you which person you should load this data into
-boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index)
+boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index, int binversion_in_binheader)
 {
 
   if ( (index<0) || (index>=NUMBER_OF_COLOURS))
@@ -1109,35 +1144,71 @@ boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * n
       exit(1);
     }
 
-  BinaryKmer kmer;
-  Edges edges;
-  int coverage;
-  int read;
-  
-  read = fread(&kmer,sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER,1,fp);
-
-  if (read>0){
-    read = fread(&coverage,sizeof(int),1,fp);    
-    if (read==0){
-      puts("error with input file - failed to read cvg, incompatible binary format?\n");
-      exit(1);
+  if (binversion_in_binheader==4)//legacy
+    {
+      BinaryKmer kmer;
+      Edges edges;
+      int coverage;
+      int read;
+      
+      read = fread(&kmer,sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER,1,fp);
+      
+      if (read>0){
+	read = fread(&coverage,sizeof(int),1,fp);    
+	if (read==0){
+	  puts("error with input file - failed to read cvg, incompatible binary format?\n");
+	  exit(1);
+	}
+	read = fread(&edges,sizeof(Edges),1,fp);
+	if (read==0){
+	  puts("error with input file - failed to read edges, incompatible binary format?\n");
+	  exit(1);
+	}   
+      }
+      else{
+	return false;
+      }
+      
+      element_set_kmer(node,&kmer,kmer_size);
+      //element_initialise(node,&kmer,kmer_size);
+      node->individual_edges[index]    = edges;
+      node->coverage[index]            = coverage;
+      db_node_action_set_status_none(node);
+      
     }
-    read = fread(&edges,sizeof(Edges),1,fp);
-    if (read==0){
-      puts("error with input file - failed to read edges, incompatible binary format?\n");
-      exit(1);
-    }   
-  }
-  else{
-    return false;
-  }
-
-  element_set_kmer(node,&kmer,kmer_size);
-  //element_initialise(node,&kmer,kmer_size);
-  node->individual_edges[index]    = edges;
-  node->coverage[index]            = coverage;
-  db_node_action_set_status_none(node);
- 
+  else//proper BINARY VERSION
+    {
+      BinaryKmer kmer;
+      Edges edges;
+      uint32_t coverage;
+      int read;
+      
+      read = fread(&kmer,sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER,1,fp);
+      
+      if (read>0){
+	read = fread(&coverage,sizeof(uint32_t),1,fp);    
+	if (read==0){
+	  puts("error with input file - failed to read cvg, incompatible binary format?\n");
+	  exit(1);
+	}
+	read = fread(&edges,sizeof(Edges),1,fp);
+	if (read==0){
+	  puts("error with input file - failed to read edges, incompatible binary format?\n");
+	  exit(1);
+	}   
+      }
+      else{
+	return false;
+      }
+      
+      element_set_kmer(node,&kmer,kmer_size);
+      //element_initialise(node,&kmer,kmer_size);
+      node->individual_edges[index]    = edges;
+      node->coverage[index]            = (int) coverage;
+      db_node_action_set_status_none(node);
+      
+    }
+  
   return true;
 }
 
