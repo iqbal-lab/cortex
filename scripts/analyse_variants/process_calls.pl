@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Basename;
-use lib Statistics-Descriptive-2.6;
+use lib "Statistics-Descriptive-2.6";
 use Descriptive;
 
 
@@ -15,7 +15,6 @@ use Descriptive;
 ####  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ### The following are the Command line arguments you must enter:
 my $callfile = shift;
-my $algo = shift; #"bubble" or "pd"
 my $outdir = shift;
 my $outvcf_filename_stub = shift;
 my $colours = shift;#list of names of colours/sample,s one per line
@@ -25,7 +24,7 @@ my $pooled_colour = shift;   #-1 if unknown, ignore this colour for the VCF - do
 my $kmer = shift;
 my $apply_filter_one_allele_must_be_ref = shift; ##  "yes" if one of your colours is the reference
                                                  ##  otherwise "no" - will produce VCF-like output
-
+my $classif = shift; ## file containing output of the population filter (classifier.R), or -1 if not used
 
 
 ####  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -39,11 +38,11 @@ my $process_bubbles_bin = "/path/to/cortex dir/scripts/analyse_variants/process_
 
 
 
+#### no need to modify anything below this line
 
 
-
-my $prefix = "cortex_".$algo;
-print "Using reference colour $reference_colour\n";
+my $prefix = "cortex";
+#print "Using reference colour $reference_colour\n";
 
 if ( ($apply_filter_one_allele_must_be_ref eq "yes") && ($reference_colour==-1) )
 {
@@ -73,7 +72,10 @@ if (!(-e $callfile))
     die("Cannot find $callfile");
 }
 
-
+if ( ($classif ne "-1") && (!(-e $classif)) )
+{
+    die("Cannot find $classif, which you have entered as the population filter file. Either enter the correct file (and path) or use -1 to signify you are not using it");
+}
 
 if ($outdir !~ /\/$/)
 {
@@ -140,11 +142,15 @@ else
 my %var_name_to_flank_mq_filter=();
 my %var_name_to_covg_and_branch_filter=();
 my %var_name_to_combined_filtering_result=();
-
+my %pop_classifier=();
+my %pop_classifier_confidence=();
 
 filter_by_flank_mapqual($mapped_flanks, \%var_name_to_flank_mq_filter);
-
-combine_all_filters(\%var_name_to_covg_and_branch_filter, \%var_name_to_flank_mq_filter, \%var_name_to_combined_filtering_result);
+if ($classif ne "-1")
+{
+    get_pop_filter_info($classif, \%pop_classifier, \%pop_classifier_confidence);
+}
+combine_all_filters(\%var_name_to_covg_and_branch_filter, \%var_name_to_flank_mq_filter, \%var_name_to_combined_filtering_result,  \%pop_classifier);
 
 
 my $fh_calls;
@@ -174,7 +180,7 @@ while ($ret==1)
     $ret = print_next_vcf_entry_for_easy_and_decomposed_vcfs($fh_calls, $fh_map_flanks, $fh_proc_bub,
 							     \%var_name_to_combined_filtering_result, \%var_name_to_cut_flank,
 							     1,1,
-							     $fh_simple_vcf, $fh_decomp_vcf);
+							     $fh_simple_vcf, $fh_decomp_vcf, \%pop_classifier_confidence);
 }
 close($fh_calls);
 close($fh_map_flanks);
@@ -197,7 +203,8 @@ sub get_vcf_header
     $head = $head. "##phasing=none, though some calls involve phasing clustered variants\n";
     $head = $head. "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
     $head = $head. "##FORMAT=<ID=COV,Number=2,Type=Integer,Description=\"Median coverage on ref and alt alleles\">\n";
-    $head = $head. "##FORMAT=<ID=CONF,Number=1,Type=Float,Description=\"Genotype confidence. Difference in log likelihood of most likely and next most likely genotype\">\n";
+    $head = $head. "##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description=\"Genotype confidence. Difference in log likelihood of most likely and next most likely genotype\">\n";
+    $head = $head. "##FORMAT=<ID=SITE_CONF,Number=1,Type=Float,Description=\"Probabilitic site classification confidence. Difference in log likelihood of most likely and next most likely model (models are variant, repeat and error)\">\n";
     $head = $head. "##INFO=<ID=SVLEN,Number=1,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">\n";
     $head = $head. "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of variant\">\n";
     $head = $head. "##ALT=<ID=SNP,Description=\"SNP\">\n";
@@ -310,7 +317,7 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 
     my ($file_handle_calls, $file_handle_map_flanks, $file_handle_proc_bubble_output,
 	$href_varname_to_passing_all_filters, $href_var_name_to_cut_flank,
-	$print_easy_vcf, $print_decomp_vcf, $fh_easy, $fh_decomp) = @_;
+	$print_easy_vcf, $print_decomp_vcf, $fh_easy, $fh_decomp, $href_pop_classifier_confidence) = @_;
 
 
 
@@ -347,12 +354,12 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 	## if niether allele is the ref allele - ignore this
 	if ($which_is_ref eq "neither")
 	{
-	    print "Ignore var $var_name, both alleles non ref!\n";
+	    #print "Ignore var $var_name, both alleles non ref!\n";
 	    return 1;
 	}
 	elsif ($which_is_ref eq "b")
 	{
-	    print "Ignore var $var_name, both alleles REF!\n";
+	    #print "Ignore var $var_name, both alleles REF!\n";
 	    return 1;
 	}
     }
@@ -387,7 +394,7 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 			 $aref_br1_cov, $aref_br2_cov, $href_var_name_to_cut_flank, $possible_inversion, $clean_indel, $split_phased_snps,
 			 0,0,0,0,\@empty, 
 			 $classification, $class_llk_rep, $class_llk_var,
-			 $genotype, $llk_hom1, $llk_het, $llk_hom2) ;
+			 $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_confidence) ;
     }
     if ($print_decomp_vcf==1)
     {
@@ -400,7 +407,7 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 			 $aref_snp_coords, $aref_snp_alleles,
 			 $aref_coords_of_indels, $aref_alleles_of_indels, $aref_indel_needs_extra_base,
 			 $classification, $class_llk_rep, $class_llk_var,
-			 $genotype, $llk_hom1, $llk_het, $llk_hom2) ;
+			 $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_confidence) ;
 
 	
     }
@@ -420,7 +427,7 @@ sub print_vcf_entry
 	 $split_phased_snps, $aref_snp_coords, $aref_snp_alleles,
 	 $aref_indel_coords, $aref_indel_alleles, $aref_indel_needs_extra_base,
 	 $classification, $class_llk_rep, $class_llk_var,
-	 $genotype, $llk_hom1, $llk_het, $llk_hom2) = @_;
+	 $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_conf) = @_;
 
     my $vcf_entry_chr = $chr;
     my $vcf_entry_pos;
@@ -516,10 +523,26 @@ sub print_vcf_entry
 	    $vcf_entry_ref_allele = $new;
 	}
 	
-	print $fh_output_vcf "$vcf_entry_chr\t$vcf_entry_pos\t$var_name\t$vcf_entry_ref_allele\t$vcf_entry_alt_allele\t.\t$filter_result\t$info\tGT:COV:CONF\t";
+	print $fh_output_vcf "$vcf_entry_chr\t$vcf_entry_pos\t$var_name\t$vcf_entry_ref_allele\t$vcf_entry_alt_allele\t.\t$filter_result\t$info\t";
+	if (  (scalar(@$genotype)>0) && (scalar (keys %$href_pop_classifier_conf) >0) )
+	{
+	    print $fh_output_vcf "GT:COV:GT_CONF:SITE_CONF\t";
+	}
+	elsif (scalar(@$genotype)>0)## genotypes called, but no site confidences/no pop classifier
+	{
+	    print $fh_output_vcf "GT:COV:GT_CONF\t";
+	}
+	elsif (scalar(keys %$href_pop_classifier_conf) >0)##pop classifier, but no genotypes called (seems impossible to me)
+	{
+	    print $fh_output_vcf "GT:COV:SITE_CONF\t";
+	}
+	else
+	{
+	    print $fh_output_vcf "COV\t";
+	}
 	print_all_genotypes_and_covgs($fh_output_vcf, $aref_br1_cov, $aref_br2_cov, $which_is_ref,
 				      $classification, $class_llk_rep, $class_llk_var,
-				      $genotype, $llk_hom1, $llk_het, $llk_hom2);
+				      $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_conf, $var_name);
 
     }
     else
@@ -566,9 +589,25 @@ sub print_vcf_entry
 
 	    my $this_snp_name = $var_name."_sub_snp_".$cnt;
 	    my $this_snp_info = "SVTYPE=SNP_FROM_COMPLEX;SVLEN=0";
-	    print $fh_output_vcf "$this_snp_chr\t$this_snp_pos\t$this_snp_name\t$this_snp_ref_allele\t$this_snp_alt_allele\t.\t$filter_result\t$this_snp_info\tGT:COV:CONF\t";
+	    print $fh_output_vcf "$this_snp_chr\t$this_snp_pos\t$this_snp_name\t$this_snp_ref_allele\t$this_snp_alt_allele\t.\t$filter_result\t$this_snp_info\t";
+	    if ( (scalar (@$genotype)>0) &&  (scalar(keys %$href_pop_classifier_conf) >0) )
+	    {
+			print $fh_output_vcf "GT:COV:GT_CONF:SITE_CONF\t";
+	    }
+	    elsif (scalar (@$genotype)>0)##just genotype and no pop filter
+	    {
+		print $fh_output_vcf "GT:COV:GT_CONF\t";
+	    }
+	    elsif (scalar(keys %$href_pop_classifier_conf) >0)
+	    {
+		print $fh_output_vcf "GT:COV:SITE_CONF\t";
+	    }
+	    else
+	    {
+		print $fh_output_vcf "COV\t";
+	    }
 	    print_all_genotypes_and_covgs($fh_output_vcf, $aref_br1_cov, $aref_br2_cov,  $which_is_ref, $classification, $class_llk_rep, $class_llk_var,
-					  $genotype, $llk_hom1, $llk_het, $llk_hom2);
+					  $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_conf, $var_name);
 	    
 	}
 	$cnt=0;
@@ -619,9 +658,27 @@ sub print_vcf_entry
             my $this_indel_name = $var_name."_sub_indel_".$cnt;
 	    my $svlen = length($this_indel_ref_allele)-length($this_indel_alt_allele);
             my $this_indel_info = "SVTYPE=INDEL_FROM_COMPLEX;SVLEN=$svlen";
-            print $fh_output_vcf "$this_indel_chr\t$this_indel_pos\t$this_indel_name\t$this_indel_ref_allele\t$this_indel_alt_allele\t.\t$filter_result\t$this_indel_info\tGT:COV:CONF\t";
+            print $fh_output_vcf "$this_indel_chr\t$this_indel_pos\t$this_indel_name\t$this_indel_ref_allele\t$this_indel_alt_allele\t.\t$filter_result\t$this_indel_info\t";
+
+	    if ( (scalar @$genotype >0) && (scalar(keys %$href_pop_classifier_conf) >0) )
+	    {
+		print $fh_output_vcf "GT:COV:GT_CONF:SITE_CONF\t";
+	    }
+	    elsif (scalar @$genotype >0)
+	    {
+		print $fh_output_vcf "GT:COV:GT_CONF\t";
+	    }
+	    elsif (scalar(keys %$href_pop_classifier_conf) >0)
+	    {
+		print $fh_output_vcf "GT:COV:SITE_CONF\t";
+	    }
+	    else
+	    {
+		print $fh_output_vcf "COV\t";
+	    }
+
 	    print_all_genotypes_and_covgs($fh_output_vcf, $aref_br1_cov, $aref_br2_cov,  $which_is_ref, $classification, $class_llk_rep, $class_llk_var,
-					  $genotype, $llk_hom1, $llk_het, $llk_hom2);
+					  $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_conf, $var_name);
 	    
 
 	    $index_of_indel++;
@@ -722,7 +779,43 @@ sub print_all_genotypes_and_covgs
 {
     my ($fh, $aref_br1_cov, $aref_br2_cov,  $which_is_ref,
 	$classification, $class_llk_rep, $class_llk_var,
-	$genotype, $llk_hom1, $llk_het, $llk_hom2) = @_;
+	$genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_conf, $name) = @_;
+
+    my $do_we_have_genotypes;
+    my $num_samples = $number_of_colours;
+    if ($reference_colour>=0)
+    {
+	$num_samples=$num_samples-1;
+    }
+    if ($pooled_colour>=0)
+    {
+	$num_samples=$num_samples-1;
+    }
+
+    my $do_we_have_pop_filter=0;
+    if (scalar keys(%$href_pop_conf) >0)
+    {
+	$do_we_have_pop_filter=1;
+    }
+
+
+    if (scalar(@$genotype)==0)
+    {
+	$do_we_have_genotypes=0;
+    }
+    elsif (scalar(@$genotype)>=$num_samples)
+    {
+	$do_we_have_genotypes=1;
+    }
+    else
+    {
+	print("Programming error - we have $num_samples samples to genotype but this function: print_all_genotypes_and_covgs has only been given this many: ");
+	print scalar(@$genotype);
+	die("Contact Zam\n");
+    }
+
+
+
     my $j;
     for ($j=0; $j<$number_of_colours; $j++)
     {
@@ -730,25 +823,23 @@ sub print_all_genotypes_and_covgs
 	{
 	    next;
 	}
-	## new genotyper returns an aref of one array ref per colour. Each of these contains log prob hom1, het, hom2 and then the genotype call in [01]/[01] format
-	my $aref_lik_and_genotypes_br1_v_br2 = new_genotyper($genotype, $llk_hom1, $llk_het, $llk_hom2);
+	#my $aref_lik_and_genotypes_br1_v_br2 = new_genotyper($genotype, $llk_hom1, $llk_het, $llk_hom2);
 	my $cov;
-	my $genotype;
-	my $confidence=get_confidence($aref_lik_and_genotypes_br1_v_br2->[$j]->[0],
-				      $aref_lik_and_genotypes_br1_v_br2->[$j]->[1],
-				      $aref_lik_and_genotypes_br1_v_br2->[$j]->[2]);
+	my $gtype;
+	my $confidence=get_confidence($llk_hom1->[$j],$llk_het->[$j],$llk_hom2->[$j]);
 
+	my $site_conf = sprintf("%.2f", $href_pop_conf->{$name});
 	if ($which_is_ref==1)
 	{
-	    $genotype = $aref_lik_and_genotypes_br1_v_br2->[$j]->[3];
+	    $gtype = $genotype->[$j];
 	    $cov=$aref_br1_cov->[$j].",".$aref_br2_cov->[$j];
 	}
 	else
 	{
-	    $genotype = switch_genotype($aref_lik_and_genotypes_br1_v_br2->[$j]->[3]);
+	    $gtype = switch_genotype($genotype->[$j]);
 	    if (scalar @$aref_br2_cov != $number_of_colours)
 	    {
-		print ("Don't hve enogh covgs for branch2 - just have ");
+		print ("Don't have enough covgs for branch2 - just have ");
 		print scalar @$aref_br2_cov;
 		die();
 	    }
@@ -762,7 +853,23 @@ sub print_all_genotypes_and_covgs
 	    }
 	    $cov=$aref_br2_cov->[$j].",".$aref_br1_cov->[$j];
 	}
-	print $fh "$genotype:$cov:$confidence";
+	
+	if ( ($do_we_have_pop_filter==1) && ($do_we_have_genotypes==1) )
+	{
+	    print $fh "$gtype:$cov:$confidence:$site_conf";
+	}
+	elsif ($do_we_have_genotypes==1)
+	{
+	    print $fh "$gtype:$cov:$confidence";
+	}
+	elsif ($do_we_have_pop_filter==1) 
+	{
+	    print $fh "$gtype:$cov:$site_conf";
+	}
+	else
+	{
+	    print $fh "$cov";
+	}
 	if ($j<$number_of_colours-1)
 	{
 	    print $fh "\t";
@@ -1104,6 +1211,10 @@ sub get_next_var_from_callfile
 	    {
 		push @arr_geno, "1/1";
 	    }
+	    elsif ($sp[1] eq "NO_CALL")
+	    {
+		push @arr_geno, "-1/-1";## should never see the light of day, and easy to spot if appears in VCF
+	    }
 	    else
 	    {
 		die("Bad genotype on $line");
@@ -1209,7 +1320,7 @@ sub get_next_var_from_callfile
     }
     else
     {
-	print "ZAMMMER $line\n";
+	print "totally unexpected error on  $line - conect zam\@well.ox.ac.uk\n";
 	die();
     }
 }
@@ -1290,7 +1401,7 @@ sub switch_genotype
     if ($str =~ /^([01])\/([01])/)
     {
 	my $a  = $1;
-	my $b = $2;
+	my $b =  $2;
 
 	if ($a ==0)
 	{
@@ -1308,7 +1419,19 @@ sub switch_genotype
         {
 	    $b=0;
         }
-        return $a.'/'.$b;
+
+	## might as well return 0/1 rather than 1/0
+	my $ret;
+	if ($a.'/'.$b eq "1/0")
+	{
+	    $ret="0/1";
+	}
+	else
+	{
+	    $ret=$a.'/'.$b;
+	}
+
+        return $ret;
 
     }
     else
@@ -2198,25 +2321,44 @@ sub combine_all_filters
 {
     my ($href_var_name_to_covg_and_branch_filter, 
 	$href_var_name_to_flank_mq_filter, 
-	$href_var_name_to_combined_filtering_result) = @_;
+	$href_var_name_to_combined_filtering_result, 
+	$href_pop_classifier) = @_;
 
 
     foreach my $key (keys %$href_var_name_to_flank_mq_filter)
     {
-	if ($href_var_name_to_flank_mq_filter->{$key} eq "PASS")
-	{
-		$href_var_name_to_combined_filtering_result->{$key}="PASS";
-	}
-	#elsif (!exists $href_var_name_to_covg_and_branch_filter->{$key})
-	#{
-	#    die("$key is not in the covg and branch filter hash\n");
-	#}
-	elsif ($href_var_name_to_flank_mq_filter->{$key} ne "PASS")
+#	if ($href_var_name_to_flank_mq_filter->{$key} eq "PASS")#
+#	{
+#		$href_var_name_to_combined_filtering_result->{$key}="PASS";
+#	}
+	if ($href_var_name_to_flank_mq_filter->{$key} ne "PASS")
 	{
 	    $href_var_name_to_combined_filtering_result->{$key}="MAPQ";
 	}
     }
+    foreach my $key (keys %$href_pop_classifier)
+    {
+	my $reason = uc($href_pop_classifier->{$key});
+	if ($href_pop_classifier->{$key} ne "variant")
+	{
+	    if (!exists $href_var_name_to_combined_filtering_result->{$key})
+	    {
+		$href_var_name_to_combined_filtering_result->{$key}="PF_FAIL_".$reason;
+	    }
+	    else
+	    {
+		$href_var_name_to_combined_filtering_result->{$key}=$href_var_name_to_combined_filtering_result->{$key}.",PF_FAIL_".$reason;
+	    }
+	}
+    }
     
+    foreach my $key (keys %$href_var_name_to_flank_mq_filter)
+    {
+	if (!exists $href_var_name_to_combined_filtering_result->{$key})
+	{
+	    $href_var_name_to_combined_filtering_result->{$key}="PASS";
+	}
+    }
     
 }
 
@@ -2243,6 +2385,23 @@ sub get_list_vars_with_cut_flanks
 		die("programming error on $line");
 	    }
 	}
+    }
+    close(FILE);
+}
+
+
+sub get_pop_filter_info
+{
+    my ($file, $href, $href_conf) = @_;
+    open(FILE, $file)||die("Cannot find the file containing output of classifer.R - you entered it as an argument, $file");
+    while (<FILE>)
+    {
+	my $line= $_;
+	chomp $line;
+	my @sp = split(/\t/, $line);
+	my $name = $prefix."_var_".$sp[0];
+	$href->{$name} = $sp[1];## classification
+	$href_conf->{$name} = $sp[2];
     }
     close(FILE);
 }
