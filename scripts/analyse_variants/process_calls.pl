@@ -27,6 +27,8 @@ my $apply_filter_one_allele_must_be_ref = shift; ##  "yes" if one of your colour
 my $classif = shift; ## file containing output of the population filter (classifier.R), or -1 if not used
 
 
+my $mapping_qual_thresh = 30;
+
 ####  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ## The following all require you to modify them for your system
 
@@ -218,7 +220,7 @@ sub get_vcf_header
     $head = $head. "##ALT=<ID=INS_INV,Description=\"Insertion + Inversion\">\n";
     $head = $head. "##ALT=<ID=PH_SNPS,Description=\"Phased SNPs\">\n";
     $head = $head. "##ALT=<ID=COMPLEX, Description=\"Complex variant, collection of SNPs and indels\">\n";
-    $head = $head. "##FILTER=<ID=MAPQ,Description=\"5prime flank maps to reference with mapping quality below 30\">\n";
+    $head = $head. "##FILTER=<ID=MAPQ,Description=\"5prime flank maps to reference with mapping quality below $mapping_qual_thresh\">\n";
  
     $head =  $head."#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t";
     open(COLOURS, $colourfile)||die("Cannot open $colours");
@@ -285,7 +287,7 @@ sub filter_by_flank_mapqual
 	    {
 		die("Expected query name in sam file would be of form var_1_5p_flank, but is $query");
 	    }	
-	    if ($sp[4]>=30)
+	    if ($sp[4]>=$mapping_qual_thresh)
 	    {
 		$href->{$varname}="PASS";
 	    }

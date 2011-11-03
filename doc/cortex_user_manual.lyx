@@ -83,12 +83,12 @@ General Introduction
 
 \begin_layout Standard
 Cortex is a software suite for de Bruijn genome assembly, consisting of
- two executables: - cortex_con for consensus assembly (primary contact Mario
- - mario.caccamo@tgac.ac.uk) and cortex_var for variation analysis and population
- assembly (primary contact Zam - zam@well.ox.ac.uk).
- For details of cortex_con, please consult the documentation on our website,
- cortexassembler.sourceforge.net.
- This document is about cortex_var.
+ two executables.
+ This document refers to just one of these - cortex_var - for variation
+ analysis and population assembly (primary contact Zam - zam@well.ox.ac.uk).
+ This work is done in collaboration with Gil McVean (in whose lab I work).
+ The other executable is cortex_con, for whole genome consensus assembly
+ (primary contact Mario - mario.caccamo@tgac.ac.uk).
  Some highlights of what cortex_var can do:
 \end_layout
 
@@ -192,14 +192,15 @@ De novo assembly and genotyping of variants using colored de Bruijn graphs
 \begin_inset Quotes erd
 \end_inset
 
-, (Nature Genetics)) for - description of our methods and model, simulations,
- a set of SNP, indel and structural variant calls on a HapMap/1000 Genomes
- human sample (NA12878); an assembly of 164 human individuals into a population
- graph, and determination of allele frequencies for 3Mb of novel sequence
- that is not accessible by mapping-based analysis, including much genic
- novel sequence that is of probable functional significance; reference-free
- variant calls on a population of 10 chimpanzees; the first demonstration
- of accurate typing of HLA-B from whole genome shotgun short-read data.
+, (Nature Genetics) (in press)) for - description of our methods and model,
+ simulations, a set of SNP, indel and structural variant calls on a HapMap/1000
+ Genomes human sample (NA12878); an assembly of 164 human individuals into
+ a population graph, and determination of allele frequencies for 3Mb of
+ novel sequence that is not accessible by mapping-based analysis, including
+ much genic novel sequence that is of probable functional significance;
+ reference-free variant calls on a population of 10 chimpanzees; the first
+ demonstration of accurate typing of HLA-B from whole genome shotgun short-read
+ data.
  
 \end_layout
 
@@ -282,8 +283,8 @@ status open
 
 \end_inset
 
-multicolour_bin FILENAME] = Filename of a multicolour binary, will be loaded
- first, into colours 0..n.
+multicolour_bin FILENAME] = Filename of a multicolour binary (includes single-co
+lour as a special case), will be loaded first, into colours 0..n.
  If using --colour_list also, those will be loaded into subsequent colours,
  after this.
 \end_layout
@@ -708,9 +709,10 @@ status open
 
 \end_inset
 
-detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch
- is in colour 0 (and not colour1) and the other branch is in colour1 (but
- not colour 0).
+detect_bubbles1 0/1 (with reference in colour 0 and sample in colour 1)
+ to find homozygous non-reference bubbles where one branch is in colour
+ 0 (and not colour1) and the other branch is in colour1 (but not colour
+ 0).
  However, one can do more complex things: e.g.
  
 \begin_inset ERT
@@ -800,7 +802,7 @@ detect_bubbles2 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] = Exactly the same
  immediately afterwards.
  This is to accomodate the common use-case where one loads a reference and
  an individual, and then wants to call homs, and hets.
- 
+ I will probably remove this in future releases.
 \end_layout
 
 \begin_layout Labeling
@@ -879,8 +881,18 @@ status open
 
 path_divergence_caller_output PATH_STUB] = Specifies the path and beginning
  of filenames of Path Divergence caller output files.
- One output file will be created per reference fasta listed in --list_ref_fasta
- 
+ One output file will be created per reference fasta listed in 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+list_ref_fasta 
 \end_layout
 
 \begin_layout Labeling
@@ -1000,7 +1012,29 @@ align FILENAME1,<FILENAME2|no>] = Aligns a list FILENAME1 of fasta/q files
  If FILENAME2 is specified, a Cortex binary graph is dumped of all marked
  nodes in the main graph - this allows the user to pull out subgraphs of
  regions of interest.
- Must also specify --align_input_format, and --max_read_len 
+ Must also specify 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+align_input_format, and 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+max_read_len 
 \end_layout
 
 \begin_layout Labeling
@@ -1083,8 +1117,18 @@ genotype_site] = (Beta code!) Genotype a single complex (typically multiallelic)
  I recommend you stick with "no" for now.
  The final argument, MIN, is optional and allows performance speedup by
  disarding any genotype with log-likelihood<MIN.
- See manual for details.Must also specify --max_var_len to give the length
- of the longest allele
+ See manual for details.Must also specify 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+max_var_len to give the length of the longest allele
 \end_layout
 
 \begin_layout Section
@@ -1228,7 +1272,7 @@ load binaries for different individuals into different colours for variation
 \end_layout
 
 \begin_layout Subsubsection
-File Input
+File input
 \end_layout
 
 \begin_layout Standard
@@ -1739,7 +1783,7 @@ width
  as an overestimate.
  2^16 * 75 =~ 4.9 million.
  Thus we specify --mem_height=16 --mem_width=75.
- The memory-use M (in bytes) of a cortex_var cingle-colour hash table with
+ The memory-use M (in bytes) of a cortex_var single-colour hash table with
  N nodes, using an executable that supports a maximum kmer of K, can be
  calculated precisely, using this formula (explanation given in our paper):
 \end_layout
@@ -1789,8 +1833,7 @@ M=\left(8\left\lceil \frac{K}{32}\right\rceil +5C+1\right)N
 \end_layout
 
 \begin_layout Standard
-Note that this formula reduces to that for cortex_con if C=1.
- For example, if we want to load sequence data for a deeply-sequenced trio
+For example, if we want to load sequence data for a deeply-sequenced trio
  of humans into a graph with K=31, we do the following.
  Firstly, we build one single-colour binary for each individual.
  A human genome (length 3Gigabases) should, to first approximation, contain
@@ -1824,6 +1867,138 @@ bytes = 84Gigabytes of RAM.
  error-correction.
  The precise amount of memory required depends on the quality of the sequencing
  data.
+\end_layout
+
+\begin_layout Subsubsection
+Choosing an appropriate kmer 
+\end_layout
+
+\begin_layout Standard
+We go into considerable detail in our paper, explaining the inter-relation
+ of read-length, depth of coverage, sequencing error rate, kmer-size and
+ genome repeat content.
+ There are two main positions you may be in
+\end_layout
+
+\begin_layout Enumerate
+You have been given a data set to analyse.
+ So coverage, read length (and the species) are pre-determined.
+ In that case all that remains is to ask - what do you want to achieve?
+ Do you want a high sensitivity set of SNPs, a high specificity set of SNPs
+ and indels, to explore the nature of larger structural variants? Is this
+ in a single individual, or in a population? What do you know about the
+ genome in question?
+\end_layout
+
+\begin_layout Enumerate
+You have a scientific question you want to answer, and you are designing
+ an experiment.
+ Maybe you have a new species with no reference genome and you want to design
+ a SNP-chip, for which you need SNPs.
+ Or maybe you suspect large insertions/deletions of being important in your
+ species, but noone has investigated them yet.
+\end_layout
+
+\begin_layout Standard
+In the Supplementary Material of our paper we go through these issues in
+ great detail.
+ Here are some highlights:
+\end_layout
+
+\begin_layout Standard
+Larger kmers lead to greater ability to disentangle the genome graph at
+ a cost in sensitivity.
+ That cost in sensitivity can be offset by increasing coverage, up to a
+ limit determined by the nature of the genome, and the kmer-size.
+ This can be quantified, thus - the power 
+\begin_inset Formula $P$
+\end_inset
+
+ to detect an allele of length 
+\begin_inset Formula $t$
+\end_inset
+
+ , given sequencing depth 
+\begin_inset Formula $D$
+\end_inset
+
+ and read length 
+\begin_inset Formula $R$
+\end_inset
+
+, is given by
+\end_layout
+
+\begin_layout Verse
+\begin_inset Formula 
+\[
+P=G(t,k)E(k,\varepsilon)(1-e^{-\lambda L})^{2}e^{-\lambda e^{^{-\lambda L}}t}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\lambda=D/R$
+\end_inset
+
+ and 
+\begin_inset Formula $G$
+\end_inset
+
+ is the 
+\begin_inset Quotes eld
+\end_inset
+
+Genome Complexity
+\begin_inset Quotes erd
+\end_inset
+
+ - the repeat content of the genome sets an upper bound on power, dependent
+ on 
+\begin_inset Formula $k$
+\end_inset
+
+.
+ There are plots of 
+\begin_inset Formula $G$
+\end_inset
+
+ for the human genome in our paper, and we show how we estimate 
+\begin_inset Formula $G$
+\end_inset
+
+.
+ 
+\begin_inset Formula $E$
+\end_inset
+
+ is the power loss due to sequencing errors and error-cleaning, dependent
+ on 
+\begin_inset Formula $k$
+\end_inset
+
+ and the sequencing error rate 
+\begin_inset Formula $\varepsilon$
+\end_inset
+
+.
+ The final terms give the probability, given a certain read-length and coverage,
+ that the allele is present in the graph - in other words, that there is
+ not a coverage gap in the middle of it.
+ This last term basically comes down to our having determined the full probabili
+ty distribution for a Lander-Waterman model on a de Bruijn graph (normally
+ when you see the Lander-Waterman statistics, people deal only with mean
+ and variance, not the full distribution).
+ We show in our paper how the model matches the results of simulations,
+ as well as in empirical data, with analysis of read data from a high coverage
+ human, and a population of chimpanzees.
+ If you're applying this formula, remember that for heterozygous sites,
+ you need to assemble two alleles, whereas for homozygous sites (where a
+ reference genome gives you one allele) you only have to assemble one.
 \end_layout
 
 \begin_layout Subsubsection
@@ -1888,7 +2063,7 @@ cut_homopolymers <value> will cut a read at a homopolymer longer than value,
 \end_layout
 
 \begin_layout Subsubsection
-Error Cleaning
+Error Cleaning a single sample
 \end_layout
 
 \begin_layout Standard
@@ -1914,12 +2089,15 @@ status open
 \end_inset
 
 remove_low_coverage_kmers <value> will remove all nodes with coverage ≤value.
- As we describe in our paper, we do 
+ As we describe in our paper, 
 \series bold
-not
+we do not
 \series default
- recommend this method, it's a blunt instrument and creates gaps in the
- assembly wh
+ 
+\series bold
+recommend this method
+\series default
+, it's a blunt instrument and creates gaps in the assembly.
 \end_layout
 
 \begin_layout Enumerate
@@ -1967,6 +2145,7 @@ status open
 \end_inset
 
 remove_low_coverage_supernodes 1.
+ I may remove this in future releases.
 \end_layout
 
 \begin_layout Standard
@@ -2145,7 +2324,7 @@ s_clean>
 \end_layout
 
 \begin_layout Subsubsection
-Variation Discovery using the Bubble Caller
+Variation discovery using the Bubble Caller
 \end_layout
 
 \begin_layout Standard
@@ -2238,7 +2417,18 @@ status open
 
 \end_inset
 
-exclude_ref_bubbles .
+exclude_ref_bubbles.
+ 
+\series bold
+It is important to understand that variation discovery is not the same as
+ genotyping
+\series default
+ - so even though we discover something that looks like a homozygous non-referen
+ce site, where the sample has the non-ref allele only, it is only after
+ genotyping (see below) that we can confidently call this as hom non-ref,
+ rather than het.
+ i.e.
+ it may simply have a coverage gap at the ref-allele.
 \end_layout
 
 \begin_layout Enumerate
@@ -2465,7 +2655,7 @@ print_colour_coverages.
 
 \begin_layout Enumerate
 Suppose we wanted to do a crude search for variants that distinguish two
- groups of samples - .e.g to variants distinguishing colours 0,1,2,3,4 from
+ groups of samples - e.g to variants distinguishing colours 0,1,2,3,4 from
  colours 5,6,7,8,9), then we would type: 
 \begin_inset ERT
 status open
@@ -2505,13 +2695,28 @@ print_colour_coverages.
  than complete presence/absence, and would do this by applying Item 5 above.
 \end_layout
 
+\begin_layout Enumerate
+Suppose we have a large number of diploid samples from different individuals
+ in a population.
+ Suppose we have no reference genome.
+ Suppose we call bubbles on the union graph.
+ Some of these are polymorphisms, and some are repeats, and some are errors.
+ 
+\series bold
+We have a statistical methodology for classifying these bubbles as variant,
+ repeat or error, which significantly improved FDR
+\series default
+.
+ See below.
+\end_layout
+
 \begin_layout Standard
 Variants are printed in this format (this is an example for demonstration
  only, usually the flanks are much longer):
 \end_layout
 
 \begin_layout Quotation
->var_1_5p_flank 
+>var_1_5p_flank <plus some other text which I recommend you ignore>
 \end_layout
 
 \begin_layout Quotation
@@ -2519,7 +2724,7 @@ CTGAGATAGGCTGGTCCTCACCTCCAGAGCCAGCCAGCCCCG
 \end_layout
 
 \begin_layout Quotation
->branch_1_1
+>branch_1_1 <plus some other text which I recommend you ignore>
 \end_layout
 
 \begin_layout Quotation
@@ -2531,7 +2736,7 @@ TACAGCATTT
 \end_layout
 
 \begin_layout Quotation
->branch_1_2
+>branch_1_2 <plus some other text which I recommend you ignore>
 \end_layout
 
 \begin_layout Quotation
@@ -2543,7 +2748,7 @@ TACAGCATTT
 \end_layout
 
 \begin_layout Quotation
->var_1_3p_flank
+>var_1_3p_flank <plus some other text which I recommend you ignore>
 \end_layout
 
 \begin_layout Quotation
@@ -2707,7 +2912,9 @@ graph
  On human data, for example, the Path Divergence Caller successfully calls
  SNPs, indels, inversions, complex haplotypes consisting of phased SNPs
  and indels, and Alu retrotransposon indels.
- See our paper for a detailed analysis of its sensitivity and specificity.
+ See our paper for a detailed analysis of its sensitivity and specificity,
+ validated by comparison with fully sequenced and finished fosmid sequence.
+ See for example Figure 3b in our paper.
 \end_layout
 
 \begin_layout Standard
@@ -2958,6 +3165,60 @@ followed by the usual (flanks, branches, colour coverages).
 \end_layout
 
 \begin_layout Subsubsection
+Classification of bubbles as VARIANT, REPEAT or ERROR
+\end_layout
+
+\begin_layout Standard
+We describe in our paper our statistical model for classifying structures
+ in the graph.
+ We provide an R script, classify.R, for classifying putative variants -
+ this will be integrated into the main executable in future releases.
+ Here is how to apply the filter:
+\end_layout
+
+\begin_layout Enumerate
+First, run a perl script which parses the Cortex callfile, and makes a single
+ tab-separated file of calls with information on coverage on each allele
+ in each sample.
+ If one of your colours is the reference, the script takes this as the final
+ argument (enter -1 if none of the colours is the reference).
+ Command-line looks like this: perl make_covg_file.pl <output of Bubble Caller>
+ <number of colours in graph> <number of colour which is reference>.
+ This makes a file with filetype : .covg_for_classifier .
+\end_layout
+
+\begin_layout Enumerate
+Open the script classifier.R, and modify the lines marked with 
+\begin_inset Quotes eld
+\end_inset
+
+<<<<<MODIFY
+\begin_inset Quotes erd
+\end_inset
+
+, to contain the relevant coverage, read-length, kmer information etc.
+ Then run the R script.
+\end_layout
+
+\begin_layout Standard
+The output of the classifier looks like this: tab separated columns are
+ variant number, classification (variant, repeat or error), and confidence
+ (difference between maximum log likelihood, and next biggest)
+\end_layout
+
+\begin_layout Standard
+1 variant 15.46981 
+\end_layout
+
+\begin_layout Standard
+2 repeat 1.228099 
+\end_layout
+
+\begin_layout Standard
+This output is then used in building the VCF
+\end_layout
+
+\begin_layout Subsubsection
 Analysing variant calls and converting to VCF format
 \end_layout
 
@@ -2984,7 +3245,7 @@ truth
  in a population.
  We have therefore found it useful to be able to do a full Needleman-Wunsch
  alignment between the two branches (alleles).
- We provide a handyscript to do just this, in the scripts/analyse_variants
+ We provide a handy script to do just this, in the scripts/analyse_variants
  directory: process_bubbles.pl.
  This script has one dependency, for Algorithm::NeedlemanWunsch, which can
  be downloaded from CPAN.
@@ -3006,17 +3267,19 @@ This goes through the file of called variants, ignores the flanks, and aligns
 \end_layout
 
 \begin_layout Standard
-We also provide a second, more complicated and scrappy script for converting
- calls to VCF format (note VCF format by definition requires a reference
- genome to exist - variant calls cannot be put into VCF format without a
- reference against which to log coordinates) - called process_calls.pl.
+We also provide a second, more complicated script for converting calls to
+ VCF format (note VCF format by definition requires a reference genome to
+ exist - variant calls cannot be put into VCF format without a reference
+ against which to log coordinates) - called process_calls.pl.
  This script does the following:
 \end_layout
 
 \begin_layout Enumerate
 Take a file of Cortex variant calls as input, specifying which caller made
  the calls.
- Requirement: must have used 
+ 
+\series bold
+Requirement: must have used 
 \begin_inset ERT
 status open
 
@@ -3033,13 +3296,32 @@ print_colour_coverages
 \begin_layout Enumerate
 Map the 5prime flanks to a reference genome (internally, we use Stampy),
  filter out calls where the mapping has quality <30.
+ 
+\series bold
+Note
+\series default
+ - this means the VCF will end up with ~1 in 1000 calls which have been
+ falsely placed, and so will have reference-alleles which do not match the
+ true reference base at that position, which you will need to find and remove.
+ You can change the value of varianble $mapping_qual_thresh in the script
+ to something larger if you prefer.
 \end_layout
 
 \begin_layout Enumerate
 For each call, align the two branches (alleles) against each other, and
- parse the alignment to try to classify the call.
+ parse the alignment to classify the call.
  This step has a tendency to falsely classify a small number of indels as
  inversions, and will be improved in future.
+\end_layout
+
+\begin_layout Enumerate
+If you have used --experiment_type in your calls, Cortex will have made
+ genotype calls, and these will be integrated
+\end_layout
+
+\begin_layout Enumerate
+If you have used the probabilistic classifier, and give the script the output
+ of this, these results will be incorporated also.
 \end_layout
 
 \begin_layout Enumerate
@@ -3067,65 +3349,10 @@ decomposed
 
 \begin_layout Standard
 Unfortunately the current version of process_calls.pl requires you to manually
- edit it to contain the path to your Stampy binary and Stampy hash.
-\end_layout
-
-\begin_layout Subsubsection
-Classification of bubbles as VARIANT, REPEAT or ERROR
-\end_layout
-
-\begin_layout Standard
-We describe in our paper our statistical model for classifying structures
- in the graph.
- We provide an R script, classify.R, for classifying variant calls - this
- will be integrated into the main executable in future releases.
- How to apply the filter
-\end_layout
-
-\begin_layout Enumerate
-First, run a perl script which parses the Cortex callfile, and makes a single
- tab-separated file of calls with information on coverage on each allele
- in each sample.
- If one of your colours is the reference, the script takes this as the final
- argument (enter -1 if none of the colours is the reference).
- Command-line looks like this: perl /path/to/cortex release/scripts/analyse_vari
-ants/make_covg_file.pl <output of Bubble Caller> <number of colours in graph>
- <number of colour which is reference>.
- This makes a file with filetype : .covg_for_classifier .
-\end_layout
-
-\begin_layout Enumerate
-Open the script /path/to/cortex release/scripts/analyse_variants/classifier.R,
- and modify the lines marked with 
-\begin_inset Quotes eld
-\end_inset
-
-<<<<<MODIFY
-\begin_inset Quotes erd
-\end_inset
-
-, to contain the relevant coverage, read-length, kmer information etc.
- Then run the R script.
-\end_layout
-
-\begin_layout Standard
-The output of the classifier looks like this: tabe separated, columns are
- variant number, classification (variant, repeat or error), and confidence
- (difference between maximum log likelihood, and next biggest)
-\end_layout
-
-\begin_layout Standard
-1 variant 15.46981 
-\end_layout
-
-\begin_layout Standard
-2 repeat 1.228099 
-\end_layout
-
-\begin_layout Standard
-As mentioned above, this will be integrated into the main body of Cortex
- in the future, along with the means to take the results of the classifier
- and merge into your VCF.
+ edit it (e.g.
+ to contain the path to your Stampy binary and Stampy hash).
+ We have a C version of process_calls, which is much faster (alignment of
+ alleles in PD calls can be slow, as they are often many kb long).
 \end_layout
 
 \begin_layout Section
@@ -3134,19 +3361,22 @@ Worked examples
 
 \begin_layout Standard
 We give some worked examples here.
+
+\series bold
  See also the demo/ directory within the release which contains several
- concrete examples for you to play with.
+ concrete examples for you to play with
+\series default
+ - 
+\series bold
+I highly recommend working through thes
+\series default
+e 
+\series bold
+- they are quick and easy and require negligible compute (RAM)
+\series default
+.
  Each example has its own directory, with a README within explaining what
- you should do, what you will see and how to interpret it,
-\end_layout
-
-\begin_layout Subsection
-Given a set of reads from a single individual: build a graph and get a consensus
- assembly (contigs)
-\end_layout
-
-\begin_layout Standard
-Consult the cortex_con manual!
+ you should do, what you will see and how to interpret it.
 \end_layout
 
 \begin_layout Subsection
@@ -3320,33 +3550,9 @@ Accelerating graph-building by using a cluster of servers
 The graph building process can be accelerated by parallelising across a
  cluster of servers.
  Simply divide the fastq into a subsets, and process each subset on a single
- node, dumping a binary from each one; then merge all of these binaries
- into a final graph.
- The latest versions of sequencing machines can produce enormous fastq files,
- and so cortex_con also supports splitting a single fastq - you can specify
- the index of the first and last reads within a fastq to load.
- For example, this might be a filelist for use on a single node of the cluster
- (tab separated):
-\end_layout
-
-\begin_layout Verse
-first_fastq.fq 1 1000
-\end_layout
-
-\begin_layout Standard
-and this for the second node:
-\end_layout
-
-\begin_layout Verse
-first_fastq 1001 2000
-\end_layout
-
-\begin_layout Standard
-etc.
- Each of these processes can be tailored (by choice of volume of input data)
- to use an amount of memory within the capacity of a cluster node.
- Finally, we merge these binaries on a single machine (core) which has sufficien
-t RAM to support the genome plus sequencing errors.
+ node, dumping a binary from each one; then merge these binaries on a single
+ machine (core) which has sufficient RAM to support the genome plus sequencing
+ errors.
 \end_layout
 
 \begin_layout Subsection
@@ -3366,7 +3572,7 @@ genotyping
  Looking for bubbles is discovery; if we give Cortex relevant information
  (estimated genome length, whether or not our species is haploid or diploid),
  then it will apply our statistical model to genotype a site.
- Why is this important ? Sometimes a bubble, which is putatively heterozygous,
+ Why is this important? Sometimes a bubble, which is putatively heterozygous,
  will be caused by a sequencing error - the model allows us to determine
  likelihoods of the variou spossible genotypes.
  Similarly, if one were calling bubbles in a graph with a sample and a reference
@@ -3520,7 +3726,9 @@ max_read_len 100
 \begin_layout Standard
 the --multicolour_bin option accepts any binary and can determine from the
  binary header the number of colours within.
- Despite the word 
+ 
+\series bold
+Despite the word 
 \begin_inset Quotes eld
 \end_inset
 
@@ -3536,7 +3744,9 @@ multicolour
 \begin_inset Quotes erd
 \end_inset
 
-, it also supports single colour binaries - apologies for any confusion.
+, it also supports single colour binaries - apologies for any confusion
+\series default
+.
  Finally, one might load that same binary as follows:
 \end_layout
 
@@ -3723,7 +3933,7 @@ estimated_error_rate 0.005
 \end_layout
 
 \begin_layout Verse
-If you do not enter an estimayted error rate, a default of 0.01 is used.
+If you do not enter an estimated error rate, a default of 0.01 is used.
 \end_layout
 
 \begin_layout Subsection
@@ -3962,6 +4172,259 @@ estimated_error_rate 0.005
 \end_layout
 
 \begin_layout Subsection
+Call hom and het variants in a single individual by de novo assembly, excluding
+ repeats by using a reference genome
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+This is almost identical to the previous example - the only difference is
+ that you specify different colours to detect_bubbles
+\series default
+.
+\end_layout
+
+\begin_layout Standard
+Build a binary ref.ctx of the reference genome, and a binary of the individual
+ indiv.ctx.
+ Load them into a two-colour de Bruijn graph as follows
+\end_layout
+
+\begin_layout Verse
+> ls ref.ctx > reference_colour
+\end_layout
+
+\begin_layout Verse
+> ls indiv.ctx > individual_colour
+\end_layout
+
+\begin_layout Verse
+> ls *_colour > list_of_colours
+\end_layout
+
+\begin_layout Verse
+[open list_of_colours in text editor and check the files are listed in the
+ order you want.
+ ]
+\end_layout
+
+\begin_layout Verse
+> cat list_of_colours
+\end_layout
+
+\begin_layout Verse
+reference_colour
+\end_layout
+
+\begin_layout Verse
+individual_colour
+\end_layout
+
+\begin_layout Verse
+>cortex_var_31_c2 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+colour_list list_of_colours 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+mem_height h 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+mem_width w 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+ref_colour 0 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+detect_bubbles1 0,1/0,1 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+output_bubbles1 <output filename>
+\end_layout
+
+\begin_layout Standard
+This tells Cortex that colour 0 is the reference, so when 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+detect_bubbles1 is called, it first detects bubbles in colour 0, and excludes
+ them as repeats.
+
+\series bold
+ It then detects bubbles in the union of colour 0 and colour 1
+\series default
+, and prints them to the output file - this will include both homs and hets.
+ It is possible that coverage gaps or our error cleaning can lead to zero
+ coverage on a branch when in fact it really does exist in the individual's
+ genome.
+ Our statistical model (details in our paper) accounts for this by calculating
+ the probability of seeing the coverages we see on both branches under 3
+ models (hom ref, het, hom alt), and genotyping the site.
+ It is possible to genotype a site as het even if there is zero coverage
+ on that branch.
+ If we want genotype calls too, then we need to add the extra commands
+\end_layout
+
+\begin_layout Verse
+cortex_var_31_c2 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+colour_list list_of_colours 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+mem_height h 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+mem_width w 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+ref_colour 0 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+detect_bubbles1 0,1/0,1 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+output_bubbles1 <output filename>
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+experiment_type EachColourADiploidSampleExceptTheRefColour 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+genome_size 3000000000 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+estimated_error_rate 0.005
+\end_layout
+
+\begin_layout Subsection
 Given a trio of individuals, find variants present in the child but neither
  parent
 \end_layout
@@ -4016,9 +4479,9 @@ Given sequencing data from 100 high coverage diploid eukaryotes from a single
 \begin_layout Standard
 For each sample, build a graph and clean it individually.
  Collect them into a single multicolour graph.
- Call bubbles on the joint graph, call genotypes, make a VCF.
- Apply the probabilistic classifier to determine if bubbles and polymorphisms,
- repeats or errors, and integrate these results into your VCF.
+ Call bubbles on the joint graph, call genotypes, apply the probabilistic
+ classifier to determine if bubbles and polymorphisms, repeats or errors,
+ and make a VCF.
 \end_layout
 
 \begin_layout Subsection
@@ -4033,9 +4496,136 @@ For each sample, build a graph (no cleaning).
  Then clean all the sample graphs against the pool.
  Then make a single multicolour graph containing all the cleaned sample
  graphs each in their own colour.
- Call bubbles on the joint graph, call genotypes, make a VCF.
- Apply the probabilistic classifier to determine if bubbles and polymorphisms,
- repeats or errors, and integrate these results into your VCF.
+ Call bubbles on the joint graph, call genotypes, apply the probabilistic
+ classifier to determine if bubbles and polymorphisms, repeats or errors,
+ and make a VCF.
+\end_layout
+
+\begin_layout Section
+Best Practises
+\end_layout
+
+\begin_layout Standard
+In the process of helping various people use Cortex, I'm accumulating a
+ set of simple best practises
+\end_layout
+
+\begin_layout Enumerate
+Always worth dumping the kmer coverage distribution of your uncleaned binary
+ and examining it
+\end_layout
+
+\begin_layout Enumerate
+Always keep your Cortex output, and the files you use to specify how the
+ binaries are built - the binary itself does NOT contain any semantic informatio
+n on what you have put in the colours - its down to you to remember what
+ is stored in Colour 0,1,2,..etc.
+ If you have sufficiently few colours, you could put that info in the filename.
+\end_layout
+
+\begin_layout Enumerate
+If you are going to have binaries wth different kmers, different levels
+ of cleaning/filtering lying around, I suggest you encode some of that in
+ the filename
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+remove_seq_errors is only there for people who are feeling sloppy - in general
+ I would use 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+remove_low_coverage_supernodes, with a threshold dependent on the coverage
+ distribution.
+\end_layout
+
+\begin_layout Enumerate
+Do not use 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+remove_low_coverage_kmers - I only include it as the rest of the industry
+ uses it, and it makes people comfortable to have it available.
+ The only good thing about it is that if you are struggling badly with memory
+ usage, it allows you to cheaply throw stuff away.
+ See our paper for a discussion of why it throws away good data and significantl
+y reduces your sensitivity.
+\end_layout
+
+\begin_layout Enumerate
+Don't use massive thresholds - e.g.
+ unless you have very very high coverage, a quality score threshold of 30,
+ which seems sensible as it 
+\begin_inset Quotes eld
+\end_inset
+
+keeps only good data
+\begin_inset Quotes erd
+\end_inset
+
+, can throw away so much data you lose too much coverage.
+ Essentially - do the minimum amount of filtering that you can get away
+ with under your memory constraints.
+ If you have 2000x coverage, then fine, filter brutally.
+ But if you have 30x coverage, either don't filter or use q5 or something.
+ 
+\end_layout
+
+\begin_layout Enumerate
+If you are just loading one binary, it's simplest to use 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+-{}-
+\end_layout
+
+\end_inset
+
+multicolour_bin to load it.
+\end_layout
+
+\begin_layout Enumerate
+Always specify kmer, mem_height and mem_width.
+ 
+\end_layout
+
+\begin_layout Enumerate
+Supporting more colours requires more memory.
+ 
+\series bold
+If you are building a single-colour graph which you are going to clean,
+ you expect this to be big, and contain many sequencing errors - therefore
+ use an executable that has been compiled for ONE colour 
+\series default
+- otherwise you waste memory on lots of empty colours, and potentially run
+ out of RAM.
+ 
 \end_layout
 
 \begin_layout Section
@@ -4197,7 +4787,7 @@ Citing Cortex, and further reading
 \end_layout
 
 \begin_layout Standard
-If you publish results dependent on use of Cortex, please cite our paper
+If you publish results dependent on use of Cortex, please cite our paper:
 \end_layout
 
 \begin_layout Quotation
@@ -4226,8 +4816,8 @@ Contact Us
 \end_layout
 
 \begin_layout Standard
-For any questions about cortex_var, please contact me (Zam Iqbal) at zam@well.ox.a
-c.uk.
+For any questions about cortex_var, variant assembly, populations, our models,
+ please contact me (Zam Iqbal) at zam@well.ox.ac.uk.
  For questions regarding cortex_con please consult the cortex_con documentation
  at cortexassembler.sourceforge.net, or contact Mario Caccamo at mario.caccamo@tgac.
 ac.uk.
