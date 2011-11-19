@@ -89,6 +89,15 @@ typedef struct
 
   int pd_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
   int num_colours_in_pd_colour_list;
+  
+  boolean print_novel_contigs;
+  int novelseq_colours_search[MAX_COLOURS_ALLOWED_TO_MERGE];
+  int numcols_novelseq_colours_search;
+  int novelseq_colours_avoid[MAX_COLOURS_ALLOWED_TO_MERGE];
+  int numcols_novelseq_colours_avoid;
+  int novelseq_contig_min_len_bp;
+  int novelseq_min_percentage_novel;
+  char novelseq_outfile[MAX_FILENAME_LEN];
 
   double manually_entered_seq_error_rate;
   boolean manually_override_error_rate;

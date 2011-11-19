@@ -384,6 +384,17 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
 							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*));
 
+void db_graph_print_supernodes_defined_by_func_of_colours_given_condition(char * filename_sups, char* filename_sings, int max_length, 
+									  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+									  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*),
+									  boolean (*condition)(dBNode** path, Orientation* ors, int len));
+
+void db_graph_print_novel_supernodes(char* outfile, int max_length, dBGraph * db_graph, 
+				     int* first_list, int len_first_list,
+				     int* second_list,  int len_second_list,
+				     int min_contig_length_bp, int min_percentage_novel,
+				     void (*print_extra_info)(dBNode**, Orientation*, int, FILE*));
+
 void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
 
 void print_covg_stats_for_timestamps_for_supernodes(char* outfile, dBGraph * db_graph, int max_expected_sup_len);

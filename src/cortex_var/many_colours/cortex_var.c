@@ -59,6 +59,12 @@ long long calculate_mean(long long* array, long long len)
   return  (sum/num);
 }
 
+void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* model_info)
+{
+  
+}
+
+
 void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph, 
 		  void (*print_some_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
 		  GraphAndModelInfo* model_info)
@@ -555,13 +561,12 @@ int main(int argc, char **argv){
 	}
       else//for FASTA we do not get read length distribution
 	{
-	  printf("When binaries are built, Cortex calculates the lenth distribution of reads\n");
+	  printf("When binaries are built, Cortex calculates the legnth distribution of reads\n");
 	  printf("after quality filters, Ns, PCR duplicates, homopolymer filters have been taked into account\n");
 	  printf("This data is saved in the binary header, if you dump a binary file.\n");
-	  printf("However Cortex does not calculate mean read length of input data if it is FASTA, as it is too\n");
-	  printf("difficult to support arbitrary read lengths (fasta may be an entire chromosome).\n");
-	  printf("This data is primarily used for \"real\" data from fastq files\n");
-	  printf("We therefore just use the value you entered for --max_read_len\n");
+	  printf("However Cortex does not calculate mean read length of input data if it is FASTA\n");
+	  printf("These stats are primarily used for \"real\" data from fastq files\n");
+	  printf("Since you have used fasta, we just use the value you entered for --max_read_len and log that in the binary header as the read length\n");
 	  printf("Set mean read len in colour 0 to %d\n", cmd_line.max_read_length);
 	  graph_info_set_mean_readlen(&db_graph_info, 0, cmd_line.max_read_length);
 	  graph_info_increment_seq(&db_graph_info, 0, bases_pass_filters_and_loaded);
@@ -1045,6 +1050,33 @@ int main(int argc, char **argv){
       printf("This estimate used a sample of %d high-quality reads\n", num_reads_used_in_estimate);
 
     }
+
+  if (cmd_line.print_novel_contigs==true)
+    {
+      timestamp();
+      printf("Start to search for and print novel contigs\n");
+      printf("Definition of novel: contig must lie in union of these colours: ");
+      int j;
+      for (j=0; j<cmd_line.numcols_novelseq_colours_search; j++)
+	{
+	  printf("%d,", cmd_line.novelseq_colours_search[j]);
+	}
+      printf("\n and at least %d percent of the kmers in this contig (excluding first and last) must have zero coverage in the union of these colours: ", cmd_line.novelseq_min_percentage_novel);
+      for (j=0; j<cmd_line.numcols_novelseq_colours_avoid; j++)
+	{
+	  printf("%d,", cmd_line.novelseq_colours_avoid[j]);
+	}
+      printf("\nAlso contig must be at least %d bp long\n", cmd_line.novelseq_contig_min_len_bp);
+      db_graph_print_novel_supernodes(cmd_line.novelseq_outfile, cmd_line.max_var_len, db_graph, 
+				      cmd_line.novelseq_colours_search, cmd_line.numcols_novelseq_colours_search,
+				      cmd_line.novelseq_colours_avoid, cmd_line.numcols_novelseq_colours_avoid,
+				      cmd_line.novelseq_contig_min_len_bp, cmd_line.novelseq_min_percentage_novel,
+				      &print_appropriate_extra_supernode_info);
+      timestamp();
+      printf("Finished printing novel contigs\n");
+      
+    }
+
   
   hash_table_free(&db_graph);
   timestamp();
@@ -1102,7 +1134,6 @@ int main(int argc, char **argv){
       hash_table_free(&db_graph2);
     }
   
-
 
 
 

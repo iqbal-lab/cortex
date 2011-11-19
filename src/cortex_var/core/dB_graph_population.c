@@ -2980,6 +2980,107 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 }
 
 
+//given two lists of colours, we want to print supernodes in the union of colours in the first list,
+// subject to the following ocnstraints
+// 1. min contig length (base pairs) 
+// 2. minimum proportion of kmers in the supernode must have ZERO covg in the unio of the second list of colours 
+
+void db_graph_print_novel_supernodes(char* outfile, int max_length, dBGraph * db_graph, 
+				     int* first_list, int len_first_list,
+				     int* second_list,  int len_second_list,
+				     int min_contig_length_bp, int min_percentage_novel,
+				     void (*print_extra_info)(dBNode**, Orientation*, int, FILE*))
+{
+
+
+  Edges get_union_first_list_colours(const dBNode* e)
+  {
+    int i;
+    Edges edges=0;
+    
+    for (i=0; i< len_first_list; i++)
+      {
+	edges |= e->individual_edges[first_list[i]];
+      }
+    return edges;    
+  }
+
+  
+
+  int get_covg_of_union_first_list_colours(const dBNode* e)
+  {
+    int i;
+    int covg=0;
+  
+    for (i=0; i< len_first_list; i++)
+      {
+	covg += e->coverage[first_list[i]];
+      }
+    return covg;
+  }
+
+  int get_covg_of_union_second_list_colours(const dBNode* e)
+  {
+    int i;
+    int covg=0;
+  
+    for (i=0; i< len_second_list; i++)
+      {
+	covg += e->coverage[second_list[i]];
+      }
+    return covg;
+  }
+
+
+
+  boolean condition_is_novel(dBNode** path, Orientation* ors, int len)
+  {
+    if (db_graph->kmer_size + len-1 <min_contig_length_bp)
+      {
+	return false;
+      }
+    else if (len<=1)
+      {
+	return false; //i just dont support sups which are 2 nodes'
+      }
+    else
+      {
+	int i;
+	int count_novel=0;
+	for (i=1; i<len; i++)
+	  {
+	    if (get_covg_of_union_second_list_colours(path[i])==0)//counting proportion of INTERIOR nodes
+	      {
+		count_novel++;
+	      }
+	  }
+	
+	int percentage =  100 * count_novel / (len-1);
+	if (percentage<min_percentage_novel)
+	  {
+	    return false;
+	  }
+	else
+	  {
+	    return true;
+	  }
+      }
+  }
+
+  db_graph_print_supernodes_defined_by_func_of_colours_given_condition(outfile, "", max_length,
+								       db_graph, &get_union_first_list_colours, &get_covg_of_union_first_list_colours,
+								       print_extra_info, &condition_is_novel);
+
+
+
+  //unset the nodes marked as visited, but not those marked as to be ignored
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+
+
+}
+
+
+
 /*
 //ie exclude bubbles found in the reference first, THEN find bubbles where the two branches lie in opposites lists
 void db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(FILE* fout, int max_length, dBGraph * db_graph, 
@@ -3353,6 +3454,119 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
       fclose(fout2);
     }
 }
+
+
+
+void db_graph_print_supernodes_defined_by_func_of_colours_given_condition(char * filename_sups, char* filename_sings, int max_length, 
+									  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+									  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*),
+									  boolean (*condition)(dBNode** path, Orientation* ors, int len)){
+
+  boolean do_we_print_singletons=true;//singletons are supernodes consisting of ONE node.
+
+  FILE * fout1; //file to which we will write all supernodes which are longer than 1 node in fasta format
+  fout1= fopen(filename_sups, "w"); 
+  if (fout1==NULL)
+    {
+      printf("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours\n", filename_sups);
+      exit(1);
+    }
+
+  FILE * fout2=NULL; //file to which we will write all "singleton" supernodes, that are just  1 node, in fasta format
+  if ( strcmp(filename_sings, "")==0 )
+    {
+      printf("Only printing supernodes consisting of >1 node (ie contigs longer than %d bases)\n", db_graph->kmer_size);
+      do_we_print_singletons=false;
+    }
+  else
+    {
+      fout2= fopen(filename_sings, "w"); 
+      if (fout2==NULL)
+	{
+	  printf("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours\n", filename_sings);
+	  exit(1);
+	}
+    }
+
+
+  int count_nodes=0;
+  
+  dBNode * *    path_nodes;
+  Orientation * path_orientations;
+  Nucleotide *  path_labels;
+  char * seq;
+  boolean is_cycle;
+  double avg_coverage;
+  int min,max;
+  
+  
+  path_nodes        = calloc(max_length,sizeof(dBNode*));
+  path_orientations = calloc(max_length,sizeof(Orientation));
+  path_labels       = calloc(max_length,sizeof(Nucleotide));
+  seq               = calloc(max_length+1+db_graph->kmer_size,sizeof(char));
+  
+  
+
+  long long count_kmers = 0;
+  long long count_sing  = 0;
+
+  void print_supernode(dBNode * node){
+    
+    count_kmers++;
+    char name[100];
+
+    if (db_node_check_status_none(node) == true){
+      int length = db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_length,&db_node_action_set_status_visited,
+									     path_nodes,path_orientations,path_labels,
+									     seq,&avg_coverage,&min,&max,&is_cycle,
+									     db_graph, get_colour, get_covg);
+      if (condition(path_nodes,path_orientations, length)==true)
+	{
+	  if (length>0){	
+	    sprintf(name,"node_%i",count_nodes);
+	    
+	    print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout1,name,length,avg_coverage,min,max,
+										 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
+										 db_graph->kmer_size,true, get_colour, get_covg);
+	    if (length==max_length){
+	      printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
+	    }
+	    //fprintf(fout1, "extra information:\n");
+	    print_extra_info(path_nodes, path_orientations, length, fout1);
+	    count_nodes++;
+	  }
+	  else{
+	    count_sing++;
+	    if (do_we_print_singletons==true)
+	      {
+		sprintf(name,"node_%qd",count_sing);
+		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout2,name,length,avg_coverage,min,max,
+										     path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
+										     db_graph->kmer_size,true, get_colour, get_covg);
+		//fprintf(fout2, "extra information:\n");
+		print_extra_info(path_nodes, path_orientations, length, fout2);
+	      }
+	    
+	    
+	  }
+	}
+    }
+  }
+  
+  hash_table_traverse(&print_supernode,db_graph); 
+  printf("%qd nodes visted [%qd singletons]\n",count_kmers,count_sing);
+
+  free(path_nodes);
+  free(path_orientations);
+  free(path_labels);
+  free(seq);
+  fclose(fout1);
+  if (fout2 != NULL)
+    {
+      fclose(fout2);
+    }
+}
+
 
 
 

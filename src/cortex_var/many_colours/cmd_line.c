@@ -220,7 +220,7 @@ const char* usage=
 "   [--genome_size]\t\t\t\t\t\t=\t If you specify --experiment_type, and therefore want to calculate likelihoods, you must also specify the (estimated) genome size in bp.\n" \
 
   // -G
-"   [--align FILENAME] \t\t\t\t\t\t=\t Aligns a list of fasta/q files to the graph, and prints coverage of each kmer in each read in each colour.\n\t\t\t\t\t\t\t\t\t Must also specify --align_input_format, and --max_read_len\n"  \
+"   [--align FILENAME,{output binary name|no}] \t\t\t\t\t\t=\t Aligns a list of fasta/q files to the graph, and prints coverage of each kmer in each read in each colour.\n\t\t\t\t\t\t\t\t\t Takes two arguments. First, a list of fasta/q. Second, either an output filename (if you want it to dump a binary of the part of the graph touched by the alignment) OR just \"no\" \n\t\t\t\t\t\t\t\t\t Must also specify --align_input_format, and --max_read_len\n"  \
   // -H
 "   [--align_input_format TYPE] \t\t\t\t\t=\t --align requires a list of fasta or fastq. This option specifies the input format as LIST_OF_FASTQ or LIST_OF_FASTA\n"  \
 
@@ -233,6 +233,9 @@ const char* usage=
 "\n\n**** EARLY ACCESS/BETA OPTIONS **** \n\n"\
   // R
 "   [--genotype_site]\t\t\t\t\t\t=\t (Beta code!) Genotype a single (typically multiallelic) site. Syntax is slightly complex. \n\t\t\t\t\t\t\t\t\t Requires an argument of the form x,y[z[N[A,B[fasta[<CLEANED|UNCLEANED>[p[q[<yes|no>[MIN.\n\t\t\t\t\t\t\t\t\t x,y is a comma-sep list of colours to genotype.\n\t\t\t\t\t\t\t\t\t z is the reference-minus-site colour.\n\t\t\t\t\t\t\t\t\t N is the number of alleles for this site (which cortex assumes are loaded\n\t\t\t\t\t\t\t\t\t in a multicolour_bin containing those alleles first, one per colour).\n\t\t\t\t\t\t\t\t\t Cortex will genotype combinations A through B of the N choose 2 possible genotypes (allows parallelisation);\n\t\t\t\t\t\t\t\t\t fasta is the file listing one read per allele.\n\t\t\t\t\t\t\t\t\t CLEANED or UNCLEANED allows Cortex to tailor its genotyping model.\n\t\t\t\t\t\t\t\t\t p,q are two free/unused colours that Cortex will use internally. \n\t\t\t\t\t\t\t\t\t yes/no specifies whether to use the more sophisticated error model, which is still in development. \n\t\t\t\t\t\t\t\t\t I recommend you stick with \"no\" for now.\n\t\t\t\t\t\t\t\t\t The final argument, MIN, is optional and allows performance speedup\n\t\t\t\t\t\t\t\t\t by disarding any genotype with log-likelihood<MIN.\n\t\t\t\t\t\t\t\t\t See manual for details.Must also specify --max_var_len to give the length of the longest allele\n"\
+  // -V
+"   [--print_novel_contigs]\t\t\t\t\t=\t Allows printing of novel sequence absent from a reference (or more generally, absent from a set of colours)\n\t\t\t\t\t\t\t\t\t Takes arguments in this format a,b,../c,d,../x/y/<output filename>\n\t\t\t\t\t\t\t\t\t Cortex will find supernodes in the union graph of colours a,b,..\n\t\t\t\t\t\t\t\t\t Typically the list c,d,.. of colours is just one colour  - that of the reference.\n\t\t\t\t\t\t\t\t\t Cortex will print contigs (supernodes) to the output file which satisfy the following criteria\n\t\t\t\t\t\t\t\t\t Contigs must be at least x base pairs long\n\t\t\t\t\t\t\t\t\t The percentage (as integer) of kmers in the contig which are present in ANY of the colours c,d,... must be at most 1-y. \n\t\t\t\t\t\t\t\t\t i.e. y is the minimum proportion of novel kmers in a contig. Typically this is 100.\n\t\t\t\t\t\t\t\t\t We ignore the first and last kmer of the contig, as these will typically connect to the reference\n  " \
+
   // -K
   //"   [--require_hw]\t\t\t\t\t\t=\t For each bubble found, calculate likelihood of observed coverage \n\t\t\t\t\t\t\t\t\t under 3 models (repeat, error, variation obeying Hardy-Weinberg)\n\t\t\t\t\t\t\t\t\t Only call variants where the bubble is more likely (according to these models) to be a variant.\n" \
 
@@ -292,6 +295,16 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
+  //novelsseq stuff
+  c->print_novel_contigs=false;
+  c->novelseq_contig_min_len_bp=100;
+  c->novelseq_min_percentage_novel=100;
+  initialise_int_list(c->novelseq_colours_search, MAX_COLOURS_ALLOWED_TO_MERGE);
+  c->numcols_novelseq_colours_search=0;
+  initialise_int_list(c->novelseq_colours_avoid, MAX_COLOURS_ALLOWED_TO_MERGE);
+  c->numcols_novelseq_colours_avoid=0;
+  set_string_to_null(c->novelseq_outfile, MAX_FILENAME_LEN);
+
   c->working_colour1 = -1;
   c->working_colour2 = -1;
   // c->working_colour3_for_1net=-1;
@@ -330,7 +343,6 @@ int default_opts(CmdLine * c)
 
   c->num_colours_in_pd_colour_list=0;
   initialise_int_list(c->pd_colour_list, MAX_COLOURS_ALLOWED_TO_MERGE);
-  
 
   c->num_colours_in_input_colour_list=0;
 
@@ -452,6 +464,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"estimated_error_rate", required_argument, NULL, 'Q'},
     {"genotype_site", required_argument, NULL, 'R'},
     {"estimate_genome_complexity", required_argument, NULL, 'T'},
+    {"print_novel_contigs", required_argument, NULL, 'V'},
     {0,0,0,0}	
   };
   
@@ -462,7 +475,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:T:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:T:V:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1257,10 +1270,30 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 	  break;
 	}
+    case 'V'://print_novel_contigs
+	{
+	  if (optarg==NULL)
+	    {
+	    errx(1,"[--print_novel_contigs] option requires a two sets of comma-separated numbers, separated by a slash, followed by an integer (minium contig length), followed by a slash, followed by a floating point number (minimum proportion of kmers in contig which are novel), followed by a slash, followed by an output filename. eg --print_novel_contigs 1,2/3/100/0.9/novel.txt will find contigs in union of colours 1 and 2, which are of minimum length 100bp, where 90 percent of the kmers in the contig do not overlap colour 3, and print it to file novel.txt");
+	    }
+          if (strlen(optarg)>MAX_FILENAME_LEN)
+	    {
+	      errx(1,"[--print_novel_contigs] argument too long [%s]",optarg);
+	    }
+
+	  parse_novelseq_args(optarg, 
+			      &(cmdline_ptr->novelseq_colours_search), &(cmdline_ptr->numcols_novelseq_colours_search),
+			      &(cmdline_ptr->novelseq_colours_avoid),  &(cmdline_ptr->numcols_novelseq_colours_avoid), 
+			      &(cmdline_ptr->novelseq_contig_min_len_bp), &(cmdline_ptr->novelseq_min_percentage_novel),
+			      &(cmdline_ptr->novelseq_outfile));
+	  cmdline_ptr->print_novel_contigs=true;
+
+	  break;
+	}
       
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:T:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:T:V:", long_options, &longopt_index);
   }   
   
   return 0;
@@ -2324,6 +2357,117 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 
 
 
+int parse_novelseq_args(char* arg, int* array_colours_to_look_in, int* num_cols_in_look_list,
+			int* array_colours_to_avoid,  int* num_cols_in_avoid_list,
+			int* min_contig_len, int* min_percentage_novel, char* outfile)
+{
+  //we expect arg tyo be of this format  a,b/c,d/x/y/filename
+  // a,b,c,d are colours. a,b are the colours in which we will look for supernodes. c,d are "the reference" - ie the colours to avoid. 
+  // you can use -1 to denote all colours instead of a,b. But that's not allowed for c,d - waste of time trying to find stuff not in the entire DBG
+  // x is the min contig len
+  // y is the min proportion of kmers in a contig that must be novel. Typically this will be 1. 
+  // filename - output filename
+
+
+
+  char delims[] = "/";
+  char temp1[MAX_FILENAME_LEN];
+  temp1[0]='\0';
+  strcpy(temp1, arg);//we checked before callling this that it fits
+  char* commaseplist1 = strtok(temp1, delims );
+  if (commaseplist1==NULL)
+    {
+      errx(1,"[--print_novel_conrigs] option requires an argument of the form a,b/c,d/x/y/filename  you do not appear to have any of these / delimiters - consult the manual");
+    }
+
+  *num_cols_in_look_list = get_numbers_from_comma_sep_list(commaseplist1, array_colours_to_look_in, NUMBER_OF_COLOURS);
+  if (*num_cols_in_look_list==-1)
+    {
+      printf("Badly formatted/chosen arguments for --print_novel_contigs. Consult the manual\n");
+      exit(1);
+    }
+
+
+
+  char* commaseplist2 = strtok(NULL, delims );
+  if (commaseplist2==NULL)
+    {
+      errx(1,"[--print_novel_conrigs] option requires an argument of the form a,b/c,d/x/y/filename  you do not appear to have anything after the first /\n");
+    }
+
+  *num_cols_in_avoid_list = get_numbers_from_comma_sep_list(commaseplist2, array_colours_to_avoid, NUMBER_OF_COLOURS);
+  if (*num_cols_in_avoid_list==-1)
+    {
+      printf("Badly formatted/chosen arguments for --print_novel_contigs. Consult the manual\n");
+      exit(1);
+    }
+  else if (*num_cols_in_avoid_list>=NUMBER_OF_COLOURS)
+    {
+      printf("[--print_novel_contigs] option requires an argument of the form a,b,../c,d,../x/y/filename. You have listed ALL the colours in the graph in c,d (either by enumerating them all, or by entering -1). this is meaningless - the idea is to look for stuff in the graph that is NOT in colours c,d,etc\n");
+      exit(1);
+    }
+  char* min_contig_len_as_char = strtok(NULL, delims ); 
+  if (min_contig_len_as_char==NULL)
+    {
+      errx(1,"[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename, but you do not seem to have anything after c,d\n");
+    }
+  else if (isNumeric(min_contig_len_as_char))
+    {
+	  *min_contig_len = atoi(min_contig_len_as_char);
+    }
+  else
+    {
+      errx(1,"[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename, where x is the minimum contig length (in bp) - you have entered a non-numeric thing for x\n");
+    }
+  
+  char* percentage_novel_as_char = strtok(NULL, delims );
+  if (percentage_novel_as_char==NULL)
+    {
+      errx(1,"[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename, but you do not seem to have anything after x\n");
+    }
+  else if (isNumeric(percentage_novel_as_char))
+    {
+      int tmp = atoi(percentage_novel_as_char);
+      if ( (tmp>0) && (tmp<=100) )
+	{
+	  *min_percentage_novel =  tmp;
+	}
+      else if (tmp<=0)
+	{
+	  printf("[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename, where y is the minimum percentage of the kmers in a contig which we require to NOT be in any colours c,d,.... ie if we want to be very stringent, we set y=100, and demand ALL kmers be novel (ie outside colours c,d..). You have chosen a value for y which is <0, which we do not allow\n");
+	  exit(1);
+	}
+      else if (tmp>100)
+	{
+	  printf("[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename, where y is the minimum percentage of the kmers in a contig which we require to NOT be in any colours c,d,.... ie if we want to be very stringent, we set y=100, and demand ALL kmers be novel (ie outside colours c,d..). You have chosen a value for y which is >100, which is meaningless\n");
+	  exit(1);
+	  
+	}
+    }
+  else
+    {
+	  printf("[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename, where y is the minimum percentage of the kmers in a contig which we require to NOT be in any colours c,d,.... ie if we want to be very stringent, we set y=100, and demand ALL kmers be novel (ie outside colours c,d..). You have chosen a NON_NUMERIC value for y\n");
+	  exit(1);
+      
+    }
+
+  char* output_filename = strtok( NULL, delims );
+  if (output_filename==NULL)
+    {
+      errx(1,"[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename - you have left off the filename\n");
+    }
+  else if (access(output_filename,F_OK)==0){
+    errx(1,"You cannot specify filename [%s] as output file for --print_novel_contigs, - file exists!",output_filename);
+  }
+  outfile[0]='\0';
+  strcpy(outfile, output_filename);
+  
+  return 0;
+}
+
+
+
+
 
 
 
@@ -2459,7 +2603,7 @@ int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_f
 	      {
 		if (arg[k]=='/') 
 		  {
-		    printf("%s option requires just one comma-separated list of integers, with no forward-slash /. Perhaps you are confusing with --bubbles.", 
+		    printf("%s option requires just one comma-separated list of integers, with no forward-slash /. Perhaps you are confusing with --detect_bubbles1.", 
 		     text_for_error_describing_which_option_this_is);		
 		    return -1;
 		  }
