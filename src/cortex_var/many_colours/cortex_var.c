@@ -1026,7 +1026,7 @@ int main(int argc, char **argv){
 	  exit(1);
 	}
       
-      call_bubbles_distinguishing_cox_pgf(db_graph, 10000, fout);
+      call_bubbles_distinguishing_cox_pgf(db_graph, 10000, fout, &model_info);
       fclose(fout);
 
       /*

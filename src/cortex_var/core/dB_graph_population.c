@@ -3714,7 +3714,7 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
 
 
 
-void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE* fout)
+void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE* fout, GraphAndModelInfo* model_info)
 {
 
   int col_pgf_gdna = 0; //from pure PGF gDNA cell line
@@ -3800,7 +3800,9 @@ void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE
     {
       int datac=datacols[i];
 
+      
       /*
+
       //mark bubbles in PGF GDNA to be ignored
       db_graph_detect_vars(NULL, max_length, db_graph, 
 			   &detect_vars_condition_always_false,
@@ -3820,20 +3822,99 @@ void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE
       
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+
       */
 
-
-      //detect bubbles in our dataset, and print ratio of covgs on the two alleles, PROVIDED the two alleles distinguish COX and PGF
+      //detect bubbles in our dataset, and print ratio of covgs on the two alleles, 
+      // PROVIDED the two alleles distinguish COX and PGF gDNA (exon capture), AND RNA
       int list[]={datac};
       int len_list=1;
 
-      boolean condition_bubble_not_in_PGF_or_COX_gDNA(VariantBranchesAndFlanks* var)
+      boolean splits_two_colours(VariantBranchesAndFlanks* var, int col1, int col2)
+      {
+	boolean all_br1_nodes_in_col1=true;
+        boolean all_br1_nodes_in_col2=true;
+        boolean all_br2_nodes_in_col1=true;
+        boolean all_br2_nodes_in_col2=true;
+	boolean no_br1_nodes_in_col1=true;
+        boolean no_br1_nodes_in_col2=true;
+        boolean no_br2_nodes_in_col1=true;
+        boolean no_br2_nodes_in_col2=true;
+	int p;
+	for (p=1; p<var->len_one_allele; p++)
+	  {
+	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col1)==0)
+	      {
+		all_br1_nodes_in_col1=false;
+	      }
+	    else
+	      {
+		no_br1_nodes_in_col1=false;
+	      }
+	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col2)==0)
+	      {
+		all_br1_nodes_in_col2=false;
+	      }
+	    else
+	      {
+		no_br1_nodes_in_col2=false;
+	      }
+	  }
+	for (p=1; p<var->len_other_allele; p++)
+	  {
+	    if (db_node_get_coverage(var->other_allele[p], individual_edge_array, col1)==0)
+	      {
+		all_br2_nodes_in_col1=false;
+	      }
+	    else
+	      {
+		no_br2_nodes_in_col1=false;
+	      }
+	    if (db_node_get_coverage(var->other_allele[p], individual_edge_array, col2)==0)
+	      {
+		all_br2_nodes_in_col2=false;
+	      }
+	    else
+	      {
+		no_br2_nodes_in_col2=false;
+	      }
+	  }
+
+	if (  (all_br1_nodes_in_col1==true) && (all_br1_nodes_in_col2==false)
+	      && (all_br2_nodes_in_col2==true) && (all_br2_nodes_in_col1==false) )
+	  {
+	    return true;
+	  }
+	else if (  (all_br1_nodes_in_col2==true) && (all_br1_nodes_in_col1==false)
+	      && (all_br2_nodes_in_col1==true) && (all_br2_nodes_in_col2==false) )
+	  {
+	    return true;
+	  }
+	else
+	  {
+	    return false;
+	  }
+      }
+
+
+      boolean splits_gDNA_and_RNA(VariantBranchesAndFlanks* var)
+      {
+	return splits_two_colours(var, col_pgf_gdna, col_cox_gdna)
+	  && splits_two_colours(var, col_pgf_rna, col_cox_rna);
+      }
+
+      /*
+      boolean condition_bubble_splits_PGF_and_COX_gDNA_and_RNA(VariantBranchesAndFlanks* var)
       {
 	int p;
 	boolean all_br1_nodes_in_PGF_gDNA=true;
 	boolean all_br1_nodes_in_COX_gDNA=true;
 	boolean all_br2_nodes_in_PGF_gDNA=true;
 	boolean all_br2_nodes_in_COX_gDNA=true;
+	boolean all_br1_nodes_in_PGF_RNA=true;
+	boolean all_br1_nodes_in_COX_RNA=true;
+	boolean all_br2_nodes_in_PGF_RNA=true;
+	boolean all_br2_nodes_in_COX_RNA=true;
 	for (p=1; p<var->len_one_allele; p++)
 	  {
 	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col_pgf_gdna)==0)
@@ -3843,6 +3924,15 @@ void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE
 	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col_cox_gdna)==0)
 	      {
 		all_br1_nodes_in_COX_gDNA=false;
+	      }
+
+	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col_pgf_rna)==0)
+	      {
+		all_br1_nodes_in_PGF_RNA=false;
+	      }
+	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col_cox_rna)==0)
+	      {
+		all_br1_nodes_in_COX_RNA=false;
 	      }
 	  }
 	for (p=1; p<var->len_other_allele; p++)
@@ -3855,8 +3945,18 @@ void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE
 	      {
 		all_br2_nodes_in_COX_gDNA=false;
 	      }
+	    if (db_node_get_coverage(var->other_allele[p], individual_edge_array, col_pgf_rna)==0)
+	      {
+		all_br2_nodes_in_PGF_RNA=false;
+	      }
+	    if (db_node_get_coverage(var->other_allele[p], individual_edge_array, col_cox_rna)==0)
+	      {
+		all_br2_nodes_in_COX_RNA=false;
+	      }
 
 	  }
+
+	//exclude sites that are not hom in the "hom" lines
 	if ((all_br1_nodes_in_PGF_gDNA==true) && (all_br2_nodes_in_PGF_gDNA==true) )
 	  {
 	    return false;
@@ -3869,10 +3969,16 @@ void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE
 	  {
 	    return true;//not a bubble in either COX or PGF gDNA
 	  }
+		  
       }
-      
+
       boolean condition_splits_haplotypes(VariantBranchesAndFlanks* var)
       {
+	if (detect_vars_condition_branches_not_marked_to_be_ignored(var)==false)
+	  {
+	    return false;
+	  }
+
 	boolean all_br1_nodes_in_COX=true;
 	boolean no_br1_nodes_in_COX = true;
 	boolean all_br1_nodes_in_PGF=true;
@@ -3941,7 +4047,7 @@ void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE
       {
 	return (condition_bubble_not_in_PGF_or_COX_gDNA(var) && condition_splits_haplotypes(var) );
       }
-
+*/
       void print_covg_ratio(VariantBranchesAndFlanks* var, FILE* fptr_out)
       {
 	boolean too_short=false;
@@ -3960,22 +4066,29 @@ void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE
 	    else if (cov1>=cov2)
 	      {
 		float ratio = (float)cov1/((float)(cov1+cov2));
-		fprintf(fptr_out, "COLOUR %d\tVAR\tALLELE_RATIO %.2f\n", datac, ratio);
+		fprintf(fptr_out, "COLOUR %d\tVAR\tALLELE_RATIO %.2f\t%d\n", datac, ratio, cov1);
 	      }
 	    else
 	      {
 		float ratio = (float)cov2/((float)(cov1+cov2));
-		fprintf(fptr_out, "COLOUR %d\tVAR\tALLELE_RATIO %.2f\n", datac, ratio);
+		fprintf(fptr_out, "COLOUR %d\tVAR\tALLELE_RATIO %.2f\t%d\n", datac, ratio, cov2);
 	      }
 	  }
       }
 
+      boolean model_selection_condition(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info)
+      {
+	return true;
+      }
+
       db_graph_detect_vars_given_lists_of_colours(fout, max_length, db_graph,
 						  list, len_list, list, len_list,
-						  &detect_vars_condition_always_true,
+						  &splits_gDNA_and_RNA,
+						  //&detect_vars_condition_always_true,
 						  //&condition_splits_haplotypes,
-						  &print_covg_ratio,
-						  false, NULL, NULL, false, NULL, NULL);
+						  //&print_covg_ratio,
+						  &print_standard_extra_info,
+						  false, NULL, NULL, false, &model_selection_condition, model_info);
 
 
 

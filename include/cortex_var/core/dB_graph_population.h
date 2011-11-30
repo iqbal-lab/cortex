@@ -636,5 +636,5 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
 						int tot_data1, int tot_data2, int tot_data3, int tot_data4, int tot_data5,
 						boolean (*condition)(dBNode**, int, int*), FILE* fout);
 
-void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE* fout);
+void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE* fout, GraphAndModelInfo* model_info);
 #endif
