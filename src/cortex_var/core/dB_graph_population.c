@@ -3726,6 +3726,8 @@ void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE
   int col_data3 = 6;
   int col_data4 = 7;
   int col_data5 = 8;
+  int col_PGF_reference = 9; //for choosing ref allele for VCF
+
   // int col_PGF_ref = 9;
   //int col_COX_ref = 10;
   int datacols[]={4,5,6,7,8};
