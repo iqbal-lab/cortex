@@ -62,6 +62,12 @@ void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fi
 									boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, 
 									dBGraph* db_graph, EdgeArrayType type, int index);
 
+
+void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
+											      boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
+											      dBGraph* db_graph, EdgeArrayType type, int index, long long** read_len_count_array);
+
+
 //pass in a single kmer sliding window and the Sequence* it was derived from. Will find the nodes correspinding to this seqeunce
 //and put them in array. Also will check that edges exist as expected from the Sequence*
 void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, Sequence* seq, dBGraph* db_graph, dBNode** array_nodes, Orientation* array_orientations, 
@@ -95,6 +101,13 @@ void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_
 
 
 void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded, long long* bad_reads, dBGraph* db_graph);
+
+
+//use preallocated sliding window, and get all the kmers from the passed-in sequence. Any kmer that would have contained an N is returned as NULL
+int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short kmer_size, KmerSlidingWindow* kmer_window, dBGraph* db_graph);
+
+
+
 
 
 // gets the next number_of_bases_to_load bases from fasta file, and returns them in the array of nodes.
@@ -196,7 +209,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
 
 void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_mean_readlens, long long* array_total_seq);
-boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary, int** array_mean_readlens, long long** array_total_seqs);
+boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary, int** array_mean_readlens, long long** array_total_seqs, int *return_binversion);
 
 boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* num_bitfields, int* number_of_colours_in_binary); //return true if binary header readable and has magic number
 

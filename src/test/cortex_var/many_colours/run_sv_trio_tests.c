@@ -36,7 +36,7 @@
 #include "test_model_selection.h"
 #include <test_file_reader.h>
 #include <test_db_complex_genotyping.h>
-
+#include <test_genome_complexity.h>
 #include <CUnit.h>
 #include <Basic.h>
 
@@ -59,7 +59,7 @@ int  main()
   /* add the tests to the suites */
 
 
-  /*
+
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
     CU_cleanup_registry();
@@ -229,11 +229,7 @@ int  main()
      CU_cleanup_registry();
      return CU_get_error();
     }
-    //   if (NULL == CU_add_test(pPopGraphSuite, "Load five people in one population, sharing different amounts of sequence. Test finding population consensus supernode.", test_get_population_consensus_supernode))
-    //{
-    //CU_cleanup_registry();
-    //return CU_get_error();
-    //}
+
     if (NULL == CU_add_test(pPopGraphSuite, "Check that correctly get stats on how many kmers are shared by 1,2,3,... people in a population", test_getting_stats_of_how_many_indivduals_share_a_node))
     {
      CU_cleanup_registry();
@@ -368,14 +364,27 @@ int  main()
 	return CU_get_error();
       }
 
-  */
+
+   //if (NULL == CU_add_test(pPopGraphSuite, "Test function for estimating genome complexity - first test", test_count_reads_where_snp_makes_clean_bubble1 ))
+   //   {
+//	CU_cleanup_registry();
+//	return CU_get_error();
+  //    }
+
+
+   if (NULL == CU_add_test(pPopGraphSuite, "Regression test case 1 - genotyping of bubble with one branch <k and one long branch", regression_test_1_single_bubble_call_one_allele_shorter_than_k_one_very_long ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test algorithm for genotyping of complex site at a simple site (repeat for different coverages and sequencing error rates, simulating real coverage coording to our model, 100 iterations each time)", test_calc_log_likelihood_of_genotype_with_complex_alleles1 ))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
 	}
-
+   
    if (NULL == CU_add_test(pPopGraphSuite, "Test genotyping of complex sites - test with two HLA-B alleles", test_calc_log_likelihood_of_genotype_with_complex_alleles2 ))
       {
 	CU_cleanup_registry();

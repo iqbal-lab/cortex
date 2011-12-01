@@ -46,7 +46,7 @@ ifndef NUM_COLS
   NUM_COLS = 1
 endif
 
-##ifeq ($(BITFIELDS),0)
+#ifeq ($(BITFIELDS),0)
 #$(error Invalid value for MAXK - either omit or use 32*x-1)
 #endif
 
@@ -71,7 +71,7 @@ IDIR_HASH_TABLE_TESTS =include/test/hash_table
 IDIR_CORTEX_CON_TESTS=include/test/graph
 IDIR_CORTEX_VAR_TESTS=include/test/cortex_var/many_colours
 
-#IDIR_CUNIT = /home/zam/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
+IDIR_CUNIT = /home/zam/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
 
 
 ifdef MAC
@@ -94,18 +94,18 @@ endif
 
 
 
-#CFLAGS_CUNIT          = -L/home/zam/bin/lib
+CFLAGS_CUNIT          = -L/home/zam/bin/lib
 
 CFLAGS_BASIC          = -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING)
 CFLAGS_GRAPH          = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_BASE_ENCODING)
 CFLAGS_CORTEX_VAR = -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_CORTEX_VAR) -I$(IDIR_BASE_ENCODING) -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO)
 
 
-CFLAGS_BASIC_TESTS = -I$(IDIR_BASIC_TESTS)  -I$(IDIR_BASIC)  -I$(IDIR_BASE_ENCODING) -I$(IDIR_CUNIT) 
-CFLAGS_HASH_TABLE_TESTS =  -I$(IDIR_HASH) -I$(IDIR_HASH_TABLE_TESTS) -I$(IDIR_CUNIT)  -I$(IDIR_CORTEX_VAR) 
-CFLAGS_GRAPH_TESTS = -I$(IDIR_GRAPH_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_CUNIT) 
-CFLAGS_CORTEX_VAR_TESTS = -I$(IDIR_CORTEX_VAR_TESTS) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_HASH) -I$(IDIR_CORTEX_VAR) -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_CUNIT) -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO) 
-CFLAGS_CORTEX_VAR_CMD_LINE_TESTS = -I$(IDIR_CORTEX_VAR_TESTS) -I$(IDIR_CORTEX_VAR_CMD_LINE) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_CUNIT) 
+CFLAGS_BASIC_TESTS = -I$(IDIR_BASIC_TESTS)  -I$(IDIR_BASIC)  -I$(IDIR_BASE_ENCODING) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
+CFLAGS_HASH_TABLE_TESTS =  -I$(IDIR_HASH) -I$(IDIR_HASH_TABLE_TESTS) -I$(IDIR_CUNIT)  -I$(IDIR_CORTEX_VAR) -L/home/zam/bin/lib
+CFLAGS_GRAPH_TESTS = -I$(IDIR_GRAPH_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_CUNIT) -L/home/zam/bin/lib 
+CFLAGS_CORTEX_VAR_TESTS = -I$(IDIR_CORTEX_VAR_TESTS) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_HASH) -I$(IDIR_CORTEX_VAR) -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_CUNIT) -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO) -L/home/zam/bin/lib
+CFLAGS_CORTEX_VAR_CMD_LINE_TESTS = -I$(IDIR_CORTEX_VAR_TESTS) -I$(IDIR_CORTEX_VAR_CMD_LINE) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_CUNIT) -L/home/zam/bin/lib
 
 
 GRAPH_OBJ      = src/obj/cortex_con/cmd_line.o src/obj/cortex_con/binary_kmer.o  src/obj/cortex_con/event_encoding.o src/obj/cortex_con/seq.o src/obj/cortex_con/element.o src/obj/cortex_con/hash_value.o src/obj/cortex_con/hash_table.o src/obj/cortex_con/dB_graph.o src/obj/cortex_con/file_reader.o src/obj/cortex_con/cortex_con.o

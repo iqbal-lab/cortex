@@ -1176,10 +1176,10 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 								      Orientation orientation,
 								      int limit,
 								      void (*node_action)(dBNode * node), 
-								      int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,
-								      char * seq1, double * avg_coverage1, int * min_coverage1, int * max_coverage1,
-								      int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,
-								      char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
+								      int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,char * seq1, 
+								      double * avg_coverage1, int * min_coverage1, int * max_coverage1,
+								      int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,char * seq2, 
+								      double * avg_coverage2, int * min_coverage2, int * max_coverage2,
 								      dBGraph * db_graph, Edges (*get_colour)(const dBNode*),  int (*get_covg)(const dBNode*),
 								      boolean apply_special_action_to_branches, void (*special_action)(dBNode * node))
 {
@@ -1235,7 +1235,12 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
     k = j+1;
     while (!ret && k<i){
       
-      if (path_nodes[j][lengths[j]] == path_nodes[k][lengths[k]]){
+      if ( 
+	  (path_nodes[j][lengths[j]]        == path_nodes[k][lengths[k]])
+	  &&
+	  (path_orientations[j][lengths[j]] == path_orientations[k][lengths[k]]) 
+	   )
+	{
 	*length1 = lengths[j];
 	*length2 = lengths[k];
 
@@ -1302,10 +1307,6 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 
 
 
-
-
-//clip the branch with smaller coverage in the first kmer --> this can be more sophisticated
-//dont want to flatten repeats -- use coverage_limit for this
 
 
 boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(dBNode * node, Orientation orientation, 
@@ -2482,7 +2483,9 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		//ModelLogLikelihoodsAndBayesFactors stats;//results of bayes factor calcs go in here
 		//initialise_stats(&stats);
 		AnnotatedPutativeVariant annovar;
-		initialise_putative_variant(&annovar, &var, BubbleCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
+		initialise_putative_variant(&annovar, &var, BubbleCaller, 
+					    model_info->ginfo, model_info->seq_error_rate_per_base, 
+					    model_info->genome_len, 
 					    db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
 		if (annovar.too_short==false)
 		  {
@@ -2513,24 +2516,31 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			    fprintf(fout,"Colour/sample\tGT_call\tllk_hom_br1\tllk_het\tllk_hom_br2\n");
 			    for (z=0; z<NUMBER_OF_COLOURS; z++)
 			      {
-				fprintf(fout,"%d\t", z);
-				if (annovar.genotype[z]==hom_one)
+				if (z==model_info->ref_colour)
 				  {
-				    fprintf(fout,"HOM1\t");
-				  }
-				else if (annovar.genotype[z]==het)
-				  {
-				    fprintf(fout,"HET\t");
-				  }
-				else if (annovar.genotype[z]==hom_other)
-				  {
-				    fprintf(fout,"HOM2\t");
+				    fprintf(fout, "%d=REF\tNO_CALL\t0\t0\t0\n", z);
 				  }
 				else
 				  {
-				    fprintf(fout,"NO_CALL\t");
+				    fprintf(fout,"%d\t", z);
+				    if (annovar.genotype[z]==hom_one)
+				      {
+					fprintf(fout,"HOM1\t");
+				      }
+				    else if (annovar.genotype[z]==het)
+				      {
+					fprintf(fout,"HET\t");
+				      }
+				    else if (annovar.genotype[z]==hom_other)
+				      {
+					fprintf(fout,"HOM2\t");
+				      }
+				    else
+				      {
+					fprintf(fout,"NO_CALL\t");
+				      }
+				    fprintf(fout, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
 				  }
-				fprintf(fout, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
 			      }
 			  }
 			else if ( (model_info->expt_type == EachColourAHaploidSample) || (model_info->expt_type ==EachColourAHaploidSampleExceptTheRefColour) )
@@ -2538,20 +2548,27 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			    fprintf(fout,"Colour/sample\tGT_call\tllk_hom_br1\tllk_hom_br2\n");
 			    for (z=0; z<NUMBER_OF_COLOURS; z++)
 			      {
-				fprintf(fout,"%d\t", z);
-				if (annovar.genotype[z]==hom_one)
+				if (z==model_info->ref_colour)
 				  {
-				    fprintf(fout,"HOM1\t");
-				  }
-				else if (annovar.genotype[z]==hom_other)
-				  {
-				    fprintf(fout,"HOM2\t");
+				    fprintf(fout, "%d=REF\tNO_CALL\t0\t0\n", z);
 				  }
 				else
 				  {
-				    fprintf(fout,"NO_CALL\t");
+				    fprintf(fout,"%d\t", z);
+				    if (annovar.genotype[z]==hom_one)
+				      {
+					fprintf(fout,"HOM1\t");
+				      }
+				    else if (annovar.genotype[z]==hom_other)
+				      {
+					fprintf(fout,"HOM2\t");
+				      }
+				    else
+				      {
+					fprintf(fout,"NO_CALL\t");
+				      }
+				    fprintf(fout, "%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[hom_other]);
 				  }
-				fprintf(fout, "%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[hom_other]);
 			      }
 			  }
 		      }
@@ -2961,6 +2978,107 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
     }
 
 }
+
+
+//given two lists of colours, we want to print supernodes in the union of colours in the first list,
+// subject to the following ocnstraints
+// 1. min contig length (base pairs) 
+// 2. minimum proportion of kmers in the supernode must have ZERO covg in the unio of the second list of colours 
+
+void db_graph_print_novel_supernodes(char* outfile, int max_length, dBGraph * db_graph, 
+				     int* first_list, int len_first_list,
+				     int* second_list,  int len_second_list,
+				     int min_contig_length_bp, int min_percentage_novel,
+				     void (*print_extra_info)(dBNode**, Orientation*, int, FILE*))
+{
+
+
+  Edges get_union_first_list_colours(const dBNode* e)
+  {
+    int i;
+    Edges edges=0;
+    
+    for (i=0; i< len_first_list; i++)
+      {
+	edges |= e->individual_edges[first_list[i]];
+      }
+    return edges;    
+  }
+
+  
+
+  int get_covg_of_union_first_list_colours(const dBNode* e)
+  {
+    int i;
+    int covg=0;
+  
+    for (i=0; i< len_first_list; i++)
+      {
+	covg += e->coverage[first_list[i]];
+      }
+    return covg;
+  }
+
+  int get_covg_of_union_second_list_colours(const dBNode* e)
+  {
+    int i;
+    int covg=0;
+  
+    for (i=0; i< len_second_list; i++)
+      {
+	covg += e->coverage[second_list[i]];
+      }
+    return covg;
+  }
+
+
+
+  boolean condition_is_novel(dBNode** path, Orientation* ors, int len)
+  {
+    if (db_graph->kmer_size + len-1 <min_contig_length_bp)
+      {
+	return false;
+      }
+    else if (len<=1)
+      {
+	return false; //i just dont support sups which are 2 nodes'
+      }
+    else
+      {
+	int i;
+	int count_novel=0;
+	for (i=1; i<len; i++)
+	  {
+	    if (get_covg_of_union_second_list_colours(path[i])==0)//counting proportion of INTERIOR nodes
+	      {
+		count_novel++;
+	      }
+	  }
+	
+	int percentage =  100 * count_novel / (len-1);
+	if (percentage<min_percentage_novel)
+	  {
+	    return false;
+	  }
+	else
+	  {
+	    return true;
+	  }
+      }
+  }
+
+  db_graph_print_supernodes_defined_by_func_of_colours_given_condition(outfile, "", max_length,
+								       db_graph, &get_union_first_list_colours, &get_covg_of_union_first_list_colours,
+								       print_extra_info, &condition_is_novel);
+
+
+
+  //unset the nodes marked as visited, but not those marked as to be ignored
+  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+
+
+}
+
 
 
 /*
@@ -4111,6 +4229,119 @@ void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE
 
 
 
+void db_graph_print_supernodes_defined_by_func_of_colours_given_condition(char * filename_sups, char* filename_sings, int max_length, 
+									  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+									  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*),
+									  boolean (*condition)(dBNode** path, Orientation* ors, int len)){
+
+  boolean do_we_print_singletons=true;//singletons are supernodes consisting of ONE node.
+
+  FILE * fout1; //file to which we will write all supernodes which are longer than 1 node in fasta format
+  fout1= fopen(filename_sups, "w"); 
+  if (fout1==NULL)
+    {
+      printf("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours\n", filename_sups);
+      exit(1);
+    }
+
+  FILE * fout2=NULL; //file to which we will write all "singleton" supernodes, that are just  1 node, in fasta format
+  if ( strcmp(filename_sings, "")==0 )
+    {
+      printf("Only printing supernodes consisting of >1 node (ie contigs longer than %d bases)\n", db_graph->kmer_size);
+      do_we_print_singletons=false;
+    }
+  else
+    {
+      fout2= fopen(filename_sings, "w"); 
+      if (fout2==NULL)
+	{
+	  printf("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours\n", filename_sings);
+	  exit(1);
+	}
+    }
+
+
+  int count_nodes=0;
+  
+  dBNode * *    path_nodes;
+  Orientation * path_orientations;
+  Nucleotide *  path_labels;
+  char * seq;
+  boolean is_cycle;
+  double avg_coverage;
+  int min,max;
+  
+  
+  path_nodes        = calloc(max_length,sizeof(dBNode*));
+  path_orientations = calloc(max_length,sizeof(Orientation));
+  path_labels       = calloc(max_length,sizeof(Nucleotide));
+  seq               = calloc(max_length+1+db_graph->kmer_size,sizeof(char));
+  
+  
+
+  long long count_kmers = 0;
+  long long count_sing  = 0;
+
+  void print_supernode(dBNode * node){
+    
+    count_kmers++;
+    char name[100];
+
+    if (db_node_check_status_none(node) == true){
+      int length = db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_length,&db_node_action_set_status_visited,
+									     path_nodes,path_orientations,path_labels,
+									     seq,&avg_coverage,&min,&max,&is_cycle,
+									     db_graph, get_colour, get_covg);
+      if (condition(path_nodes,path_orientations, length)==true)
+	{
+	  if (length>0){	
+	    sprintf(name,"node_%i",count_nodes);
+	    
+	    print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout1,name,length,avg_coverage,min,max,
+										 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
+										 db_graph->kmer_size,true, get_colour, get_covg);
+	    if (length==max_length){
+	      printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
+	    }
+	    //fprintf(fout1, "extra information:\n");
+	    print_extra_info(path_nodes, path_orientations, length, fout1);
+	    count_nodes++;
+	  }
+	  else{
+	    count_sing++;
+	    if (do_we_print_singletons==true)
+	      {
+		sprintf(name,"node_%qd",count_sing);
+		print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout2,name,length,avg_coverage,min,max,
+										     path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
+										     db_graph->kmer_size,true, get_colour, get_covg);
+		//fprintf(fout2, "extra information:\n");
+		print_extra_info(path_nodes, path_orientations, length, fout2);
+	      }
+	    
+	    
+	  }
+	}
+    }
+  }
+  
+  hash_table_traverse(&print_supernode,db_graph); 
+  printf("%qd nodes visted [%qd singletons]\n",count_kmers,count_sing);
+
+  free(path_nodes);
+  free(path_orientations);
+  free(path_labels);
+  free(seq);
+  fclose(fout1);
+  if (fout2 != NULL)
+    {
+      fclose(fout2);
+    }
+}
+
+
+
+
 void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index){
   long long count_kmers=0;
 
@@ -4835,7 +5066,7 @@ void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph *
 
 
 //if you don't want to/care about graph_info, pass in NULL
-void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
+int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   
@@ -4869,6 +5100,7 @@ void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), 
   fclose(fout);
 
   printf("%qd kmers dumped\n",count);
+  return count;
 }
 
 
@@ -6626,7 +6858,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						char** return_flank3p_array, int** return_variant_start_coord,
 						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
 						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
+						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+						GraphAndModelInfo* model_info
 						)
 {
 
@@ -7830,6 +8063,82 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 		  if (output_file != NULL)
 		    {
+
+		      //if the user has asked for it, then print out genotype likelihoods
+		      AnnotatedPutativeVariant annovar;
+		      if (model_info!=NULL)
+			{
+			  initialise_putative_variant(&annovar, &var, SimplePathDivergenceCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
+						      db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
+			  
+			  
+			  if (model_info->expt_type != Unspecified)
+			    {
+			      int z;
+			      
+			      if ( (model_info->expt_type == EachColourADiploidSample) || (model_info->expt_type ==EachColourADiploidSampleExceptTheRefColour) )
+				{
+				  fprintf(output_file,"Colour/sample\tGT_call\tllk_hom_br1\tllk_het\tllk_hom_br2\n");
+				  for (z=0; z<NUMBER_OF_COLOURS; z++)
+				    {
+				      if (z==model_info->ref_colour)
+					{
+					  fprintf(output_file, "%d=REF\tNO_CALL\t0\t0\t0\n", z);
+					}
+				      else
+					{
+					  fprintf(output_file,"%d\t", z);
+					  if (annovar.genotype[z]==hom_one)
+					    {
+					      fprintf(output_file,"HOM1\t");
+					    }
+					  else if (annovar.genotype[z]==het)
+					    {
+					      fprintf(output_file,"HET\t");
+					    }
+					  else if (annovar.genotype[z]==hom_other)
+					    {
+					      fprintf(output_file,"HOM2\t");
+					    }
+					  else
+					    {
+					      fprintf(output_file,"NO_CALL\t");
+					    }
+					  fprintf(output_file, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
+					}
+				    }
+				}
+			      else if ( (model_info->expt_type == EachColourAHaploidSample) || (model_info->expt_type ==EachColourAHaploidSampleExceptTheRefColour) )
+				{
+				  fprintf(output_file,"Colour/sample\tGT_call\tllk_hom_br1\tllk_hom_br2\n");
+				  for (z=0; z<NUMBER_OF_COLOURS; z++)
+				    {
+				      if (z==model_info->ref_colour)
+					{
+					  fprintf(output_file, "%d=REF\tNO_CALL\t0\t0\t0\n", z);
+					}
+				      else
+					{
+					  fprintf(output_file,"%d\t", z);
+					  if (annovar.genotype[z]==hom_one)
+					    {
+					      fprintf(output_file,"HOM1\t");
+					    }
+					  else if (annovar.genotype[z]==hom_other)
+					    {
+					      fprintf(output_file,"HOM2\t");
+					    }
+					  else
+					    {
+					      fprintf(output_file,"NO_CALL\t");
+					    }
+					  fprintf(output_file, "%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[hom_other]);
+					}
+				    }
+				}
+			    }
+			}
+		      
 		      
 		      char name[300]; 
 		      sprintf(name,"var_%i_5p_flank",num_variants_found);
@@ -8039,7 +8348,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 										       boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
 													    Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										       void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
+										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+										       GraphAndModelInfo* model_info
 										       )
 {
 
@@ -9217,6 +9527,81 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		  if (output_file != NULL)
 		    {
 		      
+		      //if the user has asked for it, then print out genotype likelihoods
+		      AnnotatedPutativeVariant annovar;
+		      if (model_info!=NULL)
+			{
+			  initialise_putative_variant(&annovar, &var, SimplePathDivergenceCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
+						      db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
+			  
+			  
+			  if (model_info->expt_type != Unspecified)
+			    {
+			      int z;
+			      
+			      if ( (model_info->expt_type == EachColourADiploidSample) || (model_info->expt_type ==EachColourADiploidSampleExceptTheRefColour) )
+				{
+				  fprintf(output_file,"Colour/sample\tGT_call\tllk_hom_br1\tllk_het\tllk_hom_br2\n");
+				  for (z=0; z<NUMBER_OF_COLOURS; z++)
+				    {
+				      if (z==model_info->ref_colour)
+					{
+					  fprintf(output_file, "%d=REF\tNO_CALL\t0\t0\t0\n", z);
+					}
+				      else
+					{					  
+					  fprintf(output_file,"%d\t", z);
+					  if (annovar.genotype[z]==hom_one)
+					    {
+					      fprintf(output_file,"HOM1\t");
+					    }
+					  else if (annovar.genotype[z]==het)
+					    {
+					      fprintf(output_file,"HET\t");
+					    }
+					  else if (annovar.genotype[z]==hom_other)
+					    {
+					      fprintf(output_file,"HOM2\t");
+					    }
+					  else
+					    {
+					      fprintf(output_file,"NO_CALL\t");
+					    }
+					  fprintf(output_file, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
+					}
+				    }
+				}
+			      else if ( (model_info->expt_type == EachColourAHaploidSample) || (model_info->expt_type ==EachColourAHaploidSampleExceptTheRefColour) )
+				{
+				  fprintf(output_file,"Colour/sample\tGT_call\tllk_hom_br1\tllk_hom_br2\n");
+				  for (z=0; z<NUMBER_OF_COLOURS; z++)
+				    {
+				      if (z==model_info->ref_colour)
+					{
+					  fprintf(output_file, "%d=REF\tNO_CALL\t0\t0\n", z);
+					}
+				      else
+					{
+					  fprintf(output_file,"%d\t", z);
+					  if (annovar.genotype[z]==hom_one)
+					    {
+					      fprintf(output_file,"HOM1\t");
+					    }
+					  else if (annovar.genotype[z]==hom_other)
+					    {
+					      fprintf(output_file,"HOM2\t");
+					    }
+					  else
+					    {
+					      fprintf(output_file,"NO_CALL\t");
+					    }
+					  fprintf(output_file, "%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[hom_other]);
+					}
+				    }
+				}
+			    }
+			}
+		    
 
 		      char name[300]; 
 		      sprintf(name,"var_%i_5p_flank",num_variants_found);
@@ -9402,7 +9787,8 @@ void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv
 										 boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
 												      Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										 void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
+										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+										 GraphAndModelInfo* model_info
 										 )
 {
 
@@ -9440,7 +9826,7 @@ void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv
 										     max_desired_returns,
 										     return_flank5p_array, return_trusted_branch_array, return_variant_branch_array,
 										     return_flank3p_array, return_variant_start_coord,
-										     condition, action_for_branches_of_called_variants, print_extra_info);
+										     condition, action_for_branches_of_called_variants, print_extra_info, model_info);
 										     
 
 
@@ -10344,7 +10730,7 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph){
 		       orientation == forward ? "forward" : "reverse");
 		if (fix)
 		  {
-		    db_node_reset_edge(node,n,orientation, individual_edge_array, j);
+		    db_node_reset_edge(node,orientation,n, individual_edge_array, j);
 		  }
 	      }
 	    else
@@ -10381,6 +10767,60 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph){
   printf("%qd nodes checked\n",count_nodes);
   return count_nodes;
 }
+
+
+//clean off edges that point nowhere - caused when you dump a subgraph
+long long db_graph_clean_orphan_edges(dBGraph * db_graph){
+  dBNode * next_node;
+  Nucleotide reverse_nucleotide;
+  Orientation next_orientation;
+  long long count_nodes=0;
+  char tmp_seq[db_graph->kmer_size+1]; 
+
+  void check_node_with_orientation(dBNode * node, Orientation orientation){
+
+    int j;
+    for (j=0; j< NUMBER_OF_COLOURS; j++)
+      {
+
+	void check_base(Nucleotide n)
+	{     
+	  if (db_node_edge_exist(node,n,orientation, individual_edge_array, j)==true){
+
+	    next_node = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,n,&reverse_nucleotide,db_graph, individual_edge_array, j);
+	    
+	    if(next_node == NULL)
+	      {
+		db_node_reset_edge(node,orientation,n, individual_edge_array, j);
+	      }
+	    else
+	      {
+		if (db_node_edge_exist(next_node,reverse_nucleotide,opposite_orientation(next_orientation), individual_edge_array, j)==false)
+		  {
+		    db_node_reset_edge(node,orientation, n, individual_edge_array, j);
+		  }
+	      }
+	    
+	  }
+	}
+
+	nucleotide_iterator(&check_base);
+      }
+  }
+
+
+  void check_node(dBNode * node){
+    check_node_with_orientation(node,forward);
+    check_node_with_orientation(node,reverse);
+    count_nodes++;
+  }
+
+
+  hash_table_traverse(&check_node,db_graph); 
+  return count_nodes;
+}
+
+
 
 
 

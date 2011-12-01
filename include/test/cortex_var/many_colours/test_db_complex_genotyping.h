@@ -2,3 +2,4 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles();
 void test_calc_log_likelihood_of_genotype_with_complex_alleles1();
 void test_calc_log_likelihood_of_genotype_with_complex_alleles2();
 void test_calc_log_likelihood_of_genotype_with_complex_alleles3();
+void regression_test_1_single_bubble_call_one_allele_shorter_than_k_one_very_long();

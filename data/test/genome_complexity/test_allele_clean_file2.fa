@@ -1,0 +1,4 @@
+>read loies entirely in graph defined by test_allele_clean_file1.fa, and is clean (forms supernode at k=7), 
+AGTTACTCACACCCG
+>read lies in ref but any change to the 8th base results in an overlap with the ref, so 
+AGTTCAGAGTTACTCACA

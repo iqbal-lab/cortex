@@ -29,9 +29,11 @@
 #include <string.h>
 
 
-void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat format, char* list_of_fastaq, int max_read_length, int* array_of_colours, char** array_of_names_of_colours,
+void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat format, char* list_of_fastaq, int max_read_length, 
+								      int* array_of_colours, char** array_of_names_of_colours,
 								      int num_of_colours, dBGraph* db_graph,int fastq_ascii_offset,
-								      boolean is_for_testing, char** for_test_array_of_strings, int* for_test_index)
+								      boolean is_for_testing, char** for_test_array_of_strings, int* for_test_index,
+								      boolean mark_nodes_for_dumping)
 {
 
   if ( (format != FASTA) && (format !=FASTQ) )
@@ -171,6 +173,17 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 	  if (num_kmers>0)
 	    {
 	      int k;
+	      if (mark_nodes_for_dumping==true)
+		{
+		  int q;
+		  for (q=0; q<num_kmers; q++)//for each kmer in the read
+		    {
+		      if (array_nodes[q] !=NULL)
+			{
+			  db_node_set_status(array_nodes[q], to_be_dumped);
+			}
+		    }
+		}
 	      //print out the original read
 	      if (is_for_testing==false)
 		{

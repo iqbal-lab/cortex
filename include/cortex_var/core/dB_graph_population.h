@@ -388,6 +388,17 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
 							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*));
 
+void db_graph_print_supernodes_defined_by_func_of_colours_given_condition(char * filename_sups, char* filename_sings, int max_length, 
+									  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
+									  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*),
+									  boolean (*condition)(dBNode** path, Orientation* ors, int len));
+
+void db_graph_print_novel_supernodes(char* outfile, int max_length, dBGraph * db_graph, 
+				     int* first_list, int len_first_list,
+				     int* second_list,  int len_second_list,
+				     int min_contig_length_bp, int min_percentage_novel,
+				     void (*print_extra_info)(dBNode**, Orientation*, int, FILE*));
+
 void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, EdgeArrayType type, int index);
 
 void print_covg_stats_for_timestamps_for_supernodes(char* outfile, dBGraph * db_graph, int max_expected_sup_len);
@@ -406,7 +417,7 @@ void db_graph_remove_low_coverage_nodes(int coverage, dBGraph * db_graph,
 
 void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph * db_graph);
 
-void db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info);
+int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info);
 
 void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info);
 void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info, int colour);
@@ -506,7 +517,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						char** return_flank3p_array, int** return_variant_start_coord,
 						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
 						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
+						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout), GraphAndModelInfo* model_info
 						);
 
 boolean make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours(VariantBranchesAndFlanks* var, 
@@ -527,7 +538,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 										       boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
 													    Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										       void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
+										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+										       GraphAndModelInfo* model_info
 										       );
 
 
@@ -542,7 +554,8 @@ void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv
 										 boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
 												      Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										 void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout)
+										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+										 GraphAndModelInfo* model_info
 										 );
 
 boolean condition_always_true(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
@@ -615,6 +628,7 @@ void print_standard_extra_supernode_info(dBNode** node_array, Orientation* or_ar
 void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout);
 
 long long db_graph_health_check(boolean fix, dBGraph * db_graph);
+long long db_graph_clean_orphan_edges(dBGraph * db_graph);
 
 void db_graph_wipe_colour(int colour, dBGraph* db_graph);
 void db_graph_wipe_two_colours_in_one_traversal(int colour1, int colour2, dBGraph* db_graph);

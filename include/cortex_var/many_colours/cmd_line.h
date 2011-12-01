@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo
  * 
@@ -90,9 +89,19 @@ typedef struct
 
   int pd_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
   int num_colours_in_pd_colour_list;
+  
+  boolean print_novel_contigs;
+  int novelseq_colours_search[MAX_COLOURS_ALLOWED_TO_MERGE];
+  int numcols_novelseq_colours_search;
+  int novelseq_colours_avoid[MAX_COLOURS_ALLOWED_TO_MERGE];
+  int numcols_novelseq_colours_avoid;
+  int novelseq_contig_min_len_bp;
+  int novelseq_min_percentage_novel;
+  char novelseq_outfile[MAX_FILENAME_LEN];
 
   double manually_entered_seq_error_rate;
   boolean manually_override_error_rate;
+  boolean dump_aligned_overlap_binary;
   boolean specified_max_var_len;
   ExperimentType expt_type;
   
@@ -118,6 +127,10 @@ typedef struct
   char fasta_alleles_for_complex_genotyping[MAX_FILENAME_LEN];
   char knight_output[MAX_FILENAME_LEN];
   boolean knight_expt;
+  char fastaq_for_estimating_genome_complexity[MAX_FILENAME_LEN];
+  char output_aligned_overlap_binname[MAX_FILENAME_LEN];
+
+
   boolean cut_homopolymers;
   boolean remove_pcr_dups;
   //boolean clip_tips;
@@ -143,6 +156,8 @@ typedef struct
   boolean align_given_list;
   boolean print_colour_overlap_matrix;
   boolean apply_model_selection_at_bubbles;
+  boolean estimate_genome_complexity;
+
   //int detect_vars_delta;
   //int detect_vars_branch_length;
   //int quality_score_offset;

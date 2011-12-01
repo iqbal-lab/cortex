@@ -72,35 +72,18 @@ Suite: Test main functionality of Cortex
   Test: Test element -increment coverage for different people ... passed
   Test: Test function checking number of edges to nodes with specified status ... passed
   Test: Sanity test for hash_table_find - adding kmers to graph and finding them ... passed
-  Test: Test dumping and reloading of multicolour binary ... 5 kmers dumped
-43 kmers dumped
-passed
+  Test: Test dumping and reloading of multicolour binary ...passed
   Test: Test loading of a singlecolour binary ... passed
-  Test: Test loading of a single-colour binary where nodes are only loaded if they already exist in a predefined "clean" colour, and if so, only taking the edges that overlap both colours ... 11 kmers dumped
-passed
+  Test: Test loading of a single-colour binary where nodes are only loaded if they already exist in a predefined "clean" colour, and if so, only taking the edges that overlap both colours ... passed
   Test: Test that coverage of kmers are correcty counted as reads are loaded from a file ... passed
-  Test: Test getting sliding windows, breaking when kmer is not in graph - internal function ... Start interesting
-passed
+  Test: Test getting sliding windows, breaking when kmer is not in graph - internal function ... passed
   Test: Test getting sliding windows breaking when kner or edge is not in graph - internal function ... passed
-  Test: Test function for getting length distribution of filtered/effective reads after N's, low quality, PCR duplicates and homopolymers have been cut or filtered ... Start loading ../data/test/pop_graph/test_readlen_distrib.pair1.fastq and ../data/test/pop_graph/test_readlen_distrib.pair2.fastq
-Start loading ../data/test/pop_graph/test_readlen_distrib.pair1.fastq and ../data/test/pop_graph/test_readlen_distrib.pair2.fastq
-Start loading ../data/test/pop_graph/test_readlen_distrib.pair1.fastq and ../data/test/pop_graph/test_readlen_distrib.pair2.fastq
-Start loading ../data/test/pop_graph/test_readlen_distrib.pair1.fastq and ../data/test/pop_graph/test_readlen_distrib.pair2.fastq
-Start loading ../data/test/pop_graph/test_readlen_distrib.pair1.fastq and ../data/test/pop_graph/test_readlen_distrib.pair2.fastq
-Start loading ../data/test/pop_graph/test_readlen_distrib.pair1.fastq and ../data/test/pop_graph/test_readlen_distrib.pair2.fastq
-passed
+  Test: Test function for getting length distribution of filtered/effective reads after N's, low quality, PCR duplicates and homopolymers have been cut or filtered ... passed
   Test: Test checking if a path lies in a (function of) colours ... passed
   Test: Test dumping of cleaned fasta by aligning against a cleaned graph ... passed
-  Test: Test removal of PCR duplicate reads from paired-end fastq ... Start loading ../data/test/graph/paired_end_file1_1.fastq and ../data/test/graph/paired_end_file1_2.fastq
-Start loading ../data/test/graph/paired_end_file1_1.fastq and ../data/test/graph/paired_end_file1_2.fastq
-Start loading ../data/test/graph/paired_end_file2_with_dup_1.fastq and ../data/test/graph/paired_end_file2_with_dup_2.fastq
-Start loading ../data/test/graph/paired_end_file3_with_dups_1.fastq and ../data/test/graph/paired_end_file3_with_dups_2.fastq
-passed
+  Test: Test removal of PCR duplicate reads from paired-end fastq ... passed
   Test: Test removal of PCR duplicate reafds from single-ended fastq ... passed
-  Test: Test loading of three binaries as dumped by graph into sv_trio as separate people ... Loaded next binary; total kmers in graph is now 20
-Loaded next binary; total kmers in graph is now 40
-Loaded next binary; total kmers in graph is now 41
-passed
+  Test: Test loading of three binaries as dumped by graph into sv_trio as separate people ...passed
   Test: Test utility function for getting supernode containing a given node ... passed
   Test: Test that can identify supernode ends ... passed
   Test: Test that can get the min and max coverage of a supernode ... passed
@@ -111,23 +94,8 @@ passed
   Test: Test utility function for applying some other function to all nodes in a path defined by a fasta ... passed
   Test: Test get_perfect_path (maximal path without branches) in single colour of graph ... passed
   Test: Loading two people, one fasta each, in same population, and print supernodes. 
-  Each person has 2 reads, and we have manually determined what the supernodes should be ... Upgrade this test to use the NEW PRINT FUNCTION and then uncomment it.
-passed
-  Test: Load three people in one population, each consists of one toy chromosome.
-   Find their individual supernodes correctly ... passed
+  Test: Load three people in one population, each consists of one toy chromosome. Find their individual supernodes correctly ... passed
   Test: Load two people sharing an Alu, differing by sequence before and after the Alu. Find supernodes. ... passed
-  Test: Load two people in one population, and test that given a kmer, we can find the first node in the supernode in which that kmer lies. ... 
-please reimplement (not urgent as no current users of this code) conssensus code using db_graph_supernode NULL TEST
-. passed
-  Test: Load two people in one population, and test that given a node in a person's graoh, you can find the next node in the supernode. ... 
-please reimplement (not urgent as no current users of this code) conssensus code using db_graph_supernode NULL TEST
-. passed
-  Test: Load two people in one population, and test that can pull out required subsection of a supernode. ... 
-please reimplement (not urgent as no current users of this code) conssensus code using db_graph_supernode NULL TEST
-. passed
-  Test: Load two people in one population, and test that for each separately, can find the best sub_supernode, requiring certain people_coverage ... 
-please reimplement (not urgent as no current users of this code) conssensus code using db_graph_supernode NULL TEST
-. passed
   Test: Check that correctly get stats on how many kmers are shared by 1,2,3,... people in a population ... passed
   Test: Unit test of utilty function to produce array of nodes corresponding to a given path through graph, as specified by a fasta file ... passed
   Test: Test function that reads a reference fasta and marks nodes in the graph with status exists_in_reference ... passed

@@ -38,6 +38,9 @@
 #include <db_differentiation.h>
 #include <model_selection.h>
 #include <experiment.h>
+#include <genome_complexity.h>
+#include <math.h>
+#include <maths.h>
 
 void timestamp();
 
@@ -87,8 +90,15 @@ long long calculate_mean(long long* array, long long len)
   return  (sum/num);
 }
 
+void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* model_info)
+{
+  
+}
+
+
 void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph, 
-		  void (*print_some_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp))
+		  void (*print_some_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
+		  GraphAndModelInfo* model_info)
 {
   printf("Calling variants using Path Divergence Caller.\n");
   printf("Calls are made between the reference path as specified by the fasta in %s\n", cmd_line->ref_chrom_fasta_list);
@@ -100,6 +110,14 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
     }
   printf("%d\n", cmd_line->pd_colour_list[cmd_line->num_colours_in_pd_colour_list-1]);
   printf("The reference colour is %d\n", cmd_line->ref_colour);
+  if (model_info->expt_type==Unspecified)
+    {
+      printf("Since you did not use --experiment_type, Cortex does not know how if each colour is a diploid/haploid sample or pool, so\nwill not calculate genotypes or likelihoods\n");
+    }
+  else if (cmd_line->genome_size==0)
+    {
+      printf("Since you did not specify the genome size/length, Cortex cannot calculate genotype likelihoods or call genotypes\n");
+    }
 
   //this will also check that all the ref chrom fasta files exist
   int num_ref_chroms = get_number_of_files_and_check_existence_from_filelist(cmd_line->ref_chrom_fasta_list);
@@ -185,7 +203,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 										  0, NULL, NULL, NULL, NULL, NULL, 
 										  &make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours, 
 										  &db_variant_action_do_nothing,
-										  print_some_extra_var_info);
+										  print_some_extra_var_info, model_info);
       
       
       fclose(chrom_fptr);
@@ -208,7 +226,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 		      void (*print_appropriate_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
 		      Edges(*get_col_ref) (const dBNode* e),
 		      int (*get_cov_ref)(const dBNode* e),
-		      GraphInfo* db_graph_info, ExperimentType expt, GraphAndModelInfo* model_info
+		      GraphInfo* db_graph_info, GraphAndModelInfo* model_info
 		      )
 {
 
@@ -345,6 +363,10 @@ int main(int argc, char **argv){
   int hash_key_bits, bucket_size;
   dBGraph * db_graph = NULL;
   short kmer_size;
+
+  //next two needed much later
+  int num_kmers_dumped_after_alignment=0;
+  char tmp_dump[300];
 
 
   //***************************************************************************
@@ -570,13 +592,12 @@ int main(int argc, char **argv){
 	}
       else//for FASTA we do not get read length distribution
 	{
-	  printf("When binaries are built, Cortex calculates the lenth distribution of reads\n");
+	  printf("When binaries are built, Cortex calculates the legnth distribution of reads\n");
 	  printf("after quality filters, Ns, PCR duplicates, homopolymer filters have been taked into account\n");
 	  printf("This data is saved in the binary header, if you dump a binary file.\n");
-	  printf("However Cortex does not calculate mean read length of input data if it is FASTA, as it is too\n");
-	  printf("difficult to support arbitrary read lengths (fasta may be an entire chromosome).\n");
-	  printf("This data is primarily used for \"real\" data from fastq files\n");
-	  printf("We therefore just use the value you entered for --max_read_len\n");
+	  printf("However Cortex does not calculate mean read length of input data if it is FASTA\n");
+	  printf("These stats are primarily used for \"real\" data from fastq files\n");
+	  printf("Since you have used fasta, we just use the value you entered for --max_read_len and log that in the binary header as the read length\n");
 	  printf("Set mean read len in colour 0 to %d\n", cmd_line.max_read_length);
 	  graph_info_set_mean_readlen(&db_graph_info, 0, cmd_line.max_read_length);
 	  graph_info_increment_seq(&db_graph_info, 0, bases_pass_filters_and_loaded);
@@ -688,7 +709,7 @@ int main(int argc, char **argv){
 	      if (cmd_line.load_colours_only_where_overlap_clean_colour==false)
 		{
 		  printf("If you specify --successively_dump_cleaned_colours, you must also specify --load_colours_only_where_overlap_clean_colour\n");
-		  printf("That should fix your problem, however, this should have been caught as soon as Cortex parsed your command-line. Please inform Zam Iqbal (zam@well.ox.ac.uk) so he can fix that bug\n");
+		  printf("That should fix your problem, however, this should have been caught as soon as Cortex parsed your command-line. Please inform Zam Iqbal (zam@well.ox.ac.uk) so he can fix that UI bug\n");
 		  exit(1);
 		}
 	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
@@ -769,9 +790,10 @@ int main(int argc, char **argv){
 			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line.ref_colour, num_chroms_in_expt, cmd_line.expt_type);
 
 
-  
-  printf("The following mod is for the sims for the paper only: i need the graphinfo to contain read lengths for the fasta based sim binaries\n");
   int j;
+  /*
+  printf("The following mod is for the sims for the paper only: i need the graphinfo to contain read lengths for the fasta based sim binaries\n");
+
   for (j=0; j<NUMBER_OF_COLOURS; j++)
     {
       if (db_graph_info.mean_read_length[j]==0)
@@ -779,7 +801,7 @@ int main(int argc, char **argv){
 	  graph_info_set_mean_readlen(&db_graph_info, j, cmd_line.max_read_length);
 	}
     }
-
+  */
 
       
   printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));	  
@@ -944,7 +966,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Start first set of bubble calls\n");
-      run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, cmd_line.expt_type, &model_info);
+      run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, &model_info);
 
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -957,7 +979,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Start second set of bubble calls\n");
-      run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, cmd_line.expt_type, &model_info);
+      run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, &model_info);
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
       timestamp();
@@ -968,7 +990,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Run Path-Divergence Calls\n");
-      run_pd_calls(&cmd_line, db_graph, &print_appropriate_extra_variant_info);
+      run_pd_calls(&cmd_line, db_graph, &print_appropriate_extra_variant_info, &model_info);
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
       timestamp();
       printf("Finished Path Divergence calls\n");
@@ -994,12 +1016,19 @@ int main(int argc, char **argv){
       align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(cmd_line.format_of_files_to_align, cmd_line.list_fastaq_to_align,
 								       cmd_line.max_read_length, array_of_colours, array_of_colournames,
 								       NUMBER_OF_COLOURS,db_graph,cmd_line.quality_score_offset,
-								       false, NULL, NULL);
+								       false, NULL, NULL, cmd_line.dump_aligned_overlap_binary);
       for (j=0; j<NUMBER_OF_COLOURS; j++)
 	{
 	  free(array_of_colournames[j]);
 	}
       printf("Completed alignment of fasta/q to graph to print coverages in all colours\n");
+      printf("Dumping a binary, %s,  of all the nodes which were hit by the alignment process\n", cmd_line.output_aligned_overlap_binname);
+      sprintf(tmp_dump, "%s.temporary_delete_me", cmd_line.output_aligned_overlap_binname);
+      printf("In the process we have to create a temporary file, %s, which you can/should delete when cortex has completed\n", tmp_dump);
+
+      num_kmers_dumped_after_alignment = db_graph_dump_binary(tmp_dump, &db_node_check_status_to_be_dumped, db_graph, &db_graph_info);
+      hash_table_traverse(&db_node_action_set_status_of_unpruned_to_none, db_graph);	
+
     }
   if (cmd_line.print_colour_overlap_matrix==true)
     {
@@ -1171,11 +1200,105 @@ int main(int argc, char **argv){
 
 
     }
+  if (cmd_line.estimate_genome_complexity==true)
+    {
+      int num_reads_used_in_estimate=0;
+      double g = estimate_genome_complexity(db_graph, cmd_line.fastaq_for_estimating_genome_complexity,
+					    true, 0, 1,cmd_line.max_read_length, cmd_line.format_of_input_seq,
+					    cmd_line.quality_score_offset, &num_reads_used_in_estimate);
+      printf("We estimate genome complexity at k=%d (for SNPs) as %f\n", db_graph->kmer_size, g);
+      printf("This estimate used a sample of %d high-quality reads\n", num_reads_used_in_estimate);
+
+    }
+
+  if (cmd_line.print_novel_contigs==true)
+    {
+      timestamp();
+      printf("Start to search for and print novel contigs\n");
+      printf("Definition of novel: contig must lie in union of these colours: ");
+      int j;
+      for (j=0; j<cmd_line.numcols_novelseq_colours_search; j++)
+	{
+	  printf("%d,", cmd_line.novelseq_colours_search[j]);
+	}
+      printf("\n and at least %d percent of the kmers in this contig (excluding first and last) must have zero coverage in the union of these colours: ", cmd_line.novelseq_min_percentage_novel);
+      for (j=0; j<cmd_line.numcols_novelseq_colours_avoid; j++)
+	{
+	  printf("%d,", cmd_line.novelseq_colours_avoid[j]);
+	}
+      printf("\nAlso contig must be at least %d bp long\n", cmd_line.novelseq_contig_min_len_bp);
+      db_graph_print_novel_supernodes(cmd_line.novelseq_outfile, cmd_line.max_var_len, db_graph, 
+				      cmd_line.novelseq_colours_search, cmd_line.numcols_novelseq_colours_search,
+				      cmd_line.novelseq_colours_avoid, cmd_line.numcols_novelseq_colours_avoid,
+				      cmd_line.novelseq_contig_min_len_bp, cmd_line.novelseq_min_percentage_novel,
+				      &print_appropriate_extra_supernode_info);
+      timestamp();
+      printf("Finished printing novel contigs\n");
+      
+    }
 
   
   hash_table_free(&db_graph);
   timestamp();
-  printf("Cortex completed\n");
+
+  if (cmd_line.dump_aligned_overlap_binary==true)
+    {
+
+      //reload the binary you dumped, clean off the edges, and then dump again.
+      //malloc a new hash table. Only needs to be as large as you need.
+      float s = log(num_kmers_dumped_after_alignment/100)/log(2); //make width 100
+      // now 2^s = num_kmers_dumped_after_alignment/100, so s is my height
+      dBGraph* db_graph2;
+      boolean try_smaller_hash=true;
+      if (2*num_kmers_dumped_after_alignment < pow(2,hash_key_bits) * bucket_size)
+	{
+	  db_graph2 = hash_table_new(s+1,100, max_retries, kmer_size);
+	  if (db_graph2==NULL)
+	    {
+	      try_smaller_hash=false;
+	    }
+	}
+      if (try_smaller_hash==false)
+	{
+	  db_graph2 = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
+	  if (db_graph2==NULL)
+	    {
+	      printf("Cortex has nearly finished. It's done everything you asked it to do, and has dumped a binary of the overlap of your alignment with the graph. However, by \"ripping out\" nodes from the main graph, that dumped binary now has edges pointing out to nodes that are not in the binary. So the idea is that we have deallocated the main graph now, and we were going to load the dumped binary, clean it up and re-dump it. However that has failed, becaause we could not malloc the memory to do it - the most likely reason is that someone else is sharing your server and their mempory use has gone up.\n");
+	      exit(1);
+	    }
+	}	  
+      
+      //this is all for the API - we wont use this info
+      int mean_readlens2[NUMBER_OF_COLOURS];
+      int* mean_readlens_ptrs2[NUMBER_OF_COLOURS];
+      long long total_seq_in_that_colour2[NUMBER_OF_COLOURS];
+      long long* total_seq_in_that_colour_ptrs2[NUMBER_OF_COLOURS];
+      int j;
+      for (j=0; j<NUMBER_OF_COLOURS; j++)
+	{
+	  mean_readlens2[j]=0;
+	  mean_readlens_ptrs2[j]=&(mean_readlens2[j]);
+	  total_seq_in_that_colour2[j]=0;
+	  total_seq_in_that_colour_ptrs2[j]=&(total_seq_in_that_colour2[j]);
+	}
+      int num_c;//number of colours in binary
+      
+      long long  n  = load_multicolour_binary_from_filename_into_graph(tmp_dump,db_graph2, &num_c,
+								       mean_readlens_ptrs2, total_seq_in_that_colour_ptrs2);
+      printf("Loaded the temporary binary %s and found %qd kmers\n", tmp_dump, n);
+      //this is why we are going to all this bother - cleaning edges
+      db_graph_clean_orphan_edges(db_graph2);
+      db_graph_dump_binary(cmd_line.output_aligned_overlap_binname, 
+			   &db_node_condition_always_true,
+			   db_graph2, &db_graph_info);//deliberately using original graph info - we want the same info
+      hash_table_free(&db_graph2);
+    }
+  
+
+
+
+
+  printf("Cortex completed - have a nice day!\n");
   return 0;
 }
 

@@ -392,7 +392,8 @@ void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_
 
 //pass in a single kmer sliding window and the Sequence* it was derived from. Will find the nodes correspinding to this seqeunce
 //and put them in array. Also will check that edges exist as expected from the Sequence*
-void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, Sequence* seq, dBGraph* db_graph, dBNode** array_nodes, Orientation* array_orientations, 
+void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, Sequence* seq, dBGraph* db_graph, 
+					       dBNode** array_nodes, Orientation* array_orientations, 
 					       int max_array_size, 
 					       boolean require_nodes_to_lie_in_given_colour, int colour)
 
@@ -862,6 +863,183 @@ void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* li
 
 
 
+void set_binary_kmer_to_something_not_in_the_hash_table(BinaryKmer* bkmer, dBGraph* db_graph)
+{
+  BinaryKmer b;
+  binary_kmer_initialise_to_zero(&b);
+  boolean found=true;
+  int count=0;
+  int i=1;
+  while (found==true)
+    {
+      i++;
+      b[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]=(bitfield_of_64bits) i;
+
+      dBNode* e = hash_table_find(element_get_key(&b, db_graph->kmer_size, &b), db_graph);
+      if (e==NULL)
+	{
+	  found=false;
+	}
+      count++;
+      if ((count>10000) && (found==true) )
+	{
+	  printf("Cortex needs, for non-obvious reasons, to find a kmer which is NOT in your graph, but after %d random tries, has failed to find one. Still looking.\nIf you are using a very small k, so the graph is saturating the kmer-space, this will go on forever....\n", count);
+	}
+    }
+  
+  binary_kmer_assignment_operator(*bkmer, b);
+}
+
+//The first argument - seq - is a C string in A,C,G,T,N format. (Function handles bad characters)
+//The second argument - length - is the length in bases of the sequence.
+//we want a single sliding window, using a kmer that does not exists in the hash where the kmer would include an N, or Undefined nucleotide
+int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short kmer_size, KmerSlidingWindow* kmer_window, dBGraph* db_graph)
+{  
+
+  if ( (kmer_window==NULL) || (seq==NULL))
+    {
+      printf("Do not pass NULL pointer to get_single_kmer_sliding_window_from_sequence\n");
+      exit(1);
+    }
+  
+  int number_of_steps_before_current_kmer_is_good=0; //good means free of bad characters. 
+  int latest_base_we_have_read=0;
+  int num_kmers=0;
+  char first_kmer[kmer_size+1]; //as string
+  first_kmer[kmer_size]='\0';
+  Nucleotide current_base;
+
+  BinaryKmer marked_kmer; 
+  set_binary_kmer_to_something_not_in_the_hash_table(&marked_kmer, db_graph);
+  int i;
+  /*
+
+  for (i=0; i<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      marked_kmer[i]=~0;
+    }
+  */
+  BinaryKmer current_good_kmer;
+  //binary_kmer_assignment_operator(current_good_kmer, marked_kmer); //initialisation
+  binary_kmer_initialise_to_zero(&current_good_kmer); //zam DEBUG
+
+  //long long current_good_kmer=~0;
+  
+  // don't think need this given new API --> BinaryKmer mask = (( (BinaryKmer) 1 << (2*kmer_size)) - 1); // mask binary 00..0011..11 as many 1's as kmer_size * 2 (every base takes 2 bits)
+
+  if (length < kmer_size )
+    {
+      return 0;
+    }
+
+
+  //set up first kmer
+  for (i=0; i<kmer_size; i++)
+    {
+
+      first_kmer[i]=seq[latest_base_we_have_read];
+      current_base = char_to_binary_nucleotide(seq[latest_base_we_have_read]);
+
+      if (current_base==Undefined)
+	{
+	  //we will ignore contents of the string  first_kmer as it contains a bad character
+	  binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, Adenine, kmer_size );
+	  number_of_steps_before_current_kmer_is_good=i+1;
+	}      
+      else
+	{
+	  binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, current_base, kmer_size );
+	}
+
+      latest_base_we_have_read++;
+    }
+
+
+  //add first kmer to window
+  num_kmers++;
+
+  BinaryKmer tmp_bin_kmer;
+  binary_kmer_assignment_operator(tmp_bin_kmer, marked_kmer);
+  //binary_kmer_initialise_to_zero(&tmp_bin_kmer);//zam debug
+
+  if (number_of_steps_before_current_kmer_is_good==0)
+    {
+      seq_to_binary_kmer(first_kmer,kmer_size, &tmp_bin_kmer);
+    }
+  else
+    {
+      number_of_steps_before_current_kmer_is_good--;
+    }
+  binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1], tmp_bin_kmer);
+
+
+
+  while (latest_base_we_have_read<length)
+    {
+
+      while ( (latest_base_we_have_read<length) && (number_of_steps_before_current_kmer_is_good>0))
+	{
+	  current_base = char_to_binary_nucleotide(seq[latest_base_we_have_read]);
+
+	  if (current_base==Undefined)
+	    {
+	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, Adenine, kmer_size );
+	      number_of_steps_before_current_kmer_is_good=kmer_size;
+	    }
+	  else
+	    {
+	      //add new base
+	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, current_base, kmer_size );
+	    }
+
+	  num_kmers++;
+
+	  //add a marked kmer to the window
+	  binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1], marked_kmer);
+
+	  number_of_steps_before_current_kmer_is_good--;
+	  latest_base_we_have_read++; 
+
+	}
+
+      //as long as previous kmer was good, you loop through this while loop
+      while (latest_base_we_have_read<length)
+	{
+	  current_base = char_to_binary_nucleotide(seq[latest_base_we_have_read]);
+
+	  if (current_base==Undefined)
+	    {
+	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, Adenine, kmer_size );
+	      number_of_steps_before_current_kmer_is_good=kmer_size;
+
+	      //add a marked kmer to the window 
+	      num_kmers++;
+	      binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1], marked_kmer);
+
+	      number_of_steps_before_current_kmer_is_good--; 
+	      latest_base_we_have_read++;
+	      break;
+	    }
+	  else
+	    {
+	  
+	      //add new base
+	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, current_base, kmer_size );
+	      num_kmers++;
+	      binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1],current_good_kmer);      
+	      latest_base_we_have_read++;	      
+	    }
+
+	}
+  
+    }
+    
+  kmer_window->nkmers=num_kmers;
+  return num_kmers;
+
+}
+
+
 
 
 
@@ -913,12 +1091,9 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   int chunk_length;
   int j;
 
-  BinaryKmer marked_kmer; //will have all longlongs in array being ~0
-  //  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
-  //    {
-  //      marked_kmer[j]=~0;
-  //    }
-  binary_kmer_set_all_bitfields(marked_kmer, ~( (bitfield_of_64bits) 0) );
+  BinaryKmer marked_kmer; 
+  set_binary_kmer_to_something_not_in_the_hash_table(&marked_kmer, db_graph);
+  //  binary_kmer_set_all_bitfields(marked_kmer, ~( (bitfield_of_64bits) 0) );//will have all longlongs in array being ~0
   
 
 
@@ -951,7 +1126,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   seq_length += (long long) chunk_length;
   
   //number of nodes may be less than what we asked for, if we hit the end of the file
-  int num_nodes = get_single_kmer_sliding_window_from_sequence(seq->seq,chunk_length,db_graph->kmer_size, kmer_window);
+  int num_nodes = get_single_kmer_sliding_window_from_sequence(seq->seq,chunk_length,db_graph->kmer_size, kmer_window, db_graph);
   
   //sanity
   if (expecting_new_fasta_entry==true)
@@ -985,8 +1160,8 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
   for(j=0;j<kmer_window->nkmers;j++)
     { //for each kmer in window
 
-      if ( binary_kmer_comparison_operator(kmer_window->kmer[j], marked_kmer) ) //encoding as  1's in all 64 bits of all bitfields in BineryKmer, 
-	                                                                        //a non-kmer - ie anything that would have had an N in it
+      if ( binary_kmer_comparison_operator(kmer_window->kmer[j], marked_kmer) ) //a non-kmer - ie anything that would have had an N in it
+	                                                                        
 	{
 	  //corresponds to a kmer that contains an N
 	  path_nodes[offset+j]        =NULL;
@@ -1258,7 +1433,8 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
   }
 
 
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, num_cols_in_loaded_binary, array_mean_readlens, array_total_seqs) ) )
+  int binversion_in_binheader;
+  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, num_cols_in_loaded_binary, array_mean_readlens, array_total_seqs, &binversion_in_binheader) ) )
     {
       printf("Cannot load this binary - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting.\n");
       exit(1);
@@ -1266,7 +1442,7 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
 
 
   //always reads the multicol binary into successive colours starting from 0 - assumes the hash table is empty prior to this
-  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, *num_cols_in_loaded_binary)){
+  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, *num_cols_in_loaded_binary, binversion_in_binheader)){
     count++;
     
     dBNode * current_node  = NULL;
@@ -1323,9 +1499,9 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
   }
 
 
-
+  int binversion_in_header;
   int num_cols_in_binary;
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary, &mean_readlen, &total_seq) ) )
+  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary, &mean_readlen, &total_seq, &binversion_in_header) ) )
     {
       printf("Cannot load this binary - fails signature check. Exiting.\n");
       exit(1);
@@ -1340,7 +1516,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
   
   //Go through all the entries in the binary file
   // each time you load the info into a temporary node, and load them *** into colour number index ***
-  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, type, index))
+  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, type, index, binversion_in_header))
     {
       count++;
 
@@ -2281,7 +2457,7 @@ int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length
   //get next read as a C string and put it in seq. Entry_length is the length of the read.
   int entry_length = file_reader(fp,seq,max_read_length,full_entry,&full_entry);
   //turn it into a sliding window 
-  int nkmers = get_single_kmer_sliding_window_from_sequence(seq->seq,entry_length, db_graph->kmer_size, kmer_window);
+  int nkmers = get_single_kmer_sliding_window_from_sequence(seq->seq,entry_length, db_graph->kmer_size, kmer_window, db_graph);
   //work through the sliding window and put nodes into the array you pass in. Note this may find NULL nodes if the kmer is not in the graph
   load_kmers_from_sliding_window_into_array(kmer_window, seq, db_graph, array_nodes, array_orientations, 
 					    max_read_length-db_graph->kmer_size+1, require_nodes_to_lie_in_given_colour, colour);
@@ -2415,7 +2591,12 @@ void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_me
 
 
 //return yes if signature is consistent
-boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary, int** array_mean_readlens, long long** array_total_seqs)
+boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, 
+			       int* number_of_colours_in_binary, 
+			       int** array_mean_readlens, 
+			       long long** array_total_seqs,
+			       int *return_binversion
+			       )
 {
   int read;
   char magic_number[6];
@@ -2432,7 +2613,10 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* nu
 
     int version;
     read = fread(&version,sizeof(int),1,fp);
-    if (read>0 && version==BINVERSION)
+    *return_binversion = version;
+
+    //version 4 was the version I had for ages, up until I moved to using Uint32 in the binary
+    if (read>0 && ( (version==BINVERSION)|| (version==4)) )
       {
 
 	int kmer_size2;
@@ -2509,29 +2693,30 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* nu
 		      }
 		    else
 		      {
-			printf("You are loading  binary with %d colours into a graph with %d colours - incompatible\n",
-			       num_cols, NUMBER_OF_COLOURS);
+			printf("Problem reading chunk from binary. \n");
 		      }
 		  }
 		else
 		  {
-		    printf("Kmer of binary matches the current graph. However this binary was dumped with a different max_kmer size to that of the current graph\n");
-		    printf("This binary uses %d bitfields, and current graph uses %d\n", num_bitfields, NUMBER_OF_BITFIELDS_IN_BINARY_KMER);
+		    printf("You are loading  binary with %d colours into a graph with %d colours - incompatible\n",
+			   num_cols, NUMBER_OF_COLOURS);
 		  }
 	      }
 	    else
 	      {
-		printf("You are loading a binary with kmer=%d into a graph with kmer=%d - incompatible\n", kmer_size2, kmer_size);
+		printf("Kmer of binary matches the current graph. However this binary was dumped with a different max_kmer size to that of the current graph\n");
+		printf("This binary uses %d bitfields, and current graph uses %d\n", num_bitfields, NUMBER_OF_BITFIELDS_IN_BINARY_KMER);
+
 	      }
 	  }
 	else
 	  {
-	    printf("Binary versions do not match.\n");
+	printf("You are loading a binary with kmer=%d into a graph with kmer=%d - incompatible\n", kmer_size2, kmer_size);
 	  }
       }
     else
       {
-	printf("Binary does not have magic number in header. Corrupt, or not a Cortex binary\n");
+
       }
     
   }
@@ -2539,6 +2724,8 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* nu
     {
       printf("Binary fails signature check - was build for different kmer, or with different binary version. (For debug purposes: Magic number is %s and read is %d)\n", magic_number, read);
     }
+
+
   return ret;
 
 }

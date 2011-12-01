@@ -105,4 +105,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 
 double* alloc_ML_results_array(int num_samples_to_genotype);
 char** alloc_ML_results_names_array(int num_samples_to_genotype);
+
+void modify_character(char* str, int which_base, int which_mutant);
+
 #endif

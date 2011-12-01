@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Basename;
+use lib "Statistics-Descriptive-2.6";
 use Descriptive;
 
 
@@ -8,36 +9,54 @@ use Descriptive;
 # branches against each other to determine variant type,
 # splits out SNPs from clusters so we have precise loci,
 # applies any of the following filters
-#  - demand 5prime flank maps with quality> some threshold
-#  - for ref-assisted calls, insist that the normalised covg on the ref-allele is close to zero.
+#  - demand 5prime flank maps with quality> 30
 # dumps to VCF4.0
 
+####  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+### The following are the Command line arguments you must enter:
 my $callfile = shift;
-my $algo = shift; #"bubble", or "pd" (for path-divergence)
-my $type = shift; # het or hom 
-#my $d_eff = shift;#effective diploid covg, can enter -1 if looking at bubble calls, as do not use it
-my $prefix = shift; #give prefix to make varnames globally unique
 my $outdir = shift;
 my $outvcf_filename_stub = shift;
-my $cortex_version = shift;#used for making the calls --> vcf header
-my $indiv = shift;
-my $reference = shift; #text to go into VCF header to describe this callset
+my $colours = shift;#list of names of colours/sample,s one per line
+my $number_of_colours = shift;
+my $reference_colour = shift;# -1 if unknown, ignore this colour for the VCF - dont print out anything
+my $pooled_colour = shift;   #-1 if unknown, ignore this colour for the VCF - dont print out anything
+my $kmer = shift;
+my $apply_filter_one_allele_must_be_ref = shift; ##  "yes" if one of your colours is the reference
+                                                 ##  otherwise "no" - will produce VCF-like output
+my $classif = shift; ## file containing output of the population filter (classifier.R), or -1 if not used
 
-### initialisation
-my $stampy_bin = "stampy.py";
-my $covg_filter_type = "median"; #median covg on both branches must be >= some threshold
-my $covg_filter_thresh = 2; 
-my $stampy_hash_stub = "stampy_reference"; #name for reference hash file created by Stampy
-my $flank_bin = "make_5p_flank_file.pl";
-my $process_bubbles_bin = "process_bubbles.pl";
+
+my $mapping_qual_thresh = 30;
+
+####  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+## The following all require you to modify them for your system
+
+## build a Stampy hash of the genome to whiich you want to map, and give the path here
+my $stampy_hash_stub = "/path/to/stampyhash";
+my $stampy_bin = "/path/to/stampy.py";
+my $flank_bin = "/path/to/cortex dir/scripts/analyse_variants/make_5p_flank_file.pl";
+my $process_bubbles_bin = "/path/to/cortex dir/scripts/analyse_variants/process_bubbles.pl";
+
+
+
+#### no need to modify anything below this line
+
+
+my $prefix = "cortex";
+#print "Using reference colour $reference_colour\n";
+
+if ( ($apply_filter_one_allele_must_be_ref eq "yes") && ($reference_colour==-1) )
+{
+    die("If you say yes to apply_filter_one_allele_must_be_ref then you must specify the ref colour");
+}
+
+
+
 
 ########
 #### checks
 ########
-if ( ($type ne "het") && ($type ne "hom") )
-{
-    die("Type must be het or hom");
-}
 
 
 if (!(-e $flank_bin) )
@@ -50,35 +69,37 @@ if (!(-e $process_bubbles_bin))
     die("Cannot find $process_bubbles_bin");
 }
 
-
 if (!(-e $callfile))
 {
     die("Cannot find $callfile");
 }
 
-
+if ( ($classif ne "-1") && (!(-e $classif)) )
+{
+    die("Cannot find $classif, which you have entered as the population filter file. Either enter the correct file (and path) or use -1 to signify you are not using it");
+}
 
 if ($outdir !~ /\/$/)
 {
     $outdir = $outdir.'/';
 }
-
-
-
-
-
-
-
+if (!(-e $outdir))
+{
+    die("Output directory $outdir does not exist");
+}
 
 ## 1. Map 5p flanks
 my $bname = basename($callfile);
 my $flankfile = $outdir.$bname.".5pflanks";
 
-my $flank_cmd = "perl $flank_bin $callfile > $flankfile";
-print "$flank_cmd\n";
-my $flank_ret = qx{$flank_cmd};
-print "$flank_ret\n";
 
+if (!-e $flankfile)
+{
+    my $flank_cmd = "perl $flank_bin $callfile > $flankfile";
+    print "$flank_cmd\n";
+    my $flank_ret = qx{$flank_cmd};
+    print "$flank_ret\n";
+}
 
 if ( (!(-e $flankfile)) || (-z $flankfile))
 {
@@ -88,7 +109,7 @@ if ( (!(-e $flankfile)) || (-z $flankfile))
 my $mapped_flanks = $flankfile.".sam";
 if (-e $mapped_flanks)
 {
-    print ("$mapped_flanks already exists, so wont re-do it");
+    print ("$mapped_flanks already exists, so wont re-do it\n");
 }
 else
 {
@@ -121,32 +142,17 @@ else
 ##  3. Apply filters, and collect a list of good calls.
 
 my %var_name_to_flank_mq_filter=();
-my %var_name_to_PD_normalisation_filter=();
 my %var_name_to_covg_and_branch_filter=();
 my %var_name_to_combined_filtering_result=();
+my %pop_classifier=();
+my %pop_classifier_confidence=();
 
-
-my $filter_check_one_br_in_ref = 0;
-if ($type eq "het")
-{
-    $filter_check_one_br_in_ref  = 1;
-}
-
-
-
-my $apply_pd_filters=0;
-if ($algo eq "pd")
-{
-    $apply_pd_filters=1;
-}
-
-filter_by_coverage_and_compare_branches_with_ref($callfile, $filter_check_one_br_in_ref, $covg_filter_type, $covg_filter_thresh, $type, \%var_name_to_covg_and_branch_filter,
-						 $apply_pd_filters);
 filter_by_flank_mapqual($mapped_flanks, \%var_name_to_flank_mq_filter);
-
-
-
-combine_all_filters(\%var_name_to_covg_and_branch_filter, \%var_name_to_flank_mq_filter, \%var_name_to_combined_filtering_result);
+if ($classif ne "-1")
+{
+    get_pop_filter_info($classif, \%pop_classifier, \%pop_classifier_confidence);
+}
+combine_all_filters(\%var_name_to_covg_and_branch_filter, \%var_name_to_flank_mq_filter, \%var_name_to_combined_filtering_result,  \%pop_classifier);
 
 
 my $fh_calls;
@@ -164,7 +170,7 @@ my $decomp_vcf_name = $outdir.$outvcf_filename_stub.".decomp.vcf";
 open($fh_decomp_vcf, "> $decomp_vcf_name")||die("Cannot open $decomp_vcf_name");
 
 ##print vcf header
-my $header = get_vcf_header($cortex_version, $reference, $indiv);
+my $header = get_vcf_header($colours);
 print $fh_simple_vcf $header;
 print $fh_decomp_vcf $header;
 
@@ -173,10 +179,10 @@ my $ret=1;
 while ($ret==1)
 {
 
-    $ret = print_next_vcf_entry_for_easy_and_decomposed_vcfs($type, $fh_calls, $fh_map_flanks, $fh_proc_bub,
+    $ret = print_next_vcf_entry_for_easy_and_decomposed_vcfs($fh_calls, $fh_map_flanks, $fh_proc_bub,
 							     \%var_name_to_combined_filtering_result, \%var_name_to_cut_flank,
 							     1,1,
-							     $fh_simple_vcf, $fh_decomp_vcf);
+							     $fh_simple_vcf, $fh_decomp_vcf, \%pop_classifier_confidence);
 }
 close($fh_calls);
 close($fh_map_flanks);
@@ -186,7 +192,7 @@ close($fh_proc_bub);
 
 sub get_vcf_header
 {
-    my ($changeset, $reference, $header) = @_;
+    my ($colourfile) = @_;
 
     my $date_cmd = "date \'+\%d\/\%m\/\%y\'";
     my $date = qx{$date_cmd};
@@ -196,11 +202,11 @@ sub get_vcf_header
     
     $head = $head. "##fileformat=VCFv4.0\n";
     $head = $head. "##fileDate=$date\n";
-    $head = $head. "##source=Cortex changeset $changeset\n";
-    $head = $head. "##reference=$reference\n";
     $head = $head. "##phasing=none, though some calls involve phasing clustered variants\n";
     $head = $head. "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
     $head = $head. "##FORMAT=<ID=COV,Number=2,Type=Integer,Description=\"Median coverage on ref and alt alleles\">\n";
+    $head = $head. "##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description=\"Genotype confidence. Difference in log likelihood of most likely and next most likely genotype\">\n";
+    $head = $head. "##FORMAT=<ID=SITE_CONF,Number=1,Type=Float,Description=\"Probabilitic site classification confidence. Difference in log likelihood of most likely and next most likely model (models are variant, repeat and error)\">\n";
     $head = $head. "##INFO=<ID=SVLEN,Number=1,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">\n";
     $head = $head. "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of variant\">\n";
     $head = $head. "##ALT=<ID=SNP,Description=\"SNP\">\n";
@@ -209,301 +215,41 @@ sub get_vcf_header
     $head = $head. "##ALT=<ID=INS,Description=\"Insertion of novel sequence\">\n";
     $head = $head. "##ALT=<ID=INDEL,Description=\"Insertion-deletion\">\n";
     $head = $head. "##ALT=<ID=INV,Description=\"Inversion\">\n";
-    $head = $head. "##ALT=<ID=INV_INDEL,Description=\"Inversion+indel\">\n";
+    $head = $head. "##ALT=<ID=INV_INDEL,Description=\"Inversion+indel - this script overcalls these, so worth checking\">\n";
     $head = $head. "##ALT=<ID=DEL_INV,Description=\"Deletion + Inversion\">\n";
     $head = $head. "##ALT=<ID=INS_INV,Description=\"Insertion + Inversion\">\n";
     $head = $head. "##ALT=<ID=PH_SNPS,Description=\"Phased SNPs\">\n";
     $head = $head. "##ALT=<ID=COMPLEX, Description=\"Complex variant, collection of SNPs and indels\">\n";
-    $head = $head. "##FILTER=<ID=flank_mq,Description=\"5prime flank maps to reference with mapping quality below 30\">\n";
-    $head = $head. "##FILTER=<ID=allele_cov,Description=\"Median coverage on >=1 allele below 2\">\n";
-    $head = $head. "##FILTER=<ID=path_div,Description=\"Nodes in ref allele of Path-divergence hom-non-ref call which are on the ref allele but not alt allele have median covg>0\">\n";
-    $head = $head. "##FILTER=<ID=path_div,Description=\"All nodes in ref allele of Path-divergence call occur more than once in reference\">\n";
-    $head =  $head."#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t$indiv\n";
+    $head = $head. "##FILTER=<ID=MAPQ,Description=\"5prime flank maps to reference with mapping quality below $mapping_qual_thresh\">\n";
+ 
+    $head =  $head."#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t";
+    open(COLOURS, $colourfile)||die("Cannot open $colours");
+    my $z;
+    for ($z=0; $z<$number_of_colours; $z++)
+    {
+	my $line = <COLOURS>;
+	chomp $line;
+
+	if ( ($z==$reference_colour) || ($z==$pooled_colour) )
+	{
+	    next;
+	}
+	
+	$head = $head. "$line";
+	if ($z<$number_of_colours-1)
+	{
+	    $head = $head. "\t";
+	}
+	else
+	{
+	    $head = $head. "\n";
+	}
+    }
+    close(COLOURS);
     return $head;
 }
 
 
-
-
-#if het, require both branches have median covg >= filter threshold
-#if hom non-ref, require the non-ref branch has median covg >=filter threwshold
-#if apply_pd_filt==1, then must be a hom nonref call, and add the following filters
-## 1. Covg on nodes that are on the trusted allele but not the var allele, AND are unique in the reference,  should be zero
-##    We just take the median covg on trusted-non-var nodes. If there are no trusted non-var nodes, reject the call.
-## 2. Fraction of trusted nodes  unique in ref >0?? - make this a parameter of the function 
-sub filter_by_coverage_and_compare_branches_with_ref
-{
-    my ($file, $should_we_check_one_br_in_ref, $filter_type, $filter_threshold, $hom_or_het, $href, $apply_pd_filt)=@_;
-
-    if ($filter_type ne "median")
-    {
-	die("Have only implemented median filter");
-    }
-
-    if ( ($apply_pd_filt==1) && ($hom_or_het ne "hom") )
-    {
-	die("Cannot call filter_by_coverage_and_compare_branches_with_ref asking to apply pd filters if also say is not a hom call dataset");
-    }
-
-
-    open(FILE, $file)||die("Cannot open $file");
-
-    while (<FILE>)
-    {
-	my $line = $_;
-	chomp $line;
-	if ($line =~ /(var_\d+)_5p_flank/) 
-	{
-	    my $pass_filter="true";
-	    my $varname = $prefix."_".$1;
-	    my @trusted_non_var=();
-	    my @var_non_trusted=();
-	    $line = <FILE>;# 5p sequence - need to check is not too small
-	    chomp $line;
-	    if (length($line)<25)
-	    {
-		print "$varname fails filter as 5p flank <25bp - will not be able to map it uniquely. Length is ";
-		print length($line);
-		print "\n";
-		$pass_filter="false";
-	    }
-	    $line = <FILE>;##br1 read_id
-	    if ($apply_pd_filt==1)
-	    {
-		if ($line =~ /covgs of trusted not variant nodes:\s+([\d\s]+)number_of_such_nodes/)
-		{
-		    my $str = $1;
-		    if ($str =~ /(.+)\s+$/)
-		    {
-			$str=$1;
-		    }
-		    if ($str =~ /^\s+(.+)/)
-		    {
-			$str=$1;
-		    }
-
-		    @trusted_non_var = split(/\s/, $str);##this gives us an array containing the coverages of trusted non-var nodes
-		}
-	    }
-	    <FILE>;#ignore br1 seq
-	    $line = <FILE>;# br2 read id
-	    if ($apply_pd_filt==1)
-	    {
-		if ($line =~ /covgs of variant not trusted nodes:\s+([\d\s]+)number_of_such_nodes/)
-		{
-		    my $str=$1;
-		    if ($str =~ /(.+)\s+$/)
-                    {
-                        $str=$1;
-                    }
-                    if ($str =~ /^\s+(.+)/)
-                    {
-                        $str=$1;
-                    }
-		    @var_non_trusted = split(/\s/, $str);
-		}
-	    }
-	    <FILE>;#ignore br1 seq
-	    <FILE>;#ignore 3p flank read id
-	    $line = <FILE>;# 3p flank seq
-	    chomp $line;
-	    if (length($line)<3)
-	    {
-		print "$varname fails filter, as 3p flank <3bp\n";
-		$pass_filter="false";
-	    }
-
-	    $line = <FILE>;
-	    if ($line =~ /extra information/)
-	    {
-		$line = <FILE>;
-	    }
-	    $line = <FILE>;
-
-	    if ($line !~ /branch1 coverages/)
-	    {
-		die("Zam Expected to see \"branch 1 coverages\" but instead saw $line");
-	    }
-	    $line = <FILE>;
-	    if ($line !~ /Mult in  hum ref/)
-	    {
-		die("Expected to see \"Mult in  hum ref\" but instead saw $line");
-	    }
-	    $line = <FILE>;
-	    chomp $line;
-	    my @br1_refmult=split(/\s+/, $line);
-
-
-	    $line = <FILE>;
-	    if ($line !~ /Covg in indiv/)
-	    {
-		die("Expected to see \"Covg in indiv\" but instead saw $line");
-	    }
-	    $line = <FILE>;
-	    chomp $line;
-	    my @br1_cov = split(/\s+/, $line);
-
-	    <FILE>;
-	    $line = <FILE>;
-	    if ($line !~ /Mult in  hum ref/)
-	    {
-		die("Second time - Expected to see \"Mult in  hum ref\" but instead saw $line");
-	    }
-	    $line = <FILE>;
-	    chomp $line;
-	    
-	    my @br2_refmult = split(/\s+/, $line);
-
-	    $line = <FILE>;
-	    if ($line !~ /Covg in indiv/)
-	    {
-		die("Second branch - Expected to see \"Covg in indiv\" but instead saw $line");
-	    }
-	    $line = <FILE>;
-	    chomp $line;
-	    my @br2_cov = split(/\s+/, $line);
-
-
-	    my $stat_br1_humref = Statistics::Descriptive::Full->new();
-	    $stat_br1_humref->add_data(@br1_refmult);
-	    my $stat_br2_humref = Statistics::Descriptive::Full->new();
-	    $stat_br2_humref->add_data(@br2_refmult);
-	    my $stat_br1_cov =  Statistics::Descriptive::Full->new();
-	    $stat_br1_cov -> add_data(@br1_cov);
-	    my $stat_br2_cov =  Statistics::Descriptive::Full->new();
-	    $stat_br2_cov -> add_data(@br2_cov);
-	    
-	    my $min_refmult_br1 = $stat_br1_humref->min();
-	    my $min_refmult_br2 = $stat_br2_humref->min();
-
-	    my $median_br1_cov = $stat_br1_cov->median();
-	    my $median_br2_cov = $stat_br2_cov->median();
-
-
-
-	    ## check one branch is in reference 
-	    if ($should_we_check_one_br_in_ref==1)
-	    {
-		##one of the two branches must have min multiplicity in the ref of  >=1
-		if ( ($min_refmult_br1==0) && ($min_refmult_br2==0) )
-		{
-		    print "$varname Fails at this point - het call, but not true that one branch is in reference\n";
-		    $pass_filter="false";
-		}
-	    }
-	    if ($pass_filter eq "true")
-	    {
-		
-
-		## for a het, apply condition to both branches
-		if ($hom_or_het eq "het")
-		{
-		    if ( ($median_br1_cov>=$filter_threshold) && ($median_br2_cov>=$filter_threshold) )
-		    {
-			$pass_filter = "true";
-		    }
-		    else
-		    {
-			$pass_filter="false";
-			print "$varname Fails branch filter, median covgs on br1 and br2 are $median_br1_cov and $median_br2_cov and threshold is $filter_threshold\n";
-		    }
-		}
-		else
-		{
-		    #for a hom, determine the nonref branch, and apply to that
-		    my $which_br_is_ref;
-
-		    if ( ($min_refmult_br1>=1) && ($min_refmult_br2==0) )
-		    {
-			$which_br_is_ref=1;
-		    }
-		    elsif ( ($min_refmult_br2>=1) && ($min_refmult_br1==0) )
-		    {
-			$which_br_is_ref=2;
-		    }
-		    elsif ( ($min_refmult_br1>=1) && ($min_refmult_br2>=1) )
-		    {
-			$pass_filter="false";
-			print("Hom call $varname has both branches in reference - fails filter");
-			$which_br_is_ref="b";
-		    }
-		    else
-		    {
-			$which_br_is_ref="neither";
-			$pass_filter="false";
-                        print("Hom call $varname has neither branch in reference - fails filter");
-
-		    }
-
-		    if ($pass_filter eq "true")##in which case which_br_is_ref is numeric
-		    {
-			if ( ($which_br_is_ref==1) && ($median_br2_cov < $filter_threshold) )
-			{
-			    $pass_filter="false";
-			    print "Hom call Fails branch filter, median covgs on alt allele, br2 is $median_br2_cov and threshold is $filter_threshold\n";
-			    
-			}
-			elsif ( ($which_br_is_ref==2) && ($median_br1_cov < $filter_threshold) )
-			{
-			    $pass_filter="false";
-			    print "Hom call Fails branch filter, median covgs on br1 is $median_br1_cov and threshold is $filter_threshold\n";
-			    
-			}
-			
-			
-		    }
-		}
-
-
-		if ($apply_pd_filt==1)
-		{
-		    if (scalar(@trusted_non_var)==0)
-		    {
-			$pass_filter="false";
-			print "$varname fails PD filter; all trusted nodes poccur >1 time in reference\n";
-		    }
-		    else
-		    {
-
-			my $stat_trusted_non_var = Statistics::Descriptive::Full->new();
-			$stat_trusted_non_var->add_data(@trusted_non_var);
-			my $tr_non_var_med = $stat_trusted_non_var->median();
-
-			if ($tr_non_var_med >0 )
-			{
-			    $pass_filter="false";
-			    print "$varname fails PD filter: median covg on trusted_non_var nodes is $tr_non_var_med, which is >0";
-			}
-
-		    }
-
-		}
-
-
-
-
-	    }
-
-
-
-	    if ($pass_filter eq "true")
-	    {
-		$href->{$varname} = "PASS";
-	    }
-	    else
-	    {
-		$href->{$varname} = "FAIL";
-	    }
-	}
-	else
-	{
-
-	}
-    }
-    close(FILE);
-
-
-}
 
 
 
@@ -541,7 +287,7 @@ sub filter_by_flank_mapqual
 	    {
 		die("Expected query name in sam file would be of form var_1_5p_flank, but is $query");
 	    }	
-	    if ($sp[4]>=30)
+	    if ($sp[4]>=$mapping_qual_thresh)
 	    {
 		$href->{$varname}="PASS";
 	    }
@@ -571,15 +317,17 @@ sub filter_by_flank_mapqual
 sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 {
 
-    my ($type, $file_handle_calls, $file_handle_map_flanks, $file_handle_proc_bubble_output,
+    my ($file_handle_calls, $file_handle_map_flanks, $file_handle_proc_bubble_output,
 	$href_varname_to_passing_all_filters, $href_var_name_to_cut_flank,
-	$print_easy_vcf, $print_decomp_vcf, $fh_easy, $fh_decomp) = @_;
+	$print_easy_vcf, $print_decomp_vcf, $fh_easy, $fh_decomp, $href_pop_classifier_confidence) = @_;
 
 
 
     ##1. Get next var info from all three files
-    my ($eof, $var_name, $flank5p, $br1_seq, $br2_seq, $flank3p, $br1_med_cov, $br2_med_cov, $which_is_ref) = get_next_var_from_callfile($file_handle_calls);
-    
+    my ($eof, $var_name, $flank5p, $br1_seq, $br2_seq, $flank3p, $aref_br1_cov, $aref_br2_cov, $which_is_ref,
+	$classification, $class_llk_rep, $class_llk_var,
+	$genotype, $llk_hom1, $llk_het, $llk_hom2) = get_next_var_from_callfile($file_handle_calls);
+
     my ($eof2, $var_name2, $strand, $chr, $coord) = get_next_var_from_flank_mapfile($file_handle_map_flanks);
 
     my ($eof3, $var_name3, $align_num_bases_agreement_at_start, $align_num_bases_agreement_at_end, $align_direction,
@@ -589,18 +337,6 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 
 	= get_next_alignment_from_procfile($file_handle_proc_bubble_output, $strand, $which_is_ref);
 
-
-    ## if niether allele is the ref allele - ignore this
-    if ($which_is_ref eq "neither")
-    {
-	print "Ignore var $var_name, both alleles non ref!\n";
-	return 1;
-    }
-    elsif ($which_is_ref eq "b")
-    {
-	print "Ignore var $var_name, both alleles REF!\n";
-	return 1;
-    }
 
 
     ## if one but not all reach the end of file
@@ -615,6 +351,23 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
     }
 
 
+    if ($apply_filter_one_allele_must_be_ref eq "yes")
+    {
+	## if niether allele is the ref allele - ignore this
+	if ($which_is_ref eq "neither")
+	{
+	    #print "Ignore var $var_name, both alleles non ref!\n";
+	    return 1;
+	}
+	elsif ($which_is_ref eq "b")
+	{
+	    #print "Ignore var $var_name, both alleles REF!\n";
+	    return 1;
+	}
+    }
+
+
+
 	
     if ( ($var_name ne $var_name2) || ($var_name ne $var_name3) )
     {
@@ -622,39 +375,43 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
     }
 
 
-    if ( (exists $href_varname_to_passing_all_filters->{$var_name}) 
-	&&
-	($href_varname_to_passing_all_filters->{$var_name} eq "PASS")
-	)
+    my $filter_result;
+    if (exists $href_varname_to_passing_all_filters->{$var_name})
     {
-	if ($print_easy_vcf==1)
-	{
-	    my $split_phased_snps=0;
-	    my @empty=();
-	    print_vcf_entry( $type,$fh_easy, $var_name, $flank5p, $br1_seq, $br2_seq, $flank3p,
-			     $strand, $chr, $coord, $which_is_ref, 
-			     $align_num_bases_agreement_at_start, $align_num_bases_agreement_at_end, $align_direction,
-			     $num_snps_align, $num_indels_align,$alignment_br1, $alignment_middle, $alignment_br2,
-			     $br1_med_cov, $br2_med_cov, $href_var_name_to_cut_flank, $possible_inversion, $clean_indel, $split_phased_snps,
-			     0,0,0,0,\@empty) ;
-	}
-	if ($print_decomp_vcf==1)
-	{
-	    my $split_phased_snps=1;
-	    print_vcf_entry( $type,$fh_decomp, $var_name, $flank5p, $br1_seq, $br2_seq, $flank3p,
-			     $strand, $chr, $coord, $which_is_ref, 
-			     $align_num_bases_agreement_at_start, $align_num_bases_agreement_at_end, $align_direction,
-			     $num_snps_align, $num_indels_align,$alignment_br1, $alignment_middle, $alignment_br2,
-			     $br1_med_cov, $br2_med_cov, $href_var_name_to_cut_flank, $possible_inversion, $clean_indel, $split_phased_snps, 
-			     $aref_snp_coords, $aref_snp_alleles,
-			     $aref_coords_of_indels, $aref_alleles_of_indels, $aref_indel_needs_extra_base) ;
-
-
-	}
+	$filter_result = $href_varname_to_passing_all_filters->{$var_name};
     }
     else
     {
-	#print "Fails filter: $var_name\n";
+	$filter_result = "FAILS_MAPQ";
+    }
+
+    if ($print_easy_vcf==1)
+    {
+	my $split_phased_snps=0;
+	my @empty=();
+	print_vcf_entry( $filter_result, $fh_easy, $var_name, $flank5p, $br1_seq, $br2_seq, $flank3p,
+			 $strand, $chr, $coord, $which_is_ref, 
+			 $align_num_bases_agreement_at_start, $align_num_bases_agreement_at_end, $align_direction,
+			 $num_snps_align, $num_indels_align,$alignment_br1, $alignment_middle, $alignment_br2,
+			 $aref_br1_cov, $aref_br2_cov, $href_var_name_to_cut_flank, $possible_inversion, $clean_indel, $split_phased_snps,
+			 0,0,0,0,\@empty, 
+			 $classification, $class_llk_rep, $class_llk_var,
+			 $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_confidence) ;
+    }
+    if ($print_decomp_vcf==1)
+    {
+	my $split_phased_snps=1;
+	print_vcf_entry( $filter_result, $fh_decomp, $var_name, $flank5p, $br1_seq, $br2_seq, $flank3p,
+			 $strand, $chr, $coord, $which_is_ref, 
+			 $align_num_bases_agreement_at_start, $align_num_bases_agreement_at_end, $align_direction,
+			 $num_snps_align, $num_indels_align,$alignment_br1, $alignment_middle, $alignment_br2,
+			 $aref_br1_cov, $aref_br2_cov, $href_var_name_to_cut_flank, $possible_inversion, $clean_indel, $split_phased_snps, 
+			 $aref_snp_coords, $aref_snp_alleles,
+			 $aref_coords_of_indels, $aref_alleles_of_indels, $aref_indel_needs_extra_base,
+			 $classification, $class_llk_rep, $class_llk_var,
+			 $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_confidence) ;
+
+	
     }
     return 1;
 
@@ -664,19 +421,27 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 
 sub print_vcf_entry
 {
-    my ( $hom_or_het, $fh_output_vcf, $var_name, $flank5p, $br1_seq, $br2_seq, $flank3p,
+    my ( $filter_result, $fh_output_vcf, $var_name, $flank5p, $br1_seq, $br2_seq, $flank3p,
 	 $strand, $chr, $coord, $which_is_ref,
 	 $align_num_bases_agreement_at_start, $align_num_bases_agreement_at_end, $align_direction,
 	 $num_snps_align, $num_indels_align,$alignment_br1, $alignment_middle, $alignment_br2,
-	 $br1_med_cov, $br2_med_cov, $href_var_name_to_cut_flank, $poss_inversion, $clean_indel,
+	 $aref_br1_cov, $aref_br2_cov, $href_var_name_to_cut_flank, $poss_inversion, $clean_indel,
 	 $split_phased_snps, $aref_snp_coords, $aref_snp_alleles,
-	 $aref_indel_coords, $aref_indel_alleles, $aref_indel_needs_extra_base) = @_;
+	 $aref_indel_coords, $aref_indel_alleles, $aref_indel_needs_extra_base,
+	 $classification, $class_llk_rep, $class_llk_var,
+	 $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_conf) = @_;
 
     my $vcf_entry_chr = $chr;
     my $vcf_entry_pos;
     my $vcf_entry_ref_allele;
     my $vcf_entry_alt_allele;
     my $error;
+
+    if ($classification eq "REPEAT")
+    {
+	$filter_result = $filter_result."CLASSIF_REPEAT";
+    }
+    
 
     ($vcf_entry_pos, $vcf_entry_ref_allele, $vcf_entry_alt_allele, $error)
 	 = get_simple_vcf_entry_pos_and_alleles($var_name, $strand, $coord, $flank5p, $br1_seq, $br2_seq, $flank3p,
@@ -706,25 +471,7 @@ sub print_vcf_entry
     }
 
 
-    my $genotype;
-    if ($hom_or_het eq "het")
-    {
-	$genotype="0/1";
-    }
-    else
-    {
-	$genotype="1/1";
-    }
-    my $cov;
-    if ($which_is_ref==1)
-    {
-	$cov=int($br1_med_cov).",".int($br2_med_cov);
-    }
-    else
-    {
-	$cov=int($br2_med_cov).",".int($br1_med_cov);
-    }
-    my $svlen = length($vcf_entry_ref_allele)-length($vcf_entry_alt_allele);
+    my $svlen = length($vcf_entry_alt_allele)-length($vcf_entry_ref_allele);
     my $svtype;
 
     if ( ($num_snps_align==1) && ($num_indels_align==0) )
@@ -743,11 +490,11 @@ sub print_vcf_entry
     {
 	$svtype="PH_SNPS";
     }
-    elsif ( ($clean_indel==1) && ($svlen<0) )
+    elsif ( ($clean_indel==1) && ($svlen>0) )
     {
 	$svtype="INS";
     }
-    elsif ( ($clean_indel==1) && ($svlen>0) )
+    elsif ( ($clean_indel==1) && ($svlen<0) )
     {
 	$svtype="DEL";
     }
@@ -765,7 +512,40 @@ sub print_vcf_entry
 
     if ( ( ($svtype  !~ /COMPLEX/) && ($svtype !~ /PH_SNPS/)  )|| ($split_phased_snps==0) )
     {
-	print $fh_output_vcf "$vcf_entry_chr\t$vcf_entry_pos\t$var_name\t$vcf_entry_ref_allele\t$vcf_entry_alt_allele\t.\tPASS\t$info\tGT:COV\t$genotype:$cov\n";
+	if ($vcf_entry_ref_allele =~ /([^ACGT]+)([ACGT]+)/)
+	{
+	    my $new = $2;
+	    print "Removed $1 from $var_name 's sequence. Used to be $vcf_entry_ref_allele and now is $new\n";
+	    $vcf_entry_ref_allele = $new;
+	}
+	if ($vcf_entry_ref_allele =~ /([ACGT]+)([^ACGT]+)/)
+	{
+	    my $new = $1;
+	    print "Removed $2 from $var_name 's sequence. Used to be $vcf_entry_ref_allele and now is $new\n";
+	    $vcf_entry_ref_allele = $new;
+	}
+	
+	print $fh_output_vcf "$vcf_entry_chr\t$vcf_entry_pos\t$var_name\t$vcf_entry_ref_allele\t$vcf_entry_alt_allele\t.\t$filter_result\t$info\t";
+	if (  (scalar(@$genotype)>0) && (scalar (keys %$href_pop_classifier_conf) >0) )
+	{
+	    print $fh_output_vcf "GT:COV:GT_CONF:SITE_CONF\t";
+	}
+	elsif (scalar(@$genotype)>0)## genotypes called, but no site confidences/no pop classifier
+	{
+	    print $fh_output_vcf "GT:COV:GT_CONF\t";
+	}
+	elsif (scalar(keys %$href_pop_classifier_conf) >0)##pop classifier, but no genotypes called (seems impossible to me)
+	{
+	    print $fh_output_vcf "GT:COV:SITE_CONF\t";
+	}
+	else
+	{
+	    print $fh_output_vcf "COV\t";
+	}
+	print_all_genotypes_and_covgs($fh_output_vcf, $aref_br1_cov, $aref_br2_cov, $which_is_ref,
+				      $classification, $class_llk_rep, $class_llk_var,
+				      $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_conf, $var_name);
+
     }
     else
     {
@@ -811,7 +591,26 @@ sub print_vcf_entry
 
 	    my $this_snp_name = $var_name."_sub_snp_".$cnt;
 	    my $this_snp_info = "SVTYPE=SNP_FROM_COMPLEX;SVLEN=0";
-	    print $fh_output_vcf "$this_snp_chr\t$this_snp_pos\t$this_snp_name\t$this_snp_ref_allele\t$this_snp_alt_allele\t.\tPASS\t$this_snp_info\tGT:COV\t$genotype:$cov\n";
+	    print $fh_output_vcf "$this_snp_chr\t$this_snp_pos\t$this_snp_name\t$this_snp_ref_allele\t$this_snp_alt_allele\t.\t$filter_result\t$this_snp_info\t";
+	    if ( (scalar (@$genotype)>0) &&  (scalar(keys %$href_pop_classifier_conf) >0) )
+	    {
+			print $fh_output_vcf "GT:COV:GT_CONF:SITE_CONF\t";
+	    }
+	    elsif (scalar (@$genotype)>0)##just genotype and no pop filter
+	    {
+		print $fh_output_vcf "GT:COV:GT_CONF\t";
+	    }
+	    elsif (scalar(keys %$href_pop_classifier_conf) >0)
+	    {
+		print $fh_output_vcf "GT:COV:SITE_CONF\t";
+	    }
+	    else
+	    {
+		print $fh_output_vcf "COV\t";
+	    }
+	    print_all_genotypes_and_covgs($fh_output_vcf, $aref_br1_cov, $aref_br2_cov,  $which_is_ref, $classification, $class_llk_rep, $class_llk_var,
+					  $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_conf, $var_name);
+	    
 	}
 	$cnt=0;
 	my $index_of_indel=0;
@@ -861,8 +660,28 @@ sub print_vcf_entry
             my $this_indel_name = $var_name."_sub_indel_".$cnt;
 	    my $svlen = length($this_indel_ref_allele)-length($this_indel_alt_allele);
             my $this_indel_info = "SVTYPE=INDEL_FROM_COMPLEX;SVLEN=$svlen";
-            print $fh_output_vcf "$this_indel_chr\t$this_indel_pos\t$this_indel_name\t$this_indel_ref_allele\t$this_indel_alt_allele\t.\tPASS\t$this_indel_info\tGT:COV\t$genotype:$cov\n";
+            print $fh_output_vcf "$this_indel_chr\t$this_indel_pos\t$this_indel_name\t$this_indel_ref_allele\t$this_indel_alt_allele\t.\t$filter_result\t$this_indel_info\t";
 
+	    if ( (scalar @$genotype >0) && (scalar(keys %$href_pop_classifier_conf) >0) )
+	    {
+		print $fh_output_vcf "GT:COV:GT_CONF:SITE_CONF\t";
+	    }
+	    elsif (scalar @$genotype >0)
+	    {
+		print $fh_output_vcf "GT:COV:GT_CONF\t";
+	    }
+	    elsif (scalar(keys %$href_pop_classifier_conf) >0)
+	    {
+		print $fh_output_vcf "GT:COV:SITE_CONF\t";
+	    }
+	    else
+	    {
+		print $fh_output_vcf "COV\t";
+	    }
+
+	    print_all_genotypes_and_covgs($fh_output_vcf, $aref_br1_cov, $aref_br2_cov,  $which_is_ref, $classification, $class_llk_rep, $class_llk_var,
+					  $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_conf, $var_name);
+	    
 
 	    $index_of_indel++;
 	}
@@ -871,8 +690,199 @@ sub print_vcf_entry
 }					 
 	
 
+sub log10
+{
+    my ($n) = (@_);
+    my $tmp =  log($n)/log(10) ;
+    if ($tmp < -1000000)
+    {
+	$tmp=-1000000;
+    }
+    return $tmp;
+}
+
+sub log10_factorial
+{
+    my ($n) = @_;
+    my $total=0;
+    my $i;
+    for ($i=1; $i<=$n; $i++)
+    {
+	$total += log10($i);
+    }
+    return $total;
+}
+
+## returns for each colour: log prob (b1b1|data), log prob(b1b2|data), log prob(b2b2|data), genotype (max likelihood)
+sub new_genotyper
+{
+    ## each array has one entry per colour - reember to ignore the ref and pool colours
+    my ($aref_genotype, $aref_llk_hom1, $aref_llk_het, $aref_llk_hom2)=@_;
+    
+    my $i;
+    my @big_results=();
+    for ($i=0; $i<$number_of_colours; $i++)
+    {
+	my @colour_results=();
+	if ( ($i==$reference_colour)||($i==$pooled_colour) )
+	{
+	    push @colour_results, 0;
+	    push @colour_results, 0;
+	    push @colour_results, 0;
+	    push @colour_results, "IGNORE";
+
+	}
+	else
+	{
+	    if (scalar @$aref_genotype == $number_of_colours)
+	    {
+		push @colour_results, $aref_llk_hom1->[$i]; 
+		push @colour_results, $aref_llk_het->[$i];
+		push @colour_results, $aref_llk_hom2->[$i]; 
+		push @colour_results, $aref_genotype->[$i]; #br1/br2 `NOT recenessarily ref/alt
+	    }
+	    else
+	    {
+		push @colour_results, -1;
+		push @colour_results, -1;
+		push @colour_results, -1;
+		push @colour_results, "0/1";
+
+	    }
+	}
+	push @big_results, \@colour_results;
+    }
+    
+    return \@big_results;
 
 
+}
+
+
+sub get_confidence
+{
+    #args are 3 log likelihoods of genotypes. we want difference between max and next
+    my ($A,$B,$C) = @_;
+    
+    my @arr;
+    push @arr, $A;
+    push @arr, $B;
+    push @arr, $C;
+
+    my @sorted_arr = sort { $a <=> $b } @arr; #sorted in ascending order
+    my $conf =  $sorted_arr[2] - $sorted_arr[1];
+    my $rounded_conf = sprintf("%.2f", $conf);
+
+    return $rounded_conf;
+}
+
+
+sub print_all_genotypes_and_covgs
+{
+    my ($fh, $aref_br1_cov, $aref_br2_cov,  $which_is_ref,
+	$classification, $class_llk_rep, $class_llk_var,
+	$genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_conf, $name) = @_;
+
+    my $do_we_have_genotypes;
+    my $num_samples = $number_of_colours;
+    if ($reference_colour>=0)
+    {
+	$num_samples=$num_samples-1;
+    }
+    if ($pooled_colour>=0)
+    {
+	$num_samples=$num_samples-1;
+    }
+
+    my $do_we_have_pop_filter=0;
+    if (scalar keys(%$href_pop_conf) >0)
+    {
+	$do_we_have_pop_filter=1;
+    }
+
+
+    if (scalar(@$genotype)==0)
+    {
+	$do_we_have_genotypes=0;
+    }
+    elsif (scalar(@$genotype)>=$num_samples)
+    {
+	$do_we_have_genotypes=1;
+    }
+    else
+    {
+	print("Programming error - we have $num_samples samples to genotype but this function: print_all_genotypes_and_covgs has only been given this many: ");
+	print scalar(@$genotype);
+	die("Contact Zam\n");
+    }
+
+
+
+    my $j;
+    for ($j=0; $j<$number_of_colours; $j++)
+    {
+	if ( ($j==$reference_colour) || ($j==$pooled_colour) )
+	{
+	    next;
+	}
+	#my $aref_lik_and_genotypes_br1_v_br2 = new_genotyper($genotype, $llk_hom1, $llk_het, $llk_hom2);
+	my $cov;
+	my $gtype;
+	my $confidence=get_confidence($llk_hom1->[$j],$llk_het->[$j],$llk_hom2->[$j]);
+
+	my $site_conf = sprintf("%.2f", $href_pop_conf->{$name});
+	if ($which_is_ref==1)
+	{
+	    $gtype = $genotype->[$j];
+	    $cov=$aref_br1_cov->[$j].",".$aref_br2_cov->[$j];
+	}
+	else
+	{
+	    $gtype = switch_genotype($genotype->[$j]);
+	    if (scalar @$aref_br2_cov != $number_of_colours)
+	    {
+		print ("Don't have enough covgs for branch2 - just have ");
+		print scalar @$aref_br2_cov;
+		die();
+	    }
+
+	    if (scalar @$aref_br1_cov != $number_of_colours)
+	    {
+		print ("Don't hve enogh covgs for branch1 - just have ");
+		print scalar @$aref_br1_cov;
+		die();
+
+	    }
+	    $cov=$aref_br2_cov->[$j].",".$aref_br1_cov->[$j];
+	}
+	
+	if ( ($do_we_have_pop_filter==1) && ($do_we_have_genotypes==1) )
+	{
+	    print $fh "$gtype:$cov:$confidence:$site_conf";
+	}
+	elsif ($do_we_have_genotypes==1)
+	{
+	    print $fh "$gtype:$cov:$confidence";
+	}
+	elsif ($do_we_have_pop_filter==1) 
+	{
+	    print $fh "$gtype:$cov:$site_conf";
+	}
+	else
+	{
+	    print $fh "$cov";
+	}
+	if ($j<$number_of_colours-1)
+	{
+	    print $fh "\t";
+	}
+	else
+	{
+	    print $fh "\n";
+	}
+    }
+    
+}
 
 
 sub get_simple_vcf_entry_pos_and_alleles
@@ -916,7 +926,7 @@ sub get_simple_vcf_entry_pos_and_alleles
 	    $vcf_entry_pos        =  $pos+length($flank5p)-1;
 	}
 	
-	if ($which_br_ref==1)
+	if ($which_br_ref eq "1")
 	{
 	    ## if br1 and br2 are the same at the end, cut off that bit
 
@@ -931,7 +941,7 @@ sub get_simple_vcf_entry_pos_and_alleles
 		$vcf_entry_alt_allele =  substr($flank5p, -1).substr($br2_seq, 0, length($br2_seq) - $align_num_bp_agreement_at_end);
 	    }
 	}
-	elsif ($which_br_ref==2)
+	elsif ($which_br_ref eq "2")
 	{
 	    ## if br1 and br2 are the same at the end, cut off that bit
 
@@ -948,7 +958,9 @@ sub get_simple_vcf_entry_pos_and_alleles
 	}
 	else
 	{
-	    return (0,0,0,"This var has both alleles entirely in the reference: $which_br_ref");
+	    $vcf_entry_ref_allele =  substr($br1_seq, 0, length($br1_seq) - $align_num_bp_agreement_at_end);
+	    $vcf_entry_alt_allele =  substr($br2_seq, 0, length($br2_seq) - $align_num_bp_agreement_at_end);
+	    #return (0,0,0,"This var has both alleles entirely in the reference: $which_br_ref");
 	}
     }
     ##else, 5prime flank mapped in the reverse direction
@@ -965,19 +977,17 @@ sub get_simple_vcf_entry_pos_and_alleles
 
 
 
-	if ($which_br_ref==1)
+	if ($which_br_ref eq "1")
 	{
 	    ## if br1 and br2 are the same at the end, cut off that bit
 
 	    if ($what_type eq "snp")
 	    {
-		$vcf_entry_pos        =  $pos + $align_num_bp_agreement_at_end ;
-		## use this if mapping 5p fank + br1: $vcf_entry_pos        =  $pos-length($br1_seq) + $align_num_bp_agreement_at_end ;
+		$vcf_entry_pos        =  $pos -length($br1_seq) + $align_num_bp_agreement_at_end ;
 	    }
 	    else
 	    {
-		$vcf_entry_pos        =  $pos -1 + $align_num_bp_agreement_at_end;
-		## use this if mapping 5p fank + br1:$vcf_entry_pos        =  $pos-length($br1_seq)-1 + $align_num_bp_agreement_at_end;
+		$vcf_entry_pos        =  $pos -1 -length($br1_seq) + $align_num_bp_agreement_at_end;
 	    }
 
 
@@ -1004,18 +1014,19 @@ sub get_simple_vcf_entry_pos_and_alleles
 		#$vcf_entry_alt_allele =  substr( rev_comp($flank3p), -1)  .rev_comp(substr($br2_seq, - (length($br2_seq) - $align_num_bp_agreement_at_start) ) );
 	    }
 	}
-	elsif ($which_br_ref==2)
+	elsif ($which_br_ref eq "2")
 	{
 	    ## if br1 and br2 are the same at the end, cut off that bit
 
 	    if ($what_type eq "snp")
 	    {
-		
 		$vcf_entry_pos        =  $pos-length($br2_seq) + $align_num_bp_agreement_at_end;
+		## use if mapping 5p and br1     $vcf_entry_pos        =  $pos+length($br1_seq) -length($br2_seq) + $align_num_bp_agreement_at_end;
 	    }
 	    else
 	    {
 		$vcf_entry_pos        =  $pos-length($br2_seq)-1 + $align_num_bp_agreement_at_end;
+		## use if mapping 5p and br1  $vcf_entry_pos        =  $pos+length($br1_seq) -length($br2_seq)-1 + $align_num_bp_agreement_at_end;
 	    }
 
 
@@ -1048,7 +1059,7 @@ sub get_simple_vcf_entry_pos_and_alleles
     }
     else
     {
-	die("Given str $str\n");
+	return (0,0,0,"Did not map");
     }
 
     return ($vcf_entry_pos, $vcf_entry_ref_allele, $vcf_entry_alt_allele, "0");
@@ -1097,12 +1108,27 @@ sub get_next_var_from_callfile
     my $br1;
     my $br2;
     my $flank3p;
+
+    my $classification="VARIANT";
+    my $class_llk_rep=-10;
+    my $class_llk_var=-1;
+
     
-    while ($line !~  /(var_\d+)_5p_flank/) 
+
+    ## variables I will return
+    my @arr_br1_covgs=(); ## start covg + jumps - array, one per colour
+    my @arr_br2_covgs=(); ## start covg + jumps - array, one per colour
+    my @arr_geno=();
+    my @arr_llk_hom1=();
+    my @arr_llk_hom2=();
+    my @arr_llk_het=();
+
+    
+    while ( ($line !~  /(var_\d+)_5p_flank/)  && ($line !~ /PASSES/) && ($line !~ /FAILS/) && ($line !~ /Colour\/sample/)  )
     {	
 	if (eof($fh))
 	{
-	    return ("EOF", 0,0,0,0,0,0,0,0);
+	    return ("EOF", 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 	}
 	else
 	{
@@ -1110,10 +1136,104 @@ sub get_next_var_from_callfile
 	}
 	
     }
+
+    if ($line =~ /PASSES/)
+    {
+	$classification="VARIANT";
+	if (eof($fh))
+	{
+	    return ("EOF", 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+	}
+
+	$line = <$fh>;
+	chomp $line;
+
+	if ($line =~ /llk_var:(\S+).+llk_rep:(\S+)/)
+	{
+	    $class_llk_rep = $1;
+	    $class_llk_var = $2;
+	}
+	else
+	{
+	    die("Parsing issue. Found model selecion result but cant find likelihoods on $line\n");
+	}
+	if (eof($fh))
+	{
+	    return ("EOF", 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+	}
+	$line = <$fh>;
+	
+    }
+    elsif ($line =~ /FAILS/)
+    {
+	$classification="REPEAT";
+	if (eof($fh))
+	{
+	    return ("EOF", 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+	}
+
+	$line = <$fh>;
+	chomp $line;
+
+	if ($line =~ /llk_var:(\S+).+llk_rep:(\S+)/)
+	{
+	    $class_llk_rep = $1;
+	    $class_llk_var = $2;
+	}
+	else
+	{
+	    die("Parsing issue. Found model selecion result but cant find likelihoods on $line\n");
+	}
+	if (eof($fh))
+	{
+	    return ("EOF", 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+	}
+	$line = <$fh>;
+    }
+
+    if ($line =~ /Colour\/sample/)
+    {
+	my $j;
+	for ($j=0; $j<$number_of_colours; $j++)
+	{
+	    $line = <$fh>;
+	    chomp $line;
+
+
+	    my @sp = split(/\t/, $line);
+	    if ($sp[1] eq "HOM1")
+	    {
+		push @arr_geno, "0/0";
+	    }
+	    elsif ($sp[1] eq "HET")
+	    {
+		push @arr_geno, "0/1";
+	    }
+	    elsif ($sp[1] eq "HOM2")
+	    {
+		push @arr_geno, "1/1";
+	    }
+	    elsif ($sp[1] eq "NO_CALL")
+	    {
+		push @arr_geno, "-1/-1";## should never see the light of day, and easy to spot if appears in VCF
+	    }
+	    else
+	    {
+		die("Bad genotype on $line");
+	    }
+	    push @arr_llk_hom1, $sp[2];
+	    push @arr_llk_het,  $sp[3];
+	    push @arr_llk_hom2, $sp[4];
+	}
+	$line = <$fh>;
+
+    }
+
+
     if ($line =~ /(var_\d+)_5p_flank/)
     {
 	$varname = $prefix."_".$1;
-	
+
 	$flank5p=<$fh>;
 	chomp $flank5p;
 	<$fh>;#ignore br1 read id
@@ -1130,89 +1250,114 @@ sub get_next_var_from_callfile
 	    <$fh>;
 	}
 	$line = <$fh>;
+	chomp $line;
 	if ($line !~ /branch1 coverages/)
 	{
 	    die("Expected to see \"branch 1 coverages\" but instead saw $line");
 	}
-	$line = <$fh>;
-	if ($line !~ /Mult in  hum ref/)
+	my $z;
+	for ($z=0; $z<$number_of_colours; $z++)
 	{
-	    die("Expected to see \"Mult in  hum ref\" but instead saw $line");
+	    $line = <$fh>;
+	    chomp $line;
+	    if ($line !~ /Covg in Colour/)
+	    {
+		die("Expected to see \"Covg in Colour\" but instead saw $line");
+	    }
+	    $line = <$fh>;
+	    chomp $line;
+	    my @br1=split(/\s+/, $line);
+	    push @arr_br1_covgs, get_num_reads(\@br1);
 	}
 	$line = <$fh>;
 	chomp $line;
-	my @br1_refmult=split(/\s+/, $line);
-	
-	
-	$line = <$fh>;
-	if ($line !~ /Covg in indiv/)
+        if ($line !~ /branch2 coverages/)
 	{
-	    die("Expected to see \"Covg in indiv\" but instead saw $line");
+            die("Expected to see \"branch 2 coverages\" but instead saw $line");
+        }
+
+	for ($z=0; $z<$number_of_colours; $z++)
+        {
+	    $line = <$fh>;
+	    chomp $line;
+	    
+	    if ($line !~ /Covg in Colour/)
+	    {
+		die("Expected to see \"Covg in Colour\" but instead saw $line");
+	    }
+	    $line = <$fh>;
+	    chomp $line;
+	    my @br2 = split(/\s+/, $line);
+	    push @arr_br2_covgs, get_num_reads(\@br2);
 	}
-	$line = <$fh>;
-	chomp $line;
-	my @br1_cov = split(/\s+/, $line);
 	
-	<$fh>;
-	$line = <$fh>;
-	if ($line !~ /Mult in  hum ref/)
-	{
-	    die("Second time - Expected to see \"Mult in  hum ref\" but instead saw $line");
-	}
-	$line = <$fh>;
-	chomp $line;
-	
-	my @br2_refmult = split(/\s+/, $line);
-	
-	$line = <$fh>;
-	if ($line !~ /Covg in indiv/)
-	{
-	    die("Second branch - Expected to see \"Covg in indiv\" but instead saw $line");
-	}
-	$line = <$fh>;
-	chomp $line;
-	my @br2_cov = split(/\s+/, $line);
-	
-	
-	my $stat_br1_humref = Statistics::Descriptive::Full->new();
-	$stat_br1_humref->add_data(@br1_refmult);
-	my $stat_br2_humref = Statistics::Descriptive::Full->new();
-	$stat_br2_humref->add_data(@br2_refmult);
-	my $stat_br1_cov =  Statistics::Descriptive::Full->new();
-	$stat_br1_cov -> add_data(@br1_cov);
-	my $stat_br2_cov =  Statistics::Descriptive::Full->new();
-	$stat_br2_cov -> add_data(@br2_cov);
-	
-	my $median_br1_cov = $stat_br1_cov->median();
-	my $median_br2_cov = $stat_br2_cov->median();
-	my $min_refmult_br1 = $stat_br1_humref->min();
-	my $min_refmult_br2 = $stat_br2_humref->min();
 	
 	
 	##determine which is ref allele
-	my $which_is_ref;
-	if ( ($min_refmult_br1>=1) && ($min_refmult_br2==0) )
+	my $which_is_ref="b";
+
+	if ( ( $arr_br1_covgs[$reference_colour]>=1 ) && ($arr_br2_covgs[$reference_colour]==0) )
 	{
 	    $which_is_ref=1;
 	}
-	elsif ( ($min_refmult_br2>=1) && ($min_refmult_br1==0) )
+	elsif ( ( $arr_br1_covgs[$reference_colour]==0 ) && ($arr_br2_covgs[$reference_colour]>=1) )
 	{
 	    $which_is_ref=2;
 	}
-	elsif ( ($min_refmult_br2>=1) && ($min_refmult_br1>=1) )
+	elsif ( ( $arr_br1_covgs[$reference_colour]>=1 ) && ($arr_br2_covgs[$reference_colour]>=1) )
 	{
-	    $which_is_ref="b";#both
+	    $which_is_ref="b";
 	}
 	else
 	{
-	    $which_is_ref="neither"
+	    $which_is_ref="neither";
 	}
+
 	my $eof="";
-	return  ($eof, $varname, $flank5p, $br1, $br2, $flank3p, $median_br1_cov, $median_br2_cov, $which_is_ref);
+
+
+	return  ($eof, $varname, $flank5p, $br1, $br2, $flank3p, \@arr_br1_covgs,\@arr_br2_covgs, $which_is_ref,
+		 $classification, $class_llk_rep, $class_llk_var, \@arr_geno, \@arr_llk_hom1, \@arr_llk_het, \@arr_llk_hom2);
 	
+    }
+    else
+    {
+	print "totally unexpected error on  $line - conect zam\@well.ox.ac.uk\n";
+	die();
     }
 }
 
+
+sub get_num_reads
+{
+    my ($aref) = @_;
+    my $count;
+    if (scalar(@$aref)>2)
+    {
+	$count = $aref->[1];
+    }
+    else
+    {
+	return 0;
+    }
+    my $i;
+    for ($i=2; $i<scalar(@$aref)-1; $i++)
+    {
+
+	my $jump = $aref->[$i] - $aref->[$i-1];
+	my $next_jump = -1;
+	if ($i+1<scalar(@$aref)-1)
+	{
+	    $next_jump=$aref->[$i+1] - $aref->[$i]
+	}
+
+	if ( ($jump>0) && ($next_jump!=$jump) )
+	{
+	    $count +=$jump;
+	}
+    }
+    return $count;
+}
 
 
 sub get_next_var_from_flank_mapfile
@@ -1252,7 +1397,50 @@ sub get_next_var_from_flank_mapfile
     return ($eof, $name, $strand, $chr, $coord);
 }
 
+sub switch_genotype
+{
+    my ($str) = @_;
+    if ($str =~ /^([01])\/([01])/)
+    {
+	my $a  = $1;
+	my $b =  $2;
 
+	if ($a ==0)
+	{
+	    $a=1;
+	}
+        else
+	{
+	    $a=0;
+	}
+        if ($b ==0)
+        {
+	    $b=1;
+        }
+        else
+        {
+	    $b=0;
+        }
+
+	## might as well return 0/1 rather than 1/0
+	my $ret;
+	if ($a.'/'.$b eq "1/0")
+	{
+	    $ret="0/1";
+	}
+	else
+	{
+	    $ret=$a.'/'.$b;
+	}
+
+        return $ret;
+
+    }
+    else
+    {
+	die("Passed bad genotype $str to switch_genotype");
+    }
+}
 
 ## return info about how the alignment of the two branches goes.
 ## if it turns out that an alignment of the rev comp of the branches looks good,
@@ -1264,6 +1452,12 @@ sub get_next_alignment_from_procfile
     #similarly for $which_is_ref. Must handle gracefully if this has value b (both) or neither. In both these cases we will ignore the variant
     #and we only call this function to make sure we be at the right point in the file to go to the NEXT one, next time we call this. ie just read past this var.
     my ($fh, $dir_of_alignment_of_5pflank, $which_is_ref) = @_;
+
+
+    if (!defined $which_is_ref)
+    {
+	die("Passing undefined which_is_ref to get_next_alignment_from_procfile");
+    }
 
     my $line="";
     while ($line !~ /START NEW VAR/)
@@ -1552,10 +1746,33 @@ sub get_next_alignment_from_procfile
 
 	    my $underscore_on_ref_allele_so_far=0;
 
-	    for ($j=0; $j<length($fw_middle); $j++)
+	    my $min;##zam added all this min stuff in debug
+	    if ($which_is_ref==1)
 	    {
+		if (length($fw_middle)>scalar(@split_br1) )
+		{
+		    $min = scalar(@split_br1);
+		}
+		else
+		{
+		    $min = length($fw_middle);
+		}
+	    }
+	    else
+	    {
+		if (length($fw_middle)>scalar(@split_br2) )
+		{
+		    $min = scalar(@split_br2);
+		}
+		else
+		{
+		    $min = length($fw_middle);
+		}
+	    }
 
-
+	    for ($j=0; $j<$min; $j++)
+	   # removed in debug for ($j=0; $j<length($fw_middle); $j++)
+	    {
 		if (($which_is_ref==1)&&($split_br1[$j] eq "_") )
 		{
 		    $underscore_on_ref_allele_so_far++;
@@ -1855,7 +2072,8 @@ sub get_snp_alleles
 	  (length($b1) != length($middle) )
 	)
     {
-	die("This alignment has the 3 lines of different lengths.\n$b1\n$middle\n$b2\n");
+	return ("", 0,0,0,0,0,0,0,0,0,0,0,0,0);
+	#die("This alignment has the 3 lines of different lengths.\n$b1\n$middle\n$b2\n");
     }
     
     if ($dir eq "fw")
@@ -1866,13 +2084,19 @@ sub get_snp_alleles
 	my $i;
 	for ($i=0; $i<scalar(@$aref_snp_coor); $i++)
 	{
-	    if ($which_is_ref==1)
+	    if ($which_is_ref eq "1")
 	    {
 		push @$aref_snp_allel, substr($b1, $aref_snp_coor->[$i], 1)."_".substr($b2, $aref_snp_coor->[$i], 1);
 	    }
-	    elsif ($which_is_ref==2)
+	    elsif ($which_is_ref eq "2")
 	    {
 		push @$aref_snp_allel, substr($b2, $aref_snp_coor->[$i], 1)."_".substr($b1, $aref_snp_coor->[$i], 1);
+	    }
+	    else
+	    {
+		## no idea - just put one or the other
+		print "WARNING - no idea which allele is ref as we dont have a reference - just picking one\n";
+		push @$aref_snp_allel, substr($b1, $aref_snp_coor->[$i], 1)."_".substr($b2, $aref_snp_coor->[$i], 1);
 	    }
 	}
     }
@@ -1884,19 +2108,28 @@ sub get_snp_alleles
 	my $i;
 	for ($i=0; $i<scalar(@$aref_snp_coor) ; $i++)
 	{
-	    if ($which_is_ref==1)
+	    if ($which_is_ref eq "1")
 	    {
 		push @$aref_snp_allel, 
 		    rev_comp($sp1[$index_of_last_non_match - ($aref_snp_coor->[$i])] )
 		    ."_".
 		    rev_comp($sp2[$index_of_last_non_match - ($aref_snp_coor->[$i])] );
 	    }
-	    elsif ($which_is_ref==2)
+	    elsif ($which_is_ref eq "2")
 	    {
 		push @$aref_snp_allel, 
 		    rev_comp($sp2[$index_of_last_non_match - ($aref_snp_coor->[$i])] )
 		    ."_".
 		    rev_comp($sp1[$index_of_last_non_match - ($aref_snp_coor->[$i])] );
+	    }
+	    else
+	    {
+		print "WARNING - no idea which is ref\n";
+		push @$aref_snp_allel, 
+		rev_comp($sp1[$index_of_last_non_match - ($aref_snp_coor->[$i])] )
+		    ."_".
+		    rev_comp($sp2[$index_of_last_non_match - ($aref_snp_coor->[$i])] );
+
 	    }
 	}
     }
@@ -1929,7 +2162,8 @@ sub get_indel_alleles
 	  (length($b1) != length($middle) )
 	)
     {
-	die("This alignment has the 3 lines of different lengths.\n$b1\n$middle\n$b2\n");
+	return ("", 0,0,0,0,0,0,0,0,0,0,0,0,0);
+	#die("This alignment has the 3 lines of different lengths.\n$b1\n$middle\n$b2\n");
     }
     
 
@@ -1958,29 +2192,40 @@ sub get_indel_alleles
 		$k++;
 	    }
 
-	    if ($which_is_ref==1)
+	    if ($which_is_ref eq "1")
 	    {
 		$ref = $ref.$sp1[$k];
 		$alt = $alt.$sp2[$k];
 	    }
-	    else
+	    elsif ($which_is_ref eq "2")
 	    {
 		$ref = $ref.$sp2[$k];
 		$alt = $alt.$sp1[$k];		
+	    }
+	    else
+	    {
+		$ref = $ref.$sp1[$k];
+		$alt = $alt.$sp2[$k];
+
 	    }
 	    $k++;
 	    
 	    while ($k<= $aref_indel_end_indices->[$i]  )
 	    {
-		if ($which_is_ref==1)
+		if ($which_is_ref eq "1")
 		{
 		    $ref = $ref.$sp1[$k];
 		    $alt = $alt.$sp2[$k];
 		}
-		else
+		elsif ($which_is_ref eq "2")
 		{
 		    $ref = $ref.$sp2[$k];
 		    $alt = $alt.$sp1[$k];
+		}
+		else
+		{
+		    $ref = $ref.$sp1[$k];
+		    $alt = $alt.$sp2[$k];		    
 		}
 		
 		$k++;
@@ -2037,17 +2282,21 @@ sub get_indel_alleles
 	    
 	    while ( $k>=$aref_indel_end_indices->[$i])
 	    {
-		if ($which_is_ref==1)
+		if ($which_is_ref eq "1")
 		{
 		    $ref = $ref.$sp1[$k];
 		    $alt = $alt.$sp2[$k];
 		}
-		else
+		elsif ($which_is_ref eq "2")
 		{
 		    $ref = $ref.$sp2[$k];
 		    $alt = $alt.$sp1[$k];
 		}
-		
+		else
+		{
+		    $ref = $ref.$sp1[$k];
+                    $alt = $alt.$sp2[$k];
+		}
 		$k--;
 	    }
 	    $ref =~ s/_//g;
@@ -2074,34 +2323,44 @@ sub combine_all_filters
 {
     my ($href_var_name_to_covg_and_branch_filter, 
 	$href_var_name_to_flank_mq_filter, 
-	$href_var_name_to_combined_filtering_result) = @_;
+	$href_var_name_to_combined_filtering_result, 
+	$href_pop_classifier) = @_;
 
 
     foreach my $key (keys %$href_var_name_to_flank_mq_filter)
     {
-	if ( ($href_var_name_to_flank_mq_filter->{$key} eq "PASS")
-	     &&
-	     (exists $href_var_name_to_covg_and_branch_filter->{$key})
-	     &&
-	     ($href_var_name_to_covg_and_branch_filter->{$key} eq "PASS")
-	    )
+#	if ($href_var_name_to_flank_mq_filter->{$key} eq "PASS")#
+#	{
+#		$href_var_name_to_combined_filtering_result->{$key}="PASS";
+#	}
+	if ($href_var_name_to_flank_mq_filter->{$key} ne "PASS")
 	{
-		$href_var_name_to_combined_filtering_result->{$key}="PASS";
+	    $href_var_name_to_combined_filtering_result->{$key}="MAPQ";
 	}
-	elsif (!exists $href_var_name_to_covg_and_branch_filter->{$key})
+    }
+    foreach my $key (keys %$href_pop_classifier)
+    {
+	my $reason = uc($href_pop_classifier->{$key});
+	if ($href_pop_classifier->{$key} ne "variant")
 	{
-	    die("$key is not in the covg and branch filter hash\n");
-	}
-	elsif ($href_var_name_to_covg_and_branch_filter->{$key} ne "PASS")
-	{
-	    print "$key has failed the covg & branch filter  \n";
-	}
-	elsif ($href_var_name_to_flank_mq_filter->{$key} ne "PASS")
-	{
-	    print "$key fails mapqual filter\n";
+	    if (!exists $href_var_name_to_combined_filtering_result->{$key})
+	    {
+		$href_var_name_to_combined_filtering_result->{$key}="PF_FAIL_".$reason;
+	    }
+	    else
+	    {
+		$href_var_name_to_combined_filtering_result->{$key}=$href_var_name_to_combined_filtering_result->{$key}.",PF_FAIL_".$reason;
+	    }
 	}
     }
     
+    foreach my $key (keys %$href_var_name_to_flank_mq_filter)
+    {
+	if (!exists $href_var_name_to_combined_filtering_result->{$key})
+	{
+	    $href_var_name_to_combined_filtering_result->{$key}="PASS";
+	}
+    }
     
 }
 
@@ -2128,6 +2387,23 @@ sub get_list_vars_with_cut_flanks
 		die("programming error on $line");
 	    }
 	}
+    }
+    close(FILE);
+}
+
+
+sub get_pop_filter_info
+{
+    my ($file, $href, $href_conf) = @_;
+    open(FILE, $file)||die("Cannot find the file containing output of classifer.R - you entered it as an argument, $file");
+    while (<FILE>)
+    {
+	my $line= $_;
+	chomp $line;
+	my @sp = split(/\t/, $line);
+	my $name = $prefix."_var_".$sp[0];
+	$href->{$name} = $sp[1];## classification
+	$href_conf->{$name} = $sp[2];
     }
     close(FILE);
 }

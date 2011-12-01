@@ -63,3 +63,15 @@ float log_factorial_ll(long long number)
     }
   return ret;
 }
+
+int min_of_ints(int a, int b)
+{
+  if (a<b)    
+    {
+      return a;
+    }
+  else
+    {
+      return b;
+    }
+}

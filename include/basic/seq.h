@@ -53,5 +53,5 @@ void alloc_sequence(Sequence * seq, int max_read_length, int max_name_length);
 void free_sequence(Sequence ** );
 
 void shift_last_kmer_to_start_of_sequence(Sequence * sequence, int length, short kmer_size);
-
+boolean good_base(char c);
 #endif /* STDSEQ_H_ */
