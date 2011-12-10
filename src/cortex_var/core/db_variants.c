@@ -33,7 +33,8 @@
 #include <stdlib.h>
 #include <gsl_sf_gamma.h>
 
-
+//overkill, but allows the flanks and alleles all to be the same length - I don't want to have to pass around knowledge
+VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks(int len);
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
 				     dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, 
@@ -469,32 +470,17 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar,
       annovar->BigTheta = 0;
       annovar->BigThetaStart = 0;
       
-      for (i=0; i<var->len_one_allele; i++)
+      for (i=0; i<NUMBER_OF_COLOURS; i++)
 	{
 	  if (i==ref_colour)
 	    {
 	      continue;
 	    }
-	  annovar->BigTheta += annovar->br1_covg[i];
-	}
-      
-      for (i=0; i<var->len_other_allele; i++)
-	{
-	  annovar->BigTheta     += annovar->br2_covg[i];
-	}
-      
-      
-      for (i=0; i<annovar->len_start; i++)
-	{
+	  annovar->BigTheta      += annovar->br1_covg[i] + annovar->br2_covg[i];
 	  annovar->BigThetaStart += annovar->theta1[i] + annovar->theta2[i];
-	}
-      
-      //determine genotype (under assumption/model that this is a variant) for each colour
-      
-      for (i=0; i<NUMBER_OF_COLOURS; i++)
-	{
 	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[i]));
 	}
+      
       
       for (i=0; i<NUMBER_OF_COLOURS; i++)
 	{

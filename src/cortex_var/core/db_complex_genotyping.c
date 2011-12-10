@@ -1280,7 +1280,7 @@ boolean is_this_kmer_in_the_1net(dBNode* n, dBGraph* db_graph, int (*get_covg_1n
 }
 
 
-//we ASSUME colours 0 to number_alleles are the various alternate alleles, loading in multicolour_bin
+ //we ASSUME colours 0 to number_alleles are the various alternate alleles, loading in multicolour_bin
 void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(int* colours_to_genotype, int num_colours_to_genotype,
 										      int colour_ref_minus_site, int number_alleles,
 										      int first_gt, int last_gt, // of all the possible gt's
@@ -1691,3 +1691,314 @@ char** alloc_ML_results_names_array(int num_samples_to_genotype)
     }
   return retarray;
 }
+
+
+
+/*
+void calculate_llks_for_biallelic_site(int* colours_to_genotype, int num_colours_to_genotype,
+				     int colour_ref_minus_site, //int number_alleles,
+				     //int first_gt, int last_gt, // of all the possible gt's
+				     int max_allele_length, char* fasta,//one read per allele
+				     AssumptionsOnGraphCleaning assump,
+				       //double* current_max_lik_array, double* current_max_but_one_lik_array,
+				       //char** name_current_max_lik_array, char** name_current_max_but_one_lik_array,
+				       //boolean print_all_liks_calculated,//not just the top two
+				     GraphAndModelInfo* model_info, dBGraph* db_graph,
+				     int working_colour1, int working_colour2,
+				       boolean using_1net, boolean using_2net)
+				       //double min_acceptable_llk)
+										      
+{
+  
+  int get_covg_in_union_of_colours_to_genotype(dBNode* e)
+  {
+    int i;
+    int covg=0;
+
+    for (i=0; i<num_colours_to_genotype; i++)
+      {
+	covg += e->coverage[colours_to_genotype[i]];
+      }
+
+    return covg;
+
+  }
+
+  //wipe the working colours:
+  //db_graph_wipe_colour(working_colour1, db_graph);
+  //db_graph_wipe_colour(working_colour2, db_graph);
+
+
+  //----------------------------------
+  // allocate the memory used to read the sequences
+  //----------------------------------
+  Sequence * seq = malloc(sizeof(Sequence));
+  if (seq == NULL){
+    fputs("Out of memory trying to allocate Sequence\n",stderr);
+    exit(1);
+  }
+  alloc_sequence(seq,max_allele_length,MAX_READ_NAME_LEN);
+  
+  //We are going to load all the bases into a single sliding window 
+  KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
+  if (kmer_window==NULL)
+    {
+      printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
+      exit(1);
+    }
+  
+  
+  kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_allele_length-db_graph->kmer_size-1));
+  if (kmer_window->kmer==NULL)
+    {
+      printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
+      exit(1);
+    }
+  kmer_window->nkmers=0;
+  
+  
+  int j;
+  int i;
+  
+  //we are going to need to hold ALL the allele paths in memory at the same time
+  
+  dBNode*** array_of_node_arrays = (dBNode***) malloc( sizeof(dBNode**) * number_alleles );
+  Orientation** array_of_or_arrays = (Orientation**) malloc( sizeof(Orientation*) * number_alleles );
+  int* lengths_of_alleles = (int*) malloc(sizeof(int) * number_alleles);
+  char** array_of_allele_names = (char**) malloc( sizeof(char*) * number_alleles );
+  
+  if ( (array_of_node_arrays==NULL) || (array_of_or_arrays==NULL) || (lengths_of_alleles==NULL) || (array_of_allele_names==NULL) )
+    {
+      printf("Cannot alloc arrays of arrays in print_log_liks_of_specified_set_of_genotypes_of_complex_site\n");
+      exit(1);
+    }
+  
+  for (i=0; i<number_alleles; i++)
+    {
+      array_of_node_arrays[i] = (dBNode**) malloc(sizeof(dBNode*) * max_allele_length);
+      array_of_or_arrays[i]   = (Orientation*) malloc( sizeof(Orientation) * max_allele_length);
+      array_of_allele_names[i]= (char*) malloc(sizeof(char) * 200 );
+      
+      if ( (array_of_node_arrays[i]==NULL) || (array_of_or_arrays[i]==NULL) || (array_of_allele_names==NULL) )
+	{
+	  printf("Cannot alloc the %d -th node and or array in print_log_liks_of_specified_set_of_genotypes_of_complex_site", i);
+	  exit(1);
+	}
+      lengths_of_alleles[i]=0;
+      array_of_allele_names[i][0]='\0';
+    }
+
+
+  //we also need to get supernodes to count up errors
+  dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*max_allele_length); 
+  Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*max_allele_length); 
+  Nucleotide*  path_labels       = (Nucleotide*) malloc(sizeof(Nucleotide)*max_allele_length);
+  char*        path_string  = (char*) malloc(sizeof(char)*max_allele_length+1); //+1 for \0
+
+  if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (path_string==NULL) )
+    {
+      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
+      exit(1);
+    }
+
+  
+
+
+  MultiplicitiesAndOverlapsOfBiallelicVariant* mobv= alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(max_allele_length, max_allele_length);
+  
+  int* working_array_self = (int*) malloc(sizeof(int) * max_allele_length);
+  int* working_array_shared = (int*) malloc(sizeof(int) * max_allele_length);
+  
+  if ( (mobv==NULL)||(working_array_self==NULL) || (working_array_shared==NULL))
+    {
+      printf("Cannot alloc all the arrays in calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site.  Give up and exit.");
+      exit(1);
+    }
+  
+
+
+
+
+
+
+
+
+
+  
+  //end of initialisation 
+
+  //create file reader
+  int file_reader(FILE * fp, Sequence * seq, int max_allele_length, boolean new_entry, boolean * full_entry){
+    long long ret;
+    int offset = 0;
+    if (new_entry == false){
+      printf("new_entry must be true in hsi test function");
+      exit(1);
+    }
+    ret =  read_sequence_from_fasta(fp,seq,max_allele_length,new_entry,full_entry,offset);
+    
+    return ret;
+  }
+
+
+  //Get list of alleles with coverage 
+  FILE* fp = fopen(fasta, "r");
+  if (fp==NULL)
+    {
+      printf("UNable to open %s. Exit", fasta);
+      exit(1);
+    }
+
+  int index_alleles_with_nonzero_covg=0;
+
+  for (j=0; j<= number_alleles-1; j++)
+    {
+	
+      int num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_allele_length, 
+								     array_of_node_arrays[j],//assumed alleles are colours 0..num_alleles-1 
+								     array_of_or_arrays[j], 
+								     false, file_reader, seq, kmer_window, db_graph, 0);
+      
+      strcat(array_of_allele_names[j], seq->name);
+      lengths_of_alleles[j]=num_kmers;
+    }
+  fclose(fp);
+
+
+
+
+  // For each pair in that list, keep incrementing a counter, and if the counter is betweenfirst_gt and last_gt
+  // then go ahead and check it out
+
+  int genotype_count=0;
+
+
+  for (i=0; i<number_alleles; i++)
+    {
+      for (j=i; j<number_alleles; j++) // **** now that i and j are specified, we have specified a genotype
+	{
+	  
+	  genotype_count++;
+
+	  //printf("Start genotype number %d. i is %d and j is %d\n", genotype_count, i,j);
+	  //fflush(stdout);
+	  
+	  if (genotype_count<first_gt)
+	    {
+	      continue;
+	    }
+	  if (genotype_count>last_gt)
+	    {
+	      continue;
+	    }
+	  
+	
+
+	  
+	  int get_covg_in_1net_errors_from_genotype(dBNode* n)
+	  {
+	    //return db_node_get_coverage(n, individual_edge_array, working_colour_1net);
+	    return db_node_get_coverage(n, individual_edge_array, i+number_alleles) + db_node_get_coverage(n, individual_edge_array, j+number_alleles);
+	  }
+	  int get_covg_in_2net_errors_from_genotype(dBNode* n)
+	  {
+	    if (is_this_kmer_beyond_the_2net(n, db_graph, &get_covg_in_1net_errors_from_genotype)==false)
+	      {
+		return 1;
+	      }
+	    else
+	      {
+		return 0;
+	      }
+	  }
+	  
+	  
+	  VariantBranchesAndFlanks var;
+	  set_variant_branches_but_flanks_to_null(&var, 
+						  array_of_node_arrays[i], 
+						  array_of_or_arrays[i], 
+						  lengths_of_alleles[i],
+						  array_of_node_arrays[j], 
+						  array_of_or_arrays[j],
+						  lengths_of_alleles[j],
+						  unknown);
+	  
+	  set_status_of_nodes_in_branches(&var, in_desired_genotype);
+	  reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
+	  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, mobv, false, NULL, NULL, working_colour1, working_colour2);
+	  int z;
+	  for (z=0; z<num_colours_to_genotype; z++)
+	    {
+	      //printf("Start next sample - this time z is %d", z);
+	      //fflush(stdout);
+
+	      char name[300];
+	      if (strlen(array_of_allele_names[i]) + strlen(array_of_allele_names[j])>300 )
+		{
+		  printf("Names of alleles %s and %s are too long (%d) - concatenated, Cortex requires them to be less than 300 characters", 
+			 array_of_allele_names[i], array_of_allele_names[j],(int)( strlen(array_of_allele_names[i]) + strlen(array_of_allele_names[j])) );
+		  exit(1);
+		}
+	      sprintf(name, "%s/%s", array_of_allele_names[i], array_of_allele_names[j]); 
+	      
+	      double llk= calc_log_likelihood_of_genotype_with_complex_alleles(&var, name,
+									       mobv, model_info, colours_to_genotype[z],
+									       colour_ref_minus_site, db_graph, 
+									       working_array_self, working_array_shared,
+									       &(current_max_lik_array[z]), &(current_max_but_one_lik_array[z]),
+									       name_current_max_lik_array[z], name_current_max_but_one_lik_array[z],
+									       assump, path_nodes, path_orientations, path_labels, path_string, max_allele_length,
+									       using_1net, get_covg_in_1net_errors_from_genotype, using_2net, get_covg_in_2net_errors_from_genotype, min_acceptable_llk);
+	      
+	      
+	      
+	      if (print_all_liks_calculated==true)
+		{
+		  printf("Colour %d, GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name, llk);
+		}
+	      
+	    }
+	  set_status_of_nodes_in_branches(&var, none);
+	}
+      
+    }
+  
+  //finished this set
+  printf("Finished calculating likelihoods of genotypes %d to %d\n", first_gt, last_gt);
+  int z;
+  for (z=0; z<num_colours_to_genotype; z++)
+    {
+           printf("Colour %d, MAX_LIKELIHOOD GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_lik_array[z], current_max_lik_array[z]);
+           printf("Colour %d, NEXT BEST GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name_current_max_but_one_lik_array[z], current_max_but_one_lik_array[z]);
+    }
+
+  dealloc_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
+  //many other things you should free here.
+  free_sequence(&seq);
+  free(kmer_window->kmer);
+  free(kmer_window);
+  for (i=0; i<number_alleles; i++)
+    {
+      free(array_of_node_arrays[i]);
+      free(array_of_or_arrays[i]);
+      free(array_of_allele_names[i]);
+    }
+  
+  free(array_of_node_arrays);
+  free(array_of_or_arrays);
+  free(lengths_of_alleles);
+  free(array_of_allele_names);
+  free(working_array_self);
+  free(working_array_shared);
+  
+//  if (using_1net==true)
+  //  {
+    //  dealloc_array_of_files(array_files_1net_binaries, num_colours_to_genotype);
+//    }
+
+  
+  
+}
+
+
+*/

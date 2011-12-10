@@ -7738,6 +7738,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
     }
 
 
+  //need to malloc our var object as could be really big.
   VariantBranchesAndFlanks var; //we will reuse this
 
 
