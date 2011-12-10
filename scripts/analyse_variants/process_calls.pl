@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Basename;
-use lib "Statistics-Descriptive-2.6";
+use lib "/home/zam/dev/hg/CORTEX_release/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6";
 use Descriptive;
 
 
@@ -19,12 +19,19 @@ my $outdir = shift;
 my $outvcf_filename_stub = shift;
 my $colours = shift;#list of names of colours/sample,s one per line
 my $number_of_colours = shift;
-my $reference_colour = shift;# -1 if unknown, ignore this colour for the VCF - dont print out anything
-my $pooled_colour = shift;   #-1 if unknown, ignore this colour for the VCF - dont print out anything
+my $reference_colour = 0;# -1 if unknown, ignore this colour for the VCF - dont print out anything
+my $pooled_colour = -1;   #-1 if unknown, ignore this colour for the VCF - dont print out anything
 my $kmer = shift;
-my $apply_filter_one_allele_must_be_ref = shift; ##  "yes" if one of your colours is the reference
+my $apply_filter_one_allele_must_be_ref = "yes"; ##  "yes" if one of your colours is the reference
                                                  ##  otherwise "no" - will produce VCF-like output
-my $classif = shift; ## file containing output of the population filter (classifier.R), or -1 if not used
+my $classif = -1; ## file containing output of the population filter (classifier.R), or -1 if not used
+my $prefix = shift; ## this will prefix any var name
+my $ploidy = 2;
+
+if ( ($ploidy !=1) && ($ploidy !=2) )
+{
+    die("Must have ploidy 1 or 2");
+}
 
 
 my $mapping_qual_thresh = 30;
@@ -33,17 +40,14 @@ my $mapping_qual_thresh = 30;
 ## The following all require you to modify them for your system
 
 ## build a Stampy hash of the genome to whiich you want to map, and give the path here
-my $stampy_hash_stub = "/path/to/stampyhash";
-my $stampy_bin = "/path/to/stampy.py";
-my $flank_bin = "/path/to/cortex dir/scripts/analyse_variants/make_5p_flank_file.pl";
-my $process_bubbles_bin = "/path/to/cortex dir/scripts/analyse_variants/process_bubbles.pl";
-
-
+my $stampy_hash_stub = "/data02/zamin/pombe_ref/stampy/pombe";
+my $stampy_bin = "/data02/zamin/cortex/cortex_var_1.0.5.3/scripts/analyse_variants/stampy-1.0.13/stampy.py";
+my $flank_bin = "/data02/zamin/cortex/cortex_var_1.0.5.3/scripts/analyse_variants/make_5p_flank_file.pl";
+my $needleman_wunsch_bin = "/data02/zamin/cortex/cortex_var_1.0.5.3/scripts/analyse_variants/needleman_wunsch-0.3.0/needleman_wunsch";
 
 #### no need to modify anything below this line
 
 
-my $prefix = "cortex";
 #print "Using reference colour $reference_colour\n";
 
 if ( ($apply_filter_one_allele_must_be_ref eq "yes") && ($reference_colour==-1) )
@@ -64,10 +68,15 @@ if (!(-e $flank_bin) )
     die("Cannot find $flank_bin");
 }
 
-if (!(-e $process_bubbles_bin))
+#if (!(-e $process_bubbles_bin))
+#{
+#    die("Cannot find $process_bubbles_bin");
+#}
+if (!(-e $needleman_wunsch_bin))
 {
-    die("Cannot find $process_bubbles_bin");
+    die("Cannot find $needleman_wunsch_bin");
 }
+
 
 if (!(-e $callfile))
 {
@@ -128,10 +137,16 @@ my $proc_bub_output = $outdir.$bname.".aligned_branches";
 
 if (!(-e $proc_bub_output) )
 {
-    my $proc_bub_cmd = "perl $process_bubbles_bin $callfile $prefix > $proc_bub_output 2>&1";
-    print "$proc_bub_cmd\n";
-    my $proc_bub_ret = qx{$proc_bub_cmd};
-    print "$proc_bub_ret\n";
+    wrap_needleman($needleman_wunsch_bin, $callfile, $prefix, $proc_bub_output);
+#    my $proc_bub_cmd = "perl $wrap_isaac_bin $needleman_wunsch_bin $callfile $prefix > $proc_bub_output 2>&1";
+ #   print "$proc_bub_cmd\n";
+  #  my $proc_bub_ret = qx{$proc_bub_cmd};
+   # print "$proc_bub_ret\n";
+ 
+#    my $proc_bub_cmd = "perl $process_bubbles_bin $callfile $prefix > $proc_bub_output 2>&1";
+#    print "$proc_bub_cmd\n";
+#    my $proc_bub_ret = qx{$proc_bub_cmd};
+#    print "$proc_bub_ret\n";
 }
 else
 {
@@ -204,7 +219,7 @@ sub get_vcf_header
     $head = $head. "##fileDate=$date\n";
     $head = $head. "##phasing=none, though some calls involve phasing clustered variants\n";
     $head = $head. "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
-    $head = $head. "##FORMAT=<ID=COV,Number=2,Type=Integer,Description=\"Median coverage on ref and alt alleles\">\n";
+    $head = $head. "##FORMAT=<ID=COV,Number=2,Type=Integer,Description=\"Number of reads on ref and alt alleles\">\n";
     $head = $head. "##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description=\"Genotype confidence. Difference in log likelihood of most likely and next most likely genotype\">\n";
     $head = $head. "##FORMAT=<ID=SITE_CONF,Number=1,Type=Float,Description=\"Probabilitic site classification confidence. Difference in log likelihood of most likely and next most likely model (models are variant, repeat and error)\">\n";
     $head = $head. "##INFO=<ID=SVLEN,Number=1,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">\n";
@@ -326,7 +341,7 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
     ##1. Get next var info from all three files
     my ($eof, $var_name, $flank5p, $br1_seq, $br2_seq, $flank3p, $aref_br1_cov, $aref_br2_cov, $which_is_ref,
 	$classification, $class_llk_rep, $class_llk_var,
-	$genotype, $llk_hom1, $llk_het, $llk_hom2) = get_next_var_from_callfile($file_handle_calls);
+	$genotype, $llk_hom1, $llk_het, $llk_hom2) = get_next_var_from_callfile($file_handle_calls, $ploidy);
 
     my ($eof2, $var_name2, $strand, $chr, $coord) = get_next_var_from_flank_mapfile($file_handle_map_flanks);
 
@@ -451,7 +466,7 @@ sub print_vcf_entry
 
     if ($error ne "0")
     {
-	print ("Ignore this $var_name - due to this error $error\n");
+	#print ("Ignore this $var_name - due to this error $error\n");
 	return;
     }
 
@@ -526,25 +541,34 @@ sub print_vcf_entry
 	}
 	
 	print $fh_output_vcf "$vcf_entry_chr\t$vcf_entry_pos\t$var_name\t$vcf_entry_ref_allele\t$vcf_entry_alt_allele\t.\t$filter_result\t$info\t";
+
+	my $have_called_gt=0;
+	my $have_used_classifier=0;
 	if (  (scalar(@$genotype)>0) && (scalar (keys %$href_pop_classifier_conf) >0) )
 	{
 	    print $fh_output_vcf "GT:COV:GT_CONF:SITE_CONF\t";
+	    $have_called_gt=1;
+	    $have_used_classifier=1;
 	}
 	elsif (scalar(@$genotype)>0)## genotypes called, but no site confidences/no pop classifier
 	{
 	    print $fh_output_vcf "GT:COV:GT_CONF\t";
+	    $have_called_gt=1;
 	}
 	elsif (scalar(keys %$href_pop_classifier_conf) >0)##pop classifier, but no genotypes called (seems impossible to me)
 	{
 	    print $fh_output_vcf "GT:COV:SITE_CONF\t";
+	    $have_used_classifier=1;
 	}
 	else
 	{
 	    print $fh_output_vcf "COV\t";
 	}
+
 	print_all_genotypes_and_covgs($fh_output_vcf, $aref_br1_cov, $aref_br2_cov, $which_is_ref,
 				      $classification, $class_llk_rep, $class_llk_var,
 				      $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_conf, $var_name);
+
 
     }
     else
@@ -592,17 +616,26 @@ sub print_vcf_entry
 	    my $this_snp_name = $var_name."_sub_snp_".$cnt;
 	    my $this_snp_info = "SVTYPE=SNP_FROM_COMPLEX;SVLEN=0";
 	    print $fh_output_vcf "$this_snp_chr\t$this_snp_pos\t$this_snp_name\t$this_snp_ref_allele\t$this_snp_alt_allele\t.\t$filter_result\t$this_snp_info\t";
+	    my $have_called_gt=0;
+	    my $have_used_classifier=0;
+
 	    if ( (scalar (@$genotype)>0) &&  (scalar(keys %$href_pop_classifier_conf) >0) )
 	    {
 			print $fh_output_vcf "GT:COV:GT_CONF:SITE_CONF\t";
+			$have_called_gt=1;
+			$have_used_classifier=1;
+
 	    }
 	    elsif (scalar (@$genotype)>0)##just genotype and no pop filter
 	    {
 		print $fh_output_vcf "GT:COV:GT_CONF\t";
+		$have_called_gt=1;
+
 	    }
 	    elsif (scalar(keys %$href_pop_classifier_conf) >0)
 	    {
 		print $fh_output_vcf "GT:COV:SITE_CONF\t";
+		$have_used_classifier=1;
 	    }
 	    else
 	    {
@@ -610,6 +643,7 @@ sub print_vcf_entry
 	    }
 	    print_all_genotypes_and_covgs($fh_output_vcf, $aref_br1_cov, $aref_br2_cov,  $which_is_ref, $classification, $class_llk_rep, $class_llk_var,
 					  $genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_classifier_conf, $var_name);
+
 	    
 	}
 	$cnt=0;
@@ -662,17 +696,23 @@ sub print_vcf_entry
             my $this_indel_info = "SVTYPE=INDEL_FROM_COMPLEX;SVLEN=$svlen";
             print $fh_output_vcf "$this_indel_chr\t$this_indel_pos\t$this_indel_name\t$this_indel_ref_allele\t$this_indel_alt_allele\t.\t$filter_result\t$this_indel_info\t";
 
+	    my $have_called_gt=0;
+	    my $have_used_classifier=0;
 	    if ( (scalar @$genotype >0) && (scalar(keys %$href_pop_classifier_conf) >0) )
 	    {
 		print $fh_output_vcf "GT:COV:GT_CONF:SITE_CONF\t";
+		$have_called_gt=1;
+		$have_used_classifier=1;
 	    }
 	    elsif (scalar @$genotype >0)
 	    {
 		print $fh_output_vcf "GT:COV:GT_CONF\t";
+		$have_called_gt=1;
 	    }
 	    elsif (scalar(keys %$href_pop_classifier_conf) >0)
 	    {
 		print $fh_output_vcf "GT:COV:SITE_CONF\t";
+		$have_used_classifier=1;
 	    }
 	    else
 	    {
@@ -758,8 +798,24 @@ sub new_genotyper
 
 }
 
+sub get_confidence_haploid
+{
+    #args are 3 log likelihoods of genotypes. we want difference between max and next
+    my ($A,$B) = @_;
+    
+    my @arr;
+    push @arr, $A;
+    push @arr, $B;
 
-sub get_confidence
+    my @sorted_arr = sort { $a <=> $b } @arr; #sorted in ascending order
+    my $conf =  $sorted_arr[1] - $sorted_arr[0];
+    my $rounded_conf = sprintf("%.2f", $conf);
+
+    return $rounded_conf;
+}
+
+
+sub get_confidence_diploid
 {
     #args are 3 log likelihoods of genotypes. we want difference between max and next
     my ($A,$B,$C) = @_;
@@ -777,11 +833,13 @@ sub get_confidence
 }
 
 
+
 sub print_all_genotypes_and_covgs
 {
     my ($fh, $aref_br1_cov, $aref_br2_cov,  $which_is_ref,
 	$classification, $class_llk_rep, $class_llk_var,
-	$genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_conf, $name) = @_;
+	$genotype, $llk_hom1, $llk_het, $llk_hom2, $href_pop_conf, $name)=@_;
+
 
     my $do_we_have_genotypes;
     my $num_samples = $number_of_colours;
@@ -828,17 +886,37 @@ sub print_all_genotypes_and_covgs
 	#my $aref_lik_and_genotypes_br1_v_br2 = new_genotyper($genotype, $llk_hom1, $llk_het, $llk_hom2);
 	my $cov;
 	my $gtype;
-	my $confidence=get_confidence($llk_hom1->[$j],$llk_het->[$j],$llk_hom2->[$j]);
-
-	my $site_conf = sprintf("%.2f", $href_pop_conf->{$name});
+	my $confidence=-99999;
+	if ($do_we_have_genotypes==1)
+	{
+	    if ($ploidy==2)
+	    {
+		$confidence=get_confidence_diploid($llk_hom1->[$j],$llk_het->[$j],$llk_hom2->[$j]);
+	    }
+	    else
+	    {
+		$confidence=get_confidence_haploid($llk_hom1->[$j],$llk_hom2->[$j]);
+	    }
+	}
+	my $site_conf=-99999;
+	if ($do_we_have_pop_filter==1)
+	{
+	    $site_conf = sprintf("%.2f", $href_pop_conf->{$name});
+	}
 	if ($which_is_ref==1)
 	{
-	    $gtype = $genotype->[$j];
+	    if ($do_we_have_genotypes==1)
+	    {
+		$gtype = $genotype->[$j];
+	    }
 	    $cov=$aref_br1_cov->[$j].",".$aref_br2_cov->[$j];
 	}
 	else
 	{
-	    $gtype = switch_genotype($genotype->[$j]);
+	    if ($do_we_have_genotypes==1)
+	    {
+		$gtype = switch_genotype($genotype->[$j]);
+	    }
 	    if (scalar @$aref_br2_cov != $number_of_colours)
 	    {
 		print ("Don't have enough covgs for branch2 - just have ");
@@ -848,7 +926,7 @@ sub print_all_genotypes_and_covgs
 
 	    if (scalar @$aref_br1_cov != $number_of_colours)
 	    {
-		print ("Don't hve enogh covgs for branch1 - just have ");
+		print ("Don't have enough covgs for branch1 - just have ");
 		print scalar @$aref_br1_cov;
 		die();
 
@@ -1100,7 +1178,7 @@ sub determine_type
 
 sub get_next_var_from_callfile
 {
-    my ($fh) = @_;
+    my ($fh, $p_loidy) = @_;
 
     my $line = "";
     my $varname;
@@ -1221,9 +1299,19 @@ sub get_next_var_from_callfile
 	    {
 		die("Bad genotype on $line");
 	    }
-	    push @arr_llk_hom1, $sp[2];
-	    push @arr_llk_het,  $sp[3];
-	    push @arr_llk_hom2, $sp[4];
+
+	    if ($p_loidy==2)
+	    {
+		push @arr_llk_hom1, $sp[2];
+		push @arr_llk_het,  $sp[3];
+		push @arr_llk_hom2, $sp[4];
+	    }
+	    else
+	    {
+		push @arr_llk_hom1, $sp[2];
+		push @arr_llk_het, -9999999;
+		push @arr_llk_hom2, $sp[3];
+	    }
 	}
 	$line = <$fh>;
 
@@ -1322,7 +1410,7 @@ sub get_next_var_from_callfile
     }
     else
     {
-	print "totally unexpected error on  $line - conect zam\@well.ox.ac.uk\n";
+	print "totally unexpected error on  $line - contact zam\@well.ox.ac.uk\n";
 	die();
     }
 }
@@ -2406,4 +2494,146 @@ sub get_pop_filter_info
 	$href_conf->{$name} = $sp[2];
     }
     close(FILE);
+}
+
+
+
+
+sub wrap_needleman
+{
+
+    my ($bin, $callfile, $prefix, $outfile) = @_;
+    
+    open(OUT, ">".$outfile)||die("Cannot open $outfile");
+
+## to add in front of var names to make them globally unique, otherwise all files contain var_1, var_2, etc
+    open(FILE, $callfile)||die("Cnnot open $callfile");
+    my %seq=();
+    my $count = 0;
+    my @seq1=();
+    my @seq2=();
+    
+    my $printed_at_start_of_var=0;
+    while(<FILE>){
+	
+	my $line = $_;
+	my $var_name;
+	if ($line =~ /branch\_(\d+)\_(1|2)/)
+	{
+	    if ($printed_at_start_of_var==0)
+	    {
+		print OUT "\n\nSTART NEW VAR\n";
+		$printed_at_start_of_var=1;
+	    }
+	    elsif ($printed_at_start_of_var==1)
+	    {
+		$printed_at_start_of_var=0;
+	    }
+	    
+	    
+	    $var_name = $prefix."_var_".$1;
+	    my $which_branch=$2;
+	    print OUT "$var_name branch $which_branch\n";
+	    my $a = <FILE>;
+	    chomp $a;
+	    $seq{$which_branch} = $a;
+	    $count++;
+	}
+	elsif ($line =~ /var\_(\d+)\_(\S+)_branch/)
+	{
+	    $var_name = $prefix."_var_".$1;
+	    my $which = $2;
+	    
+	    if ($printed_at_start_of_var==0)
+	    {
+		print OUT "\n\nSTART NEW VAR\n";
+		$printed_at_start_of_var=1;
+	    }
+	    elsif ($printed_at_start_of_var==1)
+	    {
+		$printed_at_start_of_var=0;
+	    }
+	    
+	    
+	    
+	    
+	    my $which_num;
+	    if ($which eq "trusted")
+	    {
+		$which_num=1;
+	    }
+	    elsif ($which eq "variant")
+	    {
+		$which_num=2
+	    }
+	    else
+	    {
+		die("Unexpected.")
+	    }
+	    print OUT "$var_name branch $which_num\n";
+	    my $a = <FILE>;
+	    chomp $a;
+	    
+	    
+	    $seq{$which_num} = $a;
+	    $count++;
+	}
+	else
+	{
+	    
+	}
+	
+	
+	if ($count==2){
+	    #print $seq{1},"\n";
+	    #print $seq{2},"\n";
+	    
+	    @seq1 = split //,$seq{1};
+	    @seq2 = split //,$seq{2};
+	    
+	    my $cmd1 = "$bin --zam $seq{1} $seq{2}";
+	    my $ret1 = qx{$cmd1};
+	    
+	    print OUT "FORWARD ALIGNMENT\n";
+	    my ($count_snps_f,$count_indels_f) = get_snp_indel_counts($ret1);
+	    print OUT "$ret1";;
+	    
+	    if ( ($count_indels_f > @seq1/3) || ($count_indels_f > @seq2/3) ){
+		print OUT "REVERSE ALIGNMENT\n";
+		@seq2 = split //, rev_comp($seq{2});
+		my $rseq2 = rev_comp($seq{2});
+		my $cmd2 = "$bin --zam $seq{1} $rseq2";
+		my $ret2 = qx{$cmd2};
+		
+		
+		my ($count_snps_r,$count_indels_r) = get_snp_indel_counts($ret2);
+		print OUT "$ret2";
+		#print OUT "\n";
+	    }
+	    else
+	    {
+		print OUT "NO REVERSE ALIGNMENT\n";
+	    }
+	    $count=0;
+	    
+	}
+    }
+    close(FILE);
+    close(OUT);
+}
+
+
+
+
+sub get_snp_indel_counts
+{
+    my ($str) = @_;
+    if ($str =~ /^.+\n.+\n.+\n(\d+) (\d+)/)
+    {
+	return ($1, $2);
+    }
+    else
+    {
+	die("Bad forma of $str in get_snp_indel_counts");
+    }
 }

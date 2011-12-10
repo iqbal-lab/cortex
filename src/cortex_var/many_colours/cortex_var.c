@@ -69,15 +69,33 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 		  void (*print_some_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
 		  GraphAndModelInfo* model_info)
 {
-  printf("Calling variants using Path Divergence Caller.\n");
-  printf("Calls are made between the reference path as specified by the fasta in %s\n", cmd_line->ref_chrom_fasta_list);
-  printf(" and the sample, which is the union of the following colour(s): ");
-  int i;
-  for (i=0; i< cmd_line->num_colours_in_pd_colour_list-1; i++)
+  if (cmd_line->pd_calls_against_each_listed_colour_consecutively==false)
     {
-      printf("%d,", cmd_line->pd_colour_list[i]);
+      printf("Calling variants using Path Divergence Caller.\n");
+      printf("Calls are made between the reference path as specified by the fasta in %s\n", cmd_line->ref_chrom_fasta_list);
+      printf(" and the union of the following colour(s): ");
+      int i;
+      for (i=0; i< cmd_line->num_colours_in_pd_colour_list-1; i++)
+	{
+	  printf("%d,", cmd_line->pd_colour_list[i]);
+	}
+      printf("%d\n", cmd_line->pd_colour_list[cmd_line->num_colours_in_pd_colour_list-1]);
     }
-  printf("%d\n", cmd_line->pd_colour_list[cmd_line->num_colours_in_pd_colour_list-1]);
+  else
+    {
+      printf("Calling variants using Path Divergence Caller. Since you used semicolons preceding and separating your list of colours,\n");
+      printf("we treat each of those colours separately. i.e we do DISCOVERY on each colour in the list independently,\n");
+      printf(" but for all variants called, however they were discovered, (if you specify --experiment_type and --genome_size, then) we will GENOTYPE all samples/colours.\n");
+      printf("Calls are made between the reference path as specified by the fasta in %s\n", cmd_line->ref_chrom_fasta_list);
+      printf(" and each of the following samples in turn. ");
+      int i;
+      for (i=0; i< cmd_line->num_colours_in_pd_colour_list-1; i++)
+	{
+	  printf("%d,", cmd_line->pd_colour_list[i]);
+	}
+      printf("%d\n", cmd_line->pd_colour_list[cmd_line->num_colours_in_pd_colour_list-1]);
+      
+    }
   printf("The reference colour is %d\n", cmd_line->ref_colour);
   if (model_info->expt_type==Unspecified)
     {
@@ -97,7 +115,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
       printf("OOM. Give up can't even allocate space for the names of the ref chromosome files\n");
       exit(1);
     }
-
+  int i;
   for (i=0; i< num_ref_chroms; i++)
     {
       ref_chroms[i] = malloc(sizeof(char)*500);
@@ -110,8 +128,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 
   get_filenames_from_list(cmd_line->ref_chrom_fasta_list, ref_chroms, num_ref_chroms);
 
-  //now set up output files
-
+  //now set up output file names
   char** output_files = malloc( sizeof(char*) * num_ref_chroms); //one for each chromosome
   if (output_files==NULL)
     {
@@ -145,38 +162,89 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
   int max_expected_size_of_supernode=cmd_line -> max_var_len;
 	
       
-  for (i=0; i<num_ref_chroms; i++) 
+  if (cmd_line->pd_calls_against_each_listed_colour_consecutively==false)
     {
-      printf("Call SV comparing individual with chromosome %s\n", ref_chroms[i]);
-	    
-      FILE* chrom_fptr = fopen(ref_chroms[i], "r");
-      if (chrom_fptr==NULL)
+      int global_var_counter=0;
+      for (i=0; i<num_ref_chroms; i++) 
 	{
-	  printf("Cannot open %s \n", ref_chroms[i]);
-	  exit(1);
+	  printf("Call SV comparing individual/sample  with chromosome %s\n", ref_chroms[i]);
+	  
+	  FILE* chrom_fptr = fopen(ref_chroms[i], "r");
+	  if (chrom_fptr==NULL)
+	    {
+	      printf("Cannot open %s \n", ref_chroms[i]);
+	      exit(1);
+	    }
+	  
+	  FILE* out_fptr = fopen(output_files[i], "w");
+	  if (out_fptr==NULL)
+	    {
+	      printf("Cannot open %s for output\n", output_files[i]);
+	      exit(1);
+	    }
+	  
+	  
+	  global_var_counter += db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(cmd_line->pd_colour_list, cmd_line->num_colours_in_pd_colour_list,
+													    chrom_fptr, cmd_line->ref_colour,
+													    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, 
+													    max_anchor_span, min_covg, max_covg, 
+													    max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
+													    0, NULL, NULL, NULL, NULL, NULL, 
+													    &make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours, 
+													    &db_variant_action_do_nothing,
+													    print_some_extra_var_info, model_info, global_var_counter+1);
+	  
+	  
+	  fclose(chrom_fptr);
+	  fclose(out_fptr);
 	}
       
-      FILE* out_fptr = fopen(output_files[i], "w");
-      if (out_fptr==NULL)
+    }
+  else
+    {
+      int global_var_counter=0;
+      for (i=0; i<num_ref_chroms; i++) 
 	{
-	  printf("Cannot open %s for output\n", output_files[i]);
-	  exit(1);
+	  printf("Call SVs by comparing each colour in turn  with chromosome %s\n", ref_chroms[i]);
+
+	  FILE* out_fptr = fopen(output_files[i], "w");//all output for this chrom goes to this file
+	  if (out_fptr==NULL)
+	    {
+	      printf("Cannot open %s for output\n", output_files[i]);
+	      exit(1);
+	    }
+	  
+	  int p;
+	  for (p=0; p<cmd_line->num_colours_in_pd_colour_list; p++)
+	    {
+	      FILE* chrom_fptr = fopen(ref_chroms[i], "r");
+	      if (chrom_fptr==NULL)
+		{
+		  printf("Cannot open %s \n", ref_chroms[i]);
+		  exit(1);
+		}
+	      
+	      
+	      int list_one_col[1];
+	      list_one_col[0]=cmd_line->pd_colour_list[p];
+	      
+	      global_var_counter += db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(list_one_col, 1,
+														chrom_fptr, cmd_line->ref_colour,
+														min_fiveprime_flank_anchor, min_threeprime_flank_anchor, 
+														max_anchor_span, min_covg, max_covg, 
+														max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
+														0, NULL, NULL, NULL, NULL, NULL, 
+														&make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours, //just always returns true
+														&db_variant_action_do_nothing,
+														print_some_extra_var_info, model_info, global_var_counter+1);
+	  
+	  
+	      fclose(chrom_fptr);
+	      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+	    }
+	  fclose(out_fptr);
 	}
       
-      
-      db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(cmd_line->pd_colour_list, cmd_line->num_colours_in_pd_colour_list,
-										  chrom_fptr, cmd_line->ref_colour,
-										  min_fiveprime_flank_anchor, min_threeprime_flank_anchor, 
-										  max_anchor_span, min_covg, max_covg, 
-										  max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
-										  0, NULL, NULL, NULL, NULL, NULL, 
-										  &make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours, 
-										  &db_variant_action_do_nothing,
-										  print_some_extra_var_info, model_info);
-      
-      
-      fclose(chrom_fptr);
-      fclose(out_fptr);
     }
   //cleanup
   for(i=0; i<num_ref_chroms; i++)
@@ -929,7 +997,7 @@ int main(int argc, char **argv){
       timestamp();
       printf("Run Path-Divergence Calls\n");
       run_pd_calls(&cmd_line, db_graph, &print_appropriate_extra_variant_info, &model_info);
-      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
+      //hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
       timestamp();
       printf("Finished Path Divergence calls\n");
     }

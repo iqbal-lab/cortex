@@ -204,7 +204,7 @@ const char* usage=
 "   [--output_bubbles2 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles2 are dumped to this file.\n" \
 
   // -l
-"   [--path_divergence_caller COMMA_SEP_COLOURS] \t\t=\t Make Path Divergence variant calls.\n\t\t\t\t\t\t\t\t\t Must specify colour of sample in which you want to find\n\t\t\t\t\t\t\t\t\t variants compared with the reference.\n\t\t\t\t\t\t\t\t\t This sample colour can be a union of colours (comma-separated list). \n\t\t\t\t\t\t\t\t\t Must also specify --ref_colour and --list_ref_fasta\n" \
+"   [--path_divergence_caller [COMMA_SEP_COLOURS|SQUARE_OPEN_BRACKET_PRECEDED_AND_SEP_COLOURS]] \t\t=\t Make Path Divergence variant calls.\n\t\t\t\t\t\t\t\t\t Must specify colour of sample in which you want to find\n\t\t\t\t\t\t\t\t\t variants compared with the reference.\n\t\t\t\t\t\t\t\t\t This sample colour can be a union of colours (comma-separated list) \n Or, given a square open bracket [ PRECEDED AND SEPARATED list(example [2[3[10 ) the caller will call against each colour in turn\n\t\t\t\t\t\t\t\t\t Must also specify --ref_colour and --list_ref_fasta\n" \
   // -I
 "   [--path_divergence_caller_output PATH_STUB]\t\t\t=\t Specifies the path and beginning of filenames of Path Divergence caller output files.\n\t\t\t\t\t\t\t\t\t One output file will be created per  reference fasta listed in --list_ref_fasta\n" \
   // -i
@@ -381,6 +381,7 @@ int default_opts(CmdLine * c)
   c->detect_bubbles1=false;
   c->detect_bubbles2=false;
   c->make_pd_calls=false;
+  c->pd_calls_against_each_listed_colour_consecutively=false;
   c->using_ref=false;
   c->seq_file_format_known=false;
   c->input_colours=false;
@@ -687,10 +688,19 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       {
 
 	if (optarg==NULL)
-	  errx(1,"[--path_divergence_caller] option requires at least one colour. If >1, must be comma separated.");
-	
-	parse_commasep_list(cmdline_ptr, //->num_colours_in_pd_colour_list, cmdline_ptr->pd_colour_list, 
-			    optarg, strlen(optarg), "[--path_divergence_caller]");
+	  errx(1,"[--path_divergence_caller] option requires at least one colour. If >1, must EITHER be comma separated (e.g. 1,2,3) OR [- preceded and separated  - eg [1[4[76.\n");
+
+	//we need to decide whether we call variants ONCE against the union of the listed colours
+	// or we call repeatedly, once against each colour listed (but genotyping all colours obviously)
+	boolean commasep_so_call_against_union=true;
+	if (optarg[0]=='[')
+	  {
+	    commasep_so_call_against_union=false;
+	    cmdline_ptr->pd_calls_against_each_listed_colour_consecutively=true;
+	  }
+	parse_commasep_or_open_square_brack_sep_list(cmdline_ptr, //->num_colours_in_pd_colour_list, cmdline_ptr->pd_colour_list, 
+					    optarg, strlen(optarg), "[--path_divergence_caller]", commasep_so_call_against_union);
+
 	cmdline_ptr->make_pd_calls = true;
 	break; 
 
@@ -2122,6 +2132,127 @@ int get_numbers_from_comma_sep_list(char* list, int* return_list, int max_len_re
 }
 
 
+//RELIES on the list (arg1) ending in '\0'.
+//expect the list to be in the form ;3;7;8 - PRECEDED and separated by semicolon
+//returns -1 on error
+// the list ;-1 is short hand for ALL colours, and a list prefixed by ;* means ALL colours except those on this list
+int get_numbers_from_open_square_brack_sep_list(char* list, int* return_list, 
+					int max_len_return_list)
+{
+  int number[max_len_return_list];
+
+
+  //exceptional case - if the list is just "[-1" , 
+  //                 then this means ALL colours
+  if (strcmp(list, "[-1")==0)
+    {
+      int j;
+      if (max_len_return_list<NUMBER_OF_COLOURS)
+	{
+	  printf("Passing array limit of %d int get_numbers_from_comma_sep_list which is less than the number of colours\n", max_len_return_list);
+	  exit(1);
+	}
+      for (j=0; j<NUMBER_OF_COLOURS; j++)
+	{
+	  return_list[j]=j;
+	}
+      
+      return NUMBER_OF_COLOURS;
+    }
+
+  //exceptional case - if the list starts with ";*" then all the numbers are to be EXCLUDED,
+  if (list[1]=='*')//we already know list[0] is [
+    {
+      int colours_to_ignore[MAX_COLOURS_ALLOWED_TO_MERGE];
+
+      int i;
+      int current=0;
+      colours_to_ignore[current]=0;
+
+      for(i=2;i<strlen(list);i++){//start at 2!
+	if (list[i]=='[')
+	  {
+	    current++;
+	    colours_to_ignore[current]=0;
+	    if (current>=max_len_return_list)
+	      {
+		printf("Too many colours in list\n");
+		return -1;
+	      }
+	  }
+	else{
+	  if ( (list[i]>='0' && list[i]<='9') ||  (i+1 == strlen(list))   ){
+	    colours_to_ignore[current]=colours_to_ignore[current]*10 + (list[i]-'0');
+	  }
+	  else{
+	    printf("This part of cmd-line argument is badly formatted: %s\n", list);
+	    return -1;
+	  }
+	}
+      }
+      
+      int index_in_returnlist=0;
+      //this isn't very efficient but you only doing it once when you parse the cmd-line
+      for (i=0; i<NUMBER_OF_COLOURS; i++)
+	{
+	  int k;
+	  boolean should_we_ignore=false;
+	  for(k=0;k<=current;k++)
+	    {
+	      if (i==colours_to_ignore[k])
+		{
+		  should_we_ignore=true;
+		}
+	    }
+	  if (should_we_ignore==false)
+	    {
+	      return_list[index_in_returnlist]=i;
+	      index_in_returnlist++;
+	    }
+
+	}
+      return index_in_returnlist;
+    }
+
+  else
+    {
+      int i;
+      int current=0;
+      number[current]=0;
+      
+      
+      for(i=1;i<strlen(list);i++){//start from 1, as list[0] is a semicolon
+	if (list[i]=='[')
+	  {
+	    current++;
+	    number[current]=0;
+	    if (current>=max_len_return_list)
+	      {
+		printf("Too many colours in list\n");
+		return -1;
+	      }
+	  }
+	else{
+	  if ( (list[i]>='0' && list[i]<='9') ||  (i+1 == strlen(list))   ){
+	    number[current]=number[current]*10 + (list[i]-'0');
+	  }
+	  else{
+	    printf("This part of cmd-line argument is badly formatted: %s\n", list);
+	    return -1;
+	  }
+	}
+      }
+      
+      
+      for(i=0;i<=current;i++){
+	return_list[i]=number[i];
+      }
+      return current+1;
+    }
+}
+
+
+
 
 
 //RELIES on the arg ending in '\0'.
@@ -2592,7 +2723,7 @@ int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_f
 
 
   //returns -1 on error, 0 otherwise. Parses argument3 and gets the colours into arg1 and arg2 
- int parse_commasep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is)
+int parse_commasep_or_open_square_brack_sep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is, boolean commasep)
 {
 
   if (len_arg<MAX_LEN_DETECT_BUB_COLOURINFO)
@@ -2603,8 +2734,9 @@ int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_f
 	      {
 		if (arg[k]=='/') 
 		  {
-		    printf("%s option requires just one comma-separated list of integers, with no forward-slash /. Perhaps you are confusing with --detect_bubbles1.", 
-		     text_for_error_describing_which_option_this_is);		
+		    
+		    printf("%s option accepts a one comma-separated list of integers, or a open square-bracket-[ preceded-and-separated list, but in either case, with no forward-slash /. Perhaps you are confusing with --detect_bubbles1.", 
+			   text_for_error_describing_which_option_this_is);		
 		    return -1;
 		  }
 	      }
@@ -2614,7 +2746,15 @@ int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_f
 	    strncpy(list, arg, strlen(arg));
 	    
 	    int list_colours[MAX_COLOURS_ALLOWED_TO_MERGE];
-	    int num_list_colours = get_numbers_from_comma_sep_list(list, list_colours, MAX_COLOURS_ALLOWED_TO_MERGE);
+	    int num_list_colours;
+	    if (commasep==true)
+	      {
+		num_list_colours= get_numbers_from_comma_sep_list(list, list_colours, MAX_COLOURS_ALLOWED_TO_MERGE);
+	      }
+	    else
+	      {
+		num_list_colours= get_numbers_from_open_square_brack_sep_list(list, list_colours, MAX_COLOURS_ALLOWED_TO_MERGE);
+	      }
 
 	    if (num_list_colours==-1) 
 	      {
@@ -2643,7 +2783,6 @@ int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_f
 
   return 0;
 }
-
 
 
 

@@ -7575,7 +7575,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 													    Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										       void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-										       GraphAndModelInfo* model_info
+										       GraphAndModelInfo* model_info,
+										       int start_variant_numbering_with_this
 										       )
 {
 
@@ -8830,7 +8831,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		    
 
 		      char name[300]; 
-		      sprintf(name,"var_%i_5p_flank",num_variants_found);
+		      sprintf(name,"var_%i_5p_flank",start_variant_numbering_with_this-1+num_variants_found);
 		      print_fasta_from_path_in_subgraph_defined_by_func_of_colours(output_file, name, length_5p_flank, 
 										   flank5p_avg_covg,flank5p_min_covg,flank5p_max_covg, flank5p_mode_coverage, 
 										   flank5p_percent_nodes_with_modal_covg, flank5p_percent_novel,
@@ -8848,7 +8849,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		      
 		      if (traverse_sup_left_to_right==true)
 			{
-			  sprintf(name,"var_%i_trusted_branch", num_variants_found);
+			  sprintf(name,"var_%i_trusted_branch", start_variant_numbering_with_this-1+num_variants_found);
 			  
 			  
 			  print_fasta_from_path_in_subgraph_defined_by_func_of_colours(output_file, name, len_trusted_branch, 
@@ -8866,7 +8867,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 			  
 			  
 			  
-			  sprintf(name,"var_%i_variant_branch", num_variants_found);
+			  sprintf(name,"var_%i_variant_branch", start_variant_numbering_with_this-1+num_variants_found);
 			  
 			  print_fasta_from_path_in_subgraph_defined_by_func_of_colours(output_file, name, len_branch2, 
 									   branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, 
@@ -8885,7 +8886,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		      else //traversing right to left
 			{
 			  
-			  sprintf(name,"var_%i_trusted_branch", num_variants_found);
+			  sprintf(name,"var_%i_trusted_branch", start_variant_numbering_with_this-1+num_variants_found);
 			  
 			  print_fasta_from_path_in_subgraph_defined_by_func_of_colours(output_file, name, len_trusted_branch, 
 									   trusted_branch_avg_covg, trusted_branch_min_covg, trusted_branch_max_covg, 
@@ -8904,7 +8905,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 			  char rev_variant_branch[len_branch2+1];
 			  seq_reverse_complement(variant_branch, len_branch2, rev_variant_branch);
 			  rev_variant_branch[len_branch2]='\0';
-			  sprintf(name,"var_%i_variant_branch", num_variants_found);
+			  sprintf(name,"var_%i_variant_branch", start_variant_numbering_with_this-1+num_variants_found);
 			  
 			  print_fasta_from_path_in_subgraph_defined_by_func_of_colours(output_file, name, len_branch2, 
 									   branch2_avg_covg, branch2_min_covg, branch2_max_covg, branch2_mode_coverage, 
@@ -8925,7 +8926,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 			    }
 			  
 			}
-		      sprintf(name,"var_%i_3p_flank",num_variants_found);
+		      sprintf(name,"var_%i_3p_flank",start_variant_numbering_with_this-1+num_variants_found);
 		      print_fasta_from_path_in_subgraph_defined_by_func_of_colours(output_file, name, length_3p_flank, 
 								       flank3p_avg_covg, flank3p_min_covg, flank3p_max_covg, flank3p_mode_coverage, 
 								       flank3p_percent_nodes_with_modal_covg, flank3p_percent_novel, 
@@ -9002,7 +9003,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 
 
-void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(int* list, int len_list,
+int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(int* list, int len_list,
 										 FILE* chrom_fasta_fptr, int ref_colour,
 										 int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, 
 										 int max_anchor_span, int min_covg, int max_covg, 
@@ -9014,7 +9015,7 @@ void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv
 												      Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										 void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-										 GraphAndModelInfo* model_info
+										 GraphAndModelInfo* model_info, int start_numbering_vars_from_this_number
 										 )
 {
 
@@ -9043,7 +9044,7 @@ void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv
     return covg;
   }
 
-  db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_colours(chrom_fasta_fptr,
+  int num_vars_called=db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_colours(chrom_fasta_fptr,
 										     &get_union_list_colours, &get_covg_of_union_first_list_colours,
 										     ref_colour,
 										     min_fiveprime_flank_anchor, min_threeprime_flank_anchor,
@@ -9052,10 +9053,10 @@ void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv
 										     max_desired_returns,
 										     return_flank5p_array, return_trusted_branch_array, return_variant_branch_array,
 										     return_flank3p_array, return_variant_start_coord,
-										     condition, action_for_branches_of_called_variants, print_extra_info, model_info);
+										     condition, action_for_branches_of_called_variants, print_extra_info, model_info, start_numbering_vars_from_this_number);
 										     
 
-
+  return num_vars_called;
 
 }
 

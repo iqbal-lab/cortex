@@ -142,6 +142,7 @@ typedef struct
   boolean detect_bubbles1;
   boolean detect_bubbles2;
   boolean make_pd_calls;
+  boolean pd_calls_against_each_listed_colour_consecutively;
   boolean using_ref;  
   boolean seq_file_format_known; 
   boolean input_colours;
@@ -190,8 +191,11 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string);
 CmdLine parse_cmdline( int argc, char* argv[],int unit_size); 
 int default_opts(CmdLine *);
 int get_numbers_from_comma_sep_list(char* list,  int* return_list, int max_len_return_list);
+int get_numbers_from_open_square_brack_sep_list(char* list, int* return_list, 
+						int max_len_return_list);
 int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is, int which_detect_bubbles);
-int parse_commasep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is);
+int parse_commasep_or_open_square_brack_sep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is, boolean commasep);
+//int parse_commasep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is);
 int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* num_colours_to_genotype , int* ref_minus_site_colour, int* num_alleles,
 				 int* start_gt_combin_num, int* end_gt_combin_num, char* fasta_file, AssumptionsOnGraphCleaning* assump,
 				 int* wk_col1, int* wk_col2, boolean* using_1net, boolean* using_2net, char* file_1net_bins, double* min_llk);
