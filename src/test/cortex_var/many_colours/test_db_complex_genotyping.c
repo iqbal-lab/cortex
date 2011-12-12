@@ -920,10 +920,7 @@ Colour:	MeanReadLen	TotalSeq
   var.len_other_allele = 134;
 
   AnnotatedPutativeVariant annovar;
-  initialise_putative_variant(&annovar, &var, BubbleCaller, 
-			      model_info.ginfo, model_info.seq_error_rate_per_base, 
-			      model_info.genome_len, 
-			      31, model_info.ref_colour, model_info.expt_type);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, 31);
 
 
   // Since none of the colours except colour 3 has any coverage AT ALL on branch1, I simply
@@ -1088,10 +1085,7 @@ Colour 0 = reference
   var.len_other_allele = 134;
 
   AnnotatedPutativeVariant annovar;
-  initialise_putative_variant(&annovar, &var, BubbleCaller, 
-			      model_info.ginfo, model_info.seq_error_rate_per_base, 
-			      model_info.genome_len, 
-			      31, model_info.ref_colour, model_info.expt_type);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, 31);
 
 
   // Since none of the colours except colour 3 has any coverage AT ALL on branch1, I simply

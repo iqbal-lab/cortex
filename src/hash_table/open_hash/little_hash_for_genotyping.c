@@ -461,7 +461,7 @@ LittleHashTable * little_hash_table_load_from_dump(FILE * fp, int max_rehash_tri
 	  read = fread(&bucket_size,sizeof(int),1,fp);
 	  if (read>0){
 	    
-	    little_hash_table = malloc(sizeof(LittleHashTabley));
+	    little_hash_table = malloc(sizeof(LittleHashTable));
 	    if (little_hash_table == NULL) {
 	      fprintf(stderr,"could not allocate hash table of size %qd\n", (long long) bucket_size * number_buckets);
 	      return NULL;

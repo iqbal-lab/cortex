@@ -217,7 +217,7 @@ Edges genotyping_element_get_colour1(const GenotypingElement* e)
 
 
 
-int genotyping_element_get_covg_union_of_all_covgs(const dBNode* e)
+int genotyping_element_get_covg_union_of_all_covgs(const GenotypingElement* e)
 {
   int i;
   int covg=0;
@@ -232,17 +232,17 @@ int genotyping_element_get_covg_union_of_all_covgs(const dBNode* e)
 }
 
 
-int genotyping_element_get_covg_colour0(const dBNode* e)
+int genotyping_element_get_covg_colour0(const GenotypingElement* e)
 {
   return e->coverage[0];
 }
 
-int genotyping_element_get_covg_last_colour(const dBNode* e)
+int genotyping_element_get_covg_last_colour(const GenotypingElement* e)
 {
   return e->coverage[MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2-1];
 }
 
-int genotyping_element_get_covg_colour1(const dBNode* e)
+int genotyping_element_get_covg_colour1(const GenotypingElement* e)
 {
   return e->coverage[1];
 }
@@ -471,7 +471,7 @@ void genotyping_element_set_kmer(GenotypingElement * e, Key kmer, short kmer_siz
 
 
 
-void db_genotyping_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
+void db_genotyping_node_increment_coverage(GenotypingElement* e, EdgeArrayType type, int index)
 {
   if (e==NULL)
     {
@@ -480,7 +480,7 @@ void db_genotyping_node_increment_coverage(dBNode* e, EdgeArrayType type, int in
     }
   e->coverage[index]=e->coverage[index]+1;
 }
-void db_genotyping_node_decrement_coverage(dBNode* e, EdgeArrayType type, int index)
+void db_genotyping_node_decrement_coverage(GenotypingElement* e, EdgeArrayType type, int index)
 {
   if (e==NULL)
     {
@@ -490,7 +490,7 @@ void db_genotyping_node_decrement_coverage(dBNode* e, EdgeArrayType type, int in
   e->coverage[index]=e->coverage[index]-1;
 }
 
-void db_genotyping_node_update_coverage(dBNode* e, EdgeArrayType type, int index, int update)
+void db_genotyping_node_update_coverage(GenotypingElement* e, EdgeArrayType type, int index, int update)
 {
 
   e->coverage[index] += update;
@@ -498,7 +498,7 @@ void db_genotyping_node_update_coverage(dBNode* e, EdgeArrayType type, int index
 }
 
 
-int db_genotyping_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index)
+int db_genotyping_node_get_coverage(const GenotypingElement* const e, EdgeArrayType type, int index)
 {
 
   if (e==NULL)
@@ -512,7 +512,7 @@ int db_genotyping_node_get_coverage(const dBNode* const e, EdgeArrayType type, i
 }
 
 
-void db_genotyping_node_set_coverage(dBNode* e, EdgeArrayType type, int colour, int covg)
+void db_genotyping_node_set_coverage(GenotypingElement* e, EdgeArrayType type, int colour, int covg)
 {
 
   if (e==NULL)
@@ -528,7 +528,7 @@ void db_genotyping_node_set_coverage(dBNode* e, EdgeArrayType type, int colour, 
 
 
 
-int db_genotyping_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, int (*get_covg)(const dBNode*) )
+int db_genotyping_node_get_coverage_in_subgraph_defined_by_func_of_colours(const GenotypingElement* const e, int (*get_covg)(const GenotypingElement*) )
 {
 
   if (e==NULL)
@@ -545,7 +545,7 @@ int db_genotyping_node_get_coverage_in_subgraph_defined_by_func_of_colours(const
 
 
 
-Orientation db_genotyping_node_get_orientation(BinaryKmer* k, dBNode * e, short kmer_size){
+Orientation db_genotyping_node_get_orientation(BinaryKmer* k, GenotypingElement * e, short kmer_size){
 
   if (binary_kmer_comparison_operator(e->kmer,*k)==true)
     {
@@ -573,7 +573,7 @@ Orientation db_genotyping_node_get_orientation(BinaryKmer* k, dBNode * e, short 
 
 //After specifying which individual or population you are talking about, this function
 //adds one edge ("arrow") to the appropriate edge in the appropriate array in the element -- basically sets a bit in the correct edges char
-void db_genotyping_node_add_labeled_edge(dBNode * e, Orientation o, Nucleotide base, EdgeArrayType edge_type, int edge_index){
+void db_genotyping_node_add_labeled_edge(GenotypingElement * e, Orientation o, Nucleotide base, EdgeArrayType edge_type, int edge_index){
 
   //set edge 
   char edge = 1 << base; // A (0) -> 0001, C (1) -> 0010, G (2) -> 0100, T (3) -> 1000
@@ -591,7 +591,7 @@ void db_genotyping_node_add_labeled_edge(dBNode * e, Orientation o, Nucleotide b
 //adding an edge between two nodes implies adding two labeled edges (one in each direction)
 //be aware that in the case of self-loops in palindromes the two labeled edges collapse in one
 
-boolean db_genotyping_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size, EdgeArrayType edge_type, int edge_index){
+boolean db_genotyping_node_add_edge(GenotypingElement * src_e, GenotypingElement * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size, EdgeArrayType edge_type, int edge_index){
 
   BinaryKmer src_k, tgt_k, tmp_kmer; 
   char seq1[kmer_size];
@@ -621,7 +621,7 @@ boolean db_genotyping_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation 
 
 
 
-boolean db_genotyping_node_edge_exist(dBNode * element,Nucleotide base,Orientation orientation, EdgeArrayType edge_type, int edge_index){
+boolean db_genotyping_node_edge_exist(GenotypingElement * element,Nucleotide base,Orientation orientation, EdgeArrayType edge_type, int edge_index){
 
   //get the edge char for this specific person or pop:
   char edge = genotyping_node_get_edge_copy(*element, edge_type, edge_index);
@@ -646,7 +646,7 @@ boolean db_genotyping_node_edge_exist(dBNode * element,Nucleotide base,Orientati
 //final argument f is a function that returns an Edge that is a function of the different colured edges in a node.
 // eg we might be interested in the union of all the coloured edges in the graph, or just the colour/edge for the first person,
 //    or the union of all edges except that corresponding to the reference.
-boolean db_genotyping_node_edge_exist_within_specified_function_of_coloured_edges(dBNode * element,Nucleotide base,Orientation orientation, Edges (*f)( const GenotypingElement* ))
+boolean db_genotyping_node_edge_exist_within_specified_function_of_coloured_edges(GenotypingElement * element,Nucleotide base,Orientation orientation, Edges (*f)( const GenotypingElement* ))
 {
 
   char edge = f(element);
@@ -673,29 +673,29 @@ boolean db_genotyping_node_edge_exist_within_specified_function_of_coloured_edge
 
 
 
-void db_genotyping_node_reset_edges(dBNode * node,EdgeArrayType edge_type, int edge_index){
-  set_edges(node, edge_type, edge_index, 0);
+void db_genotyping_node_reset_edges(GenotypingElement * node,EdgeArrayType edge_type, int edge_index){
+  genotyping_node_set_edges(node, edge_type, edge_index, 0);
 }
 
-void db_genotyping_node_reset_edge(dBNode * node, Orientation orientation, Nucleotide nucleotide, EdgeArrayType edge_type, int edge_index){
-  reset_one_edge(node, orientation, nucleotide, edge_type, edge_index);
+void db_genotyping_node_reset_edge(GenotypingElement * node, Orientation orientation, Nucleotide nucleotide, EdgeArrayType edge_type, int edge_index){
+  genotyping_node_reset_one_edge(node, orientation, nucleotide, edge_type, edge_index);
 }
 
 //pass in a function which will apply reset_one_edge to whichever of the edges it cares about
-void db_genotyping_node_reset_specified_edges(dBNode * node, Orientation orientation, Nucleotide nucleotide,  
-				   void (*f)(dBNode*, Orientation, Nucleotide )){
+void db_genotyping_node_reset_specified_edges(GenotypingElement * node, Orientation orientation, Nucleotide nucleotide,  
+				   void (*f)(GenotypingElement*, Orientation, Nucleotide )){
   f(node, orientation, nucleotide);
 }
 
 
 
 
-boolean db_genotyping_node_edges_reset(dBNode * node, EdgeArrayType edge_type, int edge_index){
+boolean db_genotyping_node_edges_reset(GenotypingElement * node, EdgeArrayType edge_type, int edge_index){
   return genotyping_node_get_edge_copy(*node,edge_type,edge_index) == 0;
 }
 
 
-boolean db_genotyping_node_has_precisely_one_edge(dBNode * node, Orientation orientation, Nucleotide * nucleotide, EdgeArrayType edge_type, int edge_index){
+boolean db_genotyping_node_has_precisely_one_edge(GenotypingElement * node, Orientation orientation, Nucleotide * nucleotide, EdgeArrayType edge_type, int edge_index){
   
   Nucleotide n;
   Edges edges = genotyping_node_get_edge_copy(*node,edge_type,edge_index);
@@ -722,8 +722,8 @@ boolean db_genotyping_node_has_precisely_one_edge(dBNode * node, Orientation ori
 
 
 
-boolean db_genotyping_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(dBNode * node, Orientation orientation, Nucleotide * nucleotide, 
-									      Edges (*get_colour)(const dBNode*) )
+boolean db_genotyping_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(GenotypingElement * node, Orientation orientation, Nucleotide * nucleotide, 
+									      Edges (*get_colour)(const GenotypingElement*) )
 {
   
   Nucleotide n;
@@ -750,7 +750,7 @@ boolean db_genotyping_node_has_precisely_one_edge_in_subgraph_defined_by_func_of
 }
 
 
-boolean db_genotyping_node_has_precisely_one_edge_in_union_graph_over_all_people(dBNode * node, Orientation orientation, Nucleotide * nucleotide){
+boolean db_genotyping_node_has_precisely_one_edge_in_union_graph_over_all_people(GenotypingElement * node, Orientation orientation, Nucleotide * nucleotide){
   
   Nucleotide n;
   Edges edges = genotyping_node_get_union_of_edges(*node);
@@ -776,7 +776,7 @@ boolean db_genotyping_node_has_precisely_one_edge_in_union_graph_over_all_people
 }
 
 //a conflict - bifurcation
-boolean db_genotyping_node_has_precisely_two_edges(dBNode * node, Orientation orientation, Nucleotide * nucleotide1, Nucleotide * nucleotide2, EdgeArrayType type, int index){
+boolean db_genotyping_node_has_precisely_two_edges(GenotypingElement * node, Orientation orientation, Nucleotide * nucleotide1, Nucleotide * nucleotide2, EdgeArrayType type, int index){
   
   Nucleotide n;
 
@@ -810,7 +810,7 @@ boolean db_genotyping_node_has_precisely_two_edges(dBNode * node, Orientation or
 
 
 
-boolean db_genotyping_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayType edge_type, int edge_index){
+boolean db_genotyping_node_is_blunt_end(GenotypingElement * node, Orientation orientation, EdgeArrayType edge_type, int edge_index){
   
   Edges edges = genotyping_node_get_edge_copy(*node, edge_type, edge_index);
 
@@ -826,7 +826,7 @@ boolean db_genotyping_node_is_blunt_end(dBNode * node, Orientation orientation, 
 
 
 
-boolean db_genotyping_node_is_blunt_end_in_subgraph_given_by_func_of_colours(dBNode * node, Orientation orientation,  Edges (*get_colour)(const dBNode*) ){
+boolean db_genotyping_node_is_blunt_end_in_subgraph_given_by_func_of_colours(GenotypingElement * node, Orientation orientation,  Edges (*get_colour)(const GenotypingElement*) ){
   
   Edges edges = get_colour(node);
 
@@ -846,11 +846,11 @@ boolean db_genotyping_node_is_blunt_end_in_subgraph_given_by_func_of_colours(dBN
 
 
 
-boolean db_genotyping_node_check_status(dBNode * node, NodeStatus status){
+boolean db_genotyping_node_check_status(GenotypingElement * node, NodeStatus status){
   return node->status == (char) status;
 }
 
-boolean db_genotyping_node_check_status_to_be_dumped(dBNode * node){
+boolean db_genotyping_node_check_status_to_be_dumped(GenotypingElement * node){
   if ( db_genotyping_node_check_status(node, to_be_dumped)==true )
     {
       return true;
@@ -861,7 +861,7 @@ boolean db_genotyping_node_check_status_to_be_dumped(dBNode * node){
     }
 }
 
-boolean db_genotyping_node_check_status_not_pruned(dBNode * node){
+boolean db_genotyping_node_check_status_not_pruned(GenotypingElement * node){
   if ( db_genotyping_node_check_status(node, none) || db_genotyping_node_check_status(node,visited))
     {
       return true;
@@ -870,7 +870,7 @@ boolean db_genotyping_node_check_status_not_pruned(dBNode * node){
 }
 
 
-boolean db_genotyping_node_check_status_not_pruned_or_visited(dBNode * node)
+boolean db_genotyping_node_check_status_not_pruned_or_visited(GenotypingElement * node)
 {
   if ( db_genotyping_node_check_status(node,visited) || db_genotyping_node_check_status(node,visited_and_exists_in_reference) ||  db_genotyping_node_check_status(node, pruned)	 ) 
     {
@@ -883,17 +883,17 @@ boolean db_genotyping_node_check_status_not_pruned_or_visited(dBNode * node)
 }
 
 
-void db_genotyping_node_set_status(dBNode * node,NodeStatus status){
+void db_genotyping_node_set_status(GenotypingElement * node,NodeStatus status){
   node->status = (char) status;
 }
-void db_genotyping_node_set_status_to_none(dBNode * node){
+void db_genotyping_node_set_status_to_none(GenotypingElement * node){
   node->status = none;
 }
 
 
 
 
-boolean db_genotyping_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, EdgeArrayType type, int index)
+boolean db_genotyping_node_is_this_node_in_this_person_or_populations_graph(GenotypingElement* node, EdgeArrayType type, int index)
 {
 
   if (node ==NULL)
@@ -919,7 +919,7 @@ boolean db_genotyping_node_is_this_node_in_this_person_or_populations_graph(dBNo
  
 }
 
-boolean db_genotyping_node_is_this_node_in_subgraph_defined_by_func_of_colours(dBNode* node, Edges (*get_colour)(const dBNode*) )
+boolean db_genotyping_node_is_this_node_in_subgraph_defined_by_func_of_colours(GenotypingElement* node, Edges (*get_colour)(const GenotypingElement*) )
 {
 
   if (node ==NULL)
@@ -949,11 +949,11 @@ boolean db_genotyping_node_is_this_node_in_subgraph_defined_by_func_of_colours(d
 
 
 
-void db_genotyping_node_action_set_status_none(dBNode * node){
+void db_genotyping_node_action_set_status_none(GenotypingElement * node){
   db_genotyping_node_set_status(node,none);
 }
 
-void db_genotyping_node_action_set_status_of_unpruned_to_none(dBNode * node){
+void db_genotyping_node_action_set_status_of_unpruned_to_none(GenotypingElement * node){
 
   if (db_genotyping_node_check_status(node, pruned)==false)
     {
@@ -963,21 +963,21 @@ void db_genotyping_node_action_set_status_of_unpruned_to_none(dBNode * node){
 
 
 
-void db_genotyping_node_action_set_status_pruned(dBNode * node){
+void db_genotyping_node_action_set_status_pruned(GenotypingElement * node){
   db_genotyping_node_set_status(node,pruned);
 }
 
 
-void db_genotyping_node_action_set_status_visited(dBNode * node){
+void db_genotyping_node_action_set_status_visited(GenotypingElement * node){
   db_genotyping_node_set_status(node,visited);
 }
 
-void db_genotyping_node_action_set_status_ignore_this_node(dBNode * node)
+void db_genotyping_node_action_set_status_ignore_this_node(GenotypingElement * node)
 {
   db_genotyping_node_set_status(node,ignore_this_node);
 }
 
-void db_genotyping_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode * node){
+void db_genotyping_node_action_set_status_visited_or_visited_and_exists_in_reference(GenotypingElement * node){
 
   if (db_genotyping_node_check_status(node, exists_in_reference))
     {
@@ -991,7 +991,7 @@ void db_genotyping_node_action_set_status_visited_or_visited_and_exists_in_refer
 }
 
 
-void db_genotyping_node_action_unset_status_visited_or_visited_and_exists_in_reference(dBNode * node){
+void db_genotyping_node_action_unset_status_visited_or_visited_and_exists_in_reference(GenotypingElement * node){
   if (db_genotyping_node_check_status_visited_and_exists_in_reference(node))
   {
     db_genotyping_node_set_status(node,exists_in_reference);
@@ -1003,7 +1003,7 @@ void db_genotyping_node_action_unset_status_visited_or_visited_and_exists_in_ref
       
 }
 
-void db_genotyping_node_action_unset_status_visited_or_visited_and_exists_in_reference_or_ignore_this_node(dBNode * node){
+void db_genotyping_node_action_unset_status_visited_or_visited_and_exists_in_reference_or_ignore_this_node(GenotypingElement * node){
   if (db_genotyping_node_check_status_visited_and_exists_in_reference(node))
   {
     db_genotyping_node_set_status(node,exists_in_reference);
@@ -1022,18 +1022,18 @@ void db_genotyping_node_action_unset_status_visited_or_visited_and_exists_in_ref
 
 
 
-void db_genotyping_node_action_do_nothing(dBNode * node){
+void db_genotyping_node_action_do_nothing(GenotypingElement * node){
   
 }
 
 
-boolean db_genotyping_node_check_status_none(dBNode * node){
+boolean db_genotyping_node_check_status_none(GenotypingElement * node){
   return db_genotyping_node_check_status(node,none);
 }
 
 
 //wrapper - in future this will be part of the flags introduced by Mario et al
-boolean db_genotyping_node_check_for_flag_ALL_OFF(dBNode * node) {
+boolean db_genotyping_node_check_for_flag_ALL_OFF(GenotypingElement * node) {
 
   if (db_genotyping_node_check_status(node, unassigned)==true)
     {
@@ -1046,19 +1046,19 @@ boolean db_genotyping_node_check_for_flag_ALL_OFF(dBNode * node) {
 }
 
 
-boolean db_genotyping_node_check_status_visited(dBNode * node){
+boolean db_genotyping_node_check_status_visited(GenotypingElement * node){
   return db_genotyping_node_check_status(node,visited);
 }
 
-boolean db_genotyping_node_check_status_exists_in_reference(dBNode * node){
+boolean db_genotyping_node_check_status_exists_in_reference(GenotypingElement * node){
   return db_genotyping_node_check_status(node,exists_in_reference);
 }
 
-boolean db_genotyping_node_check_status_visited_and_exists_in_reference(dBNode * node){
+boolean db_genotyping_node_check_status_visited_and_exists_in_reference(GenotypingElement * node){
   return db_genotyping_node_check_status(node,visited_and_exists_in_reference);
 }
 
-boolean db_genotyping_node_check_status_is_not_exists_in_reference(dBNode * node){
+boolean db_genotyping_node_check_status_is_not_exists_in_reference(GenotypingElement * node){
 
   if (db_genotyping_node_check_status(node,exists_in_reference)==true )
     {
@@ -1070,7 +1070,7 @@ boolean db_genotyping_node_check_status_is_not_exists_in_reference(dBNode * node
     }
 }
 
-boolean db_genotyping_node_check_status_is_not_visited(dBNode* node)
+boolean db_genotyping_node_check_status_is_not_visited(GenotypingElement* node)
 {
    if (db_genotyping_node_check_status(node,visited)  )
     {
@@ -1083,7 +1083,7 @@ boolean db_genotyping_node_check_status_is_not_visited(dBNode* node)
   
 }
 
-boolean db_genotyping_node_check_status_is_not_visited_or_visited_and_exists_in_reference(dBNode * node){
+boolean db_genotyping_node_check_status_is_not_visited_or_visited_and_exists_in_reference(GenotypingElement * node){
   if (db_genotyping_node_check_status(node,visited_and_exists_in_reference) || db_genotyping_node_check_status(node,visited)  )
     {
       return false;
@@ -1095,7 +1095,7 @@ boolean db_genotyping_node_check_status_is_not_visited_or_visited_and_exists_in_
 }
 
 
-boolean db_genotyping_node_condition_always_true(dBNode* node)
+boolean db_genotyping_node_condition_always_true(GenotypingElement* node)
 {
   return true;
 }

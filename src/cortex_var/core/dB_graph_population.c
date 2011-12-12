@@ -45,6 +45,7 @@
 #include <math.h> //we need both!
 #include <gsl_sf_gamma.h>
 #include <db_variants.h>
+#include <db_complex_genotyping.h>
 
 void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 						      char * name,
@@ -2483,10 +2484,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		//ModelLogLikelihoodsAndBayesFactors stats;//results of bayes factor calcs go in here
 		//initialise_stats(&stats);
 		AnnotatedPutativeVariant annovar;
-		initialise_putative_variant(&annovar, &var, BubbleCaller, 
-					    model_info->ginfo, model_info->seq_error_rate_per_base, 
-					    model_info->genome_len, 
-					    db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
+		initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, db_graph->kmer_size, NoIdeaWhatCleaning, NULL, NULL, NULL);
+
 		if (annovar.too_short==false)
 		  {
 
@@ -6085,10 +6084,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
 						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-						GraphAndModelInfo* model_info
+						GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump
 						)
 {
-
 
   int num_variants_found=0;
   
@@ -6132,7 +6130,30 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   Orientation* curr_sup_orientations   = (Orientation*) malloc(sizeof(Orientation)*(max_expected_size_of_supernode+ db_graph->kmer_size));
   Nucleotide*  curr_sup_labels         = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_expected_size_of_supernode+ db_graph->kmer_size));
   char*        supernode_string        = (char*) malloc(sizeof(char)*((max_expected_size_of_supernode+ db_graph->kmer_size)+1)); //+1 for \0
+  
+  int working_colour1 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS;
+  int working_colour2 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+1;
 
+  GenotypingWorkingPackage* gwp = alloc_genotyping_work_package(max_anchor_span, max_expected_size_of_supernode, working_colour1, working_colour2);
+
+  //number of kmers we want to support in the little hash = 2* (max possible kmers in the two alleles) = 2* (2 * max_allele_length) = 4*max_anchor_span
+  int little_width =100;
+  int little_height = (int) (log((float) (4*max_anchor_span)/100)/log(2))+1;
+  int little_retries=20;
+  LittleHashTable* little_db_graph = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
+  if (little_db_graph==NULL)
+    {
+      printf("Something very wrong here. Cant even alloc a tiny toy hash table\n");
+      exit(1);
+    }
+
+  
+  if ( (chrom_path_array==NULL) || (chrom_orientation_array==NULL) || (chrom_labels==NULL) || (chrom_string==NULL)
+       || (current_supernode==NULL) || (curr_sup_orientations==NULL) || (curr_sup_labels==NULL) || (supernode_string==NULL) || (gwp==NULL) )
+    {
+      printf("Cannot malloc arrays for PD calls. give up. Your machine is low on memory or you have asked for ridiculously large variants\n");
+      exit(1);
+    }
 
   int n;
   for (n=0; n<length_of_arrays; n++)
@@ -7294,8 +7315,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      AnnotatedPutativeVariant annovar;
 		      if (model_info!=NULL)
 			{
-			  initialise_putative_variant(&annovar, &var, SimplePathDivergenceCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
-						      db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
+			  initialise_putative_variant(&annovar, model_info, &var, SimplePathDivergenceCaller, db_graph->kmer_size,
+						      assump, gwp, db_graph, little_db_graph);
 			  
 			  
 			  if (model_info->expt_type != Unspecified)
@@ -7506,7 +7527,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
   //free malloc-ed variables
-
+  free_genotyping_work_package(gwp);
   free(chrom_path_array);
   free(chrom_orientation_array);
   free(chrom_labels);
@@ -7575,7 +7596,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 													    Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										       void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-										       GraphAndModelInfo* model_info,
+										       GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump,
 										       int start_variant_numbering_with_this
 										       )
 {
@@ -7624,6 +7645,28 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   Nucleotide*  curr_sup_labels         = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_expected_size_of_supernode+ db_graph->kmer_size));
   char*        supernode_string        = (char*) malloc(sizeof(char)*((max_expected_size_of_supernode+ db_graph->kmer_size)+1)); //+1 for \0
 
+  int working_colour1 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS;
+  int working_colour2 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+1;
+
+  GenotypingWorkingPackage* gwp = alloc_genotyping_work_package(max_anchor_span, max_expected_size_of_supernode, working_colour1, working_colour2);
+  
+  if ( (chrom_path_array==NULL) || (chrom_orientation_array==NULL) || (chrom_labels==NULL) || (chrom_string==NULL)
+       || (current_supernode==NULL) || (curr_sup_orientations==NULL) || (curr_sup_labels==NULL) || (supernode_string==NULL) || (gwp==NULL) )
+    {
+      printf("Cannot malloc arrays for PD calls. give up. Your machine is low on memory or you have asked for ridiculously large variants\n");
+      exit(1);
+    }
+
+  //number of kmers we want to support in the little hash = 2* (max possible kmers in the two alleles) = 2* (2 * max_allele_length) = 4*max_anchor_span
+  int little_width =100;
+  int little_height = (int) (log((float) (4*max_anchor_span)/100)/log(2))+1;
+  int little_retries=20;
+  LittleHashTable* little_db_graph = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
+  if (little_db_graph==NULL)
+    {
+      printf("Something very wrong here. Cant even alloc a tiny toy hash table\n");
+      exit(1);
+    }
 
   int n;
   for (n=0; n<length_of_arrays; n++)
@@ -8759,9 +8802,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		      AnnotatedPutativeVariant annovar;
 		      if (model_info!=NULL)
 			{
-			  initialise_putative_variant(&annovar, &var, SimplePathDivergenceCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
-						      db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
-			  
+			  initialise_putative_variant(&annovar, model_info, &var, SimplePathDivergenceCaller, db_graph->kmer_size,
+						      assump, gwp, db_graph, little_db_graph);
 			  
 			  if (model_info->expt_type != Unspecified)
 			    {
@@ -8972,7 +9014,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 
   //free malloc-ed variables
-
+  free_genotyping_work_package(gwp);
   free(chrom_path_array);
   free(chrom_orientation_array);
   free(chrom_labels);
@@ -9016,8 +9058,9 @@ int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(
 												      Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										 void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-										 GraphAndModelInfo* model_info, int start_numbering_vars_from_this_number
-										 )
+										GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump,
+										int start_numbering_vars_from_this_number
+										)
 {
 
 
@@ -9046,15 +9089,16 @@ int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(
   }
 
   int num_vars_called=db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_colours(chrom_fasta_fptr,
-										     &get_union_list_colours, &get_covg_of_union_first_list_colours,
-										     ref_colour,
-										     min_fiveprime_flank_anchor, min_threeprime_flank_anchor,
-										     max_anchor_span, min_covg, max_covg,
-										     max_expected_size_of_supernode, length_of_arrays, db_graph, output_file,
-										     max_desired_returns,
-										     return_flank5p_array, return_trusted_branch_array, return_variant_branch_array,
-										     return_flank3p_array, return_variant_start_coord,
-										     condition, action_for_branches_of_called_variants, print_extra_info, model_info, start_numbering_vars_from_this_number);
+													 &get_union_list_colours, &get_covg_of_union_first_list_colours,
+													 ref_colour,
+													 min_fiveprime_flank_anchor, min_threeprime_flank_anchor,
+													 max_anchor_span, min_covg, max_covg,
+													 max_expected_size_of_supernode, length_of_arrays, db_graph, output_file,
+													 max_desired_returns,
+													 return_flank5p_array, return_trusted_branch_array, return_variant_branch_array,
+													 return_flank3p_array, return_variant_start_coord,
+													 condition, action_for_branches_of_called_variants, print_extra_info, 
+													 model_info, assump, start_numbering_vars_from_this_number);
 										     
 
   return num_vars_called;
