@@ -7551,6 +7551,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   //free(covgs_of_ref_on_variant_path);
   free(working_array1);
   free(working_array2);
+  little_hash_table_free(&little_db_graph);
   return num_variants_found;
 
 
@@ -9038,6 +9039,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   //free(covgs_of_ref_on_variant_path);
   free(working_array1);
   free(working_array2);
+  little_hash_table_free(&little_db_graph);
   return num_variants_found;
 
 

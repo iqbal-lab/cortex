@@ -2610,7 +2610,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
 
   CU_ASSERT(ret==0);
 
@@ -2683,7 +2683,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_2()
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
   
   CU_ASSERT(ret==0);
 
@@ -2778,7 +2778,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
 
   
   CU_ASSERT(ret==0);
@@ -2837,7 +2837,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_4()
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
 
   
   CU_ASSERT(ret==0);
@@ -2903,7 +2903,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_5()
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
   
   CU_ASSERT(ret==0);
 
@@ -3008,7 +3008,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, 
 							return_variant_start_coords_array_ptr, 
 							&make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
   
   fclose(fp);
 
@@ -3132,7 +3132,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
 							max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array,return_variant_start_coords_array_ptr,
 							&make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
   fclose(fp);
 
   CU_ASSERT(ret==1);
@@ -3247,7 +3247,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_3()
 							max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr,
 							&make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
   
   fclose(fp);
 
@@ -3367,7 +3367,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_4()
 							max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr,
 							&make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
 
   
 
@@ -3494,7 +3494,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, 
 							return_variant_start_coords_array_ptr, &make_reference_path_based_sv_calls_condition_always_true, 
 							&action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
   fclose(fp);
 
 
@@ -3620,7 +3620,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, 
 							return_variant_start_coords_array_ptr, &make_reference_path_based_sv_calls_condition_always_true, 
 							&action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
   fclose(fp);
 
 
@@ -3777,7 +3777,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_7()
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, 
 							return_variant_start_coords_array_ptr, &make_reference_path_based_sv_calls_condition_always_true, 
 							&action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
 
 
   fclose(fp);
@@ -3948,7 +3948,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, 
 							return_variant_start_coords_array_ptr, &make_reference_path_based_sv_calls_condition_always_true, 
 							&action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
 
 
   fclose(fp);
@@ -4076,7 +4076,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, 
 							return_variant_start_coords_array_ptr, &make_reference_path_based_sv_calls_condition_always_true, 
 							&action_set_flanks_and_branches_to_be_ignored,
-							&print_no_extra_info, NULL);
+							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
 
 
   fclose(fp);

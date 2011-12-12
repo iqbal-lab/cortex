@@ -233,7 +233,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(20, 20, &var, i);
     }
   
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, kmer_size);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, kmer_size, AssumeUncleaned, NULL, NULL, NULL);
   
   double ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
 
@@ -263,7 +263,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(0,10, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
 
@@ -304,7 +304,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(5,5, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret> log(100));//called as a variant
@@ -339,7 +339,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
     }
   set_coverage_on_bubble(0,10, &var, 99);
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
 
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
@@ -385,7 +385,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(2,5, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
 
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
@@ -402,7 +402,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(2000,2000, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
 
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);

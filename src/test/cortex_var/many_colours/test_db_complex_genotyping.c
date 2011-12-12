@@ -920,7 +920,7 @@ Colour:	MeanReadLen	TotalSeq
   var.len_other_allele = 134;
 
   AnnotatedPutativeVariant annovar;
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, 31);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, 31, AssumeUncleaned, NULL, NULL, NULL );//last 3 arguments (gwp, db_graph and little db graph) are not used except for PD genotying.
 
 
   // Since none of the colours except colour 3 has any coverage AT ALL on branch1, I simply
@@ -1085,7 +1085,7 @@ Colour 0 = reference
   var.len_other_allele = 134;
 
   AnnotatedPutativeVariant annovar;
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, 31);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, 31, AssumeUncleaned, NULL, NULL, NULL );//last two arguments (db_graph and little db graph) are not used except for PD genotying.);
 
 
   // Since none of the colours except colour 3 has any coverage AT ALL on branch1, I simply
