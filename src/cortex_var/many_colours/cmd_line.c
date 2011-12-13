@@ -468,6 +468,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"experiment_type", required_argument, NULL, 'P'},
     {"estimated_error_rate", required_argument, NULL, 'Q'},
     {"genotype_site", required_argument, NULL, 'R'},
+    {"detect_alleles", required_argument, NULL, 'S'},
     {"estimate_genome_complexity", required_argument, NULL, 'T'},
     {"print_novel_contigs", required_argument, NULL, 'V'},
     {0,0,0,0}	
@@ -891,11 +892,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  errx(1,"[--max_read_len] option requires (positive) integer argument");
 	if (atoi(optarg)<0)
 	  {
-	    errx(1,"[--max_read_len] option requires (positive) integer argument");
-	  }
-	if (atoi(optarg)>20000)
-	  {
-	    errx(1,"You cannot enter a value >20000 for the max_read_len.\n");
+	    errx(1,"[--max_read_len] option requires (positive) integer argument. Either you have entered 0 or such an enormous number i has overflowed\n");
 	  }
 	cmdline_ptr->max_read_length = atoi(optarg);
 
@@ -1253,7 +1250,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	cmdline_ptr->genotype_complex_site=true;
 	break;
       }
-    case 'S'://julian knight expt
+    case 'S'://julian knight expt  --detect_alleles
       {
 	if (optarg==NULL)
 	  errx(1,"Must enter output filename");
@@ -1746,8 +1743,33 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       return -1;
     }
 
+  if (  (cmd_ptr->max_read_length>20000) && (cmd_ptr->align_given_list==false) )
+    {
+      char tmp[]="You are not allowed to set maximum read length >20000 when loading fasta/q into a graph. (However it IS allowed if you are aligning fasta/q to  preexisting graph). Since you have not specified --align, Cortexhas exited. Either reduce your max read length, or decide you are doing alignment\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
 
-  
+
+  if (  (cmd_ptr->max_read_length>300000000) && (cmd_ptr->align_given_list==true) )
+    {
+      char tmp[]="If doing alignment, max read length is 300Mb (for whole chromosomes)\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
+
   if ( (cmd_ptr->input_seq==true) && (cmd_ptr->max_read_length==0) )
     {
       char tmp[]="Must specify max read-length if inputting fasta/fastq data\n";

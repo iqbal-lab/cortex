@@ -71,7 +71,7 @@ IDIR_HASH_TABLE_TESTS =include/test/hash_table
 IDIR_CORTEX_CON_TESTS=include/test/graph
 IDIR_CORTEX_VAR_TESTS=include/test/cortex_var/many_colours
 
-#IDIR_CUNIT = /home/zam/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
+IDIR_CUNIT = /home/zam/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
 
 
 ifdef MAC
@@ -94,7 +94,7 @@ endif
 
 
 
-#CFLAGS_CUNIT          = -L/home/zam/bin/lib
+CFLAGS_CUNIT          = -L/home/zam/bin/lib
 
 CFLAGS_BASIC          = -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING)
 CFLAGS_GRAPH          = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_BASE_ENCODING)
@@ -140,7 +140,7 @@ run_cortex_var_cmdline_tests : remove_objects $(CORTEX_VAR_CMD_LINE_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS) -lm -lgsl -lgslcblas $(OPT)  -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) -lcunit
 
 run_cortex_var_tests : remove_objects $(CORTEX_VAR_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_TESTS) -lm -lgsl -lgslcblas $(OPT)  -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) -lcunit
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_TESTS) -lm -lgsl -lgslcblas $(OPT)  -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) $(CFLAGS_CUNIT)  -lcunit
 
 .PHONY : clean
 clean :
