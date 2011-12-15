@@ -1184,8 +1184,8 @@ int main(int argc, char **argv){
 
       //reload the binary you dumped, clean off the edges, and then dump again.
       //malloc a new hash table. Only needs to be as large as you need.
-      float s = log(num_kmers_dumped_after_alignment/100)/log(2); //make width 100
-      // now 2^s = num_kmers_dumped_after_alignment/100, so s is my height
+      float s = log(num_kmers_dumped_after_alignment/bucket_size)/log(2); 
+      // now 2^s = num_kmers_dumped_after_alignment/bucket_size, so s is my height
       dBGraph* db_graph2;
       boolean try_smaller_hash=true;
       if (2*num_kmers_dumped_after_alignment < pow(2,hash_key_bits) * bucket_size)
