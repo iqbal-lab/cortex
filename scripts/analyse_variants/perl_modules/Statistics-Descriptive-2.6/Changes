@@ -1,0 +1,57 @@
+Revision history for Perl extension Statistics::Descriptive.
+
+2.6   October 10, 2002
+        - Fixed caching in trimmed mean and modified code to allow trimming
+	  0% from upper bound.  Formerly if 0 was requested then it used the
+	  lower bound!
+
+	- POD format patch from ddunlap
+
+2.5   Wednesday, May 12 1999
+	- Forgot to document change in v2.4, which included fixing
+	  percentile so that it worked right and added to the test
+	  harness.
+	- Modified frequency_distribution so that specific bins could
+	  be passed in.  Fixed caching so that it actually works
+	  (it only used to get stuck returning the result of the
+	  first call).
+	- Turned off caching for least_squares_fit because there's no
+	  way to generate a unique key for memorization.
+
+2.3   Thursday Nov 12 1998
+	- Fix for frequency distribution.
+	  Changed Makefile.PL to ease ActiveState distribution of the module.
+	  Andrea's code for preventing division by zero and other 
+	  improvements.  He also wrote a great test bench.
+	  Added code from Warren Matthews to calculate percentile.
+
+2.2   Monday Feb 23 1998
+	- Multiple bug fixes:
+	  Fixed min/max bug with '0' vs defined.
+	  Provided fix for bug with AUTOLOAD/DESTROY/Carp problem.
+
+2.1   Tues Sep 02 1997
+	- Multiple bug fixes:
+	  Cleaned up syntax error with my scoping. 
+	  Fixed errors in least_squares_fit and median methods
+
+2.00  Wed Aug 20 13:22:51 1997
+	- new version; created by h2xs 1.16
+	- Complete rewrite of OO interface by Colin Kuskie.
+	- Now has 2 classes instead of 1.5, a base class without data
+	  storage and a class that inherits the base methods and
+	  extends them with data storage and more statistics.
+
+1.1 April 1995
+        - Added LeastSquaresFit and FrequencyDistribution.
+
+1.0 March 1995 
+        - Released to comp.lang.perl and placed on archive sites.
+
+0.20 December 1994 
+        - Complete rewrite after extensive and invaluable e-mail 
+          correspondence with Anno Siegel.
+
+0.10 December 1994 
+        - Initital concept, released to perl5-porters list.
+	- Jason Kastner <jkastner@tuba.aix.calpoly.edu>

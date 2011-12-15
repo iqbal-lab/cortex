@@ -539,11 +539,11 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 													    Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										       void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-										       GraphAndModelInfo* model_info
+										       GraphAndModelInfo* model_info, int start_variant_numbering_with_this
 										       );
 
 
-void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(int* list, int len_list,
+int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(int* list, int len_list,
 										 FILE* chrom_fasta_fptr, int ref_colour,
 										 int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, 
 										 int max_anchor_span, int min_covg, int max_covg, 
@@ -555,7 +555,7 @@ void db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv
 												      Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										 void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-										 GraphAndModelInfo* model_info
+										 GraphAndModelInfo* model_info, int start_numbering_vars_from_this_number
 										 );
 
 boolean condition_always_true(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,

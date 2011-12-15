@@ -140,7 +140,8 @@ run_cortex_var_cmdline_tests : remove_objects $(CORTEX_VAR_CMD_LINE_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS) -lm -lgsl -lgslcblas $(OPT)  -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) -lcunit
 
 run_cortex_var_tests : remove_objects $(CORTEX_VAR_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_TESTS) -lm -lgsl -lgslcblas $(OPT)  -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) $(CFLAGS_CUNIT)  -lcunit
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_TESTS) -lm -lgsl -lgslcblas $(OPT)  -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) $(CFLAGS_CUNIT) -lcunit
+
 
 .PHONY : clean
 clean :
