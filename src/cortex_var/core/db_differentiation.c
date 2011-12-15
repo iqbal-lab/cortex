@@ -199,7 +199,8 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 		    }
 		  else
 		    {
-		      fprintf(out, ">%s", seq->seq);
+		      printf("--align does not support aligning reads longer than max_read_len\n");
+		      exit(1);
 		    }
 		}
 	      else//for testing only
@@ -222,12 +223,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 
 		  if (is_for_testing==false)//print out read_id
 		    {
-
-		      if (full_entry)
-			{
-			  fprintf(out, ">%s\n", read_id);
-			}
-
+		      fprintf(out, ">%s\n", read_id);
 		    }
 		  else
 		    {
@@ -260,10 +256,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 		    }
 		  if (is_for_testing==false)
 		    {
-		      if (full_entry)
-			{
 			  fprintf(out, "\n");
-			}
 		    }
 		  
 		}
