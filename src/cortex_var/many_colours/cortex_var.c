@@ -974,48 +974,15 @@ int main(int argc, char **argv){
     {
 
       timestamp();
-
-
-      /*
-      printf("Get histograms of covg on supernodes specific to either PGF or COX. Calculate number of reads/length for each sup, and put in bins\n");
+      printf("Print contigs(supernodes) in the graph created by the union of all colours.\n");
       
-      int* bins_PGF = (int*) malloc( sizeof(int) * 10000);
-      int* bins_COX = (int*) malloc( sizeof(int) * 10000);
-      if ( (bins_PGF==NULL) || (bins_COX==NULL) )
-	{
-	  printf("Unable to alloc bins for PGF and COX\n");
-	  exit(1);
-	}
-      int p;
-      for (p=0; p<10000; p++)
-	{
-	  bins_PGF[p]=0;
-	  bins_COX[p]=0;
-	}
+      db_graph_print_supernodes_defined_by_func_of_colours(cmd_line.output_supernodes, "", cmd_line.max_var_len,// max_var_len is the public face of maximum expected supernode size
+							   db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
+							   &print_appropriate_extra_supernode_info);
 
-      db_graph_get_stats_of_supernodes_that_split_two_colour(cmd_line.max_var_len, 0,1, db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs,
-							     &condition_splits_COX_and_PGF, bins_PGF, bins_COX);
-
-
-      FILE* fout = fopen(cmd_line.knight_output, "w");
-      if (fout==NULL)
-	{
-	  printf("Cannot open output fule for knight\n");
-	  exit(1);
-	}
-      fprintf(fout, "Covg\tPGF_not_COX\tCOX_not_PGF\n");
-
-      for (p=0; p<10000; p++)
-	{
-	  fprintf(fout, "%d\t%d\t%d\n", p, bins_PGF[p], bins_COX[p]);
-	}
-      fclose(fout);
-      */
 
       timestamp();
-      printf("Finished COX PGF Julian Knight analysis\n");
-
-
+      printf("Supernodes dumped\n");
     }
 
 
@@ -1111,103 +1078,6 @@ int main(int argc, char **argv){
       printf("\nCompleted graph overlap matrix printing\n");
     }
 
-  if (cmd_line.knight_expt==true)
-    {
-
-      printf("Start COX PGF Julian Knight analysis\n");
-
-      FILE* fout = fopen(cmd_line.knight_output, "w");
-      if (fout==NULL)
-	{
-	  printf("Cannot open output fule for knight\n");
-	  exit(1);
-	}
-      
-      call_bubbles_distinguishing_cox_pgf(db_graph, 10000, fout, &model_info);
-      fclose(fout);
-
-      /*
-      //this supernode is seen in pure COX RNA but not in pure PGF RNA, or vice-versa
-      //PGF pure RNA is colour 0, and pure COX RNA is colour 1
-      boolean condition_splits_COX_and_PGF_RNA(dBNode** path, int length, int* which_col)
-      {
-	int col_pure_PGF_RNA=0;
-	int col_pure_COX_RNA=1;
-
-	boolean all_nodes_in_COX=true;
-	boolean no_nodes_in_COX = true;
-	boolean all_nodes_in_PGF=true;
-	boolean no_nodes_in_PGF=true;
-	int p;
-	for (p=1; p<length; p++)
-	  {
-	    if (db_node_get_coverage(path[p], individual_edge_array, col_pure_PGF_RNA)==0)
-	      {
-		all_nodes_in_PGF=false;
-	      }
-	    if (db_node_get_coverage(path[p], individual_edge_array, col_pure_COX_RNA)==0)
-	      {
-		all_nodes_in_COX=false;
-	      }
-	    if (db_node_get_coverage(path[p], individual_edge_array, col_pure_PGF_RNA)>0)
-	      {
-		no_nodes_in_PGF=false;
-	      }
-	    if (db_node_get_coverage(path[p], individual_edge_array, col_pure_COX_RNA)>0)
-	      {
-		no_nodes_in_COX=false;
-	      }
-	  }
-	if ( (all_nodes_in_COX==true) && (no_nodes_in_PGF==true) )
-	  {
-	    *which_col = 1;
-	    return true;
-	  }
-	else if ( (all_nodes_in_PGF==true) && (no_nodes_in_COX==true) )
-	  {
-	    *which_col=0;
-	    return true;
-	  }
-	else
-	  {
-	    *which_col=-1;
-	    return false;
-	  }
-
-      }
-
-      //traverse supernodes in union of colour-pure-PGF_RNA and colour-pure-COX-RNA, and for each supernode,
-      //calculate number of reads in pure COX and pure PGF, and add to two running totals, T_COX and T_PGF
-      //while doing this, get running totals for my mixed-data. T1, T2,..T5 (T1 refers to 1:1 mixing, T2 to 1:1.125 mixing , etc)
-
-      int tot_pgf=0;
-      int tot_cox=0;
-      int tot_data1=0;
-      int tot_data2=0;
-      int tot_data3=0;
-      int tot_data4=0;
-      int tot_data5=0;
-      int max_length_sup=10000;
-      db_graph_get_covgs_in_all_colours_of_col0union1_sups(max_length_sup, db_graph,
-							   &tot_pgf, &tot_cox, 
-							   &tot_data1,&tot_data2,&tot_data3,&tot_data4,&tot_data5);
-
-
-      //then traverse the same supernodes one more time, and this time for each supernode,
-      //IF it is distinct to one or other (COX or PGF), then print ratio of number of reads on it, to T_COX or T_PGF as appropriate.
-      // and then for each data colour, print number of reads in that colour, to T1, T2 or whatever, as appropriate
-      //The idea being for each supernode that splits the two haplotypes, we get an estimate of the mixing ratio.
-
-      db_graph_get_proportion_of_cvg_on_each_sup(max_length_sup, db_graph, tot_pgf, tot_cox,
-						 tot_data1, tot_data2, tot_data3, tot_data4, tot_data5,
-						 &condition_splits_COX_and_PGF_RNA, fout);
-      fclose(fout);
-
-      */
-
-      printf("Finished J Knight analysis\n");
-    }
-  
 
   if (cmd_line.genotype_complex_site==true)
     {
