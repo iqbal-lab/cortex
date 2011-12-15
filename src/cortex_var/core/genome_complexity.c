@@ -125,10 +125,15 @@ void count_reads_where_snp_makes_clean_bubble(dBGraph* db_graph, char* fasta, bo
   int num_kmers_read=1;
   while ( (num_kmers_read>0) && (*total_errors_tested < MAX_NUM_READS_USED_FOR_ESTIMATE) )
     {
+      boolean f_entry=true;
       num_kmers_read = align_next_read_to_graph_and_return_node_array(fp, max_read_length, array_nodes, array_or, 
-								      false, file_reader, seq, kmer_window, db_graph, -1);
+								      false, &f_entry, file_reader, seq, kmer_window, db_graph, -1);
 
-      
+      if (!f_entry)
+	{
+	  printf("One of these SNP reads is longer than the specified max read length\n");
+	  exit(1);
+	}
       if ((num_kmers_read>0)&&(strlen(seq->seq)>db_graph->kmer_size /2)&& (fnmatch("N", seq->seq, 0)!=0) ) 
 	//not end of file & reasonable length read
 	{
@@ -343,6 +348,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* filename_fastaq,
 
   return (double)total_errors_form_clean_bubbles / (double) total_errors_tested;
 }
+
 */
 
 double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
@@ -581,10 +587,15 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
   while ( (num_kmers_read>0) && (total_errors_tested < MAX_NUM_READS_USED_FOR_ESTIMATE) )
     {
       
+      boolean f_entry=true;
       num_kmers_read = align_next_read_to_graph_and_return_node_array(fp, max_read_length, array_nodes, array_or, 
-								      false, file_reader, seq, kmer_window, db_graph, -1);
+								      false, &f_entry, file_reader, seq, kmer_window, db_graph, -1);
 
-      
+      if (!f_entry)
+	{
+	  printf("One of these reads is longer than the specified max read length\n");
+	  exit(1);
+	}
       if ((num_kmers_read>0)&&(strlen(seq->seq)>1+db_graph->kmer_size /2) ) 
 	//not end of file & reasonable length read 
 	{

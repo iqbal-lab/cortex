@@ -2448,16 +2448,16 @@ void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_referen
 //returns the number of kmers loaded
 int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length, dBNode** array_nodes, Orientation* array_orientations, 
 						   boolean require_nodes_to_lie_in_given_colour,
+						   boolean* full_entry,
 						   int (* file_reader)(FILE * fp, Sequence * seq, 
 								       int max_read_length,boolean new_entry, 
 								       boolean * full_entry), 
 						   Sequence* seq, KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour)
 {
   
-  boolean full_entry = true;
 
   //get next read as a C string and put it in seq. Entry_length is the length of the read.
-  int entry_length = file_reader(fp,seq,max_read_length,full_entry,&full_entry);
+  int entry_length = file_reader(fp,seq,max_read_length,*full_entry,full_entry);
   //turn it into a sliding window 
   int nkmers = get_single_kmer_sliding_window_from_sequence(seq->seq,entry_length, db_graph->kmer_size, kmer_window, db_graph);
   //work through the sliding window and put nodes into the array you pass in. Note this may find NULL nodes if the kmer is not in the graph
@@ -2520,9 +2520,14 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
   
   //end of intialisation 
 
-
-  *len_flank5p = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, flank5p, flank5p_or,  true, file_reader,
+  boolean f_entry=true;
+  *len_flank5p = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, flank5p, flank5p_or,  true, &f_entry, file_reader,
 							       seq, kmer_window, db_graph, colour);
+  if (!f_entry)
+    {
+      printf("One of these reads (5p flank) is longer than specified max read length\n");
+      exit(1);
+    }
 
   if (*len_flank5p==0)
     {
@@ -2532,17 +2537,33 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
   // printf("5p flank: %s, length %d\n", seq->seq, *len_flank5p);
 
 
-  *len_ref_allele = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, ref_allele, ref_allele_or, true, file_reader,
+  *len_ref_allele = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, ref_allele, ref_allele_or, true, &f_entry, file_reader,
 							       seq, kmer_window, db_graph, colour);
   //printf("ref allele flank: %s, length %d\n", seq->seq, *len_ref_allele);
-  
-  *len_alt_allele = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, alt_allele, alt_allele_or, true, file_reader,
+    if (!f_entry)
+    {
+      printf("One of these reads (5p flank) is longer than specified max read length\n");
+      exit(1);
+    }
+
+    *len_alt_allele = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, alt_allele, alt_allele_or, true, &f_entry, file_reader,
 							       seq, kmer_window, db_graph, colour);
   //printf("alt allele: %s, length %d\n", seq->seq, *len_alt_allele );
+  if (!f_entry)
+    {
+      printf("One of these reads (5p flank) is longer than specified max read length\n");
+      exit(1);
+    }
 
-  *len_flank3p = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, flank3p, flank3p_or, true, file_reader,
+
+  *len_flank3p = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, flank3p, flank3p_or, true, &f_entry, file_reader,
 								seq, kmer_window, db_graph, colour);
   //printf("3p flank: %s, length %d\n", seq->seq, *len_flank3p);
+  if (!f_entry)
+    {
+      printf("One of these reads (5p flank) is longer than specified max read length\n");
+      exit(1);
+    }
 
   if (*len_flank3p==0)
     {

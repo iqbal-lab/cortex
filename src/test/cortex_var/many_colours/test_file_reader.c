@@ -3445,9 +3445,11 @@ TTTTTTTTTTTTTTTTAAA
   dBNode* array_nodes[200];//in fact there are 43 17-mers in the first line of the fasta
   Orientation array_or[200];
   int colour=0;
-  int num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_read_length, array_nodes, array_or, true, file_reader,
+  boolean f_entry=true;
+  int num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_read_length, array_nodes, array_or, true, &f_entry, file_reader,
 								 seq, kmer_window, db_graph, colour);
   
+  CU_ASSERT(f_entry==true);
   CU_ASSERT(num_kmers==43);
   BinaryKmer test_kmer, test_kmer_rev;
   seq_to_binary_kmer("TAACCCTAACCCTAACC", 17, &test_kmer);
@@ -3467,10 +3469,11 @@ TTTTTTTTTTTTTTTTAAA
   
 
   //get the next read
-  num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_read_length, array_nodes, array_or, true, file_reader,
+  f_entry=true;
+  num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_read_length, array_nodes, array_or, true, &f_entry, file_reader,
 								 seq, kmer_window, db_graph, colour);
   
-
+  CU_ASSERT(f_entry==true);
   CU_ASSERT(num_kmers==45-17+1);//next read is 45 bases long
 
   seq_to_binary_kmer("ACCCTAACCCTAACCCT", 17, &test_kmer);

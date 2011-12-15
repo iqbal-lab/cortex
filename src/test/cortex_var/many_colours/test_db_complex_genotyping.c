@@ -415,10 +415,16 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   int j;
   for (j=0; j<number_paths; j++)//will read allele1, then allele2, then the genome-minus-site into these arrays
     {
+      boolean f_entry=true;
       int num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_allele_length, 
 								     array_of_node_arrays[j],
 								     array_of_or_arrays[j], 
-								     false, file_reader, seq, kmer_window, db_graph, -1);
+								     false, &f_entry, file_reader, seq, kmer_window, db_graph, -1);
+      if (!f_entry)
+	{
+	  printf("Read too long to be read in one go - in test - error\n");
+	  exit(1);
+	}
     
       strcat(array_of_allele_names[j], seq->name);
       lengths_of_alleles[j]=num_kmers;
