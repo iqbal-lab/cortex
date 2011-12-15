@@ -1,0 +1,11 @@
+prefix=/home/zam/bin
+exec_prefix=/home/zam/bin
+libdir=/home/zam/bin/lib
+includedir=/home/zam/bin/include
+GSL_CBLAS_LIB=-lgslcblas
+
+Name: GSL
+Description: GNU Scientific Library
+Version: 1.15
+Libs: -L/home/zam/bin/lib -lgsl ${GSL_CBLAS_LIB} -lm -lm 
+Cflags: -I/home/zam/bin/include
