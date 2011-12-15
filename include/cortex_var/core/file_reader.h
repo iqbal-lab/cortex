@@ -196,7 +196,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_bases_to_load, int lengt
 
 
 int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length, dBNode** array_nodes, Orientation* array_orientations, 
-						   boolean require_nodes_to_lie_in_given_colour,
+						   boolean require_nodes_to_lie_in_given_colour, boolean* full_entry,
 						   int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
 						   Sequence* seq, KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour);
 

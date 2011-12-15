@@ -1447,12 +1447,16 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 
   for (j=0; j<= number_alleles-1; j++)
     {
-	
+      boolean f_entry=true;
       int num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_allele_length, 
 								     array_of_node_arrays[j],//assumed alleles are colours 0..num_alleles-1 
 								     array_of_or_arrays[j], 
-								     false, file_reader, seq, kmer_window, db_graph, 0);
-      
+								     false, &f_entry, file_reader, seq, kmer_window, db_graph, 0);
+      if (!f_entry)
+	{
+	  printf("One of these alleles is longer than the specified max_read_len\n");
+	  exit(1);
+	}
       strcat(array_of_allele_names[j], seq->name);
       lengths_of_alleles[j]=num_kmers;
     }

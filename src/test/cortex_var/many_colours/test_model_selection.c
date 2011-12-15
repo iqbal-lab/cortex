@@ -184,10 +184,14 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       exit(1);
     }
   
-  int br1len = align_next_read_to_graph_and_return_node_array(br1_fptr, max_read_length, br1_path, br1_or,  true, file_reader,
+  boolean f_entry=true;
+  int br1len = align_next_read_to_graph_and_return_node_array(br1_fptr, max_read_length, br1_path, br1_or,  true, &f_entry, file_reader,
 							       seq, kmer_window, db_graph, 0);
-  int br2len = align_next_read_to_graph_and_return_node_array(br2_fptr, max_read_length, br2_path, br2_or,  true, file_reader,
+  CU_ASSERT(f_entry==true);
+  f_entry=true;
+  int br2len = align_next_read_to_graph_and_return_node_array(br2_fptr, max_read_length, br2_path, br2_or,  true, &f_entry, file_reader,
 							       seq, kmer_window, db_graph, 0);
+  CU_ASSERT(f_entry==true);
   fclose(br1_fptr);
   fclose(br2_fptr);
   VariantBranchesAndFlanks var;

@@ -71,7 +71,8 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
     }
   
 
-  kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
+  //  kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
+  kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size+1));
   if (kmer_window->kmer==NULL)
     {
       printf("Failed to malloc kmer_window->kmer in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
@@ -109,9 +110,13 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
   }
 
   
-	  
-  dBNode* array_nodes[max_read_length+db_graph->kmer_size+1];
-  Orientation array_or[max_read_length+db_graph->kmer_size+1];
+  dBNode** array_nodes = malloc(sizeof(dBNode*)*(max_read_length+db_graph->kmer_size+1));
+  Orientation* array_or = malloc(sizeof(Orientation)*(max_read_length+db_graph->kmer_size+1));
+  if ( (array_nodes==NULL) || (array_or==NULL) )
+    {
+      printf("Unable to malloc arrays for alignment\n");
+      exit(1);
+    }
   
   //loop through the fasta/q in list_of_fasta/q, and for each, print out a new coverage fasta
   
@@ -156,16 +161,17 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
       
       int dummy_colour_ignored=0;//this will be ignored, as setting to false - we don't want to demand the read all lies in any colour
       int num_kmers;
+      boolean full_entry=true;
       do
 	{
 	  if (format==FASTA)
 	    {
-	      num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_read_length, array_nodes, array_or, false, file_reader_fasta,
+	      num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_read_length, array_nodes, array_or, false, &full_entry, file_reader_fasta,
 									 seq, kmer_window, db_graph, dummy_colour_ignored);
 	    }
 	  else if (format==FASTQ)
 	    {
-	      num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_read_length, array_nodes, array_or, false, file_reader_fastq,
+	      num_kmers = align_next_read_to_graph_and_return_node_array(fp, max_read_length, array_nodes, array_or, false, &full_entry, file_reader_fastq,
 									 seq, kmer_window, db_graph, dummy_colour_ignored);
 	    }
 
@@ -187,7 +193,14 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 	      //print out the original read
 	      if (is_for_testing==false)
 		{
-		  fprintf(out, ">%s\n%s\n", seq->name, seq->seq);
+		  if (full_entry)
+		    {
+		      fprintf(out, ">%s\n%s\n", seq->name, seq->seq);
+		    }
+		  else
+		    {
+		      fprintf(out, ">%s", seq->seq);
+		    }
 		}
 	      else//for testing only
 		{
@@ -209,7 +222,12 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 
 		  if (is_for_testing==false)//print out read_id
 		    {
-		      fprintf(out, ">%s\n", read_id);
+
+		      if (full_entry)
+			{
+			  fprintf(out, ">%s\n", read_id);
+			}
+
 		    }
 		  else
 		    {
@@ -242,7 +260,10 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 		    }
 		  if (is_for_testing==false)
 		    {
-		      fprintf(out, "\n");
+		      if (full_entry)
+			{
+			  fprintf(out, "\n");
+			}
 		    }
 		  
 		}
@@ -255,6 +276,9 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
       
     }
   fclose(list_fptr);
-  
-  
+  free(array_nodes);
+  free(array_or);
+  free_sequence(&seq);
+  free(kmer_window->kmer);
+  free(kmer_window);
 }
