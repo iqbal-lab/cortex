@@ -199,8 +199,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 		    }
 		  else
 		    {
-		      printf("--align does not support aligning reads longer than max_read_len\n");
-		      exit(1);
+		      fprintf(out, ">%s contined (long read)\n%s\n", seq->name, seq->seq);
 		    }
 		}
 	      else//for testing only
@@ -219,7 +218,14 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 	      for (j=0; j<num_of_colours ; j++)//for each colour
 		{
 		  char read_id[200];
-		  sprintf(read_id, "%s_%s_kmer_coverages", seq->name, array_of_names_of_colours[j]);
+		  if (full_entry)
+		    {
+		      sprintf(read_id, "%s_%s_kmer_coverages", seq->name, array_of_names_of_colours[j]);
+		    }
+		  else
+		    {
+		      sprintf(read_id, "%s_%s_kmer_coverages continued (long read)", seq->name, array_of_names_of_colours[j]);	      
+		    }
 
 		  if (is_for_testing==false)//print out read_id
 		    {
