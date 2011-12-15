@@ -1,0 +1,29 @@
+Over the three years that I've owned Statistics::Descriptive I've often
+wondered how users of the module feel about it.  I would appreciate it
+if you would answer the following questions:
+
+1) What do you use Statistics::Descriptive for?
+   (This is something that always amazes me.  I think the coolest
+   app so far is summarizing web server performance for the 1998
+   Olympics in Atlanta)
+
+2) On what platform do you use Perl and Statistics::Descriptive?
+
+3) Is the manpage helpful?  (If not, please explain why).
+
+4) Do you use the caching for Full method outputs such as
+   trimmed_mean()?
+
+5) Is there anything really annoying about Statistics::Descriptive?
+   (aside from flakiness from the maintainer like surveys and bad releases)
+
+6) Is there anything missing from Statistics::Descriptive?
+   (I inherited it from Jason Kastner because I wanted to add a few
+   features and he didn't have time to maintain the module anymore.
+   After v2.2, any new features (2-3) that were added have come from
+   requests from users.)
+
+7) Any other comments you'd like to make that I haven't asked about?
+
+
+

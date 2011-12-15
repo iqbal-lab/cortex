@@ -530,13 +530,13 @@ sub print_vcf_entry
 	if ($vcf_entry_ref_allele =~ /([^ACGT]+)([ACGT]+)/)
 	{
 	    my $new = $2;
-	    print "Removed $1 from $var_name 's sequence. Used to be $vcf_entry_ref_allele and now is $new\n";
+	    #print "Removed $1 from $var_name 's sequence. Used to be $vcf_entry_ref_allele and now is $new\n";
 	    $vcf_entry_ref_allele = $new;
 	}
 	if ($vcf_entry_ref_allele =~ /([ACGT]+)([^ACGT]+)/)
 	{
 	    my $new = $1;
-	    print "Removed $2 from $var_name 's sequence. Used to be $vcf_entry_ref_allele and now is $new\n";
+	    #print "Removed $2 from $var_name 's sequence. Used to be $vcf_entry_ref_allele and now is $new\n";
 	    $vcf_entry_ref_allele = $new;
 	}
 	
