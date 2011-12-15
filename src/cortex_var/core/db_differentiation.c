@@ -199,7 +199,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 		    }
 		  else
 		    {
-		      fprintf(out, ">%s contined (long read)\n%s\n", seq->name, seq->seq);
+		      fprintf(out, ">%s partial (long read)\n%s\n", seq->name, seq->seq);
 		    }
 		}
 	      else//for testing only
@@ -224,7 +224,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 		    }
 		  else
 		    {
-		      sprintf(read_id, "%s_%s_kmer_coverages continued (long read)", seq->name, array_of_names_of_colours[j]);	      
+		      sprintf(read_id, "%s_%s_kmer_coverages partial (long read)", seq->name, array_of_names_of_colours[j]);	      
 		    }
 
 		  if (is_for_testing==false)//print out read_id
