@@ -1188,21 +1188,35 @@ int main(int argc, char **argv){
       // now 2^s = num_kmers_dumped_after_alignment/bucket_size, so s is my height
       dBGraph* db_graph2;
       boolean try_smaller_hash=true;
+      printf("Need to reload and clean the temporary binary we have created\n");
       if (2*num_kmers_dumped_after_alignment < pow(2,hash_key_bits) * bucket_size)
 	{
-	  db_graph2 = hash_table_new(s+1,100, max_retries, kmer_size);
+	  printf("Will try to reload into as little memory as possible: using mem_neight %d and mem_width %d\n", s+1, bucket_size);
+	  db_graph2 = hash_table_new(s+2,bucket_size, max_retries, kmer_size);
 	  if (db_graph2==NULL)
 	    {
 	      try_smaller_hash=false;
+	      printf("Ignore the \"too much rehashing\" message - tried to load the binary of alignment overlap in minimal memory, and failed. Will try again with a bit more memory\n");
 	    }
+	  printf("Alloc succeeded\n");
+	}
+      else
+	{
+	  printf("Our quick calculation of the smallest hash we could reload the temp bin into was wrong, so will just load into a graph with the same mem_height and width as the user specified on the cmd-line. Don't worry - has no effect on the end result\n");
+	  try_smaller_hash=false;
 	}
       if (try_smaller_hash==false)
 	{
+	  printf("Now - alloc a hash table using the same mem-height/width as specified on cmd line\n");
 	  db_graph2 = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
 	  if (db_graph2==NULL)
 	    {
 	      printf("Cortex has nearly finished. It's done everything you asked it to do, and has dumped a binary of the overlap of your alignment with the graph. However, by \"ripping out\" nodes from the main graph, that dumped binary now has edges pointing out to nodes that are not in the binary. So the idea is that we have deallocated the main graph now, and we were going to load the dumped binary, clean it up and re-dump it. However that has failed, becaause we could not malloc the memory to do it - the most likely reason is that someone else is sharing your server and their mempory use has gone up.\n");
 	      exit(1);
+	    }
+	  else
+	    {
+	      printf("This time alloc succeeded\n");
 	    }
 	}	  
       
@@ -1221,6 +1235,7 @@ int main(int argc, char **argv){
 	}
       int num_c;//number of colours in binary
       
+      printf("Start loading the temp binary\n");
       long long  n  = load_multicolour_binary_from_filename_into_graph(tmp_dump,db_graph2, &num_c,
 								       mean_readlens_ptrs2, total_seq_in_that_colour_ptrs2);
       printf("Loaded the temporary binary %s and found %qd kmers\n", tmp_dump, n);
