@@ -101,7 +101,7 @@ int MIN_LLK = -9999999;
 GenotypingWorkingPackage* alloc_genotyping_work_package(int max_allele_len, int max_sup_len, 
 							int working_colour1, int working_colour2)
 {
-  GenotypingWorkingPackage* gwp = malloc(sizeof(GenotypingWorkingPackage));
+  GenotypingWorkingPackage* gwp =(GenotypingWorkingPackage*)  malloc(sizeof(GenotypingWorkingPackage));
   if (gwp==NULL)
     {
       printf("Unable to malloc GenotypingWorkingPackage 1\n");
@@ -110,30 +110,30 @@ GenotypingWorkingPackage* alloc_genotyping_work_package(int max_allele_len, int 
   gwp->max_allele_len = max_allele_len;
   gwp->max_sup_len    = max_sup_len;
   
-  gwp->working_g_e_one      =malloc(sizeof(GenotypingElement*)*max_allele_len);
-  gwp->working_o_one        =malloc(sizeof(Orientation)*max_allele_len);
-  gwp->working_g_e_other    =malloc(sizeof(GenotypingElement*)*max_allele_len);
-  gwp->working_o_other      =malloc(sizeof(Orientation)*max_allele_len);
-  gwp->working_array_self   =malloc(sizeof(int)*max_allele_len);
-  gwp->working_array_shared =malloc(sizeof(int)*max_allele_len);
-  gwp->mobv                 = alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(max_allele_len, max_allele_len);
-  gwp->working_colour1      = working_colour1;
-  gwp->working_colour2      = working_colour2;
-  gwp->path_nodes           =malloc(sizeof(dBNode*)*max_sup_len);
-  gwp->path_orientations    =malloc(sizeof(Orientation) *max_sup_len);
-  gwp->path_labels          =malloc(sizeof(Nucleotide) *max_sup_len);
-  gwp->path_string          =malloc(sizeof(char) *max_sup_len);
+  gwp->working_g_e_one      =(GenotypingElement**) malloc(sizeof(GenotypingElement*)*max_allele_len);
+  gwp->working_o_one        =(Orientation*)        malloc(sizeof(Orientation)*max_allele_len);
+  gwp->working_g_e_other    =(GenotypingElement**) malloc(sizeof(GenotypingElement*)*max_allele_len);
+  gwp->working_o_other      =(Orientation*)        malloc(sizeof(Orientation)*max_allele_len);
+  gwp->working_array_self   =(int*)                malloc(sizeof(int)*max_allele_len);
+  gwp->working_array_shared =(int*)                malloc(sizeof(int)*max_allele_len);
+  gwp->mobv                 =                      alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(max_allele_len, max_allele_len);
+  gwp->working_colour1      =                      working_colour1;
+  gwp->working_colour2      =                      working_colour2;
+  gwp->path_nodes           =(dBNode**)            malloc(sizeof(dBNode*)*max_sup_len);
+  gwp->path_orientations    =(Orientation*)        malloc(sizeof(Orientation) *max_sup_len);
+  gwp->path_labels          =(Nucleotide*)         malloc(sizeof(Nucleotide) *max_sup_len);
+  gwp->path_string          =(char*)               malloc(sizeof(char) *max_sup_len);
 
-  if ( (gwp->working_g_e_one = NULL) ||
-       (gwp->working_o_one  = NULL) ||
-       (gwp->working_g_e_other = NULL) ||
-       (gwp->working_o_other = NULL) ||
-       (gwp->working_array_self = NULL) ||
-       (gwp->working_array_shared = NULL) ||
-       (gwp->path_nodes = NULL) ||
-       (gwp->path_orientations = NULL) ||
-       (gwp->path_labels = NULL) ||
-       (gwp->path_string  = NULL) )
+  if ( (gwp->working_g_e_one == NULL) ||
+       (gwp->working_o_one  == NULL) ||
+       (gwp->working_g_e_other == NULL) ||
+       (gwp->working_o_other == NULL) ||
+       (gwp->working_array_self == NULL) ||
+       (gwp->working_array_shared == NULL) ||
+       (gwp->path_nodes == NULL) ||
+       (gwp->path_orientations == NULL) ||
+       (gwp->path_labels== NULL) ||
+       (gwp->path_string  == NULL) )
     {
       printf("Unable to alloc GenotypingWorkingPackage members\n");
       exit(1);
@@ -363,6 +363,8 @@ void improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alle
       db_genotyping_node_set_coverage(var->other_allele[i], individual_edge_array, working_colour2,0);
     }
   
+
+
 
 }
 
@@ -1148,6 +1150,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 
 //for now, does not support 1net or 2net
 //caller ensures that in the LittleHash the colour specified as model_info->ref_colour actually has covg in ref-minus-site.
+
 double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(GenotypingVariantBranchesAndFlanks* var,
 									      MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults,
 									      GraphAndModelInfo* model_info,
@@ -1297,6 +1300,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 
   while (k < var->len_one_allele)
       {
+
 	if (var_mults->mult12[k]>0) //this node occurs  >0 times in the other allele
 	  {
 	    if (working_array_self_count>0)
@@ -1307,6 +1311,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 		//printf("covg on self in this chunk %d\n", covg_on_self_in_this_chunk);
 		if (too_short==false)
 		  {
+
  		    // add log dpois ( hap_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
 		    log_prob_data += -hap_D_over_R * working_array_self_count + covg_on_self_in_this_chunk * log(hap_D_over_R * working_array_self_count) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
 
@@ -1369,7 +1374,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
  		    //add log dpois ( 2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one) , covg_on_shared_in_this_chunk)
 		    //log_prob_data += -2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one) + covg_on_shared_in_this_chunk * log(2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one)) - gsl_sf_lnfact(covg_on_shared_in_this_chunk);
 
-
+		    
 
 
 		  }
@@ -1435,6 +1440,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	  
 	}
     }
+
 
 
 
@@ -2226,6 +2232,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 
 
   //initialise the little graph
+
   wipe_little_graph(little_db_graph);
 
 
@@ -2255,6 +2262,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
     }
 
 
+
   for (i=0; i<annovar->var->len_other_allele; i++)
     {
       boolean found=false;
@@ -2278,6 +2286,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 
     }
 
+
   //now comes the clever bit. The Little Hash now contains only nodes corresponding to the two alleles.
   //the ref colour for each node contains the count for that node in the ENTIRE ref. 
   //so walk the REF allele, and decrement the covg in the ref colour once each time you hit it.
@@ -2295,7 +2304,8 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 	  db_genotyping_node_decrement_coverage(working_g_e_other[i], individual_edge_array, ref_minus_site_col);
 	}
     }
-  
+
+
 
   int j;
 
@@ -2323,10 +2333,12 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 						     working_o_one,
 						     annovar->var->len_one_allele,
 						     unknown);//not going to use the WhichIsRef in here
-	  
+
+
   set_status_of_genotyping_nodes_in_branches(&var_test, in_desired_genotype);
   reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
   improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(&var_test, mobv, working_colour1, working_colour2);
+
 
   
    annovar->gen_log_lh[colour_to_genotype].log_lh[hom_one]= 
@@ -2340,6 +2352,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
    set_status_of_genotyping_nodes_in_branches(&var_test, none);
 
 
+
    if ( (expt==EachColourADiploidSample) || (expt==EachColourADiploidSampleExceptTheRefColour) )
      {
        //het
@@ -2351,12 +2364,14 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 							  working_o_other,
 							  annovar->var->len_other_allele,
 							  unknown);//not going to use the WhichIsRef in here
-	  
+
+
        set_status_of_genotyping_nodes_in_branches(&var_test, in_desired_genotype);
        reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
        improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(&var_test, mobv, working_colour1, working_colour2);
        
-       
+
+
        annovar->gen_log_lh[colour_to_genotype].log_lh[het]= 
 	 calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(&var_test,
 										mobv, model_info, colour_to_genotype,
@@ -2366,6 +2381,8 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 										path_nodes, path_orientations, path_labels, path_string, 
 										max_sup_len);
        set_status_of_genotyping_nodes_in_branches(&var_test, none);
+
+
      }
    else//haploid
      {
@@ -2373,6 +2390,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
      }
 
   //hom other
+
   set_genotyping_variant_branches_but_flanks_to_null(&var_test, 
 						     working_g_e_other,
 						     working_o_other,
@@ -2386,7 +2404,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
   reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
   improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(&var_test, mobv, working_colour1, working_colour2);
   
-  
+
   annovar->gen_log_lh[colour_to_genotype].log_lh[hom_other]= 
     calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(&var_test,
 									   mobv, model_info, colour_to_genotype,
@@ -2396,7 +2414,6 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 									   path_nodes, path_orientations, path_labels, path_string, 
 									   max_sup_len);
   set_status_of_genotyping_nodes_in_branches(&var_test, none);
-  
   
   
   
@@ -2412,8 +2429,9 @@ void get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(Annot
 									   GraphAndModelInfo* model_info,
 									   LittleHashTable* little_db_graph, 
 									   dBGraph* db_graph,
-									   GenotypingWorkingPackage* gwp)
+									   GenotypingWorkingPackage* gwp, int colour_to_genotype)
 {
+
   GenotypingElement** working_g_e_one   = gwp->working_g_e_one;
   Orientation* working_o_one            = gwp->working_o_one;
   GenotypingElement** working_g_e_other = gwp->working_g_e_other;
@@ -2424,17 +2442,18 @@ void get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(Annot
   int working_colour2                   = gwp->working_colour2;
   dBNode** path_nodes                   = gwp->path_nodes;
   Orientation* path_orientations        = gwp->path_orientations;
-  Nucleotide* path_labels               = gwp->path_labels;
+  Nucleotide* path_labels               = gwp->path_labels; 
   char* path_string                     = gwp->path_string;
   int max_sup_len                       = gwp->max_sup_len;
 
   MultiplicitiesAndOverlapsOfBiallelicVariant* mobv=gwp->mobv;
     
-  if ( (working_colour1<0) || (working_colour1>=NUMBER_OF_COLOURS) || (working_colour2<0) || (working_colour2>=NUMBER_OF_COLOURS)  )
-    {
-      printf("Calling get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour with bad working colours %d, %d\n", working_colour1, working_colour2);
-      exit(1);
-    }
+  //  if ( (working_colour1<0) || (working_colour1>=NUMBER_OF_COLOURS+1) || 
+  //     (working_colour2<0) || (working_colour2>=NUMBER_OF_COLOURS+1)  )
+  //  {
+  //    printf("Calling get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour with bad working colours %d, %d\n", working_colour1, working_colour2);
+  //    exit(1);
+  //  }
   if ( (annovar->var->len_one_allele> gwp->max_allele_len)
        ||
        (annovar->var->len_other_allele> gwp->max_allele_len)
@@ -2445,17 +2464,16 @@ void get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(Annot
       exit(1);
     }
   int i;
-  for (i=0; i<NUMBER_OF_COLOURS; i++)
-    {
-      calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele(annovar, assump,
-											      model_info, little_db_graph, db_graph,
-											      working_g_e_one, working_o_one, 
-											      working_g_e_other, working_o_other,
-											      working_array_self, working_array_shared,
-											      mobv, i, working_colour1, working_colour2,
-											      path_nodes, path_orientations, path_labels, path_string,
-											      max_sup_len);
-    }
+
+  calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele(annovar, assump,
+											  model_info, little_db_graph, db_graph,
+											  working_g_e_one, working_o_one, 
+											  working_g_e_other, working_o_other,
+											  working_array_self, working_array_shared,
+											  mobv, colour_to_genotype, working_colour1, working_colour2,
+											  path_nodes, path_orientations, path_labels, path_string,
+											  max_sup_len);
+  
 }
 
 void get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
@@ -2603,8 +2621,9 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 	      //the full genotyping model reduces to a simple formula for bubbles
 	      //do standard genotyping according to our model for bubble calls and SNP calls from PD
 	      if ( (caller==BubbleCaller) 
-		   || 
-		   ( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) )
+		   //|| 
+		   //( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) 
+		   )
 		{
 		  get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  
 										 seq_error_rate_per_base, 
@@ -2614,7 +2633,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 	      else
 		{
 		  get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(annovar, assump,
-											model_info, little_db_graph, db_graph,gwp);
+											model_info, little_db_graph, db_graph,gwp,i);
 		}
 
 		  

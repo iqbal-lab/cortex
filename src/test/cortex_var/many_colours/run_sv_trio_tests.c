@@ -59,7 +59,7 @@ int  main()
   /* add the tests to the suites */
 
 
-
+  /*
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
     CU_cleanup_registry();
@@ -352,13 +352,13 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-   /*
-   if (NULL == CU_add_test(pPopGraphSuite, "Test classification of bubble as variant or repeat, comparing Hardy-Weinberg model with a repeat model", test_get_log_bayesfactor_varmodel_over_repeatmodel ))
-      {
-	CU_cleanup_registry();
-	return CU_get_error();
-      }
-   */
+
+//   if (NULL == CU_add_test(pPopGraphSuite, "Test classification of bubble as variant or repeat, comparing Hardy-Weinberg model with a repeat model", test_get_log_bayesfactor_varmodel_over_repeatmodel ))
+  //    {
+//	CU_cleanup_registry();
+//	return CU_get_error();
+  //    }
+
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for comparing overlap of alleles with each other and selves", test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles ))
       {
@@ -379,6 +379,14 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
+ 
+  */
+
+     if (NULL == CU_add_test(pPopGraphSuite, "Regression test case 2 - genotyping of a PD call", regression_test_2_genotyping_of_PD_SNP_call))
+    {
+  	CU_cleanup_registry();
+  	return CU_get_error();
+    }
    /*
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test algorithm for genotyping of complex site at a simple site (repeat for different coverages and sequencing error rates, simulating real coverage coording to our model, 100 iterations each time)", test_calc_log_likelihood_of_genotype_with_complex_alleles1 ))

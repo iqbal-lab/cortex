@@ -351,7 +351,7 @@ char * nucleotides_to_string(Nucleotide * nucleotides, int length, char * string
 //                 If homopolymer_cutoff= n > 0, then as soon as the latest base is the n-th in a homopolymeric sequence, the window is broken, and the next
 //                  window only starts when there is  a new base.
 //return total number of kmers read in - ie good kmers that go into windows
-int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length, char quality_cut_off, short kmer_size, KmerSlidingWindowSet * windows, 
+int get_sliding_windows_from_sequence(char * sequence,  char * qualities, int length, char quality_cut_off, short kmer_size, KmerSlidingWindowSet * windows, 
 				      int max_windows, int max_kmers, boolean break_homopolymers, int homopolymer_cutoff){  
 
   char first_kmer[kmer_size+1];
@@ -360,8 +360,8 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
   int i=0; //current index
   int count_kmers = 0;
 
-  if (seq == NULL){
-    fputs("in get_sliding_windows_from_sequence, seq is NULL\n",stderr);    
+  if (sequence == NULL){
+    fputs("in get_sliding_windows_from_sequence, sequence is NULL\n",stderr);    
     exit(1);
   }
 
@@ -384,7 +384,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
     while ((i<length) && (j<kmer_size)){
 
       //collects the bases in the first kmer
-      first_kmer[j] = seq[i];
+      first_kmer[j] = sequence[i];
 
       //what is current homopolymer length
       if ( (j>0) && (first_kmer[j]==first_kmer[j-1]) )
@@ -397,7 +397,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 	}
 
 
-      if ((char_to_binary_nucleotide(seq[i]) == Undefined) || 
+      if ((char_to_binary_nucleotide(sequence[i]) == Undefined) || 
 	  (quality_cut_off>0 && qualities[i]<= quality_cut_off)){
 	j=0; //restart the first kmer 
       }
@@ -406,7 +406,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 	  
 	  //now we may be in the middle of a very long hompoppolymer run.So we want to increment i sufficiently to hit the next base
 	  int first_base_after_homopolymer=i;
-	  while ( (first_base_after_homopolymer<length) && (seq[first_base_after_homopolymer]==first_kmer[j]) )
+	  while ( (first_base_after_homopolymer<length) && (sequence[first_base_after_homopolymer]==first_kmer[j]) )
 	    {
 	      first_base_after_homopolymer++;
 	    }
@@ -451,9 +451,9 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 	  exit(1);
 	}
 
-	Nucleotide current_base = char_to_binary_nucleotide(seq[i]);
+	Nucleotide current_base = char_to_binary_nucleotide(sequence[i]);
 
-	if ( (i>0) && (seq[i] == seq[i-1]) )
+	if ( (i>0) && (sequence[i] == sequence[i-1]) )
 	  {
 	    hom_ct++;
 	  }
@@ -471,7 +471,7 @@ int get_sliding_windows_from_sequence(char * seq,  char * qualities, int length,
 	  {
 	    //now we may be in the middle of a very long homopolymer run.So we want to increment i sufficiently to go beyond         
 	    int first_base_after_homopolymer=i;
-	    while ( (first_base_after_homopolymer<length) && (seq[first_base_after_homopolymer]==seq[i]) )
+	    while ( (first_base_after_homopolymer<length) && (sequence[first_base_after_homopolymer]==sequence[i]) )
 	      {
 		first_base_after_homopolymer++;
 	      }

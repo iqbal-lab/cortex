@@ -159,7 +159,7 @@ void get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(Annot
 									   GraphAndModelInfo* model_info,
 									   LittleHashTable* little_db_graph, 
 									   dBGraph* db_graph,
-									   GenotypingWorkingPackage* gwp);
+									   GenotypingWorkingPackage* gwp, int colour_to_genotype);
 
 			      
 
