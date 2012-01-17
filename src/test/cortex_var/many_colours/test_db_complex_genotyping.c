@@ -1103,6 +1103,15 @@ Covg in indiv:
 								     break_homopolymers, 
 								     homopolymer_cutoff,db_graph,individual_edge_array,0);
 
+  //for second var/test
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example2.fasta",
+								     &seq_read, &seq_loaded,
+								     &bad_reads, &dup_reads, 
+								     max_read_len, 
+								     remove_duplicates_single_endedly, 
+								     break_homopolymers, 
+								     homopolymer_cutoff,db_graph,individual_edge_array,0);
+
 
 
   VariantBranchesAndFlanks var;
@@ -1225,6 +1234,71 @@ Colour 0 = reference
 
 
   CU_ASSERT(annovar.genotype[1]==hom_other);
+
+
+
+  //******************
+  /// second test
+
+  fp = fopen("../data/test/pop_graph/variations/complex_genotyping/pd_example2_just_alleles.fasta", "r");
+  if (fp==NULL)
+    {
+      printf("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example2_just_alleles.fasta\n");
+      exit(1);
+    }
+  num_kmers_br1 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch1, branch1_o, false, &file_reader_fasta, 
+								      seq, kmer_window, db_graph, 0);
+
+  num_kmers_br2 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch2, branch2_o, false, &file_reader_fasta, 
+								      seq, kmer_window, db_graph, 0);
+
+
+  fclose(fp);
+  //second meaning second test
+  int second_br1_covg_0[]={1,1,1,1,1,1,1,1,1,1,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+
+  for (j=0; j<56; j++)
+    {
+      branch1[j]->coverage[0]=second_br1_covg_0[j];
+    }
+
+  int second_br1_covg_1[]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6};
+
+  for (j=0; j<56; j++)
+    {
+      branch1[j]->coverage[1]=second_br1_covg_1[j];
+    }
+
+
+
+  int second_br2_covg_0[]={1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+  for (j=0; j<56; j++)
+    {
+      branch2[j]->coverage[0]=second_br2_covg_0[j];
+    }
+  int second_br2_covg_1[]= {10,10,11,11,11,12,12,12,11,11,11,11,11,10,11,11,11,11,10,10,10,10,10,10,10,10,10,10,9,8,7,6,5,5,5,5,6,6,5,6,6,6,6,5,5,5,5,5,5,5,5,5,5,5,6,6};
+
+  for (j=0; j<56; j++)
+    {
+      branch2[j]->coverage[1]=second_br2_covg_1[j];
+    }
+  
+
+
+  AnnotatedPutativeVariant annovar2;
+  wipe_little_graph(little_db_graph);
+  initialise_putative_variant(&annovar2, &model_info, &var, SimplePathDivergenceCaller, 
+			      55, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph );
+
+
+  CU_ASSERT(annovar2.genotype[1]==hom_other);//1==colour
+
+
+
+
+
+
 
 
   free_genotyping_work_package(gwp);

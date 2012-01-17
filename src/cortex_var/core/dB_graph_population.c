@@ -6134,7 +6134,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   int working_colour1 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS;
   int working_colour2 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+1;
 
-  GenotypingWorkingPackage* gwp = alloc_genotyping_work_package(max_anchor_span, max_expected_size_of_supernode, working_colour1, working_colour2);
+  GenotypingWorkingPackage* gwp = alloc_genotyping_work_package(2*max_anchor_span, max_expected_size_of_supernode, working_colour1, working_colour2);
 
   //number of kmers we want to support in the little hash = 2* (max possible kmers in the two alleles) = 2* (2 * max_allele_length) = 4*max_anchor_span
   int little_width =100;
@@ -7649,7 +7649,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   int working_colour1 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS;
   int working_colour2 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+1;
 
-  GenotypingWorkingPackage* gwp = alloc_genotyping_work_package(max_anchor_span, max_expected_size_of_supernode, working_colour1, working_colour2);
+  GenotypingWorkingPackage* gwp = alloc_genotyping_work_package(2*max_anchor_span, max_expected_size_of_supernode, working_colour1, working_colour2);
   
   if ( (chrom_path_array==NULL) || (chrom_orientation_array==NULL) || (chrom_labels==NULL) || (chrom_string==NULL)
        || (current_supernode==NULL) || (curr_sup_orientations==NULL) || (curr_sup_labels==NULL) || (supernode_string==NULL) || (gwp==NULL) )
