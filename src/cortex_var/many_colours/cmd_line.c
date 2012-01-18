@@ -1578,7 +1578,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
     {
       if ( (cmd_ptr->input_colours==false) && (cmd_ptr->input_multicol_bin==false) )
 	{
-	  char tmp[]="Must specify either binary (--colour_list or --multicol_bin), or sequence data (--se_list and/or --pe_list) as input \n";
+	  char tmp[]="Must specify either binary (--colour_list or --multicolour_bin), or sequence data (--se_list and/or --pe_list) as input \n";
 	  if (strlen(tmp)>LEN_ERROR_STRING)
 	    {
 	      printf("coding error - this string is too long:\n%s\n", tmp);
