@@ -1714,7 +1714,10 @@ int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_
 											      supernode_str,avg_coverage,min,max,
 											      is_cycle,db_graph, 
 											      get_colour, get_covg);
-    
+    if (length==limit)
+      {
+	printf("Warning. You implicitly specified a maximum expected length of supernode %d, probably when you set --max_var_len. Cortex has just encountered a longer supernode. Continuing, but I advise rerunning with a longer --max_var_len");
+      }
   }
   else{
     length = db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(node,forward,

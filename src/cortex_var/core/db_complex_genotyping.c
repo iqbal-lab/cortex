@@ -2582,6 +2582,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
       annovar->BigThetaStart = 0;
       
       for (i=0; i<NUMBER_OF_COLOURS; i++)
+
 	{
 	  if (i==ref_colour)
 	    {
@@ -2636,7 +2637,11 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 											model_info, little_db_graph, db_graph,gwp,i);
 		}
 
-		  
+	      printf("Putative variant genotyped. log liks for hom1, het, hom2 are %.2f, %.2f, %.2f\n",
+		     annovar->gen_log_lh[i].log_lh[hom_one],
+		     annovar->gen_log_lh[i].log_lh[het],
+		     annovar->gen_log_lh[i].log_lh[hom_other]);
+	      
 	      if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
 		{
 		  if (annovar->gen_log_lh[i].log_lh[hom_one]>=annovar->gen_log_lh[i].log_lh[hom_other])

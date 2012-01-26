@@ -989,6 +989,11 @@ Colour:	MeanReadLen	TotalSeq
 
 void regression_test_2_genotyping_of_PD_SNP_call()
 {
+  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER<2)
+    {
+      printf("Null test - compile for k=55\n");
+      return;
+    }
   int kmer_size = 55;
 
   if (NUMBER_OF_COLOURS<2)
@@ -1093,7 +1098,7 @@ Covg in indiv:
   long long seq_loaded=0;
   int max_read_len = 300;
 
-  //I load this into the graph so the kmers are there, but then I am going to just create a car object with the covgs I want
+  //I load this into the graph so the kmers are there, but then I am going to just create a var object with the covgs I want
 
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example1.fasta",
 								     &seq_read, &seq_loaded,
