@@ -1296,9 +1296,9 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   //printf("total sequence is %qd and genome len is %qd , and hapD is %f and hapD over R is %f\n", model_info->ginfo->total_sequence[colour_indiv], model_info->genome_len, hap_D, hap_D_over_R);
 
   //break allele into intervals that only lie on allele1, and those shared with allele2.
-  int k=0;
+  int k=1;//ignore first node
 
-  while (k < var->len_one_allele)
+  while (k < var->len_one_allele -1 ) //ignore last node
       {
 
 	if (var_mults->mult12[k]>0) //this node occurs  >0 times in the other allele
@@ -1331,7 +1331,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	    working_array_self_count=0;
 
 	    while ( (var_mults->mult12[k] > 0) && 
-		    (k < var->len_one_allele) && 
+		    (k < var->len_one_allele -1 ) && 
 		    (check_covg_in_ref_with_site_excised(var->one_allele[k])==0 )//automatically handles case when there is no colour for ref-minus-site     
 		  )
 	      {
@@ -1346,7 +1346,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 		k++;
 		working_array_shared_count++;
 	      }
-	    while ( (k<var->len_one_allele) && (check_covg_in_ref_with_site_excised(var->one_allele[k])>0) )
+	    while ( (k<var->len_one_allele-1) && (check_covg_in_ref_with_site_excised(var->one_allele[k])>0) )
 	      {
 		k++;
 	      }
@@ -1384,7 +1384,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	    working_array_self_count=0;
 	    
 	    while ( (var_mults->mult12[k]==0) && 
-		    (k < var->len_one_allele) &&
+		    (k < var->len_one_allele-1 ) &&
 		    (check_covg_in_ref_with_site_excised(var->one_allele[k])==0)
 		    )
 	      {
@@ -1393,7 +1393,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 		working_array_self_count++;
 	      }
 
-	    while ( (k < var->len_one_allele) &&( check_covg_in_ref_with_site_excised(var->one_allele[k])>0 ) )
+	    while ( (k < var->len_one_allele-1) &&( check_covg_in_ref_with_site_excised(var->one_allele[k])>0 ) )
 
 	      { 
 		k++;
@@ -1445,11 +1445,11 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 
 
   //now walk along the other allele, only considering the intervals that are NOT shared
-  k=0;
+  k=1;//ignore first node
   working_array_self_count=0;//stuff only on allele 2=other_allele
   working_array_shared_count=0;//stuff shared on both
   
-  while (k < var->len_other_allele)
+  while (k < var->len_other_allele-1)//ignore last node
     {
       if (var_mults->mult21[k]>0) //this node occurs  >0 times in the other allele
 	{	  
@@ -1487,7 +1487,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
       if (var_mults->mult21[k]==0)
 	{
 	  while ( (check_covg_in_ref_with_site_excised(var->other_allele[k])==0) &&
-		  (k < var->len_other_allele) &&
+		  (k < var->len_other_allele-1) &&
 		  (var_mults->mult21[k]==0)
 		  )
 	    {
@@ -1496,7 +1496,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	      working_array_self_count++;
 	    }
 	  
-	  while (  (k<var->len_other_allele) &&
+	  while (  (k<var->len_other_allele-1) &&
 		   (check_covg_in_ref_with_site_excised(var->other_allele[k])>0)
 		   )
 	    {
