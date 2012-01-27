@@ -1220,7 +1220,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	    extra=length-db_graph->kmer_size;
 	  }//tells us if >1 SNP
 
-	*total_1net = (*total_1net) + extra+1;
+	*total_1net = (*total_1net) + ct + extra+1;
 
       }
     
@@ -2596,6 +2596,10 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
       
       for (i=0; i<NUMBER_OF_COLOURS; i++)
 	{
+	  if (i==ref_colour)
+	    {
+	      continue;
+	    }
 	  double sequencing_depth_of_coverage=0;
 	  if (seq_error_rate_per_base==-1)
 	    {

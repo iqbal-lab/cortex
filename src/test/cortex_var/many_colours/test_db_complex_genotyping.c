@@ -1232,6 +1232,12 @@ Colour 0 = reference
       exit(1);
     }
 
+  //DEBUG ONLY
+  //  db_graph_print_supernodes_defined_by_func_of_colours("zimzam_sups", "zimzam_sings", 10000,
+  //						       db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
+  //						       &print_no_extra_supernode_info);
+  //END OF DEBUG ONLY
+
   initialise_putative_variant(&annovar, &model_info, &var, SimplePathDivergenceCaller, 
 			      55, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph );
 
@@ -1267,7 +1273,9 @@ Colour 0 = reference
       branch1[j]->coverage[0]=second_br1_covg_0[j];
     }
 
-  int second_br1_covg_1[]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6};
+  //int second_br1_covg_1[]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6};
+  //for DEBUG
+  int second_br1_covg_1[]= {10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6};
 
   for (j=0; j<56; j++)
     {
@@ -1276,7 +1284,9 @@ Colour 0 = reference
 
 
 
-  int second_br2_covg_0[]={1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  //  int second_br2_covg_0[]={1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  // for DEBUG
+  int second_br2_covg_0[]={1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10};
 
   for (j=0; j<56; j++)
     {
