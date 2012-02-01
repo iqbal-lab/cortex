@@ -32,6 +32,7 @@
 #include <dB_graph.h>
 #include <file_format.h>
 #include <graph_info.h>
+#include <db_variants.h>
 
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;
@@ -194,18 +195,29 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_bases_to_load, int lengt
 			    dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char* path_string,
 			    Sequence* seq, KmerSlidingWindow* kmer_window, boolean expecting_new_fasta_entry,  dBGraph * db_graph);
 
-
+void ignore_next_read(FILE* fp, int max_read_length, boolean* full_entry,
+		      int (* file_reader)(FILE * fp, Sequence * seq, 
+					  int max_read_length,boolean new_entry, 
+					  boolean * full_entry), 
+		      Sequence* seq);
 int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length, dBNode** array_nodes, Orientation* array_orientations, 
 						   boolean require_nodes_to_lie_in_given_colour, boolean* full_entry,
 						   int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
 						   Sequence* seq, KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour);
 
+int given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(char* prev_kmer, FILE* fp, int max_read_length, 
+										     dBNode** array_nodes, Orientation* array_orientations, 
+										     boolean require_nodes_to_lie_in_given_colour,
+										     boolean* full_entry,
+										     int (* file_reader)(FILE * fp, Sequence * seq, 
+													 int max_read_length,boolean new_entry, 
+													 boolean * full_entry), 
+										     Sequence* seq, KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour);
 int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
-                                           dBNode** flank5p,    Orientation* flank5p_or,    int* len_flank5p,
-                                           dBNode** ref_allele, Orientation* ref_allele_or, int* len_ref_allele,
-                                           dBNode** alt_allele, Orientation* alt_allele_or, int* len_alt_allele,
-                                           dBNode** flank3p,    Orientation* flank3p_or,    int* len_flank3p,
-                                           dBGraph* db_graph, int colour);
+					   VariantBranchesAndFlanks* var, dBGraph* db_graph, 
+					   int (file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
+					   Sequence* seq, KmerSlidingWindow* kmer_window);
+
 
 
 void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_mean_readlens, long long* array_total_seq);

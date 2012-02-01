@@ -95,6 +95,89 @@ void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* mode
   
 }
 
+void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_appropriate_extra_variant_info), 
+		    Edges(*get_col_ref) (const dBNode* e),int (*get_cov_ref)(const dBNode* e),
+		    GraphInfo* db_graph_info, GraphAndModelInfo* model_info)
+{
+  FILE* fp = fopen(cmd_line->file_of_calls_to_be_genotype, "r");
+  if (fp==NULL)
+    {
+      printf("Cannot open file %s\n", cmd_line->file_of_calls_to_be_genotype);
+      exit(1);
+    }
+  else
+    {
+      int gt_file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
+	long long ret;
+	int offset = 0;
+	if (new_entry!= true){
+	  printf("new_entry has to be true for read_next_variant_from_full_flank_file\n");
+	  exit(1);
+	}	
+	ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
+	return ret;
+      }
+
+
+      //----------------------------------
+      // allocate the memory used to read the sequences
+      //----------------------------------
+      Sequence * seq = malloc(sizeof(Sequence));
+      if (seq == NULL){
+	fputs("Out of memory trying to allocate Sequence\n",stderr);
+	exit(1);
+      }
+      alloc_sequence(seq,cmd_line->max_read_length,LINE_MAX);
+      
+      //We are going to load all the bases into a single sliding window 
+      KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
+      if (kmer_window==NULL)
+	{
+	  printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
+	  exit(1);
+	}
+      kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(cmd_line->max_read_length-db_graph->kmer_size-1));
+      if (kmer_window->kmer==NULL)
+	{
+	  printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
+	  exit(1);
+	}
+      kmer_window->nkmers=0;
+
+  dBNode**  flank5p = (dBNode**) malloc(sizeof(dBNode*)*(cmd_line->max_length+1));
+  dBNode**  branch_one = (dBNode**) malloc(sizeof(dBNode*)*(cmd_line->max_length+1));
+  dBNode**  branch_other = (dBNode**) malloc(sizeof(dBNode*)*(cmd_line->max_length+1));
+  dBNode**  flank3p = (dBNode**) malloc(sizeof(dBNode*)*(cmd_line->max_length+1));
+  Orientation* flank5p_or= (Orientation*) malloc(sizeof(Orientation)*(cmd_line->max_length+1));
+  Orientation* branch_one_or= (Orientation*) malloc(sizeof(Orientation)*(cmd_line->max_length+1));
+  Orientation* branch_other_or= (Orientation*) malloc(sizeof(Orientation)*(cmd_line->max_length+1));
+  Orientation* flank3p_or= (Orientation*) malloc(sizeof(Orientation)*(cmd_line->max_length+1));
+  int len_5p=0;
+  int len_branch_one=0;
+  int len_branch_other=0;
+  int len_3p=0;
+  if ( (flank5p==NULL) || (branch_one==NULL) || (branch_other==NULL) || (flank3p==NULL) 
+       || (flank5p_or==NULL) || (branch_one_or==NULL) || (branch_other_or==NULL) || (flank3p_or==NULL) )
+    {
+      printf("Could not allocate arrays in run_genotyping. Out of memory, or you asked for unreasonably big max read length: %d\n", cmd_line->max_read_length);
+      exit(1);
+    }
+  
+  //end of initialisation 
+
+
+      int ret=1;
+      while (ret)
+	{
+	  ret = read_next_variant_from_full_flank_file(fp, cmd_line->max_read_length,
+						       flank5p, flank5p_or,len_flank5p,
+						       branch_one, branch_one_or, len_branch_one,
+						       branch_other, branch_other_or, len_branch_other,
+						       flank3p, flank3p_or, len_flank3p,
+						       db_graph, &gt_file_reader, seq, kmer_window);
+	}
+    }
+}
 
 void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph, 
 		  void (*print_some_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
@@ -1010,15 +1093,14 @@ int main(int argc, char **argv){
     }
 
   //second detect bubbles
-  if (cmd_line.detect_bubbles2==true)
+  if (cmd_line.do_genotyping_of_file_of_sites==true)
     {
       timestamp();
-      printf("Start second set of bubble calls\n");
-      run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, &model_info);
+      printf("Genotype the calls in this file %s\n", cmd_line.file_of_calls_to_be_genotyped);
+      run_genotyping(&cmd_line, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, &model_info);
       //unset the nodes marked as visited, but not those marked as to be ignored
-      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
       timestamp();
-      printf("Detect Bubbles 2, completed\n");
+      printf("Genotyping completed\n");
     }
 
   if (cmd_line.make_pd_calls==true)

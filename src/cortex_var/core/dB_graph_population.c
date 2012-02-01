@@ -2477,19 +2477,58 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 					    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p, unknown);
 	    
 
+	    //DEBUG ONLY
+	    int zim;
+	    printf("\n5p flank\n");
+	    for (zim=0; zim<=var.len_flank5p; zim++)
+	      {
+		char zamzam[db_graph->kmer_size];
+		printf("%s ", binary_kmer_to_seq(&(var.flank5p[zim]->kmer), db_graph->kmer_size, zamzam));
+	      }
+	    printf("\nallele 1\n");
+	    for (zim=0; zim<=var.len_one_allele; zim++)
+	      {
+		char zamzam[db_graph->kmer_size];
+		printf("%s ", binary_kmer_to_seq(&(var.one_allele[zim]->kmer), db_graph->kmer_size, zamzam));
+	      }
+	    printf("\nallele 2\n");
+	    for (zim=0; zim<=var.len_other_allele; zim++)
+	      {
+		char zamzam[db_graph->kmer_size];
+		printf("%s ", binary_kmer_to_seq(&(var.other_allele[zim]->kmer), db_graph->kmer_size, zamzam));
+	      }
+	    printf("\n3p flank\n");
+	    for (zim=0; zim<=var.len_flank3p; zim++)
+	      {
+		char zamzam[db_graph->kmer_size];
+		printf("%s ", binary_kmer_to_seq(&(var.flank3p[zim]->kmer), db_graph->kmer_size, zamzam));
+	      }
+
+	    // END DEBUG ONLY
+
 	    if (condition(&var)==true) 
 	      {
-
 		//ModelLogLikelihoodsAndBayesFactors stats;//results of bayes factor calcs go in here
 		//initialise_stats(&stats);
 		AnnotatedPutativeVariant annovar;
-		initialise_putative_variant(&annovar, &var, BubbleCaller, 
-					    model_info->ginfo, model_info->seq_error_rate_per_base, 
-					    model_info->genome_len, 
-					    db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
+		if (model_info!=NULL)
+		  {
+		    
+		    initialise_putative_variant(&annovar, &var, BubbleCaller, 
+						model_info->ginfo, model_info->seq_error_rate_per_base, 
+						model_info->genome_len, 
+						db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
+		  }
+		else
+		  {
+		    initialise_putative_variant(&annovar, &var, BubbleCaller, 
+						NULL, -1, -1,
+						db_graph->kmer_size, -1, Unspecified);
+		    
+		  }
 		if (annovar.too_short==false)
 		  {
-
+		    
 		    boolean site_is_variant=true;
 		    if (apply_model_selection==true)
 		      {
@@ -2506,8 +2545,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			fprintf(fout, "DISCOVERY PHASE:  VARIANT vs REPEAT MODEL LOG_LIKELIHOODS:\tllk_var:%.2f\tllk_rep:%.2f\n", 
 				annovar.model_llks.llk_var, annovar.model_llks.llk_rep);
 		      }
-
-		    if (model_info->expt_type != Unspecified)
+		    
+		    if ( (model_info !=NULL) && (model_info->expt_type != Unspecified))
 		      {
 			int z;
 			
@@ -2572,7 +2611,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			      }
 			  }
 		      }
-		  
+		    
+		    
 		    
 		    count_vars++;
 		    

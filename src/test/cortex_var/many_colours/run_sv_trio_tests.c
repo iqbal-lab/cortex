@@ -59,7 +59,7 @@ int  main()
   /* add the tests to the suites */
 
 
-
+  /*
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
     CU_cleanup_registry();
@@ -359,6 +359,14 @@ int  main()
       }
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for comparing overlap of alleles with each other and selves", test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
+*/
+
+   if (NULL == CU_add_test(pPopGraphSuite, "Test reading of variant call output (full flank file)", test_read_next_variant_from_full_flank_file))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
