@@ -2641,10 +2641,10 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 											model_info, little_db_graph, db_graph,gwp,i);
 		}
 
-	      printf("Putative variant genotyped. log liks for hom1, het, hom2 are %.2f, %.2f, %.2f\n",
-		     annovar->gen_log_lh[i].log_lh[hom_one],
-		     annovar->gen_log_lh[i].log_lh[het],
-		     annovar->gen_log_lh[i].log_lh[hom_other]);
+	      //     printf("Putative variant genotyped. log liks for hom1, het, hom2 are %.2f, %.2f, %.2f\n",
+	      //     annovar->gen_log_lh[i].log_lh[hom_one],
+	      //     annovar->gen_log_lh[i].log_lh[het],
+	      //     annovar->gen_log_lh[i].log_lh[hom_other]);
 	      
 	      if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
 		{

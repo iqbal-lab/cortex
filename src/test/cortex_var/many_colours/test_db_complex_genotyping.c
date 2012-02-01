@@ -1239,7 +1239,7 @@ Colour 0 = reference
   //END OF DEBUG ONLY
 
   initialise_putative_variant(&annovar, &model_info, &var, SimplePathDivergenceCaller, 
-			      55, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph );
+			      56, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph );
 
 
 
@@ -1273,8 +1273,7 @@ Colour 0 = reference
       branch1[j]->coverage[0]=second_br1_covg_0[j];
     }
 
-  //int second_br1_covg_1[]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6};
-  //for DEBUG
+  //the 6 on the end basically is there to make sure I ignore the star/end nodes! Makes a big difference
   int second_br1_covg_1[]= {10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6};
 
   for (j=0; j<56; j++)
@@ -1304,7 +1303,7 @@ Colour 0 = reference
   AnnotatedPutativeVariant annovar2;
   wipe_little_graph(little_db_graph);
   initialise_putative_variant(&annovar2, &model_info, &var, SimplePathDivergenceCaller, 
-			      55, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph );
+			      56, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph );
 
 
   CU_ASSERT(annovar2.genotype[1]==hom_other);//1==colour
