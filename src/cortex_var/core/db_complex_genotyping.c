@@ -1206,7 +1206,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	    exit(1);
 	  }
 	int length = db_graph_supernode_for_specific_person_or_pop(node_corresponding_to_e,max_len,
-								   &db_node_action_do_nothing,
+								   &db_node_action_set_status_visited,
 								   p_nodes,p_or,p_lab, p_str,
 								   &avg_coverage,&min,&max,&is_cycle,
 								   db_graph, individual_edge_array, colour_indiv);
