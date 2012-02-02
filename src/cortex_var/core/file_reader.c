@@ -2495,19 +2495,26 @@ int given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_ove
 										     int (* file_reader)(FILE * fp, Sequence * seq, 
 													 int max_read_length,boolean new_entry, 
 													 boolean * full_entry), 
-										     Sequence* seq, KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour)
+										     Sequence* seq, Sequence* seq_inc_prev_kmer, 
+										     KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour)
+
 {
   
 
   //get next read as a C string and put it in seq. Entry_length is the length of the read.
   int entry_length = file_reader(fp,seq,max_read_length,*full_entry,full_entry);
-  char prev_kmer_and_this_read[entry_length+db_graph->kmer_size+1];
-  prev_kmer_and_this_read[0]='\0';
-  prev_kmer_and_this_read[entry_length+db_graph->kmer_size]='\0';
-  strcpy(prev_kmer_and_this_read, prev_kmer);
-  strcat(prev_kmer_and_this_read, seq->seq);
+
+  seq_inc_prev_kmer->seq[0]='\0';
+  seq_inc_prev_kmer->seq[entry_length+db_graph->kmer_size]='\0';
+  // char prev_kmer_and_this_read[entry_length+db_graph->kmer_size+1];
+  //prev_kmer_and_this_read[0]='\0';
+  //prev_kmer_and_this_read[entry_length+db_graph->kmer_size]='\0';
+  //strcpy(prev_kmer_and_this_read, prev_kmer);
+  //strcat(prev_kmer_and_this_read, seq->seq);
+  strcpy(seq_inc_prev_kmer->seq, prev_kmer);
+  strcat(seq_inc_prev_kmer->seq, seq->seq);
   //turn it into a sliding window 
-  int nkmers = get_single_kmer_sliding_window_from_sequence(prev_kmer_and_this_read,entry_length+db_graph->kmer_size, db_graph->kmer_size, kmer_window, db_graph);
+  int nkmers = get_single_kmer_sliding_window_from_sequence(seq_inc_prev_kmer->seq,entry_length+db_graph->kmer_size, db_graph->kmer_size, kmer_window, db_graph);
   //work through the sliding window and put nodes into the array you pass in. Note this may find NULL nodes if the kmer is not in the graph
   load_kmers_from_sliding_window_into_array(kmer_window, seq, db_graph, array_nodes, array_orientations, 
 					    max_read_length+1, require_nodes_to_lie_in_given_colour, colour);
@@ -2522,10 +2529,11 @@ int given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_ove
 // otherwise returns 1 
 // MAKE SURE your kmer_window is malloced to allow max_read_length PLUS KMER bases in a "read", as we want the transitions between
 // flank and branches etc handled properly
+// MAKE SURE seq_inc_prev_kmer also has space for an extra k bases at the start
 int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 					   VariantBranchesAndFlanks* var, dBGraph* db_graph, 
 					   int (file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
-					   Sequence* seq, KmerSlidingWindow* kmer_window)
+					   Sequence* seq, Sequence* seq_inc_prev_kmer, KmerSlidingWindow* kmer_window)
 {
   int colour=-1; //ignored.
 
@@ -2551,39 +2559,33 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
   strncpy(last_kmer_5p, seq->seq+ (int)strlen(seq->seq)-db_graph->kmer_size, db_graph->kmer_size);
   printf("We think this %s is the last kmer in the 5p flank %s\n", last_kmer_5p, seq->seq);
 
-  // we will also need the last kmer of either branch, 
-  // to prepend in front of the 3p flank. 
-  // Complicated by the fact that sometimes one branch or even both branches are very short
-
-  int which_br=-1;
-  char last_kmer_of_longer_branch[db_graph->kmer_size+1];
-  last_kmer_of_longer_branch[0]='\0';
-  last_kmer_of_longer_branch[db_graph->kmer_size]='\0';
+  // we will also need the last kmer of either branch, to prepend in front of the 3p flank. 
+  // At first sight, this seems complicated by the fact that sometimes one branch or even both branches are very short (<kmer)
+  // however we have helpfully passed in the last kmer of the 50 flank, so we definitely have >k bases available to us
 
 
-  var->len_one_allele = -1 + given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_5p, fptr, max_read_length, 
-													 var->one_allele, var->one_allele_or, 
-													 false, &f_entry, file_reader,
-													 seq, kmer_window, db_graph, colour);
+  char last_kmer_of_branch1[db_graph->kmer_size+1];
+  last_kmer_of_branch1[0]='\0';
+  last_kmer_of_branch1[db_graph->kmer_size]='\0';
+
+  var->len_one_allele = -1 + 
+    given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_5p, fptr, max_read_length, 
+										     var->one_allele, var->one_allele_or, 
+										     false, &f_entry, file_reader,
+										     seq, seq_inc_prev_kmer,kmer_window, db_graph, colour);
   if (!f_entry)
     {
       printf("One of these reads (branch1) is longer than specified max read length. The last chunk we got was %s\n", seq->seq);
       exit(1);
     }
 
-  if (var->len_one_allele> db_graph->kmer_size)
-    {
-      //this will do - just get the last kmer
-      which_br=1;
-      strncpy(last_kmer_of_longer_branch, seq->seq+ (int)strlen(seq->seq)-db_graph->kmer_size, db_graph->kmer_size);
-      printf("We think the last kmer of branch1 (%s) is this: %s\n", seq->seq, last_kmer_of_longer_branch);
-    }
-
+  strncpy(last_kmer_of_branch1, seq_inc_prev_kmer->seq + (int)strlen(seq_inc_prev_kmer->seq)-db_graph->kmer_size, db_graph->kmer_size);
   
-  var->len_other_allele = -1 + given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_5p, fptr, max_read_length, 
-													   var->other_allele, var->other_allele_or, 
-													   false, &f_entry, file_reader,
-													   seq, kmer_window, db_graph, colour);
+  var->len_other_allele = -1 + 
+    given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_5p, fptr, max_read_length, 
+										     var->other_allele, var->other_allele_or, 
+										     false, &f_entry, file_reader,
+										     seq, seq_inc_prev_kmer, kmer_window, db_graph, colour);
   //printf("alt allele: %s, length %d\n", seq->seq, *len_branch_other );
   if (!f_entry)
     {
@@ -2591,28 +2593,12 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
       exit(1);
     }
 
-  if ( (which_br==-1) && (var->len_other_allele > db_graph->kmer_size) )
-    {
-      which_br=2;
-      strncpy(last_kmer_of_longer_branch, seq->seq+ (int)strlen(seq->seq)-db_graph->kmer_size, db_graph->kmer_size);
-      printf("We think the last kmer of branch2 (%s) is this: %s\n", seq->seq, last_kmer_of_longer_branch);
-    }
 
-
-
-
-  if (which_br>0)
-    {
-
-      var->len_flank3p = -1 + given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_of_longer_branch, fptr, max_read_length, 
-												      var->flank3p, var->flank3p_or, 
-												      false, &f_entry, file_reader,
-												      seq, kmer_window, db_graph, colour);
-    }
-  else
-    {//we are going to ignore this variant anyway
-      ignore_next_read(fptr, max_read_length, &f_entry, file_reader, seq);
-    }
+  var->len_flank3p = -1 + 
+    given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_of_branch1, fptr, max_read_length, 
+										     var->flank3p, var->flank3p_or, 
+										     false, &f_entry, file_reader,
+										     seq, seq_inc_prev_kmer, kmer_window, db_graph, colour);
 
   if (!f_entry)
     {
@@ -2620,14 +2606,8 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
       exit(1);
     }
 
-  if (which_br>0)
-    {
-      return 1;
-    }
-  else
-    {
-      return 2;
-    }
+  
+  return 1;
 
 }
 					   

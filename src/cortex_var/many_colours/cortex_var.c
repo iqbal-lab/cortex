@@ -95,6 +95,14 @@ void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* mode
   
 }
 
+
+void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_appropriate_extra_variant_info), 
+		    Edges(*get_col_ref) (const dBNode* e),int (*get_cov_ref)(const dBNode* e),
+		    GraphInfo* db_graph_info, GraphAndModelInfo* model_info)
+{
+  //dumm for now - part implementation in comments below
+}
+/*
 void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_appropriate_extra_variant_info), 
 		    Edges(*get_col_ref) (const dBNode* e),int (*get_cov_ref)(const dBNode* e),
 		    GraphInfo* db_graph_info, GraphAndModelInfo* model_info)
@@ -178,6 +186,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_appropria
 	}
     }
 }
+*/
 
 void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph, 
 		  void (*print_some_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),

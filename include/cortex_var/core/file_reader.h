@@ -205,6 +205,7 @@ int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length
 						   int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
 						   Sequence* seq, KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour);
 
+
 int given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(char* prev_kmer, FILE* fp, int max_read_length, 
 										     dBNode** array_nodes, Orientation* array_orientations, 
 										     boolean require_nodes_to_lie_in_given_colour,
@@ -212,12 +213,13 @@ int given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_ove
 										     int (* file_reader)(FILE * fp, Sequence * seq, 
 													 int max_read_length,boolean new_entry, 
 													 boolean * full_entry), 
-										     Sequence* seq, KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour);
+										     Sequence* seq, Sequence* seq_inc_prev_kmer, 
+										     KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour);
+
 int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 					   VariantBranchesAndFlanks* var, dBGraph* db_graph, 
 					   int (file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
-					   Sequence* seq, KmerSlidingWindow* kmer_window);
-
+					   Sequence* seq, Sequence* seq_inc_prev_kmer, KmerSlidingWindow* kmer_window);
 
 
 void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_mean_readlens, long long* array_total_seq);

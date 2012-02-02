@@ -2356,6 +2356,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  GraphAndModelInfo* model_info)
 {
 
+  printf("IQBAL\n\n\n\n\n\n\n\n");
+
   int count_vars = 0; 
   int flanking_length = 1000; 
 
@@ -2476,6 +2478,36 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    set_variant_branches_and_flanks(&var, nodes5p, orientations5p, length_flank5p, path_nodes1, path_orientations1, length1, 
 					    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p, unknown);
 	    
+	    //debug only
+	    int zim;
+	    char zaffy[db_graph->kmer_size];
+	    printf( "\n\n5p flank\n");
+	    for (zim=0; zim<=var.len_flank5p; zim++)
+	      {
+		printf("%s ", binary_kmer_to_seq(&(var.flank5p[zim]->kmer), db_graph->kmer_size, zaffy));
+		printf("\n");
+	      }
+	    printf("\n\nbranch 1\n");
+	    for (zim=0; zim<=var.len_one_allele; zim++)
+	      {
+		printf("%s ", binary_kmer_to_seq(&(var.one_allele[zim]->kmer), db_graph->kmer_size, zaffy));
+		printf("\n");
+	      }
+	    printf("\n\nbranch2 \n");
+	    for (zim=0; zim<=var.len_other_allele; zim++)
+	      {
+		printf("%s ", binary_kmer_to_seq(&(var.other_allele[zim]->kmer), db_graph->kmer_size, zaffy));
+		printf("\n");
+	      }
+	    printf("\n\n3p flank\n");
+	    for (zim=0; zim<=var.len_flank3p; zim++)
+	      {
+		printf("%s ", binary_kmer_to_seq(&(var.flank3p[zim]->kmer), db_graph->kmer_size, zaffy));
+		printf("\n");
+	      }
+	    printf("\n\n");
+	    //end debug only
+
 
 
 	    if (condition(&var)==true) 

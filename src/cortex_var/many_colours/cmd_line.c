@@ -844,7 +844,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	
 	if (strlen(optarg)<MAX_FILENAME_LEN)
 	  {
-	    strcpy(cmdline_ptr->file_of_calls_to_be_genotyped);
+	    strcpy(cmdline_ptr->file_of_calls_to_be_genotyped, optarg);
 	    cmdline_ptr->do_genotyping_of_file_of_sites=true;
 	  }
 	else
