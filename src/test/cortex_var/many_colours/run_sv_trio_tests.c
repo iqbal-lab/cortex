@@ -376,6 +376,11 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
+   if (NULL == CU_add_test(pPopGraphSuite, "Test reading of variant call output (full flank file), when both branches < k long", test_read_next_variant_from_full_flank_file_3))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
 
 
    //if (NULL == CU_add_test(pPopGraphSuite, "Test function for estimating genome complexity - first test", test_count_reads_where_snp_makes_clean_bubble1 ))
