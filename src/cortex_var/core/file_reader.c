@@ -2524,7 +2524,6 @@ int given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_ove
 
 
 
-// returns 2 if it finds a variant where both branches < kmer long (or for some reason the variant should be ignored)
 // returns 0 when hits the end of the file
 // otherwise returns 1 
 // MAKE SURE your kmer_window is malloced to allow max_read_length PLUS KMER bases in a "read", as we want the transitions between
@@ -2546,11 +2545,28 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
       exit(1);
     }
 
-  if (var->len_flank5p==0)
+  if (var->len_flank5p==-1)
     {
       return 0; //end of file (should never have a zero length read as 5prime flank btw)
     }
 
+
+  //use the read-id of the 5prime flank to get the variant name, and to double check that this IS a 5prime flank
+  char* sub_ptr = strstr(seq->name, "_5p_flank");
+  if (sub_ptr==NULL)
+    {
+      printf("Abort. Mandatory format for read-id of 5p flanks is >..some text.._5p_flank - but in this read, names %s, I cannot find the text \"_5p_flank\"\n", seq->name);
+      exit(1);
+    }
+  else
+    {
+      size_t len = sub_ptr-seq->name;
+      strncpy(var->var_name, seq->name, (int)len);
+      var->var_name[(int)len]='\0';
+      //printf("Found var name %s\n", var->var_name);
+    }
+
+  
 
   //so we have got the 5prime flank. Now we need to get all the kmers joining it to the branches
   char last_kmer_5p[db_graph->kmer_size+1];

@@ -33,7 +33,133 @@
 #include <stdlib.h>
 #include <gsl_sf_gamma.h>
 
+VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p)
+{
+  VariantBranchesAndFlanks* var = (VariantBranchesAndFlanks*) malloc(sizeof(VariantBranchesAndFlanks));
+  if (var==NULL)
+    {
+      return var;
+    }
+  else
+    {
+      
+      var->flank5p      = (dBNode**) malloc(sizeof(dBNode*)*(len_5p));
+      if (var->flank5p==NULL) 
+	{
+	  return NULL;
+	}
 
+      var->one_allele   = (dBNode**) malloc(sizeof(dBNode*)*(len_br1));
+      if (var->one_allele==NULL) 
+	{
+	  free(var->flank5p);
+	  free(var);
+	  return NULL;
+	}
+
+      var->other_allele = (dBNode**) malloc(sizeof(dBNode*)*(len_br2));
+      if (var->other_allele==NULL) 
+	{
+	  free(var->flank5p);
+	  free(var->one_allele);
+	  free(var);
+	  return NULL;
+	}
+
+      var->flank3p      = (dBNode**) malloc(sizeof(dBNode*)*(len_3p));
+      if (var->flank3p==NULL) 
+	{
+	  free(var->flank5p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var);
+	  return NULL;
+	}
+
+      
+      var->flank5p_or    = (Orientation*) malloc(sizeof(Orientation) * len_5p);
+      if (var->flank5p_or==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var);
+	  return NULL;
+	}
+       var->one_allele_or = (Orientation*) malloc(sizeof(Orientation) * len_br1);
+      if (var->one_allele_or==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var->flank5p_or);
+	  free(var);
+	  return NULL;
+	}
+ 
+      if (var->other_allele_or==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var);
+	  return NULL;
+	}
+
+      if (var->flank3p_or==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var);
+	  return NULL;
+	}
+      
+      var->var_name=(char*) malloc(sizeof(char)*MAX_VARNAME_LEN);
+      if (var->var_name==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var);
+	  
+	}
+
+      var->len_flank5p=0;
+      var->len_flank3p=0;
+      var->len_one_allele=0;
+      var->len_other_allele=0;
+      var->which = unknown;
+      var->var_name[0]='\0';
+      return var;
+    }
+}
+
+void free_VariantBranchesAndFlanks_object(VariantBranchesAndFlanks* var)
+{
+  free(var->flank5p);
+  free(var->flank3p);
+  free(var->one_allele);
+  free(var->other_allele);
+  free(var->flank5p_or);
+  free(var->flank3p_or);
+  free(var->one_allele_or);
+  free(var->other_allele_or);
+}
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
 				     dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, 

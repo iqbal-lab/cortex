@@ -111,6 +111,17 @@ void print_minimal_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 							      int index
 							      );
 
+void print_ultra_minimal_fasta_from_path(FILE *fout,
+					 char * name,
+					 int length,
+					 dBNode * fst_node,
+					 Orientation fst_orientation,
+					 dBNode * lst_node,
+					 Orientation lst_orientation,
+					 char * string, //labels of paths
+					 int kmer_size,
+					 boolean include_first_kmer);
+
 void print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *fout,
 									  char * name,
 									  int length,
@@ -10662,6 +10673,86 @@ void print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *
 }
 
 
+void print_ultra_minimal_fasta_from_path(FILE *fout,
+					 char * name,
+					 int length,
+					 dBNode * fst_node,
+					 Orientation fst_orientation,
+					 dBNode * lst_node,
+					 Orientation lst_orientation,
+					 char * string, //labels of paths
+					 int kmer_size,
+					 boolean include_first_kmer)
+{
+
+  if (fout==NULL)
+    {
+      printf("Exiting - have passed a null file pointer to print_ultra_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours\n");
+      exit(1);
+    }
+  
+  if ( (fst_node==NULL) || (lst_node==NULL) )
+    {
+      fprintf(fout, "WARNING - print_fasta command as have been given a NULL node as first or last node - will not print fst/lst kmers.\n");
+      fprintf(fout,">%s length:%i\n", 
+              name, (include_first_kmer ? length+kmer_size:length),);
+      fprintf(fout,"%s\n",string);
+    }
+  else
+    {
+      char fst_f[5], fst_r[5],lst_f[5],lst_r[5];
+      
+      compute_label_in_subgraph_defined_by_func_of_colours(fst_node,forward,fst_f, get_colour);
+      compute_label_in_subgraph_defined_by_func_of_colours(fst_node,reverse,fst_r, get_colour);
+      compute_label_in_subgraph_defined_by_func_of_colours(lst_node,forward,lst_f, get_colour);
+      compute_label_in_subgraph_defined_by_func_of_colours(lst_node,reverse,lst_r, get_colour);
+      
+      char fst_seq[kmer_size+1], lst_seq[kmer_size+1];
+ 
+      BinaryKmer fst_kmer;
+      BinaryKmer tmp_kmer;
+
+      if (fst_orientation==reverse)
+	{
+	  binary_kmer_assignment_operator(fst_kmer, *(  binary_kmer_reverse_complement(element_get_kmer(fst_node),kmer_size, &tmp_kmer) ) );
+	} 
+      else
+	{
+	  binary_kmer_assignment_operator(fst_kmer, *(element_get_kmer(fst_node)) );
+	}
+      
+      binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq);
+      
+      BinaryKmer lst_kmer;
+
+      if (lst_orientation==reverse){
+	binary_kmer_assignment_operator(lst_kmer, *(  binary_kmer_reverse_complement(element_get_kmer(lst_node),kmer_size, &tmp_kmer) ) );
+      } 
+      else
+	{
+	  binary_kmer_assignment_operator(lst_kmer, *(element_get_kmer(lst_node)) );
+	}
+      binary_kmer_to_seq(&lst_kmer,kmer_size,lst_seq);
+      
+
+      fprintf(fout,">%s length:%i\n", name,
+	      (include_first_kmer ? length+kmer_size:length));
+
+      if (include_first_kmer){    	
+	fprintf(fout,"%s",binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq));
+      }
+      
+      fprintf(fout,"%s\n",string);
+      
+    }
+
+
+
+}
+
+
+
+
 
 boolean does_this_path_exist_in_this_colour(dBNode** array_nodes, Orientation* array_orientations,  int len, Edges (*get_colour)(const dBNode*), dBGraph* db_graph )
 {
@@ -10953,6 +11044,130 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 	}
     }
 }
+
+
+
+
+void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fout, GraphAndModelInfo* model_info,
+					DiscoveryMethod which_caller, dBGraph* db_graph)
+{
+
+  AnnotatedPutativeVariant annovar;
+  if (model_info!=NULL)
+    {
+      //this does the genotyping.
+      initialise_putative_variant(&annovar, &var, which_caller, 
+				  model_info->ginfo, model_info->seq_error_rate_per_base, 
+				  model_info->genome_len, 
+				  db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
+    }
+  else
+    {
+      initialise_putative_variant(&annovar, &var, which_caller, 
+				  NULL, -1, -1,
+				  db_graph->kmer_size, -1, Unspecified);
+    }
+  if (annovar.too_short==false)
+    {		    
+      
+      if ( (model_info !=NULL) && (model_info->expt_type != Unspecified))
+	{
+	  int z;
+	  
+	  if ( (model_info->expt_type == EachColourADiploidSample) || (model_info->expt_type ==EachColourADiploidSampleExceptTheRefColour) )
+	    {
+	      fprintf(fout,"Colour/sample\tGT_call\tllk_hom_br1\tllk_het\tllk_hom_br2\n");
+	      for (z=0; z<NUMBER_OF_COLOURS; z++)
+		{
+		  if (z==model_info->ref_colour)
+		    {
+		      fprintf(fout, "%d=REF\tNO_CALL\t0\t0\t0\n", z);
+		    }
+		  else
+		    {
+		      fprintf(fout,"%d\t", z);
+		      if (annovar.genotype[z]==hom_one)
+			{
+			  fprintf(fout,"HOM1\t");
+			}
+		      else if (annovar.genotype[z]==het)
+			{
+			  fprintf(fout,"HET\t");
+			}
+		      else if (annovar.genotype[z]==hom_other)
+			{
+			  fprintf(fout,"HOM2\t");
+			}
+		      else
+			{
+			  fprintf(fout,"NO_CALL\t");
+			}
+		      fprintf(fout, "%.2f\t%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[het], annovar.gen_log_lh[z].log_lh[hom_other]);
+		    }
+		}
+	    }
+	  else if ( (model_info->expt_type == EachColourAHaploidSample) || (model_info->expt_type ==EachColourAHaploidSampleExceptTheRefColour) )
+	    {
+	      fprintf(fout,"Colour/sample\tGT_call\tllk_hom_br1\tllk_hom_br2\n");
+	      for (z=0; z<NUMBER_OF_COLOURS; z++)
+		{
+		  if (z==model_info->ref_colour)
+		    {
+		      fprintf(fout, "%d=REF\tNO_CALL\t0\t0\n", z);
+		    }
+		  else
+		    {
+		      fprintf(fout,"%d\t", z);
+		      if (annovar.genotype[z]==hom_one)
+			{
+					fprintf(fout,"HOM1\t");
+			}
+		      else if (annovar.genotype[z]==hom_other)
+			{
+			  fprintf(fout,"HOM2\t");
+			}
+		      else
+			{
+			  fprintf(fout,"NO_CALL\t");
+			}
+		      fprintf(fout, "%.2f\t%.2f\n", annovar.gen_log_lh[z].log_lh[hom_one], annovar.gen_log_lh[z].log_lh[hom_other]);
+		    }
+		}
+	    }
+	}
+      
+      
+      //print flank5p - 
+      sprintf(name,">%s_5p_flank",var->var_name);
+      
+      print_ultra_minimal_fasta_from_path(fout,name,length_flank5p,
+					  nodes5p[0],orientations5p[0],			
+					  nodes5p[length_flank5p],orientations5p[length_flank5p],				
+					  seq5p, db_graph->kmer_size,true);	
+      
+      //print branches
+      sprintf(name,">branch_%s_1",var->var_name);
+      print_ultra_minimal_fasta_from_path(fout,name,length1,
+					  path_nodes1[0],path_orientations1[0],path_nodes1[length1],path_orientations1[length1],
+					  seq1,db_graph->kmer_size,false);
+      
+      sprintf(name,">branch_%s_2", var->var_name);
+      print_ultra_minimal_fasta_from_path(fout,name,length2,
+					  path_nodes2[0],path_orientations2[0],path_nodes2[length2],path_orientations2[length2],
+					  seq2,db_graph->kmer_size,false);
+      
+      //print flank3p
+      sprintf(name,">%s_3p_flank", var->var_name);
+      print_ultra_minimal_fasta_from_path(fout,name,length_flank3p,
+					  nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
+					  seq3p,db_graph->kmer_size,false);
+      print_extra_info(&var, fout);
+      
+      
+    }
+}
+
+
 
 
 

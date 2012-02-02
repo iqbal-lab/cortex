@@ -96,21 +96,15 @@ void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* mode
 }
 
 
+
 void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_appropriate_extra_variant_info), 
 		    Edges(*get_col_ref) (const dBNode* e),int (*get_cov_ref)(const dBNode* e),
 		    GraphInfo* db_graph_info, GraphAndModelInfo* model_info)
 {
-  //dumm for now - part implementation in comments below
-}
-/*
-void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_appropriate_extra_variant_info), 
-		    Edges(*get_col_ref) (const dBNode* e),int (*get_cov_ref)(const dBNode* e),
-		    GraphInfo* db_graph_info, GraphAndModelInfo* model_info)
-{
-  FILE* fp = fopen(cmd_line->file_of_calls_to_be_genotype, "r");
+  FILE* fp = fopen(cmd_line->file_of_calls_to_be_genotyped, "r");
   if (fp==NULL)
     {
-      printf("Cannot open file %s\n", cmd_line->file_of_calls_to_be_genotype);
+      printf("Cannot open file %s\n", cmd_line->file_of_calls_to_be_genotyped);
       exit(1);
     }
   else
@@ -136,6 +130,15 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_appropria
 	exit(1);
       }
       alloc_sequence(seq,cmd_line->max_read_length,LINE_MAX);
+
+      Sequence * seq_inc_prev_kmer = malloc(sizeof(Sequence));
+      if (seq == NULL){
+	fputs("Out of memory trying to allocate Sequence\n",stderr);
+	exit(1);
+      }
+      alloc_sequence(seq_inc_prev_kmer,max_read_length+db_graph->kmer_size,LINE_MAX);
+
+
       
       //We are going to load all the bases into a single sliding window 
       KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
@@ -151,42 +154,25 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_appropria
 	  exit(1);
 	}
       kmer_window->nkmers=0;
-
-  dBNode**  flank5p = (dBNode**) malloc(sizeof(dBNode*)*(cmd_line->max_length+1));
-  dBNode**  branch_one = (dBNode**) malloc(sizeof(dBNode*)*(cmd_line->max_length+1));
-  dBNode**  branch_other = (dBNode**) malloc(sizeof(dBNode*)*(cmd_line->max_length+1));
-  dBNode**  flank3p = (dBNode**) malloc(sizeof(dBNode*)*(cmd_line->max_length+1));
-  Orientation* flank5p_or= (Orientation*) malloc(sizeof(Orientation)*(cmd_line->max_length+1));
-  Orientation* branch_one_or= (Orientation*) malloc(sizeof(Orientation)*(cmd_line->max_length+1));
-  Orientation* branch_other_or= (Orientation*) malloc(sizeof(Orientation)*(cmd_line->max_length+1));
-  Orientation* flank3p_or= (Orientation*) malloc(sizeof(Orientation)*(cmd_line->max_length+1));
-  int len_5p=0;
-  int len_branch_one=0;
-  int len_branch_other=0;
-  int len_3p=0;
-  if ( (flank5p==NULL) || (branch_one==NULL) || (branch_other==NULL) || (flank3p==NULL) 
-       || (flank5p_or==NULL) || (branch_one_or==NULL) || (branch_other_or==NULL) || (flank3p_or==NULL) )
-    {
-      printf("Could not allocate arrays in run_genotyping. Out of memory, or you asked for unreasonably big max read length: %d\n", cmd_line->max_read_length);
-      exit(1);
-    }
-  
-  //end of initialisation 
-
-
+      
+      VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(cmd_line->max_length+1, cmd_line->max_length+1, cmd_line->max_length+1, cmd_line->max_length+1);
+      if (var==NULL)
+	{
+	  printf("Abort - unable to allocate memory for buffers for reading callfile - either sever oom conditions or you have specified very veyr large max_var_len\n");
+	  exit(1);
+	}
+      //end of initialisation 
+      
+      
       int ret=1;
       while (ret)
 	{
 	  ret = read_next_variant_from_full_flank_file(fp, cmd_line->max_read_length,
-						       flank5p, flank5p_or,len_flank5p,
-						       branch_one, branch_one_or, len_branch_one,
-						       branch_other, branch_other_or, len_branch_other,
-						       flank3p, flank3p_or, len_flank3p,
-						       db_graph, &gt_file_reader, seq, kmer_window);
+						       var, db_graph, &gt_file_reader, seq, seq_inc_prev_kmer, kmer_window);
 	}
     }
 }
-*/
+
 
 void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph, 
 		  void (*print_some_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
@@ -1101,7 +1087,7 @@ int main(int argc, char **argv){
       printf("Detect Bubbles 1, completed\n");
     }
 
-  //second detect bubbles
+
   if (cmd_line.do_genotyping_of_file_of_sites==true)
     {
       timestamp();

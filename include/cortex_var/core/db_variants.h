@@ -35,6 +35,8 @@
 #include <graph_info.h>
 #include <experiment.h>
 
+#define MAX_VARNAME_LEN 200
+
 typedef struct {
   double llk_var;
   double llk_rep;
@@ -91,6 +93,7 @@ typedef struct{
   Orientation* flank3p_or;
   int len_flank3p;
   WhichAlleleIsRef which;
+  char* var_name;//make sure this is malloced if you use it
 } VariantBranchesAndFlanks;
 
 typedef enum{
@@ -131,6 +134,9 @@ typedef struct {
 
 
 //functions for VariantBranchesAndFlanks
+VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p);
+void free_VariantBranchesAndFlanks_object(VariantBranchesAndFlanks* var);
+
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
 				     dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, 

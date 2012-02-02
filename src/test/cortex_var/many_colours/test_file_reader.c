@@ -3668,7 +3668,8 @@ void test_read_next_variant_from_full_flank_file()
 				  other_allele, other_allele_or,len_other_allele, 
 				  flank3p,      flank3p_or,     len_flank3p,
 				  unknown);
-
+  char varname[40];
+  var.var_name=varname;
   //FILE* var_fptr =  fopen("tmp_test_read_next_variant_from_full_flank_file_bubble.fff", "r");
    FILE* var_fptr =  fopen("../data/tempfiles_can_be_deleted/tmp_test.fff", "r");
 
@@ -3681,6 +3682,7 @@ void test_read_next_variant_from_full_flank_file()
   CU_ASSERT(var.len_one_allele==6);
   CU_ASSERT(var.len_other_allele==6);
   CU_ASSERT(var.len_flank3p==6);
+  CU_ASSERT(strcmp(var.var_name,"var_1")==0);
   // printf("ZAMZAM\n\n len flank 5p is %d\nvariant is %s\n%s\n%s\n%s\n\n", len_flank5p);
   BinaryKmer tmp_kmer, tmp_kmer_rev;
   BinaryKmer tmp_kmer2, tmp_kmer_rev2;
@@ -4026,6 +4028,9 @@ CTGCGT
 				  flank3p,      flank3p_or,     len_flank3p,
 				  unknown);
 
+  char varname[40];
+  var.var_name=varname;
+
   //FILE* var_fptr =  fopen("tmp_test_read_next_variant_from_full_flank_file_bubble.fff", "r");
    FILE* var_fptr =  fopen("../data/tempfiles_can_be_deleted/tmp_test.fff", "r");
 
@@ -4356,6 +4361,8 @@ AGCT
 				  other_allele, other_allele_or,len_other_allele, 
 				  flank3p,      flank3p_or,     len_flank3p,
 				  unknown);
+  char varname[40];
+  var.var_name=varname;
 
   //FILE* var_fptr =  fopen("tmp_test_read_next_variant_from_full_flank_file_bubble.fff", "r");
    FILE* var_fptr =  fopen("../data/tempfiles_can_be_deleted/tmp_test.fff", "r");
@@ -4667,6 +4674,9 @@ CAGC
 				  flank3p,      flank3p_or,     len_flank3p,
 				  unknown);
 
+  char varname[40];
+  var.var_name=varname;
+
   //FILE* var_fptr =  fopen("tmp_test_read_next_variant_from_full_flank_file_bubble.fff", "r");
    FILE* var_fptr =  fopen("../data/tempfiles_can_be_deleted/tmp_test.fff", "r");
 
@@ -4675,7 +4685,7 @@ CAGC
   read_next_variant_from_full_flank_file(var_fptr, max_read_length,
 					 &var, db_graph, &this_fasta_file_reader, seq, seq_inc_prev_kmer, kmer_window);
 
-  printf("lengths are %d %d %d %d\n", var.len_flank5p, var.len_one_allele, var.len_other_allele, var.len_flank3p);
+  //  printf("lengths are %d %d %d %d\n", var.len_flank5p, var.len_one_allele, var.len_other_allele, var.len_flank3p);
   CU_ASSERT(var.len_flank5p==4 );
   CU_ASSERT(var.len_one_allele==3);
   CU_ASSERT(var.len_other_allele==4);
