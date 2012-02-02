@@ -2356,8 +2356,6 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  GraphAndModelInfo* model_info)
 {
 
-  printf("IQBAL\n\n\n\n\n\n\n\n");
-
   int count_vars = 0; 
   int flanking_length = 1000; 
 
@@ -2478,6 +2476,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    set_variant_branches_and_flanks(&var, nodes5p, orientations5p, length_flank5p, path_nodes1, path_orientations1, length1, 
 					    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p, unknown);
 	    
+	    /*
 	    //debug only
 	    int zim;
 	    char zaffy[db_graph->kmer_size];
@@ -2507,7 +2506,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	      }
 	    printf("\n\n");
 	    //end debug only
-
+	    */
 
 
 	    if (condition(&var)==true) 

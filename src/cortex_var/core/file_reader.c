@@ -2557,7 +2557,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
   last_kmer_5p[0]='\0';
   last_kmer_5p[db_graph->kmer_size]='\0';
   strncpy(last_kmer_5p, seq->seq+ (int)strlen(seq->seq)-db_graph->kmer_size, db_graph->kmer_size);
-  printf("We think this %s is the last kmer in the 5p flank %s\n", last_kmer_5p, seq->seq);
+  //printf("We think this %s is the last kmer in the 5p flank %s\n", last_kmer_5p, seq->seq);
 
   // we will also need the last kmer of either branch, to prepend in front of the 3p flank. 
   // At first sight, this seems complicated by the fact that sometimes one branch or even both branches are very short (<kmer)

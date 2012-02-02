@@ -506,7 +506,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar,
 	  if (genome_length==-1)
 	    {
 	      genome_length=3000000000;//default
-	      printf("ZAM test - I think this check can be removed - this code should never be hit\n");
+	      printf("ZAM - you should only see this printed during unit tests\n");
 	    }
 	  int mean_read_len=100;
 	  if (ginfo !=NULL)
