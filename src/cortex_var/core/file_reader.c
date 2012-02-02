@@ -2477,8 +2477,14 @@ int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length
 }
 
 
-//suppose 5p flank is : xxxxx and branch1 is yyyyyy
-// I want to read in the yyyyyy read, and get the kmers xxxxy, xxxyy, xxyyy, xyyyy, yyyyy
+
+
+// suppose 5p flank is : xxxxxxxxxxxxxxxxx and branch1 (as printed out) is yyyyyyyyyyy
+// then the 5p flank in VariantFlanksAndBranches end at xxxxx,
+// AND branch1 in VariantFlanksAndBranches starts    at xxxxx
+// and branch2, however it starts, must end with the same kmer as branch1
+
+// I want to read in the yyyyyy read, and get the kmers xxxxx, xxxxy, xxxyy, xxyyy, xyyyy, yyyyy
 // so I want to be able to pass in xxxxx to this function and get all the nodes for the branch
 //returns the number of kmers loaded
 // MAKE SURE you pass in kmer_window capable of holding read-length + KMER  bases.
@@ -2510,18 +2516,6 @@ int given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_ove
 }
 
 
-
-/*
-int given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(char* prev_kmer, FILE* fp, int max_read_length, 
-										     dBNode** array_nodes, Orientation* array_orientations, 
-										     boolean require_nodes_to_lie_in_given_colour,
-										     boolean* full_entry,
-										     int (* file_reader)(FILE * fp, Sequence * seq, 
-													 int max_read_length,boolean new_entry, 
-													 boolean * full_entry), 
-										     Sequence* seq, KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour)
-
-*/
 
 // returns 2 if it finds a variant where both branches < kmer long (or for some reason the variant should be ignored)
 // returns 0 when hits the end of the file
@@ -2557,8 +2551,10 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
   strncpy(last_kmer_5p, seq->seq+ (int)strlen(seq->seq)-db_graph->kmer_size, db_graph->kmer_size);
   printf("We think this %s is the last kmer in the 5p flank %s\n", last_kmer_5p, seq->seq);
 
-  //we will also need the last kmer of either branch, to prepend in front of the 3p flank. Complicated by the fact that sometimes one branch os very short
-  //Assume at least one of the branches is >=kmer long . If not die. (Dont want to have to cat together bits of flank + tiny branch)
+  // we will also need the last kmer of either branch, 
+  // to prepend in front of the 3p flank. 
+  // Complicated by the fact that sometimes one branch or even both branches are very short
+
   int which_br=-1;
   char last_kmer_of_longer_branch[db_graph->kmer_size+1];
   last_kmer_of_longer_branch[0]='\0';

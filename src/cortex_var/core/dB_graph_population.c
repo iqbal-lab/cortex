@@ -2477,34 +2477,6 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 					    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p, unknown);
 	    
 
-	    //DEBUG ONLY
-	    int zim;
-	    printf("\n5p flank\n");
-	    for (zim=0; zim<=var.len_flank5p; zim++)
-	      {
-		char zamzam[db_graph->kmer_size];
-		printf("%s ", binary_kmer_to_seq(&(var.flank5p[zim]->kmer), db_graph->kmer_size, zamzam));
-	      }
-	    printf("\nallele 1\n");
-	    for (zim=0; zim<=var.len_one_allele; zim++)
-	      {
-		char zamzam[db_graph->kmer_size];
-		printf("%s ", binary_kmer_to_seq(&(var.one_allele[zim]->kmer), db_graph->kmer_size, zamzam));
-	      }
-	    printf("\nallele 2\n");
-	    for (zim=0; zim<=var.len_other_allele; zim++)
-	      {
-		char zamzam[db_graph->kmer_size];
-		printf("%s ", binary_kmer_to_seq(&(var.other_allele[zim]->kmer), db_graph->kmer_size, zamzam));
-	      }
-	    printf("\n3p flank\n");
-	    for (zim=0; zim<=var.len_flank3p; zim++)
-	      {
-		char zamzam[db_graph->kmer_size];
-		printf("%s ", binary_kmer_to_seq(&(var.flank3p[zim]->kmer), db_graph->kmer_size, zamzam));
-	      }
-
-	    // END DEBUG ONLY
 
 	    if (condition(&var)==true) 
 	      {
