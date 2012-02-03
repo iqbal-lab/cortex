@@ -94,6 +94,10 @@ typedef struct{
   int len_flank3p;
   WhichAlleleIsRef which;
   char* var_name;//make sure this is malloced if you use it
+  char* seq5p;
+  char* seq_one;
+  char* seq_other;
+  char* seq3p;
 } VariantBranchesAndFlanks;
 
 typedef enum{

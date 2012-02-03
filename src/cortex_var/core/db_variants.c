@@ -138,6 +138,74 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
 	  free(var);
 	  
 	}
+      var->seq5p=(char*) malloc(sizeof(char)*len_5p);
+      if (var->seq5p==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var->var_name);
+	  free(var);	  
+	}
+
+      var->seq_one=(char*) malloc(sizeof(char)*len_br1);
+      if (var->seq_one==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var->var_name);
+	  free(var->seq5p);
+	  free(var);	  
+	}
+
+
+      var->seq_other=(char*) malloc(sizeof(char)*len_br2);
+      if (var->seq_other==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var->var_name);
+	  free(var->seq5p);
+	  free(var->seq_one);
+	  free(var);	  
+	}
+
+      var->seq3p =(char*) malloc(sizeof(char)*len_3p);
+      if (var->seq3p==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var->var_name);
+	  free(var->seq5p);
+	  free(var->seq_one);
+	  free(var->seq_other);
+	  free(var);	  
+	}
+
+
 
       var->len_flank5p=0;
       var->len_flank3p=0;
@@ -145,6 +213,11 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
       var->len_other_allele=0;
       var->which = unknown;
       var->var_name[0]='\0';
+      var->seq5p[0]='\0';
+      var->seq_one[0]='\0';
+      var->seq_other[0]='\0';
+      var->seq3p[0]='\0';
+
       return var;
     }
 }
@@ -159,6 +232,11 @@ void free_VariantBranchesAndFlanks_object(VariantBranchesAndFlanks* var)
   free(var->flank3p_or);
   free(var->one_allele_or);
   free(var->other_allele_or);
+  free(var->seq5p);
+  free(var->seq_one);
+  free(var->seq_other);
+  free(var->seq3p);
+
 }
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,

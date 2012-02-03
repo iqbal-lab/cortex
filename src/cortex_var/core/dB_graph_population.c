@@ -10694,18 +10694,11 @@ void print_ultra_minimal_fasta_from_path(FILE *fout,
   if ( (fst_node==NULL) || (lst_node==NULL) )
     {
       fprintf(fout, "WARNING - print_fasta command as have been given a NULL node as first or last node - will not print fst/lst kmers.\n");
-      fprintf(fout,">%s length:%i\n", 
-              name, (include_first_kmer ? length+kmer_size:length),);
+      fprintf(fout,">%s length:%i\n", name, (include_first_kmer ? length+kmer_size:length));
       fprintf(fout,"%s\n",string);
     }
   else
     {
-      char fst_f[5], fst_r[5],lst_f[5],lst_r[5];
-      
-      compute_label_in_subgraph_defined_by_func_of_colours(fst_node,forward,fst_f, get_colour);
-      compute_label_in_subgraph_defined_by_func_of_colours(fst_node,reverse,fst_r, get_colour);
-      compute_label_in_subgraph_defined_by_func_of_colours(lst_node,forward,lst_f, get_colour);
-      compute_label_in_subgraph_defined_by_func_of_colours(lst_node,reverse,lst_r, get_colour);
       
       char fst_seq[kmer_size+1], lst_seq[kmer_size+1];
  
@@ -11049,25 +11042,28 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 
 
 void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fout, GraphAndModelInfo* model_info,
-					DiscoveryMethod which_caller, dBGraph* db_graph)
+					DiscoveryMethod which_caller, dBGraph* db_graph, void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
+
 {
 
   AnnotatedPutativeVariant annovar;
   if (model_info!=NULL)
     {
       //this does the genotyping.
-      initialise_putative_variant(&annovar, &var, which_caller, 
+      initialise_putative_variant(&annovar, var, which_caller, 
 				  model_info->ginfo, model_info->seq_error_rate_per_base, 
 				  model_info->genome_len, 
 				  db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
     }
   else
     {
-      initialise_putative_variant(&annovar, &var, which_caller, 
-				  NULL, -1, -1,
-				  db_graph->kmer_size, -1, Unspecified);
+      printf("You are trying to read in a set of Cortex calls, for genotyping, but you have not specified the model (is it diploid/haploid, genome size etc. Aborting.)\n");
+      exit(1);
+      //      initialise_putative_variant(&annovar, &var, which_caller, 
+      //			  NULL, -1, -1,
+      //			  db_graph->kmer_size, -1, Unspecified);
     }
-  if (annovar.too_short==false)
+  if (annovar.too_short==false)//too short means length 0 or 1 supernode
     {		    
       
       if ( (model_info !=NULL) && (model_info->expt_type != Unspecified))
@@ -11120,7 +11116,7 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
 		      fprintf(fout,"%d\t", z);
 		      if (annovar.genotype[z]==hom_one)
 			{
-					fprintf(fout,"HOM1\t");
+			  fprintf(fout,"HOM1\t");
 			}
 		      else if (annovar.genotype[z]==hom_other)
 			{
@@ -11138,29 +11134,34 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
       
       
       //print flank5p - 
-      sprintf(name,">%s_5p_flank",var->var_name);
+      char name[(int)strlen(var->var_name) + 20];
+      sprintf(name,"%s_5p_flank",var->var_name);
       
-      print_ultra_minimal_fasta_from_path(fout,name,length_flank5p,
-					  nodes5p[0],orientations5p[0],			
-					  nodes5p[length_flank5p],orientations5p[length_flank5p],				
-					  seq5p, db_graph->kmer_size,true);	
+      print_ultra_minimal_fasta_from_path(fout,name,var->len_flank5p,
+					  var->flank5p[0],               var->flank5p_or[0],			
+					  var->flank5p[var->len_flank5p],var->flank5p_or[var->len_flank5p],				
+					  var->seq5p, db_graph->kmer_size, false);	
       
       //print branches
-      sprintf(name,">branch_%s_1",var->var_name);
-      print_ultra_minimal_fasta_from_path(fout,name,length1,
-					  path_nodes1[0],path_orientations1[0],path_nodes1[length1],path_orientations1[length1],
-					  seq1,db_graph->kmer_size,false);
+      sprintf(name,"branch_%s_1",var->var_name);
+      print_ultra_minimal_fasta_from_path(fout,name,var->len_one_allele,
+					  var->one_allele[0],                   var->one_allele_or[0],
+					  var->one_allele[var->len_one_allele],var->one_allele_or[var->len_one_allele],
+					  var->seq_one,db_graph->kmer_size,false);
       
-      sprintf(name,">branch_%s_2", var->var_name);
-      print_ultra_minimal_fasta_from_path(fout,name,length2,
-					  path_nodes2[0],path_orientations2[0],path_nodes2[length2],path_orientations2[length2],
-					  seq2,db_graph->kmer_size,false);
+      sprintf(name,"branch_%s_2", var->var_name);
+      print_ultra_minimal_fasta_from_path(fout,name,var->len_other_allele,
+					  var->other_allele[0],                    var->other_allele_or[0],
+					  var->other_allele[var->len_other_allele],var->other_allele_or[var->len_other_allele],
+					  var->seq_other,db_graph->kmer_size,false);
       
       //print flank3p
-      sprintf(name,">%s_3p_flank", var->var_name);
-      print_ultra_minimal_fasta_from_path(fout,name,length_flank3p,
-					  nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
-					  seq3p,db_graph->kmer_size,false);
+      sprintf(name,"%s_3p_flank", var->var_name);
+      print_ultra_minimal_fasta_from_path(fout,name,var->len_flank3p,
+					  var->flank3p[0],               var->flank3p_or[0],
+					  var->flank3p[var->len_flank3p],var->flank3p_or[var->len_flank3p],
+					  var->seq3p,db_graph->kmer_size,false);
+
       print_extra_info(&var, fout);
       
       

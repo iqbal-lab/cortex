@@ -369,6 +369,9 @@ int default_opts(CmdLine * c)
   set_string_to_null(c->filelist_1net_binaries_for_alleles, MAX_FILENAME_LEN);
   set_string_to_null(c->fastaq_for_estimating_genome_complexity, MAX_FILENAME_LEN);
   set_string_to_null(c->file_of_calls_to_be_genotyped, MAX_FILENAME_LEN);
+  set_string_to_null(c->output_genotyping, MAX_FILENAME_LEN);
+
+  c->which_caller_was_used_for_calls_to_be_genotyped=BubbleCaller;
   // set_string_to_null(c->filelist_2net_binaries_for_alleles, MAX_FILENAME_LEN);
 
   //booleans
@@ -837,19 +840,24 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 't': // --gt - genotype a list of sites, given in Cortex output format (ie as if called by Cortex)
       {
 	if (optarg==NULL)
-	  errx(1,"[--gt] option requires a filename (should be a file of Cortex calls, just 5p, branches and 3p, no colour-coverage output)\n");
-	if (access(optarg,F_OK)==0){
-	  errx(1,"[--gt] filename [%s] does not exist!",optarg);
-	}
+	  errx(1,"[--gt] option requires an input filename (should be a file of Cortex calls, just 5p, branches and 3p, no colour-coverage output), an output filename, and either BC or PD to specify which caller was used.\n");
 	
-	if (strlen(optarg)<MAX_FILENAME_LEN)
+	if (strlen(optarg)<2*MAX_FILENAME_LEN)
 	  {
-	    strcpy(cmdline_ptr->file_of_calls_to_be_genotyped, optarg);
-	    cmdline_ptr->do_genotyping_of_file_of_sites=true;
+	    char msg[300];
+	    int err= parse_arguments_for_genotyping(cmdline_ptr, optarg, msg);
+	    if (err==0)
+	      {
+		cmdline_ptr->do_genotyping_of_file_of_sites=true;
+	      }
+	    else
+	      {
+		errx(1,"[--gt] error - %s\n", msg);
+	      }
 	  }
 	else
 	  {
-	    errx(1,"[--gt] filename too long [%s]",optarg);
+	    errx(1,"[--gt] argument too long [%s]",optarg);
 	  }
 	break; 
       }
@@ -2803,4 +2811,57 @@ int parse_commasep_or_open_square_brack_sep_list(CmdLine* cmd, char* arg, int le
 }
 
 
+int parse_arguments_for_genotyping(CmdLine* cmdline, char* argmt, char* msg)
+{
+  //argument should be of form inputfilename,outputfilename,<CALLER>  where CALLER is "BC" or "PD".
+  msg[0]='\0';
+  char* filename1=NULL;
+  char* filename2=NULL;
+  char* caller=NULL;
+  char delims[] = ",";
+  char temp1[2*MAX_FILENAME_LEN];
+  temp1[0]='\0';
+  strcpy(temp1, argmt);
+  filename1 = strtok(temp1, delims );
+  if (filename1==NULL)
+    {
+      strcat(msg, "[--gt] option requires two filenames, plus either BC or PD, comma separated. The filenames are to be an input (file of cortex calls) and output filename.");
+      return 1;
+    }
+  else if (access(filename1,R_OK)==-1)
+    {
+      strcat(msg, "[--gt] option requires two filenames, plus either BC or PD, comma separated. The filenames are to be an input (file of cortex calls) and output filename. In this case the input filename does not exist - unable to open it");
+      return 1;
 
+    }
+  strcpy(cmdline->file_of_calls_to_be_genotyped,filename1);
+  filename2 = strtok( NULL, delims );
+  if (filename2==NULL)
+    {
+      strcat(msg, "[--gt] option requires two filenames, plus either BC or PD, comma separated. The filenames are to be an input (file of cortex calls) and output filename. Cannot find the output filename in your cmdline input\n");
+      return 1;
+    }
+  strcpy(cmdline->output_genotyping, filename2);
+  caller= strtok( NULL, delims );
+  if (caller==NULL)
+    {
+      strcat(msg, "[--gt] option requires two filenames, plus either BC or PD, comma separated. You have entered the filenames, but not specified which caller was used to make these calls\n");
+      return 1;
+    }
+  if (strcmp(caller, "BC")==0) 
+    {
+      cmdline->which_caller_was_used_for_calls_to_be_genotyped=BubbleCaller;
+    }
+  else if (strcmp(caller, "PD")==0 )
+    {
+      cmdline->which_caller_was_used_for_calls_to_be_genotyped=SimplePathDivergenceCaller;
+    }
+  else
+    {
+      strcat(msg, "[-gt] option - third part of argument MUST be either BC or PD.");
+      return 1;
+    }
+  return 0;
+  
+  
+}

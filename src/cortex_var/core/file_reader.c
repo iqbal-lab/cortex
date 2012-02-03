@@ -2566,7 +2566,8 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
       //printf("Found var name %s\n", var->var_name);
     }
 
-  
+  //save the sequence we have read:
+  strncpy(var->seq5p, seq->seq, (int) strlen(seq->seq));
 
   //so we have got the 5prime flank. Now we need to get all the kmers joining it to the branches
   char last_kmer_5p[db_graph->kmer_size+1];
@@ -2596,6 +2597,10 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
     }
 
   strncpy(last_kmer_of_branch1, seq_inc_prev_kmer->seq + (int)strlen(seq_inc_prev_kmer->seq)-db_graph->kmer_size, db_graph->kmer_size);
+
+  //save the sequence we have read:
+  strncpy(var->seq_one, seq->seq, (int) strlen(seq->seq));
+
   
   var->len_other_allele = -1 + 
     given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_5p, fptr, max_read_length, 
@@ -2610,6 +2615,10 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
     }
 
 
+  //save the sequence we have read:
+  strncpy(var->seq_other, seq->seq, (int) strlen(seq->seq));
+
+
   var->len_flank3p = -1 + 
     given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_of_branch1, fptr, max_read_length, 
 										     var->flank3p, var->flank3p_or, 
@@ -2621,6 +2630,9 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
       printf("One of these reads (3p flank) is longer than specified max read length\n");
       exit(1);
     }
+
+  //save the sequence we have read:
+  strncpy(var->seq3p, seq->seq, (int) strlen(seq->seq));
 
   
   return 1;

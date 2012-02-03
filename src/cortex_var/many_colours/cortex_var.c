@@ -97,7 +97,7 @@ void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* mode
 
 
 
-void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_appropriate_extra_variant_info), 
+void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_extra_variant_info)(VariantBranchesAndFlanks*), 
 		    Edges(*get_col_ref) (const dBNode* e),int (*get_cov_ref)(const dBNode* e),
 		    GraphInfo* db_graph_info, GraphAndModelInfo* model_info)
 {
@@ -136,7 +136,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_appropria
 	fputs("Out of memory trying to allocate Sequence\n",stderr);
 	exit(1);
       }
-      alloc_sequence(seq_inc_prev_kmer,max_read_length+db_graph->kmer_size,LINE_MAX);
+      alloc_sequence(seq_inc_prev_kmer,cmd_line->max_read_length+db_graph->kmer_size,LINE_MAX);
 
 
       
@@ -155,7 +155,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_appropria
 	}
       kmer_window->nkmers=0;
       
-      VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(cmd_line->max_length+1, cmd_line->max_length+1, cmd_line->max_length+1, cmd_line->max_length+1);
+      VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(cmd_line->max_var_len+1, cmd_line->max_var_len+1, cmd_line->max_var_len+1, cmd_line->max_var_len+1);
       if (var==NULL)
 	{
 	  printf("Abort - unable to allocate memory for buffers for reading callfile - either sever oom conditions or you have specified very veyr large max_var_len\n");
@@ -163,12 +163,20 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_appropria
 	}
       //end of initialisation 
       
+      FILE* fout = fopen(cmd_line->output_genotyping, "w");
+      if (fout==NULL)
+	{
+	  printf("Unable to open output file %s - abort.\n", cmd_line->output_genotyping);
+	  exit(1);
+	}
       
       int ret=1;
       while (ret)
 	{
 	  ret = read_next_variant_from_full_flank_file(fp, cmd_line->max_read_length,
 						       var, db_graph, &gt_file_reader, seq, seq_inc_prev_kmer, kmer_window);
+	  print_call_given_var_and_modelinfo(var, fout, model_info, cmd_line->which_caller_was_used_for_calls_to_be_genotyped, db_graph,
+					     print_whatever_extra_variant_info);
 	}
     }
 }
