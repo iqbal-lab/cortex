@@ -11162,7 +11162,7 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
 					  var->flank3p[var->len_flank3p],var->flank3p_or[var->len_flank3p],
 					  var->seq3p,db_graph->kmer_size,false);
 
-      print_extra_info(&var, fout);
+      print_extra_info(var, fout);
       
       
     }
