@@ -8805,6 +8805,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	      */
 
 	      Orientation dir_traversing_sup=forward;
+	      int coord_of_last_node_where_two_branches_agree=left_most_coord_of_var_branch_in_supernode_array-1;//this should not be <0 as we have a flank
 	      if (traverse_sup_left_to_right==false)
 		{
 		  dir_traversing_sup=reverse;
@@ -8818,16 +8819,83 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 											 &chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome-1], 
 											 len_trusted_branch,
 											 forward,
-											 &current_supernode[left_most_coord_of_var_branch_in_supernode_array-1],
-											 &curr_sup_orientations[left_most_coord_of_var_branch_in_supernode_array-1],
+											 &current_supernode[left_most_coord_of_var_branch_in_supernode_array],
+											 &curr_sup_orientations[left_most_coord_of_var_branch_in_supernode_array],
 											 len_branch2,
 											 dir_traversing_sup,
-											 &chrom_path_array[start_of_3prime_anchor_in_chrom-1],
-											 &chrom_orientation_array[start_of_3prime_anchor_in_chrom-1],
+											 &chrom_path_array[start_of_3prime_anchor_in_chrom],
+											 &chrom_orientation_array[start_of_3prime_anchor_in_chrom],
 											 length_3p_flank, 
 											 forward,
 											 first);//first tells it §that the trusted branch is the reference
 
+
+
+	      //debug only
+	      int zim;
+	      char zam[db_graph->kmer_size];
+	      BinaryKmer rev;
+	      printf("flank5p is \n");
+	      for (zim=0; zim<=var->len_flank5p; zim++)
+		{
+		  if (var->flank5p_or[zim]==forward)
+		    {
+		      printf("%s\n", binary_kmer_to_seq(&(var->flank5p[zim]->kmer), db_graph->kmer_size, zam));
+		    }
+		  else
+		    {
+		      binary_kmer_reverse_complement(&(var->flank5p[zim]->kmer), db_graph->kmer_size, &rev);
+		      printf("%s\n", binary_kmer_to_seq(&rev, db_graph->kmer_size, zam));
+		    }
+		}
+
+
+	      printf("branch1  is \n");
+	      for (zim=0; zim<=var->len_one_allele; zim++)
+		{
+		  if (var->one_allele_or[zim]==forward)
+		    {
+		      printf("%s\n", binary_kmer_to_seq(&(var->one_allele[zim]->kmer), db_graph->kmer_size, zam));
+		    }
+		  else
+		    {
+		      binary_kmer_reverse_complement(&(var->one_allele[zim]->kmer), db_graph->kmer_size, &rev);
+		      printf("%s\n", binary_kmer_to_seq(&rev, db_graph->kmer_size, zam));
+		    }
+		}
+
+
+	      printf("branch2  is \n");
+	      for (zim=0; zim<=var->len_other_allele; zim++)
+		{
+		  if (var->other_allele_or[zim]==forward)
+		    {
+		      printf("%s\n", binary_kmer_to_seq(&(var->other_allele[zim]->kmer), db_graph->kmer_size, zam));
+		    }
+		  else
+		    {
+		      binary_kmer_reverse_complement(&(var->other_allele[zim]->kmer), db_graph->kmer_size, &rev);
+		      printf("%s\n", binary_kmer_to_seq(&rev, db_graph->kmer_size, zam));
+		    }
+		}
+
+
+
+	      printf("flank3p is \n");
+	      for (zim=0; zim<=var->len_flank3p; zim++)
+		{
+		  if (var->flank3p_or[zim]==forward)
+		    {
+		      printf("%s\n", binary_kmer_to_seq(&(var->flank3p[zim]->kmer), db_graph->kmer_size, zam));
+		    }
+		  else
+		    {
+		      binary_kmer_reverse_complement(&(var->flank3p[zim]->kmer), db_graph->kmer_size, &rev);
+		      printf("%s\n", binary_kmer_to_seq(&rev, db_graph->kmer_size, zam));
+		    }
+		}
+	      
+	      //end debug only
 
 	      if (condition(var, ref_colour, get_colour, get_covg)==true)
 		{
@@ -9053,6 +9121,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 
   //free malloc-ed variables
+  free_VariantBranchesAndFlanks_object(var);
   free_genotyping_work_package(gwp);
   free(chrom_path_array);
   free(chrom_orientation_array);
@@ -9071,7 +9140,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   free(ptrs_to_covgs_in_variant_not_trusted);
   free(covgs_in_variant_not_trusted);
   free(covgs_in_trusted_not_variant);
-  free_VariantBranchesAndFlanks_object(var);
+
   //  free(covgs_of_indiv_on_trusted_path);
   //free(covgs_of_ref_on_trusted_path);
   //free(covgs_of_indiv_on_variant_path);

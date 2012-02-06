@@ -154,6 +154,7 @@ GenotypingWorkingPackage* alloc_genotyping_work_package(int max_allele_len, int 
    free(gwp->path_orientations  );
    free(gwp->path_labels  );
    free(gwp->path_string  );
+   dealloc_MultiplicitiesAndOverlapsOfBiallelicVariant(gwp->mobv);
    free(gwp);
  }
 
@@ -2622,6 +2623,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 	{
 	  if (i==ref_colour)
 	    {
+	      initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[i]));
 	      continue;
 	    }
 	  annovar->BigTheta      += annovar->br1_covg[i] + annovar->br2_covg[i];

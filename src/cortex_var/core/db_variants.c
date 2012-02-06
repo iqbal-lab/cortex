@@ -38,23 +38,19 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
   VariantBranchesAndFlanks* var = (VariantBranchesAndFlanks*) malloc(sizeof(VariantBranchesAndFlanks));
   if (var==NULL)
     {
-      printf("Z1\n");
       return var;
     }
   else
-    {
-      
+    {      
       var->flank5p      = (dBNode**) malloc(sizeof(dBNode*)*(len_5p));
       if (var->flank5p==NULL) 
 	{
-      printf("Z2\n");
 	  return NULL;
 	}
 
       var->one_allele   = (dBNode**) malloc(sizeof(dBNode*)*(len_br1));
       if (var->one_allele==NULL) 
 	{
-      printf("Z3\n");
 	  free(var->flank5p);
 	  free(var);
 	  return NULL;
@@ -63,7 +59,6 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
       var->other_allele = (dBNode**) malloc(sizeof(dBNode*)*(len_br2));
       if (var->other_allele==NULL) 
 	{
-      printf("Z4\n");
 	  free(var->flank5p);
 	  free(var->one_allele);
 	  free(var);
@@ -73,7 +68,6 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
       var->flank3p      = (dBNode**) malloc(sizeof(dBNode*)*(len_3p));
       if (var->flank3p==NULL) 
 	{
-      printf("Z5\n");
 	  free(var->flank5p);
 	  free(var->one_allele);
 	  free(var->other_allele);
@@ -85,7 +79,6 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
       var->flank5p_or    = (Orientation*) malloc(sizeof(Orientation) * len_5p);
       if (var->flank5p_or==NULL)
 	{
-      printf("Z6\n");
 	  free(var->flank5p);
 	  free(var->flank3p);
 	  free(var->one_allele);
@@ -96,7 +89,6 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
        var->one_allele_or = (Orientation*) malloc(sizeof(Orientation) * len_br1);
       if (var->one_allele_or==NULL)
 	{
-      printf("Z7\n");
 	  free(var->flank5p);
 	  free(var->flank3p);
 	  free(var->one_allele);
@@ -108,7 +100,6 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
       var->other_allele_or = (Orientation*) malloc(sizeof(Orientation) * len_br2);
       if (var->other_allele_or==NULL)
 	{
-	  printf("Z8\n");
 	  free(var->flank5p);
 	  free(var->flank3p);
 	  free(var->one_allele);
@@ -121,7 +112,6 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
       var->flank3p_or    = (Orientation*) malloc(sizeof(Orientation) * len_3p);
       if (var->flank3p_or==NULL)
 	{
-      printf("Z9\n");
 	  free(var->flank5p);
 	  free(var->flank3p);
 	  free(var->one_allele);
@@ -136,7 +126,6 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
       var->var_name=(char*) malloc(sizeof(char)*MAX_VARNAME_LEN);
       if (var->var_name==NULL)
 	{
-      printf("Z10\n");
 	  free(var->flank5p);
 	  free(var->flank3p);
 	  free(var->one_allele);
@@ -146,12 +135,12 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
 	  free(var->other_allele_or);
 	  free(var->flank3p_or);
 	  free(var);
+	  return NULL;
 	  
 	}
       var->seq5p=(char*) malloc(sizeof(char)*len_5p);
       if (var->seq5p==NULL)
 	{
-      printf("Z11\n");
 	  free(var->flank5p);
 	  free(var->flank3p);
 	  free(var->one_allele);
@@ -162,12 +151,13 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
 	  free(var->flank3p_or);
 	  free(var->var_name);
 	  free(var);	  
+	  return NULL;
+
 	}
 
       var->seq_one=(char*) malloc(sizeof(char)*len_br1);
       if (var->seq_one==NULL)
 	{
-      printf("Z12\n");
 	  free(var->flank5p);
 	  free(var->flank3p);
 	  free(var->one_allele);
@@ -179,13 +169,14 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
 	  free(var->var_name);
 	  free(var->seq5p);
 	  free(var);	  
+	  return NULL;
+
 	}
 
 
       var->seq_other=(char*) malloc(sizeof(char)*len_br2);
       if (var->seq_other==NULL)
 	{
-      printf("Z13\n");
 	  free(var->flank5p);
 	  free(var->flank3p);
 	  free(var->one_allele);
@@ -198,12 +189,13 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
 	  free(var->seq5p);
 	  free(var->seq_one);
 	  free(var);	  
+	  return NULL;
+
 	}
 
       var->seq3p =(char*) malloc(sizeof(char)*len_3p);
       if (var->seq3p==NULL)
 	{
-      printf("Z14\n");
 	  free(var->flank5p);
 	  free(var->flank3p);
 	  free(var->one_allele);
@@ -217,8 +209,9 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
 	  free(var->seq_one);
 	  free(var->seq_other);
 	  free(var);	  
-	}
+	  return NULL;
 
+	}
 
 
       var->len_flank5p=0;
@@ -250,7 +243,8 @@ void free_VariantBranchesAndFlanks_object(VariantBranchesAndFlanks* var)
   free(var->seq_one);
   free(var->seq_other);
   free(var->seq3p);
-
+  free(var->var_name);
+  free(var);
 }
 
 

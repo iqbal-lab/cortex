@@ -926,7 +926,6 @@ Colour:	MeanReadLen	TotalSeq
   // Since none of the colours except colour 3 has any coverage AT ALL on branch1, I simply
   // cannot accept a genotype call which is het or hom_one for those colours
 
-  CU_ASSERT(annovar.genotype[0]!=hom_one);
   CU_ASSERT(annovar.genotype[1]!=hom_one);
   CU_ASSERT(annovar.genotype[2]!=hom_one);
   //leaving out colour 3
