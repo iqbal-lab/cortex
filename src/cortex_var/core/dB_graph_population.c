@@ -11139,8 +11139,8 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
       
       print_ultra_minimal_fasta_from_path(fout,name,var->len_flank5p,
 					  var->flank5p[0],               var->flank5p_or[0],			
-					  var->flank5p[var->len_flank5p],var->flank5p_or[var->len_flank5p],				
-					  var->seq5p, db_graph->kmer_size, false);	
+					  var->flank5p[var->len_flank5p-1],var->flank5p_or[var->len_flank5p -1], //this is basically because both the branches start at the same kmer, which is at the end of the 5p flank				
+					  var->seq5p, db_graph->kmer_size, false);
       
       //print branches
       sprintf(name,"branch_%s_1",var->var_name);
