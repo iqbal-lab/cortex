@@ -138,7 +138,7 @@ typedef struct {
 
 
 //functions for VariantBranchesAndFlanks
-VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p);
+VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p, int kmer_size);
 void free_VariantBranchesAndFlanks_object(VariantBranchesAndFlanks* var);
 
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 

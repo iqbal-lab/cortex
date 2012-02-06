@@ -144,21 +144,21 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
       KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
       if (kmer_window==NULL)
 	{
-	  printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
+	  printf("Failed to malloc kmer sliding window for genotyping. Exit.\n");
 	  exit(1);
 	}
       kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(cmd_line->max_read_length-db_graph->kmer_size-1));
       if (kmer_window->kmer==NULL)
 	{
-	  printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
+	  printf("Failed to malloc kmer_window->kmer for genotyping. Exit.\n");
 	  exit(1);
 	}
       kmer_window->nkmers=0;
       
-      VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(cmd_line->max_var_len+1, cmd_line->max_var_len+1, cmd_line->max_var_len+1, cmd_line->max_var_len+1);
+      VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(cmd_line->max_var_len+1, cmd_line->max_var_len+1, cmd_line->max_var_len+1, cmd_line->max_var_len+1, db_graph->kmer_size);
       if (var==NULL)
 	{
-	  printf("Abort - unable to allocate memory for buffers for reading callfile - either sever oom conditions or you have specified very veyr large max_var_len\n");
+	  printf("Abort - unable to allocate memory for buffers for reading callfile - either sever oom conditions or you have specified very very large max_var_len\n");
 	  exit(1);
 	}
       //end of initialisation 
@@ -175,8 +175,11 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 	{
 	  ret = read_next_variant_from_full_flank_file(fp, cmd_line->max_read_length,
 						       var, db_graph, &gt_file_reader, seq, seq_inc_prev_kmer, kmer_window);
-	  print_call_given_var_and_modelinfo(var, fout, model_info, cmd_line->which_caller_was_used_for_calls_to_be_genotyped, db_graph,
-					     print_whatever_extra_variant_info);
+	  if (ret==1)
+	    {
+	      print_call_given_var_and_modelinfo(var, fout, model_info, cmd_line->which_caller_was_used_for_calls_to_be_genotyped, db_graph,
+						 print_whatever_extra_variant_info);
+	    }
 	}
     }
 }
@@ -717,7 +720,7 @@ int main(int argc, char **argv){
       long long* readlen_distrib=(long long*) malloc(sizeof(long long) * (cmd_line.max_read_length+1));
       long long** readlen_distrib_ptrs = (long long**) malloc(sizeof(long long*) * (cmd_line.max_read_length+1));
 
-      if (readlen_distrib==NULL)
+      if ( (readlen_distrib==NULL) || (readlen_distrib_ptrs==NULL) )
 	{
 	  printf("Unable to malloc array to hold readlen distirbution!Exit.\n");
 	  exit(1);
@@ -740,23 +743,7 @@ int main(int argc, char **argv){
 								    cmd_line.max_read_length, 0, db_graph);
 
       //update the graph info object
-      if (cmd_line.format_of_input_seq==FASTQ)
-	{
-	  graph_info_update_mean_readlen_and_total_seq(&db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line.max_read_length+1)), bases_pass_filters_and_loaded);
-	}
-      else//for FASTA we do not get read length distribution
-	{
-	  printf("When binaries are built, Cortex calculates the legnth distribution of reads\n");
-	  printf("after quality filters, Ns, PCR duplicates, homopolymer filters have been taked into account\n");
-	  printf("This data is saved in the binary header, if you dump a binary file.\n");
-	  printf("However Cortex does not calculate mean read length of input data if it is FASTA\n");
-	  printf("These stats are primarily used for \"real\" data from fastq files\n");
-	  printf("Since you have used fasta, we just use the value you entered for --max_read_len and log that in the binary header as the read length\n");
-	  printf("Set mean read len in colour 0 to %d\n", cmd_line.max_read_length);
-	  graph_info_set_mean_readlen(&db_graph_info, 0, cmd_line.max_read_length);
-	  graph_info_increment_seq(&db_graph_info, 0, bases_pass_filters_and_loaded);
-	}
-
+      graph_info_update_mean_readlen_and_total_seq(&db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line.max_read_length+1)), bases_pass_filters_and_loaded);
 
 
       //cleanup marks left on nodes by loading process (for PE reads)
@@ -764,16 +751,9 @@ int main(int argc, char **argv){
 
 
       timestamp();
-      if (cmd_line.format_of_input_seq==FASTQ)
-	{
-	  printf("Fastq data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\nMean read length after filters applied:%d\n", 
-		 bases_parsed, bases_pass_filters_and_loaded, db_graph_info.mean_read_length[0]);
-	}
-      else
-	{
-	  printf("Fasta data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\n", 
-		 bases_parsed, bases_pass_filters_and_loaded);
-	}
+      printf("Fastq data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\nMean read length after filters applied:%d\n", 
+	     bases_parsed, bases_pass_filters_and_loaded, db_graph_info.mean_read_length[0]);
+
 
       if (cmd_line.dump_readlen_distrib==true)
 	{

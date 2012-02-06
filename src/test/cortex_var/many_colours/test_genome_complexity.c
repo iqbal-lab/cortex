@@ -35,7 +35,7 @@ void test_count_reads_where_snp_makes_clean_bubble1()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_population_as_fasta("../data/test/genome_complexity/pop_first_test", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/genome_complexity/pop_first_test", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
 
 

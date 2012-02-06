@@ -200,7 +200,7 @@ void build_and_save_temp_binaries(char* filelist_binaries,
   long long seq_loaded=0;
   int max_read_length=2000;
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(first_allele_net_fasta,
-								     &seq_read, &seq_loaded,&bad_reads, &dup_reads, max_read_length, 
+								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,0);
   char bin1[100];
   bin1[0]='\0';
@@ -210,7 +210,7 @@ void build_and_save_temp_binaries(char* filelist_binaries,
 
 
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(second_allele_net_fasta,
-								     &seq_read, &seq_loaded,&bad_reads, &dup_reads, max_read_length, 
+								     &seq_read, &seq_loaded,NULL, &bad_reads, &dup_reads, max_read_length, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,0);
   char bin2[100];
   bin2[0]='\0';
@@ -272,11 +272,11 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   long long seq_loaded=0;
   int max_read_length=2000;
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(fasta_allele1,
-								     &seq_read, &seq_loaded,&bad_reads, &dup_reads, max_read_length, 
+								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,0);
 
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(fasta_allele2,
-								     &seq_read, &seq_loaded,&bad_reads, &dup_reads, max_read_length, 
+								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,0);
 
   //now we don't want to load the whole of the rest of the genome - just to annotate these nodes with whether they touch the rest of the genome,
@@ -284,7 +284,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 
   dBGraph * temp_db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(fasta_genome_minus_site, 
-  								     &seq_read, &seq_loaded,&bad_reads, &dup_reads, max_read_length, 
+  								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
   								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,temp_db_graph, individual_edge_array,0);
   GraphInfo temp_db_graph_info;
   graph_info_set_seq(&temp_db_graph_info, 0, 1);//unnecessary - never used

@@ -120,7 +120,7 @@ void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, b
 	    }
 	  else if (format==FASTA)
 	    {
-	      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(filename,&single_seq_bases_read, &single_seq_bases_loaded,
+	      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(filename,&single_seq_bases_read, &single_seq_bases_loaded,readlen_count_array,
 										 &bad_se_reads, &dup_se_reads, max_read_length, 
 										 remv_dups_se,break_homopolymers, homopol_limit, 
 										 db_graph, individual_edge_array, colour);
@@ -261,7 +261,7 @@ void  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(c
 
 //this routine supports big fasta entries (chromosome length for example)
 
-void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded,
+void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded,  long long** readlen_count_array,
 									long long * bad_reads, long long* dup_reads, int max_chunk_length, 
 									boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, 
 									dBGraph* db_graph, EdgeArrayType type, int index)
@@ -286,10 +286,10 @@ void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fi
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  //pass NULL in instead of an array for read length distribution - do not support getting read-length distribution for fasta
-  load_seq_data_into_graph_of_specific_person_or_pop(fp,bases_read, bases_pass_filters_and_loaded,NULL,
-							    &file_reader,bad_reads,0,dup_reads, max_chunk_length,remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-							    db_graph, type, index);
+  //if you pass NULL in instead of an array for read length distribution - then you do not get the read-length distribution
+  load_seq_data_into_graph_of_specific_person_or_pop(fp,bases_read, bases_pass_filters_and_loaded,readlen_count_array,
+						     &file_reader,bad_reads,0,dup_reads, max_chunk_length,remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
+						     db_graph, type, index);
   
   fclose(fp);
 
@@ -1270,7 +1270,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 // Only used for test code
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
-void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded,  long long* bad_reads, dBGraph* db_graph)
+void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded,  long long* bad_reads, dBGraph* db_graph, long long** readlen_count_array)
 {
 
   FILE* fp = fopen(filename, "r");
@@ -1303,7 +1303,8 @@ void load_population_as_fasta(char* filename, long long* bases_read, long long* 
 
       //printf("About to try and load fasta for this person %s\n",line);
 
-      load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, bases_read, bases_loaded, bad_reads, db_graph, people_so_far-1);
+      load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, bases_read, bases_loaded, readlen_count_array,
+										       bad_reads, db_graph, people_so_far-1);
 
 
     }
@@ -1319,7 +1320,7 @@ void load_population_as_fasta(char* filename, long long* bases_read, long long* 
 //index tells you which person within a population it is
 //bases_read is passed in to find out how much sequence there was in the files read-in.
 //bases_loaded is passed in to find out how much sequence passed filters (qual, PCR dup, homopol) and was loaded into the graph
-void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bases_read, long long* bases_loaded, 
+void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bases_read, long long* bases_loaded, long long** readlen_count_array,
 										      long long* bad_reads, dBGraph* db_graph, int index)
 {
   FILE* fptr = fopen(f_name, "r");
@@ -1346,7 +1347,9 @@ void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_
       if ((p = strchr(line, '\n')) != NULL)
 	*p = '\0';
       
-      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(line, bases_read, bases_loaded,  bad_reads, &dup_reads, MAX_READ_LENGTH, 
+      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(line, bases_read, bases_loaded,  
+									 readlen_count_array,
+									 bad_reads, &dup_reads, MAX_READ_LENGTH, 
 									 remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 									 db_graph, individual_edge_array, index);
       
@@ -2467,13 +2470,20 @@ int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length
 
   //get next read as a C string and put it in seq. Entry_length is the length of the read.
   int entry_length = file_reader(fp,seq,max_read_length,*full_entry,full_entry);
-  //turn it into a sliding window 
-  int nkmers = get_single_kmer_sliding_window_from_sequence(seq->seq,entry_length, db_graph->kmer_size, kmer_window, db_graph);
-  //work through the sliding window and put nodes into the array you pass in. Note this may find NULL nodes if the kmer is not in the graph
-  load_kmers_from_sliding_window_into_array(kmer_window, seq, db_graph, array_nodes, array_orientations, 
-					    max_read_length-db_graph->kmer_size+1, require_nodes_to_lie_in_given_colour, colour);
+  if (entry_length>0)
+    {
+      //turn it into a sliding window 
+      int nkmers = get_single_kmer_sliding_window_from_sequence(seq->seq,entry_length, db_graph->kmer_size, kmer_window, db_graph);
+      //work through the sliding window and put nodes into the array you pass in. Note this may find NULL nodes if the kmer is not in the graph
+      load_kmers_from_sliding_window_into_array(kmer_window, seq, db_graph, array_nodes, array_orientations, 
+						max_read_length-db_graph->kmer_size+1, require_nodes_to_lie_in_given_colour, colour);
 
-  return nkmers;
+      return nkmers;
+    }
+  else
+    {
+      return 0;
+    }
 }
 
 

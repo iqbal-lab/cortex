@@ -109,11 +109,13 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   long long seq_read=0;
   long long seq_loaded=0;
   int max_chunk_length = 30;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/example1_for_testing_genotyping.allele1.fasta",&seq_read, &seq_loaded,&bad_reads, &dup_reads, max_chunk_length, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/example1_for_testing_genotyping.allele1.fasta",&seq_read, &seq_loaded,NULL,
+								     &bad_reads, &dup_reads, max_chunk_length, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
   
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/example1_for_testing_genotyping.allele2.fasta",&seq_read, &seq_loaded,&bad_reads, &dup_reads, max_chunk_length, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/example1_for_testing_genotyping.allele2.fasta",&seq_read, &seq_loaded,NULL,
+								     &bad_reads, &dup_reads, max_chunk_length, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
 

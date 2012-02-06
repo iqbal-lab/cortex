@@ -56,7 +56,7 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 44);
   CU_ASSERT(seq_read == 44);
@@ -208,7 +208,7 @@ void test_take_three_people_each_with_one_read_and_find_variants()
 
   long long seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/three_indiv_simple/three_individuals_simple.txt", &bad_reads, hash_table);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/three_indiv_simple/three_individuals_simple.txt", &bad_reads, hash_table, NULL);
 
   //printf("take 3 people test Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 55);
@@ -359,7 +359,7 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
 
   long long seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/two_people.txt",  &bad_reads,hash_table);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/two_people.txt",  &bad_reads,hash_table, NULL);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 677);
   CU_ASSERT(bad_reads ==0);

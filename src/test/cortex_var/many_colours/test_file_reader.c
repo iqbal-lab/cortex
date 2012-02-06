@@ -1829,7 +1829,7 @@ void test_load_seq_into_array()
 
   long long seq_loaded=0;
   long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson1really", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson1really", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
   
   //yes, only 4 bases in this fasta!
   CU_ASSERT(seq_read==4);
@@ -1927,7 +1927,7 @@ void test_load_seq_into_array()
 
   seq_read=0;
   seq_loaded = 0;
-  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson2really", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson2really", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
   CU_ASSERT(seq_read==4);
   CU_ASSERT(seq_loaded==0);
   fptr = fopen("../data/test/pop_graph/simple2.fasta", "r");
@@ -1998,7 +1998,7 @@ void test_load_seq_into_array()
 
   seq_read=0;
   seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson3really", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson3really", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
   CU_ASSERT(seq_read==11);
   CU_ASSERT(seq_loaded==0);
   fptr = fopen("../data/test/pop_graph/simple3.fasta", "r");
@@ -2077,7 +2077,7 @@ void test_load_seq_into_array()
   // Example 4: fasta file contains: ACGCGCGTTTACG
   seq_read=0;
   seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson4really", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson4really", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(seq_read==13);
   
@@ -2281,7 +2281,7 @@ void test_load_seq_into_array()
   seq_read=0;
   seq_loaded=0;
 
-  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson5really", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson5really", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
   CU_ASSERT(seq_loaded==360);
   CU_ASSERT(seq_read==360);
   fptr = fopen("../data/test/pop_graph/simple5.fasta", "r");
@@ -2407,7 +2407,7 @@ void test_load_seq_into_array()
   seq_read=0;
   seq_loaded=0;
 
-  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson6really", &seq_read, &seq_loaded,&bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson6really", &seq_read, &seq_loaded,&bad_reads, db_graph, NULL);
   CU_ASSERT(seq_read==68);
   CU_ASSERT(seq_loaded==67);//one N
   fptr = fopen("../data/test/pop_graph/simple6.fasta", "r");
@@ -2489,7 +2489,7 @@ void test_load_seq_into_array()
 
   seq_read=0;
   seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson7really", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson7really", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
   CU_ASSERT(seq_read==72);
   CU_ASSERT(seq_loaded==67);//5 N's
   fptr = fopen("../data/test/pop_graph/simple7.fasta", "r");
@@ -2634,7 +2634,7 @@ void test_load_seq_into_array()
 
   seq_read=0;
   seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson8really", &seq_read, &seq_loaded,&bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson8really", &seq_read, &seq_loaded,&bad_reads, db_graph, NULL);
   CU_ASSERT(seq_read==10);
   CU_ASSERT(seq_loaded==6);
   fptr = fopen("../data/test/pop_graph/simple8.fasta", "r");
@@ -2695,7 +2695,7 @@ void test_load_seq_into_array()
 
   seq_read=0;
   seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson9really", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson9really", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
   CU_ASSERT(seq_read==22);
   CU_ASSERT(seq_loaded==5);//kmer is 5 and there are many Ns
 
@@ -2831,7 +2831,7 @@ void test_load_seq_into_array()
 
   seq_read=0;
   seq_loaded = 0;
-  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson10really", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson10really", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
   CU_ASSERT(seq_read==16);
   CU_ASSERT(seq_loaded==16);
   fptr = fopen("../data/test/pop_graph/simple10.fasta", "r");
@@ -3052,7 +3052,7 @@ void test_load_seq_into_array()
 
   seq_read=0;
   seq_loaded = 0;
-  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson11really", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/simplepeople_onlyperson11really", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
   CU_ASSERT(seq_read==1140);
   CU_ASSERT(seq_loaded==1140);
   fptr = fopen("../data/test/pop_graph/simple11.fasta", "r");
