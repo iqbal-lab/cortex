@@ -1,0 +1,22 @@
+I wanted a small dataset I could repeatedly test. So, took human MT chrom, and generated 100 SNPs
+
+So this is what I ran:
+ perl generate_haplotypes.pl -c Homo_sapiens.GRCh37.60.dna.chromosome.19.excerpt.fa -s 100 -n 2 -k 31
+
+and then generate reads
+
+perl  generate_reads.pl -f haplotype_2 -r 100 -c 30 -i 200 -s 10 -m 100000000000000 -e 10000000000 -l 31019
+open file haplotype_2
+entry:MT length:16568 coverage:30 read length: 100
+generate 4970 read (read length 100) for 30 X coverage
+print reads - introduce errors in the body (first 80%) of a read every 1250000000000 reads (100000000000000)
+            - introduce errors in the end of a read every 500000000 reads (10000000000)
+
+etc
+
+then renamed the files
+
+
+
+So this is  a nice smal dataset
+100 SNPs, PD caller only calls 31 at k=31, BC calls 80 of them
