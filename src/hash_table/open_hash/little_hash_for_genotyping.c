@@ -205,6 +205,17 @@ void little_hash_table_traverse_passing_3ints_and_big_graph_path(void (*f)(Genot
   }
 }
 
+void little_hash_table_traverse_passing_big_graph_path(void (*f)(GenotypingElement *, dBNode**, Orientation*, Nucleotide*, char*, int),
+								 LittleHashTable * little_hash_table, 
+								 dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len){
+  long long i;
+  for(i=0;i<little_hash_table->number_buckets * little_hash_table->bucket_size;i++){
+    if (!db_genotyping_node_check_status(&little_hash_table->table[i],unassigned)){
+      f(&little_hash_table->table[i], p_n, p_o, p_lab, p_str, len);
+    }
+  }
+}
+
 
 GenotypingElement * little_hash_table_find(Key key, LittleHashTable * little_hash_table)
 {

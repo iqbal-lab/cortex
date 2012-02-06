@@ -68,7 +68,9 @@ void little_hash_table_traverse_passing_3ints_and_big_graph_path(void (*f)(Genot
 								 LittleHashTable * little_hash_table, int* num1, int* num2, int* num3, 
 								 dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len);
 
-
+void little_hash_table_traverse_passing_big_graph_path(void (*f)(GenotypingElement *, dBNode**, Orientation*, Nucleotide*, char*, int),
+						       LittleHashTable * little_hash_table, 
+						       dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len);
 //if the element is not in table create an element with key and adds it
 GenotypingElement * little_hash_table_find_or_insert(Key key, boolean * found, LittleHashTable * little_hash_table);
 GenotypingElement * little_hash_table_insert(Key key, LittleHashTable * little_hash_table);

@@ -1716,7 +1716,7 @@ int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_
 											      get_colour, get_covg);
     if (length==limit)
       {
-	printf("Warning. You implicitly specified a maximum expected length of supernode %d, probably when you set --max_var_len. Cortex has just encountered a longer supernode. Continuing, but I advise rerunning with a longer --max_var_len");
+	printf("Warning. You implicitly specified a maximum expected length of supernode %d, probably when you set --max_var_len. Cortex has just encountered a longer supernode. Continuing, but I advise rerunning with a longer --max_var_len", limit);
       }
   }
   else{
@@ -7786,7 +7786,16 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 
   //need to malloc our var object as could be really big.
-  VariantBranchesAndFlanks var; //we will reuse this
+  VariantBranchesAndFlanks*  var = 
+    alloc_VariantBranchesAndFlanks_object(max_expected_size_of_supernode+ db_graph->kmer_size, 
+					  length_of_arrays, 
+					  max_expected_size_of_supernode+ db_graph->kmer_size, 
+					  max_expected_size_of_supernode+ db_graph->kmer_size);
+  if (var==NULL)
+    {
+      printf("Out of memory - cannt malloc my variant object. Either you have set a MASSIVE max_var_len, or your machine is out of memory\n");
+      exit(1);
+    }
 
 
   // ***********************************************************
@@ -8778,6 +8787,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		}
 	      
 
+	      /*
 	      set_variant_branches_and_flanks(&var, 
 					      &chrom_path_array[start_node_index], 
 					      &chrom_orientation_array[start_node_index], 
@@ -8792,12 +8802,37 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 					      &chrom_orientation_array[start_of_3prime_anchor_in_chrom],
 					      length_3p_flank, 
 					      first);//first tells it that the trusted branch is the reference
+	      */
+
+	      Orientation dir_traversing_sup=forward;
+	      if (traverse_sup_left_to_right==false)
+		{
+		  dir_traversing_sup=reverse;
+		}
+	      set_alloced_variant_branches_and_flanks_allowing_inputargs_in_either_order(var, 
+											 &chrom_path_array[start_node_index], 
+											 &chrom_orientation_array[start_node_index], 
+											 length_5p_flank,
+											 forward,
+											 &chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome-1], 
+											 &chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome-1], 
+											 len_trusted_branch,
+											 forward,
+											 &current_supernode[left_most_coord_of_var_branch_in_supernode_array-1],
+											 &curr_sup_orientations[left_most_coord_of_var_branch_in_supernode_array-1],
+											 len_branch2,
+											 dir_traversing_sup,
+											 &chrom_path_array[start_of_3prime_anchor_in_chrom-1],
+											 &chrom_orientation_array[start_of_3prime_anchor_in_chrom-1],
+											 length_3p_flank, 
+											 forward,
+											 first);//first tells it §that the trusted branch is the reference
 
 
-	      if (condition(&var, ref_colour, get_colour, get_covg)==true)
+	      if (condition(var, ref_colour, get_colour, get_covg)==true)
 		{
 		  //in some situations you want to mark all branches of variants for future use after this function returns
-		  action_for_branches_of_called_variants(&var);
+		  action_for_branches_of_called_variants(var);
 
 		  if (output_file != NULL)
 		    {
@@ -8806,7 +8841,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		      AnnotatedPutativeVariant annovar;
 		      if (model_info!=NULL)
 			{
-			  initialise_putative_variant(&annovar, model_info, &var, SimplePathDivergenceCaller, db_graph->kmer_size,
+			  initialise_putative_variant(&annovar, model_info, var, SimplePathDivergenceCaller, db_graph->kmer_size,
 						      assump, gwp, db_graph, little_db_graph);
 			  
 			  if (model_info->expt_type != Unspecified)
@@ -9036,6 +9071,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   free(ptrs_to_covgs_in_variant_not_trusted);
   free(covgs_in_variant_not_trusted);
   free(covgs_in_trusted_not_variant);
+  free_VariantBranchesAndFlanks_object(var);
   //  free(covgs_of_indiv_on_trusted_path);
   //free(covgs_of_ref_on_trusted_path);
   //free(covgs_of_indiv_on_variant_path);

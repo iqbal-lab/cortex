@@ -1205,6 +1205,10 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	    printf("Unable to find node in main graph correspinding to a node in the littel graph - impossible??\n");
 	    exit(1);
 	  }
+	else if (db_node_check_status(node_corresponding_to_e, visited)==true)
+	  {
+	    return;
+	  }
 	int length = db_graph_supernode_for_specific_person_or_pop(node_corresponding_to_e,max_len,
 								   &db_node_action_set_status_visited,
 								   p_nodes,p_or,p_lab, p_str,
@@ -1228,6 +1232,39 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   }
 
 
+  void reset_nodes_in_main_graph_to_un_visited(GenotypingElement* e, dBNode** p_nodes, Orientation* p_or, Nucleotide* p_lab, char* p_str, int max_len)
+  {
+
+    if (db_genotyping_node_check_status(e, in_desired_genotype)==true)
+      {
+      }
+    else if ( (db_genotyping_node_get_coverage(e, individual_edge_array,colour_indiv)>0) && (check_covg_in_ref_with_site_excised(e)==0) )
+      {
+	double avg_coverage=0;
+	int min=0; int max=0;
+	boolean is_cycle=false;
+	//get the whole supernode IN THE MAIN GRAPH. 
+	dBNode* node_corresponding_to_e = hash_table_find(&(e->kmer), db_graph);
+	if (node_corresponding_to_e==NULL)
+	  {
+	    printf("Unable to find node in main graph correspinding to a node in the littel graph - impossible??\n");
+	    exit(1);
+	  }
+	else 
+	  {
+	    if (db_node_check_status(node_corresponding_to_e, visited)==true)
+	      {
+		db_node_set_status(node_corresponding_to_e, none);
+	      }
+	  }
+
+      }
+    
+    return;
+  }
+
+
+
   
   
   
@@ -1246,9 +1283,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 							      p_nodes, p_orientations, p_labels, p_string, max_sup_len);
 
 
-  little_hash_table_traverse(&db_genotyping_node_action_set_status_none, little_db_graph); 
-  set_status_of_genotyping_nodes_in_branches(var, in_desired_genotype);
-  
+  //now go back one more time and un-set the visited flags you put on all those nodes in the main graph
+  little_hash_table_traverse_passing_big_graph_path(&reset_nodes_in_main_graph_to_un_visited, little_db_graph, p_nodes, p_orientations, p_labels, p_string, max_sup_len);
 
 
   // Errors on union of two alleles occur as a Poisson process with rate = sequencing_error_rate_per_base * kmer * length of two alleles

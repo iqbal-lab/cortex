@@ -33,6 +33,228 @@
 #include <stdlib.h>
 #include <gsl_sf_gamma.h>
 
+VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p)
+{
+  VariantBranchesAndFlanks* var = (VariantBranchesAndFlanks*) malloc(sizeof(VariantBranchesAndFlanks));
+  if (var==NULL)
+    {
+      printf("Z1\n");
+      return var;
+    }
+  else
+    {
+      
+      var->flank5p      = (dBNode**) malloc(sizeof(dBNode*)*(len_5p));
+      if (var->flank5p==NULL) 
+	{
+      printf("Z2\n");
+	  return NULL;
+	}
+
+      var->one_allele   = (dBNode**) malloc(sizeof(dBNode*)*(len_br1));
+      if (var->one_allele==NULL) 
+	{
+      printf("Z3\n");
+	  free(var->flank5p);
+	  free(var);
+	  return NULL;
+	}
+
+      var->other_allele = (dBNode**) malloc(sizeof(dBNode*)*(len_br2));
+      if (var->other_allele==NULL) 
+	{
+      printf("Z4\n");
+	  free(var->flank5p);
+	  free(var->one_allele);
+	  free(var);
+	  return NULL;
+	}
+
+      var->flank3p      = (dBNode**) malloc(sizeof(dBNode*)*(len_3p));
+      if (var->flank3p==NULL) 
+	{
+      printf("Z5\n");
+	  free(var->flank5p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var);
+	  return NULL;
+	}
+
+      
+      var->flank5p_or    = (Orientation*) malloc(sizeof(Orientation) * len_5p);
+      if (var->flank5p_or==NULL)
+	{
+      printf("Z6\n");
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var);
+	  return NULL;
+	}
+       var->one_allele_or = (Orientation*) malloc(sizeof(Orientation) * len_br1);
+      if (var->one_allele_or==NULL)
+	{
+      printf("Z7\n");
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var->flank5p_or);
+	  free(var);
+	  return NULL;
+	}
+      var->other_allele_or = (Orientation*) malloc(sizeof(Orientation) * len_br2);
+      if (var->other_allele_or==NULL)
+	{
+	  printf("Z8\n");
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var);
+	  return NULL;
+	}
+      var->flank3p_or    = (Orientation*) malloc(sizeof(Orientation) * len_3p);
+      if (var->flank3p_or==NULL)
+	{
+      printf("Z9\n");
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var);
+	  return NULL;
+	}
+      
+      var->var_name=(char*) malloc(sizeof(char)*MAX_VARNAME_LEN);
+      if (var->var_name==NULL)
+	{
+      printf("Z10\n");
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var);
+	  
+	}
+      var->seq5p=(char*) malloc(sizeof(char)*len_5p);
+      if (var->seq5p==NULL)
+	{
+      printf("Z11\n");
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var->var_name);
+	  free(var);	  
+	}
+
+      var->seq_one=(char*) malloc(sizeof(char)*len_br1);
+      if (var->seq_one==NULL)
+	{
+      printf("Z12\n");
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var->var_name);
+	  free(var->seq5p);
+	  free(var);	  
+	}
+
+
+      var->seq_other=(char*) malloc(sizeof(char)*len_br2);
+      if (var->seq_other==NULL)
+	{
+      printf("Z13\n");
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var->var_name);
+	  free(var->seq5p);
+	  free(var->seq_one);
+	  free(var);	  
+	}
+
+      var->seq3p =(char*) malloc(sizeof(char)*len_3p);
+      if (var->seq3p==NULL)
+	{
+      printf("Z14\n");
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var->var_name);
+	  free(var->seq5p);
+	  free(var->seq_one);
+	  free(var->seq_other);
+	  free(var);	  
+	}
+
+
+
+      var->len_flank5p=0;
+      var->len_flank3p=0;
+      var->len_one_allele=0;
+      var->len_other_allele=0;
+      var->which = unknown;
+      var->var_name[0]='\0';
+      var->seq5p[0]='\0';
+      var->seq_one[0]='\0';
+      var->seq_other[0]='\0';
+      var->seq3p[0]='\0';
+
+      return var;
+    }
+}
+
+void free_VariantBranchesAndFlanks_object(VariantBranchesAndFlanks* var)
+{
+  free(var->flank5p);
+  free(var->flank3p);
+  free(var->one_allele);
+  free(var->other_allele);
+  free(var->flank5p_or);
+  free(var->flank3p_or);
+  free(var->one_allele_or);
+  free(var->other_allele_or);
+  free(var->seq5p);
+  free(var->seq_one);
+  free(var->seq_other);
+  free(var->seq3p);
+
+}
+
+
+
 //overkill, but allows the flanks and alleles all to be the same length - I don't want to have to pass around knowledge
 VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks(int len);
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
@@ -53,6 +275,99 @@ void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var,
   var->len_other_allele= len_other_allele;
   var->flank3p       =flank3p;
   var->flank3p_or    = flank3p_or;
+  var->len_flank3p   = len_flank3p;
+  var->which         = which;
+}
+
+// suppose branch1 was node1 node2 node3. normally yoiu give an aray of node*'s  starting at node1
+// this function allows you to pass in the array (node3, node2, node1) + the info that it is in reverse order
+void set_alloced_variant_branches_and_flanks_allowing_inputargs_in_either_order(VariantBranchesAndFlanks* var, 
+										dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,  Orientation arraydir_5p, 
+										dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, Orientation arraydir_one,
+										dBNode** other_allele, Orientation* other_allele_or, int len_other_allele, Orientation arraydir_other,
+										dBNode** flank3p,    Orientation* flank3p_or,    int len_flank3p, Orientation arraydir_3p,
+										WhichAlleleIsRef which)
+{
+  int i,j;
+  if (arraydir_5p==reverse)
+    {
+      j=0;
+      for (i=len_flank5p; i>=0; i--)
+	{
+	  var->flank5p[j]   =flank5p[i];
+	  var->flank5p_or[j]=flank5p_or[i];
+	  j++;
+	}
+    }
+  else
+    {
+      for (i=0; i<=len_flank5p; i++)
+	{
+	  var->flank5p[i]   =flank5p[i];
+          var->flank5p_or[i]=flank5p_or[i];
+	}
+    }
+  var->len_flank5p   = len_flank5p;
+
+  
+  if (arraydir_one==reverse)
+    {
+      j=0;
+      for (i=len_one_allele; i>=0; i--)
+	{
+	  var->one_allele[j]    = one_allele[i];
+	  var->one_allele_or[j] = one_allele_or[i];
+	  j++;
+	}
+    }
+  else
+    {
+      for (i=0; i<=len_one_allele; i++)
+	{
+	  var->one_allele[i]    = one_allele[i];
+	  var->one_allele_or[i] = one_allele_or[i];	  
+	}
+    }
+  var->len_one_allele= len_one_allele;
+
+  if (arraydir_other==reverse)
+    {
+      j=0;
+      for (i=len_other_allele; i>=0; i--)
+	{
+	  var->other_allele[j]    = other_allele[i];
+	  var->other_allele_or[j] = other_allele_or[i];
+	  j++;
+	}
+    }
+  else
+    {
+      for (i=len_other_allele; i>=0; i--)
+	{
+	  var->other_allele[i]    = other_allele[i];
+	  var->other_allele_or[i] = other_allele_or[i];
+	}      
+    }
+  var->len_other_allele= len_other_allele;
+
+  if (arraydir_3p==reverse)
+    {
+      j=0;
+      for (i=len_flank3p; i>=0; i--)
+	{
+	  var->flank3p[j]       =flank3p[i];
+	  var->flank3p_or[j]    =flank3p_or[i];
+	  j++;
+	}
+    }
+  else
+    {
+      for (i=len_flank3p; i>=0; i--)
+        {
+          var->flank3p[i]       =flank3p[i];
+          var->flank3p_or[i]    =flank3p_or[i];
+	}
+    }
   var->len_flank3p   = len_flank3p;
   var->which         = which;
 }

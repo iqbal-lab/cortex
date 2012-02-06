@@ -59,7 +59,7 @@ int  main()
   /* add the tests to the suites */
 
 
-  /*
+
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
     CU_cleanup_registry();
@@ -380,7 +380,7 @@ int  main()
 	return CU_get_error();
       }
  
-  */
+
 
      if (NULL == CU_add_test(pPopGraphSuite, "Regression test case 2 - genotyping of a PD call", regression_test_2_genotyping_of_PD_SNP_call))
     {
