@@ -1143,10 +1143,11 @@ Covg in indiv:
       printf("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example1_just_alleles.fasta\n");
       exit(1);
     }
-  int num_kmers_br1 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch1, branch1_o, false, &file_reader_fasta, 
+  boolean full_entry=true;
+  int num_kmers_br1 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch1, branch1_o, false, &full_entry, &file_reader_fasta, 
 								      seq, kmer_window, db_graph, 0);
 
-  int num_kmers_br2 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch2, branch2_o, false, &file_reader_fasta, 
+  int num_kmers_br2 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch2, branch2_o, false, &full_entry, &file_reader_fasta, 
 								      seq, kmer_window, db_graph, 0);
 
 
@@ -1262,10 +1263,10 @@ Colour 0 = reference
       printf("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example2_just_alleles.fasta\n");
       exit(1);
     }
-  num_kmers_br1 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch1, branch1_o, false, &file_reader_fasta, 
+  num_kmers_br1 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch1, branch1_o, false, &full_entry,&file_reader_fasta, 
 								      seq, kmer_window, db_graph, 0);
 
-  num_kmers_br2 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch2, branch2_o, false, &file_reader_fasta, 
+  num_kmers_br2 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch2, branch2_o, false, &full_entry,&file_reader_fasta, 
 								      seq, kmer_window, db_graph, 0);
 
 
