@@ -517,7 +517,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						char** return_flank3p_array, int** return_variant_start_coord,
 						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
 						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout), GraphAndModelInfo* model_info
+						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout), GraphAndModelInfo* model_info,
+						AssumptionsOnGraphCleaning assump
 						);
 
 boolean make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours(VariantBranchesAndFlanks* var, 
@@ -539,7 +540,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 													    Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										       void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-										       GraphAndModelInfo* model_info, int start_variant_numbering_with_this
+										       GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump,int start_variant_numbering_with_this
 										       );
 
 
@@ -553,10 +554,11 @@ int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(
 										 char** return_flank3p_array, int** return_variant_start_coord,
 										 boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
 												      Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
-										 void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-										 GraphAndModelInfo* model_info, int start_numbering_vars_from_this_number
-										 );
+										void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
+										void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+										GraphAndModelInfo* model_info, 
+										AssumptionsOnGraphCleaning assump, int start_numbering_vars_from_this_number
+										);
 
 boolean condition_always_true(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
 			      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv);

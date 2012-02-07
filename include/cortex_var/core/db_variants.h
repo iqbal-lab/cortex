@@ -30,9 +30,12 @@
 #ifndef DB_VARIANTS_H_
 #define DB_VARIANTS_H_
 
-#include <element.h>
-#include <dB_graph.h>
 #include <graph_info.h>
+#include <model_info.h>
+#include <genotyping_element.h>
+#include <element.h>
+#include <experiment.h>
+#include <dB_graph.h>
 #include <experiment.h>
 
 #define MAX_VARNAME_LEN 200
@@ -100,6 +103,23 @@ typedef struct{
   char* seq3p;
 } VariantBranchesAndFlanks;
 
+
+typedef struct{
+  GenotypingElement** flank5p;
+  Orientation* flank5p_or;
+  int len_flank5p;
+  GenotypingElement** one_allele; 
+  Orientation* one_allele_or; 
+  int len_one_allele;
+  GenotypingElement** other_allele; 
+  Orientation* other_allele_or;
+  int len_other_allele;
+  GenotypingElement** flank3p;    
+  Orientation* flank3p_or;
+  int len_flank3p;
+  WhichAlleleIsRef which;
+} GenotypingVariantBranchesAndFlanks;
+
 typedef enum{
   BubbleCaller=0,
   SimplePathDivergenceCaller=1,
@@ -138,8 +158,18 @@ typedef struct {
 
 
 //functions for VariantBranchesAndFlanks
+
 VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p, int kmer_size);
+
 void free_VariantBranchesAndFlanks_object(VariantBranchesAndFlanks* var);
+
+
+void set_alloced_variant_branches_and_flanks_allowing_inputargs_in_either_order(VariantBranchesAndFlanks* var, 
+										dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,  Orientation arraydir_5p, 
+										dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, Orientation arraydir_one,
+										dBNode** other_allele, Orientation* other_allele_or, int len_other_allele, Orientation arraydir_other,
+										dBNode** flank3p,    Orientation* flank3p_or,    int len_flank3p, Orientation arraydir_3p,
+										WhichAlleleIsRef which);
 
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
@@ -152,8 +182,20 @@ void set_variant_branches_but_flanks_to_null(VariantBranchesAndFlanks* var,
 					     dBNode** other_allele, Orientation* other_allele_or, int len_other_allele, 
 					     WhichAlleleIsRef which);
 
-void set_status_of_nodes_in_branches(VariantBranchesAndFlanks* var, NodeStatus status);
 
+void set_genotyping_variant_branches_and_flanks(GenotypingVariantBranchesAndFlanks* var, 
+						GenotypingElement** flank5p,    Orientation* flank5p_or,    int len_flank5p,
+						GenotypingElement** one_allele, Orientation* one_allele_or, int len_one_allele, 
+						GenotypingElement** other_allele, Orientation* other_allele_or, int len_other_allele, 
+						GenotypingElement** flank3p,    Orientation* flank3p_or,    int len_flank3p, WhichAlleleIsRef which);
+
+void set_genotyping_variant_branches_but_flanks_to_null(GenotypingVariantBranchesAndFlanks* var, 
+							GenotypingElement** one_allele, Orientation* one_allele_or, int len_one_allele, 
+							GenotypingElement** other_allele, Orientation* other_allele_or, int len_other_allele, 
+							WhichAlleleIsRef which);
+
+void set_status_of_nodes_in_branches(VariantBranchesAndFlanks* var, NodeStatus status);
+void set_status_of_genotyping_nodes_in_branches(GenotypingVariantBranchesAndFlanks* var, NodeStatus status);
 
 void exact_copy_variant_branches_and_flanks(VariantBranchesAndFlanks copy_to, const VariantBranchesAndFlanks copy_from);
 void copy_variant_branches_and_flanks_switching_branches(VariantBranchesAndFlanks copy_to, const VariantBranchesAndFlanks copy_from);
@@ -171,14 +213,16 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
 void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl);
 void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour);
 void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour);
+
+
+
+
 double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2, 
 									double theta_one, double theta_other, int kmer);
 
 
 
-//set up of Putative Variant object
-boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, VariantBranchesAndFlanks* var, DiscoveryMethod caller,
-				    GraphInfo* ginfo, double seq_error_per_base, long long genome_length, int kmer, int ref_colour, ExperimentType type);
+
 long long get_big_theta(AnnotatedPutativeVariant* annovar);
 
 

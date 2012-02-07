@@ -313,7 +313,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 													    0, NULL, NULL, NULL, NULL, NULL, 
 													    &make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours, 
 													    &db_variant_action_do_nothing,
-													    print_some_extra_var_info, model_info, global_var_counter+1);
+													    print_some_extra_var_info, model_info,  AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, global_var_counter+1);
 	  
 	  
 	  fclose(chrom_fptr);
@@ -357,7 +357,8 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 														0, NULL, NULL, NULL, NULL, NULL, 
 														&make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours, //just always returns true
 														&db_variant_action_do_nothing,
-														print_some_extra_var_info, model_info, global_var_counter+1);
+														print_some_extra_var_info, model_info, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice,
+														global_var_counter+1);
 	  
 	  
 	      fclose(chrom_fptr);

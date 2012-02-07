@@ -49,5 +49,10 @@ typedef enum
     MetaGenomic                                                = 10,*/
   } ExperimentType;
 
+typedef enum {
+  AssumeUncleaned                                = 1,
+  AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice = 2,//because we cleaned off stuff that occurred only once
+  NoIdeaWhatCleaning                             =3
+}AssumptionsOnGraphCleaning;
 
 #endif

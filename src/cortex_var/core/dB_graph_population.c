@@ -45,6 +45,7 @@
 #include <math.h> //we need both!
 #include <gsl_sf_gamma.h>
 #include <db_variants.h>
+#include <db_complex_genotyping.h>
 
 void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 						      char * name,
@@ -1724,7 +1725,10 @@ int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_
 											      supernode_str,avg_coverage,min,max,
 											      is_cycle,db_graph, 
 											      get_colour, get_covg);
-    
+    if (length==limit)
+      {
+	printf("Warning. You implicitly specified a maximum expected length of supernode %d, probably when you set --max_var_len. Cortex has just encountered a longer supernode. Continuing, but I advise rerunning with a longer --max_var_len", limit);
+      }
   }
   else{
     length = db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(node,forward,
@@ -2540,6 +2544,10 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 						db_graph->kmer_size, -1, Unspecified);
 		    
 		  }
+
+		initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, db_graph->kmer_size, NoIdeaWhatCleaning, NULL, NULL, NULL);
+
+
 		if (annovar.too_short==false)
 		  {
 		    
@@ -6913,10 +6921,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
 						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-						GraphAndModelInfo* model_info
+						GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump
 						)
 {
-
 
   int num_variants_found=0;
   
@@ -6960,7 +6967,30 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   Orientation* curr_sup_orientations   = (Orientation*) malloc(sizeof(Orientation)*(max_expected_size_of_supernode+ db_graph->kmer_size));
   Nucleotide*  curr_sup_labels         = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_expected_size_of_supernode+ db_graph->kmer_size));
   char*        supernode_string        = (char*) malloc(sizeof(char)*((max_expected_size_of_supernode+ db_graph->kmer_size)+1)); //+1 for \0
+  
+  int working_colour1 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS;
+  int working_colour2 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+1;
 
+  GenotypingWorkingPackage* gwp = alloc_genotyping_work_package(2*max_anchor_span, max_expected_size_of_supernode, working_colour1, working_colour2);
+
+  //number of kmers we want to support in the little hash = 2* (max possible kmers in the two alleles) = 2* (2 * max_allele_length) = 4*max_anchor_span
+  int little_width =100;
+  int little_height = (int) (log((float) (4*max_anchor_span)/100)/log(2))+1;
+  int little_retries=20;
+  LittleHashTable* little_db_graph = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
+  if (little_db_graph==NULL)
+    {
+      printf("Something very wrong here. Cant even alloc a tiny toy hash table\n");
+      exit(1);
+    }
+
+  
+  if ( (chrom_path_array==NULL) || (chrom_orientation_array==NULL) || (chrom_labels==NULL) || (chrom_string==NULL)
+       || (current_supernode==NULL) || (curr_sup_orientations==NULL) || (curr_sup_labels==NULL) || (supernode_string==NULL) || (gwp==NULL) )
+    {
+      printf("Cannot malloc arrays for PD calls. give up. Your machine is low on memory or you have asked for ridiculously large variants\n");
+      exit(1);
+    }
 
   int n;
   for (n=0; n<length_of_arrays; n++)
@@ -8122,8 +8152,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      AnnotatedPutativeVariant annovar;
 		      if (model_info!=NULL)
 			{
-			  initialise_putative_variant(&annovar, &var, SimplePathDivergenceCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
-						      db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
+			  initialise_putative_variant(&annovar, model_info, &var, SimplePathDivergenceCaller, db_graph->kmer_size,
+						      assump, gwp, db_graph, little_db_graph);
 			  
 			  
 			  if (model_info->expt_type != Unspecified)
@@ -8334,7 +8364,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
   //free malloc-ed variables
-
+  free_genotyping_work_package(gwp);
   free(chrom_path_array);
   free(chrom_orientation_array);
   free(chrom_labels);
@@ -8358,6 +8388,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   //free(covgs_of_ref_on_variant_path);
   free(working_array1);
   free(working_array2);
+  little_hash_table_free(&little_db_graph);
   return num_variants_found;
 
 
@@ -8403,7 +8434,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 													    Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										       void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-										       GraphAndModelInfo* model_info,
+										       GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump,
 										       int start_variant_numbering_with_this
 										       )
 {
@@ -8452,6 +8483,28 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   Nucleotide*  curr_sup_labels         = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_expected_size_of_supernode+ db_graph->kmer_size));
   char*        supernode_string        = (char*) malloc(sizeof(char)*((max_expected_size_of_supernode+ db_graph->kmer_size)+1)); //+1 for \0
 
+  int working_colour1 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS;
+  int working_colour2 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+1;
+
+  GenotypingWorkingPackage* gwp = alloc_genotyping_work_package(2*max_anchor_span, max_expected_size_of_supernode, working_colour1, working_colour2);
+  
+  if ( (chrom_path_array==NULL) || (chrom_orientation_array==NULL) || (chrom_labels==NULL) || (chrom_string==NULL)
+       || (current_supernode==NULL) || (curr_sup_orientations==NULL) || (curr_sup_labels==NULL) || (supernode_string==NULL) || (gwp==NULL) )
+    {
+      printf("Cannot malloc arrays for PD calls. give up. Your machine is low on memory or you have asked for ridiculously large variants\n");
+      exit(1);
+    }
+
+  //number of kmers we want to support in the little hash = 2* (max possible kmers in the two alleles) = 2* (2 * max_allele_length) = 4*max_anchor_span
+  int little_width =100;
+  int little_height = (int) (log((float) (4*max_anchor_span)/100)/log(2))+1;
+  int little_retries=20;
+  LittleHashTable* little_db_graph = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
+  if (little_db_graph==NULL)
+    {
+      printf("Something very wrong here. Cant even alloc a tiny toy hash table\n");
+      exit(1);
+    }
 
   int n;
   for (n=0; n<length_of_arrays; n++)
@@ -8566,7 +8619,17 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
     }
 
 
-  VariantBranchesAndFlanks var; //we will reuse this
+  //need to malloc our var object as could be really big.
+  VariantBranchesAndFlanks*  var = 
+    alloc_VariantBranchesAndFlanks_object(max_expected_size_of_supernode+ db_graph->kmer_size, 
+					  length_of_arrays, 
+					  max_expected_size_of_supernode+ db_graph->kmer_size, 
+					  max_expected_size_of_supernode+ db_graph->kmer_size);
+  if (var==NULL)
+    {
+      printf("Out of memory - cannt malloc my variant object. Either you have set a MASSIVE max_var_len, or your machine is out of memory\n");
+      exit(1);
+    }
 
 
   // ***********************************************************
@@ -9558,6 +9621,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		}
 	      
 
+	      /*
 	      set_variant_branches_and_flanks(&var, 
 					      &chrom_path_array[start_node_index], 
 					      &chrom_orientation_array[start_node_index], 
@@ -9572,12 +9636,108 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 					      &chrom_orientation_array[start_of_3prime_anchor_in_chrom],
 					      length_3p_flank, 
 					      first);//first tells it that the trusted branch is the reference
+	      */
+
+	      Orientation dir_traversing_sup=forward;
+	      int coord_of_last_node_where_two_branches_agree=left_most_coord_of_var_branch_in_supernode_array-1;//this should not be <0 as we have a flank
+	      if (traverse_sup_left_to_right==false)
+		{
+		  dir_traversing_sup=reverse;
+		}
+	      set_alloced_variant_branches_and_flanks_allowing_inputargs_in_either_order(var, 
+											 &chrom_path_array[start_node_index], 
+											 &chrom_orientation_array[start_node_index], 
+											 length_5p_flank,
+											 forward,
+											 &chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome-1], 
+											 &chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome-1], 
+											 len_trusted_branch,
+											 forward,
+											 &current_supernode[left_most_coord_of_var_branch_in_supernode_array],
+											 &curr_sup_orientations[left_most_coord_of_var_branch_in_supernode_array],
+											 len_branch2,
+											 dir_traversing_sup,
+											 &chrom_path_array[start_of_3prime_anchor_in_chrom],
+											 &chrom_orientation_array[start_of_3prime_anchor_in_chrom],
+											 length_3p_flank, 
+											 forward,
+											 first);//first tells it §that the trusted branch is the reference
 
 
-	      if (condition(&var, ref_colour, get_colour, get_covg)==true)
+
+	      //debug only
+	      /*
+	      printf("These are the branches and flanks as defined for genotyping - does not affect printing of call\n");
+	      int zim;
+	      char zam[db_graph->kmer_size];
+	      BinaryKmer rev;
+	      printf("flank5p is \n");
+	      for (zim=0; zim<=var->len_flank5p; zim++)
+		{
+		  if (var->flank5p_or[zim]==forward)
+		    {
+		      printf("%s\n", binary_kmer_to_seq(&(var->flank5p[zim]->kmer), db_graph->kmer_size, zam));
+		    }
+		  else
+		    {
+		      binary_kmer_reverse_complement(&(var->flank5p[zim]->kmer), db_graph->kmer_size, &rev);
+		      printf("%s\n", binary_kmer_to_seq(&rev, db_graph->kmer_size, zam));
+		    }
+		}
+
+
+	      printf("branch1  is \n");
+	      for (zim=0; zim<=var->len_one_allele; zim++)
+		{
+		  if (var->one_allele_or[zim]==forward)
+		    {
+		      printf("%s\n", binary_kmer_to_seq(&(var->one_allele[zim]->kmer), db_graph->kmer_size, zam));
+		    }
+		  else
+		    {
+		      binary_kmer_reverse_complement(&(var->one_allele[zim]->kmer), db_graph->kmer_size, &rev);
+		      printf("%s\n", binary_kmer_to_seq(&rev, db_graph->kmer_size, zam));
+		    }
+		}
+
+
+	      printf("branch2  is \n");
+	      for (zim=0; zim<=var->len_other_allele; zim++)
+		{
+		  if (var->other_allele_or[zim]==forward)
+		    {
+		      printf("%s\n", binary_kmer_to_seq(&(var->other_allele[zim]->kmer), db_graph->kmer_size, zam));
+		    }
+		  else
+		    {
+		      binary_kmer_reverse_complement(&(var->other_allele[zim]->kmer), db_graph->kmer_size, &rev);
+		      printf("%s\n", binary_kmer_to_seq(&rev, db_graph->kmer_size, zam));
+		    }
+		}
+
+
+
+	      printf("flank3p is \n");
+	      for (zim=0; zim<=var->len_flank3p; zim++)
+		{
+		  if (var->flank3p_or[zim]==forward)
+		    {
+		      printf("%s\n", binary_kmer_to_seq(&(var->flank3p[zim]->kmer), db_graph->kmer_size, zam));
+		    }
+		  else
+		    {
+		      binary_kmer_reverse_complement(&(var->flank3p[zim]->kmer), db_graph->kmer_size, &rev);
+		      printf("%s\n", binary_kmer_to_seq(&rev, db_graph->kmer_size, zam));
+		    }
+		}
+	      
+	      //end debug only
+	      */
+
+	      if (condition(var, ref_colour, get_colour, get_covg)==true)
 		{
 		  //in some situations you want to mark all branches of variants for future use after this function returns
-		  action_for_branches_of_called_variants(&var);
+		  action_for_branches_of_called_variants(var);
 
 		  if (output_file != NULL)
 		    {
@@ -9586,9 +9746,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		      AnnotatedPutativeVariant annovar;
 		      if (model_info!=NULL)
 			{
-			  initialise_putative_variant(&annovar, &var, SimplePathDivergenceCaller, model_info->ginfo, model_info->seq_error_rate_per_base, model_info->genome_len, 
-						      db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
-			  
+			  initialise_putative_variant(&annovar, model_info, var, SimplePathDivergenceCaller, db_graph->kmer_size,
+						      assump, gwp, db_graph, little_db_graph);
 			  
 			  if (model_info->expt_type != Unspecified)
 			    {
@@ -9773,7 +9932,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		    }
 		 
 		  //fprintf(output_file, "var_%i - extra information\n", num_variants_found);
-		  print_extra_info(&var, output_file);
+		  print_extra_info(var, output_file);
 		}
 	      
 	      
@@ -9799,7 +9958,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 
   //free malloc-ed variables
-
+  free_VariantBranchesAndFlanks_object(var);
+  free_genotyping_work_package(gwp);
   free(chrom_path_array);
   free(chrom_orientation_array);
   free(chrom_labels);
@@ -9817,12 +9977,14 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   free(ptrs_to_covgs_in_variant_not_trusted);
   free(covgs_in_variant_not_trusted);
   free(covgs_in_trusted_not_variant);
+
   //  free(covgs_of_indiv_on_trusted_path);
   //free(covgs_of_ref_on_trusted_path);
   //free(covgs_of_indiv_on_variant_path);
   //free(covgs_of_ref_on_variant_path);
   free(working_array1);
   free(working_array2);
+  little_hash_table_free(&little_db_graph);
   return num_variants_found;
 
 
@@ -9843,8 +10005,9 @@ int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(
 												      Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*)),
 										 void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-										 GraphAndModelInfo* model_info, int start_numbering_vars_from_this_number
-										 )
+										GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump,
+										int start_numbering_vars_from_this_number
+										)
 {
 
 
@@ -9873,15 +10036,16 @@ int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(
   }
 
   int num_vars_called=db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_colours(chrom_fasta_fptr,
-										     &get_union_list_colours, &get_covg_of_union_first_list_colours,
-										     ref_colour,
-										     min_fiveprime_flank_anchor, min_threeprime_flank_anchor,
-										     max_anchor_span, min_covg, max_covg,
-										     max_expected_size_of_supernode, length_of_arrays, db_graph, output_file,
-										     max_desired_returns,
-										     return_flank5p_array, return_trusted_branch_array, return_variant_branch_array,
-										     return_flank3p_array, return_variant_start_coord,
-										     condition, action_for_branches_of_called_variants, print_extra_info, model_info, start_numbering_vars_from_this_number);
+													 &get_union_list_colours, &get_covg_of_union_first_list_colours,
+													 ref_colour,
+													 min_fiveprime_flank_anchor, min_threeprime_flank_anchor,
+													 max_anchor_span, min_covg, max_covg,
+													 max_expected_size_of_supernode, length_of_arrays, db_graph, output_file,
+													 max_desired_returns,
+													 return_flank5p_array, return_trusted_branch_array, return_variant_branch_array,
+													 return_flank3p_array, return_variant_start_coord,
+													 condition, action_for_branches_of_called_variants, print_extra_info, 
+													 model_info, assump, start_numbering_vars_from_this_number);
 										     
 
   return num_vars_called;
