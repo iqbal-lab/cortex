@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo  
+ * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo
  * 
  * CORTEX project contacts:  
  * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
@@ -26,27 +26,21 @@
  */
 
 
-// model_selection.h
+
+#ifndef ANNOVAR_H_
+#define ANNOVAR_H_
 
 
-#ifndef MODEL_SELECTION_H_
-#define MODEL_SELECTION_H_
+#include <global.h>
 
-#include <model_info.h>
 #include <graph_info.h>
-#include <db_variants.h>
+#include <model_selection.h>
+#include <genotyping_element.h>
+#include <element.h>
 #include <experiment.h>
+#include <dB_graph.h>
+#include <graph_info.h>
+#include <experiment.h>
+#include <db_complex_genotyping.h>
 
 
-#define MAX_EXPECTED_REPEAT_COPIES 10
-#define NUM_STEPS  48
-
-
-
-
-boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info);
-double get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info);
-double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info, double allele_balance_prior_coeff);
-double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info);
-
-#endif /* MODEL_SELECTION_H_ */

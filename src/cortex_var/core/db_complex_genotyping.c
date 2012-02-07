@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <global.h>
 #include <file_reader.h>
+#include <genotyping_element.h>
 
 /*
 //assumes 3 colour graph, colour 0 is the union of all alleles, colour 1 is the ref-minus site. colour 2 will be which ever allele has just been loaded
@@ -93,14 +94,76 @@ void calculate_edit_probabilities(dBGraph* db_graph, char** array_allele_names, 
 
 */
 
-
-
-
-
+  
 // Lowest log likelihood, at which we just cutoff
 int MIN_LLK = -9999999;
+    
+GenotypingWorkingPackage* alloc_genotyping_work_package(int max_allele_len, int max_sup_len, 
+							int working_colour1, int working_colour2)
+{
+  GenotypingWorkingPackage* gwp =(GenotypingWorkingPackage*)  malloc(sizeof(GenotypingWorkingPackage));
+  if (gwp==NULL)
+    {
+      printf("Unable to malloc GenotypingWorkingPackage 1\n");
+      exit(1);
+    }
+  gwp->max_allele_len = max_allele_len;
+  gwp->max_sup_len    = max_sup_len;
+  
+  gwp->working_g_e_one      =(GenotypingElement**) malloc(sizeof(GenotypingElement*)*max_allele_len);
+  gwp->working_o_one        =(Orientation*)        malloc(sizeof(Orientation)*max_allele_len);
+  gwp->working_g_e_other    =(GenotypingElement**) malloc(sizeof(GenotypingElement*)*max_allele_len);
+  gwp->working_o_other      =(Orientation*)        malloc(sizeof(Orientation)*max_allele_len);
+  gwp->working_array_self   =(int*)                malloc(sizeof(int)*max_allele_len);
+  gwp->working_array_shared =(int*)                malloc(sizeof(int)*max_allele_len);
+  gwp->mobv                 =                      alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(max_allele_len, max_allele_len);
+  gwp->working_colour1      =                      working_colour1;
+  gwp->working_colour2      =                      working_colour2;
+  gwp->path_nodes           =(dBNode**)            malloc(sizeof(dBNode*)*max_sup_len);
+  gwp->path_orientations    =(Orientation*)        malloc(sizeof(Orientation) *max_sup_len);
+  gwp->path_labels          =(Nucleotide*)         malloc(sizeof(Nucleotide) *max_sup_len);
+  gwp->path_string          =(char*)               malloc(sizeof(char) *max_sup_len);
 
-MultiplicitiesAndOverlapsOfBiallelicVariant*  alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(int len_allele1, int len_allele2)
+  if ( (gwp->working_g_e_one == NULL) ||
+       (gwp->working_o_one  == NULL) ||
+       (gwp->working_g_e_other == NULL) ||
+       (gwp->working_o_other == NULL) ||
+       (gwp->working_array_self == NULL) ||
+       (gwp->working_array_shared == NULL) ||
+       (gwp->path_nodes == NULL) ||
+       (gwp->path_orientations == NULL) ||
+       (gwp->path_labels== NULL) ||
+       (gwp->path_string  == NULL) )
+    {
+      printf("Unable to alloc GenotypingWorkingPackage members\n");
+      exit(1);
+    }
+  
+  return gwp;
+}
+ 
+ void free_genotyping_work_package(GenotypingWorkingPackage* gwp)
+ {
+   free(gwp->working_g_e_one);
+   free(gwp->working_o_one  );
+   free(gwp->working_g_e_other  );
+   free(gwp->working_o_other  );
+   free(gwp->working_array_self  );
+   free(gwp->working_array_shared  );
+   free(gwp->path_nodes  );
+   free(gwp->path_orientations  );
+   free(gwp->path_labels  );
+   free(gwp->path_string  );
+   dealloc_MultiplicitiesAndOverlapsOfBiallelicVariant(gwp->mobv);
+   free(gwp);
+ }
+
+
+
+
+
+
+ MultiplicitiesAndOverlapsOfBiallelicVariant*  alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(int len_allele1, int len_allele2)
 {
   MultiplicitiesAndOverlapsOfBiallelicVariant* mobv = (MultiplicitiesAndOverlapsOfBiallelicVariant*) malloc(sizeof(MultiplicitiesAndOverlapsOfBiallelicVariant));
 
@@ -256,6 +319,56 @@ void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(Variant
   
 
 }
+
+
+void improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(GenotypingVariantBranchesAndFlanks* var, 
+										    MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
+										    int working_colour1, int working_colour2)
+{
+  // *** ASSUME THE WORKING COLOURS ARE CLEAN ***
+
+
+  //walk through allele1, and as you do so, add multicplicity counts to working_colour1
+  int i;
+  for (i=0; i<var->len_one_allele; i++)
+    {
+      db_genotyping_node_increment_coverage(var->one_allele[i], individual_edge_array, working_colour1);
+    }
+  //same for allele2
+  for (i=0; i<var->len_other_allele; i++)
+    {
+      db_genotyping_node_increment_coverage(var->other_allele[i], individual_edge_array, working_colour2);
+    }
+  //now, as you walk through allele1, for each node, you can see how many times it occurs in allele1 and in allele2
+  for (i=0; i<var->len_one_allele; i++)
+    {
+      mult->mult11[i] += db_genotyping_node_get_coverage(var->one_allele[i], individual_edge_array, working_colour1);
+      mult->mult12[i] += db_genotyping_node_get_coverage(var->one_allele[i], individual_edge_array, working_colour2);
+    }
+
+  for (i=0; i<var->len_other_allele; i++)
+    {
+      mult->mult21[i] += db_genotyping_node_get_coverage(var->other_allele[i], individual_edge_array, working_colour1);
+      mult->mult22[i] += db_genotyping_node_get_coverage(var->other_allele[i], individual_edge_array, working_colour2);
+    }
+
+  //cleanup
+  for (i=0; i<var->len_one_allele; i++)
+    {
+      db_genotyping_node_set_coverage(var->one_allele[i], individual_edge_array, working_colour1, 0);
+      db_genotyping_node_set_coverage(var->one_allele[i], individual_edge_array, working_colour2, 0);
+    }
+  for (i=0; i<var->len_other_allele; i++)
+    {
+      db_genotyping_node_set_coverage(var->other_allele[i], individual_edge_array, working_colour1,0);
+      db_genotyping_node_set_coverage(var->other_allele[i], individual_edge_array, working_colour2,0);
+    }
+  
+
+
+
+}
+
 
 
 
@@ -1036,6 +1149,410 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 }
 
 
+//for now, does not support 1net or 2net
+//caller ensures that in the LittleHash the colour specified as model_info->ref_colour actually has covg in ref-minus-site.
+
+double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(GenotypingVariantBranchesAndFlanks* var,
+									      MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults,
+									      GraphAndModelInfo* model_info,
+									      int colour_indiv, 
+									      LittleHashTable* little_db_graph, dBGraph* db_graph,
+									      int* working_array_self, int* working_array_shared,
+									      AssumptionsOnGraphCleaning assump,
+									      dBNode** p_nodes, Orientation* p_orientations, Nucleotide* p_labels, char* p_string, 
+									      int max_sup_len
+									      )
+//assume the  2 working arrays have length = max read length
+{
+    
+  // *********************************************************************************************************************************************************
+  // Likelihood of this genotype is given by prob(see number_errors of errors in sequence with length=sum of lengths of two alleles)
+  //                                         * Product ( dpois(observed covg, expected covg) )     (product over subchunks, splitting where alleles overlap)
+  // *********************************************************************************************************************************************************
+
+  // 1. Count number of errors:
+  int colour_ref_minus_site = model_info->ref_colour; //caller of function has ensured this now contains covg in ref-minus-site
+  int check_covg_in_ref_with_site_excised(GenotypingElement* n)
+  {
+    if (colour_ref_minus_site==-1)
+      {
+	return 0;
+      }
+    else
+      {
+	return db_genotyping_node_get_coverage(n, individual_edge_array, colour_ref_minus_site);
+      }
+  }
+  
+  
+
+  // the three ints you return are basically levels of badness of error. 
+  void count_reads_in_1net(GenotypingElement* e, int* total_1net, int* total_2net, int* total_3net,
+			   dBNode** p_nodes, Orientation* p_or, Nucleotide* p_lab, char* p_str, int max_len)
+  {
+
+    if ( (db_genotyping_node_check_status(e, in_desired_genotype)==true) || (db_genotyping_node_check_status(e, visited)==true) )
+      {
+      }
+    else if ( (db_genotyping_node_get_coverage(e, individual_edge_array,colour_indiv)>0) && (check_covg_in_ref_with_site_excised(e)==0) )
+      {
+	double avg_coverage=0;
+	int min=0; int max=0;
+	boolean is_cycle=false;
+	//get the whole supernode IN THE MAIN GRAPH. If any of them are in_desired, then is 1bp away, else not
+	dBNode* node_corresponding_to_e = hash_table_find(&(e->kmer), db_graph);
+	if (node_corresponding_to_e==NULL)
+	  {
+	    printf("Unable to find node in main graph correspinding to a node in the littel graph - impossible??\n");
+	    exit(1);
+	  }
+	else if (db_node_check_status(node_corresponding_to_e, visited)==true)
+	  {
+	    return;
+	  }
+	int length = db_graph_supernode_for_specific_person_or_pop(node_corresponding_to_e,max_len,
+								   &db_node_action_set_status_visited,
+								   p_nodes,p_or,p_lab, p_str,
+								   &avg_coverage,&min,&max,&is_cycle,
+								   db_graph, individual_edge_array, colour_indiv);
+	//assume everything in supernode is bad. Not using 1net2net etc
+	int i;
+	boolean too_short=false;
+	int ct = count_reads_on_allele_in_specific_colour(p_nodes, length, colour_indiv, &too_short);
+	int extra=0;
+	if (length>db_graph->kmer_size)
+	  {
+	    extra=length-db_graph->kmer_size;
+	  }//tells us if >1 SNP
+
+	*total_1net = (*total_1net) + ct + extra+1;
+
+      }
+    
+    return;
+  }
+
+
+  void reset_nodes_in_main_graph_to_un_visited(GenotypingElement* e, dBNode** p_nodes, Orientation* p_or, Nucleotide* p_lab, char* p_str, int max_len)
+  {
+
+    if (db_genotyping_node_check_status(e, in_desired_genotype)==true)
+      {
+      }
+    else if ( (db_genotyping_node_get_coverage(e, individual_edge_array,colour_indiv)>0) && (check_covg_in_ref_with_site_excised(e)==0) )
+      {
+	double avg_coverage=0;
+	int min=0; int max=0;
+	boolean is_cycle=false;
+	//get the whole supernode IN THE MAIN GRAPH. 
+	dBNode* node_corresponding_to_e = hash_table_find(&(e->kmer), db_graph);
+	if (node_corresponding_to_e==NULL)
+	  {
+	    printf("Unable to find node in main graph correspinding to a node in the littel graph - impossible??\n");
+	    exit(1);
+	  }
+	else 
+	  {
+	    if (db_node_check_status(node_corresponding_to_e, visited)==true)
+	      {
+		db_node_set_status(node_corresponding_to_e, none);
+	      }
+	  }
+
+      }
+    
+    return;
+  }
+
+
+
+  
+  
+  
+  int num_1net_errors=0;
+  //not using the next two for now - preserving due to api, and because may well start using them
+  int num_2net_errors=0;
+  int num_3net_errors=0;
+  
+  int total_len_alleles = (var->len_one_allele + var->len_other_allele);
+
+  //new option - look at errors more closely
+  int number_bad_errors=0; //errors > 1 SNP from genotype
+
+
+  little_hash_table_traverse_passing_3ints_and_big_graph_path(&count_reads_in_1net, little_db_graph, &num_1net_errors, &num_2net_errors, &num_3net_errors,
+							      p_nodes, p_orientations, p_labels, p_string, max_sup_len);
+
+
+  //now go back one more time and un-set the visited flags you put on all those nodes in the main graph
+  little_hash_table_traverse_passing_big_graph_path(&reset_nodes_in_main_graph_to_un_visited, little_db_graph, p_nodes, p_orientations, p_labels, p_string, max_sup_len);
+
+
+  // Errors on union of two alleles occur as a Poisson process with rate = sequencing_error_rate_per_base * kmer * length of two alleles
+
+  double poisson_1net_err_rate=0;
+  double poisson_2net_err_rate=0;
+  double poisson_3net_err_rate=0;
+
+  double m=(model_info->seq_error_rate_per_base) ;
+  int kmer=(db_graph->kmer_size);
+  //double prop = max_allele_length/(model_info->genome_len);
+  if (assump==AssumeUncleaned)
+    {
+      poisson_1net_err_rate= m*total_len_alleles;
+    }
+  else if (assump==AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice)
+    {
+      poisson_1net_err_rate= m*m*total_len_alleles;
+    }
+
+  double log_prob_error = 0;
+
+
+  if (num_1net_errors>0)
+    {
+      log_prob_error += -poisson_1net_err_rate + num_1net_errors*log(poisson_1net_err_rate) - gsl_sf_lnfact(num_1net_errors);
+    }
+  
+
+
+
+  // 2.  Get sum of log likelihoods of all the subchunks of the two alleles
+
+  // walk along allele 1. For sections unique to allele1, work out log likelihood with eff haploid covg
+  // for sections shared with allele2, use eff diploid covg
+  // and finally, walk along allele2, and consider only sections unique to allele2
+
+
+  int working_array_self_count=0;
+  int working_array_shared_count=0;
+  double log_prob_data=0;
+  double hap_D  = (double) (model_info->ginfo->total_sequence[colour_indiv])/(double) (2*model_info->genome_len) ;
+  double hap_D_over_R = hap_D/(model_info->ginfo->mean_read_length[colour_indiv]);
+  int eff_r_plus_one = model_info->ginfo->mean_read_length[colour_indiv] - db_graph->kmer_size;
+  //printf("total sequence is %qd and genome len is %qd , and hapD is %f and hapD over R is %f\n", model_info->ginfo->total_sequence[colour_indiv], model_info->genome_len, hap_D, hap_D_over_R);
+
+  //break allele into intervals that only lie on allele1, and those shared with allele2.
+  int k=1;//ignore first node
+
+  while (k < var->len_one_allele -1 ) //ignore last node
+      {
+
+	if (var_mults->mult12[k]>0) //this node occurs  >0 times in the other allele
+	  {
+	    if (working_array_self_count>0)
+	      {
+		boolean too_short = 0;
+		int covg_on_self_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_self, working_array_self_count, 
+													      &too_short);
+		//printf("covg on self in this chunk %d\n", covg_on_self_in_this_chunk);
+		if (too_short==false)
+		  {
+
+ 		    // add log dpois ( hap_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
+		    log_prob_data += -hap_D_over_R * working_array_self_count + covg_on_self_in_this_chunk * log(hap_D_over_R * working_array_self_count) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
+
+
+		    //added next two lines for debug
+ 		    // add log dpois ( hap_D_over_R * (readlen-k+working_array_self_count)  , covg_on_self_in_this_chunk)
+		    //log_prob_data += -hap_D_over_R * (working_array_self_count+eff_r_plus_one) + covg_on_self_in_this_chunk * log(hap_D_over_R * (working_array_self_count+eff_r_plus_one)) 
+		    // - gsl_sf_lnfact(covg_on_self_in_this_chunk);
+
+
+		    
+		    
+		    
+		  }
+	      }
+
+	    working_array_self_count=0;
+
+	    while ( (var_mults->mult12[k] > 0) && 
+		    (k < var->len_one_allele -1 ) && 
+		    (check_covg_in_ref_with_site_excised(var->one_allele[k])==0 )//automatically handles case when there is no colour for ref-minus-site     
+		  )
+	      {
+		// this node might happen 2 times on allele 1 and 3 times on allele2. in total 5 times, annd here it counts for 2 of them
+		//working_array_shared[working_array_shared_count]=covg_allele1[k]* 2/(var_mults->mult11[k] + var_mults->mult12[k])  ;<<<<<<<<<<<< this is what I had before (when I did NA19240)
+
+		
+	        //working_array_shared[working_array_shared_count]= db_node_get_coverage(var->one_allele[k], individual_edge_array, colour_indiv)/(var_mults->mult11[k] + var_mults->mult12[k])  ;
+		//below is what I tried in debug
+		working_array_shared[working_array_shared_count]= db_genotyping_node_get_coverage(var->one_allele[k], individual_edge_array, colour_indiv)/(var_mults->mult11[k])  ;
+		
+		k++;
+		working_array_shared_count++;
+	      }
+	    while ( (k<var->len_one_allele-1) && (check_covg_in_ref_with_site_excised(var->one_allele[k])>0) )
+	      {
+		k++;
+	      }
+
+	  }
+	if (var_mults->mult12[k]==0)
+	  {
+	    //start of contiguous chunk which occurs only in first allele
+	    if (working_array_shared_count>0)
+              {
+		boolean too_short = 0;
+		int covg_on_shared_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_shared, working_array_shared_count, 
+														&too_short);
+		//printf("covg on shared in this chunk %d\n", covg_on_shared_in_this_chunk);
+
+		if (too_short==false)
+		  {
+		    //            NOTE  2*  - diploid covg
+ 		    // add log dpois ( 2*hap_D_over_R * working_array_shared_count , covg_on_shared_in_this_chunk)
+		    log_prob_data += -2*hap_D_over_R * working_array_shared_count + covg_on_shared_in_this_chunk * log(2*hap_D_over_R * working_array_shared_count) - gsl_sf_lnfact(covg_on_shared_in_this_chunk);
+
+
+
+		    //next two lines added for debug
+ 		    //add log dpois ( 2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one) , covg_on_shared_in_this_chunk)
+		    //log_prob_data += -2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one) + covg_on_shared_in_this_chunk * log(2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one)) - gsl_sf_lnfact(covg_on_shared_in_this_chunk);
+
+		    
+
+
+		  }
+              }
+
+	    working_array_shared_count=0;
+	    working_array_self_count=0;
+	    
+	    while ( (var_mults->mult12[k]==0) && 
+		    (k < var->len_one_allele-1 ) &&
+		    (check_covg_in_ref_with_site_excised(var->one_allele[k])==0)
+		    )
+	      {
+		working_array_self[working_array_self_count]=db_genotyping_node_get_coverage(var->one_allele[k], individual_edge_array, colour_indiv)/var_mults->mult11[k];
+		k++;
+		working_array_self_count++;
+	      }
+
+	    while ( (k < var->len_one_allele-1) &&( check_covg_in_ref_with_site_excised(var->one_allele[k])>0 ) )
+
+	      { 
+		k++;
+              }
+
+	  }
+      }
+  //may have exited loop with some left-over data in arrays, so:  
+  if (working_array_self_count>0)
+    {
+      boolean too_short = 0;
+      int covg_on_self_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_self, working_array_self_count,
+												    &too_short);
+
+      //printf("covg on self in this chunk %d\n", covg_on_self_in_this_chunk);
+
+      if (too_short==false)
+	{
+	  //commented out next two lines for debug only
+	  // add log dpois ( hap_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
+	  log_prob_data += -hap_D_over_R * working_array_self_count + covg_on_self_in_this_chunk * log(hap_D_over_R * working_array_self_count) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
+
+
+	  
+	}
+
+    }
+
+  if (working_array_shared_count>0)
+    {
+      boolean too_short = 0;
+      int covg_on_shared_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_shared, working_array_shared_count, 
+												      &too_short);
+
+      //printf("covg on shared in this chunk %d\n", covg_on_shared_in_this_chunk);
+
+      if (too_short==false)
+	{
+	  //            NOTE  2*  - diploid covg
+	  // add log dpois ( 2*hap_D_over_R * working_array_shared_count , covg_on_shared_in_this_chunk)
+	  log_prob_data += -2*hap_D_over_R * working_array_shared_count + covg_on_shared_in_this_chunk * log(2*hap_D_over_R * working_array_shared_count) - gsl_sf_lnfact(covg_on_shared_in_this_chunk);
+
+
+	  
+	}
+    }
+
+
+
+
+  //now walk along the other allele, only considering the intervals that are NOT shared
+  k=1;//ignore first node
+  working_array_self_count=0;//stuff only on allele 2=other_allele
+  working_array_shared_count=0;//stuff shared on both
+  
+  while (k < var->len_other_allele-1)//ignore last node
+    {
+      if (var_mults->mult21[k]>0) //this node occurs  >0 times in the other allele
+	{	  
+	  //moved out from next if
+
+	  if (working_array_self_count>0)
+	    {
+	      boolean too_short = 0;
+	      int covg_on_self_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_self, working_array_self_count, 
+													    &too_short);
+	      
+	      //printf("covg on self in this chunk %d\n", covg_on_self_in_this_chunk);
+	      if (too_short==false)
+		{
+		  // add log dpois ( hap_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
+		  log_prob_data += -hap_D_over_R * working_array_self_count 
+		    + covg_on_self_in_this_chunk * log(hap_D_over_R * working_array_self_count) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
+		  
+		  
+		  //added for debug
+		  //log_prob_data += -hap_D_over_R * (working_array_self_count+eff_r_plus_one)
+		  //  + covg_on_self_in_this_chunk * log(hap_D_over_R * (working_array_self_count+eff_r_plus_one)) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
+		  
+		  
+		  
+
+		}
+	    }
+	  //** end of moved out from next if
+
+	  working_array_self_count=0;
+	  k++;
+	}
+      //      else removed this else and replace dwith the line below
+      if (var_mults->mult21[k]==0)
+	{
+	  while ( (check_covg_in_ref_with_site_excised(var->other_allele[k])==0) &&
+		  (k < var->len_other_allele-1) &&
+		  (var_mults->mult21[k]==0)
+		  )
+	    {
+	      working_array_self[working_array_self_count]=db_genotyping_node_get_coverage(var->other_allele[k], individual_edge_array, colour_indiv)/var_mults->mult22[k];
+	      k++;
+	      working_array_self_count++;
+	    }
+	  
+	  while (  (k<var->len_other_allele-1) &&
+		   (check_covg_in_ref_with_site_excised(var->other_allele[k])>0)
+		   )
+	    {
+	      k++;
+	    } 
+	}
+      
+    }
+
+  
+  
+  return log_prob_data + log_prob_error;
+
+  
+    
+}
+
+
+
 void dealloc_array_of_files(char** array_files, int num_files_in_list)
 {
   int i;
@@ -1280,7 +1797,7 @@ boolean is_this_kmer_in_the_1net(dBNode* n, dBGraph* db_graph, int (*get_covg_1n
 }
 
 
-//we ASSUME colours 0 to number_alleles are the various alternate alleles, loading in multicolour_bin
+ //we ASSUME colours 0 to number_alleles are the various alternate alleles, loading in multicolour_bin
 void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(int* colours_to_genotype, int num_colours_to_genotype,
 										      int colour_ref_minus_site, int number_alleles,
 										      int first_gt, int last_gt, // of all the possible gt's
@@ -1694,4 +2211,539 @@ char** alloc_ML_results_names_array(int num_samples_to_genotype)
 	}
     }
   return retarray;
+}
+
+
+void wipe_little_graph(LittleHashTable* little_graph)
+{
+  void wipe_node(GenotypingElement* node)
+  {
+    int colour;
+    for (colour=0; colour<MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2 ; colour++)
+      {
+	node->individual_edges[colour]=0;
+	node->coverage[colour]=0;
+	node->status=unassigned;
+      }
+  }
+  little_hash_table_traverse(&wipe_node, little_graph);
+}
+
+// this requires that we KNOW which is the ref allele
+// since there are only 2 alleles, there is no chance of having a node in the graph with covg, but not in either
+// of the two alleles being genotyperd. so no need for the 1net and 2net
+void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele(AnnotatedPutativeVariant* annovar,
+											     AssumptionsOnGraphCleaning assump,
+											     GraphAndModelInfo* model_info, 
+											     LittleHashTable* little_db_graph,
+											     dBGraph* db_graph, 
+											     GenotypingElement** working_g_e_one, 
+											     Orientation* working_o_one,
+											     GenotypingElement** working_g_e_other, 
+											     Orientation* working_o_other,
+											     int* working_array_self,
+											     int* working_array_shared,
+											     MultiplicitiesAndOverlapsOfBiallelicVariant* mobv,
+											     int colour_to_genotype, 
+											     int working_colour1, int working_colour2,
+											     dBNode** path_nodes, Orientation* path_orientations, 
+											     Nucleotide* path_labels, char* path_string , int max_sup_len
+											     )
+{
+  ExperimentType expt = model_info->expt_type;
+  boolean first_allele_is_ref;
+  int len_ref;
+
+  if (annovar->var->which==unknown)
+    {
+      printf("Cannot call calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele unless the annovar specifies which allele is ref\n");
+      exit(1);
+    }
+  else if (annovar->var->which==first)
+    {
+      first_allele_is_ref=true;
+      len_ref=annovar->var->len_one_allele;
+    }
+  else
+    {
+      first_allele_is_ref=false;
+      len_ref=annovar->var->len_other_allele;
+    }
+  int number_alleles=2;
+
+
+  //initialise the little graph
+
+  wipe_little_graph(little_db_graph);
+
+
+  //load in the two alleles
+  int i;
+  for (i=0; i<annovar->var->len_one_allele; i++)
+    {
+      boolean found=false;
+      GenotypingElement* ge = little_hash_table_find_or_insert(&(annovar->var->one_allele[i]->kmer), &found, little_db_graph);
+      if (ge==NULL)
+	{
+	  printf("Error - could neither find nor insert into the little hash - coding error, should be learge enough\n");
+	  exit(1);
+	}
+      if (found==false)
+	{
+	  //we have just inserted a new node into the little hash. Fill in its data from the main graph:
+	  genotyping_element_initialise_from_normal_element(ge, annovar->var->one_allele[i], true);
+	}
+      else
+	{
+	  //is already in the graph, no need to update the edges or covg
+	}
+      working_g_e_one[i]=ge;
+      working_o_one[i]=annovar->var->one_allele_or[i];
+
+    }
+
+
+
+  for (i=0; i<annovar->var->len_other_allele; i++)
+    {
+      boolean found=false;
+      GenotypingElement* ge = little_hash_table_find_or_insert(&(annovar->var->other_allele[i]->kmer), &found, little_db_graph);
+      if (ge==NULL)
+	{
+	  printf("Error - could neither find nor insert into the little hash - coding error, should be learge enough\n");
+	  exit(1);
+	}
+      if (found==false)
+	{
+	  //we have just inserted a new node into the little hash. Fill in its data from the main graph:
+	  genotyping_element_initialise_from_normal_element(ge, annovar->var->other_allele[i], true);
+	}
+      else
+	{
+	  //is already in the graph, no need to update the edges or covg
+	}
+      working_g_e_other[i]=ge;
+      working_o_other[i]=annovar->var->other_allele_or[i];
+
+    }
+
+
+  //now comes the clever bit. The Little Hash now contains only nodes corresponding to the two alleles.
+  //the ref colour for each node contains the count for that node in the ENTIRE ref. 
+  //so walk the REF allele, and decrement the covg in the ref colour once each time you hit it.
+  // at the end, the ref colour has become the ref-minus-site colour :-)
+  
+  int ref_minus_site_col=model_info->ref_colour;
+  for (i=0; i<len_ref; i++)
+    {
+      if (first_allele_is_ref)
+	{
+	  db_genotyping_node_decrement_coverage(working_g_e_one[i], individual_edge_array, ref_minus_site_col);
+	}
+      else
+	{
+	  db_genotyping_node_decrement_coverage(working_g_e_other[i], individual_edge_array, ref_minus_site_col);
+	}
+    }
+
+
+
+  int j;
+
+  //  MultiplicitiesAndOverlapsOfBiallelicVariant* mobv= alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(annovar->var->len_one_allele, 
+  //												       annovar->var->len_other_allele);
+  
+  if (mobv==NULL)
+    {
+      printf("Cannot alloc all the arrays in calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele.  Give up and exit.");
+      exit(1);
+    }
+  
+
+
+  //end of initialisation 
+
+
+  //hom1
+  GenotypingVariantBranchesAndFlanks var_test;
+  set_genotyping_variant_branches_but_flanks_to_null(&var_test, 
+						     working_g_e_one,
+						     working_o_one,
+						     annovar->var->len_one_allele,
+						     working_g_e_one,
+						     working_o_one,
+						     annovar->var->len_one_allele,
+						     unknown);//not going to use the WhichIsRef in here
+
+
+  set_status_of_genotyping_nodes_in_branches(&var_test, in_desired_genotype);
+  reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
+  improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(&var_test, mobv, working_colour1, working_colour2);
+
+
+  
+   annovar->gen_log_lh[colour_to_genotype].log_lh[hom_one]= 
+     calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(&var_test,
+									    mobv, model_info, colour_to_genotype,
+									    little_db_graph, db_graph, 
+									    working_array_self, working_array_shared,
+									    assump, 
+									    path_nodes, path_orientations, path_labels, path_string, 
+									    max_sup_len);
+   set_status_of_genotyping_nodes_in_branches(&var_test, none);
+
+
+
+   if ( (expt==EachColourADiploidSample) || (expt==EachColourADiploidSampleExceptTheRefColour) )
+     {
+       //het
+       set_genotyping_variant_branches_but_flanks_to_null(&var_test, 
+							  working_g_e_one,
+							  working_o_one,
+							  annovar->var->len_one_allele,
+							  working_g_e_other,
+							  working_o_other,
+							  annovar->var->len_other_allele,
+							  unknown);//not going to use the WhichIsRef in here
+
+
+       set_status_of_genotyping_nodes_in_branches(&var_test, in_desired_genotype);
+       reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
+       improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(&var_test, mobv, working_colour1, working_colour2);
+       
+
+
+       annovar->gen_log_lh[colour_to_genotype].log_lh[het]= 
+	 calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(&var_test,
+										mobv, model_info, colour_to_genotype,
+										little_db_graph, db_graph, 
+										working_array_self, working_array_shared,
+										assump, 
+										path_nodes, path_orientations, path_labels, path_string, 
+										max_sup_len);
+       set_status_of_genotyping_nodes_in_branches(&var_test, none);
+
+
+     }
+   else//haploid
+     {
+       annovar->gen_log_lh[colour_to_genotype].log_lh[het]=-9999999;
+     }
+
+  //hom other
+
+  set_genotyping_variant_branches_but_flanks_to_null(&var_test, 
+						     working_g_e_other,
+						     working_o_other,
+						     annovar->var->len_other_allele,
+						     working_g_e_other,
+						     working_o_other,
+						     annovar->var->len_other_allele,
+						     unknown);//not going to use the WhichIsRef in here
+	  
+  set_status_of_genotyping_nodes_in_branches(&var_test, in_desired_genotype);
+  reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
+  improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(&var_test, mobv, working_colour1, working_colour2);
+  
+
+  annovar->gen_log_lh[colour_to_genotype].log_lh[hom_other]= 
+    calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(&var_test,
+									   mobv, model_info, colour_to_genotype,
+									   little_db_graph, db_graph, 
+									   working_array_self, working_array_shared,
+									   assump, 
+									   path_nodes, path_orientations, path_labels, path_string, 
+									   max_sup_len);
+  set_status_of_genotyping_nodes_in_branches(&var_test, none);
+  
+  
+  
+ 
+  //dealloc_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
+   
+  
+}
+
+
+void get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(AnnotatedPutativeVariant* annovar, 
+									   AssumptionsOnGraphCleaning assump,
+									   GraphAndModelInfo* model_info,
+									   LittleHashTable* little_db_graph, 
+									   dBGraph* db_graph,
+									   GenotypingWorkingPackage* gwp, int colour_to_genotype)
+{
+
+  GenotypingElement** working_g_e_one   = gwp->working_g_e_one;
+  Orientation* working_o_one            = gwp->working_o_one;
+  GenotypingElement** working_g_e_other = gwp->working_g_e_other;
+  Orientation* working_o_other          = gwp->working_o_other;
+  int* working_array_self               = gwp->working_array_self;
+  int* working_array_shared             = gwp->working_array_shared;
+  int working_colour1                   = gwp->working_colour1;
+  int working_colour2                   = gwp->working_colour2;
+  dBNode** path_nodes                   = gwp->path_nodes;
+  Orientation* path_orientations        = gwp->path_orientations;
+  Nucleotide* path_labels               = gwp->path_labels; 
+  char* path_string                     = gwp->path_string;
+  int max_sup_len                       = gwp->max_sup_len;
+
+  MultiplicitiesAndOverlapsOfBiallelicVariant* mobv=gwp->mobv;
+    
+  //  if ( (working_colour1<0) || (working_colour1>=NUMBER_OF_COLOURS+1) || 
+  //     (working_colour2<0) || (working_colour2>=NUMBER_OF_COLOURS+1)  )
+  //  {
+  //    printf("Calling get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour with bad working colours %d, %d\n", working_colour1, working_colour2);
+  //    exit(1);
+  //  }
+  if ( (annovar->var->len_one_allele> gwp->max_allele_len)
+       ||
+       (annovar->var->len_other_allele> gwp->max_allele_len)
+       )
+    {
+      printf("Trying to genotype a variant where one of the alleles (lengths %d, %d) is longer than the arrays we have malloced (length %d)\n",
+	     annovar->var->len_one_allele, annovar->var->len_other_allele, gwp->max_allele_len);
+      exit(1);
+    }
+  int i;
+
+  calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele(annovar, assump,
+											  model_info, little_db_graph, db_graph,
+											  working_g_e_one, working_o_one, 
+											  working_g_e_other, working_o_other,
+											  working_array_self, working_array_shared,
+											  mobv, colour_to_genotype, working_colour1, working_colour2,
+											  path_nodes, path_orientations, path_labels, path_string,
+											  max_sup_len);
+  
+}
+
+void get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
+{
+  boolean too_short = false;
+  //next two lines are an expenseive way of setting too_short!!
+  int initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
+  int initial_covg_plus_upward_jumps_branch2 = count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
+
+  if (too_short==true)
+    {
+      annovar->too_short=true;
+      int j;
+      //set all the log likelihoods to zero.
+      for (j=0; j<NUMBER_OF_COLOURS; j++)
+	{
+	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[j]));
+	}
+      return ;
+    }
+  
+  else //assume caller has checked is not a SNP
+    {
+      //set to hom_other (the variant allele)
+      annovar->gen_log_lh[colour].log_lh[hom_one]   =-999;
+      annovar->gen_log_lh[colour].log_lh[het]       =-999;
+      annovar->gen_log_lh[colour].log_lh[hom_other] = 0;
+      return;
+    }
+
+}
+
+
+//returns true if was able to initialise
+// if you have no GraphInfo, enter NULL
+//if you do not know what sequencing_error_per_base is, enter -1, will use default of 0.01
+//if you do not knwo what genome length is, enter -1, will use default of 3 billion (human)
+// NOTE THIS GENOTYPES THE SITE
+// if you enter ref_colour=-1, there is no ref. Otherwise, the ref colour will be ignored for calculations like theta, where
+// we are aggregating covg.
+// AssumptionsOnGraphCleaning assump, and GenotypingWorkingPackage gwp is only used for PD call genotyping, otherwise you can pass a NULL
+// db_graph and little_db_graph only used by PD caller genotyping, so again you can pass NULL there for bubble calls
+boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info,
+				    VariantBranchesAndFlanks* var, DiscoveryMethod caller,  int kmer,
+				    AssumptionsOnGraphCleaning assump, GenotypingWorkingPackage* gwp,
+				    dBGraph* db_graph, LittleHashTable* little_db_graph)
+				    
+{
+  GraphInfo* ginfo              = model_info->ginfo;
+  double seq_error_rate_per_base= model_info->seq_error_rate_per_base;
+  long long genome_length       = model_info->genome_len;
+  ExperimentType expt           = model_info->expt_type;
+  int ref_colour                = model_info->ref_colour;
+
+  int number_individals=NUMBER_OF_COLOURS;
+  if ( (ref_colour !=-1) && ( (ref_colour<0) || (ref_colour>=NUMBER_OF_COLOURS) ) )
+    {
+      printf("Called initialise_putative_variant with a ref_colour which is not -1, nor one of the colours this executable is compiled for. Coding error - this should have been caught earlier - call Zam\n");
+      exit(1);
+    }
+  if (ref_colour != -1)
+    {
+      number_individals--;
+    }
+
+  annovar->kmer = kmer;
+  annovar->caller = caller;
+  annovar->var=var;
+
+  boolean flag1=false;
+  boolean flag2=false;
+
+  flag1=get_num_effective_reads_on_branch(annovar->br1_covg, var->one_allele, var->len_one_allele);
+  flag2=get_num_effective_reads_on_branch(annovar->br2_covg, var->other_allele, var->len_other_allele);
+
+  if ( (flag1==true)||(flag2==true) )
+    {
+      annovar->too_short = true;
+    }
+  else
+    {
+      annovar->too_short = false;
+    }
+  
+  if (var->len_one_allele < var->len_other_allele)
+    {
+      annovar->len_start=var->len_one_allele ;
+    }
+  else
+    {
+      annovar->len_start=var->len_other_allele;
+    }
+
+  if (annovar->too_short==true)
+    {
+      //deliberately not setting values to zero, for performance reasons.
+      //this annovar should be discarded as soon as this function returns.
+    }
+  else//is a valid putative site
+    {
+      get_num_effective_reads_on_branch(annovar->theta1, var->one_allele, annovar->len_start);
+      get_num_effective_reads_on_branch(annovar->theta2, var->other_allele, annovar->len_start);
+      
+      int i;
+      annovar->BigTheta = 0;
+      annovar->BigThetaStart = 0;
+      
+      for (i=0; i<NUMBER_OF_COLOURS; i++)
+
+	{
+	  if (i==ref_colour)
+	    {
+	      initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[i]));
+	      continue;
+	    }
+	  annovar->BigTheta      += annovar->br1_covg[i] + annovar->br2_covg[i];
+	  annovar->BigThetaStart += annovar->theta1[i] + annovar->theta2[i];
+	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[i]));
+	}
+      
+      
+      for (i=0; i<NUMBER_OF_COLOURS; i++)
+	{
+	  if (i==ref_colour)
+	    {
+	      continue;
+	    }
+	  double sequencing_depth_of_coverage=0;
+	  if (seq_error_rate_per_base==-1)
+	    {
+	      seq_error_rate_per_base=0.01;//default
+	    }
+	  if (genome_length==-1)
+	    {
+	      genome_length=3000000000;//default
+	      printf("ZAM test - I think this check can be removed - this code should never be hit\n");
+	    }
+	  int mean_read_len=100;
+	  if (ginfo !=NULL)
+	    {
+	      sequencing_depth_of_coverage=(double) ginfo->total_sequence[i]/genome_length;
+	      mean_read_len = ginfo->mean_read_length[i];
+	    }
+	  if ( (sequencing_depth_of_coverage==0)|| (annovar->too_short==true) )
+	    {
+	      annovar->genotype[i]=absent;
+	    }
+	  else if ( (expt==EachColourADiploidSample) || (expt==EachColourADiploidSampleExceptTheRefColour) )
+	    {
+	      
+	      //the full genotyping model reduces to a simple formula for bubbles
+	      //do standard genotyping according to our model for bubble calls and SNP calls from PD
+	      if ( (caller==BubbleCaller) 
+		   //|| 
+		   //( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) 
+		   )
+		{
+		  get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  
+										 seq_error_rate_per_base, 
+										 sequencing_depth_of_coverage,
+										 mean_read_len,i);
+		}
+	      else
+		{
+		  get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(annovar, assump,
+											model_info, little_db_graph, db_graph,gwp,i);
+		}
+
+	      //     printf("Putative variant genotyped. log liks for hom1, het, hom2 are %.2f, %.2f, %.2f\n",
+	      //     annovar->gen_log_lh[i].log_lh[hom_one],
+	      //     annovar->gen_log_lh[i].log_lh[het],
+	      //     annovar->gen_log_lh[i].log_lh[hom_other]);
+	      
+	      if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
+		{
+		  if (annovar->gen_log_lh[i].log_lh[hom_one]>=annovar->gen_log_lh[i].log_lh[hom_other])
+		    {
+		      annovar->genotype[i]=hom_one;
+		    }
+		  else
+		    {
+		      annovar->genotype[i]=hom_other;
+		    }
+		}
+	      else if (annovar->gen_log_lh[i].log_lh[het]>=annovar->gen_log_lh[i].log_lh[hom_other])
+		{
+		  annovar->genotype[i]=het;
+		}
+	      else
+		{
+		  annovar->genotype[i]=hom_other;
+		}
+	      
+	      
+	    }
+	  else if ( (expt==EachColourAHaploidSample) || (expt==EachColourAHaploidSampleExceptTheRefColour) )
+	    {
+	      
+	      if ( (caller==BubbleCaller) 
+		   || 
+		   ( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) )
+		{
+		  get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+		}
+	      else
+		{
+		  //get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+		}
+	      
+	      
+	      if (annovar->gen_log_lh[i].log_lh[hom_one]> annovar->gen_log_lh[i].log_lh[hom_other])
+		{
+		  annovar->genotype[i]=hom_one;
+		}
+	      else
+		{
+		  annovar->genotype[i]=hom_other;
+		}
+
+	    }
+	  else
+	    {
+	      annovar->genotype[i]=hom_one;
+	    }
+
+
+
+	}
+    }
+
+  return true;
 }

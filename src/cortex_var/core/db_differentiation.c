@@ -110,8 +110,9 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
   }
 
   
-  dBNode** array_nodes = malloc(sizeof(dBNode*)*(max_read_length+db_graph->kmer_size+1));
-  Orientation* array_or = malloc(sizeof(Orientation)*(max_read_length+db_graph->kmer_size+1));
+
+  dBNode** array_nodes = (dBNode**) malloc(sizeof(dBNode*) * (max_read_length+db_graph->kmer_size+1) );
+  Orientation*  array_or = (Orientation*) malloc(sizeof(Orientation)*(max_read_length+db_graph->kmer_size+1) );
   if ( (array_nodes==NULL) || (array_or==NULL) )
     {
       printf("Unable to malloc arrays for alignment\n");
@@ -274,10 +275,11 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
       fclose(out);
       
     }
+
   fclose(list_fptr);
-  free(array_nodes);
-  free(array_or);
-  free_sequence(&seq);
   free(kmer_window->kmer);
   free(kmer_window);
+  free_sequence(&seq);
+  free(array_nodes);
+  free(array_or);
 }

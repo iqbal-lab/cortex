@@ -217,7 +217,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   int ref_colour=-1;//no reference colour
   initialise_model_info(&model_info, &ginfo, genome_len, mu, err, ref_colour, NUMBER_OF_COLOURS*2, EachColourADiploidSample);
   AnnotatedPutativeVariant annovar;
-  int ref_col=-1; //no reference
+
 
 
   clean_up(db_graph);
@@ -237,7 +237,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(20, 20, &var, i);
     }
   
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size,-1, EachColourADiploidSample);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, kmer_size, AssumeUncleaned, NULL, NULL, NULL);
   
   double ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
 
@@ -267,7 +267,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(0,10, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size,ref_col, EachColourADiploidSampleExceptTheRefColour);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
 
@@ -308,7 +308,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(5,5, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size, ref_col, EachColourADiploidSampleExceptTheRefColour);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret> log(100));//called as a variant
@@ -343,7 +343,8 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
     }
   set_coverage_on_bubble(0,10, &var, 99);
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size, ref_col,EachColourADiploidSampleExceptTheRefColour);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret> log(100) );//called as a variant
@@ -388,8 +389,8 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(2,5, &var, i);
     }
 
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size, ref_col, EachColourADiploidSampleExceptTheRefColour);
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret< log(100) );//called as a repeat
@@ -405,8 +406,8 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(2000,2000, &var, i);
     }
 
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
 
-  initialise_putative_variant(&annovar, &var, BubbleCaller, &ginfo, model_info.seq_error_rate_per_base, genome_len,kmer_size, ref_col, EachColourADiploidSampleExceptTheRefColour);
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
 

@@ -395,6 +395,7 @@ int default_opts(CmdLine * c)
   c->load_colours_only_where_overlap_clean_colour=false;
   c->successively_dump_cleaned_colours=false;
   c->align_given_list=false;
+  c->dump_aligned_overlap_binary=false;
   c->print_colour_overlap_matrix=false;
   c->format_of_files_to_align=UNSPECIFIED;
   c->apply_model_selection_at_bubbles=false;

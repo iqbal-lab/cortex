@@ -34,6 +34,8 @@
 #include <db_variants.h>
 #include <graph_info.h>
 #include <model_selection.h>
+#include <open_hash/little_hash_for_genotyping.h>
+#include <genotyping_element.h>
 
 extern int MIN_LLK;
 
@@ -47,11 +49,29 @@ typedef struct {
 
 } MultiplicitiesAndOverlapsOfBiallelicVariant;
 
-typedef enum {
-  AssumeUncleaned                                = 1,
-  AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice = 2,//because we cleaned off stuff that occurred only once
-}AssumptionsOnGraphCleaning;
 
+typedef struct {
+  int max_allele_len;//this applies to working_blah, which have to be as long as the longest allele.
+  GenotypingElement** working_g_e_one;
+  Orientation* working_o_one;
+  GenotypingElement** working_g_e_other;
+  Orientation* working_o_other;
+  int* working_array_self;
+  int* working_array_shared;
+  int working_colour1;
+  int working_colour2;
+  dBNode** path_nodes;
+  Orientation* path_orientations;
+  Nucleotide* path_labels;
+  char* path_string;
+  MultiplicitiesAndOverlapsOfBiallelicVariant* mobv;
+  int max_sup_len;//used for the path_blah allocation
+} GenotypingWorkingPackage;
+
+GenotypingWorkingPackage* alloc_genotyping_work_package(int max_allele_len, int max_sup_len, 
+							int working_colour1, int working_colour2);
+
+void free_genotyping_work_package(GenotypingWorkingPackage* gwp);
 
 MultiplicitiesAndOverlapsOfBiallelicVariant* alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(int len_allele1, int len_allele2);
 void dealloc_MultiplicitiesAndOverlapsOfBiallelicVariant(MultiplicitiesAndOverlapsOfBiallelicVariant* mobv);
@@ -85,6 +105,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 							    boolean using_2net, int (*get_covg_in_2net_of_genotype)(dBNode*),
 							    double min_acceptable_llk);
 
+
 void wipe_colour_and_load_binaries(dBGraph* db_graph, int colour, char* bin1, char* bin2);
 void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int colour2,
 					    char* binary11, char* binary12, char* binary21, char* binary22);
@@ -103,9 +124,54 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 										      boolean using_1net, boolean using_2net,
 										      double min_acceptable_llk);
 
+
+//this assumes we know which of the tewo alleles is the ref allele - needed for this genotyper
+void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele(AnnotatedPutativeVariant* annovar,
+											     AssumptionsOnGraphCleaning assump,
+											     GraphAndModelInfo* model_info, 
+											     LittleHashTable* little_db_graph,
+											     dBGraph* db_graph, 
+											     GenotypingElement** working_g_e_one, 
+											     Orientation* working_o_one,
+											     GenotypingElement** working_g_e_other, 
+											     Orientation* working_o_other,
+											     int* working_array_self,
+											     int* working_array_shared,
+											     MultiplicitiesAndOverlapsOfBiallelicVariant* mobv,
+											     int colour_to_genotype, int working_colour1, int working_colour2,
+											     dBNode** path_nodes, Orientation* path_orientations, 
+											     Nucleotide* path_labels, char* path_string , int max_sup_len
+											     );
+
+double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(GenotypingVariantBranchesAndFlanks* var,
+									      MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults,
+									      GraphAndModelInfo* model_info,
+									      int colour_indiv, 
+									      LittleHashTable* little_db_graph, dBGraph* db_graph,
+									      int* working_array_self, int* working_array_shared,
+									      AssumptionsOnGraphCleaning assump,
+									      dBNode** p_nodes, Orientation* p_orientations, Nucleotide* p_labels, char* p_string, 
+									      int max_sup_len);
+void wipe_little_graph(LittleHashTable* little_graph);
+
+void get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(AnnotatedPutativeVariant* annovar,
+									   AssumptionsOnGraphCleaning assump,
+									   GraphAndModelInfo* model_info,
+									   LittleHashTable* little_db_graph, 
+									   dBGraph* db_graph,
+									   GenotypingWorkingPackage* gwp, int colour_to_genotype);
+
+			      
+
 double* alloc_ML_results_array(int num_samples_to_genotype);
 char** alloc_ML_results_names_array(int num_samples_to_genotype);
 
 void modify_character(char* str, int which_base, int which_mutant);
+
+//set up of Putative Variant object and genotype
+boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info,
+				    VariantBranchesAndFlanks* var, DiscoveryMethod caller,  int kmer,
+				    AssumptionsOnGraphCleaning assump,GenotypingWorkingPackage* gwp,
+				    dBGraph* db_graph, LittleHashTable* little_db_graph);
 
 #endif

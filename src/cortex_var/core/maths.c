@@ -75,3 +75,15 @@ int min_of_ints(int a, int b)
       return b;
     }
 }
+
+int max_of_ints(int a, int b)
+{
+  if (a>=b)    
+    {
+      return a;
+    }
+  else
+    {
+      return b;
+    }
+}

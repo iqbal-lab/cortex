@@ -33,7 +33,224 @@
 #include <stdlib.h>
 #include <gsl_sf_gamma.h>
 
+VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p)
+{
+  VariantBranchesAndFlanks* var = (VariantBranchesAndFlanks*) malloc(sizeof(VariantBranchesAndFlanks));
+  if (var==NULL)
+    {
+      return var;
+    }
+  else
+    {      
+      var->flank5p      = (dBNode**) malloc(sizeof(dBNode*)*(len_5p));
+      if (var->flank5p==NULL) 
+	{
+	  return NULL;
+	}
 
+      var->one_allele   = (dBNode**) malloc(sizeof(dBNode*)*(len_br1));
+      if (var->one_allele==NULL) 
+	{
+	  free(var->flank5p);
+	  free(var);
+	  return NULL;
+	}
+
+      var->other_allele = (dBNode**) malloc(sizeof(dBNode*)*(len_br2));
+      if (var->other_allele==NULL) 
+	{
+	  free(var->flank5p);
+	  free(var->one_allele);
+	  free(var);
+	  return NULL;
+	}
+
+      var->flank3p      = (dBNode**) malloc(sizeof(dBNode*)*(len_3p));
+      if (var->flank3p==NULL) 
+	{
+	  free(var->flank5p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var);
+	  return NULL;
+	}
+
+      
+      var->flank5p_or    = (Orientation*) malloc(sizeof(Orientation) * len_5p);
+      if (var->flank5p_or==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var);
+	  return NULL;
+	}
+       var->one_allele_or = (Orientation*) malloc(sizeof(Orientation) * len_br1);
+      if (var->one_allele_or==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var->flank5p_or);
+	  free(var);
+	  return NULL;
+	}
+      var->other_allele_or = (Orientation*) malloc(sizeof(Orientation) * len_br2);
+      if (var->other_allele_or==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var);
+	  return NULL;
+	}
+      var->flank3p_or    = (Orientation*) malloc(sizeof(Orientation) * len_3p);
+      if (var->flank3p_or==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var);
+	  return NULL;
+	}
+      
+      var->var_name=(char*) malloc(sizeof(char)*MAX_VARNAME_LEN);
+      if (var->var_name==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var);
+	  return NULL;
+	  
+	}
+      var->seq5p=(char*) malloc(sizeof(char)*len_5p);
+      if (var->seq5p==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var->var_name);
+	  free(var);	  
+	  return NULL;
+
+	}
+
+      var->seq_one=(char*) malloc(sizeof(char)*len_br1);
+      if (var->seq_one==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var->var_name);
+	  free(var->seq5p);
+	  free(var);	  
+	  return NULL;
+
+	}
+
+
+      var->seq_other=(char*) malloc(sizeof(char)*len_br2);
+      if (var->seq_other==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var->var_name);
+	  free(var->seq5p);
+	  free(var->seq_one);
+	  free(var);	  
+	  return NULL;
+
+	}
+
+      var->seq3p =(char*) malloc(sizeof(char)*len_3p);
+      if (var->seq3p==NULL)
+	{
+	  free(var->flank5p);
+	  free(var->flank3p);
+	  free(var->one_allele);
+	  free(var->other_allele);	
+	  free(var->flank5p_or);
+	  free(var->one_allele_or);
+	  free(var->other_allele_or);
+	  free(var->flank3p_or);
+	  free(var->var_name);
+	  free(var->seq5p);
+	  free(var->seq_one);
+	  free(var->seq_other);
+	  free(var);	  
+	  return NULL;
+
+	}
+
+
+      var->len_flank5p=0;
+      var->len_flank3p=0;
+      var->len_one_allele=0;
+      var->len_other_allele=0;
+      var->which = unknown;
+      var->var_name[0]='\0';
+      var->seq5p[0]='\0';
+      var->seq_one[0]='\0';
+      var->seq_other[0]='\0';
+      var->seq3p[0]='\0';
+
+      return var;
+    }
+}
+
+void free_VariantBranchesAndFlanks_object(VariantBranchesAndFlanks* var)
+{
+  free(var->flank5p);
+  free(var->flank3p);
+  free(var->one_allele);
+  free(var->other_allele);
+  free(var->flank5p_or);
+  free(var->flank3p_or);
+  free(var->one_allele_or);
+  free(var->other_allele_or);
+  free(var->seq5p);
+  free(var->seq_one);
+  free(var->seq_other);
+  free(var->seq3p);
+  free(var->var_name);
+  free(var);
+}
+
+
+
+//overkill, but allows the flanks and alleles all to be the same length - I don't want to have to pass around knowledge
+VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks(int len);
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
 				     dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, 
@@ -56,6 +273,99 @@ void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var,
   var->which         = which;
 }
 
+// suppose branch1 was node1 node2 node3. normally yoiu give an aray of node*'s  starting at node1
+// this function allows you to pass in the array (node3, node2, node1) + the info that it is in reverse order
+void set_alloced_variant_branches_and_flanks_allowing_inputargs_in_either_order(VariantBranchesAndFlanks* var, 
+										dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,  Orientation arraydir_5p, 
+										dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, Orientation arraydir_one,
+										dBNode** other_allele, Orientation* other_allele_or, int len_other_allele, Orientation arraydir_other,
+										dBNode** flank3p,    Orientation* flank3p_or,    int len_flank3p, Orientation arraydir_3p,
+										WhichAlleleIsRef which)
+{
+  int i,j;
+  if (arraydir_5p==reverse)
+    {
+      j=0;
+      for (i=len_flank5p; i>=0; i--)
+	{
+	  var->flank5p[j]   =flank5p[i];
+	  var->flank5p_or[j]=flank5p_or[i];
+	  j++;
+	}
+    }
+  else
+    {
+      for (i=0; i<=len_flank5p; i++)
+	{
+	  var->flank5p[i]   =flank5p[i];
+          var->flank5p_or[i]=flank5p_or[i];
+	}
+    }
+  var->len_flank5p   = len_flank5p;
+
+  
+  if (arraydir_one==reverse)
+    {
+      j=0;
+      for (i=len_one_allele; i>=0; i--)
+	{
+	  var->one_allele[j]    = one_allele[i];
+	  var->one_allele_or[j] = one_allele_or[i];
+	  j++;
+	}
+    }
+  else
+    {
+      for (i=0; i<=len_one_allele; i++)
+	{
+	  var->one_allele[i]    = one_allele[i];
+	  var->one_allele_or[i] = one_allele_or[i];	  
+	}
+    }
+  var->len_one_allele= len_one_allele;
+
+  if (arraydir_other==reverse)
+    {
+      j=0;
+      for (i=len_other_allele; i>=0; i--)
+	{
+	  var->other_allele[j]    = other_allele[i];
+	  var->other_allele_or[j] = other_allele_or[i];
+	  j++;
+	}
+    }
+  else
+    {
+      for (i=len_other_allele; i>=0; i--)
+	{
+	  var->other_allele[i]    = other_allele[i];
+	  var->other_allele_or[i] = other_allele_or[i];
+	}      
+    }
+  var->len_other_allele= len_other_allele;
+
+  if (arraydir_3p==reverse)
+    {
+      j=0;
+      for (i=len_flank3p; i>=0; i--)
+	{
+	  var->flank3p[j]       =flank3p[i];
+	  var->flank3p_or[j]    =flank3p_or[i];
+	  j++;
+	}
+    }
+  else
+    {
+      for (i=len_flank3p; i>=0; i--)
+        {
+          var->flank3p[i]       =flank3p[i];
+          var->flank3p_or[i]    =flank3p_or[i];
+	}
+    }
+  var->len_flank3p   = len_flank3p;
+  var->which         = which;
+}
+
 void set_status_of_nodes_in_branches(VariantBranchesAndFlanks* var, NodeStatus status)
 {
   int i;
@@ -68,6 +378,23 @@ void set_status_of_nodes_in_branches(VariantBranchesAndFlanks* var, NodeStatus s
   for (i=0; i<var->len_other_allele; i++)
     {
       db_node_set_status( (var->other_allele)[i], status);
+    }
+
+}
+
+
+void set_status_of_genotyping_nodes_in_branches(GenotypingVariantBranchesAndFlanks* var, NodeStatus status)
+{
+  int i;
+
+  for (i=0; i<var->len_one_allele; i++)
+    {
+      db_genotyping_node_set_status( (var->one_allele)[i], status);
+    }
+
+  for (i=0; i<var->len_other_allele; i++)
+    {
+      db_genotyping_node_set_status( (var->other_allele)[i], status);
     }
 
 }
@@ -120,6 +447,29 @@ void set_variant_branches_but_flanks_to_null(VariantBranchesAndFlanks* var,
   var->len_flank3p   = 0;
   var->which         = which;
 }
+
+
+void set_genotyping_variant_branches_but_flanks_to_null(GenotypingVariantBranchesAndFlanks* var, 
+							GenotypingElement** one_allele, Orientation* one_allele_or, int len_one_allele, 
+							GenotypingElement** other_allele, Orientation* other_allele_or, int len_other_allele, 
+							WhichAlleleIsRef which)
+{
+  var->flank5p       = NULL;
+  var->flank5p_or    = NULL;
+  var->len_flank5p   = 0;
+  var->one_allele    = one_allele;
+  var->one_allele_or = one_allele_or;
+  var->len_one_allele= len_one_allele;
+  var->other_allele    = other_allele;
+  var->other_allele_or = other_allele_or;
+  var->len_other_allele= len_other_allele;
+  var->flank3p       = NULL;
+  var->flank3p_or    = NULL;
+  var->len_flank3p   = 0;
+  var->which         = which;
+}
+
+
 
 void db_variant_action_do_nothing(VariantBranchesAndFlanks* var)
 {
@@ -180,7 +530,8 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
 }
 
 
-void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
+void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, 
+								    double sequencing_depth_of_coverage, int read_length, int colour)
 {
   boolean too_short = false;
   int initial_covg_plus_upward_jumps_branch1 = 
@@ -228,37 +579,6 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
 
 }
 
-
-
-void get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
-{
-  boolean too_short = false;
-  //next two lines are an expenseive way of setting too_short!!
-  int initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
-  int initial_covg_plus_upward_jumps_branch2 = count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
-
-  if (too_short==true)
-    {
-      annovar->too_short=true;
-      int j;
-      //set all the log likelihoods to zero.
-      for (j=0; j<NUMBER_OF_COLOURS; j++)
-	{
-	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[j]));
-	}
-      return ;
-    }
-  
-  else //assume caller has checked is not a SNP
-    {
-      //set to hom_other (the variant allele)
-      annovar->gen_log_lh[colour].log_lh[hom_one]   =-999;
-      annovar->gen_log_lh[colour].log_lh[het]       =-999;
-      annovar->gen_log_lh[colour].log_lh[hom_other] = 0;
-      return;
-    }
-
-}
 
 
 
@@ -403,202 +723,6 @@ void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl)
 }
 
 
-//returns true if was able to initialise
-// if you have no GraphInfo, enter NULL
-//if you do not know what sequencing_error_per_base is, enter -1, will use default of 0.01
-//if you do not knwo what genome length is, enter -1, will use default of 3 billion (human)
-// NOTE THIS GENOTYPES THE SITE
-// if you enter ref_colour=-1, there is no ref. Otherwise, the ref colour will be ignored for calculations like theta, where
-// we are aggregating covg.
-boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, 
-				    VariantBranchesAndFlanks* var, DiscoveryMethod caller, 
-				    GraphInfo* ginfo, double seq_error_rate_per_base, 
-				    long long genome_length, int kmer,
-				    int ref_colour, ExperimentType expt)
-{
-  int number_individals=NUMBER_OF_COLOURS;
-  if ( (ref_colour !=-1) && ( (ref_colour<0) || (ref_colour>=NUMBER_OF_COLOURS) ) )
-    {
-      printf("Called initialise_putative_variant with a ref_colour which is not -1, nor one of the colours this executable is compiled for. Coding error - call Zam\n");
-      exit(1);
-    }
-  if (ref_colour != -1)
-    {
-      number_individals--;
-    }
-
-  annovar->kmer = kmer;
-  annovar->caller = caller;
-  annovar->var=var;
-
-  boolean flag1=false;
-  boolean flag2=false;
-
-  flag1=get_num_effective_reads_on_branch(annovar->br1_covg, var->one_allele, var->len_one_allele);
-  flag2=get_num_effective_reads_on_branch(annovar->br2_covg, var->other_allele, var->len_other_allele);
-
-  if ( (flag1==true)||(flag2==true) )
-    {
-      annovar->too_short = true;
-    }
-  else
-    {
-      annovar->too_short = false;
-    }
-  
-  if (var->len_one_allele < var->len_other_allele)
-    {
-      annovar->len_start=var->len_one_allele ;
-    }
-  else
-    {
-      annovar->len_start=var->len_other_allele;
-    }
-
-  if (annovar->too_short==true)
-    {
-      //deliberately not setting values to zero, for performance reasons.
-      //this annovar should be discarded as soon as this function returns.
-    }
-  else//is a valid putative site
-    {
-      get_num_effective_reads_on_branch(annovar->theta1, var->one_allele, annovar->len_start);
-      get_num_effective_reads_on_branch(annovar->theta2, var->other_allele, annovar->len_start);
-      
-      int i;
-      annovar->BigTheta = 0;
-      annovar->BigThetaStart = 0;
-      
-      for (i=0; i<var->len_one_allele; i++)
-	{
-	  if (i==ref_colour)
-	    {
-	      continue;
-	    }
-	  annovar->BigTheta += annovar->br1_covg[i];
-	}
-      
-      for (i=0; i<var->len_other_allele; i++)
-	{
-	  annovar->BigTheta     += annovar->br2_covg[i];
-	}
-      
-      
-      for (i=0; i<annovar->len_start; i++)
-	{
-	  annovar->BigThetaStart += annovar->theta1[i] + annovar->theta2[i];
-	}
-      
-      //determine genotype (under assumption/model that this is a variant) for each colour
-      
-      for (i=0; i<NUMBER_OF_COLOURS; i++)
-	{
-	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[i]));
-	}
-      
-      for (i=0; i<NUMBER_OF_COLOURS; i++)
-	{
-	  double sequencing_depth_of_coverage=0;
-	  if (seq_error_rate_per_base==-1)
-	    {
-	      seq_error_rate_per_base=0.01;//default
-	    }
-	  if (genome_length==-1)
-	    {
-	      genome_length=3000000000;//default
-	      printf("ZAM test - I think this check can be removed - this code should never be hit\n");
-	    }
-	  int mean_read_len=100;
-	  if (ginfo !=NULL)
-	    {
-	      sequencing_depth_of_coverage=(double) ginfo->total_sequence[i]/genome_length;
-	      mean_read_len = ginfo->mean_read_length[i];
-	    }
-	  if ( (sequencing_depth_of_coverage==0)|| (annovar->too_short==true) )
-	    {
-	      annovar->genotype[i]=absent;
-	    }
-	  else if ( (expt==EachColourADiploidSample) || (expt==EachColourADiploidSampleExceptTheRefColour) )
-	    {
-	      
-	      //do standard genotyping according to our model for bubble calls and SNP calls from PD
-	      if ( (caller==BubbleCaller) 
-		   || 
-		   ( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) )
-		{
-		  get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  
-										 seq_error_rate_per_base, 
-										 sequencing_depth_of_coverage,
-										 mean_read_len,i);
-		}
-	      else
-		{
-		  get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(annovar,  
-										     seq_error_rate_per_base, 
-										     sequencing_depth_of_coverage,
-										     mean_read_len,i);
-		}
-
-		  
-	      if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
-		{
-		  if (annovar->gen_log_lh[i].log_lh[hom_one]>=annovar->gen_log_lh[i].log_lh[hom_other])
-		    {
-		      annovar->genotype[i]=hom_one;
-		    }
-		  else
-		    {
-		      annovar->genotype[i]=hom_other;
-		    }
-		}
-	      else if (annovar->gen_log_lh[i].log_lh[het]>=annovar->gen_log_lh[i].log_lh[hom_other])
-		{
-		  annovar->genotype[i]=het;
-		}
-	      else
-		{
-		  annovar->genotype[i]=hom_other;
-		}
-	      
-	      
-	    }
-	  else if ( (expt==EachColourAHaploidSample) || (expt==EachColourAHaploidSampleExceptTheRefColour) )
-	    {
-	      
-	      if ( (caller==BubbleCaller) 
-		   || 
-		   ( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) )
-		{
-		  get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
-		}
-	      else
-		{
-		  get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
-		}
-	      
-	      
-	      if (annovar->gen_log_lh[i].log_lh[hom_one]> annovar->gen_log_lh[i].log_lh[hom_other])
-		{
-		  annovar->genotype[i]=hom_one;
-		}
-	      else
-		{
-		  annovar->genotype[i]=hom_other;
-		}
-
-	    }
-	  else
-	    {
-	      annovar->genotype[i]=hom_one;
-	    }
-
-
-
-	}
-    }
-
-  return true;
-}
 
 //first argument is an array of length NUMBER_OF_COLOURS, into which results go.
 //If you want the number of reads on the entire branch, enter the length of that branch in arg3 (eg var->len_one-allele)

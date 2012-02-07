@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo  
+ * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo
  * 
  * CORTEX project contacts:  
  * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
@@ -25,28 +25,23 @@
  * **********************************************************************
  */
 
+#ifndef MODEL_INFO
+#define MODEL_INFO
 
-// model_selection.h
-
-
-#ifndef MODEL_SELECTION_H_
-#define MODEL_SELECTION_H_
-
-#include <model_info.h>
 #include <graph_info.h>
-#include <db_variants.h>
 #include <experiment.h>
 
+typedef struct{
+  GraphInfo* ginfo;
+  long long genome_len;
+  double mu; //parameter of geometric distirb describing prior for repeat copy number
+  double seq_error_rate_per_base;
+  int ref_colour;
+  int num_haploid_chromosomes;
+  ExperimentType expt_type;
+} GraphAndModelInfo;
 
-#define MAX_EXPECTED_REPEAT_COPIES 10
-#define NUM_STEPS  48
+void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo, long long genome_len, double mu, double seq_err_rate_per_base, 
+			   int ref_colour, int num_chroms, ExperimentType expt_type);
 
-
-
-
-boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info);
-double get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info);
-double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info, double allele_balance_prior_coeff);
-double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info);
-
-#endif /* MODEL_SELECTION_H_ */
+#endif
