@@ -150,7 +150,8 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
       kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(cmd_line->max_read_length-db_graph->kmer_size-1));
       if (kmer_window->kmer==NULL)
 	{
-	  printf("Failed to malloc kmer_window->kmer for genotyping. Exit.\n");
+	  printf("Failed to malloc kmer_window->kmer for genotyping. Tried to alloc  an array of %d binary kmers. Max read len:%d, kmer size %d,Exit.\n", 
+		 cmd_line->max_read_length-db_graph->kmer_size-1, cmd_line->max_read_length, db_graph->kmer_size);
 	  exit(1);
 	}
       kmer_window->nkmers=0;

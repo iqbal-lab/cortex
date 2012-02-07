@@ -2578,7 +2578,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
   //save the sequence we have read:
   strncpy(var->seq5p, seq->seq, (int) strlen(seq->seq));
-
+  var->seq5p[(int) strlen(seq->seq)]='\0';
   //so we have got the 5prime flank. Now we need to get all the kmers joining it to the branches
   char last_kmer_5p[db_graph->kmer_size+1];
   last_kmer_5p[0]='\0';
@@ -2610,7 +2610,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
   //save the sequence we have read:
   strncpy(var->seq_one, seq->seq, (int) strlen(seq->seq));
-
+  var->seq_one[(int) strlen(seq->seq)]='\0';
   
   var->len_other_allele = -1 + 
     given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_5p, fptr, max_read_length, 
@@ -2627,7 +2627,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
   //save the sequence we have read:
   strncpy(var->seq_other, seq->seq, (int) strlen(seq->seq));
-
+  var->seq_other[(int) strlen(seq->seq)]='\0';
 
   var->len_flank3p = -1 + 
     given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_of_branch1, fptr, max_read_length, 
@@ -2643,7 +2643,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
   //save the sequence we have read:
   strncpy(var->seq3p, seq->seq, (int) strlen(seq->seq));
-
+  var->seq3p[(int) strlen(seq->seq)]='\0';
   
   return 1;
 

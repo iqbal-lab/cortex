@@ -1314,6 +1314,49 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
   
+
+  if ( (cmd_ptr->do_genotyping_of_file_of_sites==true) && (cmd_ptr->max_read_length==0) )
+    {
+      char tmp[] = "If you use --gt, then you must specify --max_read_len (and it must be >= any of the reads (including flanks) in your input file).\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
+
+  if ( (cmd_ptr->do_genotyping_of_file_of_sites==true) && (cmd_ptr->max_read_length<cmd_ptr->kmer_size) )
+    {
+      char tmp[] = "You have specified a max_read_length < kmer_size\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
+
+
+
+  if ( (cmd_ptr->do_genotyping_of_file_of_sites==true) && ( (cmd_ptr->expt_type==Unspecified)|| (cmd_ptr->genome_size==0) )     )
+    {
+      char tmp[] = "If you specify --gt, you must also set --genome_size and --experiment_type\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
+
+
   if (cmd_ptr->kmer_size==-1)
     {
       char tmp[] = "You must specify kmer_size\n";
