@@ -9095,7 +9095,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		    }
 		 
 		  //fprintf(output_file, "var_%i - extra information\n", num_variants_found);
-		  print_extra_info(&var, output_file);
+		  print_extra_info(var, output_file);
 		}
 	      
 	      
