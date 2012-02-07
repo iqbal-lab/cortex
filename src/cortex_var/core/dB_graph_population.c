@@ -8832,6 +8832,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 
 	      //debug only
+	      /*
+	      printf("These are the branches and flanks as defined for genotyping - does not affect printing of call\n");
 	      int zim;
 	      char zam[db_graph->kmer_size];
 	      BinaryKmer rev;
@@ -8896,6 +8898,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		}
 	      
 	      //end debug only
+	      */
 
 	      if (condition(var, ref_colour, get_colour, get_covg)==true)
 		{
