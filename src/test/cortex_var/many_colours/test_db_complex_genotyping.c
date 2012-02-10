@@ -1323,7 +1323,7 @@ Colour 0 = reference
 
   free_genotyping_work_package(gwp);
   little_hash_table_free(&little_db_graph);
-
+  hash_table_free(&db_graph);
   free(branch1);
   free(branch2);
   free(branch1_o);
