@@ -443,7 +443,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   float repeat_geometric_param_mu = 0.8;//not used in this
   // int genome_size = 554;//554 is length of one allele + rest of reference
   int num_chroms_in_expt=2;
-  initialise_model_info(&model_info, &ginfo, genome_size, repeat_geometric_param_mu, 0.01, -1, num_chroms_in_expt, EachColourADiploidSample);
+  initialise_model_info(&model_info, &ginfo, genome_size, repeat_geometric_param_mu, 0.01, -1, num_chroms_in_expt, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
   boolean is_true_hom;
   for (p=0; p<num_depths; p++)
     {
@@ -918,7 +918,7 @@ Colour:	MeanReadLen	TotalSeq
   int num_chroms=20; 
   long long genome_len = 3000000000;
   initialise_model_info(&model_info, &ginfo, genome_len, mu, seq_err_rate_per_base, 
-			ref_colour, num_chroms, EachColourADiploidSampleExceptTheRefColour);
+			ref_colour, num_chroms, EachColourADiploidSampleExceptTheRefColour, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
 
   var.one_allele       = branch1;
   var.len_one_allele   = 22;
@@ -926,7 +926,8 @@ Colour:	MeanReadLen	TotalSeq
   var.len_other_allele = 134;
 
   AnnotatedPutativeVariant annovar;
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, 31, AssumeUncleaned, NULL, NULL, NULL );//last 3 arguments (gwp, db_graph and little db graph) are not used except for PD genotying.
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, 31, AssumeUncleaned, NULL, NULL, 
+			      NULL, true );//last 3 arguments (gwp, db_graph and little db graph) are not used except for PD genotying.
 
 
   // Since none of the colours except colour 3 has any coverage AT ALL on branch1, I simply
@@ -1106,7 +1107,7 @@ Covg in indiv:
   //I load this into the graph so the kmers are there, but then I am going to just create a var object with the covgs I want
 
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example1.fasta",
-								     &seq_read, &seq_loaded,
+								     &seq_read, &seq_loaded, NULL, 
 								     &bad_reads, &dup_reads, 
 								     max_read_len, 
 								     remove_duplicates_single_endedly, 
@@ -1115,7 +1116,7 @@ Covg in indiv:
 
   //for second var/test
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example2.fasta",
-								     &seq_read, &seq_loaded,
+								     &seq_read, &seq_loaded, NULL, 
 								     &bad_reads, &dup_reads, 
 								     max_read_len, 
 								     remove_duplicates_single_endedly, 
@@ -1216,7 +1217,7 @@ Colour 0 = reference
   int num_chroms=2; 
   long long genome_len = 3000000000;
   initialise_model_info(&model_info, &ginfo, genome_len, mu, seq_err_rate_per_base, 
-			ref_colour, num_chroms, EachColourADiploidSampleExceptTheRefColour);
+			ref_colour, num_chroms, EachColourADiploidSampleExceptTheRefColour, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
 
   var.one_allele       = branch1;
   var.one_allele_or    =branch1_o;
@@ -1245,7 +1246,7 @@ Colour 0 = reference
   //END OF DEBUG ONLY
 
   initialise_putative_variant(&annovar, &model_info, &var, SimplePathDivergenceCaller, 
-			      56, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph );
+			      56, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph, true );
 
 
 
@@ -1309,7 +1310,7 @@ Colour 0 = reference
   AnnotatedPutativeVariant annovar2;
   wipe_little_graph(little_db_graph);
   initialise_putative_variant(&annovar2, &model_info, &var, SimplePathDivergenceCaller, 
-			      56, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph );
+			      56, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph, true );
 
 
   CU_ASSERT(annovar2.genotype[1]==hom_other);//1==colour

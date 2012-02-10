@@ -44,6 +44,7 @@
 #include <db_variants.h>
 #include <graph_info.h>
 #include <model_selection.h>
+#include <db_complex_genotyping.h>
 
 
 typedef struct {
@@ -640,7 +641,9 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 					  dBGraph* db_graph);
 
 void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fout, GraphAndModelInfo* model_info,
-					DiscoveryMethod which_caller, dBGraph* db_graph, void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*));
+					DiscoveryMethod which_caller, dBGraph* db_graph, void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+					AssumptionsOnGraphCleaning assump, GenotypingWorkingPackage* gwp, LittleHashTable* little_dbg);
+
 
 void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int colour1, int colour2,
 							    dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),

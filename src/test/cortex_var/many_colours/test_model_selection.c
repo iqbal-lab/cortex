@@ -196,11 +196,11 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   CU_ASSERT(f_entry==true);
   fclose(br1_fptr);
   fclose(br2_fptr);
-  VariantBranchesAndFlanks var;
-  var.one_allele     = br1_path;
-  var.len_one_allele = br1len;
-  var.other_allele     = br2_path;
-  var.len_other_allele = br2len;
+  VariantBranchesAndFlanks* var=alloc_VariantBranchesAndFlanks_object(max_read_length,max_read_length,max_read_length,max_read_length,kmer_size);
+  var->one_allele     = br1_path;
+  var->len_one_allele = br1len;
+  var->other_allele     = br2_path;
+  var->len_other_allele = br2len;
 
   int i;
   GraphInfo ginfo;
@@ -217,7 +217,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   double mu = 0.8; //param of geometric describing repeat copy num
   double err = 0.01;
   int ref_colour=-1;//no reference colour
-  initialise_model_info(&model_info, &ginfo, genome_len, mu, err, ref_colour, NUMBER_OF_COLOURS*2, EachColourADiploidSample);
+  initialise_model_info(&model_info, &ginfo, genome_len, mu, err, ref_colour, NUMBER_OF_COLOURS*2, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
   AnnotatedPutativeVariant annovar;
 
 
@@ -239,7 +239,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(20, 20, &var, i);
     }
   
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, kmer_size, AssumeUncleaned, NULL, NULL, NULL, true);
   
   double ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
 
@@ -269,7 +269,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(0,10, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL, true);
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
 
@@ -310,7 +310,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(5,5, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL, true);
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret> log(100));//called as a variant
@@ -345,7 +345,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
     }
   set_coverage_on_bubble(0,10, &var, 99);
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL, true);
 
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
@@ -391,7 +391,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(2,5, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL, true);
 
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
@@ -408,7 +408,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       set_coverage_on_bubble(2000,2000, &var, i);
     }
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL, true);
 
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
@@ -427,7 +427,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 
   //cleanup
   free_sequence(&seq);
-
+  free_VariantBranchesAndFlanks_object(var);
   free(kmer_window->kmer);
   free(kmer_window);
   free(br1_path);

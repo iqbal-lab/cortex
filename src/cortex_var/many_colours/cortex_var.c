@@ -36,6 +36,7 @@
 #include <time.h>
 #include <graph_info.h>
 #include <db_differentiation.h>
+#include <db_complex_genotyping.h>
 #include <model_selection.h>
 #include <experiment.h>
 #include <genome_complexity.h>
@@ -138,7 +139,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
       }
       alloc_sequence(seq_inc_prev_kmer,cmd_line->max_read_length+db_graph->kmer_size,LINE_MAX);
 
-
+      
       
       //We are going to load all the bases into a single sliding window 
       KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
@@ -162,6 +163,27 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 	  printf("Abort - unable to allocate memory for buffers for reading callfile - either sever oom conditions or you have specified very very large max_var_len\n");
 	  exit(1);
 	}
+      GenotypingWorkingPackage* gwp=NULL;
+      LittleHashTable* little_dbg=NULL;
+      if (cmd_line->which_caller_was_used_for_calls_to_be_genotyped==SimplePathDivergenceCaller)
+	{
+	  gwp = alloc_genotyping_work_package(cmd_line->max_var_len, cmd_line->max_var_len, NUMBER_OF_COLOURS, NUMBER_OF_COLOURS+1);
+	  if (gwp==NULL)
+	    {
+	      printf("Unable to alloc resources for genotyping prior to starting. Abort\n");
+	      exit(1);
+	    }
+	  int little_width=100;
+	  int little_height=(int) log((cmd_line->max_var_len) *4)+1;
+	  int little_retries=20;
+	  printf("Building little hash for genotyping: height %d and width %d\n", little_height, little_width);
+	  little_dbg = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
+	  if (little_dbg==NULL)
+	    {
+	      printf("Out of memory - failed to alloc tiny auxiliary hash table\n");
+	      exit(1);
+	    }
+	}
       //end of initialisation 
       
       FILE* fout = fopen(cmd_line->output_genotyping, "w");
@@ -178,8 +200,10 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 						       var, db_graph, &gt_file_reader, seq, seq_inc_prev_kmer, kmer_window);
 	  if (ret==1)
 	    {
+	      AssumptionsOnGraphCleaning assump=AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice; //todo - fix when you have incorporated changes to seq error rate handling
 	      print_call_given_var_and_modelinfo(var, fout, model_info, cmd_line->which_caller_was_used_for_calls_to_be_genotyped, db_graph,
-						 print_whatever_extra_variant_info);
+						 print_whatever_extra_variant_info,
+						 assump, gwp, little_dbg);
 	    }
 	}
     }
@@ -922,8 +946,9 @@ int main(int argc, char **argv){
       exit(1);
     }
 
+  AssumptionsOnGraphCleaning assump = AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice; // todo - fix this when you incorporate seq error info in binaries
   initialise_model_info(&model_info, &db_graph_info, cmd_line.genome_size, 
-			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line.ref_colour, num_chroms_in_expt, cmd_line.expt_type);
+			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line.ref_colour, num_chroms_in_expt, cmd_line.expt_type, assump);
 
 
   int j;

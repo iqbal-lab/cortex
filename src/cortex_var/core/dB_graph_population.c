@@ -2371,6 +2371,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  GraphAndModelInfo* model_info)
 {
 
+  
   int count_vars = 0; 
   int flanking_length = 1000; 
 
@@ -2532,20 +2533,17 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		if (model_info!=NULL)
 		  {
 		    
-		    initialise_putative_variant(&annovar, &var, BubbleCaller, 
-						model_info->ginfo, model_info->seq_error_rate_per_base, 
-						model_info->genome_len, 
-						db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
+		    initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, 
+						db_graph->kmer_size, model_info->assump, NULL, NULL, NULL, true);
 		  }
 		else
 		  {
-		    initialise_putative_variant(&annovar, &var, BubbleCaller, 
-						NULL, -1, -1,
-						db_graph->kmer_size, -1, Unspecified);
+		    initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, 
+						db_graph->kmer_size, NoIdeaWhatCleaning, NULL, NULL, NULL, false);
 		    
 		  }
 
-		initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, db_graph->kmer_size, NoIdeaWhatCleaning, NULL, NULL, NULL);
+ 		//initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, db_graph->kmer_size, NoIdeaWhatCleaning, NULL, NULL, NULL);
 
 
 		if (annovar.too_short==false)
@@ -7105,7 +7103,13 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
     }
 
 
-  VariantBranchesAndFlanks var; //we will reuse this
+  VariantBranchesAndFlanks*  var = 
+    alloc_VariantBranchesAndFlanks_object(max_expected_size_of_supernode+ db_graph->kmer_size, 
+					  length_of_arrays, 
+					  max_expected_size_of_supernode+ db_graph->kmer_size, 
+					  max_expected_size_of_supernode+ db_graph->kmer_size,
+					  db_graph->kmer_size);
+
 
 
   // ***********************************************************
@@ -8123,7 +8127,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  left_most_coord_of_var_branch_in_supernode_array = start_of_3prime_anchor_in_sup;
 		}
 	      
-
+	      /*
 	      set_variant_branches_and_flanks(&var, 
 					      &chrom_path_array[start_node_index], 
 					      &chrom_orientation_array[start_node_index], 
@@ -8138,12 +8142,36 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 					      &chrom_orientation_array[start_of_3prime_anchor_in_chrom],
 					      length_3p_flank, 
 					      first);//first tells it that the trusted branch is the reference
-
-
-	      if (condition(&var, index_for_ref_in_edge_array, index_for_indiv_in_edge_array)==true)
+	      */
+	      
+	      Orientation dir_traversing_sup=forward;
+	      int coord_of_last_node_where_two_branches_agree=left_most_coord_of_var_branch_in_supernode_array-1;//this should not be <0 as we have a flank
+	      if (traverse_sup_left_to_right==false)
 		{
-		  //in some situations you want to mark all branches of variants for future use after this function returns
-		  action_for_branches_of_called_variants(&var);
+		  dir_traversing_sup=reverse;
+		}
+	      set_alloced_variant_branches_and_flanks_allowing_inputargs_in_either_order(var, 
+											 &chrom_path_array[start_node_index], 
+											 &chrom_orientation_array[start_node_index], 
+											 length_5p_flank,
+											 forward,
+											 &chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome-1], 
+											 &chrom_orientation_array[first_index_in_chrom_where_supernode_differs_from_chromosome-1], 
+											 len_trusted_branch,
+											 forward,
+											 &current_supernode[left_most_coord_of_var_branch_in_supernode_array],
+											 &curr_sup_orientations[left_most_coord_of_var_branch_in_supernode_array],
+											 len_branch2,
+											 dir_traversing_sup,
+											 &chrom_path_array[start_of_3prime_anchor_in_chrom],
+											 &chrom_orientation_array[start_of_3prime_anchor_in_chrom],
+											 length_3p_flank, 
+											 forward,
+											 first);//first tells it §that the trusted branch is the reference
+
+
+	      if (condition(var, index_for_ref_in_edge_array, index_for_indiv_in_edge_array)==true)
+		{
 
 		  if (output_file != NULL)
 		    {
@@ -8152,8 +8180,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      AnnotatedPutativeVariant annovar;
 		      if (model_info!=NULL)
 			{
-			  initialise_putative_variant(&annovar, model_info, &var, SimplePathDivergenceCaller, db_graph->kmer_size,
-						      assump, gwp, db_graph, little_db_graph);
+			  initialise_putative_variant(&annovar, model_info, var, SimplePathDivergenceCaller, db_graph->kmer_size,
+						      assump, gwp, db_graph, little_db_graph, true);
 			  
 			  
 			  if (model_info->expt_type != Unspecified)
@@ -8338,7 +8366,11 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		    }
 		 
 		  //fprintf(output_file, "var_%i - extra information\n", num_variants_found);
-		  print_extra_info(&var, output_file);
+		  print_extra_info(var, output_file);
+
+		  //in some situations you want to mark all branches of variants for future use after this function returns
+		  action_for_branches_of_called_variants(var);
+
 		}
 	      
 	      
@@ -8364,6 +8396,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
   //free malloc-ed variables
+  free_VariantBranchesAndFlanks_object(var);
   free_genotyping_work_package(gwp);
   free(chrom_path_array);
   free(chrom_orientation_array);
@@ -8624,7 +8657,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
     alloc_VariantBranchesAndFlanks_object(max_expected_size_of_supernode+ db_graph->kmer_size, 
 					  length_of_arrays, 
 					  max_expected_size_of_supernode+ db_graph->kmer_size, 
-					  max_expected_size_of_supernode+ db_graph->kmer_size);
+					  max_expected_size_of_supernode+ db_graph->kmer_size,
+					  db_graph->kmer_size);
   if (var==NULL)
     {
       printf("Out of memory - cannt malloc my variant object. Either you have set a MASSIVE max_var_len, or your machine is out of memory\n");
@@ -9736,8 +9770,6 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 	      if (condition(var, ref_colour, get_colour, get_covg)==true)
 		{
-		  //in some situations you want to mark all branches of variants for future use after this function returns
-		  action_for_branches_of_called_variants(var);
 
 		  if (output_file != NULL)
 		    {
@@ -9746,8 +9778,12 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		      AnnotatedPutativeVariant annovar;
 		      if (model_info!=NULL)
 			{
+			  //warning - this is bad compartmentalization of code, for speed reasons
+			  // for the PD caller, initialise_putative_variant will genotype the site, and 
+			  // in doing so does various walking aroud the main graph. It will reset any
+			  //node it messes with back to visited
 			  initialise_putative_variant(&annovar, model_info, var, SimplePathDivergenceCaller, db_graph->kmer_size,
-						      assump, gwp, db_graph, little_db_graph);
+						      assump, gwp, db_graph, little_db_graph, true);
 			  
 			  if (model_info->expt_type != Unspecified)
 			    {
@@ -9933,6 +9969,10 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		 
 		  //fprintf(output_file, "var_%i - extra information\n", num_variants_found);
 		  print_extra_info(var, output_file);
+
+		  //in some situations you want to mark all branches of variants for future use after this function returns
+		  action_for_branches_of_called_variants(var);
+
 		}
 	      
 	      
@@ -11206,7 +11246,8 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 
 
 void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fout, GraphAndModelInfo* model_info,
-					DiscoveryMethod which_caller, dBGraph* db_graph, void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
+					DiscoveryMethod which_caller, dBGraph* db_graph, void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+					AssumptionsOnGraphCleaning assump, GenotypingWorkingPackage* gwp, LittleHashTable* little_dbg)
 
 {
 
@@ -11214,10 +11255,8 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
   if (model_info!=NULL)
     {
       //this does the genotyping.
-      initialise_putative_variant(&annovar, var, which_caller, 
-				  model_info->ginfo, model_info->seq_error_rate_per_base, 
-				  model_info->genome_len, 
-				  db_graph->kmer_size, model_info->ref_colour, model_info->expt_type);
+      initialise_putative_variant(&annovar, model_info, var, which_caller, 
+				  db_graph->kmer_size, assump, gwp, db_graph, little_dbg, true);
     }
   else
     {

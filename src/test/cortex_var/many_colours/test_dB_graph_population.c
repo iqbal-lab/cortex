@@ -116,7 +116,7 @@ void test_hash_table_find()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_dB_graph.fasta",&seq_read, &seq_loaded,&bad_reads, &dup_reads, 20, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_dB_graph.fasta",&seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, 20, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,0);
 
   //length of sequence read in from file
@@ -229,7 +229,7 @@ void test_tip_clipping()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_tip.fasta", &seq_read, &seq_loaded,
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_tip.fasta", &seq_read, &seq_loaded, NULL, 
 								     &bad_reads, &dup_reads, 20,
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array,0);
@@ -338,7 +338,7 @@ void test_pruning_low_coverage_nodes()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_tip.fasta",&seq_read, &seq_loaded,&bad_reads, &dup_reads, 20, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_tip.fasta",&seq_read, &seq_loaded,NULL, &bad_reads, &dup_reads, 20, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
   
@@ -412,7 +412,7 @@ void test_get_perfect_path_in_one_colour()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_two_self_loops.fasta", &seq_read, &seq_loaded, &bad_reads, &dup_reads, 20,  
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_two_self_loops.fasta", &seq_read, &seq_loaded, NULL,  &bad_reads, &dup_reads, 20,  
 										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 										  db_graph, individual_edge_array,0);
 
@@ -467,7 +467,7 @@ void test_get_perfect_path_in_one_colour()
   seq_loaded=0;
 
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_one_long_supernode_with_conflict_at_end.fasta",
-								     &seq_read, &seq_loaded,&bad_reads, &dup_reads,20,
+								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads,20,
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array,0);
 
@@ -532,7 +532,7 @@ void test_get_perfect_path_in_one_colour()
    seq_read=0;
    seq_loaded=0;
    load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_one_long_supernode_with_inward_conflict_at_end.fasta", 
-								      &seq_read, &seq_loaded,&bad_reads, &dup_reads, 20,  
+								      &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, 20,  
 								      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								      db_graph, individual_edge_array,0);
 
@@ -597,7 +597,7 @@ void test_get_perfect_path_in_one_colour()
    db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
    seq_read=0;
    seq_loaded=0;
-   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_infinite_loop.fasta",&seq_read, &seq_loaded,
+   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_infinite_loop.fasta",&seq_read, &seq_loaded, NULL,
 								      &bad_reads, &dup_reads,30,
 								      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								      db_graph, individual_edge_array,0);
@@ -956,7 +956,7 @@ void test_detect_and_smooth_bubble(){
 
   long long seq_read=0;
   long long seq_loaded=0;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generate_bubble_with_unequal_branch_sizes.fa", &seq_read, &seq_loaded,
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generate_bubble_with_unequal_branch_sizes.fa", &seq_read, &seq_loaded, NULL, 
 										      &bad_reads, &dup_reads, 200, 
 										      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 										      db_graph, individual_edge_array, 0);
@@ -1197,7 +1197,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
   // ****
 
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_two_self_loops.fasta", &seq_read, &seq_loaded,
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_two_self_loops.fasta", &seq_read, &seq_loaded, NULL, 
 								     &bad_reads, &dup_reads, 20,  
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
@@ -1338,7 +1338,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person.fasta", &seq_read, &seq_loaded,&bad_reads, &dup_reads, max_read_length, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person.fasta", &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
   
@@ -1403,7 +1403,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
   seq_read=0;
   seq_loaded=0;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person2.fasta", &seq_read, &seq_loaded, &bad_reads, &dup_reads, max_read_length, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person2.fasta", &seq_read, &seq_loaded, NULL,  &bad_reads, &dup_reads, max_read_length, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
   
@@ -1460,7 +1460,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
   seq_read=0;
   seq_loaded=0;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded,&bad_reads, &dup_reads, max_read_length, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
 										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 										  db_graph, individual_edge_array, 0);
 

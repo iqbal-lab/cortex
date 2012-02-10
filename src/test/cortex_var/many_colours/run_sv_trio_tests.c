@@ -388,6 +388,9 @@ int  main()
       }
 
 
+
+
+
    //if (NULL == CU_add_test(pPopGraphSuite, "Test function for estimating genome complexity - first test", test_count_reads_where_snp_makes_clean_bubble1 ))
    //   {
 //	CU_cleanup_registry();

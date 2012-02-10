@@ -1236,6 +1236,10 @@ void db_node_action_set_status_visited(dBNode * node){
   db_node_set_status(node,visited);
 }
 
+void db_node_action_set_status_special_visited(dBNode * node){
+  db_node_set_status(node,special_visited);
+}
+
 void db_node_action_set_status_ignore_this_node(dBNode * node)
 {
   db_node_set_status(node,ignore_this_node);

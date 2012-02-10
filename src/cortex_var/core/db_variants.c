@@ -248,7 +248,7 @@ void free_VariantBranchesAndFlanks_object(VariantBranchesAndFlanks* var)
 }
 
 
-
+//use this for a var you have created on the stack
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
 				     dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, 

@@ -793,7 +793,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
       poisson_3net_err_rate= m*m*m*total_len_alleles;
 
     }
-  else if (assump==AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice)
+  //  else if (assump==AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice)
+  else
     {
 
       //next line is the one I had
@@ -1099,7 +1100,22 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 	      k++;
 	      working_array_self_count++;
 	    }
-	  
+	  //ZAM just added this - can't believe it was missing!
+	  if (working_array_self_count>0)
+	    {
+	      boolean too_short = 0;
+	      int covg_on_self_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_self, working_array_self_count, 
+													    &too_short);
+
+	      if (too_short==false)
+		{
+		  // add log dpois ( hap_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
+		  log_prob_data += -hap_D_over_R * working_array_self_count 
+		    + covg_on_self_in_this_chunk * log(hap_D_over_R * working_array_self_count) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
+		}
+	    }
+	  //end of ZAM just added this
+
 	  while (  (k<var->len_other_allele) &&
 		   (check_covg_in_ref_with_site_excised(var->other_allele[k])>0)
 		   )
@@ -1206,12 +1222,12 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	    printf("Unable to find node in main graph correspinding to a node in the littel graph - impossible??\n");
 	    exit(1);
 	  }
-	else if (db_node_check_status(node_corresponding_to_e, visited)==true)
+	else if (db_node_check_status(node_corresponding_to_e, special_visited)==true)
 	  {
 	    return;
 	  }
 	int length = db_graph_supernode_for_specific_person_or_pop(node_corresponding_to_e,max_len,
-								   &db_node_action_set_status_visited,
+								   &db_node_action_set_status_special_visited,
 								   p_nodes,p_or,p_lab, p_str,
 								   &avg_coverage,&min,&max,&is_cycle,
 								   db_graph, individual_edge_array, colour_indiv);
@@ -1233,7 +1249,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   }
 
 
-  void reset_nodes_in_main_graph_to_un_visited(GenotypingElement* e, dBNode** p_nodes, Orientation* p_or, Nucleotide* p_lab, char* p_str, int max_len)
+  void reset_nodes_in_main_graph_to_visited(GenotypingElement* e, dBNode** p_nodes, Orientation* p_or, Nucleotide* p_lab, char* p_str, int max_len)
   {
 
     if (db_genotyping_node_check_status(e, in_desired_genotype)==true)
@@ -1253,9 +1269,9 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	  }
 	else 
 	  {
-	    if (db_node_check_status(node_corresponding_to_e, visited)==true)
+	    if (db_node_check_status(node_corresponding_to_e, special_visited)==true)
 	      {
-		db_node_set_status(node_corresponding_to_e, none);
+		db_node_set_status(node_corresponding_to_e, visited);
 	      }
 	  }
 
@@ -1285,7 +1301,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 
 
   //now go back one more time and un-set the visited flags you put on all those nodes in the main graph
-  little_hash_table_traverse_passing_big_graph_path(&reset_nodes_in_main_graph_to_un_visited, little_db_graph, p_nodes, p_orientations, p_labels, p_string, max_sup_len);
+  little_hash_table_traverse_passing_big_graph_path(&reset_nodes_in_main_graph_to_visited, little_db_graph, p_nodes, p_orientations, p_labels, p_string, max_sup_len);
 
 
   // Errors on union of two alleles occur as a Poisson process with rate = sequencing_error_rate_per_base * kmer * length of two alleles
@@ -1533,6 +1549,24 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	      working_array_self_count++;
 	    }
 	  
+
+	  //ZAM just added this - can't believe it was missing!
+	  if (working_array_self_count>0)
+	    {
+	      boolean too_short = 0;
+	      int covg_on_self_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_self, working_array_self_count, 
+													    &too_short);
+	      
+	      //printf("covg on self in this chunk %d\n", covg_on_self_in_this_chunk);
+	      if (too_short==false)
+		{
+		  // add log dpois ( hap_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
+		  log_prob_data += -hap_D_over_R * working_array_self_count 
+		    + covg_on_self_in_this_chunk * log(hap_D_over_R * working_array_self_count) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
+		}
+	    }
+	  //end of ZAM just added this
+
 	  while (  (k<var->len_other_allele-1) &&
 		   (check_covg_in_ref_with_site_excised(var->other_allele[k])>0)
 		   )
@@ -2560,14 +2594,32 @@ void get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(Annotate
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info,
 				    VariantBranchesAndFlanks* var, DiscoveryMethod caller,  int kmer,
 				    AssumptionsOnGraphCleaning assump, GenotypingWorkingPackage* gwp,
-				    dBGraph* db_graph, LittleHashTable* little_db_graph)
+				    dBGraph* db_graph, LittleHashTable* little_db_graph,
+				    boolean do_genotyping)
 				    
 {
-  GraphInfo* ginfo              = model_info->ginfo;
-  double seq_error_rate_per_base= model_info->seq_error_rate_per_base;
-  long long genome_length       = model_info->genome_len;
-  ExperimentType expt           = model_info->expt_type;
-  int ref_colour                = model_info->ref_colour;
+  GraphInfo* ginfo = NULL;
+  double seq_error_rate_per_base= -1;
+  long long genome_length       = -1;
+  ExperimentType expt           = Unspecified;
+  int ref_colour                = -1;
+
+  if (do_genotyping==true)
+    {
+      if (model_info !=NULL)
+	{
+	  ginfo                  = model_info->ginfo;
+	  seq_error_rate_per_base= model_info->seq_error_rate_per_base;
+	  genome_length          = model_info->genome_len;
+	  expt                   = model_info->expt_type;
+	  ref_colour             = model_info->ref_colour;
+	}
+      else
+	{
+	  printf("Abort - asking to genotype a putative site without specifying the model\n");
+	  exit(1);
+	}
+    }
 
   int number_individals=NUMBER_OF_COLOURS;
   if ( (ref_colour !=-1) && ( (ref_colour<0) || (ref_colour>=NUMBER_OF_COLOURS) ) )
@@ -2635,62 +2687,99 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[i]));
 	}
       
-      
-      for (i=0; i<NUMBER_OF_COLOURS; i++)
-	{
-	  if (i==ref_colour)
-	    {
-	      continue;
-	    }
-	  double sequencing_depth_of_coverage=0;
-	  if (seq_error_rate_per_base==-1)
-	    {
-	      seq_error_rate_per_base=0.01;//default
-	    }
-	  if (genome_length==-1)
-	    {
-	      genome_length=3000000000;//default
-	      printf("ZAM test - I think this check can be removed - this code should never be hit\n");
-	    }
-	  int mean_read_len=100;
-	  if (ginfo !=NULL)
-	    {
-	      sequencing_depth_of_coverage=(double) ginfo->total_sequence[i]/genome_length;
-	      mean_read_len = ginfo->mean_read_length[i];
-	    }
-	  if ( (sequencing_depth_of_coverage==0)|| (annovar->too_short==true) )
-	    {
-	      annovar->genotype[i]=absent;
-	    }
-	  else if ( (expt==EachColourADiploidSample) || (expt==EachColourADiploidSampleExceptTheRefColour) )
-	    {
-	      
-	      //the full genotyping model reduces to a simple formula for bubbles
-	      //do standard genotyping according to our model for bubble calls and SNP calls from PD
-	      if ( (caller==BubbleCaller) 
-		   //|| 
-		   //( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) 
-		   )
-		{
-		  get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  
-										 seq_error_rate_per_base, 
-										 sequencing_depth_of_coverage,
-										 mean_read_len,i);
-		}
-	      else
-		{
-		  get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(annovar, assump,
-											model_info, little_db_graph, db_graph,gwp,i);
-		}
 
-	      //     printf("Putative variant genotyped. log liks for hom1, het, hom2 are %.2f, %.2f, %.2f\n",
-	      //     annovar->gen_log_lh[i].log_lh[hom_one],
-	      //     annovar->gen_log_lh[i].log_lh[het],
-	      //     annovar->gen_log_lh[i].log_lh[hom_other]);
-	      
-	      if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
+      if (do_genotyping==true)
+	{
+	  for (i=0; i<NUMBER_OF_COLOURS; i++)
+	    {
+	      if (i==ref_colour)
 		{
-		  if (annovar->gen_log_lh[i].log_lh[hom_one]>=annovar->gen_log_lh[i].log_lh[hom_other])
+		  continue;
+		}
+	      double sequencing_depth_of_coverage=0;
+	      if (seq_error_rate_per_base==-1)
+		{
+		  seq_error_rate_per_base=0.01;//default
+		}
+	      if (genome_length==-1)
+		{
+		  printf("Warning - genome length not specified, so assuming is human!!\n");
+		  genome_length=3000000000;//default
+		}
+	      int mean_read_len=100;
+	      if (ginfo !=NULL)
+		{
+		  sequencing_depth_of_coverage=(double) ginfo->total_sequence[i]/genome_length;
+		  mean_read_len = ginfo->mean_read_length[i];
+		}
+	      if ( (sequencing_depth_of_coverage==0)|| (annovar->too_short==true) )
+		{
+		  annovar->genotype[i]=absent;
+		}
+	      else if ( (expt==EachColourADiploidSample) || (expt==EachColourADiploidSampleExceptTheRefColour) )
+		{
+		  
+		  //the full genotyping model reduces to a simple formula for bubbles
+		  //do standard genotyping according to our model for bubble calls and SNP calls from PD
+		  if ( (caller==BubbleCaller) 
+		       //|| 
+		       //( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) 
+		       )
+		    {
+		      get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  
+										     seq_error_rate_per_base, 
+										     sequencing_depth_of_coverage,
+										     mean_read_len,i);
+		    }
+		  else
+		    {
+		      get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(annovar, assump,
+											    model_info, little_db_graph, db_graph,gwp,i);
+		    }
+		  
+		  //     printf("Putative variant genotyped. log liks for hom1, het, hom2 are %.2f, %.2f, %.2f\n",
+		  //     annovar->gen_log_lh[i].log_lh[hom_one],
+		  //     annovar->gen_log_lh[i].log_lh[het],
+		  //     annovar->gen_log_lh[i].log_lh[hom_other]);
+		  
+		  if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
+		    {
+		      if (annovar->gen_log_lh[i].log_lh[hom_one]>=annovar->gen_log_lh[i].log_lh[hom_other])
+			{
+			  annovar->genotype[i]=hom_one;
+			}
+		      else
+			{
+			  annovar->genotype[i]=hom_other;
+			}
+		    }
+		  else if (annovar->gen_log_lh[i].log_lh[het]>=annovar->gen_log_lh[i].log_lh[hom_other])
+		    {
+		      annovar->genotype[i]=het;
+		    }
+		  else
+		    {
+		      annovar->genotype[i]=hom_other;
+		    }
+		  
+		  
+		}
+	      else if ( (expt==EachColourAHaploidSample) || (expt==EachColourAHaploidSampleExceptTheRefColour) )
+		{
+		  
+		  if ( (caller==BubbleCaller) 
+		       || 
+		       ( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) )
+		    {
+		      get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+		    }
+		  else
+		    {
+		      //get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+		    }
+		  
+		  
+		  if (annovar->gen_log_lh[i].log_lh[hom_one]> annovar->gen_log_lh[i].log_lh[hom_other])
 		    {
 		      annovar->genotype[i]=hom_one;
 		    }
@@ -2698,50 +2787,16 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 		    {
 		      annovar->genotype[i]=hom_other;
 		    }
-		}
-	      else if (annovar->gen_log_lh[i].log_lh[het]>=annovar->gen_log_lh[i].log_lh[hom_other])
-		{
-		  annovar->genotype[i]=het;
+		  
 		}
 	      else
-		{
-		  annovar->genotype[i]=hom_other;
-		}
-	      
-	      
-	    }
-	  else if ( (expt==EachColourAHaploidSample) || (expt==EachColourAHaploidSampleExceptTheRefColour) )
-	    {
-	      
-	      if ( (caller==BubbleCaller) 
-		   || 
-		   ( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) )
-		{
-		  get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
-		}
-	      else
-		{
-		  //get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
-		}
-	      
-	      
-	      if (annovar->gen_log_lh[i].log_lh[hom_one]> annovar->gen_log_lh[i].log_lh[hom_other])
 		{
 		  annovar->genotype[i]=hom_one;
 		}
-	      else
-		{
-		  annovar->genotype[i]=hom_other;
-		}
+	      
+	      
 
 	    }
-	  else
-	    {
-	      annovar->genotype[i]=hom_one;
-	    }
-
-
-
 	}
     }
 

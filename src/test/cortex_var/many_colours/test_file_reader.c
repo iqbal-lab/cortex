@@ -67,7 +67,7 @@ void test_dump_load_sv_trio_binary(){
   long long dup_reads=0;
   int homopolymer_cutoff=0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_dB_graph.fasta", &seq_length_parsed_pre, &seq_length_loaded_pre, &bad_reads, &dup_reads, 20, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_dB_graph.fasta", &seq_length_parsed_pre, &seq_length_loaded_pre, NULL, &bad_reads, &dup_reads, 20, 
 										      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 										      db_graph_pre, individual_edge_array,0);
 
@@ -260,7 +260,7 @@ void test_dump_load_sv_trio_binary(){
       db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
 
 
-      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person2.fasta", &seq_length_parsed_pre, &seq_length_loaded_pre,
+      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person2.fasta", &seq_length_parsed_pre, &seq_length_loaded_pre, NULL, 
 									 &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta, 
 									 remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 									 db_graph_pre, individual_edge_array, 0);
@@ -396,7 +396,7 @@ void test_dump_load_sv_trio_binary(){
   db_graph_pre = hash_table_new(number_of_bits_pre,bucket_size,max_retries,kmer_size);
   
   
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_length_parsed_pre, &seq_length_loaded_pre,
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_length_parsed_pre, &seq_length_loaded_pre, NULL, 
 								     &bad_reads,&dup_reads, max_chunk_len_reading_from_fasta,
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 								     db_graph_pre, individual_edge_array,0);
@@ -519,7 +519,7 @@ void test_load_singlecolour_binary()
   long long seq_length_parsed_pre=0;
   long long seq_length_loaded_pre=0;
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio.fasta", 
-								     &seq_length_parsed_pre, &seq_length_loaded_pre,
+								     &seq_length_parsed_pre, &seq_length_loaded_pre, NULL, 
 								     &bad_reads, &dup_reads, 20, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 								     db_graph_pre, individual_edge_array,0);
@@ -657,7 +657,7 @@ void test_load_individual_binaries_into_sv_trio()
      long long seq_loaded1=0;
      long long seq_loaded2=0;
      long long seq_loaded3=0;
-     load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person0.fasta", &seq_read, &seq_loaded1,
+     load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person0.fasta", &seq_read, &seq_loaded1,NULL, 
 									&bad_reads, &dup_reads, 200,
 									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 									db_graph, individual_edge_array,0);
@@ -671,7 +671,7 @@ void test_load_individual_binaries_into_sv_trio()
 
 
      db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-     load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person1.fasta", &seq_read,&seq_loaded2,
+     load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person1.fasta", &seq_read,&seq_loaded2, NULL, 
 									&bad_reads, &dup_reads, 200,
 									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 									db_graph, individual_edge_array,0);
@@ -685,7 +685,7 @@ void test_load_individual_binaries_into_sv_trio()
 
 
      db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-     load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person2.fasta", &seq_read,&seq_loaded3,
+     load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person2.fasta", &seq_read,&seq_loaded3, NULL, 
 									&bad_reads, &dup_reads, 200,
 									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 									db_graph, individual_edge_array,0);
@@ -861,7 +861,7 @@ void test_coverage_is_correctly_counted_on_loading_from_file()
   
   int max_chunk_length=100;
   
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/file_to_test_covg_of_reads.fasta", &seq_read, &seq_loaded,
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/file_to_test_covg_of_reads.fasta", &seq_read, &seq_loaded, NULL, 
 								     &bad_reads,&dup_reads,max_chunk_length,  
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 								     db_graph, individual_edge_array, 0);
@@ -932,7 +932,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
   dBGraph * db_graph;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded,
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded, NULL, 
 								     &bad_reads,&dup_reads, 200, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
@@ -1216,7 +1216,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   dBGraph * db_graph;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded,
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded, NULL, 
 								     &bad_reads,&dup_reads, 200, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
@@ -1489,7 +1489,7 @@ void test_dumping_of_clean_fasta()
   dBGraph * db_graph;
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded,
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded, NULL, 
 								     &bad_reads,&dup_reads, 200, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
@@ -3362,7 +3362,7 @@ void test_align_next_read_to_graph_and_return_node_array()
 
 
   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded, &bad_reads,&dup_reads, 200, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded, NULL, &bad_reads,&dup_reads, 200, 
 										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 										  db_graph, individual_edge_array, 0);
 
@@ -3599,7 +3599,7 @@ void test_read_next_variant_from_full_flank_file()
   //  ACGCAGGCGCT T ATGAGCTCCCGTTAGATAGT
 
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/one_person_with_SNP.fasta", &seq_read, &seq_loaded,
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/one_person_with_SNP.fasta", &seq_read, &seq_loaded, NULL, 
 								     &bad_reads,&dup_reads,max_chunk_length,  
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 								     db_graph, individual_edge_array, 0);
@@ -3659,48 +3659,45 @@ void test_read_next_variant_from_full_flank_file()
   int len_other_allele=0;
   int len_flank3p=0;
 
-  VariantBranchesAndFlanks var;
-  
 
-  set_variant_branches_and_flanks(&var,
-				  flank5p, flank5p_or, len_flank5p,
-				  one_allele,   one_allele_or,  len_one_allele, 
-				  other_allele, other_allele_or,len_other_allele, 
-				  flank3p,      flank3p_or,     len_flank3p,
-				  unknown);
-  char varname[40];
-  var.var_name=varname;
+  VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(40,40,40,40,kmer_size);
+  if (var==NULL)
+    {
+      printf("Failed to malloc var\n");
+      exit(1);
+    }
+
   //FILE* var_fptr =  fopen("tmp_test_read_next_variant_from_full_flank_file_bubble.fff", "r");
    FILE* var_fptr =  fopen("../data/tempfiles_can_be_deleted/tmp_test.fff", "r");
 
 
 
   read_next_variant_from_full_flank_file(var_fptr, max_read_length,
-					 &var, db_graph, &this_fasta_file_reader, seq, seq_inc_prev_kmer, kmer_window);
+					 var, db_graph, &this_fasta_file_reader, seq, seq_inc_prev_kmer, kmer_window);
   
-  CU_ASSERT(var.len_flank5p==2 );
-  CU_ASSERT(var.len_one_allele==6);
-  CU_ASSERT(var.len_other_allele==6);
-  CU_ASSERT(var.len_flank3p==6);
-  CU_ASSERT(strcmp(var.var_name,"var_1")==0);
+  CU_ASSERT(var->len_flank5p==2 );
+  CU_ASSERT(var->len_one_allele==6);
+  CU_ASSERT(var->len_other_allele==6);
+  CU_ASSERT(var->len_flank3p==6);
+  CU_ASSERT(strcmp(var->var_name,"var_1")==0);
   // printf("ZAMZAM\n\n len flank 5p is %d\nvariant is %s\n%s\n%s\n%s\n\n", len_flank5p);
   BinaryKmer tmp_kmer, tmp_kmer_rev;
   BinaryKmer tmp_kmer2, tmp_kmer_rev2;
   
   seq_to_binary_kmer("AGCTC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[0]->kmer, tmp_kmer));
-  CU_ASSERT(flank5p_or[0]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[0]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank5p_or[0]==forward);
   
   seq_to_binary_kmer("GCTCA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[1]->kmer, tmp_kmer));
-  CU_ASSERT(flank5p_or[1]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[1]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank5p_or[1]==forward);
   
   seq_to_binary_kmer("CTCAT", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[2]->kmer, tmp_kmer_rev));
-  CU_ASSERT(flank5p_or[2]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[2]->kmer, tmp_kmer_rev));
+  CU_ASSERT(var->flank5p_or[2]==reverse);
 
 
   //now the alleles
@@ -3716,8 +3713,8 @@ void test_read_next_variant_from_full_flank_file()
 
 
 
-  CU_ASSERT(var.len_one_allele   == 6);
-  CU_ASSERT(var.len_other_allele == 6);
+  CU_ASSERT(var->len_one_allele   == 6);
+  CU_ASSERT(var->len_other_allele == 6);
   //detect_vars will print alleles in alphabetical order of first base
   seq_to_binary_kmer("CTCAT", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
@@ -3725,114 +3722,114 @@ void test_read_next_variant_from_full_flank_file()
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
 
   //char zamzam[db_graph->kmer_size];
-  //printf("\n\n\n IQIQIQ   start of one allele is %s\n", binary_kmer_to_seq(&(var.one_allele[0]->kmer), db_graph->kmer_size, zamzam));
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[0]  ->kmer, tmp_kmer_rev) );
-  CU_ASSERT(var.one_allele_or[0]  ==reverse);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[0]->kmer, tmp_kmer_rev2) );
-  CU_ASSERT(var.other_allele_or[0]==reverse);
+  //printf("\n\n\n IQIQIQ   start of one allele is %s\n", binary_kmer_to_seq(&(var->one_allele[0]->kmer), db_graph->kmer_size, zamzam));
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[0]  ->kmer, tmp_kmer_rev) );
+  CU_ASSERT(var->one_allele_or[0]  ==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[0]->kmer, tmp_kmer_rev2) );
+  CU_ASSERT(var->other_allele_or[0]==reverse);
 
   seq_to_binary_kmer("TCATA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("TCATC", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[1]->kmer, tmp_kmer_rev) );
-  CU_ASSERT(var.one_allele_or[1]==reverse);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[1]->kmer, tmp_kmer_rev2) );
-  CU_ASSERT(var.other_allele_or[1]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[1]->kmer, tmp_kmer_rev) );
+  CU_ASSERT(var->one_allele_or[1]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[1]->kmer, tmp_kmer_rev2) );
+  CU_ASSERT(var->other_allele_or[1]==reverse);
 
 
   seq_to_binary_kmer("CATAA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("CATCA", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[2]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[2]==forward);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[2]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[2]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[2]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[2]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[2]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[2]==forward);
 
 
   seq_to_binary_kmer("ATAAG", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("ATCAG", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[3]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[3]==forward);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[3]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[3]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[3]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[3]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[3]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[3]==forward);
 
 
   seq_to_binary_kmer("TAAGC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("TCAGC", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[4]->kmer, tmp_kmer_rev) );
-  CU_ASSERT(var.one_allele_or[4]==reverse);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[4]->kmer, tmp_kmer_rev2) );
-  CU_ASSERT(var.other_allele_or[4]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[4]->kmer, tmp_kmer_rev) );
+  CU_ASSERT(var->one_allele_or[4]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[4]->kmer, tmp_kmer_rev2) );
+  CU_ASSERT(var->other_allele_or[4]==reverse);
 
 
   seq_to_binary_kmer("AAGCG", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("CAGCG", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[5]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[5]==forward);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[5]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[5]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[5]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[5]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[5]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[5]==forward);
 
 
   seq_to_binary_kmer("AGCGC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("AGCGC", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[6]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[6]==forward);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[6]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[6]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[6]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[6]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[6]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[6]==forward);
   
 
   //finally the 3p flank
 
   //char zamzam[db_graph->kmer_size];
-  //printf("\n\n\n IQIQIQ   start of 3p flank is %s\n", binary_kmer_to_seq(&(var.flank3p[0]->kmer), db_graph->kmer_size, zamzam));
+  //printf("\n\n\n IQIQIQ   start of 3p flank is %s\n", binary_kmer_to_seq(&(var->flank3p[0]->kmer), db_graph->kmer_size, zamzam));
 
 
   seq_to_binary_kmer("AGCGC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);  
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[0]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[0]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[0]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[0]==forward);
 
 
   seq_to_binary_kmer("GCGCC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);  
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[1]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[1]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[1]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[1]==forward);
   
   seq_to_binary_kmer("CGCCT", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[2]->kmer, tmp_kmer_rev));
-  CU_ASSERT(var.flank3p_or[2]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[2]->kmer, tmp_kmer_rev));
+  CU_ASSERT(var->flank3p_or[2]==reverse);
 
   seq_to_binary_kmer("GCCTG", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[3]->kmer, tmp_kmer_rev));
-  CU_ASSERT(var.flank3p_or[3]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[3]->kmer, tmp_kmer_rev));
+  CU_ASSERT(var->flank3p_or[3]==reverse);
 
 
   seq_to_binary_kmer("CCTGC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[4]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[4]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[4]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[4]==forward);
 
   seq_to_binary_kmer("CTGCG", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[5]->kmer, tmp_kmer_rev));
-  CU_ASSERT(var.flank3p_or[5]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[5]->kmer, tmp_kmer_rev));
+  CU_ASSERT(var->flank3p_or[5]==reverse);
 
   seq_to_binary_kmer("TGCGT", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[6]->kmer, tmp_kmer_rev));
-  CU_ASSERT(var.flank3p_or[6]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[6]->kmer, tmp_kmer_rev));
+  CU_ASSERT(var->flank3p_or[6]==reverse);
 
 
 
@@ -3842,7 +3839,7 @@ void test_read_next_variant_from_full_flank_file()
   free(kmer_window);
   free_sequence(&seq);
   free_sequence(&seq_inc_prev_kmer);
-
+  free_VariantBranchesAndFlanks_object(var);
 
 
 }
@@ -3956,7 +3953,7 @@ CTGCGT
   int max_chunk_length=100;
 
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/one_person_with_SNP_one_branch_shorter_than_k_if_k_is_5.fasta", 
-								     &seq_read, &seq_loaded,
+								     &seq_read, &seq_loaded, NULL,
 								     &bad_reads,&dup_reads,max_chunk_length,  
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 								     db_graph, individual_edge_array, 0);
@@ -4018,18 +4015,16 @@ CTGCGT
   int len_other_allele=0;
   int len_flank3p=0;
 
-  VariantBranchesAndFlanks var;
-  
+  VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(40,40,40,40,kmer_size);
+  if (var==NULL)
+    {
+      printf("Failed to malloc var 2\n");
+      exit(1);
+    }
 
-  set_variant_branches_and_flanks(&var,
-				  flank5p, flank5p_or, len_flank5p,
-				  one_allele,   one_allele_or,  len_one_allele, 
-				  other_allele, other_allele_or,len_other_allele, 
-				  flank3p,      flank3p_or,     len_flank3p,
-				  unknown);
 
-  char varname[40];
-  var.var_name=varname;
+
+
 
   //FILE* var_fptr =  fopen("tmp_test_read_next_variant_from_full_flank_file_bubble.fff", "r");
    FILE* var_fptr =  fopen("../data/tempfiles_can_be_deleted/tmp_test.fff", "r");
@@ -4037,12 +4032,12 @@ CTGCGT
 
 
   read_next_variant_from_full_flank_file(var_fptr, max_read_length,
-					 &var, db_graph, &this_fasta_file_reader, seq, seq_inc_prev_kmer, kmer_window);
+					 var, db_graph, &this_fasta_file_reader, seq, seq_inc_prev_kmer, kmer_window);
   
-  CU_ASSERT(var.len_flank5p==2 );
-  CU_ASSERT(var.len_one_allele==6);
-  CU_ASSERT(var.len_other_allele==2);
-  CU_ASSERT(var.len_flank3p==6);
+  CU_ASSERT(var->len_flank5p==2 );
+  CU_ASSERT(var->len_one_allele==6);
+  CU_ASSERT(var->len_other_allele==2);
+  CU_ASSERT(var->len_flank3p==6);
   // printf("ZAMZAM\n\n len flank 5p is %d\nvariant is %s\n%s\n%s\n%s\n\n", len_flank5p);
   BinaryKmer tmp_kmer, tmp_kmer_rev;
   BinaryKmer tmp_kmer2, tmp_kmer_rev2;
@@ -4050,18 +4045,18 @@ CTGCGT
 
   seq_to_binary_kmer("AGCTC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[0]->kmer, tmp_kmer));
-  CU_ASSERT(flank5p_or[0]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[0]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank5p_or[0]==forward);
   
   seq_to_binary_kmer("GCTCA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[1]->kmer, tmp_kmer));
-  CU_ASSERT(flank5p_or[1]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[1]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank5p_or[1]==forward);
   
   seq_to_binary_kmer("CTCAT", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[2]->kmer, tmp_kmer_rev));
-  CU_ASSERT(flank5p_or[2]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[2]->kmer, tmp_kmer_rev));
+  CU_ASSERT(var->flank5p_or[2]==reverse);
 
 
   //now the alleles
@@ -4078,51 +4073,51 @@ CTGCGT
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
 
   //char zamzam[db_graph->kmer_size];
-  //printf("\n\n\n IQIQIQ   start of one allele is %s\n", binary_kmer_to_seq(&(var.one_allele[0]->kmer), db_graph->kmer_size, zamzam));
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[0]  ->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[0]  ==reverse);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[0]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[0]==reverse);
+  //printf("\n\n\n IQIQIQ   start of one allele is %s\n", binary_kmer_to_seq(&(var->one_allele[0]->kmer), db_graph->kmer_size, zamzam));
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[0]  ->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[0]  ==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[0]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[0]==reverse);
 
   seq_to_binary_kmer("GATGA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("CATGA", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[1]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[1]==reverse);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[1]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[1]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[1]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[1]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[1]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[1]==reverse);
 
 
   seq_to_binary_kmer("CATCC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("CATGC", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[2]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[2]==forward);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[2]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[2]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[2]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[2]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[2]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[2]==forward);
 
 
   seq_to_binary_kmer("ATCCA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[3]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[3]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[3]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[3]==forward);
 
   seq_to_binary_kmer("ATGGA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[4]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[4]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[4]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[4]==reverse);
 
   seq_to_binary_kmer("CATGG", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[5]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[5]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[5]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[5]==reverse);
 
   seq_to_binary_kmer("CATGC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[6]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[6]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[6]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[6]==forward);
   
 
   //finally the 3p flank
@@ -4130,40 +4125,40 @@ CTGCGT
  
   seq_to_binary_kmer("CATGC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);  
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[0]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[0]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[0]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[0]==forward);
 
 
   seq_to_binary_kmer("ATGCC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);  
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[1]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[1]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[1]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[1]==forward);
   
   seq_to_binary_kmer("AGGCA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[2]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[2]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[2]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[2]==reverse);
 
   seq_to_binary_kmer("CAGGC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[3]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[3]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[3]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[3]==reverse);
 
 
   seq_to_binary_kmer("CCTGC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[4]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[4]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[4]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[4]==forward);
 
   seq_to_binary_kmer("CGCAG", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[5]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[5]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[5]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[5]==reverse);
 
   seq_to_binary_kmer("ACGCA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[6]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[6]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[6]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[6]==reverse);
 
 
 
@@ -4172,7 +4167,7 @@ CTGCGT
   free(kmer_window->kmer);
   free(kmer_window);
   free_sequence(&seq);
-
+  free_VariantBranchesAndFlanks_object(var);
 
 
 }
@@ -4291,7 +4286,7 @@ AGCT
   int max_chunk_length=100;
 
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/one_person_with_SNP_both_branches_shorter_than_k_if_k_is_5.fasta", 
-								     &seq_read, &seq_loaded,
+								     &seq_read, &seq_loaded, NULL, 
 								     &bad_reads,&dup_reads,max_chunk_length,  
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 								     db_graph, individual_edge_array, 0);
@@ -4352,17 +4347,13 @@ AGCT
   int len_other_allele=0;
   int len_flank3p=0;
 
-  VariantBranchesAndFlanks var;
-  
+  VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(40,40,40,40,kmer_size);
+  if (var==NULL)
+    {
+      printf("Failed to malloc var 3\n");
+      exit(1);
+    }
 
-  set_variant_branches_and_flanks(&var,
-				  flank5p, flank5p_or, len_flank5p,
-				  one_allele,   one_allele_or,  len_one_allele, 
-				  other_allele, other_allele_or,len_other_allele, 
-				  flank3p,      flank3p_or,     len_flank3p,
-				  unknown);
-  char varname[40];
-  var.var_name=varname;
 
   //FILE* var_fptr =  fopen("tmp_test_read_next_variant_from_full_flank_file_bubble.fff", "r");
    FILE* var_fptr =  fopen("../data/tempfiles_can_be_deleted/tmp_test.fff", "r");
@@ -4370,13 +4361,13 @@ AGCT
 
 
   read_next_variant_from_full_flank_file(var_fptr, max_read_length,
-					 &var, db_graph, &this_fasta_file_reader, seq, seq_inc_prev_kmer, kmer_window);
+					 var, db_graph, &this_fasta_file_reader, seq, seq_inc_prev_kmer, kmer_window);
 
 
-  CU_ASSERT(var.len_flank5p==2 );
-  CU_ASSERT(var.len_one_allele==3);
-  CU_ASSERT(var.len_other_allele==4);
-  CU_ASSERT(var.len_flank3p==4);
+  CU_ASSERT(var->len_flank5p==2 );
+  CU_ASSERT(var->len_one_allele==3);
+  CU_ASSERT(var->len_other_allele==4);
+  CU_ASSERT(var->len_flank3p==4);
   // printf("ZAMZAM\n\n len flank 5p is %d\nvariant is %s\n%s\n%s\n%s\n\n", len_flank5p);
   BinaryKmer tmp_kmer, tmp_kmer_rev;
   BinaryKmer tmp_kmer2, tmp_kmer_rev2;
@@ -4388,18 +4379,18 @@ AGCT
 
   seq_to_binary_kmer("ACGCT", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[0]->kmer, tmp_kmer));
-  CU_ASSERT(flank5p_or[0]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[0]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank5p_or[0]==forward);
   
   seq_to_binary_kmer("CAGCG", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[1]->kmer, tmp_kmer));
-  CU_ASSERT(flank5p_or[1]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[1]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank5p_or[1]==reverse);
   
   seq_to_binary_kmer("CCAGC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[2]->kmer, tmp_kmer));
-  CU_ASSERT(flank5p_or[2]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[2]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank5p_or[2]==reverse);
 
 
   //now the alleles
@@ -4415,45 +4406,45 @@ AGCT
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
 
   //char zamzam[db_graph->kmer_size];
-  //printf("\n\n\n IQIQIQ   start of one allele is %s\n", binary_kmer_to_seq(&(var.one_allele[0]->kmer), db_graph->kmer_size, zamzam));
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[0]  ->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[0]  ==reverse);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[0]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[0]==reverse);
+  //printf("\n\n\n IQIQIQ   start of one allele is %s\n", binary_kmer_to_seq(&(var->one_allele[0]->kmer), db_graph->kmer_size, zamzam));
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[0]  ->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[0]  ==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[0]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[0]==reverse);
 
   seq_to_binary_kmer("CTGGA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("CCCAG", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[1]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[1]==forward);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[1]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[1]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[1]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[1]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[1]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[1]==reverse);
 
 
   seq_to_binary_kmer("ATCCA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("TCCCA", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[2]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[2]==reverse);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[2]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[2]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[2]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[2]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[2]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[2]==reverse);
 
   seq_to_binary_kmer("CATCC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("ATCCC", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[3]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[3]==reverse);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[3]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[3]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[3]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[3]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[3]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[3]==reverse);
 
 
   seq_to_binary_kmer("CATCC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[4]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[3]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[4]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[3]==reverse);
   
 
   //finally the 3p flank
@@ -4463,30 +4454,30 @@ AGCT
  
   seq_to_binary_kmer("CATCC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);  
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[0]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[0]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[0]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[0]==reverse);
 
 
   seq_to_binary_kmer("GATGA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);  
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[1]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[1]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[1]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[1]==forward);
   
   seq_to_binary_kmer("ATGAG", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[2]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[2]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[2]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[2]==forward);
 
   seq_to_binary_kmer("GCTCA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[3]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[3]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[3]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[3]==reverse);
 
 
   seq_to_binary_kmer("AGCTC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[4]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[4]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[4]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[4]==reverse);
 
 
 
@@ -4494,7 +4485,7 @@ AGCT
   free(kmer_window->kmer);
   free(kmer_window);
   free_sequence(&seq);
-
+  free_VariantBranchesAndFlanks_object(var);
 
 
 }
@@ -4603,7 +4594,7 @@ CAGC
   int max_chunk_length=100;
 
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/one_person_with_SNP_both_branches_shorter_than_k_if_k_is_5_and_no_3p_flank.fasta", 
-								     &seq_read, &seq_loaded,
+								     &seq_read, &seq_loaded, NULL, 
 								     &bad_reads,&dup_reads,max_chunk_length,  
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 								     db_graph, individual_edge_array, 0);
@@ -4664,18 +4655,14 @@ CAGC
   int len_other_allele=0;
   int len_flank3p=0;
 
-  VariantBranchesAndFlanks var;
+  VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(40,40,40,40,kmer_size);
+  if (var==NULL)
+    {
+      printf("Failed to malloc var 4\n");
+      exit(1);
+    }
   
 
-  set_variant_branches_and_flanks(&var,
-				  flank5p, flank5p_or, len_flank5p,
-				  one_allele,   one_allele_or,  len_one_allele, 
-				  other_allele, other_allele_or,len_other_allele, 
-				  flank3p,      flank3p_or,     len_flank3p,
-				  unknown);
-
-  char varname[40];
-  var.var_name=varname;
 
   //FILE* var_fptr =  fopen("tmp_test_read_next_variant_from_full_flank_file_bubble.fff", "r");
    FILE* var_fptr =  fopen("../data/tempfiles_can_be_deleted/tmp_test.fff", "r");
@@ -4683,13 +4670,13 @@ CAGC
 
 
   read_next_variant_from_full_flank_file(var_fptr, max_read_length,
-					 &var, db_graph, &this_fasta_file_reader, seq, seq_inc_prev_kmer, kmer_window);
+					 var, db_graph, &this_fasta_file_reader, seq, seq_inc_prev_kmer, kmer_window);
 
-  //  printf("lengths are %d %d %d %d\n", var.len_flank5p, var.len_one_allele, var.len_other_allele, var.len_flank3p);
-  CU_ASSERT(var.len_flank5p==4 );
-  CU_ASSERT(var.len_one_allele==3);
-  CU_ASSERT(var.len_other_allele==4);
-  CU_ASSERT(var.len_flank3p==0);
+  //  printf("lengths are %d %d %d %d\n", var->len_flank5p, var->len_one_allele, var->len_other_allele, var->len_flank3p);
+  CU_ASSERT(var->len_flank5p==4 );
+  CU_ASSERT(var->len_one_allele==3);
+  CU_ASSERT(var->len_other_allele==4);
+  CU_ASSERT(var->len_flank3p==0);
   // printf("ZAMZAM\n\n len flank 5p is %d\nvariant is %s\n%s\n%s\n%s\n\n", len_flank5p);
   BinaryKmer tmp_kmer, tmp_kmer_rev;
   BinaryKmer tmp_kmer2, tmp_kmer_rev2;
@@ -4702,29 +4689,29 @@ CAGC
 
   seq_to_binary_kmer("AGCTC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[0]->kmer, tmp_kmer));
-  CU_ASSERT(flank5p_or[0]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[0]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank5p_or[0]==forward);
   
   seq_to_binary_kmer("GCTCA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[1]->kmer, tmp_kmer));
-  CU_ASSERT(flank5p_or[1]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[1]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank5p_or[1]==forward);
   
   seq_to_binary_kmer("ATGAG", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[2]->kmer, tmp_kmer));
-  CU_ASSERT(flank5p_or[2]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[2]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank5p_or[2]==reverse);
 
   seq_to_binary_kmer("GATGA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[3]->kmer, tmp_kmer));
-  CU_ASSERT(flank5p_or[3]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[3]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank5p_or[3]==reverse);
 
 
   seq_to_binary_kmer("CATCC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(flank5p[4]->kmer, tmp_kmer));
-  CU_ASSERT(flank5p_or[4]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank5p[4]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank5p_or[4]==forward);
 
 
 
@@ -4743,45 +4730,45 @@ CAGC
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
 
   //char zamzam[db_graph->kmer_size];
-  //printf("\n\n\n IQIQIQ   start of one allele is %s\n", binary_kmer_to_seq(&(var.one_allele[0]->kmer), db_graph->kmer_size, zamzam));
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[0]  ->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[0]  ==forward);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[0]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[0]==forward);
+  //printf("\n\n\n IQIQIQ   start of one allele is %s\n", binary_kmer_to_seq(&(var->one_allele[0]->kmer), db_graph->kmer_size, zamzam));
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[0]  ->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[0]  ==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[0]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[0]==forward);
 
   seq_to_binary_kmer("ATCCA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("ATCCC", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[1]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[1]==forward);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[1]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[1]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[1]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[1]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[1]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[1]==forward);
 
 
   seq_to_binary_kmer("CTGGA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("TCCCA", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[2]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[2]==reverse);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[2]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[2]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[2]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[2]==reverse);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[2]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[2]==forward);
 
   seq_to_binary_kmer("CCAGC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
   seq_to_binary_kmer("CCCAG", 5, &tmp_kmer2);
   binary_kmer_reverse_complement(&tmp_kmer2, 5, &tmp_kmer_rev2);
-  CU_ASSERT(binary_kmer_comparison_operator(var.one_allele[3]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[3]==forward);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[3]->kmer, tmp_kmer2) );
-  CU_ASSERT(var.other_allele_or[3]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[3]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[3]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[3]->kmer, tmp_kmer2) );
+  CU_ASSERT(var->other_allele_or[3]==forward);
 
 
   seq_to_binary_kmer("CCAGC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var.other_allele[4]->kmer, tmp_kmer) );
-  CU_ASSERT(var.one_allele_or[3]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->other_allele[4]->kmer, tmp_kmer) );
+  CU_ASSERT(var->one_allele_or[3]==forward);
   
 
   //finally the 3p flank
@@ -4789,8 +4776,8 @@ CAGC
   // CCAGC  (fw )
   seq_to_binary_kmer("CCAGC", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);  
-  CU_ASSERT(binary_kmer_comparison_operator(var.flank3p[0]->kmer, tmp_kmer));
-  CU_ASSERT(var.flank3p_or[0]==forward);
+  CU_ASSERT(binary_kmer_comparison_operator(var->flank3p[0]->kmer, tmp_kmer));
+  CU_ASSERT(var->flank3p_or[0]==forward);
 
 
 
@@ -4798,7 +4785,7 @@ CAGC
   free(kmer_window->kmer);
   free(kmer_window);
   free_sequence(&seq);
-
+  free_VariantBranchesAndFlanks_object(var);
 
 
 }
@@ -5212,7 +5199,7 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
   //GATCGGGAGT
 
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_loading_binarynodes_if_overlap_a_colour.fasta", 
-								     &seq_length_parsed_pre, &seq_length_loaded_pre, &bad_reads, &dup_reads, 20, 
+								     &seq_length_parsed_pre, &seq_length_loaded_pre, NULL, &bad_reads, &dup_reads, 20, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 								     db_graph_pre, individual_edge_array,0);
 
