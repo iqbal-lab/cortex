@@ -60,7 +60,6 @@ int  main()
 
 
 
-  /*
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
     CU_cleanup_registry();
@@ -402,7 +401,7 @@ int  main()
 //	return CU_get_error();
   //    }
 
-  */
+
 
 
 
@@ -427,7 +426,8 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
 	}
-   
+
+   /*   
    if (NULL == CU_add_test(pPopGraphSuite, "Test genotyping of complex sites - test with two HLA-B alleles", test_calc_log_likelihood_of_genotype_with_complex_alleles2 ))
       {
 	CU_cleanup_registry();
@@ -440,7 +440,7 @@ int  main()
 	return CU_get_error();
       }
 
-
+   */
 
  
 
