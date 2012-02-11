@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <gsl_sf_gamma.h>
 
-VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p)
+VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p, int kmer_size)
 {
   VariantBranchesAndFlanks* var = (VariantBranchesAndFlanks*) malloc(sizeof(VariantBranchesAndFlanks));
   if (var==NULL)
@@ -136,9 +136,9 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int 
 	  free(var->flank3p_or);
 	  free(var);
 	  return NULL;
-	  
 	}
-      var->seq5p=(char*) malloc(sizeof(char)*len_5p);
+
+      var->seq5p=(char*) malloc(sizeof(char)*(len_5p+kmer_size));
       if (var->seq5p==NULL)
 	{
 	  free(var->flank5p);
@@ -248,9 +248,7 @@ void free_VariantBranchesAndFlanks_object(VariantBranchesAndFlanks* var)
 }
 
 
-
-//overkill, but allows the flanks and alleles all to be the same length - I don't want to have to pass around knowledge
-VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks(int len);
+//use this for a var you have created on the stack
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
 				     dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, 

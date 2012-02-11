@@ -198,10 +198,8 @@ const char* usage=
 "   [--print_colour_coverages]\t\t\t\t\t=\t Print coverages in all colours for supernodes and variants.\n" \
   // -M
 "   [--exclude_ref_bubbles]\t\t\t\t\t=\t If you have specified --ref_colour, this will exclude any bubble in that colour from being called by the Bubble Caller.\n" \
-  // -t
-"   [--detect_bubbles2 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Exactly the same as detect_bubbles1, but allows you to make\n\t\t\t\t\t\t\t\t\t a second set of bubble calls immediately afterwards.\n\t\t\t\t\t\t\t\t\t This is to accomodate the common use-case where one loads a reference\n\t\t\t\t\t\t\t\t\t and an individual, and then wants to call homs, and hets.\n" \
   // -u
-"   [--output_bubbles2 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles2 are dumped to this file.\n" \
+  //"   [--output_bubbles2 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles2 are dumped to this file.\n" \
 
   // -l
 "   [--path_divergence_caller [COMMA_SEP_COLOURS|SQUARE_OPEN_BRACKET_PRECEDED_AND_SEP_COLOURS]] \t\t=\t Make Path Divergence variant calls.\n\t\t\t\t\t\t\t\t\t Must specify colour of sample in which you want to find\n\t\t\t\t\t\t\t\t\t variants compared with the reference.\n\t\t\t\t\t\t\t\t\t This sample colour can be a union of colours (comma-separated list) \n Or, given a square open bracket [ PRECEDED AND SEPARATED list(example [2[3[10 ) the caller will call against each colour in turn\n\t\t\t\t\t\t\t\t\t Must also specify --ref_colour and --list_ref_fasta\n" \
@@ -211,6 +209,9 @@ const char* usage=
 "   [--ref_colour INT] \t\t\t\t\t\t=\t Colour of reference genome.\n" \
  // -z
 "   [--list_ref_fasta FILENAME] \t\t\t\t\t=\t File listing reference chromosome fasta file(s); needed for path-divergence calls. \n" \
+  // -t
+"   [--gt FILENAME] \t=\t Given a file of calls in Cortex output format (5p, br1, br2, 3p), genotype all colours in the graph\n" \
+
 "\n\n **** ADVANCED OPTIONS **** \n\n"\
   // -P  
 "   [--experiment_type]\t\t\t\t\t\t=\t The statistical models for determining genotype likelihoods, and for deciding if bubbles are repeat or variants,\n\t\t\t\t\t\t\t\t\t require knowledge of whether each sample is a separate diploid/haploid individual. \n\t\t\t\t\t\t\t\t\t Enter type of experiment (EachColourADiploidSample, EachColourADiploidSampleExceptTheRefColour, \n\t\t\t\t\t\t\t\t\t EachColourAHaploidSample,EachColourAHaploidSampleExceptTheRefColour). \n\t\t\t\t\t\t\t\t\t This is only needed for determining likelihoods, so ignore this is you are pooling samples within a colour (support to be added for this later).\n" \
@@ -367,6 +368,10 @@ int default_opts(CmdLine * c)
   set_string_to_null(c->fasta_alleles_for_complex_genotyping, MAX_FILENAME_LEN);
   set_string_to_null(c->filelist_1net_binaries_for_alleles, MAX_FILENAME_LEN);
   set_string_to_null(c->fastaq_for_estimating_genome_complexity, MAX_FILENAME_LEN);
+  set_string_to_null(c->file_of_calls_to_be_genotyped, MAX_FILENAME_LEN);
+  set_string_to_null(c->output_genotyping, MAX_FILENAME_LEN);
+
+  c->which_caller_was_used_for_calls_to_be_genotyped=BubbleCaller;
   // set_string_to_null(c->filelist_2net_binaries_for_alleles, MAX_FILENAME_LEN);
 
   //booleans
@@ -400,6 +405,7 @@ int default_opts(CmdLine * c)
   c->format_of_files_to_align=UNSPECIFIED;
   c->apply_model_selection_at_bubbles=false;
   c->estimate_genome_complexity=false;
+  c->do_genotyping_of_file_of_sites=false;
 
   c->num_colours_to_genotype=0;
   initialise_int_list(c->list_colours_to_genotype, NUMBER_OF_COLOURS);
@@ -442,8 +448,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"output_supernodes",required_argument,NULL,'q'},
     {"detect_bubbles1",required_argument, NULL, 'r'},
     {"output_bubbles1",required_argument, NULL, 's'},    
-    {"detect_bubbles2",required_argument, NULL, 't'},
-    {"output_bubbles2",required_argument, NULL, 'u'},    
+    {"gt",required_argument, NULL, 't'},
+    //    {"output_bubbles2",required_argument, NULL, 'u'},    
     {"format",required_argument,NULL,'v'},
     {"max_read_len",required_argument,NULL,'w'},
     {"print_colour_coverages",no_argument,NULL,'x'},
@@ -479,7 +485,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:T:V:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:T:V:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -832,38 +838,34 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       }
 
 
-    case 't': //detect_bubbles2 - will give something of this form 1,2,3/5,1,7 to show the colours it wants to distinguish
+    case 't': // --gt - genotype a list of sites, given in Cortex output format (ie as if called by Cortex)
       {
 	if (optarg==NULL)
-	  errx(1,"[--detect_bubbles2] option requires two sets of comma-separated integers, separated by a forward-slash. eg 1/1, or 1,2,3/3,4,5");
+	  errx(1,"[--gt] option requires an input filename (should be a file of Cortex calls, just 5p, branches and 3p, no colour-coverage output), an output filename, and either BC or PD to specify which caller was used.\n");
 	
-	int ret = parse_colourinfo_argument(cmdline_ptr, optarg, strlen(optarg), "[-t | --detect_bubbles2] ", 2);
-	if (ret==-1)
+	if (strlen(optarg)<2*MAX_FILENAME_LEN)
 	  {
-	    errx(1, "Problem with  cmd line argument for [-t | --detect_bubbles2]");
-	  }
-	cmdline_ptr->detect_bubbles2=true;
-	break; 
-      }
-    case 'u': //output file for detect_bubbles2
-      {
-	if (optarg==NULL)
-	  errx(1,"[--output_bubbles2] option requires a filename");
-
-	if (strlen(optarg)<MAX_FILENAME_LEN)
-	  {
-	    strcpy(cmdline_ptr->output_detect_bubbles2,optarg);
+	    char msg[300];
+	    int err= parse_arguments_for_genotyping(cmdline_ptr, optarg, msg);
+	    if (err==0)
+	      {
+		cmdline_ptr->do_genotyping_of_file_of_sites=true;
+	      }
+	    else
+	      {
+		errx(1,"[--gt] error - %s\n", msg);
+	      }
 	  }
 	else
 	  {
-	    errx(1,"[--output_bubbles2] filename too long [%s]",optarg);
+	    errx(1,"[--gt] argument too long [%s]",optarg);
 	  }
-	
-	if (access(optarg,F_OK)==0){
-	  errx(1,"[--output_bubbles2] filename [%s] exists!",optarg);
-	}
-	break;        
-      } 
+	break; 
+      }
+      //    case 'u': //output file for detect_bubbles2
+      // {
+      //	break;        
+      //} 
      
     case 'v': //file format - either fasta, fastq or ctx.
       {
@@ -1303,7 +1305,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:T:V:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:T:V:", long_options, &longopt_index);
   }   
   
   return 0;
@@ -1313,6 +1315,49 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
   
+
+  if ( (cmd_ptr->do_genotyping_of_file_of_sites==true) && (cmd_ptr->max_read_length==0) )
+    {
+      char tmp[] = "If you use --gt, then you must specify --max_read_len (and it must be >= any of the reads (including flanks) in your input file).\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
+
+  if ( (cmd_ptr->do_genotyping_of_file_of_sites==true) && (cmd_ptr->max_read_length<cmd_ptr->kmer_size) )
+    {
+      char tmp[] = "You have specified a max_read_length < kmer_size\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
+
+
+
+  if ( (cmd_ptr->do_genotyping_of_file_of_sites==true) && ( (cmd_ptr->expt_type==Unspecified)|| (cmd_ptr->genome_size==0) )     )
+    {
+      char tmp[] = "If you specify --gt, you must also set --genome_size and --experiment_type\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
+
+
   if (cmd_ptr->kmer_size==-1)
     {
       char tmp[] = "You must specify kmer_size\n";
@@ -2810,4 +2855,57 @@ int parse_commasep_or_open_square_brack_sep_list(CmdLine* cmd, char* arg, int le
 }
 
 
+int parse_arguments_for_genotyping(CmdLine* cmdline, char* argmt, char* msg)
+{
+  //argument should be of form inputfilename,outputfilename,<CALLER>  where CALLER is "BC" or "PD".
+  msg[0]='\0';
+  char* filename1=NULL;
+  char* filename2=NULL;
+  char* caller=NULL;
+  char delims[] = ",";
+  char temp1[2*MAX_FILENAME_LEN];
+  temp1[0]='\0';
+  strcpy(temp1, argmt);
+  filename1 = strtok(temp1, delims );
+  if (filename1==NULL)
+    {
+      strcat(msg, "[--gt] option requires two filenames, plus either BC or PD, comma separated. The filenames are to be an input (file of cortex calls) and output filename.");
+      return 1;
+    }
+  else if (access(filename1,R_OK)==-1)
+    {
+      strcat(msg, "[--gt] option requires two filenames, plus either BC or PD, comma separated. The filenames are to be an input (file of cortex calls) and output filename. In this case the input filename does not exist - unable to open it");
+      return 1;
 
+    }
+  strcpy(cmdline->file_of_calls_to_be_genotyped,filename1);
+  filename2 = strtok( NULL, delims );
+  if (filename2==NULL)
+    {
+      strcat(msg, "[--gt] option requires two filenames, plus either BC or PD, comma separated. The filenames are to be an input (file of cortex calls) and output filename. Cannot find the output filename in your cmdline input\n");
+      return 1;
+    }
+  strcpy(cmdline->output_genotyping, filename2);
+  caller= strtok( NULL, delims );
+  if (caller==NULL)
+    {
+      strcat(msg, "[--gt] option requires two filenames, plus either BC or PD, comma separated. You have entered the filenames, but not specified which caller was used to make these calls\n");
+      return 1;
+    }
+  if (strcmp(caller, "BC")==0) 
+    {
+      cmdline->which_caller_was_used_for_calls_to_be_genotyped=BubbleCaller;
+    }
+  else if (strcmp(caller, "PD")==0 )
+    {
+      cmdline->which_caller_was_used_for_calls_to_be_genotyped=SimplePathDivergenceCaller;
+    }
+  else
+    {
+      strcat(msg, "[-gt] option - third part of argument MUST be either BC or PD.");
+      return 1;
+    }
+  return 0;
+  
+  
+}

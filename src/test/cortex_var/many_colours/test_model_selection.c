@@ -109,11 +109,13 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   long long seq_read=0;
   long long seq_loaded=0;
   int max_chunk_length = 30;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/example1_for_testing_genotyping.allele1.fasta",&seq_read, &seq_loaded,&bad_reads, &dup_reads, max_chunk_length, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/example1_for_testing_genotyping.allele1.fasta",&seq_read, &seq_loaded,NULL,
+								     &bad_reads, &dup_reads, max_chunk_length, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
   
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/example1_for_testing_genotyping.allele2.fasta",&seq_read, &seq_loaded,&bad_reads, &dup_reads, max_chunk_length, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/example1_for_testing_genotyping.allele2.fasta",&seq_read, &seq_loaded,NULL,
+								     &bad_reads, &dup_reads, max_chunk_length, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
 
@@ -194,11 +196,11 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   CU_ASSERT(f_entry==true);
   fclose(br1_fptr);
   fclose(br2_fptr);
-  VariantBranchesAndFlanks var;
-  var.one_allele     = br1_path;
-  var.len_one_allele = br1len;
-  var.other_allele     = br2_path;
-  var.len_other_allele = br2len;
+  VariantBranchesAndFlanks* var=alloc_VariantBranchesAndFlanks_object(max_read_length,max_read_length,max_read_length,max_read_length,kmer_size);
+  var->one_allele     = br1_path;
+  var->len_one_allele = br1len;
+  var->other_allele     = br2_path;
+  var->len_other_allele = br2len;
 
   int i;
   GraphInfo ginfo;
@@ -215,7 +217,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   double mu = 0.8; //param of geometric describing repeat copy num
   double err = 0.01;
   int ref_colour=-1;//no reference colour
-  initialise_model_info(&model_info, &ginfo, genome_len, mu, err, ref_colour, NUMBER_OF_COLOURS*2, EachColourADiploidSample);
+  initialise_model_info(&model_info, &ginfo, genome_len, mu, err, ref_colour, NUMBER_OF_COLOURS*2, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
   AnnotatedPutativeVariant annovar;
 
 
@@ -234,10 +236,10 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 
   for (i=0; i<100; i++)
     {
-      set_coverage_on_bubble(20, 20, &var, i);
+      set_coverage_on_bubble(20, 20, var, i);
     }
   
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+  initialise_putative_variant(&annovar, &model_info, var, BubbleCaller, kmer_size, AssumeUncleaned, NULL, NULL, NULL, true);
   
   double ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
 
@@ -256,18 +258,18 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 
   for (i=0; i<50; i++)
     {
-      set_coverage_on_bubble(5,5, &var, i);
+      set_coverage_on_bubble(5,5, var, i);
     }
   for (i=50; i<75; i++)
     {
-      set_coverage_on_bubble(10,0, &var, i);
+      set_coverage_on_bubble(10,0, var, i);
     }
   for (i=75; i<100; i++)
     {
-      set_coverage_on_bubble(0,10, &var, i);
+      set_coverage_on_bubble(0,10, var, i);
     }
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+  initialise_putative_variant(&annovar, &model_info, var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL, true);
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
 
@@ -301,14 +303,14 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 
   for (i=0; i<90; i++)
     {
-      set_coverage_on_bubble(10,0, &var, i);
+      set_coverage_on_bubble(10,0, var, i);
     }
   for (i=90; i<100; i++)
     {
-      set_coverage_on_bubble(5,5, &var, i);
+      set_coverage_on_bubble(5,5, var, i);
     }
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+  initialise_putative_variant(&annovar, &model_info, var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL, true);
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
   CU_ASSERT(ret> log(100));//called as a variant
@@ -335,15 +337,15 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   //   Colour 99 will be hom_other, given covg 10 on second allele and 0 on first
   for (i=0; i<90; i++)
     {
-      set_coverage_on_bubble(10,0, &var, i);
+      set_coverage_on_bubble(10,0, var, i);
     }
   for (i=90; i<99; i++)
     {
-      set_coverage_on_bubble(5,5, &var, i);
+      set_coverage_on_bubble(5,5, var, i);
     }
-  set_coverage_on_bubble(0,10, &var, 99);
+  set_coverage_on_bubble(0,10, var, 99);
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+  initialise_putative_variant(&annovar, &model_info, var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL, true);
 
   
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
@@ -366,30 +368,30 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 
   for (i=0; i<20; i++)
     {
-      set_coverage_on_bubble(20,20, &var, i);
+      set_coverage_on_bubble(20,20, var, i);
     }
   for (i=21; i<40; i++)
     {
-      set_coverage_on_bubble(16,11, &var, i);
+      set_coverage_on_bubble(16,11, var, i);
     }
   for (i=41; i<60; i++)
     {
-      set_coverage_on_bubble(17,18, &var, i);
+      set_coverage_on_bubble(17,18, var, i);
     }
   for (i=61; i<80; i++)
     {
-      set_coverage_on_bubble(20,20, &var, i);
+      set_coverage_on_bubble(20,20, var, i);
     }
   for (i=81; i<90; i++)
     {
-      set_coverage_on_bubble(12,20, &var, i);
+      set_coverage_on_bubble(12,20, var, i);
     }
   for (i=91; i<100; i++)
     {
-      set_coverage_on_bubble(2,5, &var, i);
+      set_coverage_on_bubble(2,5, var, i);
     }
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+  initialise_putative_variant(&annovar, &model_info, var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL, true);
 
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
@@ -403,10 +405,10 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 
   for (i=0; i<100; i++)
     {
-      set_coverage_on_bubble(2000,2000, &var, i);
+      set_coverage_on_bubble(2000,2000, var, i);
     }
 
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL);
+  initialise_putative_variant(&annovar, &model_info, var, BubbleCaller,kmer_size, AssumeUncleaned, NULL, NULL, NULL, true);
 
 
   ret = get_log_bayesfactor_varmodel_over_repeatmodel(&annovar, &model_info);
@@ -425,7 +427,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 
   //cleanup
   free_sequence(&seq);
-
+  free_VariantBranchesAndFlanks_object(var);
   free(kmer_window->kmer);
   free(kmer_window);
   free(br1_path);

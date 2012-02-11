@@ -158,8 +158,11 @@ typedef struct {
 
 
 //functions for VariantBranchesAndFlanks
-VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p);
+
+VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p, int kmer_size);
+
 void free_VariantBranchesAndFlanks_object(VariantBranchesAndFlanks* var);
+
 
 void set_alloced_variant_branches_and_flanks_allowing_inputargs_in_either_order(VariantBranchesAndFlanks* var, 
 										dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,  Orientation arraydir_5p, 
@@ -167,6 +170,7 @@ void set_alloced_variant_branches_and_flanks_allowing_inputargs_in_either_order(
 										dBNode** other_allele, Orientation* other_allele_or, int len_other_allele, Orientation arraydir_other,
 										dBNode** flank3p,    Orientation* flank3p_or,    int len_flank3p, Orientation arraydir_3p,
 										WhichAlleleIsRef which);
+
 void set_variant_branches_and_flanks(VariantBranchesAndFlanks* var, 
 				     dBNode** flank5p,    Orientation* flank5p_or,    int len_flank5p,
 				     dBNode** one_allele, Orientation* one_allele_or, int len_one_allele, 

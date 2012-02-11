@@ -32,6 +32,7 @@
 #include <dB_graph.h>
 #include <file_format.h>
 #include <graph_info.h>
+#include <db_variants.h>
 
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;
@@ -57,7 +58,7 @@ void  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(c
 									       int fastq_ascii_offset,
 									       dBGraph* db_graph, EdgeArrayType type, int index );
 
-void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded,
+void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded, long long** readlen_count_array,
 									long long * bad_reads, long long* dup_reads, int max_chunk_length, 
 									boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, 
 									dBGraph* db_graph, EdgeArrayType type, int index);
@@ -96,11 +97,11 @@ void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* li
 //index tells you which person within a population it is
 //bases_read is passed in to find out how much sequence there was in the files read-in.
 //bases_loaded is passed in to find out how much sequence passed filters (qual, PCR dup, homopol) and was loaded into the graph
-void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bases_read, long long* bases_loaded,
+void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bases_read, long long* bases_loaded, long long** readlen_count_array,
 										      long long* bad_reads, dBGraph* db_graph, int index);
 
 
-void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded, long long* bad_reads, dBGraph* db_graph);
+void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded, long long* bad_reads, dBGraph* db_graph, long long** readlen_count_array);
 
 
 //use preallocated sliding window, and get all the kmers from the passed-in sequence. Any kmer that would have contained an N is returned as NULL
@@ -194,18 +195,31 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_bases_to_load, int lengt
 			    dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char* path_string,
 			    Sequence* seq, KmerSlidingWindow* kmer_window, boolean expecting_new_fasta_entry,  dBGraph * db_graph);
 
-
+void ignore_next_read(FILE* fp, int max_read_length, boolean* full_entry,
+		      int (* file_reader)(FILE * fp, Sequence * seq, 
+					  int max_read_length,boolean new_entry, 
+					  boolean * full_entry), 
+		      Sequence* seq);
 int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length, dBNode** array_nodes, Orientation* array_orientations, 
 						   boolean require_nodes_to_lie_in_given_colour, boolean* full_entry,
 						   int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
 						   Sequence* seq, KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour);
 
+
+int given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(char* prev_kmer, FILE* fp, int max_read_length, 
+										     dBNode** array_nodes, Orientation* array_orientations, 
+										     boolean require_nodes_to_lie_in_given_colour,
+										     boolean* full_entry,
+										     int (* file_reader)(FILE * fp, Sequence * seq, 
+													 int max_read_length,boolean new_entry, 
+													 boolean * full_entry), 
+										     Sequence* seq, Sequence* seq_inc_prev_kmer, 
+										     KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour);
+
 int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
-                                           dBNode** flank5p,    Orientation* flank5p_or,    int* len_flank5p,
-                                           dBNode** ref_allele, Orientation* ref_allele_or, int* len_ref_allele,
-                                           dBNode** alt_allele, Orientation* alt_allele_or, int* len_alt_allele,
-                                           dBNode** flank3p,    Orientation* flank3p_or,    int* len_flank3p,
-                                           dBGraph* db_graph, int colour);
+					   VariantBranchesAndFlanks* var, dBGraph* db_graph, 
+					   int (file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
+					   Sequence* seq, Sequence* seq_inc_prev_kmer, KmerSlidingWindow* kmer_window);
 
 
 void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_mean_readlens, long long* array_total_seq);

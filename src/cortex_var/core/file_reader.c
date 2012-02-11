@@ -120,7 +120,7 @@ void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, b
 	    }
 	  else if (format==FASTA)
 	    {
-	      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(filename,&single_seq_bases_read, &single_seq_bases_loaded,
+	      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(filename,&single_seq_bases_read, &single_seq_bases_loaded,readlen_count_array,
 										 &bad_se_reads, &dup_se_reads, max_read_length, 
 										 remv_dups_se,break_homopolymers, homopol_limit, 
 										 db_graph, individual_edge_array, colour);
@@ -261,7 +261,7 @@ void  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(c
 
 //this routine supports big fasta entries (chromosome length for example)
 
-void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded,
+void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded,  long long** readlen_count_array,
 									long long * bad_reads, long long* dup_reads, int max_chunk_length, 
 									boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, 
 									dBGraph* db_graph, EdgeArrayType type, int index)
@@ -286,10 +286,10 @@ void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fi
     exit(1); //TODO - prefer to print warning and skip file and return an error code?
   }
 
-  //pass NULL in instead of an array for read length distribution - do not support getting read-length distribution for fasta
-  load_seq_data_into_graph_of_specific_person_or_pop(fp,bases_read, bases_pass_filters_and_loaded,NULL,
-							    &file_reader,bad_reads,0,dup_reads, max_chunk_length,remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-							    db_graph, type, index);
+  //if you pass NULL in instead of an array for read length distribution - then you do not get the read-length distribution
+  load_seq_data_into_graph_of_specific_person_or_pop(fp,bases_read, bases_pass_filters_and_loaded,readlen_count_array,
+						     &file_reader,bad_reads,0,dup_reads, max_chunk_length,remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
+						     db_graph, type, index);
   
   fclose(fp);
 
@@ -1270,7 +1270,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 // Only used for test code
 //takes a filename 
 // this file contains a list of filenames, each of these represents an individual (and contains a list of fasta for that individual).
-void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded,  long long* bad_reads, dBGraph* db_graph)
+void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded,  long long* bad_reads, dBGraph* db_graph, long long** readlen_count_array)
 {
 
   FILE* fp = fopen(filename, "r");
@@ -1303,7 +1303,8 @@ void load_population_as_fasta(char* filename, long long* bases_read, long long* 
 
       //printf("About to try and load fasta for this person %s\n",line);
 
-      load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, bases_read, bases_loaded, bad_reads, db_graph, people_so_far-1);
+      load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(line, bases_read, bases_loaded, readlen_count_array,
+										       bad_reads, db_graph, people_so_far-1);
 
 
     }
@@ -1319,7 +1320,7 @@ void load_population_as_fasta(char* filename, long long* bases_read, long long* 
 //index tells you which person within a population it is
 //bases_read is passed in to find out how much sequence there was in the files read-in.
 //bases_loaded is passed in to find out how much sequence passed filters (qual, PCR dup, homopol) and was loaded into the graph
-void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bases_read, long long* bases_loaded, 
+void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bases_read, long long* bases_loaded, long long** readlen_count_array,
 										      long long* bad_reads, dBGraph* db_graph, int index)
 {
   FILE* fptr = fopen(f_name, "r");
@@ -1346,7 +1347,9 @@ void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_
       if ((p = strchr(line, '\n')) != NULL)
 	*p = '\0';
       
-      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(line, bases_read, bases_loaded,  bad_reads, &dup_reads, MAX_READ_LENGTH, 
+      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(line, bases_read, bases_loaded,  
+									 readlen_count_array,
+									 bad_reads, &dup_reads, MAX_READ_LENGTH, 
 									 remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 									 db_graph, individual_edge_array, index);
       
@@ -2444,6 +2447,15 @@ void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_referen
 
 
 
+void ignore_next_read(FILE* fp, int max_read_length, boolean* full_entry,
+		      int (* file_reader)(FILE * fp, Sequence * seq, 
+					  int max_read_length,boolean new_entry, 
+					  boolean * full_entry), 
+		      Sequence* seq)
+{
+  //get next read as a C string and put it in seq. Entry_length is the length of the read.
+  int entry_length = file_reader(fp,seq,max_read_length,*full_entry,full_entry);
+}
 
 //returns the number of kmers loaded
 int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length, dBNode** array_nodes, Orientation* array_orientations, 
@@ -2458,119 +2470,181 @@ int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length
 
   //get next read as a C string and put it in seq. Entry_length is the length of the read.
   int entry_length = file_reader(fp,seq,max_read_length,*full_entry,full_entry);
+  if (entry_length>0)
+    {
+      //turn it into a sliding window 
+      int nkmers = get_single_kmer_sliding_window_from_sequence(seq->seq,entry_length, db_graph->kmer_size, kmer_window, db_graph);
+      //work through the sliding window and put nodes into the array you pass in. Note this may find NULL nodes if the kmer is not in the graph
+      load_kmers_from_sliding_window_into_array(kmer_window, seq, db_graph, array_nodes, array_orientations, 
+						max_read_length-db_graph->kmer_size+1, require_nodes_to_lie_in_given_colour, colour);
+
+      return nkmers;
+    }
+  else
+    {
+      return 0;
+    }
+}
+
+
+
+
+// suppose 5p flank is : xxxxxxxxxxxxxxxxx and branch1 (as printed out) is yyyyyyyyyyy
+// then the 5p flank in VariantFlanksAndBranches end at xxxxx,
+// AND branch1 in VariantFlanksAndBranches starts    at xxxxx
+// and branch2, however it starts, must end with the same kmer as branch1
+
+// I want to read in the yyyyyy read, and get the kmers xxxxx, xxxxy, xxxyy, xxyyy, xyyyy, yyyyy
+// so I want to be able to pass in xxxxx to this function and get all the nodes for the branch
+//returns the number of kmers loaded
+// MAKE SURE you pass in kmer_window capable of holding read-length + KMER  bases.
+int given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(char* prev_kmer, FILE* fp, int max_read_length, 
+										     dBNode** array_nodes, Orientation* array_orientations, 
+										     boolean require_nodes_to_lie_in_given_colour,
+										     boolean* full_entry,
+										     int (* file_reader)(FILE * fp, Sequence * seq, 
+													 int max_read_length,boolean new_entry, 
+													 boolean * full_entry), 
+										     Sequence* seq, Sequence* seq_inc_prev_kmer, 
+										     KmerSlidingWindow* kmer_window,dBGraph * db_graph, int colour)
+
+{
+  
+
+  //get next read as a C string and put it in seq. Entry_length is the length of the read.
+  int entry_length = file_reader(fp,seq,max_read_length,*full_entry,full_entry);
+
+  seq_inc_prev_kmer->seq[0]='\0';
+  seq_inc_prev_kmer->seq[entry_length+db_graph->kmer_size]='\0';
+  // char prev_kmer_and_this_read[entry_length+db_graph->kmer_size+1];
+  //prev_kmer_and_this_read[0]='\0';
+  //prev_kmer_and_this_read[entry_length+db_graph->kmer_size]='\0';
+  //strcpy(prev_kmer_and_this_read, prev_kmer);
+  //strcat(prev_kmer_and_this_read, seq->seq);
+  strcpy(seq_inc_prev_kmer->seq, prev_kmer);
+  strcat(seq_inc_prev_kmer->seq, seq->seq);
   //turn it into a sliding window 
-  int nkmers = get_single_kmer_sliding_window_from_sequence(seq->seq,entry_length, db_graph->kmer_size, kmer_window, db_graph);
+  int nkmers = get_single_kmer_sliding_window_from_sequence(seq_inc_prev_kmer->seq,entry_length+db_graph->kmer_size, db_graph->kmer_size, kmer_window, db_graph);
   //work through the sliding window and put nodes into the array you pass in. Note this may find NULL nodes if the kmer is not in the graph
   load_kmers_from_sliding_window_into_array(kmer_window, seq, db_graph, array_nodes, array_orientations, 
-					    max_read_length-db_graph->kmer_size+1, require_nodes_to_lie_in_given_colour, colour);
+					    max_read_length+1, require_nodes_to_lie_in_given_colour, colour);
 
   return nkmers;
 }
 
 
-// returns 1 unless hits end of file, when returns 0
-// Exits if the sequence read does not exist in db_graph (ie any kmer or edge) in the colour specified as last argument
 
+// returns 0 when hits the end of the file
+// otherwise returns 1 
+// MAKE SURE your kmer_window is malloced to allow max_read_length PLUS KMER bases in a "read", as we want the transitions between
+// flank and branches etc handled properly
+// MAKE SURE seq_inc_prev_kmer also has space for an extra k bases at the start
 int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
-					   dBNode** flank5p,    Orientation* flank5p_or,    int* len_flank5p,
-					   dBNode** ref_allele, Orientation* ref_allele_or, int* len_ref_allele, 
-					   dBNode** alt_allele, Orientation* alt_allele_or, int* len_alt_allele, 
-					   dBNode** flank3p,    Orientation* flank3p_or,    int* len_flank3p,
-					   dBGraph* db_graph, int colour)
+					   VariantBranchesAndFlanks* var, dBGraph* db_graph, 
+					   int (file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
+					   Sequence* seq, Sequence* seq_inc_prev_kmer, KmerSlidingWindow* kmer_window)
 {
-  int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
-    long long ret;
-    int offset = 0;
-
-    if (new_entry!= true){
-      printf("new_entry has to be true for read_next_variant_from_full_flank_file\n");
-      exit(1);
-    }
-
-    ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
-    
-    return ret;
-  }
-  
-  //----------------------------------
-  // allocate the memory used to read the sequences
-  //----------------------------------
-  Sequence * seq = malloc(sizeof(Sequence));
-  if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
-  }
-  alloc_sequence(seq,max_read_length,LINE_MAX);
-  
-  //We are going to load all the bases into a single sliding window 
-  KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
-  if (kmer_window==NULL)
-    {
-      printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-      exit(1);
-    }
-  kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
-  if (kmer_window->kmer==NULL)
-    {
-      printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-      exit(1);
-    }
-  kmer_window->nkmers=0;
-  
-  
-  //end of intialisation 
+  int colour=-1; //ignored.
 
   boolean f_entry=true;
-  *len_flank5p = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, flank5p, flank5p_or,  true, &f_entry, file_reader,
-							       seq, kmer_window, db_graph, colour);
+  var->len_flank5p = -1 + align_next_read_to_graph_and_return_node_array(fptr, max_read_length, var->flank5p, var->flank5p_or,  false, &f_entry, file_reader,
+								    seq, kmer_window, db_graph, colour);
   if (!f_entry)
     {
-      printf("One of these reads (5p flank) is longer than specified max read length\n");
+      printf("One of these reads (5p flank) is longer than specified max read length. Last chunk we get was %s\n", seq->seq);
       exit(1);
     }
 
-  if (*len_flank5p==0)
+  if (var->len_flank5p==-1)
     {
       return 0; //end of file (should never have a zero length read as 5prime flank btw)
     }
 
-  // printf("5p flank: %s, length %d\n", seq->seq, *len_flank5p);
 
-
-  *len_ref_allele = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, ref_allele, ref_allele_or, true, &f_entry, file_reader,
-							       seq, kmer_window, db_graph, colour);
-  //printf("ref allele flank: %s, length %d\n", seq->seq, *len_ref_allele);
-    if (!f_entry)
+  //use the read-id of the 5prime flank to get the variant name, and to double check that this IS a 5prime flank
+  char* sub_ptr = strstr(seq->name, "_5p_flank");
+  if (sub_ptr==NULL)
     {
-      printf("One of these reads (5p flank) is longer than specified max read length\n");
+      printf("Abort. Mandatory format for read-id of 5p flanks is >..some text.._5p_flank - but in this read, names %s, I cannot find the text \"_5p_flank\"\n", seq->name);
       exit(1);
     }
+  else
+    {
+      size_t len = sub_ptr-seq->name;
+      strncpy(var->var_name, seq->name, (int)len);
+      var->var_name[(int)len]='\0';
+      //printf("Found var name %s\n", var->var_name);
+    }
 
-    *len_alt_allele = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, alt_allele, alt_allele_or, true, &f_entry, file_reader,
-							       seq, kmer_window, db_graph, colour);
-  //printf("alt allele: %s, length %d\n", seq->seq, *len_alt_allele );
+  //save the sequence we have read:
+  strncpy(var->seq5p, seq->seq, (int) strlen(seq->seq));
+  var->seq5p[(int) strlen(seq->seq)]='\0';
+  //so we have got the 5prime flank. Now we need to get all the kmers joining it to the branches
+  char last_kmer_5p[db_graph->kmer_size+1];
+  last_kmer_5p[0]='\0';
+  last_kmer_5p[db_graph->kmer_size]='\0';
+  strncpy(last_kmer_5p, seq->seq+ (int)strlen(seq->seq)-db_graph->kmer_size, db_graph->kmer_size);
+  //printf("We think this %s is the last kmer in the 5p flank %s\n", last_kmer_5p, seq->seq);
+
+  // we will also need the last kmer of either branch, to prepend in front of the 3p flank. 
+  // At first sight, this seems complicated by the fact that sometimes one branch or even both branches are very short (<kmer)
+  // however we have helpfully passed in the last kmer of the 50 flank, so we definitely have >k bases available to us
+
+
+  char last_kmer_of_branch1[db_graph->kmer_size+1];
+  last_kmer_of_branch1[0]='\0';
+  last_kmer_of_branch1[db_graph->kmer_size]='\0';
+
+  var->len_one_allele = -1 + 
+    given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_5p, fptr, max_read_length, 
+										     var->one_allele, var->one_allele_or, 
+										     false, &f_entry, file_reader,
+										     seq, seq_inc_prev_kmer,kmer_window, db_graph, colour);
   if (!f_entry)
     {
-      printf("One of these reads (5p flank) is longer than specified max read length\n");
+      printf("One of these reads (branch1) is longer than specified max read length. The last chunk we got was %s\n", seq->seq);
       exit(1);
     }
 
+  strncpy(last_kmer_of_branch1, seq_inc_prev_kmer->seq + (int)strlen(seq_inc_prev_kmer->seq)-db_graph->kmer_size, db_graph->kmer_size);
 
-  *len_flank3p = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, flank3p, flank3p_or, true, &f_entry, file_reader,
-								seq, kmer_window, db_graph, colour);
-  //printf("3p flank: %s, length %d\n", seq->seq, *len_flank3p);
+  //save the sequence we have read:
+  strncpy(var->seq_one, seq->seq, (int) strlen(seq->seq));
+  var->seq_one[(int) strlen(seq->seq)]='\0';
+  
+  var->len_other_allele = -1 + 
+    given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_5p, fptr, max_read_length, 
+										     var->other_allele, var->other_allele_or, 
+										     false, &f_entry, file_reader,
+										     seq, seq_inc_prev_kmer, kmer_window, db_graph, colour);
+  //printf("alt allele: %s, length %d\n", seq->seq, *len_branch_other );
   if (!f_entry)
     {
-      printf("One of these reads (5p flank) is longer than specified max read length\n");
+      printf("One of these reads (branch2) is longer than specified max read length Last chunk we got was %s\n\n", seq->seq);
       exit(1);
     }
 
-  if (*len_flank3p==0)
+
+  //save the sequence we have read:
+  strncpy(var->seq_other, seq->seq, (int) strlen(seq->seq));
+  var->seq_other[(int) strlen(seq->seq)]='\0';
+
+  var->len_flank3p = -1 + 
+    given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_of_branch1, fptr, max_read_length, 
+										     var->flank3p, var->flank3p_or, 
+										     false, &f_entry, file_reader,
+										     seq, seq_inc_prev_kmer, kmer_window, db_graph, colour);
+
+  if (!f_entry)
     {
-      printf("Malformed full flank format file. Last seq we got back was %s", seq->seq);
+      printf("One of these reads (3p flank) is longer than specified max read length\n");
       exit(1);
     }
 
+  //save the sequence we have read:
+  strncpy(var->seq3p, seq->seq, (int) strlen(seq->seq));
+  var->seq3p[(int) strlen(seq->seq)]='\0';
+  
   return 1;
 
 }
@@ -3035,3 +3109,5 @@ boolean check_colour_list(char* filename, int kmer)
 
   return true;
 }
+
+

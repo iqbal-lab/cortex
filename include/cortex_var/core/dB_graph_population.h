@@ -44,6 +44,7 @@
 #include <db_variants.h>
 #include <graph_info.h>
 #include <model_selection.h>
+#include <db_complex_genotyping.h>
 
 
 typedef struct {
@@ -502,6 +503,8 @@ void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(dBNode** array1, dBNod
 
 
 boolean make_reference_path_based_sv_calls_condition_always_true(VariantBranchesAndFlanks* var, int colour_ref, int colour_indiv);
+boolean make_reference_path_based_sv_calls_condition_always_true_for_func_of_colours(VariantBranchesAndFlanks* var,  int colour_of_ref,
+										     Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) );
 
 
 void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout);
@@ -638,6 +641,11 @@ void db_graph_wipe_two_colours_in_one_traversal(int colour1, int colour2, dBGrap
 void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
                                           int* second_col_list, int num2,
 					  dBGraph* db_graph);
+
+void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fout, GraphAndModelInfo* model_info,
+					DiscoveryMethod which_caller, dBGraph* db_graph, void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+					AssumptionsOnGraphCleaning assump, GenotypingWorkingPackage* gwp, LittleHashTable* little_dbg);
+
 
 void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int colour1, int colour2,
 							    dBGraph * db_graph, Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),

@@ -36,6 +36,7 @@
 #include <time.h>
 #include <graph_info.h>
 #include <db_differentiation.h>
+#include <db_complex_genotyping.h>
 #include <model_selection.h>
 #include <experiment.h>
 #include <genome_complexity.h>
@@ -93,6 +94,128 @@ long long calculate_mean(long long* array, long long len)
 void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* model_info)
 {
   
+}
+
+
+
+void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_extra_variant_info)(VariantBranchesAndFlanks*), 
+		    Edges(*get_col_ref) (const dBNode* e),int (*get_cov_ref)(const dBNode* e),
+		    GraphInfo* db_graph_info, GraphAndModelInfo* model_info)
+{
+  FILE* fp = fopen(cmd_line->file_of_calls_to_be_genotyped, "r");
+  if (fp==NULL)
+    {
+      printf("Cannot open file %s\n", cmd_line->file_of_calls_to_be_genotyped);
+      exit(1);
+    }
+  else
+    {
+      int gt_file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
+	long long ret;
+	int offset = 0;
+	if (new_entry!= true){
+	  printf("new_entry has to be true for read_next_variant_from_full_flank_file\n");
+	  exit(1);
+	}	
+	ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
+	return ret;
+      }
+
+
+      //----------------------------------
+      // allocate the memory used to read the sequences
+      //----------------------------------
+      Sequence * seq = malloc(sizeof(Sequence));
+      if (seq == NULL){
+	fputs("Out of memory trying to allocate Sequence\n",stderr);
+	exit(1);
+      }
+      alloc_sequence(seq,cmd_line->max_read_length,LINE_MAX);
+
+      Sequence * seq_inc_prev_kmer = malloc(sizeof(Sequence));
+      if (seq == NULL){
+	fputs("Out of memory trying to allocate Sequence\n",stderr);
+	exit(1);
+      }
+      alloc_sequence(seq_inc_prev_kmer,cmd_line->max_read_length+db_graph->kmer_size,LINE_MAX);
+
+      
+      
+      //We are going to load all the bases into a single sliding window 
+      KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
+      if (kmer_window==NULL)
+	{
+	  printf("Failed to malloc kmer sliding window for genotyping. Exit.\n");
+	  exit(1);
+	}
+      kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(cmd_line->max_read_length-db_graph->kmer_size-1));
+      if (kmer_window->kmer==NULL)
+	{
+	  printf("Failed to malloc kmer_window->kmer for genotyping. Tried to alloc  an array of %d binary kmers. Max read len:%d, kmer size %d,Exit.\n", 
+		 cmd_line->max_read_length-db_graph->kmer_size-1, cmd_line->max_read_length, db_graph->kmer_size);
+	  exit(1);
+	}
+      kmer_window->nkmers=0;
+      
+      VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(cmd_line->max_var_len+1, cmd_line->max_var_len+1, cmd_line->max_var_len+1, cmd_line->max_var_len+1, db_graph->kmer_size);
+      if (var==NULL)
+	{
+	  printf("Abort - unable to allocate memory for buffers for reading callfile - either sever oom conditions or you have specified very very large max_var_len\n");
+	  exit(1);
+	}
+      GenotypingWorkingPackage* gwp=NULL;
+      LittleHashTable* little_dbg=NULL;
+      if (cmd_line->which_caller_was_used_for_calls_to_be_genotyped==SimplePathDivergenceCaller)
+	{
+	  gwp = alloc_genotyping_work_package(cmd_line->max_var_len, cmd_line->max_var_len, NUMBER_OF_COLOURS, NUMBER_OF_COLOURS+1);
+	  if (gwp==NULL)
+	    {
+	      printf("Unable to alloc resources for genotyping prior to starting. Abort\n");
+	      exit(1);
+	    }
+	  int little_width=100;
+	  int little_height=(int) log((cmd_line->max_var_len) *4)+1;
+	  int little_retries=20;
+	  printf("Building little hash for genotyping: height %d and width %d\n", little_height, little_width);
+	  little_dbg = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
+	  if (little_dbg==NULL)
+	    {
+	      printf("Out of memory - failed to alloc tiny auxiliary hash table\n");
+	      exit(1);
+	    }
+	  var->which=first;
+	}
+      //end of initialisation 
+      
+      FILE* fout = fopen(cmd_line->output_genotyping, "w");
+      if (fout==NULL)
+	{
+	  printf("Unable to open output file %s - abort.\n", cmd_line->output_genotyping);
+	  exit(1);
+	}
+      
+      int ret=1;
+      while (ret)
+	{
+	  ret = read_next_variant_from_full_flank_file(fp, cmd_line->max_read_length,
+						       var, db_graph, &gt_file_reader, seq, seq_inc_prev_kmer, kmer_window);
+	  if (ret==1)
+	    {
+	      AssumptionsOnGraphCleaning assump=AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice; //todo - fix when you have incorporated changes to seq error rate handling
+	      print_call_given_var_and_modelinfo(var, fout, model_info, cmd_line->which_caller_was_used_for_calls_to_be_genotyped, db_graph,
+						 print_whatever_extra_variant_info,
+						 assump, gwp, little_dbg);
+	    }
+	}
+
+
+      //cleanup
+      free_VariantBranchesAndFlanks_object(var);
+      if (cmd_line->which_caller_was_used_for_calls_to_be_genotyped==SimplePathDivergenceCaller)
+	{
+	  free_genotyping_work_package(gwp); 
+	}
+    }
 }
 
 
@@ -632,7 +755,7 @@ int main(int argc, char **argv){
       long long* readlen_distrib=(long long*) malloc(sizeof(long long) * (cmd_line.max_read_length+1));
       long long** readlen_distrib_ptrs = (long long**) malloc(sizeof(long long*) * (cmd_line.max_read_length+1));
 
-      if (readlen_distrib==NULL)
+      if ( (readlen_distrib==NULL) || (readlen_distrib_ptrs==NULL) )
 	{
 	  printf("Unable to malloc array to hold readlen distirbution!Exit.\n");
 	  exit(1);
@@ -655,23 +778,7 @@ int main(int argc, char **argv){
 								    cmd_line.max_read_length, 0, db_graph);
 
       //update the graph info object
-      if (cmd_line.format_of_input_seq==FASTQ)
-	{
-	  graph_info_update_mean_readlen_and_total_seq(&db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line.max_read_length+1)), bases_pass_filters_and_loaded);
-	}
-      else//for FASTA we do not get read length distribution
-	{
-	  printf("When binaries are built, Cortex calculates the legnth distribution of reads\n");
-	  printf("after quality filters, Ns, PCR duplicates, homopolymer filters have been taked into account\n");
-	  printf("This data is saved in the binary header, if you dump a binary file.\n");
-	  printf("However Cortex does not calculate mean read length of input data if it is FASTA\n");
-	  printf("These stats are primarily used for \"real\" data from fastq files\n");
-	  printf("Since you have used fasta, we just use the value you entered for --max_read_len and log that in the binary header as the read length\n");
-	  printf("Set mean read len in colour 0 to %d\n", cmd_line.max_read_length);
-	  graph_info_set_mean_readlen(&db_graph_info, 0, cmd_line.max_read_length);
-	  graph_info_increment_seq(&db_graph_info, 0, bases_pass_filters_and_loaded);
-	}
-
+      graph_info_update_mean_readlen_and_total_seq(&db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line.max_read_length+1)), bases_pass_filters_and_loaded);
 
 
       //cleanup marks left on nodes by loading process (for PE reads)
@@ -679,16 +786,9 @@ int main(int argc, char **argv){
 
 
       timestamp();
-      if (cmd_line.format_of_input_seq==FASTQ)
-	{
-	  printf("Fastq data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\nMean read length after filters applied:%d\n", 
-		 bases_parsed, bases_pass_filters_and_loaded, db_graph_info.mean_read_length[0]);
-	}
-      else
-	{
-	  printf("Fasta data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\n", 
-		 bases_parsed, bases_pass_filters_and_loaded);
-	}
+      printf("Fastq data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\nMean read length after filters applied:%d\n", 
+	     bases_parsed, bases_pass_filters_and_loaded, db_graph_info.mean_read_length[0]);
+
 
       if (cmd_line.dump_readlen_distrib==true)
 	{
@@ -855,8 +955,9 @@ int main(int argc, char **argv){
       exit(1);
     }
 
+  AssumptionsOnGraphCleaning assump = AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice; // todo - fix this when you incorporate seq error info in binaries
   initialise_model_info(&model_info, &db_graph_info, cmd_line.genome_size, 
-			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line.ref_colour, num_chroms_in_expt, cmd_line.expt_type);
+			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line.ref_colour, num_chroms_in_expt, cmd_line.expt_type, assump);
 
 
   int j;
@@ -1010,16 +1111,15 @@ int main(int argc, char **argv){
       printf("Detect Bubbles 1, completed\n");
     }
 
-  //second detect bubbles
-  if (cmd_line.detect_bubbles2==true)
+
+  if (cmd_line.do_genotyping_of_file_of_sites==true)
     {
       timestamp();
-      printf("Start second set of bubble calls\n");
-      run_bubble_calls(&cmd_line, 2, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, &model_info);
+      printf("Genotype the calls in this file %s\n", cmd_line.file_of_calls_to_be_genotyped);
+      run_genotyping(&cmd_line, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, &model_info);
       //unset the nodes marked as visited, but not those marked as to be ignored
-      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
       timestamp();
-      printf("Detect Bubbles 2, completed\n");
+      printf("Genotyping completed\n");
     }
 
   if (cmd_line.make_pd_calls==true)

@@ -172,6 +172,6 @@ void modify_character(char* str, int which_base, int which_mutant);
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info,
 				    VariantBranchesAndFlanks* var, DiscoveryMethod caller,  int kmer,
 				    AssumptionsOnGraphCleaning assump,GenotypingWorkingPackage* gwp,
-				    dBGraph* db_graph, LittleHashTable* little_db_graph);
+				    dBGraph* db_graph, LittleHashTable* little_db_graph, boolean do_genotyping);
 
 #endif

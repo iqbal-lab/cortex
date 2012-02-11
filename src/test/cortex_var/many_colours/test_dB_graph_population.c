@@ -116,7 +116,7 @@ void test_hash_table_find()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_dB_graph.fasta",&seq_read, &seq_loaded,&bad_reads, &dup_reads, 20, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_dB_graph.fasta",&seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, 20, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,0);
 
   //length of sequence read in from file
@@ -229,7 +229,7 @@ void test_tip_clipping()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_tip.fasta", &seq_read, &seq_loaded,
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_tip.fasta", &seq_read, &seq_loaded, NULL, 
 								     &bad_reads, &dup_reads, 20,
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array,0);
@@ -338,7 +338,7 @@ void test_pruning_low_coverage_nodes()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_tip.fasta",&seq_read, &seq_loaded,&bad_reads, &dup_reads, 20, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_tip.fasta",&seq_read, &seq_loaded,NULL, &bad_reads, &dup_reads, 20, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
   
@@ -412,7 +412,7 @@ void test_get_perfect_path_in_one_colour()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_two_self_loops.fasta", &seq_read, &seq_loaded, &bad_reads, &dup_reads, 20,  
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_two_self_loops.fasta", &seq_read, &seq_loaded, NULL,  &bad_reads, &dup_reads, 20,  
 										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 										  db_graph, individual_edge_array,0);
 
@@ -467,7 +467,7 @@ void test_get_perfect_path_in_one_colour()
   seq_loaded=0;
 
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_one_long_supernode_with_conflict_at_end.fasta",
-								     &seq_read, &seq_loaded,&bad_reads, &dup_reads,20,
+								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads,20,
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array,0);
 
@@ -532,7 +532,7 @@ void test_get_perfect_path_in_one_colour()
    seq_read=0;
    seq_loaded=0;
    load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_one_long_supernode_with_inward_conflict_at_end.fasta", 
-								      &seq_read, &seq_loaded,&bad_reads, &dup_reads, 20,  
+								      &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, 20,  
 								      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								      db_graph, individual_edge_array,0);
 
@@ -597,7 +597,7 @@ void test_get_perfect_path_in_one_colour()
    db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
    seq_read=0;
    seq_loaded=0;
-   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_infinite_loop.fasta",&seq_read, &seq_loaded,
+   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_infinite_loop.fasta",&seq_read, &seq_loaded, NULL,
 								      &bad_reads, &dup_reads,30,
 								      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								      db_graph, individual_edge_array,0);
@@ -956,7 +956,7 @@ void test_detect_and_smooth_bubble(){
 
   long long seq_read=0;
   long long seq_loaded=0;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generate_bubble_with_unequal_branch_sizes.fa", &seq_read, &seq_loaded,
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generate_bubble_with_unequal_branch_sizes.fa", &seq_read, &seq_loaded, NULL, 
 										      &bad_reads, &dup_reads, 200, 
 										      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 										      db_graph, individual_edge_array, 0);
@@ -1197,7 +1197,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
   // ****
 
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_two_self_loops.fasta", &seq_read, &seq_loaded,
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_two_self_loops.fasta", &seq_read, &seq_loaded, NULL, 
 								     &bad_reads, &dup_reads, 20,  
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
@@ -1338,7 +1338,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person.fasta", &seq_read, &seq_loaded,&bad_reads, &dup_reads, max_read_length, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person.fasta", &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
   
@@ -1403,7 +1403,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
   seq_read=0;
   seq_loaded=0;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person2.fasta", &seq_read, &seq_loaded, &bad_reads, &dup_reads, max_read_length, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person2.fasta", &seq_read, &seq_loaded, NULL,  &bad_reads, &dup_reads, max_read_length, 
 								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 								     db_graph, individual_edge_array, 0);
   
@@ -1460,7 +1460,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
   seq_read=0;
   seq_loaded=0;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded,&bad_reads, &dup_reads, max_read_length, 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
 										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 										  db_graph, individual_edge_array, 0);
 
@@ -1647,7 +1647,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end", &seq_read, &seq_loaded,&bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end", &seq_read, &seq_loaded,&bad_reads, hash_table, NULL);
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(bad_reads==0);
 
@@ -1726,7 +1726,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
   seq_read=0;
   seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   //person 1:
   //>person1_read1
@@ -1976,7 +1976,7 @@ void test_is_supernode_end()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops", &seq_read, &seq_loaded,  &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops", &seq_read, &seq_loaded,  &bad_reads, hash_table, NULL);
   CU_ASSERT(seq_loaded==6);
   CU_ASSERT(seq_read==6);
   CU_ASSERT(seq_read==6);
@@ -2020,7 +2020,7 @@ void test_is_supernode_end()
   hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
   seq_read=0;
   seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end", &seq_read, &seq_loaded,&bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end", &seq_read, &seq_loaded,&bad_reads, hash_table, NULL);
 
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(seq_read==13);
@@ -2079,7 +2079,7 @@ void test_is_supernode_end()
 
   seq_read=0;
   seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_inward_conflict_at_end",&seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_inward_conflict_at_end",&seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(seq_read==13);
@@ -2145,7 +2145,7 @@ void test_is_supernode_end()
 
   seq_read=0;
   seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_infiniteloop", &seq_read, &seq_loaded,  &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_infiniteloop", &seq_read, &seq_loaded,  &bad_reads, hash_table, NULL);
   CU_ASSERT(bad_reads==0);
   CU_ASSERT(seq_loaded==25);
   CU_ASSERT(seq_read==25);
@@ -2198,7 +2198,7 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
   long long seq_loaded=0;
   long long seq_read=0;
 
-  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 44);
   CU_ASSERT(bad_reads==0);
@@ -2274,7 +2274,7 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
   //double coverness of hairpin must not confuse read coverage
 
 
-  load_population_as_fasta("../data/test/pop_graph/coverage/one_person", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/coverage/one_person", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 24);
   CU_ASSERT(seq_read == 24);
@@ -2322,7 +2322,7 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
     }
   long long seq_loaded=0;
   long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/one_person_for_testing_array_loading", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/one_person_for_testing_array_loading", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
 
   //>one read
   //AATAGACGCCCACACCTGATAGACCCCACACTCTAA
@@ -2570,7 +2570,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
   long long seq_read=0;
 
   
-  load_population_as_fasta("../data/test/pop_graph/one_person_with_Ns_on_end", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/one_person_with_Ns_on_end", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   //>one read
   //AATAGACGCCCACACCTGATAGACCCCACAC 
@@ -2648,7 +2648,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_2()
   long long seq_loaded=0;
   long long seq_read=0;
   //just load one person who's sequence is an Alu. Then take reference which is that same sequence and try to find variants
-  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/just_one_of_the_two_people.txt", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/just_one_of_the_two_people.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   //   >7SLRNA#SINE/Alu  plus GTTCAGAG at start and GTCAGCGTAG at end
   //   GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
@@ -2734,7 +2734,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
   long long seq_loaded=0;
   long long seq_read=0;
   
-  load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_alu_Ns_then_same_alu", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_alu_Ns_then_same_alu", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   
   //   >7SLRNA#SINE/Alu  
@@ -2813,7 +2813,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_4()
     }
   long long seq_loaded=0;
   long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_10kb_of_chrom1", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_10kb_of_chrom1", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   
   CU_ASSERT(seq_read==16320);
@@ -2878,7 +2878,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_5()
   long long seq_read=0;
 
 
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_insertion", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_insertion", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_alu.fasta", "r");
   if (chrom_fptr==NULL)
@@ -2940,7 +2940,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
   long long seq_loaded=0;
   long long seq_read=0;
 
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_short_seq_with_one_base_difference", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/variations/two_people_short_seq_with_one_base_difference", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   CU_ASSERT(seq_read==192);
   
@@ -3010,7 +3010,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
 										       1, return_flank5p_array, return_trusted_branch_array, 
 										       return_branch2_array, return_flank3p_array, 
 										       return_variant_start_coords_array_ptr, 
-										       &make_reference_path_based_sv_calls_condition_always_true, 
+										       &make_reference_path_based_sv_calls_condition_always_true_for_func_of_colours, 
 										       &action_set_flanks_and_branches_to_be_ignored,
 										       &print_no_extra_info, NULL, NoIdeaWhatCleaning, 0);//last 0 - start numbering variant at 0
   
@@ -3073,7 +3073,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
     }
   long long seq_loaded=0;
   long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_both_alu_Ns_alu_with_one_base_difference", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/variations/two_people_both_alu_Ns_alu_with_one_base_difference", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fasta", "r");
   if (chrom_fptr==NULL)
@@ -3185,7 +3185,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_3()
     }
   long long seq_loaded=0;
   long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_2_bases_missing", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_2_bases_missing", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_2_bases_missing.fasta", "r");
   if (chrom_fptr==NULL)
@@ -3305,7 +3305,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_4()
 
 
   //we use the same two people as last time, but swap their roles
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_2_bases_missing", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_2_bases_missing", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_2_bases_missing.fasta", "r");
   if (chrom_fptr==NULL)
@@ -3432,7 +3432,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
 
 
 
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_inserted_mid_supernode", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_inserted_mid_supernode", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fasta", "r");
   if (chrom_fptr==NULL)
@@ -3557,7 +3557,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
 
 
   //we use the same two people as last time, but swap their roles
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_inserted_mid_supernode", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_inserted_mid_supernode", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fasta", "r");
   if (chrom_fptr==NULL)
@@ -3680,7 +3680,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_7()
 
 
   //we use the same two people as last time, but swap their roles
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_is_alu_other_has_2nd_alu_inserted", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_is_alu_other_has_2nd_alu_inserted", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fasta", "r");
   if (chrom_fptr==NULL)
@@ -3834,7 +3834,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
   long long seq_loaded=0;
   long long seq_read=0;
 
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_1kb_deletion", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_1kb_deletion", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta", "r");
   if (chrom_fptr==NULL)
@@ -4011,7 +4011,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
   long long seq_loaded=0;
   long long seq_read=0;
 
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_1kb_deletion_both_with_600lineschrom12_beforehand", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_1kb_deletion_both_with_600lineschrom12_beforehand", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta", "r");
   if (chrom_fptr==NULL)
@@ -4137,7 +4137,7 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_population_as_fasta("../data/test/pop_graph/one_person_two_reads", &seq_read, &seq_loaded, &bad_reads, hash_table);
+  load_population_as_fasta("../data/test/pop_graph/one_person_two_reads", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
   //>read1
   //AAAACGAAAAAATTCGAG
@@ -4277,7 +4277,7 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
   long long seq_read=0;
   long long seq_loaded=0;
 
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_short_seq_with_one_base_difference", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/variations/two_people_short_seq_with_one_base_difference", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
 
   //load two people, one of whom contains this:
 
@@ -4359,7 +4359,7 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
   //now load some more fastas, including one which has some N's in the middle Make sure we can get the right kmers when we follow that path
   seq_read=0;
   seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_both_alu_Ns_alu_with_one_base_difference", &seq_read, &seq_loaded, &bad_reads, db_graph);
+  load_population_as_fasta("../data/test/pop_graph/variations/two_people_both_alu_Ns_alu_with_one_base_difference", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
 
 
   //cleanup results
@@ -4427,7 +4427,7 @@ void test_does_this_path_exist_in_this_colour()
       long long seq_read=0;
       long long seq_loaded=0;
 
-      load_population_as_fasta("../data/test/pop_graph/three_colours", &seq_read, &seq_loaded, &bad_reads, db_graph);
+      load_population_as_fasta("../data/test/pop_graph/three_colours", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
       
       //annoyingly, I have called these file colour1 and colour2, but in the hash table they are colours 0 and 1. Sorry for this. From here on, I use colour0 colour1 - the original filenames irrelevant
       /* in colour 0 we have
