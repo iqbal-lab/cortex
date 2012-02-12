@@ -170,6 +170,57 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
   CU_ASSERT(mobv.mult21[5]==0);
   CU_ASSERT(mobv.mult21[6]==1);
 
+
+  // fourth test - two branches, first shorter than second, with some nodes repeated within and between branches
+  array1[1]=e2;//reset the second element in array1 to what it was before the last test
+  //recall array1[4]={e1,e2,e3,e4}
+  dBNode* array4[4]={e1,e2,e3,e4};
+
+
+  set_variant_branches_and_flanks(&var,
+				  NULL, NULL, 0,
+				  array1, NULL, 4,
+				  array4, NULL, 4,
+				  NULL, NULL, 0,
+				  unknown);
+
+  
+  int mult4_11[4]={0,0,0,0};
+  int mult4_22[7]={0,0,0,0};
+  int mult4_12[4]={0,0,0,0};
+  int mult4_21[7]={0,0,0,0};
+  mobv.mult11=mult4_11;
+  mobv.mult22=mult4_22;
+  mobv.mult12=mult4_12;
+  mobv.mult21=mult4_21;
+  mobv.len1 = 4;
+  mobv.len2 = 4;
+
+  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, &mobv, true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, working_colour1, working_colour2);
+
+
+
+  CU_ASSERT(mobv.mult11[0]==1);
+  CU_ASSERT(mobv.mult11[1]==1);
+  CU_ASSERT(mobv.mult11[2]==1);
+  CU_ASSERT(mobv.mult11[3]==1);
+
+  CU_ASSERT(mobv.mult22[0]==1);
+  CU_ASSERT(mobv.mult22[1]==1);
+  CU_ASSERT(mobv.mult22[2]==1);
+  CU_ASSERT(mobv.mult22[3]==1);
+
+  CU_ASSERT(mobv.mult12[0]==1);
+  CU_ASSERT(mobv.mult12[1]==1);
+  CU_ASSERT(mobv.mult12[2]==1);
+  CU_ASSERT(mobv.mult12[3]==1);
+
+  CU_ASSERT(mobv.mult21[0]==1);
+  CU_ASSERT(mobv.mult21[1]==1);
+  CU_ASSERT(mobv.mult21[2]==1);
+  CU_ASSERT(mobv.mult21[3]==1);
+
+
   free(e1);
   free(e2);
   free(e3);
@@ -615,7 +666,6 @@ void test_calc_log_likelihood_of_genotype_with_complex_alleles1()
 void test_calc_log_likelihood_of_genotype_with_complex_alleles2()
 {
 
-  // load a simple case. 2 alleles which do not overlap at all, or with the rest of the genome
   // load the alleles, and the rest of the genome into the hash, then run the simulator, and check the right genotype
   // happens
   utility_func_test_complex_genotyping_given_two_alleles("hlab_070201_extended", "hlab_550104_extended", "../data/test/pop_graph/variations/complex_genotyping/hlab_070201.fa",

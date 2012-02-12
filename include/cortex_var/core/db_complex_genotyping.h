@@ -143,6 +143,14 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 											     Nucleotide* path_labels, char* path_string , int max_sup_len
 											     );
 
+
+double calc_log_prob_of_covg_on_chunk(double eff_D_over_R, int* working_array, int working_array_len);
+
+double get_log_probability_of_covg_on_one_allele_given_second_allele_and_multiplicities(double hap_D_over_R, dBNode** allele, int len_allele,
+											int* mult_this_allele_in_self, int* mult_this_allele_in_other,
+											int* working_array_self, int* working_array_shared,
+											int (*check_covg_in_ref_with_site_excised)(dBNode*),
+											int colour_indiv);
 double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(GenotypingVariantBranchesAndFlanks* var,
 									      MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults,
 									      GraphAndModelInfo* model_info,

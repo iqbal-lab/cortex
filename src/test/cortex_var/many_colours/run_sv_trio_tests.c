@@ -59,7 +59,7 @@ int  main()
   /* add the tests to the suites */
 
 
-
+  /*
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
     CU_cleanup_registry();
@@ -360,6 +360,7 @@ int  main()
   //    }
 
 
+
    if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for comparing overlap of alleles with each other and selves", test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles ))
       {
 	CU_cleanup_registry();
@@ -421,18 +422,22 @@ int  main()
     }
 
 
+  */
    if (NULL == CU_add_test(pPopGraphSuite, "Test algorithm for genotyping of complex site at a simple site (repeat for different coverages and sequencing error rates, simulating real coverage coording to our model, 100 iterations each time)", test_calc_log_likelihood_of_genotype_with_complex_alleles1 ))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
 	}
 
-   /*   
+
+
+
    if (NULL == CU_add_test(pPopGraphSuite, "Test genotyping of complex sites - test with two HLA-B alleles", test_calc_log_likelihood_of_genotype_with_complex_alleles2 ))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
+
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test genotyping of complex sites - test with two HLA-B alleles, using 1-net and 2-net error model", test_calc_log_likelihood_of_genotype_with_complex_alleles3 ))
       {
@@ -440,7 +445,7 @@ int  main()
 	return CU_get_error();
       }
 
-   */
+
 
  
 

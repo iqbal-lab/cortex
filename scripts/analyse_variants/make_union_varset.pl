@@ -90,7 +90,7 @@ sub print_unionset
 sub get_all_calls_from_this_file
 {
     my ($file, $href) = @_;
-    open(F, $file)||die();
+    open(F, $file)||die("Cannot find file $file");
     while (<F>)
     {
 	my $ln = $_;
