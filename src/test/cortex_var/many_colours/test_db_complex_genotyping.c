@@ -1376,10 +1376,13 @@ Colour 0 = reference
 
   AnnotatedPutativeVariant annovar2;
   wipe_little_graph(little_db_graph);
+
+  printf("ZAM - genotype a site that is clearly hom other - zero covg on first allele. So the only gt that should see errors is hom one\n");
   initialise_putative_variant(&annovar2, &model_info, &var, SimplePathDivergenceCaller, 
 			      56, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph, true );
 
 
+  printf("This should be homother. llks are %f,%f,%f\n", annovar2.gen_log_lh[1].log_lh[0], (annovar2.gen_log_lh[1]).log_lh[1], annovar2.gen_log_lh[1].log_lh[2]);
   CU_ASSERT(annovar2.genotype[1]==hom_other);//1==colour
 
 

@@ -1,32 +1,93 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Basename;
-use lib "/home/zam/dev/hg/CORTEX_release/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6";
+use lib "/path/to/your/releasedir/CORTEX_release/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6"; ##<<< fix this
 use Descriptive;
+use Getopt::Long;
 
 
 # Takes as input a set of variant calls made by Cortex, maps the flanks, aligns
 # branches against each other to determine variant type,
 # splits out SNPs from clusters so we have precise loci,
 # applies any of the following filters
-#  - demand 5prime flank maps with quality> 30
+#  - demand 5prime flank maps with quality>= 40
 # dumps to VCF4.0
 
-####  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-### The following are the Command line arguments you must enter:
-my $callfile = shift;
-my $outdir = shift;
-my $outvcf_filename_stub = shift;
-my $colours = shift;#list of names of colours/sample,s one per line
-my $number_of_colours = shift;
-my $reference_colour = 0;# -1 if unknown, ignore this colour for the VCF - dont print out anything
-my $pooled_colour = -1;   #-1 if unknown, ignore this colour for the VCF - dont print out anything
-my $kmer = shift;
-my $apply_filter_one_allele_must_be_ref = "yes"; ##  "yes" if one of your colours is the reference
-                                                 ##  otherwise "no" - will produce VCF-like output
-my $classif = -1; ## file containing output of the population filter (classifier.R), or -1 if not used
-my $prefix = shift; ## this will prefix any var name
-my $ploidy = 2;
+my ($callfile, $outdir, $outvcf_filename_stub, $colours, $number_of_colours, $reference_colour, $kmer, $apply_filter_one_allele_must_be_ref, $classif, $prefix, $ploidy, $require_one_allele_is_ref);
+
+
+#set defaults
+my $pooled_colour=-1;
+$classif=-1;
+$require_one_allele_is_ref="yes";
+$prefix = "cortex";
+$outdir = ".";
+$outvcf_filename_stub ='';
+$callfile='';
+$colours='';
+$number_of_colours=0;
+$reference_colour=-1;
+$kmer=-1;
+
+my $help='';#default false
+&GetOptions(
+     	    'callfile|f:s'                 => \$callfile,         
+	    'outdir|o:s'                   => \$outdir,
+	    'outvcf|v:s'                   => \$outvcf_filename_stub,
+	    'samplename_list|s:s'          => \$colours,   #list of names of colours/sample,s one per line
+	    'num_cols|n:i'                 => \$number_of_colours,
+            'refcol|r:i'                   => \$reference_colour, # ignore this colour for the VCF - dont print out anything. if there is no reference in your colours, use -1
+            'kmer|k:i'                     => \$kmer,
+            'require_one_allele_is_ref|a:s'=> \$apply_filter_one_allele_must_be_ref,#must be "yes" or "no". Usually in VCF require one allele is the ref allele and matches the reference
+            'pop_classifier|c:s'           => \$classif, ## file containing output of the population filter (classifier.R), or -1 if not used (default)
+            'prefix|p:s'                   => \$prefix, ## this will prefix any var name 
+            'ploidy|y:i'                   => \$ploidy, ## must be 1 or 2
+            'help'                         => \$help,                    
+           );
+
+if ($help)
+{
+    print "\n\n";
+    print "Usage: mandatory arguments:\n";
+    print "--callfile                    : file of calls output by Cortex (may be from Bubble or Path Divergence caller, but you MUST have used --print_colour_coverages\n";
+    print "--outvcf                      : the output VCF files will have filenames starting with this\n";
+    print "--outdir                      : all output will go here. Default is current working directory\n";
+    print "--samplename_list             : file listing names of each colour/sample, one line per colour. These names end up in the header line of the VCF\n";
+    print "--num_cols                    : nUmber of colours in your graph (and callfile output)\n";
+    print "--kmer                        : kmer size used\n";
+    print "Optional arguments\n";
+    print "--refcol                      : if one of the colours is the reference genome, specify this colour number. Default is -1 (meaning no reference present), but if you \n";
+    print "                                do have a reference genome and are producing a VCF with respect to it, I STRONGLY recommend putting the reference into a colour\n";
+    print "--require_one_allele_is_ref   : Acceptable values are \"yes\" or \"no\". If you are using a reference which is not too diverged from your samples\n";
+    print "                                then I would use \"yes\". However this will filter out some calls where BOTH alleles don't match the reference\n";
+    print "                                If you want to dig in and see which calls got filtered out, you can compare the VCF with the original callfile and see which calls are missing\n";
+    print "--pop_classifier              : If you used classifier.R, give the filename of the output file\n";
+    print "--ploidy                      : Acceptable values are 1 and 2. Default is 2.\n";
+    print "--prefix                      : String prefix which will go in the front of any variant names. e.g --prefix ZAM will produce variants ZAM_var_1, ZAM_var_2, etc\n";
+    print "\n\n\n";
+    die();
+}
+
+
+
+if ( ($outvcf_filename_stub eq '') || ($callfile eq '') || ($colours eq '') || ($kmer ==-1) )
+{
+    die("You must specify --outvcf and --callfile and --samplename_list and --kmer ");
+    exit(1);
+}
+if (!(-e $callfile))
+{
+    die("Cannot find this callfile $callfile");
+}
+if (!(-e $colours))
+{
+    die("Cannot find this sample list $colours");
+}
+if ( ($reference_colour<0) && ($reference_colour!=-1))
+{
+    die("Reference colour must be -1 (meaning there is no reference), or >=0 - you entered $reference_colour");
+}
+
 
 if ( ($ploidy !=1) && ($ploidy !=2) )
 {
@@ -40,10 +101,10 @@ my $mapping_qual_thresh = 30;
 ## The following all require you to modify them for your system
 
 ## build a Stampy hash of the genome to whiich you want to map, and give the path here
-my $stampy_hash_stub = "/data02/zamin/pombe_ref/stampy/pombe";
-my $stampy_bin = "/data02/zamin/cortex/cortex_var_1.0.5.3/scripts/analyse_variants/stampy-1.0.13/stampy.py";
-my $flank_bin = "/data02/zamin/cortex/cortex_var_1.0.5.3/scripts/analyse_variants/make_5p_flank_file.pl";
-my $needleman_wunsch_bin = "/data02/zamin/cortex/cortex_var_1.0.5.3/scripts/analyse_variants/needleman_wunsch-0.3.0/needleman_wunsch";
+my $stampy_hash_stub = "/give/path/to/your/stampy/hash";## <<<<<< fix this
+my $stampy_bin = "/path/to/stampy.py"; #### <<<<<<< fix this
+my $flank_bin = "/path/to/your/cortex_release/dir/scripts/analyse_variants/make_5p_flank_file.pl";## <<<<<<<<<< fix this
+my $needleman_wunsch_bin = "/path/to/your/cortex_release/dir/scripts/analyse_variants/needleman_wunsch-0.3.0/needleman_wunsch"; ### <<<<<< fix this. Also - you needd to go in here and type make
 
 #### no need to modify anything below this line
 

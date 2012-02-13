@@ -499,60 +499,63 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 	boolean too_short=false;
 	int ct = count_reads_on_allele_in_specific_colour(p_nodes, length, colour_indiv, &too_short);
 	int extra=0;
-	if (length>db_graph->kmer_size)
+	if (too_short==false)
 	  {
-	    extra=length-db_graph->kmer_size;
-	  }//tells us if >1 SNP
-	if (wor==worst_is_1net)
-	  {
-	    /*
-	    if (too_short==false)
+	    if (length>db_graph->kmer_size)
 	      {
-		*total_1net = (*total_1net) + ct;
+		extra=length-db_graph->kmer_size;
+	      }//tells us if >1 SNP
+	    if (wor==worst_is_1net)
+	      {
+		/*
+		  if (too_short==false)
+		  {
+		  *total_1net = (*total_1net) + ct;
+		  }
+		  else
+		  {
+		  *total_1net = (*total_1net) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
+		  }
+		*/
+		//*total_1net = (*total_1net) + 1;
+		//*total_1net = (*total_1net) + db_node_get_coverage(e, individual_edge_array,colour_indiv) ;
+		*total_1net = (*total_1net) + extra+1;
+		//*total_1net = (*total_1net) + length;
+	      }
+	    else if (wor==worst_is_2net)
+	      {
+		/*
+		  if (too_short==false)
+		  {
+		  *total_2net = (*total_2net) + ct;	
+		  }
+		  else
+		  {
+		  *total_2net = (*total_2net) + db_node_get_coverage(e, individual_edge_array,colour_indiv) * (extra + 1);
+		  }
+		*/
+		*total_2net = (*total_2net) + 1+extra;
+		//*total_2net = (*total_2net) + 1;
+		//*total_2net = (*total_2net) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
+		//*total_2net = (*total_2net) + length;
 	      }
 	    else
 	      {
-		*total_1net = (*total_1net) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
+		/*
+		  if (too_short==false)
+		  {
+		  *total_3net = (*total_3net) + ct;	
+		  }
+		  else
+		  {
+		  *total_3net = (*total_3net) + db_node_get_coverage(e, individual_edge_array,colour_indiv) * (extra + 1);
+		  }
+		*/
+		*total_3net = (*total_3net) + 1 + extra;
+		//*total_3net = (*total_3net) + 1;
+		//*total_3net = (*total_3net) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
+		//*total_3net = (*total_3net) + length;
 	      }
-	    */
-	    //*total_1net = (*total_1net) + 1;
-	    //*total_1net = (*total_1net) + db_node_get_coverage(e, individual_edge_array,colour_indiv) ;
-	    *total_1net = (*total_1net) + extra+1;
-	    //*total_1net = (*total_1net) + length;
-	  }
-	else if (wor==worst_is_2net)
-	  {
-	    /*
-	    if (too_short==false)
-	      {
-		*total_2net = (*total_2net) + ct;	
-	      }
-	    else
-	      {
-		*total_2net = (*total_2net) + db_node_get_coverage(e, individual_edge_array,colour_indiv) * (extra + 1);
-	      }
-	    */
-	    *total_2net = (*total_2net) + 1+extra;
-	    //*total_2net = (*total_2net) + 1;
-	    //*total_2net = (*total_2net) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
-	    //*total_2net = (*total_2net) + length;
-	  }
-	else
-	  {
-	    /*
-	    if (too_short==false)
-	      {
-		*total_3net = (*total_3net) + ct;	
-	      }
-	    else
-	      {
-		*total_3net = (*total_3net) + db_node_get_coverage(e, individual_edge_array,colour_indiv) * (extra + 1);
-	      }
-	    */
-	    *total_3net = (*total_3net) + 1 + extra;
-	    //*total_3net = (*total_3net) + 1;
-	    //*total_3net = (*total_3net) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
-	    //*total_3net = (*total_3net) + length;
 	  }
       }
     
@@ -1067,14 +1070,16 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	int i;
 	boolean too_short=false;
 	int ct = count_reads_on_allele_in_specific_colour(p_nodes, length, colour_indiv, &too_short);
-	int extra=0;
-	if (length>db_graph->kmer_size)
+	if (too_short==false)
 	  {
-	    extra=length-db_graph->kmer_size;
-	  }//tells us if >1 SNP
-
-	*total_1net = (*total_1net) + ct + extra+1;
-
+	    int extra=0;
+	    if (length>db_graph->kmer_size)
+	      {
+		extra=length-db_graph->kmer_size;
+	      }//tells us if >1 SNP
+	    
+	    *total_1net = (*total_1net) + ct + extra+1;
+	  }
       }
     
     return;
@@ -1157,6 +1162,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   double log_prob_error = 0;
 
 
+  printf("Num 1 net errors is %d\n", num_1net_errors);
   if (num_1net_errors>0)
     {
       log_prob_error += -poisson_1net_err_rate + num_1net_errors*log(poisson_1net_err_rate) - gsl_sf_lnfact(num_1net_errors);
@@ -1167,10 +1173,6 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 
   // 2.  Get sum of log likelihoods of all the subchunks of the two alleles
 
-  // walk along allele 1. For sections unique to allele1, work out log likelihood with eff haploid covg
-  // for sections shared with allele2, use eff diploid covg
-  // and finally, walk along allele2, and consider only sections unique to allele2
-
 
   int working_array_self_count=0;
   int working_array_shared_count=0;
@@ -1178,236 +1180,19 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   double hap_D  = (double) (model_info->ginfo->total_sequence[colour_indiv])/(double) (2*model_info->genome_len) ;
   double hap_D_over_R = hap_D/(model_info->ginfo->mean_read_length[colour_indiv]);
   int eff_r_plus_one = model_info->ginfo->mean_read_length[colour_indiv] - db_graph->kmer_size;
-  //printf("total sequence is %qd and genome len is %qd , and hapD is %f and hapD over R is %f\n", model_info->ginfo->total_sequence[colour_indiv], model_info->genome_len, hap_D, hap_D_over_R);
-
-  //break allele into intervals that only lie on allele1, and those shared with allele2.
-  int k=1;//ignore first node
-
-  while (k < var->len_one_allele -1 ) //ignore last node
-      {
-
-	if (var_mults->mult12[k]>0) //this node occurs  >0 times in the other allele
-	  {
-	    if (working_array_self_count>0)
-	      {
-		boolean too_short = 0;
-		int covg_on_self_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_self, working_array_self_count, 
-													      &too_short);
-		//printf("covg on self in this chunk %d\n", covg_on_self_in_this_chunk);
-		if (too_short==false)
-		  {
-
- 		    // add log dpois ( hap_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
-		    log_prob_data += -hap_D_over_R * working_array_self_count + covg_on_self_in_this_chunk * log(hap_D_over_R * working_array_self_count) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
 
 
-		    //added next two lines for debug
- 		    // add log dpois ( hap_D_over_R * (readlen-k+working_array_self_count)  , covg_on_self_in_this_chunk)
-		    //log_prob_data += -hap_D_over_R * (working_array_self_count+eff_r_plus_one) + covg_on_self_in_this_chunk * log(hap_D_over_R * (working_array_self_count+eff_r_plus_one)) 
-		    // - gsl_sf_lnfact(covg_on_self_in_this_chunk);
+  //walk the first allele
+  log_prob_data += get_log_probability_of_covg_on_one_allele_given_second_allele_and_multiplicities(hap_D_over_R, var->one_allele, var->len_one_allele,
+												    var_mults->mult11, var_mults->mult12,
+												    working_array_self, working_array_shared,
+												    check_covg_in_ref_with_site_excised, colour_indiv);
+  //now walk the second (which will be the same one again if this is hom)
+  log_prob_data += get_log_probability_of_covg_on_one_allele_given_second_allele_and_multiplicities(hap_D_over_R, var->other_allele, var->len_other_allele,
+												    var_mults->mult22, var_mults->mult21,
+												    working_array_self, working_array_shared,
+												    check_covg_in_ref_with_site_excised, colour_indiv);
 
-
-		    
-		    
-		    
-		  }
-	      }
-
-	    working_array_self_count=0;
-
-	    while ((k < var->len_one_allele -1 ) &&  
-		   (var_mults->mult12[k] > 0) && 
-		    (check_covg_in_ref_with_site_excised(var->one_allele[k])==0 )//automatically handles case when there is no colour for ref-minus-site     
-		  )
-	      {
-		// this node might happen 2 times on allele 1 and 3 times on allele2. in total 5 times, annd here it counts for 2 of them
-		//working_array_shared[working_array_shared_count]=covg_allele1[k]* 2/(var_mults->mult11[k] + var_mults->mult12[k])  ;<<<<<<<<<<<< this is what I had before (when I did NA19240)
-
-		
-	        //working_array_shared[working_array_shared_count]= db_node_get_coverage(var->one_allele[k], individual_edge_array, colour_indiv)/(var_mults->mult11[k] + var_mults->mult12[k])  ;
-		//below is what I tried in debug
-		working_array_shared[working_array_shared_count]= db_genotyping_node_get_coverage(var->one_allele[k], individual_edge_array, colour_indiv)/(var_mults->mult11[k])  ;
-		
-		k++;
-		working_array_shared_count++;
-	      }
-	    while ( (k<var->len_one_allele-1) && (check_covg_in_ref_with_site_excised(var->one_allele[k])>0) )
-	      {
-		k++;
-	      }
-
-	  }
-	if (var_mults->mult12[k]==0)
-	  {
-	    //start of contiguous chunk which occurs only in first allele
-	    if (working_array_shared_count>0)
-              {
-		boolean too_short = 0;
-		int covg_on_shared_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_shared, working_array_shared_count, 
-														&too_short);
-		//printf("covg on shared in this chunk %d\n", covg_on_shared_in_this_chunk);
-
-		if (too_short==false)
-		  {
-		    //            NOTE  2*  - diploid covg
- 		    // add log dpois ( 2*hap_D_over_R * working_array_shared_count , covg_on_shared_in_this_chunk)
-		    log_prob_data += -2*hap_D_over_R * working_array_shared_count + covg_on_shared_in_this_chunk * log(2*hap_D_over_R * working_array_shared_count) - gsl_sf_lnfact(covg_on_shared_in_this_chunk);
-
-
-
-		    //next two lines added for debug
- 		    //add log dpois ( 2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one) , covg_on_shared_in_this_chunk)
-		    //log_prob_data += -2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one) + covg_on_shared_in_this_chunk * log(2*hap_D_over_R * (working_array_shared_count+eff_r_plus_one)) - gsl_sf_lnfact(covg_on_shared_in_this_chunk);
-
-		    
-
-
-		  }
-              }
-
-	    working_array_shared_count=0;
-	    working_array_self_count=0;
-	    
-	    while ((k < var->len_one_allele-1 ) && 
-		   (var_mults->mult12[k]==0) && 
-		    (check_covg_in_ref_with_site_excised(var->one_allele[k])==0)
-		    )
-	      {
-		working_array_self[working_array_self_count]=db_genotyping_node_get_coverage(var->one_allele[k], individual_edge_array, colour_indiv)/var_mults->mult11[k];
-		k++;
-		working_array_self_count++;
-	      }
-
-	    while ( (k < var->len_one_allele-1) &&( check_covg_in_ref_with_site_excised(var->one_allele[k])>0 ) )
-
-	      { 
-		k++;
-              }
-
-	  }
-      }
-  //may have exited loop with some left-over data in arrays, so:  
-  if (working_array_self_count>0)
-    {
-      boolean too_short = 0;
-      int covg_on_self_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_self, working_array_self_count,
-												    &too_short);
-
-      //printf("covg on self in this chunk %d\n", covg_on_self_in_this_chunk);
-
-      if (too_short==false)
-	{
-	  //commented out next two lines for debug only
-	  // add log dpois ( hap_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
-	  log_prob_data += -hap_D_over_R * working_array_self_count + covg_on_self_in_this_chunk * log(hap_D_over_R * working_array_self_count) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
-
-
-	  
-	}
-
-    }
-
-  if (working_array_shared_count>0)
-    {
-      boolean too_short = 0;
-      int covg_on_shared_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_shared, working_array_shared_count, 
-												      &too_short);
-
-      //printf("covg on shared in this chunk %d\n", covg_on_shared_in_this_chunk);
-
-      if (too_short==false)
-	{
-	  //            NOTE  2*  - diploid covg
-	  // add log dpois ( 2*hap_D_over_R * working_array_shared_count , covg_on_shared_in_this_chunk)
-	  log_prob_data += -2*hap_D_over_R * working_array_shared_count + covg_on_shared_in_this_chunk * log(2*hap_D_over_R * working_array_shared_count) - gsl_sf_lnfact(covg_on_shared_in_this_chunk);
-
-
-	  
-	}
-    }
-
-
-
-
-  //now walk along the other allele, only considering the intervals that are NOT shared
-  k=1;//ignore first node
-  working_array_self_count=0;//stuff only on allele 2=other_allele
-  working_array_shared_count=0;//stuff shared on both
-  
-  while (k < var->len_other_allele-1)//ignore last node
-    {
-      if (var_mults->mult21[k]>0) //this node occurs  >0 times in the other allele
-	{	  
-	  //moved out from next if
-
-	  if (working_array_self_count>0)
-	    {
-	      boolean too_short = 0;
-	      int covg_on_self_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_self, working_array_self_count, 
-													    &too_short);
-	      
-	      //printf("covg on self in this chunk %d\n", covg_on_self_in_this_chunk);
-	      if (too_short==false)
-		{
-		  // add log dpois ( hap_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
-		  log_prob_data += -hap_D_over_R * working_array_self_count 
-		    + covg_on_self_in_this_chunk * log(hap_D_over_R * working_array_self_count) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
-		  
-		  
-		  //added for debug
-		  //log_prob_data += -hap_D_over_R * (working_array_self_count+eff_r_plus_one)
-		  //  + covg_on_self_in_this_chunk * log(hap_D_over_R * (working_array_self_count+eff_r_plus_one)) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
-		  
-		  
-		  
-
-		}
-	    }
-	  //** end of moved out from next if
-
-	  working_array_self_count=0;
-	  k++;
-	}
-      //      else removed this else and replace dwith the line below
-      if (var_mults->mult21[k]==0)
-	{
-	  while ((k < var->len_other_allele-1) && 
-		 (check_covg_in_ref_with_site_excised(var->other_allele[k])==0) &&
-		  (var_mults->mult21[k]==0)
-		  )
-	    {
-	      working_array_self[working_array_self_count]=db_genotyping_node_get_coverage(var->other_allele[k], individual_edge_array, colour_indiv)/var_mults->mult22[k];
-	      k++;
-	      working_array_self_count++;
-	    }
-	  
-
-	  //ZAM just added this - can't believe it was missing!
-	  if (working_array_self_count>0)
-	    {
-	      boolean too_short = 0;
-	      int covg_on_self_in_this_chunk = count_reads_on_allele_in_specific_colour_given_array_of_cvgs(working_array_self, working_array_self_count, 
-													    &too_short);
-	      
-	      //printf("covg on self in this chunk %d\n", covg_on_self_in_this_chunk);
-	      if (too_short==false)
-		{
-		  // add log dpois ( hap_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
-		  log_prob_data += -hap_D_over_R * working_array_self_count 
-		    + covg_on_self_in_this_chunk * log(hap_D_over_R * working_array_self_count) - gsl_sf_lnfact(covg_on_self_in_this_chunk);
-		}
-	    }
-	  //end of ZAM just added this
-
-	  while (  (k<var->len_other_allele-1) &&
-		   (check_covg_in_ref_with_site_excised(var->other_allele[k])>0)
-		   )
-	    {
-	      k++;
-	    } 
-	}
-      
-    }
 
   
   
@@ -2573,10 +2358,10 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 											    model_info, little_db_graph, db_graph,gwp,i);
 		    }
 		  
-		  //     printf("Putative variant genotyped. log liks for hom1, het, hom2 are %.2f, %.2f, %.2f\n",
-		  //     annovar->gen_log_lh[i].log_lh[hom_one],
-		  //     annovar->gen_log_lh[i].log_lh[het],
-		  //     annovar->gen_log_lh[i].log_lh[hom_other]);
+		  printf("ZAM - Putative variant genotyped. log liks for hom1, het, hom2 are %.2f, %.2f, %.2f\n",
+			 annovar->gen_log_lh[i].log_lh[hom_one],
+			 annovar->gen_log_lh[i].log_lh[het],
+			 annovar->gen_log_lh[i].log_lh[hom_other]);
 		  
 		  if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
 		    {
