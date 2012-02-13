@@ -95,7 +95,7 @@ if ( ($ploidy !=1) && ($ploidy !=2) )
 }
 
 
-my $mapping_qual_thresh = 30;
+my $mapping_qual_thresh = 40;
 
 ####  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ## The following all require you to modify them for your system
