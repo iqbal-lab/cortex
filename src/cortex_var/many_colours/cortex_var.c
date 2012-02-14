@@ -208,13 +208,13 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 	    }
 	}
 
-
       //cleanup
       free_VariantBranchesAndFlanks_object(var);
       if (cmd_line->which_caller_was_used_for_calls_to_be_genotyped==SimplePathDivergenceCaller)
 	{
 	  free_genotyping_work_package(gwp); 
 	}
+
     }
 }
 
