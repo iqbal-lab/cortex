@@ -1097,7 +1097,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	double avg_coverage=0;
 	int min=0; int max=0;
 	boolean is_cycle=false;
-	//get the whole supernode IN THE MAIN GRAPH. 
+	//get the corresponding node IN THE MAIN GRAPH. 
 	dBNode* node_corresponding_to_e = hash_table_find(&(e->kmer), db_graph);
 	if (node_corresponding_to_e==NULL)
 	  {

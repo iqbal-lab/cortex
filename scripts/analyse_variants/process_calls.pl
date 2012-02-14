@@ -16,6 +16,27 @@ use Getopt::Long;
 my ($callfile, $outdir, $outvcf_filename_stub, $colours, $number_of_colours, $reference_colour, $kmer, $apply_filter_one_allele_must_be_ref, $classif, $prefix, $ploidy, $require_one_allele_is_ref);
 
 
+
+
+####  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+## The following all require you to modify them for your system
+
+## build a Stampy hash of the genome to which you want to map, and give the path here
+my $stampy_hash_stub = "/give/path/to/your/stampy/hash";## <<<<<< 
+my $stampy_bin = "/path/to/stampy.py"; #### <<<<<<< fix this
+my $flank_bin = "/path/to/your/cortex_release/dir/scripts/analyse_variants/make_5p_flank_file.pl";## <<<<<<<<<< 
+my $needleman_wunsch_bin = "/path/to/your/cortex_release/dir/scripts/analyse_variants/needleman_wunsch-0.3.0/needleman_wunsch"; ### <<<<<< fix this. Also - you needd to go in here and type make
+
+#### no need to modify anything below this line
+
+
+
+
+
+
+
+
+
 #set defaults
 my $pooled_colour=-1;
 $classif=-1;
@@ -28,6 +49,7 @@ $colours='';
 $number_of_colours=0;
 $reference_colour=-1;
 $kmer=-1;
+$ploidy=2;
 
 my $help='';#default false
 &GetOptions(
@@ -97,16 +119,6 @@ if ( ($ploidy !=1) && ($ploidy !=2) )
 
 my $mapping_qual_thresh = 40;
 
-####  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-## The following all require you to modify them for your system
-
-## build a Stampy hash of the genome to whiich you want to map, and give the path here
-my $stampy_hash_stub = "/give/path/to/your/stampy/hash";## <<<<<< fix this
-my $stampy_bin = "/path/to/stampy.py"; #### <<<<<<< fix this
-my $flank_bin = "/path/to/your/cortex_release/dir/scripts/analyse_variants/make_5p_flank_file.pl";## <<<<<<<<<< fix this
-my $needleman_wunsch_bin = "/path/to/your/cortex_release/dir/scripts/analyse_variants/needleman_wunsch-0.3.0/needleman_wunsch"; ### <<<<<< fix this. Also - you needd to go in here and type make
-
-#### no need to modify anything below this line
 
 
 #print "Using reference colour $reference_colour\n";
@@ -157,6 +169,22 @@ if (!(-e $outdir))
 {
     die("Output directory $outdir does not exist");
 }
+
+
+## You will often need to print a newline after the last colour which is not the reference or pool.
+my $last_sample_col=$number_of_colours-1;
+my $f;
+for ($f=$number_of_colours-1; $f<=0; $f--)
+{
+    if (($f !=$reference_colour) && ($f != $pooled_colour) )
+    {
+	$last_sample_col=$f;
+	last;
+    }
+}
+
+
+
 
 ## 1. Map 5p flanks
 my $bname = basename($callfile);
@@ -308,6 +336,10 @@ sub get_vcf_header
 
 	if ( ($z==$reference_colour) || ($z==$pooled_colour) )
 	{
+	    if ($z==$last_sample_col)
+	    {
+		$head=$head."\n";
+	    }
 	    next;
 	}
 	
@@ -938,6 +970,8 @@ sub print_all_genotypes_and_covgs
 
 
     my $j;
+
+
     for ($j=0; $j<$number_of_colours; $j++)
     {
 	if ( ($j==$reference_colour) || ($j==$pooled_colour) )
@@ -1011,13 +1045,13 @@ sub print_all_genotypes_and_covgs
 	{
 	    print $fh "$cov";
 	}
-	if ($j<$number_of_colours-1)
+	if ($j==$last_sample_col)
 	{
-	    print $fh "\t";
+	    print $fh "\n";
 	}
 	else
 	{
-	    print $fh "\n";
+	    print $fh "\t";
 	}
     }
     
