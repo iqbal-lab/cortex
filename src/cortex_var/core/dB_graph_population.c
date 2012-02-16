@@ -2407,9 +2407,6 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
       exit(1);
     }
 
-  
-  void get_vars(dBNode * node){
-   
 
     //will reuse this as we traverse the graph
     VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(flanking_length, max_length, max_length, flanking_length, db_graph->kmer_size);
@@ -2420,9 +2417,9 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
       }
 
 
-
-
-
+  
+  void get_vars(dBNode * node){
+   
     void get_vars_with_orientation(dBNode * node, Orientation orientation){
       
       int length1=0;
@@ -2724,12 +2721,13 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
     }
 
 
-    free_VariantBranchesAndFlanks_object(var);
+
   }
  
   hash_table_traverse(&get_vars,db_graph); 
 
   //cleanup
+  free_VariantBranchesAndFlanks_object(var);
   free(nodes5p);
   free(nodes3p);
   free(orientations5p);

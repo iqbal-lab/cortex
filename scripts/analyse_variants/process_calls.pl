@@ -1,44 +1,49 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Basename;
-use lib "/path/to/your/releasedir/CORTEX_release/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6"; ##<<< fix this
-use Descriptive;
 use Getopt::Long;
 
 
-# Takes as input a set of variant calls made by Cortex, maps the flanks, aligns
-# branches against each other to determine variant type,
-# splits out SNPs from clusters so we have precise loci,
-# applies any of the following filters
-#  - demand 5prime flank maps with quality>= 40
-# dumps to VCF4.0
-
-my ($callfile, $outdir, $outvcf_filename_stub, $colours, $number_of_colours, $reference_colour, $kmer, $apply_filter_one_allele_must_be_ref, $classif, $prefix, $ploidy, $require_one_allele_is_ref);
-
-
-
-
-####  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-## The following all require you to modify them for your system
-
-## build a Stampy hash of the genome to which you want to map, and give the path here
-my $stampy_hash_stub = "/give/path/to/your/stampy/hash";## <<<<<< 
-my $stampy_bin = "/path/to/stampy.py"; #### <<<<<<< fix this
-my $flank_bin = "/path/to/your/cortex_release/dir/scripts/analyse_variants/make_5p_flank_file.pl";## <<<<<<<<<< 
-my $needleman_wunsch_bin = "/path/to/your/cortex_release/dir/scripts/analyse_variants/needleman_wunsch-0.3.0/needleman_wunsch"; ### <<<<<< fix this. Also - you needd to go in here and type make
-
+#### Dear User - this following 3 lines are the only lines in this script you need to manually edit.
+my $stampy_bin = "/path/to/stampy.py";    #### <<<<<<< fix this
+my $cortex_dir = "/path/to/cortex/dir/"; #### <<<<<<< fix this -  path to your cortex release directory (containing Makefile, bin/, scripts/, src/ etc)
+use lib "/XXXXX/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6"; ## replace XXX with the same cortex_release directory path as on previous line
 #### no need to modify anything below this line
 
 
 
+# However you may decide you want to increase this threshold
+my $mapping_qual_thresh = 40; #  - demand 5prime flank maps with quality>= 40
 
 
 
+###******** Description of process_calls.pl ##################################################################
+# process_call.pl Takes as input a set of variant calls made by Cortex, maps the flanks, aligns
+# branches against each other to determine variant type, splits out SNPs from clusters so we have precise loci,
+# It assumes you have a reference to map to - VCF format needs a chromosome and coordinate
+# If you do not have a reference, and want a VCF-like thing, (suppose you have 20,000 variant calls) I suggest you make a reference genome
+# which consists of 20,000 "chromosomes". Each chromosome is 5p-flank + branch1 + 3p flank, cat-ed together.
+# Build a stampy hash of this reference, and use process_calls. Each call will then be on its own chromosome, and you
+# will get a VCF4.0 file that shows you all your calls, which samples have which alleles, and how your alleles related to each other
+##############################################################################################################
 
+
+use Descriptive;
+
+##make sure there is forward slash on the end:
+if ($cortex_dir !~ /\/$/)
+{
+    $cortex_dir= $cortex_dir.'/';
+}
+
+
+
+my ($callfile, $outdir, $outvcf_filename_stub, $colours, $number_of_colours, 
+    $reference_colour, $kmer, $apply_filter_one_allele_must_be_ref, $classif, $prefix, $ploidy, $require_one_allele_is_ref, $stampy_hash_stub);
 
 
 #set defaults
-my $pooled_colour=-1;
+my $pooled_colour=-1; #deprecated
 $classif=-1;
 $require_one_allele_is_ref="yes";
 $prefix = "cortex";
@@ -50,8 +55,10 @@ $number_of_colours=0;
 $reference_colour=-1;
 $kmer=-1;
 $ploidy=2;
+$apply_filter_one_allele_must_be_ref="unknown";
 
 my $help='';#default false
+
 &GetOptions(
      	    'callfile|f:s'                 => \$callfile,         
 	    'outdir|o:s'                   => \$outdir,
@@ -64,32 +71,60 @@ my $help='';#default false
             'pop_classifier|c:s'           => \$classif, ## file containing output of the population filter (classifier.R), or -1 if not used (default)
             'prefix|p:s'                   => \$prefix, ## this will prefix any var name 
             'ploidy|y:i'                   => \$ploidy, ## must be 1 or 2
+            'stampy_hash|t:s'              => \$stampy_hash_stub, #stampy creates blah.sthash and blah.stidx. You should enter --stampy_hash blah
             'help'                         => \$help,                    
            );
 
 if ($help)
 {
     print "\n\n";
-    print "Usage: mandatory arguments:\n";
+    print "Usage:\n********  mandatory arguments *********  :\n";
     print "--callfile                    : file of calls output by Cortex (may be from Bubble or Path Divergence caller, but you MUST have used --print_colour_coverages\n";
     print "--outvcf                      : the output VCF files will have filenames starting with this\n";
     print "--outdir                      : all output will go here. Default is current working directory\n";
     print "--samplename_list             : file listing names of each colour/sample, one line per colour. These names end up in the header line of the VCF\n";
     print "--num_cols                    : nUmber of colours in your graph (and callfile output)\n";
     print "--kmer                        : kmer size used\n";
-    print "Optional arguments\n";
-    print "--refcol                      : if one of the colours is the reference genome, specify this colour number. Default is -1 (meaning no reference present), but if you \n";
-    print "                                do have a reference genome and are producing a VCF with respect to it, I STRONGLY recommend putting the reference into a colour\n";
-    print "--require_one_allele_is_ref   : Acceptable values are \"yes\" or \"no\". If you are using a reference which is not too diverged from your samples\n";
+    print "--stampy_hash                 : VCF format needs a chromosome and position. You have two options:\n";
+    print "                                 1. Use a reference genome to place yout variants. If you do this, process_calls.pl will\n";
+    print "                                    map your calls to it using Stampy. You need to first build a Stampy hash. \n";
+    print "                                    Stampy creates blah.sthash and blah.stidx. You should enter --stampy_hash blah\n";
+    print "                                 2. You have no reference, and don't care about coordinates, but want to know what the\n";
+    print "                                    variants are (SNPs, indels, complex), and who has what allele (genotypes)\n";
+    print "                                    In that case we already know we are going to be abusing VCF slightly - this is fine, we are pragmatic.\n";
+    print "                                    In this case (suppose you have N variant calls), create a pseudo-reference which has N chromosomes\n";
+    print "                                    Chromosome i is the 5prime flank, branch1 and then 3prime flank of variant i\n";
+    print "                                    Then build a stampy hash of this pseudo-reference and pass it in with the --stampy_hash argument as in 1 above\n";
+    print "                                 3. You have no decent reference but you have a rough consensus draft assembly - same as case 1\n";
+    print "                                 In all cases, you must use Stampy (http://www.well.ox.ac.uk/project-stampy)\n";
+    print "--require_one_allele_is_ref   : Do you want to discard calls where both or neither alleles match the reference colour\n";
+    print "                                Acceptable values are \"yes\" or \"no\". If you are using a reference which is not too diverged from your samples\n";
     print "                                then I would use \"yes\". However this will filter out some calls where BOTH alleles don't match the reference\n";
     print "                                If you want to dig in and see which calls got filtered out, you can compare the VCF with the original callfile and see which calls are missing\n";
+    print "*****   Optional arguments ******* \n";
+    print "--refcol                      : if one of the colours is the reference genome, specify this colour number. Default is -1 (meaning no reference present), but if you \n";
+    print "                                do have a reference genome and are producing a VCF with respect to it, you will ONLY get the correct ref-allele in the VCF\n";
+    print "                                if you have put the reference into the graph and specify which colour using --refcol\n";
     print "--pop_classifier              : If you used classifier.R, give the filename of the output file\n";
     print "--ploidy                      : Acceptable values are 1 and 2. Default is 2.\n";
     print "--prefix                      : String prefix which will go in the front of any variant names. e.g --prefix ZAM will produce variants ZAM_var_1, ZAM_var_2, etc\n";
     print "\n\n\n";
-    die();
+    exit();
 }
 
+
+
+### checks
+if ($apply_filter_one_allele_must_be_ref eq "unknown")
+{
+    die("You have not specified the mandatory argument --require_one_allele_is_ref, which must be either \"yes\" or \"no\"\n");
+}
+
+if ( (!(-e $stampy_bin)) || (!(-d $cortex_dir)) )
+{
+    printf("Please manually modify the two lines at the top of process_calls.pl to give the paths to stampy.py, and your Cortex install directory.");
+    die();
+}
 
 
 if ( ($outvcf_filename_stub eq '') || ($callfile eq '') || ($colours eq '') || ($kmer ==-1) )
@@ -117,7 +152,25 @@ if ( ($ploidy !=1) && ($ploidy !=2) )
 }
 
 
-my $mapping_qual_thresh = 40;
+
+
+my $flank_bin = $cortex_dir."/scripts/analyse_variants/make_5p_flank_file.pl";
+if (!(-e $flank_bin))
+{
+    die("Cannot find make_5p_flank_file.pl, looked here: $flank_bin. Maybe you mis-entered the path to your Cortex directory when you manually edited process_calls?");
+}
+
+my $needleman_wunsch_bin = $cortex_dir."/scripts/analyse_variants/needleman_wunsch-0.3.0/needleman_wunsch"; 
+if (!(-e $needleman_wunsch_bin))
+{
+    print("Cannot find the needleman_wunsch binary. Either:\n");
+    print("1. you mis-entered the path to your Cortex directory when you manually edited process_calls.pl, or\n");
+    print("2. you forgot to cd into scripts/analyse_variants/needleman_wunsch and type \"make\", as documented in the compilation section of the Manual\n");
+    die();
+}
+
+
+
 
 
 
@@ -461,7 +514,7 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 
     if ($apply_filter_one_allele_must_be_ref eq "yes")
     {
-	## if niether allele is the ref allele - ignore this
+	## if neither allele is the ref allele - ignore this
 	if ($which_is_ref eq "neither")
 	{
 	    #print "Ignore var $var_name, both alleles non ref!\n";
@@ -473,10 +526,14 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 	    return 1;
 	}
     }
+    else
+    {
+	if (($which_is_ref eq "neither")||($which_is_ref eq "b") )
+	{
+	    $which_is_ref=1;
+	}
+    }
 
-
-
-	
     if ( ($var_name ne $var_name2) || ($var_name ne $var_name3) )
     {
 	die("Some ordering problem, next var in the three files are $var_name, $var_name2, $var_name3");
@@ -976,6 +1033,10 @@ sub print_all_genotypes_and_covgs
     {
 	if ( ($j==$reference_colour) || ($j==$pooled_colour) )
 	{
+	    if ($j==$last_sample_col)
+	    {
+		print $fh "\n";
+	    }
 	    next;
 	}
 	#my $aref_lik_and_genotypes_br1_v_br2 = new_genotyper($genotype, $llk_hom1, $llk_het, $llk_hom2);
@@ -1416,6 +1477,10 @@ sub get_next_var_from_callfile
     if ($line =~ /(var_\d+)_5p_flank/)
     {
 	$varname = $prefix."_".$1;
+	if ($varname eq "")
+	{
+	    die("Found this line :$line in the callfile - expected it to be of the form var_<NUMBER>_5p_flank\n");
+	}
 
 	$flank5p=<$fh>;
 	chomp $flank5p;
@@ -1479,7 +1544,11 @@ sub get_next_var_from_callfile
 	##determine which is ref allele
 	my $which_is_ref="b";
 
-	if ( ( $arr_br1_covgs[$reference_colour]>=1 ) && ($arr_br2_covgs[$reference_colour]==0) )
+	if ($reference_colour==-1)
+	{
+	    $which_is_ref=1;
+	}
+	elsif ( ( $arr_br1_covgs[$reference_colour]>=1 ) && ($arr_br2_covgs[$reference_colour]==0) )
 	{
 	    $which_is_ref=1;
 	}
@@ -1755,8 +1824,8 @@ sub get_next_alignment_from_procfile
 
     if ( ($which_is_ref eq "b") || ($which_is_ref eq "neither") )
     {
-	## No need for the rest of this function, we will ignore this variant.
-	return ("", 0,0,0,0,0,0,0,0,0,0,0,0,0);
+	## we will probably ignore this variant. But in case the alignment is useful, set ref allele to 1
+	$which_is_ref=1;
     }
 
 

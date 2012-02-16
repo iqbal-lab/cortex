@@ -1680,7 +1680,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
       for (j=i; j<number_alleles; j++) // **** now that i and j are specified, we have specified a genotype
 	{
 
-	  printf("ZAM genotype is i=%d, j=%d\n", i,j);
+	  //printf("ZAM genotype is i=%d, j=%d\n", i,j);
 	  genotype_count++;
 
 	  //printf("Start genotype number %d. i is %d and j is %d\n", genotype_count, i,j);
@@ -2358,10 +2358,10 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 											    model_info, little_db_graph, db_graph,gwp,i);
 		    }
 		  
-		  printf("ZAM - Putative variant genotyped. log liks for hom1, het, hom2 are %.2f, %.2f, %.2f\n",
-			 annovar->gen_log_lh[i].log_lh[hom_one],
-			 annovar->gen_log_lh[i].log_lh[het],
-			 annovar->gen_log_lh[i].log_lh[hom_other]);
+		  //printf("ZAM - Putative variant genotyped. log liks for hom1, het, hom2 are %.2f, %.2f, %.2f\n",
+		  //	 annovar->gen_log_lh[i].log_lh[hom_one],
+		  //	 annovar->gen_log_lh[i].log_lh[het],
+		  //	 annovar->gen_log_lh[i].log_lh[hom_other]);
 		  
 		  if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
 		    {
