@@ -202,7 +202,7 @@ const char* usage=
   //"   [--output_bubbles2 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles2 are dumped to this file.\n" \
 
   // -l
-"   [--path_divergence_caller [COMMA_SEP_COLOURS|SQUARE_OPEN_BRACKET_PRECEDED_AND_SEP_COLOURS]] \t\t=\t Make Path Divergence variant calls.\n\t\t\t\t\t\t\t\t\t Must specify colour of sample in which you want to find\n\t\t\t\t\t\t\t\t\t variants compared with the reference.\n\t\t\t\t\t\t\t\t\t This sample colour can be a union of colours (comma-separated list) \n Or, given a square open bracket [ PRECEDED AND SEPARATED list(example [2[3[10 ) the caller will call against each colour in turn\n\t\t\t\t\t\t\t\t\t Must also specify --ref_colour and --list_ref_fasta\n" \
+"   [--path_divergence_caller [args]] \t\t\t\t\t= Make Path Divergence variant calls. Arguments can be specified in 2 ways.\n\t\t\t\t\t\t\t\t\t Option 1. Calls once, comparing reference and one colour (or union)\n\t\t\t\t\t\t\t\t\t e.g. --path_divergence_caller 1,2 --ref_colour 0 will look for differences\n\t\t\t\t\t\t\t\t\t between the union of colours 1,2 and the reference in colour 0\n\t\t\t\t\t\t\t\t\t Option2. Make several successive independent runs of the PD caller, each time against a different colour\n\t\t\t\t\t\t\t\t\tTo do this, use a square open bracket [ PRECEDED AND SEPARATED list\n\t\t\t\t\t\t\t\t\t For example --path_divergence_caller [2[3[10 --ref_colour 0 will make calls on samples 2 then 3 then 10)\n\t\t\t\t\t\t\t\t\t all output to the same file, with globally unique variant names. The caller will call against each colour in turn\n\t\t\t\t\t\t\t\t\t You must also specify --ref_colour and --list_ref_fasta\n" \
   // -I
 "   [--path_divergence_caller_output PATH_STUB]\t\t\t=\t Specifies the path and beginning of filenames of Path Divergence caller output files.\n\t\t\t\t\t\t\t\t\t One output file will be created per  reference fasta listed in --list_ref_fasta\n" \
   // -i
@@ -210,7 +210,7 @@ const char* usage=
  // -z
 "   [--list_ref_fasta FILENAME] \t\t\t\t\t=\t File listing reference chromosome fasta file(s); needed for path-divergence calls. \n" \
   // -t
-"   [--gt FILENAME] \t=\t Given a file of calls in Cortex output format (5p, br1, br2, 3p), genotype all colours in the graph\n" \
+"   [--gt INPUT,OUTPUT,{BC|PD}] \t\t\t\t\t=\t Given a file of calls in Cortex output format (5p, br1, br2, 3p), genotype all colours in the graph\n\t\t\t\t\t\t\t\t\t and output to specified filename. All calls must be either from the BubbleCaller or PathDivergence (not a mixture)\n\t\t\t\t\t\t\t\t\t and you specify this with either BC or PD. eg --gt infile,outfile,BC\n" \
 
 "\n\n **** ADVANCED OPTIONS **** \n\n"\
   // -P  
@@ -221,7 +221,7 @@ const char* usage=
 "   [--genome_size]\t\t\t\t\t\t=\t If you specify --experiment_type, and therefore want to calculate likelihoods, you must also specify the (estimated) genome size in bp.\n" \
 
   // -G
-"   [--align FILENAME,{output binary name|no}] \t\t\t\t\t\t=\t Aligns a list of fasta/q files to the graph, and prints coverage of each kmer in each read in each colour.\n\t\t\t\t\t\t\t\t\t Takes two arguments. First, a list of fasta/q. Second, either an output filename (if you want it to dump a binary of the part of the graph touched by the alignment) OR just \"no\" \n\t\t\t\t\t\t\t\t\t Must also specify --align_input_format, and --max_read_len\n"  \
+"   [--align FILENAME,{output binary name|no}] \t\t\t\t=\t Aligns a list of fasta/q files to the graph, \n\t\t\t\t\t\t\t and prints coverage of each kmer in each read in each colour.\n\t\t\t\t\t\t\t Takes two arguments. First, a LIST of fasta/q. \n\t\t\t\t\t\t\t Second, either an output filename (if you want it to dump a binary of the part of the graph touched by the alignment) OR just \"no\" \n\t\t\t\t\t\t\t Must also specify --align_input_format, and --max_read_len\n"  \
   // -H
 "   [--align_input_format TYPE] \t\t\t\t\t=\t --align requires a list of fasta or fastq. This option specifies the input format as LIST_OF_FASTQ or LIST_OF_FASTA\n"  \
 
