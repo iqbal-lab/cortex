@@ -957,9 +957,12 @@ int main(int argc, char **argv){
       exit(1);
     }
 
-  AssumptionsOnGraphCleaning assump = AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice; // todo - fix this when you incorporate seq error info in binaries
+  AssumptionsOnGraphCleaning assump = AssumeUncleaned;
+  //  AssumptionsOnGraphCleaning assump = AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice;
   initialise_model_info(&model_info, &db_graph_info, cmd_line.genome_size, 
-			repeat_geometric_param_mu, seq_err_rate_per_base, cmd_line.ref_colour, num_chroms_in_expt, cmd_line.expt_type, assump);
+			repeat_geometric_param_mu, seq_err_rate_per_base, 
+			cmd_line.ref_colour, num_chroms_in_expt, 
+			cmd_line.expt_type, assump);
 
 
   int j;
