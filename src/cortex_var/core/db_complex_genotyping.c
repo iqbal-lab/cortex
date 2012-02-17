@@ -519,7 +519,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 		*/
 		//*total_1net = (*total_1net) + 1;
 		//*total_1net = (*total_1net) + db_node_get_coverage(e, individual_edge_array,colour_indiv) ;
-		*total_1net = (*total_1net) + extra+1;
+		*total_1net = (*total_1net) + ct + extra+1;
+		//*total_1net = (*total_1net) + extra+1;
 		//*total_1net = (*total_1net) + length;
 	      }
 	    else if (wor==worst_is_2net)
@@ -534,7 +535,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 		  *total_2net = (*total_2net) + db_node_get_coverage(e, individual_edge_array,colour_indiv) * (extra + 1);
 		  }
 		*/
-		*total_2net = (*total_2net) + 1+extra;
+		*total_2net = (*total_2net) + ct+extra+1;
 		//*total_2net = (*total_2net) + 1;
 		//*total_2net = (*total_2net) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
 		//*total_2net = (*total_2net) + length;
@@ -551,7 +552,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 		  *total_3net = (*total_3net) + db_node_get_coverage(e, individual_edge_array,colour_indiv) * (extra + 1);
 		  }
 		*/
-		*total_3net = (*total_3net) + 1 + extra;
+		*total_3net = (*total_3net) + ct+extra+1;
 		//*total_3net = (*total_3net) + 1;
 		//*total_3net = (*total_3net) + db_node_get_coverage(e, individual_edge_array,colour_indiv);
 		//*total_3net = (*total_3net) + length;
@@ -1162,7 +1163,6 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   double log_prob_error = 0;
 
 
-  printf("Num 1 net errors is %d\n", num_1net_errors);
   if (num_1net_errors>0)
     {
       log_prob_error += -poisson_1net_err_rate + num_1net_errors*log(poisson_1net_err_rate) - gsl_sf_lnfact(num_1net_errors);
@@ -1774,7 +1774,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 									       using_1net, get_covg_in_1net_errors_from_genotype, using_2net, get_covg_in_2net_errors_from_genotype, min_acceptable_llk);
 	      
 	      
-	      printf("IQBAL - calculated llk for that gt\n");
+
 	      if (print_all_liks_calculated==true)
 		{
 		  printf("Colour %d, GENOTYPE %s : LLK=%f\n", colours_to_genotype[z], name, llk);

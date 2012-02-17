@@ -322,13 +322,15 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   long long seq_read=0;
   long long seq_loaded=0;
   int max_read_length=2000;
+
+  //load them into colour indiv so it has the right edges. Coverages will be fixed up later, and edges in other colours dont matter for this test
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(fasta_allele1,
 								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,0);
+								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,colour_indiv);
 
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(fasta_allele2,
 								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,0);
+								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,colour_indiv);
 
   //now we don't want to load the whole of the rest of the genome - just to annotate these nodes with whether they touch the rest of the genome,
   //***create local temporary new hash, load rest of genome, dump binary, then reload those nodes that are ALREADY in our allele1/2 hash
@@ -495,13 +497,13 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   // int genome_size = 554;//554 is length of one allele + rest of reference
   int num_chroms_in_expt=2;
   initialise_model_info(&model_info, &ginfo, genome_size, repeat_geometric_param_mu, 0.01, -1, num_chroms_in_expt, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
-  boolean is_true_hom;
+  zygosity true_genotype;
   for (p=0; p<num_depths; p++)
     {
       depth=depths[p];
       //printf("\n********************************* New set of tests - depth = %d\n", depth);
       printf("First - tests where correct answer is het\n");
-      is_true_hom=false;
+      true_genotype=het;
 
       // set up the variant so it has two different alleles, one on each branch
       set_variant_branches_but_flanks_to_null(&var, 
@@ -524,6 +526,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
       strcat(true_gt,"/");
       strcat(true_gt,second_allele_name);
       // run for various sequencing error rates
+      printf("Zam Seq err 0.01\n");
       seq_err_per_base=0.01;
       model_info.seq_error_rate_per_base=seq_err_per_base;
       
@@ -546,29 +549,32 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 
 
 
-      simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
+      simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, 
+		colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		&var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site  fasta_allele1_then_allele2
-		is_true_hom, &model_info, fasta_allele1_then_allele2, true_gt, db_graph, working_colour1, working_colour2,
+		true_genotype, &model_info, fasta_allele1_then_allele2, true_gt, db_graph, working_colour1, working_colour2,
 		using_nets, filelist_1net_binaries, filelist_2net_binaries, working_colour_net1, working_colour_net2);
 
       if (try_multiple_seq_errors==true)
 	{
+	  printf("Zam seq err 0.02\n");
 	  seq_err_per_base=0.02;
 	  model_info.seq_error_rate_per_base=seq_err_per_base;
 
 	  
 	  simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		    &var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
-		    is_true_hom, &model_info, fasta_allele1_then_allele2, true_gt, db_graph, working_colour1, working_colour2,
+		    true_genotype, &model_info, fasta_allele1_then_allele2, true_gt, db_graph, working_colour1, working_colour2,
 		    using_nets, filelist_1net_binaries, filelist_2net_binaries, working_colour_net1, working_colour_net2);
 	  
+	  printf("Zam seq err 0.001\n");
 	  seq_err_per_base=0.001;
 	  model_info.seq_error_rate_per_base=seq_err_per_base;
 
 	  
 	  simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		    &var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
-		    is_true_hom, &model_info, fasta_allele1_then_allele2, true_gt, db_graph,working_colour1, working_colour2,
+		    true_genotype, &model_info, fasta_allele1_then_allele2, true_gt, db_graph,working_colour1, working_colour2,
 		    using_nets, filelist_1net_binaries, filelist_2net_binaries, working_colour_net1, working_colour_net2);
 	}
       
@@ -576,7 +582,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
       // now re-run for a true hom
 
       printf("Now for true hom\n");
-      is_true_hom=true;
+      true_genotype=hom_one;
       set_variant_branches_but_flanks_to_null(&var, 
 					      array_of_node_arrays[0], 
 					      array_of_or_arrays[0], 
@@ -595,31 +601,34 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
       strcat(true_gt2,first_allele_name);
 
       // run for various sequencing error rates
+      printf("Zam seq err 0.001\n");
       seq_err_per_base=0.01;
       model_info.seq_error_rate_per_base=seq_err_per_base;
 
       simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		&var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
-		is_true_hom,  &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2,
+		true_genotype,  &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2,
 		using_nets, filelist_1net_binaries, filelist_1net_binaries, working_colour_net1, working_colour_net2);
 
       if (try_multiple_seq_errors==true)
 	{      
+	  printf("Zam seq err 0.02\n");
 	  seq_err_per_base=0.02;
 	  model_info.seq_error_rate_per_base=seq_err_per_base;
 
 	  
 	  simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		    &var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
-		    is_true_hom,  &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2,
+		    true_genotype,  &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2,
 		    using_nets, filelist_1net_binaries, filelist_1net_binaries, working_colour_net1, working_colour_net2);
+	  printf("Zam seq err 0.001\n");
 	  seq_err_per_base=0.001;
 	  model_info.seq_error_rate_per_base=seq_err_per_base;
 
 	  
 	  simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		    &var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
-		    is_true_hom,  &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2,
+		    true_genotype,  &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2,
 		    using_nets, filelist_1net_binaries, filelist_1net_binaries, working_colour_net1, working_colour_net2);
 	}
 
@@ -655,9 +664,9 @@ void test_calc_log_likelihood_of_genotype_with_complex_alleles1()
 							 "../data/test/pop_graph/variations/complex_genotyping/simple_allele2.fa",
 							 "../data/test/pop_graph/variations/complex_genotyping/simple_rest_of_genome.fa",
 							 "../data/test/pop_graph/variations/complex_genotyping/simple_alleles_then_ref_minus_site.fa",
-							 "../data/test/pop_graph/variations/complex_genotyping/simple_alleles.fa", 50,31,554,15,100,1, true,
+							 "../data/test/pop_graph/variations/complex_genotyping/simple_alleles.fa", 50,31,554,15,100,10, true,
 							 false, NULL, NULL, NULL, NULL);
-  // I have run this with 10 iterations, and it works, but is slow
+
 }
 
 
@@ -672,7 +681,7 @@ void test_calc_log_likelihood_of_genotype_with_complex_alleles2()
 							 "../data/test/pop_graph/variations/complex_genotyping/hlab_550104.fa",
 							 "../data/test/pop_graph/variations/complex_genotyping/chr6_minus_hlab_excerpt.fa",
 							 "../data/test/pop_graph/variations/complex_genotyping/hlab_two_alleles_then_ref.fa",
-							 "../data/test/pop_graph/variations/complex_genotyping/both_hlab_alleles.fa", 50,31,89978,15,100,1, false,//changes 24 to 15
+							 "../data/test/pop_graph/variations/complex_genotyping/both_hlab_alleles.fa", 50,31,89978,15,100,10, false,//changes 24 to 15
 							 false, NULL, NULL, NULL, NULL);
 }
 
@@ -687,7 +696,7 @@ void test_calc_log_likelihood_of_genotype_with_complex_alleles3()
 							 "../data/test/pop_graph/variations/complex_genotyping/hlab_550104.fa",
 							 "../data/test/pop_graph/variations/complex_genotyping/chr6_minus_hlab_excerpt.fa",
 							 "../data/test/pop_graph/variations/complex_genotyping/hlab_two_alleles_then_ref.fa",
-							 "../data/test/pop_graph/variations/complex_genotyping/both_hlab_alleles.fa", 50,31,89978,15,100,1, false,//change 24 to 15
+							 "../data/test/pop_graph/variations/complex_genotyping/both_hlab_alleles.fa", 50,31,89978,15,100,10, false,//change 24 to 15
 							 true, 
 							 "../data/test/pop_graph/variations/complex_genotyping/hlab_070201_extended.single_errors.fasta", 
 							 "../data/test/pop_graph/variations/complex_genotyping/hlab_070201_extended.double_errors.fasta", 
@@ -1173,7 +1182,7 @@ Covg in indiv:
 
   //I load this into the graph so the kmers are there, but then I am going to just create a var object with the covgs I want
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example1.fasta",
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example1_branch1andflanks.fasta",
 								     &seq_read, &seq_loaded, NULL, 
 								     &bad_reads, &dup_reads, 
 								     max_read_len, 
@@ -1181,14 +1190,30 @@ Covg in indiv:
 								     break_homopolymers, 
 								     homopolymer_cutoff,db_graph,individual_edge_array,0);
 
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example1_branch2andflanks.fasta",
+								     &seq_read, &seq_loaded, NULL, 
+								     &bad_reads, &dup_reads, 
+								     max_read_len, 
+								     remove_duplicates_single_endedly, 
+								     break_homopolymers, 
+								     homopolymer_cutoff,db_graph,individual_edge_array,1);
+
   //for second var/test
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example2.fasta",
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example2_branch1_and_flanks.fasta",
 								     &seq_read, &seq_loaded, NULL, 
 								     &bad_reads, &dup_reads, 
 								     max_read_len, 
 								     remove_duplicates_single_endedly, 
 								     break_homopolymers, 
 								     homopolymer_cutoff,db_graph,individual_edge_array,0);
+
+  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example2_branch2_and_flanks.fasta",
+								     &seq_read, &seq_loaded, NULL, 
+								     &bad_reads, &dup_reads, 
+								     max_read_len, 
+								     remove_duplicates_single_endedly, 
+								     break_homopolymers, 
+								     homopolymer_cutoff,db_graph,individual_edge_array,1);
 
 
 
@@ -1377,12 +1402,10 @@ Colour 0 = reference
   AnnotatedPutativeVariant annovar2;
   wipe_little_graph(little_db_graph);
 
-  printf("ZAM - genotype a site that is clearly hom other - zero covg on first allele. So the only gt that should see errors is hom one\n");
   initialise_putative_variant(&annovar2, &model_info, &var, SimplePathDivergenceCaller, 
 			      56, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph, true );
 
 
-  printf("This should be homother. llks are %f,%f,%f\n", annovar2.gen_log_lh[1].log_lh[0], (annovar2.gen_log_lh[1]).log_lh[1], annovar2.gen_log_lh[1].log_lh[2]);
   CU_ASSERT(annovar2.genotype[1]==hom_other);//1==colour
 
 

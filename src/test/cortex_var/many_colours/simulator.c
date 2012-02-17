@@ -94,7 +94,8 @@ void zero_path_except_two_alleles_and_ref(dBNode** allele, int len, int colour_a
 void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int number_repetitions, 
 	       int colour_indiv, int colour_allele1, int colour_allele2, int colour_ref_minus_site,
 	       VariantBranchesAndFlanks* var, dBNode** genome_minus_site, int len_genome_minus_site,
-	       boolean are_the_two_alleles_identical,
+	       zygosity true_gt,
+	       //boolean are_the_two_alleles_identical,
 	       GraphAndModelInfo* model_info,
 	       char* fasta, char* true_ml_gt_name, dBGraph* db_graph, int working_colour1, int working_colour2,
 	       boolean using_1and2_nets, 
@@ -144,7 +145,9 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
 										     AssumeUncleaned,
 										     &ml_genotype_lik, &ml_but_one_genotype_lik,
 										     ml_genotype_name_array, ml_but_one_genotype_name_array,
-										     false, model_info, db_graph, working_colour1, working_colour2,
+										     //false, model_info, db_graph, working_colour1, working_colour2,
+										     //DEBUG only:
+										     true, model_info, db_graph, working_colour1, working_colour2,
 										     use_1_and_2net, use_1_and_2net, MIN_LLK);
 
     //printf("We get max lik gt %s and we expect %s\n", ml_genotype_name, true_ml_gt_name);
@@ -184,26 +187,60 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
 
       //give the each allele depth which is taken from a Poisson with mean =  (D/2) * (R-k+1)/R  * (1-k*epsilon)
       //printf("Depth %d, var->len one allele - k,er +1 = %d, and 1-kmer * seq_err = %f     \n", depth, (var->len_one_allele)-kmer+1, 1-kmer*seq_err_per_base    )    ;
-      double exp_depth_on_allele1 = ((double) depth/2) * ( (double)(read_len+(var->len_one_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base);
-      //      if (are_the_two_alleles_identical==false)
-      //	{
-      //  exp_depth_on_allele1 +=  (read_len+(var->len_other_allele)-kmer+1) * ((double)depth/2) *kmer*seq_err_per_base  ;
-      //}
-      double exp_depth_on_allele2 = ((double) depth/2) * ( (double)(read_len+(var->len_other_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base);
-      //if (are_the_two_alleles_identical==false)
-      //{	
-      //  exp_depth_on_allele2 +=  (read_len+(var->len_one_allele)-kmer+1) * ((double)depth/2) *kmer*seq_err_per_base  ;
-      //}
+      double exp_depth_on_allele1; 
+      if (true_gt==het)
+	//het. So 1/3 of seq errors on the other allele end up on this one
+      	{
+	  exp_depth_on_allele1 = ((double) depth/2) *
+	    ( (double)(read_len+(var->len_one_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base)
+	    + ((double) depth/2) *
+	    ( (double)(read_len+(var->len_other_allele)-kmer+1)/read_len) * (kmer*seq_err_per_base/3); //some errors from the other allele give covg here
+	}
+      else if (true_gt==hom_one)
+	{//hom
+	  exp_depth_on_allele1 = ((double) depth) * 
+	    ( (double)(read_len+(var->len_one_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base);
+	}
+      else if (true_gt==hom_other)
+	{
+	  exp_depth_on_allele1 = ((double) depth) *
+	    ( (double)(read_len+(var->len_other_allele)-kmer+1)/read_len) * kmer*seq_err_per_base/3;// 1/3 of the errors on the true allele are on this one
+	}
+      double exp_depth_on_allele2;
+      if (true_gt==het)
+	//het. So 1/3 of seq errors are not a problem. So loss of covg is (1-k*(2/3)*e)
+      	{
+	  exp_depth_on_allele2 = ((double) depth/2) * 
+	     ( (double)(read_len+(var->len_other_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base)
+	    + ((double) depth/2) *
+	    ( (double)(read_len+(var->len_one_allele)-kmer+1)/read_len) * (kmer*seq_err_per_base/3); //some errors from the other allele give covg here;
+	}
+      else if (true_gt==hom_one)
+	{
+	  exp_depth_on_allele2 = ( (double)(read_len+(var->len_one_allele)-kmer+1)/read_len) * kmer*seq_err_per_base/3;
+	  //((double) depth/2) * 
+	    //	    ( (double)((var->len_other_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base);
+	  //   ( (double)(read_len+(var->len_other_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base);
+	}
+      else if (true_gt==hom_other)
+	{
+	  exp_depth_on_allele2 = ((double) depth) *
+	    ( (double)(read_len+(var->len_other_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base);
+	}
+
       double exp_depth_on_ref_minus_site = (double) depth * ((double)(len_genome_minus_site-kmer+1)/read_len) * (1-kmer*seq_err_per_base);
       //printf("exp ZAMMER %f %f %f\n", exp_depth_on_allele1, exp_depth_on_allele2, exp_depth_on_ref_minus_site);
       unsigned int sampled_covg_allele1 = gsl_ran_poisson (r, exp_depth_on_allele1);
       unsigned int sampled_covg_allele2 = gsl_ran_poisson (r, exp_depth_on_allele2);
       unsigned int sampled_covg_rest_of_genome = gsl_ran_poisson (r, exp_depth_on_ref_minus_site);
       //printf("Sampled covgs on alleles 1,2 and genome are  %d %d %d\n", sampled_covg_allele1, sampled_covg_allele2, sampled_covg_rest_of_genome);
-      update_allele(var->one_allele, var->len_one_allele,     colour_indiv, sampled_covg_allele1,read_len-kmer+1);
-      update_allele(var->other_allele, var->len_other_allele, colour_indiv, sampled_covg_allele2, read_len-kmer+1);
+      update_allele(var->one_allele, var->len_one_allele,     
+		    colour_indiv, sampled_covg_allele1,read_len-kmer+1);
+      update_allele(var->other_allele, var->len_other_allele, 
+		    colour_indiv, sampled_covg_allele2, read_len-kmer+1);
       //update_allele(genome_minus_site,len_genome_minus_site,  colour_indiv, sampled_covg_rest_of_genome);
-      test(var,  model_info, colour_allele1, colour_allele2, colour_ref_minus_site, colour_indiv, using_1and2_nets, filelist_net1, filelist_net2);
+      test(var,  model_info, colour_allele1, colour_allele2, colour_ref_minus_site, 
+	   colour_indiv, using_1and2_nets, filelist_net1, filelist_net2);
 
     }
 
