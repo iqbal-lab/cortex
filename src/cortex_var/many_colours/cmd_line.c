@@ -416,7 +416,7 @@ int default_opts(CmdLine * c)
   c->genotype_complex_site=false;
   c->using_1net=false;
   c->using_2net=false;
-  c->assump_for_genotyping=AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice;
+  c->assump_for_genotyping=AssumeUncleaned;
   c->min_acceptable_llk=-999999999;
   return 1;
 }
