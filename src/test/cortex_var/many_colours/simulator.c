@@ -145,9 +145,7 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
 										     AssumeUncleaned,
 										     &ml_genotype_lik, &ml_but_one_genotype_lik,
 										     ml_genotype_name_array, ml_but_one_genotype_name_array,
-										     //false, model_info, db_graph, working_colour1, working_colour2,
-										     //DEBUG only:
-										     true, model_info, db_graph, working_colour1, working_colour2,
+										     false, model_info, db_graph, working_colour1, working_colour2,
 										     use_1_and_2net, use_1_and_2net, MIN_LLK);
 
     //printf("We get max lik gt %s and we expect %s\n", ml_genotype_name, true_ml_gt_name);
@@ -184,6 +182,7 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
   for (i=0; i<number_repetitions; i++)
     {
       zero_path_except_two_alleles_and_ref(var->one_allele, var->len_one_allele, colour_allele1, colour_allele2, colour_ref_minus_site);
+      zero_path_except_two_alleles_and_ref(var->other_allele, var->len_other_allele, colour_allele1, colour_allele2, colour_ref_minus_site);
 
       //give the each allele depth which is taken from a Poisson with mean =  (D/2) * (R-k+1)/R  * (1-k*epsilon)
       //printf("Depth %d, var->len one allele - k,er +1 = %d, and 1-kmer * seq_err = %f     \n", depth, (var->len_one_allele)-kmer+1, 1-kmer*seq_err_per_base    )    ;
@@ -192,9 +191,9 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
 	//het. So 1/3 of seq errors on the other allele end up on this one
       	{
 	  exp_depth_on_allele1 = ((double) depth/2) *
-	    ( (double)(read_len+(var->len_one_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base)
-	    + ((double) depth/2) *
-	    ( (double)(read_len+(var->len_other_allele)-kmer+1)/read_len) * (kmer*seq_err_per_base/3); //some errors from the other allele give covg here
+	    ( (double)(read_len+(var->len_one_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base);
+	    // + ((double) depth/2) *
+	    //( (double)(read_len+(var->len_other_allele)-kmer+1)/read_len) * (kmer*seq_err_per_base/3); //some errors from the other allele give covg here
 	}
       else if (true_gt==hom_one)
 	{//hom
@@ -210,17 +209,11 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
       if (true_gt==het)
 	//het. So 1/3 of seq errors are not a problem. So loss of covg is (1-k*(2/3)*e)
       	{
-	  exp_depth_on_allele2 = ((double) depth/2) * 
-	     ( (double)(read_len+(var->len_other_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base)
-	    + ((double) depth/2) *
-	    ( (double)(read_len+(var->len_one_allele)-kmer+1)/read_len) * (kmer*seq_err_per_base/3); //some errors from the other allele give covg here;
+	  exp_depth_on_allele2 = exp_depth_on_allele1;
 	}
       else if (true_gt==hom_one)
 	{
 	  exp_depth_on_allele2 = ( (double)(read_len+(var->len_one_allele)-kmer+1)/read_len) * kmer*seq_err_per_base/3;
-	  //((double) depth/2) * 
-	    //	    ( (double)((var->len_other_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base);
-	  //   ( (double)(read_len+(var->len_other_allele)-kmer+1)/read_len) * (1-kmer*seq_err_per_base);
 	}
       else if (true_gt==hom_other)
 	{
@@ -233,7 +226,7 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
       unsigned int sampled_covg_allele1 = gsl_ran_poisson (r, exp_depth_on_allele1);
       unsigned int sampled_covg_allele2 = gsl_ran_poisson (r, exp_depth_on_allele2);
       unsigned int sampled_covg_rest_of_genome = gsl_ran_poisson (r, exp_depth_on_ref_minus_site);
-      //printf("Sampled covgs on alleles 1,2 and genome are  %d %d %d\n", sampled_covg_allele1, sampled_covg_allele2, sampled_covg_rest_of_genome);
+      printf("Sampled covgs on alleles 1,2 and genome are  %d %d %d\n", sampled_covg_allele1, sampled_covg_allele2, sampled_covg_rest_of_genome);
       update_allele(var->one_allele, var->len_one_allele,     
 		    colour_indiv, sampled_covg_allele1,read_len-kmer+1);
       update_allele(var->other_allele, var->len_other_allele, 
@@ -249,7 +242,7 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
   zero_allele(var->other_allele, var->len_other_allele, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site);
 
   CU_ASSERT((double)count_passes/(double)(count_passes+count_fails) > 0.9 );//actually, we could set this to ==1
-  printf("Number of passes: %d, number of fails %d\n", count_passes, count_fails);
+  //printf("Number of passes: %d, number of fails %d\n", count_passes, count_fails);
     
 
   gsl_rng_free (r);

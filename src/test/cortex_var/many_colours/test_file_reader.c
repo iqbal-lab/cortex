@@ -3848,6 +3848,11 @@ void test_read_next_variant_from_full_flank_file()
 void test_read_next_variant_from_full_flank_file_2()
 {
 
+  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
+    {
+      printf("Null test - compile for k<=31");
+      return;
+    }
 
 /*
 
@@ -3857,10 +3862,9 @@ void test_read_next_variant_from_full_flank_file_2()
 Test an example where both branches are shorter than the kmer
 
 >read1
-ACGCAGGCATGGATGAGCTCCCGTTAGATAGT
->read2
 ACGCAGGCATGAGCTCCCGTTAGATAGT
-
+>read2
+ACGCAGGCATGGATGAGCTCCCGTTAGATAGT
 with k=5 we get these branches
 
 >var_1_5p_flank length:7
@@ -4106,7 +4110,7 @@ CTGCGT
 
   seq_to_binary_kmer("ATGGA", 5, &tmp_kmer);
   binary_kmer_reverse_complement(&tmp_kmer, 5, &tmp_kmer_rev);
-  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[4]->kmer, tmp_kmer) );
+  CU_ASSERT(binary_kmer_comparison_operator(var->one_allele[4]->kmer, tmp_kmer) ); ///ZAM THIS IS WHERE T GOES
   CU_ASSERT(var->one_allele_or[4]==reverse);
 
   seq_to_binary_kmer("CATGG", 5, &tmp_kmer);

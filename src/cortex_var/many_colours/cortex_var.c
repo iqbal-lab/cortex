@@ -201,7 +201,8 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 						       var, db_graph, &gt_file_reader, seq, seq_inc_prev_kmer, kmer_window);
 	  if (ret==1)
 	    {
-	      AssumptionsOnGraphCleaning assump=AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice; //todo - fix when you have incorporated changes to seq error rate handling
+	      //AssumptionsOnGraphCleaning assump=AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice; //todo - fix when you have incorporated changes to seq error rate handling
+	      AssumptionsOnGraphCleaning assump=AssumeUncleaned; //todo - fix when you have incorporated changes to seq error rate handling
 	      print_call_given_var_and_modelinfo(var, fout, model_info, cmd_line->which_caller_was_used_for_calls_to_be_genotyped, db_graph,
 						 print_whatever_extra_variant_info,
 						 assump, gwp, little_dbg);
@@ -346,7 +347,8 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 													    0, NULL, NULL, NULL, NULL, NULL, 
 													    &make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours, 
 													    &db_variant_action_do_nothing,
-													    print_some_extra_var_info, model_info,  AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, global_var_counter+1);
+													    //print_some_extra_var_info, model_info,  AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, global_var_counter+1);
+													    print_some_extra_var_info, model_info,  AssumeUncleaned, global_var_counter+1);
 	  
 	  
 	  fclose(chrom_fptr);

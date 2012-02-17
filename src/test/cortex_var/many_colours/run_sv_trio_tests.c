@@ -61,8 +61,6 @@ int  main()
 
 
 
-  /*
-
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
     CU_cleanup_registry();
@@ -377,6 +375,8 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
+
+
    if (NULL == CU_add_test(pPopGraphSuite, "Test reading of variant call output (full flank file), when one branch < k long", test_read_next_variant_from_full_flank_file_2))
       {
 	CU_cleanup_registry();
@@ -393,7 +393,6 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-
 
 
 
@@ -422,7 +421,7 @@ int  main()
   	CU_cleanup_registry();
   	return CU_get_error();
     }
-*/
+
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test algorithm for genotyping of complex site at a simple site (repeat for different coverages and sequencing error rates, simulating real coverage coording to our model, 100 iterations each time)", test_calc_log_likelihood_of_genotype_with_complex_alleles1 ))
       {
@@ -430,7 +429,6 @@ int  main()
 	return CU_get_error();
 	}
 
-   /*
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test genotyping of complex sites - test with two HLA-B alleles", test_calc_log_likelihood_of_genotype_with_complex_alleles2 ))
       {
@@ -445,7 +443,8 @@ int  main()
 	return CU_get_error();
       }
 
-   */
+
+
 
  
 

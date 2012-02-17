@@ -1134,8 +1134,12 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   int number_bad_errors=0; //errors > 1 SNP from genotype
 
 
-  little_hash_table_traverse_passing_3ints_and_big_graph_path(&count_reads_in_1net, little_db_graph, &num_1net_errors, &num_2net_errors, &num_3net_errors,
-							      p_nodes, p_orientations, p_labels, p_string, max_sup_len);
+  little_hash_table_traverse_passing_3ints_and_big_graph_path(&count_reads_in_1net, little_db_graph, 
+							      &num_1net_errors, 
+							      &num_2net_errors, 
+							      &num_3net_errors,
+							      p_nodes, p_orientations, 
+							      p_labels, p_string, max_sup_len);
 
 
   //now go back one more time and un-set the visited flags you put on all those nodes in the main graph
@@ -1165,7 +1169,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 
   if (num_1net_errors>0)
     {
-      log_prob_error += -poisson_1net_err_rate + num_1net_errors*log(poisson_1net_err_rate) - gsl_sf_lnfact(num_1net_errors);
+      log_prob_error += -poisson_1net_err_rate + 
+	num_1net_errors*log(poisson_1net_err_rate) - gsl_sf_lnfact(num_1net_errors);
     }
   
 
