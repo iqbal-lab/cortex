@@ -996,6 +996,110 @@ double get_log_probability_of_covg_on_one_allele_given_second_allele_and_multipl
 
 
 
+//traverse an allele, with a second allele in mind, given multiplicities of each node in either allele
+// break allele into unique and shared chunks, and (given haplid covg), return the log probabiity
+// of seeing this covg on this allele, given that we know the truth consists of this allele AND the other one
+// thus if our allele consists of these chunks ABCABAB and the other allele consists of DEFAGBB
+// then we are going to account for 3/4 of the covg on A adnd 3/5 of the covg on B while traversing this allele, and all of C
+// in the knowldge that we will come back and traverse the second allele later and account for the remainin 1/4 of A covg and 3/5 of B covg, plus D,E,F,G.
+
+double get_log_probability_of_covg_on_one_allele_given_second_allele_and_multiplicities_using_little_hash(double hap_D_over_R, GenotypingElement** allele, int len_allele,
+													  int* mult_this_allele_in_self, int* mult_this_allele_in_other,
+													  int* working_array_self, int* working_array_shared,
+													  int (*check_covg_in_ref_with_site_excised)(GenotypingElement*),
+													  int colour_indiv)
+										
+
+{
+  
+  double log_prob_data=0;
+  int k=0;
+  int working_array_self_count  =0;
+  int working_array_shared_count=0;
+  while (k < len_allele)
+      {
+
+	if (mult_this_allele_in_other[k]>0) //this node occurs  >0 times in the other allele
+	  {
+	    if (working_array_self_count>0) //contribution from previous chunk, which was unique to this allele
+	      {
+		log_prob_data += calc_log_prob_of_covg_on_chunk(hap_D_over_R, working_array_self, working_array_self_count);
+		working_array_self_count=0;
+	      }
+	  }
+
+	while ((k < len_allele) &&  
+	       (mult_this_allele_in_other[k] > 0) && 
+	       (check_covg_in_ref_with_site_excised(allele[k])==0 )//automatically handles case when there is no colour for ref-minus-site     
+	       )
+	  {
+	    // this node might happen 2 times on allele 1 and 3 times on allele2. in total 5 times, annd here it counts for 2 of them
+	    working_array_shared[working_array_shared_count]= 
+	      db_genotyping_node_get_coverage(allele[k], individual_edge_array, colour_indiv)/(mult_this_allele_in_self[k] + mult_this_allele_in_other[k])  ;
+	    //printf("Shared segment: Dividing covg by %d\n", mult_this_allele_in_self[k] + mult_this_allele_in_other[k]);
+	    k++;
+	    working_array_shared_count++;
+
+	  }
+
+	while ( (k<len_allele) && (check_covg_in_ref_with_site_excised(allele[k])>0 ) )
+	  {
+	    k++;
+	  }
+	
+	
+	if (mult_this_allele_in_other[k]==0)
+	  {
+	    //start of contiguous chunk which occurs only in first allele
+	    if (working_array_shared_count>0)
+	      {
+		//have broken up allle and dividec covg by multiplicity in both alleles, so just hap_D below
+		log_prob_data += calc_log_prob_of_covg_on_chunk(hap_D_over_R, working_array_shared, working_array_shared_count);
+		working_array_shared_count=0;
+	      }
+	  }
+	
+	    
+	while ((k < len_allele) && 
+	       (mult_this_allele_in_other[k]==0) && 
+	       (check_covg_in_ref_with_site_excised(allele[k])==0)
+	       )
+	  {
+	    working_array_self[working_array_self_count]=db_genotyping_node_get_coverage(allele[k], individual_edge_array, colour_indiv)/mult_this_allele_in_self[k];
+	    //printf("Self segment: Dividing covg by %d, k is %d and len allele is %d\n", mult_this_allele_in_self[k], k, len_allele);
+	    k++;
+	    working_array_self_count++;
+
+	  }
+
+	while ( (k < len_allele) &&( check_covg_in_ref_with_site_excised(allele[k])>0 ) )
+	  { 
+	    k++;
+	  }
+	
+      }
+
+  //may have exited loop with some left-over data in arrays, so:  
+  if (working_array_self_count>0)
+    {
+      log_prob_data += calc_log_prob_of_covg_on_chunk(hap_D_over_R, working_array_self, working_array_self_count);
+      working_array_self_count=0;
+    }
+  
+  if (working_array_shared_count>0)
+    {
+      log_prob_data += calc_log_prob_of_covg_on_chunk(2*hap_D_over_R, working_array_shared, working_array_shared_count);
+      working_array_shared_count=0;
+    }
+
+
+  return log_prob_data;
+
+}
+
+
+
+
 
 
 
@@ -1188,15 +1292,15 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 
 
   //walk the first allele
-  log_prob_data += get_log_probability_of_covg_on_one_allele_given_second_allele_and_multiplicities(hap_D_over_R, var->one_allele, var->len_one_allele,
-												    var_mults->mult11, var_mults->mult12,
-												    working_array_self, working_array_shared,
-												    check_covg_in_ref_with_site_excised, colour_indiv);
+  log_prob_data += get_log_probability_of_covg_on_one_allele_given_second_allele_and_multiplicities_using_little_hash(hap_D_over_R, var->one_allele, var->len_one_allele,
+														      var_mults->mult11, var_mults->mult12,
+														      working_array_self, working_array_shared,
+														      check_covg_in_ref_with_site_excised, colour_indiv);
   //now walk the second (which will be the same one again if this is hom)
-  log_prob_data += get_log_probability_of_covg_on_one_allele_given_second_allele_and_multiplicities(hap_D_over_R, var->other_allele, var->len_other_allele,
-												    var_mults->mult22, var_mults->mult21,
-												    working_array_self, working_array_shared,
-												    check_covg_in_ref_with_site_excised, colour_indiv);
+  log_prob_data += get_log_probability_of_covg_on_one_allele_given_second_allele_and_multiplicities_using_little_hash(hap_D_over_R, var->other_allele, var->len_other_allele,
+														      var_mults->mult22, var_mults->mult21,
+														      working_array_self, working_array_shared,
+														      check_covg_in_ref_with_site_excised, colour_indiv);
 
 
   

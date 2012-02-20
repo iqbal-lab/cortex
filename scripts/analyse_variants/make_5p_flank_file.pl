@@ -11,7 +11,7 @@ while(<FILE>)
 {
     my $line=$_;
     chomp $line;
-    if ($line =~ /^>var_(\d+)_5p_flank/)
+    if ($line =~ /var_(\d+)_5p_flank/)
     {
 	
 	my $readid_5p = $line;

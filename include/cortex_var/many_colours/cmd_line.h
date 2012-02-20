@@ -206,5 +206,5 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 				 int* start_gt_combin_num, int* end_gt_combin_num, char* fasta_file, AssumptionsOnGraphCleaning* assump,
 				 int* wk_col1, int* wk_col2, boolean* using_1net, boolean* using_2net, char* file_1net_bins, double* min_llk);
 
-
+int parse_arguments_for_genotyping(CmdLine* cmdline, char* argmt, char* msg);
 #endif /* CMD_LINE_H_ */

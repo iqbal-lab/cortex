@@ -840,6 +840,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
     case 't': // --gt - genotype a list of sites, given in Cortex output format (ie as if called by Cortex)
       {
+	printf("ZAM - parsing --gt\n");
 	if (optarg==NULL)
 	  errx(1,"[--gt] option requires an input filename (should be a file of Cortex calls, just 5p, branches and 3p, no colour-coverage output), an output filename, and either BC or PD to specify which caller was used.\n");
 	
@@ -849,16 +850,19 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    int err= parse_arguments_for_genotyping(cmdline_ptr, optarg, msg);
 	    if (err==0)
 	      {
+		printf("ZAMIQBAL - set TRUE - will do genotyping\n");
 		cmdline_ptr->do_genotyping_of_file_of_sites=true;
 	      }
 	    else
 	      {
-		errx(1,"[--gt] error - %s\n", msg);
+		printf("[--gt] error - %s\n", msg);
+		exit(1);
 	      }
 	  }
 	else
 	  {
-	    errx(1,"[--gt] argument too long [%s]",optarg);
+	    printf("[--gt] argument too long [%s]",optarg);
+	    exit(1);
 	  }
 	break; 
       }
@@ -1773,10 +1777,10 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       strcpy(error_string, tmp);
       return -1;
     }
-
-  if (  (cmd_ptr->max_read_length>20000) && (cmd_ptr->align_given_list==false) )
+  
+  if (  (cmd_ptr->max_read_length>20000) && (cmd_ptr->align_given_list==false) && (cmd_ptr->do_genotyping_of_file_of_sites==false) )
     {
-      char tmp[]="You are not allowed to set maximum read length >20000 when loading fasta/q into a graph. (However it IS allowed if you are aligning fasta/q to  preexisting graph). Since you have not specified --align, Cortexhas exited. Either reduce your max read length, or decide you are doing alignment\n";
+      char tmp[]="You are not allowed to set maximum read length >20000 when loading fasta/q into a graph. (However it IS allowed if you are aligning fasta/q to  preexisting graph, or genotyping a file of calls (which might be very long)). Since you have not specified --align, Cortex has exited.\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
 	  printf("coding error - this string is too long:\n%s\n", tmp);
@@ -1786,7 +1790,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       return -1;
       
     }
-
+  
 
   if (  (cmd_ptr->max_read_length>300000000) && (cmd_ptr->align_given_list==true) )
     {
@@ -2857,6 +2861,7 @@ int parse_commasep_or_open_square_brack_sep_list(CmdLine* cmd, char* arg, int le
 
 int parse_arguments_for_genotyping(CmdLine* cmdline, char* argmt, char* msg)
 {
+  printf("ZAMZMZAM - start parse_arguments_for_genotyping\n");
   //argument should be of form inputfilename,outputfilename,<CALLER>  where CALLER is "BC" or "PD".
   msg[0]='\0';
   char* filename1=NULL;

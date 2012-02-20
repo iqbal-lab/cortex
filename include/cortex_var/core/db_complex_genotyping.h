@@ -31,6 +31,7 @@
 #define DB_COMPLEX_GENOTYPING_H_
 
 #include <element.h>
+#include <genotyping_element.h>
 #include <db_variants.h>
 #include <graph_info.h>
 #include <model_selection.h>
@@ -151,6 +152,13 @@ double get_log_probability_of_covg_on_one_allele_given_second_allele_and_multipl
 											int* working_array_self, int* working_array_shared,
 											int (*check_covg_in_ref_with_site_excised)(dBNode*),
 											int colour_indiv);
+
+double get_log_probability_of_covg_on_one_allele_given_second_allele_and_multiplicities_using_little_hash(double hap_D_over_R, GenotypingElement** allele, int len_allele,
+													  int* mult_this_allele_in_self, int* mult_this_allele_in_other,
+													  int* working_array_self, int* working_array_shared,
+													  int (*check_covg_in_ref_with_site_excised)(GenotypingElement*),
+													  int colour_indiv);
+
 double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(GenotypingVariantBranchesAndFlanks* var,
 									      MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults,
 									      GraphAndModelInfo* model_info,

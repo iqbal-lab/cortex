@@ -98,7 +98,7 @@ void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* mode
 
 
 
-void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_extra_variant_info)(VariantBranchesAndFlanks*), 
+void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_extra_variant_info)(VariantBranchesAndFlanks*, FILE*), 
 		    Edges(*get_col_ref) (const dBNode* e),int (*get_cov_ref)(const dBNode* e),
 		    GraphInfo* db_graph_info, GraphAndModelInfo* model_info)
 {
@@ -167,7 +167,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
       LittleHashTable* little_dbg=NULL;
       if (cmd_line->which_caller_was_used_for_calls_to_be_genotyped==SimplePathDivergenceCaller)
 	{
-	  gwp = alloc_genotyping_work_package(cmd_line->max_var_len, cmd_line->max_var_len, NUMBER_OF_COLOURS, NUMBER_OF_COLOURS+1);
+	  gwp = alloc_genotyping_work_package(cmd_line->max_read_length, cmd_line->max_read_length, NUMBER_OF_COLOURS, NUMBER_OF_COLOURS+1);
 	  if (gwp==NULL)
 	    {
 	      printf("Unable to alloc resources for genotyping prior to starting. Abort\n");
@@ -1125,6 +1125,10 @@ int main(int argc, char **argv){
       //unset the nodes marked as visited, but not those marked as to be ignored
       timestamp();
       printf("Genotyping completed\n");
+    }
+  else
+    {
+      printf("IQB - NOT TRUE\n");
     }
 
   if (cmd_line.make_pd_calls==true)
