@@ -3495,7 +3495,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
 											       min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 											       max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 											       1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, 
-											       return_variant_start_coords_array_ptr, &make_reference_path_based_sv_calls_condition_always_true, 
+											       return_variant_start_coords_array_ptr, &make_reference_path_based_sv_calls_condition_always_true_for_func_of_colours, 
 											       &action_set_flanks_and_branches_to_be_ignored,
 											       &print_no_extra_info, NULL, NoIdeaWhatCleaning,0); //last 0 - start numbering variant at 0
   fclose(fp);
