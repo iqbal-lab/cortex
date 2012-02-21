@@ -122,10 +122,15 @@ if ($apply_filter_one_allele_must_be_ref eq "unknown")
 
 if ( (!(-e $stampy_bin)) || (!(-d $cortex_dir)) )
 {
-    printf("Please manually modify the two lines at the top of process_calls.pl to give the paths to stampy.py, and your Cortex install directory.");
+    print("Please manually modify the two lines at the top of process_calls.pl to give the paths to stampy.py, and your Cortex install directory.");
     die();
 }
 
+if ($number_of_colours==0)
+{
+    print("You must specify --num_cols\n");
+    die();
+}
 
 if ( ($outvcf_filename_stub eq '') || ($callfile eq '') || ($colours eq '') || ($kmer ==-1) )
 {

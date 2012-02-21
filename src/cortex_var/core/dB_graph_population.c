@@ -2690,7 +2690,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		    
 		    //print flank3p
 		    sprintf(name,"var_%i_3p_flank",count_vars);
-		    printf("Length flank 3p is %d\n", length_flank3p);
+
 		    print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout,name,length_flank3p,avg_coverage3p,min3p,max3p,
 											 nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
 											 seq3p,

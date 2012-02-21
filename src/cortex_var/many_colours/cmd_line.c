@@ -1333,6 +1333,38 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       
     }
 
+  if ( (cmd_ptr->do_genotyping_of_file_of_sites==true) && (cmd_ptr->which_caller_was_used_for_calls_to_be_genotyped==SimplePathDivergenceCaller) 
+       &&  (cmd_ptr->ref_colour==-1)  )
+    {
+      char tmp[] = "If you use --gt, and specify that the calls to genotype were called with the Path Divergence caller, then you must specify --ref_colour.\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
+
+
+  if ( (cmd_ptr->do_genotyping_of_file_of_sites==true) && (cmd_ptr->which_caller_was_used_for_calls_to_be_genotyped==SimplePathDivergenceCaller) 
+       &&  (cmd_ptr->expt_type!=EachColourADiploidSampleExceptTheRefColour) && (cmd_ptr->expt_type!=EachColourAHaploidSampleExceptTheRefColour) )
+
+    {
+      char tmp[] = "If you use --gt, and specify that the calls to genotype were called with the Path Divergence caller, then you must specify --experiment_type to be EachColourADiploidSampleExceptTheRefColour or EachColourAHaploidSampleExceptTheRefColour.\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
+
+
+
   if ( (cmd_ptr->do_genotyping_of_file_of_sites==true) && (cmd_ptr->max_read_length<cmd_ptr->kmer_size) )
     {
       char tmp[] = "You have specified a max_read_length < kmer_size\n";

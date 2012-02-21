@@ -1672,6 +1672,8 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
       which_colour++;
     }
 
+  fclose(fp);
+
   //printf("Finished loading population, with total seq loaded %d\n",total_seq_loaded); 
   return total_seq_loaded;
 

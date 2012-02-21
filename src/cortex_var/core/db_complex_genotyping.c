@@ -1146,12 +1146,16 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   void count_reads_in_1net(GenotypingElement* e, int* total_1net, int* total_2net, int* total_3net,
 			   dBNode** p_nodes, Orientation* p_or, Nucleotide* p_lab, char* p_str, int max_len)
   {
+    char zamzam[db_graph->kmer_size];
+    //printf("Zam1 - traversing little graph, look at %s\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, zamzam));
 
     if ( (db_genotyping_node_check_status(e, in_desired_genotype)==true) || (db_genotyping_node_check_status(e, visited)==true) )
       {
+	//	printf("Zam2 - traversing little graph - ignore this is visited/in genotype %s\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, zamzam));
       }
     else if ( (db_genotyping_node_get_coverage(e, individual_edge_array,colour_indiv)>0) && (check_covg_in_ref_with_site_excised(e)==0) )
       {
+	//printf("Zam2 - traversing little graph - folow thus up %s\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, zamzam));
 	double avg_coverage=0;
 	int min=0; int max=0;
 	boolean is_cycle=false;
@@ -1159,11 +1163,13 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	dBNode* node_corresponding_to_e = hash_table_find(&(e->kmer), db_graph);
 	if (node_corresponding_to_e==NULL)
 	  {
-	    printf("Unable to find node in main graph correspinding to a node in the littel graph - impossible??\n");
+	    char tmp[db_graph->kmer_size];
+	    printf("During counting, cannot find node %s (which IS in the little graph) in the main graph. Abort.\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, tmp));
 	    exit(1);
 	  }
 	else if (db_node_check_status(node_corresponding_to_e, special_visited)==true)
 	  {
+	    //printf("Zam - spec visited -return\n");
 	    return;
 	  }
 	int length = db_graph_supernode_for_specific_person_or_pop(node_corresponding_to_e,max_len,
@@ -1206,7 +1212,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	dBNode* node_corresponding_to_e = hash_table_find(&(e->kmer), db_graph);
 	if (node_corresponding_to_e==NULL)
 	  {
-	    printf("Unable to find node in main graph correspinding to a node in the littel graph - impossible??\n");
+	    char tmp[db_graph->kmer_size];
+	    printf("During rest, cannot find node %s (which IS in the little graph) in the main graph. Abort.\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, tmp));
 	    exit(1);
 	  }
 	else 
@@ -1223,9 +1230,6 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   }
 
 
-
-  
-  
   
   int num_1net_errors=0;
   //not using the next two for now - preserving due to api, and because may well start using them
@@ -1237,7 +1241,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   //new option - look at errors more closely
   int number_bad_errors=0; //errors > 1 SNP from genotype
 
-
+  //printf("Zam start traverse to count\n");
   little_hash_table_traverse_passing_3ints_and_big_graph_path(&count_reads_in_1net, little_db_graph, 
 							      &num_1net_errors, 
 							      &num_2net_errors, 
@@ -1245,10 +1249,11 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 							      p_nodes, p_orientations, 
 							      p_labels, p_string, max_sup_len);
 
-
+  //printf("Zam end traverse to count\n");
+  //printf("Zam start traverse to reset\n");
   //now go back one more time and un-set the visited flags you put on all those nodes in the main graph
   little_hash_table_traverse_passing_big_graph_path(&reset_nodes_in_main_graph_to_visited, little_db_graph, p_nodes, p_orientations, p_labels, p_string, max_sup_len);
-
+  //printf("Zam end reset\n");
 
   // Errors on union of two alleles occur as a Poisson process with rate = sequencing_error_rate_per_base * kmer * length of two alleles
 
@@ -1982,13 +1987,15 @@ void wipe_little_graph(LittleHashTable* little_graph)
 {
   void wipe_node(GenotypingElement* node)
   {
-    int colour;
+    
+    /*    int colour;
     for (colour=0; colour<MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2 ; colour++)
       {
 	node->individual_edges[colour]=0;
 	node->coverage[colour]=0;
 	node->status=unassigned;
-      }
+	}*/
+    db_genotyping_node_set_status(node, unassigned);
   }
   little_hash_table_traverse(&wipe_node, little_graph);
 }
@@ -2036,8 +2043,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
   int number_alleles=2;
 
 
-  //initialise the little graph
-
+  //initialise the little graph - set all nodes to unassigned
   wipe_little_graph(little_db_graph);
 
 
@@ -2056,6 +2062,8 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 	{
 	  //we have just inserted a new node into the little hash. Fill in its data from the main graph:
 	  genotyping_element_initialise_from_normal_element(ge, annovar->var->one_allele[i], true);
+	  char tmpzam[db_graph->kmer_size];
+	  //printf("Zam added %s to little hash\n", binary_kmer_to_seq(&(ge->kmer), db_graph->kmer_size, tmpzam));
 	}
       else
 	{
@@ -2081,6 +2089,9 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 	{
 	  //we have just inserted a new node into the little hash. Fill in its data from the main graph:
 	  genotyping_element_initialise_from_normal_element(ge, annovar->var->other_allele[i], true);
+	  char tmpzam[db_graph->kmer_size];
+	  //printf("Zam added %s to little hash\n", binary_kmer_to_seq(&(ge->kmer), db_graph->kmer_size, tmpzam));
+
 	}
       else
 	{

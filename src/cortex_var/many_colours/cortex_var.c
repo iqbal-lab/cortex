@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo 
  * 
@@ -210,12 +211,18 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 	}
 
       //cleanup
+      fclose(fout);
+      fclose(fp);
       free_VariantBranchesAndFlanks_object(var);
       if (cmd_line->which_caller_was_used_for_calls_to_be_genotyped==SimplePathDivergenceCaller)
 	{
 	  free_genotyping_work_package(gwp); 
+	  little_hash_table_free(&little_dbg);
 	}
-
+      free_sequence(&seq);
+      free_sequence(&seq_inc_prev_kmer);
+      free(kmer_window->kmer);
+      free(kmer_window);
     }
 }
 
@@ -392,7 +399,8 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 														0, NULL, NULL, NULL, NULL, NULL, 
 														&make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours, //just always returns true
 														&db_variant_action_do_nothing,
-														print_some_extra_var_info, model_info, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice,
+														//print_some_extra_var_info, model_info, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice,
+														print_some_extra_var_info, model_info, AssumeUncleaned,
 														global_var_counter+1);
 	  
 	  
@@ -539,7 +547,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 						  model_info);
     }
 
-
+  fclose(fp);
 }
 
 
