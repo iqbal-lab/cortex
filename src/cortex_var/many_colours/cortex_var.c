@@ -158,10 +158,11 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 	}
       kmer_window->nkmers=0;
       
-      VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(cmd_line->max_var_len+1, cmd_line->max_var_len+1, cmd_line->max_var_len+1, cmd_line->max_var_len+1, db_graph->kmer_size);
+      VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(cmd_line->max_read_length+1, cmd_line->max_read_length+1, 
+									    cmd_line->max_read_length+1, cmd_line->max_read_length+1, db_graph->kmer_size);
       if (var==NULL)
 	{
-	  printf("Abort - unable to allocate memory for buffers for reading callfile - either sever oom conditions or you have specified very very large max_var_len\n");
+	  printf("Abort - unable to allocate memory for buffers for reading callfile - either sever oom conditions or you have specified very very large max_read_len\n");
 	  exit(1);
 	}
       GenotypingWorkingPackage* gwp=NULL;
@@ -175,7 +176,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 	      exit(1);
 	    }
 	  int little_width=100;
-	  int little_height=(int) log((cmd_line->max_var_len) *4)+1;
+	  int little_height=(int) log((cmd_line->max_read_length) *4)+1;
 	  int little_retries=20;
 	  printf("Building little hash for genotyping: height %d and width %d\n", little_height, little_width);
 	  little_dbg = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
