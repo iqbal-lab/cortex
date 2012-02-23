@@ -2555,7 +2555,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    */
 
 
-	    if (condition(var)==true) 
+	    if (condition(&var)==true) 
 	      {
 		//ModelLogLikelihoodsAndBayesFactors stats;//results of bayes factor calcs go in here
 		//initialise_stats(&stats);
