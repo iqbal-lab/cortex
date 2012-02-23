@@ -2567,7 +2567,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		else
 		  {
 		    initialise_putative_variant(&annovar, model_info, var, BubbleCaller, 
-						db_graph->kmer_size, NoIdeaWhatCleaning, NULL, NULL, NULL, false);
+						db_graph->kmer_size, AssumeUncleaned, NULL, NULL, NULL, false);
 		    
 		  }
 
