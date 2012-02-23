@@ -28,6 +28,15 @@
 #include <dB_graph.h>
 #include <graph_info.h>
 
+void error_cleaning_initialise(ErrorCleaning cl)
+{
+  cl.tip_clipping=false;
+  cl.remv_low_cov_sups=false;
+  cl.remv_low_cov_nodes=false;
+  cl.remv_low_cov_sups_thresh=-1;
+  cl.remv_low_cov_nodes_thresh=-1;
+}
+
 void graph_info_initialise(GraphInfo* ginfo)
 {
   int i;
@@ -36,6 +45,8 @@ void graph_info_initialise(GraphInfo* ginfo)
     {
       graph_info_set_seq(ginfo, i, 0);
       graph_info_set_mean_readlen(ginfo, i, 0);
+      ginfo->seq_err[i]=-1;
+      error_cleaning_initialise(ginfo->cleaning[i]);
     }
 }
 

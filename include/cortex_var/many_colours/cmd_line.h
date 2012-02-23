@@ -101,6 +101,7 @@ typedef struct
 
   double manually_entered_seq_error_rate;
   boolean manually_override_error_rate;
+  boolean use_snp_alleles_to_estim_seq_err_rate;
   boolean dump_aligned_overlap_binary;
   boolean specified_max_var_len;
   ExperimentType expt_type;
@@ -131,6 +132,7 @@ typedef struct
   char output_aligned_overlap_binname[MAX_FILENAME_LEN];
   char file_of_calls_to_be_genotyped[MAX_FILENAME_LEN];
   char output_genotyping[MAX_FILENAME_LEN];
+  char colourlist_snp_alleles[MAX_FILENAME_LEN];
   boolean do_genotyping_of_file_of_sites;
   DiscoveryMethod which_caller_was_used_for_calls_to_be_genotyped;
 

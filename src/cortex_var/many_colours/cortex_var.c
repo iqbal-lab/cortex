@@ -1008,7 +1008,7 @@ int main(int argc, char **argv){
     }
 
 
-  
+  /*
   // Error Correction actions
   if (cmd_line.remove_seq_errors==true)
     {
@@ -1016,12 +1016,12 @@ int main(int argc, char **argv){
       printf("Remove nodes that look like sequencing errors. Clip tips first\n");
       db_graph_clip_tips_in_union_of_all_colours(db_graph);
       
-      /*
-	printf("Then remove low coverage supernodes covg (<= %d) \n", cmd_line.remv_low_covg_sups_threshold);
-      db_graph_remove_errors_considering_covg_and_topology(cmd_line.remv_low_covg_sups_threshold,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
-							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,      
-						   cmd_line.max_var_len);
-      */
+      
+//	printf("Then remove low coverage supernodes covg (<= %d) \n", cmd_line.remv_low_covg_sups_threshold);
+  //    db_graph_remove_errors_considering_covg_and_topology(cmd_line.remv_low_covg_sups_threshold,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
+//							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,      
+//						   cmd_line.max_var_len);
+      
       db_graph_remove_supernodes_more_likely_errors_than_sampling(db_graph, &db_graph_info, &model_info,
 								  cmd_line.max_var_len, 
 								  &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
@@ -1031,7 +1031,8 @@ int main(int argc, char **argv){
       printf("Error correction done\n");
 
     }
-  else if (cmd_line.remv_low_covg_sups_threshold!=-1)
+  else */ 
+  if (cmd_line.remv_low_covg_sups_threshold!=-1)
     {
       printf("Clip tips first\n");
       db_graph_clip_tips_in_union_of_all_colours(db_graph);
@@ -1042,7 +1043,13 @@ int main(int argc, char **argv){
 							   cmd_line.max_var_len);
       timestamp();
       printf("Error correction done\n");
-
+      int z;
+      for (z=0; z<NUMBER_OF_COLOURS; z++)
+	{
+	  db_graph_info.cleaning[z].tip_clipping=true;
+	  db_graph_info.cleaning[z].remv_low_cov_sups=true;
+	  db_graph_info.cleaning[z].remv_low_cov_sups_thresh = cmd_line.remv_low_covg_sups_threshold;
+	}
     }
   else if (cmd_line.remove_low_coverage_nodes==true)
     {
@@ -1051,6 +1058,13 @@ int main(int argc, char **argv){
       db_graph_remove_low_coverage_nodes_ignoring_colours(cmd_line.node_coverage_threshold, db_graph);
       timestamp();
       printf("Error correction done\n");
+      int z;
+      for (z=0; z<NUMBER_OF_COLOURS; z++)
+	{
+	  db_graph_info.cleaning[z].tip_clipping=true;
+	  db_graph_info.cleaning[z].remv_low_cov_nodes=true;
+	  db_graph_info.cleaning[z].remv_low_cov_nodes_thresh = cmd_line.node_coverage_threshold;
+	}
       
     }
 

@@ -29,12 +29,25 @@
 #define GRAPH_INFO_H_
 
 #include <stdint.h>
+#include <global.h>
+
+typedef struct{
+  boolean tip_clipping;
+  boolean remv_low_cov_sups;
+  boolean remv_low_cov_nodes;
+  int remv_low_cov_sups_thresh;
+  int remv_low_cov_nodes_thresh;
+}ErrorCleaning;
+
+void error_cleaning_initialise(ErrorCleaning cl);
 
 
 typedef struct{
-  long long total_sequence[NUMBER_OF_COLOURS];
-  int mean_read_length[NUMBER_OF_COLOURS];
-}GraphInfo;
+  long long     total_sequence[NUMBER_OF_COLOURS];
+  int           mean_read_length[NUMBER_OF_COLOURS];
+  long double   seq_err[NUMBER_OF_COLOURS];
+  ErrorCleaning cleaning[NUMBER_OF_COLOURS];
+} GraphInfo;
 
 void graph_info_initialise(GraphInfo* ginfo);
 
