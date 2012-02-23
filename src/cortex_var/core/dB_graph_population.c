@@ -2409,13 +2409,15 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
 
     //will reuse this as we traverse the graph
+  VariantBranchesAndFlanks var;
+  /*
     VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(flanking_length, max_length, max_length, flanking_length, db_graph->kmer_size);
     if (var==NULL)
       {
 	printf("Unable to allocate a var object at the start of the Bubble Caller. Abort. V low on memory, or you have asked for max var length which is too big\n");
 	exit(1);	
       }
-
+  */
 
   
   void get_vars(dBNode * node){
@@ -2508,17 +2510,17 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    char name[100];
 	    
 
-
+	    /*
 	    set_alloced_variant_branches_and_flanks_allowing_inputargs_in_either_order(var,
 										       nodes5p, orientations5p, length_flank5p, forward,
 										       path_nodes1, path_orientations1, length1, forward,
 										       path_nodes2, path_orientations2, length2, forward,
 										       nodes3p, orientations3p, length_flank3p, forward,
 										       unknown);
-
+	    */
 	    //i think this warning is wrong! --> warning - array of 5prime nodes, oprientations is in reverse order to what you would expect - it is never used in what follows
-	    //	    set_variant_branches_and_flanks(&var, nodes5p, orientations5p, length_flank5p, path_nodes1, path_orientations1, length1, 
-	    //				    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p, unknown);
+	    set_variant_branches_and_flanks(&var, nodes5p, orientations5p, length_flank5p, path_nodes1, path_orientations1, length1, 
+	    				    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p, unknown);
 	    
 	    /*
 	    //debug only
@@ -2561,12 +2563,12 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		if (model_info!=NULL)
 		  {
 		    
-		    initialise_putative_variant(&annovar, model_info, var, BubbleCaller, 
+		    initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, 
 						db_graph->kmer_size, model_info->assump, NULL, NULL, NULL, true);
 		  }
 		else
 		  {
-		    initialise_putative_variant(&annovar, model_info, var, BubbleCaller, 
+		    initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, 
 						db_graph->kmer_size, AssumeUncleaned, NULL, NULL, NULL, false);
 		    
 		  }
@@ -2695,7 +2697,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 											 nodes3p[0],orientations3p[0],nodes3p[length_flank3p],orientations3p[length_flank3p],
 											 seq3p,
 											 db_graph->kmer_size,false, get_colour, get_covg);
-		    print_extra_info(var, fout);
+		    print_extra_info(&var, fout);
 		    
 		    
 		  }
@@ -2727,7 +2729,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
   hash_table_traverse(&get_vars,db_graph); 
 
   //cleanup
-  free_VariantBranchesAndFlanks_object(var);
+  //free_VariantBranchesAndFlanks_object(var);
   free(nodes5p);
   free(nodes3p);
   free(orientations5p);
@@ -11294,7 +11296,8 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 
 
 void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fout, GraphAndModelInfo* model_info,
-					DiscoveryMethod which_caller, dBGraph* db_graph, void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+					DiscoveryMethod which_caller, dBGraph* db_graph, 
+					void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
 					AssumptionsOnGraphCleaning assump, GenotypingWorkingPackage* gwp, LittleHashTable* little_dbg)
 
 {
