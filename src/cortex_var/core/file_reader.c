@@ -1182,11 +1182,16 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
       if (current_node == NULL){
 	BinaryKmer tmp_dbg_kmer;
+	// debug ZAM zahara
 	char tmp_dbg_seq[db_graph->kmer_size];
 
 	printf("Problem in load_seq_into_array - current kmer not found %s\n",
 	       binary_kmer_to_seq(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_dbg_kmer), db_graph->kmer_size,tmp_dbg_seq));
 	exit(1);
+	/* potential bug, and fix/more robust solution:
+	previous_node=NULL; 
+	continue;
+	*/
       }
 
       current_orientation = db_node_get_orientation(&(kmer_window->kmer[j]),current_node, db_graph->kmer_size);
@@ -2550,7 +2555,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
   boolean f_entry=true;
   var->len_flank5p = -1 + align_next_read_to_graph_and_return_node_array(fptr, max_read_length, var->flank5p, var->flank5p_or,  false, &f_entry, file_reader,
-								    seq, kmer_window, db_graph, colour);
+									 seq, kmer_window, db_graph, colour);
   if (!f_entry)
     {
       printf("One of these reads (5p flank) is longer than specified max read length. Last chunk we get was %s\n", seq->seq);

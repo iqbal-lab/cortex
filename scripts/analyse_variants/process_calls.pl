@@ -101,10 +101,12 @@ if ($help)
     print "                                Acceptable values are \"yes\" or \"no\". If you are using a reference which is not too diverged from your samples\n";
     print "                                then I would use \"yes\". However this will filter out some calls where BOTH alleles don't match the reference\n";
     print "                                If you want to dig in and see which calls got filtered out, you can compare the VCF with the original callfile and see which calls are missing\n";
-    print "*****   Optional arguments ******* \n";
+    print "*****   Strictly this argument is optional, BUT ********\n";
+    print "****    if you want a valid VCF with correctly assigned ref-allele, you MUST use it ******* \n";
     print "--refcol                      : if one of the colours is the reference genome, specify this colour number. Default is -1 (meaning no reference present), but if you \n";
     print "                                do have a reference genome and are producing a VCF with respect to it, you will ONLY get the correct ref-allele in the VCF\n";
     print "                                if you have put the reference into the graph and specify which colour using --refcol\n";
+    print "*****   Optional arguments ******* \n";
     print "--pop_classifier              : If you used classifier.R, give the filename of the output file\n";
     print "--ploidy                      : Acceptable values are 1 and 2. Default is 2.\n";
     print "--prefix                      : String prefix which will go in the front of any variant names. e.g --prefix ZAM will produce variants ZAM_var_1, ZAM_var_2, etc\n";
@@ -1692,6 +1694,10 @@ sub switch_genotype
 
         return $ret;
 
+    }
+    elsif ($str eq "-1/-1")
+    {
+	return "-1/-1";
     }
     else
     {

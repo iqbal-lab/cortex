@@ -292,6 +292,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
   get_filenames_from_list(cmd_line->ref_chrom_fasta_list, ref_chroms, num_ref_chroms);
 
   //now set up output file names
+  /*
   char** output_files = malloc( sizeof(char*) * num_ref_chroms); //one for each chromosome
   if (output_files==NULL)
     {
@@ -308,12 +309,22 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 	  exit(1);
 	}
     }
-  
-  
   for (i=0; i<num_ref_chroms; i++)
     {
       sprintf(output_files[i], "%s_pd_chr_%i", cmd_line->path_divergence_caller_output_stub, i+1);
     }
+
+  */
+  char* output_file = malloc(sizeof(char)*1000);
+  sprintf(output_file, "%s_pd_calls", cmd_line->path_divergence_caller_output_stub);
+
+  FILE* out_fptr = fopen(output_file, "w");
+  if (out_fptr==NULL)
+    {
+      printf("Cannot open %s for output\n", output_file);
+      exit(1);
+    }
+
 
 
   int min_fiveprime_flank_anchor = 2;
@@ -339,12 +350,6 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 	      exit(1);
 	    }
 	  
-	  FILE* out_fptr = fopen(output_files[i], "w");
-	  if (out_fptr==NULL)
-	    {
-	      printf("Cannot open %s for output\n", output_files[i]);
-	      exit(1);
-	    }
 	  
 	  
 	  global_var_counter += db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(cmd_line->pd_colour_list, cmd_line->num_colours_in_pd_colour_list,
@@ -360,9 +365,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 	  
 	  
 	  fclose(chrom_fptr);
-	  fclose(out_fptr);
-	}
-      
+	}      
     }
   else
     {
@@ -371,13 +374,6 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 	{
 	  printf("Call SVs by comparing each colour in turn  with chromosome %s\n", ref_chroms[i]);
 
-	  FILE* out_fptr = fopen(output_files[i], "w");//all output for this chrom goes to this file
-	  if (out_fptr==NULL)
-	    {
-	      printf("Cannot open %s for output\n", output_files[i]);
-	      exit(1);
-	    }
-	  
 	  int p;
 	  for (p=0; p<cmd_line->num_colours_in_pd_colour_list; p++)
 	    {
@@ -408,18 +404,20 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 	      fclose(chrom_fptr);
 	      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 	    }
-	  fclose(out_fptr);
+
 	}
       
     }
   //cleanup
+  fclose(out_fptr);
+
   for(i=0; i<num_ref_chroms; i++)
     {
       free(ref_chroms[i]);
-      free(output_files[i]);
+      //free(output_files[i]);
     }
   free(ref_chroms);
-  free(output_files);
+  //free(output_files);
 
   
 
