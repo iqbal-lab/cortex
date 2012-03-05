@@ -10855,47 +10855,46 @@ void print_ultra_minimal_fasta_from_path(FILE *fout,
 
   if (fout==NULL)
     {
-      printf("Exiting - have passed a null file pointer to print_ultra_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours\n");
+      printf("Exiting - have passed a null file pointer to print_ultra_minimal_fasta_from_path\n");
       exit(1);
     }
   
-  //  if ( (fst_node==NULL) || (lst_node==NULL) )
-  if ( fst_node==NULL )
+  
+  if (include_first_kmer==false)
     {
-      fprintf(fout, "WARNING - print_fasta command as have been given a NULL node as first  node.\n");
-      exit(1);
+      fprintf(fout,">%s length:%i\n%s\n", name, length, string);
     }
   else
     {
-      
-      char fst_seq[kmer_size+1];
- 
-      BinaryKmer fst_kmer;
-      BinaryKmer tmp_kmer;
-
-      if (fst_orientation==reverse)
+      if ( fst_node==NULL )
 	{
-	  binary_kmer_assignment_operator(fst_kmer, *(  binary_kmer_reverse_complement(element_get_kmer(fst_node),kmer_size, &tmp_kmer) ) );
-	} 
+	  fprintf(fout, "WARNING - print_ultra_minimal_fasta_from_path command has been given a NULL node as first node, and needs to dereference it.\n");
+	  exit(1);
+	}
       else
 	{
-	  binary_kmer_assignment_operator(fst_kmer, *(element_get_kmer(fst_node)) );
+	  char fst_seq[kmer_size+1];
+	  fst_seq[kmer_size]='\0';
+	  BinaryKmer fst_kmer; BinaryKmer tmp_kmer;
+	  
+	  if (fst_orientation==reverse)
+	    {
+	      binary_kmer_assignment_operator(fst_kmer, *(  binary_kmer_reverse_complement(element_get_kmer(fst_node),kmer_size, &tmp_kmer) ) );
+	    } 
+	  else
+	    {
+	      binary_kmer_assignment_operator(fst_kmer, *(element_get_kmer(fst_node)) );
+	    }
+	  
+	  binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq);
+	  
+	  fprintf(fout,">%s length:%i\n", name,length+kmer_size);
+	  fprintf(fout,"%s", fst_seq);
+	  fprintf(fout,"%s\n",string);
+      
 	}
       
-      binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq);
-      
-      fprintf(fout,">%s length:%i\n", name,
-	      (include_first_kmer ? length+kmer_size:length));
-
-      if (include_first_kmer){    	
-	fprintf(fout,"%s",binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq));
-      }
-      
-      fprintf(fout,"%s\n",string);
-      
     }
-
-
 
 }
 
@@ -11295,7 +11294,7 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
 
       print_ultra_minimal_fasta_from_path(fout,name,var->len_flank5p,
 					  var->flank5p[0],               var->flank5p_or[0],			
-					  var->seq5p, db_graph->kmer_size, false);
+					  var->seq5p, db_graph->kmer_size, false);//false - var->seq5p contains all, including the first kmer, as read it from callfile
       
       //print branches
       sprintf(name,"branch_%s_1",var->var_name);

@@ -199,6 +199,10 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
       int ret=1;
       while (ret)
 	{
+
+	  //note you are reading a bunch of variants that may have been called on another sample,
+	  //and potentially are genotyping them on a different sample. So these reads can contain kmers
+	  // that are not in our graph. These become NULL points in our array of dBNode* 's.
 	  ret = read_next_variant_from_full_flank_file(fp, cmd_line->max_read_length,
 						       var, db_graph, &gt_file_reader, seq, seq_inc_prev_kmer, kmer_window);
 	  if (ret==1)
