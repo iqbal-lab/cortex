@@ -2051,7 +2051,13 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
   int i;
   for (i=0; i<annovar->var->len_one_allele; i++)
     {
-      boolean found=false;
+      //the ref allele for PD may contain Ns
+      if (annovar->var->one_allele[i]==NULL)
+	{
+	  continue;
+	}
+      //for non-N's, add to little hash
+      boolean found=false;    
       GenotypingElement* ge = little_hash_table_find_or_insert(&(annovar->var->one_allele[i]->kmer), &found, little_db_graph);
       if (ge==NULL)
 	{
@@ -2075,9 +2081,15 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
     }
 
 
-
+  // I don't expect ever to see an N in the alt allele. But make robust to it and print a warning
   for (i=0; i<annovar->var->len_other_allele; i++)
     {
+      if (annovar->var->other_allele[i]==NULL)
+	{
+	  printf("WARNING - alt allele to be genotyped contains an N -  unexpected, but will try to continue. Worth telling Zam (zam@well.ox.ac.uk).\n");
+	  continue;
+	}
+      
       boolean found=false;
       GenotypingElement* ge = little_hash_table_find_or_insert(&(annovar->var->other_allele[i]->kmer), &found, little_db_graph);
       if (ge==NULL)
