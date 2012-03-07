@@ -54,10 +54,10 @@ sub print_unionset
 		my $f5_id = ">".$vname."_5p_flank";
 		my $f5_seq=<SOMEFILE>;
 		<SOMEFILE>;
-		my $b1_id=">branch_".$vname."_1";
+		my $b1_id=">$vname"."_branch_1";
 		my $b1_seq=<SOMEFILE>;
 		<SOMEFILE>;
-		my $b2_id=">branch_".$vname."_2";
+		my $b2_id=">$vname"."_branch_2";
 		my $b2_seq=<SOMEFILE>;
 		<SOMEFILE>;
 		my $f3_id=">".$vname."_3p_flank";
@@ -95,7 +95,7 @@ sub get_all_calls_from_this_file
     {
 	my $ln = $_;
 	chomp $ln;
-	if ($ln =~ />(\S+)_5p_flank/)
+	if ($ln =~ /5p_flank/)
 	{
 	    <F>; #ignore 5p
 	    <F>; #ignore b1 read id

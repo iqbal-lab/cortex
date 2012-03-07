@@ -2677,13 +2677,13 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 							db_graph->kmer_size,true);	
 		    
 		    //print branches
-		    sprintf(name,"branch_%i_1",count_vars);
+		    sprintf(name,"var_%i_branch_1",count_vars);
 		    print_ultra_minimal_fasta_from_path(fout,name,length1,
 							path_nodes1[0],path_orientations1[0],
 							seq1,
 							db_graph->kmer_size,false);
 		    
-		    sprintf(name,"branch_%i_2",count_vars);
+		    sprintf(name,"var_%i_branch_2",count_vars);
 		    print_ultra_minimal_fasta_from_path(fout,name,length2,
 							path_nodes2[0],path_orientations2[0],
 							seq2,
@@ -8312,7 +8312,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      
 		      if (traverse_sup_left_to_right==true)
 			{
-			  sprintf(name,"branch_%i_1", num_variants_found);
+			  sprintf(name,"var_%i_branch_1", num_variants_found);
 			  
 			  
 			  print_ultra_minimal_fasta_from_path(output_file, name, len_trusted_branch, 
@@ -8323,7 +8323,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 							      false);
 			  
 			  
-			  sprintf(name,"branch_%i_2", num_variants_found);
+			  sprintf(name,"var_%i_branch_2", num_variants_found);
 			  
 			  print_ultra_minimal_fasta_from_path(output_file, name, len_branch2, 
 							      current_supernode[start_of_var_branch_in_supernode_array], 
@@ -8335,7 +8335,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      else //traversing right to left
 			{
 			  
-			  sprintf(name,"branch_%i_1", num_variants_found);
+			  sprintf(name,"var_%i_branch_1", num_variants_found);
 			  
 			  print_ultra_minimal_fasta_from_path(output_file, name, len_trusted_branch, 
 							      chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
@@ -8347,7 +8347,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 			  char rev_variant_branch[len_branch2+1];
 			  seq_reverse_complement(variant_branch, len_branch2, rev_variant_branch);
 			  rev_variant_branch[len_branch2]='\0';
-			  sprintf(name,"branch_%i_2", num_variants_found);
+			  sprintf(name,"var_%i_branch_2", num_variants_found);
 			  
 			  print_ultra_minimal_fasta_from_path(output_file, name, len_branch2, 
 							      current_supernode[start_of_var_branch_in_supernode_array], 
@@ -9873,7 +9873,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		      
 		      if (traverse_sup_left_to_right==true)
 			{
-			  sprintf(name,"branch_%i_1", start_variant_numbering_with_this-1+num_variants_found);
+			  sprintf(name,"var_%i_branch_1", start_variant_numbering_with_this-1+num_variants_found);
 			  
 			  print_ultra_minimal_fasta_from_path(output_file, name, len_trusted_branch, 
 							      chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
@@ -9883,7 +9883,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 							      false);
 			  
 			  
-			  sprintf(name,"branch_%i_2", start_variant_numbering_with_this-1+num_variants_found);
+			  sprintf(name,"var_%i_branch_2", start_variant_numbering_with_this-1+num_variants_found);
 			  
 			  print_ultra_minimal_fasta_from_path(output_file, name, len_branch2, 
 							      current_supernode[start_of_var_branch_in_supernode_array], 
@@ -9895,7 +9895,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		      else //traversing right to left
 			{
 			  
-			  sprintf(name,"branch_%i_1", start_variant_numbering_with_this-1+num_variants_found);
+			  sprintf(name,"var_%i_branch_1", start_variant_numbering_with_this-1+num_variants_found);
 			  
 			  print_ultra_minimal_fasta_from_path(output_file, name, len_trusted_branch, 
 							      chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome],
@@ -9907,7 +9907,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 			  char rev_variant_branch[len_branch2+1];
 			  seq_reverse_complement(variant_branch, len_branch2, rev_variant_branch);
 			  rev_variant_branch[len_branch2]='\0';
-			  sprintf(name,"branch_%i_2", start_variant_numbering_with_this-1+num_variants_found);
+			  sprintf(name,"var_%i_branch_2", start_variant_numbering_with_this-1+num_variants_found);
 			  
 			  print_ultra_minimal_fasta_from_path(output_file, name, len_branch2, 
 							      current_supernode[start_of_var_branch_in_supernode_array], 
@@ -11297,12 +11297,12 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
 					  var->seq5p, db_graph->kmer_size, false);//false - var->seq5p contains all, including the first kmer, as read it from callfile
       
       //print branches
-      sprintf(name,"branch_%s_1",var->var_name);
+      sprintf(name,"%s_branch_1",var->var_name);
       print_ultra_minimal_fasta_from_path(fout,name,var->len_one_allele,
 					  var->one_allele[0],                   var->one_allele_or[0],
 					  var->seq_one,db_graph->kmer_size,false);
       
-      sprintf(name,"branch_%s_2", var->var_name);
+      sprintf(name,"%s_branch_2", var->var_name);
       print_ultra_minimal_fasta_from_path(fout,name,var->len_other_allele,
 					  var->other_allele[0],                    var->other_allele_or[0],
 					  var->seq_other,db_graph->kmer_size,false);

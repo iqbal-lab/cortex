@@ -446,8 +446,7 @@ void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
 {
   if (e==NULL)
     {
-      printf("Called increment covg on NULL pointer");
-      exit(1);
+      return;
     }
   e->coverage[index]=e->coverage[index]+1;
 }

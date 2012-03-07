@@ -2542,7 +2542,8 @@ int given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_ove
 
 
 // returns 0 when hits the end of the file
-// otherwise returns 1 
+// returns -1 when this variant is bad
+// otherwise returns 1 (good variant)
 // MAKE SURE your kmer_window is malloced to allow max_read_length PLUS KMER bases in a "read", as we want the transitions between
 // flank and branches etc handled properly
 // MAKE SURE seq_inc_prev_kmer also has space for an extra k bases at the start
@@ -2552,7 +2553,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 					   Sequence* seq, Sequence* seq_inc_prev_kmer, KmerSlidingWindow* kmer_window)
 {
   int colour=-1; //ignored.
-
+  
   boolean f_entry=true;
   var->len_flank5p = -1 + align_next_read_to_graph_and_return_node_array(fptr, max_read_length, var->flank5p, var->flank5p_or,  false, &f_entry, file_reader,
 									 seq, kmer_window, db_graph, colour);
@@ -2564,7 +2565,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
   if (var->len_flank5p==-1)
     {
-      return 0; //end of file (should never have a zero length read as 5prime flank btw)
+      return 0; //end of file (should never have a zero length read as 5prime flank btw - should at least be one kmer
     }
 
 
