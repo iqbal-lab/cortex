@@ -909,7 +909,7 @@ sub get_auto_thresholds
     ## how many cleaning thresholds were you asked to generate below the auto one?
 
     ## work in steps which are 1/10 of the distance between the auto-choice, and the deff.
-    my $step = int($$deff) - $auto_thresh;
+    my $step = int($deff) - $auto_thresh;
     for ($i=0; ($i<$num_below); $i++)
     {
 	my $t= $auto_thresh-($i+1)*$step;
