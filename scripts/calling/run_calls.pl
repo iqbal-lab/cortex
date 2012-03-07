@@ -64,8 +64,8 @@ my (
         $do_bc,                            $bc_col_args,  $bc_out_stub,
         $do_pd,                            $pd_col_args,  $pd_out_stub,
         $outdir,               $fastaq_index,
-	$outvcf_filename_stub, $samplenames,
-	$number_of_colours,    $reference_colour,
+	$outvcf_filename_stub, 
+        $number_of_colours,    $use_ref,
 	$kmer,                 $apply_filter_one_allele_must_be_ref,
 	$apply_classif,  $prefix,
 	$ploidy,                $require_one_allele_is_ref,
@@ -100,9 +100,9 @@ $fastaq_index="";
 $require_one_allele_is_ref           = "yes";
 $prefix                              = "cortex";
 $outvcf_filename_stub                = "default_vcfname";
-$samplenames                          = '';
+#$samplenames                          = '';
 $number_of_colours                   = 0;
-$reference_colour                    = -1;
+$use_ref                             = "yes";
 $kmer                                = -1;
 $ploidy                              = 2;
 $apply_filter_one_allele_must_be_ref = "unknown";
@@ -141,9 +141,8 @@ my $help = '';    #default false
     'pd:s'                 => \$do_pd, # $pd_col_args,
     'outdir:s'             => \$outdir,   
     'outvcf:s'             => \$outvcf_filename_stub,
-    'samplename_list:s'    => \$samplenames,
     'num_cols:i'           => \$number_of_colours,
-    'refcol:i'             => \$reference_colour,
+    'use_ref:s'             => \$use_ref,
     'kmer:i'               => \$kmer,
     'ploidy:i'             => \$ploidy,
     'require_one_allele_is_ref' => \$apply_filter_one_allele_must_be_ref,
@@ -198,12 +197,12 @@ $outdir_vcfs=$outdir."vcfs/";
 
 ## basic setup
 my @samples = ();
-get_sample_names($samplenames, \@samples);
+get_sample_names($fastaq_index, \@samples);
 
 my $ref_name = "none";
-if ($reference_colour !=-1)
+if ($use_ref eq "yes")
 {
-    $ref_name = $samples[$reference_colour];
+    $ref_name = "REFERENCE";
 }
 
 my @kmers=();
@@ -225,7 +224,7 @@ my %sample_to_min_cleaning_thresh=(); #sample -> kmer -> min clean thresh
 
 if ($fastaq_index ne "")
 {
-    build_all_unclean_binaries($fastaq_index, $outdir_binaries, $samplenames, 
+    build_all_unclean_binaries($fastaq_index, $outdir_binaries, 
 			       \%sample_to_uncleaned, \%sample_to_uncleaned_log,
 			       \%sample_to_uncleaned_covg_distrib,
 			       $cortex_dir, $qthresh, $dups, $homopol, $mem_height, $mem_width, $max_read_len, $format);
@@ -242,7 +241,7 @@ if ( ($do_auto_cleaning eq "yes") || ($do_user_spec_cleaning eq "yes"))
     build_all_cleaned_binaries(\%sample_to_uncleaned, \%sample_to_uncleaned_log,
 			       \%sample_to_uncleaned_covg_distrib,
 			       \%sample_to_cleaned_bin,
-			       $outdir_binaries, $samplenames,
+			       $outdir_binaries, 
 			       $cortex_dir, $mem_height, $mem_width, $max_var_len,
 			       $do_auto_cleaning, $auto_below, $auto_above,
 			       $do_user_spec_cleaning, $user_min_clean, $user_max_clean, $user_clean_step, $genome_size);
@@ -255,10 +254,10 @@ else
     {
 	foreach my $sam (@samples)
 	{
-	    if ($sam eq $ref_name)
-	    {
-		next;
-	    }
+	   # if ($sam eq $ref_name)
+	   # {
+#		next;
+#	    }
 	    $sample_to_cleaned_bin{$sam}{$k}{0}=$sample_to_uncleaned{$sam}{$k};
 	}
     }
@@ -297,16 +296,16 @@ foreach my $k (@kmers)
     my $ctx_bin = get_right_binary($k, $cortex_dir,2);
     foreach my $sam (@samples)
     {
-	if ($sam eq $ref_name)
-	{
-	    next;
-	}
+	#if ($sam eq $ref_name)
+	#{
+	#    next;
+	#}
 
 	foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}{$k}})
 	{
 	    my $colour_list = make_2sample_filelist($ref_name, $sam, $k_to_refbin{$k}, $sample_to_cleaned_bin{$sam}{$k}{$cleaning});
 	    ## load reference binary and make calls. 
-	    my $cmd = $ctx_bin." --kmer_size $k --mem_height $mem_height --mem_width $mem_width --ref_colour $reference_colour --colour_list $colour_list --ref_colour $reference_colour --print_colour_coverages ";
+	    my $cmd = $ctx_bin." --kmer_size $k --mem_height $mem_height --mem_width $mem_width --ref_colour 0 --colour_list $colour_list  --print_colour_coverages ";
 	    print "Load reference $k_to_refbin{$k} in colour 0, and sample ";
 	    print $sample_to_cleaned_bin{$sam}{$k}{$cleaning};
 	    print " into colour 1\n";
@@ -413,20 +412,10 @@ if ( ($expt_type ne "") && ($genome_size != 0) )
 ##    Note it has to be the lowest kmer, otherwise some calls will have flanks and branches which are shorter than our kmer
 ######################################################################################################
     
-    my $num_samples = $number_of_colours;
-    if ($reference_colour != -1)
-    {
-	$num_samples--;
-    }
-    
     my @ordered_list_binaries=();
+    push @ordered_list_binaries, $k_to_refbin{$first_kmer};
     foreach my $sam (@samples)
     {	
-	if ($sam eq $ref_name)
-	{
-	    push @ordered_list_binaries, $k_to_refbin{$first_kmer};
-	    next;
-	}
 	my $min =999999999;
 	
 	foreach my $c (keys %{$sample_to_cleaned_bin{$sam}{$first_kmer}})
@@ -450,7 +439,7 @@ if ( ($expt_type ne "") && ($genome_size != 0) )
 	print "GT bc out is $gt_bc_out\n";
 	my $gt_bc_log = $gt_bc_out.".log";
 	
-	my $gt_bc_cmd = $multicol_ctx_bin." --colour_list $multicolour_list  --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour $reference_colour --gt $union_of_bc_callsets,$gt_bc_out,BC --max_read_len $max_read_len_bc_union  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size > $gt_bc_log 2>&1  ";
+	my $gt_bc_cmd = $multicol_ctx_bin." --colour_list $multicolour_list  --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour 0 --gt $union_of_bc_callsets,$gt_bc_out,BC --max_read_len $max_read_len_bc_union  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size > $gt_bc_log 2>&1  ";
 	print "$gt_bc_cmd\n";
 	my $gt_bc_ret = qx{$gt_bc_cmd};
 	print "$gt_bc_ret\n";
@@ -460,7 +449,7 @@ if ( ($expt_type ne "") && ($genome_size != 0) )
     {	
 	$gt_pd_out = $outdir_calls.basename($union_of_pd_callsets).".genotyped";
 	my $gt_pd_log = $gt_pd_out."_pd_calls.log";
-	my $gt_pd_cmd = $multicol_ctx_bin." --colour_list $multicolour_list --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour $reference_colour --gt $union_of_pd_callsets,$gt_pd_out,PD --max_read_len $max_read_len_pd_union  --print_colour_coverages  --experiment_type $expt_type --genome_size $genome_size > $gt_pd_log 2>&1  ";
+	my $gt_pd_cmd = $multicol_ctx_bin." --colour_list $multicolour_list --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour 0  --gt $union_of_pd_callsets,$gt_pd_out,PD --max_read_len $max_read_len_pd_union  --print_colour_coverages  --experiment_type $expt_type --genome_size $genome_size > $gt_pd_log 2>&1  ";
 	print "$gt_pd_cmd\n";
 	my $gt_pd_ret = qx{$gt_pd_cmd};
 	print "$gt_pd_ret\n";
@@ -704,7 +693,29 @@ sub build_vcfs
 	return;
     }
 
-    my $cmd = "perl ".$proc_calls." --callfile $file --outdir $directory --outvcf $string --samplename_list $samplenames --num_cols $num --refcol $reference_colour --require_one_allele_is_ref yes  --ploidy $ploidy --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin > $log 2>&1" ;
+    my $colournames=$outdir_vcfs.'/'."SAMPLES";
+    if (!(-e $colournames))
+    {
+	open(COL, ">".$colournames)||die();
+	if ($use_ref eq "yes")
+	{
+	    print COL "REF\n";
+	}
+	my $j;
+	for ($j=0; $j<scalar(@samples); $j++)
+	{
+	    print COL $samples[$j];
+	    print COL "\n";
+	}
+	close(COL);
+    }
+    my $cmd = "perl ".$proc_calls." --callfile $file --outdir $directory --outvcf $string --samplename_list $colournames --num_cols $num  --ploidy $ploidy --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin ";
+    if ($use_ref eq "yes")
+    {
+	$cmd = $cmd." --refcol 0 --require_one_allele_is_ref yes"; 
+    }
+    $cmd = $cmd."  > $log 2>&1" ;
+
     print "$cmd\n";
     my $ret = qx{$cmd};
     print "$ret\n";
@@ -784,7 +795,7 @@ sub build_all_cleaned_binaries
 	$href_sample_to_uncleaned_log,
 	$href_sample_to_uncleaned_covg_distrib,
 	$href_sample_to_cleaned,
-	$outdir_binaries, $samplenames,
+	$outdir_binaries, #,$samplenames
 	$cortex_dir, $mem_height, $mem_width, $max_var_len,
 	$do_auto_cleaning, $auto_below, $auto_above,
 	$do_user_spec_cleaning, $user_min_clean, $user_max_clean, $user_clean_step, $g_size) = @_;
@@ -945,7 +956,9 @@ sub get_sample_names
     {
 	my $line = $_;
 	chomp $line;
-	push @$aref, $line;
+	my @sp = split(/\t/, $line);
+	my $name = $sp[0];
+	push @$aref, $name;
     }
     close(FILE);
 }
@@ -953,7 +966,7 @@ sub get_sample_names
 sub get_fastq_filelists
 {
     my ($href_se_lists, $href_pe_lists, 
-	$indx, $outdir_bins, $list_samples)=@_;
+	$indx, $outdir_bins)=@_;
     
     ## index format
     # name se_list pe_list1  pe_list2
@@ -1010,12 +1023,12 @@ sub get_num_lines
 }
 sub build_all_unclean_binaries
 {
-    my ($index, $odir_bins, $list_samplenames, 
+    my ($index, $odir_bins,  
 	$href_sam_to_uncleaned, $href_sam_to_uncleaned_log, $href_sam_to_covg,
 	$cortex_directory, $qual, $dup, $hom, $hei, $widt, $max_read, $format) = @_;
     my %se_lists=();
     my %pe_lists=();
-    get_fastq_filelists(\%se_lists, \%pe_lists, $index, $odir_bins, $list_samplenames);
+    get_fastq_filelists(\%se_lists, \%pe_lists, $index, $odir_bins);
     foreach my $sample (keys %se_lists)
     {
 	foreach my $k (@kmers)
@@ -1158,14 +1171,10 @@ sub run_checks
 	my $cmd = "mkdir -p $outdir";
 	qx{$cmd};
     }
-    if ($reference_colour==-1)
-    {
-	die("you must specify --refcol\n");
-    }
     
-    if ($refbindir eq "")
+    if ( ($use_ref eq "yes") && ($refbindir eq ""))
     {
-	die("You must specify --refbindir");
+	die("Since you said yes to --use_ref, You must specify --refbindir");
     }
 
     if ( ($do_auto_cleaning eq "yes") && ($genome_size==0) )
@@ -1186,10 +1195,6 @@ sub run_checks
     if ( ($fastaq_index eq "") && ($binary_colourlist eq "") )
     {
 	die("Either specify a fastq index or a colourlist");
-    }
-    if ($samplenames eq "")
-    {
-	die("you must specify --samplename_list");
     }
     if ($mem_height==-1)
     {
