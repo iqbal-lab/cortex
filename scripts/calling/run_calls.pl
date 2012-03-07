@@ -101,7 +101,7 @@ $require_one_allele_is_ref           = "yes";
 $prefix                              = "cortex";
 $outvcf_filename_stub                = "default_vcfname";
 #$samplenames                          = '';
-$number_of_colours                   = 0;
+#$number_of_colours                   = 0;
 $use_ref                             = "yes";
 $kmer                                = -1;
 $ploidy                              = 2;
@@ -141,7 +141,6 @@ my $help = '';    #default false
     'pd:s'                 => \$do_pd, # $pd_col_args,
     'outdir:s'             => \$outdir,   
     'outvcf:s'             => \$outvcf_filename_stub,
-    'num_cols:i'           => \$number_of_colours,
     'use_ref:s'             => \$use_ref,
     'kmer:i'               => \$kmer,
     'ploidy:i'             => \$ploidy,
@@ -1142,11 +1141,40 @@ sub get_right_binary
 
 
 
-
+sub get_number_samples
+{
+    my ($index) = @_;
+    open(FILE, $index)||die("Cannot open $index");
+    my $num=0;
+    while (<FILE>)
+    {
+	my $line = $_;
+	chomp $line;
+	my @sp = split(/\t/, $line);
+	if (scalar (@sp) != 4)
+	{
+	    die("Format error in fastaq index $index - each line should be tab separated with 4 fields. Name of sample\tse_list\tpe_list1\tpe_list2\n");
+	}
+	else
+	{
+	    $num++;
+	}
+    }
+    close(FILE);
+    return $num;
+}
 
 
 sub run_checks
 {
+    if ($use_ref eq "no")
+    {
+	$number_of_colours = get_number_samples($fastaq_index);
+    }
+    else
+    {
+	$number_of_colours = get_number_samples($fastaq_index)+1;
+    }
     if ($expt_type eq "")
     {
 	die("You must specify --expt_type as one of EachColourADiploidSample, EachColourADiploidSampleExceptTheRefColour,  EachColourAHaploidSample,EachColourAHaploidSampleExceptTheRefColour\n");
