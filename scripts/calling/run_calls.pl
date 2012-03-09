@@ -628,11 +628,14 @@ sub clean_vcf
     my $rmdups_file = $sorted_file.".rmdups";
     open(RMDUPS, ">".$rmdups_file)||die("Cannot open $rmdups_file");
     my %chrpos_to_var_overlapping=(); #make a mask of the genome, and later on we will use it so if a new variant overlaps with an old one, remove them both
+    my %vars_which_are_precise_dups_of_prev_vars_and_can_be_ignore=();
+    make_mask($sorted_file, \%chrpos_to_var_overlapping, \%vars_which_are_precise_dups_of_prev_vars_and_can_be_ignore);
     open(SORTED, $sorted_file)||die("Cannot open $sorted_file");
     my $prev_chr="";
     my $prev_pos=-1;
     my $prev_ref="Z";
     my $prev_alt="Z";
+    my $prev_name="";
     while (<SORTED>)
     {
 	my $ln = $_;
@@ -641,10 +644,8 @@ sub clean_vcf
 	{
 	    print RMDUPS "$ln\n";
 	}
-	else
+	else ## is not a header
 	{
-	    ##remove a variant if it is identical to the previous one
-
 	    my @sp = split(/\t/, $ln);
 	    my $chr = $sp[0];
 	    my $pos = $sp[1];
@@ -653,36 +654,82 @@ sub clean_vcf
 	    my $alt = $sp[4];
 	    my $j;
 
-	    if (!( ($chr eq $prev_chr) && ($pos==$prev_pos) && ($ref eq $prev_ref) && ($alt eq $prev_alt)) )## ignore if is identical to previous one
+	    if (exists $vars_which_are_precise_dups_of_prev_vars_and_can_be_ignore{$name})
 	    {
-
+                ## ignore if is identical to previous one
+	    }
+	    else ## is not a precide dup -> will print unless is a cryptic duplicate
+	    {		
 		## now check if it is the same as the previous one, but looks different because ambiguity in VCF format (eg ATA --> A could be a deletion of AT or TA)
-		my $len=length($alt) - length($ref);
-		my $prev_len = length($prev_alt) - length($prev_ref);
-		
-		if ($len != $prev_len)
+		if ($ln=~/SVTYPE=SNP/)
 		{
-		    print RMDUPS $ln;
-		    mark_mask(\%chrpos_to_var_overlapping, $chr, $pos, $name, length($ref));
-		}
-		elsif  (two_calls_are_same_but_look_different($ref, $alt, $prev_ref, $prev_alt) eq "false")
-		{
-		    print RMDUPS "$ln\n";
-		    mark_mask(\%chrpos_to_var_overlapping, $chr, $pos, $name, length($ref));		    
-		}
-		else #must be true - is a dup, but does not look like it - mark is VCF so can check if is working
-		{
-		    $sp[6] =~ s/PASS//;
-		    $sp[6] = $sp[6]."NON_OBVIOUS_DUP";
+		    if ( ($chr eq $prev_chr) && ($pos ==$prev_pos) )
+		    {
+			$sp[6] =~ s/PASS//;
+			if ($sp[6] eq "")
+			{
+			    $sp[6]="OVERLAPPING_SNP";
+			}
+			else
+			{
+			    $sp[6] = $sp[6].",OVERLAPPING_SNP";
+			}
+		    }
 		    print RMDUPS join("\t", @sp);
 		    print RMDUPS "\n";
-		    #dont mark dup in mask
 		}
-		
-		$prev_chr = $chr;
-		$prev_pos = $pos;
-		$prev_ref = $ref;
-		$prev_alt = $alt;
+		else##not a SNP
+		{
+		    if (two_calls_overlap($name, $chr, $pos, $ref, 
+					  $prev_name, $prev_chr, $prev_pos, $prev_ref) eq "yes")
+					 
+		    {
+			my $len=length($alt) - length($ref);
+			my $prev_len = length($prev_alt) - length($prev_ref);
+
+			if ($len != $prev_len)
+			{
+			    my $filter = $sp[6];
+			    $filter =~ s/PASS//;
+			    if ($filter !~ /OVERLAP/)
+			    {
+				$filter = $filter."OVERLAP";
+			    }
+			    $sp[6]=$filter;
+			    print RMDUPS join("\t", @sp);
+			    print RMDUPS "\n";
+			}
+			elsif  (two_calls_are_same_but_look_different($ref, $alt, $prev_ref, $prev_alt, $pos-$prev_pos) eq "false")
+			{
+			    print RMDUPS "$ln\n";
+			}
+			else #must be true - is a dup, but does not look like it - mark is VCF so can check if is working
+			{
+			    $sp[6] =~ s/PASS//;
+			    if ($sp[6] eq "")
+			    {
+				$sp[6]="NON_OBVIOUS_DUP";
+			    }
+			    else
+			    {
+				$sp[6] = $sp[6].",NON_OBVIOUS_DUP";
+			    }
+			    print RMDUPS join("\t", @sp);
+			    print RMDUPS "\n";
+			}
+		    }
+		    else  ## calls dont overlap
+		    {
+			print RMDUPS join("\t", @sp);
+			print RMDUPS "\n";
+		    }
+		    $prev_chr = $chr;
+		    $prev_pos = $pos;
+		    $prev_name = $name;
+		    $prev_ref = $ref;
+		    $prev_alt = $alt;
+		    
+		}
 
 	    }
 	}
@@ -691,10 +738,6 @@ sub clean_vcf
     close(RMDUPS);
 	  
     
-
-
-
-
     ## Now remove variants which overlap with each other.
     my %safe_vars=();
     foreach my $chrpos (keys %chrpos_to_var_overlapping)
@@ -753,7 +796,10 @@ sub clean_vcf
 		    
 		    my $filter = $sp[6];
 		    $filter =~ s/PASS//;
-		    $filter = $filter."OVERLAP";
+		    if ($filter !~ /OVERLAP/)
+		    {
+			$filter = $filter."OVERLAP";
+		    }
 		    $sp[6]=$filter;
 		    print FINAL join("\t", @sp);
 		    print FINAL "\n";
@@ -1678,10 +1724,10 @@ sub get_max
     }
 }
 
-
+## we assume we know these calls overlap
 sub two_calls_are_same_but_look_different
 {
-    my ($ref1, $alt1, $ref2, $alt2) = @_;
+    my ($ref1, $alt1, $ref2, $alt2, $diff_in_start_pos) = @_;
     
     if (length($ref1) - length($alt1) != length($ref2) - length($alt2) )
     {
@@ -1691,12 +1737,12 @@ sub two_calls_are_same_but_look_different
     if (length($ref1) > length($alt1))
     {
 	##compare ref alleles
-	return two_alleles_are_offset($ref1, $ref2);
+	return two_alleles_are_offset($ref1, $ref2, $diff_in_start_pos);
     }
     elsif (length($alt1) > length($ref1) )
     {
 	##compare alt alleles
-	return two_alleles_are_offset($alt1, $alt2);
+	return two_alleles_are_offset($alt1, $alt2, $diff_in_start_pos);
     }
     
     return "false";
@@ -1705,25 +1751,77 @@ sub two_calls_are_same_but_look_different
 
 sub two_alleles_are_offset
 {
-    my ($str1, $str2) = @_;
-
-	my $tmp1 = substr($str1, 1);
-	my $tmp2 = substr($str2, -1);
-	if ($tmp1 eq $tmp2)
-	{
-	    return "true";
-	}
-
-	my $tmp3 = substr($str1, -1);
-	my $tmp4 = substr($str2,  1);
-	if ($tmp3 eq $tmp4)
-	{
-	    return "true";
-	}
+    my ($str1, $str2, $diff) = @_;
+    
+    if ( ($diff>length($str1)) || ($diff>length($str2)) )
+    {
+	die("Passed two alleles $str1 and $str2 and diff $diff\n");
+    }
+    my $tmp1 = substr($str1, $diff);
+    my $tmp2 = substr($str2, -$diff);
+    if ($tmp1 eq $tmp2)
+    {
+	return "true";
+    }
+    
+    my $tmp3 = substr($str1, -$diff);
+    my $tmp4 = substr($str2,  $diff);
+    if ($tmp3 eq $tmp4)
+    {
+	return "true";
+    }
     
     return "false";
 
 }
+
+
+## so I know which calls overlap other calls. Ignore precise duplicates (calls which have same chr pos ref and alt)
+sub make_mask
+{
+    my ($file, $href, $href_to_ignore) = @_;
+
+    open(FILE, $file)||die("Cannot open $file");
+    my $prev_chr="";
+    my $prev_pos=-1;
+    my $prev_ref="Z";
+    my $prev_alt="Z";
+    while (<FILE>)
+    {
+	my $ln = $_;
+	chomp $ln;
+	if ($ln !~ /^\#/)
+	{
+	    my @sp = split(/\t/, $ln);
+	    my $chr = $sp[0];
+	    my $pos = $sp[1];
+	    my $name= $sp[2];
+	    my $ref = $sp[3];
+	    my $alt = $sp[4];
+	    my $j;
+	    
+	    if ( ($chr eq $prev_chr) && ($pos==$prev_pos) && ($ref eq $prev_ref) && ($alt eq $prev_alt)) 
+	    {
+                ## ignore if is identical to previous one
+		$href_to_ignore->{$name}=1;
+	    }
+	    else
+	    {
+		mark_mask($href, $chr, $pos, $name, length($ref));
+	    }		
+	    $prev_chr = $chr;
+	    $prev_pos = $pos;
+	    $prev_ref = $ref;
+	    $prev_alt = $alt;
+
+	    
+	}
+    }
+    close(FILE);
+    close(RMDUPS);
+    
+}
+
 
 
 sub mark_mask
@@ -1750,3 +1848,39 @@ sub print_build_stats
 {
     my ($href_sample_to_uncleaned_log, $file) = @_;
     
+}
+
+
+
+sub two_calls_overlap
+{
+    # name, chrom, pos, refallele,  same for prev
+    my ($n, $c, $p, $r, $prev_n, $prev_c, $prev_p, $prev_r) = @_;
+    
+    if ($c ne $prev_c)
+    {
+	return "no"; #different chroms
+    }
+    
+    my $they_overlap = "no";
+    
+    if ($prev_p==$p)
+    {
+	$they_overlap = "yes";
+    }
+    elsif ($prev_p<$p)
+    {
+	if ($prev_p+length($r)-1 > $p)
+	{
+	    $they_overlap = "yes";
+	}
+    }
+    else
+    {
+	die("prev pos $p > current pos $p");
+    }
+    
+    
+    return $they_overlap;
+}
+
