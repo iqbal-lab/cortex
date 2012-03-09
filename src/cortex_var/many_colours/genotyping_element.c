@@ -475,8 +475,7 @@ void db_genotyping_node_increment_coverage(GenotypingElement* e, EdgeArrayType t
 {
   if (e==NULL)
     {
-      printf("Called increment covg on NULL pointer");
-      exit(1);
+      return;
     }
   e->coverage[index]=e->coverage[index]+1;
 }
@@ -484,8 +483,7 @@ void db_genotyping_node_decrement_coverage(GenotypingElement* e, EdgeArrayType t
 {
   if (e==NULL)
     {
-      printf("Called increment covg on NULL pointer");
-      exit(1);
+      return;
     }
   if (e->coverage[index]>0)
     {

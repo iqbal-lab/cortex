@@ -179,7 +179,7 @@ my %k_to_refbin=();
 ### checks
 run_checks();
 
-$outdir_binaries=$outdir."binaries";
+$outdir_binaries=$outdir."binaries/";
 $outdir_calls=$outdir."calls/";
 $outdir_vcfs=$outdir."vcfs/";
 
@@ -189,7 +189,7 @@ $outdir_vcfs=$outdir."vcfs/";
 ## 3. Call variants
 ## 4. Make a union callset
 ## 5. Genotype all samples on the union callset
-## 6. Use pop classifier
+## 6. Use pop classifier  <<<<< not incorporated yet
 ## 7. Build a VCF
 ## 8. Clean up the vCF (sort it, remove dup lines, remove lines where ref-allele doesnt match reference).
 
@@ -213,8 +213,9 @@ get_kmers(\@kmers, $first_kmer, $last_kmer, $kmer_step);
 ## 1. Build uncleaned binaries
 ##################################
 
-
+print "********************************************\n";
 print "Build uncleaned binaries:\n";
+print "********************************************\n";
 
 my %sample_to_uncleaned=(); #samplename --> kmer --> uncleaned bin name
 my %sample_to_uncleaned_log=(); #samplename --> kmer --> log file from building uncleaned bin 
@@ -230,10 +231,16 @@ if ($fastaq_index ne "")
 }
 
 
+my $uncleaned_stats_log = $outdir_binaries."uncleaned/UNCLEANED_BINS_STATS";
+print_build_stats(\%sample_to_uncleaned_log, $uncleaned_stats_log); 
+
+
 ##################################
 ## 2. Clean
 ##################################
+print "********************************************\n";
 print "Clean binaries\n";
+print "********************************************\n";
 my %sample_to_cleaned_bin=(); #sample -> kmer -> cleaning -> $binary
 if ( ($do_auto_cleaning eq "yes") || ($do_user_spec_cleaning eq "yes"))
 {
@@ -247,7 +254,7 @@ if ( ($do_auto_cleaning eq "yes") || ($do_user_spec_cleaning eq "yes"))
 }
 else
 {
-    print "No cleaning specified, so will not do any - will call on uncleaned binaries\n";
+    print "No cleaning specified, so will not do any - will call variants on uncleaned binaries\n";
 
     foreach my $k (@kmers)
     {
@@ -277,7 +284,15 @@ else
 ## How do we do this? Suppose we are doing 3  levels of cleaning per sample, say cl1, cl2, cl3 (these will be different for each sample, but I just want to be
 ## able to refer to the first, second and third level). 
 
+if ( ($do_bc ne "yes") && ($do_pd ne "yes") )
+{
+    print "Binaries are built, but you have not specified to run any calling, so will halt now. Good night.\n";
+    exit(0);
+}
+
+print "********************************************\n";
 print "Call variants\n";
+print "********************************************\n";
 my $dir_for_per_sample_calls=$outdir_calls."per_sample_callsets/";
 print "per sample call dir us $dir_for_per_sample_calls\n";
 if (!(-d $dir_for_per_sample_calls))
@@ -309,25 +324,54 @@ foreach my $k (@kmers)
 	    print $sample_to_cleaned_bin{$sam}{$k}{$cleaning};
 	    print " into colour 1\n";
 
-	    if ($do_bc eq "yes")
+	    my $bubble_output = $dir_for_per_sample_calls.$sam."_bubbles_k".$k."_clean".$cleaning.".calling_on_this_sample_only";
+	    my $pd_output = $dir_for_per_sample_calls.$sam."_pd_k".$k."_clean".$cleaning.".calling_on_this_sample_only";
+
+	    ##these variables needed to decide whether to run var valling
+	    my $bc_already_done="no";
+	    my $pd_already_done = "no";
+	    if ($do_bc eq "no")
 	    {
-		my $bubble_output = $dir_for_per_sample_calls.$sam."_bubbles_k".$k."_clean".$cleaning.".calling_on_this_sample_only";
+		$bc_already_done="yes";
+	    }
+	    if ($do_pd eq "no")
+	    {
+		$pd_already_done="yes";
+	    }
+
+	    if ( ($do_bc eq "yes") && (!(-e $bubble_output)) )## we want to do it and not already done
+	    {
 		$cmd = $cmd." --detect_bubbles1 -1/-1 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len ";
 		$sample_to_bc_callfile{$sam}{$k}{$cleaning} =  $bubble_output ;
-		print "\n\nIQ $sam $k $cleaning -> $bubble_output\n";
 	    }
-	    if ($do_pd eq "yes")
+	    elsif  ( ($do_bc eq "yes") && (-e $bubble_output) )## we want t do it but it has already been done
 	    {
-		my $pd_output = $dir_for_per_sample_calls.$sam."_pd_k".$k."_clean".$cleaning.".calling_on_this_sample_only";
+		print "Bubble calling already seems to have been done - will not rerun\n";
+		$bc_already_done = "yes";
+		$sample_to_bc_callfile{$sam}{$k}{$cleaning} =  $bubble_output ;
+	    }
+	    if ( ($do_pd eq "yes") && (!(-e $pd_output."_pd_calls")) )
+	    {
 		$cmd = $cmd." --path_divergence_caller 1 --path_divergence_caller_output $pd_output --list_ref_fasta $list_ref_fasta --max_var_len $max_var_len ";
+		$sample_to_pd_callfile{$sam}{$k}{$cleaning} =  $pd_output."_pd_calls"
+	    }
+	    elsif ( ($do_pd eq "yes") && (-e $pd_output."_pd_calls"))
+	    {
+		print "Path divergence calling already seems to have been done - will not rerun\n";
+		$pd_already_done = "yes";
 		$sample_to_pd_callfile{$sam}{$k}{$cleaning} =  $pd_output."_pd_calls"
 	    }
 
 	    my $log = $dir_for_per_sample_calls.$sam."_varcalling_log_k".$k."_clean".$cleaning.".calling_on_this_sample_only.log";
-	    $cmd = $cmd." > $log 2>&1";
-	    print "$cmd\n";
-	    my $ret = qx{$cmd};
-	    print "$ret\n";
+
+
+	    if (!( ($bc_already_done eq "yes") && ($pd_already_done eq "yes")))##not all done
+		{
+		    $cmd = $cmd." > $log 2>&1";
+		    print "$cmd\n";
+		    my $ret = qx{$cmd};
+		    print "$ret\n";
+		}
 
 
 	    ## Add code to check log file for errors here:
@@ -342,8 +386,13 @@ foreach my $k (@kmers)
 ## 4. Make union callsets
 ##################################
 
+print "********************************************\n";
+print "Make union variant callsets\n";
+print "********************************************\n";
+
+
 my $tmpdir = $outdir."tmp_filelists";
-print "\n\n\n\n\n\n\n1 $tmpdir\n";
+
 if (!(-d  $tmpdir))
 {
     my $cmd1 = "mkdir -p $tmpdir";
@@ -369,8 +418,11 @@ if ($do_bc eq "yes")
     }
     close(BCCALL);
     my $bc_cmd = "perl $make_union --filelist $bc_call_list --varname_stub UNION_BC > $union_of_bc_callsets 2>&1";
-    print "$bc_cmd\n";
-    my $bc_ret = qx{$bc_cmd};
+    if (! -e($union_of_bc_callsets))
+    {
+	print "$bc_cmd\n";
+	my $bc_ret = qx{$bc_cmd};
+    }
     $max_read_len_bc_union = get_max_read_len_of_fasta($union_of_bc_callsets)+$last_kmer+10;
 }
 
@@ -395,8 +447,11 @@ if ($do_pd eq "yes")
     close(PDCALL);
 
    my $pd_cmd = "perl $make_union --filelist $pd_call_list --varname_stub UNION_PD > $union_of_pd_callsets 2>&1";
-    print "$pd_cmd\n";
-    my $pd_ret = qx{$pd_cmd};
+    if (!(-e $union_of_pd_callsets))
+    {
+	print "$pd_cmd\n";
+	my $pd_ret = qx{$pd_cmd};
+    }
     $max_read_len_pd_union = get_max_read_len_of_fasta($union_of_pd_callsets)+$last_kmer+10;
 }
 
@@ -410,6 +465,11 @@ if ( ($expt_type ne "") && ($genome_size != 0) )
 ## 5. Genotype te union callset on ALL samples, using multicoloured graph with lowest k and lowest cleaning
 ##    Note it has to be the lowest kmer, otherwise some calls will have flanks and branches which are shorter than our kmer
 ######################################################################################################
+
+    print "********************************************\n";
+    print "Genotype the union callset\n";
+    print "********************************************\n";
+    
     
     my @ordered_list_binaries=();
     push @ordered_list_binaries, $k_to_refbin{$first_kmer};
@@ -437,21 +497,36 @@ if ( ($expt_type ne "") && ($genome_size != 0) )
 	$gt_bc_out = $outdir_calls.basename($union_of_bc_callsets).".genotyped";
 	print "GT bc out is $gt_bc_out\n";
 	my $gt_bc_log = $gt_bc_out.".log";
-	
-	my $gt_bc_cmd = $multicol_ctx_bin." --colour_list $multicolour_list  --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour 0 --gt $union_of_bc_callsets,$gt_bc_out,BC --max_read_len $max_read_len_bc_union  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size > $gt_bc_log 2>&1  ";
-	print "$gt_bc_cmd\n";
-	my $gt_bc_ret = qx{$gt_bc_cmd};
-	print "$gt_bc_ret\n";
+
+	if (!(-e $gt_bc_out))
+	{
+	    my $gt_bc_cmd = $multicol_ctx_bin." --colour_list $multicolour_list  --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour 0 --gt $union_of_bc_callsets,$gt_bc_out,BC --max_read_len $max_read_len_bc_union  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size > $gt_bc_log 2>&1  ";
+	    print "$gt_bc_cmd\n";
+	    my $gt_bc_ret = qx{$gt_bc_cmd};
+	    print "$gt_bc_ret\n";
+	}
+	else
+	{
+	    print "$gt_bc_out already exists so no need to genotype the union of BC calls\n";
+	}
     }
     my $gt_pd_out="";
     if ($do_pd eq "yes")
     {	
 	$gt_pd_out = $outdir_calls.basename($union_of_pd_callsets).".genotyped";
 	my $gt_pd_log = $gt_pd_out."_pd_calls.log";
-	my $gt_pd_cmd = $multicol_ctx_bin." --colour_list $multicolour_list --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour 0  --gt $union_of_pd_callsets,$gt_pd_out,PD --max_read_len $max_read_len_pd_union  --print_colour_coverages  --experiment_type $expt_type --genome_size $genome_size > $gt_pd_log 2>&1  ";
-	print "$gt_pd_cmd\n";
-	my $gt_pd_ret = qx{$gt_pd_cmd};
-	print "$gt_pd_ret\n";
+	
+	if (!(-e $gt_pd_out))
+	{
+	    my $gt_pd_cmd = $multicol_ctx_bin." --colour_list $multicolour_list --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour 0  --gt $union_of_pd_callsets,$gt_pd_out,PD --max_read_len $max_read_len_pd_union  --print_colour_coverages  --experiment_type $expt_type --genome_size $genome_size > $gt_pd_log 2>&1  ";
+	    print "$gt_pd_cmd\n";
+	    my $gt_pd_ret = qx{$gt_pd_cmd};
+	    print "$gt_pd_ret\n";
+	}
+	else
+	{
+	    print "$gt_pd_out already exists so no need to genotype the union of PD calls\n";
+	}
     }
 
 
@@ -460,17 +535,29 @@ if ( ($expt_type ne "") && ($genome_size != 0) )
 ## 6. Make one VCF for BC and one for PD
 ######################################################################################################
 
+
+    print "********************************************\n";
+    print "Build VCFs\n";
+    print "********************************************\n";
+    
+
     if (!(-d $outdir_vcfs))
     {
 	my $c = "mkdir -p $outdir_vcfs";
 	qx{$c};
     }
     ## build the VCFs of union calls
+
+    print "\n******   Build initial (uncleaned) VCFs of union callsets  ***\n";
+
+
     my %vcfs_needing_post_processing=();
     build_vcfs($gt_bc_out, "union_BC_calls", $number_of_colours, $outdir_vcfs."output_proc_union_bc", $outdir_vcfs, \%vcfs_needing_post_processing);
     build_vcfs($gt_pd_out, "union_PD_calls", $number_of_colours, $outdir_vcfs."output_proc_union_pd", $outdir_vcfs, \%vcfs_needing_post_processing);
 
     ##and build the VCFs for each of the individual callsets, for comparison
+    print "\n******   Build VCFs for each of the individual callsets   ***\n";
+
     build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
 
 ######################################################################################################
@@ -479,11 +566,35 @@ if ( ($expt_type ne "") && ($genome_size != 0) )
 ######################################################################################################
 
     ## Now we have a bunch of VCFs, and we need to remove duplicate lines, sort them, 
+    print "\n****** Clean the union VCFs  ***\n";
+
     clean_all_vcfs(\%vcfs_needing_post_processing);
 
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
 
 
 sub clean_all_vcfs
@@ -513,20 +624,27 @@ sub clean_vcf
     qx{$sortcmd};
 
     ##remove dup lines
-    my %seen=();
+
     my $rmdups_file = $sorted_file.".rmdups";
     open(RMDUPS, ">".$rmdups_file)||die("Cannot open $rmdups_file");
     my %chrpos_to_var_overlapping=(); #make a mask of the genome, and later on we will use it so if a new variant overlaps with an old one, remove them both
     open(SORTED, $sorted_file)||die("Cannot open $sorted_file");
+    my $prev_chr="";
+    my $prev_pos=-1;
+    my $prev_ref="Z";
+    my $prev_alt="Z";
     while (<SORTED>)
     {
 	my $ln = $_;
+	chomp $ln;
 	if ($ln =~ /^\#/)
 	{
-	    print RMDUPS $ln;
+	    print RMDUPS "$ln\n";
 	}
 	else
 	{
+	    ##remove a variant if it is identical to the previous one
+
 	    my @sp = split(/\t/, $ln);
 	    my $chr = $sp[0];
 	    my $pos = $sp[1];
@@ -534,25 +652,37 @@ sub clean_vcf
 	    my $ref = $sp[3];
 	    my $alt = $sp[4];
 	    my $j;
-	    my $key = $chr."_".$pos."_".$ref."_".$alt;
-	    if (!exists $seen{$key})
-	    {
-		print RMDUPS $ln;
-		$seen{$key}=1;
 
-		##mark out mask of the genome
-		for ($j=0; $j<length($ref); $j++)
+	    if (!( ($chr eq $prev_chr) && ($pos==$prev_pos) && ($ref eq $prev_ref) && ($alt eq $prev_alt)) )## ignore if is identical to previous one
+	    {
+
+		## now check if it is the same as the previous one, but looks different because ambiguity in VCF format (eg ATA --> A could be a deletion of AT or TA)
+		my $len=length($alt) - length($ref);
+		my $prev_len = length($prev_alt) - length($prev_ref);
+		
+		if ($len != $prev_len)
 		{
-		    my $posn = $pos+$j;
-		    if (!exists $chrpos_to_var_overlapping{$chr."_".$posn})
-		    {
-			$chrpos_to_var_overlapping{$chr."_".$posn}=$name;
-		    }
-		    else
-		    {
-			$chrpos_to_var_overlapping{$chr."_".$posn}=$chrpos_to_var_overlapping{$chr."_".$posn}."ZAMSPLITTER".$name;
-		    }
+		    print RMDUPS $ln;
+		    mark_mask(\%chrpos_to_var_overlapping, $chr, $pos, $name, length($ref));
 		}
+		elsif  (two_calls_are_same_but_look_different($ref, $alt, $prev_ref, $prev_alt) eq "false")
+		{
+		    print RMDUPS "$ln\n";
+		    mark_mask(\%chrpos_to_var_overlapping, $chr, $pos, $name, length($ref));		    
+		}
+		else #must be true - is a dup, but does not look like it - mark is VCF so can check if is working
+		{
+		    $sp[6] =~ s/PASS//;
+		    $sp[6] = $sp[6]."NON_OBVIOUS_DUP";
+		    print RMDUPS join("\t", @sp);
+		    print RMDUPS "\n";
+		    #dont mark dup in mask
+		}
+		
+		$prev_chr = $chr;
+		$prev_pos = $pos;
+		$prev_ref = $ref;
+		$prev_alt = $alt;
 
 	    }
 	}
@@ -560,6 +690,11 @@ sub clean_vcf
     close(SORTED);
     close(RMDUPS);
 	  
+    
+
+
+
+
     ## Now remove variants which overlap with each other.
     my %safe_vars=();
     foreach my $chrpos (keys %chrpos_to_var_overlapping)
@@ -650,21 +785,28 @@ sub build_per_sample_vcfs
     {
 	foreach my $sam (@samples)
 	{
+	    my $samdir = $dir.$sam;
+	    if (!(-e $samdir))
+	    {
+		my $s = "mkdir -p $samdir";
+		qx{$s};
+	    }
+	    
 	    foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}{$k}})
 	    {
 		if ($do_bc eq "yes")
 		{
 		    my $bc_file =  $sample_to_bc_callfile{$sam}{$k}{$cleaning};
 		    my $stub = "BC_sample_".$sam."_kmer".$k."_cleaning".$cleaning;
-		    my $this_log =$dir. $stub.".log";
-		    build_vcfs($bc_file, $stub, 2, $this_log, $dir, $href);
+		    my $this_log =$samdir. $stub.".log";
+		    build_vcfs($bc_file, $stub, 2, $this_log, $samdir, $href);
 		}
 		if ($do_pd eq "yes")
 		{
 		    my $pd_file =  $sample_to_pd_callfile{$sam}{$k}{$cleaning};
 		    my $stub = "PD_sample_".$sam."_kmer".$k."_cleaning".$cleaning;
-		    my $this_log =$dir. $stub.".log";
-		    build_vcfs($pd_file, $stub, 2, $this_log, $dir, $href);
+		    my $this_log =$samdir. $stub.".log";
+		    build_vcfs($pd_file, $stub, 2, $this_log, $samdir, $href);
 		}
 
 	    }
@@ -731,7 +873,6 @@ sub make_multicol_filelist
     my ($aref_bins) = @_;
 
     my $tmpdir = $outdir."tmp_filelists";
-    print "\n\n\n\n\n\n\n2 $tmpdir\n";
     if (!(-d  $tmpdir))
     {
 	my $cmd1 = "mkdir $tmpdir";
@@ -761,7 +902,7 @@ sub make_2sample_filelist
     my ($str1, $str2, $bin1, $bin2) = @_;
 
     my $tmpdir = $outdir."tmp_filelists";
-    print "\n\n\n\n3 $tmpdir\n";
+
     if (!(-d  $tmpdir))
     {
 	my $cmd1 = "mkdir -p $tmpdir";
@@ -858,6 +999,24 @@ sub build_clean_binary
     $ctx =~ s/.ctx//;
     $ctx = $ctx."cleaned_".$clean_thresh.".ctx";
     my $log = $ctx.".log";
+    $href_sam_to_cleaned_bin->{$sample}->{$kmer}->{$clean_thresh}=$ctx;
+
+    ## skip this if binary already built
+    if (-e $ctx)
+    {
+	if (!(-e $log))
+	{
+	    print "Binary $ctx exists, so will not rebuild, but the log file is missing. Carrying on nevertheless.\n";
+	}
+	else
+	{
+	    print "Binary $ctx already exists, so will not rebuild\n";
+	}
+	return;
+    }
+
+
+
    
     my $cortex_binary = get_right_binary($kmer, $cortex_dir,1 );##one colour
     my $cmd2 = $cortex_binary." --kmer_size $kmer --mem_height $height --mem_width $width --dump_binary $ctx --remove_low_coverage_supernodes $clean_thresh --multicolour_bin $uncleaned > $log 2>&1";
@@ -1518,3 +1677,76 @@ sub get_max
 	return $b;
     }
 }
+
+
+sub two_calls_are_same_but_look_different
+{
+    my ($ref1, $alt1, $ref2, $alt2) = @_;
+    
+    if (length($ref1) - length($alt1) != length($ref2) - length($alt2) )
+    {
+	return "false";
+    }
+
+    if (length($ref1) > length($alt1))
+    {
+	##compare ref alleles
+	return two_alleles_are_offset($ref1, $ref2);
+    }
+    elsif (length($alt1) > length($ref1) )
+    {
+	##compare alt alleles
+	return two_alleles_are_offset($alt1, $alt2);
+    }
+    
+    return "false";
+}
+
+
+sub two_alleles_are_offset
+{
+    my ($str1, $str2) = @_;
+
+	my $tmp1 = substr($str1, 1);
+	my $tmp2 = substr($str2, -1);
+	if ($tmp1 eq $tmp2)
+	{
+	    return "true";
+	}
+
+	my $tmp3 = substr($str1, -1);
+	my $tmp4 = substr($str2,  1);
+	if ($tmp3 eq $tmp4)
+	{
+	    return "true";
+	}
+    
+    return "false";
+
+}
+
+
+sub mark_mask
+{
+    my ($href_mask, $ch, $po, $nam, $len) = @_;
+    ##mark out mask of the genome
+    my $j;
+    for ($j=0; $j<$len; $j++)
+    {
+	my $posn = $po+$j;
+	if (!exists $href_mask->{$ch."_".$posn})
+	{
+	    $href_mask->{$ch."_".$posn}=$nam;
+	}
+	else
+	{
+	    $href_mask->{$ch."_".$posn}=$href_mask->{$ch."_".$posn}."ZAMSPLITTER".$nam;
+	}
+    }
+
+}
+
+sub print_build_stats
+{
+    my ($href_sample_to_uncleaned_log, $file) = @_;
+    
