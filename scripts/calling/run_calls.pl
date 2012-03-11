@@ -66,7 +66,7 @@ my (
         $outdir,               $fastaq_index,
 	$outvcf_filename_stub, 
         $number_of_colours,    $use_ref,
-	$kmer,                 $apply_filter_one_allele_must_be_ref,
+	                 $apply_filter_one_allele_must_be_ref,
 	$apply_classif,  $prefix,
 	$ploidy,                $require_one_allele_is_ref,
 	$stampy_hash_stub,
@@ -103,7 +103,6 @@ $outvcf_filename_stub                = "default_vcfname";
 #$samplenames                          = '';
 #$number_of_colours                   = 0;
 $use_ref                             = "yes";
-$kmer                                = -1;
 $ploidy                              = 2;
 $apply_filter_one_allele_must_be_ref = "unknown";
 $apply_classif                       ='';
@@ -142,7 +141,6 @@ my $help = '';    #default false
     'outdir:s'             => \$outdir,   
     'outvcf:s'             => \$outvcf_filename_stub,
     'use_ref:s'             => \$use_ref,
-    'kmer:i'               => \$kmer,
     'ploidy:i'             => \$ploidy,
     'require_one_allele_is_ref' => \$apply_filter_one_allele_must_be_ref,
     'apply_pop_classifier'   => \$apply_classif,
@@ -163,14 +161,49 @@ my $help = '';    #default false
     'genome_size:i'        => \$genome_size,
     'refbindir:s'          =>\$refbindir,
     'expt_type:s'          =>\$expt_type,
-    'list_ref_fasta:s'     =>\$list_ref_fasta
+    'list_ref_fasta:s'     =>\$list_ref_fasta,
+    'help'                 =>\$help
 );
 
 if ($help)
 {
 	print "\n\n";
 	print "Usage:\n:\n";
-	print "\n\n\n";
+	print "--first_kmer\t\t\t\tThis script allows you to ru across a range of kmer sizes. This is the lowest. It must be odd\n";
+	print "--last_kmer\t\t\t\tIgnore this if you want to run for one kmer only\n";
+	print "--kmer_step\t\t\t\tIf you run for many kmers, this is the increment.\n";
+	print "--auto_cleaning\t\t\t\tTakes values yes or no. Default no. This looks at covg distribution and chooses a cleaning threshold\n";
+	print "--auto_below\t\t\t\tYou can also ask it to run for, say 2 thresholds below the auto-chosen one. By default it wont do this\n";
+	print "--auto_above\t\t\t\tYou can ask it to run for, say 3 threshold values above the auto-chosen one (will stay below the expected depth\n";
+	print "--user_cleaning\t\t\t\tValid arguments are yes and no. Default is no. Make your own cleanig choices\n";
+	print "--user_min_clean\t\t\t\tIf you want to try a range. Use this also if you only want to use one threshold.\n";
+	print "--user_max_clean\t\t\t\tIf you want to try a range. Ignore this if you only want to use one threshold\n";
+	print "--use_clean_step\t\t\t\tIncrement between cleaning thresholds.\n";
+	print "--bc\t\t\t\tMake Bubble Calls. You must enter yes or no. Default (if you don't use --bc) is no.\n";
+	print "--pd\t\t\t\tMake Path Divergence Calls. You must enter yes or no. Default (if you don't use --bc) is no.\n";
+	print "--outdir\t\t\t\tOutput directory. Everything will go into dsubdirectories of this directory\n";
+	print "--outvcf\t\t\t\tVCFs generated will have names that start with the text you enter here\n";
+	print "--use_ref\t\t\t\tValid values are yes and no, depending on whether you want to include a reference genome when calling.\n";
+	print "--ploidy\t\t\t\tMust be 1 or 2.\n";
+	print "--require_one_allele_is_ref\t\t\t\tyes or no. Highly recommended if you want a VCF with ref chromosome positions\n";
+	print "--prefix\t\t\t\tIf you want your variant calls to have names with a specific prefix, use this\n";
+	print "--stampy_hash\t\t\t\tMANDATORY. Build a hash of your reference genome, and specify here the path to it. if stampy makes blah.stdidx etc then specify blah.\n";
+	print "--stampy_bin\t\t\t\tSpecify the path to your Stampy binary. Or manually edit this at the top of the file (it's marked out for you)\n";
+	print "--fastaq_index\t\t\t\tMANDATORY. File has format SAMPLE_NAME\tse_list\tpe_list1\tpe_list2. One line per sample\n";
+	print "--qthresh\t\t\t\tIf you want Cortex to use a quality score threshold, speify it here\n";
+	print "--dups\t\t\t\tIf you want Cortex to remove PCR duplicates, specify this flag (no arguments, just --dups)\n";
+	print "--homopol\t\t\t\tIf you want to cut homopolymers, threshold specified here\n";
+	print "--mem_height\t\t\t\tFor Cortex\n";
+	print "--mem_width\t\t\t\tFor Cortex\n";
+	print "--max_read_len\t\t\t\tMax read length\n";
+	print "--format\t\t\t\tFASTA or FASTQ\n";
+	print "--max_var_len\t\t\t\tSee Cortex manual - max var length to look for\n";
+	print "--genome_size\t\t\t\tGenome length in base pairs - needed for genotyping\n";
+	print "--refbindir\t\t\t\tDiorectry containing binaries built of the reference at all the kmers you want to use. \n";
+	print "\t\t\t\t\tThe binary filename should contain the kmer value, eg refbinary.k31.ctx\n";
+	print "--expt_type\t\t\t\tAs in Cortex input\n";
+	print "--list_ref_fasta\t\t\t\tFile listing the fasta files (one per chromosome) for the reference. Needed for the PD caller\n";
+	print "--help\t\t\t\tprints this\n";
 	exit();
 }
 
@@ -611,6 +644,19 @@ sub clean_vcf
 {
     my ($file) = @_;
 
+    my $type="";
+    if ($file=~ /raw/)
+    {
+	$type="raw";
+    }
+    elsif ($file =~ /decomp/)
+    {
+	$type="decomp";
+    }
+    else
+    {
+	die("Trying to clean a VCF that is neither raw nor decomp - $file\n");
+    }
     ## sort.
     my $tmpdir = $outdir_vcfs."/tmpdir";
     if (!(-d $tmpdir))
@@ -657,8 +703,9 @@ sub clean_vcf
 	    if (exists $vars_which_are_precise_dups_of_prev_vars_and_can_be_ignore{$name})
 	    {
                 ## ignore if is identical to previous one
+		
 	    }
-	    else ## is not a precide dup -> will print unless is a cryptic duplicate
+	    else ## is not a precise dup created by taking the union -> will print unless is a cryptic duplicate
 	    {		
 		## now check if it is the same as the previous one, but looks different because ambiguity in VCF format (eg ATA --> A could be a deletion of AT or TA)
 		if ($ln=~/SVTYPE=SNP/)
@@ -678,17 +725,28 @@ sub clean_vcf
 		    print RMDUPS join("\t", @sp);
 		    print RMDUPS "\n";
 		}
-		else##not a SNP
+		elsif ($type eq "decomp") ##not a SNP, and this is a decomp file
 		{
 		    if (two_calls_overlap($name, $chr, $pos, $ref, 
 					  $prev_name, $prev_chr, $prev_pos, $prev_ref) eq "yes")
 					 
 		    {
+			##debug
+			if ( ($prev_name eq "cortex_UNION_BC_var_32058_sub_indel_1")||($name eq "cortex_UNION_BC_var_32058_sub_indel_1") )
+			{
+			    print " Our vars did overlap $name and $prev_name\n";
+			}
 			my $len=length($alt) - length($ref);
 			my $prev_len = length($prev_alt) - length($prev_ref);
 
 			if ($len != $prev_len)
 			{
+			    if ( ($prev_name eq "cortex_UNION_BC_var_32058_sub_indel_1")||($name eq "cortex_UNION_BC_var_32058_sub_indel_1") )
+			    {
+				print " Our vars has diff lengths $len and $prev_len \n";
+			    }
+
+			    
 			    my $filter = $sp[6];
 			    $filter =~ s/PASS//;
 			    if ($filter !~ /OVERLAP/)
@@ -701,10 +759,25 @@ sub clean_vcf
 			}
 			elsif  (two_calls_are_same_but_look_different($ref, $alt, $prev_ref, $prev_alt, $pos-$prev_pos) eq "false")
 			{
+			if ( ($prev_name eq "cortex_UNION_BC_var_32058_sub_indel_1")||($name eq "cortex_UNION_BC_var_32058_sub_indel_1") )
+			    {
+				print " Our vars are not cryptic\n";
+			    }
+
 			    print RMDUPS "$ln\n";
+			}
+			elsif (two_calls_are_same_but_look_different($ref, $alt, $prev_ref, $prev_alt, $pos-$prev_pos) eq "BAD")
+			{
+			    die("These two calls allegedly overlap $name and $prev_name, and we passed these bad var values into two_calls_are_same_but_look_different: $ref, $alt, $prev_ref, $prev_alt, $pos-$prev_pos");
 			}
 			else #must be true - is a dup, but does not look like it - mark is VCF so can check if is working
 			{
+			if ( ($prev_name eq "cortex_UNION_BC_var_32058_sub_indel_1")||($name eq "cortex_UNION_BC_var_32058_sub_indel_1") )
+			    {
+				print " Our vars ARE cryptic\n";
+			    }
+
+
 			    $sp[6] =~ s/PASS//;
 			    if ($sp[6] eq "")
 			    {
@@ -723,15 +796,21 @@ sub clean_vcf
 			print RMDUPS join("\t", @sp);
 			print RMDUPS "\n";
 		    }
-		    $prev_chr = $chr;
-		    $prev_pos = $pos;
-		    $prev_name = $name;
-		    $prev_ref = $ref;
-		    $prev_alt = $alt;
 		    
+		}
+		else#not a SNP and tis is a RAW file - just print:
+		{
+		    print RMDUPS join("\t", @sp);
+		    print RMDUPS "\n";
 		}
 
 	    }
+
+	    $prev_chr = $chr;
+	    $prev_pos = $pos;
+	    $prev_name = $name;
+	    $prev_ref = $ref;
+	    $prev_alt = $alt;
 	}
     }
     close(SORTED);
@@ -904,9 +983,11 @@ sub build_vcfs
     $cmd = $cmd."  > $log 2>&1" ;
 
     print "$cmd\n";
-    my $ret = qx{$cmd};
-    print "$ret\n";
-
+    if ( (!(-e $directory.$string.".decomp.vcf"))  || (!(-e $directory.$string.".raw.vcf")) )
+    {
+	my $ret = qx{$cmd};
+	print "$ret\n";
+    }
     $href_store_vcf_names->{$directory.$string.".decomp.vcf"}=1;
     $href_store_vcf_names->{$directory.$string.".raw.vcf"}=1;
 }
@@ -1723,29 +1804,51 @@ sub get_max
 	return $b;
     }
 }
+sub get_min
+{
+    my ($a, $b)  = @_;
+    if ($a<=$b)
+    {
+	return $a;
+    }
+    else
+    {
+	return $b;
+    }
+}
 
 ## we assume we know these calls overlap
 sub two_calls_are_same_but_look_different
 {
     my ($ref1, $alt1, $ref2, $alt2, $diff_in_start_pos) = @_;
+
+    my $ret = "false";
     
     if (length($ref1) - length($alt1) != length($ref2) - length($alt2) )
     {
-	return "false";
+	return $ret;;
+    }
+    if (length(get_max(length($ref1) ,length($alt1))) != length(get_max(length($ref2) ,length($alt2) )) )
+    {
+	return $ret;
+    }
+    if (length(get_min(length($ref1) ,length($alt1))) != length(get_min(length($ref2) ,length($alt2) )) )
+    {
+	return $ret;
     }
 
     if (length($ref1) > length($alt1))
     {
 	##compare ref alleles
-	return two_alleles_are_offset($ref1, $ref2, $diff_in_start_pos);
+	$ret = two_alleles_are_offset($ref1, $ref2, $diff_in_start_pos);
     }
     elsif (length($alt1) > length($ref1) )
     {
 	##compare alt alleles
-	return two_alleles_are_offset($alt1, $alt2, $diff_in_start_pos);
+	$ret=  two_alleles_are_offset($alt1, $alt2, $diff_in_start_pos);
     }
     
-    return "false";
+    return $ret;
 }
 
 
@@ -1755,7 +1858,7 @@ sub two_alleles_are_offset
     
     if ( ($diff>length($str1)) || ($diff>length($str2)) )
     {
-	die("Passed two alleles $str1 and $str2 and diff $diff\n");
+	return "BAD";
     }
     my $tmp1 = substr($str1, $diff);
     my $tmp2 = substr($str2, -$diff);
@@ -1793,6 +1896,10 @@ sub make_mask
 	if ($ln !~ /^\#/)
 	{
 	    my @sp = split(/\t/, $ln);
+	    if (scalar (@sp) != 9 + scalar(@samples))
+	    {
+		die("This line in $file is invalid:\n$ln\n");
+	    }
 	    my $chr = $sp[0];
 	    my $pos = $sp[1];
 	    my $name= $sp[2];
@@ -1818,7 +1925,7 @@ sub make_mask
 	}
     }
     close(FILE);
-    close(RMDUPS);
+
     
 }
 
@@ -1870,7 +1977,7 @@ sub two_calls_overlap
     }
     elsif ($prev_p<$p)
     {
-	if ($prev_p+length($r)-1 > $p)
+	if ($prev_p+length($prev_r)-1 > $p)
 	{
 	    $they_overlap = "yes";
 	}
@@ -1879,7 +1986,6 @@ sub two_calls_overlap
     {
 	die("prev pos $p > current pos $p");
     }
-    
     
     return $they_overlap;
 }
