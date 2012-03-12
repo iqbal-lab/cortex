@@ -16,17 +16,20 @@ my $callingscript_dir;
 my $analyse_variants_dir;
 #my $script_dir;
 my $cortex_dir;
-
+my $isaac_bioinf_dir;
 BEGIN
 {
 	use FindBin;
 	$callingscript_dir = $FindBin::Bin;
 	$cortex_dir = $callingscript_dir . '/../../';
 	$analyse_variants_dir = $cortex_dir."/scripts/analyse_variants/";
+	$isaac_bioinf_dir = $analyse_variants_dir."bioinf-perl/lib/";
+
 	push( @INC,
 		$cortex_dir
-		  . "/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6"
-	);
+		  . "/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6",
+	      $isaac_bioinf_dir
+	    );
 }
 
 my $proc_calls = $analyse_variants_dir."process_calls.alex.LOCAL.pl";
