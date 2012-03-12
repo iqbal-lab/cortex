@@ -3,11 +3,18 @@ use strict;
 use File::Basename;
 use Getopt::Long;
 
+###******** Description of run_calls.pl ##################################################################
+# This script allows the user to specify a number of kmer values and cleaning thresholds, and then
+# will build graphs, clean them, call with both the bubble caller and PD caller, make union callsets
+# genotype all samples at the union of all called sites, make a VCF and remove duplicate sites from the VCF
+##############################################################################################################
+
 
 
 #### Dear User - this following line is the only one in this script you may want to edit
 my $stampy_bin ="/path/to/stampy.py";    #### <<<<<<< can also use command line parameter
-#### no need to modify anything below this line
+my $vcftools_dir="/path/to/vcftools/dir";### <<<< can also use command line param
+#### ****************  no need to modify anything below this line
 
 # However you may decide you want to increase this threshold
 my $mapping_qual_thresh = 40;    #  - demand 5prime flank maps with quality>= 40
@@ -17,18 +24,23 @@ my $analyse_variants_dir;
 #my $script_dir;
 my $cortex_dir;
 my $isaac_bioinf_dir;
+
+print "*********** Command-line used was : *********************\n";
+print $0." ".join(" ",@ARGV)."\n";
+print "*********************************************************\n";
+
 BEGIN
 {
 	use FindBin;
 	$callingscript_dir = $FindBin::Bin;
 	$cortex_dir = $callingscript_dir . '/../../';
 	$analyse_variants_dir = $cortex_dir."/scripts/analyse_variants/";
-	$isaac_bioinf_dir = $analyse_variants_dir."bioinf-perl/lib/";
+	$isaac_bioinf_dir = $analyse_variants_dir."bioinf-perl/";
 
 	push( @INC,
 		$cortex_dir
 		  . "/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6",
-	      $isaac_bioinf_dir
+	      $isaac_bioinf_dir."lib/"
 	    );
 }
 
@@ -43,14 +55,8 @@ if (!(-e $make_union))
     die("Cannot find make_union_varset script: $make_union\n");
 }
 
-
+#use lib $isaac_bioinf_dir;
 use Descriptive;
-
-###******** Description of run_calls.pl ##################################################################
-# This script allows the user to specify a number of kmer values and cleaning thresholds, and then
-# will build graphs, clean them, call with both the bubble caller and PD caller, make union callsets
-# genotype all samples at the union of all called sites, make a VCF and remove duplicate sites from the VCF
-##############################################################################################################
 
 
 
@@ -98,7 +104,6 @@ $do_pd="no";
 $pd_col_args="";
 $pd_out_stub="PD";
 $outdir="cortex_results/";
-
 $fastaq_index="";
 $require_one_allele_is_ref           = "yes";
 $prefix                              = "cortex";
@@ -165,6 +170,7 @@ my $help = '';    #default false
     'refbindir:s'          =>\$refbindir,
     'expt_type:s'          =>\$expt_type,
     'list_ref_fasta:s'     =>\$list_ref_fasta,
+    'vcftools_dir:s'       =>\$vcftools_dir,
     'help'                 =>\$help
 );
 
@@ -206,6 +212,7 @@ if ($help)
 	print "\t\t\t\t\tThe binary filename should contain the kmer value, eg refbinary.k31.ctx\n";
 	print "--expt_type\t\t\t\tAs in Cortex input\n";
 	print "--list_ref_fasta\t\t\t\tFile listing the fasta files (one per chromosome) for the reference. Needed for the PD caller\n";
+	print "--vcftools_dir\t\t\t\tVCFtools is used to generate VCFs - mandatory to either specify this on cmd-line, or manually edit the path at the top of this script\n";
 	print "--help\t\t\t\tprints this\n";
 	exit();
 }
@@ -660,237 +667,33 @@ sub clean_vcf
     {
 	die("Trying to clean a VCF that is neither raw nor decomp - $file\n");
     }
-    ## sort.
-    my $tmpdir = $outdir_vcfs."/tmpdir";
-    if (!(-d $tmpdir))
-    {
-	my $c = "mkdir -p $tmpdir";
-	qx{$c};
-    }
-    my $bname = basename($file);
-    my $sorted_file = $tmpdir.'/'."$bname".".sorted";
-    my $sortcmd = "(cat $file  | head -100 | grep ^#; cat $file  | grep -v ^# | sort -k1,1d -k2,2n;) > $sorted_file";
-    qx{$sortcmd};
 
-    ##remove dup lines
+    #my $tmpdir = $outdir_vcfs."tmpdir";
+    #if (!(-d $tmpdir))
+    #{#
+	#my $c = "mkdir -p $tmpdir";
+	#qx{$c};
+    #}
 
-    my $rmdups_file = $sorted_file.".rmdups";
-    open(RMDUPS, ">".$rmdups_file)||die("Cannot open $rmdups_file");
-    my %chrpos_to_var_overlapping=(); #make a mask of the genome, and later on we will use it so if a new variant overlaps with an old one, remove them both
-    my %vars_which_are_precise_dups_of_prev_vars_and_can_be_ignore=();
-    make_mask($sorted_file, \%chrpos_to_var_overlapping, \%vars_which_are_precise_dups_of_prev_vars_and_can_be_ignore);
-    open(SORTED, $sorted_file)||die("Cannot open $sorted_file");
-    my $prev_chr="";
-    my $prev_pos=-1;
-    my $prev_ref="Z";
-    my $prev_alt="Z";
-    my $prev_name="";
-    while (<SORTED>)
-    {
-	my $ln = $_;
-	chomp $ln;
-	if ($ln =~ /^\#/)
-	{
-	    print RMDUPS "$ln\n";
-	}
-	else ## is not a header
-	{
-	    my @sp = split(/\t/, $ln);
-	    my $chr = $sp[0];
-	    my $pos = $sp[1];
-	    my $name= $sp[2];
-	    my $ref = $sp[3];
-	    my $alt = $sp[4];
-	    my $j;
-
-	    if (exists $vars_which_are_precise_dups_of_prev_vars_and_can_be_ignore{$name})
-	    {
-                ## ignore if is identical to previous one
-		
-	    }
-	    else ## is not a precise dup created by taking the union -> will print unless is a cryptic duplicate
-	    {		
-		## now check if it is the same as the previous one, but looks different because ambiguity in VCF format (eg ATA --> A could be a deletion of AT or TA)
-		if ($ln=~/SVTYPE=SNP/)
-		{
-		    if ( ($chr eq $prev_chr) && ($pos ==$prev_pos) )
-		    {
-			$sp[6] =~ s/PASS//;
-			if ($sp[6] eq "")
-			{
-			    $sp[6]="OVERLAPPING_SNP";
-			}
-			else
-			{
-			    $sp[6] = $sp[6].",OVERLAPPING_SNP";
-			}
-		    }
-		    print RMDUPS join("\t", @sp);
-		    print RMDUPS "\n";
-		}
-		elsif ($type eq "decomp") ##not a SNP, and this is a decomp file
-		{
-		    if (two_calls_overlap($name, $chr, $pos, $ref, 
-					  $prev_name, $prev_chr, $prev_pos, $prev_ref) eq "yes")
-					 
-		    {
-			##debug
-			if ( ($prev_name eq "cortex_UNION_BC_var_32058_sub_indel_1")||($name eq "cortex_UNION_BC_var_32058_sub_indel_1") )
-			{
-			    print " Our vars did overlap $name and $prev_name\n";
-			}
-			my $len=length($alt) - length($ref);
-			my $prev_len = length($prev_alt) - length($prev_ref);
-
-			if ($len != $prev_len)
-			{
-			    if ( ($prev_name eq "cortex_UNION_BC_var_32058_sub_indel_1")||($name eq "cortex_UNION_BC_var_32058_sub_indel_1") )
-			    {
-				print " Our vars has diff lengths $len and $prev_len \n";
-			    }
-
-			    
-			    my $filter = $sp[6];
-			    $filter =~ s/PASS//;
-			    if ($filter !~ /OVERLAP/)
-			    {
-				$filter = $filter."OVERLAP";
-			    }
-			    $sp[6]=$filter;
-			    print RMDUPS join("\t", @sp);
-			    print RMDUPS "\n";
-			}
-			elsif  (two_calls_are_same_but_look_different($ref, $alt, $prev_ref, $prev_alt, $pos-$prev_pos) eq "false")
-			{
-			if ( ($prev_name eq "cortex_UNION_BC_var_32058_sub_indel_1")||($name eq "cortex_UNION_BC_var_32058_sub_indel_1") )
-			    {
-				print " Our vars are not cryptic\n";
-			    }
-
-			    print RMDUPS "$ln\n";
-			}
-			elsif (two_calls_are_same_but_look_different($ref, $alt, $prev_ref, $prev_alt, $pos-$prev_pos) eq "BAD")
-			{
-			    die("These two calls allegedly overlap $name and $prev_name, and we passed these bad var values into two_calls_are_same_but_look_different: $ref, $alt, $prev_ref, $prev_alt, $pos-$prev_pos");
-			}
-			else #must be true - is a dup, but does not look like it - mark is VCF so can check if is working
-			{
-			if ( ($prev_name eq "cortex_UNION_BC_var_32058_sub_indel_1")||($name eq "cortex_UNION_BC_var_32058_sub_indel_1") )
-			    {
-				print " Our vars ARE cryptic\n";
-			    }
+    my $ref_fa = get_ref_fasta($list_ref_fasta); 
+    #my $bname = basename($file);
+    #my $cleaned_file = $tmpdir.'/'."$bname".".cleaned";
+    my $final_file = $file.".clean.sorted";
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --tag PV LEFT $file $ref_fa  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl | grep -v vcf_remove_dupes.pl  > $final_file";
+    print "$cmd1\n";
+    my $ret1 = qx{$cmd1};
+    print "$ret1\n";
 
 
-			    $sp[6] =~ s/PASS//;
-			    if ($sp[6] eq "")
-			    {
-				$sp[6]="NON_OBVIOUS_DUP";
-			    }
-			    else
-			    {
-				$sp[6] = $sp[6].",NON_OBVIOUS_DUP";
-			    }
-			    print RMDUPS join("\t", @sp);
-			    print RMDUPS "\n";
-			}
-		    }
-		    else  ## calls dont overlap
-		    {
-			print RMDUPS join("\t", @sp);
-			print RMDUPS "\n";
-		    }
-		    
-		}
-		else#not a SNP and tis is a RAW file - just print:
-		{
-		    print RMDUPS join("\t", @sp);
-		    print RMDUPS "\n";
-		}
+    ##now sort
+    #
+    #my $sortcmd = "(cat $cleaned_file  | head -100 | grep ^#; cat $cleaned_file  | grep -v ^# | sort -k1,1d -k2,2n;) > $final_file";
+    #qx{$sortcmd};
 
-	    }
 
-	    $prev_chr = $chr;
-	    $prev_pos = $pos;
-	    $prev_name = $name;
-	    $prev_ref = $ref;
-	    $prev_alt = $alt;
-	}
-    }
-    close(SORTED);
-    close(RMDUPS);
-	  
-    
-    ## Now remove variants which overlap with each other.
-    my %safe_vars=();
-    foreach my $chrpos (keys %chrpos_to_var_overlapping)
-    {
-	my $vars = $chrpos_to_var_overlapping{$chrpos};
-	if ($vars !~ /ZAMSPLITTER/)
-	{
-	    if (!exists $safe_vars{$vars})
-	    {
-		$safe_vars{$vars}=1;
-	    }
-	    else
-	    {
-		#either it exists, and is makred as 1 - nothing to do
-		#or exists but is marked as 0, so leave it 
-	    }
-	}
-	else
-	{
-	    my @spvars = split(/ZAMSPLITTER/, $vars);
-	    foreach my $sp (@spvars)
-	    {
-		$safe_vars{$sp}=0;
-	    }
-	}
-    }
-    ## Now remove variants where the ref allele does not match the ref allele at that position in the ref (mapping error)
-    
+    ## Now remove variants where the ref allele does not match the ref allele at that position in the ref (mapping error)    
     ## <<<< fill in
 
-
-    my $latest = $rmdups_file; ## <<< might later make this the file you get after removing vars where the ref allele  doesnt match the ref allele
-    my $final_file = $file.".clean.sorted";
-    open(FINAL, ">".$final_file)||die("Cannot open $final_file");
-    open(LATEST, $latest)||die("Cannot open latest file - $latest");
-    while(<LATEST>)
-    {
-	my $l = $_;
-	if ($l =~ /^\#/)
-	{
-	    print FINAL $l;
-	}
-	else
-	{
-	    chomp $l;
-	    my @sp = split(/\t/, $l);
-	    my $name = $sp[2];
-	    if (exists $safe_vars{$name})
-	    {
-		if ($safe_vars{$name}==1)
-		{
-		    print FINAL "$l\n";
-		}
-		else
-		{
-		    
-		    my $filter = $sp[6];
-		    $filter =~ s/PASS//;
-		    if ($filter !~ /OVERLAP/)
-		    {
-			$filter = $filter."OVERLAP";
-		    }
-		    $sp[6]=$filter;
-		    print FINAL join("\t", @sp);
-		    print FINAL "\n";
-		}
-	    }
-	}
-    }
-    close(LATEST);
-    close(FINAL);
 
 }
 
@@ -1456,6 +1259,10 @@ sub get_number_samples
 
 sub run_checks
 {
+    if ($vcftools_dir eq "/path/to/vcftools/dir")
+    {
+	die("You must specify the VCFTools directory, either on the commandline with --vcftools_dir, or by editing run_calls.pl manually (it's highlighted for you at the top of the file)\n");
+    }
     if ($use_ref eq "no")
     {
 	$number_of_colours = get_number_samples($fastaq_index);
@@ -1820,139 +1627,9 @@ sub get_min
     }
 }
 
-## we assume we know these calls overlap
-sub two_calls_are_same_but_look_different
-{
-    my ($ref1, $alt1, $ref2, $alt2, $diff_in_start_pos) = @_;
-
-    my $ret = "false";
-    
-    if (length($ref1) - length($alt1) != length($ref2) - length($alt2) )
-    {
-	return $ret;;
-    }
-    if (length(get_max(length($ref1) ,length($alt1))) != length(get_max(length($ref2) ,length($alt2) )) )
-    {
-	return $ret;
-    }
-    if (length(get_min(length($ref1) ,length($alt1))) != length(get_min(length($ref2) ,length($alt2) )) )
-    {
-	return $ret;
-    }
-
-    if (length($ref1) > length($alt1))
-    {
-	##compare ref alleles
-	$ret = two_alleles_are_offset($ref1, $ref2, $diff_in_start_pos);
-    }
-    elsif (length($alt1) > length($ref1) )
-    {
-	##compare alt alleles
-	$ret=  two_alleles_are_offset($alt1, $alt2, $diff_in_start_pos);
-    }
-    
-    return $ret;
-}
-
-
-sub two_alleles_are_offset
-{
-    my ($str1, $str2, $diff) = @_;
-    
-    if ( ($diff>length($str1)) || ($diff>length($str2)) )
-    {
-	return "BAD";
-    }
-    my $tmp1 = substr($str1, $diff);
-    my $tmp2 = substr($str2, -$diff);
-    if ($tmp1 eq $tmp2)
-    {
-	return "true";
-    }
-    
-    my $tmp3 = substr($str1, -$diff);
-    my $tmp4 = substr($str2,  $diff);
-    if ($tmp3 eq $tmp4)
-    {
-	return "true";
-    }
-    
-    return "false";
-
-}
-
-
-## so I know which calls overlap other calls. Ignore precise duplicates (calls which have same chr pos ref and alt)
-sub make_mask
-{
-    my ($file, $href, $href_to_ignore) = @_;
-
-    open(FILE, $file)||die("Cannot open $file");
-    my $prev_chr="";
-    my $prev_pos=-1;
-    my $prev_ref="Z";
-    my $prev_alt="Z";
-    while (<FILE>)
-    {
-	my $ln = $_;
-	chomp $ln;
-	if ($ln !~ /^\#/)
-	{
-	    my @sp = split(/\t/, $ln);
-	    if (scalar (@sp) != 9 + scalar(@samples))
-	    {
-		die("This line in $file is invalid:\n$ln\n");
-	    }
-	    my $chr = $sp[0];
-	    my $pos = $sp[1];
-	    my $name= $sp[2];
-	    my $ref = $sp[3];
-	    my $alt = $sp[4];
-	    my $j;
-	    
-	    if ( ($chr eq $prev_chr) && ($pos==$prev_pos) && ($ref eq $prev_ref) && ($alt eq $prev_alt)) 
-	    {
-                ## ignore if is identical to previous one
-		$href_to_ignore->{$name}=1;
-	    }
-	    else
-	    {
-		mark_mask($href, $chr, $pos, $name, length($ref));
-	    }		
-	    $prev_chr = $chr;
-	    $prev_pos = $pos;
-	    $prev_ref = $ref;
-	    $prev_alt = $alt;
-
-	    
-	}
-    }
-    close(FILE);
-
-    
-}
 
 
 
-sub mark_mask
-{
-    my ($href_mask, $ch, $po, $nam, $len) = @_;
-    ##mark out mask of the genome
-    my $j;
-    for ($j=0; $j<$len; $j++)
-    {
-	my $posn = $po+$j;
-	if (!exists $href_mask->{$ch."_".$posn})
-	{
-	    $href_mask->{$ch."_".$posn}=$nam;
-	}
-	else
-	{
-	    $href_mask->{$ch."_".$posn}=$href_mask->{$ch."_".$posn}."ZAMSPLITTER".$nam;
-	}
-    }
-
-}
 
 sub print_build_stats
 {
@@ -1961,35 +1638,18 @@ sub print_build_stats
 }
 
 
-
-sub two_calls_overlap
+sub get_ref_fasta
 {
-    # name, chrom, pos, refallele,  same for prev
-    my ($n, $c, $p, $r, $prev_n, $prev_c, $prev_p, $prev_r) = @_;
-    
-    if ($c ne $prev_c)
+    my ($list) = @_;
+    my $out = $outdir_vcfs."temp_ref.fa";
+    open(LI, $list)||die();
+    while (<LI>)
     {
-	return "no"; #different chroms
+	my $lyn = $_;
+	chomp $lyn;
+	my $cmd ="cat $lyn >> $out";
+	qx{$cmd};
     }
-    
-    my $they_overlap = "no";
-    
-    if ($prev_p==$p)
-    {
-	$they_overlap = "yes";
-    }
-    elsif ($prev_p<$p)
-    {
-	if ($prev_p+length($prev_r)-1 > $p)
-	{
-	    $they_overlap = "yes";
-	}
-    }
-    else
-    {
-	die("prev pos $p > current pos $p");
-    }
-    
-    return $they_overlap;
+    close(LI);
+    return $out;
 }
-
