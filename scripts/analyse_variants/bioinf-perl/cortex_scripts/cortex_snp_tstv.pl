@@ -105,7 +105,7 @@ print "Ts: ".num2str($num_of_transitions)."; " .
 if($num_of_transversions > 0)
 {
   print sprintf("%.3f", $num_of_transitions / $num_of_transversions) .
-        " Tv / Ts\n";
+        " Ts / Tv\n";
 }
 
 print "Total SNPs: ".num2str($num_of_transitions+$num_of_transversions)."\n";

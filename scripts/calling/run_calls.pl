@@ -44,7 +44,7 @@ BEGIN
 	    );
 }
 
-my $proc_calls = $analyse_variants_dir."process_calls.alex.LOCAL.pl";
+my $proc_calls = $analyse_variants_dir."process_calls.pl";
 if (!(-e $proc_calls))
 {
     die("Cannot find process_calls script: $proc_calls\n");

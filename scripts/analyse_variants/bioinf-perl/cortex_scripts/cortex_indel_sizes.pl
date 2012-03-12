@@ -92,7 +92,15 @@ while(defined($flank_5p))
 close($covg_handle);
 
 print "indel_size".$csvsep."count\n";
-for(my $i = 0; $i < @indel_sizes; $i++)
+
+my $i = 0;
+
+while(!defined($indel_size[$i]) || $indel_size[$i] == 0)
+{
+  $i++;
+}
+
+for(; $i < @indel_sizes; $i++)
 {
   print $i . $csvsep . (defined($indel_sizes[$i]) ? $indel_sizes[$i] : 0) . "\n";
 }
