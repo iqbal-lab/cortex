@@ -35,7 +35,7 @@ if(@ARGV == 0)
 {
   my $fastn_handle = open_stdin();
   
-  $max_read_length = get_max_read_in_fastn($fastn_handle);
+  $max_read_length = get_max_read_in_fastn($fastn_handle, "stdin");
   
   close($fastn_handle);
 }
@@ -44,17 +44,20 @@ else
   for my $file (@ARGV)
   {
     my $fastn_handle;
+    my $descriptor;
   
     if($file eq "-")
     {
       $fastn_handle = open_stdin();
+      $descriptor = "stdin";
     }
     else
     {
       open($fastn_handle, $file) or die("Cannot open FASTA/Q file '$file'");
+      $descriptor = $file;
     }
     
-    $max_read_length = max(get_max_read_in_fastn($fastn_handle),
+    $max_read_length = max(get_max_read_in_fastn($fastn_handle, $descriptor),
                            $max_read_length);
     
     close($fastn_handle);
@@ -82,11 +85,11 @@ sub open_stdin
 
 sub get_max_read_in_fastn
 {
-  my ($handle) = @_;
+  my ($handle, $descriptor) = @_;
 
   my $max_length = 0;
 
-  my $fastn_file = new FASTNFile($handle);
+  my $fastn_file = new FASTNFile($handle, $descriptor);
 
   if($fastn_file->is_fastq())
   {

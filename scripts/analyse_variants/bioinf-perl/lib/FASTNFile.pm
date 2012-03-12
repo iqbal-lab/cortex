@@ -15,8 +15,7 @@ our @EXPORT = qw(read_all_from_files estimate_fastq_size);
 
 sub new
 {
-  my $class = shift;
-  my $handle = shift;
+  my ($class, $handle, $descriptor) = @_;
   my $next_line = <$handle>;
   my $is_fastq = -1;
   
@@ -35,9 +34,11 @@ sub new
   }
 
   my $self = {
+      _descriptor => $descriptor,
       _handle => $handle,
       _next_line => $next_line,
-      _is_fastq => $is_fastq
+      _is_fastq => $is_fastq,
+      _line_number => 1
   };
 
   bless $self, $class;
@@ -63,6 +64,7 @@ sub read_line
   my $handle = $self->{_handle};
   
   $self->{_next_line} = <$handle>;
+  $self->{_line_number}++;
   
   return $temp_line;
 }
@@ -158,19 +160,29 @@ sub read_next_fastq
     croak("FASTQ file - invalid sequence line '".substr($sequence,0,50)."'");
   }
 
-  for(my $i = 0; $i < $num_of_seq_lines && defined($line = $self->read_line()); $i++)
+  for(my $i = 0;
+      length($quality) < length($sequence) &&
+      defined($line = $self->read_line());
+      $i++)
   {
     chomp($line);
     $quality .= $line;
   }
   
-  if($quality eq "") {
+  if($quality eq "")
+  {
     croak("FASTQ file ended early - expected quality line");
   }
   elsif(length($sequence) != length($quality))
   {
+    print STDERR '@'."$title\n";
+    print STDERR "$sequence\n";
+    print STDERR "$quality\n";
+
     croak("FASTQ file: length of sequence (".length($sequence).") does not match " .
-          "length of quality line (".length($quality).") for read '$title'");
+          "length of quality line (".length($quality).") for read '$title' " .
+          (defined($self->{_descriptor}) ? "in ".$self->{_descriptor}.":"
+                                         : "on line ") . $self->{_line_number});
   }
 
   return ($title, $sequence, $skip, $quality);

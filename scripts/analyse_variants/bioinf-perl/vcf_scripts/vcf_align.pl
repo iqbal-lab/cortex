@@ -21,12 +21,13 @@ sub print_usage
   }
 
   print STDERR "" .
-"Usage: ./vcf_align.pl [--tag <name>] <LEFT|RIGHT> <in.vcf> <ref1.fa ..>\n" .
+"Usage: ./vcf_align.pl [--tag <name>|--remove_ref_mismatch] <LEFT|RIGHT> <in.vcf> <ref1.fa ..>\n" .
 "  Shift clean indel variants to the left/right.  Variants that do not match\n".
 "  the reference and those that are not clean indels are printed unchanged.\n" .
 "  FASTA entry names must match VCF CHROM column.  If <in.vcf> is '-', reads\n".
 "  from STDIN.\n".
-"  --tag <tag_name>   INFO tag to label variation in position.\n";
+"  --tag <tag_name>       INFO tag to label variation in position\n".
+"  --remove_ref_mismatch  Remove variants that do not match the reference\n";
   exit;
 }
 
@@ -36,11 +37,24 @@ if(@ARGV < 3)
 }
 
 my $tag;
+my $remove_ref_mismatch = 0;
 
-if($ARGV[0] =~ /^-?-tag$/i)
+while(@ARGV > 3)
 {
-  shift;
-  $tag = shift;
+  if($ARGV[0] =~ /^-?-tag$/i)
+  {
+    shift;
+    $tag = shift;
+  }
+  elsif($ARGV[0] =~ /^-?-remove_ref_mismatch$/i)
+  {
+    shift;
+    $remove_ref_mismatch = 1;
+  }
+  else
+  {
+    last;
+  }
 }
 
 my $justify = lc(shift);
@@ -105,6 +119,7 @@ my $vcf_entry;
 
 my $num_ref_mismatch = 0;
 my $num_of_variants = 0;
+my $num_of_variants_moved = 0;
 
 my %missing_chrs = ();
 
@@ -121,6 +136,9 @@ while(defined($vcf_entry = $vcf->read_entry()))
 
   # Get inserted or deleted sequence
   my $indel = get_clean_indel($vcf_entry);
+  
+  # Check if ref mismatch
+  my $ref_mismatch = 0;
 
   if(!defined($ref_genomes{$chr}))
   {
@@ -130,6 +148,7 @@ while(defined($vcf_entry = $vcf->read_entry()))
         uc($ref_allele))
   {
     $num_ref_mismatch++;
+    $ref_mismatch = 1;
   }
   elsif(defined($indel))
   {
@@ -172,18 +191,26 @@ while(defined($vcf_entry = $vcf->read_entry()))
     }
 
     # Update VCF entry values
-    # $new_pos is 0-based, VCF POS is 1-based
-    $vcf_entry->{'true_POS'} = $new_pos+1;
-    $vcf_entry->{'POS'} = $new_pos;
-    
-    $vcf_entry->{length($ref_allele) > 0 ? 'true_REF' : 'true_ALT'} = $new_indel;
+    if($var_start != $new_pos)
+    {
+      $num_of_variants_moved++;
 
-    my $prior_base = substr($ref_genomes{$chr}, $new_pos-1, 1);
-    $vcf_entry->{'REF'} = $prior_base.$vcf_entry->{'true_REF'};
-    $vcf_entry->{'ALT'} = $prior_base.$vcf_entry->{'true_ALT'};
+      # $new_pos is 0-based, VCF POS is 1-based
+      $vcf_entry->{'true_POS'} = $new_pos+1;
+      $vcf_entry->{'POS'} = $new_pos;
+    
+      $vcf_entry->{length($ref_allele) > 0 ? 'true_REF' : 'true_ALT'} = $new_indel;
+
+      my $prior_base = substr($ref_genomes{$chr}, $new_pos-1, 1);
+      $vcf_entry->{'REF'} = $prior_base.$vcf_entry->{'true_REF'};
+      $vcf_entry->{'ALT'} = $prior_base.$vcf_entry->{'true_ALT'};
+    }
   }
 
-  $vcf->print_entry($vcf_entry);
+  if(!$ref_mismatch || !$remove_ref_mismatch)
+  {
+    $vcf->print_entry($vcf_entry);
+  }
 }
 
 my @missing_chr_names = sort keys %missing_chrs;
@@ -198,8 +225,13 @@ if($num_ref_mismatch > 0)
 {
   print STDERR "vcf_align.pl: " .
                pretty_fraction($num_ref_mismatch, $num_of_variants) . " " .
-               "variants removed for not matching the reference\n";
+               "variants did not match the reference " .
+               ($remove_ref_mismatch ? "(removed)" : "(left in)") . "\n";
 }
+
+print STDERR "vcf_align.pl: " .
+             pretty_fraction($num_of_variants_moved, $num_of_variants) . " " .
+             "variants moved to the $justify\n";
 
 close($vcf_handle);
 
