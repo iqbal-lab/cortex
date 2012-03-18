@@ -99,7 +99,7 @@ typedef struct
   int novelseq_min_percentage_novel;
   char novelseq_outfile[MAX_FILENAME_LEN];
 
-  double manually_entered_seq_error_rate;
+  long double manually_entered_seq_error_rate;
   boolean manually_override_error_rate;
   boolean use_snp_alleles_to_estim_seq_err_rate;
   boolean dump_aligned_overlap_binary;
@@ -209,4 +209,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
 				 int* wk_col1, int* wk_col2, boolean* using_1net, boolean* using_2net, char* file_1net_bins, double* min_llk);
 
 int parse_arguments_for_genotyping(CmdLine* cmdline, char* argmt, char* msg);
+int parse_novelseq_args(char* arg, int* array_colours_to_look_in, int* num_cols_in_look_list,
+			int* array_colours_to_avoid,  int* num_cols_in_avoid_list,
+			int* min_contig_len, int* min_percentage_novel, char* outfile);
 #endif /* CMD_LINE_H_ */

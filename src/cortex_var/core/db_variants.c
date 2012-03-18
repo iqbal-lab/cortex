@@ -757,7 +757,7 @@ int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colou
   if ( (len==0) || (len==1) )
     {
       *too_short=true;
-      return -1;
+      return 0;//previously this returned -1, which seems perverse to me
     }
 
   //note start at node 1, avoid first node

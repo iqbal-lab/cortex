@@ -797,12 +797,12 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   // and finally, walk along allele2, and consider only sections unique to allele2
 
 
-  int working_array_self_count=0;
-  int working_array_shared_count=0;
+  //int working_array_self_count=0;
+  //int working_array_shared_count=0;
   double log_prob_data=0;
   double hap_D  = (double) (model_info->ginfo->total_sequence[colour_indiv])/(double) (2*model_info->genome_len) ;
   double hap_D_over_R = hap_D/(model_info->ginfo->mean_read_length[colour_indiv]);
-  int eff_r_plus_one = model_info->ginfo->mean_read_length[colour_indiv] - db_graph->kmer_size;
+  //int eff_r_plus_one = model_info->ginfo->mean_read_length[colour_indiv] - db_graph->kmer_size;
   //printf("total sequence is %qd and genome len is %qd , and hapD is %f and hapD over R is %f\n", model_info->ginfo->total_sequence[colour_indiv], model_info->genome_len, hap_D, hap_D_over_R);
 
   //Option 1
@@ -1293,7 +1293,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   double log_prob_data=0;
   double hap_D  = (double) (model_info->ginfo->total_sequence[colour_indiv])/(double) (2*model_info->genome_len) ;
   double hap_D_over_R = hap_D/(model_info->ginfo->mean_read_length[colour_indiv]);
-  int eff_r_plus_one = model_info->ginfo->mean_read_length[colour_indiv] - db_graph->kmer_size;
+  //int eff_r_plus_one = model_info->ginfo->mean_read_length[colour_indiv] - db_graph->kmer_size;
 
 
   //walk the first allele

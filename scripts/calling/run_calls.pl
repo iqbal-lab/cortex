@@ -26,7 +26,7 @@ my $cortex_dir;
 my $isaac_bioinf_dir;
 
 print "*********** Command-line used was : *********************\n";
-print $0." ".join(" ",@ARGV)."\n";
+print "perl ".$0." ".join(" ",@ARGV)."\n";
 print "*********************************************************\n";
 
 BEGIN
@@ -83,7 +83,7 @@ my (
         $qthresh,              $dups,           $homopol,
         $mem_height,           $mem_width, $binary_colourlist,
         $max_read_len,         $format, $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
-        $expt_type
+        $expt_type,            $do_union, $manual_override_cleaning
 );
 
 #set defaults
@@ -127,6 +127,8 @@ $genome_size=0;
 $refbindir="";
 $list_ref_fasta = "nonexistent_nonsense";
 $expt_type = "";
+$do_union = "no";
+$manual_override_cleaning="no";
 my $pooled_colour = -1;    #deprecated
 my $help = '';    #default false
 
@@ -171,7 +173,8 @@ my $help = '';    #default false
     'expt_type:s'          =>\$expt_type,
     'list_ref_fasta:s'     =>\$list_ref_fasta,
     'vcftools_dir:s'       =>\$vcftools_dir,
-    'help'                 =>\$help
+    'manual_override_cleaning:s' => \$manual_override_cleaning,
+    'do_union:s'         =>\$do_union
 );
 
 if ($help)
@@ -213,6 +216,8 @@ if ($help)
 	print "--expt_type\t\t\t\tAs in Cortex input\n";
 	print "--list_ref_fasta\t\t\t\tFile listing the fasta files (one per chromosome) for the reference. Needed for the PD caller\n";
 	print "--vcftools_dir\t\t\t\tVCFtools is used to generate VCFs - mandatory to either specify this on cmd-line, or manually edit the path at the top of this script\n";
+	print "--do_union\t\t\t\tHaving made per-sample callsets (per kmer and cleaning), should we combine all calls into a union set, and genotype all samples? Valid values are yes and no. Default is no.\n";
+	print "--manual_override_cleaning\t\t\t\tYou can specify specific thresholds for specific samples by giving a file here, each line has three (tab sep) columns: sample name, kmer, and comma-separated thresholds\nDon't use this unless you know what you are doing\n";
 	print "--help\t\t\t\tprints this\n";
 	exit();
 }
@@ -285,7 +290,7 @@ print "********************************************\n";
 print "Clean binaries\n";
 print "********************************************\n";
 my %sample_to_cleaned_bin=(); #sample -> kmer -> cleaning -> $binary
-if ( ($do_auto_cleaning eq "yes") || ($do_user_spec_cleaning eq "yes"))
+if ( ($do_auto_cleaning eq "yes") || ($do_user_spec_cleaning eq "yes") || ($manual_override_cleaning ne "no") )
 {
     build_all_cleaned_binaries(\%sample_to_uncleaned, \%sample_to_uncleaned_log,
 			       \%sample_to_uncleaned_covg_distrib,
@@ -293,7 +298,8 @@ if ( ($do_auto_cleaning eq "yes") || ($do_user_spec_cleaning eq "yes"))
 			       $outdir_binaries, 
 			       $cortex_dir, $mem_height, $mem_width, $max_var_len,
 			       $do_auto_cleaning, $auto_below, $auto_above,
-			       $do_user_spec_cleaning, $user_min_clean, $user_max_clean, $user_clean_step, $genome_size);
+			       $do_user_spec_cleaning, $user_min_clean, $user_max_clean, $user_clean_step, $genome_size,
+	                       $manual_override_cleaning);
 }
 else
 {
@@ -406,7 +412,10 @@ foreach my $k (@kmers)
 	    }
 
 	    my $log = $dir_for_per_sample_calls.$sam."_varcalling_log_k".$k."_clean".$cleaning.".calling_on_this_sample_only.log";
-
+	    if (-e $log)
+	    {
+		$log = $log.".again";
+	    }
 
 	    if (!( ($bc_already_done eq "yes") && ($pd_already_done eq "yes")))##not all done
 		{
@@ -425,197 +434,209 @@ foreach my $k (@kmers)
 
 
 
+
 ##################################
 ## 4. Make union callsets
 ##################################
-
-print "********************************************\n";
-print "Make union variant callsets\n";
-print "********************************************\n";
-
-
-my $tmpdir = $outdir."tmp_filelists";
-
-if (!(-d  $tmpdir))
+my %vcfs_needing_post_processing=();
+if ($do_union eq "yes")
 {
-    my $cmd1 = "mkdir -p $tmpdir";
-    qx{$cmd1};
-}
-
-my $union_of_bc_callsets = $outdir_calls."union_all_bc_callsets";
-my $max_read_len_bc_union=0;
-if ($do_bc eq "yes")
-{
-    my $bc_call_list  = $tmpdir."/list_bc_callfiles";
-    open(BCCALL, ">".$bc_call_list)||die();
-    foreach my $k (@kmers)
+    print "********************************************\n";
+    print "Make union variant callsets\n";
+    print "********************************************\n";
+    
+    
+    my $tmpdir = $outdir."tmp_filelists";
+    
+    if (!(-d  $tmpdir))
     {
-	foreach my $sam (@samples)
+	my $cmd1 = "mkdir -p $tmpdir";
+	qx{$cmd1};
+    }
+    
+    my $union_of_bc_callsets = $outdir_calls."union_all_bc_callsets";
+    my $max_read_len_bc_union=0;
+    if ($do_bc eq "yes")
+    {
+	my $bc_call_list  = $tmpdir."/list_bc_callfiles";
+	open(BCCALL, ">".$bc_call_list)||die();
+	foreach my $k (@kmers)
 	{
-	    foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}{$k}})
+	    foreach my $sam (@samples)
 	    {
-		print BCCALL $sample_to_bc_callfile{$sam}{$k}{$cleaning};
-		print BCCALL "\n";
+		foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}{$k}})
+		{
+		    print BCCALL $sample_to_bc_callfile{$sam}{$k}{$cleaning};
+		    print BCCALL "\n";
+		}
 	    }
 	}
-    }
-    close(BCCALL);
-    my $bc_cmd = "perl $make_union --filelist $bc_call_list --varname_stub UNION_BC > $union_of_bc_callsets 2>&1";
-    if (! -e($union_of_bc_callsets))
-    {
-	print "$bc_cmd\n";
-	my $bc_ret = qx{$bc_cmd};
-    }
-    $max_read_len_bc_union = get_max_read_len_of_fasta($union_of_bc_callsets)+$last_kmer+10;
-}
-
-my $union_of_pd_callsets = $outdir_calls."union_all_pd_callsets";
-my $max_read_len_pd_union=0;
-if ($do_pd eq "yes")
-{
-
-    my $pd_call_list  = $tmpdir."/list_pd_callfiles";
-    open(PDCALL, ">".$pd_call_list)||die();
-    foreach my $k (@kmers)
-    {
-	foreach my $sam (@samples)
+	close(BCCALL);
+	my $bc_cmd = "perl $make_union --filelist $bc_call_list --varname_stub UNION_BC > $union_of_bc_callsets 2>&1";
+	if (! -e($union_of_bc_callsets))
 	{
-	    foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}->{$k}})
+	    print "$bc_cmd\n";
+	    my $bc_ret = qx{$bc_cmd};
+	}
+	$max_read_len_bc_union = get_max_read_len_of_fasta($union_of_bc_callsets)+$last_kmer+10;
+    }
+    
+    my $union_of_pd_callsets = $outdir_calls."union_all_pd_callsets";
+    my $max_read_len_pd_union=0;
+    if ($do_pd eq "yes")
+    {
+	
+	my $pd_call_list  = $tmpdir."/list_pd_callfiles";
+	open(PDCALL, ">".$pd_call_list)||die();
+	foreach my $k (@kmers)
+	{
+	    foreach my $sam (@samples)
 	    {
-		print PDCALL $sample_to_pd_callfile{$sam}{$k}{$cleaning};
-		print PDCALL "\n";
+		foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}->{$k}})
+		{
+		    print PDCALL $sample_to_pd_callfile{$sam}{$k}{$cleaning};
+		    print PDCALL "\n";
+		}
 	    }
 	}
+	close(PDCALL);
+	
+	my $pd_cmd = "perl $make_union --filelist $pd_call_list --varname_stub UNION_PD > $union_of_pd_callsets 2>&1";
+	if (!(-e $union_of_pd_callsets))
+	{
+	    print "$pd_cmd\n";
+	    my $pd_ret = qx{$pd_cmd};
+	}
+	$max_read_len_pd_union = get_max_read_len_of_fasta($union_of_pd_callsets)+$last_kmer+10;
     }
-    close(PDCALL);
-
-   my $pd_cmd = "perl $make_union --filelist $pd_call_list --varname_stub UNION_PD > $union_of_pd_callsets 2>&1";
-    if (!(-e $union_of_pd_callsets))
+    
+    
+    
+    
+    if ( ($expt_type ne "") && ($genome_size != 0) )
     {
-	print "$pd_cmd\n";
-	my $pd_ret = qx{$pd_cmd};
-    }
-    $max_read_len_pd_union = get_max_read_len_of_fasta($union_of_pd_callsets)+$last_kmer+10;
-}
-
-
-
-
-if ( ($expt_type ne "") && ($genome_size != 0) )
-{
-
+	
 ######################################################################################################
 ## 5. Genotype te union callset on ALL samples, using multicoloured graph with lowest k and lowest cleaning
 ##    Note it has to be the lowest kmer, otherwise some calls will have flanks and branches which are shorter than our kmer
 ######################################################################################################
-
-    print "********************************************\n";
-    print "Genotype the union callset\n";
-    print "********************************************\n";
-    
-    
-    my @ordered_list_binaries=();
-    push @ordered_list_binaries, $k_to_refbin{$first_kmer};
-    foreach my $sam (@samples)
-    {	
-	my $min =999999999;
 	
-	foreach my $c (keys %{$sample_to_cleaned_bin{$sam}{$first_kmer}})
-	{
-	    print "For $sam, $first_kmer, cleanign thresh $c\n";
-	    if ($c<$min)
+	print "********************************************\n";
+	print "Genotype the union callset\n";
+	print "********************************************\n";
+	
+	
+	my @ordered_list_binaries=();
+	push @ordered_list_binaries, $k_to_refbin{$first_kmer};
+	foreach my $sam (@samples)
+	{	
+	    my $min =999999999;
+	    
+	    foreach my $c (keys %{$sample_to_cleaned_bin{$sam}{$first_kmer}})
 	    {
-		$min=$c;
+		print "For $sam, $first_kmer, cleanign thresh $c\n";
+		if ($c<$min)
+		{
+		    $min=$c;
+		}
+	    }
+	    push @ordered_list_binaries, $sample_to_cleaned_bin{$sam}{$first_kmer}{$min};
+	}
+	my $multicolour_list = make_multicol_filelist(\@ordered_list_binaries);
+## genotype all of the calls, called with all different kmers, on the max kmer
+	my $gt_bc_out="";
+	my $multicol_ctx_bin = get_right_binary($first_kmer, $cortex_dir, $number_of_colours); 
+	if ($do_bc eq "yes")
+	{
+	    
+	    $gt_bc_out = $outdir_calls.basename($union_of_bc_callsets).".genotyped";
+	    print "GT bc out is $gt_bc_out\n";
+	    my $gt_bc_log = $gt_bc_out.".log";
+	    
+	    if (!(-e $gt_bc_out))
+	    {
+		my $gt_bc_cmd = $multicol_ctx_bin." --colour_list $multicolour_list  --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour 0 --gt $union_of_bc_callsets,$gt_bc_out,BC --max_read_len $max_read_len_bc_union  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size > $gt_bc_log 2>&1  ";
+		print "$gt_bc_cmd\n";
+		my $gt_bc_ret = qx{$gt_bc_cmd};
+		print "$gt_bc_ret\n";
+	    }
+	    else
+	    {
+		print "$gt_bc_out already exists so no need to genotype the union of BC calls\n";
 	    }
 	}
-	push @ordered_list_binaries, $sample_to_cleaned_bin{$sam}{$first_kmer}{$min};
-    }
-    my $multicolour_list = make_multicol_filelist(\@ordered_list_binaries);
-## genotype all of the calls, called with all different kmers, on the max kmer
-    my $gt_bc_out="";
-    my $multicol_ctx_bin = get_right_binary($first_kmer, $cortex_dir, $number_of_colours); 
-    if ($do_bc eq "yes")
-    {
-
-	$gt_bc_out = $outdir_calls.basename($union_of_bc_callsets).".genotyped";
-	print "GT bc out is $gt_bc_out\n";
-	my $gt_bc_log = $gt_bc_out.".log";
-
-	if (!(-e $gt_bc_out))
-	{
-	    my $gt_bc_cmd = $multicol_ctx_bin." --colour_list $multicolour_list  --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour 0 --gt $union_of_bc_callsets,$gt_bc_out,BC --max_read_len $max_read_len_bc_union  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size > $gt_bc_log 2>&1  ";
-	    print "$gt_bc_cmd\n";
-	    my $gt_bc_ret = qx{$gt_bc_cmd};
-	    print "$gt_bc_ret\n";
+	my $gt_pd_out="";
+	if ($do_pd eq "yes")
+	{	
+	    $gt_pd_out = $outdir_calls.basename($union_of_pd_callsets).".genotyped";
+	    my $gt_pd_log = $gt_pd_out."_pd_calls.log";
+	    
+	    if (!(-e $gt_pd_out))
+	    {
+		my $gt_pd_cmd = $multicol_ctx_bin." --colour_list $multicolour_list --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour 0  --gt $union_of_pd_callsets,$gt_pd_out,PD --max_read_len $max_read_len_pd_union  --print_colour_coverages  --experiment_type $expt_type --genome_size $genome_size > $gt_pd_log 2>&1  ";
+		print "$gt_pd_cmd\n";
+		my $gt_pd_ret = qx{$gt_pd_cmd};
+		print "$gt_pd_ret\n";
+	    }
+	    else
+	    {
+		print "$gt_pd_out already exists so no need to genotype the union of PD calls\n";
+	    }
 	}
-	else
-	{
-	    print "$gt_bc_out already exists so no need to genotype the union of BC calls\n";
-	}
-    }
-    my $gt_pd_out="";
-    if ($do_pd eq "yes")
-    {	
-	$gt_pd_out = $outdir_calls.basename($union_of_pd_callsets).".genotyped";
-	my $gt_pd_log = $gt_pd_out."_pd_calls.log";
 	
-	if (!(-e $gt_pd_out))
-	{
-	    my $gt_pd_cmd = $multicol_ctx_bin." --colour_list $multicolour_list --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour 0  --gt $union_of_pd_callsets,$gt_pd_out,PD --max_read_len $max_read_len_pd_union  --print_colour_coverages  --experiment_type $expt_type --genome_size $genome_size > $gt_pd_log 2>&1  ";
-	    print "$gt_pd_cmd\n";
-	    my $gt_pd_ret = qx{$gt_pd_cmd};
-	    print "$gt_pd_ret\n";
-	}
-	else
-	{
-	    print "$gt_pd_out already exists so no need to genotype the union of PD calls\n";
-	}
-    }
-
-
-
+	
+	
 ######################################################################################################
 ## 6. Make one VCF for BC and one for PD
 ######################################################################################################
+	
+	
+	print "********************************************\n";
+	print "Build union VCFs\n";
+	print "********************************************\n";
+	
+	
+	if (!(-d $outdir_vcfs))
+	{
+	    my $c = "mkdir -p $outdir_vcfs";
+	    qx{$c};
+	}
+	## build the VCFs of union calls
+	
+	print "\n******   Build initial (uncleaned) VCFs of union callsets  ***\n";
+	
+	
 
+	build_vcfs($gt_bc_out, "union_BC_calls", $number_of_colours, $outdir_vcfs."output_proc_union_bc", $outdir_vcfs, \%vcfs_needing_post_processing);
+	build_vcfs($gt_pd_out, "union_PD_calls", $number_of_colours, $outdir_vcfs."output_proc_union_pd", $outdir_vcfs, \%vcfs_needing_post_processing);
+	
+	
 
-    print "********************************************\n";
-    print "Build VCFs\n";
-    print "********************************************\n";
-    
-
-    if (!(-d $outdir_vcfs))
-    {
-	my $c = "mkdir -p $outdir_vcfs";
-	qx{$c};
-    }
-    ## build the VCFs of union calls
-
-    print "\n******   Build initial (uncleaned) VCFs of union callsets  ***\n";
-
-
-    my %vcfs_needing_post_processing=();
-    build_vcfs($gt_bc_out, "union_BC_calls", $number_of_colours, $outdir_vcfs."output_proc_union_bc", $outdir_vcfs, \%vcfs_needing_post_processing);
-    build_vcfs($gt_pd_out, "union_PD_calls", $number_of_colours, $outdir_vcfs."output_proc_union_pd", $outdir_vcfs, \%vcfs_needing_post_processing);
-
-    ##and build the VCFs for each of the individual callsets, for comparison
-    print "\n******   Build VCFs for each of the individual callsets   ***\n";
-
-    build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
-
+	
+        ##and build the VCFs for each of the individual callsets, for comparison
+	print "\n******   Build VCFs for each of the individual callsets   ***\n";
+	build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
+	
 ######################################################################################################
 ## 7. Post-process the VCFS - make a union, remove dupliate lines, remove variants where 
 ##    the ref allele does not match the reference. Check each line has right number of fields.
 ######################################################################################################
 
-    ## Now we have a bunch of VCFs, and we need to remove duplicate lines, sort them, 
-    print "\n****** Clean the union VCFs  ***\n";
-
-    clean_all_vcfs(\%vcfs_needing_post_processing);
-
-
-
+## Now we have a bunch of VCFs, and we need to remove duplicate lines, sort them, 
+	print "\n****** Clean the union VCFs  ***\n";
+    }
 }
+
+else  ##### if not making a union set
+{
+
+       ## build the VCFs for each of the individual callsets
+	print "\n******   Build VCFs for each of the individual callsets   ***\n";
+	build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
+	clean_all_vcfs(\%vcfs_needing_post_processing);
+}
+
+
 
 
 
@@ -788,11 +809,19 @@ sub build_vcfs
     }
     $cmd = $cmd."  > $log 2>&1" ;
 
-    print "$cmd\n";
+
     if ( (!(-e $directory.$string.".decomp.vcf"))  || (!(-e $directory.$string.".raw.vcf")) )
     {
+	print "$cmd\n";
 	my $ret = qx{$cmd};
 	print "$ret\n";
+    }
+    else
+    {
+	print $directory.$string.".decomp.vcf";
+	print " and ";
+	print $directory.$string.".raw.vcf";
+	print " both exist, so no need to rebuild\n";
     }
     $href_store_vcf_names->{$directory.$string.".decomp.vcf"}=1;
     $href_store_vcf_names->{$directory.$string.".raw.vcf"}=1;
@@ -871,7 +900,8 @@ sub build_all_cleaned_binaries
 	$outdir_binaries, #,$samplenames
 	$cortex_dir, $mem_height, $mem_width, $max_var_len,
 	$do_auto_cleaning, $auto_below, $auto_above,
-	$do_user_spec_cleaning, $user_min_clean, $user_max_clean, $user_clean_step, $g_size) = @_;
+	$do_user_spec_cleaning, $user_min_clean, $user_max_clean, $user_clean_step, $g_size,
+	$manual_override_cleaning_file) = @_;
 
 
 
@@ -888,7 +918,7 @@ sub build_all_cleaned_binaries
 		$href_sample_to_uncleaned_log, $href_sample_to_uncleaned_covg_distrib,
 		$do_auto_cleaning, $auto_below, $auto_above,
 		$do_user_spec_cleaning, $user_min_clean, $user_max_clean, $user_clean_step,
-		\@clean_threshes, $g_size);
+		\@clean_threshes, $g_size, $manual_override_cleaning_file);
 	    
 
 	    my $min = 9999999;
@@ -967,7 +997,7 @@ sub get_cleaning_thresholds
     my ($sampl, $km, $href_log, $href_covg,
 	$do_auto, $auto_below, $auto_above, 
 	$do_user, $user_min,   $user_max, $user_step,
-	$aref, $g_size) = @_;
+	$aref, $g_size, $manual_override_file) = @_;
 
     if ($do_auto eq "yes")
     {
@@ -981,6 +1011,47 @@ sub get_cleaning_thresholds
 	    push @$aref, $i;
 	}
     }
+
+    ##either way, you can also manually override and add some more thresholds
+    get_manually_specified_thresholds_for_this_sample($sampl, $km, $manual_override_file, $aref);
+
+}
+
+sub get_manually_specified_thresholds_for_this_sample
+{
+    my ($sample_name, $khmer, $file, $array_ref) = @_;
+    if ($file eq "no")
+    {
+	return;
+    }
+
+    my %tmp=();## to make sure we don't double-add thresholds that are already there
+    foreach my $c (@$aref)
+    {
+	$tmp{$c}=1;
+    }
+
+    open(F, $file)||die("Cannot open file $file\n");
+    while (<F>)
+    {
+	my $line = $_;
+	chomp $line;
+	my @sp = split(/\t/, $line);
+	if(  ($sp[0] eq $sample_name) && ($sp[1] eq $khmer) )
+	{
+	    my @sp2 = split(/,/, $sp[1]);
+	    foreach my $thresh (@sp2)
+	    {
+		if (!exists $tmp{$thresh})##if it isn't already on the list
+		{
+		    push @$array_ref, $thresh;
+		}
+	    }
+	    last;
+	}
+    }
+    close(F);
+    
 }
 
 sub get_auto_thresholds
@@ -1259,6 +1330,10 @@ sub get_number_samples
 
 sub run_checks
 {
+    if ( ($do_union ne "yes") && ($do_union ne "no") )
+    {
+	die("If you specify --do_union, you must give the value \"yes\" or \"no\"\n");
+    }
     if ($vcftools_dir eq "/path/to/vcftools/dir")
     {
 	die("You must specify the VCFTools directory, either on the commandline with --vcftools_dir, or by editing run_calls.pl manually (it's highlighted for you at the top of the file)\n");

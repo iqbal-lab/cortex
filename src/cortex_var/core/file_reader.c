@@ -63,7 +63,7 @@ void  load_paired_end_seq_into_graph_of_specific_person_or_pop(FILE* fp1, FILE* 
 //pass in bases_read to track amount of sequence read in, and bases_pass_filters_and_loaded to see how much passed filters and got into the graph
 void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, boolean pe, char* se_f, char* pe_f1, char* pe_f2,
 								   long long* bases_read, long long* bases_pass_filters_and_loaded,long long** readlen_count_array,
-								   int qual_thresh, boolean remv_dups_se, int remv_dups_pe, 
+								   int qual_thresh, boolean remv_dups_se, boolean remv_dups_pe, 
 								   boolean break_homopolymers, int homopol_limit, int ascii_fq_offset, FileFormat format, 
 								   int max_read_length, int colour, dBGraph* db_graph)
 {

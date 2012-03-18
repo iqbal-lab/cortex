@@ -52,7 +52,6 @@ void set_BF_var_over_rep(ModelLogLikelihoodsAndBayesFactors* stats, double val)
 boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info)
 {
   //demand variant is 100 times as likely as repeat
-  int thresh = 100; 
   int lthresh = log(100);
   double allele_balance_prior = 5;
 
@@ -113,7 +112,7 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
       prior_gt[2][i]=f*f;
     }
     
-  int mean_observed_cov = (annovar->BigThetaStart)/2;
+  //int mean_observed_cov = (annovar->BigThetaStart)/2;
   int total_covg_br1 = 0;
   int total_covg_br2 = 0;
   for (i=0; i<NUMBER_OF_COLOURS; i++)
@@ -156,8 +155,7 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
 
   
   //genotypes
-  int    gs[3] = {2,1,0};
-
+  // int    gs[3] = {2,1,0};
   //expected counts for each genotype, allowing for errors
   //(can think of the following as this vector sum gs*(1-err)+(2-gs)*err)
   // es is (2(1-err) , 1, err)  <<< this is how many copies of allele1 you expect to see if is hom1, het, hom2
@@ -524,8 +522,8 @@ double ignore_get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVar
       log_prob_var +=  thet * log(lambda_s[i]) - log_factorial(thet) ;
     }
   
-  double varsum=0;
-  double zeta = 0.128;
+  //double varsum=0;
+  //double zeta = 0.128;
   double p;
   double max_lik_p=0;
   double current_best=0;

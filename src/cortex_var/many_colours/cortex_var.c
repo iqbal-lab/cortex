@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo 
  * 
@@ -79,18 +78,6 @@ double  get_histogram_for_kmers_in_just_one_haplotype(long long** arr, int max, 
 }
 */
 
-long long calculate_mean(long long* array, long long len)
-{
-  long long sum=0;
-  long long num=0;
-  long long i;
-  for (i=0; i<len; i++)
-    {
-      sum += i*array[i];
-      num += array[i];
-    }
-  return  (sum/num);
-}
 
 void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* model_info)
 {
@@ -919,34 +906,35 @@ int main(int argc, char **argv){
   GraphAndModelInfo model_info;
   float repeat_geometric_param_mu = 0.8;
   float seq_err_rate_per_base;
-
-  if (cmd_line.manually_override_error_rate==false)
+  int i;
+  // need estimated sequencing error rates for genotyping
+  if ((cmd_line.manually_override_error_rate==false) && (cmd_line.use_snp_alleles_to_estim_seq_err_rate==false))
     {
-      seq_err_rate_per_base= 0.01;//default, but this may change below
-
-      /*      if (cmd_line.genome_size !=0)
+      //if you manually override, you set the same seq error rate for all colours (except the ref)
+      for (i=0; i<NUMBER_OF_COLOURS; i++)
 	{
-	  long long num_cov1_kmers = db_graph_count_covg1_kmers_in_func_of_colours(db_graph, &get_covg_in_union_all_colours_except_ref);
-	  long long num_cov2_kmers = db_graph_count_covg2_kmers_in_func_of_colours(db_graph, &get_covg_in_union_all_colours_except_ref);
-
-	  double estim_err = num_cov1_kmers/(num_cov2_kmers*(db_graph->kmer_size) );
-	  if ((estim_err<0.1) && (estim_err>0.001) )
+	  if (i != cmd_line.ref_colour)
 	    {
-	      printf("Estimating sequencing error rate of %f, using estimate num_kmers_covg_1/(kmer_size * num_kmers_covg_2), where num_kmers_covg1 = %qd, num_kmers_covg2 = %qd\n", estim_err, num_cov1_kmers, num_cov2_kmers);
-	      printf("This is used in error-cleaning and likelihood calcs. Remember you can override this with --estimated_error_rate\n");
-	      seq_err_rate_per_base=estim_err;
-	    }
-	  else
-	    {
-	      printf("Attempted to estimate the sequencing error rate, using estimate num_kmers_covg_1/(kmer_size * num_kmers_covg_2), where num_kmers_covg1 = %qd, num_kmers_covg2 = %qd. However the estimate we got, %f, was not believable so fell back on default value of 0.01. This is used in error-cleaning and likelihood calcs. Remember you can override this with --estimated_error_rate. One reason why this estimate may have failed is if the loaded binary was already cleaned\n",  num_cov1_kmers, num_cov2_kmers, estim_err);
+	      db_graph_info.seq_err[i]=0.01;
 	    }
 	}
-      */
     }
-  else
+  else if ((cmd_line.manually_override_error_rate==true) && (cmd_line.use_snp_alleles_to_estim_seq_err_rate==false))
     {
-      seq_err_rate_per_base=cmd_line.manually_entered_seq_error_rate;
+      for (i=0; i<NUMBER_OF_COLOURS; i++)
+	{
+	  if (i != cmd_line.ref_colour)
+	    {
+	      db_graph_info.seq_err[i]=cmd_line.manually_entered_seq_error_rate;
+	    }
+	}
     }
+  else //cmd_line.use_snp_alleles_to_estim_seq_err_rate==true
+    {
+      estimate_seq_error_rate_from_snps_for_each_colour(cmd_line.colourlist_snp_alleles, db_graph_info, db_graph, cmd_line.ref_colour);
+    }
+
+
 
   int num_chroms_in_expt=NUMBER_OF_COLOURS;
   if (cmd_line.expt_type==EachColourADiploidSample)

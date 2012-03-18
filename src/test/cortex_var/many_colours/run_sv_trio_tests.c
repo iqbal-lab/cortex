@@ -37,6 +37,7 @@
 #include <test_file_reader.h>
 #include <test_db_complex_genotyping.h>
 #include <test_genome_complexity.h>
+#include <test_seq_error_estimation.h>
 #include <CUnit.h>
 #include <Basic.h>
 
@@ -59,7 +60,7 @@ int  main()
   /* add the tests to the suites */
 
 
-
+  /*
 
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
@@ -203,7 +204,7 @@ int  main()
       CU_cleanup_registry();
       return CU_get_error();
     }
-  if (NULL == CU_add_test(pPopGraphSuite, "Load two people sharing an Alu, differing by sequence before and after the Alu. Find supernodes.", test_take_two_people_sharing_an_alu_and_find_supernodes))
+  if (NULL == CU_add_test(pPopGraphSuite, "Load two people sharing an Alu, differing by sequene before and after the Alu. Find supernodes.", test_take_two_people_sharing_an_alu_and_find_supernodes))
     {
       CU_cleanup_registry();
       return CU_get_error();
@@ -438,6 +439,14 @@ int  main()
 
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test genotyping of complex sites - test with two HLA-B alleles, using 1-net and 2-net error model", test_calc_log_likelihood_of_genotype_with_complex_alleles3 ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
+
+*/
+   if (NULL == CU_add_test(pPopGraphSuite, "Test estimation of sequencing error rate from fasta of pairs of SNP alleles (first allele known not to be present, second known to be homozygous present)", test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta ))
       {
 	CU_cleanup_registry();
 	return CU_get_error();

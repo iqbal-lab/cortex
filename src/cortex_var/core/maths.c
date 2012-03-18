@@ -87,3 +87,17 @@ int max_of_ints(int a, int b)
       return b;
     }
 }
+
+
+long long calculate_mean(long long* array, long long len)
+{
+  long long sum=0;
+  long long num=0;
+  long long i;
+  for (i=0; i<len; i++)
+    {
+      sum += i*array[i];
+      num += array[i];
+    }
+  return  (sum/num);
+}

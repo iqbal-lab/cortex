@@ -53,6 +53,56 @@ int isNumeric (const char * s)
   return *p == '\0';
 }
 
+boolean check_files_in_list_exist_ignoring_ref_line(char* filelist, char* error_msg, int ref_colour)
+{
+  error_msg[0]='\0';
+  if (ref_colour==-1)
+    {
+      strcat(error_msg,"You should not call --estim_e_with_snps unless you also specify --ref_colour\n");
+      return false;
+    }
+    if (filelist[0]=='\0')
+    {
+      strcat(error_msg,"Empty string in check_files_in_list_exist_ignoring_ref_line - call Zam - I only put this error msg in out of paranoia\n");
+      return false;
+    }
+
+  FILE* fp = fopen(filelist, "r");
+  if (fp==NULL)
+    {
+      printf("Cannot open %s\n", filelist);
+      exit(1);
+    }
+
+  char filename[MAX_LINE];
+  int count=-1;
+  while (feof(fp) ==0)
+    {
+      if (fgets(filename,MAX_LINE, fp) !=NULL)
+        {
+	  count++;
+	  if (count != ref_colour)
+	    {
+	      if (access(filename,R_OK)==-1) 
+		{
+		  sprintf(error_msg,"File %s on line %d (numbering lines from 0)  (corresponding to colour %d) of file %s cannot be accessed - bad path?\n", filename, count, count, filelist );
+		  return false;
+		}
+	    }
+	}
+    }
+  fclose(fp);
+
+  if (count!=NUMBER_OF_COLOURS)
+    {
+      sprintf(error_msg,"File %s is supposed to contain one line per colour in your graph (the assumption is your graph contains a ref-colour, plus a set of colours, all of which contain data from samples for who you want to estimate the sequencing error rate). However in fact it contains %d lines\n", filelist, count);
+      return false;
+      
+    }
+  return true;
+
+
+}
 
 boolean more_than_one_colour_in_list(char* file)
 {
@@ -1251,7 +1301,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	if (isNumeric(optarg))
 	  {
 	    cmdline_ptr->manually_override_error_rate=true;
-	    cmdline_ptr->manually_entered_seq_error_rate = strtod(optarg,NULL);
+	    cmdline_ptr->manually_entered_seq_error_rate = (long double) strtod(optarg,NULL);
 	  }
 	else
 	  {
@@ -1311,10 +1361,10 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    }
 
 	  parse_novelseq_args(optarg, 
-			      &(cmdline_ptr->novelseq_colours_search), &(cmdline_ptr->numcols_novelseq_colours_search),
-			      &(cmdline_ptr->novelseq_colours_avoid),  &(cmdline_ptr->numcols_novelseq_colours_avoid), 
+			      (cmdline_ptr->novelseq_colours_search), &(cmdline_ptr->numcols_novelseq_colours_search),
+			      (cmdline_ptr->novelseq_colours_avoid),  &(cmdline_ptr->numcols_novelseq_colours_avoid), 
 			      &(cmdline_ptr->novelseq_contig_min_len_bp), &(cmdline_ptr->novelseq_min_percentage_novel),
-			      &(cmdline_ptr->novelseq_outfile));
+			      (cmdline_ptr->novelseq_outfile));
 	  cmdline_ptr->print_novel_contigs=true;
 
 	  break;
@@ -1332,7 +1382,15 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
   
-
+  if (cmd_ptr->use_snp_alleles_to_estim_seq_err_rate==true)
+    {
+      char error_msg[2*MAX_FILENAME_LEN];
+      if (check_files_in_list_exist_ignoring_ref_line(cmd_ptr->colourlist_snp_alleles, error_msg, cmd_ptr->ref_colour)==false)
+	{
+	  printf("%s\n",error_msg);
+	  exit(1);
+	}
+    }
   if ( (cmd_ptr->do_genotyping_of_file_of_sites==true) && (cmd_ptr->max_read_length==0) )
     {
       char tmp[] = "If you use --gt, then you must specify --max_read_len (and it must be >= any of the reads (including flanks) in your input file).\n";
