@@ -74,6 +74,11 @@ void free_genotyping_element(GenotypingElement** element)
 void genotyping_element_assign(GenotypingElement* e1, GenotypingElement* e2)
 {
 
+  if ((e1==NULL)||(e2==NULL))
+    {
+      return;
+    }
+
   binary_kmer_assignment_operator( (*e1).kmer, (*e2).kmer);
   int i;
   for (i=0; i< MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2; i++)
@@ -92,6 +97,11 @@ void genotyping_element_initialise_from_normal_element(GenotypingElement* e1,
 						       boolean set_status_to_none)
 						    
 {
+  if (e2==NULL)
+    {
+      e1=NULL;
+      return;
+    }
 
   binary_kmer_assignment_operator( (*e1).kmer, (*e2).kmer);
   int i;
@@ -885,10 +895,17 @@ boolean db_genotyping_node_check_status_not_pruned_or_visited(GenotypingElement 
 
 
 void db_genotyping_node_set_status(GenotypingElement * node,NodeStatus status){
-  node->status = (char) status;
+  if (node!=NULL)
+    {
+      node->status = (char) status;
+    }
 }
+
 void db_genotyping_node_set_status_to_none(GenotypingElement * node){
-  node->status = none;
+  if (node!=NULL)
+    {
+      node->status = none;
+    }
 }
 
 

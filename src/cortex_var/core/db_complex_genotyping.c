@@ -801,7 +801,15 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   int working_array_shared_count=0;
   double log_prob_data=0;
   double hap_D  = (double) (model_info->ginfo->total_sequence[colour_indiv])/(double) (2*model_info->genome_len) ;
-  double hap_D_over_R = hap_D/(model_info->ginfo->mean_read_length[colour_indiv]);
+  double hap_D_over_R;
+  if (model_info->ginfo->mean_read_length[colour_indiv])
+    {
+      hap_D_over_R = hap_D/(model_info->ginfo->mean_read_length[colour_indiv]);
+    }
+  else
+    {
+      hap_D_over_R=0;
+    }
   int eff_r_plus_one = model_info->ginfo->mean_read_length[colour_indiv] - db_graph->kmer_size;
   //printf("total sequence is %qd and genome len is %qd , and hapD is %f and hapD over R is %f\n", model_info->ginfo->total_sequence[colour_indiv], model_info->genome_len, hap_D, hap_D_over_R);
 
@@ -961,10 +969,14 @@ double get_log_probability_of_covg_on_one_allele_given_second_allele_and_multipl
 	       (check_covg_in_ref_with_site_excised(allele[k])==0)
 	       )
 	  {
-	    working_array_self[working_array_self_count]=db_node_get_coverage(allele[k], individual_edge_array, colour_indiv)/mult_this_allele_in_self[k];
+	    if (mult_this_allele_in_self[k]>0)
+	      {
+		working_array_self[working_array_self_count]=db_node_get_coverage(allele[k], individual_edge_array, colour_indiv)/mult_this_allele_in_self[k];
+		working_array_self_count++;
+	      }
 	    //printf("Self segment: Dividing covg by %d, k is %d and len allele is %d\n", mult_this_allele_in_self[k], k, len_allele);
 	    k++;
-	    working_array_self_count++;
+
 
 	  }
 
@@ -1065,10 +1077,14 @@ double get_log_probability_of_covg_on_one_allele_given_second_allele_and_multipl
 	       (check_covg_in_ref_with_site_excised(allele[k])==0)
 	       )
 	  {
-	    working_array_self[working_array_self_count]=db_genotyping_node_get_coverage(allele[k], individual_edge_array, colour_indiv)/mult_this_allele_in_self[k];
+	    if (mult_this_allele_in_self[k]>0)
+	      {//in PD calls, can have N in the ref allele
+		working_array_self[working_array_self_count]=db_genotyping_node_get_coverage(allele[k], individual_edge_array, colour_indiv)/mult_this_allele_in_self[k];
+		working_array_self_count++;
+	      }
 	    //printf("Self segment: Dividing covg by %d, k is %d and len allele is %d\n", mult_this_allele_in_self[k], k, len_allele);
 	    k++;
-	    working_array_self_count++;
+
 
 	  }
 
