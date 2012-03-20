@@ -1,0 +1,1 @@
+void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta();
