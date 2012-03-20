@@ -366,7 +366,8 @@ foreach my $k (@kmers)
 
 	foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}{$k}})
 	{
-	    my $colour_list = make_2sample_filelist($ref_name, $sam, $k_to_refbin{$k}, $sample_to_cleaned_bin{$sam}{$k}{$cleaning});
+	    my $uniqid = "sample_".$sam."_kmer".$k."_cleaning".$cleaning;
+	    my $colour_list = make_2sample_filelist($ref_name.".".$uniqid, $sam.".".$uniqid, $k_to_refbin{$k}, $sample_to_cleaned_bin{$sam}{$k}{$cleaning}, $uniqid );
 	    ## load reference binary and make calls. 
 	    my $cmd = $ctx_bin." --kmer_size $k --mem_height $mem_height --mem_width $mem_width --ref_colour 0 --colour_list $colour_list  --print_colour_coverages ";
 	    print "Load reference $k_to_refbin{$k} in colour 0, and sample ";
@@ -861,7 +862,7 @@ sub make_multicol_filelist
 sub make_2sample_filelist
 {
 
-    my ($str1, $str2, $bin1, $bin2) = @_;
+    my ($str1, $str2, $bin1, $bin2, $uniq_id) = @_;
 
     my $tmpdir = $outdir."tmp_filelists";
 
@@ -870,7 +871,7 @@ sub make_2sample_filelist
 	my $cmd1 = "mkdir -p $tmpdir";
 	qx{$cmd1};
     }
-    my $colourlist = $tmpdir."/tmp_col_list";
+    my $colourlist = $tmpdir."/tmp_col_list_".$uniq_id;
     open(TMP, ">".$colourlist)||die("Cannot open $colourlist");
     print TMP "$tmpdir/$str1\n$tmpdir/$str2\n";
     close(TMP);
@@ -1026,7 +1027,7 @@ sub get_manually_specified_thresholds_for_this_sample
     }
 
     my %tmp=();## to make sure we don't double-add thresholds that are already there
-    foreach my $c (@$aref)
+    foreach my $c (@$array_ref)
     {
 	$tmp{$c}=1;
     }
@@ -1039,7 +1040,7 @@ sub get_manually_specified_thresholds_for_this_sample
 	my @sp = split(/\t/, $line);
 	if(  ($sp[0] eq $sample_name) && ($sp[1] eq $khmer) )
 	{
-	    my @sp2 = split(/,/, $sp[1]);
+	    my @sp2 = split(/,/, $sp[2]);
 	    foreach my $thresh (@sp2)
 	    {
 		if (!exists $tmp{$thresh})##if it isn't already on the list
