@@ -532,16 +532,22 @@ if ($do_union eq "yes")
 	foreach my $sam (@samples)
 	{	
 	    my $min =999999999;
-	    
+	    my $max=0;
+
 	    foreach my $c (keys %{$sample_to_cleaned_bin{$sam}{$first_kmer}})
 	    {
-		print "For $sam, $first_kmer, cleanign thresh $c\n";
-		if ($c<$min)
+		#print "For $sam, $first_kmer, cleanign thresh $c\n";
+		#if ($c<$min)
+		#{
+		#    $min=$c;
+		#}
+		if ($c>$max)
 		{
-		    $min=$c;
+		    $max=$c;
 		}
 	    }
-	    push @ordered_list_binaries, $sample_to_cleaned_bin{$sam}{$first_kmer}{$min};
+	    #push @ordered_list_binaries, $sample_to_cleaned_bin{$sam}{$first_kmer}{$min};
+	    push @ordered_list_binaries, $sample_to_cleaned_bin{$sam}{$first_kmer}{$max};
 	}
 	my $multicolour_list = make_multicol_filelist(\@ordered_list_binaries);
 ## genotype all of the calls, called with all different kmers, on the max kmer
@@ -614,9 +620,8 @@ if ($do_union eq "yes")
 	
 
 	
-        ##and build the VCFs for each of the individual callsets, for comparison
-	print "\n******   Build VCFs for each of the individual callsets   ***\n";
-	build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
+	#print "\n******   Build VCFs for each of the individual callsets   ***\n";
+	#build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
 	
 ######################################################################################################
 ## 7. Post-process the VCFS - make a union, remove dupliate lines, remove variants where 
@@ -625,6 +630,7 @@ if ($do_union eq "yes")
 
 ## Now we have a bunch of VCFs, and we need to remove duplicate lines, sort them, 
 	print "\n****** Clean the union VCFs  ***\n";
+	clean_all_vcfs(\%vcfs_needing_post_processing);
     }
 }
 
@@ -632,8 +638,8 @@ else  ##### if not making a union set
 {
 
        ## build the VCFs for each of the individual callsets
-	print "\n******   Build VCFs for each of the individual callsets   ***\n";
-	build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
+	#print "\n******   Build VCFs for each of the individual callsets   ***\n";
+	#build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
 	clean_all_vcfs(\%vcfs_needing_post_processing);
 }
 
@@ -980,7 +986,7 @@ sub build_clean_binary
     }
 
 
-
+    die("DEBUGDEBUG clean binary is $ctx - does not exist\n");
    
     my $cortex_binary = get_right_binary($kmer, $cortex_dir,1 );##one colour
     my $cmd2 = $cortex_binary." --kmer_size $kmer --mem_height $height --mem_width $width --dump_binary $ctx --remove_low_coverage_supernodes $clean_thresh --multicolour_bin $uncleaned > $log 2>&1";
@@ -1215,7 +1221,10 @@ sub build_unclean
 	$out = $out.'/';
     }
     my $c1 = "mkdir -p $out"."uncleaned/$km";
-    qx{$c1};
+    if (!(-d $out."uncleaned/$km"))
+    {
+	qx{$c1};
+    }
     my $ctx = $out."uncleaned/$km/".$name.".unclean.kmer".$km;
     if ($q>0)
     {
@@ -1247,7 +1256,7 @@ sub build_unclean
 	print "Binary $ctx already exists, so will not rebuild\n";
 	return;
     }
-
+    die("DEBUG ZAM got here, ctx is $ctx does not exist\n");
     my $cortex_binary = get_right_binary($km, $cdir,1 );##one colour
     my $cmd = $cortex_binary." --kmer_size $km --mem_height $height --mem_width $width --dump_binary $ctx --max_read_len $max_r  --format $format --dump_covg_distribution $covg";
     if ($se ne "NO")
