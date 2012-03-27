@@ -2,6 +2,7 @@
 use strict;
 use File::Basename;
 use Getopt::Long;
+use IO::Tee;
 
 ###******** Description of run_calls.pl ##################################################################
 # This script allows the user to specify a number of kmer values and cleaning thresholds, and then
@@ -25,9 +26,6 @@ my $analyse_variants_dir;
 my $cortex_dir;
 my $isaac_bioinf_dir;
 
-print "*********** Command-line used was : *********************\n";
-print "perl ".$0." ".join(" ",@ARGV)."\n";
-print "*********************************************************\n";
 
 BEGIN
 {
@@ -84,7 +82,7 @@ my (
         $mem_height,           $mem_width, $binary_colourlist,
         $max_read_len,         $format, $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
         $expt_type,            $do_union, $manual_override_cleaning,
-        $build_per_sample_vcfs
+        $build_per_sample_vcfs, $global_logfile,
 );
 
 #set defaults
@@ -131,6 +129,7 @@ $expt_type = "";
 $do_union = "no";
 $manual_override_cleaning="no";
 $build_per_sample_vcfs="no";
+$global_logfile = "default_logfile";
 my $pooled_colour = -1;    #deprecated
 my $help = '';    #default false
 
@@ -178,6 +177,7 @@ my $help = '';    #default false
     'manual_override_cleaning:s' => \$manual_override_cleaning,
     'do_union:s'         =>\$do_union,
     'build_per_sample_vcfs:s' =>\$build_per_sample_vcfs,
+    'logfile:s'           => \$global_logfile,
 );
 
 if ($help)
@@ -227,9 +227,24 @@ if ($help)
 }
 
 
+
+
+
 my %k_to_refbin=();
 ### checks
 run_checks();
+
+
+## sort out loggin
+my $tee = IO::Tee->new(">> $global_logfile", \*STDOUT);
+
+
+print $tee "*********** Command-line used was : *********************\n";
+print $tee "perl ".$0." ".join(" ",@ARGV)."\n";
+print $tee "*********************************************************\n";
+
+
+
 
 $outdir_binaries=$outdir."binaries/";
 $outdir_calls=$outdir."calls/";
@@ -265,9 +280,9 @@ get_kmers(\@kmers, $first_kmer, $last_kmer, $kmer_step);
 ## 1. Build uncleaned binaries
 ##################################
 
-print "********************************************\n";
-print "Build uncleaned binaries:\n";
-print "********************************************\n";
+print $tee "********************************************\n";
+print $tee "Build uncleaned binaries:\n";
+print $tee "********************************************\n";
 
 my %sample_to_uncleaned=(); #samplename --> kmer --> uncleaned bin name
 my %sample_to_uncleaned_log=(); #samplename --> kmer --> log file from building uncleaned bin 
@@ -290,9 +305,9 @@ print_build_stats(\%sample_to_uncleaned_log, $uncleaned_stats_log);
 ##################################
 ## 2. Clean
 ##################################
-print "********************************************\n";
-print "Clean binaries\n";
-print "********************************************\n";
+print $tee "********************************************\n";
+print $tee "Clean binaries\n";
+print $tee "********************************************\n";
 my %sample_to_cleaned_bin=(); #sample -> kmer -> cleaning -> $binary
 if ( ($do_auto_cleaning eq "yes") || ($do_user_spec_cleaning eq "yes") || ($manual_override_cleaning ne "no") )
 {
@@ -307,7 +322,7 @@ if ( ($do_auto_cleaning eq "yes") || ($do_user_spec_cleaning eq "yes") || ($manu
 }
 else
 {
-    print "No cleaning specified, so will not do any - will call variants on uncleaned binaries\n";
+    print $tee "No cleaning specified, so will not do any - will call variants on uncleaned binaries\n";
 
     foreach my $k (@kmers)
     {
@@ -339,15 +354,15 @@ else
 
 if ( ($do_bc ne "yes") && ($do_pd ne "yes") )
 {
-    print "Binaries are built, but you have not specified to run any calling, so will halt now. Good night.\n";
+    print $tee "Binaries are built, but you have not specified to run any calling, so will halt now. Good night.\n";
     exit(0);
 }
 
-print "********************************************\n";
-print "Call variants\n";
-print "********************************************\n";
+print $tee "********************************************\n";
+print $tee "Call variants\n";
+print $tee "********************************************\n";
 my $dir_for_per_sample_calls=$outdir_calls."per_sample_callsets/";
-print "per sample call dir us $dir_for_per_sample_calls\n";
+print $tee "per sample call dir us $dir_for_per_sample_calls\n";
 if (!(-d $dir_for_per_sample_calls))
 {
     my $c = "mkdir -p $dir_for_per_sample_calls";
@@ -374,9 +389,9 @@ foreach my $k (@kmers)
 	    my $colour_list = make_2sample_filelist($ref_name.".".$uniqid, $sam.".".$uniqid, $k_to_refbin{$k}, $sample_to_cleaned_bin{$sam}{$k}{$cleaning}, $uniqid );
 	    ## load reference binary and make calls. 
 	    my $cmd = $ctx_bin." --kmer_size $k --mem_height $mem_height --mem_width $mem_width --ref_colour 0 --colour_list $colour_list  --print_colour_coverages ";
-	    print "Load reference $k_to_refbin{$k} in colour 0, and sample ";
-	    print $sample_to_cleaned_bin{$sam}{$k}{$cleaning};
-	    print " into colour 1\n";
+	    print $tee "Load reference $k_to_refbin{$k} in colour 0, and sample ";
+	    print $tee $sample_to_cleaned_bin{$sam}{$k}{$cleaning};
+	    print $tee " into colour 1\n";
 
 	    my $bubble_output = $dir_for_per_sample_calls.$sam."_bubbles_k".$k."_clean".$cleaning.".calling_on_this_sample_only";
 	    my $pd_output = $dir_for_per_sample_calls.$sam."_pd_k".$k."_clean".$cleaning.".calling_on_this_sample_only";
@@ -400,7 +415,7 @@ foreach my $k (@kmers)
 	    }
 	    elsif  ( ($do_bc eq "yes") && (-e $bubble_output) )## we want t do it but it has already been done
 	    {
-		print "Bubble calling already seems to have been done - will not rerun\n";
+		print $tee "Bubble calling already seems to have been done - will not rerun\n";
 		$bc_already_done = "yes";
 		$sample_to_bc_callfile{$sam}{$k}{$cleaning} =  $bubble_output ;
 	    }
@@ -411,7 +426,7 @@ foreach my $k (@kmers)
 	    }
 	    elsif ( ($do_pd eq "yes") && (-e $pd_output."_pd_calls"))
 	    {
-		print "Path divergence calling already seems to have been done - will not rerun\n";
+		print $tee "Path divergence calling already seems to have been done - will not rerun\n";
 		$pd_already_done = "yes";
 		$sample_to_pd_callfile{$sam}{$k}{$cleaning} =  $pd_output."_pd_calls"
 	    }
@@ -425,9 +440,9 @@ foreach my $k (@kmers)
 	    if (!( ($bc_already_done eq "yes") && ($pd_already_done eq "yes")))##not all done
 		{
 		    $cmd = $cmd." > $log 2>&1";
-		    print "$cmd\n";
+		    print $tee "$cmd\n";
 		    my $ret = qx{$cmd};
-		    print "$ret\n";
+		    print $tee "$ret\n";
 		}
 
 
@@ -446,9 +461,9 @@ foreach my $k (@kmers)
 my %vcfs_needing_post_processing=();
 if ($do_union eq "yes")
 {
-    print "********************************************\n";
-    print "Make union variant callsets\n";
-    print "********************************************\n";
+    print $tee "********************************************\n";
+    print $tee "Make union variant callsets\n";
+    print $tee "********************************************\n";
     
     
     my $tmpdir = $outdir."tmp_filelists";
@@ -480,7 +495,7 @@ if ($do_union eq "yes")
 	my $bc_cmd = "perl $make_union --filelist $bc_call_list --varname_stub UNION_BC > $union_of_bc_callsets 2>&1";
 	if (! -e($union_of_bc_callsets))
 	{
-	    print "$bc_cmd\n";
+	    print $tee "$bc_cmd\n";
 	    my $bc_ret = qx{$bc_cmd};
 	}
 	$max_read_len_bc_union = get_max_read_len_of_fasta($union_of_bc_callsets)+$last_kmer+10;
@@ -509,7 +524,7 @@ if ($do_union eq "yes")
 	my $pd_cmd = "perl $make_union --filelist $pd_call_list --varname_stub UNION_PD > $union_of_pd_callsets 2>&1";
 	if (!(-e $union_of_pd_callsets))
 	{
-	    print "$pd_cmd\n";
+	    print $tee "$pd_cmd\n";
 	    my $pd_ret = qx{$pd_cmd};
 	}
 	$max_read_len_pd_union = get_max_read_len_of_fasta($union_of_pd_callsets)+$last_kmer+10;
@@ -526,9 +541,9 @@ if ($do_union eq "yes")
 ##    Note it has to be the lowest kmer, otherwise some calls will have flanks and branches which are shorter than our kmer
 ######################################################################################################
 	
-	print "********************************************\n";
-	print "Genotype the union callset\n";
-	print "********************************************\n";
+	print $tee "********************************************\n";
+	print $tee "Genotype the union callset\n";
+	print $tee "********************************************\n";
 	
 	
 	my @ordered_list_binaries=();
@@ -540,7 +555,7 @@ if ($do_union eq "yes")
 
 	    foreach my $c (keys %{$sample_to_cleaned_bin{$sam}{$first_kmer}})
 	    {
-		#print "For $sam, $first_kmer, cleanign thresh $c\n";
+		#print $tee "For $sam, $first_kmer, cleanign thresh $c\n";
 		#if ($c<$min)
 		#{
 		#    $min=$c;
@@ -561,19 +576,19 @@ if ($do_union eq "yes")
 	{
 	    
 	    $gt_bc_out = $outdir_calls.basename($union_of_bc_callsets).".genotyped";
-	    print "GT bc out is $gt_bc_out\n";
+	    print $tee "GT bc out is $gt_bc_out\n";
 	    my $gt_bc_log = $gt_bc_out.".log";
 	    
 	    if (!(-e $gt_bc_out))
 	    {
 		my $gt_bc_cmd = $multicol_ctx_bin." --colour_list $multicolour_list  --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour 0 --gt $union_of_bc_callsets,$gt_bc_out,BC --max_read_len $max_read_len_bc_union  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size > $gt_bc_log 2>&1  ";
-		print "$gt_bc_cmd\n";
+		print $tee "$gt_bc_cmd\n";
 		my $gt_bc_ret = qx{$gt_bc_cmd};
-		print "$gt_bc_ret\n";
+		print $tee "$gt_bc_ret\n";
 	    }
 	    else
 	    {
-		print "$gt_bc_out already exists so no need to genotype the union of BC calls\n";
+		print $tee "$gt_bc_out already exists so no need to genotype the union of BC calls\n";
 	    }
 	}
 	my $gt_pd_out="";
@@ -585,13 +600,13 @@ if ($do_union eq "yes")
 	    if (!(-e $gt_pd_out))
 	    {
 		my $gt_pd_cmd = $multicol_ctx_bin." --colour_list $multicolour_list --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width --experiment_type $expt_type --genome_size $genome_size --ref_colour 0  --gt $union_of_pd_callsets,$gt_pd_out,PD --max_read_len $max_read_len_pd_union  --print_colour_coverages  --experiment_type $expt_type --genome_size $genome_size > $gt_pd_log 2>&1  ";
-		print "$gt_pd_cmd\n";
+		print $tee "$gt_pd_cmd\n";
 		my $gt_pd_ret = qx{$gt_pd_cmd};
-		print "$gt_pd_ret\n";
+		print $tee "$gt_pd_ret\n";
 	    }
 	    else
 	    {
-		print "$gt_pd_out already exists so no need to genotype the union of PD calls\n";
+		print $tee "$gt_pd_out already exists so no need to genotype the union of PD calls\n";
 	    }
 	}
 	
@@ -602,9 +617,9 @@ if ($do_union eq "yes")
 ######################################################################################################
 	
 	
-	print "********************************************\n";
-	print "Build union VCFs\n";
-	print "********************************************\n";
+	print $tee "********************************************\n";
+	print $tee "Build union VCFs\n";
+	print $tee "********************************************\n";
 	
 	
 	if (!(-d $outdir_vcfs))
@@ -614,7 +629,7 @@ if ($do_union eq "yes")
 	}
 	## build the VCFs of union calls
 	
-	print "\n******   Build initial (uncleaned) VCFs of union callsets  ***\n";
+	print $tee "\n******   Build initial (uncleaned) VCFs of union callsets  ***\n";
 	
 	
 
@@ -625,7 +640,7 @@ if ($do_union eq "yes")
 
 	if ($build_per_sample_vcfs eq "yes")
 	{
-	    print "\n******   Build VCFs for each of the individual callsets   ***\n";
+	    print $tee "\n******   Build VCFs for each of the individual callsets   ***\n";
 	    build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
 	}
 
@@ -635,7 +650,7 @@ if ($do_union eq "yes")
 ######################################################################################################
 
 ## Now we have a bunch of VCFs, and we need to remove duplicate lines, sort them, 
-	print "\n****** Clean the union VCFs  ***\n";
+	print $tee "\n****** Clean the union VCFs  ***\n";
 	clean_all_vcfs(\%vcfs_needing_post_processing);
     }
 }
@@ -646,7 +661,7 @@ else  ##### if not making a union set
     if ($build_per_sample_vcfs eq "yes")
     {
 	## build the VCFs for each of the individual callsets
-	print "\n******   Build VCFs for each of the individual callsets   ***\n";
+	print $tee "\n******   Build VCFs for each of the individual callsets   ***\n";
 	build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
     }
     clean_all_vcfs(\%vcfs_needing_post_processing);
@@ -717,9 +732,9 @@ sub clean_vcf
     #my $cleaned_file = $tmpdir.'/'."$bname".".cleaned";
     my $final_file = $file.".clean.sorted";
     my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $file $ref_fa  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl | grep -v vcf_remove_dupes.pl  > $final_file";
-    print "$cmd1\n";
+    print $tee "$cmd1\n";
     my $ret1 = qx{$cmd1};
-    print "$ret1\n";
+    print $tee "$ret1\n";
 
 
     ##now sort
@@ -828,16 +843,16 @@ sub build_vcfs
 
     if ( (!(-e $directory.$string.".decomp.vcf"))  || (!(-e $directory.$string.".raw.vcf")) )
     {
-	print "$cmd\n";
+	print $tee "$cmd\n";
 	my $ret = qx{$cmd};
-	print "$ret\n";
+	print $tee "$ret\n";
     }
     else
     {
-	print $directory.$string.".decomp.vcf";
-	print " and ";
-	print $directory.$string.".raw.vcf";
-	print " both exist, so no need to rebuild\n";
+	print $tee $directory.$string.".decomp.vcf";
+	print $tee " and ";
+	print $tee $directory.$string.".raw.vcf";
+	print $tee " both exist, so no need to rebuild\n";
     }
     $href_store_vcf_names->{$directory.$string.".decomp.vcf"}=1;
     $href_store_vcf_names->{$directory.$string.".raw.vcf"}=1;
@@ -985,11 +1000,11 @@ sub build_clean_binary
     {
 	if (!(-e $log))
 	{
-	    print "Binary $ctx exists, so will not rebuild, but the log file is missing. Carrying on nevertheless.\n";
+	    print $tee "Binary $ctx exists, so will not rebuild, but the log file is missing. Carrying on nevertheless.\n";
 	}
 	else
 	{
-	    print "Binary $ctx already exists, so will not rebuild\n";
+	    print $tee "Binary $ctx already exists, so will not rebuild\n";
 	}
 	return;
     }
@@ -998,9 +1013,9 @@ sub build_clean_binary
     my $cortex_binary = get_right_binary($kmer, $cortex_dir,1 );##one colour
     my $cmd2 = $cortex_binary." --kmer_size $kmer --mem_height $height --mem_width $width --dump_binary $ctx --remove_low_coverage_supernodes $clean_thresh --multicolour_bin $uncleaned > $log 2>&1";
     my $ret2 = qx{$cmd2};
-    print "$cmd2\n$ret2\n";
+    print $tee "$cmd2\n$ret2\n";
     $sample_to_cleaned_bin{$sample}{$kmer}{$clean_thresh}=$ctx;
-    print "add $sample  $kmer $clean_thresh = $ctx\n";
+    print $tee "add $sample  $kmer $clean_thresh = $ctx\n";
     if (!(-e $ctx))
     {
 	die("Unable to build $ctx\n");
@@ -1075,7 +1090,7 @@ sub get_auto_thresholds
     my @distrib=();
     my $deff = get_expected_depth_and_cvg_distrib($href_logfiles->{$sample}->{$kmer}, $kmer, $genome_siz);
     my $auto_thresh  = get_cleaning_thresh_and_distrib($href_covg->{$sample}->{$kmer}, $deff,  \@distrib);
-    print "Automated cleaning chooses threshold $auto_thresh for sample $sample, kmer $kmer\nExpected depth of covg (D_eff) is $deff\n";
+    print $tee "Automated cleaning chooses threshold $auto_thresh for sample $sample, kmer $kmer\nExpected depth of covg (D_eff) is $deff\n";
     if ($deff<$auto_thresh)
     {
 	die("WARNING - the auto-estimator for cleaning has estimated a cleaning threshold higher than the expected covg. Look at the covg profile - is there something odd?\n");
@@ -1093,7 +1108,7 @@ sub get_auto_thresholds
 	if ($t>0)
 	{
 	    push @$aref_results, $t;
-	    print "Will also clean at threshold $t\n";
+	    print $tee "Will also clean at threshold $t\n";
 	}
     }
 
@@ -1104,7 +1119,7 @@ sub get_auto_thresholds
 	if ($t<$deff)
 	{
 	    push @$aref_results, $t;
-	    print "Will also clean at thresh $t\n";
+	    print $tee "Will also clean at thresh $t\n";
 	}
     }
 
@@ -1254,13 +1269,13 @@ sub build_unclean
     {
 	if (!(-e $log))
 	{
-	    print "Binary $ctx exists, so will not rebuild, but the log file is missing. Carrying on nevertheless.\n";
+	    print $tee "Binary $ctx exists, so will not rebuild, but the log file is missing. Carrying on nevertheless.\n";
 	}
 	if (!(-e $covg))
 	{
-	    print "Binary $ctx exists, so will not rebuild, but the covg distribution file is missing\n";
+	    print $tee "Binary $ctx exists, so will not rebuild, but the covg distribution file is missing\n";
 	}
-	print "Binary $ctx already exists, so will not rebuild\n";
+	print $tee "Binary $ctx already exists, so will not rebuild\n";
 	return;
     }
 
@@ -1289,7 +1304,7 @@ sub build_unclean
 
     $cmd = $cmd." > $log 2>&1";
     my $ret = qx{$cmd};
-    print "$cmd\n$ret\n";
+    print $tee "$cmd\n$ret\n";
     if (!(-e $ctx))
     {
 	die("Unable to build $ctx");
@@ -1347,6 +1362,10 @@ sub get_number_samples
 
 sub run_checks
 {
+    if (-e $global_logfile)
+    {
+	die("Abort. run_calls.pl will either output its logs to a file called \"default_logfile\", or if you have specified --logfile, then it outputs to whatever you specify. However this file $global_logfile, already exists. Specify another, or delete this one\n");
+    }
     if ( ($do_union ne "yes") && ($do_union ne "no") )
     {
 	die("If you specify --do_union, you must give the value \"yes\" or \"no\"\n");
@@ -1463,8 +1482,8 @@ sub run_checks
     }
     if ( ($do_auto_cleaning ne "yes") && ($do_auto_cleaning ne "no") )
     {
-	print ("--auto_cleaning takes an argument that must be \"yes\" or \"no\", but you have given it this value ");
-	print $do_auto_cleaning;
+	print $tee ("--auto_cleaning takes an argument that must be \"yes\" or \"no\", but you have given it this value ");
+	print $tee $do_auto_cleaning;
 	die("\n");
     }
     if ( ($do_user_spec_cleaning ne "yes") && ($do_user_spec_cleaning ne "no") )
@@ -1476,15 +1495,15 @@ sub run_checks
     {
 	if ( ($user_min_clean==0) && ($user_max_clean==0)  )
 	{
-	    print ("If you specify --user_clean that means you want to tell the script what cleaning threshold(s) to use.\n");
-	    print "If you want to use just one threshold, say 2, use --user_min_clean 2\n";
-	    print "If you want to do many then do --user_min_clean 2 --user_max_clean 10 --user_clean_step 2\n";
-	    print "This will do 2,4,6,8,10\n";
+	    print $tee ("If you specify --user_clean that means you want to tell the script what cleaning threshold(s) to use.\n");
+	    print $tee "If you want to use just one threshold, say 2, use --user_min_clean 2\n";
+	    print $tee "If you want to do many then do --user_min_clean 2 --user_max_clean 10 --user_clean_step 2\n";
+	    print $tee "This will do 2,4,6,8,10\n";
 	    die();
 	}
 	else
 	{
-	    print "ZAMZAM $user_min_clean $user_max_clean $user_clean_step\n";
+	    print $tee "ZAMZAM $user_min_clean $user_max_clean $user_clean_step\n";
 	}
 	if ( ($user_max_clean-$user_min_clean) % $user_clean_step !=0)
 	{

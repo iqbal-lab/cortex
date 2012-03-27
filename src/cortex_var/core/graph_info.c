@@ -45,7 +45,7 @@ void graph_info_initialise(GraphInfo* ginfo)
     {
       graph_info_set_seq(ginfo, i, 0);
       graph_info_set_mean_readlen(ginfo, i, 0);
-      ginfo->seq_err[i]=-1;
+      ginfo->seq_err[i]=0.01;
       error_cleaning_initialise(ginfo->cleaning[i]);
     }
 }

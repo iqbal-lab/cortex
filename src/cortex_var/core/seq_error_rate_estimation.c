@@ -208,7 +208,6 @@ long double estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(char* f
 
     if (total_covg_on_true_alleles+total_covg_on_error_alleles==0)
       {
-	printf("RET DEF\n");
 	return default_seq_err;
       }
     else

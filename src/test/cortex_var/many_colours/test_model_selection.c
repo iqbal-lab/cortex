@@ -217,7 +217,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   double mu = 0.8; //param of geometric describing repeat copy num
   double err = 0.01;
   int ref_colour=-1;//no reference colour
-  initialise_model_info(&model_info, &ginfo, genome_len, mu, err, ref_colour, NUMBER_OF_COLOURS*2, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
+  initialise_model_info(&model_info, &ginfo, genome_len, mu, ref_colour, NUMBER_OF_COLOURS*2, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
   AnnotatedPutativeVariant annovar;
 
 

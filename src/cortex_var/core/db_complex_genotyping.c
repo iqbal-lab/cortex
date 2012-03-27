@@ -2473,10 +2473,6 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 	      //	{
 	      //  seq_error_rate_per_base=0.01;//default
 	      //}
-	      if (model_info->ginfo->seq_err[i]==-1)
-		{
-		  model_info->ginfo->seq_err[i]=0.01;//default
-		}
 	      if (genome_length==-1)
 		{
 		  printf("Warning - genome length not specified, so assuming is human!!\n");

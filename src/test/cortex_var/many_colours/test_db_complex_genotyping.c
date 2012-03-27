@@ -526,10 +526,10 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
       strcat(true_gt,"/");
       strcat(true_gt,second_allele_name);
       // run for various sequencing error rates
-      printf("Zam Seq err 0.01\n");
+      //printf("Zam Seq err 0.01\n");
       seq_err_per_base=0.01;
-      model_info.seq_error_rate_per_base=seq_err_per_base;
-      
+      //model_info.seq_error_rate_per_base=seq_err_per_base;
+      model_info.ginfo->seq_err[colour_indiv]=seq_err_per_base; 
       //time(&now);
       //printf("%s", ctime(&now));
 
@@ -559,8 +559,8 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 	{
 	  printf("Zam seq err 0.02\n");
 	  seq_err_per_base=0.02;
-	  model_info.seq_error_rate_per_base=seq_err_per_base;
-
+	  //model_info.seq_error_rate_per_base=seq_err_per_base;
+	  model_info.ginfo->seq_err[colour_indiv]=seq_err_per_base; 
 	  
 	  simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		    &var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
@@ -569,8 +569,8 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 	  
 	  printf("Zam seq err 0.001\n");
 	  seq_err_per_base=0.001;
-	  model_info.seq_error_rate_per_base=seq_err_per_base;
-
+	  //	  model_info.seq_error_rate_per_base=seq_err_per_base;
+	  model_info.ginfo->seq_err[colour_indiv]=seq_err_per_base; 
 	  
 	  simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		    &var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
@@ -603,8 +603,8 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
       // run for various sequencing error rates
       printf("Zam seq err 0.001\n");
       seq_err_per_base=0.01;
-      model_info.seq_error_rate_per_base=seq_err_per_base;
-
+      //model_info.seq_error_rate_per_base=seq_err_per_base;
+      model_info.ginfo->seq_err[colour_indiv]=seq_err_per_base; 
       simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		&var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
 		true_genotype,  &model_info, fasta_allele1_then_allele2, true_gt2, db_graph, working_colour1, working_colour2,
@@ -614,8 +614,8 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 	{      
 	  printf("Zam seq err 0.02\n");
 	  seq_err_per_base=0.02;
-	  model_info.seq_error_rate_per_base=seq_err_per_base;
-
+	  //model_info.seq_error_rate_per_base=seq_err_per_base;
+	  model_info.ginfo->seq_err[colour_indiv]=seq_err_per_base; 
 	  
 	  simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		    &var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
@@ -623,8 +623,8 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 		    using_nets, filelist_1net_binaries, filelist_1net_binaries, working_colour_net1, working_colour_net2);
 	  printf("Zam seq err 0.001\n");
 	  seq_err_per_base=0.001;
-	  model_info.seq_error_rate_per_base=seq_err_per_base;
-
+	  //  model_info.seq_error_rate_per_base=seq_err_per_base;
+	  model_info.ginfo->seq_err[colour_indiv]=seq_err_per_base; 
 	  
 	  simulator(depth, read_len, kmer, seq_err_per_base, number_repeats_of_sim, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site,
 		    &var, array_of_node_arrays[2], lengths_of_alleles[2],//these with the [2] are the genome-minus-site
