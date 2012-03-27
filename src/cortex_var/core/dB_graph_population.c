@@ -4944,7 +4944,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
 
 
 
-
+/*
 long long db_graph_remove_supernodes_more_likely_errors_than_sampling(dBGraph * db_graph, GraphInfo* ginfo, GraphAndModelInfo* model_info,
 								       int max_length_allowed_to_prune, 
 								      int (*sum_of_covgs_in_desired_colours)(const Element *), 
@@ -5006,6 +5006,7 @@ long long db_graph_remove_supernodes_more_likely_errors_than_sampling(dBGraph * 
   free(supernode_string);
   return number_of_pruned_supernodes;
 }
+*/
 
 
 

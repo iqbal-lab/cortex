@@ -726,7 +726,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   double poisson_2net_err_rate=0;
   double poisson_3net_err_rate=0;
 
-  double m=(model_info->seq_error_rate_per_base) ;
+  //double m=(model_info->seq_error_rate_per_base) ;
+  double m=model_info->ginfo->seq_err[colour_indiv];
   int kmer=(db_graph->kmer_size);
   double prop = max_allele_length/(model_info->genome_len);
   if (assump==AssumeUncleaned)
@@ -1278,9 +1279,11 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   double poisson_2net_err_rate=0;
   double poisson_3net_err_rate=0;
 
-  double m=(model_info->seq_error_rate_per_base) ;
+  //double m=(model_info->seq_error_rate_per_base) ;
+  double m=model_info->ginfo->seq_err[colour_indiv];
   int kmer=(db_graph->kmer_size);
   //double prop = max_allele_length/(model_info->genome_len);
+
   if (assump==AssumeUncleaned)
     {
       poisson_1net_err_rate= m*total_len_alleles;
@@ -1298,8 +1301,6 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
       log_prob_error += -poisson_1net_err_rate + 
 	num_1net_errors*log(poisson_1net_err_rate) - gsl_sf_lnfact(num_1net_errors);
     }
-  
-
 
 
   // 2.  Get sum of log likelihoods of all the subchunks of the two alleles
@@ -1324,8 +1325,6 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 														      working_array_self, working_array_shared,
 														      check_covg_in_ref_with_site_excised, colour_indiv);
 
-
-  
   
   return log_prob_data + log_prob_error;
 
@@ -2185,7 +2184,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
   improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(&var_test, mobv, working_colour1, working_colour2);
 
 
-  
+  printf("Get gt llk hom1\n");
    annovar->gen_log_lh[colour_to_genotype].log_lh[hom_one]= 
      calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(&var_test,
 									    mobv, model_info, colour_to_genotype,
@@ -2321,6 +2320,9 @@ void get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(Annot
   
 }
 
+
+
+
 void get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
 {
   boolean too_short = false;
@@ -2369,7 +2371,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 				    
 {
   GraphInfo* ginfo = NULL;
-  double seq_error_rate_per_base= -1;
+  //double seq_error_rate_per_base= -1;
   long long genome_length       = -1;
   ExperimentType expt           = Unspecified;
   int ref_colour                = -1;
@@ -2379,7 +2381,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
       if (model_info !=NULL)
 	{
 	  ginfo                  = model_info->ginfo;
-	  seq_error_rate_per_base= model_info->seq_error_rate_per_base;
+	  //seq_error_rate_per_base= model_info->seq_error_rate_per_base;
 	  genome_length          = model_info->genome_len;
 	  expt                   = model_info->expt_type;
 	  ref_colour             = model_info->ref_colour;
@@ -2467,9 +2469,13 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 		  continue;
 		}
 	      double sequencing_depth_of_coverage=0;
-	      if (seq_error_rate_per_base==-1)
+	      //if (seq_error_rate_per_base==-1)
+	      //	{
+	      //  seq_error_rate_per_base=0.01;//default
+	      //}
+	      if (model_info->ginfo->seq_err[i]==-1)
 		{
-		  seq_error_rate_per_base=0.01;//default
+		  model_info->ginfo->seq_err[i]=0.01;//default
 		}
 	      if (genome_length==-1)
 		{
@@ -2497,7 +2503,8 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 		       )
 		    {
 		      get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  
-										     seq_error_rate_per_base, 
+										     //seq_error_rate_per_base, 
+										     model_info->ginfo->seq_err[i],
 										     sequencing_depth_of_coverage,
 										     mean_read_len,i);
 		    }
@@ -2538,14 +2545,18 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 		{
 		  
 		  if ( (caller==BubbleCaller) 
-		       || 
-		       ( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) )
+		       //|| 
+		       //( (caller==SimplePathDivergenceCaller) && (annovar->var->len_one_allele==annovar->var->len_other_allele) && (annovar->var->len_one_allele<=annovar->kmer+1)    ) )
+		       )
 		    {
-		      get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+		      get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  model_info->ginfo->seq_err[i], sequencing_depth_of_coverage,mean_read_len,i);
 		    }
 		  else
 		    {
 		      //get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(annovar,  seq_error_rate_per_base, sequencing_depth_of_coverage,mean_read_len,i);
+		      get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(annovar, assump,
+											    model_info, little_db_graph, db_graph,gwp,i);
+
 		    }
 		  
 		  

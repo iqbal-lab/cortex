@@ -35,14 +35,14 @@ typedef struct{
   GraphInfo* ginfo;
   long long genome_len;
   double mu; //parameter of geometric distirb describing prior for repeat copy number
-  double seq_error_rate_per_base;
+  //double seq_error_rate_per_base;
   int ref_colour;
   int num_haploid_chromosomes;
   ExperimentType expt_type;
   AssumptionsOnGraphCleaning assump;
 } GraphAndModelInfo;
 
-void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo, long long genome_len, double mu, double seq_err_rate_per_base, 
+void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo, long long genome_len, double mu, //double seq_err_rate_per_base, 
 			   int ref_colour, int num_chroms, ExperimentType expt_type, AssumptionsOnGraphCleaning assump);
 
 #endif

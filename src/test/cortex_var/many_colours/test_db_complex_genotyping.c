@@ -496,7 +496,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   float repeat_geometric_param_mu = 0.8;//not used in this
   // int genome_size = 554;//554 is length of one allele + rest of reference
   int num_chroms_in_expt=2;
-  initialise_model_info(&model_info, &ginfo, genome_size, repeat_geometric_param_mu, 0.01, -1, num_chroms_in_expt, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
+  initialise_model_info(&model_info, &ginfo, genome_size, repeat_geometric_param_mu, -1, num_chroms_in_expt, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
   zygosity true_genotype;
   for (p=0; p<num_depths; p++)
     {
@@ -989,11 +989,11 @@ Colour:	MeanReadLen	TotalSeq
 
   GraphAndModelInfo model_info;
   double mu=0.8;
-  double seq_err_rate_per_base=0.01;
+  //double seq_err_rate_per_base=0.01;
   int ref_colour=0;
   int num_chroms=20; 
   long long genome_len = 3000000000;
-  initialise_model_info(&model_info, &ginfo, genome_len, mu, seq_err_rate_per_base, 
+  initialise_model_info(&model_info, &ginfo, genome_len, mu, //seq_err_rate_per_base, 
 			ref_colour, num_chroms, EachColourADiploidSampleExceptTheRefColour, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
 
   var.one_allele       = branch1;
@@ -1304,11 +1304,11 @@ Colour 0 = reference
 
   GraphAndModelInfo model_info;
   double mu=0.8;
-  double seq_err_rate_per_base=0.01;
+  // double seq_err_rate_per_base=0.01;
   int ref_colour=0;
   int num_chroms=2; 
   long long genome_len = 3000000000;
-  initialise_model_info(&model_info, &ginfo, genome_len, mu, seq_err_rate_per_base, 
+  initialise_model_info(&model_info, &ginfo, genome_len, mu, //seq_err_rate_per_base, 
 			ref_colour, num_chroms, EachColourADiploidSampleExceptTheRefColour, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
 
   var.one_allele       = branch1;

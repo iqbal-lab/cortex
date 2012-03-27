@@ -64,8 +64,10 @@ boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, Graph
     }
 
   //calling these functions sets the values of the likelihoods inside the annovar object/struct
-  calculate_integrated_loglikelihood_of_snp_model_given_data(annovar, model_info);
-  calculate_integrated_loglikelihood_of_repeat_model_given_data(annovar, model_info, allele_balance_prior);
+  
+  // *********    WARNING   - commented out the next 2 lines when I added one seq error rate per colour. uncomment them when you fix those functions to support this
+  //calculate_integrated_loglikelihood_of_snp_model_given_data(annovar, model_info);
+  //calculate_integrated_loglikelihood_of_repeat_model_given_data(annovar, model_info, allele_balance_prior);
   
   double log_bf_var_over_rep = annovar->model_llks.llk_var - annovar->model_llks.llk_rep;
 
@@ -81,6 +83,7 @@ boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, Graph
 }
 
 
+/*
 double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info)
 {
    double step = (0.98-0.02)/NUM_STEPS; //grid/mesh/step  value for frequency
@@ -261,6 +264,9 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
   return llk;
 
 }
+*/
+
+
 
 int factorial(int n)
 {
@@ -410,11 +416,16 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
 }
 
 
+
 double get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info)
 {
   double allele_balance_prior=5;//goes into symmetric Beta
-  return calculate_integrated_loglikelihood_of_snp_model_given_data(annovar, model_info)
-    - calculate_integrated_loglikelihood_of_repeat_model_given_data(annovar, model_info, allele_balance_prior);
+  return 0; //ZAM - commented this out when I moved to one seq error rate per colour, as I have not modified calculate_integrated_loglikelihood_of_snp_model_given_data to support that
+  //commenting out as I know I have to reimplement this anyway
+
+
+  //return calculate_integrated_loglikelihood_of_snp_model_given_data(annovar, model_info)
+  //- calculate_integrated_loglikelihood_of_repeat_model_given_data(annovar, model_info, allele_balance_prior);
 }
 
 

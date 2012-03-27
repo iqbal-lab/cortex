@@ -184,15 +184,13 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 	}
       
       int ret=1;
-      int debugctr = 0;
+
       while (ret)
 	{
 
 	  //note you are reading a bunch of variants that may have been called on another sample,
 	  //and potentially are genotyping them on a different sample. So these reads can contain kmers
 	  // that are not in our graph. These become NULL points in our array of dBNode* 's.
-	  debugctr++;
-	  printf("ZAm read next var %d\n", debugctr);
 	  ret = read_next_variant_from_full_flank_file(fp, cmd_line->max_read_length,
 						       var, db_graph, &gt_file_reader, seq, seq_inc_prev_kmer, kmer_window);
 	  if (ret==1)
@@ -205,7 +203,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 	    }
 	  else
 	    {
-	      printf("Debug - ret is %d for debugctr %d\n", ret, debugctr);
+
 	    }
 	}
 
@@ -905,7 +903,7 @@ int main(int argc, char **argv){
 
   GraphAndModelInfo model_info;
   float repeat_geometric_param_mu = 0.8;
-  float seq_err_rate_per_base;
+  // float seq_err_rate_per_base;
   int i;
   // need estimated sequencing error rates for genotyping
   if ((cmd_line.manually_override_error_rate==false) && (cmd_line.use_snp_alleles_to_estim_seq_err_rate==false))
@@ -966,7 +964,7 @@ int main(int argc, char **argv){
   AssumptionsOnGraphCleaning assump = AssumeUncleaned;
   //  AssumptionsOnGraphCleaning assump = AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice;
   initialise_model_info(&model_info, &db_graph_info, cmd_line.genome_size, 
-			repeat_geometric_param_mu, seq_err_rate_per_base, 
+			repeat_geometric_param_mu, //seq_err_rate_per_base, 
 			cmd_line.ref_colour, num_chroms_in_expt, 
 			cmd_line.expt_type, assump);
 
