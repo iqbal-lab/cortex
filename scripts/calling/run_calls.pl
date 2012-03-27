@@ -83,7 +83,8 @@ my (
         $qthresh,              $dups,           $homopol,
         $mem_height,           $mem_width, $binary_colourlist,
         $max_read_len,         $format, $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
-        $expt_type,            $do_union, $manual_override_cleaning
+        $expt_type,            $do_union, $manual_override_cleaning,
+        $build_per_sample_vcfs
 );
 
 #set defaults
@@ -129,6 +130,7 @@ $list_ref_fasta = "nonexistent_nonsense";
 $expt_type = "";
 $do_union = "no";
 $manual_override_cleaning="no";
+$build_per_sample_vcfs="no";
 my $pooled_colour = -1;    #deprecated
 my $help = '';    #default false
 
@@ -174,7 +176,8 @@ my $help = '';    #default false
     'list_ref_fasta:s'     =>\$list_ref_fasta,
     'vcftools_dir:s'       =>\$vcftools_dir,
     'manual_override_cleaning:s' => \$manual_override_cleaning,
-    'do_union:s'         =>\$do_union
+    'do_union:s'         =>\$do_union,
+    'build_per_sample_vcfs:s' =>\$build_per_sample_vcfs,
 );
 
 if ($help)
@@ -218,6 +221,7 @@ if ($help)
 	print "--vcftools_dir\t\t\t\tVCFtools is used to generate VCFs - mandatory to either specify this on cmd-line, or manually edit the path at the top of this script\n";
 	print "--do_union\t\t\t\tHaving made per-sample callsets (per kmer and cleaning), should we combine all calls into a union set, and genotype all samples? Valid values are yes and no. Default is no.\n";
 	print "--manual_override_cleaning\t\t\t\tYou can specify specific thresholds for specific samples by giving a file here, each line has three (tab sep) columns: sample name, kmer, and comma-separated thresholds\nDon't use this unless you know what you are doing\n";
+	print "--build_per_sample_vcfs\t\t\t\tThis script repeatedly runs Cortex BC and PD callers, calling on each sample separately, and then by default builds one pair (raw/decomp) of VCFs for the union set. If in addition you want VCFs built for each callset, enter \"yes\" here. In general, do not do this, it is very slow.\n";
 	print "--help\t\t\t\tprints this\n";
 	exit();
 }
@@ -619,10 +623,12 @@ if ($do_union eq "yes")
 	
 	
 
-	
-	#print "\n******   Build VCFs for each of the individual callsets   ***\n";
-	#build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
-	
+	if ($build_per_sample_vcfs eq "yes")
+	{
+	    print "\n******   Build VCFs for each of the individual callsets   ***\n";
+	    build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
+	}
+
 ######################################################################################################
 ## 7. Post-process the VCFS - make a union, remove dupliate lines, remove variants where 
 ##    the ref allele does not match the reference. Check each line has right number of fields.
@@ -637,10 +643,13 @@ if ($do_union eq "yes")
 else  ##### if not making a union set
 {
 
-       ## build the VCFs for each of the individual callsets
-	#print "\n******   Build VCFs for each of the individual callsets   ***\n";
-	#build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
-	clean_all_vcfs(\%vcfs_needing_post_processing);
+    if ($build_per_sample_vcfs eq "yes")
+    {
+	## build the VCFs for each of the individual callsets
+	print "\n******   Build VCFs for each of the individual callsets   ***\n";
+	build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
+    }
+    clean_all_vcfs(\%vcfs_needing_post_processing);
 }
 
 
@@ -986,8 +995,6 @@ sub build_clean_binary
     }
 
 
-    die("DEBUGDEBUG clean binary is $ctx - does not exist\n");
-   
     my $cortex_binary = get_right_binary($kmer, $cortex_dir,1 );##one colour
     my $cmd2 = $cortex_binary." --kmer_size $kmer --mem_height $height --mem_width $width --dump_binary $ctx --remove_low_coverage_supernodes $clean_thresh --multicolour_bin $uncleaned > $log 2>&1";
     my $ret2 = qx{$cmd2};
@@ -1256,7 +1263,7 @@ sub build_unclean
 	print "Binary $ctx already exists, so will not rebuild\n";
 	return;
     }
-    die("DEBUG ZAM got here, ctx is $ctx does not exist\n");
+
     my $cortex_binary = get_right_binary($km, $cdir,1 );##one colour
     my $cmd = $cortex_binary." --kmer_size $km --mem_height $height --mem_width $width --dump_binary $ctx --max_read_len $max_r  --format $format --dump_covg_distribution $covg";
     if ($se ne "NO")
