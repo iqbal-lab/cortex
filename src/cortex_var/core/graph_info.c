@@ -140,3 +140,24 @@ int get_mean_readlen_across_colours(GraphInfo* ginfo)
     }
   return (int) (alpha/beta);
 }
+
+void read_estimated_seq_errors_from_file(GraphInfo* ginfo, FILE* fp)
+{
+  char line[MAX_FILENAME_LENGTH+1];
+  int col=0;
+
+  while (fgets(line, MAX_FILENAME_LENGTH, fp) !=NULL)
+    {
+            //remove newline from end of line - replace with \0
+      char* p;
+      if ((p = strchr(line, '\n')) != NULL)
+	*p = '\0';
+      
+      if (col<NUMBER_OF_COLOURS) //just for robustness - should always be true
+	{
+	  ginfo->seq_err[col]=  (long double) strtod(line ,NULL);
+	  col++;
+	}
+	
+    }
+}

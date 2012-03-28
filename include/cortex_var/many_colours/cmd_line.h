@@ -101,6 +101,8 @@ typedef struct
 
   long double manually_entered_seq_error_rate;
   boolean manually_override_error_rate;
+  char manually_entered_seq_error_rates_file[MAX_FILENAME_LEN];//one line per colour, each line is a seq error rate
+
   boolean use_snp_alleles_to_estim_seq_err_rate;
   boolean dump_aligned_overlap_binary;
   boolean specified_max_var_len;

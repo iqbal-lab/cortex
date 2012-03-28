@@ -364,6 +364,7 @@ int default_opts(CmdLine * c)
   //c->working_colour4_for_2net=-1;
   c->manually_entered_seq_error_rate=-1;
   c->manually_override_error_rate=false;
+  set_string_to_null(c->manually_entered_seq_error_rates_file, MAX_FILENAME_LEN);
   c->expt_type = Unspecified;
   c->genome_size=0;
   c->kmer_size = -1;
@@ -1303,9 +1304,14 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    cmdline_ptr->manually_override_error_rate=true;
 	    cmdline_ptr->manually_entered_seq_error_rate = (long double) strtod(optarg,NULL);
 	  }
+	else if (access(optarg,R_OK)!=-1)
+	  {
+	    cmdline_ptr->manually_override_error_rate=true;
+	    strcpy(cmdline_ptr->manually_entered_seq_error_rates_file,optarg);
+	  }
 	else
 	  {
-	    errx(1,"[--estimated_error_rate] option requires an argument, the per base-pair error rate. You have entered a non-numeric value");
+	    errx(1,"[--estimated_error_rate] option requires an argument. This can either be the per base-pair error rate (which is then assumed to be true for all colours), OR a file, containing one estimated error rate for each colour. You have neither entered a numeric argument, nor a file which Cortex can find/open\n");
 	  }
 	break;
       }

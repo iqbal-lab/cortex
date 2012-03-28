@@ -62,4 +62,7 @@ int graph_info_update_mean_readlen(GraphInfo* ginfo, int colour, int previous_me
 void graph_info_update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,int mean_readlen_in_added_data, long long added_seq);
 double get_total_depth_of_coverage_across_colours(GraphInfo* ginfo, long long genome_length);
 int get_mean_readlen_across_colours(GraphInfo* ginfo);
+
+void read_estimated_seq_errors_from_file(GraphInfo* ginfo, FILE* fp);
+
 #endif

@@ -26,8 +26,8 @@ BEGIN
 	$script_dir = $FindBin::Bin;
 	$cortex_dir = $script_dir . '/../../';
 	push( @INC,
-		$cortex_dir
-		  . "/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6"
+		$script_dir
+		  . "/perl_modules/Statistics-Descriptive-2.6"
 	);
 }
 

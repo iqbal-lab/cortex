@@ -919,12 +919,26 @@ int main(int argc, char **argv){
     }
   else if ((cmd_line.manually_override_error_rate==true) && (cmd_line.use_snp_alleles_to_estim_seq_err_rate==false))
     {
-      for (i=0; i<NUMBER_OF_COLOURS; i++)
+      if (strcmp(cmd_line.manually_entered_seq_error_rates_file, "")==0)
 	{
-	  if (i != cmd_line.ref_colour)
+	  for (i=0; i<NUMBER_OF_COLOURS; i++)
 	    {
-	      db_graph_info.seq_err[i]=cmd_line.manually_entered_seq_error_rate;
+	      if (i != cmd_line.ref_colour)
+		{
+		  db_graph_info.seq_err[i]=cmd_line.manually_entered_seq_error_rate;
+		}
 	    }
+	}
+      else
+	{
+	  FILE* fp_err = fopen(cmd_line.manually_entered_seq_error_rates_file, "r");
+	  if (fp_err==NULL)
+	    {
+	      printf("Unable to open file %s\n", cmd_line.manually_entered_seq_error_rates_file);
+	      exit(1);
+	    }
+	  read_estimated_seq_errors_from_file(&db_graph_info, fp_err);
+	  fclose(fp_err);
 	}
     }
   else //cmd_line.use_snp_alleles_to_estim_seq_err_rate==true
