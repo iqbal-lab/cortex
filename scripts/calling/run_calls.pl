@@ -222,6 +222,7 @@ if ($help)
 	print "--do_union\t\t\t\tHaving made per-sample callsets (per kmer and cleaning), should we combine all calls into a union set, and genotype all samples? Valid values are yes and no. Default is no.\n";
 	print "--manual_override_cleaning\t\t\t\tYou can specify specific thresholds for specific samples by giving a file here, each line has three (tab sep) columns: sample name, kmer, and comma-separated thresholds\nDon't use this unless you know what you are doing\n";
 	print "--build_per_sample_vcfs\t\t\t\tThis script repeatedly runs Cortex BC and PD callers, calling on each sample separately, and then by default builds one pair (raw/decomp) of VCFs for the union set. If in addition you want VCFs built for each callset, enter \"yes\" here. In general, do not do this, it is very slow.\n";
+	print "--logfile\t\t\t\tOutput always goes to a logfile, not to stdout/screen. If you do not specify a name here, it goes to a file called \"default_logfile\". So, enter a filename for yout logfile here. Use filename,f to force overwriting of that file even if it already exists. Otherwise run_calls will abort to prevent overwriting.\n";
 	print "--help\t\t\t\tprints this\n";
 	exit();
 }
@@ -1367,10 +1368,22 @@ sub get_number_samples
 
 sub run_checks
 {
-    if (-e $global_logfile)
+    if ($global_logfile =~ /^([^,]+),f$/)
+    {
+	## user has specified to forcibly output to this file, even if it already exists.
+	$global_logfile = $1;
+	if (-e $global_logfile)
+	{
+	    my $cmd = "rm $global_logfile";
+	    qx{$cmd};
+	}
+	
+    }
+    elsif (-e $global_logfile)
     {
 	die("Abort. run_calls.pl will either output its logs to a file called \"default_logfile\", or if you have specified --logfile, then it outputs to whatever you specify. However this file $global_logfile, already exists. Specify another, or delete this one\n");
     }
+
     if ( ($do_union ne "yes") && ($do_union ne "no") )
     {
 	die("If you specify --do_union, you must give the value \"yes\" or \"no\"\n");
