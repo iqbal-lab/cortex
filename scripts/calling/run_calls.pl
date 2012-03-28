@@ -238,7 +238,7 @@ run_checks();
 ## sort out loggin
 if ($global_logfile ne "")
 {
-    open(GLOBAL, ">".$glocal_logfile)||die("Cannot open log file $global_logfile - have you given a bad path? Permissions issue?\n");
+    open(GLOBAL, ">".$global_logfile)||die("Cannot open log file $global_logfile - have you given a bad path? Permissions issue?\n");
     *STDOUT = *GLOBAL;
 }
 
