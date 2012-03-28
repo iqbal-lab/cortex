@@ -1,77 +1,44 @@
->this does occur, but we expect it not to - it's an error
+>this DOES occur in sample, but we expect it not to - it's an error
 AAACTGGAGCTGAAAGAAACAAATATTTACATATAAAGTTAAAAGTTATATAGGGAACAAA
 >this is the true sequence, occurs 100 times in the sample
 AAACTGGAGCTGAAAGAAACAAATATTTACCTATAAAGTTAAAAGTTATATAGGGAACAAA
-> this does not occur in sample (first line is allele we expect to not occur)
+> this does not occur in sample, and we expect it not to (eg ref allele of hom nonref site)
 ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
+> site we expect to be hom in sample, and indeed it is
 ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
+> this does not occur in sample, and we expect it not to (eg ref allele of hom nonref site)
 ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
+> site we expect to be hom in sample, and indeed it is
 ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
+> this does not occur in sample, and we expect it not to (eg ref allele of hom nonref site)
 ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
+> site we expect to be hom in sample, and indeed it is
 ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
+> this does not occur in sample, and we expect it not to (eg ref allele of hom nonref site)
 ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
+> site we expect to be hom in sample, and indeed it is
 ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
+> this does not occur in sample, and we expect it not to (eg ref allele of hom nonref site)
 ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
+> site we expect to be hom in sample, and indeed it is
 ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
+> this does not occur in sample, and we expect it not to (eg ref allele of hom nonref site)
 ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
+> site we expect to be hom in sample, and indeed it is
 ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
+> this does not occur in sample, and we expect it not to (eg ref allele of hom nonref site)
 ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
+> site we expect to be hom in sample, and indeed it is
 ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
+> this does not occur in sample, and we expect it not to (eg ref allele of hom nonref site)
 ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
+> site we expect to be hom in sample, and indeed it is
 ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
+> this does not occur in sample, and we expect it not to (eg ref allele of hom nonref site)
 ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
+> site we expect to be hom in sample, and indeed it is
 ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
+> this does not occur in sample, and we expect it not to (eg ref allele of hom nonref site)
 ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
+> site we expect to be hom in sample, and indeed it is
 ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
-ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
-ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
-ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
-ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
-ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
-ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
-ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
-ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
-ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
-ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
-ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
-ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
-ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
-ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-> this does not occur in sample (first line is allele we expect to not occur) - pretend this is a different, independent SNP for purposes of test
-ATTAAAATGTTATAACTCTAGGATGTTATACGTAATTCTCATAGTAACCAAAAATGAAATA
-> first line of real genome - does occur (this is the allele we expect to be hom) - so no error here
-ATTAAAATGTTATAACTCTAGGATGTTATATGTAATTCTCATAGTAACCAAAAATGAAATA
-

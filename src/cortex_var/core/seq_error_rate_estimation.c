@@ -39,7 +39,7 @@
 #include <string.h>
 
 void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alleles, GraphInfo* db_graph_info, dBGraph* db_graph, int ref_colour, long long genome_size,
-						       long double default_seq_err_rate)
+						       long double default_seq_err_rate, char* output_file)
 {
 
   int max_read_length = 2*(db_graph->kmer_size);
@@ -99,6 +99,16 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
       exit(1);
     }
 
+  FILE* fout=NULL;
+  if (output_file != NULL)
+    {
+      fout = fopen(output_file, "w");
+      if (fout==NULL)
+	{
+	  printf("Unable to open output file %s\n", output_file);
+	  exit(1);
+	}
+    }
   //end of initialisation 
 
 
@@ -133,7 +143,7 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
 	      db_graph_info->seq_err[colour]=estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(filename, db_graph, colour, 
 												     seq, kmer_window, &file_reader_fasta,
 												     array_nodes, array_or, &num_snps_tested,
-												     max_read_length, default_seq_err_rate);
+													  max_read_length, default_seq_err_rate, fout);
 
 	    }
 
@@ -141,6 +151,11 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
     }
   fclose(fp);
 
+  //cleanup
+  if (output_file != NULL)
+    {
+      fclose(fout);
+    }
   free_sequence(&seq);
   free(kmer_window->kmer);
   free(kmer_window);
@@ -157,16 +172,21 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
 //   >allele which we think is homozygous in this sample
 //   GAAGATAGAG
 //  should be k-1 bases before and after the SNP base itself.
+//if you enter NULL for output filename, will not dump distribution of numbers of SNPs with 0,..100 covg on the allele we expect to have zero covg on
 long double estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(char* fasta, dBGraph* db_graph, int colour, 
 									 Sequence* seq, KmerSlidingWindow* kmer_window,
 									 int (*file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
 									 dBNode** array_nodes, Orientation* array_or, int* num_snps_tested, int max_read_length,
-									 long double default_seq_err)
+									 long double default_seq_err, FILE* fout)
 {
-  int num_snps=0;
-  long long total_covg_on_true_alleles=0; //2nd read in each pair
-  long long total_covg_on_error_alleles=0; //first read in each pair
 
+  int num_snps_with_no_covg=0; //meaning no covg on the allele we expect to have zero covg
+  int num_snps_with_covg1 =0; //ignoring SNps where covg>1, likely due to repeats - this is an approx!!
+
+  // long long total_covg_on_true_alleles=0; //2nd read in each pair
+  //long long total_covg_on_error_alleles=0; //first read in each pair
+
+  int counts[101];
   FILE* fptr = fopen(fasta, "r");
   if (fptr==NULL)
     {
@@ -181,39 +201,60 @@ long double estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(char* f
       num_kmers = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, array_nodes, array_or, false, &full_entry, file_reader,
 								 seq, kmer_window, db_graph, -1);
 
-      printf("Next SNP\n");
-      boolean too_short = false;
-      total_covg_on_error_alleles += count_reads_on_allele_in_specific_colour(array_nodes, num_kmers, colour, &too_short);
-      printf("New total covg on bad alleles is %qd\n", total_covg_on_error_alleles);
-      num_kmers = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, array_nodes, array_or, false, &full_entry, file_reader,
-								 seq, kmer_window, db_graph, -1);
+      if (num_kmers>0)
+	{
+	  boolean too_short = false;
+	  long long covg_on_error_allele = count_reads_on_allele_in_specific_colour(array_nodes, num_kmers, colour, &too_short);
 
-      total_covg_on_true_alleles += count_reads_on_allele_in_specific_colour(array_nodes, num_kmers, colour, &too_short);
-      printf("New total covg on true alleles is %qd\n", total_covg_on_true_alleles);
+	  if (covg_on_error_allele==0)
+	    {
+	      num_snps_with_no_covg++;
+	    }
+	  else if (covg_on_error_allele==1)
+	    {
+	      num_snps_with_covg1++;
+	    }
+	  if (covg_on_error_allele<=100)
+	    {
+	      counts[covg_on_error_allele]=counts[covg_on_error_allele]+1;
+	    }
+	  //num_kmers = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, array_nodes, array_or, false, &full_entry, file_reader,
+	  //							 seq, kmer_window, db_graph, -1);
+	  ignore_next_read(fptr, max_read_length, &full_entry, file_reader, seq);//this is the read of the allele we DO expect to be in the sample. Might use this in future
+	}
 
-      num_snps++; 
     }
   while((num_kmers>0)||(!feof(fptr)) );
 
     
-    if (num_snps==0)
-      {
-	printf("This file %s seems to contain no reads. Will forcibly set estimated seq error rate to %Lf and continue. But you should look into this\n",  fasta, default_seq_err);
-	return (long double) default_seq_err;
-      }
-    else
-      {
-	*num_snps_tested = num_snps;
-      }
-
-    if (total_covg_on_true_alleles+total_covg_on_error_alleles==0)
-      {
-	return default_seq_err;
-      }
-    else
-      {
-	return total_covg_on_error_alleles/(total_covg_on_true_alleles+total_covg_on_error_alleles);
-      }
+  //dump distribution to next line of file
+  if (fout !=NULL)
+    {
+      fprintf(fout, "%d\t", colour);
+      int j;
+      for (j=0; j<=100; j++)
+	{
+	  fprintf(fout, "%d", counts[j]);
+	  if (j<100)
+	    {
+	      fprintf(fout, "\t");
+	    }
+	  else
+	    {
+	      fprintf(fout, "\n");
+	    }
+	}
+    }
+  
+  if (num_snps_with_no_covg+num_snps_with_covg1==0)
+    {
+      return default_seq_err;
+    }
+  else
+    {
+      printf("Num with covg 1 is %d, and with 0 is %d\n", num_snps_with_covg1, num_snps_with_no_covg);
+      return (long double) num_snps_with_covg1/((long double) (num_snps_with_no_covg+num_snps_with_covg1)) ;
+    }
 
   fclose(fptr);
 

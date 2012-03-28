@@ -451,6 +451,7 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
+
    if (NULL == CU_add_test(pPopGraphSuite, "Test estimation of sequencing error rate from fasta of pairs of SNP alleles (first allele known not to be present, second known to be homozygous present) - another test", test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta_test2 ))
       {
 	CU_cleanup_registry();
