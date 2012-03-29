@@ -941,11 +941,16 @@ int main(int argc, char **argv){
 	  fclose(fp_err);
 	}
     }
-  else //cmd_line.use_snp_alleles_to_estim_seq_err_rate==true
+  else if (cmd_line.use_snp_alleles_to_estim_seq_err_rate==true)
     {
-      estimate_seq_error_rate_from_snps_for_each_colour(cmd_line.colourlist_snp_alleles, db_graph_info, db_graph, cmd_line.ref_colour);
+      estimate_seq_error_rate_from_snps_for_each_colour(cmd_line.colourlist_snp_alleles, db_graph_info, db_graph, cmd_line.ref_colour, "seq_err_estimation.txt");
+    }
+  else
+    {
+      printf("ZAM shouldnever get here\n");
     }
 
+  print_seq_err_rates_to_screen(&db_graph_info);
 
 
   int num_chroms_in_expt=NUMBER_OF_COLOURS;

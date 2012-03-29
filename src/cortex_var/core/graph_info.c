@@ -27,6 +27,7 @@
 
 #include <dB_graph.h>
 #include <graph_info.h>
+#include <file_reader.h>
 
 void error_cleaning_initialise(ErrorCleaning cl)
 {
@@ -159,5 +160,15 @@ void read_estimated_seq_errors_from_file(GraphInfo* ginfo, FILE* fp)
 	  col++;
 	}
 	
+    }
+}
+
+void print_seq_err_rates_to_screen(GraphInfo* ginfo)
+{
+  printf("Setting the following per-colour sequencing error rates (used only for genotyping):\nColour\tRate\n");
+  int i;
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      printf("%d\t%.3Lf\n", i, ginfo->seq_err[i]);
     }
 }

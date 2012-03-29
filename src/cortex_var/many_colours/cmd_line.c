@@ -56,11 +56,12 @@ int isNumeric (const char * s)
 boolean check_files_in_list_exist_ignoring_ref_line(char* filelist, char* error_msg, int ref_colour)
 {
   error_msg[0]='\0';
+  /*
   if (ref_colour==-1)
     {
       strcat(error_msg,"You should not call --estim_e_with_snps unless you also specify --ref_colour\n");
       return false;
-    }
+      }*/
     if (filelist[0]=='\0')
     {
       strcat(error_msg,"Empty string in check_files_in_list_exist_ignoring_ref_line - call Zam - I only put this error msg in out of paranoia\n");
@@ -83,9 +84,13 @@ boolean check_files_in_list_exist_ignoring_ref_line(char* filelist, char* error_
 	  count++;
 	  if (count != ref_colour)
 	    {
+	      char* p;
+	      if ((p = strchr(filename, '\n')) != NULL)
+		*p = '\0';
+	      
 	      if (access(filename,R_OK)==-1) 
 		{
-		  sprintf(error_msg,"File %s on line %d (numbering lines from 0)  (corresponding to colour %d) of file %s cannot be accessed - bad path?\n", filename, count, count, filelist );
+		  sprintf(error_msg,"File Z%sZ on line %d (numbering lines from 0)  (corresponding to colour %d) of file %s cannot be accessed - bad path?\n", filename, count, count, filelist );
 		  return false;
 		}
 	    }
@@ -93,7 +98,7 @@ boolean check_files_in_list_exist_ignoring_ref_line(char* filelist, char* error_
     }
   fclose(fp);
 
-  if (count!=NUMBER_OF_COLOURS)
+  if (count!=NUMBER_OF_COLOURS-1)
     {
       sprintf(error_msg,"File %s is supposed to contain one line per colour in your graph (the assumption is your graph contains a ref-colour, plus a set of colours, all of which contain data from samples for who you want to estimate the sequencing error rate). However in fact it contains %d lines\n", filelist, count);
       return false;
@@ -1304,7 +1309,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    cmdline_ptr->manually_override_error_rate=true;
 	    cmdline_ptr->manually_entered_seq_error_rate = (long double) strtod(optarg,NULL);
 	  }
-	else if (access(optarg,R_OK)!=-1)
+	else if (access(optarg,R_OK)==0)
 	  {
 	    cmdline_ptr->manually_override_error_rate=true;
 	    strcpy(cmdline_ptr->manually_entered_seq_error_rates_file,optarg);
