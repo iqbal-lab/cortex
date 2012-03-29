@@ -349,7 +349,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   int clean_colour = 0;
   boolean only_load_kmers_already_in_graph = true;
   load_single_colour_binary_data_from_filename_into_graph("../data/tempfiles_can_be_deleted/ref_minus_genome.ctx", db_graph, &mean_r, &tot_s, false, individual_edge_array, 
-							  colour_ref_minus_site, only_load_kmers_already_in_graph, clean_colour);
+							  colour_ref_minus_site, only_load_kmers_already_in_graph, clean_colour, false);
 
 
   int max_allele_length = 90000;

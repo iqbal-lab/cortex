@@ -109,6 +109,8 @@ typedef struct
   ExperimentType expt_type;
   
   char colour_list[MAX_FILENAME_LEN];
+  boolean for_each_colour_load_union_of_binaries;// so if colour 0 has binaries 1.ctx and 2.ctx, you load 1.ctx, and then for each kmer in 2.ctx, 
+                                                 // if it is not in the graph, you load it, and if it IS, you DO NOT increment covg, just edges
   int num_colours_in_input_colour_list;
   char multicolour_bin[MAX_FILENAME_LEN];
   int num_colours_in_multicol_bin;

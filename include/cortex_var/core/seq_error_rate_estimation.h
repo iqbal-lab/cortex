@@ -36,8 +36,13 @@
 
 
 
-void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alleles, GraphInfo* db_graph_info, dBGraph* db_graph, int ref_colour, long long genome_size,
-						       long double default_seq_err_rate, char* output_file);
+void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alleles, 
+						       GraphInfo* db_graph_info, 
+						       dBGraph* db_graph, 
+						       int ref_colour, 
+						       long long genome_size,
+						       long double default_seq_err_rate, 
+						       char* output_file);
 
 
 

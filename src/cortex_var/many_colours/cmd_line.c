@@ -352,6 +352,7 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
+  c->for_each_colour_load_union_of_binaries=false;
   //novelsseq stuff
   c->use_snp_alleles_to_estim_seq_err_rate=false;
   c->print_novel_contigs=false;
@@ -565,17 +566,33 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       {
 	if (optarg==NULL)
 	  errx(1,"[--colour_list] option requires a filename [file of filenames, one for each colour]");
-	
+
+
 	if (strlen(optarg)<MAX_FILENAME_LEN)
 	  {
-	    //how any colours in this filelist?
-	    int num_cols_in_input_list=get_number_of_files_and_check_existence_from_filelist(optarg);
+	    //special case. If optarg starts with [, then that's a flag to say "load this colourlist, and for each colour, load the UNION of these binaries (for shared kmers, dont increment covg)
+	    char temp1[MAX_FILENAME_LEN];
+	    temp1[0]='\0';
+	    strcpy(temp1, optarg);
+	    if (temp1[0]=='[')
+	      {
+		cmdline_ptr->for_each_colour_load_union_of_binaries=true;
+	      }
+	    char delims[] = "[";
+	    char* col_list = strtok(temp1, delims);
+	    if (col_list==NULL)
+	      {
+		errx(1,"[--colour_list] option requires a filename [file of filenames, one for each colour]");
+	      }
+	      
+	    //how many colours in this filelist?
+	    int num_cols_in_input_list=get_number_of_files_and_check_existence_from_filelist(col_list);
 	    if (num_cols_in_input_list==0)
 	      {
-		errx(1, "[--colour_list] filename %s contains nothing", optarg);
+		errx(1, "[--colour_list] filename %s contains nothing", col_list);
 	      }
 	    cmdline_ptr ->num_colours_in_input_colour_list=num_cols_in_input_list;
-	    strcpy(cmdline_ptr->colour_list,optarg);
+	    strcpy(cmdline_ptr->colour_list,col_list);
 	    printf("colour list is set to %s\n", cmdline_ptr->colour_list);
 	  }
 	else
@@ -583,9 +600,10 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    errx(1,"[--colour_list] filename too long [%s]",optarg);
 	  }
 	
-	if (access(optarg,R_OK)==-1){
-	  errx(1,"[--colour_list] filename [%s] cannot be accessed",optarg);
-	}
+	if ( (cmdline_ptr->for_each_colour_load_union_of_binaries==false) && (access(optarg,R_OK)==-1))
+	  {
+	    errx(1,"[--colour_list] filename [%s] cannot be accessed",optarg);
+	  }
 
 	cmdline_ptr->input_colours = true;
 	break; 
@@ -1393,6 +1411,18 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
   
+  if ( (cmd_ptr->for_each_colour_load_union_of_binaries==true) && (cmd_ptr->successively_dump_cleaned_colours==true) )
+    {
+      char tmp[] = "You can't use successively_dump_cleaned_colours and load a colour_list in \"union\" mode\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
   if (cmd_ptr->use_snp_alleles_to_estim_seq_err_rate==true)
     {
       char error_msg[2*MAX_FILENAME_LEN];

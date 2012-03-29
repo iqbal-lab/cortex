@@ -42,6 +42,7 @@
 #include <genome_complexity.h>
 #include <math.h>
 #include <maths.h>
+#include <seq_error_rate_estimation.h>
 
 void timestamp();
 
@@ -873,7 +874,8 @@ int main(int argc, char **argv){
 		}
 	      load_population_as_binaries_from_graph(cmd_line.colour_list, first_colour_data_starts_going_into, 
 						     graph_has_had_no_other_binaries_loaded, db_graph, &db_graph_info,
-						     cmd_line.load_colours_only_where_overlap_clean_colour, cmd_line.clean_colour);
+						     cmd_line.load_colours_only_where_overlap_clean_colour, cmd_line.clean_colour,
+						     cmd_line.for_each_colour_load_union_of_binaries);
 	      timestamp();
 	      printf("Finished loading single_colour binaries\n");
 	    }
@@ -908,7 +910,7 @@ int main(int argc, char **argv){
   // need estimated sequencing error rates for genotyping
   if ((cmd_line.manually_override_error_rate==false) && (cmd_line.use_snp_alleles_to_estim_seq_err_rate==false))
     {
-      //if you manually override, you set the same seq error rate for all colours (except the ref)
+      //if you manually override, you set the same seq error rate for all colours 
       for (i=0; i<NUMBER_OF_COLOURS; i++)
 	{
 	  if (i != cmd_line.ref_colour)
@@ -943,7 +945,13 @@ int main(int argc, char **argv){
     }
   else if (cmd_line.use_snp_alleles_to_estim_seq_err_rate==true)
     {
-      estimate_seq_error_rate_from_snps_for_each_colour(cmd_line.colourlist_snp_alleles, db_graph_info, db_graph, cmd_line.ref_colour, "seq_err_estimation.txt");
+      long double default_seq_err = 0.01;
+      estimate_seq_error_rate_from_snps_for_each_colour(cmd_line.colourlist_snp_alleles, 
+							&db_graph_info, db_graph, 
+							cmd_line.ref_colour, 
+							cmd_line.genome_size,
+							default_seq_err,
+							"seq_err_estimation.txt");
     }
   else
     {

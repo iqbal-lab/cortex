@@ -82,7 +82,7 @@ my (
         $mem_height,           $mem_width, $binary_colourlist,
         $max_read_len,         $format, $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
         $expt_type,            $do_union, $manual_override_cleaning,
-        $build_per_sample_vcfs, $global_logfile,
+        $build_per_sample_vcfs, $global_logfile, $call_jointly_noref, $call_jointly_incref,
 );
 
 #set defaults
@@ -130,6 +130,8 @@ $do_union = "no";
 $manual_override_cleaning="no";
 $build_per_sample_vcfs="no";
 $global_logfile = "default_logfile";
+$call_jointly_noref="no";
+$call_jointly_incref="no";
 my $pooled_colour = -1;    #deprecated
 my $help = '';    #default false
 
@@ -178,6 +180,9 @@ my $help = '';    #default false
     'do_union:s'         =>\$do_union,
     'build_per_sample_vcfs:s' =>\$build_per_sample_vcfs,
     'logfile:s'           => \$global_logfile,
+    'call_jointly_noref' => \$call_jointly_noref,
+    'call_jointly_incref' => \$call_jointly_incref,
+
 );
 
 if ($help)
@@ -223,6 +228,8 @@ if ($help)
 	print "--manual_override_cleaning\t\t\t\tYou can specify specific thresholds for specific samples by giving a file here, each line has three (tab sep) columns: sample name, kmer, and comma-separated thresholds\nDon't use this unless you know what you are doing\n";
 	print "--build_per_sample_vcfs\t\t\t\tThis script repeatedly runs Cortex BC and PD callers, calling on each sample separately, and then by default builds one pair (raw/decomp) of VCFs for the union set. If in addition you want VCFs built for each callset, enter \"yes\" here. In general, do not do this, it is very slow.\n";
 	print "--logfile\t\t\t\tOutput always goes to a logfile, not to stdout/screen. If you do not specify a name here, it goes to a file called \"default_logfile\". So, enter a filename for yout logfile here. Use filename,f to force overwriting of that file even if it already exists. Otherwise run_calls will abort to prevent overwriting.\n";
+	print "--call_jointly_noref\t\t\tMake (in addition) a callset from the joint graph of samples only. If there is a reference in the graph, ignore it for calling, but use it for VCF building. If there is no VCF in the graph, construct a fake reference purely for building the VCF (has no scientific value). If you have specified --auto, it uses those cleaning levels. If you have specified --auto_above 3 (for example) so each sample has 4 cleanings done, it will make 4 callsets, where the i-th callset uses cleaning level i for all samples\n";
+	print "--call_jointly_incref\t\t\tMake (in addition) a callset from the joint graph of samples and reference. If you have specified --auto, it uses those cleaning levels. If you have specified --auto_above 3 (for example) so each sample has 4 cleanings done, it will make 4 callsets, where the i-th callset uses cleaning level i for all samples\n";
 	print "--help\t\t\t\tprints this\n";
 	exit();
 }
@@ -368,16 +375,28 @@ print "********************************************\n";
 print "Call variants\n";
 print "********************************************\n";
 my $dir_for_per_sample_calls=$outdir_calls."per_sample_callsets/";
-print "per sample call dir us $dir_for_per_sample_calls\n";
+print "Per sample call dir is $dir_for_per_sample_calls\n";
 if (!(-d $dir_for_per_sample_calls))
 {
     my $c = "mkdir -p $dir_for_per_sample_calls";
     qx{$c};
 }
 
+my $dir_for_joint_calls=$outdir_calls."joint_callsets/";
+if ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )
+{
+    print "Joint call dir is $dir_for_joint_calls\n";
+}
+if (!(-d $dir_for_joint_calls))
+{
+    my $c = "mkdir -p $dir_for_joint_calls";
+    qx{$c};
+}
+
 
 my %sample_to_bc_callfile=();#sample ->kmer ->cleaning ->callfile
 my %sample_to_pd_callfile=();
+my %joint_callfiles=(); ##kmer -> cleaning -> callfile
 
 foreach my $k (@kmers)
 {
@@ -459,6 +478,17 @@ foreach my $k (@kmers)
 }
 
 
+
+if  ($call_jointly_incref eq "yes")
+{
+    my $num_cleanings = get_num_cleaning_levels();
+    my $cl=0;
+    for ($cl=0; $cl <= $num_cleanings; $cl++)
+    {
+	my $joint_incref_colourlist = get_colourlist_for_joint_incref($cl);
+
+    }
+}
 
 
 ##################################
@@ -684,6 +714,9 @@ else  ##### if not making a union set
 
 
 
+##cleanup
+close(GLOBAL);
+
 
 
 
@@ -697,7 +730,19 @@ else  ##### if not making a union set
 #######################################################################################################
 #######################################################################################################
 
-
+sub get_num_cleaning_levels
+{
+    my $num = 0;
+    if ($do_auto_cleaning eq "yes") 
+    {
+	$num = 1+$auto_above + $auto_below;
+    }
+    elsif ($do_user_spec_cleaning eq "yes")
+    {
+	$num = ($user_max_clean - $user_min_clean)/$user_clean_step + 1;
+    }
+    return $num;
+}
 sub clean_all_vcfs
 {
     my ($href) = @_;

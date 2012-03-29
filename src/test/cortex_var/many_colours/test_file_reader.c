@@ -537,7 +537,7 @@ void test_load_singlecolour_binary()
   long long total_seq=0;
   int seq_length_post = load_single_colour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_single_colour_cortex_var_graph.bin", db_graph_post,
 										&mean_readlen, &total_seq,
-										true, individual_edge_array,0, false,0);
+										true, individual_edge_array,0, false,0, false);
 
 
 
@@ -701,7 +701,7 @@ void test_load_individual_binaries_into_sv_trio()
      graph_info_initialise(&ginfo);
      int first_colour=0;
      load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_singlecolour_bins_into_multicol_bin", first_colour, true, db_graph, &ginfo,
-					    false, 0);
+					    false, 0, false);
      CU_ASSERT(ginfo.total_sequence[0]==seq_loaded1);
      CU_ASSERT(ginfo.total_sequence[1]==seq_loaded2);
      CU_ASSERT(ginfo.total_sequence[2]==seq_loaded3);
@@ -5259,7 +5259,7 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
   int mean_len;
   long long totseq;
   load_single_colour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph.singlecol.ctx",db_graph_post,&mean_len, &totseq,
-							  false,individual_edge_array,1,true,0);
+							  false,individual_edge_array,1,true,0, false);
 
 
 

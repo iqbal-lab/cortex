@@ -1481,7 +1481,8 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
 long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
 								  int* mean_readlen, long long* total_seq,
 								  boolean all_entries_are_unique, EdgeArrayType type, int index,
-								  boolean only_load_kmers_already_in_hash, int colour_clean)
+								  boolean only_load_kmers_already_in_hash, int colour_clean,
+								  boolean load_all_kmers_but_only_increment_covg_on_new_ones)//last arg is to load the "union" of two graphs.
 {
 
   if ( (only_load_kmers_already_in_hash==true) && (colour_clean>=NUMBER_OF_COLOURS) )
@@ -1527,7 +1528,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
   while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, type, index, binversion_in_header))
     {
       count++;
-
+      found=false;//zam just added this
       dBNode * current_node  = NULL;
       BinaryKmer tmp_kmer;
       if (only_load_kmers_already_in_hash==false) //normal case
@@ -1542,7 +1543,13 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 	    }
 	  seq_length+=db_graph->kmer_size;
 	  add_edges(current_node,individual_edge_array, index, get_edge_copy(tmp_node, individual_edge_array, index));
-	  db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&tmp_node, individual_edge_array,index) );
+	  if ( (load_all_kmers_but_only_increment_covg_on_new_ones==false)//usual case
+	       ||
+	       ( (load_all_kmers_but_only_increment_covg_on_new_ones==true) && (found==false)) 
+	       )
+	    {
+	      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&tmp_node, individual_edge_array,index) );
+	    }
 	}
       else
 	{//check if node exists in hash already. If yes, then load edge and covg info into the appropriate colour
@@ -1572,7 +1579,8 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 // we compile for 2 colours only, and we are loading into colour 1.
 long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, GraphInfo* db_graph_info, 
 											   boolean all_entries_are_unique, EdgeArrayType type, int index,
-											   boolean only_load_kmers_already_in_hash, int colour_clean)
+											   boolean only_load_kmers_already_in_hash, int colour_clean,
+											   boolean load_all_kmers_but_only_increment_covg_on_new_ones)
 {
 
   FILE* fptr = fopen(filename, "r");
@@ -1601,7 +1609,8 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
       total_seq_loaded += 
 	load_single_colour_binary_data_from_filename_into_graph(line, db_graph, &mean_read_len_in_this_binary,&total_seq_in_this_binary,
 								all_entries_are_unique, individual_edge_array, index,
-								only_load_kmers_already_in_hash, colour_clean);
+								only_load_kmers_already_in_hash, colour_clean,
+								load_all_kmers_but_only_increment_covg_on_new_ones);
       all_entries_are_unique=false;
 
       graph_info_update_mean_readlen_and_total_seq(db_graph_info, index,mean_read_len_in_this_binary, total_seq_in_this_binary);
@@ -1624,7 +1633,8 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 // this file contains a list of filenames, each of these represents an individual (and contains a list of binaries for that individual).
 // these go into successive colours, starting with first_colour
 long long load_population_as_binaries_from_graph(char* filename, int first_colour,boolean about_to_load_first_binary_into_empty_graph, 
-						 dBGraph* db_graph, GraphInfo* db_graph_info, boolean only_load_kmers_already_in_hash, int colour_clean)
+						 dBGraph* db_graph, GraphInfo* db_graph_info, boolean only_load_kmers_already_in_hash, int colour_clean,
+						 boolean load_all_kmers_but_only_increment_covg_on_new_ones)
 {
 
   if ( (about_to_load_first_binary_into_empty_graph==true) && (only_load_kmers_already_in_hash==true) )
@@ -1671,7 +1681,8 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph,db_graph_info, 
 											 about_to_load_first_binary_into_empty_graph, 
 											 individual_edge_array, which_colour,
-											 only_load_kmers_already_in_hash, colour_clean);
+											 only_load_kmers_already_in_hash, colour_clean,
+											 load_all_kmers_but_only_increment_covg_on_new_ones);
       about_to_load_first_binary_into_empty_graph=false;
       //printf("Loaded person %d, total kmers in graph %qd\n", which_colour, hash_table_get_unique_kmers(db_graph) );
       which_colour++;
@@ -1723,7 +1734,7 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_c
       total_seq_loaded = total_seq_loaded + 
 	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph,db_graph_info, false,
 											 individual_edge_array, in_colour,
-											 true, clean_colour);
+											 true, clean_colour, false);
       char outfile[1000];
       outfile[0]='\0';
       sprintf(outfile,"%s_%s.ctx",line,suffix);

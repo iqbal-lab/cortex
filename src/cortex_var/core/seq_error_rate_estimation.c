@@ -38,8 +38,13 @@
 #include <seq_error_rate_estimation.h>
 #include <string.h>
 
-void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alleles, GraphInfo* db_graph_info, dBGraph* db_graph, int ref_colour, long long genome_size,
-						       long double default_seq_err_rate, char* output_file)
+void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alleles, 
+						       GraphInfo* db_graph_info, 
+						       dBGraph* db_graph, 
+						       int ref_colour, 
+						       long long genome_size,
+						       long double default_seq_err_rate, 
+						       char* output_file)
 {
 
   int max_read_length = 2*(db_graph->kmer_size);
@@ -114,7 +119,6 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
 
 
 
-  int i;
 
   printf("Open colourlist %s\n", colourlist_snp_alleles);
   FILE* fp = fopen(colourlist_snp_alleles, "r");
@@ -185,8 +189,18 @@ long double estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(char* f
 
   // long long total_covg_on_true_alleles=0; //2nd read in each pair
   //long long total_covg_on_error_alleles=0; //first read in each pair
-
+  int i;
   int counts[101];
+  for (i=0; i<=100; i++)
+    {
+      counts[i]=0;
+    }
+  int counts_true[1001];
+  for (i=0; i<=1000; i++)
+    {
+      counts_true[i]=0;
+    }
+  
   FILE* fptr = fopen(fasta, "r");
   if (fptr==NULL)
     {
@@ -218,9 +232,18 @@ long double estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(char* f
 	    {
 	      counts[covg_on_error_allele]=counts[covg_on_error_allele]+1;
 	    }
-	  //num_kmers = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, array_nodes, array_or, false, &full_entry, file_reader,
-	  //							 seq, kmer_window, db_graph, -1);
-	  ignore_next_read(fptr, max_read_length, &full_entry, file_reader, seq);//this is the read of the allele we DO expect to be in the sample. Might use this in future
+
+	  num_kmers = align_next_read_to_graph_and_return_node_array(fptr, max_read_length, array_nodes, array_or, false, &full_entry, file_reader,
+								     seq, kmer_window, db_graph, -1);
+	  if (num_kmers>0)
+	    {
+	      long long covg_on_true_allele = count_reads_on_allele_in_specific_colour(array_nodes, num_kmers, colour, &too_short);
+	      if (covg_on_true_allele<=10000)
+		{
+		  counts_true[covg_on_true_allele] = counts_true[covg_on_true_allele]+1;
+		}
+	    }
+	
 	}
 
     }
@@ -230,7 +253,7 @@ long double estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(char* f
   //dump distribution to next line of file
   if (fout !=NULL)
     {
-      fprintf(fout, "%d\t", colour);
+      fprintf(fout, "%d\t%s\t", colour, "ref_covg_distrib");
       int j;
       for (j=0; j<=100; j++)
 	{
@@ -244,6 +267,20 @@ long double estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(char* f
 	      fprintf(fout, "\n");
 	    }
 	}
+      fprintf(fout, "%d\t%s\t", colour, "alt_covg_distrib");
+      for (j=0; j<=1000; j++)
+	{
+	  fprintf(fout, "%d", counts_true[j]);
+	  if (j<1000)
+	    {
+	      fprintf(fout, "\t");
+	    }
+	  else
+	    {
+	      fprintf(fout, "\n");
+	    }
+	}
+
     }
   
   if (num_snps_with_no_covg+num_snps_with_covg1==0)
