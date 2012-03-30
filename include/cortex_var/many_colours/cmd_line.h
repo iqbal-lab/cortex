@@ -99,10 +99,13 @@ typedef struct
   int novelseq_min_percentage_novel;
   char novelseq_outfile[MAX_FILENAME_LEN];
 
+  boolean estimate_copy_num;
+  char copy_num_fasta[MAX_FILENAME_LEN];
+  char copy_num_output[MAX_FILENAME_LEN];
+
   long double manually_entered_seq_error_rate;
   boolean manually_override_error_rate;
   char manually_entered_seq_error_rates_file[MAX_FILENAME_LEN];//one line per colour, each line is a seq error rate
-
   boolean use_snp_alleles_to_estim_seq_err_rate;
   boolean dump_aligned_overlap_binary;
   boolean specified_max_var_len;

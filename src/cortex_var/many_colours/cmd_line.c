@@ -352,6 +352,10 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
+  c->estimate_copy_num=false;
+  set_string_to_null(c->copy_num_fasta, MAX_FILENAME_LEN);
+  set_string_to_null(c->copy_num_output, MAX_FILENAME_LEN);
+
   c->for_each_colour_load_union_of_binaries=false;
   //novelsseq stuff
   c->use_snp_alleles_to_estim_seq_err_rate=false;
@@ -526,6 +530,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"require_hw",no_argument,NULL,'K'},
     {"genome_size",required_argument,NULL,'L'},
     {"exclude_ref_bubbles",no_argument,NULL,'M'},
+    {"estimate_copy_num",required_argument,NULL,'N'},
     {"remove_low_coverage_supernodes",required_argument,NULL,'O'},
     {"experiment_type", required_argument, NULL, 'P'},
     {"estimated_error_rate", required_argument, NULL, 'Q'},
@@ -543,7 +548,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:T:V:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -576,7 +581,15 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    strcpy(temp1, optarg);
 	    if (temp1[0]=='[')
 	      {
+		if (NUMBER_OF_COLOURS>1)
+		  {
+		    errx(1, "Sorry - I won't let you load a union of binaries when there is >1 colour. Gets too messy when you start loading colour 2, and find kmers in colour 1\n");
+		  }
 		cmdline_ptr->for_each_colour_load_union_of_binaries=true;
+		printf("You have enabled a Cortex secret option! Congratulations.\n");
+		printf("Since you put a [ before the colourlist name, Cortex will load the UNION of these binaries\n");
+		printf("(Normally, it cumulates binaries, adding up coverages)\n");
+
 	      }
 	    char delims[] = "[";
 	    char* col_list = strtok(temp1, delims);
@@ -1280,6 +1293,53 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	cmdline_ptr->exclude_ref_bubbles=true;
 	break;
       }
+    case 'N'://--estimate_copy_num takes input,output
+      {
+	if (strlen(optarg)<MAX_FILENAME_LEN)
+	  {
+	    //   if (access(optarg,R_OK)==-1)
+	    //{
+	    //	errx(1,"[--estimate_copy_num] filename [%s] cannot be accessed",optarg);
+	    //}
+	    char* filename = NULL;
+	    char delims[] = ",";
+	    char temp[MAX_FILENAME_LEN*2];
+	    temp[0]='\0';
+	    strcpy(temp, optarg);
+	    filename = strtok(temp, delims);
+	    if (filename==NULL)
+	      {
+		errx(1,"[--estimate_copy_num] option requires an input fasta filename, a comma, then an output filename\n");
+	      }
+	    else if (access(filename,F_OK)!=0){
+	      errx(1,"[--estimate_copy_num]   - Cannot open this fasta  [%s] . Abort.\n", filename);
+	    }
+
+	    cmdline_ptr->estimate_copy_num = true;
+	    strcpy(cmdline_ptr->copy_num_fasta,filename);
+
+	    char* filename2=NULL;
+	    filename2 = strtok(NULL, delims);
+	    if (filename2==NULL)
+	      {
+		errx(1,"[--estimate_copy_num] option requires an input fasta filename, a comma, then an output filename - you haven't entered an output filename\n");
+	      }
+	    else if (access(filename2,F_OK)==0)
+	      {
+		errx(1,"[--estimate_copy_num] output filename [%s] already exists - will not overwrite. Abort.\n",filename2);
+	      }
+	    else
+	      {
+		strcpy(cmdline_ptr->copy_num_output, filename2);
+		printf("Will dump copy number estimates in file %s\n", cmdline_ptr->copy_num_output);
+	      }
+	  }
+	else
+	  {
+	    errx(1,"[--estimate_copy_num] filename too long [%s]",optarg);
+	  }
+	break;
+      }
     case 'O':
 	{
 	  if (optarg==NULL)
@@ -1401,7 +1461,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MO:P:Q:R:T:V:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
   }   
   
   return 0;

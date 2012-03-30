@@ -1171,9 +1171,10 @@ int main(int argc, char **argv){
       timestamp();
       printf("Genotyping completed\n");
     }
-  else
+
+  if (cmd_line.estimate_copy_num==true)
     {
-      printf("IQB - NOT TRUE\n");
+      // add code to do copy number estimation here!!!
     }
 
   if (cmd_line.make_pd_calls==true)

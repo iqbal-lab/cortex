@@ -1545,7 +1545,8 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 	  add_edges(current_node,individual_edge_array, index, get_edge_copy(tmp_node, individual_edge_array, index));
 	  if ( (load_all_kmers_but_only_increment_covg_on_new_ones==false)//usual case
 	       ||
-	       ( (load_all_kmers_but_only_increment_covg_on_new_ones==true) && (found==false)) 
+	       ( (load_all_kmers_but_only_increment_covg_on_new_ones==true) && (found==false)) //loading union, and this is new
+	       
 	       )
 	    {
 	      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&tmp_node, individual_edge_array,index) );
