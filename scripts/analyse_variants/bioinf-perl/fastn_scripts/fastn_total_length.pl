@@ -14,7 +14,7 @@ sub print_usage
     print STDERR "Error: $err\n";
   }
 
-  print STDERR "usage: ./fastn_longest_seq.pl [file1 ..]\n";
+  print STDERR "usage: ./fastn_total_length.pl [file1 ..]\n";
   print STDERR " Print the length of the longest sequence\n";
   print STDERR " If [file] is omitted '-', reads from STDIN\n";
   exit;
@@ -30,12 +30,13 @@ if(@ARGV > 0 && $ARGV[0] =~ /^--?h(elp)?$/i)
 #
 
 my $max_read_length = 0;
+my $total_read_length = 0;
 
 if(@ARGV == 0)
 {
   my $fastn_handle = open_stdin();
   
-  $max_read_length = get_max_read_in_fastn($fastn_handle, "stdin");
+  get_max_read_in_fastn($fastn_handle, "stdin");
   
   close($fastn_handle);
 }
@@ -57,15 +58,14 @@ else
       $descriptor = $file;
     }
     
-    $max_read_length = max(get_max_read_in_fastn($fastn_handle, $descriptor),
-                           $max_read_length);
+    get_max_read_in_fastn($fastn_handle, $descriptor);
     
     close($fastn_handle);
   }
 }
 
-print "$max_read_length\n";
-
+print "Total length (bp): ".num2str($total_read_length)."\n";
+print "Longest read (bp): ".num2str($max_read_length)."\n";
 
 sub open_stdin
 {
@@ -87,8 +87,6 @@ sub get_max_read_in_fastn
 {
   my ($handle, $descriptor) = @_;
 
-  my $max_length = 0;
-
   my $fastn_file = new FASTNFile($handle, $descriptor);
 
   if($fastn_file->is_fastq())
@@ -98,7 +96,11 @@ sub get_max_read_in_fastn
 
     while(defined($title))
     {
-      $max_length = max(length($seq), $max_length);
+      my $seq_length = length($seq);
+
+      $max_read_length = max($seq_length, $max_read_length);
+      $total_read_length += $seq_length;
+
       ($title, $seq) = $fastn_file->read_next();
     }
   }
@@ -109,18 +111,17 @@ sub get_max_read_in_fastn
     
     while(defined($line = $fastn_file->read_line()))
     {
-      $curr_length = 0;
+      my $seq_length = 0;
 
       while(defined($peak = $fastn_file->peak_line()) && $peak !~ /^[>]/)
       {
         $line = $fastn_file->read_line();
         chomp($line);
-        $curr_length += length($line);
+        $seq_length += length($line);
       }
   
-      $max_length = max($max_length, $curr_length);
+      $max_read_length = max($seq_length, $max_read_length);
+      $total_read_length += $seq_length;
     }
   }
-
-  return $max_length;
 }
