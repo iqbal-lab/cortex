@@ -7,9 +7,25 @@ use Carp;
 
 use base 'Exporter';
 
-our @EXPORT = qw(get_clean_chr_name rev_comp complement rev_comp_cyclic
-                 dna_word_group dna_pattern_group dna_weak_strong_group);
+our @EXPORT = qw(get_clean_chr_name
+                 gc_content
+                 rev_comp complement rev_comp_cyclic
+                 dna_rev_comp_group dna_word_group
+                 dna_pattern_group dna_weak_strong_group);
 
+
+sub gc_content
+{
+  my ($seq) = @_;
+  my $gc = 0;
+
+  while($seq =~ /([gc]+)/gi)
+  {
+    $gc += length($1);
+  }
+
+  return $gc;
+}
 
 sub get_clean_chr_name
 {
@@ -79,13 +95,23 @@ sub complement
 
     if(!defined($chr))
     {
-      carp("rev_comp: Cannot complement base '".substr($seq,$i,1)."'");
+      carp("rev_comp: Cannot complement base '".substr($seq,$i,1)."' " .
+           "in string '$seq'");
     }
 
     substr($complement, $i, 1) = $chr;
   }
 
   return $complement;
+}
+
+sub dna_rev_comp_group
+{
+  my ($seq) = @_;
+
+  my $rev = rev_comp($seq);
+
+  return ($seq le $rev ? $seq : $rev);
 }
 
 sub rev_comp_cyclic

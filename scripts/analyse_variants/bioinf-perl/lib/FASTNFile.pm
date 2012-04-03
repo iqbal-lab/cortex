@@ -11,7 +11,7 @@ use List::Util qw(min);
 # is_fastq read_next read_all peak_line read_line
 
 use base 'Exporter';
-our @EXPORT = qw(read_all_from_files estimate_fastq_size);
+our @EXPORT = qw(read_all_from_files estimate_fastq_size print_FASTA print_FASTQ);
 
 sub new
 {
@@ -19,17 +19,20 @@ sub new
   my $next_line = <$handle>;
   my $is_fastq = -1;
   
-  if(defined($next_line))
+  my $tmp_line = $next_line;
+  chomp($tmp_line);
+  
+  if(defined($tmp_line) && length($tmp_line) > 0)
   {
-    if($next_line =~ /^@/) {
+    if($tmp_line =~ /^@/) {
       $is_fastq = 1;
     }
-    elsif($next_line =~ /^>/) {
+    elsif($tmp_line =~ /^>/) {
       $is_fastq = 0;
     }
     else {
-      my $len = min(length($next_line),10);
-      croak("Invalid first line '".substr($next_line,0,$len)."...'");
+      my $len = min(length($tmp_line),10);
+      croak("Invalid first line '" . substr($tmp_line, 0, $len) . "...'");
     }
   }
 
@@ -285,6 +288,79 @@ sub estimate_fastq_size
   my $num_of_bases = $num_of_reads * $read_length;
 
   return ($read_length, $file_size, $num_of_reads, $num_of_bases);
+}
+
+# Line wrap is optional (-1 means no wrap)
+sub print_wrap
+{
+  my ($txt, $line_wrap, $out) = @_;
+
+  my $txt_len = length($txt);
+
+  for(my $i = 0; $i < $txt_len; $i += $line_wrap)
+  {
+    print $out substr($txt, $i, $line_wrap) . "\n";
+  }
+}
+
+sub print_FASTA
+{
+  my ($title, $seq, $line_wrap, $out) = @_;
+
+  if(!defined($out))
+  {
+    open($out, ">-") or die("Couldn't open pipe to stdout");
+  }
+
+  print $out ">$title\n";
+
+  if(defined($line_wrap) && $line_wrap > 0)
+  {
+    print_wrap($seq, $line_wrap, $out);
+  }
+  else
+  {
+    print $out "$seq\n";
+  }
+}
+
+# Line wrap is optional (-1 means no wrap)
+# if out not given, prints to STDOUT
+sub print_FASTQ
+{
+  my ($title, $seq, $qualitites, $line_wrap, $out) = @_;
+
+  if(!defined($out))
+  {
+    open($out, ">-") or die("Couldn't open pipe to stdout");
+  }
+
+  print $out '@'.$title."\n";
+
+  if(defined($line_wrap) && $line_wrap > 0)
+  {
+    print_wrap($seq, $line_wrap, $out);
+  }
+  else
+  {
+    print $out "$seq\n";
+  }
+
+  print $out "+\n";
+
+  if(!defined($qualitites))
+  {
+    $qualitites = "!" x length($seq);
+  }
+
+  if(defined($line_wrap) && $line_wrap > 0)
+  {
+    print_wrap($qualitites, $line_wrap, $out);
+  }
+  else
+  {
+    print $out "$qualitites\n";
+  }
 }
 
 1;

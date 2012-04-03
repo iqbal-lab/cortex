@@ -5,11 +5,11 @@ use warnings;
 
 if(@ARGV < 2 || @ARGV > 4)
 {
-    print "usage: ./clean_fasta.pl [-p|-n] <ref.fa> <out.fa>\n";
-    print "  Copies sequence from <ref.fa> to <out.fa> only if name is not chrUn* or *random*\n";
-    print "  -p  Print sequence names that are copied\n";
-    print "  -n  Print sequence names that are not copied\n";
-    exit;
+  print "usage: ./clean_fasta.pl [-p|-n] <ref.fa> <out.fa>\n";
+  print "  Copies sequence from <ref.fa> to <out.fa> only if name is not chrUn* or *random*\n";
+  print "  -p  Print sequence names that are copied\n";
+  print "  -n  Print sequence names that are not copied\n";
+  exit;
 }
 
 my $print_clean = 0;

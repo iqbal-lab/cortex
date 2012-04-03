@@ -14,22 +14,22 @@ sub print_usage
 {
   for my $err (@_)
   {
-    chomp($err);
     print STDERR "Error: $err\n";
   }
 
   print STDERR "" .
 "Usage: ./vcf_filter_variants.pl [--invert] <INDEL|CLEAN_INDEL|SNP|MNP|NP> " .
   "[in.vcf]\n" .
-"  Prints variants were SVLEN != 0\n" .
-"  --invert      Everything but option\n" .
-"  \n" .
-"  Options:\n" .
-"   INDEL        SVLEN != 0\n" .
-"   CLEAN_INDEL  (SVLEN != 0) & (one allele 0bp)\n" .
-"   SNP          both alleles 1bp\n" .
-"   MNP          (SVLEN == 0) & (allele length > 1)\n" .
-"   NP           SVLEN == 0\n";
+"  Prints variants of a particular type
+  --invert      Everything but option
+
+  Options:
+   INDEL        SVLEN != 0
+   CLEAN_INDEL  (SVLEN != 0) & (one allele 0bp)
+   SNP          both alleles 1bp
+   MNP          (SVLEN == 0) & (allele length > 1)
+   NP           SVLEN == 0
+   COMPLEX      !snp && (length(allele1) > 0) & (length(allele2) > 0)\n";
 
   exit;
 }
@@ -50,9 +50,16 @@ if(@ARGV > 1 && $ARGV[0] =~ /^-?-c(lean)?$/i)
 my $filter = shift;
 $filter = uc($filter);
 
-my @filters = qw(INDEL INDELS CLEAN_INDEL CLEAN_INDELS SNP SNPS MNP MNPS NP NPS);
+my @filters = qw(INDEL CLEAN_INDEL SNP MNP NP COMPLEX);
 
-if(!grep {$_ eq $filter} @filters)
+my @plural = map {$_."S"} @filters;
+
+if(grep {$filter eq $_} @plural)
+{
+  # Chop 's' off
+  $filter = substr($filter, 0, -1);
+}
+elsif(!grep {$_ eq $filter} @filters)
 {
   print_usage("Unknown option: '$filter' " .
               "(expected one of: ".join(",",@filters).")");
@@ -95,29 +102,36 @@ while(defined($vcf_entry = $vcf->read_entry()))
 
   my $print;
 
-  if($filter eq "INDEL" || $filter eq "INDELS")
+  if($filter eq "INDEL")
   {
     $print = ($vcf_entry->{'INFO'}->{'SVLEN'} != 0);
   }
-  elsif($filter eq "CLEAN_INDEL" || $filter eq "CLEAN_INDELS")
+  elsif($filter eq "CLEAN_INDEL")
   {
     $print = ($vcf_entry->{'INFO'}->{'SVLEN'} != 0 &&
               (length($vcf_entry->{'true_REF'}) == 0 ||
                length($vcf_entry->{'true_ALT'}) == 0));
   }
-  elsif($filter eq "SNP" || $filter eq "SNPS")
+  elsif($filter eq "SNP")
   {
     $print = (length($vcf_entry->{'true_REF'}) == 1 &&
               length($vcf_entry->{'true_ALT'}) == 1);
   }
-  elsif($filter eq "MNP" || $filter eq "MNPS")
+  elsif($filter eq "MNP")
   {
     $print = ($vcf_entry->{'INFO'}->{'SVLEN'} == 0 &&
               length($vcf_entry->{'true_REF'}) > 1);
   }
-  elsif($filter eq "NP" || $filter eq "NPS")
+  elsif($filter eq "NP")
   {
     $print = ($vcf_entry->{'INFO'}->{'SVLEN'} == 0);
+  }
+  elsif($filter eq "COMPLEX")
+  {
+    my $ref_len = length($vcf_entry->{'true_REF'});
+    my $alt_len = length($vcf_entry->{'true_ALT'});
+
+    $print = ($ref_len > 0 && $alt_len > 0 && ($ref_len != 1 || $alt_len != 1));
   }
 
   if($print != $filter_invert)

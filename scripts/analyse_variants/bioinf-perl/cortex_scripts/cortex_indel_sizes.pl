@@ -95,7 +95,7 @@ print "indel_size".$csvsep."count\n";
 
 my $i = 0;
 
-while(!defined($indel_size[$i]) || $indel_size[$i] == 0)
+while(!defined($indel_sizes[$i]) || $indel_sizes[$i] == 0)
 {
   $i++;
 }

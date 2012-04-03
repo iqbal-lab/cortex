@@ -21,13 +21,14 @@ sub print_usage
   }
 
   print STDERR "" .
-"Usage: ./vcf_align.pl [--tag <name>|--remove_ref_mismatch] <LEFT|RIGHT> <in.vcf> <ref1.fa ..>\n" .
-"  Shift clean indel variants to the left/right.  Variants that do not match\n".
-"  the reference and those that are not clean indels are printed unchanged.\n" .
-"  FASTA entry names must match VCF CHROM column.  If <in.vcf> is '-', reads\n".
-"  from STDIN.\n".
-"  --tag <tag_name>       INFO tag to label variation in position\n".
-"  --remove_ref_mismatch  Remove variants that do not match the reference\n";
+"Usage: ./vcf_align.pl [--tag <name>|--remove_ref_mismatch] <LEFT|RIGHT> <in.vcf> <ref1.fa ..>
+  Shift clean indel variants to the left/right.  Variants that do not match
+  the reference and those that are not clean indels are printed unchanged.
+  FASTA entry names must match VCF CHROM column.  If <in.vcf> is '-', reads
+  from STDIN.
+  --tag <tag_name>       INFO tag to label variation in position\n
+  --remove_ref_mismatch  Remove variants that do not match the reference\n";
+
   exit;
 }
 
@@ -71,7 +72,7 @@ if($justify ne "left" && $justify ne "right")
 #
 my $vcf_handle;
 
-if($vcf_file ne "-")
+if(defined($vcf_file) && $vcf_file ne "-")
 {
   open($vcf_handle, $vcf_file)
     or print_usage("Cannot open VCF file '$vcf_file'\n");
@@ -91,11 +92,13 @@ else
 my ($ref_genomes_hashref, $qual) = read_all_from_files(@ref_files);
 
 my %ref_genomes = %$ref_genomes_hashref;
+my %ref_genomes_lengths = ();
 
 # Change chromosome to uppercase
 while(my ($key,$value) = each(%ref_genomes))
 {
   $ref_genomes{$key} = uc($ref_genomes{$key});
+  $ref_genomes_lengths{$key} = length($ref_genomes{$key});
 }
 
 #
@@ -104,7 +107,7 @@ while(my ($key,$value) = each(%ref_genomes))
 my $vcf = new VCFFile($vcf_handle);
 
 # Add justify info to header and print
-$vcf->add_header_metainfo("variants_justified",$justify);
+$vcf->add_header_metainfo("variants_justified", $justify);
 
 if(defined($tag))
 {
@@ -120,6 +123,10 @@ my $vcf_entry;
 my $num_ref_mismatch = 0;
 my $num_of_variants = 0;
 my $num_of_variants_moved = 0;
+my $num_of_clean_indels_matching_ref = 0;
+
+my $max_position_diff = 0;
+my $total_position_diff = 0;
 
 my %missing_chrs = ();
 
@@ -144,6 +151,12 @@ while(defined($vcf_entry = $vcf->read_entry()))
   {
     $missing_chrs{$chr} = 1;
   }
+  elsif($ref_genomes_lengths{$chr} < $var_start+length($ref_allele))
+  {
+    print STDERR "vcf_align.pl - Error: var " . $vcf_entry->{'ID'} . " at " .
+                 "$chr:$var_start:".length($ref_allele)." is out of bounds of ".
+                 "$chr:1:".$ref_genomes_lengths{$chr}."\n";
+  }
   elsif(substr($ref_genomes{$chr}, $var_start, length($ref_allele)) ne
         uc($ref_allele))
   {
@@ -152,42 +165,41 @@ while(defined($vcf_entry = $vcf->read_entry()))
   }
   elsif(defined($indel))
   {
-    my ($new_pos, $new_indel);
+    $num_of_clean_indels_matching_ref++;
 
+    # align to the left
+    my ($pos_left, $indel_left) = get_left_aligned_position($chr,
+                                                            $var_start,
+                                                            $indel);
+
+    my $ref_allele_len = length($ref_allele);
+
+    # align to the right
+    my ($pos_right, $indel_right) = get_right_aligned_position($chr, $var_start,
+                                                               $ref_allele_len,
+                                                               $indel);
+
+    my $position_diff = $pos_right - $pos_left;
+
+    if(defined($tag) && $position_diff > 0)
+    {
+      $vcf_entry->{'INFO'}->{$tag} = $position_diff;
+    }
+
+    $max_position_diff = max($position_diff, $max_position_diff);
+    $total_position_diff += $position_diff;
+
+    my ($new_pos, $new_indel);
+    
     if($justify eq "left")
     {
-      # align to the left
-      ($new_pos, $new_indel) = get_left_aligned_position($chr, $var_start,
-                                                         $indel);
+      $new_pos = $pos_left;
+      $new_indel = $indel_left;
     }
     else
     {
-      # align to the right
-      ($new_pos, $new_indel) = get_right_aligned_position($chr, $var_start,
-                                                          length($ref_allele),
-                                                          $indel);
-    }
-
-    if(defined($tag))
-    {
-      my ($pos_left, $pos_right);
-      
-      if($justify eq "left")
-      {
-        $pos_left = $new_pos;
-        ($pos_right) = get_right_aligned_position($chr, $var_start,
-                                                  length($ref_allele), $indel);
-      }
-      else
-      {
-        ($pos_left) = get_left_aligned_position($chr, $var_start, $indel);
-        $pos_right = $new_pos;
-      }
-
-      if($pos_left != $pos_right)
-      {
-        $vcf_entry->{'INFO'}->{$tag} = $pos_right - $pos_left;
-      }
+      $new_pos = $pos_right;
+      $new_indel = $indel_right;
     }
 
     # Update VCF entry values
@@ -230,8 +242,24 @@ if($num_ref_mismatch > 0)
 }
 
 print STDERR "vcf_align.pl: " .
+             pretty_fraction($num_of_clean_indels_matching_ref,
+                             $num_of_variants) . " " .
+             "of variants are clean indels\n";
+
+print STDERR "vcf_align.pl: " .
              pretty_fraction($num_of_variants_moved, $num_of_variants) . " " .
              "variants moved to the $justify\n";
+
+print STDERR "vcf_align.pl: average ambiguity per variant: " .
+             sprintf("%.3f", $total_position_diff / $num_of_variants) .
+             " bp\n";
+
+my $clean_indel_rate = $total_position_diff / $num_of_clean_indels_matching_ref;
+
+print STDERR "vcf_align.pl: average ambiguity per clean indel matching " .
+             "the ref: " . sprintf("%.3f", $clean_indel_rate) . " bp\n";
+
+print STDERR "vcf_align.pl: maximum variant ambiguity: ".$max_position_diff." bp\n";
 
 close($vcf_handle);
 

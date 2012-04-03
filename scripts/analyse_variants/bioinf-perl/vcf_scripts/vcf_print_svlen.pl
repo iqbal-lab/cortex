@@ -9,6 +9,10 @@ use lib $FindBin::Bin;
 
 use VCFFile;
 
+# config
+my $csvsep = ",";
+#
+
 sub print_usage
 {
   for my $err (@_) {
@@ -106,9 +110,13 @@ while(defined($vcf_entry = $vcf->read_entry()))
 
 close($vcf_handle);
 
+# Print header
+
+print "size".$csvsep."count\n";
+
 if(!$abs)
 {
-  print join("\n", map { "-" . $_ . "," . (defined($del[$_]) ? $del[$_] : 0) }
+  print join("\n", map { "-" . $_ . $csvsep . (defined($del[$_]) ? $del[$_] : 0) }
                      reverse(1..$#del)) . "\n";
 }
 
@@ -119,6 +127,6 @@ while(!defined($ins[$ins_start]))
   $ins_start++;
 }
 
-print join("\n", map {$_ . "," . (defined($ins[$_]) ? $ins[$_] : 0) }
+print join("\n", map {$_ . $csvsep . (defined($ins[$_]) ? $ins[$_] : 0) }
                    $ins_start..$#ins) . "\n";
 

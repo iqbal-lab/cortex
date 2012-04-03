@@ -675,26 +675,26 @@ sub read_entry
   $entry{'INFO_flags'} = \%info_flags;
 
   # Auto-correct chromosome names
-  if($entry{'CHROM'} !~ /^chr/)
-  {
-    if($entry{'CHROM'} =~ /^chr(.*)$/i)
-    {
+  #if($entry{'CHROM'} !~ /^chr/)
+  #{
+  #  if($entry{'CHROM'} =~ /^chr(.*)$/i)
+  #  {
       # matches only with case-insensitive
-      $entry{'CHROM'} = 'chr'.$1;
-    }
-    else {
-      $entry{'CHROM'} = 'chr'.$entry{'CHROM'};
-    }
-  }
+  #    $entry{'CHROM'} = 'chr'.$1;
+  #  }
+  #  else {
+  #    $entry{'CHROM'} = 'chr'.$entry{'CHROM'};
+  #  }
+  #}
 
-  if($entry{'CHROM'} =~ /^chr([xy])$/i)
-  {
-    $entry{'CHROM'} = 'chr'.uc($1);
-  }
-  else
-  {
-    $entry{'CHROM'} = lc($entry{'CHROM'});
-  }
+  #if($entry{'CHROM'} =~ /^chr([xy])$/i)
+  #{
+  #  $entry{'CHROM'} = 'chr'.uc($1);
+  #}
+  #else
+  #{
+  #  $entry{'CHROM'} = lc($entry{'CHROM'});
+  #}
 
   # Correct SVLEN
   $entry{'INFO'}->{'SVLEN'} = length($entry{'ALT'}) - length($entry{'REF'});
