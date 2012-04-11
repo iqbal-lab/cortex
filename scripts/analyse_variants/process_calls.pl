@@ -377,7 +377,7 @@ filter_by_flank_mapqual( $mapped_flanks, \%var_name_to_flank_mq_filter );
 if ( $classif ne "-1" )
 {
 	get_pop_filter_info( $classif, \%pop_classifier,
-		\%pop_classifier_confidence );
+			     \%pop_classifier_confidence );
 }
 combine_all_filters(
 	\%var_name_to_covg_and_branch_filter,    \%var_name_to_flank_mq_filter,
@@ -1311,7 +1311,18 @@ sub print_all_genotypes_and_covgs
 		my $site_conf = -99999;
 		if ( $do_we_have_pop_filter == 1 )
 		{
+		    if (exists $href_pop_conf->{$name})
+		    {
 			$site_conf = sprintf( "%.2f", $href_pop_conf->{$name} );
+		    }
+		    else
+		    {
+			$site_conf = "ZAMBO";
+			print "cannot find site conf for $name\n";
+			print "keys are ";
+			print join("\n", keys %$href_pop_conf);
+			die();
+		    }
 		}
 		if ( $which_is_ref == 1 )
 		{
@@ -3057,11 +3068,18 @@ sub get_pop_filter_info
 	{
 		my $line = $_;
 		chomp $line;
-		die "Variants format not adapted yet!";
 		my @sp = split( /\t/, $line );
-		my $name = $prefix . "_var_" . $sp[0];
+		my $name = $prefix . "_" . $sp[0];
+		if ($name =~ /^(\S+)\s+/)
+		{
+		    $name = $1;
+		}
 		$href->{$name}      = $sp[1];    ## classification
 		$href_conf->{$name} = $sp[2];
+		print "Add IQ$name";
+		print "IQ --> Z";
+		print $sp[2];
+		print "Z\n";
 	}
 	close(FILE);
 }
