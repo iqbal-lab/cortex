@@ -1502,10 +1502,29 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
   boolean found;
   int count=0;
 
-  if (fp_bin == NULL){
-    printf("load_single_colour_binary_data_from_filename_into_graph cannot open file:%s\n",filename);
-    exit(1); //TODO - prefer to print warning and skip file and return an error code?
-  }
+  int debug_num_attempts=1;
+
+  if (fp_bin == NULL)
+    {
+      printf("load_single_colour_binary_data_from_filename_into_graph cannot open file:%s - bastard ibrix - attempt number %d\n",filename, debug_num_attempts);
+      //  exit(1); //TODO - prefer to print warning and skip file and return an error code?
+      while ((debug_num_attempts<=10)&&(fp_bin==NULL))
+	{
+	  sleep(debug_num_attempts*600); //wait 10 mins the first time, then 20,..up til 100 mins the 10th time, then give up
+	  //try again
+	  debug_num_attempts++;
+	  fp_bin = fopen(filename, "r");
+	  if (fp_bin==NULL)
+	    {
+	      printf("load_single_colour_binary_data_from_filename_into_graph cannot open file:%s - bastard ibrix - attempt number %d\n",filename, debug_num_attempts);
+	    }
+	}
+      if (fp_bin==NULL)
+	{
+	  printf("I give up\n");
+	  exit(1);
+	}
+    }
 
 
   int binversion_in_header;

@@ -809,8 +809,8 @@ if ($do_union eq "yes")
 	
 	
 
-	build_vcfs($gt_bc_out, "union_BC_calls", $number_of_colours, $outdir_vcfs."output_proc_union_bc", $outdir_vcfs, \%vcfs_needing_post_processing);
-	build_vcfs($gt_pd_out, "union_PD_calls", $number_of_colours, $outdir_vcfs."output_proc_union_pd", $outdir_vcfs, \%vcfs_needing_post_processing);
+	build_vcfs($gt_bc_out, $outvcf_filename_stub."union_BC_calls", $number_of_colours, $outdir_vcfs."output_proc_union_bc", $outdir_vcfs, \%vcfs_needing_post_processing);
+	build_vcfs($gt_pd_out, $outvcf_filename_stub."union_PD_calls", $number_of_colours, $outdir_vcfs."output_proc_union_pd", $outdir_vcfs, \%vcfs_needing_post_processing);
 	
 	
 

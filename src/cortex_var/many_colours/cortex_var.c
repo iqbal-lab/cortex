@@ -1133,6 +1133,7 @@ int main(int argc, char **argv){
 							   &print_appropriate_extra_supernode_info);
 
 
+      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
       timestamp();
       printf("Supernodes dumped\n");
     }
