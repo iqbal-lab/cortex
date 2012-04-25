@@ -105,22 +105,27 @@ my @mapping_columns = qw(name flags chr pos MAPQ CIGAR
 print STDERR "vcf_add_ancestral_to_indels.pl: Loading ancestral ref...\n";
 my ($anc_ref_hash) = read_all_from_files(@ancestral_ref_files);
 
-my @anc_chrs = keys %$anc_ref_hash;
-# looks like: >ANCESTOR_for_chromosome:CHIMP2.1:1:1:229974691:1
-for my $key (@anc_chrs)
-{
-  if($key =~ /ANCESTOR_for_chromosome:[^:]*:(?:chr)?([\dXY]*)([ab]*):/i)
-  {
-    my $chr = "chr".uc($1).lc($2);
-    $anc_ref_hash->{$chr} = $anc_ref_hash->{$key};
-    delete($anc_ref_hash->{$key});
+# Set the reference genome chromosome names
+$vcf->set_ref_chrom_names(keys %$anc_ref_hash);
+
+# Ancestral FASTA looks like: >ANCESTOR_for_chromosome:CHIMP2.1:1:1:229974691:1
+#my @anc_chrs = keys %$anc_ref_hash;
+#
+#for my $key (@anc_chrs)
+#{
+#  if($key =~ /ANCESTOR_for_chromosome:[^:]*:(?:chr)?([\dXY]*)([ab]*):/i)
+#  {
+#    my $chr = "chr".uc($1).lc($2);
+#    $anc_ref_hash->{$chr} = $anc_ref_hash->{$key};
+#    delete($anc_ref_hash->{$key});
     #print STDERR "vcf_add_ancestral.pl: Loaded '$chr'\n";
-  }
-  else
-  {
+#  }
+#  else
+#  {
     #print STDERR "vcf_add_ancestral.pl: Ancestral ref ignored: $key\n";
-  }
-}
+#  }
+#}
+
 
 #
 # Print VCF header
@@ -163,17 +168,19 @@ while(defined($vcf_entry = $vcf->read_entry()))
     # Nucleotide Polymorphism (NP) - use ancestral allele
     $num_of_np++;
 
-    if(!defined($anc_ref_hash->{$chr}))
+    my $anc_ref = $vcf->guess_ref_chrom_name($ref);
+
+    if(!defined($anc_ref))
     {
       print STDERR "vcf_add_ancestral.pl: Ancestor lacks chromosome '$chr'\n";
       die();
     }
 
-    my $anc_ref = substr($anc_ref_hash->{$chr},
+    my $anc_ref = substr($anc_ref_hash->{$anc_ref},
                          $pos-1, # because perl uses 0-based
                          length($ref_allele));
 
-    my $anc_alt = substr($anc_ref_hash->{$chr},
+    my $anc_alt = substr($anc_ref_hash->{$anc_ref},
                          $pos-1, # because perl uses 0-based
                          length($alt_allele));
 
@@ -253,11 +260,13 @@ while(defined($vcf_entry = $vcf->read_entry()))
       if($ref_mapping{'CIGAR'} !~ /^(?:\d+[MID])+$/i)
       {
         # Full range MIDNSHP=X
-        die("Unexpected cigar entry (var: $var_id; cigar: '$ref_mapping{'CIGAR'}')");
+        die("Unexpected cigar entry " .
+            "(var: $var_id; cigar: '$ref_mapping{'CIGAR'}')");
       }
       elsif($alt_mapping{'CIGAR'} !~ /^(?:\d+[MID])+$/i)
       {
-        die("Unexpected cigar entry (var: $var_id; cigar: '$alt_mapping{'CIGAR'}')");
+        die("Unexpected cigar entry " .
+            "(var: $var_id; cigar: '$alt_mapping{'CIGAR'}')");
       }
 
       my $long_cigar = $ref_mapping{'CIGAR'};
@@ -308,32 +317,26 @@ while(defined($vcf_entry = $vcf->read_entry()))
   #}
 }
 
-my $percent = sprintf("%.2f", 100 * $num_of_np_polarised / $num_of_np);
 print STDERR "vcf_add_ancestral.pl: " .
-             num2str($num_of_np_polarised) . "/" . num2str($num_of_np) .
-             " ($percent%) NP polarised\n";
+             pretty_fraction($num_of_np_polarised, $num_of_np) . " " .
+             "NP polarised\n";
 
-$percent = sprintf("%.2f", 100 * $num_of_np_ref / $num_of_np_polarised);
 print STDERR "vcf_add_ancestral.pl: of which " .
-             num2str($num_of_np_ref) . "/" . num2str($num_of_np_polarised) .
-             " ($percent%) were ref\n";
+             pretty_fraction($num_of_np_ref, $num_of_np_polarised) . " " .
+             "were ref\n";
 
-$percent = sprintf("%.2f", 100 * $num_of_indels_polarised / $num_of_indels);
 print STDERR "vcf_add_ancestral.pl: " .
-             num2str($num_of_indels_polarised) . "/" . num2str($num_of_indels) .
-             " ($percent%) indels polarised\n";
+             pretty_fraction($num_of_indels_polarised, $num_of_indels) . " " .
+             "indels polarised\n";
 
-$percent = sprintf("%.2f", 100 * $num_of_indels_ref / $num_of_indels_polarised);
 print STDERR "vcf_add_ancestral.pl: of which " .
-             num2str($num_of_indels_ref) . "/" . num2str($num_of_indels_polarised) .
-             " ($percent%) were ref\n";
+             pretty_fraction($num_of_indels_ref, $num_of_indels_polarised) .
+             " were ref\n";
 
 my $total_polarised = $num_of_np_polarised + $num_of_indels_polarised;
 
-$percent = sprintf("%.2f", 100 * $total_polarised / $num_of_variants);
 print STDERR "vcf_add_ancestral.pl: Total variants polarised = " .
-             num2str($total_polarised) . "/" . num2str($num_of_variants) .
-             " ($percent%)\n";
+             pretty_fraction($total_polarised, $num_of_variants) . "\n";
 
 # Done
 close($vcf_handle);

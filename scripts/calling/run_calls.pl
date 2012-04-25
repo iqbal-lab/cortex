@@ -26,12 +26,15 @@ my $analyse_variants_dir;
 my $cortex_dir;
 my $isaac_bioinf_dir;
 
+my $str_input_args = "*********** Command-line used was : *********************\nperl ".$0." ".join(" ",@ARGV)."\n*********************************************************\n";
 
 BEGIN
 {
 	use FindBin;
 	$callingscript_dir = $FindBin::Bin;
-	$cortex_dir = $callingscript_dir . '/../../';
+	#$cortex_dir = $callingscript_dir . '/../../';
+	$cortex_dir = $callingscript_dir;
+	$cortex_dir =~ s/scripts\/calling//;
 	$analyse_variants_dir = $cortex_dir."/scripts/analyse_variants/";
 	$isaac_bioinf_dir = $analyse_variants_dir."bioinf-perl/";
 
@@ -180,10 +183,13 @@ my $help = '';    #default false
     'do_union:s'         =>\$do_union,
     'build_per_sample_vcfs:s' =>\$build_per_sample_vcfs,
     'logfile:s'           => \$global_logfile,
-    'call_jointly_noref' => \$call_jointly_noref,
-    'call_jointly_incref' => \$call_jointly_incref,
+    'call_jointly_noref:s' => \$call_jointly_noref,
+    'call_jointly_incref:s' => \$call_jointly_incref,
 
 );
+
+
+
 
 if ($help)
 {
@@ -243,6 +249,8 @@ my %k_to_refbin=();
 run_checks();
 
 
+
+
 ## sort out loggin
 if ($global_logfile ne "")
 {
@@ -251,10 +259,14 @@ if ($global_logfile ne "")
 }
 
 
+## print start time
+print "Start time: ";
+my $st = "date";
+my $ret_st = qx{date};
+print "$ret_st\n";
 
-print "*********** Command-line used was : *********************\n";
-print "perl ".$0." ".join(" ",@ARGV)."\n";
-print "*********************************************************\n";
+print "\n\n$str_input_args\n";
+
 
 
 
@@ -323,7 +335,7 @@ print "********************************************\n";
 print "Clean binaries\n";
 print "********************************************\n";
 my %sample_to_cleaned_bin=(); #sample -> kmer -> cleaning -> $binary
-if ( ($do_auto_cleaning eq "yes") || ($do_user_spec_cleaning eq "yes") || ($manual_override_cleaning ne "no") )
+if ( ($do_auto_cleaning eq "yes") || ($do_auto_cleaning eq "stringent") || ($do_user_spec_cleaning eq "yes") || ($manual_override_cleaning ne "no") )
 {
     build_all_cleaned_binaries(\%sample_to_uncleaned, \%sample_to_uncleaned_log,
 			       \%sample_to_uncleaned_covg_distrib,
@@ -354,7 +366,60 @@ else
 }
 
 
+##########################################################################################################################################
+##  2.5.    Load all the cleaned binaries into one graph, to find out how many kmers there are in total
+##          You can use this to work out how much mem to use when you do the multicolour graph
+##########################################################################################################################################
 
+my %total_clean_kmers=(); ## kmer ---> number (assume min cleaning)
+my $tmpdir = $outdir."tmp_filelists";
+if (!(-d $tmpdir))
+{
+    my $c = "mkdir -p $tmpdir";
+    qx{$c};
+}
+
+my $list_all_clean = $tmpdir."/tmp_list_all_clean_bins_k".$first_kmer;
+open(LIST_ALL, ">".$list_all_clean)||die("Unable to open $list_all_clean");
+foreach my $s (@samples)
+{
+    #get binary
+    my $b = $sample_to_cleaned_bin{$s}{$first_kmer}{$sample_to_min_cleaning_thresh{$s}{$first_kmer}}; 
+    print LIST_ALL "$b\n";
+}
+print LIST_ALL $k_to_refbin{$first_kmer};
+close(LIST_ALL);
+my $list_all_clean_pop = $list_all_clean.".pop";
+open(LIST_ALL_CLEAN_POP, ">".$list_all_clean_pop)||die("Cannot open $list_all_clean_pop");
+print LIST_ALL_CLEAN_POP "$list_all_clean\n";
+close(LIST_ALL_CLEAN_POP);
+my $count_log = $list_all_clean_pop.".log";
+my $ctx_bin_for_count = get_right_binary($first_kmer, $cortex_dir,scalar(@samples)+1);
+my $cmd_count_kmers = $ctx_bin_for_count." --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width  --colour_list $list_all_clean_pop > $count_log 2>&1";
+print "Load all k=$first_kmer cleaned binaries into one colour, and check how many kmers. Having done this, we can know how much memory to use for the multicolour graphs. This is just a memory saving device\n";
+qx{$cmd_count_kmers};
+my $use_full_mem="false";
+my $num_kmers_in_cleaned_pool=0; ##will be number of kmers
+if (ran_out_of_memory($count_log) eq "true")
+{
+    $use_full_mem="true";
+}
+else
+{
+    $num_kmers_in_cleaned_pool = get_num_kmers($count_log);
+    if ($num_kmers_in_cleaned_pool==-1)
+    {
+	print "Unable to find number of kmers in loaded graph in $count_log. Will just continue to next stage using mem_height and width as specified by the user. Mention this to zam please. Should never happen\n";
+	$use_full_mem="true";
+    }
+    else
+    {
+	my $new_mem_height = int(log($num_kmers_in_cleaned_pool/100)/log(2)) +1;
+	print "Cleaning means I can now reduce mem_height to $new_mem_height from $mem_height, and will up mem_width from 100 to 120 to leave some margin\n";
+	$mem_height = $new_mem_height;
+	$mem_width = 120;
+    }
+}
 
 ##################################
 ## 3. Call variants
@@ -388,6 +453,12 @@ if ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )
 {
     print "Joint call dir is $dir_for_joint_calls\n";
 }
+if ( ($call_jointly_incref eq "yes") && ($call_jointly_noref eq "yes") )
+{
+    print "You can only call jointly in one way or the other (either exclude or include the ref colour when looking for bubbles)\n";
+    die("You have specified both - get rid of one of them\n");
+}
+
 if (!(-d $dir_for_joint_calls))
 {
     my $c = "mkdir -p $dir_for_joint_calls";
@@ -397,185 +468,166 @@ if (!(-d $dir_for_joint_calls))
 
 my %sample_to_bc_callfile=();#sample ->kmer ->cleaning ->callfile
 my %sample_to_pd_callfile=();
-my %joint_callfiles_noref=(); ##kmer -> cleaning -> callfile
-my %joint_callfiles_incref=(); ##kmer -> cleaning -> callfile
+my %joint_callfiles=(); ##kmer -> cleaning -> callfile
 
-foreach my $k (@kmers)
+
+
+
+
+if  ( ($call_jointly_incref eq "no") && ($call_jointly_noref eq "no") )
 {
-    my $ctx_bin = get_right_binary($k, $cortex_dir,2);
-    foreach my $sam (@samples)
+    foreach my $k (@kmers)
     {
-	#if ($sam eq $ref_name)
-	#{
-	#    next;
-	#}
-
-	foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}{$k}})
+	my $ctx_bin = get_right_binary($k, $cortex_dir,2);
+	foreach my $sam (@samples)
 	{
-	    my $uniqid = "sample_".$sam."_kmer".$k."_cleaning".$cleaning;
-	    my $colour_list = make_2sample_filelist($ref_name.".".$uniqid, $sam.".".$uniqid, $k_to_refbin{$k}, $sample_to_cleaned_bin{$sam}{$k}{$cleaning}, $uniqid );
-	    ## load reference binary and make calls. 
-	    my $cmd = $ctx_bin." --kmer_size $k --mem_height $mem_height --mem_width $mem_width --ref_colour 0 --colour_list $colour_list  --print_colour_coverages ";
-	    print "Load reference $k_to_refbin{$k} in colour 0, and sample ";
-	    print $sample_to_cleaned_bin{$sam}{$k}{$cleaning};
-	    print " into colour 1\n";
-
-	    my $bubble_output = $dir_for_per_sample_calls.$sam."_bubbles_k".$k."_clean".$cleaning.".calling_on_this_sample_only";
-	    my $pd_output = $dir_for_per_sample_calls.$sam."_pd_k".$k."_clean".$cleaning.".calling_on_this_sample_only";
-
-	    ##these variables needed to decide whether to run var valling
-	    my $bc_already_done="no";
-	    my $pd_already_done = "no";
-	    if ($do_bc eq "no")
+	    #if ($sam eq $ref_name)
+	    #{
+	    #    next;
+	    #}
+	    
+	    foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}{$k}})
 	    {
-		$bc_already_done="yes";
-	    }
-	    if ($do_pd eq "no")
-	    {
-		$pd_already_done="yes";
-	    }
-
-	    if ( ($do_bc eq "yes") && (!(-e $bubble_output)) )## we want to do it and not already done
-	    {
-		$cmd = $cmd." --detect_bubbles1 -1/-1 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len ";
-		$sample_to_bc_callfile{$sam}{$k}{$cleaning} =  $bubble_output ;
-	    }
-	    elsif  ( ($do_bc eq "yes") && (-e $bubble_output) )## we want t do it but it has already been done
-	    {
-		print "Bubble calling already seems to have been done - will not rerun\n";
-		$bc_already_done = "yes";
-		$sample_to_bc_callfile{$sam}{$k}{$cleaning} =  $bubble_output ;
-	    }
-	    if ( ($do_pd eq "yes") && (!(-e $pd_output."_pd_calls")) )
-	    {
-		$cmd = $cmd." --path_divergence_caller 1 --path_divergence_caller_output $pd_output --list_ref_fasta $list_ref_fasta --max_var_len $max_var_len ";
-		$sample_to_pd_callfile{$sam}{$k}{$cleaning} =  $pd_output."_pd_calls"
-	    }
-	    elsif ( ($do_pd eq "yes") && (-e $pd_output."_pd_calls"))
-	    {
-		print "Path divergence calling already seems to have been done - will not rerun\n";
-		$pd_already_done = "yes";
-		$sample_to_pd_callfile{$sam}{$k}{$cleaning} =  $pd_output."_pd_calls"
-	    }
-
-	    my $log = $dir_for_per_sample_calls.$sam."_varcalling_log_k".$k."_clean".$cleaning.".calling_on_this_sample_only.log";
-	    if (-e $log)
-	    {
-		$log = $log.".again";
-	    }
-
-	    if (!( ($bc_already_done eq "yes") && ($pd_already_done eq "yes")))##not all done
+		my $uniqid = "sample_".$sam."_kmer".$k."_cleaning".$cleaning;
+		my $colour_list = make_2sample_filelist($ref_name.".".$uniqid, $sam.".".$uniqid, $k_to_refbin{$k}, $sample_to_cleaned_bin{$sam}{$k}{$cleaning}, $uniqid );
+		## load reference binary and make calls. 
+		my $cmd = $ctx_bin." --kmer_size $k --mem_height $mem_height --mem_width $mem_width --ref_colour 0 --colour_list $colour_list  --print_colour_coverages ";
+		print "Load reference $k_to_refbin{$k} in colour 0, and sample ";
+		print $sample_to_cleaned_bin{$sam}{$k}{$cleaning};
+		print " into colour 1\n";
+		
+		my $bubble_output = $dir_for_per_sample_calls.$sam."_bubbles_k".$k."_clean".$cleaning.".calling_on_this_sample_only";
+		my $pd_output = $dir_for_per_sample_calls.$sam."_pd_k".$k."_clean".$cleaning.".calling_on_this_sample_only";
+		
+		##these variables needed to decide whether to run var valling
+		my $bc_already_done="no";
+		my $pd_already_done = "no";
+		if ($do_bc eq "no")
+		{
+		    $bc_already_done="yes";
+		}
+		if ($do_pd eq "no")
+		{
+		    $pd_already_done="yes";
+		}
+		
+		if ( ($do_bc eq "yes") && (!(-e $bubble_output)) )## we want to do it and not already done
+		{
+		    $cmd = $cmd." --detect_bubbles1 -1/-1 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len ";
+		    $sample_to_bc_callfile{$sam}{$k}{$cleaning} =  $bubble_output ;
+		}
+		elsif  ( ($do_bc eq "yes") && (-e $bubble_output) )## we want t do it but it has already been done
+		{
+		    print "Bubble calling already seems to have been done - will not rerun\n";
+		    $bc_already_done = "yes";
+		    $sample_to_bc_callfile{$sam}{$k}{$cleaning} =  $bubble_output ;
+		}
+		if ( ($do_pd eq "yes") && (!(-e $pd_output."_pd_calls")) )
+		{
+		    $cmd = $cmd." --path_divergence_caller 1 --path_divergence_caller_output $pd_output --list_ref_fasta $list_ref_fasta --max_var_len $max_var_len ";
+		    $sample_to_pd_callfile{$sam}{$k}{$cleaning} =  $pd_output."_pd_calls"
+		}
+		elsif ( ($do_pd eq "yes") && (-e $pd_output."_pd_calls"))
+		{
+		    print "Path divergence calling already seems to have been done - will not rerun\n";
+		    $pd_already_done = "yes";
+		    $sample_to_pd_callfile{$sam}{$k}{$cleaning} =  $pd_output."_pd_calls"
+		}
+		
+		my $log = $dir_for_per_sample_calls.$sam."_varcalling_log_k".$k."_clean".$cleaning.".calling_on_this_sample_only.log";
+		if (-e $log)
+		{
+		    $log = $log.".again";
+		}
+		
+		if (!( ($bc_already_done eq "yes") && ($pd_already_done eq "yes")))##not all done
 		{
 		    $cmd = $cmd." > $log 2>&1";
 		    print "$cmd\n";
 		    my $ret = qx{$cmd};
 		    print "$ret\n";
 		}
-
-
-	    ## Add code to check log file for errors here:
 		
+		
+		## Add code to check log file for errors here:
+		
+	    }
 	}
     }
 }
 
 
-
-if  ($call_jointly_incref eq "yes")## then just assume is BC only
+if  ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )## then just assume is BC only
 {
+
+    print "**********************************************\n";
+    print " ***    Make calls in joint graph\n";
+    print "**********************************************\n";
+
     my $num_cleanings = get_num_cleaning_levels();
     my $cl=0;
 
     foreach my $K (@kmers)
     {
+
 	for ($cl=0; $cl < $num_cleanings; $cl++)
 	{	
 	    my $do_it = 1;
 	    my $num_cols = scalar(@samples)+1;
 
 	    my $ctx_bin = get_right_binary($K, $cortex_dir,$num_cols);
-	    my $uniqid = "joint_incref_kmer".$K."_cleaning_level".$cl;
-	    my $colour_list = get_colourlist_for_joint_incref($cl);
-
+	    my $str;
+	    if ($call_jointly_incref eq "yes")
+	    {
+		$str = "inc_ref";
+	    }
+	    else
+	    {
+		$str = "exc_ref";
+	    }
+	    my $uniqid = "joint_".$str ."kmer".$K."_cleaning_level".$cl;
+	    my $colour_list = get_colourlist_for_joint($K, $cl);
 	    
 	    my $cmd = $ctx_bin." --kmer_size $K --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list  --print_colour_coverages --ref_colour 0";
 	    my $bubble_output = $dir_for_joint_calls."bubble_calls_".$uniqid;
 
 	    if (!(-e $bubble_output))## we want to do it and not already done
 	    {
-		$cmd = $cmd." --detect_bubbles1 -1/-1 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len ";
-		$joint_callfiles_incref{$K}{$cl} =  $bubble_output ;
+		print "Bubble calls on joint graph do not yet exists - so run the calls!\n";
+		if ($call_jointly_incref eq "yes")
+		{
+		    $cmd = $cmd." --detect_bubbles1 -1/-1 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len ";
+		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
+		}
+		elsif ($call_jointly_noref eq "yes")
+		{
+		    $cmd = $cmd." --detect_bubbles1 \*0/\*0 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len ";
+		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
+		}
+		
+		$do_it=1;
 	    }
 	    elsif  (-e $bubble_output )## we want t do it but it has already been done
 	    {
-		print "Joint Bubble calling (including the reference colour in calling) already seems to have been done - will not rerun\n";
-		$joint_callfiles_incref{$K}{$cl} =  $bubble_output ;
-		$do_it=0;
-	    }
-
-	    my $log = $dir_for_joint_calls."joint_varcalling_incref_k".$K."_cleanlevel".$cl.".log";
-	    if ($do_it==1)
-	    {
-		$cmd = $cmd." > $log 2>&1";
-		print "$cmd\n";
-		my $ret = qx{$cmd};
-		print "$ret\n";
-	    }
-	}
- 
-    }
-
-
-}
-
-
-
-if  ($call_jointly_noref eq "yes")## then just assume is BC only
-{
-
-    my $num_cleanings = get_num_cleaning_levels();
-    my $cl=0;
-
-    foreach my $K (@kmers)
-    {
-	for ($cl=0; $cl < $num_cleanings; $cl++)
-	{	
-	    my $do_it = 1;
-	    my $num_cols = scalar(@samples);
-	    if ($use_ref eq "yes")
-	    {
-		$num_cols++;
-	    }
-	    my $ctx_bin = get_right_binary($K, $cortex_dir,$num_cols);
-	    my $uniqid = "joint_noref_kmer".$K."_cleaning_level".$cl;
-	    my $colour_list = get_colourlist_for_joint_noref($cl);
-
-	    
-	    my $cmd = $ctx_bin." --kmer_size $K --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list  --print_colour_coverages ";
-	    my $bubble_output = $dir_for_joint_calls."bubble_calls_".$uniqid;
-
-	    if (!(-e $bubble_output))## we want to do it and not already done
-	    {
-		if ($use_ref eq "yes")
+		print "Joint bubble calling has already been done, as $bubble_output already exists\n";
+		if ($call_jointly_incref eq "yes")
 		{
-		    $cmd = $cmd." --detect_bubbles1 \*0/\*0 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len --ref_colour 0";
+		    print "(including the reference colour in calling) ";
+		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
 		}
 		else
 		{
-		    $cmd = $cmd." --detect_bubbles1 -1/-1 --output_bubbles1 $bubble_output  --max_var_len $max_var_len ";
+		    print "(excluding the reference colour in calling) ";
+		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
 		}
-		$joint_callfiles_noref{$K}{$cl} =  $bubble_output ;
-	    }
-	    elsif  (-e $bubble_output )## we want t do it but it has already been done
-	    {
-		print "Joint Bubble calling (including the reference colour in calling) already seems to have been done - will not rerun\n";
-		$joint_callfiles_noref{$K}{$cl} =  $bubble_output ;
+
 		$do_it=0;
 	    }
-	    $cmd = $cmd." --experiment_type $expt_type --genome_size $genome_size ";
-	    my $log = $dir_for_joint_calls."joint_varcalling_noref_k".$K."_cleanlevel".$cl.".log";
+
+	    my $log = $dir_for_joint_calls."joint_varcalling_".$str."_k".$K."_cleanlevel".$cl.".log";
 	    if ($do_it==1)
 	    {
+		print "Run joint calls:\n";
 		$cmd = $cmd." > $log 2>&1";
 		print "$cmd\n";
 		my $ret = qx{$cmd};
@@ -584,31 +636,33 @@ if  ($call_jointly_noref eq "yes")## then just assume is BC only
 	}
  
     }
+
+
 }
+
 
 
 ##################################
 ## 4. Make union callsets
 ##################################
 my %vcfs_needing_post_processing=();
-if ($do_union eq "yes")
+if ($do_union eq "yes")  
 {
-    print "******************************************************************\n";
-    print "Make union variant callsets combining all the per-sample callsets\n";
-    print "******************************************************************\n";
-    
-    
-    my $tmpdir = $outdir."tmp_filelists";
-    
-    if (!(-d  $tmpdir))
+
+    if (($call_jointly_noref eq "no") && ($call_jointly_incref eq "no"))
     {
-	my $cmd1 = "mkdir -p $tmpdir";
-	qx{$cmd1};
+	print "******************************************************************\n";
+	print "Make union variant callsets combining all the per-sample callsets\n";
+	print "******************************************************************\n";
     }
     
+
+    
+    
     my $union_of_bc_callsets = $outdir_calls."union_all_bc_callsets";
+
     my $max_read_len_bc_union=0;
-    if ($do_bc eq "yes")
+    if ( ($do_bc eq "yes") && ($call_jointly_noref eq "no") && ($call_jointly_incref eq "no") )
     {
 	my $bc_call_list  = $tmpdir."/list_bc_callfiles";
 	open(BCCALL, ">".$bc_call_list)||die();
@@ -635,7 +689,7 @@ if ($do_union eq "yes")
     
     my $union_of_pd_callsets = $outdir_calls."union_all_pd_callsets";
     my $max_read_len_pd_union=0;
-    if ($do_pd eq "yes")
+    if ( ($do_pd eq "yes") && ($call_jointly_noref eq "no") && ($call_jointly_incref eq "no") )
     {
 	
 	my $pd_call_list  = $tmpdir."/list_pd_callfiles";
@@ -663,45 +717,54 @@ if ($do_union eq "yes")
     }
     
 
-    if ($call_jointly_noref eq "yes")
+    if ( ($call_jointly_noref eq "yes") || ($call_jointly_incref eq "yes") )
     {
 	print "******************************************************************\n";
 	print "Make union variant callsets combining all callsets made from the joint graph ";
-	if ($use_ref eq "yes")
+	if ($call_jointly_incref eq "yes")
 	{
-	    print " (excluding the ref from the joint graph for discovery)\n";
+	    print "(including the colour of the reference when looking for bubbles) \n";
 	}
 	else
 	{
-	    print "\n";
+	    print " (excluding the colour of the reference when looking for bubbles)\n";
 	}
 	print "******************************************************************\n";
+	
+	my $str="inc_ref";
+	if ($call_jointly_noref eq "yes") 
+	{
+	    $str = "exc_ref";
+	}
+	my $bc_call_list  = $tmpdir."/list_bc_joint_".$str."_callfiles";#
+	open(BCCALL, ">".$bc_call_list)||die();
+	my $num_cleanings = get_num_cleaning_levels();
+	my $cl=0;
+	
+	foreach my $K (@kmers)
+	{
+	    for ($cl=0; $cl < $num_cleanings; $cl++)
+	    {		
+		    print BCCALL $joint_callfiles{$K}{$cl};#
+		    print BCCALL "\n";
+	    }
+	}
+	close(BCCALL);
 
-#	my $bc_call_list  = $tmpdir."/list_bc_joint_noref_callfiles";#
-#	open(BCCALL, ">".$bc_call_list)||die()#;
-#	my $num_cleanings = get_num_cleaning_levels();
-#	my $cl=0;
-#	
-#	foreach my $K (@kmers)
-#	{
-#	    for ($cl=0; $cl < $num_cleanings; $cl++)
-#	    {		
-#		foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}{$K}})
-#		{
-#		    print BCCALL $sample_to_bc_callfile{$sam}{$K}{$cleaning};
-#		    print BCCALL "\n";
-#		}
-#	    }
-#	}
-#	
-#	close(BCCALL);
-#	my $bc_cmd = "perl $make_union --filelist $bc_call_list --varname_stub UNION_BC > $ZAZ 2>&1";
-#	if (! -e($union_of_bc_callsets))
-#	{
-#	    print "$bc_cmd\n";
-#	    my $bc_ret = qx{$bc_cmd};
-#	}
-#	$max_read_len_bc_union = get_max_read_len_of_fasta($union_of_bc_callsets)+$last_kmer+10;
+	print "Z1 - going to see if this exists $union_of_bc_callsets\n";
+	my $bc_cmd = "perl $make_union --filelist $bc_call_list --varname_stub UNION_BC > $union_of_bc_callsets 2>&1";
+	if (! -e($union_of_bc_callsets))
+	{
+	    print "Z2 - does not \n";
+	    print "$bc_cmd\n";
+	    my $bc_ret = qx{$bc_cmd};
+	    print "Z3 - ran it and got this\n$bc_ret";
+	}
+	else
+	{
+	    print "Union of all joint calls, $union_of_bc_callsets, already exists so will not regenerate\n";
+	}
+	$max_read_len_bc_union = get_max_read_len_of_fasta($union_of_bc_callsets)+$last_kmer+10;
 
     }
 
@@ -718,7 +781,7 @@ if ($do_union eq "yes")
 #############################################################################################################################
 	
 	print "********************************************\n";
-	print "Genotype the union callset (made from per-sample callsets)\n";
+	print "Genotype the union callset\n";
 	print "********************************************\n";
 	
 	
@@ -809,8 +872,8 @@ if ($do_union eq "yes")
 	
 	
 
-	build_vcfs($gt_bc_out, $outvcf_filename_stub."union_BC_calls", $number_of_colours, $outdir_vcfs."output_proc_union_bc", $outdir_vcfs, \%vcfs_needing_post_processing);
-	build_vcfs($gt_pd_out, $outvcf_filename_stub."union_PD_calls", $number_of_colours, $outdir_vcfs."output_proc_union_pd", $outdir_vcfs, \%vcfs_needing_post_processing);
+	build_vcfs($gt_bc_out, $outvcf_filename_stub."_union_BC_calls", $number_of_colours, $outdir_vcfs."output_proc_union_bc", $outdir_vcfs, \%vcfs_needing_post_processing);
+	build_vcfs($gt_pd_out, $outvcf_filename_stub."_union_PD_calls", $number_of_colours, $outdir_vcfs."output_proc_union_pd", $outdir_vcfs, \%vcfs_needing_post_processing);
 	
 	
 
@@ -847,6 +910,11 @@ else  ##### if not making a union set
 
 
 
+## print finish time
+print "Finish  time: ";
+my $end = "date";
+my $ret_end = qx{date};
+print "$ret_end\n";
 
 
 
@@ -870,35 +938,81 @@ close(GLOBAL);
 #######################################################################################################
 #######################################################################################################
 
+sub get_num_kmers
+{
+    my ($log) = @_;
+    open(LOG, $log)||die("Cannot open $log");
+    while (<LOG>)
+    {
+	my $line = $_;
+	chomp $line;
+	if ($line =~ /Total kmers in table:\s+(\d+)/)
+	{
+	    close(LOG);
+	    return $1;
+	}
+    }
+    close(LOG);
+    return -1;
+}
+
+sub ran_out_of_memory
+{
+    my ($log) = @_;
+    open(LOG, $log)||die("Cannot open $log");
+    while (<LOG>)
+    {
+	my $line = $_;
+	chomp $line;
+	if (($line =~ /oo much rehashing/)||($line =~ /you have not allocated enough memory/) )
+	{
+	    close(LOG);
+	    return "true";
+	}
+    }
+    close(LOG);
+    return "false";
+
+}
 sub get_refbin_name
 {
     my ($dir, $kHHmer) = @_; ##refbindir
+    if ($dir !~ /\/$/)
+    {
+	$dir = $dir.'/';
+    }
     ## check ref binary exists
     opendir (DIR, $dir) or die("Cannot open reference binary directory $dir\n");
     my @files=();
     while (my $file = readdir(DIR)) {
 	push @files, $file;
     }
+
+
+    
     # is there a binary with this k in its name in that directory
     my $found=0;
-    my $f;
-    foreach  $f (@files)
+    my $the_binary="";
+    foreach  my $f (@files)
     {
 	if (($f =~ /k$kHHmer/) && ($f =~ /.ctx/))
 	    {
 		$found=1;
-		last;
+		$the_binary=$f;
 	    }
     }
-    if ($found==0)
+    if (($found==0) || ($the_binary eq "") )
     {
-	die("Cannot find a reference binary fr k=$kHHmer in the specified dir $dir\n");
+	die("Cannot find a reference binary for k=$kHHmer in the specified dir $dir\n");
     }
-    
-    return $f;
+    else
+    {
+    }
+
+    return $the_binary;
 
 }
-sub get_colourlist_for_joint_incref
+sub get_colourlist_for_joint
 {
     my ($kmer, $level) = @_;
     
@@ -913,76 +1027,27 @@ sub get_colourlist_for_joint_incref
 	$refbindir=$refbindir.'/';
     }
 
-#    my $ref_bin_list = $tmpdir."filelist_for_joint_incref_refbinary_k".$kmer;
- #   open(REF, ">".$ref_bin_list)||die("Cannot open $ref_bin_list");
-  #  print REF $refbindir;
-#    print REF get_refbin_name($refbindir, $kmer);
-#    print REF "\n";
-#    close(REF);
-
-#    my $outfile = $tmpdir."tmp_colourlist_joint_inc_ref_kmer".$kmer."_level".$level;
-#    open(OUT, ">".$outfile)||die("Cannot open $outfile");
-#    print OUT  $ref_bin_list."\n";
-#    foreach $sample (@samples)
-#    {#
-#	my $f = $tmpdir."sample_".$sample."_kmer.".$kmer."_cleaning_level".$level."_binary";
-#	print OUT "$f\n";
-#	open(F, ">".$f)||die("Cannot open $f");
-#	
-#	if ($sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level] !=0)
-#	{
-#	    print F $sample_to_cleaned_bin{$sample}{$kmer}{$sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level]};
-#	}
-#	else
-#	{
-#	    print F $sample_to_uncleaned{$sample}{$kmer};
-#	}
-#	print F "\n";
-#	close(F);
- #   }
-  #  close(OUT);
     
-#    return $outfile;
-}
-
-
-sub get_colourlist_for_joint_noref
-{
-    my ($kmer, $level) = @_;
+    my $ref_bin_list = $tmpdir."filelist_refbin_for_joint_k".$kmer;
+    open(REF, ">".$ref_bin_list)||die("Cannot open $ref_bin_list");
+    print REF $refbindir;
+    print "ZAMZAM $refbindir and $kmer\n";
+    print REF get_refbin_name($refbindir, $kmer);
+    print REF "\n";
+    close(REF);
+      
     
-    my $tmpdir = $outdir_calls."tmp_filelists/";
-    if (!(-d $tmpdir))
-    {
-	my $c = "mkdir -p $tmpdir";
-	qx{$c};
-    }
-    my $ref_bin_list="";
-    if ($use_ref eq "yes")
-    {
-	if ($refbindir !~ /\/$/)
-	{
-	    $refbindir=$refbindir.'/';
-	}
-	$ref_bin_list = $tmpdir."filelist_for_joint_noref_refbinary_k".$kmer;
-	open(REF, ">".$ref_bin_list)||die("Cannot open $ref_bin_list");
-	print REF $refbindir;
-	print REF get_refbin_name($refbindir, $kmer);
-	print REF "\n";
-	close(REF);
-    }
-    my $outfile = $tmpdir."tmp_colourlist_joint_noref_kmer".$kmer."_level".$level;
+    my $outfile = $tmpdir."tmp_colourlist_joint_kmer".$kmer."_level".$level;
     open(OUT, ">".$outfile)||die("Cannot open $outfile");
-    if ($use_ref eq "yes")
-    {
-	print OUT  $ref_bin_list."\n";
-    }
+    print OUT  $ref_bin_list."\n";
+
+
     foreach my $sample (@samples)
     {
 	my $f = $tmpdir."sample_".$sample."_kmer.".$kmer."_cleaning_level".$level."_binary";
 	print OUT "$f\n";
 	open(F, ">".$f)||die("Cannot open $f");
-
-	if ($sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level] !=0)
+       	if ($sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level] !=0)
 	{
 	    print F $sample_to_cleaned_bin{$sample}{$kmer}{$sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level]};
 	}
@@ -992,12 +1057,12 @@ sub get_colourlist_for_joint_noref
 	}
 	print F "\n";
 	close(F);
-
     }
     close(OUT);
     
     return $outfile;
 }
+
 
 
 sub get_num_cleaning_levels
@@ -1007,6 +1072,10 @@ sub get_num_cleaning_levels
     if ($do_auto_cleaning eq "yes") 
     {
 	$num = 1+$auto_above + $auto_below;
+    }
+    elsif ($do_auto_cleaning eq "stringent") 
+    {
+	$num = 1;
     }
     elsif ($do_user_spec_cleaning eq "yes")
     {
@@ -1351,9 +1420,9 @@ sub get_cleaning_thresholds
 	$do_user, $user_min,   $user_max, $user_step,
 	$aref, $g_size, $manual_override_file) = @_;
 
-    if ($do_auto eq "yes")
+    if ( ($do_auto eq "yes") || ($do_auto eq "stringent") )
     {
-	get_auto_thresholds($sampl, $km, $auto_below, $auto_above, $aref, $href_log, $href_covg, $g_size);
+	get_auto_thresholds($sampl, $km, $do_auto, $auto_below, $auto_above, $aref, $href_log, $href_covg, $g_size);
     }
     elsif ($do_user eq "yes")
     {
@@ -1423,42 +1492,57 @@ sub get_manually_specified_thresholds_for_this_sample
 
 sub get_auto_thresholds
 {
-    my ($sample, $kmer, $num_below, $num_above, $aref_results, $href_logfiles, $href_covg, $genome_siz) = @_;
+    my ($sample, $kmer, $do_auto_keyword, $num_below, $num_above, $aref_results, $href_logfiles, $href_covg, $genome_siz) = @_;
     
     my @distrib=();
     my $deff = get_expected_depth_and_cvg_distrib($href_logfiles->{$sample}->{$kmer}, $kmer, $genome_siz);
     my $auto_thresh  = get_cleaning_thresh_and_distrib($href_covg->{$sample}->{$kmer}, $deff,  \@distrib);
-    print "Automated cleaning chooses threshold $auto_thresh for sample $sample, kmer $kmer\nExpected depth of covg (D_eff) is $deff\n";
     if ($deff<$auto_thresh)
     {
 	die("WARNING - the auto-estimator for cleaning has estimated a cleaning threshold higher than the expected covg. Look at the covg profile - is there something odd?\n");
     }
-    ## ok, get results
+
     my $i;
-    push @$aref_results, $auto_thresh;
+    if ($do_auto_keyword eq "yes")
+    {
+	print "Automated cleaning chooses threshold $auto_thresh for sample $sample, kmer $kmer\nExpected depth of covg (D_eff) is $deff\n";
+	push @$aref_results, $auto_thresh;
+    }
+
     ## how many cleaning thresholds were you asked to generate below the auto one?
 
     ## work in steps which are 1/10 of the distance between the auto-choice, and the deff.
     my $step = int(($deff - $auto_thresh)/10);
-    for ($i=0; ($i<$num_below); $i++)
+
+    if ($do_auto_keyword eq "yes")
     {
-	my $t= $auto_thresh-($i+1)*$step;
-	if ($t>0)
+	for ($i=0; ($i<$num_below); $i++)
 	{
-	    push @$aref_results, $t;
-	    print "Will also clean at threshold $t\n";
+	    my $t= $auto_thresh-($i+1)*$step;
+	    if ($t>0)
+	    {
+		push @$aref_results, $t;
+		print "Will also clean at threshold $t\n";
+	    }
+	}
+	
+    ## how many cleaning thresholds were you asked to generate above the auto one?
+	for ($i=0; ($i<$num_above); $i++)
+	{
+	    my $t= $auto_thresh+($i+1)*$step;
+	    if ($t<$deff)
+	    {
+		push @$aref_results, $t;
+		#print "Will also clean at thresh $t\n";
+	    }
 	}
     }
-
-    ## how many cleaning thresholds were you asked to generate above the auto one?
-    for ($i=0; ($i<$num_above); $i++)
+    else
     {
-	my $t= $auto_thresh+($i+1)*$step;
-	if ($t<$deff)
-	{
-	    push @$aref_results, $t;
-	    #print "Will also clean at thresh $t\n";
-	}
+	print "Stringent cleaning selected. Choose a cleaning threshold 20% along from auto-choice ($auto_thresh) and D_eff ($deff): ";
+	print $auto_thresh + 2* $step;
+	print "\n";
+	push @$aref_results, $auto_thresh + 2* $step;
     }
 
 }
@@ -1772,7 +1856,7 @@ sub run_checks
 	    die("Cannot find the ref binary directory you specified - $refbindir\n");
 	}
     }
-    if ( ($do_auto_cleaning eq "yes") && ($genome_size==0) )
+    if ( ($do_auto_cleaning ne "no") && ($genome_size==0) )
     {
 	die("If you want automatic cleaning, you need tos pecify --genome_size");
     }
@@ -1837,10 +1921,10 @@ sub run_checks
 	}
 	if ($found==0)
 	{
-	    die("Cannot find a reference binary fr k=$z in the specified dir $refbindir\n");
+	    die("Cannot find a reference binary for k=$z in the specified dir $refbindir. run_calls.pl expects you to have built these reference binaries in advance, and places them in a single directory. The filename must contain the letter k, followed by the kmer value; for example the k=21 binary must have a filename containing \"k21\". \n");
 	}
     }
-    if ( ($do_auto_cleaning ne "yes") && ($do_auto_cleaning ne "no") )
+    if ( ($do_auto_cleaning ne "yes") && ($do_auto_cleaning ne "no") && ($do_auto_cleaning ne "stringent") )
     {
 	print ("--auto_cleaning takes an argument that must be \"yes\" or \"no\", but you have given it this value ");
 	print $do_auto_cleaning;
@@ -1871,7 +1955,7 @@ sub run_checks
 	}
 
     }
-    if ( ($do_auto_cleaning eq "yes") && ($do_user_spec_cleaning eq "yes") )
+    if ( (($do_auto_cleaning eq "yes")|| ($do_auto_cleaning eq "no")) && ($do_user_spec_cleaning eq "yes") )
     {
 	die("You cannot specify both automatic cleaning and user-specified cleaning\n");
     }
@@ -2051,6 +2135,10 @@ sub get_cleaning_thresh_and_distrib
 sub get_max_read_len_of_fasta
 {
     my ($fasta) = @_;
+    if (!(-e $fasta))
+    {
+	die("Cannot open nonexistent file $fasta\n");
+    }
     open(FA, $fasta)||die("Cannot open $fasta");
     my $max_read_len=0;
     while (<FA>)

@@ -21,7 +21,8 @@ sub print_usage
   }
 
   print STDERR "" .
-"Usage: ./vcf_align.pl [--tag <name>|--remove_ref_mismatch] <LEFT|RIGHT> <in.vcf> <ref1.fa ..>
+"Usage: ./vcf_align.pl [--tag <name>|--remove_ref_mismatch] <LEFT|RIGHT> " .
+  "<in.vcf> <ref1.fa ..>
   Shift clean indel variants to the left/right.  Variants that do not match
   the reference and those that are not clean indels are printed unchanged.
   FASTA entry names must match VCF CHROM column.  If <in.vcf> is '-', reads
@@ -106,6 +107,9 @@ while(my ($key,$value) = each(%ref_genomes))
 #
 my $vcf = new VCFFile($vcf_handle);
 
+# Set the reference genome chromosome names
+$vcf->set_ref_chrom_names(keys %ref_genomes);
+
 # Add justify info to header and print
 $vcf->add_header_metainfo("variants_justified", $justify);
 
@@ -129,12 +133,16 @@ my $max_position_diff = 0;
 my $total_position_diff = 0;
 
 my %missing_chrs = ();
+my %missing_chrs_lengths = ();
 
 while(defined($vcf_entry = $vcf->read_entry()))
 {
   $num_of_variants++;
 
+  my $print = 1;
+
   my $chr = $vcf_entry->{'CHROM'};
+  my $ref_chr = $vcf->guess_ref_chrom_name($chr);
 
   # Get coordinates, convert to zero based
   my $var_start = $vcf_entry->{'true_POS'}-1;
@@ -143,41 +151,50 @@ while(defined($vcf_entry = $vcf->read_entry()))
 
   # Get inserted or deleted sequence
   my $indel = get_clean_indel($vcf_entry);
-  
-  # Check if ref mismatch
-  my $ref_mismatch = 0;
 
-  if(!defined($ref_genomes{$chr}))
+  my $ref_length;
+
+  if(!defined($ref_chr))
   {
     $missing_chrs{$chr} = 1;
   }
-  elsif($ref_genomes_lengths{$chr} < $var_start+length($ref_allele))
+  elsif(!defined($ref_length = $ref_genomes_lengths{$chr}) &&
+        !defined($ref_length = $ref_genomes_lengths{$ref_chr}))
+  {
+    $missing_chrs_lengths{$chr} = 1;
+  }
+  elsif($ref_genomes_lengths{$ref_chr} < $var_start+length($ref_allele))
   {
     print STDERR "vcf_align.pl - Error: var " . $vcf_entry->{'ID'} . " at " .
-                 "$chr:$var_start:".length($ref_allele)." is out of bounds of ".
-                 "$chr:1:".$ref_genomes_lengths{$chr}."\n";
+                  "$chr:$var_start:".length($ref_allele)." is out of bounds of ".
+                  "$chr:1:".$ref_genomes_lengths{$ref_chr}."\n";
   }
-  elsif(substr($ref_genomes{$chr}, $var_start, length($ref_allele)) ne
+  elsif(substr($ref_genomes{$ref_chr}, $var_start, length($ref_allele)) ne
         uc($ref_allele))
   {
     $num_ref_mismatch++;
-    $ref_mismatch = 1;
+    
+    if($remove_ref_mismatch)
+    {
+      $print = 0;
+    }
   }
   elsif(defined($indel))
   {
     $num_of_clean_indels_matching_ref++;
 
     # align to the left
-    my ($pos_left, $indel_left) = get_left_aligned_position($chr,
+    my ($pos_left, $indel_left) = get_left_aligned_position($ref_chr,
                                                             $var_start,
                                                             $indel);
 
     my $ref_allele_len = length($ref_allele);
 
     # align to the right
-    my ($pos_right, $indel_right) = get_right_aligned_position($chr, $var_start,
-                                                               $ref_allele_len,
-                                                               $indel);
+    my ($pos_right, $indel_right) = get_right_aligned_position($ref_chr,
+                                                                $var_start,
+                                                                $ref_allele_len,
+                                                                $indel);
 
     my $position_diff = $pos_right - $pos_left;
 
@@ -190,7 +207,7 @@ while(defined($vcf_entry = $vcf->read_entry()))
     $total_position_diff += $position_diff;
 
     my ($new_pos, $new_indel);
-    
+
     if($justify eq "left")
     {
       $new_pos = $pos_left;
@@ -211,26 +228,34 @@ while(defined($vcf_entry = $vcf->read_entry()))
       $vcf_entry->{'true_POS'} = $new_pos+1;
       $vcf_entry->{'POS'} = $new_pos;
     
-      $vcf_entry->{length($ref_allele) > 0 ? 'true_REF' : 'true_ALT'} = $new_indel;
+      my $indel_allele = length($ref_allele) > 0 ? 'true_REF' : 'true_ALT';
+      $vcf_entry->{$indel_allele} = $new_indel;
 
-      my $prior_base = substr($ref_genomes{$chr}, $new_pos-1, 1);
+      my $prior_base = substr($ref_genomes{$ref_chr}, $new_pos-1, 1);
       $vcf_entry->{'REF'} = $prior_base.$vcf_entry->{'true_REF'};
       $vcf_entry->{'ALT'} = $prior_base.$vcf_entry->{'true_ALT'};
     }
   }
 
-  if(!$ref_mismatch || !$remove_ref_mismatch)
+  if($print)
   {
     $vcf->print_entry($vcf_entry);
   }
 }
 
 my @missing_chr_names = sort keys %missing_chrs;
+my @missing_chr_lengths = sort keys %missing_chrs_lengths;
 
 if(@missing_chr_names > 0)
 {
   print STDERR "vcf_align.pl: Missing chromosomes: " .
                join(", ", @missing_chr_names) . "\n";
+}
+
+if(@missing_chr_lengths > 0)
+{
+  print STDERR "vcf_align.pl: Missing chromosome lengths: " .
+               join(", ", @missing_chr_lengths) . "\n";
 }
 
 if($num_ref_mismatch > 0)
@@ -254,23 +279,29 @@ print STDERR "vcf_align.pl: average ambiguity per variant: " .
              sprintf("%.3f", $total_position_diff / $num_of_variants) .
              " bp\n";
 
-my $clean_indel_rate = $total_position_diff / $num_of_clean_indels_matching_ref;
+if($num_of_clean_indels_matching_ref > 0)
+{
+  my $clean_indel_rate
+    = $total_position_diff / $num_of_clean_indels_matching_ref;
 
-print STDERR "vcf_align.pl: average ambiguity per clean indel matching " .
-             "the ref: " . sprintf("%.3f", $clean_indel_rate) . " bp\n";
+  print STDERR "vcf_align.pl: average ambiguity per clean indel matching " .
+               "the ref: " . sprintf("%.3f", $clean_indel_rate) . " bp\n";
+}
 
-print STDERR "vcf_align.pl: maximum variant ambiguity: ".$max_position_diff." bp\n";
+print STDERR "vcf_align.pl: maximum variant ambiguity: " .
+             $max_position_diff . " bp\n";
 
 close($vcf_handle);
 
 # $pos is 0-based
 sub get_left_aligned_position
 {
-  my ($chr, $pos, $indel) = @_;
+  my ($ref_chr, $pos, $indel) = @_;
 
   # align to the left
   # while base before variant (on the reference) equals last base of indel
-  while($pos > 0 && substr($ref_genomes{$chr}, $pos-1, 1) eq uc(substr($indel, -1)))
+  while($pos > 0 &&
+        substr($ref_genomes{$ref_chr}, $pos-1, 1) eq uc(substr($indel, -1)))
   {
     $indel = substr($indel, -1) . substr($indel, 0, -1);
     $pos--;
@@ -282,12 +313,12 @@ sub get_left_aligned_position
 # $pos is 0-based
 sub get_right_aligned_position
 {
-  my ($chr, $pos, $ref_allele_length, $indel) = @_;
+  my ($ref_chr, $pos, $ref_allele_length, $indel) = @_;
 
   # align to the right
   # while base after variant (on the reference) equals first base of indel
-  while($pos < length($ref_genomes{$chr}) &&
-        substr($ref_genomes{$chr}, $pos+$ref_allele_length, 1) eq
+  while($pos < length($ref_genomes{$ref_chr}) &&
+        substr($ref_genomes{$ref_chr}, $pos+$ref_allele_length, 1) eq
         uc(substr($indel, 0, 1)))
   {
     $indel = substr($indel, 1) . substr($indel, 0, 1);

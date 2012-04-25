@@ -96,7 +96,7 @@ sub new
         carp("VCF columns missing");
       }
 
-      # Peak at first entry
+      # Peek at first entry
       $next_line = <$handle>;
       last;
     }
@@ -161,7 +161,7 @@ sub new
   return $self;
 }
 
-sub _peak_line
+sub _peek_line
 {
   my ($self) = @_;
   return $self->{_next_line};
@@ -499,6 +499,97 @@ sub get_header_tags
 {
   my ($self) = @_;
   return %{$self->{_header_tags}};
+}
+
+#
+# Chromosomes
+#
+sub set_ref_chrom_names
+{
+  my ($self, @names) = @_;
+
+  my %names_hash = ();
+  @names_hash{@names} = 1;
+
+  $self->{_ref_chroms} = \%names_hash;
+  $self->{_ref_chroms_guessed} = {};
+}
+
+sub guess_ref_chrom_name
+{
+  my ($self, $chrom) = @_;
+
+  if(!defined($self->{_ref_chroms}))
+  {
+    return undef;
+  }
+
+  my @ref_chroms = keys %{$self->{_ref_chroms}};
+
+  if(scalar(@ref_chroms) == 0)
+  {
+    return undef;
+  }
+
+  if(defined($self->{_ref_chroms}->{$chrom}))
+  {
+    return $chrom;
+  }
+
+  my $guess;
+
+  if(defined($guess = $self->{_ref_chroms_guessed}->{$chrom}))
+  {
+    return $guess;
+  }
+
+  # strip off the chr... start
+  my $chrom_stripped = $chrom;
+  $chrom_stripped =~ s/^chr//g;
+
+  # Look for just the name at the start, e.g. '>10' '> chr10' '> chromosome 10'
+  for my $name (@ref_chroms)
+  {
+    if($name =~ /^\s*(chr(om(osome)?)?)?\s*$chrom_stripped([^a-z0-9]|$)/i)
+    {
+      $self->{_ref_chroms_guessed}->{$name} = 1;
+      return $name;
+    }
+  }
+
+  # Look for 'chr 10' 'chromosome 10' anywhere etc
+  for my $name (@ref_chroms)
+  {
+    if($name =~ /(chr(om(osome)?)?)?\s*$chrom_stripped([^a-z0-9]|$)/i)
+    {
+      $self->{_ref_chroms_guessed}->{$name} = 1;
+      return $name;
+    }
+  }
+
+  # Look for 'chr 10' 'chromosome 10' anywhere etc
+  for my $name (@ref_chroms)
+  {
+    if($name =~ /(chr(om(osome)?)?)?\s*$chrom_stripped([^a-z0-9]|$)/i)
+    {
+      $self->{_ref_chroms_guessed}->{$name} = 1;
+      return $name;
+    }
+  }
+
+  # Look for chromosome:<assembly>:<chrom>
+  # e.g. '>asdfas chromosome:GRCh37:10:1:135534747:1'
+
+  for my $name (@ref_chroms)
+  {
+    if($name =~ /(chr(om(osome)?)?):\w+:(chr(om(osome)?)?)$chrom_stripped([^a-z0-9]|$)/i)
+    {
+      $self->{_ref_chroms_guessed}->{$name} = 1;
+      return $name;
+    }
+  }
+
+  return undef;
 }
 
 #

@@ -978,7 +978,7 @@ sub print_vcf_entry
 			my $two_alleles = $aref_snp_alleles->[ $cnt - 1 ];
 			my $this_snp_ref_allele;
 			my $this_snp_alt_allele;
-			if ( $two_alleles =~ /^([ACGT])_([ACGT])$/ )
+			if ( $two_alleles =~ /^(\S)_(\S)$/ )
 			{
 				$this_snp_ref_allele = $1;
 				$this_snp_alt_allele = $2;

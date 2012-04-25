@@ -86,44 +86,19 @@ else
 }
 
 #
-# Check reference genome files exist
-#
-for my $ref_file (@ref_files)
-{
-  if(!(-e $ref_file)) {
-    print_usage("Reference file '$ref_file' doesn't exist");
-  }
-  elsif(!(-r $ref_file)) {
-    print_usage("Reference file '$ref_file' isn't readable");
-  }
-}
-
-#
-# Load reference
+# Load reference files
 #
 my ($ref_genomes_hashref, $qual) = read_all_from_files(@ref_files);
 
 my %ref_genomes = %$ref_genomes_hashref;
 
-# Correct '1..' to 'chr1...' etc
-while(my ($key,$value) = each(%ref_genomes))
-{
-  my $new_key = get_clean_chr_name($key);
-
-  if($new_key ne $key)
-  {
-    $ref_genomes{$new_key} = uc($ref_genomes{$key});
-    delete($ref_genomes{$key});
-  }
-  else {
-    $ref_genomes{$key} = uc($ref_genomes{$key});
-  }
-}
-
 #
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+# Set the reference genome chromosome names
+$vcf->set_ref_chrom_names(keys %ref_genomes);
 
 # Add tags to header and print
 my $tag_description = "$flank_size bp adjacent in ref genome '$ref_name'";
@@ -131,9 +106,10 @@ $vcf->add_header_tag("INFO", "left_flank", 1, "String", $tag_description);
 $vcf->add_header_tag("INFO", "right_flank", 1, "String", $tag_description);
 $vcf->print_header();
 
+my $num_printed = 0;
+my $num_flanks_added = 0;
 my $num_ref_mismatch = 0;
 my $num_ns_in_alleles_or_flanks = 0;
-my $num_printed = 0;
 my $total_num_entries = 0;
 
 my $vcf_entry;
@@ -144,75 +120,82 @@ while(defined($vcf_entry = $vcf->read_entry()))
 {
   $total_num_entries++;
   my $chr = $vcf_entry->{'CHROM'};
-  
-  if(!defined($ref_genomes{$chr}))
+
+  my $print = 1;
+  my $ref_chr = $vcf->guess_ref_chrom_name($chr);
+
+  if(!defined($ref_chr))
   {
     $missing_chrs{$chr} = 1;
-    next;
-  }
-  
-  # Get coordinates, convert to zero based
-  my $var_start = $vcf_entry->{'true_POS'}-1;
-  my $ref_allele = $vcf_entry->{'true_REF'};
-  my $alt_allele = $vcf_entry->{'true_ALT'};
-  
-  my $var_length = length($ref_allele);
-
-  my $left_flank_start = max(0, $var_start-$flank_size);
-  my $left_flank_length = $var_start - $left_flank_start;
-
-  my $right_flank_start = $var_start + $var_length;
-  my $right_flank_length = min($flank_size,
-                               length($ref_genomes{$chr}) - $right_flank_start);
-
-  my $vcf_info = $vcf_entry->{'INFO'};
-
-  if($left_flank_start < 0 ||
-     $left_flank_start + $left_flank_length > length($ref_genomes{$chr}))
-  {
-    print STDERR "Out of bounds: $left_flank_start $left_flank_length " .
-                 "($chr ".length($ref_genomes{$chr}).")\n";
-    
-    open(my $stderr, ">&", STDERR) or die("Cannot open STDERR");
-    $vcf->print_entry($vcf_entry, $stderr);
-    #die();
-  }
-  elsif($right_flank_start < 0 ||
-        $right_flank_start + $right_flank_length > length($ref_genomes{$chr}))
-  {
-    print STDERR "Out of bounds: $right_flank_start $right_flank_length " .
-                 "($chr ".length($ref_genomes{$chr}).")\n";
-    
-    open(my $stderr, ">&", STDERR) or die("Cannot open STDERR");
-    $vcf->print_entry($vcf_entry, $stderr);
-    #die();
-  }
-
-  $vcf_info->{'left_flank'} = substr($ref_genomes{$chr},
-                                     $left_flank_start, $left_flank_length);
-
-  $vcf_info->{'right_flank'} = substr($ref_genomes{$chr},
-                                      $right_flank_start, $right_flank_length);
-  
-  my $ref_seq = substr($ref_genomes{$chr}, $var_start, $var_length);
-  
-  if($filter_by_ref_match && $ref_seq ne uc($ref_allele))
-  {
-    $num_ref_mismatch++;
-  }
-  elsif($filter_Ns &&
-        ($vcf_entry->{'REF'} =~ /n/i ||
-         $vcf_entry->{'ALT'} =~ /n/i ||
-         $vcf_info->{'left_flank'} =~ /n/i ||
-         $vcf_info->{'right_flank'} =~ /n/i ||
-         $left_flank_length < $flank_size ||
-         $right_flank_length < $flank_size))
-  {
-    $num_ns_in_alleles_or_flanks++;
   }
   else
   {
-    # No filtering or passed filtering
+    # Get coordinates, convert to zero based
+    my $var_start = $vcf_entry->{'true_POS'}-1;
+
+    my $ref_allele = $vcf_entry->{'true_REF'};
+    my $alt_allele = $vcf_entry->{'true_ALT'};
+  
+    my $var_length = length($ref_allele);
+    my $ref_chrom_length = length($ref_genomes{$ref_chr});
+
+    my $left_flank_start = max(0, $var_start-$flank_size);
+    my $left_flank_length = $var_start - $left_flank_start;
+
+    my $right_flank_start = $var_start + $var_length;
+    my $right_flank_length = min($flank_size,
+                                 $ref_chrom_length - $right_flank_start);
+
+    my $vcf_info = $vcf_entry->{'INFO'};
+
+    if($var_start < 0 || $var_start + $var_length >= $ref_chrom_length)
+    {
+      print STDERR "vcf_add_flanks.pl: variant outside of reference genome " .
+                   "bounds: " . $chr . ":" . $vcf_entry->{'POS'} . " " .
+                   "(ref '$ref_chr' has length: " .
+                   num2str($ref_chrom_length) . ")\n";
+
+      open(my $stderr, ">&", STDERR) or die("Cannot open STDERR");
+      $vcf->print_entry($vcf_entry, $stderr);
+    }
+    else
+    {
+      $vcf_info->{'left_flank'} = substr($ref_genomes{$ref_chr},
+                                         $left_flank_start,
+                                         $left_flank_length);
+
+      $vcf_info->{'right_flank'} = substr($ref_genomes{$ref_chr},
+                                          $right_flank_start,
+                                          $right_flank_length);
+  
+      my $ref_seq = substr($ref_genomes{$ref_chr}, $var_start, $var_length);
+  
+      if($filter_by_ref_match && $ref_seq ne uc($ref_allele))
+      {
+        $num_ref_mismatch++;
+        $print = 0;
+      }
+      elsif($filter_Ns &&
+            ($vcf_entry->{'REF'} =~ /n/i ||
+            $vcf_entry->{'ALT'} =~ /n/i ||
+            $vcf_info->{'left_flank'} =~ /n/i ||
+            $vcf_info->{'right_flank'} =~ /n/i ||
+            $left_flank_length < $flank_size ||
+            $right_flank_length < $flank_size))
+      {
+        $num_ns_in_alleles_or_flanks++;
+        $print = 0;
+      }
+      else
+      {
+        $num_flanks_added++;
+        # No filtering or passed filtering
+      }
+    }
+  }
+  
+  if($print)
+  {
     $num_printed++;
     $vcf->print_entry($vcf_entry);
   }
@@ -226,38 +209,26 @@ if(@missing_chr_names > 0)
                join(", ", @missing_chr_names) . "\n";
 }
 
-if($num_ref_mismatch > 0)
+if($filter_by_ref_match)
 {
-  my $mismatch_percent = 100 * $num_ref_mismatch / $total_num_entries;
-
   print STDERR "vcf_add_flanks.pl: " .
-               num2str($num_ref_mismatch) . " / " .
-               num2str($total_num_entries) . " " .
-               "(" . sprintf("%.2f", $mismatch_percent) . "%) " .
+               pretty_fraction($num_ref_mismatch, $total_num_entries) . " " .
                "variants removed for not matching the reference\n";
 }
 
-if($num_ns_in_alleles_or_flanks > 0)
+if($filter_Ns)
 {
-  my $ns_percent = 100 * $num_ns_in_alleles_or_flanks / $total_num_entries;
-
   print STDERR "vcf_add_flanks.pl: " .
-               num2str($num_ns_in_alleles_or_flanks) . " / " .
-               num2str($total_num_entries) . " " .
-               "(" . sprintf("%.2f", $ns_percent) . "%) " .
-               " variants removed for containing Ns in ref/alt allele or " .
-               "flanks too short\n";
+               pretty_fraction($num_ref_mismatch, $total_num_entries) . " " .
+               "variants removed for not matching the reference\n";
 }
 
-if($filter_by_ref_match || $filter_Ns)
-{
-  my $printed_percent = 100 * $num_printed / $total_num_entries;
+print STDERR "vcf_add_flanks.pl: " .
+             pretty_fraction($num_flanks_added, $total_num_entries) . " " .
+             "variants had flanks added\n";
 
-  print STDERR "vcf_filter_by_checks.pl: " .
-               num2str($num_printed) . " / " .
-               num2str($total_num_entries) . " " .
-               "(" . sprintf("%.2f", $printed_percent) . "%) " .
-               "variants printed\n";
-}
+print STDERR "vcf_add_flanks.pl: " .
+             pretty_fraction($num_printed, $total_num_entries) . " " .
+             "variants printed\n";
 
 close($vcf_handle);

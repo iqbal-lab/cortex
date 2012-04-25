@@ -27,7 +27,7 @@ sub new
   return $self;
 }
 
-sub peak_line
+sub peek_line
 {
   my ($self) = @_;
   return $self->{_next_line};
@@ -73,8 +73,8 @@ sub read_blast_entries
   
   my $blast_entry;
 
-  my $peak;
-  while(defined($peak = $self->peak_line()) && $peak !~ /^Query=/i)
+  my $peek;
+  while(defined($peek = $self->peek_line()) && $peek !~ /^Query=/i)
   {
     $line = $self->read_line();
     $blast_entry .= $line;

@@ -19,14 +19,17 @@ sub print_usage
     print STDERR "Error: $err\n";
   }
 
-  print STDERR "Usage: ./vcf_print_allele_branches.pl <K> <in.vcf> [ref.files ..]\n";
-  print STDERR "  Prints alleles plus flanking sequence from VCF file in FASTA format\n";
-  print STDERR "  - If <in.vcf> is '-', reads from stdin\n";
-  print STDERR "  - <K> is max flank size\n";
-  print STDERR "  - If [ref.files] omitted, uses INFO flank tags\n";
-  print STDERR "\n";
-  print STDERR "  OTPIONS:\n";
-  print STDERR "    --trim <t>          trim sequences longer than <t>\n";
+  print STDERR "" .
+"Usage: ./vcf_print_allele_branches.pl <K> <in.vcf> [ref.files ..]
+  Prints alleles plus flanking sequence from VCF file in FASTA format. If
+  <in.vcf> is '-', reads from stdin.  If [ref.files] omitted, uses INFO flank
+  tags.
+
+  <K> is flank size
+
+  OTPIONS:
+    --trim <t>          trim sequences longer than <t>\n";
+
   exit;
 }
 
@@ -83,30 +86,18 @@ if(@ref_files > 0)
   my ($ref_genomes_hashref) = read_all_from_files(@ref_files);
 
   %ref_genomes = %$ref_genomes_hashref;
-
-  # Correct '1..' to 'chr1...' etc
-  # and convert to upper case at the same time
-  while(my ($key,$value) = each(%ref_genomes))
-  {
-    my $new_key = get_clean_chr_name($key);
-
-    if($new_key ne $key)
-    {
-      $ref_genomes{$new_key} = uc($ref_genomes{$key});
-      delete($ref_genomes{$key});
-    }
-    else
-    {
-      # Just convert to upper case
-      $ref_genomes{$key} = uc($ref_genomes{$key});
-    }
-  }
 }
 
 #
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+if(@ref_files > 0)
+{
+  # Set the reference genome chromosome names
+  $vcf->set_ref_chrom_names(keys %ref_genomes);
+}
 
 my $vcf_entry;
 
@@ -141,14 +132,21 @@ while(defined($vcf_entry = $vcf->read_entry()))
         $right_flank = substr($right_flank, -$max_flank_size);
       }
     }
-    elsif(defined($ref_genomes{$vcf_entry->{'CHROM'}}))
-    {
-      ($left_flank, $right_flank) = get_flanks_from_ref_genome($vcf_entry);
-    }
     else
     {
-      die("Chromosome '$vcf_entry->{'CHROM'}' not in reference " .
-          "(".join(",",sort keys %ref_genomes).")");
+      my $chr = $vcf_entry->{'CHROM'};
+      my $ref_chr = $vcf->guess_ref_chrom_name($chr);
+
+      if(defined($ref_chr))
+      {
+        ($left_flank, $right_flank) = get_flanks_from_ref_genome($vcf_entry,
+                                                                 $ref_chr);
+      }
+      else
+      {
+        die("Chromosome '$vcf_entry->{'CHROM'}' not in reference " .
+            "(".join(",",sort keys %ref_genomes).")");
+      }
     }
   }
 
@@ -179,9 +177,7 @@ sub print_to_fasta
 
 sub get_flanks_from_ref_genome
 {
-  my ($vcf_entry) = @_;
-
-  my $chr = $vcf_entry->{'CHROM'};
+  my ($vcf_entry, $ref_chr) = @_;
 
   # Convert from 1-based to 0-based
   my $var_start = $vcf_entry->{'true_POS'}-1;
@@ -193,11 +189,11 @@ sub get_flanks_from_ref_genome
 
   my $right_flank_start = $var_start + $var_length;
   my $right_flank_length = min($max_flank_size,
-                               length($ref_genomes{$chr}) - $right_flank_start);
+                               length($ref_genomes{$ref_chr}) - $right_flank_start);
   
-  my $left_flank = substr($ref_genomes{$chr},
+  my $left_flank = substr($ref_genomes{$ref_chr},
                           $left_flank_start, $left_flank_length);
-  my $right_flank = substr($ref_genomes{$chr},
+  my $right_flank = substr($ref_genomes{$ref_chr},
                            $right_flank_start, $right_flank_length);
 
   return ($left_flank, $right_flank);

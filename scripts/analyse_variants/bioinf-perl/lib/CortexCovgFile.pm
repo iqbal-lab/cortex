@@ -46,7 +46,7 @@ sub new
   return $self;
 }
 
-sub peak_line
+sub peek_line
 {
   my ($self) = @_;
   return $self->{_next_line};
@@ -68,7 +68,7 @@ sub grab_bubble_entry
 {
   my ($self) = @_;
 
-  if(!defined($self->peak_line()))
+  if(!defined($self->peek_line()))
   {
     return undef;
   }
@@ -80,9 +80,9 @@ sub grab_bubble_entry
     return undef;
   }
 
-  my $peak;
+  my $peek;
   
-  while(defined($peak = $self->peak_line()) && $peak !~ /^(?:Colour|>var_\d+_5p_flank)/i)
+  while(defined($peek = $self->peek_line()) && $peek !~ /^(?:Colour|>var_\d+_5p_flank)/i)
   {
     $entry .= $self->read_line();
   }
@@ -95,7 +95,7 @@ sub read_bubble_entry
   my ($self) = @_;
 
   # Check there is another entry
-  if(!defined($self->peak_line()))
+  if(!defined($self->peek_line()))
   {
     return undef;
   }
@@ -103,7 +103,7 @@ sub read_bubble_entry
   # Read likelihoods if they are there
   my $col_llk;
 
-  if($self->peak_line() =~ /^Colour\/sample/i)
+  if($self->peek_line() =~ /^Colour\/sample/i)
   {
     $col_llk = {};
 
@@ -113,7 +113,7 @@ sub read_bubble_entry
     
     my $likelihood_header = $self->read_line();
     
-    while(($self->peak_line() =~ /^\d+/))
+    while(($self->peek_line() =~ /^\d+/))
     {
       my $likelihood_line = $self->read_line();
       my ($col, $gt_call, $llk_hom_br1, $llk_hom_br2)
@@ -162,7 +162,7 @@ sub parse_bubble_covgs
     croak("Expected branch1 covgs line ('$covg_line')");
   }
 
-  while($self->peak_line() =~ /^Covg in Colour (\d+):/)
+  while($self->peek_line() =~ /^Covg in Colour (\d+):/)
   {
     my $colour = $1;
     $self->read_line();
@@ -259,10 +259,10 @@ sub read_align_entry
   my %colour_lines = ();
   
   my $expected_line = '>'.quotemeta($read_name).'_colour_(\d+)_kmer_coverages';
-  my $peak_line;
+  my $peek_line;
   
-  while(defined($peak_line = $self->peak_line()) &&
-        $peak_line =~ /^$expected_line/)
+  while(defined($peek_line = $self->peek_line()) &&
+        $peek_line =~ /^$expected_line/)
   {
     my $cortex_colour = $1;
 

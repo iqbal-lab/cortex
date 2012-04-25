@@ -19,26 +19,44 @@ sub print_usage
     print STDERR "Error: $err\n";
   }
 
-  print STDERR "usage: ./vcf_filter_by_ref.pl <K> <in.vcf> <ref files> ...\n";
-  print STDERR "  Filter out variants that have Ns in the reference\n";
-  print STDERR "  (useful for filtering out variants in repeats by using masked ref)\n";
-  print STDERR "  If <in.vcf> is '-' then reads from STDIN\n";
-  print STDERR "  <K> is flank size to check\n";
+  print STDERR "" .
+"Usage: ./vcf_filter_by_ref.pl [OPTIONS] <in.vcf> <ref1.fa ..>
+  Filter out variants that do not match the reference.  If <in.vcf> is '-' then
+  read from STDIN.
+
+  OPTIONS:
+    -filter_n <k>  filter out variants with an non-ACGT base within <k> bp\n";
+
   exit;
 }
 
-if(@ARGV < 3)
+if(@ARGV < 1)
 {
   print_usage();
 }
 
-my $flank_size = shift;
+my $filter_out_ns = 0;
+my $filter_dist;
+
+if($ARGV[0] =~ /^-?-filter_n$/i)
+{
+  shift;
+  $filter_dist = shift;
+
+  if(!defined($filter_dist) || $filter_dist !~ /^\d+$/)
+  {
+    print_usage("--filter_n <k> must be given a positive integer");
+  }
+}
+
 my $vcf_file = shift;
 my @ref_files = @ARGV;
 
-if($flank_size !~ /^\d+$/) {
-  print_usage("Flank size <k> must be a positive integer");
+if(@ref_files == 0)
+{
+  print_usage("No references files given");
 }
+
 
 #
 # Open VCF Handle
@@ -64,31 +82,26 @@ my ($ref_genomes_hashref) = read_all_from_files(@ref_files);
 
 my %ref_genomes = %$ref_genomes_hashref;
 
-# Correct '1..' to 'chr1...' etc
-#my ($key,$value)
-while(my ($key,$value) = each(%ref_genomes))
-{
-  my $new_key = get_clean_chr_name($key);
-
-  if($new_key ne $key)
-  {
-    $ref_genomes{$new_key} = uc($ref_genomes{$key});
-    delete($ref_genomes{$key});
-  }
-  else {
-    $ref_genomes{$key} = uc($ref_genomes{$key});
-  }
-}
-
 #
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
 
+# Set the reference genome chromosome names
+$vcf->set_ref_chrom_names(keys %ref_genomes);
+
 $vcf->print_header();
 
-my $num_of_filtered_entries = 0;
+# Things read in
 my $total_num_entries = 0;
+
+# Things filtered out
+my $num_of_ref_mismatches = 0;
+my $num_of_filtered_regions = 0;
+
+# Thing printed out
+my $num_of_filtered_entries = 0;
+my $num_of_printed_entries = 0;
 
 my $vcf_entry;
 my %chrom_not_in_ref = ();
@@ -97,40 +110,94 @@ while(defined($vcf_entry = $vcf->read_entry()))
 {
   $total_num_entries++;
 
+  my $print = 1;
+
   my $chr = $vcf_entry->{'CHROM'};
-  my $start = $vcf_entry->{'true_POS'} - $flank_size - 1;
-  my $length = $flank_size + length($vcf_entry->{'true_REF'}) + $flank_size; 
+  my $ref_chr = $vcf->guess_ref_chrom_name($chr);
 
-  if($start < 0)
-  {
-    $length += $start; # reduce length
-    $start = 0;
-  }
-
-  if(!defined($ref_genomes{$chr}))
+  if(!defined($ref_chr))
   {
     if(!defined($chrom_not_in_ref{$chr}))
     {
       $chrom_not_in_ref{$chr} = 1;
 
-      print STDERR "Warning: chromosome '$chr' not in reference - " .
-                   "filtering out variants\n";
+      print STDERR "vcf_filter_by_ref.pl - Warning: chromosome '$chr' not in " .
+                   "reference, filtering out variants\n";
     }
   }
-  elsif($start + $length <= length($ref_genomes{$chr}) &&
-        substr($ref_genomes{$chr}, $start, $length) =~ /^[acgt]*$/i)
+  else
   {
-    $num_of_filtered_entries++;
+    my $ref_allele = uc($vcf_entry->{'true_REF'});
 
+    my $var_start = $vcf_entry->{'true_POS'} - 1;
+    my $var_length = length($ref_allele);
+
+    my $chrom_length = length($ref_genomes{$ref_chr});
+
+    if($var_start + $var_length > $chrom_length)
+    {
+      print STDERR "vcf_filter_by_ref.pl - Warning: variant " .
+                   $vcf_entry->{'ID'} . " " .
+                   "[".$chr.":".$vcf_entry->{'POS'}.":".$var_length."] " .
+                   "out of bounds of ref '$ref_chr' [length:$chrom_length]\n";
+    }
+    else
+    {
+      my $ref_seq = substr($ref_genomes{$ref_chr}, $var_start, $var_length);
+
+      if(uc($ref_seq) ne $ref_allele)
+      {
+        $print = 0;
+        $num_of_ref_mismatches++;
+      }
+      elsif($filter_out_ns)
+      {
+        my $region_start = max(0, $var_start - $filter_dist);
+        my $region_end = min($chrom_length-1, $var_start+$var_length);
+
+        my $region = substr($ref_genomes{$ref_chr}, $region_start, $region_end);
+
+        if($region =~ /[^acgt]/i)
+        {
+          $print = 0;
+          $num_of_filtered_regions++;
+        }
+        else
+        {
+          $num_of_filtered_entries++;
+        }
+      }
+      else
+      {
+        $num_of_filtered_entries++;
+      }
+    }
+  }
+
+  if($print)
+  {
+    $num_of_printed_entries++;
     $vcf->print_entry($vcf_entry);
   }
 }
 
-# Print filtered rate
-my $printed_percent = 100 * $num_of_filtered_entries / $total_num_entries;
+print STDERR "vcf_filter_by_ref.pl: " .
+             pretty_fraction($num_of_ref_mismatches, $total_num_entries) .
+             " variants mismatched\n";
 
-print STDERR "vcf_filter_by_ref.pl: " . num2str($num_of_filtered_entries) .
-             " / " . num2str($total_num_entries) . " " .
-             "(" . sprintf("%.2f", $printed_percent) . "%) variants printed\n";
+if($filter_out_ns)
+{
+  print STDERR "vcf_filter_by_ref.pl: " .
+               pretty_fraction($num_of_filtered_regions, $total_num_entries) .
+               " variants had non-bases within regions of $filter_dist bp\n";
+}
+
+print STDERR "vcf_filter_by_ref.pl: " .
+             pretty_fraction($num_of_filtered_entries, $total_num_entries) .
+             " variants passed filters\n";
+
+print STDERR "vcf_filter_by_ref.pl: " .
+             pretty_fraction($num_of_printed_entries, $total_num_entries) .
+             " variants printed\n";
 
 close($vcf_handle);

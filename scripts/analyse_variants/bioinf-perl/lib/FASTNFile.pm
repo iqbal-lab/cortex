@@ -8,7 +8,7 @@ use Carp;
 use List::Util qw(min);
 
 # Object methods:
-# is_fastq read_next read_all peak_line read_line
+# is_fastq read_next read_all peek_line read_line
 
 use base 'Exporter';
 our @EXPORT = qw(read_all_from_files estimate_fastq_size print_FASTA print_FASTQ);
@@ -54,7 +54,7 @@ sub is_fastq
   return $self->{_is_fastq};
 }
 
-sub peak_line
+sub peek_line
 {
   my ($self) = @_;
   return $self->{_next_line};
@@ -101,9 +101,9 @@ sub read_next_fasta
   
   my $title = substr($line,1);
   my $seq = "";
-  my $peak;
+  my $peek;
 
-  while(defined($peak = $self->peak_line()) && $peak =~ /^[^>]/i)
+  while(defined($peek = $self->peek_line()) && $peek =~ /^[^>]/i)
   {
     $line = $self->read_line();
     chomp($line);
@@ -300,6 +300,20 @@ sub print_wrap
   for(my $i = 0; $i < $txt_len; $i += $line_wrap)
   {
     print $out substr($txt, $i, $line_wrap) . "\n";
+  }
+}
+
+sub print_entry
+{
+  my ($self, $title, $seq, $qualities, $line_wrap, $out) = @_;
+
+  if($self->is_fastq())
+  {
+    print_FASTQ($title, $seq, $qualities, $line_wrap, $out);
+  }
+  else
+  {
+    print_FASTA($title, $seq, $line_wrap, $out);
   }
 }
 

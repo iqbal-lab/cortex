@@ -254,7 +254,8 @@ const char* usage=
   // -M
 "   [--exclude_ref_bubbles]\t\t\t\t\t=\t If you have specified --ref_colour, this will exclude any bubble in that colour from being called by the Bubble Caller.\n" \
   // -u
-  "   [--estim_e_with_snps FILENAME]\t\t\t\t\t=\t Use SNPs alleles known (eg from SNP-chip genotyping) to estimate\n\t\t\t\t\t the sequencing error rate for each colour. Give a list of fasta, one per colour. For ref colour, line is ignored.\n" \
+  //hidden from public
+  //  "   [--estim_e_with_snps FILENAME]\t\t\t\t\t=\t Use SNPs alleles known (eg from SNP-chip genotyping) to estimate\n\t\t\t\t\t the sequencing error rate for each colour. Give a list of fasta, one per colour. For //ref colour, line is ignored.\n" \
 
   // -l
 "   [--path_divergence_caller [args]] \t\t\t\t\t= Make Path Divergence variant calls. Arguments can be specified in 2 ways.\n\t\t\t\t\t\t\t\t\t Option 1. Calls once, comparing reference and one colour (or union)\n\t\t\t\t\t\t\t\t\t e.g. --path_divergence_caller 1,2 --ref_colour 0 will look for differences\n\t\t\t\t\t\t\t\t\t between the union of colours 1,2 and the reference in colour 0\n\t\t\t\t\t\t\t\t\t Option2. Make several successive independent runs of the PD caller, each time against a different colour\n\t\t\t\t\t\t\t\t\tTo do this, use a square open bracket [ PRECEDED AND SEPARATED list\n\t\t\t\t\t\t\t\t\t For example --path_divergence_caller [2[3[10 --ref_colour 0 will make calls on samples 2 then 3 then 10)\n\t\t\t\t\t\t\t\t\t all output to the same file, with globally unique variant names. The caller will call against each colour in turn\n\t\t\t\t\t\t\t\t\t You must also specify --ref_colour and --list_ref_fasta\n" \
@@ -281,8 +282,9 @@ const char* usage=
 "   [--align_input_format TYPE] \t\t\t\t\t=\t --align requires a list of fasta or fastq. This option specifies the input format as LIST_OF_FASTQ or LIST_OF_FASTA\n"  \
 
   // T
-"   [--estimate_genome_complexity FILENAME]\t\t\t=\t Print estimated genome complexity by reading up to 10,000 reads from the given file\n"\
-"\n\n **** OPTIONS THAT I MAY REMOVE - NOT CLEAR ANYONE HAS A GOOD USE FOR THEM - EMAIL ME IF YOU LIKE IT\n\n"\
+  //hidden from public
+  //"   [--estimate_genome_complexity FILENAME]\t\t\t=\t Print estimated genome complexity by reading up to 10,000 reads from the given file\n"	\
+  //"\n\n **** OPTIONS THAT I MAY REMOVE - NOT CLEAR ANYONE HAS A GOOD USE FOR THEM - EMAIL ME IF YOU LIKE IT\n\n" \
   // -J
 "   [--colour_overlaps COMMA_SEP_COLOURS/COMMA_SEP_COLOURS]\t=\t Compares each coloured subgraph in the first list with all of the \n\t\t\t\t\t\t\t\t\t coloured subgraphs in the second list. Outputs a matrix to stdout;\n\t\t\t\t\t\t\t\t\t (i,j)-element is the number of nodes in both colour-i (on first list)\n\t\t\t\t\t\t\t\t\t and colour-j (on second list).\n" \
 
