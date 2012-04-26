@@ -384,8 +384,16 @@ open(LIST_ALL, ">".$list_all_clean)||die("Unable to open $list_all_clean");
 foreach my $s (@samples)
 {
     #get binary
-    my $b = $sample_to_cleaned_bin{$s}{$first_kmer}{$sample_to_min_cleaning_thresh{$s}{$first_kmer}}; 
-    print LIST_ALL "$b\n";
+    if ( ($do_auto_cleaning ne "no") || ($do_user_spec_cleaning ne "no") )
+    {
+	my $b = $sample_to_cleaned_bin{$s}{$first_kmer}{$sample_to_min_cleaning_thresh{$s}{$first_kmer}}; 
+	print LIST_ALL "$b\n";
+    }
+    else
+    {
+	my $b = $sample_to_uncleaned{$s}{$first_kmer};
+	print LIST_ALL "$b\n";
+    }
 }
 print LIST_ALL $k_to_refbin{$first_kmer};
 close(LIST_ALL);
@@ -569,6 +577,7 @@ if  ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )## then
 
     foreach my $K (@kmers)
     {
+
 
 	for ($cl=0; $cl < $num_cleanings; $cl++)
 	{	
@@ -1847,7 +1856,7 @@ sub run_checks
     }
     if ($refbindir ne "")
     {
-	if ($refbindir !~ /^\/$/)
+	if ($refbindir !~ /\/$/)
 	{
 	    $refbindir = $refbindir.'/';
 	}
@@ -1901,6 +1910,7 @@ sub run_checks
     }
 
     ## check ref binary exists
+
     opendir (DIR, $refbindir) or die("Cannot open reference binary directory $refbindir\n");
     my @files=();
     while (my $file = readdir(DIR)) {
@@ -1913,6 +1923,7 @@ sub run_checks
 	my $found=0;
 	foreach my $f (@files)
 	{
+	    
 	    if (($f =~ /k$z/) && ($f =~ /.ctx/))
 	    {
 		$found=1;
@@ -1947,7 +1958,7 @@ sub run_checks
 	}
 	else
 	{
-	    print "ZAMZAM $user_min_clean $user_max_clean $user_clean_step\n";
+	
 	}
 	if ( ($user_max_clean-$user_min_clean) % $user_clean_step !=0)
 	{

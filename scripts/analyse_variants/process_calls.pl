@@ -8,26 +8,33 @@ use Getopt::Long;
 #### Dear User - this following line is the only one in this script you may want to edit
 my $stampy_bin =
   "/home/zam/installed_apps/stampy-1.0.13/stampy.py";    #### <<<<<<< can also use command line parameter to specify this
+my $vcftools_dir="/path/to/vcftools/dir";### <<<< can also use command line param
+
 #### no need to modify anything below this line
 
 # However you may decide you want to increase this threshold
 my $mapping_qual_thresh = 40;    #  - demand 5prime flank maps with quality>= 40
 
 
-
-
-
 my $script_dir;
 my $cortex_dir;
+my $isaac_bioinf_dir;
+
+my $str_input_args = "*********** Command-line used was : *********************\nperl ".$0." ".join(" ",@ARGV)."\n*********************************************************\n";
 
 BEGIN
 {
 	use FindBin;
 	$script_dir = $FindBin::Bin;
+	$isaac_bioinf_dir = $script_dir."bioinf-perl/";
 	$cortex_dir = $script_dir . '/../../';
+	$cortex_dir = $script_dir;
+	$cortex_dir =~ s/scripts\/analyse_variants//;
+	
 	push( @INC,
 		$script_dir
-		  . "/perl_modules/Statistics-Descriptive-2.6"
+		  . "/perl_modules/Statistics-Descriptive-2.6",
+	      $isaac_bioinf_dir."lib/"
 	);
 }
 
@@ -60,7 +67,7 @@ my (
 	                       $apply_filter_one_allele_must_be_ref,
 	$classif,              $prefix,
 	$ploidy,               $require_one_allele_is_ref,
-	$stampy_hash_stub
+	$stampy_hash_stub,     $ref_fasta,
 );
 
 #set defaults
@@ -77,7 +84,7 @@ $reference_colour                    = -1;
 $ploidy                              = 2;
 $apply_filter_one_allele_must_be_ref = "unknown";
 $stampy_hash_stub                    = "";
-
+$ref_fasta                           = "unspecified";
 my $help = '';    #default false
 
 &GetOptions(
@@ -98,6 +105,8 @@ my $help = '';    #default false
 	'stampy_hash|t:s' => \$stampy_hash_stub
 	, #stampy creates blah.sthash and blah.stidx. You should enter --stampy_hash blah
 	'stampy_bin:s' => \$stampy_bin,    ## must be 1 or 2
+        'ref_fasta:s' => \$ref_fasta, ## optional, but if there, will remove calls which have been misplaced by mapper.
+        'vcftools_dir:s'       =>\$vcftools_dir,    #mandatory
 	'help'         => \$help,
 );
 
@@ -147,6 +156,8 @@ if ($help)
 "                                then I would use \"yes\". However this will filter out some calls where BOTH alleles don't match the reference\n";
 	print
 "                                If you want to dig in and see which calls got filtered out, you can compare the VCF with the original callfile and see which calls are missing\n";
+	print
+ "--vcftools_dir                : VCFtools is used to generate VCFs - mandatory to either specify this on cmd-line, or manually edit the path at the top of this script\n";
 	print "*****   Optional arguments ******* \n";
 	print
 "--stampy_bin                  : Path to stampy bin - default is set via variable in script. \n";
@@ -162,11 +173,24 @@ if ($help)
 "--ploidy                      : Acceptable values are 1 and 2. Default is 2.\n";
 	print
 "--prefix                      : String prefix which will go in the front of any variant names. e.g --prefix ZAM will produce variants ZAM_var_1, ZAM_var_2, etc\n";
+	print
+"--ref_fasta                   : Stampy maps calls to a reference with a mapping quality. We use a threshold of 40 by default, so 1 in 10000 are wrongly placed on the reference\n";
+	print
+	    "                                If you pass in the name of the reference fasta here, this script will check the VCF and remove misplaced variants\n";
 	print "\n\n\n";
 	exit();
 }
 
+
+##print out what the user typed in
+print "\n\n$str_input_args\n";
+
 ### checks
+if ($vcftools_dir eq "/path/to/vcftools/dir")
+{
+    die("You must specify the VCFTools directory, either on the commandline with --vcftools_dir, or by editing process_calls.pl manually (it's highlighted for you at the top of the file)\n");
+}
+
 if ($stampy_hash_stub eq "")
 {
     die("You must specify Stanpy hash (either hardcode or using --stampy_hash \n");
@@ -393,9 +417,9 @@ my $fh_decomp_vcf;
 open( $fh_calls,      $callfile )        || die("Cannot open $callfile");
 open( $fh_map_flanks, $mapped_flanks )   || die("Cannot open $mapped_flanks");
 open( $fh_proc_bub,   $proc_bub_output ) || die("Cannot open $proc_bub_output");
-my $simple_vcf_name = $outdir . $outvcf_filename_stub . ".raw.vcf";
+my $simple_vcf_name = $outdir . $outvcf_filename_stub . ".raw.vcf.uncleaned";
 open( $fh_simple_vcf, "> $simple_vcf_name" ) || die("Cannot open ");
-my $decomp_vcf_name = $outdir . $outvcf_filename_stub . ".decomp.vcf";
+my $decomp_vcf_name = $outdir . $outvcf_filename_stub . ".decomp.vcf.uncleaned";
 open( $fh_decomp_vcf, "> $decomp_vcf_name" )
   || die("Cannot open $decomp_vcf_name");
 
@@ -419,6 +443,46 @@ while ( $ret == 1 )
 close($fh_calls);
 close($fh_map_flanks);
 close($fh_proc_bub);
+
+
+### cleanup
+if ($ref_fasta eq "unspecified")
+{
+    ## just sort the file and PV tag it
+    my $final_simple = $simple_vcf_name;
+    $final_simple =~ s/\.uncleaned//;
+    my $final_decomp = $decomp_vcf_name;
+    $final_decomp =~ s/\.uncleaned//;
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_simple";
+    print "$cmd1\n";
+    my $ret1 = qx{$cmd1};
+    print "$ret1\n";
+
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --tag PV LEFT $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_decomp";
+    print "$cmd2\n";
+    my $ret2 = qx{$cmd2};
+    print "$ret2\n";
+
+}
+else # sort and PV tag and remove ref mismatches
+{
+    my $final_simple = $simple_vcf_name;
+    $final_simple =~ s/\.uncleaned//;
+    my $final_decomp = $decomp_vcf_name;
+    $final_decomp =~ s/\.uncleaned//;
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $simple_vcf_name $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_simple";
+    print "$cmd1\n";
+    my $ret1 = qx{$cmd1};
+    print "$ret1\n";
+
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $decomp_vcf_name $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_decomp";
+    print "$cmd2\n";
+    my $ret2 = qx{$cmd2};
+    print "$ret2\n";
+
+}
+
+
 
 sub get_vcf_header
 {
