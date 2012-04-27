@@ -87,6 +87,7 @@ $stampy_hash_stub                    = "";
 $ref_fasta                           = "unspecified";
 my $help = '';    #default false
 
+
 &GetOptions(
 	'callfile|f:s' => \$callfile,
 	'outdir|o:s'   => \$outdir,
@@ -186,6 +187,18 @@ if ($help)
 print "\n\n$str_input_args\n";
 
 ### checks
+my $legacy_callfile = check_if_callfile_in_legacy_format($callfile);
+if ($legacy_callfile==-1)
+{
+    die("Failed to run check on callfile, to see if it is in legacy format\n");
+}
+elsif ($legacy_callfile==1)
+{
+    print "This looks like the old format in which Cortex used to output calls. With things like > branch_200_1 for the first branch of var 200. \n";
+    print " Should be no problem, have tried to get process_calls.pl to handle the old legacy format. This is not an error message\n";
+
+}
+
 if ($vcftools_dir eq "/path/to/vcftools/dir")
 {
     die("You must specify the VCFTools directory, either on the commandline with --vcftools_dir, or by editing process_calls.pl manually (it's highlighted for you at the top of the file)\n");
@@ -483,7 +496,29 @@ else # sort and PV tag and remove ref mismatches
 }
 
 
-
+sub check_if_callfile_in_legacy_format
+{
+    my ($file) = @_;
+    open (CHECK, $file)||die();
+    my $done = -1;
+    while ($done ==-1)
+    {
+	my $ln = <CHECK>;
+	if ($ln =~ /branch/)
+	{
+	    if ($ln =~ /branch\_\d+\_(1|2)/)
+	    {
+		$done=1;#legacy
+	    }
+	    else
+	    {
+		$done = 0;#not legacy
+	    }
+	}
+    }
+    close(CHECK);
+    return $done;
+}
 sub get_vcf_header
 {
 	my ($colourfile) = @_;
@@ -3138,12 +3173,10 @@ sub get_pop_filter_info
 		{
 		    $name = $1;
 		}
+
 		$href->{$name}      = $sp[1];    ## classification
 		$href_conf->{$name} = $sp[2];
-		print "Add IQ$name";
-		print "IQ --> Z";
-		print $sp[2];
-		print "Z\n";
+		print "$name --> "; print $sp[2]; print "\n";
 	}
 	close(FILE);
 }
@@ -3152,7 +3185,8 @@ sub wrap_needleman
 {
 
 	my ( $bin, $callfile, $prefix, $outfile ) = @_;
-
+	
+#	my $printed=0;
 	open( OUT, ">" . $outfile ) || die("Cannot open $outfile");
 
 ## to add in front of var names to make them globally unique, otherwise all files contain var_1, var_2, etc
@@ -3188,45 +3222,41 @@ sub wrap_needleman
 			$seq{$which_branch} = $a;
 			$count++;
 		}
-		elsif ( $line =~ /(\w*var\_\d+)\_(\S+)_branch/ )
+		elsif ( $line =~ /branch\_(\d+)\_(1|2)/ )
 		{
-		    die("NONONO\n");
-			$var_name = $prefix . '_var_' . $1;
-			my $which = $2;
+		    $var_name = $prefix . '_var_' . $1;
+		    my $which = $2;
 
-			if ( $printed_at_start_of_var == 0 )
-			{
-				print OUT "\n\nSTART NEW VAR\n";
-				$printed_at_start_of_var = 1;
-			}
-			elsif ( $printed_at_start_of_var == 1 )
-			{
-				$printed_at_start_of_var = 0;
-			}
+		    if ( $printed_at_start_of_var == 0 )
+		    {
+			print OUT "\n\nSTART NEW VAR\n";
+			$printed_at_start_of_var = 1;
+		    }
+		    elsif ( $printed_at_start_of_var == 1 )
+		    {
+			$printed_at_start_of_var = 0;
+		    }
 
-			my $which_num;
-			if ( $which eq "trusted" )
-			{
-				$which_num = 1;
-			}
-			elsif ( $which eq "variant" )
-			{
-				$which_num = 2;
-			}
-			else
-			{
-				die("Unexpected.");
-			}
-			print OUT "$var_name branch $which_num\n";
-			my $a = <FILE>;
-			chomp $a;
+		    my $which_branch=$which;
+		    if ( $which eq "trusted" )
+		    {
+			$which_branch = 1;
+		    }
+		    elsif ( $which eq "variant" )
+		    {
+			$which_branch = 2;
+		    }
 
-			$seq{$which_num} = $a;
-			$count++;
+		    print OUT "$var_name branch $which_branch\n";
+		    my $a = <FILE>;
+		    chomp $a;
+		    
+		    $seq{$which_branch} = $a;
+		    $count++;
 		}
 		else
 		{
-
+		    #die("Unexpected format of line in callfile - contact Zam. Your offending line is :\n$line\n");
 		}
 
 		if ( $count == 2 )
