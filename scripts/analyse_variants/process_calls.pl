@@ -26,6 +26,10 @@ BEGIN
 {
 	use FindBin;
 	$script_dir = $FindBin::Bin;
+	if ($script_dir !~ /\/$/)
+	{
+	    $script_dir=$script_dir.'/';
+	}
 	$isaac_bioinf_dir = $script_dir."bioinf-perl/";
 	$cortex_dir = $script_dir . '/../../';
 	$cortex_dir = $script_dir;
@@ -3176,7 +3180,7 @@ sub get_pop_filter_info
 
 		$href->{$name}      = $sp[1];    ## classification
 		$href_conf->{$name} = $sp[2];
-		print "$name --> "; print $sp[2]; print "\n";
+
 	}
 	close(FILE);
 }
