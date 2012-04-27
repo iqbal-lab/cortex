@@ -31,6 +31,7 @@ if(@ARGV > 0 && $ARGV[0] =~ /^--?h(elp)?$/i)
 
 my $max_read_length = 0;
 my $total_read_length = 0;
+my $num_of_reads = 0;
 
 if(@ARGV == 0)
 {
@@ -64,8 +65,12 @@ else
   }
 }
 
+my $mean_read_length = $total_read_length / $num_of_reads;
+
 print "Total length (bp): ".num2str($total_read_length)."\n";
 print "Longest read (bp): ".num2str($max_read_length)."\n";
+print "Number of reads:   ".num2str($num_of_reads)."\n";
+print "Mean length (bp):  ".num2str(sprintf("%.2f", $mean_read_length))."\n";
 
 sub open_stdin
 {
@@ -100,6 +105,7 @@ sub get_max_read_in_fastn
 
       $max_read_length = max($seq_length, $max_read_length);
       $total_read_length += $seq_length;
+      $num_of_reads++;
 
       ($title, $seq) = $fastn_file->read_next();
     }
@@ -107,13 +113,13 @@ sub get_max_read_in_fastn
   else
   {
     # FASTA - memory effecient method:
-    my ($line, $peak, $curr_length);
+    my ($line, $peek, $curr_length);
     
     while(defined($line = $fastn_file->read_line()))
     {
       my $seq_length = 0;
 
-      while(defined($peak = $fastn_file->peak_line()) && $peak !~ /^[>]/)
+      while(defined($peek = $fastn_file->peek_line()) && $peek !~ /^[>]/)
       {
         $line = $fastn_file->read_line();
         chomp($line);
@@ -122,6 +128,7 @@ sub get_max_read_in_fastn
   
       $max_read_length = max($seq_length, $max_read_length);
       $total_read_length += $seq_length;
+      $num_of_reads++;
     }
   }
 }

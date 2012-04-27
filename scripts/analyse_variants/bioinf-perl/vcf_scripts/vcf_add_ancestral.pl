@@ -168,19 +168,19 @@ while(defined($vcf_entry = $vcf->read_entry()))
     # Nucleotide Polymorphism (NP) - use ancestral allele
     $num_of_np++;
 
-    my $anc_ref = $vcf->guess_ref_chrom_name($ref);
+    my $ref_name = $vcf->guess_ref_chrom_name($chr);
 
-    if(!defined($anc_ref))
+    if(!defined($ref_name))
     {
       print STDERR "vcf_add_ancestral.pl: Ancestor lacks chromosome '$chr'\n";
       die();
     }
 
-    my $anc_ref = substr($anc_ref_hash->{$anc_ref},
+    my $anc_ref = substr($anc_ref_hash->{$ref_name},
                          $pos-1, # because perl uses 0-based
                          length($ref_allele));
 
-    my $anc_alt = substr($anc_ref_hash->{$anc_ref},
+    my $anc_alt = substr($anc_ref_hash->{$ref_name},
                          $pos-1, # because perl uses 0-based
                          length($alt_allele));
 

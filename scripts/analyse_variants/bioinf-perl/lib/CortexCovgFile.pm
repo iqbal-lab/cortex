@@ -27,7 +27,7 @@ use List::Util qw(min max sum);
 
 use base 'Exporter';
 
-our @EXPORT = qw{get_num_of_read_arrivals estimate_contig_rate};
+our @EXPORT = qw{get_num_of_read_arrivals estimate_contig_count};
 
 
 sub new
@@ -82,7 +82,8 @@ sub grab_bubble_entry
 
   my $peek;
   
-  while(defined($peek = $self->peek_line()) && $peek !~ /^(?:Colour|>var_\d+_5p_flank)/i)
+  while(defined($peek = $self->peek_line()) &&
+        $peek !~ /^(?:Colour|>var_\d+_5p_flank)/i)
   {
     $entry .= $self->read_line();
   }
@@ -246,21 +247,21 @@ sub read_align_entry
   else {
     croak("Unexpected .colour_covgs read name '$read_name': $!");
   }
-  
+
   my $sequence = $self->read_line();
-  
+
   if(!defined($sequence))
   {
     croak("Unexpected end of .colour_covgs file (read '$read_name'): $!");
   }
-  
+
   chomp($sequence);
-  
-  my %colour_lines = ();
-  
+
+  my @colour_lines = ();
+
   my $expected_line = '>'.quotemeta($read_name).'_colour_(\d+)_kmer_coverages';
   my $peek_line;
-  
+
   while(defined($peek_line = $self->peek_line()) &&
         $peek_line =~ /^$expected_line/)
   {
@@ -278,10 +279,10 @@ sub read_align_entry
     
     chomp($covg_line);
     my @kmer_covgs = split(/\s/, $covg_line);
-    $colour_lines{$cortex_colour} = \@kmer_covgs;
+    $colour_lines[$cortex_colour] = \@kmer_covgs;
   }
-  
-  return ($read_name, $sequence, \%colour_lines);
+
+  return ($read_name, $sequence, \@colour_lines);
 }
 
 
@@ -289,38 +290,52 @@ sub read_align_entry
 # static methods
 #
 
-sub estimate_contig_rate
+# read
+sub estimate_contig_count
 {
-  my ($covgs_ptr, $kmer_size, $read_length, $epsilon,
-      $autosome_depth, $x_depth, $y_depth) = @_;
-  
-  if(!defined($y_depth)) {
+  my ($covgs_ptr, $kmer_size, $read_length_bp, $epsilon, @read_depths) = @_;
+
+  if(@read_depths == 0)
+  {
     croak("estimate_contig_rate(..) Missing arguments $!");
   }
-  
-  my ($num_of_read_arrivals) = get_num_of_read_arrivals($covgs_ptr);
 
-  my $contig_length_in_k = @$covgs_ptr;
-  my $epsilon_correction = (1 - $kmer_size * $epsilon);
-  
-  my $auto_count = ($num_of_read_arrivals * $read_length) /
-                   ($epsilon_correction * $contig_length_in_k * $autosome_depth);
+  my $num_of_read_arrivals = get_num_of_read_arrivals($covgs_ptr);
 
-  my $x_count = ($num_of_read_arrivals * $read_length) /
-                ($epsilon_correction * $contig_length_in_k * $x_depth);
+  my $contig_length_in_k = @$covgs_ptr - 2; # we ignore first and last
+  my $read_length_in_k = $read_length_bp - $kmer_size + 1;
 
-  my $y_count = ($num_of_read_arrivals * $read_length) /
-                ($epsilon_correction * $contig_length_in_k * $y_depth);
+  my $epsilon_correction = max(1 - $kmer_size * $epsilon, 0);
 
-  return ($auto_count, $x_count, $y_count);
+  my @results = ();
+
+  for my $read_depth (@read_depths)
+  {
+    # Effective covg for given read depth
+    my $effective_covg = $read_length_in_k * $read_depth / $read_length_bp;
+
+    # Covg on the contig
+    my $actual_covg = ($num_of_read_arrivals * $read_length_in_k) /
+                       $contig_length_in_k;
+
+    # Covg if contig happened once
+    my $covg_for_single_copy = $epsilon_correction * $effective_covg;
+
+    my $count = $actual_covg / $covg_for_single_copy;
+
+    push(@results, $count);
+  }
+
+  return @results == 1 ? $results[0] : @results;
 }
 
 sub get_num_of_read_arrivals
 {
   my ($covgs_ptr) = @_;
 
-  if(!defined($covgs_ptr)) {
-    croak("get_num_of_read_arrivals_zam(..) Missing arguments $!");
+  if(!defined($covgs_ptr))
+  {
+    croak("get_num_of_read_arrivals(..) Missing arguments $!");
   }
 
   my $total = $covgs_ptr->[1];
@@ -339,7 +354,7 @@ sub get_num_of_read_arrivals
       $total += $jump;
     }
   }
-  
+
   return $total;
 }
 

@@ -40,7 +40,7 @@
 #include <err.h>
 
 #define MAX_NUM_DIGITS_IN_COLOUR_ENTERED_ON_CMDLINE_COMMASEP 4
-#define LEN_ERROR_STRING 200
+#define LEN_ERROR_STRING 400
 #define MAX_LINE 500
 
 
@@ -216,7 +216,7 @@ const char* usage=
   // -p
 "   [--dump_binary FILENAME] \t\t\t\t\t=\t Dump a binary file, with this name (after applying error-cleaning, if specified).\n" \
   // -w
-"   [--max_read_len] \t\t\t\t\t\t=\t For fastq, this is the Maximum read length over all input files.\n\t\t\t\t\t\t\t\t\t For fasta it is the size of chunk in which the reads are read (if reading a whole chromosome\n\t\t\t\t\t\t\t\t\t a typical value to use is 10000. Values above 20000 forbidden.\n\t\t\t\t\t\t\t\t\t (Mandatory if fastq or fasta files are input.)\n" \
+"   [--max_read_len] \t\t\t\t\t\t=\t For fastq, this is the Maximum read length over all input files.\n\t\t\t\t\t\t\t\t\t For fasta it is the size of chunk in which the reads are read (if reading a whole chromosome\n\t\t\t\t\t\t\t\t\t a typical value to use is 10000. Values above 100000 forbidden.\n\t\t\t\t\t\t\t\t\t (Mandatory if fastq or fasta files are input.)\n" \
 " \n**** FILTERING AND ERROR CLEANING OPTIONS ****\n\n"\
   // -m
 "   [--quality_score_threshold INT] \t\t\t\t=\t Filter for quality scores in the input file (default 0).\n" \
@@ -1984,9 +1984,9 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       return -1;
     }
   
-  if (  (cmd_ptr->max_read_length>20000) && (cmd_ptr->align_given_list==false) && (cmd_ptr->do_genotyping_of_file_of_sites==false) )
+  if (  (cmd_ptr->max_read_length>100000) && (cmd_ptr->align_given_list==false) && (cmd_ptr->do_genotyping_of_file_of_sites==false) )
     {
-      char tmp[]="You are not allowed to set maximum read length >20000 when loading fasta/q into a graph. (However it IS allowed if you are aligning fasta/q to  preexisting graph, or genotyping a file of calls (which might be very long)). Since you have not specified --align, Cortex has exited.\n";
+      char tmp[]="You are not allowed to set maximum read length >100000 when loading fasta/q into a graph. (However it IS allowed if you are aligning fasta/q to  preexisting graph, or genotyping a file of calls (which might be very long)). Since you have not specified --align, Cortex has exited.\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
 	  printf("coding error - this string is too long:\n%s\n", tmp);

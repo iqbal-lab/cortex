@@ -550,7 +550,7 @@ sub guess_ref_chrom_name
   # Look for just the name at the start, e.g. '>10' '> chr10' '> chromosome 10'
   for my $name (@ref_chroms)
   {
-    if($name =~ /^\s*(chr(om(osome)?)?)?\s*$chrom_stripped([^a-z0-9]|$)/i)
+    if($name =~ /^\s*(chr(om(osome)?)?)?\s*$chrom_stripped([^a-z0-9\-\_]|$)/i)
     {
       $self->{_ref_chroms_guessed}->{$name} = 1;
       return $name;
@@ -560,7 +560,7 @@ sub guess_ref_chrom_name
   # Look for 'chr 10' 'chromosome 10' anywhere etc
   for my $name (@ref_chroms)
   {
-    if($name =~ /(chr(om(osome)?)?)?\s*$chrom_stripped([^a-z0-9]|$)/i)
+    if($name =~ /(chr(om(osome)?)?)?\s*$chrom_stripped([^a-z0-9\-\_]|$)/i)
     {
       $self->{_ref_chroms_guessed}->{$name} = 1;
       return $name;
@@ -570,7 +570,7 @@ sub guess_ref_chrom_name
   # Look for 'chr 10' 'chromosome 10' anywhere etc
   for my $name (@ref_chroms)
   {
-    if($name =~ /(chr(om(osome)?)?)?\s*$chrom_stripped([^a-z0-9]|$)/i)
+    if($name =~ /(chr(om(osome)?)?)?\s*$chrom_stripped([^a-z0-9\-\_]|$)/i)
     {
       $self->{_ref_chroms_guessed}->{$name} = 1;
       return $name;
@@ -704,43 +704,56 @@ sub read_entry
     return pop(@{$self->{_entry_buffered}});
   }
 
+  # store details in this hash
+  my %entry = ();
+  my @entry_cols;
+
   my $vcf_line;
-
-  # Read over empty line
-  while(defined($vcf_line = $self->_read_line()) && $vcf_line =~ /^\s*$/) {}
-
-  # no entries found
-  if(!defined($vcf_line))
-  {
-    return undef;
-  }
-
-  chomp($vcf_line);
-
-  my %entry = (); # store details in this hash
-  my @entry_cols = split(/\t/, $vcf_line);
 
   my %vcf_columns = %{$self->{_columns_hash}};
 
-  for my $col_name (keys %vcf_columns)
+  # Read until we get the correct number of columns
+  while(1)
   {
-    if($col_name ne "INFO")
+    # Read over empty line
+    while(defined($vcf_line = $self->_read_line()) && $vcf_line =~ /^\s*$/) {}
+
+    # no entries found
+    if(!defined($vcf_line))
     {
-      $entry{$col_name} = @entry_cols[$vcf_columns{$col_name}];
+      return undef;
     }
-  }
 
-  my $num_of_cols = scalar(@{$self->{_columns_arr}});
+    chomp($vcf_line);
 
-  if(@entry_cols < $num_of_cols)
-  {
-    croak("Not enough columns in VCF entry (ID: ".$entry{'ID'}."; " .
-          "got " . @entry_cols . " columns, expected " . $num_of_cols . ")");
-  }
-  elsif(@entry_cols > $num_of_cols)
-  {
-    croak("Too many columns in VCF entry (ID: ".$entry{'ID'}."; " .
-          "got " . @entry_cols . " columns, expected " . $num_of_cols . ")");
+    # Reset entry
+    %entry = ();
+    @entry_cols = split(/\t/, $vcf_line);
+
+    for my $col_name (keys %vcf_columns)
+    {
+      if($col_name ne "INFO")
+      {
+        $entry{$col_name} = @entry_cols[$vcf_columns{$col_name}];
+      }
+    }
+
+    my $num_of_cols = scalar(@{$self->{_columns_arr}});
+
+    if(@entry_cols < $num_of_cols)
+    {
+      warn("Not enough columns in VCF entry (ID: ".$entry{'ID'}."; " .
+           "got " . @entry_cols . " columns, expected " . $num_of_cols . ")");
+    }
+    elsif(@entry_cols > $num_of_cols)
+    {
+      warn("Too many columns in VCF entry (ID: ".$entry{'ID'}."; " .
+           "got " . @entry_cols . " columns, expected " . $num_of_cols . ")");
+    }
+    else
+    {
+      last;
+    }
   }
 
   my %info_col = ();
@@ -764,28 +777,6 @@ sub read_entry
 
   $entry{'INFO'} = \%info_col;
   $entry{'INFO_flags'} = \%info_flags;
-
-  # Auto-correct chromosome names
-  #if($entry{'CHROM'} !~ /^chr/)
-  #{
-  #  if($entry{'CHROM'} =~ /^chr(.*)$/i)
-  #  {
-      # matches only with case-insensitive
-  #    $entry{'CHROM'} = 'chr'.$1;
-  #  }
-  #  else {
-  #    $entry{'CHROM'} = 'chr'.$entry{'CHROM'};
-  #  }
-  #}
-
-  #if($entry{'CHROM'} =~ /^chr([xy])$/i)
-  #{
-  #  $entry{'CHROM'} = 'chr'.uc($1);
-  #}
-  #else
-  #{
-  #  $entry{'CHROM'} = lc($entry{'CHROM'});
-  #}
 
   # Correct SVLEN
   $entry{'INFO'}->{'SVLEN'} = length($entry{'ALT'}) - length($entry{'REF'});

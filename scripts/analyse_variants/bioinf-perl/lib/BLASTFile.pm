@@ -71,16 +71,16 @@ sub read_blast_entries
     croak("BLAST entry does not match '$expected_name': '$line'");
   }
   
-  my $blast_entry;
+  my $blast_txt;
 
   my $peek;
   while(defined($peek = $self->peek_line()) && $peek !~ /^Query=/i)
   {
     $line = $self->read_line();
-    $blast_entry .= $line;
+    $blast_txt .= $line;
   }
-  
-  return split_blast_entry($blast_entry);
+
+  return ($blast_txt, split_blast_entry($blast_txt));
 }
 
 sub split_blast_entry
@@ -95,14 +95,28 @@ sub split_blast_entry
 
   for(my $i = 0; $i < @lines; $i++)
   {
+    chomp($lines[$i]);
+
     if($lines[$i] =~ /^>.*\|(.*)$/) {
       $curr_chr = $1;
+      $i++;
+      # Look at next line
       
-      $i++; # Look at next line
-      if($i < @lines && $lines[$i] =~ /Length=(\d+)/i) {
-        $chr_lengths{$curr_chr} = $1;
+      for(; $i < @lines; $i++)
+      {
+        if($lines[$i] =~ /^Length=(\d+)/i)
+        {
+          $chr_lengths{$curr_chr} = $1;
+          last;
+        }
+        else
+        {
+          $curr_chr .= $lines[$i];
+        }
       }
-      else {
+
+      if(!defined($chr_lengths{$curr_chr}))
+      {
         croak("BLAST processing error : $!");
       }
     }
