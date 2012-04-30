@@ -463,13 +463,43 @@ close($fh_proc_bub);
 
 
 ### cleanup
+
+## for those non-SNPs where the called variant was in the reverse direction, and the 3p flank was zero-length
+## we have had to put a Z in place of the base before the variant, in both ref and alt alleles. We need now
+## to go through and fix these. Parse the VCF once and collect a list of chrom_pos where we have Z's. We need to do
+## this for both raw and decomp VCFs. 
+my %Z_posns_raw=();## will be chr_pos --> 1 - at these positions the VCFs have a Z
+my %Z_posns_decomp=();
+
+#get_Z_positions(\%Z_posns_raw,    $simple_vcf_name);
+#get_Z_positions(\%Z_posns_decomp, $decomp_vcf_name);
+
+
+#get_characters_to_replace_Z(\%Z_posns_raw,    $ref_fasta);
+#get_characters_to_replace_Z(\%Z_posns_decomp, $ref_fasta);
+
+
+#my $fixed_Z_simple = $simple_vcf_name;
+#$fixed_Z_simple =~ s/\.uncleaned/.fixed_Z/;
+#my $fixed_Z_decomp = $decomp_vcf_name;
+#$fixed_Z_decomp =~ s/\.uncleaned/.fixed_Z/;
+#print "Start fix z\n";
+#fix_Z($simple_vcf_name, $fixed_Z_simple, \%Z_posns_raw);
+#fix_Z($decomp_vcf_name, $fixed_Z_decomp, \%Z_posns_decomp);
+#print "end fix z\n";
+
+#my $final_simple = $fixed_Z_simple;
+#$final_simple =~ s/\.fixed_Z//;
+#my $final_decomp = $fixed_Z_decomp;
+#$final_decomp =~ s/\.fixed_Z//;
+my $final_simple = $simple_vcf_name;
+$final_simple =~ s/.uncleaned//;
+my $final_decomp = $decomp_vcf_name;
+$final_decomp =~ s/.uncleaned//;
+
 if ($ref_fasta eq "unspecified")
 {
     ## just sort the file and PV tag it
-    my $final_simple = $simple_vcf_name;
-    $final_simple =~ s/\.uncleaned//;
-    my $final_decomp = $decomp_vcf_name;
-    $final_decomp =~ s/\.uncleaned//;
     my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_simple";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
@@ -483,10 +513,6 @@ if ($ref_fasta eq "unspecified")
 }
 else # sort and PV tag and remove ref mismatches
 {
-    my $final_simple = $simple_vcf_name;
-    $final_simple =~ s/\.uncleaned//;
-    my $final_decomp = $decomp_vcf_name;
-    $final_decomp =~ s/\.uncleaned//;
     my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $simple_vcf_name $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_simple";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
@@ -500,6 +526,144 @@ else # sort and PV tag and remove ref mismatches
 }
 
 
+sub fix_Z
+{
+    my ($oldvcf, $outvcfname, $href) = @_;
+    open(OLD, $oldvcf)||die("Cannot open $oldvcf");
+    open(NEW, ">".$outvcfname)||die("Cannot open $outvcfname");
+
+    while(<OLD>)
+    {
+	my $bobble = $_;
+	chomp $bobble;
+	if ($bobble =~ /^\#/)
+	{
+	    print NEW "$bobble\n";
+	}
+	else
+	{
+	    my @sp = split(/\t/, $bobble);
+	    my $chr = $sp[0];
+	    my $pos = $sp[1];
+	    my $ref = $sp[3];
+	    my $alt = $sp[4];
+	    if (scalar(@sp)<4)
+	    {
+		die("Less than 4 fields in $bobble\n");
+	    }
+
+	    if (!defined($ref))
+	    {
+		print "ZAM! ref is not define on this line:\n$bobble\nof vcf $oldvcf\n";
+	    }
+
+	    if ($ref =~ /^Z/)
+	    {
+		if (!exists $href->{$chr."_".$pos})
+		{
+		    die("Coding error Zam - $chr $pos is not in your hash for Z replacement. The VCf line is\n$bobble\n");
+		}
+		my $fix = $href->{$chr."_".$pos};
+		$sp[3] =~ s/Z/$fix/;
+		$sp[4] =~ s/Z/$fix/;
+		print NEW join("\t", @sp);
+		print NEW "\n";
+
+	    }
+	}
+    }
+    close(OLD);
+    close(NEW);
+}
+sub get_characters_to_replace_Z
+{
+    my ($href, $reference_fa) = @_;
+    if ($reference_fa eq "unspecified")
+    {
+	foreach my $k (keys %$href)
+	{
+	    $href->{$k} = -1;
+	}
+    }
+    else
+    {
+	my %localhash=();
+	foreach my $k (keys %$href)
+        {
+	    my $c; my $p;
+	    if ($k =~ /(\S+)_(\S+)/)
+	    {
+		$c = $1;
+		$p = $2;
+		$localhash{$c}{$p}=1;
+	    }
+	    else
+	    {
+		die("Problem parsing chromosome name in my hash? k is $k, does not have an underscore. call zam");
+	    }
+	}
+	## read the ref fasta once and collect bases
+	open(REFFO, $reference_fa)||die("Cannot open $reference_fa");
+	my $curr_chro = "-1";
+	my $curr_pos=-1;
+	while(<REFFO>)
+	{
+	    my $lion = $_;
+	    chomp $lion;
+	    if ($lion =~ /^>(\S+)/)
+	    {
+		$curr_chro=$1;
+		$curr_pos=0;
+	    }
+	    else
+	    {
+		my @sp = split(//, $lion);
+		my $i;
+		for ($i=0; $i<scalar(@sp); $i++)
+		{
+		    $curr_pos++;
+		    if (exists $localhash{$curr_chro}{$curr_pos})
+		    {
+			$href->{$curr_chro."_".$curr_pos}=$sp[$i];
+		    }
+		}
+	    }
+	}
+	close(REFFO);
+    }
+}
+
+sub get_Z_positions
+{
+    my ($href, $vcf) = @_;
+    open(V, $vcf)||die();
+    while (<V>)
+    {
+	my $ly = $_;
+	chomp $ly;
+	if ($ly !~ /^\#/)
+	{
+	    my @sp = split(/\t/, $ly);
+	    my $chr = $sp[0];
+	    my $pos = $sp[1];
+	    my $ref = $sp[3];
+	    my $alt = $sp[4];
+	    if (!defined($ref))
+	    {
+		print "ZAM! ref is not define on this line:\n$ly\nof vcf $vcf\n";
+	    }
+	    if (scalar(@sp)<4)
+	    {
+		die("Less than 4 fields in $ly\n");
+	    }
+	    if ($ref =~ /^Z/)
+	    {
+		$href->{$chr."_".$pos}=1;
+	    }
+	}
+    }
+    close(V);
+}
 sub check_if_callfile_in_legacy_format
 {
     my ($file) = @_;
@@ -680,6 +844,7 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 		$which_is_ref, $classification, $class_llk_rep, $class_llk_var,
 		$genotype,     $llk_hom1,       $llk_het,       $llk_hom2
 	) = get_next_var_from_callfile( $file_handle_calls, $ploidy );
+
 
 	my ( $eof2, $var_name2, $strand, $chr, $coord ) =
 	  get_next_var_from_flank_mapfile($file_handle_map_flanks);
@@ -1549,15 +1714,18 @@ sub get_simple_vcf_entry_pos_and_alleles
 				$vcf_entry_alt_allele =
 				  substr( $br2_seq, 0,
 					length($br2_seq) - $align_num_bp_agreement_at_end );
+
 			}
 			else
 			{
 				$vcf_entry_ref_allele = substr( $flank5p, -1 )
 				  . substr( $br1_seq, 0,
 					length($br1_seq) - $align_num_bp_agreement_at_end );
+
 				$vcf_entry_alt_allele = substr( $flank5p, -1 )
 				  . substr( $br2_seq, 0,
 					length($br2_seq) - $align_num_bp_agreement_at_end );
+
 			}
 		}
 		elsif ( $which_br_ref eq "2" )
@@ -1572,15 +1740,18 @@ sub get_simple_vcf_entry_pos_and_alleles
 				$vcf_entry_alt_allele =
 				  substr( $br1_seq, 0,
 					length($br1_seq) - $align_num_bp_agreement_at_end );
+
 			}
 			else
 			{
 				$vcf_entry_ref_allele = substr( $flank5p, -1 )
 				  . substr( $br2_seq, 0,
 					length($br2_seq) - $align_num_bp_agreement_at_end );
+
 				$vcf_entry_alt_allele = substr( $flank5p, -1 )
 				  . substr( $br1_seq, 0,
 					length($br1_seq) - $align_num_bp_agreement_at_end );
+
 			}
 		}
 		else
@@ -1588,9 +1759,11 @@ sub get_simple_vcf_entry_pos_and_alleles
 			$vcf_entry_ref_allele =
 			  substr( $br1_seq, 0,
 				length($br1_seq) - $align_num_bp_agreement_at_end );
+
 			$vcf_entry_alt_allele =
 			  substr( $br2_seq, 0,
 				length($br2_seq) - $align_num_bp_agreement_at_end );
+
 
 #return (0,0,0,"This var has both alleles entirely in the reference: $which_br_ref");
 		}
@@ -1598,6 +1771,18 @@ sub get_simple_vcf_entry_pos_and_alleles
 	##else, 5prime flank mapped in the reverse direction
 	elsif ( $str == 16 )
 	{
+	    ## for non-SNPs, you will need the last base before the variant. In some cases, one needs to get this from the 
+	    ## (reverse complement of) the 3p flank. However in some of these cases, the 3p flank is zero!
+	    ## when that happens, use a placement character Z. At a later stage, when we have a sorted VCF, we will go 
+	    ## through the reference fasta once, and replace the Z characters with the relevant correct characters
+	    ## from the reference (one base before the variant in each case).
+	    my $last_base_of_rev_comp_of_3p_flank = "Z";
+	    if (length($flank3p)>0)
+	    {
+		#chomp $flank3p;
+		$last_base_of_rev_comp_of_3p_flank =  substr( rev_comp($flank3p), -1 );
+	    } 
+
 		my $br1_excepting_agreement_at_end =
 		  substr( $br1_seq, 0,
 			length($br1_seq) - $align_num_bp_agreement_at_end );
@@ -1643,11 +1828,12 @@ sub get_simple_vcf_entry_pos_and_alleles
 				if ( $align_num_bp_agreement_at_end == 0 )
 				{
 					$vcf_entry_ref_allele =
-					  substr( rev_comp($flank3p), -1 )
+					  $last_base_of_rev_comp_of_3p_flank
 					  . rev_comp($br1_excepting_agreement_at_end);
 					$vcf_entry_alt_allele =
-					  substr( rev_comp($flank3p), -1 )
+					  $last_base_of_rev_comp_of_3p_flank
 					  . rev_comp($br2_excepting_agreement_at_end);
+
 				}
 				else
 				{
@@ -1657,6 +1843,7 @@ sub get_simple_vcf_entry_pos_and_alleles
 					$vcf_entry_alt_allele =
 					    rev_comp($last_base_in_branch_before_variant)
 					  . rev_comp($br2_excepting_agreement_at_end);
+
 				}
 
 #$vcf_entry_ref_allele =  substr( rev_comp($flank3p), -1)  .rev_comp(substr($br1_seq, - (length($br1_seq) - $align_num_bp_agreement_at_start) ) );
@@ -1686,17 +1873,19 @@ sub get_simple_vcf_entry_pos_and_alleles
 				  rev_comp($br2_excepting_agreement_at_end);
 				$vcf_entry_alt_allele =
 				  rev_comp($br1_excepting_agreement_at_end);
+
 			}
 			else
 			{
 				if ( $align_num_bp_agreement_at_end == 0 )
 				{
-					$vcf_entry_ref_allele =
-					  substr( rev_comp($flank3p), -1 )
-					  . rev_comp($br2_excepting_agreement_at_end);
-					$vcf_entry_alt_allele =
-					  substr( rev_comp($flank3p), -1 )
-					  . rev_comp($br1_excepting_agreement_at_end);
+				    $vcf_entry_ref_allele =
+					$last_base_of_rev_comp_of_3p_flank
+					. rev_comp($br2_excepting_agreement_at_end);
+				    $vcf_entry_alt_allele =
+					$last_base_of_rev_comp_of_3p_flank
+					. rev_comp($br1_excepting_agreement_at_end);
+
 				}
 				else
 				{
@@ -1706,6 +1895,7 @@ sub get_simple_vcf_entry_pos_and_alleles
 					$vcf_entry_alt_allele =
 					    rev_comp($last_base_in_branch_before_variant)
 					  . rev_comp($br1_excepting_agreement_at_end);
+
 				}
 
 			}
@@ -1723,6 +1913,7 @@ sub get_simple_vcf_entry_pos_and_alleles
 		return ( 0, 0, 0, "Did not map" );
 	}
 
+
 	return ( $vcf_entry_pos, $vcf_entry_ref_allele, $vcf_entry_alt_allele,
 		"0" );
 
@@ -1731,7 +1922,11 @@ sub get_simple_vcf_entry_pos_and_alleles
 sub rev_comp
 {
 	my ($seq) = @_;
-
+	
+	if ($seq=~/(\S+)\s+/)
+	{
+	    $seq = $1;
+	}
 	my $r_seq = reverse($seq);
 	$r_seq =~ tr/acgtACGT/tgcaTGCA/;
 
@@ -1925,6 +2120,7 @@ sub get_next_var_from_callfile
 		chomp $br2;
 		<$fh>;    #ignore 3p flank read id
 		$flank3p = <$fh>;
+		chomp $flank3p;
 		$line    = <$fh>;
 
 		if ( $line =~ /extra information/ )
