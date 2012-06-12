@@ -50,7 +50,11 @@ endif
 #$(error Invalid value for MAXK - either omit or use 32*x-1)
 #endif
 
-
+# Test if running on a mac
+UNAME=$(shell uname)
+ifeq ($(UNAME),Darwin)
+	MAC = 1
+endif
 
 
 #main program includes
@@ -82,24 +86,26 @@ endif
 
 ARCH =  -m64 
 
-
 ifdef 32_BITS
  ARCH =  
 endif
+
 OPT  		      = $(ARCH) -Wall  -O3  $(MACFLAG) -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) -DNUMBER_OF_COLOURS=$(NUM_COLS)
 
 ifdef DEBUG
  OPT                  = $(ARCH) -Wall -O0 -g $(MACFLAG) -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) -DNUMBER_OF_COLOURS=$(NUM_COLS)
 endif
 
-
-
 CFLAGS_CUNIT          = -L/home/zam/bin/lib
 
 CFLAGS_BASIC          = -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING)
 CFLAGS_GRAPH          = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_BASE_ENCODING)
-CFLAGS_CORTEX_VAR = -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_CORTEX_VAR) -I$(IDIR_BASE_ENCODING) -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO)
+CFLAGS_CORTEX_VAR     = -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_CORTEX_VAR) -I$(IDIR_BASE_ENCODING) -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO)
 
+ifdef NOT_ZAM
+	IDIR_CUNIT = /opt/local/include/CUnit
+	CFLAGS_CUNIT           = -L/opt/local/lib -lncurses
+endif
 
 CFLAGS_BASIC_TESTS = -I$(IDIR_BASIC_TESTS)  -I$(IDIR_BASIC)  -I$(IDIR_BASE_ENCODING) -I$(IDIR_CUNIT) 
 CFLAGS_HASH_TABLE_TESTS =  -I$(IDIR_HASH) -I$(IDIR_HASH_TABLE_TESTS) -I$(IDIR_CUNIT)  -I$(IDIR_CORTEX_VAR) 

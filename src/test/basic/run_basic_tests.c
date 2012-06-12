@@ -72,13 +72,12 @@ int  main()
     return CU_get_error();
   }
   
-  if (NULL == CU_add_test(pSuite, "Test the left shift operator for big binary kmers that are encoded in multiple long integers", test_binary_kmer_left_shift )){
+  if (NULL == CU_add_test(pSuite, "Test the right shift operator for big binary kmers that are encoded in multiple long integers", test_binary_kmer_right_shift_one_base )){
     CU_cleanup_registry();
     return CU_get_error();
   }
-  
-  
-  if (NULL == CU_add_test(pSuite, "Test the right shift operator for big binary kmers that are encoded in multiple long integers", test_binary_kmer_right_shift )){
+
+  if (NULL == CU_add_test(pSuite, "Test the left shift operator for big binary kmers that are encoded in multiple long integers", test_binary_kmer_left_shift_one_base )){
     CU_cleanup_registry();
     return CU_get_error();
   }
