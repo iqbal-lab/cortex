@@ -6,9 +6,9 @@ void test_binary_kmer_comparison_operator();
 
 void test_binary_kmer_less_than();
 
-void test_binary_kmer_right_shift();
+void test_binary_kmer_right_shift_one_base();
 
-void test_binary_kmer_left_shift();
+void test_binary_kmer_left_shift_one_base();
 
 void test_seq_to_binary_kmer_and_binary_kmer_to_seq();
 
