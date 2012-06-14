@@ -20,7 +20,7 @@ while (<CALLS>)
 {
     my $line = $_;
     
-    if ($line =~ /^\>(var_\d+)_5p_flank/)
+    if ($line =~ /^\>\S{0,100}(var_\d+)_5p_flank/)
     {
 	$name = $1;
 	my $lenbr1;

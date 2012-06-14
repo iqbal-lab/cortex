@@ -45,12 +45,22 @@ BEGIN
 	    );
 }
 
+my $check_perl5 = "echo \$PERL5LIB";
+my $check_perl5_ret = qx{$check_perl5};
+my $isaac_libdir = $isaac_bioinf_dir."lib";
+if ($check_perl5_ret !~ /$isaac_libdir/)
+{
+    my $update_perl5 = "export PERL5LIB=$isaac_libdir:\$PERL5LIB";
+    print "$update_perl5\n";
+    qx{$update_perl5};
+}
+
 my $proc_calls = $analyse_variants_dir."process_calls.pl";
 if (!(-e $proc_calls))
 {
     die("Cannot find process_calls script: $proc_calls\n");
 }
-my $make_union = $analyse_variants_dir."make_union_varset.pl";
+my $make_union = $analyse_variants_dir."make_union_varset_including_metadata_in_names.pl";
 if (!(-e $make_union))
 {
     die("Cannot find make_union_varset script: $make_union\n");
@@ -85,10 +95,11 @@ my (
         $mem_height,           $mem_width, $binary_colourlist,
         $max_read_len,         $format, $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
         $expt_type,            $do_union, $manual_override_cleaning,
-        $build_per_sample_vcfs, $global_logfile, $call_jointly_noref, $call_jointly_incref,
+        $build_per_sample_vcfs, $global_logfile, $call_jointly_noref, $call_jointly_incref, $squeeze_mem
 );
 
 #set defaults
+$squeeze_mem='';
 $first_kmer=0;
 $last_kmer=0;
 $kmer_step=1;
@@ -110,6 +121,7 @@ $fastaq_index="";
 $require_one_allele_is_ref           = "yes";
 $prefix                              = "cortex";
 $outvcf_filename_stub                = "default_vcfname";
+
 #$samplenames                          = '';
 #$number_of_colours                   = 0;
 $use_ref                             = "yes";
@@ -159,7 +171,7 @@ my $help = '';    #default false
     'use_ref:s'             => \$use_ref,
     'ploidy:i'             => \$ploidy,
     'require_one_allele_is_ref' => \$apply_filter_one_allele_must_be_ref,
-    'apply_pop_classifier'   => \$apply_classif,
+    'apply_pop_classifier:s'   => \$apply_classif,
     'prefix:s'             => \$prefix,            ## this will prefix any var name
     'stampy_hash:s'        => \$stampy_hash_stub, #stampy creates blah.sthash and blah.stidx. You should enter --stampy_hash blah
     'stampy_bin:s'         => \$stampy_bin,    ## must be 1 or 2
@@ -185,7 +197,7 @@ my $help = '';    #default false
     'logfile:s'           => \$global_logfile,
     'call_jointly_noref:s' => \$call_jointly_noref,
     'call_jointly_incref:s' => \$call_jointly_incref,
-
+    'squeeze_mem'          =>\$squeeze_mem
 );
 
 
@@ -401,31 +413,33 @@ my $list_all_clean_pop = $list_all_clean.".pop";
 open(LIST_ALL_CLEAN_POP, ">".$list_all_clean_pop)||die("Cannot open $list_all_clean_pop");
 print LIST_ALL_CLEAN_POP "$list_all_clean\n";
 close(LIST_ALL_CLEAN_POP);
-my $count_log = $list_all_clean_pop.".log";
-my $ctx_bin_for_count = get_right_binary($first_kmer, $cortex_dir,scalar(@samples)+1);
-my $cmd_count_kmers = $ctx_bin_for_count." --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width  --colour_list $list_all_clean_pop > $count_log 2>&1";
-print "Load all k=$first_kmer cleaned binaries into one colour, and check how many kmers. Having done this, we can know how much memory to use for the multicolour graphs. This is just a memory saving device\n";
-qx{$cmd_count_kmers};
-my $use_full_mem="false";
-my $num_kmers_in_cleaned_pool=0; ##will be number of kmers
-if (ran_out_of_memory($count_log) eq "true")
+if ($squeeze_mem)
 {
-    $use_full_mem="true";
-}
-else
-{
-    $num_kmers_in_cleaned_pool = get_num_kmers($count_log);
-    if ($num_kmers_in_cleaned_pool==-1)
+    my $count_log = $list_all_clean_pop.".log";
+    my $ctx_bin_for_count = get_right_binary($first_kmer, $cortex_dir,scalar(@samples)+1);
+    my $cmd_count_kmers = $ctx_bin_for_count." --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width  --colour_list $list_all_clean_pop > $count_log 2>&1";
+    print "Load all k=$first_kmer cleaned binaries into one colour, and check how many kmers. Having done this, we can know how much memory to use for the multicolour graphs. This is just a memory saving device\n";
+    qx{$cmd_count_kmers};
+    my $num_kmers_in_cleaned_pool=0; ##will be number of kmers
+    if (ran_out_of_memory($count_log) eq "true")
     {
-	print "Unable to find number of kmers in loaded graph in $count_log. Will just continue to next stage using mem_height and width as specified by the user. Mention this to zam please. Should never happen\n";
-	$use_full_mem="true";
+	## do nothing
     }
     else
     {
-	my $new_mem_height = int(log($num_kmers_in_cleaned_pool/100)/log(2)) +1;
-	print "Cleaning means I can now reduce mem_height to $new_mem_height from $mem_height, and will up mem_width from 100 to 120 to leave some margin\n";
-	$mem_height = $new_mem_height;
-	$mem_width = 120;
+	$num_kmers_in_cleaned_pool = get_num_kmers($count_log);
+	if ($num_kmers_in_cleaned_pool==-1)
+	{
+	    print "Unable to find number of kmers in loaded graph in $count_log. Will just continue to next stage using mem_height and width as specified by the user. Mention this to zam please. Should never happen\n";
+	    ## do nothing - stick with same mem width and height
+	}
+	else
+	{
+	    my $new_mem_height = int(log($num_kmers_in_cleaned_pool/100)/log(2)) +1;
+	    print "Cleaning means I can now reduce mem_height to $new_mem_height from $mem_height, and will up mem_width from 100 to 120 to leave some margin\n";
+	    $mem_height = $new_mem_height;
+	    $mem_width = 120;
+	}
     }
 }
 
@@ -669,12 +683,13 @@ if ($do_union eq "yes")
     
     
     my $union_of_bc_callsets = $outdir_calls."union_all_bc_callsets";
+    my $union_of_bc_callsets_log = $outdir_calls."union_all_bc_callsets.log";
 
     my $max_read_len_bc_union=0;
     if ( ($do_bc eq "yes") && ($call_jointly_noref eq "no") && ($call_jointly_incref eq "no") )
     {
-	my $bc_call_list  = $tmpdir."/list_bc_callfiles";
-	open(BCCALL, ">".$bc_call_list)||die();
+	my $bc_call_index  = $tmpdir."/index_bc_callfiles";
+	open(BCCALL, ">".$bc_call_index)||die();
 	foreach my $k (@kmers)
 	{
 	    foreach my $sam (@samples)
@@ -682,12 +697,13 @@ if ($do_union eq "yes")
 		foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}{$k}})
 		{
 		    print BCCALL $sample_to_bc_callfile{$sam}{$k}{$cleaning};
+		    print BCCALL "\t$k\t$cleaning";
 		    print BCCALL "\n";
 		}
 	    }
 	}
 	close(BCCALL);
-	my $bc_cmd = "perl $make_union --filelist $bc_call_list --varname_stub UNION_BC > $union_of_bc_callsets 2>&1";
+	my $bc_cmd = "perl $make_union --index $bc_call_index --varname_stub UNION_BC --outfile $union_of_bc_callsets > $union_of_bc_callsets_log  2>&1";
 	if (! -e($union_of_bc_callsets))
 	{
 	    print "$bc_cmd\n";
@@ -697,12 +713,13 @@ if ($do_union eq "yes")
     }
     
     my $union_of_pd_callsets = $outdir_calls."union_all_pd_callsets";
+    my $union_of_pd_callsets_log = $outdir_calls."union_all_pd_callsets.log";
     my $max_read_len_pd_union=0;
     if ( ($do_pd eq "yes") && ($call_jointly_noref eq "no") && ($call_jointly_incref eq "no") )
     {
 	
-	my $pd_call_list  = $tmpdir."/list_pd_callfiles";
-	open(PDCALL, ">".$pd_call_list)||die();
+	my $pd_call_index  = $tmpdir."/index_pd_callfiles";
+	open(PDCALL, ">".$pd_call_index)||die();
 	foreach my $k (@kmers)
 	{
 	    foreach my $sam (@samples)
@@ -710,13 +727,14 @@ if ($do_union eq "yes")
 		foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}->{$k}})
 		{
 		    print PDCALL $sample_to_pd_callfile{$sam}{$k}{$cleaning};
+		    print PDCALL "\t$k\t$cleaning";
 		    print PDCALL "\n";
 		}
 	    }
 	}
 	close(PDCALL);
 	
-	my $pd_cmd = "perl $make_union --filelist $pd_call_list --varname_stub UNION_PD > $union_of_pd_callsets 2>&1";
+	my $pd_cmd = "perl $make_union --index $pd_call_index --varname_stub UNION_PD --outfile $union_of_pd_callsets > $union_of_pd_callsets_log 2>&1";
 	if (!(-e $union_of_pd_callsets))
 	{
 	    print "$pd_cmd\n";
@@ -745,8 +763,8 @@ if ($do_union eq "yes")
 	{
 	    $str = "exc_ref";
 	}
-	my $bc_call_list  = $tmpdir."/list_bc_joint_".$str."_callfiles";#
-	open(BCCALL, ">".$bc_call_list)||die();
+	my $bc_call_index  = $tmpdir."/list_bc_joint_".$str."_callfiles";#
+	open(BCCALL, ">".$bc_call_index)||die();
 	my $num_cleanings = get_num_cleaning_levels();
 	my $cl=0;
 	
@@ -755,13 +773,13 @@ if ($do_union eq "yes")
 	    for ($cl=0; $cl < $num_cleanings; $cl++)
 	    {		
 		    print BCCALL $joint_callfiles{$K}{$cl};#
-		    print BCCALL "\n";
+		    print BCCALL "\t$K\t$cl\n";
 	    }
 	}
 	close(BCCALL);
 
 	print "Z1 - going to see if this exists $union_of_bc_callsets\n";
-	my $bc_cmd = "perl $make_union --filelist $bc_call_list --varname_stub UNION_BC > $union_of_bc_callsets 2>&1";
+	my $bc_cmd = "perl $make_union --filelist $bc_call_index --varname_stub UNION_BC --outfile $union_of_bc_callsets > $union_of_bc_callsets_log 2>&1";
 	if (! -e($union_of_bc_callsets))
 	{
 	    print "Z2 - does not \n";
@@ -881,8 +899,10 @@ if ($do_union eq "yes")
 	
 	
 
-	build_vcfs($gt_bc_out, $outvcf_filename_stub."_union_BC_calls", $number_of_colours, $outdir_vcfs."output_proc_union_bc", $outdir_vcfs, \%vcfs_needing_post_processing);
-	build_vcfs($gt_pd_out, $outvcf_filename_stub."_union_PD_calls", $number_of_colours, $outdir_vcfs."output_proc_union_pd", $outdir_vcfs, \%vcfs_needing_post_processing);
+	build_vcfs($gt_bc_out, $outvcf_filename_stub."_union_BC_calls", $number_of_colours, 
+		   $outdir_vcfs."output_proc_union_bc", $outdir_vcfs, \%vcfs_needing_post_processing, $union_of_bc_callsets);
+	build_vcfs($gt_pd_out, $outvcf_filename_stub."_union_PD_calls", $number_of_colours, 
+		   $outdir_vcfs."output_proc_union_pd", $outdir_vcfs, \%vcfs_needing_post_processing, $union_of_pd_callsets);
 	
 	
 
@@ -898,8 +918,8 @@ if ($do_union eq "yes")
 ######################################################################################################
 
 ## Now we have a bunch of VCFs, and we need to remove duplicate lines, sort them, 
-	print "\n****** Clean the union VCFs  ***\n";
-	clean_all_vcfs(\%vcfs_needing_post_processing);
+	#print "\n****** Clean the union VCFs  ***\n";
+	#clean_all_vcfs(\%vcfs_needing_post_processing);
     }
 }
 
@@ -912,7 +932,7 @@ else  ##### if not making a union set
 	print "\n******   Build VCFs for each of the individual callsets   ***\n";
 	build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
     }
-    clean_all_vcfs(\%vcfs_needing_post_processing);
+    #clean_all_vcfs(\%vcfs_needing_post_processing);
 }
 
 
@@ -1202,7 +1222,7 @@ sub build_per_sample_vcfs
 
 sub build_vcfs
 {
-    my ($file, $string, $num, $log, $directory, $href_store_vcf_names) = @_;
+    my ($file, $string, $num, $log, $directory, $href_store_vcf_names, $fasta_file_of_just_calls) = @_;
     if (!(-e $file))
     {
 	return;
@@ -1234,11 +1254,18 @@ sub build_vcfs
 	}
 	close(COL);
     }
-    my $cmd = "perl ".$proc_calls." --callfile $file --outdir $directory --outvcf $string --samplename_list $colournames --num_cols $num  --ploidy $ploidy --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin ";
+    my $cmd = "perl ".$proc_calls." --callfile $file --outdir $directory --outvcf $string --samplename_list $colournames --num_cols $num  --ploidy $ploidy --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin --vcftools_dir $vcftools_dir ";
     if ($use_ref eq "yes")
     {
+	my $ref_fa = get_ref_fasta($list_ref_fasta); 
+	$cmd = $cmd." --ref_fasta $ref_fa ";
 	$cmd = $cmd." --refcol 0 --require_one_allele_is_ref yes"; 
     }
+    if ($apply_classif ne '')
+    {
+	$cmd = $cmd." --pop_classifier $apply_classif ";
+    }
+    $cmd = $cmd. " --unioncalls $fasta_file_of_just_calls ";
     $cmd = $cmd."  > $log 2>&1" ;
 
 
@@ -2212,6 +2239,11 @@ sub get_ref_fasta
 {
     my ($list) = @_;
     my $out = $outdir_vcfs."temp_ref.fa";
+    if (-e $out)
+    {
+	my $c = "rm $out";
+	qx{$c};
+    }
     open(LI, $list)||die();
     while (<LI>)
     {

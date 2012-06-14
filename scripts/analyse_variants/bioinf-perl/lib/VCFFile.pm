@@ -8,7 +8,11 @@ use Carp;
 
 # All methods are object methods except these:
 use base 'Exporter';
-our @EXPORT = qw(get_standard_vcf_columns is_snp get_clean_indel);
+our @EXPORT = qw(get_standard_vcf_columns
+                 vcf_sort_variants
+                 vcf_add_filter_txt
+                 is_snp get_clean_indel
+                 vcf_get_ancestral_true_allele);
 
 my @header_tag_columns = qw(ALT FILTER FORMAT INFO);
 my @header_tag_types = qw(Integer Float Character String Flag);
@@ -305,9 +309,15 @@ sub _check_valid_header_tag
       return 0;
     }
   }
-  elsif(defined($tag->{'Number'}) || defined($tag->{'Type'}))
+  elsif(defined($tag->{'Number'}) && $tag->{'Number'} != 0)
   {
-    #carp("VCF header ALT/FILTER tags cannot have Number or Type attributes\n");
+    carp("VCF header ALT/FILTER tags cannot have Number attributes\n");
+    return 0;
+  }
+  elsif(defined($tag->{'Type'}))
+  {
+    carp("VCF header ALT/FILTER tags cannot have Type attributes " .
+         "('$tag->{'Type'}')\n");
     return 0;
   }
 
@@ -385,7 +395,9 @@ sub print_header
     $desc =~ s/\\/\\\\/g;
     $desc =~ s/\"/\\\"/g;
 
-    if($tag->{'column'} =~ /^(?:ALT|FILTER)$/)
+    print "";
+
+    if($tag->{'column'} =~ /^(ALT|FILTER)$/i)
     {
       print $out "##" . $tag->{'column'} . "=<" .
                  "ID=" . $tag->{'ID'} . "," .
@@ -461,10 +473,6 @@ sub add_header_tag
   # INFO, FILTER, FORMAT.. column is in upper case
   $tag_col = uc($tag_col);
 
-  # Integer, String.. lowercase with uppercase first letter
-  $tag_type = lc($tag_type);
-  substr($tag_type,0,1) = uc(substr($tag_type,0,1));
-
   my $tag = {'column' => $tag_col,
              'ID' => $tag_id,
              'Description' => $tag_description};
@@ -474,8 +482,12 @@ sub add_header_tag
     $tag->{'Number'} = $tag_number;
   }
 
-  if(defined($tag_number))
+  if(defined($tag_type))
   {
+    # Integer, String.. lowercase with uppercase first letter
+    $tag_type = lc($tag_type);
+    substr($tag_type,0,1) = uc(substr($tag_type,0,1));
+
     $tag->{'Type'} = $tag_type;
   }
 
@@ -485,6 +497,11 @@ sub add_header_tag
   if(_check_valid_header_tag($tag))
   {
     $self->{_header_tags}->{$tag_id} = $tag;
+  }
+  else
+  {
+    print STDERR "VCFFile::add_header_tag(): " .
+                 "Not a valid header tag: '$tag_id'\n";
   }
 }
 
@@ -501,96 +518,6 @@ sub get_header_tags
   return %{$self->{_header_tags}};
 }
 
-#
-# Chromosomes
-#
-sub set_ref_chrom_names
-{
-  my ($self, @names) = @_;
-
-  my %names_hash = ();
-  @names_hash{@names} = 1;
-
-  $self->{_ref_chroms} = \%names_hash;
-  $self->{_ref_chroms_guessed} = {};
-}
-
-sub guess_ref_chrom_name
-{
-  my ($self, $chrom) = @_;
-
-  if(!defined($self->{_ref_chroms}))
-  {
-    return undef;
-  }
-
-  my @ref_chroms = keys %{$self->{_ref_chroms}};
-
-  if(scalar(@ref_chroms) == 0)
-  {
-    return undef;
-  }
-
-  if(defined($self->{_ref_chroms}->{$chrom}))
-  {
-    return $chrom;
-  }
-
-  my $guess;
-
-  if(defined($guess = $self->{_ref_chroms_guessed}->{$chrom}))
-  {
-    return $guess;
-  }
-
-  # strip off the chr... start
-  my $chrom_stripped = $chrom;
-  $chrom_stripped =~ s/^chr//g;
-
-  # Look for just the name at the start, e.g. '>10' '> chr10' '> chromosome 10'
-  for my $name (@ref_chroms)
-  {
-    if($name =~ /^\s*(chr(om(osome)?)?)?\s*$chrom_stripped([^a-z0-9\-\_]|$)/i)
-    {
-      $self->{_ref_chroms_guessed}->{$name} = 1;
-      return $name;
-    }
-  }
-
-  # Look for 'chr 10' 'chromosome 10' anywhere etc
-  for my $name (@ref_chroms)
-  {
-    if($name =~ /(chr(om(osome)?)?)?\s*$chrom_stripped([^a-z0-9\-\_]|$)/i)
-    {
-      $self->{_ref_chroms_guessed}->{$name} = 1;
-      return $name;
-    }
-  }
-
-  # Look for 'chr 10' 'chromosome 10' anywhere etc
-  for my $name (@ref_chroms)
-  {
-    if($name =~ /(chr(om(osome)?)?)?\s*$chrom_stripped([^a-z0-9\-\_]|$)/i)
-    {
-      $self->{_ref_chroms_guessed}->{$name} = 1;
-      return $name;
-    }
-  }
-
-  # Look for chromosome:<assembly>:<chrom>
-  # e.g. '>asdfas chromosome:GRCh37:10:1:135534747:1'
-
-  for my $name (@ref_chroms)
-  {
-    if($name =~ /(chr(om(osome)?)?):\w+:(chr(om(osome)?)?)$chrom_stripped([^a-z0-9]|$)/i)
-    {
-      $self->{_ref_chroms_guessed}->{$name} = 1;
-      return $name;
-    }
-  }
-
-  return undef;
-}
 
 #
 # Samples
@@ -781,6 +708,24 @@ sub read_entry
   # Correct SVLEN
   $entry{'INFO'}->{'SVLEN'} = length($entry{'ALT'}) - length($entry{'REF'});
 
+  # Correct AALEN
+  if(defined($entry{'INFO'}->{'AA'}) && $entry{'INFO'}->{'AA'} =~ /^\d$/)
+  {
+    if($entry{'INFO'}->{'AA'} == 0)
+    {
+      $entry{'INFO'}->{'AALEN'} = length($entry{'ALT'}) - length($entry{'REF'});
+    }
+    elsif($entry{'INFO'}->{'AA'} == 1)
+    {
+      $entry{'INFO'}->{'AALEN'} = length($entry{'REF'}) - length($entry{'ALT'});
+    }
+    else
+    {
+      # Invalid AA value
+      $entry{'INFO'}->{'AALEN'} = undef;
+    }
+  }
+
   if(length($entry{'REF'}) != 1 || length($entry{'ALT'}) != 1)
   {
     # variant is not a SNP
@@ -837,6 +782,62 @@ sub print_entry
   print $out_handle "\n";
 }
 
+# cmp variants (by chrom, pos, SVLEN, ref-allele, alt-allele)
+sub cmp_variants
+{
+  my $order = $a->{'CHROM'} cmp $b->{'CHROM'};
+
+  if(($order = $a->{'CHROM'} cmp $b->{'CHROM'}) != 0)
+  {
+    return $order;
+  }
+
+  if(($order = $a->{'POS'} <=> $b->{'POS'}) != 0)
+  {
+    return $order;
+  }
+  
+  if(($order = $a->{'INFO'}->{'SVLEN'} <=> $b->{'INFO'}->{'SVLEN'}) != 0)
+  {
+    return $order;
+  }
+
+  if(($order = uc($a->{'REF'}) cmp uc($b->{'REF'})) != 0)
+  {
+    return $order;
+  }
+
+  if(($order = uc($a->{'ALT'}) cmp uc($b->{'ALT'})) != 0)
+  {
+    return $order;
+  }
+
+  return 0;
+}
+
+# sort variants (by chrom, pos, SVLEN, ref-allele, alt-allele)
+sub vcf_sort_variants
+{
+  my ($variants) = @_;
+
+  @$variants = sort cmp_variants @$variants;
+}
+
+# Add FILTER column txt
+sub vcf_add_filter_txt
+{
+  my ($variant, $filter_txt) = @_;
+
+  if($variant->{'FILTER'} eq "." || $variant->{'FILTER'} =~ /^PASS$/i)
+  {
+    $variant->{'FILTER'} = $filter_txt;
+  }
+  else
+  {
+    $variant->{'FILTER'} = $variant->{'FILTER'}.";".$filter_txt;
+  }
+}
+
 # returns 0 or 1
 sub is_snp
 {
@@ -865,6 +866,20 @@ sub get_clean_indel
   {
     return undef;
   }
+}
+
+sub vcf_get_ancestral_true_allele
+{
+  my ($vcf_entry) = @_;
+
+  my $ancestral = $vcf_entry->{'INFO'}->{'AA'};
+
+  if(!defined($ancestral))
+  {
+    return undef;
+  }
+
+  return ($ancestral == 0 ? $vcf_entry->{'true_REF'} : $vcf_entry->{'true_ALT'});
 }
 
 1;

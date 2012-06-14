@@ -1056,8 +1056,8 @@ int main(int argc, char **argv){
   else */ 
   if (cmd_line.remv_low_covg_sups_threshold!=-1)
     {
-      printf("Clip tips first\n");
-      db_graph_clip_tips_in_union_of_all_colours(db_graph);
+      //printf("Clip tips first\n");
+      //db_graph_clip_tips_in_union_of_all_colours(db_graph); zahara
 
       printf("Remove low coverage supernodes covg (<= %d) \n", cmd_line.remv_low_covg_sups_threshold);
       db_graph_remove_errors_considering_covg_and_topology(cmd_line.remv_low_covg_sups_threshold,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,

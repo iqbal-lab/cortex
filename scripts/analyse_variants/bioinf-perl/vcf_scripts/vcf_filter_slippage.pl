@@ -19,38 +19,64 @@ sub print_usage
   }
 
   print STDERR "" .
-"Usage: ./vcf_filter_slippage.pl [--invert | --flag <flag>] [in.vcf]\n" .
-"  Prints (or flags) slippage indels.  Slippage can only be on clean indels.\n".
-"  Requires INFO tags 'left_flank' and 'right_flank'\n" .
-"  \n" .
-"  --invert       Print or flag non slippage indels\n" .
-"  --tag <tag>    INFO tag to add slippage\n";
+"Usage: ./vcf_filter_slippage.pl [OPTIONS] [in.vcf]
+  Prints and flags slippage indels.  Slippage can only be on clean indels.
+  Requires INFO tags 'left_flank' and 'right_flank'
+
+  --only <tandem|non>  Print only tandem/non-tandem events (+ SNPs etc)
+  --non_flag <tag>     INFO flag non-tandem (slippage < SVLEN)
+  --tandem_flag <tag>  INFO flag tandem (slippage >= SVLEN)
+  --dist_tag <tag>     INFO tag with amount of slippage (bp shared with flank)\n";
   exit;
 }
 
-if(@ARGV > 4)
-{
-  print_usage();
-}
-
-my $invert = 0;
-my $flag;
+my ($filter, $tandem_flag, $non_tandem_flag, $dist_tag);
 
 while(@ARGV > 0)
 {
-  if($ARGV[0] =~ /^-?-invert$/i)
+  if($ARGV[0] =~ /^-?-only$/i)
   {
     shift;
-    $invert = 1;
-  }
-  elsif($ARGV[0] =~ /^-?-flag$/i)
-  {
-    shift;
-    $flag = shift;
-    
-    if(!defined($flag))
+    $filter = lc(shift);
+
+    if(defined($filter) && ($filter =~ /^-*non[_ \-]?tandem$/i))
     {
-      print_usage("Flag name needs to be specified");
+      $filter = "non";
+    }
+
+    if(!defined($filter) || ($filter ne "tandem" && $filter ne "non"))
+    {
+      print_usage("--only needs to be given 'tandem' or 'non'");
+    }
+  }
+  elsif($ARGV[0] =~ /^-?-tandem_flag$/i)
+  {
+    shift;
+    $tandem_flag = shift;
+    
+    if(!defined($tandem_flag))
+    {
+      print_usage("--tandem_flag needs a name to be specified");
+    }
+  }
+  elsif($ARGV[0] =~ /^-?-non_flag$/i)
+  {
+    shift;
+    $non_tandem_flag = shift;
+    
+    if(!defined($non_tandem_flag))
+    {
+      print_usage("--non_flag needs a name to be specified");
+    }
+  }
+  elsif($ARGV[0] =~ /^-?-dist_tag$/i)
+  {
+    shift;
+    $dist_tag = shift;
+    
+    if(!defined($dist_tag))
+    {
+      print_usage("--dist_flag needs a name to be specified");
     }
   }
   elsif(@ARGV > 1)
@@ -64,6 +90,19 @@ while(@ARGV > 0)
 }
 
 my $vcf_file = shift;
+
+if(@ARGV > 0)
+{
+  print_usage();
+}
+elsif(defined($tandem_flag) && defined($filter) && ($filter eq "tandem"))
+{
+  print_usage("Did you mean to flag tandems and filter them out??");
+}
+elsif(defined($non_tandem_flag) && defined($filter) && ($filter eq "non"))
+{
+  print_usage("Did you mean to flag non-tandems and filter them out??");
+}
 
 #
 # Open VCF Handle
@@ -89,17 +128,32 @@ else
 #
 my $vcf = new VCFFile($vcf_handle);
 
-if(defined($flag))
+# Add tags to VCF header
+if(defined($dist_tag))
 {
-  # Add tag to VCF header
-  my $description = $invert ? "Not slippage indels" : "Slippage indels";
-  $vcf->add_header_tag("INFO", $flag, 0, "Flag", $description);
+  $vcf->add_header_tag("INFO", $dist_tag, 1, "Integer", "Distance of slippage");
+}
+
+if(defined($tandem_flag))
+{
+  $vcf->add_header_tag("INFO", $tandem_flag, 0, "Flag",
+                       "Tandem indels (distance of slippage >= length)");
+}
+
+if(defined($non_tandem_flag))
+{
+  $vcf->add_header_tag("INFO", $non_tandem_flag, 0, "Flag",
+                       "Non-tandem indels (distance of slippage < length)");
 }
 
 $vcf->print_header();
 
 my $num_of_variants = 0;
+my $num_of_indels = 0;
+my $num_of_tandem = 0;
 my $num_of_printed = 0;
+
+my $total_slippage = 0;
 
 my $vcf_entry;
 
@@ -119,11 +173,13 @@ while(defined($vcf_entry = $vcf->read_entry()))
     ($long_allele, $short_allele) = ($short_allele, $long_allele);
   }
 
-  my $is_slippage = 0;
+  my $is_tandem = 0;
   my $slippage_dist = 0;
 
   if(length($short_allele) == 0 && length($long_allele) > 0)
   {
+    $num_of_indels++;
+
     if(!defined($vcf_entry->{'INFO'}->{'left_flank'}) ||
        !defined($vcf_entry->{'INFO'}->{'right_flank'}))
     {
@@ -138,34 +194,66 @@ while(defined($vcf_entry = $vcf->read_entry()))
 
     $slippage_dist = get_match($left_flank_rev, $indel_rev) +
                      get_match($right_flank, $indel);
-    
-    $is_slippage = ($slippage_dist >= length($indel));
-  }
 
-  if(defined($flag))
-  {
-    # Print all, tag those that are filtered
-    $vcf_entry->{'INFO'}->{$flag} = $slippage_dist;
-    $vcf->print_entry($vcf_entry);
-    
-    if($is_slippage)
+    $total_slippage += $slippage_dist;
+
+    if($slippage_dist >= length($indel))
     {
-      $num_of_printed++;
+      $is_tandem = 1;
+      $num_of_tandem++;
     }
   }
-  elsif($is_slippage != $invert)
+
+  if(defined($tandem_flag) && $is_tandem)
   {
-    # Just print / filter
+    $vcf_entry->{'INFO_flags'}->{$tandem_flag} = 1;
+  }
+  elsif(defined($non_tandem_flag) && !$is_tandem)
+  {
+    $vcf_entry->{'INFO_flags'}->{$non_tandem_flag} = 1;
+  }
+
+  if(defined($dist_tag))
+  {
+    $vcf_entry->{'INFO'}->{$dist_tag} = $slippage_dist;
+  }
+
+  if(!defined($filter) || ($filter eq "tandem") == $is_tandem)
+  {
     $vcf->print_entry($vcf_entry);
     $num_of_printed++;
   }
 }
 
-# Print filtered rate
+# Print
 print STDERR "vcf_filter_slippage.pl: " .
-              "(" . (!defined($flag) && $invert ? "not " : "") . "slippage) " .
               pretty_fraction($num_of_printed, $num_of_variants) . " " .
-              "variants printed\n";
+              "variants printed";
+
+if(defined($filter))
+{
+  print STDERR " (".($filter eq "non" ? "" : "non-")."tandem indels removed)";
+}
+
+print STDERR "\n";
+
+print STDERR "vcf_filter_slippage.pl: " .
+              pretty_fraction($num_of_indels, $num_of_variants) . " " .
+              "variants were clean indels\n";
+
+if($num_of_indels > 0)
+{
+  print STDERR "vcf_filter_slippage.pl: " .
+                pretty_fraction($num_of_tandem, $num_of_indels) . " " .
+                "indels are tandem\n";
+
+  print STDERR "vcf_filter_slippage.pl: " .
+                pretty_fraction($num_of_indels-$num_of_tandem, $num_of_indels) .
+                " indels are non-tandem\n";
+
+  print STDERR "vcf_filter_slippage.pl: mean slippage per indel is " .
+               sprintf("%.3f", $total_slippage / $num_of_indels) . "bp\n";
+}
 
 close($vcf_handle);
 

@@ -10,7 +10,7 @@ use lib $FindBin::Bin;
 use Fcntl qw(SEEK_CUR);
 
 use VCFFile;
-use FASTNFile;
+use RefGenome;
 use UsefulModule;
 
 use List::Util qw(min max);
@@ -22,19 +22,22 @@ sub print_usage
   }
 
   print STDERR
-"Usage: ./vcf_add_ancestral.pl <stampy.sam> <min_MAPQ> <outgroup_name> <in.vcf> " .
-  "<ancestral_ref.fa1 ..>\n" .
-"  Assigns ancestral allele to VCF.  Adds AA and AALEN INFO tags. If <in.vcf> \n" .
-"  is '-' reads from stdin\n" .
-"  \n" .
-"  For variants with both alleles the same length, uses ancestral reference.\n" .
-"  For indels, uses mapping of 5'+allele+3' flank to outgroup genome.\n" .
-"  * AA = [. -> unknown, 0 -> ref, 1 -> alt allele]\n" .
-"  * AALEN = (derived length - ancestral length)\n";
+"Usage: ./vcf_add_ancestral.pl <stampy.sam> <min_MAPQ> <outgroup_name> " .
+  "<in.vcf> [ancestral_ref.fa1 ..]
+  Assigns ancestral allele to VCF.  Adds AA and AALEN INFO tags. If <in.vcf>
+  is '-' reads from stdin.
+
+  Ancestral reference genome is optional - if it is not given, only variants
+  with SVLEN != 0 will be polarised.  
+
+  For variants with both alleles the same length, uses ancestral reference.
+  For indels, uses mapping of 5'+allele+3' flank to outgroup genome.
+  * AA = [. -> unknown, 0 -> ref, 1 -> alt allele]
+  * AALEN = (derived length - ancestral length)\n";
   exit;
 }
 
-if(@ARGV < 5)
+if(@ARGV < 4)
 {
   print_usage();
 }
@@ -103,29 +106,15 @@ my @mapping_columns = qw(name flags chr pos MAPQ CIGAR
 # Load Ancestral Reference
 #
 print STDERR "vcf_add_ancestral_to_indels.pl: Loading ancestral ref...\n";
-my ($anc_ref_hash) = read_all_from_files(@ancestral_ref_files);
 
-# Set the reference genome chromosome names
-$vcf->set_ref_chrom_names(keys %$anc_ref_hash);
+my $ancestral;
 
-# Ancestral FASTA looks like: >ANCESTOR_for_chromosome:CHIMP2.1:1:1:229974691:1
-#my @anc_chrs = keys %$anc_ref_hash;
-#
-#for my $key (@anc_chrs)
-#{
-#  if($key =~ /ANCESTOR_for_chromosome:[^:]*:(?:chr)?([\dXY]*)([ab]*):/i)
-#  {
-#    my $chr = "chr".uc($1).lc($2);
-#    $anc_ref_hash->{$chr} = $anc_ref_hash->{$key};
-#    delete($anc_ref_hash->{$key});
-    #print STDERR "vcf_add_ancestral.pl: Loaded '$chr'\n";
-#  }
-#  else
-#  {
-    #print STDERR "vcf_add_ancestral.pl: Ancestral ref ignored: $key\n";
-#  }
-#}
-
+if(@ancestral_ref_files > 1 ||
+   (@ancestral_ref_files > 0 && $ancestral_ref_files[0] ne "-"))
+{
+  $ancestral = new RefGenome(uppercase => 1);
+  $ancestral->load_from_files(@ancestral_ref_files);
+}
 
 #
 # Print VCF header
@@ -161,46 +150,40 @@ while(defined($vcf_entry = $vcf->read_entry()))
   my $ref_allele = uc($vcf_entry->{'true_REF'});
   my $alt_allele = uc($vcf_entry->{'true_ALT'});
 
-  my $aa;
+  my $aa = '.';
 
   if($svlen == 0)
   {
     # Nucleotide Polymorphism (NP) - use ancestral allele
     $num_of_np++;
 
-    my $ref_name = $vcf->guess_ref_chrom_name($chr);
-
-    if(!defined($ref_name))
+    if(defined($ancestral))
     {
-      print STDERR "vcf_add_ancestral.pl: Ancestor lacks chromosome '$chr'\n";
-      die();
-    }
+      # $pos-1 because perl uses 0-based
+      my $anc_ref = $ancestral->get_chr_substr($chr, $pos-1, length($ref_allele));
+      my $anc_alt = $ancestral->get_chr_substr($chr, $pos-1, length($alt_allele));
 
-    my $anc_ref = substr($anc_ref_hash->{$ref_name},
-                         $pos-1, # because perl uses 0-based
-                         length($ref_allele));
+      if(!defined($anc_ref))
+      {
+        print STDERR "vcf_add_ancestral.pl Error: " .
+                     "Ancestor lacks chromosome '$chr'\n";
+        die();
+      }
 
-    my $anc_alt = substr($anc_ref_hash->{$ref_name},
-                         $pos-1, # because perl uses 0-based
-                         length($alt_allele));
+      my $ref_matches = ancestral_match($anc_ref, $ref_allele);
+      my $alt_matches = ancestral_match($anc_alt, $alt_allele);
 
-    my $ref_matches = ancestral_match($anc_ref, $ref_allele);
-    my $alt_matches = ancestral_match($anc_alt, $alt_allele);
-
-    if($ref_matches && !$alt_matches)
-    {
-      $aa = '0';
-      $num_of_np_polarised++;
-    }
-    elsif(!$ref_matches && $alt_matches)
-    {
-      $aa = '1';
-      $num_of_np_polarised++;
-      $num_of_np_ref++;
-    }
-    else
-    {
-      $aa = '.';
+      if($ref_matches && !$alt_matches)
+      {
+        $aa = '0';
+        $num_of_np_polarised++;
+      }
+      elsif(!$ref_matches && $alt_matches)
+      {
+        $aa = '1';
+        $num_of_np_polarised++;
+        $num_of_np_ref++;
+      }
     }
   }
   else
@@ -239,7 +222,8 @@ while(defined($vcf_entry = $vcf->read_entry()))
 
     if(!defined($ref_mapping_line))
     {
-      die("vcf_add_ancestral.pl: Couldn't find mapping for var '$var_id'\n");
+      #die("vcf_add_ancestral.pl: Couldn't find mapping for var '$var_id'\n");
+	next;
     }
     elsif(lc($alt_mapping{'name'}) ne lc($var_id."_alt"))
     {

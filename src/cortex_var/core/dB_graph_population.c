@@ -4741,7 +4741,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 
   if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
     {
-      //printf("Ignore as status us not none\n\n");
+      printf("zahara DEBUG - Ignore suoernode as status us not none, it is %c\n\n", node->status);
       *supernode_len=-1;//caller can check this
       is_supernode_pruned=false;
       return is_supernode_pruned;
@@ -4766,13 +4766,14 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 										    sum_of_covgs_in_desired_colours);
 
 	*supernode_len=length_sup;
-
+	printf("zahara length of sup is %d\n", length_sup);
 	if (length_sup <=1)
 	  {
 	    is_supernode_pruned=false;
+	    printf("zahara - no interiot - exit\n");
 	    return is_supernode_pruned;//do nothing. This supernode has no interior, is just 1 or 2 nodes, so cannot prune it
 	  }
-	else if (length_sup <= 2*db_graph->kmer_size +2)
+	else //if (length_sup <= 2*db_graph->kmer_size +2)
 	  {
 	    int i;
 	    //to look like an error, must all have actual coverage, caused by an actual errored read, BUT must have low covg, <=threshold
@@ -4787,9 +4788,10 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 
 	    if (interior_nodes_look_like_error==true)
 	      {
+		printf("zahara - Looks like is error. prine\n");
 		for (i=1; (i<=length_sup-1); i++)
 		  {
-
+		    printf("zahara %d - prune \n", i);
 		    db_graph_db_node_prune_low_coverage(path_nodes[i],coverage,
 							&db_node_action_set_status_pruned,
 							db_graph,
@@ -4797,16 +4799,18 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 							);
 		  }
 	      }
-	    else//interior nodes do not look like error
-	      {
+	    //else//interior nodes do not look like error
+	    //  {
 		//don't prune - some interior ode has high coverage
-		is_supernode_pruned=false;
-	      }
+	    //	is_supernode_pruned=false;
+
+	    //	printf("zahara - DO NOT PRUNE - soe interior node has covg > thresh \n");
+	    //}
 	  }
       }
   else//debug only
     {
-      //printf("OK - query node has too much covg to consider removing\n");
+      printf("zahara - query node has too much covg to consider removing\n");
       is_supernode_pruned=false;
     }
     return is_supernode_pruned;

@@ -7,7 +7,7 @@ use warnings;
 use FindBin;
 use lib $FindBin::Bin;
 
-use List::Util qw(min);
+use List::Util qw(sum min max);
 
 use VCFFile;
 use UsefulModule;
@@ -85,9 +85,26 @@ my $num_of_clean_indels = 0;
 my $num_of_transitions = 0;
 my $num_of_transversions = 0;
 
-my $num_of_small_indels = 0;
-my $num_of_small_tandem = 0;
-my $num_of_small_non_tandem = 0;
+my $num_of_indels = 0;
+my $num_of_tandem = 0;
+my $num_of_non_tandem = 0;
+
+# Ins/del ratios
+my $num_of_del = 0;
+my $num_of_ins = 0;
+my @ins_sizes = ();
+my @del_sizes = ();
+
+my $num_of_tandem_del = 0;
+my $num_of_tandem_ins = 0;
+my @ins_sizes_tandem = ();
+my @del_sizes_tandem = ();
+
+my $num_of_non_tandem_del = 0;
+my $num_of_non_tandem_ins = 0;
+my @ins_sizes_non_tandem = ();
+my @del_sizes_non_tandem = ();
+
 
 my $vcf_entry;
 
@@ -119,7 +136,7 @@ while(defined($vcf_entry = $vcf->read_entry()))
 
     if((!defined($max_indel) || abs($svlen) <= $max_indel))
     {
-      $num_of_small_indels++;
+      $num_of_indels++;
 
       # tandem
       my $left_flank = $vcf_entry->{'INFO'}->{'left_flank'};
@@ -127,13 +144,59 @@ while(defined($vcf_entry = $vcf->read_entry()))
 
       if(defined($left_flank) && defined($right_flank))
       {
-        if(is_slippage($left_flank, $indel, $right_flank))
+        my $is_tandem = is_slippage($left_flank, $indel, $right_flank);
+
+        if($is_tandem)
         {
-          $num_of_small_tandem++;
+          $num_of_tandem++;
         }
         else
         {
-          $num_of_small_non_tandem++;
+          $num_of_non_tandem++;
+        }
+
+        my $polarised_len;
+
+        if(defined($polarised_len = $vcf_entry->{'INFO'}->{'AALEN'}) &&
+           $polarised_len ne ".")
+        {
+          if($polarised_len > 0)
+          {
+            $num_of_ins++;
+            push(@ins_sizes, $polarised_len);
+          }
+          else
+          {
+            $num_of_del++;
+            push(@del_sizes, -$polarised_len);
+          }
+
+          if($is_tandem)
+          {
+            if($polarised_len > 0)
+            {
+              $num_of_tandem_ins++;
+              push(@ins_sizes_tandem, $polarised_len);
+            }
+            else
+            {
+              $num_of_tandem_del++;
+              push(@del_sizes_tandem, -$polarised_len);
+            }
+          }
+          else
+          {
+            if($polarised_len > 0)
+            {
+              $num_of_non_tandem_ins++;
+              push(@ins_sizes_non_tandem, $polarised_len);
+            }
+            else
+            {
+              $num_of_non_tandem_del++;
+              push(@del_sizes_non_tandem, -$polarised_len);
+            }
+          }
         }
       }
     }
@@ -147,13 +210,29 @@ while(defined($vcf_entry = $vcf->read_entry()))
 
 close($vcf_handle);
 
+@ins_sizes = sort {$a <=> $b} @ins_sizes;
+@del_sizes = sort {$a <=> $b} @del_sizes;
+
+@ins_sizes_tandem = sort {$a <=> $b} @ins_sizes_tandem;
+@del_sizes_tandem = sort {$a <=> $b} @del_sizes_tandem;
+
+@ins_sizes_non_tandem = sort {$a <=> $b} @ins_sizes_non_tandem;
+@del_sizes_non_tandem = sort {$a <=> $b} @del_sizes_non_tandem;
+
 # Print results
+print "-- Overview --\n";
+
 my $num_of_snps = $num_of_transitions+$num_of_transversions;
-print "SNPs:         ".pretty_fraction($num_of_snps, $num_of_variants)." of variants\n";
-print "clean indels: ".pretty_fraction($num_of_clean_indels, $num_of_variants)." of variants\n";
-print "complex:      ".pretty_fraction($num_of_complex, $num_of_variants)." of variants\n";
+
+print "SNPs:         " .
+      pretty_fraction($num_of_snps, $num_of_variants) . " of variants\n";
+print "clean indels: " . pretty_fraction($num_of_clean_indels, $num_of_variants) .
+      " of variants\n";
+print "complex:      " . pretty_fraction($num_of_complex, $num_of_variants) .
+      " of variants\n";
 
 # Print Ts/Tv results
+print "-- SNPs --\n";
 print "Ts:    ".pretty_fraction($num_of_transitions, $num_of_snps)." of snps\n" .
       "Tv:    ".pretty_fraction($num_of_transversions, $num_of_snps)." of snps\n";
 
@@ -164,11 +243,73 @@ if($num_of_transversions > 0)
 }
 
 # small indel results
-print "small clean indels: ".pretty_fraction($num_of_small_indels, $num_of_variants)." of variants\n";
+print "-- Indels --\n";
+print "clean indels: " . pretty_fraction($num_of_indels, $num_of_variants) .
+      " of variants\n";
+print "  ins: ".pretty_fraction($num_of_ins, $num_of_ins+$num_of_del)."\n";
+print "  ins distrib: ".print_arr_stats(\@ins_sizes)."\n";
+print "  del distrib: ".print_arr_stats(\@del_sizes)."\n";
 
-my $total_tandem_nontandem = $num_of_small_tandem + $num_of_small_non_tandem;
-print "small tandem:       ".pretty_fraction($num_of_small_tandem, $total_tandem_nontandem)." of small indels\n";
-print "small non-tandem:   ".pretty_fraction($num_of_small_non_tandem, $total_tandem_nontandem)." of small indels\n";
+my $total_tandem_nontandem = $num_of_tandem + $num_of_non_tandem;
+
+print "  tandem:       " .
+      pretty_fraction($num_of_tandem, $total_tandem_nontandem) .
+      " of small indels\n";
+
+if($num_of_tandem > 0)
+{
+  my $polarised_tandem = $num_of_tandem_ins + $num_of_tandem_del;
+
+  print "    ins: ".pretty_fraction($num_of_tandem_ins, $polarised_tandem)."\n";
+  print "    ins distrib: ".print_arr_stats(\@ins_sizes_tandem)."\n";
+  print "    del distrib: ".print_arr_stats(\@del_sizes_tandem)."\n";
+}
+
+print "  non-tandem:   " .
+      pretty_fraction($num_of_non_tandem, $total_tandem_nontandem) . " " .
+      "of small indels\n";
+
+if($num_of_non_tandem > 0)
+{
+  my $polarised_non_tandem = $num_of_non_tandem_ins +
+                             $num_of_non_tandem_del;
+  print "    ins: " . pretty_fraction($num_of_non_tandem_ins,
+                                      $polarised_non_tandem) . "\n";
+
+  print "    ins distrib: " . print_arr_stats(\@ins_sizes_non_tandem) . "\n";
+  print "    del distrib: " . print_arr_stats(\@del_sizes_non_tandem) . "\n";
+}
+
+sub print_arr_stats
+{
+  my ($arr) = @_;
+  
+  my $elements = scalar(@$arr);
+
+  if($elements == 0)
+  {
+    return "";
+  }
+
+  my $mean = sum(@$arr) / $elements;
+  my $median;
+
+  if($elements == 1)
+  {
+    $median = $arr->[0];
+  }
+  elsif($elements % 2 == 0)
+  {
+    $median = ($arr->[$elements/2] + $arr->[$elements/2+1]) / 2;
+  }
+  else
+  {
+    $median = $arr->[$elements/2];
+  }
+
+  return "min: $arr->[0]; mean: " . sprintf("%.3f", $mean) . "; " .
+         "median: " . sprintf("%.1f", $median) . "; max: $arr->[$elements-1];";
+}
 
 sub is_slippage
 {

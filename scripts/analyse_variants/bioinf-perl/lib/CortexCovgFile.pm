@@ -305,7 +305,8 @@ sub estimate_contig_count
   my $contig_length_in_k = @$covgs_ptr - 2; # we ignore first and last
   my $read_length_in_k = $read_length_bp - $kmer_size + 1;
 
-  my $epsilon_correction = max(1 - $kmer_size * $epsilon, 0);
+  #my $epsilon_correction = max(1 - $kmer_size * $epsilon, 0);
+  my $epsilon_correction = (1 - $epsilon) ** $kmer_size;
 
   my @results = ();
 

@@ -9,7 +9,7 @@ use List::Util qw(max);
 use FindBin;
 use lib $FindBin::Bin;
 
-use FASTNFile;
+use RefGenome;
 use VCFFile;
 use UsefulModule;
 
@@ -78,17 +78,13 @@ else
 #
 # Load reference files
 #
-my ($ref_genomes_hashref) = read_all_from_files(@ref_files);
-
-my %ref_genomes = %$ref_genomes_hashref;
+my $genome = new RefGenome(uppercase => 1);
+$genome->load_from_files(@ref_files);
 
 #
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
-
-# Set the reference genome chromosome names
-$vcf->set_ref_chrom_names(keys %ref_genomes);
 
 $vcf->print_header();
 
@@ -113,9 +109,8 @@ while(defined($vcf_entry = $vcf->read_entry()))
   my $print = 1;
 
   my $chr = $vcf_entry->{'CHROM'};
-  my $ref_chr = $vcf->guess_ref_chrom_name($chr);
 
-  if(!defined($ref_chr))
+  if(!$genome->chr_exists($chr))
   {
     if(!defined($chrom_not_in_ref{$chr}))
     {
@@ -132,20 +127,22 @@ while(defined($vcf_entry = $vcf->read_entry()))
     my $var_start = $vcf_entry->{'true_POS'} - 1;
     my $var_length = length($ref_allele);
 
-    my $chrom_length = length($ref_genomes{$ref_chr});
+    my $chrom_length = $genome->get_chr_length($chr);
 
     if($var_start + $var_length > $chrom_length)
     {
       print STDERR "vcf_filter_by_ref.pl - Warning: variant " .
                    $vcf_entry->{'ID'} . " " .
                    "[".$chr.":".$vcf_entry->{'POS'}.":".$var_length."] " .
-                   "out of bounds of ref '$ref_chr' [length:$chrom_length]\n";
+                   "out of bounds of ref " .
+                   "'".$genome->guess_chrom_fasta_name($chr)."' " .
+                   "[length:$chrom_length]\n";
     }
     else
     {
-      my $ref_seq = substr($ref_genomes{$ref_chr}, $var_start, $var_length);
+      my $ref_seq = $genome->get_chr_substr($chr, $var_start, $var_length);
 
-      if(uc($ref_seq) ne $ref_allele)
+      if($ref_seq ne $ref_allele)
       {
         $print = 0;
         $num_of_ref_mismatches++;
@@ -155,7 +152,7 @@ while(defined($vcf_entry = $vcf->read_entry()))
         my $region_start = max(0, $var_start - $filter_dist);
         my $region_end = min($chrom_length-1, $var_start+$var_length);
 
-        my $region = substr($ref_genomes{$ref_chr}, $region_start, $region_end);
+        my $region = $genome->get_chr_substr($chr, $region_start, $region_end);
 
         if($region =~ /[^acgt]/i)
         {
