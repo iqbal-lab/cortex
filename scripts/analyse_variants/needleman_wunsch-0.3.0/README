@@ -1,0 +1,148 @@
+Needleman-Wunsch global alignment
+Isaac Turner <turner.isaac@gmail.com>
+28 Nov 2011
+
+GNU General Public License (v3 or later)
+
+== Build ==
+
+isaac$ make
+
+== Run ==
+
+Baiscs:
+
+isaac$ ./needleman_wunsch CAGACGT CGATA
+CAGACGT
+C--GATA
+isaac$
+
+
+Print alignment scores:
+
+isaac$ ./needleman_wunsch --printscores CAGACGT CGATA
+CAGACGT
+C--GATA
+score: -15
+isaac$
+
+
+Read from file:
+
+dna.fa contains:
+>seqA
+ACAATAGAC
+>seqB
+ACGAATAGAT
+>seqC
+ACGTGA
+CAGAT
+>seqD
+GTGGACG
+AGTA
+isaac$
+
+isaac$ ./needleman_wunsch --printscores --file dna.fa.gz
+AC-AATAGAC
+ACGAATAGAT
+score: -3
+
+ACGTGACAGAT
+GTGGACGAGTA
+score: -5
+
+
+Reading from STDIN:
+
+isaac$ gzip -d -c dna.fa.gz | ./needleman_wunsch --stdin
+AC-AATAGAC
+ACGAATAGAT
+
+ACGTGACAGAT
+GTGGACGAGTA
+
+or:
+isaac$ gzip -d -c dna.fa.gz | ./needleman_wunsch --file -
+(gives same output)
+
+Set different scoring systems
+
+isaac$ ./needleman_wunsch --match 1 --mismatch 0 --gapopen -10 --gapextend 0 ACGTGCCCCACAGAT AGGTGGACGAGAT
+
+Getting help
+
+isaac$ ./needleman_wunsch 
+usage: ./needleman_wunsch [OPTIONS] [seq1 seq2]
+  Needleman-Wunsch optimal global alignment (maximises score).  
+  Takes a pair of sequences on the command line, reads from a
+  file and from sequence piped in.  Can read gzip files and FASTA.  
+
+  OPTIONS:
+    --file <file>        Sequence file reading with gzip support
+    --stdin              Read from STDIN (same as '--file -')
+
+    --scoring <PAM30|PAM70|BLOSUM80|BLOSUM62>
+    --case_sensitive     Case sensitive matching
+
+    --match <score>      default: 1
+    --mismatch <score>   default: -2
+    --gapopen <score>    default: -4
+    --gapextend <score>  default: -1
+      Gap (of length N) penalty is: (open+N*extend)
+
+    --freestartgap       No penalty for gap at start of alignment
+    --freeendgap         No penalty for gap at end of alignment
+
+    --printscores        Print optimal alignment scores
+    --pretty             Print with a descriptor line
+    --colour             Print with in colour
+    --zam                A funky type of output
+
+ DETAILS:
+  * For help chosing scoring, see the README file. 
+  * To do alignment without affine gap, set '--gapopen 0'.
+
+  turner.isaac@gmail.com  28 Nov 2011
+isaac$
+
+== Scoring systems ==
+
+Proteins:
+Query Length    Substitution Matrix   Gap Costs (gap_open,gap_extend)
+<35             PAM-30                (9,1)
+35-50           PAM-70                (10,1)
+50-85           BLOSUM-80             (10,1)
+85              BLOSUM-62             (10,1)
+[table from http://www.ncbi.nlm.nih.gov/blast/html/sub_matrix.html]
+
+gap (of length N) penalty: gap_open + N*gap_extend
+
+NCBI BLAST Quote:
+Many nucleotide searches use a simple scoring system that consists of a "reward"
+for a match and a "penalty" for a mismatch. The (absolute) reward/penalty ratio
+should be increased as one looks at more divergent sequences. A ratio of 0.33
+(1/-3) is appropriate for sequences that are about 99% conserved; a ratio of 0.5
+(1/-2) is best for sequences that are 95% conserved; a ratio of about one (1/-1)
+is best for sequences that are 75% conserved [1].
+- http://www.ncbi.nlm.nih.gov/BLAST/blastcgihelp.shtml#Reward-penalty
+
+NCBI Gap (open, extend) values:
+-5, -2
+-2, -2
+-1, -2
+-0, -2
+-3, -1
+-2, -1
+-1, -1
+
+Our default (for now) are:
+gap_open/gap_extend: (-4,-1)
+match/mismatch: (1,-2)
+
+== Development ==
+
+Short term goals:
+- reading in of different scoring systems
+
+Long term goals:
+- allow inversions
