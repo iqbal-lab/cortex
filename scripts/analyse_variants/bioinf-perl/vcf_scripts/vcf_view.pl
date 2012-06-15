@@ -10,7 +10,7 @@ use FindBin;
 use lib $FindBin::Bin;
 
 use VCFFile;
-use FASTNFile;
+use RefGenome;
 
 ## Config
 my $align_cmd = "needleman_wunsch --pretty";
@@ -35,7 +35,7 @@ OPTIONS:
   --no_indels  Variants must not have indels
   
   
-  --ref <ref>  Load reference genome
+  --ref <ref>  Load reference genome (can use used multiple time)
   --flanks <f> Print <f> bp of flank, using left_flank INFO tag or --ref file
   --colour     Print with colour
   
@@ -50,7 +50,7 @@ my $no_snps = 0;
 my $require_indels = 0;
 my $no_indels = 0;
 
-my $ref_file;
+my @ref_files = ();
 my $flank_size = 0;
 
 my $colour_output = 0;
@@ -86,11 +86,15 @@ while(@ARGV > 0)
   elsif($ARGV[0] =~ /^-?-ref$/i)
   {
     shift;
-    $ref_file = shift;
-    
+    my $ref_file = shift;
+
     if(!defined($ref_file))
     {
       print_usage("missing --ref <ref> argument");
+    }
+    else
+    {
+      push(@ref_files, $ref_file);
     }
   }
   elsif($ARGV[0] =~ /^-?-flanks?$/i)
@@ -159,24 +163,13 @@ else
 #
 # Load reference
 #
-my %ref_genomes;
-
-if(defined($ref_file))
-{
-  my ($ref_genomes_hashref) = read_all_from_files($ref_file);
-  %ref_genomes = %$ref_genomes_hashref;
-}
+my $genome = new RefGenome(uppercase => 1);
+$genome->load_from_files(@ref_files);
 
 #
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
-
-if(defined($ref_file))
-{
-  # Set the reference genome chromosome names
-  $vcf->set_ref_chrom_names(keys %ref_genomes);
-}
 
 if($view_as_vcf)
 {
@@ -290,38 +283,39 @@ while(defined($vcf_entry = $vcf->read_entry()))
       if($flank_size > 0)
       {
         my $chr = $vcf_entry->{'CHROM'};
-        my $ref_chr = $vcf->guess_ref_chrom_name($chr);
 
-        if(defined($ref_file) && defined($ref_genomes{$ref_chr}))
+        if(@ref_files > 0 && $genome->chr_exists($chr))
         {
           # get as 0-based
           my $var_pos = $vcf_entry->{'true_POS'} - 1;
-          my $chrom_length = length($ref_genomes{$ref_chr});
+          my $chrom_length = $genome->get_chr_length($chr);
 
           if($var_pos >= $chrom_length)
           {
+            my $fasta_name = $genome->guess_chrom_fasta_name($chr);
+          
             print STDERR "vcf_view.pl - Warning: variant " .
                          "'".$vcf_entry->{'ID'}."' " .
                          "[$chr:".$vcf_entry->{'POS'}."] outside of ref " .
-                         "'$ref_chr' [length:$chrom_length]\n";
+                         "'$fasta_name' [length:$chrom_length]\n";
           }
           else
           {
             my $left_start = max(0, $var_pos - $flank_size);
             my $left_length = $var_pos - $left_start;
 
-            $left_flank = substr($ref_genomes{$ref_chr},
-                                 $left_start,
-                                 $left_length);
+            $left_flank = $genome->get_chr_substr($chr,
+                                                  $left_start,
+                                                  $left_length);
 
             my $right_start = $var_pos - 1 + length($vcf_entry->{'true_REF'});
             my $right_length = min($chrom_length - $right_start, $flank_size);
 
-            $right_flank = substr($ref_genomes{$ref_chr},
-                                  $right_start,
-                                  $right_length);
+            $right_flank = $genome->get_chr_substr($chr,
+                                                   $right_start,
+                                                   $right_length);
 
-            $sep = ("|"x$left_length) . $sep . ("|"x$right_length);
+            $sep = ("|" x $left_length) . $sep . ("|" x $right_length);
           }
         }
         else
@@ -339,7 +333,7 @@ while(defined($vcf_entry = $vcf->read_entry()))
           if(defined($info_left))
           {
             my $length = min($flank_size, length($info_right));
-            $left_flank = substr($info_right, 0, $length);
+            $right_flank = substr($info_right, 0, $length);
             $sep = $sep.("|"x$length);
           }
         }

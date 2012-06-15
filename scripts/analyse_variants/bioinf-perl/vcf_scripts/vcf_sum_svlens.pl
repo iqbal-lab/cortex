@@ -17,7 +17,7 @@ sub print_usage
   }
 
   print STDERR "Usage: ./vcf_sum_svlens.pl [file.vcf]\n";
-  print STDERR "  Sum polarised SVLENs\n";
+  print STDERR "  Sum polarised SVLEN (uses tag AALEN).\n";
   exit;
 }
 

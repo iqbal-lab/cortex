@@ -9,9 +9,8 @@ use List::Util qw(min max);
 use FindBin;
 use lib $FindBin::Bin;
 
-use GeneticsModule;
 use VCFFile;
-use FASTNFile;
+use RefGenome;
 
 sub print_usage
 {
@@ -20,12 +19,10 @@ sub print_usage
   }
 
   print STDERR "" .
-"Usage: ./vcf_print_allele_branches.pl <K> <in.vcf> [ref.files ..]
+"Usage: ./vcf_print_allele_branches.pl <flank_size> <in.vcf> [ref.files ..]
   Prints alleles plus flanking sequence from VCF file in FASTA format. If
   <in.vcf> is '-', reads from stdin.  If [ref.files] omitted, uses INFO flank
-  tags.
-
-  <K> is flank size
+  tags (left_flank=.. & right_flank=..).
 
   OTPIONS:
     --trim <t>          trim sequences longer than <t>\n";
@@ -78,26 +75,18 @@ else
   print_usage("Must specify or pipe in a VCF file");
 }
 
-my %ref_genomes;
+my $genome = new RefGenome();
 
 if(@ref_files > 0)
 {
   # Load reference
-  my ($ref_genomes_hashref) = read_all_from_files(@ref_files);
-
-  %ref_genomes = %$ref_genomes_hashref;
+  $genome->load_from_files(@ref_files);
 }
 
 #
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
-
-if(@ref_files > 0)
-{
-  # Set the reference genome chromosome names
-  $vcf->set_ref_chrom_names(keys %ref_genomes);
-}
 
 my $vcf_entry;
 
@@ -134,19 +123,7 @@ while(defined($vcf_entry = $vcf->read_entry()))
     }
     else
     {
-      my $chr = $vcf_entry->{'CHROM'};
-      my $ref_chr = $vcf->guess_ref_chrom_name($chr);
-
-      if(defined($ref_chr))
-      {
-        ($left_flank, $right_flank) = get_flanks_from_ref_genome($vcf_entry,
-                                                                 $ref_chr);
-      }
-      else
-      {
-        die("Chromosome '$vcf_entry->{'CHROM'}' not in reference " .
-            "(".join(",",sort keys %ref_genomes).")");
-      }
+      ($left_flank, $right_flank) = get_flanks_from_ref_genome($vcf_entry);
     }
   }
 
@@ -167,7 +144,7 @@ sub print_to_fasta
   
   if(defined($trim))
   {
-    print substr($fasta_seq,0,$trim) . "\n";
+    print substr($fasta_seq, 0, $trim) . "\n";
   }
   else
   {
@@ -177,24 +154,51 @@ sub print_to_fasta
 
 sub get_flanks_from_ref_genome
 {
-  my ($vcf_entry, $ref_chr) = @_;
+  my ($vcf_entry) = @_;
+
+  my $chr = $vcf_entry->{'CHROM'};
 
   # Convert from 1-based to 0-based
   my $var_start = $vcf_entry->{'true_POS'}-1;
   
   my $var_length = length($vcf_entry->{'true_REF'});
 
+  my $chrom_length = $genome->get_chr_length($chr);
+
+  if(!defined($chrom_length))
+  {
+    die("Chromosome '$chr' not in reference " .
+        "(" . join(",", $genome->get_chr_names()) . ")");
+  }
+
   my $left_flank_start = max(0, $var_start-$max_flank_size);
   my $left_flank_length = $var_start - $left_flank_start;
 
   my $right_flank_start = $var_start + $var_length;
   my $right_flank_length = min($max_flank_size,
-                               length($ref_genomes{$ref_chr}) - $right_flank_start);
-  
-  my $left_flank = substr($ref_genomes{$ref_chr},
-                          $left_flank_start, $left_flank_length);
-  my $right_flank = substr($ref_genomes{$ref_chr},
-                           $right_flank_start, $right_flank_length);
+                               $chrom_length - $right_flank_start);
 
-  return ($left_flank, $right_flank);
+  if($right_flank_start + $right_flank_length >= $chrom_length)
+  {
+    my $ref_chrom_name = $genome->guess_chrom_fasta_name($chr);
+
+    print STDERR "vcf_print_allele_branches.pl Warning: " .
+                  "var " . $vcf_entry->{'ID'} . " at " .
+                  "$chr:" . $vcf_entry->{'POS'} . " is out of bounds of " .
+                  "$ref_chrom_name:1:" . $chrom_length . "\n";
+  
+    return ("", "");
+  }
+  else
+  {
+    my $left_flank = $genome->get_chr_substr($chr,
+                                             $left_flank_start,
+                                             $left_flank_length);
+
+    my $right_flank = $genome->get_chr_substr($chr,
+                                              $right_flank_start,
+                                              $right_flank_length);
+
+    return ($left_flank, $right_flank);
+  }
 }

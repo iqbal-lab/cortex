@@ -20,7 +20,7 @@ sub print_usage
   }
 
   print STDERR "Usage: ./vcf_print_svlen.pl [--abs|--tag <t>] [file.vcf]\n";
-  print STDERR "  Print SVLENs\n";
+  print STDERR "  Print size distribution of SVLENs\n";
   print STDERR "  --tag specify which INFO tag to use\n";
   exit;
 }
@@ -116,17 +116,10 @@ print "size".$csvsep."count\n";
 
 if(!$abs)
 {
-  print join("\n", map { "-" . $_ . $csvsep . (defined($del[$_]) ? $del[$_] : 0) }
-                     reverse(1..$#del)) . "\n";
+  print join("", map { "-".$_.$csvsep.(defined($del[$_]) ? $del[$_] : 0)."\n" }
+                   reverse(1..$#del));
 }
 
-my $ins_start = 0;
-
-while(!defined($ins[$ins_start]))
-{
-  $ins_start++;
-}
-
-print join("\n", map {$_ . $csvsep . (defined($ins[$_]) ? $ins[$_] : 0) }
-                   $ins_start..$#ins) . "\n";
+print join("", map {$_ . $csvsep . (defined($ins[$_]) ? $ins[$_] : 0) . "\n" }
+                 1..$#ins);
 

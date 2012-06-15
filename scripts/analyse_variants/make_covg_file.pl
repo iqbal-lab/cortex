@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
+use Getopt::Long;
 
 
 my $callfile = shift; ## callfile output by Cortex
@@ -11,6 +12,8 @@ my $outfile = $callfile.".covg_for_classifier";
 
 open(CALLS, $callfile)||die();
 open(OUT, ">".$outfile)||die();
+
+
 #print OUT "VAR\tREF_FILTER\tBR1_LEN\tBR2_LEN\tREF_COV_BR1\tREF_COV_BR2\tSAMPLES...\n";
 
 my $name = "";
@@ -110,7 +113,10 @@ while (<CALLS>)
 	}
 	elsif ($ref_colour==-1)
 	{
-	    print OUT "0";
+	    #Zam - just modified this. If there is no ref in the graph, printnothing. Either way, num of columns we print =  2*number of colours, but if 
+	    ## there is a ref colour, that is moved to the front
+	    #print OUT "0";
+
 	}
 	else
 	{
