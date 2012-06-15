@@ -25,26 +25,45 @@
 ### arg 2 - how many variants to process/classify
 ### arg 3 - input covg_for_classifier file. You should generate this in advance
 ### arg 4 - number of rows/lines in the covg_for_classifier file = number of variants overall
-### arg 5 - number of samples. This will be the number of colours in the graph, minus one if one of them was the ref. eg if you use cortex_var_31_c7 to get your calls, then this argument should be 7.
-###         or 6 if one of them was the reference (even if you only loaded data into the first colour. What's important is the number in the overall graph)
-### arg 6  - table of read lengths and covgs
-### arg 7  - estimated genome size. (Don't panic if not exact)
-### arg 8  - kmer size
+### arg 5 - number of colours in the graph 
+###         For example  you use cortex_var_31_c7 to get your calls, then this argument should be 7, even if you only loaded data from one sample in
+### arg 6 - was there a reference colour? 1 for yes and 0 for no (doesn't matter which colour it was)
+### arg 7  - table of read lengths and covgs
+### arg 8  - estimated genome size. (Don't panic if not exact)
+### arg 9  - kmer size
 
 
 args <- commandArgs(trailingOnly = TRUE) ##  one argument only -  start number 
 
-first_var            <- as.integer(args[1])+1;
+first_var            <- as.integer(args[1]);
 num_vars_to_process  <- as.integer(args[2])
 covgfile             <- args[3]
 totalvars            <- as.integer(args[4])
-num_samples          <- as.integer(args[5])
-tablefile            <- args[6]
-genome.size          <- as.integer(args[7]);
-kmer                 <-as.integer(args[8]);
+num_colours          <- as.integer(args[5])
+ref_present          <- as.integer(args[6])
+tablefile            <- args[7]
+genome.size          <- as.integer(args[8]);
+kmer                 <- as.integer(args[9]);
+
+## covg file will contain two char columns (var name, whether this looks like a ref bubble) which are 
+## not used by the classifier, followed by 2 numeric columns (length branch1, length branch2)
+## followed by 2*num_colours numeric columns (covg on the two branches in each colour)
+## If there was a reference in the graph, then the first two of these are covgs in the ref, also not used by the classifier.
+
+num_numeric_cols            <- 2*num_colours
+first_column_of_sample_data <- 5;
+num_samples                 <- num_colours
+
+if (ref_present==1)
+{
+    ## ignore the two columns showing covg in ref - that's purely for humans wanting to debug/explore.
+	first_column_of_sample_data<- 7; 
+	num_samples                <- num_colours-1
+}
+
 
 d<-read.table(covgfile, as.is=T, head=F,
- 		nrows= totalvars, colClasses=c("character", "character", rep("numeric",2*num_samples + 4)), 
+ 		nrows= totalvars, colClasses=c("character", "character", rep("numeric",2*num_colours + 2)), 
 		comment.char = "", sep="\t"); 
 
 
@@ -267,7 +286,7 @@ k.cov<-a.cov*(read.length-kmer+1)/read.length;
 per.base.read.arrival<-cov/(read.length*genome.size);
 
 #First get coverage for each sample from bubbles - check looks concordant
-cov.mn<-apply(d[,7:ncol(d)], 2, mean, trim=0.05);
+cov.mn<-apply(d[,first_column_of_sample_data:ncol(d)], 2, mean, trim=0.05);
 
 ii<-1:num_samples;
 
@@ -277,8 +296,7 @@ mn.cov<-mean(per.base.read.arrival);
 cat("\n\n***Classifying bubbles***\n\n", file=logfile, append=TRUE,  sep="\n");
 
 to.do<-nrow(d);
-num_cols_in_op<-7
-cols_in_d_corresponding_to_samples_start_here<-7       ## this is a "different" 7 !
+num_cols_in_op<-7   
 op<-array(0, c(to.do, num_cols_in_op));
 colnames(op)<-c("ID", "LLk.G1", "LLk.SNP", "LLk.ERR", "LLk.REP", "REF.BUBBLE", "Model");
 
@@ -291,7 +309,7 @@ for (i in first_var:lim) {
 
         cat("\n", file=logfile, append=TRUE,  sep="");
 	cat("Doing site ", i, file=logfile, append=TRUE,  sep="");
-	d1<-t(array(as.integer(d[i,cols_in_d_corresponding_to_samples_start_here:ncol(d)]), c(2, num_samples)));
+	d1<-t(array(as.integer(d[i,first_column_of_sample_data:ncol(d)]), c(2, num_samples)));
 
 	k.cov.emp<-(d[i,3]+d[i,4])*mn.cov/2;
 
@@ -385,7 +403,7 @@ for (i in 1:10) {
 ### output useful stats
 #######################
 cat("\n", sep="", file=logfile, append=TRUE);
-cat("\nClassify ", 100*length(which.snp)/num_vars_to_process, "% as SNPs", sep="", file=logfile, append=TRUE);
+cat("\nClassify ", 100*length(which.snp)/num_vars_to_process, "% as variants", sep="", file=logfile, append=TRUE);
 #cat("\nOf those passing threshold, ", 100*mean(op[which.snp,6]), 
 #	"% are REF BUBBLE compared to ", 100*mean(op[,6]), "% overall\n\n", sep="", file=logfile, append=TRUE);
 #which.fp<-which.snp[op[which.snp,6]==1];
@@ -396,7 +414,7 @@ cat("\nClassify ", 100*length(which.snp)/num_vars_to_process, "% as SNPs", sep="
 #cat("\n\nOf ", length(which.err), " bubbles identified as errors, ", 100*mean(op[which.err,6]), 
 #	"% are REF bubbles\n\n", sep="", file=logfile, append=TRUE);
 #ss<-setdiff(which(op[,7]==1), which.snp);
-#cat("\n\nOf ", length(ss), " bubbles identified as SNPs, but fail to meet threshold, ", 100*mean(op[ss,6]), 
+#cat("\n\nOf ", length(ss), " bubbles identified as variants, but fail to meet threshold, ", 100*mean(op[ss,6]), 
 #	"% are REF bubbles\n\n", sep="", file=logfile, append=TRUE);
 #cat("\n\nClassification eliminates ", 100-100*sum(op[which.snp,6])/sum(op[,6]), "% of errors\n\n", sep="\n", file=logfile, append=TRUE);
 

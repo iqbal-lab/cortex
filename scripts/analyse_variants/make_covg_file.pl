@@ -1,6 +1,5 @@
 #!/usr/bin/perl -w
 use strict;
-use Getopt::Long;
 
 
 my $callfile = shift; ## callfile output by Cortex
@@ -9,7 +8,10 @@ my $ref_colour = shift;## if one of the colours is the reference, specify here. 
 
 
 my $outfile = $callfile.".covg_for_classifier";
-
+if (-e $outfile)
+{
+    die("Halting make_covg_file.pl as the output file $outfile already exists. Do you really mean to overwrite it? Delete it first and rerun, or save it somewhere else\n");
+}
 open(CALLS, $callfile)||die();
 open(OUT, ">".$outfile)||die();
 
@@ -110,19 +112,19 @@ while (<CALLS>)
 	if ($ref_colour>=0)
 	{
 	    print OUT $array_counts_for_each_colour[$ref_colour];
+	    print OUT "\t";
 	}
 	elsif ($ref_colour==-1)
 	{
 	    #Zam - just modified this. If there is no ref in the graph, printnothing. Either way, num of columns we print =  2*number of colours, but if 
 	    ## there is a ref colour, that is moved to the front
 	    #print OUT "0";
-
 	}
 	else
 	{
 	    die("Ref colour is not -1 and yet is not positive\n");
 	}
-	print OUT "\t";
+
 	for ($i=0; $i<$number_of_colours; $i++)
 	{
 	    if ($i==$ref_colour)
