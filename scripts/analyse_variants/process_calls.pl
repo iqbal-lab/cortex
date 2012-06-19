@@ -90,7 +90,7 @@ my (
 my $pooled_colour = -1;    #deprecated
 $classif                             = -1;
 $require_one_allele_is_ref           = "yes";
-$prefix                              = "cortex";
+$prefix                              = "";
 $outdir                              = ".";
 $outvcf_filename_stub                = '';
 $callfile                            = "unspecified";
@@ -118,7 +118,7 @@ my $help = '';    #default false
 	                                          #must be "yes" or "no". Usually in VCF require one allele is the ref allele and matches the reference
 	'pop_classifier|c:s'                   => \$classif,
 	                                          ## file containing output of the population filter (classifier.R), or -1 if not used (default)
-	'prefix|p:s'                           => \$prefix,            ## this will prefix any var name
+	'prefix|p:s'                           => \$prefix,            ## this allows you to add a prefix to any var name. By default, it uses what is in the cortex callfile
 	'ploidy|y:i'                           => \$ploidy,            ## must be 1 or 2
 	'stampy_hash|t:s'                      => \$stampy_hash_stub,
 	                                            #stampy creates blah.sthash and blah.stidx. You should enter --stampy_hash blah
@@ -529,7 +529,8 @@ $final_decomp =~ s/.uncleaned//;
 if ($ref_fasta eq "unspecified")
 {
     ## just sort the file and PV tag it
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --filter_txt KMER_DUPE | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_simple";
+
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --filter_txt DUPE | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_simple";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
     print "$ret1\n";
@@ -542,15 +543,36 @@ if ($ref_fasta eq "unspecified")
 }
 else # sort and PV tag and remove ref mismatches
 {
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $simple_vcf_name $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --filter_txt KMER_DUPE  > $final_simple";
+
+    #### RAW vcf
+    my $tmp1 = $simple_vcf_name.".corrected_ref_mismatch";
+    print "Switch ref/alt bases in raw vcf on those sites where we know we have placed them back to front:\n";
+
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl $simple_vcf_name $ref_fasta > $tmp1";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
     print "$ret1\n";
 
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $decomp_vcf_name $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --filter_txt KMER_DUPE > $final_decomp";
-    print "$cmd2\n";
+    print "Remove sites where Stampy has placed variant in wrong place\n";
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --filter_txt KMER_DUPE  > $final_simple";
+    print "$cmd1\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
+
+    ### DECOMP VCF
+
+    my $tmp3 = $decomp_vcf_name.".corrected_ref_mismatch";
+    print "Switch ref/alt bases in decomp vcf on those sites where we know we have placed them back to front:\n";
+
+    my $cmd3 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl $decomp_vcf_name $ref_fasta > $tmp3";
+    print "$cmd3\n";
+    my $ret3 = qx{$cmd3};
+    print "$ret3\n";
+
+    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --filter_txt KMER_DUPE > $final_decomp";
+    print "$cmd4\n";
+    my $ret4 = qx{$cmd4};
+    print "$ret4\n";
 
 }
 
@@ -568,7 +590,11 @@ sub get_extra_info_for_calls
 
 	if ( $line =~ /(\w*var_\d+)_5p_flank/ )
 	{
-	    my $varname = $prefix . "_" . $1;
+	    my $varname = $1;
+	    if ($prefix ne "")
+	    {
+		$varname = $prefix."_".$varname;
+	    }
 	    if ( $varname eq "" )
 	    {
 		die(
@@ -862,7 +888,12 @@ sub filter_by_flank_mapqual
 			my $varname;
 			if ( $query =~ /(\w*var_\d+)_5p_flank/ )
 			{
-				$varname = $prefix . "_" . $1;
+			    $varname = $1;
+			    if ($prefix ne "")
+			    {
+				$varname = $prefix."_".$varname;
+			    }
+
 
 			}
 			else
@@ -908,7 +939,7 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 		$genotype,     $llk_hom1,       $llk_het,       $llk_hom2, $extra_info_fields
 	) = get_next_var_from_callfile( $file_handle_calls, $ploidy );
 
-	print "Got back extra info: $extra_info_fields for $var_name\n";
+	#print "Got back extra info: $extra_info_fields for $var_name\n";
 	my ( $eof2, $var_name2, $strand, $chr, $coord ) =
 	  get_next_var_from_flank_mapfile($file_handle_map_flanks);
 
@@ -964,9 +995,9 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 		}
 		elsif ( $which_is_ref eq "b" )
 		{
-
-			print "Ignore var $var_name, both alleles REF!\n";
-			return 1;
+		      ## let Isaac's scripts handle this
+			#print "Ignore var $var_name, both alleles REF!\n";
+			#return 1;
 		}
 	}
 	else
@@ -1227,10 +1258,11 @@ sub print_vcf_entry
 	}
 
 	my $info = "SVTYPE=$svtype;SVLEN=$svlen";
-	if ($extra_info ne '')
+	if ($extra_info ne "")
 	{
 	    $info = $info.";$extra_info";
 	}
+	
 	if (   ( ( $svtype !~ /COMPLEX/ ) && ( $svtype !~ /PH_SNPS/ ) )
 		|| ( $split_phased_snps == 0 ) )
 	{
@@ -1334,6 +1366,11 @@ sub print_vcf_entry
 
 			my $this_snp_name = $var_name . "_sub_snp_" . $cnt;
 			my $this_snp_info = "SVTYPE=SNP_FROM_COMPLEX;SVLEN=0";
+			if ($extra_info ne "")
+			{
+			    $this_snp_info = $this_snp_info.";$extra_info";
+			}
+
 			print $fh_output_vcf
 "$this_snp_chr\t$this_snp_pos\t$this_snp_name\t$this_snp_ref_allele\t$this_snp_alt_allele\t.\t$filter_result\t$this_snp_info\t";
 			my $have_called_gt       = 0;
@@ -1424,6 +1461,11 @@ sub print_vcf_entry
 			my $svlen =
 			  length($this_indel_ref_allele) - length($this_indel_alt_allele);
 			my $this_indel_info = "SVTYPE=INDEL_FROM_COMPLEX;SVLEN=$svlen";
+			if ($extra_info ne "")
+			{
+			    $this_indel_info = $this_indel_info.";$extra_info";
+			}
+
 			print $fh_output_vcf
 "$this_indel_chr\t$this_indel_pos\t$this_indel_name\t$this_indel_ref_allele\t$this_indel_alt_allele\t.\t$filter_result\t$this_indel_info\t";
 
@@ -1645,16 +1687,27 @@ sub print_all_genotypes_and_covgs
 			}
 		}
 		my $site_conf = -99999;
+		my $stripped_name = $name;
+		my $prefix_under;
+		if ($prefix ne "")
+		{
+		    $prefix_under = $prefix."_";
+		    $stripped_name =~ s/$prefix_under//;
+		}
 		if ( $do_we_have_pop_filter == 1 )
 		{
 		    if (exists $href_pop_conf->{$name})
 		    {
 			$site_conf = sprintf( "%.2f", $href_pop_conf->{$name} );
 		    }
+		    elsif (exists $href_pop_conf->{$stripped_name})
+		    {
+			$site_conf = sprintf( "%.2f", $href_pop_conf->{$stripped_name});
+		    }
 		    else
 		    {
 			$site_conf = "ZAMBO";
-			print "cannot find site conf for $name\n";
+			print "cannot find site conf for $name or $stripped_name\n";
 			print "keys are ";
 			print join("\n", keys %$href_pop_conf);
 			die();
@@ -2170,7 +2223,12 @@ sub get_next_var_from_callfile
 
 	if ( $line =~ /(\w*var_\d+)_5p_flank/ )
 	{
-		$varname = $prefix . "_" . $1;
+		$varname = $1;
+		if ($prefix ne "")
+		{
+		    $varname = $prefix."_".$varname;
+		}
+
 		if ( $varname eq "" )
 		{
 			die(
@@ -2181,6 +2239,14 @@ sub get_next_var_from_callfile
 		if (exists $call_to_extra_info{$varname})
 		{
 		    $extra_info=$call_to_extra_info{$varname};
+		}
+		elsif ($varname =~ /(\S+)_sub/)
+		{
+		    my $rawname = $1;
+		    if (exists $call_to_extra_info{$rawname})
+		    {
+			$extra_info=$call_to_extra_info{$rawname};
+		    }
 		}
 		else
 		{
@@ -2394,7 +2460,11 @@ sub get_next_var_from_flank_mapfile
 	my $name;
 	if ( $sp[0] =~ /(\w*var_\d+)/ )
 	{
-		$name = $prefix . "_" . $1;
+		$name = $1;
+		if ($prefix ne "")
+		{
+		    $name = $prefix."_".$name;
+		}
 	}
 	else
 	{
@@ -3460,7 +3530,11 @@ sub get_list_vars_with_cut_flanks
 		{
 			if ( $line =~ /(\w*var_\d+)_5p_flank/ )
 			{
-				my $name = $prefix . "_" . $1;
+				my $name = $1;
+				if ($prefix ne "")
+				{
+				    $name = $prefix . "_" .$name;
+				}
 				$href->{$name} = 1;
 			}
 			else
@@ -3484,7 +3558,11 @@ sub get_pop_filter_info
 		my $line = $_;
 		chomp $line;
 		my @sp = split( /\t/, $line );
-		my $name = $prefix . "_" . $sp[0];
+		my $name = $sp[0];
+		if ($prefix ne "")
+		{
+		    $name = $prefix . "_" .$name; 
+		}
 		if ($name =~ /^(\S+)\s+/)
 		{
 		    $name = $1;
@@ -3530,7 +3608,11 @@ sub wrap_needleman
 				$printed_at_start_of_var = 0;
 			}
 
-			$var_name = $prefix ."_".$1;
+			$var_name = $1;
+			if ($prefix ne "")
+			{
+			    $var_name = $prefix ."_".$var_name;
+			}
 			my $which_branch = $2;
 			print OUT "$var_name branch $which_branch\n";
 			my $a = <FILE>;
@@ -3540,7 +3622,11 @@ sub wrap_needleman
 		}
 		elsif ( $line =~ /branch\_(\d+)\_(1|2)/ )
 		{
-		    $var_name = $prefix . '_var_' . $1;
+		    $var_name = "var_" . $1;
+		    if ($prefix ne "")
+		    {
+			$var_name = $prefix."_".$var_name;
+		    }
 		    my $which = $2;
 
 		    if ( $printed_at_start_of_var == 0 )
