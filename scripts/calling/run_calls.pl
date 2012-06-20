@@ -716,6 +716,7 @@ my %vcfs_needing_merging=();
 my %kmer_to_union_callset=();#kmer--> {BC,PD} -> name of union callset 
 my %union_callset_to_max_read_len=();
 my %union_callset_to_table_readlens_and_covgs=();
+my %final_vcfs=(); # BC -> final BC, and PD -> final PD.
 
 if ($do_union eq "yes")  
 {
@@ -840,9 +841,9 @@ if ($do_union eq "yes")
 ######################################################################################################
 	
 	my $final_BC_vcf = $outdir_vcfs."combined_BC_calls_at_all_k.vcf";
-	merge_vcfs(\%vcfs_needing_merging, "BC", $final_BC_vcf);
+	merge_vcfs(\%vcfs_needing_merging, "BC", $final_BC_vcf, \%final_vcfs);
 	my $final_PD_vcf = $outdir_vcfs."combined_PD_calls_at_all_k.vcf";
-	merge_vcfs(\%vcfs_needing_merging, "PD", $final_PD_vcf);
+	merge_vcfs(\%vcfs_needing_merging, "PD", $final_PD_vcf, \%final_vcfs);
 
 
 
@@ -879,6 +880,12 @@ else  ##### if not making a union set
 
 
 
+#### print a report ####
+
+print "\n\nAll graph building, calling and VCF building is complete\n";
+print_report(\%vcfs_needing_merging, \%final_vcfs);
+
+
 
 
 ## print finish time
@@ -908,6 +915,21 @@ close(GLOBAL);
 #######################################################################################################
 #######################################################################################################
 #######################################################################################################
+
+sub print_report
+{
+    my ($href_vcfs_needing_merging, $href_final_vcfs) = @_;
+
+    return;
+
+}
+
+sub get_time
+{
+
+    
+}
+
 
 sub get_num_kmers
 {
@@ -1068,7 +1090,7 @@ sub clean_all_vcfs
 sub clean_vcf
 {
     my ($file) = @_;
-
+    die("deprecated");
     my $type="";
     if ($file=~ /raw/)
     {
@@ -1166,22 +1188,28 @@ sub build_per_sample_vcfs
 
 sub merge_vcfs
 {
-    my ($href_vcfs_needing_merging, $which_caller, $output_vcf)=@_;
+    my ($href_vcfs_needing_merging, $which_caller, $output_vcf, $href_result)=@_;
     
-    
-    my @vcfs=keys %{$href_vcfs_needing_merging->{$which_caller}};
-    my $first = $vcfs[0];
-    my $cmd1 = "(cat $first | head -200 | grep ^\#; ";
-    my $i;
-    for ($i=1; $i<scalar @vcfs; $i++)
+    if (exists $href_vcfs_needing_merging->{$which_caller})
     {
-	$cmd1 = $cmd1." cat ".$vcfs[$i]." | grep -v ^\#; ";
+	my @vcfs=keys %{$href_vcfs_needing_merging->{$which_caller}};
+	if (scalar(@vcfs)>0)
+	{
+	    my $first = $vcfs[0];
+	    my $cmd1 = "(cat $first | head -200 | grep ^\#; ";
+	    my $i;
+	    for ($i=1; $i<scalar @vcfs; $i++)
+	    {
+		$cmd1 = $cmd1." cat ".$vcfs[$i]." | grep -v ^\#; ";
+	    }
+	    $cmd1 = $cmd1.") | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER  --removed_tag KMER | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl > $output_vcf";
+	    print "$cmd1\n";
+	    my $ret1 = qx{$cmd1};
+	    print "$ret1\n";
+	    
+	    $href_result->{$which_caller}= $output_vcf;
+	}
     }
-    $cmd1 = $cmd1.") | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --filter_txt KMER_DUPE | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl > $output_vcf";
-    print "$cmd1\n";
-    my $ret1 = qx{$cmd1};
-    print "$ret1\n";
-
 }
 
 sub build_vcfs

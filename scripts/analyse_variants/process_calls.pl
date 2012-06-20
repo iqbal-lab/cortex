@@ -530,12 +530,12 @@ if ($ref_fasta eq "unspecified")
 {
     ## just sort the file and PV tag it
 
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --filter_txt DUPE | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_simple";
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --removed_tag KMER  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_simple";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
     print "$ret1\n";
 
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --tag PV LEFT $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --filter_txt KMER_DUPE | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_decomp";
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --tag PV LEFT $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --removed_tag KMER  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_decomp";
     print "$cmd2\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";

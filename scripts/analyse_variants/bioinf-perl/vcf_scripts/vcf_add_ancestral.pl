@@ -222,8 +222,7 @@ while(defined($vcf_entry = $vcf->read_entry()))
 
     if(!defined($ref_mapping_line))
     {
-      #die("vcf_add_ancestral.pl: Couldn't find mapping for var '$var_id'\n");
-	next;
+      die("vcf_add_ancestral.pl: Couldn't find mapping for var '$var_id'\n");
     }
     elsif(lc($alt_mapping{'name'}) ne lc($var_id."_alt"))
     {

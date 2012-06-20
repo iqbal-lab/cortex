@@ -7,9 +7,10 @@ use warnings;
 use FindBin;
 use lib $FindBin::Bin;
 
-use VCFFile;
-use RefGenome;
+use GeneticsModule;
 use UsefulModule; # num2str
+use VCFFile;
+use FASTNFile;
 
 use List::Util qw(min max);
 
@@ -21,9 +22,9 @@ sub print_usage
     print STDERR "Error: $err\n";
   }
 
-  print STDERR "Usage: ./vcf_add_flanks_at_least_as_long_as_var.pl [FILTERS] <flank_size> <in.vcf> " .
+  print STDERR "Usage: ./vcf_add_flanks.pl [FILTERS] <flank_size> <in.vcf> " .
                "<ref_name> <ref1.fa ..>\n";
-  print STDERR "  Adds the flanking sequence to VCF files, makes sure is >some min length and at least as long as the variant\n";
+  print STDERR "  Adds the flanking sequence to VCF files\n";
   print STDERR "  --filter_ref_match: remove variants where ref allele " .
                "doesn't match\n";
   print STDERR "  --filter_Ns: remove variants where flank+[ref/alt]+flank " .
@@ -87,13 +88,17 @@ else
 #
 # Load reference files
 #
-my $genome = new RefGenome(uppercase => 1);
-$genome->load_from_files(@ref_files);
+my ($ref_genomes_hashref, $qual) = read_all_from_files(@ref_files);
+
+my %ref_genomes = %$ref_genomes_hashref;
 
 #
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+# Set the reference genome chromosome names
+$vcf->set_ref_chrom_names(keys %ref_genomes);
 
 # Add tags to header and print
 my $tag_description = "$min_flank_size bp adjacent in ref genome '$ref_name'";
@@ -117,8 +122,9 @@ while(defined($vcf_entry = $vcf->read_entry()))
   my $chr = $vcf_entry->{'CHROM'};
 
   my $print = 1;
+  my $ref_chr = $vcf->guess_ref_chrom_name($chr);
 
-  if(!$genome->chr_exists($chr))
+  if(!defined($ref_chr))
   {
     $missing_chrs{$chr} = 1;
   }
@@ -131,15 +137,15 @@ while(defined($vcf_entry = $vcf->read_entry()))
     my $alt_allele = $vcf_entry->{'true_ALT'};
   
     my $var_length = length($ref_allele);
-    my $ref_chrom_length = $genome->get_chr_length($chr);
+    my $ref_chrom_length = length($ref_genomes{$ref_chr});
 
     my $indel_len = get_max(length($ref_allele), length($alt_allele));
 
-    my $left_flank_start = max(0, $var_start-get_max($indel_len, $min_flank_size));
+    my $left_flank_start = max(0, $var_start-get_max($indel_len,$min_flank_size));
     my $left_flank_length = $var_start - $left_flank_start;
 
     my $right_flank_start = $var_start + $var_length;
-    my $right_flank_length = min(get_max($min_flank_size, $indel_len),
+    my $right_flank_length = min( get_max($min_flank_size, $indel_len),
                                  $ref_chrom_length - $right_flank_start);
 
     my $vcf_info = $vcf_entry->{'INFO'};
@@ -148,23 +154,23 @@ while(defined($vcf_entry = $vcf->read_entry()))
     {
       print STDERR "vcf_add_flanks.pl: variant outside of reference genome " .
                    "bounds: " . $chr . ":" . $vcf_entry->{'POS'} . " " .
-                   "(ref '".$genome->guess_chrom_fasta_name($chr)."' has " .
-                   "length: " . num2str($ref_chrom_length) . ")\n";
+                   "(ref '$ref_chr' has length: " .
+                   num2str($ref_chrom_length) . ")\n";
 
       open(my $stderr, ">&", STDERR) or die("Cannot open STDERR");
       $vcf->print_entry($vcf_entry, $stderr);
     }
     else
     {
-      $vcf_info->{'left_flank'} = $genome->get_chr_substr($chr,
-                                                          $left_flank_start,
-                                                          $left_flank_length);
+      $vcf_info->{'left_flank'} = substr($ref_genomes{$ref_chr},
+                                         $left_flank_start,
+                                         $left_flank_length);
 
-      $vcf_info->{'right_flank'} = $genome->get_chr_substr($chr,
-                                                           $right_flank_start,
-                                                           $right_flank_length);
+      $vcf_info->{'right_flank'} = substr($ref_genomes{$ref_chr},
+                                          $right_flank_start,
+                                          $right_flank_length);
   
-      my $ref_seq = $genome->get_chr_substr($chr, $var_start, $var_length);
+      my $ref_seq = substr($ref_genomes{$ref_chr}, $var_start, $var_length);
   
       if($filter_by_ref_match && $ref_seq ne uc($ref_allele))
       {
@@ -230,10 +236,11 @@ print STDERR "vcf_add_flanks.pl: " .
 close($vcf_handle);
 
 
+
 sub get_max
 {
     my ($a, $b) = @_;
-    if ($a >= $b)
+    if ($a>=$b)
     {
 	return $a;
     }
