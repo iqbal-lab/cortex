@@ -25,7 +25,8 @@ sub print_usage
   
   print STDERR
 "Usage: ./vcf_summary.pl [--max_indel <abs_svlen>] [in.vcf]
-  Print summary stats\n";
+  Print summary stats.  Does not do any filtering.  
+  To only use 'PASS' variants, filter first with vcf_filter_column.pl\n";
 
   exit;
 }
@@ -220,6 +221,7 @@ close($vcf_handle);
 @del_sizes_non_tandem = sort {$a <=> $b} @del_sizes_non_tandem;
 
 # Print results
+print "Note: includes ALL variants (PASS and those that fail any filters)\n";
 print "-- Overview --\n";
 
 my $num_of_snps = $num_of_transitions+$num_of_transversions;
