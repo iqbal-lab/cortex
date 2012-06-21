@@ -418,7 +418,8 @@ else
 
 
 ##########################################################################################################################################
-##  2.5.    Load all the cleaned binaries into one graph, to find out how many kmers there are in total
+##  2.5.    If squeeze_mem is set, 
+###         Load all the cleaned binaries into one graph, to find out how many kmers there are in total
 ##          You can use this to work out how much mem to use when you do the multicolour graph
 ##########################################################################################################################################
 
@@ -502,7 +503,7 @@ print "********************************************\n";
 print "Call variants\n";
 print "********************************************\n";
 my $dir_for_per_sample_calls=$outdir_calls."per_sample_callsets/";
-print "Per sample call dir is $dir_for_per_sample_calls\n";
+#print "Per sample call dir is $dir_for_per_sample_calls\n";
 if (!(-d $dir_for_per_sample_calls))
 {
     my $c = "mkdir -p $dir_for_per_sample_calls";
