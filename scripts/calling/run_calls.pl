@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+ #!/usr/bin/perl -w
 use strict;
 use File::Basename;
 use Getopt::Long;
@@ -18,6 +18,7 @@ my $vcftools_dir="/path/to/vcftools/dir";### <<<< can also use command line para
 #### ****************  no need to modify anything below this line
 
 # However you may decide you want to increase this threshold
+
 my $mapping_qual_thresh = 40;    #  - demand 5prime flank maps with quality>= 40
 
 my $callingscript_dir;
@@ -322,7 +323,8 @@ if (!(-e $classifier))
 $outdir_binaries=$outdir."binaries/";
 $outdir_calls=$outdir."calls/";
 $outdir_vcfs=$outdir."vcfs/";
-my @new_dirs=($outdir_binaries, $outdir_calls, $outdir_vcfs);
+my $tmpdir_working_vcfs = $outdir_vcfs."tmp_working/";
+my @new_dirs=($outdir_binaries, $outdir_calls, $outdir_vcfs, $tmpdir_working_vcfs);
 make_sure_dirs_exist_and_create_if_necessary(\@new_dirs); 
 
 
@@ -386,16 +388,18 @@ print "********************************************\n";
 print "Clean binaries\n";
 print "********************************************\n";
 my %sample_to_cleaned_bin=(); #sample -> kmer -> cleaning -> $binary
+build_all_cleaned_binaries(\%sample_to_uncleaned, \%sample_to_uncleaned_log,
+			   \%sample_to_uncleaned_covg_distrib,
+			   \%sample_to_cleaned_bin,
+			   $outdir_binaries, 
+			   $cortex_dir, $mem_height, $mem_width, $max_var_len,
+			   $do_auto_cleaning, $auto_below, $auto_above,
+			   $do_user_spec_cleaning, $user_min_clean, $user_max_clean, $user_clean_step, $genome_size,
+			   $manual_override_cleaning);
+
+
 if ( ($do_auto_cleaning eq "yes") || ($do_auto_cleaning eq "stringent") || ($do_user_spec_cleaning eq "yes") || ($manual_override_cleaning ne "no") )
 {
-    build_all_cleaned_binaries(\%sample_to_uncleaned, \%sample_to_uncleaned_log,
-			       \%sample_to_uncleaned_covg_distrib,
-			       \%sample_to_cleaned_bin,
-			       $outdir_binaries, 
-			       $cortex_dir, $mem_height, $mem_width, $max_var_len,
-			       $do_auto_cleaning, $auto_below, $auto_above,
-			       $do_user_spec_cleaning, $user_min_clean, $user_max_clean, $user_clean_step, $genome_size,
-	                       $manual_override_cleaning);
 }
 else
 {
@@ -405,10 +409,6 @@ else
     {
 	foreach my $sam (@samples)
 	{
-	   # if ($sam eq $ref_name)
-	   # {
-#		next;
-#	    }
 	    $sample_to_cleaned_bin{$sam}{$k}{0}=$sample_to_uncleaned{$sam}{$k};
 	}
     }
@@ -499,7 +499,7 @@ if ( ($do_bc ne "yes") && ($do_pd ne "yes") )
     exit(0);
 }
 
-print "********************************************\n";
+print "\n\n\n********************************************\n";
 print "Call variants\n";
 print "********************************************\n";
 my $dir_for_per_sample_calls=$outdir_calls."per_sample_callsets/";
@@ -513,7 +513,7 @@ if (!(-d $dir_for_per_sample_calls))
 my $dir_for_joint_calls=$outdir_calls."joint_callsets/";
 if ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )
 {
-    print "Joint call dir is $dir_for_joint_calls\n";
+    #print "Joint call dir is $dir_for_joint_calls\n";
 }
 if ( ($call_jointly_incref eq "yes") && ($call_jointly_noref eq "yes") )
 {
@@ -531,7 +531,7 @@ if (!(-d $dir_for_joint_calls))
 my %sample_to_bc_callfile=();#sample ->kmer ->cleaning ->callfile
 my %sample_to_pd_callfile=();
 my %joint_callfiles=(); ##kmer -> cleaning -> callfile
-
+my %joint_callfiles_logs=();##kmer -> cleaning -> logfile from generating that callfile
 
 
 
@@ -625,9 +625,9 @@ if  ( ($call_jointly_incref eq "no") && ($call_jointly_noref eq "no") )
 if  ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )## then just assume is BC only
 {
 
-    print "**********************************************\n";
-    print " ***    Make calls in joint graph\n";
-    print "**********************************************\n";
+ 
+    print " \n\n\n***    Make calls in joint graph\n";
+ 
 
     my $num_cleanings = get_num_cleaning_levels();
     my $cl=0;
@@ -691,6 +691,7 @@ if  ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )## then
 	    }
 
 	    my $log = $dir_for_joint_calls."joint_varcalling_".$str."_k".$K."_cleanlevel".$cl.".log";
+	    $joint_callfiles_logs{$K}{$cl} = $log;
 	    if ($do_it==1)
 	    {
 		print "Run joint calls:\n";
@@ -707,7 +708,7 @@ if  ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )## then
 
 }
 
-
+print "\n\nAll calling complete. Now, do genotyping (if required), build VCFs (and apply pop filter if so specified\n";
 
 #############################################################################################################################
 ## 4. For the independent workflow, make union callsets combining all the callsets for each kmer. No need to do this for joint
@@ -725,8 +726,8 @@ if ($do_union eq "yes")
     if (($call_jointly_noref eq "no") && ($call_jointly_incref eq "no"))
     {
 	print "******************************************************************\n";
-	print "Make union variant callsets combining all the per-sample callsets\n";
-	print "******************************************************************\n";
+	print "At each specified kmer, we will make union variant callsets combining all the per-sample callsets, and then combine all at the end\n";
+	print "******************************************************************\n\n\n";
     }
     
 
@@ -749,90 +750,124 @@ if ($do_union eq "yes")
     {
 	
 ############################################################################################################################
-## 5. Genotype the union per-sample per-kmer callset on ALL samples, using multicoloured graph with lowest k and lowest cleaning
+## 5. Genotype the union per-sample per-kmer callset on ALL samples,
 ##    Note a call cannot be genotyped at a kmer < the lowest k at which is was discovered,
 ##    otherwise may have flanks and branches which are shorter than our kmer
 ##    For each genotyped callset, build a VCF
 #############################################################################################################################
 	
-	
-	print "********************************************\n";
-	print "For the independent workflow, for each k, Genotype the union callset\n";
-	print "********************************************\n";
-	
 
-	foreach my $km (@kmers)
+	if (($call_jointly_noref eq "no") && ($call_jointly_incref eq "no"))
 	{
-	    my @ordered_list_binaries=();
-	    push @ordered_list_binaries, $k_to_refbin{$km};
-	    foreach my $sam (@samples)
-	    {	
-		my $min = get_min_cleaning_for_given_sample(\%sample_to_cleaned_bin, $sam, $km);
-		#push @ordered_list_binaries, $sample_to_cleaned_bin{$sam}{$km}{$max};
-		push @ordered_list_binaries, $sample_to_cleaned_bin{$sam}{$km}{$min};
-	    }
+	    print "********************************************\n";
+	    print "For each k, genotype the union callset\n";
+	    print "********************************************\n";
 	    
-	    my $multicolour_list = make_multicol_filelist(\@ordered_list_binaries);
-
-	    my $gt_bc_out="";
-	    my $gt_pd_out="";
-	    my $multicol_ctx_bin = get_right_binary($km, $cortex_dir, $number_of_colours); 
-	    if ($do_bc eq "yes")
+	    
+	    foreach my $km (@kmers)
 	    {
-		
-		$gt_bc_out = $outdir_calls.basename($kmer_to_union_callset{$km}{"BC"}).".genotyped";
-		print "GT bc out is $gt_bc_out\n";
-		my $gt_bc_log = $gt_bc_out.".log";
-		print "ZAMZAM = the read len is ";
-		print $union_callset_to_max_read_len{$km}{"BC"};
-		print "\n";
-		genotype_union($multicol_ctx_bin, $multicolour_list, 
-			       $km, $mem_height, $mem_width, 
-			       0, $kmer_to_union_callset{$km}{"BC"}, 
-			       $gt_bc_out, $gt_bc_log, "BC", 
-			       $union_callset_to_max_read_len{$km}{"BC"}, 
-			       $expt_type,  $genome_size);
-
-		my $pop_classif_file="";
-		if ($apply_classif)
-		{
-		    $pop_classif_file = apply_pop_classifier($classifier, 
-							     $make_covg_script, $make_table_script,
-							     $gt_bc_out, $gt_bc_log,
-							     scalar(@samples), 
-							     $km, $genome_size);
+		my @ordered_list_binaries=();
+		push @ordered_list_binaries, $k_to_refbin{$km};
+		foreach my $sam (@samples)
+		{	
+		    my $min = get_min_cleaning_for_given_sample(\%sample_to_cleaned_bin, $sam, $km);
+		    #push @ordered_list_binaries, $sample_to_cleaned_bin{$sam}{$km}{$max};
+		    push @ordered_list_binaries, $sample_to_cleaned_bin{$sam}{$km}{$min};
 		}
-		build_vcfs($gt_bc_out, $outvcf_filename_stub."_union_BC_calls_k".$km, $number_of_colours, 
-			   $outdir_vcfs."output_proc_union_bc_k".$km, $outdir_vcfs, \%vcfs_needing_merging, 
-			   $kmer_to_union_callset{$km}{"BC"}, "BC", $pop_classif_file, $kmer_to_bc_var_stub{$km});
+		
+		my $multicolour_list = make_multicol_filelist(\@ordered_list_binaries);
+		
+		my $gt_bc_out="";
+		my $gt_pd_out="";
+		my $multicol_ctx_bin = get_right_binary($km, $cortex_dir, $number_of_colours); 
+		if ($do_bc eq "yes")
+		{
+		    
+		    $gt_bc_out = $outdir_calls.basename($kmer_to_union_callset{$km}{"BC"}).".genotyped";
+		    my $gt_bc_log = $gt_bc_out.".log";
+
+		    genotype_union($multicol_ctx_bin, $multicolour_list, 
+				   $km, $mem_height, $mem_width, 
+				   0, $kmer_to_union_callset{$km}{"BC"}, 
+				   $gt_bc_out, $gt_bc_log, "BC", 
+				   $union_callset_to_max_read_len{$km}{"BC"}, 
+				   $expt_type,  $genome_size);
+		    
+		    my $pop_classif_file="";
+		    if ($apply_classif)
+		    {
+			$pop_classif_file = apply_pop_classifier($classifier, 
+								 $make_covg_script, $make_table_script,
+								 $gt_bc_out, $gt_bc_log,
+								 scalar(@samples), 
+								 $km, $genome_size);
+		    }
+		    build_vcfs($gt_bc_out, $gt_bc_log, $outvcf_filename_stub."_union_BC_calls_k".$km, $number_of_colours, 
+			       $outdir_vcfs."output_proc_union_bc_k".$km, $outdir_vcfs, \%vcfs_needing_merging, 
+			       $kmer_to_union_callset{$km}{"BC"}, "BC", $pop_classif_file, $km);
+		}
+		
+		if ($do_pd eq "yes")
+		{	
+		    $gt_pd_out = $outdir_calls.basename($kmer_to_union_callset{$km}{"PD"}).".genotyped";
+		    my $gt_pd_log = $gt_pd_out."_pd_calls.log";
+		    
+		    genotype_union($multicol_ctx_bin, $multicolour_list, $km, $mem_height, $mem_width, 
+				   0, $kmer_to_union_callset{$km}{"PD"}, 
+				   $gt_pd_out, $gt_pd_log, "PD", 
+				   $union_callset_to_max_read_len{$km}{"PD"}, 
+				   $expt_type,  $genome_size);
+		    my $pop_classif_file;
+		    if ($apply_classif)
+		    {
+			$pop_classif_file = apply_pop_classifier($classifier, 
+								 $make_covg_script, $make_table_script,
+								 $gt_pd_out, $gt_pd_log,
+								 scalar(@samples), 
+								 $km, $genome_size);
+		    }
+		    
+		    
+		    build_vcfs($gt_pd_out, $gt_pd_log, $outvcf_filename_stub."_union_PD_calls_k".$km, $number_of_colours, 
+			       $outdir_vcfs."output_proc_union_pd_k".$km, $outdir_vcfs, \%vcfs_needing_merging, 
+			       $kmer_to_union_callset{$km}{"PD"}, "PD", $pop_classif_file, $km);
+		    
+		}
 	    }
+	}
+	else
+	{
+	    ## joint workflow - genotyping done already. Apply the pop filter, and build VCFs for each callset
+
+
+	    my $num_cleanings = get_num_cleaning_levels();
+	    my $cl=0;
 	    
-	    if ($do_pd eq "yes")
-	    {	
-		$gt_pd_out = $outdir_calls.basename($kmer_to_union_callset{$km}{"PD"}).".genotyped";
-		my $gt_pd_log = $gt_pd_out."_pd_calls.log";
-		
-		genotype_union($multicol_ctx_bin, $multicolour_list, $km, $mem_height, $mem_width, 
-			       0, $kmer_to_union_callset{$km}{"PD"}, 
-			       $gt_pd_out, $gt_pd_log, "PD", 
-			       $union_callset_to_max_read_len{$km}{"PD"}, 
-			       $expt_type,  $genome_size);
-		my $pop_classif_file;
-		if ($apply_classif)
-		{
-		    $pop_classif_file = apply_pop_classifier($classifier, 
-							     $make_covg_script, $make_table_script,
-							     $gt_pd_out, $gt_pd_log,
-							     scalar(@samples), 
-							     $km, $genome_size);
+	    foreach my $K (@kmers)
+	    {
+		for ($cl=0; $cl < $num_cleanings; $cl++)
+		{	
+		    
+		    my $pop_classif_file="";
+		    if ($apply_classif)
+		    {
+			$pop_classif_file = apply_pop_classifier($classifier, 
+								 $make_covg_script, $make_table_script,
+								 $joint_callfiles{$K}{$cl},
+								 $joint_callfiles_logs{$K}{$cl},
+								 scalar(@samples), 
+								 $K, $genome_size);
+		    }
+		    build_vcfs($joint_callfiles{$K}{$cl}, $joint_callfiles_logs{$K}{$cl},
+			       $outvcf_filename_stub."_union_joint_BC_calls_k".$K."_clean_level".$cl, 
+			       $number_of_colours, 
+			       $outdir_vcfs."output_proc_joint_union_bc_k".$K."_cl".$cl, 
+			       $outdir_vcfs, 
+			       \%vcfs_needing_merging, "", "BC", 
+			       $pop_classif_file, $K);
 		}
-
-
-		build_vcfs($gt_pd_out, $outvcf_filename_stub."_union_PD_calls_k".$km, $number_of_colours, 
-			   $outdir_vcfs."output_proc_union_pd_k".$km, $outdir_vcfs, \%vcfs_needing_merging, 
-			   $kmer_to_union_callset{$km}{"PD"}, "PD", $pop_classif_file, $kmer_to_pd_var_stub{$km});
-		
 	    }
+
 	}
 	
 	
@@ -840,11 +875,16 @@ if ($do_union eq "yes")
 ######################################################################################################
 ## 6. Make one VCF for BC and one for PD
 ######################################################################################################
-	
-	my $final_BC_vcf = $outdir_vcfs."combined_BC_calls_at_all_k.vcf";
-	merge_vcfs(\%vcfs_needing_merging, "BC", $final_BC_vcf, \%final_vcfs);
-	my $final_PD_vcf = $outdir_vcfs."combined_PD_calls_at_all_k.vcf";
-	merge_vcfs(\%vcfs_needing_merging, "PD", $final_PD_vcf, \%final_vcfs);
+
+	print "\n\n\n*** Now combine all preexisting vcfs\n\n";
+
+	my $final_BC_vcf_raw    = $outdir_vcfs."combined_BC_calls_at_all_k.raw.vcf";
+	my $final_BC_vcf_decomp = $outdir_vcfs."combined_BC_calls_at_all_k.decomp.vcf";
+	my $final_PD_vcf_raw    = $outdir_vcfs."combined_PD_calls_at_all_k.raw.vcf";
+	my $final_PD_vcf_decomp = $outdir_vcfs."combined_PD_calls_at_all_k.decomp.vcf";
+	merge_vcfs(\%vcfs_needing_merging, "BC", $final_BC_vcf_raw, $final_BC_vcf_decomp, \%final_vcfs, $tmpdir_working_vcfs);
+	merge_vcfs(\%vcfs_needing_merging, "PD", $final_PD_vcf_raw, $final_PD_vcf_decomp, \%final_vcfs, $tmpdir_working_vcfs);
+
 
 
 
@@ -1009,7 +1049,8 @@ sub get_refbin_name
 sub get_colourlist_for_joint
 {
     my ($kmer, $level) = @_;
-    
+
+
     my $tmpdir = $outdir_calls."tmp_filelists/";
     if (!(-d $tmpdir))
     {
@@ -1025,7 +1066,6 @@ sub get_colourlist_for_joint
     my $ref_bin_list = $tmpdir."filelist_refbin_for_joint_k".$kmer;
     open(REF, ">".$ref_bin_list)||die("Cannot open $ref_bin_list");
     print REF $refbindir;
-    print "ZAMZAM $refbindir and $kmer\n";
     print REF get_refbin_name($refbindir, $kmer);
     print REF "\n";
     close(REF);
@@ -1041,6 +1081,20 @@ sub get_colourlist_for_joint
 	my $f = $tmpdir."sample_".$sample."_kmer.".$kmer."_cleaning_level".$level."_binary";
 	print OUT "$f\n";
 	open(F, ">".$f)||die("Cannot open $f");
+
+	if (!exists $sample_to_kmer_to_list_cleanings_used{$sample})
+	{
+	    print "ZOOFO1 sample $sample\n";
+	}
+	elsif (!exists $sample_to_kmer_to_list_cleanings_used{$sample}{$kmer})
+	{
+	    print "ZOOFO2 sample $sample and kmer $kmer\n";
+	}
+	else
+	{
+	    print "ZOOFO3 sample $sample kmer $kmer level $level\n";
+	}
+
        	if ($sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level] !=0)
 	{
 	    print F $sample_to_cleaned_bin{$sample}{$kmer}{$sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level]};
@@ -1074,6 +1128,10 @@ sub get_num_cleaning_levels
     elsif ($do_user_spec_cleaning eq "yes")
     {
 	$num = ($user_max_clean - $user_min_clean)/$user_clean_step + 1;
+    }
+    if ($num==0)
+    {
+	$num=1; ## act as if there is one cleaning level if there is no cleaning done
     }
 
     return $num;
@@ -1189,36 +1247,129 @@ sub build_per_sample_vcfs
 
 sub merge_vcfs
 {
-    my ($href_vcfs_needing_merging, $which_caller, $output_vcf, $href_result)=@_;
+    my ($href_vcfs_needing_merging, $which_caller, $output_raw, $output_decomp, $href_result, $tmpdir)=@_;
     
+    print "\n\nMerge the $which_caller vcfs:\n";
+
     if (exists $href_vcfs_needing_merging->{$which_caller})
     {
-	my @vcfs=keys %{$href_vcfs_needing_merging->{$which_caller}};
-	if (scalar(@vcfs)>0)
+	my @vcfs_decomp=();
+	if (exists $href_vcfs_needing_merging->{$which_caller}->{"DECOMP"})
 	{
-	    my $first = $vcfs[0];
-	    my $cmd1 = "(cat $first | head -200 | grep ^\#; ";
-	    my $i;
-	    for ($i=1; $i<scalar @vcfs; $i++)
-	    {
-		$cmd1 = $cmd1." cat ".$vcfs[$i]." | grep -v ^\#; ";
-	    }
-	    $cmd1 = $cmd1.") | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER  --removed_tag KMER | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl > $output_vcf";
-	    print "$cmd1\n";
-	    my $ret1 = qx{$cmd1};
-	    print "$ret1\n";
-	    
-	    $href_result->{$which_caller}= $output_vcf;
+	    @vcfs_decomp=@{$href_vcfs_needing_merging->{$which_caller}->{"DECOMP"}};
+	    print "Got a list of ";
+	    print scalar @vcfs_decomp;
+	    print " vcfs for decomp\n";
+	    print "They are ";
+	    print join(" ", @vcfs_decomp);
+	    print "\n";
+	    merge_list_of_vcfs(\@vcfs_decomp, $which_caller, $output_decomp, $tmpdir, "DECOMP", $href_result );
+	}
+	my @vcfs_raw=();
+	if (exists $href_vcfs_needing_merging->{$which_caller}->{"RAW"})
+	{
+	    @vcfs_raw=@{$href_vcfs_needing_merging->{$which_caller}->{"RAW"}};
+	    print "Got a list of ";
+	    print scalar @vcfs_raw;
+	    print " for raw\n";
+
+	    merge_list_of_vcfs(\@vcfs_raw,    $which_caller, $output_raw, $tmpdir, "RAW" , $href_result);
+	}
+
+    }
+    else
+    {
+
+    }
+}
+
+sub merge_list_of_vcfs
+{
+    my ($aref, $which_caller, $outfilename, $tmpdir, $raw_or_decomp, $href_result) = @_;
+
+
+    if (-e $outfilename)
+    {
+	print "No need to combine these files - the output file $outfilename already exists. Will skip this\n";
+	return;
+    }
+
+    my $catout_fh;
+    if (scalar(@$aref)>0)
+    {
+	my $tmp = $tmpdir.basename($outfilename).".temp_cated_vcf";
+
+	open ($catout_fh, ">".$tmp)||die("UNable to open temp file $tmp");
+	print_header_from_vcf($aref->[0], $catout_fh);
+	
+	my $i;
+	for ($i=0; $i<scalar @$aref; $i++)
+	{
+	    print_vcf_contents($aref->[$i], $catout_fh);
+	}
+	close($catout_fh);
+
+	## Now cleanup - remove dups.
+	print "Have combined all the $raw_or_decomp VCFs for this caller, now remove dups: AAM THIS IS THE PROBLEM LINE\n";
+	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl > $outfilename";
+	print "$cmd1\n";
+	my $ret1 = qx{$cmd1};
+	print "$ret1\n";
+
+	$href_result->{$which_caller}->{$raw_or_decomp}= $outfilename;
+    }
+    else
+    {
+	    print "ZAMMMERRRRR\n\n";
+    }
+}
+
+
+sub print_header_from_vcf
+{
+    my ($file, $fh) = @_;
+    open(FILE, $file)||die("Cannot open $file");
+    
+    while (<FILE>)
+    {
+	my $line = $_;
+	if ($line =~ /^\#/)
+	{
+	    print $fh $line;
+	}
+	else
+	{
+	    last;
 	}
     }
+    close(FILE);
+    return;
+}
+
+sub print_vcf_contents
+{
+    my ($file, $fh) = @_;
+    open(FILE, $file)||die("Cannot open $file");
+    
+    while (<FILE>)
+    {
+	my $line = $_;
+	if ($line !~ /^\#/)
+	{
+	    print $fh $line;
+	}
+    }
+    close(FILE);
+    return;
 }
 
 sub build_vcfs
 {
     ## when I wrote this href_store_vcf_names contained a list of vcfs to be seperately cleaned
     ## I now intend to use it to collect vcfs to be MERGED (as we make one vcf per kmer)
-    my ($file, $string, $num, $log, $directory, $href_store_vcf_names, $fasta_file_of_just_calls, $which_caller, $classifier_output,
-	$bc_stub, $pd_stub) = @_;
+    my ($file, $call_log, $string, $num, $log, $directory, 
+	$href_store_vcf_names, $fasta_file_of_just_calls, $which_caller, $classifier_output,
+	$kmer_size) = @_;
     if (!(-e $file))
     {
 	return;
@@ -1250,7 +1401,7 @@ sub build_vcfs
 	}
 	close(COL);
     }
-    my $cmd = "perl ".$proc_calls." --callfile $file --outdir $directory --outvcf $string --samplename_list $colournames --num_cols $num  --ploidy $ploidy --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin --vcftools_dir $vcftools_dir ";
+    my $cmd = "perl ".$proc_calls." --callfile $file --callfile_log $call_log --kmer $kmer_size --caller $which_caller --outdir $directory --outvcf $string --samplename_list $colournames --num_cols $num  --ploidy $ploidy --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin --vcftools_dir $vcftools_dir ";
     if ($use_ref eq "yes")
     {
 	my $ref_fa = get_ref_fasta($list_ref_fasta); 
@@ -1270,7 +1421,11 @@ sub build_vcfs
     {
 	$cmd = $cmd." --pop_classifier $classifier_output ";
     }
-    $cmd = $cmd. " --unioncalls $fasta_file_of_just_calls ";
+    if ($fasta_file_of_just_calls ne "")
+    {
+	$cmd = $cmd. " --unioncalls $fasta_file_of_just_calls ";	
+    }
+
     $cmd = $cmd."  > $log 2>&1" ;
 
 
@@ -1287,8 +1442,9 @@ sub build_vcfs
 	print $directory.$string.".raw.vcf";
 	print " both exist, so no need to rebuild\n";
     }
-    $href_store_vcf_names->{$which_caller}->{$directory.$string.".decomp.vcf"}=1;
-    $href_store_vcf_names->{$which_caller}->{$directory.$string.".raw.vcf"}=1;
+    push @{$href_store_vcf_names->{$which_caller}->{"DECOMP"}}, $directory.$string.".decomp.vcf";
+    push @{$href_store_vcf_names->{$which_caller}->{"RAW"}}, $directory.$string.".raw.vcf";
+
 }
 
 
@@ -1392,11 +1548,14 @@ sub build_all_cleaned_binaries
 		{
 		    $min=$c;
 		}
-		build_clean_binary($sample, $k, $c,
-				   $outdir_binaries, 
-				   $href_sample_to_uncleaned, 
-				   $cortex_dir, $mem_height, $mem_width,
-                  		    $href_sample_to_cleaned);
+		if ($c>0)
+		{
+		    build_clean_binary($sample, $k, $c,
+				       $outdir_binaries, 
+				       $href_sample_to_uncleaned, 
+				       $cortex_dir, $mem_height, $mem_width,
+				       $href_sample_to_cleaned);
+		}
 	    }
 	    $sample_to_min_cleaning_thresh{$sample}{$k}=$min;
 	}
@@ -1537,6 +1696,7 @@ sub get_auto_thresholds
     
     my @distrib=();
     my $deff = get_expected_depth_and_cvg_distrib($href_logfiles->{$sample}->{$kmer}, $kmer, $genome_siz);
+    my $deff_for_printing = sprintf( "%.1f", $deff );
     my $auto_thresh  = get_cleaning_thresh_and_distrib($href_covg->{$sample}->{$kmer}, $deff,  \@distrib);
     if ($deff<$auto_thresh)
     {
@@ -1580,10 +1740,10 @@ sub get_auto_thresholds
     }
     else
     {
-	print "Stringent cleaning selected. Choose a cleaning threshold 20% along from auto-choice ($auto_thresh) and D_eff ($deff): ";
-	print $auto_thresh + 2* $step;
+	print "Stringent cleaning selected. Choose a cleaning threshold 50% along from auto-choice ($auto_thresh) and D_eff ($deff_for_printing): ";
+	print $auto_thresh + 5* $step;
 	print "\n";
-	push @$aref_results, $auto_thresh + 2* $step;
+	push @$aref_results, $auto_thresh + 5* $step;
     }
 
 }

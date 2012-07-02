@@ -28,7 +28,7 @@ sub print_usage
 
 my $padding = 0;
 
-if($ARGV[0] =~ /^-?-padding$/i)
+if( (@ARGV>0)  && ($ARGV[0] =~ /^-?-padding$/i) )
 {
   shift;
   $padding = shift;

@@ -1133,7 +1133,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 									      LittleHashTable* little_db_graph, dBGraph* db_graph,
 									      int* working_array_self, int* working_array_shared,
 									      AssumptionsOnGraphCleaning assump,
-									      dBNode** p_nodes, Orientation* p_orientations, Nucleotide* p_labels, char* p_string, 
+									      dBNode** p_nodes, Orientation* p_orientations, 
+									      Nucleotide* p_labels, char* p_string, 
 									      int max_sup_len
 									      )
 //assume the  2 working arrays have length = max read length
@@ -1162,7 +1163,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 
   // the three ints you return are basically levels of badness of error. 
   void count_reads_in_1net(GenotypingElement* e, int* total_1net, int* total_2net, int* total_3net,
-			   dBNode** p_nodes, Orientation* p_or, Nucleotide* p_lab, char* p_str, int max_len)
+			   dBNode** p_nod, Orientation* p_or, Nucleotide* p_lab, char* p_str, int max_len)
   {
     char zamzam[db_graph->kmer_size];
     //printf("Zam1 - traversing little graph, look at %s\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, zamzam));
@@ -1192,13 +1193,13 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	  }
 	int length = db_graph_supernode_for_specific_person_or_pop(node_corresponding_to_e,max_len,
 								   &db_node_action_set_status_special_visited,
-								   p_nodes,p_or,p_lab, p_str,
+								   p_nod,p_or,p_lab, p_str,
 								   &avg_coverage,&min,&max,&is_cycle,
 								   db_graph, individual_edge_array, colour_indiv);
 	//assume everything in supernode is bad. Not using 1net2net etc
 	int i;
 	boolean too_short=false;
-	int ct = count_reads_on_allele_in_specific_colour(p_nodes, length, colour_indiv, &too_short);
+	int ct = count_reads_on_allele_in_specific_colour(p_nod, length, colour_indiv, &too_short);
 	if (too_short==false)
 	  {
 	    int extra=0;
@@ -1215,7 +1216,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   }
 
 
-  void reset_nodes_in_main_graph_to_visited(GenotypingElement* e, dBNode** p_nodes, Orientation* p_or, Nucleotide* p_lab, char* p_str, int max_len)
+  void reset_nodes_in_main_graph_to_visited(GenotypingElement* e, dBNode** p_nod, Orientation* p_or, Nucleotide* p_lab, char* p_str, int max_len)
   {
 
     if (db_genotyping_node_check_status(e, in_desired_genotype)==true)
