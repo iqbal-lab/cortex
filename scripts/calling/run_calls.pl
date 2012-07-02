@@ -118,7 +118,7 @@ my (
         $max_read_len,         $format, $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
         $expt_type,            $do_union, $manual_override_cleaning,
         $build_per_sample_vcfs, $global_logfile, $call_jointly_noref, $call_jointly_incref, $squeeze_mem,
-        $joint_workflow, $independent_workflow,
+        $joint_workflow, $independent_workflow
 );
 
 #set defaults
@@ -160,7 +160,7 @@ $binary_colourlist                   ="";
 $mem_height=-1;
 $mem_width=-1;
 $max_read_len=-1;
-$max_var_len = 10000;
+$max_var_len = 30000;
 $format="UNPSECIFIED";
 $genome_size=0;
 $refbindir="";
@@ -223,6 +223,7 @@ my $help = '';    #default false
     'call_jointly_noref:s' => \$call_jointly_noref,
     'call_jointly_incref:s' => \$call_jointly_incref,
     'squeeze_mem'          =>\$squeeze_mem
+
 );
 
 
@@ -260,7 +261,7 @@ if ($help)
 	print "--mem_width\t\t\t\tFor Cortex\n";
 	print "--max_read_len\t\t\t\tMax read length\n";
 	print "--format\t\t\t\tFASTA or FASTQ\n";
-	print "--max_var_len\t\t\t\tSee Cortex manual - max var length to look for\n";
+	print "--max_var_len\t\t\t\tSee Cortex manual - max var length to look for. Default value 40000 (bp)\n";
 	print "--genome_size\t\t\t\tGenome length in base pairs - needed for genotyping\n";
 	print "--refbindir\t\t\t\tDiorectry containing binaries built of the reference at all the kmers you want to use. \n";
 	print "\t\t\t\t\tThe binary filename should contain the kmer value, eg refbinary.k31.ctx\n";
@@ -1310,7 +1311,7 @@ sub merge_list_of_vcfs
 	close($catout_fh);
 
 	## Now cleanup - remove dups.
-	print "Have combined all the $raw_or_decomp VCFs for this caller, now remove dups: AAM THIS IS THE PROBLEM LINE\n";
+
 	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl > $outfilename";
 	print "$cmd1\n";
 	my $ret1 = qx{$cmd1};
@@ -1320,7 +1321,7 @@ sub merge_list_of_vcfs
     }
     else
     {
-	    print "ZAMMMERRRRR\n\n";
+
     }
 }
 

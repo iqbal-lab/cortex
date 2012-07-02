@@ -336,7 +336,7 @@ if (   ( $apply_filter_one_allele_must_be_ref eq "yes" )
 "If you say yes to apply_filter_one_allele_must_be_ref then you must specify the ref colour"
 	);
 }
-if (   ( $caller eq "PD"  )
+if (   ( $caller_type eq "PD"  )
 	&& ( $reference_colour == -1 ) )
 {
 	die(

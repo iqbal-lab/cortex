@@ -157,7 +157,14 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
       LittleHashTable* little_dbg=NULL;
       if (cmd_line->which_caller_was_used_for_calls_to_be_genotyped==SimplePathDivergenceCaller)
 	{
-	  gwp = alloc_genotyping_work_package(cmd_line->max_read_length, cmd_line->max_read_length, NUMBER_OF_COLOURS, NUMBER_OF_COLOURS+1);
+	  int max = cmd_line->max_read_length;
+	  if (cmd_line->max_var_len > max)
+	    {
+	      max = cmd_line->max_var_len;
+	    }
+	  gwp = alloc_genotyping_work_package(max,max,
+					      NUMBER_OF_COLOURS, 
+					      NUMBER_OF_COLOURS+1);
 	  if (gwp==NULL)
 	    {
 	      printf("Unable to alloc resources for genotyping prior to starting. Abort\n");

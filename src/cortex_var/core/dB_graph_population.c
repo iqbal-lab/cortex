@@ -762,7 +762,7 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
     current_node        = next_node;
     current_orientation = next_orientation;
     
-  } while (length<limit && 
+  } while (length<(limit-1) && 
 	   !((next_node == node) && (next_orientation == orientation)) && //loop
 	   db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2, type, index) && //multiple entries
 	   db_node_has_precisely_one_edge(current_node, current_orientation,&nucleotide, type, index)); //has one next edge only
@@ -796,6 +796,12 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
     }
   */
   
+
+  if (length>=limit)
+    {
+      printf("Stopped becase supernode length limit exceeded: length %d and limit %d\n", length, limit);
+      exit(1);
+    }
   
    seq[length] = '\0';
   *avg_coverage = (length-1<=0) ? 0 : (double) sum_coverage/(double) (length-1);
@@ -1727,7 +1733,8 @@ int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_
 											      get_colour, get_covg);
     if (length==limit)
       {
-	printf("Warning. You implicitly specified a maximum expected length of supernode %d, probably when you set --max_var_len. Cortex has just encountered a longer supernode. Continuing, but I advise rerunning with a longer --max_var_len", limit);
+	printf("Warning. You implicitly specified a maximum expected length of supernode %d, probably when you set --max_var_len. Cortex has just encountered a longer supernode. Aborting - I advise rerunning with a longer --max_var_len", limit);
+	exit(1);
       }
   }
   else{
