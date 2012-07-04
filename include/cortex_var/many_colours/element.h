@@ -61,7 +61,9 @@ typedef enum
     read_start_forward_and_reverse = 9,//used when removing duplicate reads  
     ignore_this_node = 10,
     in_desired_genotype = 11,
-    special_visited = 12
+    special_visited = 12,
+    special_none = 13,
+    special_pruned = 14
   } NodeStatus;
 
 
@@ -197,6 +199,10 @@ void db_node_action_set_status_of_unpruned_to_none(dBNode * node);
 void db_node_action_set_status_pruned(dBNode * node);
 void db_node_action_set_status_visited(dBNode * node);
 void db_node_action_set_status_special_visited(dBNode * node);
+boolean db_node_check_status_special(dBNode* node);
+void db_node_action_specialise_status(dBNode * node);
+void db_node_action_unspecialise_status(dBNode * node);
+
 void db_node_action_set_status_ignore_this_node(dBNode * node);
 
 void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode * node);

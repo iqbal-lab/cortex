@@ -1239,6 +1239,73 @@ void db_node_action_set_status_special_visited(dBNode * node){
   db_node_set_status(node,special_visited);
 }
 
+boolean db_node_check_status_special(dBNode* node)
+{
+  if (  (db_node_check_status(node, special_none)==true)
+	||
+	(db_node_check_status(node, special_visited)==true)
+	||
+	(db_node_check_status(node, special_pruned)==true)
+	)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+void db_node_action_specialise_status(dBNode * node){
+  if (db_node_check_status(node, visited)==true)
+    {
+      db_node_set_status(node,special_visited);      
+    }
+  else if (db_node_check_status(node, none)==true)
+    {
+      db_node_set_status(node,special_none);      
+    }
+  else if (db_node_check_status(node, pruned)==true)
+    {
+      db_node_set_status(node,special_pruned);      
+    }
+  else if ( (db_node_check_status(node, read_start_forward)==true)
+	    ||
+	    (db_node_check_status(node, read_start_reverse)==true)
+	    ||
+	    (db_node_check_status(node, read_start_forward_and_reverse)==true)
+	    )
+    {
+      db_node_set_status(node,special_none);//happy to lose PCR dup info at this stage
+      printf("Warn Zam (zam@well.ox.ac.uk) that you met a PCR dup status during genotyping. He knows how to fix it\n"); 
+    }
+  else
+    {
+      NodeStatus ret = node->status;
+      printf("Warn Zam (zam@well.ox.ac.uk) that you met a status of %d. Could signal a subtle (but now, with your information, fixable) bug.\n", (int) ret); 
+    }
+  
+}
+
+
+
+void db_node_action_unspecialise_status(dBNode * node){
+  if (db_node_check_status(node, special_visited)==true)
+    {
+      db_node_set_status(node,visited);      
+    }
+  else if (db_node_check_status(node, special_none)==true)
+    {
+      db_node_set_status(node,none);      
+    }
+  else if (db_node_check_status(node, special_pruned)==true)
+    {
+      db_node_set_status(node,pruned);      
+    }
+  
+}
+
+
 void db_node_action_set_status_ignore_this_node(dBNode * node)
 {
   db_node_set_status(node,ignore_this_node);

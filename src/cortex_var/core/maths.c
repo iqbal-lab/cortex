@@ -101,3 +101,13 @@ long long calculate_mean(long long* array, long long len)
     }
   return  (sum/num);
 }
+
+
+void set_int_array_to_zero(int* array, int len)
+{
+  int i;
+  for (i=0; i<len; i++)
+    {
+      array[i]=0;
+    }
+}
