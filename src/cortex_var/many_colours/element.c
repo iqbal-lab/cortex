@@ -1279,7 +1279,7 @@ void db_node_action_specialise_status(dBNode * node){
       db_node_set_status(node,special_none);//happy to lose PCR dup info at this stage
       printf("Warn Zam (zam@well.ox.ac.uk) that you met a PCR dup status during genotyping. He knows how to fix it\n"); 
     }
-  else
+  else if (db_node_check_status_special(node)==false)
     {
       NodeStatus ret = node->status;
       printf("Warn Zam (zam@well.ox.ac.uk) that you met a status of %d. Could signal a subtle (but now, with your information, fixable) bug.\n", (int) ret); 

@@ -2012,7 +2012,7 @@ void wipe_little_graph(LittleHashTable* little_graph)
 {
   void wipe_node(GenotypingElement* node)
   {
-    
+    /*
     int colour;
     for (colour=0; colour<MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2 ; colour++)
       {
@@ -2020,7 +2020,8 @@ void wipe_little_graph(LittleHashTable* little_graph)
 	node->coverage[colour]=0;
 	node->status=unassigned;
 	}
-    //db_genotyping_node_set_status(node, unassigned);
+    */
+    db_genotyping_node_set_status(node, unassigned);
   }
   little_hash_table_traverse(&wipe_node, little_graph);
 }
@@ -2197,13 +2198,6 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
   little_graph_wipe_colour(working_colour2, little_db_graph);
   reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
   improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(&var_test, mobv, working_colour1, working_colour2);
-   //memset working arrays to zero
-   memset(working_array_self, 0, 
-	  len_working_arrays*sizeof(int));
-   memset(working_array_shared, 0, 
-	  len_working_arrays*sizeof(int));
-
-
 
    annovar->gen_log_lh[colour_to_genotype].log_lh[hom_one]= 
      calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(&var_test,
@@ -2215,10 +2209,10 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 									    max_sup_len);
    set_status_of_genotyping_nodes_in_branches(&var_test, none);
    //memset just the amount you used back to zero
-   //memset(working_array_self, 0, 
-   //	  max_of_ints(annovar->var->len_one_allele, annovar->var->len_other_allele)*sizeof(int));
-   //memset(working_array_shared, 0, 
-   //	  max_of_ints(annovar->var->len_one_allele, annovar->var->len_other_allele)*sizeof(int));
+   memset(working_array_self, 0, 
+   	  max_of_ints(annovar->var->len_one_allele, annovar->var->len_other_allele)*sizeof(int));
+   memset(working_array_shared, 0, 
+   	  max_of_ints(annovar->var->len_one_allele, annovar->var->len_other_allele)*sizeof(int));
 
 
    if ( (expt==EachColourADiploidSample) || (expt==EachColourADiploidSampleExceptTheRefColour) )
@@ -2240,11 +2234,6 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
        reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
        improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(&var_test, mobv, working_colour1, working_colour2);
        
-       memset(working_array_self, 0, 
-	      len_working_arrays*sizeof(int));
-       memset(working_array_shared, 0, 
-	      len_working_arrays*sizeof(int));
-
 
        annovar->gen_log_lh[colour_to_genotype].log_lh[het]= 
 	 calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(&var_test,
@@ -2255,10 +2244,11 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 										path_nodes, path_orientations, path_labels, path_string, 
 										max_sup_len);
        set_status_of_genotyping_nodes_in_branches(&var_test, none);
-       //memset(working_array_self, 0, 
-       //     max_of_ints(annovar->var->len_one_allele, annovar->var->len_other_allele)*sizeof(int));
-       //memset(working_array_shared, 0, 
-       //     max_of_ints(annovar->var->len_one_allele, annovar->var->len_other_allele)*sizeof(int));
+       memset(working_array_self, 0, 
+	      max_of_ints(annovar->var->len_one_allele, annovar->var->len_other_allele)*sizeof(int));
+       memset(working_array_shared, 0, 
+   	  max_of_ints(annovar->var->len_one_allele, annovar->var->len_other_allele)*sizeof(int));
+
 
 
 
@@ -2284,10 +2274,6 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
   little_graph_wipe_colour(working_colour2, little_db_graph);
   reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
   improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(&var_test, mobv, working_colour1, working_colour2);
-  memset(working_array_self, 0, 
-	 len_working_arrays*sizeof(int));
-  memset(working_array_shared, 0, 
-	 len_working_arrays*sizeof(int));
 
 
   annovar->gen_log_lh[colour_to_genotype].log_lh[hom_other]= 
@@ -2300,10 +2286,11 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 									   max_sup_len);
   set_status_of_genotyping_nodes_in_branches(&var_test, none);
 
+  memset(working_array_self, 0, 
+	 max_of_ints(annovar->var->len_one_allele, annovar->var->len_other_allele)*sizeof(int));
+  memset(working_array_shared, 0, 
+	 max_of_ints(annovar->var->len_one_allele, annovar->var->len_other_allele)*sizeof(int));
   
-  
- 
-  //dealloc_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
    
   
 }
@@ -2324,7 +2311,7 @@ void get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(Annot
   int* working_array_self               = gwp->working_array_self;
   int* working_array_shared             = gwp->working_array_shared;
   int len_working_arrays                = gwp->max_allele_len;
-  int working_colour1                   = gwp->working_colour1;//these are zeroed by the gwp allocation function.
+  int working_colour1                   = gwp->working_colour1;//these are zeroed by the gwp allocation function, so provided we clean up at the end of this call, everything is fine
   int working_colour2                   = gwp->working_colour2;
   dBNode** path_nodes                   = gwp->path_nodes;
   Orientation* path_orientations        = gwp->path_orientations;
