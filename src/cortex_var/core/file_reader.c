@@ -60,6 +60,17 @@ void  load_paired_end_seq_into_graph_of_specific_person_or_pop(FILE* fp1, FILE* 
 							       boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph, EdgeArrayType type, int index);
 
 
+
+void initialise_binary_header_info(BinaryHeaderInfo* binfo, GraphInfo* ginfo)
+{
+  binfo->version=0;
+  binfo->kmer_size=0;
+  binfo->number_of_bitfields=0;
+  binfo->number_of_colours=0;
+  binfo->ginfo=ginfo;
+}
+
+
 //pass in bases_read to track amount of sequence read in, and bases_pass_filters_and_loaded to see how much passed filters and got into the graph
 void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, boolean pe, char* se_f, char* pe_f1, char* pe_f2,
 								   long long* bases_read, long long* bases_pass_filters_and_loaded,long long** readlen_count_array,
@@ -1422,7 +1433,7 @@ void load_population_as_fastq(char* filename, long long* bases_read, long long b
 
 //returns number of kmers loaded*kmer_length
  //array_mean_readlens and array_total_seqs are arrays of length NUMBER_OF_COLOURS, so they can hold the mean read length+total seq in every colour
-long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, GraphInfo* ginfo, int* num_cols_in_loaded_binary,); 
+long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, GraphInfo* ginfo, int* num_cols_in_loaded_binary) 
 //							    int** array_mean_readlens, long long** array_total_seqs)
 {
 
@@ -1507,49 +1518,43 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
   boolean found;
   int count=0;
 
-  int debug_num_attempts=1;
-
   if (fp_bin == NULL)
     {
-      printf("load_single_colour_binary_data_from_filename_into_graph cannot open file:%s - bastard ibrix - attempt number %d\n",filename, debug_num_attempts);
       //  exit(1); //TODO - prefer to print warning and skip file and return an error code?
-      while ((debug_num_attempts<=10)&&(fp_bin==NULL))
-	{
-	  sleep(debug_num_attempts*600); //wait 10 mins the first time, then 20,..up til 100 mins the 10th time, then give up
-	  //try again
-	  debug_num_attempts++;
-	  fp_bin = fopen(filename, "r");
-	  if (fp_bin==NULL)
-	    {
-	      printf("load_single_colour_binary_data_from_filename_into_graph cannot open file:%s - bastard ibrix - attempt number %d\n",filename, debug_num_attempts);
-	    }
-	}
-      if (fp_bin==NULL)
-	{
-	  printf("I give up\n");
-	  exit(1);
-	}
-    }
-
-
-  int binversion_in_header;
-  int num_cols_in_binary;
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary, &mean_readlen, &total_seq, &binversion_in_header) ) )
-    {
-      printf("Cannot load this binary - fails signature check. Exiting.\n");
+      printf("Unable to open this binary %s\n", filename);
       exit(1);
     }
 
-  if (num_cols_in_binary!=1)
+
+  //this will be inefficient once we have thousands of colours, but is only run once.
+  GraphInfo ginfo;
+  graph_info_initialise(&ginfo);
+  BinaryHeaderErrorCode ecode=EValid;
+  BinaryHeaderInfo binfo;
+  initialise_binary_header_info(&binfo, &ginfo);
+
+
+  if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode)))
     {
-      printf("Expecting a single colour binary, but instead this one has %d colours\n. Exiting.\n", num_cols_in_binary);
+      printf("Cannot load this binary - fails signature check with error code %d. Exiting.\n", ecode);
+      exit(1);
+    }
+  else
+    {
+      *mean_read_len = ginfo.mean_read_length[0];
+      *total_seq     = ginfo.total_sequence[0];
+    }
+
+  if (binfo.number_of_colours!=1)
+    {
+      printf("Expecting a single colour binary, but instead this one has %d colours\n. Exiting.\n", binfo->number_of_colours);
       exit(1);
     }
 
   
   //Go through all the entries in the binary file
   // each time you load the info into a temporary node, and load them *** into colour number index ***
-  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, type, index, binversion_in_header))
+  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, type, index, binfo.version))
     {
       count++;
       found=false;//zam just added this

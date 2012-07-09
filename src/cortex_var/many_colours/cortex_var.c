@@ -852,8 +852,8 @@ int main(int argc, char **argv){
 	      total_seq_in_that_colour[j]=0;
 	      total_seq_in_that_colour_ptrs[j]=&(total_seq_in_that_colour[j]);
 	    }
-	  long long  bp_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line.multicolour_bin,db_graph, &first_colour_data_starts_going_into,
-										  db_graph_info);
+	  long long  bp_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line.multicolour_bin,db_graph, 
+										  &db_graph_info, &first_colour_data_starts_going_into);
 	                                                                          //mean_readlens_ptrs, total_seq_in_that_colour_ptrs);
 	  //update graph_info object
 	  //for (j=0; j<first_colour_data_starts_going_into; j++)
@@ -1375,9 +1375,10 @@ int main(int argc, char **argv){
 	}
       int num_c;//number of colours in binary
       
+      GraphInfo tmp_info;
+      graph_info_initialise(&tmp_info);
+      long long  n  = load_multicolour_binary_from_filename_into_graph(tmp_dump,db_graph2, &tmp_info, &num_c);
 
-      long long  n  = load_multicolour_binary_from_filename_into_graph(tmp_dump,db_graph2, &num_c,
-								       mean_readlens_ptrs2, total_seq_in_that_colour_ptrs2);
 
       //this is why we are going to all this bother - cleaning edges
       db_graph_clean_orphan_edges(db_graph2);

@@ -61,6 +61,8 @@ typedef struct {
   GraphInfo* ginfo;
 } BinaryHeaderInfo;
 
+void initialise_binary_header_info(BinaryHeaderInfo* binfo, GraphInfo* ginfo);
+
 
 //pass in bases_read to track amount of sequence read in, and bases_pass_filters_and_loaded to see how much passed filters and got into the graph
 void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, boolean pe, char* se_f, char* pe_f1, char* pe_f2,
@@ -150,9 +152,9 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
 
 //functions for loading multicolour graphs
-long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
-							   int* num_cols_in_loaded_binary, int** array_mean_readlens, long long** array_total_seqs);
-
+//long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
+//							   int* num_cols_in_loaded_binary, int** array_mean_readlens, long long** array_total_seqs);
+long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, GraphInfo* ginfo, int* num_cols_in_loaded_binary); 
 
 long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
 								  int* mean_readlen, long long* total_seq,
@@ -250,9 +252,20 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
 
 void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_mean_readlens, long long* array_total_seq);
+void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo* ginfo);
+
 boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary, int** array_mean_readlens, long long** array_total_seqs, int *return_binversion);
+boolean check_binary_signature_NEW(FILE * fp,int kmer_size, 
+				   BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
 
 boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* num_bitfields, int* number_of_colours_in_binary); //return true if binary header readable and has magic number
+boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+
+boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+boolean read_next_error_cleaning_object(FILE* fp, ErrorCleaning* cl);
+
 
 int get_number_of_files_and_check_existence_from_filelist(char* filelist);
 void get_filenames_from_list(char* filelist, char** array, int len);
