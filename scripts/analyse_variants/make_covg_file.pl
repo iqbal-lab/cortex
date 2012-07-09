@@ -25,7 +25,7 @@ while (<CALLS>)
 {
     my $line = $_;
     
-    if ($line =~ /^\>(var_\d+)_5p_flank/)
+    if ($line =~ /^\>(\S+var_\d+)_5p_flank/)
     {
 	$name = $1;
 	my $lenbr1;
@@ -76,7 +76,7 @@ while (<CALLS>)
 
 	if ($line !~ /branch2 coverages/)
 	{
-	    die("Expected branch2 coverages but got $line");
+	    die("Expected branch2 coverages but got $line in $callfile");
 	}
 	$current_colour = 0;
 	$line = <CALLS>;
@@ -148,7 +148,7 @@ while (<CALLS>)
 }
 close(CALLS);
 close(OUT);
-
+print "Completed making covg file!\n";
 
 sub are_all_nodes_in_ref
 {

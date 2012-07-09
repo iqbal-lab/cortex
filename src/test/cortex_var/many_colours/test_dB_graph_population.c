@@ -799,18 +799,37 @@ void test_detect_and_smooth_bubble(){
   db_node_add_edge(node5, node9, reverse,reverse, db_graph->kmer_size, individual_edge_array, 0);
 
 
-  bubble = db_graph_detect_bubble_for_specific_person_or_population(node1,forward,db_graph->kmer_size+1,
+  bubble = db_graph_detect_bubble_for_specific_person_or_population(node1,forward,
+								    db_graph->kmer_size+2,
 								    &db_node_action_set_status_visited,
-								    &length1,path_nodes1,orientations1,labels1,
-								    seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
-								    &length2,path_nodes2,orientations2,labels2,
-								    seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
-								    db_graph, individual_edge_array, 0);
+								    &length1,
+								    path_nodes1,
+								    orientations1,
+								    labels1,
+								    seq1,
+								    &avg_coverage1,
+								    &min_coverage1,
+								    &max_coverage1,
+								    &length2,
+								    path_nodes2,
+								    orientations2,
+								    labels2,
+								    seq2,
+								    &avg_coverage2,
+								    &min_coverage2,
+								    &max_coverage2,
+								    db_graph, 
+								    individual_edge_array, 
+								    0);
 
 
   CU_ASSERT(bubble);
 
-  CU_ASSERT(((labels1[0] == Adenine) && (labels2[0] == Thymine)) || ((labels2[0] == Adenine) && (labels1[0] == Thymine)));
+  CU_ASSERT(
+	    ((labels1[0] == Adenine) && (labels2[0] == Thymine)) 
+	    || 
+	    ((labels2[0] == Adenine) && (labels1[0] == Thymine))
+	    );
 
   CU_ASSERT_EQUAL(labels1[1],Cytosine);
   CU_ASSERT_EQUAL(labels1[2],Thymine);

@@ -37,13 +37,23 @@ BEGIN
 	
 	push( @INC,
 		$script_dir
-		  . "/perl_modules/Statistics-Descriptive-2.6",
+		  . "/perl_modules/Statiistics-Descriptive-2.6",
 	      $isaac_bioinf_dir."lib/"
 	);
 }
 
-# use lib $cortex_dir."/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6";
+my $check_perl5 = "echo \$PERL5LIB";
+my $check_perl5_ret = qx{$check_perl5};
+my $isaac_libdir = $isaac_bioinf_dir."lib";
+if ($check_perl5_ret !~ /$isaac_libdir/)
+{
+    my $update_perl5 = "export PERL5LIB=$isaac_libdir:\$PERL5LIB";
+    print "$update_perl5\n";
+    qx{$update_perl5};
+}
 
+use lib $cortex_dir."/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6";
+use Descriptive;
 
 
 ###******** Description of process_calls.pl ##################################################################
@@ -56,7 +66,7 @@ BEGIN
 # will get a VCF4.0 file that shows you all your calls, which samples have which alleles, and how your alleles related to each other
 ##############################################################################################################
 
-use Descriptive;
+
 
 ##make sure there is forward slash on the end:
 if ( $cortex_dir !~ /\/$/ )
@@ -71,17 +81,18 @@ my (
 	                       $apply_filter_one_allele_must_be_ref,
 	$classif,              $prefix,
 	$ploidy,               $require_one_allele_is_ref,
-	$stampy_hash_stub,     $ref_fasta,
+	$stampy_hash_stub,     $ref_fasta, $unioncalls, $caller_type,
+        $callfile_log,         $kmer
 );
 
 #set defaults
 my $pooled_colour = -1;    #deprecated
 $classif                             = -1;
 $require_one_allele_is_ref           = "yes";
-$prefix                              = "cortex";
+$prefix                              = "";
 $outdir                              = ".";
 $outvcf_filename_stub                = '';
-$callfile                            = '';
+$callfile                            = "unspecified";
 $colours                             = '';
 $number_of_colours                   = 0;
 $reference_colour                    = -1;
@@ -89,30 +100,39 @@ $ploidy                              = 2;
 $apply_filter_one_allele_must_be_ref = "unknown";
 $stampy_hash_stub                    = "";
 $ref_fasta                           = "unspecified";
+$unioncalls                          = "unspecified";
+$caller_type                         = "unspecified";
+$callfile_log                        = "unspecified";
+$kmer                                = -1;
 my $help = '';    #default false
 
 
 &GetOptions(
-	'callfile|f:s' => \$callfile,
-	'outdir|o:s'   => \$outdir,
-	'outvcf|v:s'   => \$outvcf_filename_stub,
-	'samplename_list|s:s' =>
-	  \$colours,    #list of names of colours/sample,s one per line
-	'num_cols|n:i' => \$number_of_colours,
-	'refcol|r:i'   => \$reference_colour
-	, # ignore this colour for the VCF - dont print out anything. if there is no reference in your colours, use -1
-	'require_one_allele_is_ref|a:s' => \$apply_filter_one_allele_must_be_ref
-	, #must be "yes" or "no". Usually in VCF require one allele is the ref allele and matches the reference
-	'pop_classifier|c:s' => \$classif
-	, ## file containing output of the population filter (classifier.R), or -1 if not used (default)
-	'prefix|p:s'      => \$prefix,            ## this will prefix any var name
-	'ploidy|y:i'      => \$ploidy,            ## must be 1 or 2
-	'stampy_hash|t:s' => \$stampy_hash_stub
-	, #stampy creates blah.sthash and blah.stidx. You should enter --stampy_hash blah
-	'stampy_bin:s' => \$stampy_bin,    ## must be 1 or 2
-        'ref_fasta:s' => \$ref_fasta, ## optional, but if there, will remove calls which have been misplaced by mapper.
-        'vcftools_dir:s'       =>\$vcftools_dir,    #mandatory
-	'help'         => \$help,
+	'callfile|f:s'                         => \$callfile,
+	'callfile_log|i:s'                     => \$callfile_log,
+	'outdir|o:s'                           => \$outdir,
+	'outvcf|v:s'                           => \$outvcf_filename_stub,
+	'samplename_list|s:s'                  =>  \$colours,    #list of names of colours/sample,s one per line
+	'num_cols|n:i'                         => \$number_of_colours,
+	'refcol|r:i'                           => \$reference_colour,
+	                                          # ignore this colour for the VCF - dont 
+                                                  #print out anything. if there is no reference in your colours, use -1
+	'require_one_allele_is_ref|a:s'        => \$apply_filter_one_allele_must_be_ref,
+	                                          #must be "yes" or "no". Usually in VCF require one allele is the ref allele and matches the reference
+	'pop_classifier|c:s'                   => \$classif,
+	                                          ## file containing output of the population filter (classifier.R), or -1 if not used (default)
+	'prefix|p:s'                           => \$prefix,            ## this allows you to add a prefix to any var name. By default, it uses what is in the cortex callfile
+	'ploidy|y:i'                           => \$ploidy,            ## must be 1 or 2
+	'stampy_hash|t:s'                      => \$stampy_hash_stub,
+	                                            #stampy creates blah.sthash and blah.stidx. You should enter --stampy_hash blah
+	'stampy_bin|b:s'                       => \$stampy_bin,    ## must be 1 or 2
+        'ref_fasta|e:s'                        => \$ref_fasta, ## optional, but if there, will remove calls which have been misplaced by mapper.
+        'vcftools_dir|d:s'                     => \$vcftools_dir,    #mandatory
+        'unioncalls|u:s'                       => \$unioncalls, ## purely for internal use - the union callset which is passed in for genotyping (which generates $callfile),
+                                                                ##  is sometimes annotated with KMER, which we may want to preserve
+        'caller|l:s'                           => \$caller_type,# BC or PD
+        'kmer|k:i'                             => \$kmer,
+	'help'                                 => \$help,
 );
 
 if ($help)
@@ -120,7 +140,8 @@ if ($help)
 	print "\n\n";
 	print "Usage:\n********  mandatory arguments *********  :\n";
 	print
-"--callfile                    : file of calls output by Cortex (may be from Bubble or Path Divergence caller, but you MUST have used --print_colour_coverages\n";
+"--callfile                    : file of calls output by Cortex (may be from Bubble or Path Divergence caller, but you MUST have used --print_colour_coverages\n";	print
+"--callfile_log                : file in which you have saved the Cortex output (stuff it prints to screen when it runs)\n";
 	print
 "--outvcf                      : the output VCF files will have filenames starting with this\n";
 	print
@@ -163,6 +184,10 @@ if ($help)
 "                                If you want to dig in and see which calls got filtered out, you can compare the VCF with the original callfile and see which calls are missing\n";
 	print
  "--vcftools_dir                : VCFtools is used to generate VCFs - mandatory to either specify this on cmd-line, or manually edit the path at the top of this script\n";
+	print
+	    "--caller                      : Which caller generated this callset. Acceptable arguments are BC or PD.\n";
+	print
+	    "--kmer                        : What kmer value was used in generating this callfile\n";
 	print "*****   Optional arguments ******* \n";
 	print
 "--stampy_bin                  : Path to stampy bin - default is set via variable in script. \n";
@@ -191,6 +216,22 @@ if ($help)
 print "\n\n$str_input_args\n";
 
 ### checks
+if ($callfile eq "unspecified")
+{
+    die("You must specify --callfile");
+}
+if ($callfile_log eq "unspecified")
+{
+    die("You must specify --callfile_log");
+}
+if ($caller_type eq "unspecified")
+{
+    die("You must specify --caller, as BC or PD\n");
+}
+if (!(-e $callfile))
+{
+    die("Cannot open callfile $callfile");
+}
 my $legacy_callfile = check_if_callfile_in_legacy_format($callfile);
 if ($legacy_callfile==-1)
 {
@@ -295,6 +336,13 @@ if (   ( $apply_filter_one_allele_must_be_ref eq "yes" )
 "If you say yes to apply_filter_one_allele_must_be_ref then you must specify the ref colour"
 	);
 }
+if (   ( $caller_type eq "PD"  )
+	&& ( $reference_colour == -1 ) )
+{
+	die(
+"If you have specified the caller as PD, you must specify the reference colour"
+	);
+}
 
 ########
 #### checks
@@ -346,6 +394,20 @@ for ( $f = $number_of_colours - 1 ; $f >= 0 ; $f-- )
 		last;
 	}
 }
+
+## if you have passed in a unioncalls file, get the KMER information from it
+my %call_to_extra_info=();
+if ($unioncalls ne "unspecified")
+{
+    get_extra_info_for_calls(\%call_to_extra_info, $unioncalls);
+}
+
+###### Get the read length and covg info from the caller log file
+my %colour_to_readlen=();
+my %colour_to_totalseq=();
+get_covg_and_total_seq_from_log($callfile_log, \%colour_to_readlen, \%colour_to_totalseq);
+
+
 
 ## 1. Map 5p flanks
 my $bname     = basename($callfile);
@@ -410,6 +472,7 @@ else
 
 my %var_name_to_flank_mq_filter           = ();
 my %var_name_to_covg_and_branch_filter    = ();
+my %var_name_to_pd_filter                 = ();
 my %var_name_to_combined_filtering_result = ();
 my %pop_classifier                        = ();
 my %pop_classifier_confidence             = ();
@@ -420,9 +483,15 @@ if ( $classif ne "-1" )
 	get_pop_filter_info( $classif, \%pop_classifier,
 			     \%pop_classifier_confidence );
 }
+
+if ($caller_type eq "PD")
+{
+    filter_calls_where_entire_ref_allele_is_multicopy(\%var_name_to_pd_filter, $callfile, $reference_colour);
+}
 combine_all_filters(
-	\%var_name_to_covg_and_branch_filter,    \%var_name_to_flank_mq_filter,
-	\%var_name_to_combined_filtering_result, \%pop_classifier
+    \%var_name_to_covg_and_branch_filter,    \%var_name_to_flank_mq_filter,
+    \%var_name_to_pd_filter,
+    \%var_name_to_combined_filtering_result, \%pop_classifier
 );
 
 my $fh_calls;
@@ -500,12 +569,13 @@ $final_decomp =~ s/.uncleaned//;
 if ($ref_fasta eq "unspecified")
 {
     ## just sort the file and PV tag it
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_simple";
+
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_simple";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
     print "$ret1\n";
 
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --tag PV LEFT $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_decomp";
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --tag PV LEFT $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_decomp ";
     print "$cmd2\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
@@ -513,15 +583,115 @@ if ($ref_fasta eq "unspecified")
 }
 else # sort and PV tag and remove ref mismatches
 {
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $simple_vcf_name $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_simple";
+
+    #### RAW vcf
+    my $tmp1 = $simple_vcf_name.".corrected_ref_mismatch";
+    print "Switch ref/alt bases in raw vcf on those sites where we know we have placed them back to front:\n";
+
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl $simple_vcf_name $ref_fasta > $tmp1";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
     print "$ret1\n";
 
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $decomp_vcf_name $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_decomp";
-    print "$cmd2\n";
+    print "Remove sites where Stampy has placed variant in wrong place\n";
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_simple ";
+    print "$cmd1\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
+
+    ### DECOMP VCF
+
+    my $tmp3 = $decomp_vcf_name.".corrected_ref_mismatch";
+    print "Switch ref/alt bases in decomp vcf on those sites where we know we have placed them back to front:\n";
+
+    my $cmd3 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl $decomp_vcf_name $ref_fasta > $tmp3 ";
+    print "$cmd3\n";
+    my $ret3 = qx{$cmd3};
+    print "$ret3\n";
+
+    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --filter_txt KMER_DUPE > $final_decomp ";
+    print "$cmd4\n";
+    my $ret4 = qx{$cmd4};
+    print "$ret4\n";
+
+}
+
+
+sub get_covg_and_total_seq_from_log
+{
+    my ($log, $href_rlen, $href_seq) = @_;
+
+    open(LOG, $log)||die("Unable to open caller log file $log\n");
+
+    my $outer_done=0;
+    while ($outer_done==0)
+    {
+	my $ln = <LOG>;
+	chomp $ln;
+	if ($ln =~ /SUMMARY/)
+	{
+	    <LOG>;
+	    my $done = 0;
+	    while ($done==0)
+	    {
+		$ln = <LOG>;
+		chomp $ln;
+		if ($ln !~ /\*/)
+		{
+		    my @sp = split(/\t/, $ln);
+		    my $colour = $sp[0];
+		    my $readlen = $sp[1];
+		    my $seq = $sp[2];
+		    $href_rlen->{$colour}=$readlen;
+		    $href_seq->{$colour} = $seq;
+		}
+		else
+		{
+		    $done=1;
+		    $outer_done=1;
+		}
+	    }
+
+	}
+	
+    }
+    close(LOG);
+}
+
+sub get_extra_info_for_calls
+{
+    my ($href, $file) = @_;
+
+    open(UN, $file)||die();
+    while (<UN>)
+    {
+	my $line = $_;
+	chomp $line;
+
+
+	if ( $line =~ /(\w*var_\d+)_5p_flank/ )
+	{
+	    my $varname = $1;
+	    if ($prefix ne "")
+	    {
+		$varname = $prefix."_".$varname;
+	    }
+	    if ( $varname eq "" )
+	    {
+		die(
+		    "get_extra_info_for_calls - Found this line :$line in the unionfile $file  - expected it to be of the form \\w+var_<NUMBER>_5p_flank\n"
+		    );
+	    }
+
+	    if ($line =~ /\w*var_\d+_5p_flank\s+INFO:(\S+)/)
+	    {
+		my $extra_info=$1;
+		$href->{$varname} = $extra_info;
+	    }
+
+	}
+    }
+    close(UN);
 
 }
 
@@ -667,7 +837,7 @@ sub get_Z_positions
 sub check_if_callfile_in_legacy_format
 {
     my ($file) = @_;
-    open (CHECK, $file)||die();
+    open (CHECK, $file)||die("Cannot open $file");
     my $done = -1;
     while ($done ==-1)
     {
@@ -773,6 +943,214 @@ sub get_vcf_header
 	return $head;
 }
 
+sub  filter_calls_where_entire_ref_allele_is_multicopy
+{
+    my ($href, $callfile, $ref_colour) = @_;
+    
+    my $fh;
+    open($fh, $callfile)||die("Cannot open the callfile $callfile\n");
+
+    my $line = "";
+    my $varname;
+    my $flank5p;
+    my $br1;
+    my $br2;
+    my $flank3p;
+
+    my $classification = "VARIANT";
+    my $class_llk_rep  = -10;
+    my $class_llk_var  = -1;
+    
+
+    my @arr_br1_covgs = (); 
+    my @arr_br2_covgs = (); 
+
+    while (( $line !~ /(\w*var_\d+)_5p_flank/ )
+	   && ( $line !~ /PASSES/ )
+	   && ( $line !~ /FAILS/ )
+	   && ( $line !~ /Colour\/sample/ ) )
+    {
+	if ( eof($fh) )
+	{
+ 	    close($fh);
+	    return;
+	}
+	else
+	{
+	    $line = <$fh>;
+	}
+    }
+    
+    if ( $line =~ /PASSES/ )
+    {
+	$classification = "VARIANT";
+	if ( eof($fh) )
+	{
+	    close($fh);
+	    return;
+	}
+	
+	$line = <$fh>;
+	chomp $line;
+	
+	if ( $line =~ /llk_var:(\S+).+llk_rep:(\S+)/ )
+	{
+	    $class_llk_rep = $1;
+	    $class_llk_var = $2;
+	}
+	else
+	{
+	    die(
+		"Parsing issue. Found model selecion result but cant find likelihoods on $line\n"
+		);
+	}
+	if ( eof($fh) )
+	{
+	    close($fh);
+	    return ;
+	}
+	$line = <$fh>;
+	
+    }
+    elsif ( $line =~ /FAILS/ )
+    {
+	$classification = "REPEAT";
+	if ( eof($fh) )
+	{
+	    close($fh);
+	    return;
+	}
+	
+	$line = <$fh>;
+	chomp $line;
+	
+	if ( $line =~ /llk_var:(\S+).+llk_rep:(\S+)/ )
+	{
+	    $class_llk_rep = $1;
+	    $class_llk_var = $2;
+	}
+	else
+	{
+	    die(
+		"Parsing issue. Found model selecion result but cant find likelihoods on $line\n"
+		);
+	}
+	if ( eof($fh) )
+	{
+	    close($fh);
+	    return;
+	}
+	$line = <$fh>;
+    }
+    
+    if ( $line =~ /Colour\/sample/ )
+    {
+	my $j;
+	for ( $j = 0 ; $j < $number_of_colours ; $j++ )
+	{
+	    $line = <$fh>;#### all the genotype calls
+	    chomp $line;
+	}
+	$line = <$fh>;
+	
+    }
+    
+    if ( $line =~ /(\w*var_\d+)_5p_flank/ )
+    {
+	$varname = $1;
+	if ($prefix ne "")
+	{
+	    $varname = $prefix."_".$varname;
+	}
+	
+	if ( $varname eq "" )
+	{
+	    die(
+		"Found this line :$line in the callfile - expected it to be of the form var_<NUMBER>_5p_flank\n"
+		);
+	}
+	
+	
+	$flank5p = <$fh>;
+	chomp $flank5p;
+	<$fh>;    #ignore br1 read id
+	$br1 = <$fh>;
+	chomp $br1;
+	<$fh>;    #ignore br2 read id
+	$br2 = <$fh>;
+	chomp $br2;
+	<$fh>;    #ignore 3p flank read id
+	$flank3p = <$fh>;
+	chomp $flank3p;
+	$line    = <$fh>;
+	
+	if ( $line =~ /extra information/ )
+	{
+	    <$fh>;
+	}
+	$line = <$fh>;
+	chomp $line;
+	if ( $line !~ /branch1 coverages/ )
+	{
+	    die("Expected to see \"branch 1 coverages\" but instead saw $line");
+	}
+	my $z;
+	for ( $z = 0 ; $z < $number_of_colours ; $z++ )
+	{
+	    $line = <$fh>;
+	    chomp $line;
+	    if ( $line !~ /Covg in Colour/ )
+	    {
+		die("Expected to see \"Covg in Colour\" but instead saw $line");
+	    }
+	    $line = <$fh>;
+	    chomp $line;
+	    if ($z==$ref_colour)
+	    {
+		my @br1 = split( /\s+/, $line );
+		
+		my $min1 =  get_min_covg(\@br1);
+		if ($min1>1)
+		{
+		    ### Every kmer on this allele occurs >1 time in reference. We need to filter this call
+		    $href->{$varname}=1;
+		}
+	    }
+	}
+	$line = <$fh>;
+	chomp $line;
+	if ( $line !~ /branch2 coverages/ )
+	{
+	    die("Expected to see \"branch 2 coverages\" but instead saw $line");
+	}
+	
+	for ( $z = 0 ; $z < $number_of_colours ; $z++ )
+	{
+	    $line = <$fh>;
+	    chomp $line;
+	    
+	    if ( $line !~ /Covg in Colour/ )
+	    {
+		die("Expected to see \"Covg in Colour\" but instead saw $line");
+	    }
+	    $line = <$fh>;
+	    ### branch 2 is the alt allele
+	}
+	
+	close($fh);
+	return;
+	
+    }
+    else
+    {
+	print
+	    "totally unexpected error on  $line - contact zam\@well.ox.ac.uk\n";
+	die();
+    }
+    close($fh);
+    return;
+}
+
 sub filter_by_flank_mapqual
 {
 	my ( $file, $href ) = @_;
@@ -799,7 +1177,12 @@ sub filter_by_flank_mapqual
 			my $varname;
 			if ( $query =~ /(\w*var_\d+)_5p_flank/ )
 			{
-				$varname = $prefix . "_" . $1;
+			    $varname = $1;
+			    if ($prefix ne "")
+			    {
+				$varname = $prefix."_".$varname;
+			    }
+
 
 			}
 			else
@@ -842,10 +1225,10 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 		$eof,          $var_name,       $flank5p,       $br1_seq,
 		$br2_seq,      $flank3p,        $aref_br1_cov,  $aref_br2_cov,
 		$which_is_ref, $classification, $class_llk_rep, $class_llk_var,
-		$genotype,     $llk_hom1,       $llk_het,       $llk_hom2
+		$genotype,     $llk_hom1,       $llk_het,       $llk_hom2, $extra_info_fields
 	) = get_next_var_from_callfile( $file_handle_calls, $ploidy );
 
-
+	#print "Got back extra info: $extra_info_fields for $var_name\n";
 	my ( $eof2, $var_name2, $strand, $chr, $coord ) =
 	  get_next_var_from_flank_mapfile($file_handle_map_flanks);
 
@@ -901,9 +1284,9 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 		}
 		elsif ( $which_is_ref eq "b" )
 		{
-
-			print "Ignore var $var_name, both alleles REF!\n";
-			return 1;
+		      ## let Isaac's scripts handle this
+			#print "Ignore var $var_name, both alleles REF!\n";
+			#return 1;
 		}
 	}
 	else
@@ -973,7 +1356,8 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 			$llk_hom1,
 			$llk_het,
 			$llk_hom2,
-			$href_pop_classifier_confidence
+			$href_pop_classifier_confidence,
+		        $extra_info_fields
 		);
 	}
 	if ( $print_decomp_vcf == 1 )
@@ -1017,7 +1401,7 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 			$llk_hom1,
 			$llk_het,
 			$llk_hom2,
-			$href_pop_classifier_confidence
+			$href_pop_classifier_confidence, $extra_info_fields
 		);
 
 	}
@@ -1065,7 +1449,8 @@ sub print_vcf_entry
 		$llk_hom1,
 		$llk_het,
 		$llk_hom2,
-		$href_pop_classifier_conf
+		$href_pop_classifier_conf,
+	        $extra_info
 	) = @_;
 
 	my $vcf_entry_chr = $chr;
@@ -1162,7 +1547,11 @@ sub print_vcf_entry
 	}
 
 	my $info = "SVTYPE=$svtype;SVLEN=$svlen";
-
+	if ($extra_info ne "")
+	{
+	    $info = $info.";$extra_info";
+	}
+	
 	if (   ( ( $svtype !~ /COMPLEX/ ) && ( $svtype !~ /PH_SNPS/ ) )
 		|| ( $split_phased_snps == 0 ) )
 	{
@@ -1266,6 +1655,11 @@ sub print_vcf_entry
 
 			my $this_snp_name = $var_name . "_sub_snp_" . $cnt;
 			my $this_snp_info = "SVTYPE=SNP_FROM_COMPLEX;SVLEN=0";
+			if ($extra_info ne "")
+			{
+			    $this_snp_info = $this_snp_info.";$extra_info";
+			}
+
 			print $fh_output_vcf
 "$this_snp_chr\t$this_snp_pos\t$this_snp_name\t$this_snp_ref_allele\t$this_snp_alt_allele\t.\t$filter_result\t$this_snp_info\t";
 			my $have_called_gt       = 0;
@@ -1356,6 +1750,11 @@ sub print_vcf_entry
 			my $svlen =
 			  length($this_indel_ref_allele) - length($this_indel_alt_allele);
 			my $this_indel_info = "SVTYPE=INDEL_FROM_COMPLEX;SVLEN=$svlen";
+			if ($extra_info ne "")
+			{
+			    $this_indel_info = $this_indel_info.";$extra_info";
+			}
+
 			print $fh_output_vcf
 "$this_indel_chr\t$this_indel_pos\t$this_indel_name\t$this_indel_ref_allele\t$this_indel_alt_allele\t.\t$filter_result\t$this_indel_info\t";
 
@@ -1577,16 +1976,27 @@ sub print_all_genotypes_and_covgs
 			}
 		}
 		my $site_conf = -99999;
+		my $stripped_name = $name;
+		my $prefix_under;
+		if ($prefix ne "")
+		{
+		    $prefix_under = $prefix."_";
+		    $stripped_name =~ s/$prefix_under//;
+		}
 		if ( $do_we_have_pop_filter == 1 )
 		{
 		    if (exists $href_pop_conf->{$name})
 		    {
 			$site_conf = sprintf( "%.2f", $href_pop_conf->{$name} );
 		    }
+		    elsif (exists $href_pop_conf->{$stripped_name})
+		    {
+			$site_conf = sprintf( "%.2f", $href_pop_conf->{$stripped_name});
+		    }
 		    else
 		    {
 			$site_conf = "ZAMBO";
-			print "cannot find site conf for $name\n";
+			print "cannot find site conf for $name or $stripped_name\n";
 			print "keys are ";
 			print join("\n", keys %$href_pop_conf);
 			die();
@@ -1978,7 +2388,7 @@ sub get_next_var_from_callfile
 	my @arr_llk_hom1  = ();
 	my @arr_llk_hom2  = ();
 	my @arr_llk_het   = ();
-
+	my $extra_info="";
 	while (( $line !~ /(\w*var_\d+)_5p_flank/ )
 		&& ( $line !~ /PASSES/ )
 		&& ( $line !~ /FAILS/ )
@@ -1986,7 +2396,7 @@ sub get_next_var_from_callfile
 	{
 		if ( eof($fh) )
 		{
-			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
 		}
 		else
 		{
@@ -1999,7 +2409,7 @@ sub get_next_var_from_callfile
 		$classification = "VARIANT";
 		if ( eof($fh) )
 		{
-			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0 );
 		}
 
 		$line = <$fh>;
@@ -2018,7 +2428,7 @@ sub get_next_var_from_callfile
 		}
 		if ( eof($fh) )
 		{
-			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
 		}
 		$line = <$fh>;
 
@@ -2028,7 +2438,7 @@ sub get_next_var_from_callfile
 		$classification = "REPEAT";
 		if ( eof($fh) )
 		{
-			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
 		}
 
 		$line = <$fh>;
@@ -2047,7 +2457,7 @@ sub get_next_var_from_callfile
 		}
 		if ( eof($fh) )
 		{
-			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
 		}
 		$line = <$fh>;
 	}
@@ -2102,13 +2512,36 @@ sub get_next_var_from_callfile
 
 	if ( $line =~ /(\w*var_\d+)_5p_flank/ )
 	{
-		$varname = $prefix . "_" . $1;
+		$varname = $1;
+		if ($prefix ne "")
+		{
+		    $varname = $prefix."_".$varname;
+		}
+
 		if ( $varname eq "" )
 		{
 			die(
 "Found this line :$line in the callfile - expected it to be of the form var_<NUMBER>_5p_flank\n"
 			);
 		}
+
+		if (exists $call_to_extra_info{$varname})
+		{
+		    $extra_info=$call_to_extra_info{$varname};
+		}
+		elsif ($varname =~ /(\S+)_sub/)
+		{
+		    my $rawname = $1;
+		    if (exists $call_to_extra_info{$rawname})
+		    {
+			$extra_info=$call_to_extra_info{$rawname};
+		    }
+		}
+		else
+		{
+		    #print "No extra info (eg Kmer value)  for $varname\n";
+		}
+
 
 		$flank5p = <$fh>;
 		chomp $flank5p;
@@ -2145,8 +2578,9 @@ sub get_next_var_from_callfile
 			$line = <$fh>;
 			chomp $line;
 			my @br1 = split( /\s+/, $line );
-			push @arr_br1_covgs, get_num_reads( \@br1 );
+			# ZAM - remove this and try using median :    push @arr_br1_covgs, get_num_reads( \@br1 );
 			push @arr_br1_min_covg, get_min_covg(\@br1);
+			push @arr_br1_covgs, get_num_reads_using_median( $line, $colour_to_readlen{$z}, $kmer); 
 		}
 		$line = <$fh>;
 		chomp $line;
@@ -2167,7 +2601,8 @@ sub get_next_var_from_callfile
 			$line = <$fh>;
 			chomp $line;
 			my @br2 = split( /\s+/, $line );
-			push @arr_br2_covgs, get_num_reads( \@br2 );
+			#ZAM - remove for debug - try median push @arr_br2_covgs, get_num_reads( \@br2 );
+			push @arr_br2_covgs, get_num_reads_using_median($line, $colour_to_readlen{$z}, $kmer);
 			push @arr_br2_min_covg, get_min_covg(\@br2);
 		}
 
@@ -2197,7 +2632,8 @@ sub get_next_var_from_callfile
 		elsif (( $arr_br1_min_covg[$reference_colour] >= 1 )
 			&& ( $arr_br2_min_covg[$reference_colour] >= 1 ) )
 		{
-			$which_is_ref = "b";
+			#$which_is_ref = "b";
+			$which_is_ref = 1;## ZAm - added during debugging - will get Isaac's scripts to fix up afterwards
 		}
 		else
 		{
@@ -2212,7 +2648,7 @@ sub get_next_var_from_callfile
 			\@arr_br1_covgs, \@arr_br2_covgs, $which_is_ref,
 			$classification, $class_llk_rep,  $class_llk_var,
 			\@arr_geno,      \@arr_llk_hom1,  \@arr_llk_het,
-			\@arr_llk_hom2
+			\@arr_llk_hom2, $extra_info
 		);
 
 	}
@@ -2224,6 +2660,40 @@ sub get_next_var_from_callfile
 	}
 }
 
+sub get_num_reads_using_median
+{
+    my ($line, $read_length, $khmer) = @_;
+    my @sp = split(/\s+/, $line);
+    my $i;
+    my $total = $sp[1];
+    if (scalar @sp < 3)
+    {
+	return 0;
+    }
+
+    pop(@sp);
+    shift(@sp); ##remove firsdt and last elements
+    my $stat = Statistics::Descriptive::Full->new();
+    $stat ->add_data(@sp);
+
+    my $median = $stat->median();
+
+    if ($read_length-$khmer+1>scalar(@sp) )## the variant is shorted than the effective read length
+    {
+	return int($median);
+    }
+    else
+    {
+	## total number of kmer-covg = median * length
+	my $num_kmercovg = scalar(@sp) * $median;
+	## total reads = = number bases/read length
+	my $num_reads = int($num_kmercovg/($read_length-$khmer+1));
+	#print "Num reads is $num_reads. Median is $median zaz. num kmercovg is $num_kmercovg, r-k is ";
+	#print $read_length-$kmer+1;
+	#print "\n";
+	return $num_reads;
+    }
+}
 sub get_num_reads
 {
 	my ($aref) = @_;
@@ -2278,7 +2748,11 @@ sub get_next_var_from_flank_mapfile
 	my $name;
 	if ( $sp[0] =~ /(\w*var_\d+)/ )
 	{
-		$name = $prefix . "_" . $1;
+		$name = $1;
+		if ($prefix ne "")
+		{
+		    $name = $prefix."_".$name;
+		}
 	}
 	else
 	{
@@ -3283,11 +3757,12 @@ sub get_indel_alleles
 sub combine_all_filters
 {
 	my (
-		$href_var_name_to_covg_and_branch_filter,
-		$href_var_name_to_flank_mq_filter,
-		$href_var_name_to_combined_filtering_result,
-		$href_pop_classifier
-	) = @_;
+	    $href_var_name_to_covg_and_branch_filter,
+	    $href_var_name_to_flank_mq_filter,
+	    $href_pd_filter,
+	    $href_var_name_to_combined_filtering_result,
+	    $href_pop_classifier
+	    ) = @_;
 
 	foreach my $key ( keys %$href_var_name_to_flank_mq_filter )
 	{
@@ -3300,6 +3775,21 @@ sub combine_all_filters
 		{
 			$href_var_name_to_combined_filtering_result->{$key} = "MAPQ";
 		}
+	}
+	foreach my $key (keys %$href_pd_filter)
+	{
+	    if ( !exists $href_var_name_to_combined_filtering_result->{$key} )
+	    {
+		$href_var_name_to_combined_filtering_result->{$key} =
+		    "PF_FAIL_PD_PARALOG" ;
+	    }
+	    else
+	    {
+		$href_var_name_to_combined_filtering_result->{$key} =
+		    $href_var_name_to_combined_filtering_result->{$key}
+		. ",PF_FAIL_PD_PARALOG";
+
+	    }
 	}
 	foreach my $key ( keys %$href_pop_classifier )
 	{
@@ -3344,7 +3834,11 @@ sub get_list_vars_with_cut_flanks
 		{
 			if ( $line =~ /(\w*var_\d+)_5p_flank/ )
 			{
-				my $name = $prefix . "_" . $1;
+				my $name = $1;
+				if ($prefix ne "")
+				{
+				    $name = $prefix . "_" .$name;
+				}
 				$href->{$name} = 1;
 			}
 			else
@@ -3368,7 +3862,11 @@ sub get_pop_filter_info
 		my $line = $_;
 		chomp $line;
 		my @sp = split( /\t/, $line );
-		my $name = $prefix . "_" . $sp[0];
+		my $name = $sp[0];
+		if ($prefix ne "")
+		{
+		    $name = $prefix . "_" .$name; 
+		}
 		if ($name =~ /^(\S+)\s+/)
 		{
 		    $name = $1;
@@ -3414,7 +3912,11 @@ sub wrap_needleman
 				$printed_at_start_of_var = 0;
 			}
 
-			$var_name = $prefix ."_".$1;
+			$var_name = $1;
+			if ($prefix ne "")
+			{
+			    $var_name = $prefix ."_".$var_name;
+			}
 			my $which_branch = $2;
 			print OUT "$var_name branch $which_branch\n";
 			my $a = <FILE>;
@@ -3424,7 +3926,11 @@ sub wrap_needleman
 		}
 		elsif ( $line =~ /branch\_(\d+)\_(1|2)/ )
 		{
-		    $var_name = $prefix . '_var_' . $1;
+		    $var_name = "var_" . $1;
+		    if ($prefix ne "")
+		    {
+			$var_name = $prefix."_".$var_name;
+		    }
 		    my $which = $2;
 
 		    if ( $printed_at_start_of_var == 0 )

@@ -138,6 +138,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 											     Orientation* working_o_other,
 											     int* working_array_self,
 											     int* working_array_shared,
+											     int len_working_arrays,
 											     MultiplicitiesAndOverlapsOfBiallelicVariant* mobv,
 											     int colour_to_genotype, int working_colour1, int working_colour2,
 											     dBNode** path_nodes, Orientation* path_orientations, 
