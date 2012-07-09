@@ -162,24 +162,18 @@ boolean more_than_one_colour_in_multicol_binary(char* file, int kmer_size)
       exit(1);
     }
 
-  int num_cols=0;
-  int mean_readlens[NUMBER_OF_COLOURS];
-  long long total_seqs[NUMBER_OF_COLOURS];
-  int* mean_readlens_ptrs[NUMBER_OF_COLOURS];
-  long long* total_seqs_ptrs[NUMBER_OF_COLOURS];
-  int i;
-  for (i=0; i<NUMBER_OF_COLOURS; i++)
-    {
-      mean_readlens[i]=0;
-      mean_readlens_ptrs[i]=&(mean_readlens[i]);
-      total_seqs[i]=0;
-      total_seqs_ptrs[i]=&(total_seqs[i]);
-    }
-  int binversion_in_header;
-  check_binary_signature(fp, kmer_size, BINVERSION, &num_cols, mean_readlens_ptrs, total_seqs_ptrs, &binversion_in_header);
+
+  GraphInfo ginfo;
+  graph_info_initialise(&ginfo);
+  BinaryHeaderErrorCode ecode=EValid;
+
+  BinaryHeaderInfo binfo;
+  initialise_binary_header_info(&binfo, &ginfo);
+
+  query_binary_NEW(fp, kmer_size, &binfo, &ecode);
   fclose(fp);
 
-  if (num_cols>1)
+  if (binfo->number_of_colours>1)
     {
       return true;
     }
@@ -2078,58 +2072,58 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
           return -1;
 	}
 
-      int mean_readlens[NUMBER_OF_COLOURS];
-      long long total_seqs[NUMBER_OF_COLOURS];
-      int* mean_readlens_ptrs[NUMBER_OF_COLOURS];
-      long long* total_seqs_ptrs[NUMBER_OF_COLOURS];
-      int i;
-      for (i=0; i<NUMBER_OF_COLOURS; i++)
-	{
-	  mean_readlens[i]=0;
-	  mean_readlens_ptrs[i]=&(mean_readlens[i]);
-	  total_seqs[i]=0;
-	  total_seqs_ptrs[i]=&(total_seqs[i]);
-	}
-      int binversion_in_header;
-      boolean is_multicol_bin_ok = check_binary_signature(fp, cmd_ptr->kmer_size, BINVERSION, &num_m_cols, mean_readlens_ptrs, total_seqs_ptrs, &binversion_in_header);
+
+      
+      GraphInfo ginfo;
+      graph_info_initialise(&ginfo);
+      BinaryHeaderErrorCode ecode=EValid;
+      
+      BinaryHeaderInfo binfo;
+      initialise_binary_header_info(&binfo, &ginfo);
+
+      boolean is_multicol_bin_ok = check_binary_signature_NEW(fp, cmd_ptr->kmer_size, &binfo, &ecode);
 
       
       fclose(fp);
 
       char tmp[LEN_ERROR_STRING];
-      if (is_multicol_bin_ok==false)
+
+      
+       if (is_multicol_bin_ok==false)
 	{
-	  sprintf(tmp,"This binary %s is not compatible with the current de Bruijn graph parameters\n", cmd_ptr->multicolour_bin);
+	  sprintf(tmp,"This binary %s is not compatible with the current de Bruijn graph parameters, error code %d\n", 
+		  cmd_ptr->multicolour_bin, ecode);
+          strcpy(error_string, tmp);
+          return -1;
+	  
+	}
+
+      if (binfo->number_of_colours<=0)
+	{
+	  printf("Corrupt binary %s - signature claims to have <=0 colours within\n", cmd_ptr->multicolour_bin);
+	}
+      elsif (binfo->number_of_colours >NUMBER_OF_COLOURS)
+	{
+	  printf("Multicolour binary %s contains %d colours, but cortex_var is compiled to support a maximum of %d colours\n", 
+		  cmd_ptr->multicolour_bin, binfo->number_of_colours, NUMBER_OF_COLOURS);
+
+	}
+      else if ( (cmd_ptr->successively_dump_cleaned_colours==false) && (binfo->number_of_colours+cmd_ptr->num_colours_in_input_colour_list > NUMBER_OF_COLOURS) )
+	{
+	  printf("Between %s (containing %d colours) and %s (containing %d colours), you have exceeded the compile-time limit on colours, %d\n",
+		 cmd_ptr->multicolour_bin, binfo->number_of_colours, cmd_ptr->colour_list, cmd_ptr->num_colours_in_input_colour_list, NUMBER_OF_COLOURS);
+	}
+
+       if (is_multicol_bin_ok==false)
+	{
+	  sprintf(tmp,"This binary %s is not compatible with the current de Bruijn graph parameters, error code %d\n", 
+		  cmd_ptr->multicolour_bin, ecode);
           strcpy(error_string, tmp);
           return -1;
 	  
 	}
       
-      if (num_m_cols<=0)
-	{
-	  sprintf(tmp,"Corrupt binary %s - signatire claims to have <=0 colours within\n", cmd_ptr->multicolour_bin);
-          strcpy(error_string, tmp);
-          return -1;
-
-	}
-      if (num_m_cols>NUMBER_OF_COLOURS)
-	{
-	  sprintf(tmp,"Multicolour binary %s contains %d colours, but cortex_var is compiled to support a maximum of %d colours\n", 
-		  cmd_ptr->multicolour_bin, num_m_cols, NUMBER_OF_COLOURS);
-          strcpy(error_string, tmp);
-          return -1;
-
-	}
-      else if ( (cmd_ptr->successively_dump_cleaned_colours==false) && (num_m_cols+cmd_ptr->num_colours_in_input_colour_list > NUMBER_OF_COLOURS) )
-	{
-	  sprintf(tmp,"Between %s (containing %d colours) and %s (containing %d colours), you have exceeded the compile-time limit on colours, %d\n",
-		 cmd_ptr->multicolour_bin, num_m_cols, cmd_ptr->colour_list, cmd_ptr->num_colours_in_input_colour_list, NUMBER_OF_COLOURS);
-          strcpy(error_string, tmp);
-          return -1;
-	}
-
-      
-      cmd_ptr->num_colours_in_multicol_bin=num_m_cols;
+      cmd_ptr->num_colours_in_multicol_bin=binfo->number_of_colours;
     }
 
 

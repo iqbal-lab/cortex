@@ -37,6 +37,30 @@
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;
 
+typedef enum {
+  EValid                        = 0,
+  ECannotReadMagicNumber        = 1,
+  ECanReadMagicNumberButIsWrong = 2,
+  ECannotReadBinversion         = 3,
+  EValidButOldBinVersion        = 4,
+  EInvalidBinversion            = 5,
+  ECannotReadKmer               = 6,
+  EWrongKmer                    = 7,
+  ECannotReadNumBitfields       = 8,
+  EWrongNumberBitfields         = 9,
+  ECannotReadNumColours         = 10,
+  EBadColours                   = 11,
+  EFailedToReadReadLensAndCovgs = 12,
+  EGarbage = 20,
+} BinaryHeaderErrorCode;
+typedef struct {
+  int version;
+  int kmer_size;
+  int number_of_bitfields;
+  int number_of_colours;
+  GraphInfo* ginfo;
+} BinaryHeaderInfo;
+
 
 //pass in bases_read to track amount of sequence read in, and bases_pass_filters_and_loaded to see how much passed filters and got into the graph
 void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, boolean pe, char* se_f, char* pe_f1, char* pe_f2,

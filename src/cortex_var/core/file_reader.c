@@ -1422,8 +1422,8 @@ void load_population_as_fastq(char* filename, long long* bases_read, long long b
 
 //returns number of kmers loaded*kmer_length
  //array_mean_readlens and array_total_seqs are arrays of length NUMBER_OF_COLOURS, so they can hold the mean read length+total seq in every colour
-long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
-							   int* num_cols_in_loaded_binary, int** array_mean_readlens, long long** array_total_seqs)
+long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, GraphInfo* ginfo, int* num_cols_in_loaded_binary,); 
+//							    int** array_mean_readlens, long long** array_total_seqs)
 {
 
   //printf("Load this binary - %s\n", filename);
@@ -1440,17 +1440,22 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
     exit(1); 
   }
 
+  BinaryHeaderErrorCode ecode = EValid;
+  BinaryHeaderInfo binfo;
+  initialise_binary_header_info(&binfo, ginfo);
 
-  int binversion_in_binheader;
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, num_cols_in_loaded_binary, array_mean_readlens, array_total_seqs, &binversion_in_binheader) ) )
+  if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, ginfo)))
     {
-      printf("Cannot load this binary - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting.\n");
+      printf("Cannot load this binary - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting, error code %d\n", ecode);
       exit(1);
     }
-
+  else
+    {
+      *num_cols_in_loaded_binary = binfo.number_of_colours;
+    }
 
   //always reads the multicol binary into successive colours starting from 0 - assumes the hash table is empty prior to this
-  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, *num_cols_in_loaded_binary, binversion_in_binheader)){
+  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, *num_cols_in_loaded_binary, binfo.version)){
     count++;
     
     dBNode * current_node  = NULL;
@@ -2726,6 +2731,69 @@ void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_me
 }
 
 
+
+void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo* ginfo)
+{
+  char magic_number[6];
+  int version = BINVERSION;
+  
+  magic_number[0]='C';
+  magic_number[1]='O';
+  magic_number[2]='R';
+  magic_number[3]='T';
+  magic_number[4]='E';
+  magic_number[5]='X';
+  
+
+  int num_bitfields = NUMBER_OF_BITFIELDS_IN_BINARY_KMER;
+
+  fwrite(magic_number,sizeof(char),6,fp);
+  fwrite(&version,sizeof(int),1,fp);
+  fwrite(&kmer_size,sizeof(int),1,fp);
+  fwrite(&num_bitfields, sizeof(int),1,fp);
+  fwrite(&num_cols, sizeof(int), 1, fp);
+
+  int i;
+  for (i=0; i<num_cols; i++)
+    {
+      fwrite(&(ginfo->mean_read_length[i]), sizeof(int), 1, fp);
+    }
+  for (i=0; i<num_cols; i++)
+    {
+      fwrite(&(ginfo->total_sequence[i]), sizeof(long long), 1, fp);
+    }
+  for (i=0; i<num_cols; i++)
+    {
+      fwrite(&(ginfo->sample_id_lens[i]), sizeof(int), 1, fp);
+      fwrite(&(ginfo->sample_ids[i]), sizeof(char), ginfo->sample_id_lens[i], fp);
+    }
+  for (i=0; i<num_cols; i++)
+    {
+      fwrite(&(ginfo->seq_err[i]), sizeof(int), 1, fp);
+    }
+  for (i=0; i<num_cols; i++)
+    {
+      print_error_cleaning_object(fp, ginfo, i);
+    }
+
+  fwrite(magic_number,sizeof(char),6,fp);
+
+}
+
+void print_error_cleaning_object(FILE* fp, GraphInfo* ginfo, int colour)
+{
+  fwrite(&((ginfo->cleaning[colour]).tip_clipping), sizeof(boolean), 1, fp);
+  fwrite(&((ginfo->cleaning[colour]).remove_low_cov_sups), sizeof(boolean), 1, fp);
+  fwrite(&((ginfo->cleaning[colour]).remove_low_cov_nodes), sizeof(boolean), 1, fp);
+  fwrite(&((ginfo->cleaning[colour]).cleaned_against_another_graph), sizeof(boolean), 1, fp);
+  fwrite(&((ginfo->cleaning[colour]).remv_low_cov_sups_thresh), sizeof(int), 1, fp);
+  fwrite(&((ginfo->cleaning[colour]).remv_low_cov_nodes_thresh), sizeof(int), 1, fp);
+  fwrite(&((ginfo->cleaning[colour]).len_name_of_graph_against_which_was_cleaned), sizeof(int), 1, fp);
+  fwrite(&((ginfo->cleaning[colour]).name_of_graph_against_which_was_cleaned), sizeof(char), 
+	 (ginfo->cleaning[colour]).len_name_of_graph_against_which_was_cleaned, fp);
+  
+}
+
 //return yes if signature is consistent
 boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, 
 			       int* number_of_colours_in_binary, 
@@ -2865,6 +2933,355 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version,
   return ret;
 
 }
+
+
+
+
+
+//return yes if signature is consistent
+boolean check_binary_signature_NEW(FILE * fp,int kmer_size, 
+				   BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+				   
+{
+  boolean bin_header_ok = query_binary_NEW(fp, &binfo, ecode);
+
+  if (bin_header_ok==true)
+    {
+      //just need to check the kmer is ok
+      if (kmer_size==binfo->kmer_size)
+	{
+	  return true;
+	}
+      else
+	{
+	  return false;
+	}
+    }
+  return false;
+}
+
+
+//return true if signature is readable, checks binversion, number of bitfields, magic number.
+//does not check kmer is compatible with number of bitfields, leaves that to caller.
+boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode){
+  int read;
+  char magic_number[6];
+  
+  *ecode = EValid;
+  read = fread(magic_number,sizeof(char),6,fp);
+  if (read>0)
+    {
+      if (       magic_number[0]=='C' &&
+		 magic_number[1]=='O' &&
+		 magic_number[2]=='R' &&
+		 magic_number[3]=='T' &&
+		 magic_number[4]=='E' &&
+		 magic_number[5]=='X' )
+	{
+	  
+	  read = fread(&(binfo->version),sizeof(int),1,fp);
+	  if (read>0)
+	    {//can read version
+	      if ((binfo->version >=5) && (binfo->version<=BINVERSION) )
+		{//version is good
+		  read = fread(&(binfo->kmer_size),sizeof(int),1,fp);
+		  if (read>0)
+		    {//can read bitfields
+		      read = fread(&(binfo->num_bitfields),sizeof(int),1,fp);
+		     
+		      if (binfo->num_bitfields===NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
+			{//bitfuields are good
+
+			  read = fread(&(binfo->number_of_colours),sizeof(int),1,fp);
+			  
+			  if ( read>0  )
+			    {//can read colours
+
+			      if (binfo->number_of_colours<=NUMBER_OF_COLOURS)
+				{//colours are good
+				  
+				  //ok, the basic information looks OK
+				  // get extra information. In all cases, return false and an error code if anything looks bad.
+				  return get_extra_data_from_header(fp, binfo, ecode);
+				  //also checks for the magic number at the end of the header
+				}
+			      else
+				{//colours bad
+				  *ecode = EBadColours;
+				  return false;				      
+				}
+			    }
+			  else
+			    {//cant read colours
+			      *ecode = ECannotReadNumColours;
+			      return false;
+			    }
+			}//bitfields are good
+		      else
+			{//bitfields are bad
+			  *ecode =  EWrongNumberBitfields;
+			  return false;
+			}
+		    }//can read bitfields
+		  else
+		    {//cannot read bitfields
+		      *ecode = ECannotReadNumBitfields;
+		      return false;
+		    }
+		}//version is good
+	      else
+		{//version is bad
+		  *ecode = EInvalidBinversion;
+		  return false;
+		}
+	    }//can read version
+	  else
+	    {//cannot read version
+	      *ecode =  ECannotReadBinversion;
+	      return false;
+	    }
+	}//magic number good
+      else
+	{
+	  *ecode=  ECanReadMagicNumberButIsWrong;
+	  return false;
+	}
+    }
+  else
+    {
+      *ecode = ECannotReadMagicNumber;
+      return false;
+    }
+
+  
+}
+
+
+//assume num colours, number of bitfields, etc were fine. So now
+//
+// Binary Version 5: mean read lengths (NUMBER_OF_COLOURS of them) and then total sequences
+// Binary Version 6: as 5, and then the Sample Id's for each colour, then the sequencing error rates
+//                         and then the ErrorCleanings
+boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+{
+  boolean no_problem=true;
+  if (binfo->version==5)
+    {
+      no_problem = get_read_lengths_and_total_seqs_from_header(fp, binfo, ecode);
+    }
+  else if (binfo->version==6)
+    {
+      no_problem = get_read_lengths_and_total_seqs_from_header(fp, binfo, ecode);
+      if (no_problem==true)
+	{
+	  //get the extra stuff for binary version 6
+	  no_problem = get_binversion6_extra_data(fp, binfo, ecode);
+	}
+    }
+  else
+    {
+      *ecode = EInvalidBinversion;
+      no_problem=false;
+    }
+
+  if (no_problem==true)
+    {
+      //only thing remaining to check is the end of header magic number
+      int read;
+      char magic_number[6];
+      magic_number[0]='\0';
+      magic_number[1]='\0';
+      magic_number[2]='\0';
+      magic_number[3]='\0';
+      magic_number[4]='\0';
+      magic_number[5]='\0';
+      read = fread(magic_number,sizeof(char),6,fp);
+      if (read==0)
+	{
+	  *ecode = ECannotReadEndOfHeaderMagicNumber;
+	  no_problem=false;
+	}
+      else if (
+	   magic_number[0]=='C' &&
+	   magic_number[1]=='O' &&
+	   magic_number[2]=='R' &&
+	   magic_number[3]=='T' &&
+	   magic_number[4]=='E' &&
+	   magic_number[5]=='X' )
+	{
+	  //all good.
+	}
+      else
+	{
+	  no_problem=false;
+	  *ecode = ECanReadEndOfHeaderMagicNumberButIsWrong;
+	}
+    }
+
+  return no_problem;
+
+}
+
+
+boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+{
+  int read;
+  int i;
+  boolean no_problem=true;
+
+  for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+    {
+      read = fread(&(binfo->ginfo->mean_read_length[i]),sizeof(int),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	  *ecode= EFailedToReadReadLensAndCovgs;
+	}
+    }
+  if (no_problem==true)
+    {
+      for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+	{
+	  read = fread(&(binfo->ginfo->total_sequence[i]),sizeof(long long),1,fp);
+	  if (read==0)
+	    {
+	      no_problem=false;
+	      *ecode= EFailedToReadReadLensAndCovgs;
+	    }
+	}
+    }
+
+  return no_problem;
+}
+
+//Binary header version 6 includes sample id's, and Seq Error rate and Error Cleaning Info.
+boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+{
+  int read;
+  int i;
+  boolean no_problem=true;
+
+  //first get sample information
+  for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+    {
+      //get the length of the sample id name
+      read = fread(&(binfo->ginfo->sample_id_lens[i]),sizeof(int),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	  *ecode = EFailedToReadSampleIds;
+	}
+      else
+	{
+	  //now get the actual sample id for colour i
+	  read = fread(&(binfo->ginfo->sample_ids[i]),sizeof(char),binfo->ginfo->sample_id_lens[i],fp);
+	  if (read==0)
+	    {
+	      no_problem=false;
+	      *ecode = EFailedToReadSampleIds;
+	    }
+	}
+    }
+
+  //now get the sequencing error rate
+  for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+    {
+      read = fread(&(binfo->ginfo->seq_err[i]),sizeof(long double),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	  *ecode = EFailedToReadSeqErrRates;
+	}
+    }
+
+
+  //now get the error cleaning information for each colour
+  for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+    {
+      no_problem = read_next_error_cleaning_object(fp, &(binfo->ginfo->cleaning[i]) );
+      if (no_problem==false)
+	{
+	  *ecode = EFailedToReadErrorCleaningInfo;
+	}
+    }
+
+  return no_problem;
+
+}
+
+boolean read_next_error_cleaning_object(FILE* fp, ErrorCleaning* cl)
+{
+  int read;
+  boolean no_problem=true;
+
+  read = fread(&(cl->tip_clipping),sizeof(boolean),1,fp);
+  if (read==0)
+    {
+      no_problem=false;
+    }
+  if (no_problem==true)
+    {
+      read = fread(&(cl->remove_low_cov_sups),sizeof(boolean),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+
+  if (no_problem==true)
+    {
+      read = fread(&(cl->remove_low_cov_nodes),sizeof(boolean),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+  if (no_problem==true)
+    {
+      read = fread(&(cl->cleaned_against_another_graph),sizeof(boolean),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+  if (no_problem==true)
+    {
+      read = fread(&(cl->remv_low_cov_sups_thresh),sizeof(int),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+  if (no_problem==true)
+    {
+      read = fread(&(cl->remv_low_cov_nodes_thresh),sizeof(int),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+
+  if (no_problem==true)
+    {
+      read = fread(&(cl->len_name_of_graph_against_which_was_cleaned),sizeof(int),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+  if (no_problem==true)
+    {
+      read = fread(&(cl->name_of_graph_against_which_was_cleaned),sizeof(char),cl->len_name_of_graph_against_which_was_cleaned,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+
+  return no_problem;
+
+}
+
 
 //return true if signature is readable
 boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* number_of_bitfields, int* number_of_colours_in_binary){

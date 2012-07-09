@@ -561,7 +561,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 int main(int argc, char **argv){
 
   timestamp();
-  printf("Starting Cortex\n");
+  printf("Starting Cortex, version %d.%d.%d.%d\n", VERSION, SUBVERSION, SUBSUBVERSION,SUBSUBSUBVERSION);
 
   CmdLine cmd_line = parse_cmdline(argc,argv,sizeof(Element));
 
@@ -853,12 +853,13 @@ int main(int argc, char **argv){
 	      total_seq_in_that_colour_ptrs[j]=&(total_seq_in_that_colour[j]);
 	    }
 	  long long  bp_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line.multicolour_bin,db_graph, &first_colour_data_starts_going_into,
-										  mean_readlens_ptrs, total_seq_in_that_colour_ptrs);
+										  db_graph_info);
+	                                                                          //mean_readlens_ptrs, total_seq_in_that_colour_ptrs);
 	  //update graph_info object
-	  for (j=0; j<first_colour_data_starts_going_into; j++)
-            {
-	      graph_info_update_mean_readlen_and_total_seq(&db_graph_info, j, mean_readlens[j], total_seq_in_that_colour[j]);
-	    }
+	  //for (j=0; j<first_colour_data_starts_going_into; j++)
+          //  {
+	  //    graph_info_update_mean_readlen_and_total_seq(&db_graph_info, j, mean_readlens[j], total_seq_in_that_colour[j]);
+	  //  }
 	  timestamp();
 	  printf("Loaded the multicolour binary %s, and got %qd kmers\n", cmd_line.multicolour_bin, bp_loaded/db_graph->kmer_size);
 	  graph_has_had_no_other_binaries_loaded=false;

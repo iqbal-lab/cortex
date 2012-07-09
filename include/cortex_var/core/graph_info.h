@@ -32,18 +32,26 @@
 #include <global.h>
 #include <stdio.h>
 
+#define MAX_LEN_NAME_GRAPH_CLEANED_AGAINST 10000;
+
 typedef struct{
   boolean tip_clipping;
   boolean remv_low_cov_sups;
   boolean remv_low_cov_nodes;
+  boolean cleaned_against_another_graph; //eg cleaning a low covg sample against cleaned pool of population
   int remv_low_cov_sups_thresh;
   int remv_low_cov_nodes_thresh;
+  int len_name_of_graph_against_which_was_cleaned;
+  char* name_of_graph_against_which_was_cleaned;
+
 }ErrorCleaning;
 
 void error_cleaning_initialise(ErrorCleaning cl);
 
 
 typedef struct{
+  int           sample_id_lens[NUMBER_OF_COLOURS];
+  char*         sample_ids[NUMBER_OF_COLOURS];
   long long     total_sequence[NUMBER_OF_COLOURS];
   int           mean_read_length[NUMBER_OF_COLOURS];
   long double   seq_err[NUMBER_OF_COLOURS];

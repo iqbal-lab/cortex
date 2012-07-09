@@ -1088,7 +1088,7 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 	  node->individual_edges[i] = individual_edges_reading_from_binary[i];
 	}
     }
-  else
+  else//higher than 4
     {
       BinaryKmer kmer;
       uint32_t covg_reading_from_binary[num_colours_in_binary];
