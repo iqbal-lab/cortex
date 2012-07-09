@@ -32,9 +32,12 @@ sub print_usage
   --take_lowest <tag>  OR
   --take_highest <tag> OR
   --take_first         OR
-  --take_last          OR
-  
-  --filter_txt <txt>  Add to / set the filter column instead of removing\n";
+  --take_last          
+
+  --removed_tag <tag>  Used with --take_[lowest|highest], adds the removed
+                       values as a list to the selected variant
+
+  --filter_txt <txt>   Add to / set the filter column instead of removing\n";
 
   exit;
 }
@@ -48,36 +51,43 @@ if(@ARGV > 5)
 my $select_dupe;
 # Tag to use in selection
 my $select_tag;
+my $list_removed_tag;
 
 my $filter_txt;
 
 while(@ARGV >= 1)
 {
-  if($ARGV[0] =~ /^--take_lowest$/i)
+  if($ARGV[0] =~ /^-?-take_lowest$/i)
   {
     shift;
     $select_dupe = DUPE_SELECT_LOWEST_TAG;
     $select_tag = shift
-      or print_usage("Missing INFO tag argument to --take_lowest");
+      or print_usage("Missing INFO tag argument to --take_lowest <tag>");
   }
-  elsif($ARGV[0] =~ /^--take_highest$/i)
+  elsif($ARGV[0] =~ /^-?-take_highest$/i)
   {
     shift;
     $select_dupe = DUPE_SELECT_HIGHEST_TAG;
     $select_tag = shift
-      or print_usage("Missing INFO tag argument to --take_highest");
+      or print_usage("Missing INFO tag argument to --take_highest <tag>");
   }
-  elsif($ARGV[0] =~ /^--take_first$/i)
+  elsif($ARGV[0] =~ /^-?-take_first$/i)
   {
     shift;
     $select_dupe = DUPE_SELECT_FIRST;
   }
-  elsif($ARGV[0] =~ /^--take_last$/i)
+  elsif($ARGV[0] =~ /^-?-take_last$/i)
   {
     shift;
     $select_dupe = DUPE_SELECT_LAST;
   }
-  elsif($ARGV[0] =~ /^--filter_txt$/i)
+  elsif($ARGV[0] =~ /^-?-removed_tag$/i)
+  {
+    shift;
+    $list_removed_tag = shift
+      or print_usage("Missing INFO tag argument to --removed_tag <tag>");
+  }
+  elsif($ARGV[0] =~ /^-?-filter_txt$/i)
   {
     shift;
     $filter_txt = shift or print_usage("Missing FILTER text for --filter_txt");
@@ -97,6 +107,11 @@ my $vcf_file = shift;
 # Set default behaviour
 if(!defined($select_dupe))
 {
+  if(defined($list_removed_tag))
+  {
+    print_usage("Must use --take_lowest or --take_highest with --removed_tag");
+  }
+
   $select_dupe = defined($filter_txt) ? DUPE_SELECT_NOT_SET : DUPE_SELECT_FIRST;
 }
 
@@ -153,6 +168,12 @@ if(defined($filter_txt))
   }
 
   $vcf->add_header_tag("FILTER", $filter_txt, 0, undef, $description);
+}
+
+if(defined($list_removed_tag))
+{
+  $vcf->add_header_tag("INFO", $list_removed_tag, ".", "Integer",
+                       "Comma-separated list of removed values of '$select_tag'");
 }
 
 $vcf->print_header();
@@ -304,6 +325,13 @@ sub process_dupes
     elsif($select_dupe == DUPE_SELECT_LAST)
     {
       $selected_variant = $_[$#_];
+    }
+
+    if(defined($list_removed_tag) && @_ > 1)
+    {
+      $selected_variant->{'INFO'}->{$list_removed_tag}
+        = join(",", map {$_->{'INFO'}->{$select_tag}}
+                    grep {$_ != $selected_variant} @_);
     }
 
     $selected_variant->{'print'} = 1;
