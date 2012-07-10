@@ -11,7 +11,6 @@ use Getopt::Long;
 ##############################################################################################################
 
 
-
 #### Dear User - this following line is the only one in this script you may want to edit
 my $stampy_bin ="/path/to/stampy.py";    #### <<<<<<< can also use command line parameter
 my $vcftools_dir="/path/to/vcftools/dir";### <<<< can also use command line param
