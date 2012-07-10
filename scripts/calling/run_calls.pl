@@ -117,9 +117,9 @@ my (
         $mem_height,           $mem_width, $binary_colourlist,
         $max_read_len,         $format, $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
         $expt_type,            $do_union, $manual_override_cleaning,
-        $build_per_sample_vcfs, $global_logfile, $call_jointly_noref, $call_jointly_incref, $squeeze_mem,
-        $joint_workflow, $independent_workflow
-);
+        $build_per_sample_vcfs, $global_logfile,  $squeeze_mem,
+        $workflow
+    );
 
 #set defaults
 $squeeze_mem='';
@@ -144,12 +144,12 @@ $fastaq_index="";
 $require_one_allele_is_ref           = "yes";
 $prefix                              = "cortex";
 $outvcf_filename_stub                = "default_vcfname";
-$joint_workflow                      = "no";
-$independent_workflow                = "no";
+$workflow                      = "unspecified";
+
 
 #$samplenames                          = '';
 #$number_of_colours                   = 0;
-$use_ref                             = "yes";
+$use_ref                             = "unspecified";
 $ploidy                              = 2;
 $apply_filter_one_allele_must_be_ref = "unknown";
 $apply_classif                       ='';
@@ -170,8 +170,6 @@ $do_union = "no";
 $manual_override_cleaning="no";
 $build_per_sample_vcfs="no";
 $global_logfile = "default_logfile";
-$call_jointly_noref="no";
-$call_jointly_incref="no";
 my $pooled_colour = -1;    #deprecated
 my $help = '';    #default false
 
@@ -193,7 +191,7 @@ my $help = '';    #default false
     'pd:s'                 => \$do_pd, # $pd_col_args,
     'outdir:s'             => \$outdir,   
     'outvcf:s'             => \$outvcf_filename_stub,
-    'use_ref:s'             => \$use_ref,
+    'ref:s'             => \$use_ref, 
     'ploidy:i'             => \$ploidy,
     'require_one_allele_is_ref' => \$apply_filter_one_allele_must_be_ref,
     'apply_pop_classifier'   => \$apply_classif,
@@ -220,8 +218,7 @@ my $help = '';    #default false
     'do_union:s'         =>\$do_union,
     'build_per_sample_vcfs:s' =>\$build_per_sample_vcfs,
     'logfile:s'           => \$global_logfile,
-    'call_jointly_noref:s' => \$call_jointly_noref,
-    'call_jointly_incref:s' => \$call_jointly_incref,
+    'workflow:s'          => \$workflow,
     'squeeze_mem'          =>\$squeeze_mem
 
 );
@@ -247,7 +244,7 @@ if ($help)
 	print "--pd\t\t\t\tMake Path Divergence Calls. You must enter yes or no. Default (if you don't use --bc) is no.\n";
 	print "--outdir\t\t\t\tOutput directory. Everything will go into dsubdirectories of this directory\n";
 	print "--outvcf\t\t\t\tVCFs generated will have names that start with the text you enter here\n";
-	print "--use_ref\t\t\t\tValid values are yes and no, depending on whether you want to include a reference genome when calling.\n";
+	print "--ref\t\t\t\tSpecify if you are using a reference, and if so, how.\n\t\t\t\t\tValid values are CoordinatesOnly, CoordinatesAndInCalling, and Absent\n";
 	print "--ploidy\t\t\t\tMust be 1 or 2.\n";
 	print "--require_one_allele_is_ref\t\t\t\tyes or no. Highly recommended if you want a VCF with ref chromosome positions\n";
 	print "--prefix\t\t\t\tIf you want your variant calls to have names with a specific prefix, use this\n";
@@ -272,8 +269,9 @@ if ($help)
 	print "--manual_override_cleaning\t\t\t\tYou can specify specific thresholds for specific samples by giving a file here, each line has three (tab sep) columns: sample name, kmer, and comma-separated thresholds\nDon't use this unless you know what you are doing\n";
 	print "--build_per_sample_vcfs\t\t\t\tThis script repeatedly runs Cortex BC and PD callers, calling on each sample separately, and then by default builds one pair (raw/decomp) of VCFs for the union set. If in addition you want VCFs built for each callset, enter \"yes\" here. In general, do not do this, it is very slow.\n";
 	print "--logfile\t\t\t\tOutput always goes to a logfile, not to stdout/screen. If you do not specify a name here, it goes to a file called \"default_logfile\". So, enter a filename for yout logfile here. Use filename,f to force overwriting of that file even if it already exists. Otherwise run_calls will abort to prevent overwriting.\n";
-	print "--call_jointly_noref\t\t\tMake (in addition) a callset from the joint graph of samples only. If there is a reference in the graph, ignore it for calling, but use it for VCF building. If there is no VCF in the graph, construct a fake reference purely for building the VCF (has no scientific value). If you have specified --auto, it uses those cleaning levels. If you have specified --auto_above 3 (for example) so each sample has 4 cleanings done, it will make 4 callsets, where the i-th callset uses cleaning level i for all samples\n";
-	print "--call_jointly_incref\t\t\tMake (in addition) a callset from the joint graph of samples and reference. If you have specified --auto, it uses those cleaning levels. If you have specified --auto_above 3 (for example) so each sample has 4 cleanings done, it will make 4 callsets, where the i-th callset uses cleaning level i for all samples\n";
+	print "--workflow\t\t\t\tMandatory to specify this. Valid arguments are \"joint\" and \"independent\"\n";
+#	print "--call_jointly_noref\t\t\tMake (in addition) a callset from the joint graph of samples only. If there is a reference in the graph, ignore it for calling, but use it for VCF building. If there is no VCF in the graph, construct a fake reference purely for building the VCF (has no scientific value). If you have specified --auto, it uses those cleaning levels. If you have specified --auto_above 3 (for example) so each sample has 4 cleanings done, it will make 4 callsets, where the i-th callset uses cleaning level i for all samples\n";
+#	print "--call_jointly_incref\t\t\tMake (in addition) a callset from the joint graph of samples and reference. If you have specified --auto, it uses those cleaning levels. If you have specified --auto_above 3 (for example) so each sample has 4 cleanings done, it will make 4 callsets, where the i-th callset uses cleaning level i for all samples\n";
 	print "--help\t\t\t\tprints this\n";
 	exit();
 }
@@ -345,7 +343,7 @@ my @samples = ();
 get_sample_names($fastaq_index, \@samples);
 
 my $ref_name = "none";
-if ($use_ref eq "yes")
+if ($use_ref ne "Absent")
 {
     $ref_name = "REFERENCE";
 }
@@ -512,15 +510,11 @@ if (!(-d $dir_for_per_sample_calls))
 }
 
 my $dir_for_joint_calls=$outdir_calls."joint_callsets/";
-if ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )
+if ($workflow eq "joint" )
 {
     #print "Joint call dir is $dir_for_joint_calls\n";
 }
-if ( ($call_jointly_incref eq "yes") && ($call_jointly_noref eq "yes") )
-{
-    print "You can only call jointly in one way or the other (either exclude or include the ref colour when looking for bubbles)\n";
-    die("You have specified both - get rid of one of them\n");
-}
+
 
 if (!(-d $dir_for_joint_calls))
 {
@@ -537,7 +531,7 @@ my %joint_callfiles_logs=();##kmer -> cleaning -> logfile from generating that c
 
 
 
-if  ( ($call_jointly_incref eq "no") && ($call_jointly_noref eq "no") )
+if  ($workflow eq "independent" )
 {
     foreach my $k (@kmers)
     {
@@ -623,7 +617,7 @@ if  ( ($call_jointly_incref eq "no") && ($call_jointly_noref eq "no") )
 }
 
 
-if  ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )## then just assume is BC only
+if  ($workflow eq "joint" )## then just assume is BC only
 {
 
  
@@ -644,13 +638,13 @@ if  ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )## then
 
 	    my $ctx_bin = get_right_binary($K, $cortex_dir,$num_cols);
 	    my $str;
-	    if ($call_jointly_incref eq "yes")
+	    if ($ref eq "CoordinatesAndInCalling")
 	    {
-		$str = "inc_ref";
+		$str = "inc_ref_in_calling";
 	    }
 	    else
 	    {
-		$str = "exc_ref";
+		$str = "exc_ref_from_calling";
 	    }
 	    my $uniqid = "joint_".$str ."kmer".$K."_cleaning_level".$cl;
 	    my $colour_list = get_colourlist_for_joint($K, $cl);
@@ -661,12 +655,12 @@ if  ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )## then
 	    if (!(-e $bubble_output))## we want to do it and not already done
 	    {
 		print "Bubble calls on joint graph do not yet exist - so run the calls (and genotype) at k=$K, and cleaning level $cl\n";
-		if ($call_jointly_incref eq "yes")
+		if ($ref eq "CoordinatesAndInCalling")
 		{
 		    $cmd = $cmd." --detect_bubbles1 -1/-1 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len ";
 		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
 		}
-		elsif ($call_jointly_noref eq "yes")
+		elsif ($ref eq "CoordinatesOnly")
 		{
 		    $cmd = $cmd." --detect_bubbles1 \*0/\*0 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len ";
 		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
@@ -677,15 +671,19 @@ if  ( ($call_jointly_incref eq "yes") || ($call_jointly_noref eq "yes") )## then
 	    elsif  (-e $bubble_output )## we want t do it but it has already been done
 	    {
 		print "Joint bubble calling has already been done, as $bubble_output already exists\n";
-		if ($call_jointly_incref eq "yes")
+		if ($ref eq "CoordinatesAndInCalling")
 		{
 		    print "(including the reference colour in calling) ";
 		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
 		}
-		else
+		elsif ($ref eq "CoordinatesOnly")
 		{
 		    print "(excluding the reference colour in calling) ";
 		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
+		}
+		else
+		{
+		    die("ZAM TODO - in case where no reference at all, auto generate a ref");
 		}
 
 		$do_it=0;
@@ -724,7 +722,7 @@ my %final_vcfs=(); # BC -> final BC, and PD -> final PD.
 if ($do_union eq "yes")  
 {
 
-    if (($call_jointly_noref eq "no") && ($call_jointly_incref eq "no"))
+    if ($workflow eq "independent")
     {
 	print "******************************************************************\n";
 	print "At each specified kmer, we will make union variant callsets combining all the per-sample callsets, and then combine all at the end\n";
@@ -736,7 +734,7 @@ if ($do_union eq "yes")
     my %kmer_to_bc_var_stub=();
     my %kmer_to_pd_var_stub=();
 
-    if ( (($do_bc eq "yes") || ($do_pd eq "yes")) && ($call_jointly_incref eq "no") && ($call_jointly_noref eq "no") )
+    if ( (($do_bc eq "yes") || ($do_pd eq "yes")) && ($workflow eq "independent") )
     {
 	make_a_union_callset_for_each_kmer(\@kmers, \@samples, \%sample_to_cleaned_bin, 
 					   \%sample_to_bc_callfile, \%sample_to_pd_callfile,\%joint_callfiles,
@@ -758,7 +756,7 @@ if ($do_union eq "yes")
 #############################################################################################################################
 	
 
-	if (($call_jointly_noref eq "no") && ($call_jointly_incref eq "no"))
+	if ($workflow eq "independent")
 	{
 	    print "********************************************\n";
 	    print "For each k, genotype the union callset\n";
@@ -1390,7 +1388,7 @@ sub build_vcfs
     if (!(-e $colournames))
     {
 	open(COL, ">".$colournames)||die();
-	if ($use_ref eq "yes")
+	if ($use_ref ne "Absent")
 	{
 	    print COL "REF\n";
 	}
@@ -1403,7 +1401,7 @@ sub build_vcfs
 	close(COL);
     }
     my $cmd = "perl ".$proc_calls." --callfile $file --callfile_log $call_log --kmer $kmer_size --caller $which_caller --outdir $directory --outvcf $string --samplename_list $colournames --num_cols $num  --ploidy $ploidy --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin --vcftools_dir $vcftools_dir ";
-    if ($use_ref eq "yes")
+    if ($use_ref ne "Absent")
     {
 	my $ref_fa = get_ref_fasta($list_ref_fasta); 
 	$cmd = $cmd." --ref_fasta $ref_fa ";
@@ -1986,6 +1984,14 @@ sub get_number_samples
 
 sub run_checks
 {
+    if ($use_ref eq "unspecified")
+    {
+	die("You must specify whether you are using a reference, using --ref\n";
+    }
+    if ($workflow eq "unspecified")
+    {
+	die("You must specify which workflow to use, using --workflow; valid arguments are joint, and independent\n";
+    }
     if ($global_logfile =~ /^([^,]+),f$/)
     {
 	## user has specified to forcibly output to this file, even if it already exists.
@@ -2010,7 +2016,7 @@ sub run_checks
     {
 	die("You must specify the VCFTools directory, either on the commandline with --vcftools_dir, or by editing run_calls.pl manually (it's highlighted for you at the top of the file)\n");
     }
-    if ($use_ref eq "no")
+    if ($use_ref eq "Absent")
     {
 	$number_of_colours = get_number_samples($fastaq_index);
     }
@@ -2043,9 +2049,9 @@ sub run_checks
 	qx{$cmd};
     }
     
-    if ( ($use_ref eq "yes") && ($refbindir eq ""))
+    if ( ($use_ref ne "Absent") && ($refbindir eq ""))
     {
-	die("Since you said yes to --use_ref, You must specify --refbindir");
+	die("Since you specified $user_ref for --ref, You must also specify a directory with pre-built binaries of the reference genome, at the kmers you use, using --refbindir");
     }
     if ($refbindir ne "")
     {
