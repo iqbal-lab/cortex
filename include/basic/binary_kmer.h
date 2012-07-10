@@ -92,8 +92,8 @@ void       binary_kmer_assignment_operator(BinaryKmer left, BinaryKmer right);
 void       binary_kmer_set_all_bitfields(BinaryKmer assignee, bitfield_of_64bits val);
 boolean    binary_kmer_comparison_operator(const BinaryKmer const left, const BinaryKmer const right);
 boolean    binary_kmer_less_than(const BinaryKmer const left, const BinaryKmer const right,short kmer_size);
-void       binary_kmer_right_shift(BinaryKmer* kmer, int num_bits_to_shift);
-void       binary_kmer_left_shift(BinaryKmer* kmer, int num_bits_to_shift, short kmer_size);
+void       binary_kmer_right_shift_one_base(BinaryKmer kmer);
+void       binary_kmer_left_shift_one_base(BinaryKmer kmer, short kmer_size);
 void       binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(BinaryKmer* bkmer, Nucleotide n, short kmer_size);
 
 

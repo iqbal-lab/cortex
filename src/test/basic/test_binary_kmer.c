@@ -167,370 +167,161 @@ void test_binary_kmer_less_than()
   
 }
 
-void test_binary_kmer_right_shift()
+void test_binary_kmer_right_shift_one_base()
 {
   BinaryKmer test;
-  int i;
+  BinaryKmer shifted;
 
-
-  // First a simple test. Start with a 1 at the far left, and keep shifting it one bit to the right
+  // Start with largest possible kmer size, then work down
+  int kmer_size = NUMBER_OF_BITFIELDS_IN_BINARY_KMER*32-1;
   
-  for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-    {
-      test[i]=0;
-    }
-
-  bitfield_of_64bits init = ((bitfield_of_64bits) 1) <<63;
-  test[0]= init ;//put a 1 at the far left of the left-most bitfield
-
+  unsigned long bases[4] = {0,1,2,3};
+  //unsigned long bases[4] = {2,2,2,2};
   
-
-  for (i=1; i<64; i++)
+  for(; kmer_size > 0; kmer_size -= 2)
+  {
+    // zero
+    int i;
+    for(i = 0; i < NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
     {
-      binary_kmer_right_shift(&test, 1);
-      CU_ASSERT(test[0]==(init>>i));
-      int j;
-      for (j=1; j< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
-	{
-	  CU_ASSERT(test[j]==0);
-	}
+      test[i] = 0;
+      shifted[i] = 0;
+    }
+  
+    // Fill test one base at a time
+    int bases_in_most_sig_word = kmer_size % 32;
+
+    if(bases_in_most_sig_word == 0)
+    {
+      bases_in_most_sig_word = 32;
     }
 
+    int base_offset = bases_in_most_sig_word - 1;
+    int word = NUMBER_OF_BITFIELDS_IN_BINARY_KMER - (kmer_size+31)/32;
 
-  //so we should now have all bitfields=0, exceptfar left, which is 1
-  CU_ASSERT(test[0]==1);
-  int j;
-  for (j=1; j< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
+    test[word] |= (bases[0] << (base_offset*2));
+    base_offset--;
+
+    for(i = 1; i < kmer_size; i++)
     {
-      CU_ASSERT(test[j]==0);
+      // Update word and offset
+      if(base_offset < 0)
+      {
+        base_offset = 31;
+        word++;
+      }
+
+      test[word] |= (bases[i % 4] << (base_offset*2));
+      shifted[word] |= (bases[(i+3) % 4] << (base_offset*2));
+      base_offset--;
     }
 
+    //printf("setup\n");
+    //print_kmer(test);
+    //print_kmer(shifted);
 
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
+    // shift and compare
+    binary_kmer_right_shift_one_base(test);
+
+    //print_kmer(test);
+    //print_kmer(shifted);
+
+    CU_ASSERT(binary_kmer_comparison_operator(test, shifted));
+
+    // Shift off the end, compare with zero
+    for(i = 0; i < kmer_size-1; i++)
     {
-      binary_kmer_right_shift(&test, 1);
-      CU_ASSERT(test[0]==0);
-      CU_ASSERT(test[1]==init);
-
-      for (i=1; i<64; i++)
-	{
-	  binary_kmer_right_shift(&test, 1);
-	  
-	  CU_ASSERT(test[0]==0);
-	  CU_ASSERT(test[1]==init>>i);
-	  int j;
-	  for (j=2; j< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
-	    {
-	      test[j]=0;
-	    }
-	}
-
+      binary_kmer_right_shift_one_base(test);
     }
+    
+    //printf("zero:\n");
+    //print_kmer(test);
 
-
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>=2)
+    for(i = 0; i < NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
     {
-      //cleanup
-      for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-	{
-	  test[i]=0;
-	}
-      
-      
-      test[0]= ((bitfield_of_64bits) 1) <<63;
-      
-      binary_kmer_right_shift(&test,2);
-      CU_ASSERT(test[0]== ((bitfield_of_64bits) 1)<<61);
-      CU_ASSERT(test[1]==0);
-      binary_kmer_right_shift(&test,20);
-      CU_ASSERT(test[0]== ((bitfield_of_64bits) 1)<<41);
-      CU_ASSERT(test[1]==0);
-      binary_kmer_right_shift(&test,50);
-      CU_ASSERT(test[0]==0);
-      CU_ASSERT(test[1]== ((bitfield_of_64bits) 1)<<55) ;
-      binary_kmer_right_shift(&test,50);
-      CU_ASSERT(test[0]==0);
-      CU_ASSERT(test[1]== ((bitfield_of_64bits) 1)<<5) ;
+      CU_ASSERT(test[i] == 0);
     }
-
-
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>=3)
-    {
-      for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-        {
-          test[i]=0;
-	}
-
-      test[0]=~0;
-      binary_kmer_right_shift(&test,1);
-      CU_ASSERT(test[0]==((((bitfield_of_64bits) 1)<<63) -1) );
-      CU_ASSERT(test[1]== ((bitfield_of_64bits) 1)<<63) ;
-      binary_kmer_right_shift(&test,1);
-      CU_ASSERT(test[0]==(( ((bitfield_of_64bits) 1)<<62) -1) );
-      CU_ASSERT(test[1]==((bitfield_of_64bits) 3)<<62);
-      binary_kmer_right_shift(&test,63);
-      CU_ASSERT(test[0]==0);
-      CU_ASSERT(test[1]==(( ((bitfield_of_64bits) 1)<<63) -1) );
-      CU_ASSERT(test[2]==((bitfield_of_64bits) 1)<<63);
-
-    }
-
+  }
 }
 
-void test_binary_kmer_left_shift()
+void test_binary_kmer_left_shift_one_base()
 {
-
-
   BinaryKmer test;
-  int i;
+  BinaryKmer shifted;
 
-  // First a simple test. Start with a 1 at the far right, and keep shifting it one bit to the left
-
-  for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-    {
-      test[i]=0;
-    }
-  test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]=1;
-
+  // Start with largest possible kmer size, then work down
   int kmer_size = NUMBER_OF_BITFIELDS_IN_BINARY_KMER*32-1;
-  int number_of_bitfields_fully_used = kmer_size/32;
-  int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
-
-
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==1)
+  
+  unsigned long bases[4] = {0,1,2,3};
+  //unsigned long bases[4] = {2,2,2,2};
+  
+  for(; kmer_size > 0; kmer_size -= 2)
+  {
+    // zero
+    int i;
+    for(i = 0; i < NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
     {
-      for (i=0; i<61; i++)
-	{
-	  binary_kmer_left_shift(&test, 1, kmer_size);
-	  
-	  //printf("Have shifted 1 left by %d, and furthest rh bitfield is %lld\n", i+1, test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]);
-	  
-	  CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==( ((bitfield_of_64bits) 1)<<(i+1)));
-	  int j;
-	  
-	  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1; j++)
-	    {
-	      CU_ASSERT(test[j]==0);
-	    }
-	  
-	}
-      binary_kmer_left_shift(&test, 1, kmer_size);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==0)
-      binary_kmer_left_shift(&test, 1, kmer_size);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==0)
-
-    }
-  else
-    {
-      for (i=0; i<63; i++)
-	{
-	  binary_kmer_left_shift(&test, 1, kmer_size);
-	  
-	  //printf("Have shifted 1 left by %d, and furthest rh bitfield is %lld\n", i+1, test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]);
-	  
-	  CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==( ((bitfield_of_64bits) 1)<<(i+1)));
-	  int j;
-	  
-	  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1; j++)
-	    {
-	      CU_ASSERT(test[j]==0);
-	    }
-	  
-	}
-    }
-
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
-    {
-      binary_kmer_left_shift(&test, 1, kmer_size);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==0);
-
-      if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER==2)
-	{
-	  for (i=0; i<61; i++)//ie go to the end of the kmer, last 2 bits are masked to zero
-	    {
-	      binary_kmer_left_shift(&test, 1, kmer_size);
-	      
-	      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==0);
-	      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2]==( ((bitfield_of_64bits) 1)<<(i+1)));
-
-	      int j;
-	      for (j=0; j< NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2; j++)
-		{
-		  test[j]=0;
-		}
-	    }
-	}
-	else
-	  {
-	  for (i=0; i<63; i++)
-	    {
-	      binary_kmer_left_shift(&test, 1, kmer_size);
-	      
-	      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==0);
-	      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2]==( ((bitfield_of_64bits) 1)<<(i+1)));
-
-	      int j;
-	      for (j=0; j< NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2; j++)
-		{
-		  test[j]=0;
-		}
-	    }
-
-	  }
-      
-    }
-
-
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>=2)
-    {
-      for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-	{
-	  test[i]=0;
-	}
-      
-
-      test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]=1;
-      
-      binary_kmer_left_shift(&test,2, kmer_size);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] == ((bitfield_of_64bits) 1)<<2);
-      binary_kmer_left_shift(&test,20,kmer_size);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]== ((bitfield_of_64bits) 1)<<22);
-      binary_kmer_left_shift(&test,50, kmer_size);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==0);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2]== ((bitfield_of_64bits) 1)<<8) ;
-      binary_kmer_left_shift(&test,50, kmer_size);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==0);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2]== ((bitfield_of_64bits) 1)<<58) ;
+      test[i] = 0;
+      shifted[i] = 0;
     }
   
+    // Fill test one base at a time
+    int bases_in_most_sig_word = kmer_size % 32;
 
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>=3)
+    if(bases_in_most_sig_word == 0)
     {
-      for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-	{
-          test[i]=0;
-	}
-
-      test[0]=~0;
-      binary_kmer_left_shift(&test,63, kmer_size);
-      binary_kmer_left_shift(&test,1, kmer_size);
-
-      for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-	{
-          CU_ASSERT(test[i]==0);
-	  if (test[i] !=0)
-	    {
-	      printf("i is %d when test[i] is not zero - it is %llu\n", i, test[0]);
-	      exit(1);
-	    }
-	}
-      
-      test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]=~0;
-      binary_kmer_left_shift(&test,1, kmer_size);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]  ==~1 );
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2]==1) ;
-      binary_kmer_left_shift(&test,1, kmer_size);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==~3 );
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2]==3)  ;
-      binary_kmer_left_shift(&test,63, kmer_size);
-      binary_kmer_left_shift(&test,1, kmer_size);
-
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]  == 0);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2]== ~3);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-3]== 3);
-
+      bases_in_most_sig_word = 32;
     }
 
+    int base_offset = bases_in_most_sig_word - 1;
+    int word = NUMBER_OF_BITFIELDS_IN_BINARY_KMER - (kmer_size+31)/32;
 
-  // Now run some checks with different kmer_sizes, so that we for example do not use all of the bitfields completely.
-  
-  for (kmer_size=1; kmer_size<=NUMBER_OF_BITFIELDS_IN_BINARY_KMER*32; kmer_size=kmer_size+1)
+    test[word] |= (bases[0] << (base_offset*2));
+    base_offset--;
+
+    for(i = 1; i < kmer_size; i++)
     {
-      //cleanup to start with
-      for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-        {
-          test[i]=0;
-	}
+      // Update word and offset
+      if(base_offset < 0)
+      {
+        base_offset = 31;
+        word++;
+      }
 
-      int number_of_bitfields_fully_used = kmer_size/32;
-      int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
-
-      //simple example - 1s in every bit up to size of kmer
-      //Set all the bitfields in test except the leftmost that holds any kmer bits
-
-
-      for (i=NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used-1; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-	{
-	  test[i]=~0;
-	}
-
-      bitfield_of_64bits init = (((bitfield_of_64bits)1)<<number_of_bits_in_most_sig_bitfield) -1; //all 1's as far as can be fitted within the kmer
-
-      if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used>=1)
-	{
-	  //set the final bitfield of our test BinaryKmer
-	  test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used-1]=  init;
-	      
-	  //at first, every time you shift left, you still have 1's in the leftmost places, as you're pushing 1's in,
-	  // and the 1's that go beyond the kmer-length are masked off to zero.
-	  for (i=1; i<= number_of_bitfields_fully_used*64; i++)
-	    {
-	      binary_kmer_left_shift(&test,1, kmer_size);
-	      
-	      int j;
-	      for (j=0; j< NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used-1; j++)
-		{
-		  CU_ASSERT(test[j]==0); //zero's to the left of the bits used to hold the kmer
-		}
-	      
-	      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used-1]== init);
-	    }
-
-	  //now all that is left is the 1's in the leftmost of the bitfields that held any kmer bits, and each shift left will push one off the end
-	  for (i=0; i<number_of_bits_in_most_sig_bitfield; i++)
-	    {
-	      binary_kmer_left_shift(&test,1, kmer_size);
-	      int j;
-              for (j=0; j< NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used-1; j++)
-                {
-                  CU_ASSERT(test[j]==0); //zero's to the left of the bits used to hold the kmer
-                }
-	      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used-1]== init - ((((bitfield_of_64bits)1)<<(i+1))-1) );
-	    }
-
-
-	}
-
-
+      test[word] |= (bases[i % 4] << (base_offset*2));
+      shifted[word] |= (bases[(i+3) % 4] << (base_offset*2));
+      base_offset--;
     }
 
+    //printf("setup\n");
+    //print_kmer(test);
+    //print_kmer(shifted);
 
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>=3)
+    // mask last base
+    test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] &= ~3;
+    // shift left
+    binary_kmer_left_shift_one_base(shifted, kmer_size);
+
+    //printf("compare\n");
+    //print_kmer(test);
+    //print_kmer(shifted);
+
+    CU_ASSERT(binary_kmer_comparison_operator(test, shifted));
+
+    // Shift off the end, compare with zero
+    for(i = 0; i < kmer_size-1; i++)
     {
-      //cleanup to start afresh
-      for (i=0; i< NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-	{
-	  test[i]=0;
-	}
-      
-      kmer_size=67;
-      test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]=32; // 000...000100000
-      test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2]=1;
-      test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-3]=31; // 00..011111
-
-      binary_kmer_left_shift(&test,1, kmer_size);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]==64);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-2]==2);
-      CU_ASSERT(test[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-3]==62);//00...0111110
-      
-      for (i=0; i<NUMBER_OF_BITFIELDS_IN_BINARY_KMER-3; i++)
-	{
-	  CU_ASSERT(test[i]==0);
-	}
-      
-      
+      binary_kmer_left_shift_one_base(test, kmer_size);
     }
+    
+    //printf("zero:\n");
+    //print_kmer(test);
 
+    for(i = 0; i < NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+    {
+      CU_ASSERT(test[i] == 0);
+    }
+  }
 }
 
 

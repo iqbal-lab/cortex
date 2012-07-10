@@ -125,126 +125,34 @@ boolean binary_kmer_less_than(const BinaryKmer const left, const BinaryKmer cons
 
 
 //implicit in this is the idea that you shift left, and mask to 0 the bits that fall off the left hand end
-void binary_kmer_left_shift(BinaryKmer* kmer, int num_bits_to_shift, short kmer_size)
+void binary_kmer_right_shift_one_base(BinaryKmer kmer)
 {
-
-  if (kmer_size==32*NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
-    {
-      printf("Kmer should be even, and we do not allow it to be 32*NUMBER_OF_BITFIELDS_IN_BINARY_KMER");
-      exit(1);
-    }
-
-  int number_of_bitfields_fully_used = kmer_size/32;
-  int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used)); // maybe clearer to call this 2*kmer_size - 64*number_of_bitfields_fully_used
-
-  //we will start at the right-most bitfield, and shift it left, keeping the overflow to apply to the next bitfield on the left.
-  if (num_bits_to_shift>63)
+  int i;
+  for(i = NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1; i > 0; i--)
   {
-    printf("Have not implemented  binary_kmer_left_shift to support shifts bigger than 63 bits. Did try setting limit to 64, but compiler warns if you do that");
-    exit(1);
+    kmer[i] >>= 2;
+    kmer[i] |= (kmer[i-1] << 62); // & 0x3
   }
 
-  void shift_left(int which_bitfield_in_kmer, bitfield_of_64bits overflow_to_apply_from_bitfield_to_the_right)
-    {
-
-
-      //get the overflow that you will create when you shift left
-      bitfield_of_64bits mask = ~(((bitfield_of_64bits)1<<(64-num_bits_to_shift))-1);   // start with 1's in all bits except the left hand (most significant) number_of_bits_to_shift, and then you take complement with ~
-      bitfield_of_64bits new_overflow = ((*kmer)[which_bitfield_in_kmer]) & mask;
-      new_overflow >>= (64-num_bits_to_shift); //so overflow is at far right hand end of the bitfield
-      
-      //shift left
-      ((*kmer)[which_bitfield_in_kmer]) <<= num_bits_to_shift;
-
-      //apply overflow we have been passed in
-      ((*kmer)[which_bitfield_in_kmer]) = ((*kmer)[which_bitfield_in_kmer]) | overflow_to_apply_from_bitfield_to_the_right;
-
-      //zam added this if
-      if (which_bitfield_in_kmer==NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1-number_of_bitfields_fully_used) //ie you are in the leftmost bitfield, where not all of the bits are used
-	{
-	  //mask off everything to the left of the bits that contain your kmer.
-	  ((*kmer)[which_bitfield_in_kmer]) = ((*kmer)[which_bitfield_in_kmer]) & ( (((bitfield_of_64bits)1)<<number_of_bits_in_most_sig_bitfield) -1);
-
-
-	}
-
-
-      
-      which_bitfield_in_kmer--;
-      
-      //if (which_bitfield_in_kmer>=0)
-      if (which_bitfield_in_kmer>=NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1-number_of_bitfields_fully_used)
-      {
-	shift_left(which_bitfield_in_kmer, new_overflow);
-      }
-      
-      
-      return;
-      
-    }
-  
-
-  shift_left(NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1,0);
-
-  //remove the num_bits_to_shift bits at the left hand end that have been pushed beyond the end of the kmer  
-  if (number_of_bitfields_fully_used<NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
-  {
-
-    bitfield_of_64bits mask = 0;
-    mask = ((((bitfield_of_64bits)1)<<number_of_bits_in_most_sig_bitfield)-1);
-
-    // mask the (number_of_bitfields_fully_used+1)-th bitfield from the right
-    (*kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used -1 ] = (*kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used -1] & mask;
-
-    //this next is important - do not remove it
-    int j;
-    for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used -1; j++)
-      {
-	(*kmer)[j] = (bitfield_of_64bits)0;
-      }
-
-
-  }
+  kmer[0] >>= 2;
 }
 
-
-  //does not need to know kmer size.
-void binary_kmer_right_shift(BinaryKmer* kmer, int num_bits_to_shift)
+void binary_kmer_left_shift_one_base(BinaryKmer kmer, short kmer_size)
 {
+  int top_word = NUMBER_OF_BITFIELDS_IN_BINARY_KMER - (kmer_size+31)/32;
 
+  int i;
+  for(i = top_word; i < NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1; i++)
+  {
+    kmer[i] <<= 2;
+    kmer[i] |= (kmer[i+1] >> 62); // & 0x3
+  }
 
-  if (num_bits_to_shift>63)
-    {
-      printf("Have not implemented  binary_kmer_right_shift to support shifts bigger than 63 bits. Did try setting limit to 64, but compiler warns if you do that");
-      exit(1);
-    }
+  kmer[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] <<= 2;
 
-  void shift_right(int which_bitfield_in_kmer, bitfield_of_64bits overflow_to_apply_from_bitfield_to_the_left)
-    {
-
-      //get the overflow that you will create when you shift right
-      bitfield_of_64bits mask =  (((bitfield_of_64bits)1<<num_bits_to_shift)-1);  
-      bitfield_of_64bits new_overflow = ((*kmer)[which_bitfield_in_kmer]) & mask;
-      new_overflow <<= (64-num_bits_to_shift);
-
-      //shift right
-      ((*kmer)[which_bitfield_in_kmer]) >>= num_bits_to_shift;
-      //apply overflow we have been given from bitfield on the left
-      ((*kmer)[which_bitfield_in_kmer]) = ((*kmer)[which_bitfield_in_kmer]) | overflow_to_apply_from_bitfield_to_the_left;
-      
-      which_bitfield_in_kmer++;
-      if (which_bitfield_in_kmer < NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
-	{
-	  shift_right(which_bitfield_in_kmer, new_overflow);
-	}
-      
-      return;
-
-    }
-
-
-  shift_right(0,0);
-
+  // Mask top word
+  short top_bits = 2 * (kmer_size % 32); // bits in top word
+  kmer[top_word] &= (~(unsigned long long)0 >> (64 - top_bits));
 }
 
 
@@ -252,7 +160,7 @@ void binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(BinaryKmer
 {
 
   //shift left by one base,
-  binary_kmer_left_shift(bkmer, 2, kmer_size);
+  binary_kmer_left_shift_one_base(*bkmer, kmer_size);
 
   // add new base at right hand end 
   (*bkmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] |= n;
@@ -567,7 +475,7 @@ char * binary_kmer_to_seq(BinaryKmer* bkmer, short kmer_size, char * seq){
     //get translation for the two least significant bits
     seq[j] =  binary_nucleotide_to_char(local_bkmer[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] & mask);
     //shift right zam
-    binary_kmer_right_shift(&local_bkmer, 2); //note this is a local copy internal to this function - not altering the original BinaryKmer
+    binary_kmer_right_shift_one_base(local_bkmer); //note this is a local copy internal to this function - not altering the original BinaryKmer
 
   }
   
@@ -598,13 +506,13 @@ BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size, Bi
   for(j=0;j<kmer_size;j++){
 
     //make space for new base  
-    binary_kmer_left_shift(prealloc_reverse_kmer, 2, kmer_size);
+    binary_kmer_left_shift_one_base(*prealloc_reverse_kmer, kmer_size);
 
     //add base
     (*prealloc_reverse_kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] 
       = (*prealloc_reverse_kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] | (local_copy_of_input_kmer[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] & mask);
 
-    binary_kmer_right_shift(&local_copy_of_input_kmer, 2);
+    binary_kmer_right_shift_one_base(local_copy_of_input_kmer);
 
   }
 
