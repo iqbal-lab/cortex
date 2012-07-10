@@ -638,7 +638,7 @@ if  ($workflow eq "joint" )## then just assume is BC only
 
 	    my $ctx_bin = get_right_binary($K, $cortex_dir,$num_cols);
 	    my $str;
-	    if ($ref eq "CoordinatesAndInCalling")
+	    if ($use_ref eq "CoordinatesAndInCalling")
 	    {
 		$str = "inc_ref_in_calling";
 	    }
@@ -655,12 +655,12 @@ if  ($workflow eq "joint" )## then just assume is BC only
 	    if (!(-e $bubble_output))## we want to do it and not already done
 	    {
 		print "Bubble calls on joint graph do not yet exist - so run the calls (and genotype) at k=$K, and cleaning level $cl\n";
-		if ($ref eq "CoordinatesAndInCalling")
+		if ($use_ref eq "CoordinatesAndInCalling")
 		{
 		    $cmd = $cmd." --detect_bubbles1 -1/-1 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len ";
 		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
 		}
-		elsif ($ref eq "CoordinatesOnly")
+		elsif ($use_ref eq "CoordinatesOnly")
 		{
 		    $cmd = $cmd." --detect_bubbles1 \*0/\*0 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len ";
 		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
@@ -671,12 +671,12 @@ if  ($workflow eq "joint" )## then just assume is BC only
 	    elsif  (-e $bubble_output )## we want t do it but it has already been done
 	    {
 		print "Joint bubble calling has already been done, as $bubble_output already exists\n";
-		if ($ref eq "CoordinatesAndInCalling")
+		if ($use_ref eq "CoordinatesAndInCalling")
 		{
 		    print "(including the reference colour in calling) ";
 		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
 		}
-		elsif ($ref eq "CoordinatesOnly")
+		elsif ($use_ref eq "CoordinatesOnly")
 		{
 		    print "(excluding the reference colour in calling) ";
 		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
@@ -739,7 +739,7 @@ if ($do_union eq "yes")
 	make_a_union_callset_for_each_kmer(\@kmers, \@samples, \%sample_to_cleaned_bin, 
 					   \%sample_to_bc_callfile, \%sample_to_pd_callfile,\%joint_callfiles,
 					   \%kmer_to_union_callset, \%union_callset_to_max_read_len,
-					   $do_bc, $do_pd, $outdir_calls, $dir_for_joint_calls, $tmpdir, $call_jointly_noref, $call_jointly_incref, 
+					   $do_bc, $do_pd, $outdir_calls, $dir_for_joint_calls, $tmpdir, $workflow, $use_ref,
 					   $num_cleaning_levels, \%kmer_to_bc_var_stub, \%kmer_to_pd_var_stub);
     }
     
@@ -1091,19 +1091,6 @@ sub get_colourlist_for_joint
 	print OUT "$f\n";
 	open(F, ">".$f)||die("Cannot open $f");
 
-	if (!exists $sample_to_kmer_to_list_cleanings_used{$sample})
-	{
-	    print "ZOOFO1 sample $sample\n";
-	}
-	elsif (!exists $sample_to_kmer_to_list_cleanings_used{$sample}{$kmer})
-	{
-	    print "ZOOFO2 sample $sample and kmer $kmer\n";
-	}
-	else
-	{
-	    print "ZOOFO3 sample $sample kmer $kmer level $level\n";
-	}
-
        	if ($sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level] !=0)
 	{
 	    print F $sample_to_cleaned_bin{$sample}{$kmer}{$sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level]};
@@ -1266,22 +1253,12 @@ sub merge_vcfs
 	if (exists $href_vcfs_needing_merging->{$which_caller}->{"DECOMP"})
 	{
 	    @vcfs_decomp=@{$href_vcfs_needing_merging->{$which_caller}->{"DECOMP"}};
-	    print "Got a list of ";
-	    print scalar @vcfs_decomp;
-	    print " vcfs for decomp\n";
-	    print "They are ";
-	    print join(" ", @vcfs_decomp);
-	    print "\n";
 	    merge_list_of_vcfs(\@vcfs_decomp, $which_caller, $output_decomp, $tmpdir, "DECOMP", $href_result );
 	}
 	my @vcfs_raw=();
 	if (exists $href_vcfs_needing_merging->{$which_caller}->{"RAW"})
 	{
 	    @vcfs_raw=@{$href_vcfs_needing_merging->{$which_caller}->{"RAW"}};
-	    print "Got a list of ";
-	    print scalar @vcfs_raw;
-	    print " for raw\n";
-
 	    merge_list_of_vcfs(\@vcfs_raw,    $which_caller, $output_raw, $tmpdir, "RAW" , $href_result);
 	}
 
@@ -1996,11 +1973,11 @@ sub run_checks
 {
     if ($use_ref eq "unspecified")
     {
-	die("You must specify whether you are using a reference, using --ref\n";
+	die("You must specify whether you are using a reference, using --ref\n");
     }
     if ($workflow eq "unspecified")
     {
-	die("You must specify which workflow to use, using --workflow; valid arguments are joint, and independent\n";
+	die("You must specify which workflow to use, using --workflow; valid arguments are joint, and independent\n");
     }
     if ($global_logfile =~ /^([^,]+),f$/)
     {
@@ -2061,7 +2038,7 @@ sub run_checks
     
     if ( ($use_ref ne "Absent") && ($refbindir eq ""))
     {
-	die("Since you specified $user_ref for --ref, You must also specify a directory with pre-built binaries of the reference genome, at the kmers you use, using --refbindir");
+	die("Since you specified $use_ref for --ref, You must also specify a directory with pre-built binaries of the reference genome, at the kmers you use, using --refbindir");
     }
     if ($refbindir ne "")
     {

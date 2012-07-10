@@ -197,7 +197,7 @@ sub make_a_union_callset_for_each_kmer
 	$href_sample_to_kmer_to_cleaning_to_bc_callfile, $href_sample_to_kmer_to_cleaning_to_pd_callfile,
 	$href_joint_bc_callfiles, 
 	$href_results, $href_max_readlens, $do_bc, $do_pd, $outdir_calls, $outdir_jointcalls, $tmpdir,	##outputs
-	$call_jointly_noref, $call_jointly_incref, $num_cleaning_levels,
+	$workflow, $use_ref, $num_cleaning_levels,
 	$href_kmer_to_bc_stub, $href_kmer_to_pd_stub)
 	= @_;
 
@@ -206,9 +206,9 @@ sub make_a_union_callset_for_each_kmer
     foreach my $k (@$aref_kmers)
     {
 	## you are either working with the JOINT or INDEPENDENT workflow, but not both. If joint, you only do BC for the moment
-	my $union_of_bc_callsets     = $outdir_calls."union_all_k".$k."_bc_callsets";
-	my $union_of_pd_callsets     = $outdir_calls."union_all_k".$k."_pd_callsets";
-	if ( ($call_jointly_noref eq "yes") || ($call_jointly_incref eq "yes") )
+	my $union_of_bc_callsets     = $outdir_calls."union_all_".$workflow."_k".$k."_bc_callsets";
+	my $union_of_pd_callsets     = $outdir_calls."union_all_".$workflow."_k".$k."_pd_callsets";
+	if ($workflow eq "joint" )
 	{
 	    $union_of_bc_callsets =~ s/$outdir_calls/$outdir_jointcalls/;
 	    $union_of_pd_callsets =~ s/$outdir_calls/$outdir_jointcalls/;### right now this is not used anyway
@@ -217,7 +217,7 @@ sub make_a_union_callset_for_each_kmer
 	my $union_of_bc_callsets_log = $union_of_bc_callsets.".log";
 	my $union_of_pd_callsets_log = $union_of_pd_callsets.".log";
 
-	if ( ($do_bc eq "yes") && ($call_jointly_noref eq "no") && ($call_jointly_incref eq "no") )
+	if ( ($do_bc eq "yes") && ($workflow eq "independent" ))
 	{
 	    my $bc_call_index  = $tmpdir."/index_k".$k."_bc_callfiles";
 	    $href_kmer_to_bc_stub->{$k} = make_index_and_union_callset_for_specific_k($bc_call_index, $aref_samples, $href_sample_to_kmer_to_cleanings_to_binary, 
@@ -227,7 +227,7 @@ sub make_a_union_callset_for_each_kmer
 										      $href_max_readlens, $href_results, "BC");
 	}
 	
-	if ( ($do_pd eq "yes") && ($call_jointly_noref eq "no") && ($call_jointly_incref eq "no") )
+	if ( ($do_pd eq "yes") && ($workflow eq "independent") )
 	{
 	    my $pd_call_index  = $tmpdir."/index_k".$k."_pd_callfiles";
  	    $href_kmer_to_pd_stub->{$k} = make_index_and_union_callset_for_specific_k($pd_call_index, $aref_samples, $href_sample_to_kmer_to_cleanings_to_binary, 
