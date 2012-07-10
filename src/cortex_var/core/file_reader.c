@@ -1455,7 +1455,7 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
   BinaryHeaderInfo binfo;
   initialise_binary_header_info(&binfo, ginfo);
 
-  if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, ginfo)))
+  if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode)))
     {
       printf("Cannot load this binary - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting, error code %d\n", ecode);
       exit(1);
@@ -1541,13 +1541,13 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
     }
   else
     {
-      *mean_read_len = ginfo.mean_read_length[0];
+      *mean_readlen = ginfo.mean_read_length[0];
       *total_seq     = ginfo.total_sequence[0];
     }
 
   if (binfo.number_of_colours!=1)
     {
-      printf("Expecting a single colour binary, but instead this one has %d colours\n. Exiting.\n", binfo->number_of_colours);
+      printf("Expecting a single colour binary, but instead this one has %d colours\n. Exiting.\n", binfo.number_of_colours);
       exit(1);
     }
 
@@ -2788,8 +2788,8 @@ void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo
 void print_error_cleaning_object(FILE* fp, GraphInfo* ginfo, int colour)
 {
   fwrite(&((ginfo->cleaning[colour]).tip_clipping), sizeof(boolean), 1, fp);
-  fwrite(&((ginfo->cleaning[colour]).remove_low_cov_sups), sizeof(boolean), 1, fp);
-  fwrite(&((ginfo->cleaning[colour]).remove_low_cov_nodes), sizeof(boolean), 1, fp);
+  fwrite(&((ginfo->cleaning[colour]).remv_low_cov_sups), sizeof(boolean), 1, fp);
+  fwrite(&((ginfo->cleaning[colour]).remv_low_cov_nodes), sizeof(boolean), 1, fp);
   fwrite(&((ginfo->cleaning[colour]).cleaned_against_another_graph), sizeof(boolean), 1, fp);
   fwrite(&((ginfo->cleaning[colour]).remv_low_cov_sups_thresh), sizeof(int), 1, fp);
   fwrite(&((ginfo->cleaning[colour]).remv_low_cov_nodes_thresh), sizeof(int), 1, fp);
@@ -2948,7 +2948,7 @@ boolean check_binary_signature_NEW(FILE * fp,int kmer_size,
 				   BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
 				   
 {
-  boolean bin_header_ok = query_binary_NEW(fp, &binfo, ecode);
+  boolean bin_header_ok = query_binary_NEW(fp, binfo, ecode);
 
   if (bin_header_ok==true)
     {
@@ -2992,9 +2992,9 @@ boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCo
 		  read = fread(&(binfo->kmer_size),sizeof(int),1,fp);
 		  if (read>0)
 		    {//can read bitfields
-		      read = fread(&(binfo->num_bitfields),sizeof(int),1,fp);
+		      read = fread(&(binfo->number_of_bitfields),sizeof(int),1,fp);
 		     
-		      if (binfo->num_bitfields===NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
+		      if (binfo->number_of_bitfields==NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
 			{//bitfuields are good
 
 			  read = fread(&(binfo->number_of_colours),sizeof(int),1,fp);
@@ -3226,7 +3226,7 @@ boolean read_next_error_cleaning_object(FILE* fp, ErrorCleaning* cl)
     }
   if (no_problem==true)
     {
-      read = fread(&(cl->remove_low_cov_sups),sizeof(boolean),1,fp);
+      read = fread(&(cl->remv_low_cov_sups),sizeof(boolean),1,fp);
       if (read==0)
 	{
 	  no_problem=false;
@@ -3235,7 +3235,7 @@ boolean read_next_error_cleaning_object(FILE* fp, ErrorCleaning* cl)
 
   if (no_problem==true)
     {
-      read = fread(&(cl->remove_low_cov_nodes),sizeof(boolean),1,fp);
+      read = fread(&(cl->remv_low_cov_nodes),sizeof(boolean),1,fp);
       if (read==0)
 	{
 	  no_problem=false;

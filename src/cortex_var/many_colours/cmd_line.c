@@ -170,10 +170,10 @@ boolean more_than_one_colour_in_multicol_binary(char* file, int kmer_size)
   BinaryHeaderInfo binfo;
   initialise_binary_header_info(&binfo, &ginfo);
 
-  query_binary_NEW(fp, kmer_size, &binfo, &ecode);
+  query_binary_NEW(fp, &binfo, &ecode);
   fclose(fp);
 
-  if (binfo->number_of_colours>1)
+  if (binfo.number_of_colours>1)
     {
       return true;
     }
@@ -1805,12 +1805,15 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  return -1;
 	}
 
-      int binary_version_in_header;
-      int kmer_in_header;
-      int num_bf;
-      int num_cols;
-      boolean check = query_binary(fp, &binary_version_in_header, &kmer_in_header, &num_bf, &num_cols);
-      if (cmd_ptr->clean_colour >= num_cols)
+      GraphInfo temp_ginfo;
+      graph_info_initialise(&temp_ginfo);
+      BinaryHeaderErrorCode ecode=EValid;
+      BinaryHeaderInfo binfo;
+      initialise_binary_header_info(&binfo, &temp_ginfo);
+      query_binary_NEW(fp, &binfo, &ecode);
+      fclose(fp);
+
+      if (cmd_ptr->clean_colour >= binfo.number_of_colours)
 	{
 	  char tmp[]="Specified clean colour number is > number of colours in the multicolour binary. Consult the manual.\n";
 	  if (strlen(tmp)>LEN_ERROR_STRING)
@@ -2098,20 +2101,20 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  
 	}
 
-      if (binfo->number_of_colours<=0)
+      if (binfo.number_of_colours<=0)
 	{
 	  printf("Corrupt binary %s - signature claims to have <=0 colours within\n", cmd_ptr->multicolour_bin);
 	}
-      elsif (binfo->number_of_colours >NUMBER_OF_COLOURS)
+      else if (binfo.number_of_colours >NUMBER_OF_COLOURS)
 	{
 	  printf("Multicolour binary %s contains %d colours, but cortex_var is compiled to support a maximum of %d colours\n", 
-		  cmd_ptr->multicolour_bin, binfo->number_of_colours, NUMBER_OF_COLOURS);
+		  cmd_ptr->multicolour_bin, binfo.number_of_colours, NUMBER_OF_COLOURS);
 
 	}
-      else if ( (cmd_ptr->successively_dump_cleaned_colours==false) && (binfo->number_of_colours+cmd_ptr->num_colours_in_input_colour_list > NUMBER_OF_COLOURS) )
+      else if ( (cmd_ptr->successively_dump_cleaned_colours==false) && (binfo.number_of_colours+cmd_ptr->num_colours_in_input_colour_list > NUMBER_OF_COLOURS) )
 	{
 	  printf("Between %s (containing %d colours) and %s (containing %d colours), you have exceeded the compile-time limit on colours, %d\n",
-		 cmd_ptr->multicolour_bin, binfo->number_of_colours, cmd_ptr->colour_list, cmd_ptr->num_colours_in_input_colour_list, NUMBER_OF_COLOURS);
+		 cmd_ptr->multicolour_bin, binfo.number_of_colours, cmd_ptr->colour_list, cmd_ptr->num_colours_in_input_colour_list, NUMBER_OF_COLOURS);
 	}
 
        if (is_multicol_bin_ok==false)
@@ -2123,7 +2126,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  
 	}
       
-      cmd_ptr->num_colours_in_multicol_bin=binfo->number_of_colours;
+      cmd_ptr->num_colours_in_multicol_bin=binfo.number_of_colours;
     }
 
 

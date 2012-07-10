@@ -51,7 +51,12 @@ typedef enum {
   ECannotReadNumColours         = 10,
   EBadColours                   = 11,
   EFailedToReadReadLensAndCovgs = 12,
-  EGarbage = 20,
+  ECannotReadEndOfHeaderMagicNumber = 13,
+  EFailedToReadSampleIds        =14,
+  EFailedToReadSeqErrRates      =15,
+  EFailedToReadErrorCleaningInfo=16,
+  ECanReadEndOfHeaderMagicNumberButIsWrong = 17,
+  EGarbage = 18,
 } BinaryHeaderErrorCode;
 typedef struct {
   int version;
@@ -260,6 +265,7 @@ boolean check_binary_signature_NEW(FILE * fp,int kmer_size,
 
 boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* num_bitfields, int* number_of_colours_in_binary); //return true if binary header readable and has magic number
 boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+void print_error_cleaning_object(FILE* fp, GraphInfo* ginfo, int colour);
 
 boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
 boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
