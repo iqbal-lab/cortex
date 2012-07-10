@@ -152,25 +152,34 @@ sub guess_name_pairs
   my @results_plain = ();
   my @results_fasta = ();
 
-  for my $plain_name (@$plain_names_arr)
+  for my $plain_name_full (@$plain_names_arr)
   {
+    my $plain_name = $plain_name_full;
     $plain_name =~ s/^chr//g;
 
-    my $plain_stripped = $plain_name;
-    $plain_stripped =~ s/^\w+([0-9a-z])$/$1/gi;
+    my @regexes = ('^\s*(chr(om(osome)?)?)?\s*'.$plain_name.'\b',
+                   '\b(chr(om(osome)?)?)?\s*'.$plain_name.'\b',
+                   '\b(chr(om(osome)?)?):\w+:(chr(om(osome)?)?)?'.$plain_name.'\b',
+                   '([_\-:]|chr|chrom|chromosome|\b)'.$plain_name.'\b');
 
-    my ($result_plain, $result_fasta);
+    my $result_plain = $plain_name;
+    my $result_fasta;
 
-    for my $fasta_name (@$fasta_names_arr)
+    for my $regex (@regexes)
     {
-      if($fasta_name =~ /^\s*(chr(om(osome)?)?)?\s*$plain_name\b/i ||
-         $fasta_name =~ /\b(chr(om(osome)?)?)?\s*$plain_name\b/i ||
-         $fasta_name =~ /\b(chr(om(osome)?)?):\w+:(chr(om(osome)?)?)$plain_name\b/i ||
-         $fasta_name =~ /(\w|\b)$plain_stripped\b/i)
+      for my $fasta_name (@$fasta_names_arr)
       {
-        # Look for just the name at the start, e.g. '>10' '> chr10' '> chromosome 10'
-        $result_plain = $plain_name;
-        $result_fasta = $fasta_name;
+        if($fasta_name =~ /$regex/i)
+        {
+          # Look for just the name at the start, e.g. '>10' '> chr10' '> chromosome 10'
+          $result_plain = $plain_name_full;
+          $result_fasta = $fasta_name;
+          last;
+        }
+      }
+
+      if(defined($result_fasta))
+      {
         last;
       }
     }

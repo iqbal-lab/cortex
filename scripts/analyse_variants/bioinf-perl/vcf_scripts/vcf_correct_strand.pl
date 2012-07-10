@@ -125,6 +125,7 @@ my $num_of_ref_mismatch = 0;
 my $num_of_switched = 0;
 
 my %missing_chrs = ();
+my %format_fields = ();
 
 while(defined($vcf_entry = $vcf->read_entry()))
 {
@@ -140,15 +141,28 @@ while(defined($vcf_entry = $vcf->read_entry()))
 
   my $max_allele_len = max(length($ref_allele), length($alt_allele));
 
-  my $genome_seq = $genome->get_chr_substr($chr, $var_start, $max_allele_len);
-
   my $unfixed_mismatch = 0;
 
-  if(!defined($genome_seq))
+  my $genome_seq;
+
+  if(!$genome->chr_exists($chr))
   {
     $missing_chrs{$chr} = 1;
   }
   else
+  {
+    $genome_seq = $genome->get_chr_substr($chr, $var_start, $max_allele_len);
+
+    if($genome->get_chr_length($chr) < $var_start + $max_allele_len)
+    {
+      print STDERR "vcf_correct_strand.pl: var " . $vcf_entry->{'ID'} . " at " .
+                   "$chr:$var_start:$max_allele_len is out of " .
+                   "bounds of $chr:1:" . $genome->get_chr_length($chr) . "\n";
+      $genome_seq = undef;
+    }
+  }
+
+  if(defined($genome_seq))
   {
     my $genome_seq_ref = substr($genome_seq, 0, length($ref_allele));
     my $genome_seq_alt = substr($genome_seq, 0, length($alt_allele));
@@ -174,29 +188,58 @@ while(defined($vcf_entry = $vcf->read_entry()))
         $vcf_entry->{'ALT'} = $tmp;
 
         # Switch genotypes
+        my $format = $vcf_entry->{'FORMAT'};
+
+        if(!defined($format))
+        {
+          die("No format column");
+        }
+
+        my @formats = split(":", $format);
+        @format_fields{@formats} = 1;
+
         for my $sample (@samples)
         {
-          my $genotype = $vcf_entry->{$sample};
-          
-          if($genotype =~ /^([01])([\/\|])([01]):(\d+),(\d+)(.*)/)
-          {
-            my ($gt1,$gt_sep,$gt2,$covg1,$covg2,$end) = ($1,$2,$3,$4,$5,$6);
+          my @genotype = split(":", $vcf_entry->{$sample});
 
-            # There is a special case that doesn't need switching
-            if(!($gt1 == 0 && $gt2 == 1 && $gt_sep eq "/"))
+          if(@genotype != @formats)
+          {
+            die("Sample does not match format field " .
+                "[var: $vcf_entry->{'ID'}; sample: $sample]");
+          }
+
+          my $new_genotype = "";
+
+          for(my $i = 0; $i < @genotype; $i++)
+          {
+            my $result = $genotype[$i];
+
+            if($formats[$i] eq "GT")
             {
-              # Swap
-              $gt1 = $gt1 == 0 ? 1 : 0;
-              $gt2 = $gt2 == 0 ? 1 : 0;
-              ($covg1,$covg2) = ($covg2,$covg1);
+              if($genotype[$i] =~ /^([01])([\/\|])([01])$/)
+              {
+                my ($gt1,$gt_sep,$gt2) = ($1,$2,$3);
+                $gt1 = $gt1 == 0 ? 1 : 0;
+                $gt2 = $gt2 == 0 ? 1 : 0;
+                $result = $gt1.$gt_sep.$gt2;
+              }
+              else
+              {
+                die("Invalid format [var: $vcf_entry->{'ID'}; sample: $sample]");
+              }
+            }
+            elsif($formats[$i] eq "COV")
+            {
+              if($genotype[$i] =~ /^(\d+),(\d+)$/)
+              {
+                $result = $2.",".$1;
+              }
             }
 
-            $vcf_entry->{$sample} = $gt1.$gt_sep.$gt2.":".$covg1.",".$covg2.$end;
+            $new_genotype .= ($i > 0 ? ":" : "") . $result;
           }
-          else
-          {
-            die("Cannot parse genotype '$genotype' (id: $vcf_entry->{'ID'})");
-          }
+
+          $vcf_entry->{$sample} = $new_genotype;
         }
       }
       else
@@ -217,6 +260,14 @@ while(defined($vcf_entry = $vcf->read_entry()))
     $vcf->print_entry($vcf_entry);
   }
 }
+
+my @format_field_names
+  = grep {uc($_) ne "GT" && uc($_) ne "COV"}
+    sort keys %format_fields;
+
+print STDERR "vcf_correct_strand.pl: Ignored format fields: " .
+             join(",", @format_field_names) . "\n";
+print STDERR "                       (I only manipulate GT & COVG)\n";
 
 my @missing_chr_names = sort keys %missing_chrs;
 
