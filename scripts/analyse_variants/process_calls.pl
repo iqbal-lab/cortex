@@ -112,7 +112,7 @@ my $help = '';    #default false
 	'callfile_log|i:s'                     => \$callfile_log,
 	'outdir|o:s'                           => \$outdir,
 	'outvcf|v:s'                           => \$outvcf_filename_stub,
-	'samplename_list|s:s'                  =>  \$colours,    #list of names of colours/sample,s one per line
+	'samplename_list|s:s'                  =>  \$colours,    #list of names of colours/samples, one per line. 
 	'num_cols|n:i'                         => \$number_of_colours,
 	'refcol|r:i'                           => \$reference_colour,
 	                                          # ignore this colour for the VCF - dont 
@@ -609,7 +609,7 @@ else # sort and PV tag and remove ref mismatches
     my $ret3 = qx{$cmd3};
     print "$ret3\n";
 
-    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_lowest KMER --filter_txt KMER_DUPE > $final_decomp ";
+    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_decomp ";
     print "$cmd4\n";
     my $ret4 = qx{$cmd4};
     print "$ret4\n";
@@ -861,6 +861,25 @@ sub get_vcf_header
 {
 	my ($colourfile) = @_;
 
+	my $check_file_cmd = "wc -l $colourfile";
+	my $check_ret = qx{$check_file_cmd};
+	if ($check_ret =~ /^(\d+)\s/)
+	{
+	    my $nc = $1;
+	    if ($nc==$number_of_colours-1)
+	    {
+		die("Sample list file has one less line ($nc) than there are colours ($number_of_colours). Is it missing a carriage return on the final line? Or is there one too few line? Please fix and rerun");
+	    }
+	    elsif ($nc==$number_of_colours)
+	    {
+		#fine
+	    }
+	    else
+	    {
+		die("You must pass in a samplename_list file which contains one line per colour, each line ending with a carriage return (ie hit enter at the end of each line, or use \\n if you are printing with perl");
+	    }
+	}
+
 	my $date_cmd = "date \'+\%d\/\%m\/\%y\'";
 	my $date     = qx{$date_cmd};
 	chomp $date;
@@ -903,43 +922,39 @@ sub get_vcf_header
 	  . "##FILTER=<ID=MAPQ,Description=\"5prime flank maps to reference with mapping quality below $mapping_qual_thresh\">\n";
 
 	$head = $head . "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t";
-	if ( $colourfile !~ /,/ )
+	#if ( $colourfile !~ /,/ )
+	#{
+	open( COLOURS, $colourfile ) || die("Cannot open $colourfile");
+	my $z;
+	for ( $z = 0 ; $z < $number_of_colours ; $z++ )
 	{
-		open( COLOURS, $colourfile ) || die("Cannot open $colourfile");
-		my $z;
-		for ( $z = 0 ; $z < $number_of_colours ; $z++ )
-		{
-			my $line = <COLOURS>;
-			chomp $line;
-
-			if ( ( $z == $reference_colour ) || ( $z == $pooled_colour ) )
-			{
-				if ( $z == $last_sample_col )
-				{
-					$head = $head . "\n";
-				}
-				next;
-			}
-
-			$head = $head . "$line";
-			if ( $z < $number_of_colours - 1 )
-			{
-				$head = $head . "\t";
-			}
-			else
-			{
-				$head = $head . "\n";
-			}
-		}
-		close(COLOURS);
+	    my $line = <COLOURS>;
+	    chomp $line;
+	    
+	    if ( ( $z == $reference_colour ) || ( $z == $pooled_colour ) )
+	    {
+		next;
+	    }
+	    
+	    $head = $head ."$line";
+	    if ( $z == $last_sample_col )
+	    {
+		$head = $head . "\n";
+	    }
+	    else
+	    {
+		$head = $head . "\t";
+	    }
 	}
-	else
-	{
-		my @colors = split( /,/, $colourfile );
-		@colors = grep { $_ ne "REF" } @colors;
-		$head .= join( "\t", @colors ) . "\n";
+	close(COLOURS);
 
-	}
+	#else
+	#{
+	#	my @colors = split( /,/, $colourfile );
+	#	@colors = grep { $_ ne "REF" } @colors;
+	#	$head .= join( "\t", @colors ) . "\n";
+
+	#}
 	return $head;
 }
 
@@ -2578,9 +2593,14 @@ sub get_next_var_from_callfile
 			$line = <$fh>;
 			chomp $line;
 			my @br1 = split( /\s+/, $line );
-			# ZAM - remove this and try using median :    push @arr_br1_covgs, get_num_reads( \@br1 );
+
+			# default/standard Cortex
+			push @arr_br1_covgs, get_num_reads( \@br1 );
+			
+			## contemplating moving to this, using median 
+			#push @arr_br1_covgs, get_num_reads_using_median( $line, $colour_to_readlen{$z}, $kmer); 
+
 			push @arr_br1_min_covg, get_min_covg(\@br1);
-			push @arr_br1_covgs, get_num_reads_using_median( $line, $colour_to_readlen{$z}, $kmer); 
 		}
 		$line = <$fh>;
 		chomp $line;
@@ -2601,8 +2621,13 @@ sub get_next_var_from_callfile
 			$line = <$fh>;
 			chomp $line;
 			my @br2 = split( /\s+/, $line );
-			#ZAM - remove for debug - try median push @arr_br2_covgs, get_num_reads( \@br2 );
-			push @arr_br2_covgs, get_num_reads_using_median($line, $colour_to_readlen{$z}, $kmer);
+			
+			#default/standard
+			push @arr_br2_covgs, get_num_reads( \@br2 );
+
+			#contemplating moving to median:
+			#push @arr_br2_covgs, get_num_reads_using_median($line, $colour_to_readlen{$z}, $kmer);
+			
 			push @arr_br2_min_covg, get_min_covg(\@br2);
 		}
 
