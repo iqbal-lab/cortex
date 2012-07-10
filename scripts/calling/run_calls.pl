@@ -877,10 +877,20 @@ if ($do_union eq "yes")
 
 	print "\n\n\n*** Now combine all preexisting vcfs\n\n";
 
-	my $final_BC_vcf_raw    = $outdir_vcfs."combined_BC_calls_at_all_k.raw.vcf";
-	my $final_BC_vcf_decomp = $outdir_vcfs."combined_BC_calls_at_all_k.decomp.vcf";
-	my $final_PD_vcf_raw    = $outdir_vcfs."combined_PD_calls_at_all_k.raw.vcf";
-	my $final_PD_vcf_decomp = $outdir_vcfs."combined_PD_calls_at_all_k.decomp.vcf";
+	my $pref;
+	if ($workflow eq "independent")
+	{
+	    $pref="wk_flow_I_";
+	}
+	else
+	{
+	    $pref="wk_flow_J_";
+	}
+	my $final_BC_vcf_raw    = $outdir_vcfs.$pref."combined_BC_calls_at_all_k.raw.vcf";
+	my $final_BC_vcf_decomp = $outdir_vcfs.$pref."combined_BC_calls_at_all_k.decomp.vcf";
+	my $final_PD_vcf_raw    = $outdir_vcfs.$pref."combined_PD_calls_at_all_k.raw.vcf";
+	my $final_PD_vcf_decomp = $outdir_vcfs.$pref."combined_PD_calls_at_all_k.decomp.vcf";
+	    
 	merge_vcfs(\%vcfs_needing_merging, "BC", $final_BC_vcf_raw, $final_BC_vcf_decomp, \%final_vcfs, $tmpdir_working_vcfs);
 	merge_vcfs(\%vcfs_needing_merging, "PD", $final_PD_vcf_raw, $final_PD_vcf_decomp, \%final_vcfs, $tmpdir_working_vcfs);
 
