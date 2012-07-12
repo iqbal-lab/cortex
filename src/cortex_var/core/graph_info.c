@@ -28,6 +28,7 @@
 #include <dB_graph.h>
 #include <graph_info.h>
 #include <file_reader.h>
+#include <string.h>
 
 void error_cleaning_initialise(ErrorCleaning cl)
 {

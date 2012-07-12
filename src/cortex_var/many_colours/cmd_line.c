@@ -197,7 +197,7 @@ const char* usage=
 " \n ** DATA LOADING ** \n\n"\
   // -v
 "   [--format TYPE] \t\t\t\t\t\t=\t File format for input in se_list and pe_list. All files assumed to be of the same format.\n\t\t\t\t\t\t\t\t\t Type must be FASTQ or FASTA\n" \
-"   [--colour_list FILENAME] \t\t\t\t\t=\t File of filenames, one per colour. n-th file is a list of\n\t\t\t\t\t\t\t\t\t single-colour binaries to be loaded into colour n.\n\t\t\t\t\t\t\t\t\t Cannot be used with --se_list or --pe_list \n" \
+"   [--colour_list FILENAME] \t\t\t\t\t=\t File of filenames, one per colour. n-th file is a list of\n\t\t\t\t\t\t\t\t\t single-colour binaries to be loaded into colour n.\n\t\t\t\t\t\t\t\t\t Cannot be used with --se_list or --pe_list \n\t\t\t\t\t\t\t\t\t Optionally, this can contain a second column, containing a sample identifier/name for each colour\n" \
 "   [--multicolour_bin FILENAME] \t\t\t\t=\t Filename of a multicolour binary, will be loaded first, into colours 0..n.\n\t\t\t\t\t\t\t\t\t If using --colour_list also, those will be loaded into subsequent colours, after this.\n" \
 "   [--se_list FILENAME] \t\t\t\t\t=\t List of single-end fasta/q to be loaded into a single-colour graph.\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n" \
 "   [--pe_list FILENAME] \t\t\t\t\t=\t Two filenames, comma-separated: each is a list of paired-end fasta/q to be \n\t\t\t\t\t\t\t\t\t loaded into a single-colour graph. Lists are assumed to ordered so that \n\t\t\t\t\t\t\t\t\t corresponding paired-end fasta/q files are at the same positions in their lists.\n\t\t\t\t\t\t\t\t\t Currently Cortex only use paired-end information to remove\n\t\t\t\t\t\t\t\t\t PCR duplicate reads (if that flag is set).\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n" \
@@ -355,6 +355,7 @@ int default_opts(CmdLine * c)
   c->for_each_colour_load_union_of_binaries=false;
   //novelsseq stuff
   c->use_snp_alleles_to_estim_seq_err_rate=false;
+  c->loaded_sample_names=false;
   c->print_novel_contigs=false;
   c->novelseq_contig_min_len_bp=100;
   c->novelseq_min_percentage_novel=100;
@@ -408,6 +409,11 @@ int default_opts(CmdLine * c)
 
   //filenames/strings
   set_string_to_null(c->colour_list, MAX_FILENAME_LEN);
+  int i;
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      set_string_to_null(c->colour_sample_ids[i], MAX_FILENAME_LEN);
+    }
   set_string_to_null(c->multicolour_bin,MAX_FILENAME_LEN);
   set_string_to_null(c->se_list,MAX_FILENAME_LEN);
   set_string_to_null(c->pe_list_lh_mates,MAX_FILENAME_LEN);
@@ -566,7 +572,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'a'://colour list
       {
 	if (optarg==NULL)
-	  errx(1,"[--colour_list] option requires a filename [file of filenames, one for each colour]");
+	  errx(1,"[--colour_list] option requires a filename [file of filenames, one for each colour. Optional second column for sample names]");
 
 
 	if (strlen(optarg)<MAX_FILENAME_LEN)
@@ -591,11 +597,22 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    char* col_list = strtok(temp1, delims);
 	    if (col_list==NULL)
 	      {
-		errx(1,"[--colour_list] option requires a filename [file of filenames, one for each colour]");
+		errx(1,"[--colour_list] option requires a filename [file of filenames, one for each colour, with optional second column for sample id's]");
 	      }
 	      
-	    //how many colours in this filelist?
-	    int num_cols_in_input_list=get_number_of_files_and_check_existence_from_filelist(col_list);
+	    //check - is this a one-column file, just of filelists, or a 2-column file (col1=filelist, col2=sample name)
+	    boolean colour_list_has_samples = check_if_colourlist_contains_samplenames(col_list);
+	    int num_cols_in_input_list;
+	    if (colour_list_has_samples==false)
+	      {
+		//how many colours in this filelist?
+		num_cols_in_input_list=get_number_of_files_and_check_existence_from_filelist(col_list);
+	      }
+	    else //colour list has two columns and includes samples
+	      {
+		num_cols_in_input_list=get_number_of_files_and_check_existence_and_get_samplenames_from_col_list(col_list, cmdline_ptr); 
+		cmdline_ptr->loaded_sample_names=true;
+	      }
 	    if (num_cols_in_input_list==0)
 	      {
 		errx(1, "[--colour_list] filename %s contains nothing", col_list);
@@ -2247,7 +2264,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 }
 
 
-CmdLine parse_cmdline( int argc, char* argv[], int unit_size) 
+void parse_cmdline(CmdLine* cmd_line, int argc, char* argv[], int unit_size) 
 {	
   int i;
   printf("Command: ");
@@ -2257,11 +2274,11 @@ CmdLine parse_cmdline( int argc, char* argv[], int unit_size)
   printf("\n");
   // printf("Unit size:%i\n",unit_size);
 
-  CmdLine cmd_line;
-  default_opts(&cmd_line);
+  //CmdLine cmd_line;
+  default_opts(cmd_line);
 
   char error_string[LEN_ERROR_STRING]="";
-  int err = parse_cmdline_inner_loop(argc, argv, unit_size, &cmd_line, error_string);
+  int err = parse_cmdline_inner_loop(argc, argv, unit_size, cmd_line, error_string);
 
 
   if (err==-1) 
@@ -2275,7 +2292,7 @@ CmdLine parse_cmdline( int argc, char* argv[], int unit_size)
     
   //  extra_cmd_line_settings(&cmd_line);//some cmd_line settings depend on other options, and we need to wait til all parsing is done
 
-  err = check_cmdline(&cmd_line, error_string2);
+  err = check_cmdline(cmd_line, error_string2);
 
   if (err == -1)
     {
@@ -2283,7 +2300,6 @@ CmdLine parse_cmdline( int argc, char* argv[], int unit_size)
       exit(1);
     }
   
-  return cmd_line;
   
 }
 
@@ -3116,4 +3132,110 @@ int parse_arguments_for_genotyping(CmdLine* cmdline, char* argmt, char* msg)
   return 0;
   
   
+}
+
+
+//returns number of filenames/colours in this file
+int get_number_of_files_and_check_existence_and_get_samplenames_from_col_list(char* colour_list, CmdLine* cmd)
+{
+  int count=0;
+
+  FILE* fp = fopen(colour_list, "r");
+  if (fp==NULL)
+    {
+      printf("Running initial sanity check: Cannot open the colourlist %s. Abort.\n", colour_list);
+      exit(1);
+    }
+
+  char line[2*MAX_FILENAME_LENGTH];
+  line[0]='\0';
+  
+  while (feof(fp)==0)
+    {
+      if (fgets(line, 2*MAX_FILENAME_LENGTH, fp) != NULL)
+	{
+	  //remove newline from end of line - replace with \0
+	  char* p;
+	  if ((p = strchr(line, '\n')) != NULL)
+	    {
+	      *p = '\0';
+	    }
+
+	  //now this line should be tab separated with two columns.
+	  char* file;
+	  char* sample_name;
+	  char delims[]="\t";
+	  file = strtok(line, delims);
+	  if (file==NULL)
+	    {
+	      printf("Format issue in %s. Started off looking like two columns (tab sep), but one of the lines looks bad\n", line);
+	      exit(1);
+	    }
+	  if (access(file, R_OK)==-1)
+	    {
+	      printf("Cannot access file %s listed in %s\n", file, colour_list);
+	      exit(1);
+	    }
+	  else
+	    {
+	      sample_name = strtok(NULL, delims);
+	      strcpy(cmd->colour_sample_ids[count], sample_name);
+	      count++;
+	    }
+
+	}
+    }
+  fclose(fp);
+
+  return count;
+}
+
+
+boolean check_if_colourlist_contains_samplenames(char* filename)
+{
+  boolean contains_samplenames=false;
+
+  FILE* fp = fopen(filename, "r");
+  if (fp==NULL)
+    {
+      printf("Running initial sanity check: Cannot open the colourlist %s. Abort.\n", filename);
+      exit(1);
+    }
+
+  char line[2*MAX_FILENAME_LENGTH];
+  line[0]='\0';
+  
+  while (feof(fp)==0)
+    {
+      if (fgets(line, 2*MAX_FILENAME_LENGTH, fp) != NULL)
+	{
+	  //remove newline from end of line - replace with \0
+	  char* p;
+	  if ((p = strchr(line, '\n')) != NULL)
+	    {
+	      *p = '\0';
+	    }
+
+	  //Is this one column, or two?
+	  char* file;
+	  char* sample_name;
+	  char delims[]="\t";
+	  file = strtok(line, delims);
+	  if (file==NULL)
+	    {
+	      printf("Format issue in %s. I don't see how this can happen - please send me your colourlist!\n",line );
+	      exit(1);
+	    }
+	  else
+	    {
+	      sample_name = strtok(NULL, delims);
+	      if (sample_name !=NULL)
+		{
+		  contains_samplenames=true;
+		}
+	    }
+	}
+    }
+  fclose(fp);
+  return contains_samplenames;
 }
