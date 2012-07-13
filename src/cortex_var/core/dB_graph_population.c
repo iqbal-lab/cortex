@@ -29,21 +29,26 @@
   dB_graph_population.c - implementation
  */
 
+// standard libraries
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <limits.h>
+#include <math.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <libgen.h>
+
+#include <gsl_sf_gamma.h>
 
 #include <element.h>
 #include <open_hash/hash_table.h>
 #include <dB_graph.h>
 #include <dB_graph_population.h>
 #include <seq.h>
-#include <string.h>
-#include <limits.h>
 #include <file_reader.h>
 #include <model_selection.h>
 #include <maths.h>
-#include <math.h> //we need both!
-#include <gsl_sf_gamma.h>
 #include <db_variants.h>
 #include <db_complex_genotyping.h>
 
@@ -5208,8 +5213,22 @@ int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), d
 }
 
 
+void db_graph_dump_single_colour_binary_of_colour0(char * filename,
+                                                   boolean (*condition)(dBNode * node),
+                                                   dBGraph * db_graph,
+                                                   GraphInfo* db_graph_info)
+{
+  // Create directory path for output
+  char* pathcopy = strdup(filename);
+  char* dir_name = dirname(pathcopy);
 
-void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
+  if(!mkpath(dir_name, 0777))
+  {
+  	fprintf("Couldn't create output directory: '%s'\n", dir_name);
+  }
+
+  free(pathcopy);
+
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   if (fout==NULL)

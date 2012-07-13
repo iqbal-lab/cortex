@@ -28,6 +28,8 @@
 #ifndef FILE_READER_H_
 #define FILE_READER_H_
 
+#include <sys/stat.h>
+
 #include <seq.h>
 #include <dB_graph.h>
 #include <file_format.h>
@@ -37,6 +39,19 @@
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;
 
+// mkpath - ensure all directories in path exist
+// Returns 1 on success, 0 on failure
+// Adapted from Jonathan Leffler http://stackoverflow.com/a/675193/431087
+char mkpath(const char *path, mode_t mode);
+
+void load_se_and_pe_filelists_into_graph_colour(
+  char* se_filelist_path, char* pe_filelist_path1, char* pe_filelist_path2,
+  unsigned long long *bases_read,
+  unsigned long long *bases_pass_filters_and_loaded,
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
+  int qual_thresh, boolean remv_dups_se, boolean remv_dups_pe, 
+  boolean break_homopolymers, int homopol_limit, char ascii_fq_offset,
+  int colour, dBGraph* db_graph);
 
 //pass in bases_read to track amount of sequence read in, and bases_pass_filters_and_loaded to see how much passed filters and got into the graph
 void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, boolean pe, char* se_f, char* pe_f1, char* pe_f2,

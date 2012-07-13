@@ -28,24 +28,1000 @@
   routines to load files into dB Graph 
  */
 
-#include <binary_kmer.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <limits.h>
+#include <unistd.h>
+#include <libgen.h> // Required for dirname
+#include <errno.h>
+#include <sys/stat.h>
+
+#include <seq_file.h>
+
+#include <binary_kmer.h>
 #include <dB_graph.h>
 #include <seq.h>
 #include <file_reader.h>
 #include <global.h>
-#include <string.h>
 #include <dB_graph_supernode.h>
 #include <dB_graph_population.h>
 #include <file_format.h>
-#include <unistd.h>
+
+#define MIN(x,y) ((x) <= (y) ? (x) : (y))
+#define MAX(x,y) ((x) >= (y) ? (x) : (y))
+
+#define is_base_char(x) ((x) == 'a' || (x) == 'A' || \
+                         (x) == 'c' || (x) == 'C' || \
+                         (x) == 'g' || (x) == 'G' || \
+                         (x) == 't' || (x) == 'T' || \
+                         (x) == 'n' || (x) == 'N')
 
 int MAX_FILENAME_LENGTH=500;
 int MAX_READ_LENGTH=10000;//should ONLY be used by test code
 
+// Returns 1 on success, 0 on failure
+// Sets errno to ENOTDIR if already exists but is not directory
+// Adapted from Jonathan Leffler http://stackoverflow.com/a/675193/431087
+char _ensure_dir_exists(const char *path, mode_t mode)
+{
+  struct stat st;
 
+  if(stat(path, &st) != 0)
+  {
+    // Directory does not exist   
+    return mkdir(path, mode) == 0 ? 1 : 0;
+  }
+  else if(!S_ISDIR(st.st_mode))
+  {
+    errno = ENOTDIR;
+    return 0;
+  }
+
+  return 1;
+}
+
+// mkpath - ensure all directories in path exist
+// Returns 1 on success, 0 on failure
+// Adapted from Jonathan Leffler http://stackoverflow.com/a/675193/431087
+char mkpath(const char *path, mode_t mode)
+{
+  char *copypath = strdup(path);
+
+  size_t i = 0, j = 0;
+  char status = 1;
+
+  while(1)
+  {
+    while(path[i] == '.' || path[i] == '/')
+      i++;
+
+    j = i;
+
+    while(path[j] != '.' && path[j] != '/' && path[j] != '\0')
+      j++;
+
+    if(i == j)
+      break;
+
+    char tmp = copypath[j];
+
+    copypath[j] = '\0';
+
+    if(!(status = _ensure_dir_exists(copypath, mode)))
+      break;
+
+    if(tmp == '\0')
+      break;
+
+    copypath[j] = tmp;
+    i = j + 1;
+  }
+
+  free(copypath);
+
+  return status;
+}
+
+//
+// Isaac's re-write
+//
+
+// ToDo: check quality cut off and homopolymer run cut off use
+//       > >= < <= correctly
+
+// Note: parsing of homopolymers means input is different if reads are read
+//       forward vs reverse-complemented!
+
+#define shift_kmer_str(kmer,k,c) memmove((kmer)+1, (kmer), (k)-1); \
+                                 (kmer)[(k)-1] = (c);
+
+short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
+                   short kmer_size, char read_qual,
+                   char quality_cut_off, int homopolymer_cutoff)
+{
+  short num_bp_to_skip = 0;
+  int i;
+
+  for(i = kmer_size-1; i >= 0; i--)
+  {
+    if(!is_base_char(kmer_str[i]))
+    {
+      // die -- invalid base
+      fprintf(stderr, "%s:%d: Invalid base character '%i' "
+                      "[path: %s; line: %lu]\n",
+              __FILE__, __LINE__, (int)kmer_str[i],
+              seq_get_path(sf), seq_curr_line_number(sf));
+      exit(EXIT_FAILURE);
+    }
+    else if(kmer_str[i] == 'n' || kmer_str[i] == 'N')
+    {
+      // skip N
+      num_bp_to_skip = i+1;
+      break;
+    }
+  }
+
+  if(read_qual)
+  {
+    // Find latest poor-quality base position
+    for(i = kmer_size-1; i >= 0; i--)
+    {
+      if(qual_str[i] < quality_cut_off)
+      {
+        num_bp_to_skip = i+1;
+        break;
+      }
+    }
+  }
+
+  if(homopolymer_cutoff != 0)
+  {
+    int run_length = 1;
+
+    for(i = 1; i < kmer_size; i++)
+    {
+      if(kmer_str[i] == kmer_str[i-1])
+        run_length++;
+      else
+        run_length = 1;
+    
+      if(run_length > homopolymer_cutoff)
+        num_bp_to_skip = MAX(i+1, num_bp_to_skip);
+    }
+  }
+
+  return num_bp_to_skip;
+}
+
+inline char _read_base(SeqFile *sf, char *b, char *q, char read_qual)
+{
+  if(!seq_read_base(sf, b))
+  {
+    return 0;
+  }
+
+  if(!is_base_char(*b))
+  {
+    // die -- invalid base
+    fprintf(stderr, "%s:%d: Invalid base character %i [path: %s; line: %lu]\n",
+            __FILE__, __LINE__, (int)*b, seq_get_path(sf), seq_curr_line_number(sf));
+    exit(EXIT_FAILURE);
+  }
+
+  if(read_qual && !seq_read_qual(sf, q))
+  {
+    fprintf(stderr, "%s:%d: Couldn't read quality scores "
+                    "[read: %s; path: %s; line: %lu]",
+            __FILE__, __LINE__, seq_get_read_name(sf), seq_get_path(sf),
+            seq_curr_line_number(sf));
+  }
+
+  return 1;
+}
+
+inline char _read_k_bases(SeqFile *sf, char *bases, char *quals, int k,
+                          char read_qual)
+{
+  if(!seq_read_k_bases(sf, bases, k))
+  {
+    return 0;
+  }
+
+  if(read_qual && !seq_read_k_quals(sf, quals, k))
+  {
+    fprintf(stderr, "%s:%d: Couldn't read quality scores "
+                    "[read: %s; path: %s; line: %lu]",
+            __FILE__, __LINE__, seq_get_read_name(sf), seq_get_path(sf),
+            seq_curr_line_number(sf));
+  }
+
+  return 1;
+}
+
+inline char _read_all_bases(SeqFile *sf, StrBuf *bases, StrBuf *quals,
+                            char read_qual)
+{
+  if(!seq_read_all_bases(sf, bases))
+    return 0;
+
+  if(read_qual && !seq_read_all_quals(sf, quals))
+  {
+    fprintf(stderr, "%s:%d: Couldn't read quality scores "
+                    "[read: %s; path: %s; line: %lu]",
+            __FILE__, __LINE__, seq_get_read_name(sf), seq_get_path(sf),
+            seq_curr_line_number(sf));
+  }
+
+  return 1;
+}
+
+void _print_kmer(BinaryKmer bkmer)
+{
+  char str[32];
+  binary_kmer_to_seq((BinaryKmer*)bkmer, 31, str);
+  str[31] = '\0';
+  printf("Adding %s\n", str);
+}
+
+char _read_first_kmer(SeqFile *sf, char *kmer_str, char* qual_str,
+                      short kmer_size, char read_qual,
+                      char quality_cut_off, int homopolymer_cutoff,
+                      char first_base, char first_qual)
+{
+  short bp_to_skip;
+
+  if(first_base != 0)
+  {
+    // Already got one base
+    kmer_str[0] = first_base;
+    qual_str[0] = first_qual;
+
+    if(!_read_k_bases(sf, kmer_str+1, qual_str+1, kmer_size-1, read_qual))
+      return 0;
+  }
+  else if(!_read_k_bases(sf, kmer_str, qual_str, kmer_size, read_qual))
+  {
+    return 0;
+  }
+
+  while((bp_to_skip = _kmer_errors(sf, kmer_str, qual_str, kmer_size, read_qual,
+                                   quality_cut_off, homopolymer_cutoff)) > 0)
+  {
+    if(bp_to_skip < kmer_size)
+    {
+      // Skip bp_to_skip bases
+      int bp_to_keep = kmer_size - bp_to_skip;
+
+      memmove(kmer_str, kmer_str+bp_to_skip, bp_to_keep);
+      memmove(qual_str, qual_str+bp_to_skip, bp_to_keep);
+
+      if(!_read_k_bases(sf, kmer_str+bp_to_keep, qual_str+bp_to_keep,
+                        bp_to_skip, read_qual))
+      {
+        return 0;
+      }
+    }
+    else if(!_read_k_bases(sf, kmer_str, qual_str, kmer_size, read_qual))
+    {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
+                          unsigned long long *bases_pass_filters_and_loaded,
+                          unsigned long *readlen_count_array,
+                          unsigned long readlen_count_array_size,
+                          char quality_cut_off, int homopolymer_cutoff,
+                          dBGraph *db_graph, int colour_index,
+                          BinaryKmer curr_kmer, Element *curr_node,
+                          Orientation curr_orient)
+{
+  // Hash table stuff
+  //BinaryKmer prev_kmer;
+  Element *prev_node = NULL; // Element is a hash table entry
+  Orientation prev_orient = forward;
+  boolean curr_found;
+  BinaryKmer tmp_key;
+
+  short kmer_size = db_graph->kmer_size;
+  char read_qual = seq_has_quality_scores(sf);
+
+  char base, qual, prev_base;
+  unsigned long contig_length;
+  int homopol_length = 1;
+
+  char keep_reading = 1;
+  char is_first_kmer = 1;
+
+  while(keep_reading)
+  {
+    if(!is_first_kmer)
+    {
+      seq_to_binary_kmer(kmer_str, kmer_size, (BinaryKmer*)curr_kmer);
+      _print_kmer(curr_kmer);
+
+      element_get_key((BinaryKmer*)curr_kmer, kmer_size, &tmp_key);
+      curr_node = hash_table_find_or_insert(&tmp_key, &curr_found, db_graph);
+      curr_orient = db_node_get_orientation((BinaryKmer*)curr_kmer, curr_node, kmer_size);
+
+      // Update coverage
+      db_node_update_coverage(curr_node, 0, colour_index, 1);
+      //db_node_update_coverage(curr_node, colour_index, 1); // EdgeArrayType removed
+    }
+
+    is_first_kmer = 0;
+
+    contig_length = kmer_size;
+    prev_base = kmer_str[kmer_size-1];
+
+    // Set homol_length for the first kmer in this contig
+    if(homopolymer_cutoff != 0)
+    {
+      homopol_length = 1;
+
+      int i;
+      for(i = kmer_size-2; i >= 0 && kmer_str[i] == prev_base; i--)
+        homopol_length++;
+    }
+
+    while((keep_reading = _read_base(sf, &base, &qual, read_qual)))
+    {
+      // Check for Ns and low quality scores
+      if(base == 'n' || base == 'N' || (read_qual && qual < quality_cut_off))
+      {
+        keep_reading = _read_first_kmer(sf, kmer_str, qual_str,
+                                        kmer_size, read_qual,
+                                        quality_cut_off, homopolymer_cutoff,
+                                        0, 0);
+        break;
+      }
+
+      // Check homopolymer run length
+      if(homopolymer_cutoff != 0)
+      {
+        if(prev_base == base)
+        {
+          homopol_length++;
+
+          if(homopol_length > homopolymer_cutoff)
+          {
+            // Skip the rest of these bases
+            while((keep_reading = _read_base(sf, &base, &qual, read_qual)) &&
+                  base == prev_base);
+
+            // Pass on first base that is != prev_base
+            keep_reading = _read_first_kmer(sf, kmer_str, qual_str,
+                                            kmer_size, read_qual,
+                                            quality_cut_off, homopolymer_cutoff,
+                                            base, qual);
+            break;
+          }
+        }
+        else
+        {
+          // Reset homopolymer length
+          homopol_length = 1;
+        }
+      }
+
+      // base accepted
+      contig_length++;
+
+      // Update curr -> prev hash table entry
+      prev_node = curr_node;
+      prev_orient = curr_orient;
+
+      // Construct new kmer
+      //binary_kmer_assignment_operator(curr_kmer, prev_kmer);
+      Nucleotide nuc = char_to_binary_nucleotide(base);
+      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end((BinaryKmer*)curr_kmer,
+                                                                       nuc,
+                                                                       kmer_size);
+
+      //_print_kmer(curr_kmer);
+
+      // Lookup in db
+      element_get_key((BinaryKmer*)curr_kmer, kmer_size, &tmp_key);
+      curr_node = hash_table_find_or_insert(&tmp_key, &curr_found, db_graph);
+      curr_orient = db_node_get_orientation((BinaryKmer*)curr_kmer, curr_node, kmer_size);
+
+      // Update covg
+      db_node_update_coverage(curr_node, 0, colour_index, 1);
+      //db_node_update_coverage(curr_node, colour_index, 1); // EdgeArrayType removed
+
+      // Add edge
+      db_node_add_edge(prev_node, curr_node,
+                       prev_orient, curr_orient,
+                       kmer_size, 0, colour_index);
+      // db_node_add_edge(prev_node, curr_node,
+      //                  prev_orient, curr_orient,
+      //                  kmer_size, colour_index); // EdgeArrayType removed
+    }
+
+    // Store bases used
+    (*bases_pass_filters_and_loaded) += contig_length;
+
+    // Store contig length
+    if(readlen_count_array != NULL)
+    {
+      contig_length = MIN(contig_length, readlen_count_array_size-1);
+      readlen_count_array[contig_length]++;
+    }
+
+    // Store previous base
+    prev_base = base;
+  }
+}
+
+void load_se_seq_data_into_graph_colour(
+  const char *file_path, char ascii_fq_offset,
+  unsigned long long *bases_read, // total bases in file
+  unsigned long long *bases_pass_filters_and_loaded, // bases that make it into the graph
+  unsigned long *readlen_count_array,
+  unsigned long readlen_count_array_size, // size of prev array - reads bigger go in final bin
+  unsigned long long *bad_reads, // number of reads that have no good kmers
+  unsigned long long *dup_reads, // number of reads that pcr duplicates
+  boolean remove_dups_single_endedly,
+  char quality_cut_off,
+  int homopolymer_cutoff, // cut off 
+  dBGraph *db_graph,
+  int colour_index)
+{
+  short kmer_size = db_graph->kmer_size;
+
+  // Open file
+  SeqFile *sf = seq_file_open(file_path);
+
+  if(sf == NULL)
+  {
+    fprintf(stderr, "Couldn't open single-end sequence file '%s'\n", file_path);
+    exit(EXIT_FAILURE);
+  }
+
+  seq_set_fastq_ascii_offset(sf, ascii_fq_offset);
+
+  // Are we using quality scores
+  char read_qual = seq_has_quality_scores(sf);
+
+  // Vars for reading in
+  char kmer_str[kmer_size+1];
+  char qual_str[kmer_size+1];
+
+  //
+  // Hash table variables
+  BinaryKmer curr_kmer;
+
+  // Element and dBNode are the same thing
+  Element *curr_node = NULL;
+  Orientation curr_orient = forward;
+  BinaryKmer tmp_key;
+  boolean curr_found;
+
+  while(seq_next_read(sf))
+  {
+    //printf("Started seq read: %s\n", seq_get_read_name(sf));
+
+    if(_read_first_kmer(sf, kmer_str, qual_str, kmer_size, read_qual,
+                        quality_cut_off, homopolymer_cutoff, 0, 0))
+    {
+      // Check if we want this read
+      char is_dupe = 0;
+
+      // Look up in table
+      curr_found = false;
+
+      seq_to_binary_kmer(kmer_str, kmer_size, &curr_kmer);
+      //_print_kmer(curr_kmer);
+
+      element_get_key(&curr_kmer, kmer_size, &tmp_key);
+      curr_node = hash_table_find_or_insert(&tmp_key, &curr_found, db_graph);
+      curr_orient = db_node_get_orientation(&curr_kmer, curr_node, kmer_size);
+
+      if(remove_dups_single_endedly == true)
+      {
+        // We are assuming that if you want to remove dups, you deal with one sample
+        // at a time, in a single coloured graph.  I don't want to comtempate
+        // multiple colours but only one type of read_start label. So I'm happy to
+        // use hash_table_find here and not check if it is in this person's/colour
+        // of the graph
+
+        if(curr_found == true &&
+           db_node_check_single_ended_duplicates(curr_node, curr_orient) == true)
+        {
+          (*dup_reads)++;
+          is_dupe = 1;
+        }
+        else
+        {
+          db_node_set_read_start_status(curr_node, curr_orient);
+        }
+      }
+
+      // char tmpstr[32];
+      // binary_kmer_to_seq(curr_kmer, kmer_size, tmpstr);
+      // printf("First kmer: %s\n", tmpstr);
+
+      if(!is_dupe)
+      {
+        // Update coverage
+        db_node_update_coverage(curr_node, 0, colour_index, 1);
+        //db_node_update_coverage(curr_node, colour_index, 1); // EdgeArrayType removed
+      
+        _process_read(sf, kmer_str, qual_str,
+                      bases_pass_filters_and_loaded,
+                      readlen_count_array, readlen_count_array_size, 
+                      quality_cut_off, homopolymer_cutoff,
+                      db_graph, colour_index,
+                      curr_kmer, curr_node, curr_orient);
+      }
+    }
+    else
+    {
+      // Couldn't get a single kmer from read
+      (*bad_reads)++;
+    }
+  }
+
+  // Update with bases read in
+  (*bases_read) += seq_total_bases_passed(sf);
+
+  seq_file_close(sf);
+}
+
+void load_pe_seq_data_into_graph_colour(
+  const char *file_path1, const char *file_path2, char ascii_fq_offset,
+  unsigned long long *bases_read, // total bases in file
+  unsigned long long *bases_pass_filters_and_loaded, // bases that make it into the graph
+  unsigned long *readlen_count_array,
+  unsigned long readlen_count_array_size, // size of prev array - reads bigger go in final bin
+  unsigned long long *bad_reads, // number of reads that have no good kmers
+  unsigned long long *dup_reads, // number of reads that pcr duplicates
+  boolean remove_dups_single_endedly,
+  char quality_cut_off,
+  int homopolymer_cutoff, // cut off 
+  dBGraph *db_graph,
+  int colour_index)
+{
+  short kmer_size = db_graph->kmer_size;
+
+  // Open files
+  SeqFile *sf1 = seq_file_open(file_path1);
+  SeqFile *sf2 = seq_file_open(file_path2);
+
+  if(sf1 == NULL)
+  {
+    fprintf(stderr, "Couldn't open paired-end sequence file '%s'\n", file_path1);
+    exit(EXIT_FAILURE);
+  }
+  else if(sf2 == NULL)
+  {
+    fprintf(stderr, "Couldn't open paired-end sequence file '%s'\n", file_path2);
+    exit(EXIT_FAILURE);
+  }
+
+  seq_set_fastq_ascii_offset(sf1, ascii_fq_offset);
+  seq_set_fastq_ascii_offset(sf2, ascii_fq_offset);
+
+  // Are we using quality scores
+  char read_qual1 = seq_has_quality_scores(sf1);
+  char read_qual2 = seq_has_quality_scores(sf2);
+
+  // Vars for reading in
+  char kmer_str1[kmer_size+1], kmer_str2[kmer_size+1];
+  char qual_str1[kmer_size+1], qual_str2[kmer_size+1];
+
+  //
+  // Hash table variables
+  BinaryKmer curr_kmer1, curr_kmer2;
+
+  // Element and dBNode are the same thing
+  Element *curr_node1 = NULL, *curr_node2 = NULL;
+  Orientation curr_orient1 = forward, curr_orient2 = forward;
+  BinaryKmer tmp_key;
+  boolean curr_found1, curr_found2;
+
+  while(1)
+  {
+    char read1 = seq_next_read(sf1);
+    char read2 = seq_next_read(sf2);
+
+    if(read1 != read2)
+    {
+      fprintf(stderr, "Paired-end files don't have the same number of reads\n");
+      fprintf(stderr, "file1: %s\n", file_path1);
+      fprintf(stderr, "file2: %s\n", file_path2);
+      exit(EXIT_FAILURE);
+    }
+    else if(!read1)
+    {
+      // Neither have read
+      break;
+    }
+
+    read1 = _read_first_kmer(sf1, kmer_str1, qual_str1, kmer_size, read_qual1,
+                             quality_cut_off, homopolymer_cutoff, 0, 0);
+
+    read2 = _read_first_kmer(sf2, kmer_str2, qual_str2, kmer_size, read_qual2,
+                             quality_cut_off, homopolymer_cutoff, 0, 0);
+
+    if(read1)
+    {
+      curr_found1 = false;
+
+      // Get binary kmer
+      seq_to_binary_kmer(kmer_str1, kmer_size, &curr_kmer1);
+
+      // Look up first kmer
+      element_get_key(&curr_kmer1, kmer_size, &tmp_key);
+      curr_node1 = hash_table_find_or_insert(&tmp_key, &curr_found1, db_graph);
+      curr_orient1 = db_node_get_orientation(&curr_kmer1, curr_node1, kmer_size);
+    }
+    else
+    {
+      // Couldn't get a single kmer from read
+      (*bad_reads)++;
+    }
+
+    if(read2)
+    {
+      curr_found2 = false;
+
+      // Get binary kmer
+      seq_to_binary_kmer(kmer_str2, kmer_size, &curr_kmer2);
+
+      // Look up second kmer
+      element_get_key(&curr_kmer2, kmer_size, &tmp_key);
+      curr_node2 = hash_table_find_or_insert(&tmp_key, &curr_found2, db_graph);
+      curr_orient2 = db_node_get_orientation(&curr_kmer2, curr_node2, kmer_size);
+    }
+    else
+    {
+      // Couldn't get a single kmer from read
+      (*bad_reads)++;
+    }
+
+    char is_dupe = 0;
+
+    if(remove_dups_single_endedly == true)
+    {
+      // We are assuming that if you want to remove dups, you deal with one sample
+      // at a time, in a single coloured graph.  I don't want to comtempate
+      // multiple colours but only one type of read_start label. So I'm happy to
+      // use hash_table_find here and not check if it is in this person's/colour
+      // of the graph
+
+      if(read1 && read2 && curr_found1 == true && curr_found2 == true &&
+         db_node_check_single_ended_duplicates(curr_node1, curr_orient1) == true &&
+         db_node_check_single_ended_duplicates(curr_node2, curr_orient2))
+      {
+        is_dupe = 1;
+      }
+      else if(read1 && curr_found1 == true &&
+         db_node_check_single_ended_duplicates(curr_node1, curr_orient1) == true)
+      {
+        is_dupe = 1;
+      }
+      else if(read2 && curr_found2 == true &&
+         db_node_check_single_ended_duplicates(curr_node2, curr_orient2) == true)
+      {
+        is_dupe = 1;
+      }
+      
+      if(is_dupe)
+      {
+        (*dup_reads)++;
+      }
+      else
+      {
+        if(read1)
+          db_node_set_read_start_status(curr_node1, curr_orient1);
+
+        if(read2)
+          db_node_set_read_start_status(curr_node2, curr_orient2);
+      }
+    }
+
+    if(!is_dupe)
+    {
+      if(read1)
+      {
+        // Update coverage
+        db_node_update_coverage(curr_node1, 0, colour_index, 1);
+        //db_node_update_coverage(curr_node1, colour_index, 1); // EdgeArrayType removed
+
+        _process_read(sf1, kmer_str1, qual_str1,
+                      bases_pass_filters_and_loaded,
+                      readlen_count_array, readlen_count_array_size, 
+                      quality_cut_off, homopolymer_cutoff,
+                      db_graph, colour_index,
+                      curr_kmer1, curr_node1, curr_orient1);
+      }
+      
+      if(read2)
+      {
+        // Update coverage
+        db_node_update_coverage(curr_node2, 0, colour_index, 1);
+        //db_node_update_coverage(curr_node2, colour_index, 1); // EdgeArrayType removed
+
+        _process_read(sf2, kmer_str2, qual_str2,
+                      bases_pass_filters_and_loaded,
+                      readlen_count_array, readlen_count_array_size, 
+                      quality_cut_off, homopolymer_cutoff,
+                      db_graph, colour_index,
+                      curr_kmer2, curr_node2, curr_orient2);
+      }
+    }
+  }
+
+  // Update with bases read in
+  (*bases_read) += seq_total_bases_passed(sf1);
+  (*bases_read) += seq_total_bases_passed(sf2);
+
+  seq_file_close(sf1);
+  seq_file_close(sf2);
+}
+
+
+// pass in bases_read to track amount of sequence read in, and
+// bases_pass_filters_and_loaded to see how much passed filters and
+// got into the graph
+void load_se_filelists_into_graph_colour(
+  char* se_filelist_path,
+  unsigned long long *bases_read,
+  unsigned long long *bases_pass_filters_and_loaded,
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
+  int qual_thresh, boolean remv_dups_se,
+  int homopol_limit, char ascii_fq_offset,
+  int colour, dBGraph* db_graph)
+{
+  unsigned int num_single_ended_files_loaded = 0;
+
+  unsigned long long single_seq_bases_read = 0;
+  unsigned long long single_seq_bases_loaded = 0;
+
+  unsigned long long bad_se_reads=0;
+  unsigned long long dup_se_reads=0;
+
+  //Go through all the files, loading data into the graph
+
+  printf("Load single-ended files\n");
+
+  char *dir_tmp = strdup(se_filelist_path);
+  StrBuf *dir = strbuf_create(dirname(se_filelist_path));
+  strbuf_append_char(dir, '/');
+  free(dir_tmp);
+
+  FILE* se_list_file = fopen(se_filelist_path, "r");
+
+  if(se_list_file == NULL)
+  {
+    printf("Cannot open filelist of SE files: %s\n", se_filelist_path);
+    exit(1);
+  }
+
+  StrBuf *line = strbuf_new();
+  char absolute_path[PATH_MAX+1];
+
+  while(strbuf_reset_readline(line, se_list_file))
+  {
+    strbuf_chomp(line);
+
+    if(strbuf_len(line) > 0)
+    {
+      if(strbuf_get_char(line, 0) != '/')
+      {
+        strbuf_insert(line, 0, dir, 0, strbuf_len(dir));
+      }
+
+      // Get absolute paths
+      char* path_ptr = realpath(line->buff, absolute_path);
+
+      load_se_seq_data_into_graph_colour(path_ptr, ascii_fq_offset,
+        &single_seq_bases_read, &single_seq_bases_loaded,
+        readlen_count_array, readlen_count_array_size,
+        &bad_se_reads, &dup_se_reads,
+        remv_dups_se, qual_thresh, homopol_limit,
+        db_graph, colour);
+
+      num_single_ended_files_loaded++;
+    }
+  }
+
+  strbuf_free(line);
+  strbuf_free(dir);
+
+  // Finished reading single-ended file list
+  fclose(se_list_file);
+
+  // Print SE stats
+  printf("\nNum SE files loaded:%u\n", num_single_ended_files_loaded);
+  printf("\tkmers:%llu\n", hash_table_get_unique_kmers(db_graph));
+  printf("\tCumulative bad reads:%llu\n", bad_se_reads);
+  printf("\tTotal SE sequence parsed:%llu\n", single_seq_bases_read);
+  printf("Total SE sequence passed filters and loaded:%llu\n",
+         single_seq_bases_loaded);
+  printf("\tDuplicates removed:%llu\n", dup_se_reads);
+
+  *bases_read += single_seq_bases_read;
+  *bases_pass_filters_and_loaded += single_seq_bases_loaded;
+}
+
+void load_pe_filelists_into_graph_colour(
+  char* pe_filelist_path1, char* pe_filelist_path2,
+  unsigned long long *bases_read,
+  unsigned long long *bases_pass_filters_and_loaded,
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
+  int qual_thresh, boolean remv_dups_pe,
+  int homopol_limit, char ascii_fq_offset,
+  int colour, dBGraph* db_graph)
+{
+  unsigned int num_file_pairs_loaded = 0;
+
+  unsigned long long paired_seq_bases_read = 0;
+  unsigned long long paired_seq_bases_loaded = 0;
+
+  unsigned long long bad_pe_reads=0;
+  unsigned long long dup_pe_reads=0;
+
+  //Go through all the files, loading data into the graph
+
+  printf("Load paired-end files\n");
+
+  // Get directory path for first filelist
+  char *dir1_tmp = strdup(pe_filelist_path1);
+  StrBuf *dir1 = strbuf_create(dirname(pe_filelist_path1));
+  strbuf_append_char(dir1, '/');
+  free(dir1_tmp);
+
+  // Get directory path for second filelist
+  char *dir2_tmp = strdup(pe_filelist_path2);
+  StrBuf *dir2 = strbuf_create(dirname(pe_filelist_path2));
+  strbuf_append_char(dir2, '/');
+  free(dir2_tmp);
+
+  FILE* pe_list_file1 = fopen(pe_filelist_path1, "r");
+  FILE* pe_list_file2 = fopen(pe_filelist_path2, "r");
+
+  if(pe_list_file1 == NULL)
+  {
+    printf("Cannot open filelist of PE files: %s\n", pe_filelist_path1);
+    exit(EXIT_FAILURE);
+  }
+  else if(pe_list_file2 == NULL)
+  {
+    printf("Cannot open filelist of PE files: %s\n", pe_filelist_path2);
+    exit(EXIT_FAILURE);
+  }
+
+  StrBuf *line1 = strbuf_new();
+  StrBuf *line2 = strbuf_new();
+
+  char absolute_path1[PATH_MAX+1], absolute_path2[PATH_MAX+1];
+
+  while(1)
+  {
+    char read1 = strbuf_reset_readline(line1, pe_list_file1) > 0;
+    char read2 = strbuf_reset_readline(line2, pe_list_file2) > 0;
+
+    if(!read1 && !read2)
+      break;
+
+    strbuf_chomp(line1);
+    strbuf_chomp(line2);
+
+    if((strbuf_len(line1) == 0) != (strbuf_len(line2) == 0))
+    {
+      fprintf(stderr, "Paired-end files don't have the same number of lines:\n");
+      fprintf(stderr, "File 1: %s", pe_filelist_path1);
+      fprintf(stderr, "File 2: %s", pe_filelist_path2);
+      exit(EXIT_FAILURE);
+    }
+    else if(strbuf_len(line1) > 0)
+    {
+      // Get paths relative to filelist dir
+      if(strbuf_get_char(line1, 0) != '/')
+        strbuf_insert(line1, 0, dir1, 0, strbuf_len(dir1));
+
+      if(strbuf_get_char(line2, 0) != '/')
+        strbuf_insert(line2, 0, dir2, 0, strbuf_len(dir2));
+
+      // Get absolute paths
+      char* path_ptr1 = realpath(line1->buff, absolute_path1);
+      char* path_ptr2 = realpath(line2->buff, absolute_path2);
+
+      load_pe_seq_data_into_graph_colour(path_ptr1, path_ptr2,
+        ascii_fq_offset,
+        &paired_seq_bases_read, &paired_seq_bases_loaded,
+        readlen_count_array, readlen_count_array_size,
+        &bad_pe_reads, &dup_pe_reads,
+        remv_dups_pe, qual_thresh, homopol_limit,
+        db_graph, colour);
+
+      num_file_pairs_loaded++;
+    }
+  }
+
+  strbuf_free(line1);
+  strbuf_free(line2);
+
+  // Finished reading paired-ended file list
+  fclose(pe_list_file1);
+  fclose(pe_list_file2);
+
+  // Free dir paths
+  strbuf_free(dir1);
+  strbuf_free(dir2);
+
+  // Print PE stats
+  printf("\nNum PE file pairs loaded:%u\n", num_file_pairs_loaded);
+  printf("\tkmers:%llu\n", hash_table_get_unique_kmers(db_graph));
+  printf("\tCumulative bad reads:%llu\n", bad_pe_reads);
+  printf("\tTotal PE sequence parsed:%llu\n", paired_seq_bases_read);
+  printf("Total SE sequence passed filters and loaded:%llu\n",
+         paired_seq_bases_loaded);
+  printf("\tDuplicates removed:%llu\n", dup_pe_reads);
+
+  *bases_read += paired_seq_bases_read;
+  *bases_pass_filters_and_loaded += paired_seq_bases_loaded;
+}
+
+void load_se_and_pe_filelists_into_graph_colour(
+  char* se_filelist_path, char* pe_filelist_path1, char* pe_filelist_path2,
+  unsigned long long *bases_read,
+  unsigned long long *bases_pass_filters_and_loaded,
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
+  int qual_thresh, boolean remv_dups_se, boolean remv_dups_pe, 
+  boolean break_homopolymers, int homopol_limit, char ascii_fq_offset,
+  int colour, dBGraph* db_graph)
+{
+  if(break_homopolymers == false)
+  {
+    homopol_limit = 0;
+  }
+
+  qual_thresh += ascii_fq_offset;
+
+  if(se_filelist_path != NULL)
+  {
+    char actualpath [PATH_MAX+1];
+    char* path_ptr = realpath(se_filelist_path, actualpath);
+
+    // // Change to directory of the file
+    // char *dir_path = strdup(path_ptr);
+    // chdir(dirname(dir_path));
+    // free(dir_path);
+
+    load_se_filelists_into_graph_colour(path_ptr,
+      bases_read, bases_pass_filters_and_loaded,
+      readlen_count_array, readlen_count_array_size,
+      qual_thresh, remv_dups_se, homopol_limit, ascii_fq_offset,
+      colour, db_graph);
+  }
+
+  if(pe_filelist_path1 != NULL && pe_filelist_path2 != NULL)
+  {
+    char actualpath1[PATH_MAX+1], actualpath2[PATH_MAX+1];
+
+    char* path_ptr1 = realpath(pe_filelist_path1, actualpath1);
+    char* path_ptr2 = realpath(pe_filelist_path2, actualpath2);
+
+    load_pe_filelists_into_graph_colour(path_ptr1, path_ptr2,
+      bases_read, bases_pass_filters_and_loaded,
+      readlen_count_array, readlen_count_array_size,
+      qual_thresh, remv_dups_pe, homopol_limit, ascii_fq_offset,
+      colour, db_graph);
+  }
+
+  hash_table_print_stats(db_graph);
+}
+
+//
+// -- Old --
+//
 
 void load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, long long* bases_read, long long* bases_pass_filters_and_loaded,long long** readlen_count_array, 
 							int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 

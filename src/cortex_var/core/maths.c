@@ -89,15 +89,17 @@ int max_of_ints(int a, int b)
 }
 
 
-long long calculate_mean(long long* array, long long len)
+unsigned long calculate_mean(unsigned long* array, unsigned long len)
 {
-  long long sum=0;
-  long long num=0;
-  long long i;
-  for (i=0; i<len; i++)
-    {
-      sum += i*array[i];
-      num += array[i];
-    }
-  return  (sum/num);
+  unsigned long sum = 0;
+  unsigned long num = 0;
+  unsigned long i;
+
+  for(i = 0; i < len; i++)
+  {
+     sum += i*array[i];
+    num += array[i];
+  }
+
+  return num == 0 ? 0 : (sum / num);
 }
