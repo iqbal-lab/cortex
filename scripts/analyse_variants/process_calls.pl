@@ -3880,7 +3880,7 @@ sub get_pop_filter_info
 	my ( $file, $href, $href_conf ) = @_;
 	open( FILE, $file )
 	  || die(
-"Cannot find the file containing output of classifer.R - you entered it as an argument, $file"
+"Cannot find the file containing output of classifer.parallel.ploidy_aware.R - you entered it as an argument, $file"
 	  );
 	while (<FILE>)
 	{
