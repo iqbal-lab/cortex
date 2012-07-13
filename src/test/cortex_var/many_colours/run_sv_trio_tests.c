@@ -99,6 +99,10 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+
+
+
+
   if (NULL == CU_add_test(pPopGraphSuite, "Test loading of a singlecolour binary",test_load_singlecolour_binary )) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -427,6 +431,9 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
 	}
+
+
+  
 
    /*
    if (NULL == CU_add_test(pPopGraphSuite, "Test genotyping of complex sites - test with two HLA-B alleles", test_calc_log_likelihood_of_genotype_with_complex_alleles2 ))

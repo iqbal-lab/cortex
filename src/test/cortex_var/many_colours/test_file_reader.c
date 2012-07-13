@@ -36,6 +36,7 @@
 #include <seq.h>
 #include <graph_info.h>
 #include <limits.h>
+#include <graph_info.h>
 
 void test_dump_load_sv_trio_binary(){
 
@@ -76,14 +77,16 @@ void test_dump_load_sv_trio_binary(){
 
   //  if (fout == NULL){
   //  fprintf(stderr,"cannot open ../data/test/pop_graph/dump_sv_trio_graph.bin");
-  //  exit(1);
+  //  Exit(1);
   //}
 
   //hash_table_traverse(&print_node_binary,db_graph_pre);
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
-  graph_info_set_seq(&ginfo, 0, seq_length_parsed_pre);
-  db_graph_dump_binary("../data/test/pop_graph/dump_cortex_var_graph.bin", &db_node_condition_always_true, db_graph_pre, &ginfo);
+  GraphInfo* ginfo=graph_info_alloc_and_init();
+
+  graph_info_set_seq(ginfo, 0, seq_length_parsed_pre);
+  graph_info_set_mean_readlen(ginfo, 0, 5);
+  db_graph_dump_binary("../data/tempfiles_can_be_deleted/dump_cortex_var_graph.ctx", 
+		       &db_node_condition_always_true, db_graph_pre, ginfo);
 
 
   hash_table_free(&db_graph_pre);
@@ -94,26 +97,13 @@ void test_dump_load_sv_trio_binary(){
   db_graph_post = hash_table_new(number_of_bits_post,bucket_size,10,kmer_size);
   int num_cols_in_binary=-1;
 
-  int array_mean_readlens[NUMBER_OF_COLOURS];
-  int* array_mean_readlens_ptrs[NUMBER_OF_COLOURS];
-  long long array_total_seq[NUMBER_OF_COLOURS];
-  long long* array_total_seq_ptrs[NUMBER_OF_COLOURS];
-
-  int i;
-  for (i=0; i<NUMBER_OF_COLOURS; i++)
-    {
-      array_mean_readlens[i]=0;
-      array_mean_readlens_ptrs[i]=&array_mean_readlens[i];
-      array_total_seq[i]=0;
-      array_total_seq_ptrs[i]=&array_total_seq[i];
-    }
-  long long seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph.bin", db_graph_post, &num_cols_in_binary,
-									       array_mean_readlens_ptrs, array_total_seq_ptrs);
-
+  graph_info_initialise(ginfo);
+  long long seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/tempfiles_can_be_deleted/dump_cortex_var_graph.ctx", 
+									       db_graph_post, ginfo, &num_cols_in_binary);
 
   CU_ASSERT(num_cols_in_binary==NUMBER_OF_COLOURS);
-  CU_ASSERT(array_mean_readlens[0]==0);
-  CU_ASSERT(array_total_seq[0]==seq_length_parsed_pre);
+  CU_ASSERT(ginfo->mean_read_length[0]==5);
+  CU_ASSERT(ginfo->total_sequence[0]==seq_length_parsed_pre);
 
   //load_multicolour_binary_data_from_filename_into_graph returns total number of unique kmers loaded, times kmer_length
   CU_ASSERT_EQUAL(seq_length_post,15);
@@ -274,9 +264,10 @@ void test_dump_load_sv_trio_binary(){
       //	GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
       
 
-      graph_info_initialise(&ginfo);
-      graph_info_set_seq(&ginfo, 0, seq_length_parsed_pre);
-      db_graph_dump_binary("../data/test/pop_graph/dump_cortex_var_graph_2.bin", &db_node_condition_always_true, db_graph_pre, &ginfo);
+      graph_info_initialise(ginfo);
+      graph_info_set_seq(ginfo, 0, seq_length_parsed_pre);//not bothering to set mean read lebngth this time
+      db_graph_dump_binary("../data/tempfiles_can_be_deleted/dump_cortex_var_graph_2.ctx", 
+			   &db_node_condition_always_true, db_graph_pre, ginfo);
       //hash_table_traverse(&print_node_binary,db_graph_pre);
   
       hash_table_free(&db_graph_pre);
@@ -284,18 +275,13 @@ void test_dump_load_sv_trio_binary(){
       
       db_graph_post = hash_table_new(number_of_bits_post,bucket_size,max_retries,kmer_size);
 
-      for (i=0; i<NUMBER_OF_COLOURS; i++)
-	{
-	  array_mean_readlens[i]=0;
-	  array_total_seq[i]=0;
-	}
+      graph_info_initialise(ginfo);
+      seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/tempfiles_can_be_deleted/dump_cortex_var_graph_2.ctx", db_graph_post, 
+									 ginfo, &num_cols_in_binary);
+
       
-      seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph_2.bin", db_graph_post, &num_cols_in_binary,
-									 array_mean_readlens_ptrs, array_total_seq_ptrs);
-
-
+      CU_ASSERT(ginfo->mean_read_length[0]==0);//because we did not set it
       CU_ASSERT(num_cols_in_binary==NUMBER_OF_COLOURS);
-
       CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post),31);
   
 
@@ -418,25 +404,21 @@ void test_dump_load_sv_trio_binary(){
 //    TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
     
 
-  graph_info_initialise(&ginfo);
-  graph_info_set_seq(&ginfo, 0, seq_length_parsed_pre);
-  db_graph_dump_binary("../data/test/pop_graph/dump_cortex_var_graph_3.bin", &db_node_condition_always_true, db_graph_pre, &ginfo);
+  graph_info_initialise(ginfo);
+  graph_info_set_seq(ginfo, 0, seq_length_parsed_pre);
+  db_graph_dump_binary("../data/tempfiles_can_be_deleted/dump_cortex_var_graph_3.ctx", &db_node_condition_always_true, db_graph_pre, ginfo);
   hash_table_free(&db_graph_pre);
   CU_ASSERT(db_graph_pre==NULL);
   
   
   db_graph_post = hash_table_new(number_of_bits_post,bucket_size,max_retries,kmer_size);
 
-  for (i=0; i<NUMBER_OF_COLOURS; i++)
-    {
-      array_mean_readlens[i]=0;
-      array_total_seq[i]=0;
-    }
-  seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph_3.bin", db_graph_post, &num_cols_in_binary,
-								     array_mean_readlens_ptrs, array_total_seq_ptrs);
-
+  graph_info_initialise(ginfo);
+  seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/tempfiles_can_be_deleted/dump_cortex_var_graph_3.ctx", db_graph_post, 
+								     ginfo,&num_cols_in_binary);
 
   CU_ASSERT(num_cols_in_binary==NUMBER_OF_COLOURS);
+  CU_ASSERT(ginfo->total_sequence[0]==seq_length_parsed_pre);
 
   //now try to traverse a supernode. This is effectively a regressiontest for a bug in graph/element.c: print_binary/read_binary
   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TAACCCTAACCCTAACC", kmer_size, &tmp_kmer1),kmer_size, &tmp_kmer2) ,db_graph_post);
@@ -469,7 +451,7 @@ void test_dump_load_sv_trio_binary(){
   
   
   hash_table_free(&db_graph_post);
-  
+  graph_info_free(ginfo);
 
 
   
@@ -525,17 +507,20 @@ void test_load_singlecolour_binary()
 								     db_graph_pre, individual_edge_array,0);
 
 
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
-  graph_info_set_seq(&ginfo, 0, seq_length_parsed_pre);
-  db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/dump_single_colour_cortex_var_graph.bin", &db_node_condition_always_true, db_graph_pre, &ginfo);
+  GraphInfo* ginfo=graph_info_alloc_and_init();
+
+  graph_info_set_seq(ginfo, 0, seq_length_parsed_pre);
+  db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/dump_single_colour_cortex_var_graph.ctx", &db_node_condition_always_true, 
+						db_graph_pre, ginfo);
   hash_table_free(&db_graph_pre);
   CU_ASSERT(db_graph_pre==NULL);
 
   dBGraph* db_graph_post = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   int mean_readlen=0;
   long long total_seq=0;
-  int seq_length_post = load_single_colour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_single_colour_cortex_var_graph.bin", db_graph_post,
+  graph_info_initialise(ginfo);//zero it, and see if you get your data back
+  int seq_length_post = load_single_colour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_single_colour_cortex_var_graph.ctx", 
+										db_graph_post,
 										&mean_readlen, &total_seq,
 										true, individual_edge_array,0, false,0, false);
 
@@ -601,7 +586,7 @@ void test_load_singlecolour_binary()
   CU_ASSERT(test_element17 == NULL);
 
   hash_table_free(&db_graph_post);
-
+  graph_info_free(ginfo);
 }
 
 
@@ -662,11 +647,11 @@ void test_load_individual_binaries_into_sv_trio()
 									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 									db_graph, individual_edge_array,0);
 
-     GraphInfo ginfo;
-     graph_info_initialise(&ginfo);
-     graph_info_set_seq(&ginfo, 0, seq_loaded1);
+     GraphInfo* ginfo=graph_info_alloc_and_init();
+
+     graph_info_set_seq(ginfo, 0, seq_loaded1);
      db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person0_kmer31.ctx", 
-						   &db_node_condition_always_true, db_graph, &ginfo);
+						   &db_node_condition_always_true, db_graph, ginfo);
      hash_table_free(&db_graph);
 
 
@@ -675,10 +660,10 @@ void test_load_individual_binaries_into_sv_trio()
 									&bad_reads, &dup_reads, 200,
 									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 									db_graph, individual_edge_array,0);
-     graph_info_initialise(&ginfo);
-     graph_info_set_seq(&ginfo, 0, seq_loaded2);
+     graph_info_initialise(ginfo);
+     graph_info_set_seq(ginfo, 0, seq_loaded2);
      db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person1_kmer31.ctx", 
-						   &db_node_condition_always_true, db_graph, &ginfo);
+						   &db_node_condition_always_true, db_graph, ginfo);
      hash_table_free(&db_graph);
 
 
@@ -689,22 +674,22 @@ void test_load_individual_binaries_into_sv_trio()
 									&bad_reads, &dup_reads, 200,
 									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 									db_graph, individual_edge_array,0);
-     graph_info_initialise(&ginfo);
-     graph_info_set_seq(&ginfo, 0, seq_loaded3);
+     graph_info_initialise(ginfo);
+     graph_info_set_seq(ginfo, 0, seq_loaded3);
      db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person2_kmer31.ctx", 
-						   &db_node_condition_always_true, db_graph, &ginfo);
+						   &db_node_condition_always_true, db_graph, ginfo);
      hash_table_free(&db_graph);
 
 
      
      db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-     graph_info_initialise(&ginfo);
+     graph_info_initialise(ginfo);
      int first_colour=0;
-     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_singlecolour_bins_into_multicol_bin", first_colour, true, db_graph, &ginfo,
+     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_singlecolour_bins_into_multicol_bin", first_colour, true, db_graph, ginfo,
 					    false, 0, false);
-     CU_ASSERT(ginfo.total_sequence[0]==seq_loaded1);
-     CU_ASSERT(ginfo.total_sequence[1]==seq_loaded2);
-     CU_ASSERT(ginfo.total_sequence[2]==seq_loaded3);
+     CU_ASSERT(ginfo->total_sequence[0]==seq_loaded1);
+     CU_ASSERT(ginfo->total_sequence[1]==seq_loaded2);
+     CU_ASSERT(ginfo->total_sequence[2]==seq_loaded3);
       
      CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph), 41);
      
@@ -5213,18 +5198,17 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
   CU_ASSERT(seq_length_parsed_pre==46);
   CU_ASSERT(seq_length_loaded_pre==46);
 
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
-  graph_info_set_seq(&ginfo, 0, seq_length_parsed_pre);
+  GraphInfo* ginfo=graph_info_alloc_and_init();
+  graph_info_set_seq(ginfo, 0, seq_length_parsed_pre);
   //dump a single colour binary just of this graph
-  db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/dump_cortex_var_graph.singlecol.ctx", &db_node_condition_always_true, db_graph_pre, &ginfo);
+  db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/dump_cortex_var_graph.singlecol.ctx", &db_node_condition_always_true, db_graph_pre, ginfo);
   
   
   //OK, we now have dumped a binary corresponding to colour 0.
   //Now let's clean up, removing the bubble created by the single base error on the 2nd copy of read 4
   db_graph_remove_low_coverage_nodes_ignoring_colours(1, db_graph_pre);
   //and dump a clean graph,
-  db_graph_dump_binary("../data/test/pop_graph/dump_cortex_var_graph.clean.ctx", &db_node_check_status_not_pruned, db_graph_pre, &ginfo);
+  db_graph_dump_binary("../data/test/pop_graph/dump_cortex_var_graph.clean.ctx", &db_node_check_status_not_pruned, db_graph_pre, ginfo);
   
   //cleanup, before starting all over
   hash_table_free(&db_graph_pre);
@@ -5233,26 +5217,14 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
   //Now load the clean graph, so the "dirty" nodes are not even there
   db_graph_post = hash_table_new(number_of_bits_post,bucket_size,10,kmer_size);
   int num_cols_in_binary=-1;
-  int array_mean_readlens[NUMBER_OF_COLOURS];
-  int* array_mean_readlens_ptrs[NUMBER_OF_COLOURS];
-  long long array_total_seq[NUMBER_OF_COLOURS];
-  long long* array_total_seq_ptrs[NUMBER_OF_COLOURS];
+  graph_info_initialise(ginfo);
 
-  int i;
-  for (i=0; i<NUMBER_OF_COLOURS; i++)
-    {
-      array_mean_readlens[i]=0;
-      array_mean_readlens_ptrs[i]=&array_mean_readlens[i];
-      array_total_seq[i]=0;
-      array_total_seq_ptrs[i]=&array_total_seq[i];
-    }
-  long long seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph.clean.ctx", db_graph_post, &num_cols_in_binary,
-									       array_mean_readlens_ptrs, array_total_seq_ptrs);
-
+  long long seq_length_post = load_multicolour_binary_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph.clean.ctx", 
+									       db_graph_post, ginfo, &num_cols_in_binary);
 
   CU_ASSERT(num_cols_in_binary==NUMBER_OF_COLOURS);
-  CU_ASSERT(array_mean_readlens[0]==0);
-  CU_ASSERT(array_total_seq[0]==seq_length_parsed_pre);
+  CU_ASSERT(ginfo->mean_read_length[0]==0);
+  CU_ASSERT(ginfo->total_sequence[0]==seq_length_parsed_pre);
 
 
   //OK, finally we are ready for our real test. Load the singlecolour uncleaned binary into colour1, but only load the bits that overlap the cleaned graph (ie colour 0)
@@ -5409,6 +5381,8 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
 
 
   hash_table_free(&db_graph_post);
+  graph_info_free(ginfo);
+
   CU_ASSERT(db_graph_post == NULL);
  
 }

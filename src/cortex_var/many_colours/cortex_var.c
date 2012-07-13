@@ -710,9 +710,7 @@ int main(int argc, char **argv){
 
 
 
-  GraphInfo db_graph_info;
-  graph_info_initialise(&db_graph_info);
-
+  GraphInfo* db_graph_info=graph_info_alloc_and_init();//will exit it fails to alloc.
 
 
   // input data:
@@ -798,7 +796,7 @@ int main(int argc, char **argv){
 								    cmd_line->max_read_length, 0, db_graph);
 
       //update the graph info object
-      graph_info_update_mean_readlen_and_total_seq(&db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line->max_read_length+1)), bases_pass_filters_and_loaded);
+      graph_info_update_mean_readlen_and_total_seq(db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line->max_read_length+1)), bases_pass_filters_and_loaded);
 
 
       //cleanup marks left on nodes by loading process (for PE reads)
@@ -860,12 +858,12 @@ int main(int argc, char **argv){
 	      total_seq_in_that_colour_ptrs[j]=&(total_seq_in_that_colour[j]);
 	    }
 	  long long  bp_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line->multicolour_bin,db_graph, 
-										  &db_graph_info, &first_colour_data_starts_going_into);
+										  db_graph_info, &first_colour_data_starts_going_into);
 	                                                                          //mean_readlens_ptrs, total_seq_in_that_colour_ptrs);
 	  //update graph_info object
 	  //for (j=0; j<first_colour_data_starts_going_into; j++)
           //  {
-	  //    graph_info_update_mean_readlen_and_total_seq(&db_graph_info, j, mean_readlens[j], total_seq_in_that_colour[j]);
+	  //    graph_info_update_mean_readlen_and_total_seq(db_graph_info, j, mean_readlens[j], total_seq_in_that_colour[j]);
 	  //  }
 	  timestamp();
 	  printf("Loaded the multicolour binary %s, and got %qd kmers\n", cmd_line->multicolour_bin, bp_loaded/db_graph->kmer_size);
@@ -888,7 +886,7 @@ int main(int argc, char **argv){
 			 cmd_line->colour_list, cmd_line->clean_colour);
 		}
 	      load_population_as_binaries_from_graph(cmd_line->colour_list, first_colour_data_starts_going_into, 
-						     graph_has_had_no_other_binaries_loaded, db_graph, &db_graph_info,
+						     graph_has_had_no_other_binaries_loaded, db_graph, db_graph_info,
 						     cmd_line->load_colours_only_where_overlap_clean_colour, cmd_line->clean_colour,
 						     cmd_line->for_each_colour_load_union_of_binaries);
 	      timestamp();
@@ -906,7 +904,7 @@ int main(int argc, char **argv){
 	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
 		     cmd_line->colour_list,cmd_line->clean_colour);
 	      dump_successive_cleaned_binaries(cmd_line->colour_list, first_colour_data_starts_going_into,cmd_line->clean_colour,
-					       cmd_line->successively_dump_cleaned_colours_suffix, db_graph, &db_graph_info);
+					       cmd_line->successively_dump_cleaned_colours_suffix, db_graph, db_graph_info);
 	      printf("Completed dumping of clean binaries\n");
 	    }
 
@@ -954,7 +952,7 @@ int main(int argc, char **argv){
 	      printf("Unable to open file %s\n", cmd_line->manually_entered_seq_error_rates_file);
 	      exit(1);
 	    }
-	  read_estimated_seq_errors_from_file(&db_graph_info, fp_err);
+	  read_estimated_seq_errors_from_file(db_graph_info, fp_err);
 	  fclose(fp_err);
 	}
     }
@@ -962,7 +960,7 @@ int main(int argc, char **argv){
     {
       long double default_seq_err = 0.01;
       estimate_seq_error_rate_from_snps_for_each_colour(cmd_line->colourlist_snp_alleles, 
-							&db_graph_info, db_graph, 
+							db_graph_info, db_graph, 
 							cmd_line->ref_colour, 
 							cmd_line->genome_size,
 							default_seq_err,
@@ -973,7 +971,7 @@ int main(int argc, char **argv){
       printf("ZAM shouldnever get here\n");
     }
 
-  print_seq_err_rates_to_screen(&db_graph_info);
+  print_seq_err_rates_to_screen(db_graph_info);
 
 
   int num_chroms_in_expt=NUMBER_OF_COLOURS;
@@ -1005,7 +1003,7 @@ int main(int argc, char **argv){
 
   AssumptionsOnGraphCleaning assump = AssumeUncleaned;
   //  AssumptionsOnGraphCleaning assump = AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice;
-  initialise_model_info(&model_info, &db_graph_info, cmd_line->genome_size, 
+  initialise_model_info(&model_info, db_graph_info, cmd_line->genome_size, 
 			repeat_geometric_param_mu, //seq_err_rate_per_base, 
 			cmd_line->ref_colour, num_chroms_in_expt, 
 			cmd_line->expt_type, assump);
@@ -1019,7 +1017,7 @@ int main(int argc, char **argv){
     {
       if (db_graph_info.mean_read_length[j]==0)
 	{
-	  graph_info_set_mean_readlen(&db_graph_info, j, cmd_line->max_read_length);
+	  graph_info_set_mean_readlen(db_graph_info, j, cmd_line->max_read_length);
 	}
     }
   */
@@ -1059,7 +1057,7 @@ int main(int argc, char **argv){
 //							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,      
 //						   cmd_line->max_var_len);
       
-      db_graph_remove_supernodes_more_likely_errors_than_sampling(db_graph, &db_graph_info, &model_info,
+      db_graph_remove_supernodes_more_likely_errors_than_sampling(db_graph, db_graph_info, &model_info,
 								  cmd_line->max_var_len, 
 								  &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
 								  &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,      
@@ -1121,7 +1119,7 @@ int main(int argc, char **argv){
 	  //dump single colour
 	  timestamp();
 	  printf("Input data was fasta/q, so dump single colour binary file: %s\n", cmd_line->output_binary_filename);
-	  db_graph_dump_single_colour_binary_of_colour0(cmd_line->output_binary_filename, &db_node_check_status_not_pruned,db_graph, &db_graph_info);
+	  db_graph_dump_single_colour_binary_of_colour0(cmd_line->output_binary_filename, &db_node_check_status_not_pruned,db_graph, db_graph_info);
 	  timestamp();
 	  printf("Binary dumped\n");
 
@@ -1131,7 +1129,7 @@ int main(int argc, char **argv){
 	{
 	  timestamp();
 	  printf("Dump multicolour binary with %d colours (compile-time setting)\n", NUMBER_OF_COLOURS);
-	  db_graph_dump_binary(cmd_line->output_binary_filename, &db_node_check_status_not_pruned,db_graph, &db_graph_info);
+	  db_graph_dump_binary(cmd_line->output_binary_filename, &db_node_check_status_not_pruned,db_graph, db_graph_info);
 	  timestamp();
 	  printf("Binary dumped\n");
 	}
@@ -1169,7 +1167,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Start first set of bubble calls\n");
-      run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, &model_info);
+      run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, db_graph_info, &model_info);
 
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -1182,7 +1180,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Genotype the calls in this file %s\n", cmd_line->file_of_calls_to_be_genotyped);
-      run_genotyping(&cmd_line, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, &db_graph_info, &model_info);
+      run_genotyping(&cmd_line, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, db_graph_info, &model_info);
       //unset the nodes marked as visited, but not those marked as to be ignored
       timestamp();
       printf("Genotyping completed\n");
@@ -1233,7 +1231,7 @@ int main(int argc, char **argv){
       sprintf(tmp_dump, "%s.temporary_delete_me", cmd_line->output_aligned_overlap_binname);
       printf("In the process we have to create a temporary file, %s, which you can/should delete when cortex has completed\n", tmp_dump);
 
-      num_kmers_dumped_after_alignment = db_graph_dump_binary(tmp_dump, &db_node_check_status_to_be_dumped, db_graph, &db_graph_info);
+      num_kmers_dumped_after_alignment = db_graph_dump_binary(tmp_dump, &db_node_check_status_to_be_dumped, db_graph, db_graph_info);
       hash_table_traverse(&db_node_action_set_status_of_unpruned_to_none, db_graph);	
 
     }
@@ -1368,22 +1366,9 @@ int main(int argc, char **argv){
 	}
       
       //this is all for the API - we wont use this info
-      int mean_readlens2[NUMBER_OF_COLOURS];
-      int* mean_readlens_ptrs2[NUMBER_OF_COLOURS];
-      long long total_seq_in_that_colour2[NUMBER_OF_COLOURS];
-      long long* total_seq_in_that_colour_ptrs2[NUMBER_OF_COLOURS];
-      int j;
-      for (j=0; j<NUMBER_OF_COLOURS; j++)
-	{
-	  mean_readlens2[j]=0;
-	  mean_readlens_ptrs2[j]=&(mean_readlens2[j]);
-	  total_seq_in_that_colour2[j]=0;
-	  total_seq_in_that_colour_ptrs2[j]=&(total_seq_in_that_colour2[j]);
-	}
-      int num_c;//number of colours in binary
-      
-      GraphInfo tmp_info;
-      graph_info_initialise(&tmp_info);
+      GraphInfo* temp_info = graph_info_alloc_and_init();
+
+      int num_c;//number of colours in binary      
       long long  n  = load_multicolour_binary_from_filename_into_graph(tmp_dump,db_graph2, &tmp_info, &num_c);
 
 
@@ -1391,8 +1376,9 @@ int main(int argc, char **argv){
       db_graph_clean_orphan_edges(db_graph2);
       db_graph_dump_binary(cmd_line->output_aligned_overlap_binname, 
 			   &db_node_condition_always_true,
-			   db_graph2, &db_graph_info);//deliberately using original graph info - we want the same info
+			   db_graph2, db_graph_info);//deliberately using original graph info - we want the same info
       hash_table_free(&db_graph2);
+      graph_info_free(temp_info);
     }
   
 

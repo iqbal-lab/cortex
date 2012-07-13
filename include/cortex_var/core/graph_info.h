@@ -33,7 +33,9 @@
 #include <stdio.h>
 
 #define MAX_LEN_NAME_GRAPH_CLEANED_AGAINST 10000;
+extern int MAX_LEN_SAMPLE_NAME;
 
+//this is alloced and initialised by the GraphInfo object. I miss C++
 typedef struct{
   boolean tip_clipping;
   boolean remv_low_cov_sups;
@@ -43,10 +45,11 @@ typedef struct{
   int remv_low_cov_nodes_thresh;
   int len_name_of_graph_against_which_was_cleaned;
   char* name_of_graph_against_which_was_cleaned;
-
 }ErrorCleaning;
 
-void error_cleaning_initialise(ErrorCleaning cl);
+ErrorCleaning* error_cleaning_alloc_and_init();
+void error_cleaning_initialise(ErrorCleaning* cl);
+void error_cleaning_free(ErrorCleaning* );
 
 
 typedef struct{
@@ -55,9 +58,11 @@ typedef struct{
   long long     total_sequence[NUMBER_OF_COLOURS];
   int           mean_read_length[NUMBER_OF_COLOURS];
   long double   seq_err[NUMBER_OF_COLOURS];
-  ErrorCleaning cleaning[NUMBER_OF_COLOURS];
+  ErrorCleaning* cleaning[NUMBER_OF_COLOURS];
 } GraphInfo;
 
+GraphInfo* graph_info_alloc_and_init();
+void graph_info_free(GraphInfo* ginfo);
 void graph_info_initialise(GraphInfo* ginfo);
 
 //set total amount of sequence in a colour

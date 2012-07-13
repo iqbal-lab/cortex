@@ -1457,7 +1457,8 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
 
   if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode)))
     {
-      printf("Cannot load this binary - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting, error code %d\n", ecode);
+      printf("Cannot load this binary(%s) - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting, error code %d\n", 
+	     filename, ecode);
       exit(1);
     }
   else
@@ -1527,11 +1528,10 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 
 
   //this will be inefficient once we have thousands of colours, but is only run once.
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
+  GraphInfo* ginfo=graph_info_alloc_and_init();//no need to check return code
   BinaryHeaderErrorCode ecode=EValid;
   BinaryHeaderInfo binfo;
-  initialise_binary_header_info(&binfo, &ginfo);
+  initialise_binary_header_info(&binfo, ginfo);
 
 
   if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode)))
@@ -1541,8 +1541,8 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
     }
   else
     {
-      *mean_readlen = ginfo.mean_read_length[0];
-      *total_seq     = ginfo.total_sequence[0];
+      *mean_readlen = ginfo->mean_read_length[0];
+      *total_seq     = ginfo->total_sequence[0];
     }
 
   if (binfo.number_of_colours!=1)
@@ -1550,7 +1550,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
       printf("Expecting a single colour binary, but instead this one has %d colours\n. Exiting.\n", binfo.number_of_colours);
       exit(1);
     }
-
+  graph_info_free(ginfo);
   
   //Go through all the entries in the binary file
   // each time you load the info into a temporary node, and load them *** into colour number index ***
@@ -2699,6 +2699,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 }
 					   
 
+/*
 
 //array_mean_readlens is an array of length num_cols, giving the mean read length of data loaded into each colour
 //array_total_seq is an array of length num_cols, giving the total amount of sequence in each colour (ie sequence loaded, AFTER filtering out by quality, PCR dups, homopolymers etc)
@@ -2734,10 +2735,14 @@ void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_me
   fwrite(magic_number,sizeof(char),6,fp);
 
 }
+*/
 
 
-
-void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo* ginfo)
+//we assume we are dumping N consecutive colours from the graph (the UI only supports
+//1 colour (colour0) or all, but also I have a function for dumping one specific colour.
+//let's say we want to dump from first_col to first_col + num_cols-1. These colours
+//also correspond to those in the graph_info of course
+void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo* ginfo, int first_col)
 {
   char magic_number[6];
   int version = BINVERSION;
@@ -2759,24 +2764,24 @@ void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo
   fwrite(&num_cols, sizeof(int), 1, fp);
 
   int i;
-  for (i=0; i<num_cols; i++)
+  for (i=first_col; i<first_col+num_cols; i++)
     {
       fwrite(&(ginfo->mean_read_length[i]), sizeof(int), 1, fp);
     }
-  for (i=0; i<num_cols; i++)
+  for (i=first_col; i<first_col+num_cols; i++)
     {
       fwrite(&(ginfo->total_sequence[i]), sizeof(long long), 1, fp);
     }
-  for (i=0; i<num_cols; i++)
+  for (i=first_col; i<first_col+num_cols; i++)
     {
       fwrite(&(ginfo->sample_id_lens[i]), sizeof(int), 1, fp);
-      fwrite(&(ginfo->sample_ids[i]), sizeof(char), ginfo->sample_id_lens[i], fp);
+      fwrite(ginfo->sample_ids[i], sizeof(char), ginfo->sample_id_lens[i], fp);
     }
-  for (i=0; i<num_cols; i++)
+  for (i=first_col; i<first_col+num_cols; i++)
     {
-      fwrite(&(ginfo->seq_err[i]), sizeof(int), 1, fp);
+      fwrite(&(ginfo->seq_err[i]), sizeof(long double), 1, fp);
     }
-  for (i=0; i<num_cols; i++)
+  for (i=first_col; i<first_col+num_cols; i++)
     {
       print_error_cleaning_object(fp, ginfo, i);
     }
@@ -2787,18 +2792,19 @@ void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo
 
 void print_error_cleaning_object(FILE* fp, GraphInfo* ginfo, int colour)
 {
-  fwrite(&((ginfo->cleaning[colour]).tip_clipping), sizeof(boolean), 1, fp);
-  fwrite(&((ginfo->cleaning[colour]).remv_low_cov_sups), sizeof(boolean), 1, fp);
-  fwrite(&((ginfo->cleaning[colour]).remv_low_cov_nodes), sizeof(boolean), 1, fp);
-  fwrite(&((ginfo->cleaning[colour]).cleaned_against_another_graph), sizeof(boolean), 1, fp);
-  fwrite(&((ginfo->cleaning[colour]).remv_low_cov_sups_thresh), sizeof(int), 1, fp);
-  fwrite(&((ginfo->cleaning[colour]).remv_low_cov_nodes_thresh), sizeof(int), 1, fp);
-  fwrite(&((ginfo->cleaning[colour]).len_name_of_graph_against_which_was_cleaned), sizeof(int), 1, fp);
-  fwrite(&((ginfo->cleaning[colour]).name_of_graph_against_which_was_cleaned), sizeof(char), 
-	 (ginfo->cleaning[colour]).len_name_of_graph_against_which_was_cleaned, fp);
+  fwrite(&(ginfo->cleaning[colour]->tip_clipping), sizeof(boolean), 1, fp);
+  fwrite(&(ginfo->cleaning[colour]->remv_low_cov_sups), sizeof(boolean), 1, fp);
+  fwrite(&(ginfo->cleaning[colour]->remv_low_cov_nodes), sizeof(boolean), 1, fp);
+  fwrite(&(ginfo->cleaning[colour]->cleaned_against_another_graph), sizeof(boolean), 1, fp);
+  fwrite(&(ginfo->cleaning[colour]->remv_low_cov_sups_thresh), sizeof(int), 1, fp);
+  fwrite(&(ginfo->cleaning[colour]->remv_low_cov_nodes_thresh), sizeof(int), 1, fp);
+  fwrite(&(ginfo->cleaning[colour]->len_name_of_graph_against_which_was_cleaned), sizeof(int), 1, fp);
+  fwrite(ginfo->cleaning[colour]->name_of_graph_against_which_was_cleaned, sizeof(char), 
+	 ginfo->cleaning[colour]->len_name_of_graph_against_which_was_cleaned, fp);
   
 }
 
+/*
 //return yes if signature is consistent
 boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, 
 			       int* number_of_colours_in_binary, 
@@ -2938,7 +2944,7 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version,
   return ret;
 
 }
-
+*/
 
 
 
@@ -3179,11 +3185,20 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
       else
 	{
 	  //now get the actual sample id for colour i
-	  read = fread(&(binfo->ginfo->sample_ids[i]),sizeof(char),binfo->ginfo->sample_id_lens[i],fp);
-	  if (read==0)
+	  if (binfo->ginfo->sample_id_lens[i]<MAX_LEN_SAMPLE_NAME)
+	    {
+	      read = fread(binfo->ginfo->sample_ids[i],sizeof(char),binfo->ginfo->sample_id_lens[i],fp);
+	      if (read==0)
+		{
+		  no_problem=false;
+		  *ecode = EFailedToReadSampleIds;
+		}
+	    }
+	  else
 	    {
 	      no_problem=false;
-	      *ecode = EFailedToReadSampleIds;
+	      *ecode = EFailedToReadSampleIdsSeemsTooLong;
+
 	    }
 	}
     }
@@ -3195,6 +3210,7 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
       if (read==0)
 	{
 	  no_problem=false;
+	  printf("i is %d and num colours is %d, but read is zero DEBUGZAM zahara\n", i, binfo->number_of_colours);
 	  *ecode = EFailedToReadSeqErrRates;
 	}
     }
@@ -3203,7 +3219,7 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
   //now get the error cleaning information for each colour
   for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
     {
-      no_problem = read_next_error_cleaning_object(fp, &(binfo->ginfo->cleaning[i]) );
+      no_problem = read_next_error_cleaning_object(fp, (binfo->ginfo->cleaning[i]) );
       if (no_problem==false)
 	{
 	  *ecode = EFailedToReadErrorCleaningInfo;
@@ -3276,7 +3292,7 @@ boolean read_next_error_cleaning_object(FILE* fp, ErrorCleaning* cl)
     }
   if (no_problem==true)
     {
-      read = fread(&(cl->name_of_graph_against_which_was_cleaned),sizeof(char),cl->len_name_of_graph_against_which_was_cleaned,fp);
+      read = fread(cl->name_of_graph_against_which_was_cleaned,sizeof(char),cl->len_name_of_graph_against_which_was_cleaned,fp);
       if (read==0)
 	{
 	  no_problem=false;

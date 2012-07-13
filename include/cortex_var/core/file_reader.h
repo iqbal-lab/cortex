@@ -53,10 +53,11 @@ typedef enum {
   EFailedToReadReadLensAndCovgs = 12,
   ECannotReadEndOfHeaderMagicNumber = 13,
   EFailedToReadSampleIds        =14,
-  EFailedToReadSeqErrRates      =15,
-  EFailedToReadErrorCleaningInfo=16,
-  ECanReadEndOfHeaderMagicNumberButIsWrong = 17,
-  EGarbage = 18,
+  EFailedToReadSampleIdsSeemsTooLong = 15,
+  EFailedToReadSeqErrRates      =16,
+  EFailedToReadErrorCleaningInfo=17,
+  ECanReadEndOfHeaderMagicNumberButIsWrong = 18,
+  EGarbage = 19,
 } BinaryHeaderErrorCode;
 typedef struct {
   int version;
@@ -256,10 +257,10 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 					   Sequence* seq, Sequence* seq_inc_prev_kmer, KmerSlidingWindow* kmer_window);
 
 
-void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_mean_readlens, long long* array_total_seq);
-void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo* ginfo);
+//void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_mean_readlens, long long* array_total_seq);
+void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo* ginfo, int first_col);
 
-boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary, int** array_mean_readlens, long long** array_total_seqs, int *return_binversion);
+//boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary, int** array_mean_readlens, long long** array_total_seqs, int *return_binversion);
 boolean check_binary_signature_NEW(FILE * fp,int kmer_size, 
 				   BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
 
