@@ -38,7 +38,7 @@ sub apply_pop_classifier
 {
     my ($classifier, $make_covg_script, $make_table_script,
 	$genotyping_output, $genotyping_output_log,
-	$num_samples, $kmer, $genome_size) = @_;
+	$num_samples, $kmer, $genome_size, $ploidy) = @_;
 
     ## first - make covg file
     my $covgfile = $genotyping_output.".covg_for_classifier";
@@ -77,14 +77,14 @@ sub apply_pop_classifier
 
     if (!(-e $out))
     {
-	my $cmd3 = "cat $classifier  | R --vanilla --args $covgfile $num_samples 1 $num_calls $table $kmer $genome_size > $log 2>&1";
+	my $cmd3 = "cat $classifier  | R --vanilla --args $covgfile $num_samples 1 $num_calls $table $kmer $genome_size $ploidy > $log 2>&1";
 	print "$cmd3\n";
 	my $ret3 = qx{$cmd3};
 	print "$ret3\n";
 
 	if (!(-e $out))
 	{
-	    die("Ran classifier but could not find output fil $out\n");
+	    die("Ran classifier but could not find output file $out\n");
 	}
     }
 

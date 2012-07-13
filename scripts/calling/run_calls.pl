@@ -304,15 +304,8 @@ print "\n\n$str_input_args\n";
 
 
 
-my $classifier;
-if ($ploidy==1)
-{
-    $classifier = $analyse_variants_dir."classifier.parallel.correct.haploid.R";
-}
-else
-{
-    $classifier = $analyse_variants_dir."classifier.parallel.correct.diploid.R";
-}
+my $classifier = $analyse_variants_dir."classifier.parallel.ploidy_aware.R";
+
 if (!(-e $classifier))
 {
     die("Cannot find classifier $classifier in the place I expect to find it: $analyse_variants_dir");
@@ -798,7 +791,7 @@ if ($do_union eq "yes")
 								 $make_covg_script, $make_table_script,
 								 $gt_bc_out, $gt_bc_log,
 								 scalar(@samples), 
-								 $km, $genome_size);
+								 $km, $genome_size, $ploidy);
 		    }
 		    build_vcfs($gt_bc_out, $gt_bc_log, $outvcf_filename_stub."_union_BC_calls_k".$km, $number_of_colours, 
 			       $outdir_vcfs."output_proc_union_bc_k".$km, $outdir_vcfs, \%vcfs_needing_merging, 
@@ -822,7 +815,7 @@ if ($do_union eq "yes")
 								 $make_covg_script, $make_table_script,
 								 $gt_pd_out, $gt_pd_log,
 								 scalar(@samples), 
-								 $km, $genome_size);
+								 $km, $genome_size, $ploidy);
 		    }
 		    
 		    
@@ -854,7 +847,7 @@ if ($do_union eq "yes")
 								 $joint_callfiles{$K}{$cl},
 								 $joint_callfiles_logs{$K}{$cl},
 								 scalar(@samples), 
-								 $K, $genome_size);
+								 $K, $genome_size, $ploidy);
 		    }
 		    build_vcfs($joint_callfiles{$K}{$cl}, $joint_callfiles_logs{$K}{$cl},
 			       $outvcf_filename_stub."_union_joint_BC_calls_k".$K."_clean_level".$cl, 
