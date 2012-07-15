@@ -790,7 +790,7 @@ if ($do_union eq "yes")
 			$pop_classif_file = apply_pop_classifier($classifier, 
 								 $make_covg_script, $make_table_script,
 								 $gt_bc_out, $gt_bc_log,
-								 scalar(@samples), 
+								 $number_of_colours, $use_ref, 
 								 $km, $genome_size, $ploidy);
 		    }
 		    build_vcfs($gt_bc_out, $gt_bc_log, $outvcf_filename_stub."_union_BC_calls_k".$km, $number_of_colours, 
@@ -814,7 +814,7 @@ if ($do_union eq "yes")
 			$pop_classif_file = apply_pop_classifier($classifier, 
 								 $make_covg_script, $make_table_script,
 								 $gt_pd_out, $gt_pd_log,
-								 scalar(@samples), 
+								 $number_of_colours, $use_ref, 
 								 $km, $genome_size, $ploidy);
 		    }
 		    
@@ -846,7 +846,7 @@ if ($do_union eq "yes")
 								 $make_covg_script, $make_table_script,
 								 $joint_callfiles{$K}{$cl},
 								 $joint_callfiles_logs{$K}{$cl},
-								 scalar(@samples), 
+								 $number_of_colours, $use_ref, 
 								 $K, $genome_size, $ploidy);
 		    }
 		    build_vcfs($joint_callfiles{$K}{$cl}, $joint_callfiles_logs{$K}{$cl},

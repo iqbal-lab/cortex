@@ -38,15 +38,26 @@ sub apply_pop_classifier
 {
     my ($classifier, $make_covg_script, $make_table_script,
 	$genotyping_output, $genotyping_output_log,
-	$num_samples, $kmer, $genome_size, $ploidy) = @_;
+	$num_cols, $use_reference, $kmer, $genome_size, $ploidy) = @_;
+
+    my $is_ref;
+    my $refcol=-1;
+    if ($use_reference eq "Absent")
+    {
+	$is_ref=0;
+    }
+    else
+    {
+	$is_ref=1;
+	$refcol=0;
+    }
 
     ## first - make covg file
     my $covgfile = $genotyping_output.".covg_for_classifier";
 
     if (!(-e $covgfile))
     {
-	my $num_colours = $num_samples+1;
-	my $cmd1 = "perl $make_covg_script $genotyping_output $num_colours 0";
+	my $cmd1 = "perl $make_covg_script $genotyping_output $num_cols $refcol";
 	print "$cmd1\n";
 	my $ret1 = qx{$cmd1};
 	print "$ret1\n";
@@ -77,7 +88,7 @@ sub apply_pop_classifier
 
     if (!(-e $out))
     {
-	my $cmd3 = "cat $classifier  | R --vanilla --args $covgfile $num_samples 1 $num_calls $table $kmer $genome_size $ploidy > $log 2>&1";
+	my $cmd3 = "cat $classifier  | R --vanilla --args 1 $num_calls $covgfile $num_calls $num_cols $is_ref $table $genome_size $kmer $ploidy > $log 2>&1";
 	print "$cmd3\n";
 	my $ret3 = qx{$cmd3};
 	print "$ret3\n";
