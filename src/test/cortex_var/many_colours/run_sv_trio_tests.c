@@ -61,6 +61,7 @@ int  main()
 
 
 
+
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -435,7 +436,7 @@ int  main()
 
   
 
-   /*
+   
    if (NULL == CU_add_test(pPopGraphSuite, "Test genotyping of complex sites - test with two HLA-B alleles", test_calc_log_likelihood_of_genotype_with_complex_alleles2 ))
       {
 	CU_cleanup_registry();
@@ -448,7 +449,7 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-   */
+
 
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test estimation of sequencing error rate from fasta of pairs of SNP alleles (first allele known not to be present, second known to be homozygous present) - very basic test", test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta ))
