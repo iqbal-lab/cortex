@@ -1119,7 +1119,8 @@ int main(int argc, char **argv){
 	  //dump single colour
 	  timestamp();
 	  printf("Input data was fasta/q, so dump single colour binary file: %s\n", cmd_line->output_binary_filename);
-	  db_graph_dump_single_colour_binary_of_colour0(cmd_line->output_binary_filename, &db_node_check_status_not_pruned,db_graph, db_graph_info);
+	  db_graph_dump_single_colour_binary_of_colour0(cmd_line->output_binary_filename, &db_node_check_status_not_pruned,
+							db_graph, db_graph_info, BINVERSION);
 	  timestamp();
 	  printf("Binary dumped\n");
 
@@ -1129,7 +1130,7 @@ int main(int argc, char **argv){
 	{
 	  timestamp();
 	  printf("Dump multicolour binary with %d colours (compile-time setting)\n", NUMBER_OF_COLOURS);
-	  db_graph_dump_binary(cmd_line->output_binary_filename, &db_node_check_status_not_pruned,db_graph, db_graph_info);
+	  db_graph_dump_binary(cmd_line->output_binary_filename, &db_node_check_status_not_pruned,db_graph, db_graph_info, BINVERSION);
 	  timestamp();
 	  printf("Binary dumped\n");
 	}
@@ -1231,7 +1232,7 @@ int main(int argc, char **argv){
       sprintf(tmp_dump, "%s.temporary_delete_me", cmd_line->output_aligned_overlap_binname);
       printf("In the process we have to create a temporary file, %s, which you can/should delete when cortex has completed\n", tmp_dump);
 
-      num_kmers_dumped_after_alignment = db_graph_dump_binary(tmp_dump, &db_node_check_status_to_be_dumped, db_graph, db_graph_info);
+      num_kmers_dumped_after_alignment = db_graph_dump_binary(tmp_dump, &db_node_check_status_to_be_dumped, db_graph, db_graph_info, BINVERSION);
       hash_table_traverse(&db_node_action_set_status_of_unpruned_to_none, db_graph);	
 
     }
@@ -1376,7 +1377,7 @@ int main(int argc, char **argv){
       db_graph_clean_orphan_edges(db_graph2);
       db_graph_dump_binary(cmd_line->output_aligned_overlap_binname, 
 			   &db_node_condition_always_true,
-			   db_graph2, db_graph_info);//deliberately using original graph info - we want the same info
+			   db_graph2, db_graph_info, BINVERSION);//deliberately using original graph info - we want the same info
       hash_table_free(&db_graph2);
       graph_info_free(temp_info);
     }

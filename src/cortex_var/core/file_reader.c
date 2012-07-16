@@ -1768,7 +1768,7 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_c
       char outfile[1000];
       outfile[0]='\0';
       sprintf(outfile,"%s_%s.ctx",line,suffix);
-      db_graph_dump_single_colour_binary_of_specified_colour(outfile, &db_node_condition_always_true,db_graph,db_graph_info,in_colour);
+      db_graph_dump_single_colour_binary_of_specified_colour(outfile, &db_node_condition_always_true,db_graph,db_graph_info,in_colour, BINVERSION);
       //reset that colour:
       db_graph_wipe_colour(in_colour,db_graph);
       graph_info_set_seq(db_graph_info, in_colour,0);
@@ -2742,10 +2742,12 @@ void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_me
 //1 colour (colour0) or all, but also I have a function for dumping one specific colour.
 //let's say we want to dump from first_col to first_col + num_cols-1. These colours
 //also correspond to those in the graph_info of course
-void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo* ginfo, int first_col)
+//the final argument, version, is always BINVERSION in normal use, but in testing it might be an old version
+// so I can test backward compatbility
+void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo* ginfo, int first_col, int version)
 {
   char magic_number[6];
-  int version = BINVERSION;
+  //  int version = BINVERSION;
   
   magic_number[0]='C';
   magic_number[1]='O';

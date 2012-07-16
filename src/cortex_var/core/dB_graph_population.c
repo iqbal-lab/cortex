@@ -5181,7 +5181,7 @@ void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph *
 
 
 //if you don't want to/care about graph_info, pass in NULL
-int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
+int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info, int version){
 
   FILE* fout= fopen(filename, "w"); 
   if (fout==NULL)
@@ -5194,12 +5194,12 @@ int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), d
   if (db_graph_info==NULL)
     {
       GraphInfo* ginfo_dummy=graph_info_alloc_and_init();//no need to check return - will abort if does not alloc
-      print_binary_signature_NEW(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, ginfo_dummy, 0);//0 means start from colour 0,
+      print_binary_signature_NEW(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, ginfo_dummy, 0, version);//0 means start from colour 0,
       graph_info_free(ginfo_dummy);
     }
   else
     {
-      print_binary_signature_NEW(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, db_graph_info, 0);
+      print_binary_signature_NEW(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, db_graph_info, 0, version);
     }
 
   long long count=0;
@@ -5220,7 +5220,8 @@ int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), d
 
 
 
-void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
+void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), 
+						   dBGraph * db_graph, GraphInfo* db_graph_info, int version){
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   if (fout==NULL)
@@ -5232,12 +5233,12 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*co
   if (db_graph_info==NULL)
     {
       GraphInfo* ginfo_dummy=graph_info_alloc_and_init();//no need to check return
-      print_binary_signature_NEW(fout, db_graph->kmer_size,1, ginfo_dummy, 0);
+      print_binary_signature_NEW(fout, db_graph->kmer_size,1, ginfo_dummy, 0, version);
       graph_info_free(ginfo_dummy);
     }
   else
     {
-      print_binary_signature_NEW(fout, db_graph->kmer_size, 1, db_graph_info, 0);
+      print_binary_signature_NEW(fout, db_graph->kmer_size, 1, db_graph_info, 0, version);
     }
 
 
@@ -5261,7 +5262,8 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*co
 
 
 void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boolean (*condition)(dBNode * node), 
-							    dBGraph * db_graph, GraphInfo* db_graph_info, int colour){
+							    dBGraph * db_graph, GraphInfo* db_graph_info, int colour,
+							    int version){
 
   if ( (colour<0) || (colour>=NUMBER_OF_COLOURS) )
     {
@@ -5281,12 +5283,12 @@ void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boo
   if (db_graph_info==NULL)
     {
       GraphInfo* ginfo_dummy=graph_info_alloc_and_init();//no need to check return
-      print_binary_signature_NEW(fout, db_graph->kmer_size,1, ginfo_dummy, colour);
+      print_binary_signature_NEW(fout, db_graph->kmer_size,1, ginfo_dummy, colour, version);
       graph_info_free(ginfo_dummy);
     }
   else
     {
-      print_binary_signature_NEW(fout, db_graph->kmer_size, 1, db_graph_info, colour);
+      print_binary_signature_NEW(fout, db_graph->kmer_size, 1, db_graph_info, colour, version);
     }
 
 

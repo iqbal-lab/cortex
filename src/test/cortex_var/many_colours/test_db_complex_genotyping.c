@@ -256,7 +256,7 @@ void build_and_save_temp_binaries(char* filelist_binaries,
   char bin1[100];
   bin1[0]='\0';
   sprintf(bin1, "../data/tempfiles_can_be_deleted/%s_allele1_temp.ctx", stub);
-  db_graph_dump_single_colour_binary_of_colour0(bin1, &db_node_check_status_not_pruned, db_graph, NULL);
+  db_graph_dump_single_colour_binary_of_colour0(bin1, &db_node_check_status_not_pruned, db_graph, NULL, BINVERSION);
   db_graph_wipe_colour(0, db_graph);
 
 
@@ -266,7 +266,7 @@ void build_and_save_temp_binaries(char* filelist_binaries,
   char bin2[100];
   bin2[0]='\0';
   sprintf(bin2, "../data/tempfiles_can_be_deleted/%s_allele2_temp.ctx", stub);
-  db_graph_dump_single_colour_binary_of_colour0(bin2, &db_node_check_status_not_pruned, db_graph, NULL);
+  db_graph_dump_single_colour_binary_of_colour0(bin2, &db_node_check_status_not_pruned, db_graph, NULL, BINVERSION);
   db_graph_wipe_colour(0, db_graph);
 
   FILE* fp = fopen(filelist_binaries, "w");
@@ -344,7 +344,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 
   graph_info_set_seq(temp_db_graph_info, 0, 1);//unnecessary - never used
   graph_info_set_mean_readlen(temp_db_graph_info, 0, 1);//unnecessary - never used
-  db_graph_dump_single_colour_binary_of_specified_colour("../data/tempfiles_can_be_deleted/ref_minus_genome.ctx", &db_node_condition_always_true,temp_db_graph,temp_db_graph_info,0);
+  db_graph_dump_single_colour_binary_of_specified_colour("../data/tempfiles_can_be_deleted/ref_minus_genome.ctx", &db_node_condition_always_true,temp_db_graph,temp_db_graph_info,0, BINVERSION);
   hash_table_free(&temp_db_graph);
   graph_info_free(temp_db_graph_info);
 

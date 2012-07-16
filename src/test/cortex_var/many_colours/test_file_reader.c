@@ -86,7 +86,7 @@ void test_dump_load_sv_trio_binary(){
   graph_info_set_seq(ginfo, 0, seq_length_parsed_pre);
   graph_info_set_mean_readlen(ginfo, 0, 5);
   db_graph_dump_binary("../data/tempfiles_can_be_deleted/dump_cortex_var_graph.ctx", 
-		       &db_node_condition_always_true, db_graph_pre, ginfo);
+		       &db_node_condition_always_true, db_graph_pre, ginfo, BINVERSION);
 
 
   hash_table_free(&db_graph_pre);
@@ -267,7 +267,7 @@ void test_dump_load_sv_trio_binary(){
       graph_info_initialise(ginfo);
       graph_info_set_seq(ginfo, 0, seq_length_parsed_pre);//not bothering to set mean read lebngth this time
       db_graph_dump_binary("../data/tempfiles_can_be_deleted/dump_cortex_var_graph_2.ctx", 
-			   &db_node_condition_always_true, db_graph_pre, ginfo);
+			   &db_node_condition_always_true, db_graph_pre, ginfo, BINVERSION);
       //hash_table_traverse(&print_node_binary,db_graph_pre);
   
       hash_table_free(&db_graph_pre);
@@ -406,7 +406,7 @@ void test_dump_load_sv_trio_binary(){
 
   graph_info_initialise(ginfo);
   graph_info_set_seq(ginfo, 0, seq_length_parsed_pre);
-  db_graph_dump_binary("../data/tempfiles_can_be_deleted/dump_cortex_var_graph_3.ctx", &db_node_condition_always_true, db_graph_pre, ginfo);
+  db_graph_dump_binary("../data/tempfiles_can_be_deleted/dump_cortex_var_graph_3.ctx", &db_node_condition_always_true, db_graph_pre, ginfo, BINVERSION);
   hash_table_free(&db_graph_pre);
   CU_ASSERT(db_graph_pre==NULL);
   
@@ -511,7 +511,7 @@ void test_load_singlecolour_binary()
 
   graph_info_set_seq(ginfo, 0, seq_length_parsed_pre);
   db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/dump_single_colour_cortex_var_graph.ctx", &db_node_condition_always_true, 
-						db_graph_pre, ginfo);
+						db_graph_pre, ginfo, BINVERSION);
   hash_table_free(&db_graph_pre);
   CU_ASSERT(db_graph_pre==NULL);
 
@@ -651,7 +651,7 @@ void test_load_individual_binaries_into_sv_trio()
 
      graph_info_set_seq(ginfo, 0, seq_loaded1);
      db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person0_kmer31.ctx", 
-						   &db_node_condition_always_true, db_graph, ginfo);
+						   &db_node_condition_always_true, db_graph, ginfo, BINVERSION);
      hash_table_free(&db_graph);
 
 
@@ -663,7 +663,7 @@ void test_load_individual_binaries_into_sv_trio()
      graph_info_initialise(ginfo);
      graph_info_set_seq(ginfo, 0, seq_loaded2);
      db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person1_kmer31.ctx", 
-						   &db_node_condition_always_true, db_graph, ginfo);
+						   &db_node_condition_always_true, db_graph, ginfo, BINVERSION);
      hash_table_free(&db_graph);
 
 
@@ -677,7 +677,7 @@ void test_load_individual_binaries_into_sv_trio()
      graph_info_initialise(ginfo);
      graph_info_set_seq(ginfo, 0, seq_loaded3);
      db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person2_kmer31.ctx", 
-						   &db_node_condition_always_true, db_graph, ginfo);
+						   &db_node_condition_always_true, db_graph, ginfo, BINVERSION);
      hash_table_free(&db_graph);
 
 
@@ -5201,14 +5201,15 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
   GraphInfo* ginfo=graph_info_alloc_and_init();
   graph_info_set_seq(ginfo, 0, seq_length_parsed_pre);
   //dump a single colour binary just of this graph
-  db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/dump_cortex_var_graph.singlecol.ctx", &db_node_condition_always_true, db_graph_pre, ginfo);
+  db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/dump_cortex_var_graph.singlecol.ctx", 
+						&db_node_condition_always_true, db_graph_pre, ginfo, BINVERSION);
   
   
   //OK, we now have dumped a binary corresponding to colour 0.
   //Now let's clean up, removing the bubble created by the single base error on the 2nd copy of read 4
   db_graph_remove_low_coverage_nodes_ignoring_colours(1, db_graph_pre);
   //and dump a clean graph,
-  db_graph_dump_binary("../data/test/pop_graph/dump_cortex_var_graph.clean.ctx", &db_node_check_status_not_pruned, db_graph_pre, ginfo);
+  db_graph_dump_binary("../data/test/pop_graph/dump_cortex_var_graph.clean.ctx", &db_node_check_status_not_pruned, db_graph_pre, ginfo, BINVERSION);
   
   //cleanup, before starting all over
   hash_table_free(&db_graph_pre);
