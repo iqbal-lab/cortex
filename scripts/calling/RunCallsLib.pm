@@ -82,13 +82,12 @@ sub apply_pop_classifier
     my $num_calls = count_calls_in_callfile($genotyping_output);
     
     
-
     my $out = $covgfile.".classified.split_start_1";
-    my $log = $out.".log";
+#    my $log = $out.".log";
 
     if (!(-e $out))
     {
-	my $cmd3 = "cat $classifier  | R --vanilla --args 1 $num_calls $covgfile $num_calls $num_cols $is_ref $table $genome_size $kmer $ploidy > $log 2>&1";
+	my $cmd3 = "cat $classifier  | R --vanilla --args 1 $num_calls $covgfile $num_calls $num_cols $is_ref $table $genome_size $kmer $ploidy $out ";
 	print "$cmd3\n";
 	my $ret3 = qx{$cmd3};
 	print "$ret3\n";
