@@ -563,7 +563,7 @@ int main(int argc, char **argv){
   timestamp();
   printf("Starting Cortex, version %d.%d.%d.%d\n", VERSION, SUBVERSION, SUBSUBVERSION,SUBSUBSUBVERSION);
 
-  CmdLine* cmd_line = (CmdLine*) malloc(sizeof(CmdLine));
+  CmdLine* cmd_line = cmd_line_alloc();
   if (cmd_line==NULL)
     {
       printf("Out of memory!! Cannot even malloc the space to store your command-line arguments. Check who else is using your server, you seem to have severe problems\n");
@@ -805,7 +805,7 @@ int main(int argc, char **argv){
 
       timestamp();
       printf("Fastq data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\nMean read length after filters applied:%d\n", 
-	     bases_parsed, bases_pass_filters_and_loaded, db_graph_info.mean_read_length[0]);
+	     bases_parsed, bases_pass_filters_and_loaded, db_graph_info->mean_read_length[0]);
 
 
       if (cmd_line->dump_readlen_distrib==true)
@@ -928,7 +928,7 @@ int main(int argc, char **argv){
 	{
 	  if (i != cmd_line->ref_colour)
 	    {
-	      db_graph_info.seq_err[i]=0.01;
+	      db_graph_info->seq_err[i]=0.01;
 	    }
 	}
     }
@@ -940,7 +940,7 @@ int main(int argc, char **argv){
 	    {
 	      if (i != cmd_line->ref_colour)
 		{
-		  db_graph_info.seq_err[i]=cmd_line->manually_entered_seq_error_rate;
+		  db_graph_info->seq_err[i]=cmd_line->manually_entered_seq_error_rate;
 		}
 	    }
 	}
@@ -1015,7 +1015,7 @@ int main(int argc, char **argv){
 
   for (j=0; j<NUMBER_OF_COLOURS; j++)
     {
-      if (db_graph_info.mean_read_length[j]==0)
+      if (db_graph_info->mean_read_length[j]==0)
 	{
 	  graph_info_set_mean_readlen(db_graph_info, j, cmd_line->max_read_length);
 	}
@@ -1029,7 +1029,7 @@ int main(int argc, char **argv){
 
   for (j=0; j<NUMBER_OF_COLOURS; j++)
     {
-      printf("%d\t%d\t%qd\n", j, db_graph_info.mean_read_length[j], db_graph_info.total_sequence[j]);
+      printf("%d\t%d\t%qd\n", j, db_graph_info->mean_read_length[j], db_graph_info->total_sequence[j]);
     }
   printf("****************************************\n");
 
@@ -1043,30 +1043,6 @@ int main(int argc, char **argv){
     }
 
 
-  /*
-  // Error Correction actions
-  if (cmd_line->remove_seq_errors==true)
-    {
-      timestamp();
-      printf("Remove nodes that look like sequencing errors. Clip tips first\n");
-      db_graph_clip_tips_in_union_of_all_colours(db_graph);
-      
-      
-//	printf("Then remove low coverage supernodes covg (<= %d) \n", cmd_line->remv_low_covg_sups_threshold);
-  //    db_graph_remove_errors_considering_covg_and_topology(cmd_line->remv_low_covg_sups_threshold,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
-//							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,      
-//						   cmd_line->max_var_len);
-      
-      db_graph_remove_supernodes_more_likely_errors_than_sampling(db_graph, db_graph_info, &model_info,
-								  cmd_line->max_var_len, 
-								  &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
-								  &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,      
-								  cmd_line->max_var_len, cmd_line->remv_low_covg_sups_threshold);
-      timestamp();
-      printf("Error correction done\n");
-
-    }
-  else */ 
   if (cmd_line->remv_low_covg_sups_threshold!=-1)
     {
       //printf("Clip tips first\n");
@@ -1081,9 +1057,9 @@ int main(int argc, char **argv){
       int z;
       for (z=0; z<NUMBER_OF_COLOURS; z++)
 	{
-	  db_graph_info.cleaning[z].tip_clipping=true;
-	  db_graph_info.cleaning[z].remv_low_cov_sups=true;
-	  db_graph_info.cleaning[z].remv_low_cov_sups_thresh = cmd_line->remv_low_covg_sups_threshold;
+	  db_graph_info->cleaning[z]->tip_clipping=false;
+	  db_graph_info->cleaning[z]->remv_low_cov_sups=true;
+	  db_graph_info->cleaning[z]->remv_low_cov_sups_thresh = cmd_line->remv_low_covg_sups_threshold;
 	}
     }
   else if (cmd_line->remove_low_coverage_nodes==true)
@@ -1096,9 +1072,8 @@ int main(int argc, char **argv){
       int z;
       for (z=0; z<NUMBER_OF_COLOURS; z++)
 	{
-	  db_graph_info.cleaning[z].tip_clipping=true;
-	  db_graph_info.cleaning[z].remv_low_cov_nodes=true;
-	  db_graph_info.cleaning[z].remv_low_cov_nodes_thresh = cmd_line->node_coverage_threshold;
+	  db_graph_info->cleaning[z]->remv_low_cov_nodes=true;
+	  db_graph_info->cleaning[z]->remv_low_cov_nodes_thresh = cmd_line->node_coverage_threshold;
 	}
       
     }
@@ -1168,7 +1143,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Start first set of bubble calls\n");
-      run_bubble_calls(&cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, db_graph_info, &model_info);
+      run_bubble_calls(cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, db_graph_info, &model_info);
 
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -1181,7 +1156,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Genotype the calls in this file %s\n", cmd_line->file_of_calls_to_be_genotyped);
-      run_genotyping(&cmd_line, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, db_graph_info, &model_info);
+      run_genotyping(cmd_line, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, db_graph_info, &model_info);
       //unset the nodes marked as visited, but not those marked as to be ignored
       timestamp();
       printf("Genotyping completed\n");
@@ -1196,7 +1171,7 @@ int main(int argc, char **argv){
     {
       timestamp();
       printf("Run Path-Divergence Calls\n");
-      run_pd_calls(&cmd_line, db_graph, &print_appropriate_extra_variant_info, &model_info);
+      run_pd_calls(cmd_line, db_graph, &print_appropriate_extra_variant_info, &model_info);
       //hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
       timestamp();
       printf("Finished Path Divergence calls\n");
@@ -1267,7 +1242,7 @@ int main(int argc, char **argv){
       //check that we have read lengths for the colours we want to genotype
       for (k=0; k<cmd_line->num_colours_to_genotype; k++)
 	{
-	  if (db_graph_info.mean_read_length[cmd_line->list_colours_to_genotype[k]] < db_graph->kmer_size )
+	  if (db_graph_info->mean_read_length[cmd_line->list_colours_to_genotype[k]] < db_graph->kmer_size )
 	    {
 	      printf("This will not work. If you scroll up to the summary of read-lengths and covgs in your colours, you will see that\n");
 	      printf("at least one of the colours you want to genotype has mean read length < kmer_size. We only know of one way this can happen:\n");
@@ -1277,7 +1252,7 @@ int main(int argc, char **argv){
 	      exit(1);
 	    }
 
-	  if (db_graph_info.total_sequence[cmd_line->list_colours_to_genotype[k]]==0)
+	  if (db_graph_info->total_sequence[cmd_line->list_colours_to_genotype[k]]==0)
 	    {
 	      printf("This will not work. If you scroll up to the summary of read-lengths and covgs in your colours, you will see that\n");
 	      printf("at least one of the colours you want to genotype has total sequence 0. We only know of one way this can happen:\n");
@@ -1370,7 +1345,7 @@ int main(int argc, char **argv){
       GraphInfo* temp_info = graph_info_alloc_and_init();
 
       int num_c;//number of colours in binary      
-      long long  n  = load_multicolour_binary_from_filename_into_graph(tmp_dump,db_graph2, &tmp_info, &num_c);
+      long long  n  = load_multicolour_binary_from_filename_into_graph(tmp_dump,db_graph2, temp_info, &num_c);
 
 
       //this is why we are going to all this bother - cleaning edges
@@ -1384,7 +1359,7 @@ int main(int argc, char **argv){
   
 
 
-
+  cmd_line_free(cmd_line);
 
   printf("Cortex completed - have a nice day!\n");
   return 0;

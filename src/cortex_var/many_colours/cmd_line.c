@@ -410,7 +410,7 @@ int default_opts(CmdLine * c)
   int i;
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
-      set_string_to_null(c->colour_sample_ids[i], MAX_FILENAME_LEN);
+      set_string_to_null(c->colour_sample_ids[i], MAX_LEN_SAMPLE_NAME);
     }
   set_string_to_null(c->multicolour_bin,MAX_FILENAME_LEN);
   set_string_to_null(c->se_list,MAX_FILENAME_LEN);
@@ -481,6 +481,45 @@ int default_opts(CmdLine * c)
   c->assump_for_genotyping=AssumeUncleaned;
   c->min_acceptable_llk=-999999999;
   return 1;
+}
+
+
+CmdLine* cmd_line_alloc()
+{
+  CmdLine* cmd = (CmdLine*) malloc(sizeof(CmdLine));
+  if (cmd==NULL)
+    {
+      printf("Out of memory before we even start Cortex, cannot alloc space to hold the commandline variables! Abort\n");
+      exit(1);
+    }
+  cmd->colour_sample_ids=(char**) malloc(sizeof(char*) * NUMBER_OF_COLOURS);
+  if (cmd->colour_sample_ids==NULL)
+    {
+      printf("Out of memory before we even start Cortex, cannot alloc space to hold the commandline variables! Abort\n");
+      exit(1);      
+    }
+  int i;
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      cmd->colour_sample_ids[i]=(char*) malloc(sizeof(char)*(MAX_LEN_SAMPLE_NAME+1));
+      if (cmd->colour_sample_ids[i]==NULL)
+	{
+	  printf("Out of memory before we even start Cortex, cannot alloc space to hold the commandline variables! Abort\n");
+	  exit(1);      
+	}
+      
+    }
+  return cmd;
+}
+
+void cmd_line_free(CmdLine* cmd)
+{
+  int i;
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      free(cmd->colour_sample_ids[i]);
+    }
+  free(cmd->colour_sample_ids);
 }
 
 
@@ -1826,7 +1865,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       initialise_binary_header_info(&binfo, temp_ginfo);
       query_binary_NEW(fp, &binfo, &ecode);
       fclose(fp);
-      graph_info_free(ginfo);
+      graph_info_free(temp_ginfo);
 
       if (cmd_ptr->clean_colour >= binfo.number_of_colours)
 	{
@@ -2092,7 +2131,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 
 
       
-      GraphInfo* ginfo=graph_info_alloc_and_free();
+      GraphInfo* ginfo=graph_info_alloc_and_init();
       BinaryHeaderErrorCode ecode=EValid;      
       BinaryHeaderInfo binfo;
       initialise_binary_header_info(&binfo, ginfo);

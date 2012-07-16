@@ -113,7 +113,7 @@ typedef struct
   ExperimentType expt_type;
   
   char colour_list[MAX_FILENAME_LEN];
-  char* colour_sample_ids[NUMBER_OF_COLOURS];//sample names
+  char** colour_sample_ids;//sample names
   boolean for_each_colour_load_union_of_binaries;// so if colour 0 has binaries 1.ctx and 2.ctx, you load 1.ctx, and then for each kmer in 2.ctx, 
                                                  // if it is not in the graph, you load it, and if it IS, you DO NOT increment covg, just edges
   int num_colours_in_input_colour_list;
@@ -202,6 +202,9 @@ typedef struct
   AssumptionsOnGraphCleaning assump_for_genotyping;
 } CmdLine;
 
+
+CmdLine* cmd_line_alloc();
+void cmd_line_free(CmdLine* cmd);
 
 int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmdline_ptr, char* error_string);
 int check_cmdline(CmdLine* cmd_ptr, char* error_string);
