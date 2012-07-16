@@ -339,11 +339,15 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(fasta_genome_minus_site, 
   								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
   								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,temp_db_graph, individual_edge_array,0);
-  GraphInfo temp_db_graph_info;
-  graph_info_set_seq(&temp_db_graph_info, 0, 1);//unnecessary - never used
-  graph_info_set_mean_readlen(&temp_db_graph_info, 0, 1);//unnecessary - never used
-  db_graph_dump_single_colour_binary_of_specified_colour("../data/tempfiles_can_be_deleted/ref_minus_genome.ctx", &db_node_condition_always_true,temp_db_graph,&temp_db_graph_info,0);
+
+  GraphInfo* temp_db_graph_info=graph_info_alloc_and_init();
+
+  graph_info_set_seq(temp_db_graph_info, 0, 1);//unnecessary - never used
+  graph_info_set_mean_readlen(temp_db_graph_info, 0, 1);//unnecessary - never used
+  db_graph_dump_single_colour_binary_of_specified_colour("../data/tempfiles_can_be_deleted/ref_minus_genome.ctx", &db_node_condition_always_true,temp_db_graph,temp_db_graph_info,0);
   hash_table_free(&temp_db_graph);
+  graph_info_free(temp_db_graph_info);
+
   int mean_r;
   long long tot_s;
   int clean_colour = 0;
@@ -489,14 +493,14 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   int num_depths=1;
 
   int p;
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
+  GraphInfo* ginfo=graph_info_alloc_and_init();
   GraphAndModelInfo model_info;
 
   float repeat_geometric_param_mu = 0.8;//not used in this
   // int genome_size = 554;//554 is length of one allele + rest of reference
   int num_chroms_in_expt=2;
-  initialise_model_info(&model_info, &ginfo, genome_size, repeat_geometric_param_mu, -1, num_chroms_in_expt, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
+  initialise_model_info(&model_info, ginfo, genome_size, repeat_geometric_param_mu, 
+			-1, num_chroms_in_expt, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
   zygosity true_genotype;
   for (p=0; p<num_depths; p++)
     {
@@ -651,6 +655,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   free(lengths_of_alleles);
   free(array_of_allele_names);
   hash_table_free(&db_graph);
+  graph_info_free(ginfo);
 }
 
 
@@ -961,30 +966,30 @@ Colour:	MeanReadLen	TotalSeq
 
    */
 
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
-  graph_info_set_seq(&ginfo, 0, 2912760135);
-  graph_info_set_seq(&ginfo, 1, 18286122352 );
-  graph_info_set_seq(&ginfo, 2, 16816361244);
-  graph_info_set_seq(&ginfo, 3, 18039181209);
-  graph_info_set_seq(&ginfo, 4, 15879192506);
-  graph_info_set_seq(&ginfo, 5, 17729089947);
-  graph_info_set_seq(&ginfo, 6, 15750659112);
-  graph_info_set_seq(&ginfo, 7, 26196361173);
-  graph_info_set_seq(&ginfo, 8, 20202087523);
-  graph_info_set_seq(&ginfo, 9, 18907785783);
-  graph_info_set_seq(&ginfo, 10, 16870486574);
-  graph_info_set_mean_readlen(&ginfo, 0, 0);
-  graph_info_set_mean_readlen(&ginfo, 1, 50);
-  graph_info_set_mean_readlen(&ginfo, 2, 50);
-  graph_info_set_mean_readlen(&ginfo, 3, 50);
-  graph_info_set_mean_readlen(&ginfo, 4, 50);
-  graph_info_set_mean_readlen(&ginfo, 5, 50);
-  graph_info_set_mean_readlen(&ginfo, 6, 50);
-  graph_info_set_mean_readlen(&ginfo, 7, 50);
-  graph_info_set_mean_readlen(&ginfo, 8, 52);
-  graph_info_set_mean_readlen(&ginfo, 9, 50);
-  graph_info_set_mean_readlen(&ginfo, 10, 50);
+  GraphInfo* ginfo = graph_info_alloc_and_init();
+
+  graph_info_set_seq(ginfo, 0, 2912760135);
+  graph_info_set_seq(ginfo, 1, 18286122352 );
+  graph_info_set_seq(ginfo, 2, 16816361244);
+  graph_info_set_seq(ginfo, 3, 18039181209);
+  graph_info_set_seq(ginfo, 4, 15879192506);
+  graph_info_set_seq(ginfo, 5, 17729089947);
+  graph_info_set_seq(ginfo, 6, 15750659112);
+  graph_info_set_seq(ginfo, 7, 26196361173);
+  graph_info_set_seq(ginfo, 8, 20202087523);
+  graph_info_set_seq(ginfo, 9, 18907785783);
+  graph_info_set_seq(ginfo, 10, 16870486574);
+  graph_info_set_mean_readlen(ginfo, 0, 0);
+  graph_info_set_mean_readlen(ginfo, 1, 50);
+  graph_info_set_mean_readlen(ginfo, 2, 50);
+  graph_info_set_mean_readlen(ginfo, 3, 50);
+  graph_info_set_mean_readlen(ginfo, 4, 50);
+  graph_info_set_mean_readlen(ginfo, 5, 50);
+  graph_info_set_mean_readlen(ginfo, 6, 50);
+  graph_info_set_mean_readlen(ginfo, 7, 50);
+  graph_info_set_mean_readlen(ginfo, 8, 52);
+  graph_info_set_mean_readlen(ginfo, 9, 50);
+  graph_info_set_mean_readlen(ginfo, 10, 50);
  
 
   GraphAndModelInfo model_info;
@@ -993,7 +998,7 @@ Colour:	MeanReadLen	TotalSeq
   int ref_colour=0;
   int num_chroms=20; 
   long long genome_len = 3000000000;
-  initialise_model_info(&model_info, &ginfo, genome_len, mu, //seq_err_rate_per_base, 
+  initialise_model_info(&model_info, ginfo, genome_len, mu, //seq_err_rate_per_base, 
 			ref_colour, num_chroms, EachColourADiploidSampleExceptTheRefColour, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
 
   var.one_allele       = branch1;
@@ -1064,7 +1069,7 @@ Colour:	MeanReadLen	TotalSeq
     {
       free(branch2[i]);
     }
-
+  graph_info_free(ginfo);
 }
 
 
@@ -1289,17 +1294,17 @@ Colour 0 = reference
 ****************************************
 */
 
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
-  graph_info_set_seq(&ginfo, 0, 200);
-  graph_info_set_seq(&ginfo, 1, 73500000000 );
-  graph_info_set_mean_readlen(&ginfo, 0, 100);
-  graph_info_set_mean_readlen(&ginfo, 1, 90);
+  GraphInfo* ginfo=graph_info_alloc_and_init();
+
+  graph_info_set_seq(ginfo, 0, 200);
+  graph_info_set_seq(ginfo, 1, 73500000000 );
+  graph_info_set_mean_readlen(ginfo, 0, 100);
+  graph_info_set_mean_readlen(ginfo, 1, 90);
 
   for (j=2; j<NUMBER_OF_COLOURS; j++)
     { 
-      graph_info_set_seq(&ginfo, j, 0 );
-      graph_info_set_mean_readlen(&ginfo, j, 0);
+      graph_info_set_seq(ginfo, j, 0 );
+      graph_info_set_mean_readlen(ginfo, j, 0);
     }
 
   GraphAndModelInfo model_info;
@@ -1308,7 +1313,7 @@ Colour 0 = reference
   int ref_colour=0;
   int num_chroms=2; 
   long long genome_len = 3000000000;
-  initialise_model_info(&model_info, &ginfo, genome_len, mu, //seq_err_rate_per_base, 
+  initialise_model_info(&model_info, ginfo, genome_len, mu, //seq_err_rate_per_base, 
 			ref_colour, num_chroms, EachColourADiploidSampleExceptTheRefColour, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
 
   var.one_allele       = branch1;
@@ -1425,7 +1430,7 @@ Colour 0 = reference
   free(branch2);
   free(branch1_o);
   free(branch2_o);
-
+  graph_info_free(ginfo);
 
 
 

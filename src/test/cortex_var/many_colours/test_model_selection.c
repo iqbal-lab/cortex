@@ -203,13 +203,13 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   var->len_other_allele = br2len;
 
   int i;
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
+  GraphInfo* ginfo=graph_info_alloc_and_init();
+
   for (i=0; i<100; i++)
     {
       long long total_seq = 4000;
       int mean_read_len = 24; //these choices explained below
-      graph_info_set_seq(&ginfo, i, total_seq);
+      graph_info_set_seq(ginfo, i, total_seq);
       graph_info_set_mean_readlen(&ginfo, i, mean_read_len);
     }
   GraphAndModelInfo model_info;
@@ -217,7 +217,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   double mu = 0.8; //param of geometric describing repeat copy num
   double err = 0.01;
   int ref_colour=-1;//no reference colour
-  initialise_model_info(&model_info, &ginfo, genome_len, mu, ref_colour, NUMBER_OF_COLOURS*2, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
+  initialise_model_info(&model_info, ginfo, genome_len, mu, ref_colour, NUMBER_OF_COLOURS*2, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
   AnnotatedPutativeVariant annovar;
 
 
@@ -441,5 +441,5 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   free(br1_or);
   free(br2_or);
   hash_table_free(&db_graph);
-
+  graph_info_free(ginfo);
 }
