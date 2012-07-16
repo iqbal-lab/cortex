@@ -100,6 +100,10 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+  if (NULL == CU_add_test(pPopGraphSuite, "Test dump Binary format version5, and reload", test_load_binversion5_binary)) {
+    CU_cleanup_registry();
+    return CU_get_error();
+  }
 
 
 

@@ -2774,18 +2774,22 @@ void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo
     {
       fwrite(&(ginfo->total_sequence[i]), sizeof(long long), 1, fp);
     }
-  for (i=first_col; i<first_col+num_cols; i++)
+
+  if (version>5)
     {
-      fwrite(&(ginfo->sample_id_lens[i]), sizeof(int), 1, fp);
-      fwrite(ginfo->sample_ids[i], sizeof(char), ginfo->sample_id_lens[i], fp);
-    }
-  for (i=first_col; i<first_col+num_cols; i++)
-    {
-      fwrite(&(ginfo->seq_err[i]), sizeof(long double), 1, fp);
-    }
-  for (i=first_col; i<first_col+num_cols; i++)
-    {
-      print_error_cleaning_object(fp, ginfo, i);
+      for (i=first_col; i<first_col+num_cols; i++)
+	{
+	  fwrite(&(ginfo->sample_id_lens[i]), sizeof(int), 1, fp);
+	  fwrite(ginfo->sample_ids[i], sizeof(char), ginfo->sample_id_lens[i], fp);
+	}
+      for (i=first_col; i<first_col+num_cols; i++)
+	{
+	  fwrite(&(ginfo->seq_err[i]), sizeof(long double), 1, fp);
+	}
+      for (i=first_col; i<first_col+num_cols; i++)
+	{
+	  print_error_cleaning_object(fp, ginfo, i);
+	}
     }
 
   fwrite(magic_number,sizeof(char),6,fp);
@@ -3127,6 +3131,7 @@ boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHea
       else
 	{
 	  no_problem=false;
+	  printf("ZAM magic is %s\n", magic_number);
 	  *ecode = ECanReadEndOfHeaderMagicNumberButIsWrong;
 	}
     }
