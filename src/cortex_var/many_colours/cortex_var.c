@@ -976,6 +976,7 @@ int main(int argc, char **argv){
       printf("ZAM shouldnever get here\n");
     }
 
+  
   print_seq_err_rates_to_screen(db_graph_info);
 
 
