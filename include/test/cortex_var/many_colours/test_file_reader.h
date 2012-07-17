@@ -41,3 +41,4 @@ void test_read_next_variant_from_full_flank_file_3();
 void test_read_next_variant_from_full_flank_file_4();
 void test_getting_readlength_distribution();
 void test_loading_binary_data_iff_it_overlaps_a_fixed_colour();
+void test_load_binversion5_binary();

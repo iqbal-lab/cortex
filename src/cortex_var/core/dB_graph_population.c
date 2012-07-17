@@ -4748,7 +4748,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 
   if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
     {
-      printf("zahara DEBUG - Ignore suoernode as status us not none, it is %c\n\n", node->status);
+      //printf("zahara DEBUG - Ignore suoernode as status us not none, it is %c\n\n", node->status);
       *supernode_len=-1;//caller can check this
       is_supernode_pruned=false;
       return is_supernode_pruned;
@@ -4773,11 +4773,11 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 										    sum_of_covgs_in_desired_colours);
 
 	*supernode_len=length_sup;
-	printf("zahara length of sup is %d\n", length_sup);
+
 	if (length_sup <=1)
 	  {
 	    is_supernode_pruned=false;
-	    printf("zahara - no interiot - exit\n");
+
 	    return is_supernode_pruned;//do nothing. This supernode has no interior, is just 1 or 2 nodes, so cannot prune it
 	  }
 	else //if (length_sup <= 2*db_graph->kmer_size +2)
@@ -4795,10 +4795,10 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 
 	    if (interior_nodes_look_like_error==true)
 	      {
-		printf("zahara - Looks like is error. prine\n");
+
 		for (i=1; (i<=length_sup-1); i++)
 		  {
-		    printf("zahara %d - prune \n", i);
+
 		    db_graph_db_node_prune_low_coverage(path_nodes[i],coverage,
 							&db_node_action_set_status_pruned,
 							db_graph,
@@ -4817,7 +4817,6 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
       }
   else//debug only
     {
-      printf("zahara - query node has too much covg to consider removing\n");
       is_supernode_pruned=false;
     }
     return is_supernode_pruned;
@@ -5181,25 +5180,25 @@ void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph *
 
 
 //if you don't want to/care about graph_info, pass in NULL
-int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
-  FILE * fout; //binary output
-  fout= fopen(filename, "w"); 
+int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info, int version){
+
+  FILE* fout= fopen(filename, "w"); 
+  if (fout==NULL)
+    {
+      printf("Unable to dump binary file %s, as cannot open it with write-access.Permissions issue? Directory does not exist? Out of disk?\n",
+	     filename);
+      exit(1);
+    }
   
   if (db_graph_info==NULL)
     {
-      int i;
-      int means[NUMBER_OF_COLOURS];
-      long long tots[NUMBER_OF_COLOURS];
-      for (i=0; i<NUMBER_OF_COLOURS; i++)
-	{
-	  means[i]=0;
-	  tots[i]=0;
-	}
-      print_binary_signature(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, means, tots);
+      GraphInfo* ginfo_dummy=graph_info_alloc_and_init();//no need to check return - will abort if does not alloc
+      print_binary_signature_NEW(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, ginfo_dummy, 0, version);//0 means start from colour 0,
+      graph_info_free(ginfo_dummy);
     }
   else
     {
-      print_binary_signature(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, db_graph_info->mean_read_length, db_graph_info->total_sequence);
+      print_binary_signature_NEW(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, db_graph_info, 0, version);
     }
 
   long long count=0;
@@ -5214,13 +5213,14 @@ int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), d
   hash_table_traverse(&print_node_multicolour_binary,db_graph); 
   fclose(fout);
 
-  printf("%qd kmers dumped\n",count);
+  printf("%qd kmers dumped to file %s\n",count, filename);
   return count;
 }
 
 
 
-void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
+void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), 
+						   dBGraph * db_graph, GraphInfo* db_graph_info, int version){
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   if (fout==NULL)
@@ -5231,13 +5231,13 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*co
 
   if (db_graph_info==NULL)
     {
-      int means=0;
-      long long tots=0;
-      print_binary_signature(fout, db_graph->kmer_size,1, &means, &tots);
+      GraphInfo* ginfo_dummy=graph_info_alloc_and_init();//no need to check return
+      print_binary_signature_NEW(fout, db_graph->kmer_size,1, ginfo_dummy, 0, version);
+      graph_info_free(ginfo_dummy);
     }
   else
     {
-      print_binary_signature(fout, db_graph->kmer_size, 1, &(db_graph_info->mean_read_length[0]), &(db_graph_info->total_sequence[0]) );
+      print_binary_signature_NEW(fout, db_graph->kmer_size, 1, db_graph_info, 0, version);
     }
 
 
@@ -5260,7 +5260,9 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*co
 
 
 
-void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info, int colour){
+void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boolean (*condition)(dBNode * node), 
+							    dBGraph * db_graph, GraphInfo* db_graph_info, int colour,
+							    int version){
 
   if ( (colour<0) || (colour>=NUMBER_OF_COLOURS) )
     {
@@ -5279,14 +5281,13 @@ void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boo
 
   if (db_graph_info==NULL)
     {
-      int means=0;
-      long long tots=0;
-
-      print_binary_signature(fout, db_graph->kmer_size,1, &means, &tots);
+      GraphInfo* ginfo_dummy=graph_info_alloc_and_init();//no need to check return
+      print_binary_signature_NEW(fout, db_graph->kmer_size,1, ginfo_dummy, colour, version);
+      graph_info_free(ginfo_dummy);
     }
   else
     {
-      print_binary_signature(fout, db_graph->kmer_size, 1, &(db_graph_info->mean_read_length[colour]), &(db_graph_info->total_sequence[colour]) );
+      print_binary_signature_NEW(fout, db_graph->kmer_size, 1, db_graph_info, colour, version);
     }
 
 

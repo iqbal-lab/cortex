@@ -60,6 +60,17 @@ void  load_paired_end_seq_into_graph_of_specific_person_or_pop(FILE* fp1, FILE* 
 							       boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph, EdgeArrayType type, int index);
 
 
+
+void initialise_binary_header_info(BinaryHeaderInfo* binfo, GraphInfo* ginfo)
+{
+  binfo->version=0;
+  binfo->kmer_size=0;
+  binfo->number_of_bitfields=0;
+  binfo->number_of_colours=0;
+  binfo->ginfo=ginfo;
+}
+
+
 //pass in bases_read to track amount of sequence read in, and bases_pass_filters_and_loaded to see how much passed filters and got into the graph
 void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, boolean pe, char* se_f, char* pe_f1, char* pe_f2,
 								   long long* bases_read, long long* bases_pass_filters_and_loaded,long long** readlen_count_array,
@@ -107,7 +118,7 @@ void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, b
 	      printf("Unable to read from %s\n", se_f);
 	      exit(1);
 	    }
-
+	  
 	  num_single_ended_files_loaded++;
 	  
 	  if (format==FASTQ)
@@ -132,10 +143,10 @@ void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, b
 	    }
 	  
 	  
-	    printf("\nNum SE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal SE sequence parsed:%qd\nTotal SE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n",
-	  	 num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_se_reads,single_seq_bases_read, single_seq_bases_loaded, dup_se_reads);
-
-	    
+	  printf("\nNum SE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal SE sequence parsed:%qd\nTotal SE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n",
+		 num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_se_reads,single_seq_bases_read, single_seq_bases_loaded, dup_se_reads);
+	  
+	  
 	}
       fclose(se_fp);
     }
@@ -841,7 +852,7 @@ void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* li
 	    {
 	      *p = '\0';
 	    }
-	  
+
 	  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(filename1, filename2, format,
 										   bases_read, bases_loaded,readlen_count_array, 
 										   bad_reads, quality_cut_off, max_read_length, num_dups, remove_dups, 
@@ -1422,8 +1433,8 @@ void load_population_as_fastq(char* filename, long long* bases_read, long long b
 
 //returns number of kmers loaded*kmer_length
  //array_mean_readlens and array_total_seqs are arrays of length NUMBER_OF_COLOURS, so they can hold the mean read length+total seq in every colour
-long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
-							   int* num_cols_in_loaded_binary, int** array_mean_readlens, long long** array_total_seqs)
+long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, GraphInfo* ginfo, int* num_cols_in_loaded_binary) 
+//							    int** array_mean_readlens, long long** array_total_seqs)
 {
 
   //printf("Load this binary - %s\n", filename);
@@ -1440,17 +1451,23 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
     exit(1); 
   }
 
+  BinaryHeaderErrorCode ecode = EValid;
+  BinaryHeaderInfo binfo;
+  initialise_binary_header_info(&binfo, ginfo);
 
-  int binversion_in_binheader;
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, num_cols_in_loaded_binary, array_mean_readlens, array_total_seqs, &binversion_in_binheader) ) )
+  if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode)))
     {
-      printf("Cannot load this binary - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting.\n");
+      printf("Cannot load this binary(%s) - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting, error code %d\n", 
+	     filename, ecode);
       exit(1);
     }
-
+  else
+    {
+      *num_cols_in_loaded_binary = binfo.number_of_colours;
+    }
 
   //always reads the multicol binary into successive colours starting from 0 - assumes the hash table is empty prior to this
-  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, *num_cols_in_loaded_binary, binversion_in_binheader)){
+  while (db_node_read_multicolour_binary(fp_bin,db_graph->kmer_size,&node_from_file, *num_cols_in_loaded_binary, binfo.version)){
     count++;
     
     dBNode * current_node  = NULL;
@@ -1502,49 +1519,42 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
   boolean found;
   int count=0;
 
-  int debug_num_attempts=1;
-
   if (fp_bin == NULL)
     {
-      printf("load_single_colour_binary_data_from_filename_into_graph cannot open file:%s - bastard ibrix - attempt number %d\n",filename, debug_num_attempts);
       //  exit(1); //TODO - prefer to print warning and skip file and return an error code?
-      while ((debug_num_attempts<=10)&&(fp_bin==NULL))
-	{
-	  sleep(debug_num_attempts*600); //wait 10 mins the first time, then 20,..up til 100 mins the 10th time, then give up
-	  //try again
-	  debug_num_attempts++;
-	  fp_bin = fopen(filename, "r");
-	  if (fp_bin==NULL)
-	    {
-	      printf("load_single_colour_binary_data_from_filename_into_graph cannot open file:%s - bastard ibrix - attempt number %d\n",filename, debug_num_attempts);
-	    }
-	}
-      if (fp_bin==NULL)
-	{
-	  printf("I give up\n");
-	  exit(1);
-	}
-    }
-
-
-  int binversion_in_header;
-  int num_cols_in_binary;
-  if (!(check_binary_signature(fp_bin, db_graph->kmer_size, BINVERSION, &num_cols_in_binary, &mean_readlen, &total_seq, &binversion_in_header) ) )
-    {
-      printf("Cannot load this binary - fails signature check. Exiting.\n");
+      printf("Unable to open this binary %s\n", filename);
       exit(1);
     }
 
-  if (num_cols_in_binary!=1)
+
+  //this will be inefficient once we have thousands of colours, but is only run once.
+  GraphInfo* ginfo=graph_info_alloc_and_init();//no need to check return code
+  BinaryHeaderErrorCode ecode=EValid;
+  BinaryHeaderInfo binfo;
+  initialise_binary_header_info(&binfo, ginfo);
+
+
+  if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode)))
     {
-      printf("Expecting a single colour binary, but instead this one has %d colours\n. Exiting.\n", num_cols_in_binary);
+      printf("Cannot load this binary - fails signature check with error code %d. Exiting.\n", ecode);
       exit(1);
     }
+  else
+    {
+      *mean_readlen = ginfo->mean_read_length[0];
+      *total_seq     = ginfo->total_sequence[0];
+    }
 
+  if (binfo.number_of_colours!=1)
+    {
+      printf("Expecting a single colour binary, but instead this one has %d colours\n. Exiting.\n", binfo.number_of_colours);
+      exit(1);
+    }
+  graph_info_free(ginfo);
   
   //Go through all the entries in the binary file
   // each time you load the info into a temporary node, and load them *** into colour number index ***
-  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, type, index, binversion_in_header))
+  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, type, index, binfo.version))
     {
       count++;
       found=false;//zam just added this
@@ -1597,21 +1607,36 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 // If you have a clean graph in colour 0, and you only want to load nodes from the binaries that overlap with this,
 // then set only_load_kmers_already_in_hash==true, and specify colour_clean to be that clean graph colour. Usually this is zero,
 // we compile for 2 colours only, and we are loading into colour 1.
-long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, GraphInfo* db_graph_info, 
+long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename, //_plus_maybe_samplename,  
+											   dBGraph* db_graph, GraphInfo* db_graph_info, 
 											   boolean all_entries_are_unique, EdgeArrayType type, int index,
 											   boolean only_load_kmers_already_in_hash, int colour_clean,
 											   boolean load_all_kmers_but_only_increment_covg_on_new_ones)
 {
+  /*
+  char* temp1 = (char*) malloc(sizeof(char)*2*MAX_FILENAME_LENGTH);
+  if (temp1==NULL)
+    {
+      printf("Out of memory. Something wrong - we havent even started Cortex yet. Is some other process using all the memory on your machine? Abort Cortex\n");
+      exit(1);
+    }
+  temp1[0]='\0';
+  strcpy(temp1, filename_plus_maybe_samplename);
 
-  FILE* fptr = fopen(filename, "r");
+  char delims[] = "\t";
+  char* proper_filename = strtok(temp1, delims);
+  */
+
+  // FILE* fptr = fopen(proper_filename, "r");//this might be the same as filename
+  FILE* fptr = fopen(filename, "r");//this might be the same as filename
   if (fptr == NULL)
     {
       printf("cannot open %s which is supposed to list all .ctx files for person with index %d \n",filename, index);
       exit(1); 
     }
 
-  //file contains a list of .ctx filenames, as dumped by the graph/ target (NOT sv_trio)
-  char line[MAX_FILENAME_LENGTH+1];
+  //file contains a list of .ctx filenames
+  char line[MAX_FILENAME_LENGTH+1];//just about willing to do this on the stack
   
   int total_seq_loaded=0;
   
@@ -1638,6 +1663,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
     }
 
   fclose(fptr);
+  //  free(temp1);
   return total_seq_loaded;
 
 
@@ -1670,14 +1696,14 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
     exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
   }
 
-  char line[MAX_FILENAME_LENGTH+1];
+  char line[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
 
   int total_seq_loaded=0;
   int which_colour=first_colour;
 
 
 
-  while(fgets(line,MAX_FILENAME_LENGTH, fp) !=NULL)
+  while(fgets(line,MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME, fp) !=NULL)
     {
       
       //remove newline from end of line - replace with \0
@@ -1685,10 +1711,15 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
       if ((p = strchr(line, '\n')) != NULL)
 	*p = '\0';
 
-
+      char temp1[MAX_FILENAME_LENGTH];
+      temp1[0]='\0';
+      strcpy(temp1, line);
+      char delims[] = "\t";
+      char* proper_filename = strtok(temp1, delims);
+      
       if (which_colour>NUMBER_OF_COLOURS-1)
-      {
-        printf("This filelist contains too many people, remember we have set a population limit of %d in variable NUMBER_OF_COLOURS. Cannot load into colour %d", 
+	{
+	  printf("This filelist contains too many people, remember we have set a population limit of %d in variable NUMBER_OF_COLOURS. Cannot load into colour %d", 
 	       NUMBER_OF_COLOURS, which_colour);
 	exit(1);
       }
@@ -1698,7 +1729,7 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 
       
       total_seq_loaded = total_seq_loaded + 
-	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph,db_graph_info, 
+	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(proper_filename, db_graph,db_graph_info, 
 											 about_to_load_first_binary_into_empty_graph, 
 											 individual_edge_array, which_colour,
 											 only_load_kmers_already_in_hash, colour_clean,
@@ -1758,7 +1789,7 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_c
       char outfile[1000];
       outfile[0]='\0';
       sprintf(outfile,"%s_%s.ctx",line,suffix);
-      db_graph_dump_single_colour_binary_of_specified_colour(outfile, &db_node_condition_always_true,db_graph,db_graph_info,in_colour);
+      db_graph_dump_single_colour_binary_of_specified_colour(outfile, &db_node_condition_always_true,db_graph,db_graph_info,in_colour, BINVERSION);
       //reset that colour:
       db_graph_wipe_colour(in_colour,db_graph);
       graph_info_set_seq(db_graph_info, in_colour,0);
@@ -2689,6 +2720,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 }
 					   
 
+/*
 
 //array_mean_readlens is an array of length num_cols, giving the mean read length of data loaded into each colour
 //array_total_seq is an array of length num_cols, giving the total amount of sequence in each colour (ie sequence loaded, AFTER filtering out by quality, PCR dups, homopolymers etc)
@@ -2724,8 +2756,82 @@ void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_me
   fwrite(magic_number,sizeof(char),6,fp);
 
 }
+*/
 
 
+//we assume we are dumping N consecutive colours from the graph (the UI only supports
+//1 colour (colour0) or all, but also I have a function for dumping one specific colour.
+//let's say we want to dump from first_col to first_col + num_cols-1. These colours
+//also correspond to those in the graph_info of course
+//the final argument, version, is always BINVERSION in normal use, but in testing it might be an old version
+// so I can test backward compatbility
+void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo* ginfo, int first_col, int version)
+{
+  char magic_number[6];
+  //  int version = BINVERSION;
+  
+  magic_number[0]='C';
+  magic_number[1]='O';
+  magic_number[2]='R';
+  magic_number[3]='T';
+  magic_number[4]='E';
+  magic_number[5]='X';
+  
+
+  int num_bitfields = NUMBER_OF_BITFIELDS_IN_BINARY_KMER;
+
+  fwrite(magic_number,sizeof(char),6,fp);
+  fwrite(&version,sizeof(int),1,fp);
+  fwrite(&kmer_size,sizeof(int),1,fp);
+  fwrite(&num_bitfields, sizeof(int),1,fp);
+  fwrite(&num_cols, sizeof(int), 1, fp);
+
+  int i;
+  for (i=first_col; i<first_col+num_cols; i++)
+    {
+      fwrite(&(ginfo->mean_read_length[i]), sizeof(int), 1, fp);
+    }
+  for (i=first_col; i<first_col+num_cols; i++)
+    {
+      fwrite(&(ginfo->total_sequence[i]), sizeof(long long), 1, fp);
+    }
+
+  if (version>5)
+    {
+      for (i=first_col; i<first_col+num_cols; i++)
+	{
+	  fwrite(&(ginfo->sample_id_lens[i]), sizeof(int), 1, fp);
+	  fwrite(ginfo->sample_ids[i], sizeof(char), ginfo->sample_id_lens[i], fp);
+	}
+      for (i=first_col; i<first_col+num_cols; i++)
+	{
+	  fwrite(&(ginfo->seq_err[i]), sizeof(long double), 1, fp);
+	}
+      for (i=first_col; i<first_col+num_cols; i++)
+	{
+	  print_error_cleaning_object(fp, ginfo, i);
+	}
+    }
+
+  fwrite(magic_number,sizeof(char),6,fp);
+
+}
+
+void print_error_cleaning_object(FILE* fp, GraphInfo* ginfo, int colour)
+{
+  fwrite(&(ginfo->cleaning[colour]->tip_clipping), sizeof(boolean), 1, fp);
+  fwrite(&(ginfo->cleaning[colour]->remv_low_cov_sups), sizeof(boolean), 1, fp);
+  fwrite(&(ginfo->cleaning[colour]->remv_low_cov_nodes), sizeof(boolean), 1, fp);
+  fwrite(&(ginfo->cleaning[colour]->cleaned_against_another_graph), sizeof(boolean), 1, fp);
+  fwrite(&(ginfo->cleaning[colour]->remv_low_cov_sups_thresh), sizeof(int), 1, fp);
+  fwrite(&(ginfo->cleaning[colour]->remv_low_cov_nodes_thresh), sizeof(int), 1, fp);
+  fwrite(&(ginfo->cleaning[colour]->len_name_of_graph_against_which_was_cleaned), sizeof(int), 1, fp);
+  fwrite(ginfo->cleaning[colour]->name_of_graph_against_which_was_cleaned, sizeof(char), 
+	 ginfo->cleaning[colour]->len_name_of_graph_against_which_was_cleaned, fp);
+  
+}
+
+/*
 //return yes if signature is consistent
 boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, 
 			       int* number_of_colours_in_binary, 
@@ -2865,6 +2971,366 @@ boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version,
   return ret;
 
 }
+*/
+
+
+
+
+//return yes if signature is consistent
+boolean check_binary_signature_NEW(FILE * fp,int kmer_size, 
+				   BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+				   
+{
+  boolean bin_header_ok = query_binary_NEW(fp, binfo, ecode);
+
+  if (bin_header_ok==true)
+    {
+      //just need to check the kmer is ok
+      if (kmer_size==binfo->kmer_size)
+	{
+	  return true;
+	}
+      else
+	{
+	  return false;
+	}
+    }
+  return false;
+}
+
+
+//return true if signature is readable, checks binversion, number of bitfields, magic number.
+//does not check kmer is compatible with number of bitfields, leaves that to caller.
+boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode){
+  int read;
+  char magic_number[6];
+  
+  *ecode = EValid;
+  read = fread(magic_number,sizeof(char),6,fp);
+  if (read>0)
+    {
+      if (       magic_number[0]=='C' &&
+		 magic_number[1]=='O' &&
+		 magic_number[2]=='R' &&
+		 magic_number[3]=='T' &&
+		 magic_number[4]=='E' &&
+		 magic_number[5]=='X' )
+	{
+	  
+	  read = fread(&(binfo->version),sizeof(int),1,fp);
+	  if (read>0)
+	    {//can read version
+	      if ((binfo->version >=5) && (binfo->version<=BINVERSION) )
+		{//version is good
+		  read = fread(&(binfo->kmer_size),sizeof(int),1,fp);
+		  if (read>0)
+		    {//can read bitfields
+		      read = fread(&(binfo->number_of_bitfields),sizeof(int),1,fp);
+		     
+		      if (binfo->number_of_bitfields==NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
+			{//bitfuields are good
+
+			  read = fread(&(binfo->number_of_colours),sizeof(int),1,fp);
+			  
+			  if ( read>0  )
+			    {//can read colours
+
+			      if (binfo->number_of_colours<=NUMBER_OF_COLOURS)
+				{//colours are good
+				  
+				  //ok, the basic information looks OK
+				  // get extra information. In all cases, return false and an error code if anything looks bad.
+				  return get_extra_data_from_header(fp, binfo, ecode);
+				  //also checks for the magic number at the end of the header
+				}
+			      else
+				{//colours bad
+				  *ecode = EBadColours;
+				  return false;				      
+				}
+			    }
+			  else
+			    {//cant read colours
+			      *ecode = ECannotReadNumColours;
+			      return false;
+			    }
+			}//bitfields are good
+		      else
+			{//bitfields are bad
+			  *ecode =  EWrongNumberBitfields;
+			  return false;
+			}
+		    }//can read bitfields
+		  else
+		    {//cannot read bitfields
+		      *ecode = ECannotReadNumBitfields;
+		      return false;
+		    }
+		}//version is good
+	      else
+		{//version is bad
+		  *ecode = EInvalidBinversion;
+		  return false;
+		}
+	    }//can read version
+	  else
+	    {//cannot read version
+	      *ecode =  ECannotReadBinversion;
+	      return false;
+	    }
+	}//magic number good
+      else
+	{
+	  *ecode=  ECanReadMagicNumberButIsWrong;
+	  return false;
+	}
+    }
+  else
+    {
+      *ecode = ECannotReadMagicNumber;
+      return false;
+    }
+
+  
+}
+
+
+//assume num colours, number of bitfields, etc were fine. So now
+//
+// Binary Version 5: mean read lengths (NUMBER_OF_COLOURS of them) and then total sequences
+// Binary Version 6: as 5, and then the Sample Id's for each colour, then the sequencing error rates
+//                         and then the ErrorCleanings
+boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+{
+  boolean no_problem=true;
+  if (binfo->version==5)
+    {
+      no_problem = get_read_lengths_and_total_seqs_from_header(fp, binfo, ecode);
+    }
+  else if (binfo->version==6)
+    {
+      no_problem = get_read_lengths_and_total_seqs_from_header(fp, binfo, ecode);
+      if (no_problem==true)
+	{
+	  //get the extra stuff for binary version 6
+	  no_problem = get_binversion6_extra_data(fp, binfo, ecode);
+	}
+    }
+  else
+    {
+      *ecode = EInvalidBinversion;
+      no_problem=false;
+    }
+
+  if (no_problem==true)
+    {
+      //only thing remaining to check is the end of header magic number
+      int read;
+      char magic_number[6];
+      magic_number[0]='\0';
+      magic_number[1]='\0';
+      magic_number[2]='\0';
+      magic_number[3]='\0';
+      magic_number[4]='\0';
+      magic_number[5]='\0';
+      read = fread(magic_number,sizeof(char),6,fp);
+      if (read==0)
+	{
+	  *ecode = ECannotReadEndOfHeaderMagicNumber;
+	  no_problem=false;
+	}
+      else if (
+	   magic_number[0]=='C' &&
+	   magic_number[1]=='O' &&
+	   magic_number[2]=='R' &&
+	   magic_number[3]=='T' &&
+	   magic_number[4]=='E' &&
+	   magic_number[5]=='X' )
+	{
+	  //all good.
+	}
+      else
+	{
+	  no_problem=false;
+	  printf("ZAM magic is %s\n", magic_number);
+	  *ecode = ECanReadEndOfHeaderMagicNumberButIsWrong;
+	}
+    }
+
+  return no_problem;
+
+}
+
+
+boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+{
+  int read;
+  int i;
+  boolean no_problem=true;
+
+  for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+    {
+      read = fread(&(binfo->ginfo->mean_read_length[i]),sizeof(int),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	  *ecode= EFailedToReadReadLensAndCovgs;
+	}
+    }
+  if (no_problem==true)
+    {
+      for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+	{
+	  read = fread(&(binfo->ginfo->total_sequence[i]),sizeof(long long),1,fp);
+	  if (read==0)
+	    {
+	      no_problem=false;
+	      *ecode= EFailedToReadReadLensAndCovgs;
+	    }
+	}
+    }
+
+  return no_problem;
+}
+
+//Binary header version 6 includes sample id's, and Seq Error rate and Error Cleaning Info.
+boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+{
+  int read;
+  int i;
+  boolean no_problem=true;
+
+  //first get sample information
+  for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+    {
+      //get the length of the sample id name
+      read = fread(&(binfo->ginfo->sample_id_lens[i]),sizeof(int),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	  *ecode = EFailedToReadSampleIds;
+	}
+      else
+	{
+	  //now get the actual sample id for colour i
+	  if (binfo->ginfo->sample_id_lens[i]<MAX_LEN_SAMPLE_NAME)
+	    {
+	      read = fread(binfo->ginfo->sample_ids[i],sizeof(char),binfo->ginfo->sample_id_lens[i],fp);
+	      if (read==0)
+		{
+		  no_problem=false;
+		  *ecode = EFailedToReadSampleIds;
+		}
+	    }
+	  else
+	    {
+	      no_problem=false;
+	      *ecode = EFailedToReadSampleIdsSeemsTooLong;
+
+	    }
+	}
+    }
+
+  //now get the sequencing error rate
+  for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+    {
+      read = fread(&(binfo->ginfo->seq_err[i]),sizeof(long double),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	  printf("i is %d and num colours is %d, but read is zero DEBUGZAM zahara\n", i, binfo->number_of_colours);
+	  *ecode = EFailedToReadSeqErrRates;
+	}
+    }
+
+
+  //now get the error cleaning information for each colour
+  for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+    {
+      no_problem = read_next_error_cleaning_object(fp, (binfo->ginfo->cleaning[i]) );
+      if (no_problem==false)
+	{
+	  *ecode = EFailedToReadErrorCleaningInfo;
+	}
+    }
+
+  return no_problem;
+
+}
+
+boolean read_next_error_cleaning_object(FILE* fp, ErrorCleaning* cl)
+{
+  int read;
+  boolean no_problem=true;
+
+  read = fread(&(cl->tip_clipping),sizeof(boolean),1,fp);
+  if (read==0)
+    {
+      no_problem=false;
+    }
+  if (no_problem==true)
+    {
+      read = fread(&(cl->remv_low_cov_sups),sizeof(boolean),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+
+  if (no_problem==true)
+    {
+      read = fread(&(cl->remv_low_cov_nodes),sizeof(boolean),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+  if (no_problem==true)
+    {
+      read = fread(&(cl->cleaned_against_another_graph),sizeof(boolean),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+  if (no_problem==true)
+    {
+      read = fread(&(cl->remv_low_cov_sups_thresh),sizeof(int),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+  if (no_problem==true)
+    {
+      read = fread(&(cl->remv_low_cov_nodes_thresh),sizeof(int),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+
+  if (no_problem==true)
+    {
+      read = fread(&(cl->len_name_of_graph_against_which_was_cleaned),sizeof(int),1,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+  if (no_problem==true)
+    {
+      read = fread(cl->name_of_graph_against_which_was_cleaned,sizeof(char),cl->len_name_of_graph_against_which_was_cleaned,fp);
+      if (read==0)
+	{
+	  no_problem=false;
+	}
+    }
+
+  return no_problem;
+
+}
+
 
 //return true if signature is readable
 boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* number_of_bitfields, int* number_of_colours_in_binary){
@@ -2938,8 +3404,9 @@ boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* number_
 //given a list of filenames, check they all exist, and return the number of them
 int get_number_of_files_and_check_existence_from_filelist(char* filelist)
 {
-
+  
   int count=0;
+  
 
   FILE* fp = fopen(filelist, "r");
   if (fp==NULL)
@@ -2948,12 +3415,13 @@ int get_number_of_files_and_check_existence_from_filelist(char* filelist)
       exit(1);
     }
 
-  char file[MAX_FILENAME_LENGTH+1];
+
+  char file[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
   file[0]='\0';
   
   while (feof(fp)==0)
     {
-      if (fgets(file, MAX_FILENAME_LENGTH, fp) != NULL)
+      if (fgets(file, MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME, fp) != NULL)
 	{
 	  //remove newline from end of line - replace with \0
 	  char* p;
@@ -2961,9 +3429,16 @@ int get_number_of_files_and_check_existence_from_filelist(char* filelist)
 	    {
 	      *p = '\0';
 	    }
-	  if (access(file, R_OK)==-1)
+	  
+	  char temp1[MAX_FILENAME_LENGTH];
+	  temp1[0]='\0';
+	  strcpy(temp1, file);
+	  char delims[] = "\t";
+	  char* proper_filename = strtok(temp1, delims);
+
+	  if (access(proper_filename, R_OK)==-1)
 	    {
-	      printf("Cannot access file %s listed in %s\n", file, filelist);
+	      printf("Cannot access file %s listed in %s\n", proper_filename, filelist);
 	      exit(1);
 	    }
 	  else
@@ -2990,7 +3465,7 @@ void get_filenames_from_list(char* filelist, char** array, int len)
       exit(1);
     }
 
-  char file[MAX_FILENAME_LENGTH+1];
+  char file[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
   file[0]='\0';
   
   while ( (feof(fp)==0) && (count<len) )
@@ -3004,7 +3479,14 @@ void get_filenames_from_list(char* filelist, char** array, int len)
 	      *p = '\0';
 	    }
 
-	  strcpy(array[count], file);
+
+	  char temp1[MAX_FILENAME_LENGTH];
+	  temp1[0]='\0';
+	  strcpy(temp1, file);
+	  char delims[] = "\t";
+	  char* proper_filename = strtok(temp1, delims);
+
+	  strcpy(array[count], proper_filename);
 	  count++;
 	}
     }
@@ -3014,7 +3496,7 @@ void get_filenames_from_list(char* filelist, char** array, int len)
   
 }
 
-// filename is a list of files, one for each colour. Check they all exists, there are not too many,
+// filename is a list of files, one for each colour (with optional second column of sample-ids). Check they all exists, there are not too many,
 // ad that each of them contains a alist of valid binaries.
 boolean check_colour_list(char* filename, int kmer)
 {

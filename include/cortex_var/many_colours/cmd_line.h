@@ -44,7 +44,7 @@
 #define MAX_SUFFIX_LEN 100
 #define  MAX_LEN_DETECT_BUB_COLOURINFO 500 //will be info of form 1,2,3/5,6,7,8,9 specifying how you call vars between colours
 #define  MAX_COLOURS_ALLOWED_TO_MERGE 3000 //arbitrary limit, can be increased
-#define LEN_ERROR_STRING 200
+#define LEN_ERROR_STRING 400
 
 //typedef enum
 // {
@@ -90,6 +90,8 @@ typedef struct
   int pd_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
   int num_colours_in_pd_colour_list;
   
+  boolean entered_sampleid_as_cmdline_arg;
+  boolean loaded_sample_names;
   boolean print_novel_contigs;
   int novelseq_colours_search[MAX_COLOURS_ALLOWED_TO_MERGE];
   int numcols_novelseq_colours_search;
@@ -112,6 +114,7 @@ typedef struct
   ExperimentType expt_type;
   
   char colour_list[MAX_FILENAME_LEN];
+  char** colour_sample_ids;//sample names
   boolean for_each_colour_load_union_of_binaries;// so if colour 0 has binaries 1.ctx and 2.ctx, you load 1.ctx, and then for each kmer in 2.ctx, 
                                                  // if it is not in the graph, you load it, and if it IS, you DO NOT increment covg, just edges
   int num_colours_in_input_colour_list;
@@ -147,7 +150,7 @@ typedef struct
   boolean remove_pcr_dups;
   //boolean clip_tips;
   boolean exclude_ref_bubbles;
-  boolean remove_seq_errors;
+  //  boolean remove_seq_errors;
   boolean print_colour_coverages;
   boolean load_colours_only_where_overlap_clean_colour;
   boolean successively_dump_cleaned_colours;
@@ -201,9 +204,12 @@ typedef struct
 } CmdLine;
 
 
+CmdLine* cmd_line_alloc();
+void cmd_line_free(CmdLine* cmd);
+
 int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmdline_ptr, char* error_string);
 int check_cmdline(CmdLine* cmd_ptr, char* error_string);
-CmdLine parse_cmdline( int argc, char* argv[],int unit_size); 
+void parse_cmdline(CmdLine* cmd_line, int argc, char* argv[],int unit_size); 
 int default_opts(CmdLine *);
 int get_numbers_from_comma_sep_list(char* list,  int* return_list, int max_len_return_list);
 int get_numbers_from_open_square_brack_sep_list(char* list, int* return_list, 
@@ -219,4 +225,9 @@ int parse_arguments_for_genotyping(CmdLine* cmdline, char* argmt, char* msg);
 int parse_novelseq_args(char* arg, int* array_colours_to_look_in, int* num_cols_in_look_list,
 			int* array_colours_to_avoid,  int* num_cols_in_avoid_list,
 			int* min_contig_len, int* min_percentage_novel, char* outfile);
+
+
+boolean get_sample_id_from_se_pe_list(char* cmdline_sampleid, char* se_pe_list);
+int get_number_of_files_and_check_existence_and_get_samplenames_from_col_list(char* colour_list, CmdLine* cmd);
+boolean check_if_colourlist_contains_samplenames(char* filename);
 #endif /* CMD_LINE_H_ */

@@ -84,18 +84,19 @@ void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta()
 
 
   //initialise a graph_info object
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
-  graph_info_update_mean_readlen_and_total_seq(&ginfo, 0, calculate_mean(readlen_distrib, (long long) (max_read_length+1)), seq_loaded);  
+  GraphInfo* ginfo=graph_info_alloc_and_init();
+
+  graph_info_update_mean_readlen_and_total_seq(ginfo, 0, calculate_mean(readlen_distrib, (long long) (max_read_length+1)), seq_loaded);  
   
   long double default_err_rate = 0.01;
-  estimate_seq_error_rate_from_snps_for_each_colour("../data/test/pop_graph/seq_error_estimation/colour_list_test_sample1", &ginfo, db_graph, -1, 89, default_err_rate, NULL);
+  estimate_seq_error_rate_from_snps_for_each_colour("../data/test/pop_graph/seq_error_estimation/colour_list_test_sample1", ginfo, db_graph, -1, 89, default_err_rate, NULL);
 
-  CU_ASSERT_DOUBLE_EQUAL(ginfo.seq_err[0],0.0, 0.0001);
+  CU_ASSERT_DOUBLE_EQUAL(ginfo->seq_err[0],0.0, 0.0001);
 
 
 
   hash_table_free(&db_graph);
+  graph_info_free(ginfo);
   free(readlen_distrib_ptrs);
   free(readlen_distrib);
   
@@ -152,20 +153,21 @@ void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta_test2()
 
 
   //initialise a graph_info object
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
-  graph_info_update_mean_readlen_and_total_seq(&ginfo, 0, calculate_mean(readlen_distrib, (long long) (max_read_length+1)), seq_loaded);  
+  GraphInfo* ginfo=graph_info_alloc_and_init();
+
+  graph_info_update_mean_readlen_and_total_seq(ginfo, 0, calculate_mean(readlen_distrib, (long long) (max_read_length+1)), seq_loaded);  
   
   long double default_err_rate = 0.01;
-  printf("ZAMMER  - before estimation got seq err rate %Lf\n", ginfo.seq_err[0]);
-  estimate_seq_error_rate_from_snps_for_each_colour("../data/test/pop_graph/seq_error_estimation/colour_list_test_sample2", &ginfo, db_graph, -1, 770, default_err_rate, NULL);
+  printf("ZAMMER  - before estimation got seq err rate %Lf\n", ginfo->seq_err[0]);
+  estimate_seq_error_rate_from_snps_for_each_colour("../data/test/pop_graph/seq_error_estimation/colour_list_test_sample2", ginfo, db_graph, -1, 770, default_err_rate, NULL);
 
-  printf("ZAMMER got seq err rate %Lf\n", ginfo.seq_err[0]);
-  CU_ASSERT_DOUBLE_EQUAL(ginfo.seq_err[0],0.0909, 0.01);
+  printf("ZAMMER got seq err rate %Lf\n", ginfo->seq_err[0]);
+  CU_ASSERT_DOUBLE_EQUAL(ginfo->seq_err[0],0.0909, 0.01);
 
 
 
   hash_table_free(&db_graph);
+  graph_info_free(ginfo);
   free(readlen_distrib_ptrs);
   free(readlen_distrib);
   
