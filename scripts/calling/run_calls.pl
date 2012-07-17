@@ -1881,7 +1881,7 @@ sub build_unclean
     }
 
     my $cortex_binary = get_right_binary($km, $cdir,1 );##one colour
-    my $cmd = $cortex_binary." --kmer_size $km --mem_height $height --mem_width $width --dump_binary $ctx --max_read_len $max_r  --format $format --dump_covg_distribution $covg";
+    my $cmd = $cortex_binary." --sample_id $name --kmer_size $km --mem_height $height --mem_width $width --dump_binary $ctx --max_read_len $max_r  --format $format --dump_covg_distribution $covg";
     if ($se ne "NO")
     {
 	$cmd = $cmd." --se_list $se ";
