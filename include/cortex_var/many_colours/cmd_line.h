@@ -44,7 +44,7 @@
 #define MAX_SUFFIX_LEN 100
 #define  MAX_LEN_DETECT_BUB_COLOURINFO 500 //will be info of form 1,2,3/5,6,7,8,9 specifying how you call vars between colours
 #define  MAX_COLOURS_ALLOWED_TO_MERGE 3000 //arbitrary limit, can be increased
-#define LEN_ERROR_STRING 200
+#define LEN_ERROR_STRING 400
 
 //typedef enum
 // {
@@ -149,7 +149,7 @@ typedef struct
   boolean remove_pcr_dups;
   //boolean clip_tips;
   boolean exclude_ref_bubbles;
-  boolean remove_seq_errors;
+  //  boolean remove_seq_errors;
   boolean print_colour_coverages;
   boolean load_colours_only_where_overlap_clean_colour;
   boolean successively_dump_cleaned_colours;
@@ -226,6 +226,7 @@ int parse_novelseq_args(char* arg, int* array_colours_to_look_in, int* num_cols_
 			int* min_contig_len, int* min_percentage_novel, char* outfile);
 
 
+boolean get_sample_id_from_se_pe_list(char* cmdline_sampleid, char* se_pe_list);
 int get_number_of_files_and_check_existence_and_get_samplenames_from_col_list(char* colour_list, CmdLine* cmd);
 boolean check_if_colourlist_contains_samplenames(char* filename);
 #endif /* CMD_LINE_H_ */

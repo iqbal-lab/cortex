@@ -719,7 +719,8 @@ int main(int argc, char **argv){
       if (strcmp(cmd_line->se_list, "")!=0)
 	{
 	  fprintf(stdout,"Input file of single ended data filenames: %s\n",
-		  cmd_line->se_list); 
+		  cmd_line->se_list);
+	  cmd_line->loaded_sample_names = get_sample_id_from_se_pe_list(cmd_line->colour_sample_ids[0], cmd_line->se_list);
 	}
       else
 	{
@@ -729,6 +730,14 @@ int main(int argc, char **argv){
 	{
 	  fprintf(stdout,"Input file of paired end data: %s, and %s, \n",
 		  cmd_line->pe_list_lh_mates, cmd_line->pe_list_rh_mates); 
+	  if (cmd_line->loaded_sample_names==false)
+	    {
+	      cmd_line->loaded_sample_names = get_sample_id_from_se_pe_list(cmd_line->colour_sample_ids[0], cmd_line->pe_list_lh_mates);
+	    }
+	  if (cmd_line->loaded_sample_names==false)
+	    {
+	      cmd_line->loaded_sample_names = get_sample_id_from_se_pe_list(cmd_line->colour_sample_ids[0], cmd_line->pe_list_rh_mates);
+	    }
 	}
       else
 	{
@@ -797,14 +806,18 @@ int main(int argc, char **argv){
 
       //update the graph info object
       graph_info_update_mean_readlen_and_total_seq(db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line->max_read_length+1)), bases_pass_filters_and_loaded);
-
+      if (cmd_line->loaded_sample_names==true)
+	{
+	  graph_info_set_sample_ids(cmd_line->colour_sample_ids, 1, db_graph_info, 0);
+	}
 
       //cleanup marks left on nodes by loading process (for PE reads)
       hash_table_traverse(&db_node_set_status_to_none, db_graph);
 
 
       timestamp();
-      printf("Fastq data loaded\nTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\nMean read length after filters applied:%d\n", 
+      printf("Fastq data loaded\nSampleName:%s\tTotal bases parsed:%qd\nTotal bases passing filters and loaded into graph:%qd\nMean read length after filters applied:%d\n", 
+	     cmd_line->colour_sample_ids[0],
 	     bases_parsed, bases_pass_filters_and_loaded, db_graph_info->mean_read_length[0]);
 
 
@@ -845,26 +858,8 @@ int main(int argc, char **argv){
 
       if (cmd_line->input_multicol_bin==true)
 	{
-	  int mean_readlens[NUMBER_OF_COLOURS];
-	  int* mean_readlens_ptrs[NUMBER_OF_COLOURS];
-	  long long total_seq_in_that_colour[NUMBER_OF_COLOURS];
-	  long long* total_seq_in_that_colour_ptrs[NUMBER_OF_COLOURS];
-	  int j;
-	  for (j=0; j<NUMBER_OF_COLOURS; j++)
-	    {
-	      mean_readlens[j]=0;
-	      mean_readlens_ptrs[j]=&(mean_readlens[j]);
-	      total_seq_in_that_colour[j]=0;
-	      total_seq_in_that_colour_ptrs[j]=&(total_seq_in_that_colour[j]);
-	    }
 	  long long  bp_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line->multicolour_bin,db_graph, 
 										  db_graph_info, &first_colour_data_starts_going_into);
-	                                                                          //mean_readlens_ptrs, total_seq_in_that_colour_ptrs);
-	  //update graph_info object
-	  //for (j=0; j<first_colour_data_starts_going_into; j++)
-          //  {
-	  //    graph_info_update_mean_readlen_and_total_seq(db_graph_info, j, mean_readlens[j], total_seq_in_that_colour[j]);
-	  //  }
 	  timestamp();
 	  printf("Loaded the multicolour binary %s, and got %qd kmers\n", cmd_line->multicolour_bin, bp_loaded/db_graph->kmer_size);
 	  graph_has_had_no_other_binaries_loaded=false;
@@ -885,10 +880,17 @@ int main(int argc, char **argv){
 		  printf("When loading the binaries specified in %s, we only load nodes that are already in colour %d\n", 
 			 cmd_line->colour_list, cmd_line->clean_colour);
 		}
+
 	      load_population_as_binaries_from_graph(cmd_line->colour_list, first_colour_data_starts_going_into, 
 						     graph_has_had_no_other_binaries_loaded, db_graph, db_graph_info,
 						     cmd_line->load_colours_only_where_overlap_clean_colour, cmd_line->clean_colour,
 						     cmd_line->for_each_colour_load_union_of_binaries);
+	      //if the colour_list contained sample_ids, add them to the GraphInfo object
+	      if (cmd_line->loaded_sample_names==true)
+		{
+		  graph_info_set_sample_ids(cmd_line->colour_sample_ids, cmd_line->num_colours_in_input_colour_list,
+					    db_graph_info, first_colour_data_starts_going_into);
+		}
 	      timestamp();
 	      printf("Finished loading single_colour binaries\n");
 	    }

@@ -187,7 +187,19 @@ void graph_info_update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,i
 }
 
 
-
+void graph_info_set_sample_ids(char** sample_ids, int num_ids, GraphInfo* ginfo, int first_col)
+{
+  if (first_col+num_ids-1>NUMBER_OF_COLOURS-1)
+    {
+      printf("Coding error in graph_info_set_sample_ids - trying to load sample id into a colour greater than the number of supported colours you have compiled for. Should have been caught earlier - please tell Zam\n");
+      exit(1);
+    }
+  int i;
+  for (i=first_col; i<first_col+num_ids; i++)
+    {
+      strcpy(ginfo->sample_ids[i], sample_ids[i]);
+    }
+}
 double get_total_depth_of_coverage_across_colours(GraphInfo* ginfo, long long genome_length)
 {
   int i;

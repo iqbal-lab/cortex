@@ -79,7 +79,7 @@ void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, b
 								   int max_read_length, int colour, dBGraph* db_graph)
 {
 
-  char filename[MAX_FILENAME_LENGTH];
+  char filename[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME];
   int num_single_ended_files_loaded   = 0;
   int num_file_pairs_loaded   = 0;
 
@@ -112,40 +112,45 @@ void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, b
 
       while (!feof(se_fp))
 	{
-	  int ret_fscan_se = fscanf(se_fp, "%s\n", filename);
-	  if (ret_fscan_se==EOF)
+	  if (fgets(filename,MAX_FILENAME_LENGTH, se_fp) !=NULL)
 	    {
-	      printf("Unable to read from %s\n", se_f);
-	      exit(1);
-	    }
-
-	  num_single_ended_files_loaded++;
+	      char temp1[MAX_FILENAME_LENGTH];
+	      temp1[0]='\0';
+	      strcpy(temp1, filename);
+	      char delims[] = "\t";
+	      char* proper_filename = strtok(temp1, delims);
+	      if (proper_filename==NULL)
+		{
+		  printf("Coding error, given filename %s, and by parsing it to check if there is a sample-id, we lose it and get a NULL\n", filename);
+		  exit(1);
+		}
+	      num_single_ended_files_loaded++;
 	  
-	  if (format==FASTQ)
-	    {
-	      load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(filename, &single_seq_bases_read, &single_seq_bases_loaded,readlen_count_array,
-										 &bad_se_reads, qual_thresh, &dup_se_reads, 
-										 max_read_length, 
-										 remv_dups_se,break_homopolymers, homopol_limit, ascii_fq_offset, 
+	      if (format==FASTQ)
+		{
+		  load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(proper_filename, &single_seq_bases_read, &single_seq_bases_loaded,readlen_count_array,
+										     &bad_se_reads, qual_thresh, &dup_se_reads, 
+										     max_read_length, 
+										     remv_dups_se,break_homopolymers, homopol_limit, ascii_fq_offset, 
 										 db_graph, individual_edge_array, colour);
-	    }
-	  else if (format==FASTA)
-	    {
-	      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(filename,&single_seq_bases_read, &single_seq_bases_loaded,readlen_count_array,
-										 &bad_se_reads, &dup_se_reads, max_read_length, 
-										 remv_dups_se,break_homopolymers, homopol_limit, 
-										 db_graph, individual_edge_array, colour);
-	    }
-	  else
-	    {
-	      printf("SE data is being passed in, so Format in must be specified as fastq or fasta\n");
-	      exit(1);
-	    }
+		}
+	      else if (format==FASTA)
+		{
+		  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(proper_filename,&single_seq_bases_read, &single_seq_bases_loaded,readlen_count_array,
+										     &bad_se_reads, &dup_se_reads, max_read_length, 
+										     remv_dups_se,break_homopolymers, homopol_limit, 
+										     db_graph, individual_edge_array, colour);
+		}
+	      else
+		{
+		  printf("SE data is being passed in, so Format in must be specified as fastq or fasta\n");
+		  exit(1);
+		}
 	  
 	  
-	    printf("\nNum SE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal SE sequence parsed:%qd\nTotal SE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n",
-	  	 num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_se_reads,single_seq_bases_read, single_seq_bases_loaded, dup_se_reads);
-
+	      printf("\nNum SE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal SE sequence parsed:%qd\nTotal SE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n",
+		     num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_se_reads,single_seq_bases_read, single_seq_bases_loaded, dup_se_reads);
+	    }
 	    
 	}
       fclose(se_fp);
@@ -826,15 +831,15 @@ void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* li
     }
 
   long long seq_length = 0;
-  char filename1[MAX_FILENAME_LENGTH+1];
-  char filename2[MAX_FILENAME_LENGTH+1];
+  char filename1[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
+  char filename2[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
   filename1[0]='\0';
   filename2[0]='\0';
 
 
   while (feof(f1) ==0)
     {
-      if (fgets(filename1,MAX_FILENAME_LENGTH, f1) !=NULL)
+      if (fgets(filename1,MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME, f1) !=NULL)
 	{
 
 	  //remove newline from end of line - replace with \0
@@ -852,8 +857,26 @@ void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* li
 	    {
 	      *p = '\0';
 	    }
+
+	  char temp1[MAX_FILENAME_LENGTH];
+	  temp1[0]='\0';
+	  strcpy(temp1, filename1);
+	  char delims[] = "\t";
+	  char* proper_filename1 = strtok(temp1, delims);
+
 	  
-	  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(filename1, filename2, format,
+	  char temp2[MAX_FILENAME_LENGTH];
+	  temp2[0]='\0';
+	  strcpy(temp2, filename2);
+	  char* proper_filename2 = strtok(temp2, delims);
+	  
+	  if ((proper_filename1==NULL)||(proper_filename2==NULL))
+	    {
+	      printf("Error parsing the PE lists, started with %s and %s, and in trying to check for sample-id, got a NULL. Contact Zam\n",
+		     filename1, filename2);
+	    }
+
+	  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(proper_filename1, proper_filename2, format,
 										   bases_read, bases_loaded,readlen_count_array, 
 										   bad_reads, quality_cut_off, max_read_length, num_dups, remove_dups, 
 										   break_homopolymers, homopolymer_cutoff, fq_ascii_cutoff,
@@ -1607,21 +1630,36 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 // If you have a clean graph in colour 0, and you only want to load nodes from the binaries that overlap with this,
 // then set only_load_kmers_already_in_hash==true, and specify colour_clean to be that clean graph colour. Usually this is zero,
 // we compile for 2 colours only, and we are loading into colour 1.
-long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, GraphInfo* db_graph_info, 
+long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename, //_plus_maybe_samplename,  
+											   dBGraph* db_graph, GraphInfo* db_graph_info, 
 											   boolean all_entries_are_unique, EdgeArrayType type, int index,
 											   boolean only_load_kmers_already_in_hash, int colour_clean,
 											   boolean load_all_kmers_but_only_increment_covg_on_new_ones)
 {
+  /*
+  char* temp1 = (char*) malloc(sizeof(char)*2*MAX_FILENAME_LENGTH);
+  if (temp1==NULL)
+    {
+      printf("Out of memory. Something wrong - we havent even started Cortex yet. Is some other process using all the memory on your machine? Abort Cortex\n");
+      exit(1);
+    }
+  temp1[0]='\0';
+  strcpy(temp1, filename_plus_maybe_samplename);
 
-  FILE* fptr = fopen(filename, "r");
+  char delims[] = "\t";
+  char* proper_filename = strtok(temp1, delims);
+  */
+
+  // FILE* fptr = fopen(proper_filename, "r");//this might be the same as filename
+  FILE* fptr = fopen(filename, "r");//this might be the same as filename
   if (fptr == NULL)
     {
       printf("cannot open %s which is supposed to list all .ctx files for person with index %d \n",filename, index);
       exit(1); 
     }
 
-  //file contains a list of .ctx filenames, as dumped by the graph/ target (NOT sv_trio)
-  char line[MAX_FILENAME_LENGTH+1];
+  //file contains a list of .ctx filenames
+  char line[MAX_FILENAME_LENGTH+1];//just about willing to do this on the stack
   
   int total_seq_loaded=0;
   
@@ -1648,6 +1686,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
     }
 
   fclose(fptr);
+  //  free(temp1);
   return total_seq_loaded;
 
 
@@ -1680,14 +1719,14 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
     exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
   }
 
-  char line[MAX_FILENAME_LENGTH+1];
+  char line[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
 
   int total_seq_loaded=0;
   int which_colour=first_colour;
 
 
 
-  while(fgets(line,MAX_FILENAME_LENGTH, fp) !=NULL)
+  while(fgets(line,MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME, fp) !=NULL)
     {
       
       //remove newline from end of line - replace with \0
@@ -1695,10 +1734,15 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
       if ((p = strchr(line, '\n')) != NULL)
 	*p = '\0';
 
-
+      char temp1[MAX_FILENAME_LENGTH];
+      temp1[0]='\0';
+      strcpy(temp1, line);
+      char delims[] = "\t";
+      char* proper_filename = strtok(temp1, delims);
+      
       if (which_colour>NUMBER_OF_COLOURS-1)
-      {
-        printf("This filelist contains too many people, remember we have set a population limit of %d in variable NUMBER_OF_COLOURS. Cannot load into colour %d", 
+	{
+	  printf("This filelist contains too many people, remember we have set a population limit of %d in variable NUMBER_OF_COLOURS. Cannot load into colour %d", 
 	       NUMBER_OF_COLOURS, which_colour);
 	exit(1);
       }
@@ -1708,7 +1752,7 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 
       
       total_seq_loaded = total_seq_loaded + 
-	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph,db_graph_info, 
+	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(proper_filename, db_graph,db_graph_info, 
 											 about_to_load_first_binary_into_empty_graph, 
 											 individual_edge_array, which_colour,
 											 only_load_kmers_already_in_hash, colour_clean,
@@ -3383,8 +3427,9 @@ boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* number_
 //given a list of filenames, check they all exist, and return the number of them
 int get_number_of_files_and_check_existence_from_filelist(char* filelist)
 {
-
+  
   int count=0;
+  
 
   FILE* fp = fopen(filelist, "r");
   if (fp==NULL)
@@ -3393,12 +3438,13 @@ int get_number_of_files_and_check_existence_from_filelist(char* filelist)
       exit(1);
     }
 
-  char file[MAX_FILENAME_LENGTH+1];
+
+  char file[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
   file[0]='\0';
   
   while (feof(fp)==0)
     {
-      if (fgets(file, MAX_FILENAME_LENGTH, fp) != NULL)
+      if (fgets(file, MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME, fp) != NULL)
 	{
 	  //remove newline from end of line - replace with \0
 	  char* p;
@@ -3406,9 +3452,16 @@ int get_number_of_files_and_check_existence_from_filelist(char* filelist)
 	    {
 	      *p = '\0';
 	    }
-	  if (access(file, R_OK)==-1)
+	  
+	  char temp1[MAX_FILENAME_LENGTH];
+	  temp1[0]='\0';
+	  strcpy(temp1, file);
+	  char delims[] = "\t";
+	  char* proper_filename = strtok(temp1, delims);
+
+	  if (access(proper_filename, R_OK)==-1)
 	    {
-	      printf("Cannot access file %s listed in %s\n", file, filelist);
+	      printf("Cannot access file %s listed in %s\n", proper_filename, filelist);
 	      exit(1);
 	    }
 	  else
@@ -3435,7 +3488,7 @@ void get_filenames_from_list(char* filelist, char** array, int len)
       exit(1);
     }
 
-  char file[MAX_FILENAME_LENGTH+1];
+  char file[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
   file[0]='\0';
   
   while ( (feof(fp)==0) && (count<len) )
@@ -3449,7 +3502,14 @@ void get_filenames_from_list(char* filelist, char** array, int len)
 	      *p = '\0';
 	    }
 
-	  strcpy(array[count], file);
+
+	  char temp1[MAX_FILENAME_LENGTH];
+	  temp1[0]='\0';
+	  strcpy(temp1, file);
+	  char delims[] = "\t";
+	  char* proper_filename = strtok(temp1, delims);
+
+	  strcpy(array[count], proper_filename);
 	  count++;
 	}
     }
@@ -3459,7 +3519,7 @@ void get_filenames_from_list(char* filelist, char** array, int len)
   
 }
 
-// filename is a list of files, one for each colour. Check they all exists, there are not too many,
+// filename is a list of files, one for each colour (with optional second column of sample-ids). Check they all exists, there are not too many,
 // ad that each of them contains a alist of valid binaries.
 boolean check_colour_list(char* filename, int kmer)
 {

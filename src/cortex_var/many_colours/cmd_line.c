@@ -40,7 +40,7 @@
 #include <err.h>
 
 #define MAX_NUM_DIGITS_IN_COLOUR_ENTERED_ON_CMDLINE_COMMASEP 4
-#define LEN_ERROR_STRING 400
+//#define LEN_ERROR_STRING 400
 #define MAX_LINE 500
 
 
@@ -185,7 +185,7 @@ boolean more_than_one_colour_in_multicol_binary(char* file, int kmer_size)
 
 const char* usage=
 "Cortex, multicoloured target, cortex_var by Z. Iqbal (zam@well.ox.ac.uk) (primary contact for cortex_var) and M. Caccamo (mario.caccamo@bbsrc.ac.uk)\n" \
-"\nusage: to build a single-colour binary:\ncortex_var --se_list <filename> --pe_list <filename> --format FASTQ --quality_score_threshold 5 --remove_pcr_duplicates --remove_seq_errors --dump_binary some_name.ctx\n" \
+"\nusage: to build a single-colour binary:\ncortex_var --se_list <filename> --pe_list <filename> --format FASTQ --quality_score_threshold 5 --remove_pcr_duplicates --remove_low_coverage_supernodes 1 --dump_binary some_name.ctx\n" \
 "\nusage: to build a multicolour graph from single-colour graphs and call variants between colours 1 and 2:\ncortex_var --colour_list <filename> --detect_bubbles1 1/2 --output_bubbles1 vars_between_cols1_and_2\n" \
 "\nusage: to load a multicolour graph from single-colour graphs and call heterozygous variants in colour 0:\ncortex_var --colour_list <filename> --detect_bubbles1 0/0 --output_bubbles1 hets_in_colour_0\n" \
 "\n" \
@@ -197,8 +197,8 @@ const char* usage=
 "   [--format TYPE] \t\t\t\t\t\t=\t File format for input in se_list and pe_list. All files assumed to be of the same format.\n\t\t\t\t\t\t\t\t\t Type must be FASTQ or FASTA\n" \
 "   [--colour_list FILENAME] \t\t\t\t\t=\t File of filenames, one per colour. n-th file is a list of\n\t\t\t\t\t\t\t\t\t single-colour binaries to be loaded into colour n.\n\t\t\t\t\t\t\t\t\t Cannot be used with --se_list or --pe_list \n\t\t\t\t\t\t\t\t\t Optionally, this can contain a second column, containing a sample identifier/name for each colour\n" \
 "   [--multicolour_bin FILENAME] \t\t\t\t=\t Filename of a multicolour binary, will be loaded first, into colours 0..n.\n\t\t\t\t\t\t\t\t\t If using --colour_list also, those will be loaded into subsequent colours, after this.\n" \
-"   [--se_list FILENAME] \t\t\t\t\t=\t List of single-end fasta/q to be loaded into a single-colour graph.\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n" \
-"   [--pe_list FILENAME] \t\t\t\t\t=\t Two filenames, comma-separated: each is a list of paired-end fasta/q to be \n\t\t\t\t\t\t\t\t\t loaded into a single-colour graph. Lists are assumed to ordered so that \n\t\t\t\t\t\t\t\t\t corresponding paired-end fasta/q files are at the same positions in their lists.\n\t\t\t\t\t\t\t\t\t Currently Cortex only use paired-end information to remove\n\t\t\t\t\t\t\t\t\t PCR duplicate reads (if that flag is set).\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n" \
+"   [--se_list FILENAME] \t\t\t\t\t=\t List of single-end fasta/q to be loaded into a single-colour graph.\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n\t\t\t\t\t\t\t\t\t Optionally, the first line is allowed to have, after the filename, a tab, and then a sample identifier\n" \
+"   [--pe_list FILENAME] \t\t\t\t\t=\t Two filenames, comma-separated: each is a list of paired-end fasta/q to be \n\t\t\t\t\t\t\t\t\t loaded into a single-colour graph. Lists are assumed to ordered so that \n\t\t\t\t\t\t\t\t\t corresponding paired-end fasta/q files are at the same positions in their lists.\n\t\t\t\t\t\t\t\t\t Currently Cortex only use paired-end information to remove\n\t\t\t\t\t\t\t\t\t PCR duplicate reads (if that flag is set).\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n\t\t\t\t\t\t\t\t\t  Optionally, the first line is allowed to have, after the filename, a tab, and then a sample identifier\n" \
 "   [--kmer_size INT] \t\t\t\t\t\t=\t Kmer size. Must be an odd number.\n" \
 "   [--mem_width INT] \t\t\t\t\t\t=\t Size of hash table buckets (default 100).\n" \
   //-g 
@@ -217,9 +217,7 @@ const char* usage=
   // -k
 "   [--cut_homopolymers INT] \t\t\t\t\t=\t Breaks reads at homopolymers of length >= this threshold.\n\t\t\t\t\t\t\t\t\t (i.e. max homopolymer in filtered read==threshold-1, and New read starts after homopolymer)\n" \
   // -O
-"   [--remove_low_coverage_supernodes INT]\t\t\t\t=\t Remove all supernodes where max coverage is <= the limit you set. Overrides --remove_seq_errors. Recommended method.\n" \
-   // -o
-"   [--remove_seq_errors] \t\t\t\t\t=\t Remove tips + remove supernodes with coverage everywhere==1\n" \
+"   [--remove_low_coverage_supernodes INT]\t\t\t\t=\t Remove all supernodes where max coverage is <= the limit you set. Recommended method.\n" \
   // -B
 "   [--remove_low_coverage_kmers INT] \t\t\t\t=\t Filter for kmers with coverage less than or equal to  threshold. Not recommended. See manual and our paper for why\n"  \
   // -E
@@ -411,11 +409,12 @@ int default_opts(CmdLine * c)
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       set_string_to_null(c->colour_sample_ids[i], MAX_LEN_SAMPLE_NAME);
+      strcpy(c->colour_sample_ids[i], "undefined");
     }
   set_string_to_null(c->multicolour_bin,MAX_FILENAME_LEN);
-  set_string_to_null(c->se_list,MAX_FILENAME_LEN);
-  set_string_to_null(c->pe_list_lh_mates,MAX_FILENAME_LEN);
-  set_string_to_null(c->pe_list_rh_mates,MAX_FILENAME_LEN);
+  set_string_to_null(c->se_list,MAX_FILENAME_LEN+MAX_LEN_SAMPLE_NAME);
+  set_string_to_null(c->pe_list_lh_mates,MAX_FILENAME_LEN+MAX_LEN_SAMPLE_NAME);
+  set_string_to_null(c->pe_list_rh_mates,MAX_FILENAME_LEN+MAX_LEN_SAMPLE_NAME);
   set_string_to_null(c->output_binary_filename,MAX_FILENAME_LEN);
   set_string_to_null(c->output_supernodes,MAX_FILENAME_LEN);
   set_string_to_null(c->output_detect_bubbles1,MAX_FILENAME_LEN);
@@ -441,7 +440,6 @@ int default_opts(CmdLine * c)
   c->cut_homopolymers = false;
   c->remove_pcr_dups=false;
   //c->clip_tips=false;
-  c->remove_seq_errors=false;
   c->print_colour_coverages=false;
   c->dump_binary=false;
   c->print_supernode_fasta=false;
@@ -544,7 +542,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"path_divergence_caller",required_argument,NULL,'l'},
     {"quality_score_threshold",required_argument, NULL, 'm'},
     {"fastq_offset",required_argument, NULL, 'n'},
-    {"remove_seq_errors",no_argument,NULL,'o'},
+    //    {"remove_seq_errors",no_argument,NULL,'o'},
     {"dump_binary",required_argument,NULL,'p'},
     {"output_supernodes",required_argument,NULL,'q'},
     {"detect_bubbles1",required_argument, NULL, 'r'},
@@ -587,7 +585,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:op:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:p:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -630,7 +628,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 		printf("(Normally, it cumulates binaries, adding up coverages)\n");
 
 	      }
-	    char delims[] = "[";
+	    char delims[] = "\t";
 	    char* col_list = strtok(temp1, delims);
 	    if (col_list==NULL)
 	      {
@@ -648,7 +646,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    else //colour list has two columns and includes samples
 	      {
 		num_cols_in_input_list=get_number_of_files_and_check_existence_and_get_samplenames_from_col_list(col_list, cmdline_ptr); 
-		cmdline_ptr->loaded_sample_names=true;
+		cmdline_ptr->loaded_sample_names=true;//can be used to test if colour_list is 1 or 2 column
 	      }
 	    if (num_cols_in_input_list==0)
 	      {
@@ -703,7 +701,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'c': //se_list
       {
 	if (optarg==NULL)
-	  errx(1,"[--se_list] option requires a filename (listing single_ended fasta/q)");
+	  errx(1,"[--se_list] option requires a filename (listing single_ended fasta/q)\nOptionally, the first line of the list is allowed to have (aftert the filename) a tab, and then a sample-identifier string, which will be loaded up, and stored in any binary graph you dump.");
 	
 	if (strlen(optarg)<MAX_FILENAME_LEN)
 	  {
@@ -883,12 +881,12 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       }
 
 
-    case 'o': //use coverage and topology to remove sequencing errors. Not compatible with any other error correction
+      /*    case 'o': //use coverage and topology to remove sequencing errors. Not compatible with any other error correction
       {
 	cmdline_ptr->remove_seq_errors = true;
 	cmdline_ptr->remv_low_covg_sups_threshold = 1;
 	break;
-      }
+	}*/
 
     case 'p'://output of binary ctx
       {
@@ -1511,7 +1509,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:opqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:pqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
   }   
   
   return 0;
@@ -1912,7 +1910,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
     }
   
   
-  if ( (cmd_ptr->using_ref==true) && (cmd_ptr->remove_seq_errors==true) )
+  if ( (cmd_ptr->using_ref==true) && ((cmd_ptr->remv_low_covg_sups_threshold!=-1)|| (cmd_ptr->remove_low_coverage_nodes==true)) )
 
     {
 
@@ -3167,6 +3165,70 @@ int parse_arguments_for_genotyping(CmdLine* cmdline, char* argmt, char* msg)
   
 }
 
+//returns true if it did find a sample identifier on the top line of the se/pe list.
+//will exit if it finds an identifier, but finds the id is already set (means an identifier was
+// set in some other file also) and it does not match. ASSUMPTION is fasta/q only goes into colour 0,
+// and all has same sample id.
+boolean get_sample_id_from_se_pe_list(char* cmdline_sampleid, char* se_pe_list)
+{
+  boolean found_an_id=false;
+  FILE* fp = fopen(se_pe_list, "r");
+  if (fp==NULL)
+    {
+      printf("Unable to open se/pe filelist %s\n", se_pe_list);
+      exit(1);
+    }
+  else
+    {
+      char line[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME];
+      line[0]='\0';
+      if (fgets(line, MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME, fp) != NULL)
+	{
+	  //remove newline from end of line - replace with \0
+	  char* p;
+	  if ((p = strchr(line, '\n')) != NULL)
+	    {
+	      *p = '\0';
+	    }
+	  
+	  //now this line is either just a filename, or a filename and sample_idshould be tab separated with two columns.
+	  char* file;
+	  char* sample_name;
+	  char delims[]="\t";
+	  file = strtok(line, delims);
+	  if (file==NULL)
+	    {
+	      //empty file
+	    }
+	  else if (access(file, R_OK)==-1)
+	    {
+	      printf("Cannot access file %s listed in %s. Cortex thinks this is a filename. Either you are trying to list sample_identifiers in your se_list or pe_list file, (in which case - make sure you have a tab between the filename (first column) and sample-id (second column)), or you have listed a file without the right path, as it does not seem to exist/have the right permissions\n", file, se_pe_list);
+	      exit(1);
+	    }
+	  else
+	    {
+	      sample_name = strtok(NULL, delims);
+	      if (sample_name !=NULL)
+		{
+		  if (strcmp(cmdline_sampleid, "undefined")==0)
+		    {
+		      strcpy(cmdline_sampleid, sample_name);
+		      found_an_id=true;
+		    }
+		  else if (strcmp(cmdline_sampleid, sample_name)!=0)
+		    {
+		      //you seem to have got a second sample id for the same data/sample
+		      printf("Your se/pe lists seem to contain TWO sample id's, %s and %s. One identifier only allowed when loading FASTA/Q, as it all goes into colour 0, and is treated like one sample\n", cmdline_sampleid, sample_name);
+		      exit(1);
+		    }
+
+		}
+	    }
+	}
+      fclose(fp);
+    }
+  return found_an_id;
+}
 
 //returns number of filenames/colours in this file
 int get_number_of_files_and_check_existence_and_get_samplenames_from_col_list(char* colour_list, CmdLine* cmd)
@@ -3204,9 +3266,9 @@ int get_number_of_files_and_check_existence_and_get_samplenames_from_col_list(ch
 	      printf("Format issue in %s. Started off looking like two columns (tab sep), but one of the lines looks bad\n", line);
 	      exit(1);
 	    }
-	  if (access(file, R_OK)==-1)
+	  else if (access(file, R_OK)==-1)
 	    {
-	      printf("Cannot access file %s listed in %s\n", file, colour_list);
+	      printf("Cannot access file %s listed in %s. Cortex thinks this is a filename. If you are trying to list sample_identifiers in your colour_list file, make sure you have a tab between the filename (first column) and sample-id (second column)\n", file, colour_list);
 	      exit(1);
 	    }
 	  else
