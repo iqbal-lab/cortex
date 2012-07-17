@@ -90,6 +90,7 @@ typedef struct
   int pd_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
   int num_colours_in_pd_colour_list;
   
+  boolean entered_sampleid_as_cmdline_arg;
   boolean loaded_sample_names;
   boolean print_novel_contigs;
   int novelseq_colours_search[MAX_COLOURS_ALLOWED_TO_MERGE];

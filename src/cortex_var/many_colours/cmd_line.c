@@ -205,6 +205,8 @@ const char* usage=
 "   [--mem_height INT] \t\t\t\t\t\t=\t Number of buckets in hash table in bits (default 10). \n\t\t\t\t\t\t\t\t\t Actual number of buckets will be 2^(the number you enter)\n" \
   // -n 
 "   [--fastq_offset INT] \t\t\t\t\t=\t Default 33, for standard fastq.\n\t\t\t\t\t\t\t\t\t Some fastq directly from different versions of Illumina machines require different offsets.\n" \
+  // -o
+"   [--sample_id STRING] \t\t\t\t\t=\t (Only) if losding fasta/q, you can use this option to set the sample-identifier.\n\t\t\t\t\t\t\t\t\t This will be saved in any binary file you dump.\n" \
   // -p
 "   [--dump_binary FILENAME] \t\t\t\t\t=\t Dump a binary file, with this name (after applying error-cleaning, if specified).\n" \
   // -w
@@ -351,6 +353,7 @@ int default_opts(CmdLine * c)
   c->for_each_colour_load_union_of_binaries=false;
   //novelsseq stuff
   c->use_snp_alleles_to_estim_seq_err_rate=false;
+  c->entered_sampleid_as_cmdline_arg=false;
   c->loaded_sample_names=false;
   c->print_novel_contigs=false;
   c->novelseq_contig_min_len_bp=100;
@@ -412,9 +415,9 @@ int default_opts(CmdLine * c)
       strcpy(c->colour_sample_ids[i], "undefined");
     }
   set_string_to_null(c->multicolour_bin,MAX_FILENAME_LEN);
-  set_string_to_null(c->se_list,MAX_FILENAME_LEN+MAX_LEN_SAMPLE_NAME);
-  set_string_to_null(c->pe_list_lh_mates,MAX_FILENAME_LEN+MAX_LEN_SAMPLE_NAME);
-  set_string_to_null(c->pe_list_rh_mates,MAX_FILENAME_LEN+MAX_LEN_SAMPLE_NAME);
+  set_string_to_null(c->se_list,MAX_FILENAME_LEN);
+  set_string_to_null(c->pe_list_lh_mates,MAX_FILENAME_LEN);
+  set_string_to_null(c->pe_list_rh_mates,MAX_FILENAME_LEN);
   set_string_to_null(c->output_binary_filename,MAX_FILENAME_LEN);
   set_string_to_null(c->output_supernodes,MAX_FILENAME_LEN);
   set_string_to_null(c->output_detect_bubbles1,MAX_FILENAME_LEN);
@@ -542,7 +545,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"path_divergence_caller",required_argument,NULL,'l'},
     {"quality_score_threshold",required_argument, NULL, 'm'},
     {"fastq_offset",required_argument, NULL, 'n'},
-    //    {"remove_seq_errors",no_argument,NULL,'o'},
+    {"sample_id",required_argument,NULL,'o'},
     {"dump_binary",required_argument,NULL,'p'},
     {"output_supernodes",required_argument,NULL,'q'},
     {"detect_bubbles1",required_argument, NULL, 'r'},
@@ -585,7 +588,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:p:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -881,12 +884,12 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       }
 
 
-      /*    case 'o': //use coverage and topology to remove sequencing errors. Not compatible with any other error correction
+    case 'o': //--sample_id - only to be used when loading sequence data
       {
-	cmdline_ptr->remove_seq_errors = true;
-	cmdline_ptr->remv_low_covg_sups_threshold = 1;
+	cmdline_ptr->entered_sampleid_as_cmdline_arg = true;
+	strcpy(cmdline_ptr->colour_sample_ids[0], optarg);
 	break;
-	}*/
+      }
 
     case 'p'://output of binary ctx
       {
@@ -1509,7 +1512,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:pqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:o:pqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
   }   
   
   return 0;
@@ -1791,6 +1794,19 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	}
       strcpy(error_string, tmp);
       return -1;
+    }
+
+  if ( (cmd_ptr->entered_sampleid_as_cmdline_arg==true) && (cmd_ptr->input_seq ==false) )
+    {
+      char tmp[] = "You can only use --sample_id when loading sequence data (fasta/q), not loading binaries\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  printf("coding error - this string is too long:\n%s\n", tmp);
+	  exit(1);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
     }
 
   if (cmd_ptr->input_colours ==true)

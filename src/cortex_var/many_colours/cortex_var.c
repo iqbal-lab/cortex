@@ -720,7 +720,7 @@ int main(int argc, char **argv){
 	{
 	  fprintf(stdout,"Input file of single ended data filenames: %s\n",
 		  cmd_line->se_list);
-	  cmd_line->loaded_sample_names = get_sample_id_from_se_pe_list(cmd_line->colour_sample_ids[0], cmd_line->se_list);
+	  //cmd_line->loaded_sample_names = get_sample_id_from_se_pe_list(cmd_line->colour_sample_ids[0], cmd_line->se_list);
 	}
       else
 	{
@@ -730,6 +730,7 @@ int main(int argc, char **argv){
 	{
 	  fprintf(stdout,"Input file of paired end data: %s, and %s, \n",
 		  cmd_line->pe_list_lh_mates, cmd_line->pe_list_rh_mates); 
+	  /*
 	  if (cmd_line->loaded_sample_names==false)
 	    {
 	      cmd_line->loaded_sample_names = get_sample_id_from_se_pe_list(cmd_line->colour_sample_ids[0], cmd_line->pe_list_lh_mates);
@@ -737,7 +738,7 @@ int main(int argc, char **argv){
 	  if (cmd_line->loaded_sample_names==false)
 	    {
 	      cmd_line->loaded_sample_names = get_sample_id_from_se_pe_list(cmd_line->colour_sample_ids[0], cmd_line->pe_list_rh_mates);
-	    }
+	      }*/
 	}
       else
 	{
@@ -806,7 +807,7 @@ int main(int argc, char **argv){
 
       //update the graph info object
       graph_info_update_mean_readlen_and_total_seq(db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line->max_read_length+1)), bases_pass_filters_and_loaded);
-      if (cmd_line->loaded_sample_names==true)
+      if (cmd_line->entered_sampleid_as_cmdline_arg==true)
 	{
 	  graph_info_set_sample_ids(cmd_line->colour_sample_ids, 1, db_graph_info, 0);
 	}
@@ -885,7 +886,9 @@ int main(int argc, char **argv){
 						     graph_has_had_no_other_binaries_loaded, db_graph, db_graph_info,
 						     cmd_line->load_colours_only_where_overlap_clean_colour, cmd_line->clean_colour,
 						     cmd_line->for_each_colour_load_union_of_binaries);
+
 	      //if the colour_list contained sample_ids, add them to the GraphInfo object
+	      // these will override the sample-id in the binary
 	      if (cmd_line->loaded_sample_names==true)
 		{
 		  graph_info_set_sample_ids(cmd_line->colour_sample_ids, cmd_line->num_colours_in_input_colour_list,

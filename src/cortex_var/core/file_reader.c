@@ -79,7 +79,7 @@ void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, b
 								   int max_read_length, int colour, dBGraph* db_graph)
 {
 
-  char filename[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME];
+  char filename[MAX_FILENAME_LENGTH];
   int num_single_ended_files_loaded   = 0;
   int num_file_pairs_loaded   = 0;
 
@@ -112,46 +112,41 @@ void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, b
 
       while (!feof(se_fp))
 	{
-	  if (fgets(filename,MAX_FILENAME_LENGTH, se_fp) !=NULL)
+	  int ret_fscan_se = fscanf(se_fp, "%s\n", filename);
+	  if (ret_fscan_se==EOF)
 	    {
-	      char temp1[MAX_FILENAME_LENGTH];
-	      temp1[0]='\0';
-	      strcpy(temp1, filename);
-	      char delims[] = "\t";
-	      char* proper_filename = strtok(temp1, delims);
-	      if (proper_filename==NULL)
-		{
-		  printf("Coding error, given filename %s, and by parsing it to check if there is a sample-id, we lose it and get a NULL\n", filename);
-		  exit(1);
-		}
-	      num_single_ended_files_loaded++;
-	  
-	      if (format==FASTQ)
-		{
-		  load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(proper_filename, &single_seq_bases_read, &single_seq_bases_loaded,readlen_count_array,
-										     &bad_se_reads, qual_thresh, &dup_se_reads, 
-										     max_read_length, 
-										     remv_dups_se,break_homopolymers, homopol_limit, ascii_fq_offset, 
-										 db_graph, individual_edge_array, colour);
-		}
-	      else if (format==FASTA)
-		{
-		  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(proper_filename,&single_seq_bases_read, &single_seq_bases_loaded,readlen_count_array,
-										     &bad_se_reads, &dup_se_reads, max_read_length, 
-										     remv_dups_se,break_homopolymers, homopol_limit, 
-										     db_graph, individual_edge_array, colour);
-		}
-	      else
-		{
-		  printf("SE data is being passed in, so Format in must be specified as fastq or fasta\n");
-		  exit(1);
-		}
-	  
-	  
-	      printf("\nNum SE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal SE sequence parsed:%qd\nTotal SE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n",
-		     num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_se_reads,single_seq_bases_read, single_seq_bases_loaded, dup_se_reads);
+	      printf("Unable to read from %s\n", se_f);
+	      exit(1);
 	    }
-	    
+	  
+	  num_single_ended_files_loaded++;
+	  
+	  if (format==FASTQ)
+	    {
+	      load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(filename, &single_seq_bases_read, &single_seq_bases_loaded,readlen_count_array,
+										 &bad_se_reads, qual_thresh, &dup_se_reads, 
+										 max_read_length, 
+										 remv_dups_se,break_homopolymers, homopol_limit, ascii_fq_offset, 
+										 db_graph, individual_edge_array, colour);
+	    }
+	  else if (format==FASTA)
+	    {
+	      load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(filename,&single_seq_bases_read, &single_seq_bases_loaded,readlen_count_array,
+										 &bad_se_reads, &dup_se_reads, max_read_length, 
+										 remv_dups_se,break_homopolymers, homopol_limit, 
+										 db_graph, individual_edge_array, colour);
+	    }
+	  else
+	    {
+	      printf("SE data is being passed in, so Format in must be specified as fastq or fasta\n");
+	      exit(1);
+	    }
+	  
+	  
+	  printf("\nNum SE files loaded:%i\n\tkmers:%qd\n\tCumulative bad reads:%qd\n\tTotal SE sequence parsed:%qd\nTotal SE sequence passed filters and loaded:%qd\n\tDuplicates removed:%qd\n",
+		 num_single_ended_files_loaded,hash_table_get_unique_kmers(db_graph),bad_se_reads,single_seq_bases_read, single_seq_bases_loaded, dup_se_reads);
+	  
+	  
 	}
       fclose(se_fp);
     }
@@ -831,15 +826,15 @@ void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* li
     }
 
   long long seq_length = 0;
-  char filename1[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
-  char filename2[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
+  char filename1[MAX_FILENAME_LENGTH+1];
+  char filename2[MAX_FILENAME_LENGTH+1];
   filename1[0]='\0';
   filename2[0]='\0';
 
 
   while (feof(f1) ==0)
     {
-      if (fgets(filename1,MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME, f1) !=NULL)
+      if (fgets(filename1,MAX_FILENAME_LENGTH, f1) !=NULL)
 	{
 
 	  //remove newline from end of line - replace with \0
@@ -858,25 +853,7 @@ void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* li
 	      *p = '\0';
 	    }
 
-	  char temp1[MAX_FILENAME_LENGTH];
-	  temp1[0]='\0';
-	  strcpy(temp1, filename1);
-	  char delims[] = "\t";
-	  char* proper_filename1 = strtok(temp1, delims);
-
-	  
-	  char temp2[MAX_FILENAME_LENGTH];
-	  temp2[0]='\0';
-	  strcpy(temp2, filename2);
-	  char* proper_filename2 = strtok(temp2, delims);
-	  
-	  if ((proper_filename1==NULL)||(proper_filename2==NULL))
-	    {
-	      printf("Error parsing the PE lists, started with %s and %s, and in trying to check for sample-id, got a NULL. Contact Zam\n",
-		     filename1, filename2);
-	    }
-
-	  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(proper_filename1, proper_filename2, format,
+	  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(filename1, filename2, format,
 										   bases_read, bases_loaded,readlen_count_array, 
 										   bad_reads, quality_cut_off, max_read_length, num_dups, remove_dups, 
 										   break_homopolymers, homopolymer_cutoff, fq_ascii_cutoff,
