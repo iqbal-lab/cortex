@@ -1754,7 +1754,8 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 // First take person 0's list of binaries and load them all into colour in_colour, BUT only load nodes that are already in the hash,
 //  and only load those edges that are in the clean colour. Then dump a single-colour binary of colour in_colour,
 // with filename = colour name PLUS a suffix added on the end.
-void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_colour, char* suffix, dBGraph* db_graph, GraphInfo* db_graph_info )
+void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_colour, char* suffix, 
+				      dBGraph* db_graph, GraphInfo* db_graph_info)
 {
 
   if (in_colour==clean_colour)
