@@ -1,0 +1,192 @@
+From directory tests/
+
+--- tests/dennis: ---
+
+rm *.ctx
+
+# FASTA
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --se_list dennis_5Kbp_from_chr1_2M.falist --dump_binary old.dennis_5Kbp_from_chr1_2M.fa.ctx --format FASTA --max_read_len 400 > old.fa.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list dennis_5Kbp_from_chr1_2M.falist --dump_binary new.dennis_5Kbp_from_chr1_2M.fa.ctx --format FASTA --max_read_len 400 > new.fa.out
+
+# FASTQ
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --se_list dennis_5Kbp_from_chr1_2M.fqlist --dump_binary old.dennis_5Kbp_from_chr1_2M.fq.ctx --format FASTQ --max_read_len 400 > old.fq.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list dennis_5Kbp_from_chr1_2M.fqlist --dump_binary new.dennis_5Kbp_from_chr1_2M.fq.ctx --format FASTQ --max_read_len 400 > new.fq.out
+
+# SAM
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list dennis_5Kbp_from_chr1_2M.samlist --dump_binary new.dennis_5Kbp_from_chr1_2M.sam.ctx --format FASTA --max_read_len 400 > new.sam.out
+
+# BAM
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list dennis_5Kbp_from_chr1_2M.bamlist --dump_binary new.dennis_5Kbp_from_chr1_2M.bam.ctx --format FASTA --max_read_len 400 > new.bam.out
+
+# SAM and BAM should be the same as FASTQ
+diff -q new.dennis_5Kbp_from_chr1_2M.fa.ctx old.dennis_5Kbp_from_chr1_2M.fa.ctx
+diff -q new.dennis_5Kbp_from_chr1_2M.fq.ctx old.dennis_5Kbp_from_chr1_2M.fq.ctx
+diff -q new.dennis_5Kbp_from_chr1_2M.fq.ctx new.dennis_5Kbp_from_chr1_2M.sam.ctx
+diff -q new.dennis_5Kbp_from_chr1_2M.fq.ctx new.dennis_5Kbp_from_chr1_2M.bam.ctx
+
+# Try different arguments with FASTQ
+
+cmd_old=../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1
+cmd_new=../../bin/cortex_var_31_c1
+i=1
+rm *.supernodes
+for args in '' '--remove_pcr_duplicates' '--quality_score_threshold 20' '--cut_homopolymers 4' '--cut_homopolymers 5' '--quality_score_threshold 20 --remove_pcr_duplicates' '--quality_score_threshold 20 --cut_homopolymers 5' '--cut_homopolymers 5 --remove_pcr_duplicates' '--quality_score_threshold 20 --remove_pcr_duplicates --cut_homopolymers 5'
+do
+  rm *.ctx
+  echo $i $args
+  $cmd_old --kmer_size 31 --se_list dennis_5Kbp_from_chr1_2M.fqlist --dump_binary old.dennis_5Kbp_from_chr1_2M.fq.ctx --format FASTQ --max_read_len 400 $args > old.fq.out
+  $cmd_new --kmer_size 31 --se_list dennis_5Kbp_from_chr1_2M.fqlist --dump_binary new.dennis_5Kbp_from_chr1_2M.fq.ctx --format FASTQ --max_read_len 400 $args > new.fq.out
+  diff -q new.dennis_5Kbp_from_chr1_2M.fq.ctx old.dennis_5Kbp_from_chr1_2M.fq.ctx
+
+  $cmd_old --kmer_size 31 --multicolour_bin old.dennis_5Kbp_from_chr1_2M.fq.ctx --output_supernodes old.$i.fq.supernodes > old.dumpsupernodes.out
+  $cmd_old --kmer_size 31 --multicolour_bin new.dennis_5Kbp_from_chr1_2M.fq.ctx --output_supernodes new.$i.fq.supernodes > new.dumpsupernodes.out
+  i=$(($i+1))
+done;
+
+
+--- paired_dennis: ---
+
+rm *.ctx
+
+# FASTA
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --pe_list dennis_kBkp_from_chr1_2M.falist.1,dennis_kBkp_from_chr1_2M.falist.2 --dump_binary old.dennis_5Kbp_from_chr1_2M.fa.ctx --format FASTA --max_read_len 400 > old.fa.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --pe_list dennis_kBkp_from_chr1_2M.falist.1,dennis_kBkp_from_chr1_2M.falist.2 --dump_binary new.dennis_5Kbp_from_chr1_2M.fa.ctx --format FASTA --max_read_len 400 > new.fa.out
+
+# FASTQ
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --pe_list dennis_kBkp_from_chr1_2M.fqlist.1,dennis_kBkp_from_chr1_2M.fqlist.2 --dump_binary old.dennis_5Kbp_from_chr1_2M.fq.ctx --format FASTQ --max_read_len 400 > old.fq.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --pe_list dennis_kBkp_from_chr1_2M.fqlist.1,dennis_kBkp_from_chr1_2M.fqlist.2 --dump_binary new.dennis_5Kbp_from_chr1_2M.fq.ctx --format FASTQ --max_read_len 400 > new.fq.out
+
+# SAM
+../../bin/cortex_var_31_c1 --kmer_size 31 --pe_list dennis_kBkp_from_chr1_2M.samlist.1,dennis_kBkp_from_chr1_2M.samlist.2 --dump_binary new.dennis_5Kbp_from_chr1_2M.sam.ctx --format FASTA --max_read_len 400 > new.sam.out
+
+# BAM
+../../bin/cortex_var_31_c1 --kmer_size 31 --pe_list dennis_kBkp_from_chr1_2M.bamlist.1,dennis_kBkp_from_chr1_2M.bamlist.2 --dump_binary new.dennis_5Kbp_from_chr1_2M.bam.ctx --format FASTA --max_read_len 400 > new.bam.out
+
+# SAM and BAM should be the same as FASTQ
+diff -q new.dennis_5Kbp_from_chr1_2M.fa.ctx old.dennis_5Kbp_from_chr1_2M.fa.ctx
+diff -q new.dennis_5Kbp_from_chr1_2M.fq.ctx old.dennis_5Kbp_from_chr1_2M.fq.ctx
+diff -q new.dennis_5Kbp_from_chr1_2M.fq.ctx new.dennis_5Kbp_from_chr1_2M.sam.ctx
+diff -q new.dennis_5Kbp_from_chr1_2M.fq.ctx new.dennis_5Kbp_from_chr1_2M.bam.ctx
+
+
+# Try different arguments with FASTQ
+
+for args in '' '--remove_pcr_duplicates' '--quality_score_threshold 20' '--cut_homopolymers 4' '--quality_score_threshold 20 --remove_pcr_duplicates' '--quality_score_threshold 20 --cut_homopolymers 4' '--cut_homopolymers 4 --remove_pcr_duplicates' '--quality_score_threshold 20 --remove_pcr_duplicates --cut_homopolymers 4'
+do
+rm *.ctx
+echo $args
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --pe_list dennis_kBkp_from_chr1_2M.fqlist.1,dennis_kBkp_from_chr1_2M.fqlist.2 --dump_binary old.dennis_5Kbp_from_chr1_2M.fq.ctx --format FASTQ --max_read_len 400 $args > old.fq.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --pe_list dennis_kBkp_from_chr1_2M.fqlist.1,dennis_kBkp_from_chr1_2M.fqlist.2 --dump_binary new.dennis_5Kbp_from_chr1_2M.fq.ctx --format FASTQ --max_read_len 400 $args > new.fq.out
+diff -q new.dennis_5Kbp_from_chr1_2M.fq.ctx old.dennis_5Kbp_from_chr1_2M.fq.ctx
+done;
+
+
+--- tests/simple: ---
+
+rm *.ctx
+
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --se_list simple.falist --dump_binary simple.fa.old.ctx --format FASTA --max_read_len 400 > simple.old.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list simple.falist --dump_binary simple.fa.new.ctx --format FASTA --max_read_len 400 > simple.new.out
+
+diff -q simple.fa.new.ctx simple.fa.old.ctx
+
+# Cut homopolymer 5
+rm *.ctx
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --se_list simple.falist --dump_binary old.simple.cuthomopol5.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 5 > old.simple.cuthomopol5.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list simple.falist --dump_binary new.simple.cuthomopol5.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 5 > new.simple.cuthomopol5.out
+diff -q new.simple.cuthomopol5.fa.ctx old.simple.cuthomopol5.fa.ctx
+
+# Cut homopolymer 4
+rm *.ctx
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --se_list simple.falist --dump_binary old.simple.cuthomopol4.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 4 > old.simple.cuthomopol4.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list simple.falist --dump_binary new.simple.cuthomopol4.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 4 > new.simple.cuthomopol4.out
+diff -q new.simple.cuthomopol4.fa.ctx old.simple.cuthomopol4.fa.ctx
+
+rm *.supernodes
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --multicolour_bin old.simple.cuthomopol5.fa.ctx --output_supernodes old.simple.cuthomopol5.supernodes
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --multicolour_bin new.simple.cuthomopol5.fa.ctx --output_supernodes new.simple.cuthomopol5.supernodes
+
+
+--- tests/simple2: ---
+
+rm *.ctx
+
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --se_list simple2.falist --dump_binary simple2.fa.old.ctx --format FASTA --max_read_len 400 > simple2.old.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list simple2.falist --dump_binary simple2.fa.new.ctx --format FASTA --max_read_len 400 > simple2.new.out
+
+diff -q simple2.fa.new.ctx simple2.fa.old.ctx
+
+# Cut homopolymer
+rm *.ctx
+
+# Cut homopolymer 4
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --se_list simple2.falist --dump_binary old.simple2.cuthomopol4.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 4 > old.simple2.cuthomopol4.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list simple2.falist --dump_binary new.simple2.cuthomopol4.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 4 > new.simple2.cuthomopol4.out
+
+# Cut homopolymer 5
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --se_list simple2.falist --dump_binary old.simple2.cuthomopol5.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 5 > old.simple2.cuthomopol5.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list simple2.falist --dump_binary new.simple2.cuthomopol5.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 5 > new.simple2.cuthomopol5.out
+
+diff -q new.simple2.cuthomopol4.fa.ctx old.simple2.cuthomopol4.fa.ctx
+diff -q new.simple2.cuthomopol5.fa.ctx old.simple2.cuthomopol5.fa.ctx
+
+rm *.supernodes
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --multicolour_bin old.simple2.cuthomopol5.fa.ctx --output_supernodes old.simple2.cuthomopol5.supernodes
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --multicolour_bin new.simple2.cuthomopol5.fa.ctx --output_supernodes new.simple2.cuthomopol5.supernodes
+
+
+--- tests/simple3: ---
+
+rm *.ctx
+
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --se_list simple3.falist --dump_binary simple3.fa.old.ctx --format FASTA --max_read_len 400 > simple3.old.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list simple3.falist --dump_binary simple3.fa.new.ctx --format FASTA --max_read_len 400 > simple3.new.out
+
+diff -q simple3.fa.new.ctx simple3.fa.old.ctx
+
+# Cut homopolymer
+rm *.ctx
+
+# Cut homopolymer 3
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --se_list simple3.falist --dump_binary old.simple3.cuthomopol3.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 3 > old.simple3.cuthomopol3.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list simple3.falist --dump_binary new.simple3.cuthomopol3.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 3 > new.simple3.cuthomopol3.out
+
+# Cut homopolymer 4
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --se_list simple3.falist --dump_binary old.simple3.cuthomopol4.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 4 > old.simple3.cuthomopol4.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list simple3.falist --dump_binary new.simple3.cuthomopol4.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 4 > new.simple3.cuthomopol4.out
+
+# Cut homopolymer 5
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --se_list simple3.falist --dump_binary old.simple3.cuthomopol5.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 5 > old.simple3.cuthomopol5.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --se_list simple3.falist --dump_binary new.simple3.cuthomopol5.fa.ctx --format FASTA --max_read_len 400 --cut_homopolymers 5 > new.simple3.cuthomopol5.out
+
+diff -q new.simple3.cuthomopol3.fa.ctx old.simple3.cuthomopol3.fa.ctx
+diff -q new.simple3.cuthomopol4.fa.ctx old.simple3.cuthomopol4.fa.ctx
+diff -q new.simple3.cuthomopol5.fa.ctx old.simple3.cuthomopol5.fa.ctx
+
+rm *.supernodes
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --multicolour_bin old.simple3.cuthomopol3.fa.ctx --output_supernodes old.simple3.cuthomopol3.supernodes
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --multicolour_bin new.simple3.cuthomopol3.fa.ctx --output_supernodes new.simple3.cuthomopol3.supernodes
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --multicolour_bin old.simple3.cuthomopol4.fa.ctx --output_supernodes old.simple3.cuthomopol4.supernodes
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --multicolour_bin new.simple3.cuthomopol4.fa.ctx --output_supernodes new.simple3.cuthomopol4.supernodes
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --multicolour_bin old.simple3.cuthomopol5.fa.ctx --output_supernodes old.simple3.cuthomopol5.supernodes
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --multicolour_bin new.simple3.cuthomopol5.fa.ctx --output_supernodes new.simple3.cuthomopol5.supernodes
+
+
+--- tests/paired_simple: ---
+
+rm *.ctx
+
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --pe_list simple.falist.1,simple.falist.2 --dump_binary simple.fa.old.ctx --format FASTA --max_read_len 400 > simple.old.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --pe_list simple.falist.1,simple.falist.2 --dump_binary simple.fa.new.ctx --format FASTA --max_read_len 400 > simple.new.out
+
+diff -q simple.fa.new.ctx simple.fa.old.ctx
+
+
+# With options
+rm *.ctx
+
+../../../../current/CORTEX_release_isaac_branch/bin/cortex_var_31_c1 --kmer_size 31 --pe_list simple.falist.1,simple.falist.2 --dump_binary simple.fa.old.ctx --format FASTA --max_read_len 400 --cut_homopolymers 5 --remove_pcr_duplicates > simple.old.out
+../../bin/cortex_var_31_c1 --kmer_size 31 --pe_list simple.falist.1,simple.falist.2 --dump_binary simple.fa.new.ctx --format FASTA --max_read_len 400 --cut_homopolymers 5 --remove_pcr_duplicates > simple.new.out
+
+diff -q simple.fa.new.ctx simple.fa.old.ctx
+
