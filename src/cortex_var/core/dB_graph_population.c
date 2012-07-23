@@ -3495,10 +3495,10 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
   Nucleotide *  path_labels;
   char * seq;
   boolean is_cycle;
-  double avg_coverage;
-  int min,max;
-  
-  
+  double avg_coverage=0;
+  int min=0;
+  int max=0;
+
   path_nodes        = calloc(max_length,sizeof(dBNode*));
   path_orientations = calloc(max_length,sizeof(Orientation));
   path_labels       = calloc(max_length,sizeof(Nucleotide));
@@ -3523,9 +3523,9 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
       if (length>0){	
 	sprintf(name,"node_%i",count_nodes);
 
-	print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout1,name,length,avg_coverage,min,max,
-									     path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
-									     db_graph->kmer_size,true, get_colour, get_covg);
+	print_ultra_minimal_fasta_from_path(fout1,name,length,
+					    path_nodes[0],path_orientations[0], seq,
+					    db_graph->kmer_size,true);
 	if (length==max_length){
 	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
 	}
@@ -3538,9 +3538,9 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 	if (do_we_print_singletons==true)
 	  {
 	    sprintf(name,"node_%qd",count_sing);
-	    print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout2,name,length,avg_coverage,min,max,
-										 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
-										 db_graph->kmer_size,true, get_colour, get_covg);
+	    print_ultra_minimal_fasta_from_path(fout2,name,length,
+						path_nodes[0],path_orientations[0],seq,
+						db_graph->kmer_size,true);
 	    //fprintf(fout2, "extra information:\n");
 	    print_extra_info(path_nodes, path_orientations, length, fout2);
 	  }

@@ -53,7 +53,8 @@ if ( ($check_perl5_ret !~ /$isaac_libdir/) || ($check_perl5_ret !~ /$callingscri
 {
     my $update_perl5 = "export PERL5LIB=$isaac_libdir:$callingscript_dir:\$PERL5LIB";
     print "$update_perl5\n";
-    qx{$update_perl5};
+    my $update_perl5_ret = qx{$update_perl5};
+    print "$update_perl5_ret\n";
 }
 
 use RunCallsLib;
@@ -872,11 +873,11 @@ if ($do_union eq "yes")
 	my $pref;
 	if ($workflow eq "independent")
 	{
-	    $pref="wk_flow_I_";
+	    $pref=$outvcf_filename_stub."_wk_flow_I_";
 	}
 	else
 	{
-	    $pref="wk_flow_J_";
+	    $pref=$outvcf_filename_stub."_wk_flow_J_";
 	}
 	my $final_BC_vcf_raw    = $outdir_vcfs.$pref."combined_BC_calls_at_all_k.raw.vcf";
 	my $final_BC_vcf_decomp = $outdir_vcfs.$pref."combined_BC_calls_at_all_k.decomp.vcf";
