@@ -10875,7 +10875,7 @@ void print_ultra_minimal_fasta_from_path(FILE *fout,
   
   if (include_first_kmer==false)
     {
-      fprintf(fout,">%s length:%i\n%s\n", name, length, string);
+      fprintf(fout,">%s length:%i\n%s kmer:%d\n", name, length, string, kmer_size);
     }
   else
     {
@@ -10901,7 +10901,7 @@ void print_ultra_minimal_fasta_from_path(FILE *fout,
 	  
 	  binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq);
 	  
-	  fprintf(fout,">%s length:%i\n", name,length+kmer_size);
+	  fprintf(fout,">%s length:%i kmer:%d\n", name,length+kmer_size, kmer_size);
 	  fprintf(fout,"%s", fst_seq);
 	  fprintf(fout,"%s\n",string);
       
