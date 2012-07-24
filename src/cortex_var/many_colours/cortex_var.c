@@ -897,7 +897,7 @@ int main(int argc, char **argv){
 	      timestamp();
 	      printf("Finished loading single_colour binaries\n");
 	    }
-	  else
+	  else//we are going to clean a list of binaries against one of the colours in the multicolir bin
 	    {
 	      //we have loaded a multicolour binary, and we have checked that the clean_colour is one of the colours in that binary
 	      if (cmd_line->load_colours_only_where_overlap_clean_colour==false)
@@ -908,8 +908,14 @@ int main(int argc, char **argv){
 		}
 	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
 		     cmd_line->colour_list,cmd_line->clean_colour);
+
+	      graph_info_set_specific_colour_to_cleaned_against_pool(db_graph_info,  first_colour_data_starts_going_into, 
+								      cmd_line->multicolour_bin, cmd_line->clean_colour);
+
 	      dump_successive_cleaned_binaries(cmd_line->colour_list, first_colour_data_starts_going_into,cmd_line->clean_colour,
 					       cmd_line->successively_dump_cleaned_colours_suffix, db_graph, db_graph_info);
+
+	      graph_info_UNset_specific_colour_from_cleaned_against_pool(db_graph_info, first_colour_data_starts_going_into);
 	      printf("Completed dumping of clean binaries\n");
 	    }
 
@@ -1076,21 +1082,20 @@ int main(int argc, char **argv){
 
   if (cmd_line->remv_low_covg_sups_threshold!=-1)
     {
-      //printf("Clip tips first\n");
-      //db_graph_clip_tips_in_union_of_all_colours(db_graph); zahara
-
       printf("Remove low coverage supernodes covg (<= %d) \n", cmd_line->remv_low_covg_sups_threshold);
-      db_graph_remove_errors_considering_covg_and_topology(cmd_line->remv_low_covg_sups_threshold,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
-							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,
+      db_graph_remove_errors_considering_covg_and_topology(cmd_line->remv_low_covg_sups_threshold,
+							   db_graph, 
+							   &element_get_covg_union_of_all_covgs, 
+							   &element_get_colour_union_of_all_colours,
+							   &apply_reset_to_specific_edge_in_union_of_all_colours, 
+							   &apply_reset_to_all_edges_in_union_of_all_colours,
 							   cmd_line->max_var_len);
       timestamp();
       printf("Error correction done\n");
       int z;
       for (z=0; z<NUMBER_OF_COLOURS; z++)
 	{
-	  db_graph_info->cleaning[z]->tip_clipping=false;
-	  db_graph_info->cleaning[z]->remv_low_cov_sups=true;
-	  db_graph_info->cleaning[z]->remv_low_cov_sups_thresh = cmd_line->remv_low_covg_sups_threshold;
+	  graph_info_set_remv_low_cov_sups(db_graph_info, z, cmd_line->remv_low_covg_sups_threshold);
 	}
     }
   else if (cmd_line->remove_low_coverage_nodes==true)
@@ -1098,13 +1103,13 @@ int main(int argc, char **argv){
       timestamp();
       printf("Start to to remove nodes with covg (in union of all colours)  <= %d\n", cmd_line->node_coverage_threshold);
       db_graph_remove_low_coverage_nodes_ignoring_colours(cmd_line->node_coverage_threshold, db_graph);
+
       timestamp();
       printf("Error correction done\n");
       int z;
       for (z=0; z<NUMBER_OF_COLOURS; z++)
 	{
-	  db_graph_info->cleaning[z]->remv_low_cov_nodes=true;
-	  db_graph_info->cleaning[z]->remv_low_cov_nodes_thresh = cmd_line->node_coverage_threshold;
+	  graph_info_set_remv_low_cov_nodes(db_graph_info, z, cmd_line->node_coverage_threshold);
 	}
       
     }
@@ -1148,8 +1153,11 @@ int main(int argc, char **argv){
       timestamp();
       printf("Print contigs(supernodes) in the graph created by the union of all colours.\n");
       
-      db_graph_print_supernodes_defined_by_func_of_colours(cmd_line->output_supernodes, "", cmd_line->max_var_len,// max_var_len is the public face of maximum expected supernode size
-							   db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
+      db_graph_print_supernodes_defined_by_func_of_colours(cmd_line->output_supernodes, "", 
+							   cmd_line->max_var_len,// max_var_len is the public face of maximum expected supernode size
+							   db_graph, 
+							   &element_get_colour_union_of_all_colours, 
+							   &element_get_covg_union_of_all_covgs, 
 							   &print_appropriate_extra_supernode_info);
 
 
@@ -1392,7 +1400,7 @@ int main(int argc, char **argv){
 
   cmd_line_free(cmd_line);
 
-  printf("Cortex completed - have a nice day!\n");
+  printf("Cortex completed - y'all have a nice day!\n");
   return 0;
 }
 

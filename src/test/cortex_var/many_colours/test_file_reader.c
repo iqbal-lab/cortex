@@ -85,6 +85,10 @@ void test_dump_load_sv_trio_binary(){
 
   graph_info_set_seq(ginfo, 0, seq_length_parsed_pre);
   graph_info_set_mean_readlen(ginfo, 0, 5);
+  graph_info_set_specific_colour_to_cleaned_against_pool(ginfo, 0, "zammo.ctx", 401);
+  graph_info_set_seq_err(ginfo, 0, 0.456);
+  graph_info_set_remv_low_cov_sups(ginfo, 0, 178);
+   
   db_graph_dump_binary("../data/tempfiles_can_be_deleted/dump_cortex_var_graph.ctx", 
 		       &db_node_condition_always_true, db_graph_pre, ginfo, BINVERSION);
 
@@ -104,7 +108,14 @@ void test_dump_load_sv_trio_binary(){
   CU_ASSERT(num_cols_in_binary==NUMBER_OF_COLOURS);
   CU_ASSERT(ginfo->mean_read_length[0]==5);
   CU_ASSERT(ginfo->total_sequence[0]==seq_length_parsed_pre);
-
+  CU_ASSERT(ginfo->seq_err[0]-0.456<0.0001);
+  CU_ASSERT(ginfo->cleaning[0]->tip_clipping==false);
+  CU_ASSERT(ginfo->cleaning[0]->remv_low_cov_sups==true);
+  CU_ASSERT(ginfo->cleaning[0]->remv_low_cov_sups_thresh==178);
+  CU_ASSERT(ginfo->cleaning[0]->remv_low_cov_nodes==false);
+  CU_ASSERT(ginfo->cleaning[0]->remv_low_cov_nodes_thresh==-1);
+  CU_ASSERT(strcmp(ginfo->cleaning[0]->name_of_graph_against_which_was_cleaned, "zammo.ctx colour 401")==0);
+  CU_ASSERT(ginfo->cleaning[0]->len_name_of_graph_against_which_was_cleaned==strlen("zammo.ctx colour 401"));
   //load_multicolour_binary_data_from_filename_into_graph returns total number of unique kmers loaded, times kmer_length
   CU_ASSERT_EQUAL(seq_length_post,15);
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post),5);
@@ -1161,7 +1172,6 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
 
   // last read contains two kmers that are in the graph, but which have no edge between them. This function is not sensitive to that, and should just get one window
 
-  printf("Start interesting\n");
   len = read_sequence_from_fastq(fp, seq, max_read_length,fq_ascii_offset);
   get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq, seq->qual, len, quality_cutoff, 
 										windows, max_windows, max_kmers, db_graph);  
@@ -4913,7 +4923,9 @@ void test_getting_readlength_distribution()
 	homopolymer_cutoff=5;
       }
     //breakpoint:
-    load_fastq_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/test_readlen_distrib.fastq", &seq_read, &seq_loaded, readlen_counts_ptrs,
+    load_fastq_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/test_readlen_distrib.fastq", 
+								       &seq_read, &seq_loaded, 
+								       readlen_counts_ptrs,
 									&bad_reads, qfilter, &dup_reads, 200, remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
 								       33,db_graph, individual_edge_array, 0);
     //CU_ASSERT(seq_read==correct_answers_seq_read[j]);
