@@ -1030,6 +1030,7 @@ int main(int argc, char **argv){
 
       
   printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));	  
+  printf("The following is a summary of the data that has been loaded, immediately after loading (prior to any error cleaning, calling etc)\n");
   printf("****************************************\n");
   printf("SUMMARY:\nColour\tSampleID\tMeanReadLen\tTotalSeq\tErrorCleaning\tLowCovSupsThresh\tLowCovNodesThresh\tPoolagainstWhichCleaned\n");
 
