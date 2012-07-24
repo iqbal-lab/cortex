@@ -1972,6 +1972,14 @@ sub run_checks
     {
 	die("You must specify which workflow to use, using --workflow; valid arguments are joint, and independent\n");
     }
+    if ($workflow =~ /joint/i)
+    {
+	$workflow="joint";
+    }
+    elsif ($workflow =~ /independent/i)
+    {
+	$workflow="independent";
+    }
     if ($global_logfile =~ /^([^,]+),f$/)
     {
 	## user has specified to forcibly output to this file, even if it already exists.
