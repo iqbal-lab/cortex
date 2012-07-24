@@ -829,7 +829,7 @@ void test_load_individual_binaries_into_sv_trio()
       
       
       
-      
+      graph_info_free(ginfo);
       hash_table_free(&db_graph);
     }
 
