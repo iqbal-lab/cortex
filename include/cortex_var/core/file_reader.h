@@ -166,7 +166,10 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 								  int* mean_readlen, long long* total_seq,
 								  boolean all_entries_are_unique, EdgeArrayType type, int index,
 								  boolean only_load_kmers_already_in_hash, int colour_clean,
-								  boolean load_all_kmers_but_only_increment_covg_on_new_ones);//last arg is to load the "union" of graphs
+								  char* sample_identity,
+								  boolean load_all_kmers_but_only_increment_covg_on_new_ones);
+                                                                  //last arg is to load the "union" of graphs
+								  
 
 long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, GraphInfo* db_graph_info,
 											   boolean all_entries_are_unique, EdgeArrayType type, int index,
