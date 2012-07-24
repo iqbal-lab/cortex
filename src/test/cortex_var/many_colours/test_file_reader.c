@@ -114,8 +114,8 @@ void test_dump_load_sv_trio_binary(){
   CU_ASSERT(ginfo->cleaning[0]->remv_low_cov_sups_thresh==178);
   CU_ASSERT(ginfo->cleaning[0]->remv_low_cov_nodes==false);
   CU_ASSERT(ginfo->cleaning[0]->remv_low_cov_nodes_thresh==-1);
-  CU_ASSERT(strcmp(ginfo->cleaning[0]->name_of_graph_against_which_was_cleaned, "zammo.ctx colour 401")==0);
-  CU_ASSERT(ginfo->cleaning[0]->len_name_of_graph_against_which_was_cleaned==strlen("zammo.ctx colour 401"));
+  CU_ASSERT(strcmp(ginfo->cleaning[0]->name_of_graph_against_which_was_cleaned, "zammo.ctx (colour 401)")==0);
+  CU_ASSERT(ginfo->cleaning[0]->len_name_of_graph_against_which_was_cleaned==strlen("zammo.ctx (colour 401)"));
   //load_multicolour_binary_data_from_filename_into_graph returns total number of unique kmers loaded, times kmer_length
   CU_ASSERT_EQUAL(seq_length_post,15);
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post),5);
