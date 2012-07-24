@@ -166,7 +166,6 @@ Edges element_get_colour_union_of_all_colours(const Element* e)
 
 Edges element_get_last_colour(const Element* e)
 {
-  int i;
   Edges edges =  get_edge_copy(*e, individual_edge_array, NUMBER_OF_COLOURS-1);
   return edges;
 }
@@ -404,7 +403,6 @@ void element_initialise_kmer_covgs_edges_and_status_to_zero(Element * e){
       exit(1);
     }
 
-  BinaryKmer tmp_kmer;
   binary_kmer_initialise_to_zero(&(e->kmer));
   //binary_kmer_assignment_operator( e->kmer, &tmp_kmer);
 
@@ -564,8 +562,6 @@ boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orie
   binary_kmer_assignment_operator(src_k, src_e->kmer);
   binary_kmer_assignment_operator(tgt_k, tgt_e->kmer);
 
-  char tmp_seq[kmer_size];
- 
   if (src_o == reverse){
     binary_kmer_assignment_operator(src_k, *(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer)));
   }

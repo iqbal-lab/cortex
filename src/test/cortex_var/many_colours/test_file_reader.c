@@ -673,6 +673,7 @@ void test_load_individual_binaries_into_sv_trio()
 									db_graph, individual_edge_array,0);
      graph_info_initialise(ginfo);
      graph_info_set_seq(ginfo, 0, seq_loaded2);
+
      db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person1_kmer31.ctx", 
 						   &db_node_condition_always_true, db_graph, ginfo, BINVERSION);
      hash_table_free(&db_graph);
@@ -687,6 +688,7 @@ void test_load_individual_binaries_into_sv_trio()
 									db_graph, individual_edge_array,0);
      graph_info_initialise(ginfo);
      graph_info_set_seq(ginfo, 0, seq_loaded3);
+
      db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person2_kmer31.ctx", 
 						   &db_node_condition_always_true, db_graph, ginfo, BINVERSION);
      hash_table_free(&db_graph);
@@ -698,6 +700,7 @@ void test_load_individual_binaries_into_sv_trio()
      int first_colour=0;
      load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_singlecolour_bins_into_multicol_bin", first_colour, true, db_graph, ginfo,
 					    false, 0, false);
+
      CU_ASSERT(ginfo->total_sequence[0]==seq_loaded1);
      CU_ASSERT(ginfo->total_sequence[1]==seq_loaded2);
      CU_ASSERT(ginfo->total_sequence[2]==seq_loaded3);

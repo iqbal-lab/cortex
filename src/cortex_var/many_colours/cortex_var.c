@@ -871,6 +871,7 @@ int main(int argc, char **argv){
 	  timestamp();
 
 	  //normal use
+
 	  if (cmd_line->successively_dump_cleaned_colours==false)
 	    {
 	      
@@ -908,14 +909,16 @@ int main(int argc, char **argv){
 		}
 	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
 		     cmd_line->colour_list,cmd_line->clean_colour);
-
+	      printf("\n\n\n\n ZAMZAMZAM first col is %d\n\n\n\n", first_colour_data_starts_going_into);
 	      graph_info_set_specific_colour_to_cleaned_against_pool(db_graph_info,  first_colour_data_starts_going_into, 
 								      cmd_line->multicolour_bin, cmd_line->clean_colour);
 
+	      db_graph_info->cleaning[first_colour_data_starts_going_into]->cleaned_against_another_graph=true;
 	      dump_successive_cleaned_binaries(cmd_line->colour_list, first_colour_data_starts_going_into,cmd_line->clean_colour,
 					       cmd_line->successively_dump_cleaned_colours_suffix, db_graph, db_graph_info);
 
-	      graph_info_UNset_specific_colour_from_cleaned_against_pool(db_graph_info, first_colour_data_starts_going_into);
+	      graph_info_unset_specific_colour_from_cleaned_against_pool(db_graph_info, first_colour_data_starts_going_into);
+	      db_graph_info->cleaning[first_colour_data_starts_going_into]->cleaned_against_another_graph=false;
 	      printf("Completed dumping of clean binaries\n");
 	    }
 
@@ -1369,7 +1372,7 @@ int main(int argc, char **argv){
 
       //reload the binary you dumped, clean off the edges, and then dump again.
       //malloc a new hash table. Only needs to be as large as you need.
-      float s = log(num_kmers_dumped_after_alignment/bucket_size)/log(2); 
+      //float s = log(num_kmers_dumped_after_alignment/bucket_size)/log(2); 
       // now 2^s = num_kmers_dumped_after_alignment/bucket_size, so s is my height
       dBGraph* db_graph2;
       printf("Reload and fix dangling edges in the temporary binary we have created\n");
@@ -1384,7 +1387,7 @@ int main(int argc, char **argv){
       GraphInfo* temp_info = graph_info_alloc_and_init();
 
       int num_c;//number of colours in binary      
-      long long  n  = load_multicolour_binary_from_filename_into_graph(tmp_dump,db_graph2, temp_info, &num_c);
+      load_multicolour_binary_from_filename_into_graph(tmp_dump,db_graph2, temp_info, &num_c);
 
 
       //this is why we are going to all this bother - cleaning edges

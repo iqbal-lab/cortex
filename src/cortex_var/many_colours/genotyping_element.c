@@ -207,7 +207,6 @@ Edges genotyping_element_get_colour_union_of_all_colours(const GenotypingElement
 
 Edges genotyping_element_get_last_colour(const GenotypingElement* e)
 {
-  int i;
   Edges edges =  genotyping_node_get_edge_copy(*e, individual_edge_array, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2-1);
   return edges;
 }
@@ -443,7 +442,6 @@ void genotyping_element_initialise_kmer_covgs_edges_and_status_to_zero(Genotypin
       exit(1);
     }
 
-  BinaryKmer tmp_kmer;
   binary_kmer_initialise_to_zero(&(e->kmer));
   //binary_kmer_assignment_operator( e->kmer, &tmp_kmer);
 
@@ -605,14 +603,10 @@ void db_genotyping_node_add_labeled_edge(GenotypingElement * e, Orientation o, N
 boolean db_genotyping_node_add_edge(GenotypingElement * src_e, GenotypingElement * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size, EdgeArrayType edge_type, int edge_index){
 
   BinaryKmer src_k, tgt_k, tmp_kmer; 
-  char seq1[kmer_size];
-  char seq2[kmer_size];
 
   binary_kmer_assignment_operator(src_k, src_e->kmer);
   binary_kmer_assignment_operator(tgt_k, tgt_e->kmer);
 
-  char tmp_seq[kmer_size];
- 
   if (src_o == reverse){
     binary_kmer_assignment_operator(src_k, *(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer)));
   }

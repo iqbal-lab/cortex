@@ -264,8 +264,9 @@ void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo
 boolean check_binary_signature_NEW(FILE * fp,int kmer_size, 
 				   BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
 
-boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* num_bitfields, int* number_of_colours_in_binary); //return true if binary header readable and has magic number
+//boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* num_bitfields, int* number_of_colours_in_binary); //return true if binary header readable and has magic number
 boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+
 void print_error_cleaning_object(FILE* fp, GraphInfo* ginfo, int colour);
 
 boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);

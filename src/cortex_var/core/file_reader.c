@@ -414,7 +414,6 @@ void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, S
       Element * previous_node  = NULL;
       Orientation current_orientation=forward;
       Orientation previous_orientation=forward;
-      Nucleotide current_base;
       BinaryKmer tmp_kmer;
       int j;
 	
@@ -513,8 +512,6 @@ void load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, long long* bas
   int entry_length;
   boolean full_entry = true;
   boolean prev_full_entry = true;
-  long long len_last_window=0; //will repeatedly read a chunk from file, break it into windows. The length of the final window
-                             // needs to be added to the length of the first window of the next chunk if this chunk was not the end of an entry
   
   while ((entry_length = file_reader(fp,seq,max_read_length,full_entry,&full_entry))){
    
@@ -825,7 +822,6 @@ void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* li
       exit(1);
     }
 
-  long long seq_length = 0;
   char filename1[MAX_FILENAME_LENGTH+1];
   char filename2[MAX_FILENAME_LENGTH+1];
   filename1[0]='\0';
@@ -1193,7 +1189,6 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
       if (current_node == NULL){
 	BinaryKmer tmp_dbg_kmer;
-	// debug ZAM zahara
 	char tmp_dbg_seq[db_graph->kmer_size];
 
 	printf("Problem in load_seq_into_array - current kmer not found %s\n",
@@ -1443,7 +1438,7 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
   dBNode node_from_file;
   element_initialise_kmer_covgs_edges_and_status_to_zero(&node_from_file);
 
-  boolean found;
+
   int count=0;
 
   if (fp_bin == NULL){
@@ -1453,7 +1448,7 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
 
   BinaryHeaderErrorCode ecode = EValid;
   BinaryHeaderInfo binfo;
-  initialise_binary_header_info(&binfo, ginfo);
+  initialise_binary_header_info(&binfo, ginfo);//pass in the main graph info
 
   if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode)))
     {
@@ -1542,7 +1537,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
   else
     {
       *mean_readlen = ginfo->mean_read_length[0];
-      *total_seq     = ginfo->total_sequence[0];
+      *total_seq    = ginfo->total_sequence[0];
     }
 
   if (binfo.number_of_colours!=1)
@@ -1613,21 +1608,8 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 											   boolean only_load_kmers_already_in_hash, int colour_clean,
 											   boolean load_all_kmers_but_only_increment_covg_on_new_ones)
 {
-  /*
-  char* temp1 = (char*) malloc(sizeof(char)*2*MAX_FILENAME_LENGTH);
-  if (temp1==NULL)
-    {
-      printf("Out of memory. Something wrong - we havent even started Cortex yet. Is some other process using all the memory on your machine? Abort Cortex\n");
-      exit(1);
-    }
-  temp1[0]='\0';
-  strcpy(temp1, filename_plus_maybe_samplename);
 
-  char delims[] = "\t";
-  char* proper_filename = strtok(temp1, delims);
-  */
 
-  // FILE* fptr = fopen(proper_filename, "r");//this might be the same as filename
   FILE* fptr = fopen(filename, "r");//this might be the same as filename
   if (fptr == NULL)
     {
@@ -1657,7 +1639,6 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 								only_load_kmers_already_in_hash, colour_clean,
 								load_all_kmers_but_only_increment_covg_on_new_ones);
       all_entries_are_unique=false;
-
       graph_info_update_mean_readlen_and_total_seq(db_graph_info, index,mean_read_len_in_this_binary, total_seq_in_this_binary);
       printf("Loaded next binary; total kmers in graph is now %qd\n",  hash_table_get_unique_kmers(db_graph) );
     }
@@ -1790,7 +1771,7 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_c
       char outfile[1000];
       outfile[0]='\0';
       sprintf(outfile,"%s_%s.ctx",line,suffix);
-      db_graph_dump_single_colour_binary_of_specified_colour(outfile, &db_node_condition_always_true,db_graph,db_graph_info,in_colour, BINVERSION);
+      db_graph_dump_single_colour_binary_of_specified_colour(outfile, &db_node_check_status_not_pruned,db_graph,db_graph_info,in_colour, BINVERSION);
       //reset that colour:
       db_graph_wipe_colour(in_colour,db_graph);
       graph_info_set_seq(db_graph_info, in_colour,0);
@@ -2524,7 +2505,7 @@ void ignore_next_read(FILE* fp, int max_read_length, boolean* full_entry,
 		      Sequence* seq)
 {
   //get next read as a C string and put it in seq. Entry_length is the length of the read.
-  int entry_length = file_reader(fp,seq,max_read_length,*full_entry,full_entry);
+  file_reader(fp,seq,max_read_length,*full_entry,full_entry);
 }
 
 //returns the number of kmers loaded
@@ -3002,7 +2983,8 @@ boolean check_binary_signature_NEW(FILE * fp,int kmer_size,
 
 //return true if signature is readable, checks binversion, number of bitfields, magic number.
 //does not check kmer is compatible with number of bitfields, leaves that to caller.
-boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode){
+boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+{
   int read;
   char magic_number[6];
   
@@ -3153,7 +3135,6 @@ boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHea
       else
 	{
 	  no_problem=false;
-	  printf("ZAM magic is %s\n", magic_number);
 	  *ecode = ECanReadEndOfHeaderMagicNumberButIsWrong;
 	}
     }
@@ -3168,25 +3149,35 @@ boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo*
   int read;
   int i;
   boolean no_problem=true;
-
+  
   for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
     {
-      read = fread(&(binfo->ginfo->mean_read_length[i]),sizeof(int),1,fp);
+      int mean_read_len=0;
+      read = fread(&mean_read_len, sizeof(int),1,fp);
       if (read==0)
 	{
 	  no_problem=false;
 	  *ecode= EFailedToReadReadLensAndCovgs;
+	}
+      else
+	{
+	  binfo->ginfo->mean_read_length[i] = mean_read_len;
 	}
     }
   if (no_problem==true)
     {
       for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
 	{
-	  read = fread(&(binfo->ginfo->total_sequence[i]),sizeof(long long),1,fp);
+	  long long tot=0;
+	  read = fread(&tot, sizeof(long long),1,fp);
 	  if (read==0)
 	    {
 	      no_problem=false;
 	      *ecode= EFailedToReadReadLensAndCovgs;
+	    }
+	  else
+	    {
+	      binfo->ginfo->total_sequence[i] =tot;
 	    }
 	}
     }
@@ -3239,7 +3230,7 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
       if (read==0)
 	{
 	  no_problem=false;
-	  printf("i is %d and num colours is %d, but read is zero DEBUGZAM zahara\n", i, binfo->number_of_colours);
+	  printf("i is %d and num colours is %d, but read is zero  - problem reading binary header. Contact Zam\n", i, binfo->number_of_colours);
 	  *ecode = EFailedToReadSeqErrRates;
 	}
     }
@@ -3332,7 +3323,7 @@ boolean read_next_error_cleaning_object(FILE* fp, ErrorCleaning* cl)
 
 }
 
-
+/*
 //return true if signature is readable
 boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* number_of_bitfields, int* number_of_colours_in_binary){
   int read;
@@ -3399,7 +3390,7 @@ boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* number_
 
   return true;
 }
-
+*/
 
 
 //given a list of filenames, check they all exist, and return the number of them
@@ -3532,14 +3523,14 @@ boolean check_colour_list(char* filename, int kmer)
 	  printf("Cannot open %s from list %s\n", list_cols[i], filename);
 	  exit(1);
 	}
-      int bv;
-      int k;
-      int num_b;
-      int num_c;
-      int check = query_binary(fptr, &bv, &k, &num_b, &num_c);
+      GraphInfo* ginfo=graph_info_alloc_and_init();
+      BinaryHeaderErrorCode ecode=EValid;
+      BinaryHeaderInfo binfo;
+      initialise_binary_header_info(&binfo, ginfo);
+      int check = query_binary_NEW(fptr, &binfo, &ecode);
       if (check==true)
 	{
-	  printf("Error with input arguments.\n --colour_list requires a list of files, each of which represent a colour.\n Inside each of those ");
+	  printf("Error with input arguments. SUmmary: you have passed in a list of binaries, not a list of lists of binaries.\n--colour_list requires a list of files, each of which represent a colour.\n Inside each of those ");
 	  printf("should be a list of cortex binaries. \nHowever your colour list %s contains this file %s which is itself a cortex binary not a list of binaries\n", filename, list_cols[i]);
 	  exit(1);
 	}
@@ -3575,12 +3566,12 @@ boolean check_colour_list(char* filename, int kmer)
 		      printf("Cannot open this file %s\n", file);
 		      exit(1);
 		    }
-		  int bv2;
-		  int k2;
-		  int num_b2;
-		  int num_c2;
-
-		  int check2 = query_binary(fp_putative_binary, &bv2, &k2, &num_b2, &num_c2);
+		  
+		  GraphInfo* ginfo2=graph_info_alloc_and_init();
+		  BinaryHeaderErrorCode ecode2=EValid;
+		  BinaryHeaderInfo binfo2;
+		  initialise_binary_header_info(&binfo2, ginfo2);
+		  int check2 = query_binary_NEW(fp_putative_binary, &binfo2, &ecode2);
 		  fclose(fp_putative_binary);
 		  if (check2==false)
 		    {
@@ -3589,25 +3580,25 @@ boolean check_colour_list(char* filename, int kmer)
 		      printf("However it contains %s, which is not a cortex binary\n", file);
 		      exit(1);
 		    }
-		  else if (k2 != kmer)
+		  else if (binfo2.kmer_size != kmer)
 		    {
-		      printf("This binary %s is a kmer %d binary, and cannot be loaded into the main graph which has kmer %d\n", file,k2, kmer);
+		      printf("This binary %s is a kmer %d binary, and cannot be loaded into the main graph which has kmer %d\n", file,binfo.kmer_size, kmer);
 		      exit(1);
 		    }
-		  else if (num_b2!=NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
+		  else if (binfo2.number_of_bitfields != NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
 		    {
 		      printf("Cannot load this binary %s, as it was built with max_kmer_size=%d, whereas the current graph has this set to %d. Incompatible binary.\n",
-			     file, num_b2, NUMBER_OF_BITFIELDS_IN_BINARY_KMER);
+			     file, binfo2.number_of_bitfields, NUMBER_OF_BITFIELDS_IN_BINARY_KMER);
 		      exit(1);
 		    }
-		  else if (num_c2 !=1)
+		  else if (binfo2.number_of_colours !=1)
 		    {
 		      printf("Input error. --colour_list requires a list of colour files, each one containing a list of single-colour binaries\n");
-		      printf("This binary %s is not a single colour binary - it has %d colours.\n", file, num_c2);
+		      printf("This binary %s is not a single colour binary - it has %d colours.\n", file, binfo2.number_of_colours);
 		      exit(1);
 		    }
 		  count++;
-
+		  graph_info_free(ginfo2);
 		}
 	    }
 	  fclose(fp);
@@ -3619,6 +3610,7 @@ boolean check_colour_list(char* filename, int kmer)
 
 
       fclose(fptr);
+      graph_info_free(ginfo);
     }
 
 

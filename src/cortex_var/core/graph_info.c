@@ -213,11 +213,13 @@ void graph_info_set_specific_colour_to_cleaned_against_pool(GraphInfo* ginfo, in
   //set the "name" to be "binary_blah.ctx colour 5", for example
   ginfo->cleaning[colour]->name_of_graph_against_which_was_cleaned[0]='\0';
   strcat(ginfo->cleaning[colour]->name_of_graph_against_which_was_cleaned, multicol_binary);
-  strcat(ginfo->cleaning[colour]->name_of_graph_against_which_was_cleaned, " colour ");
+  strcat(ginfo->cleaning[colour]->name_of_graph_against_which_was_cleaned, " (colour ");
   char col_as_str[50];
   col_as_str[0]='\0';
   sprintf(col_as_str, "%d", colour_in_multicol);
   strcat(ginfo->cleaning[colour]->name_of_graph_against_which_was_cleaned, col_as_str);
+  strcat(ginfo->cleaning[colour]->name_of_graph_against_which_was_cleaned, ")");
+
   //then set the len variable
   ginfo->cleaning[colour]->len_name_of_graph_against_which_was_cleaned
     = strlen(ginfo->cleaning[colour]->name_of_graph_against_which_was_cleaned);

@@ -247,7 +247,8 @@ const char* usage=
 "   [--exclude_ref_bubbles]\t\t\t\t\t=\t If you have specified --ref_colour, this will exclude any bubble in that colour from being called by the Bubble Caller.\n" \
   // -u
   //hidden from public
-  //  "   [--estim_e_with_snps FILENAME]\t\t\t\t\t=\t Use SNPs alleles known (eg from SNP-chip genotyping) to estimate\n\t\t\t\t\t the sequencing error rate for each colour. Give a list of fasta, one per colour. For //ref colour, line is ignored.\n" \
+  //  "   [--estim_e_with_snps FILENAME]\t\t\t\t\t=\t Use SNPs alleles known (eg from SNP-chip genotyping) to estimate\n\t\t\t\t\t 
+  //the sequencing error rate for each colour. Give a list of fasta, one per colour. For //ref colour, line is ignored.\n" \
 
   // -l
 "   [--path_divergence_caller [args]] \t\t\t\t\t= Make Path Divergence variant calls. Arguments can be specified in 2 ways.\n\t\t\t\t\t\t\t\t\t Option 1. Calls once, comparing reference and one colour (or union)\n\t\t\t\t\t\t\t\t\t e.g. --path_divergence_caller 1,2 --ref_colour 0 will look for differences\n\t\t\t\t\t\t\t\t\t between the union of colours 1,2 and the reference in colour 0\n\t\t\t\t\t\t\t\t\t Option2. Make several successive independent runs of the PD caller, each time against a different colour\n\t\t\t\t\t\t\t\t\tTo do this, use a square open bracket [ PRECEDED AND SEPARATED list\n\t\t\t\t\t\t\t\t\t For example --path_divergence_caller [2[3[10 --ref_colour 0 will make calls on samples 2 then 3 then 10)\n\t\t\t\t\t\t\t\t\t all output to the same file, with globally unique variant names. The caller will call against each colour in turn\n\t\t\t\t\t\t\t\t\t You must also specify --ref_colour and --list_ref_fasta\n" \
@@ -2133,7 +2134,6 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 
   if (cmd_ptr->input_multicol_bin==true)
     {
-      int num_m_cols;
       FILE* fp = fopen(cmd_ptr->multicolour_bin, "r");
       if (fp==NULL)
 	{
