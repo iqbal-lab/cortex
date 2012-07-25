@@ -874,11 +874,11 @@ if ($do_union eq "yes")
 	my $pref;
 	if ($workflow eq "independent")
 	{
-	    $pref=$outvcf_filename_stub."_wk_flow_I_";
+	    $pref=$outvcf_filename_stub."_wk_flow_I_FINAL";
 	}
 	else
 	{
-	    $pref=$outvcf_filename_stub."_wk_flow_J_";
+	    $pref=$outvcf_filename_stub."_wk_flow_J_FINAL";
 	}
 	my $final_BC_vcf_raw    = $outdir_vcfs.$pref."combined_BC_calls_at_all_k.raw.vcf";
 	my $final_BC_vcf_decomp = $outdir_vcfs.$pref."combined_BC_calls_at_all_k.decomp.vcf";
@@ -1165,7 +1165,7 @@ sub clean_vcf
     #my $bname = basename($file);
     #my $cleaned_file = $tmpdir.'/'."$bname".".cleaned";
     my $final_file = $file.".clean.sorted";
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $file $ref_fa  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl | grep -v vcf_remove_dupes.pl  > $final_file";
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $file $ref_fa  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --filter_txt OVERLAPPING | grep -v vcf_remove_dupes.pl  > $final_file";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
     print "$ret1\n";

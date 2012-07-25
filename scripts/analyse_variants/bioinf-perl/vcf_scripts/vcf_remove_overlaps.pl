@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 
+use List::Util qw(min max sum);
+
 # Use current directory to find modules
 use FindBin;
 use lib $FindBin::Bin;
@@ -18,17 +20,20 @@ sub print_usage
 
   print STDERR "" .
 "Usage: ./vcf_remove_overlaps.pl [--padding <p>] [file.vcf]
-  Remove entries that match position, REF and ALT alleles. Assumes sorted VCF
-  with duplicates removed. Example:
-    vcf-sort in.vcf | vcf_remove_dupes.pl | vcf_remove_overlaps.pl > out.vcf
-    
-  --padding <p>  require at least <p> bp between variants [default: 0]\n";
+  Remove entries that overlap on the reference. Assumes sorted VCF with
+  duplicates removed.
+
+  --padding <p>  require at least <p> bp between variants [default: 0]
+
+  Example:
+    vcf-sort in.vcf | vcf_remove_dupes.pl | vcf_remove_overlaps.pl > out.vcf\n";
+
   exit;
 }
 
 my $padding = 0;
 
-if( (@ARGV>0)  && ($ARGV[0] =~ /^-?-padding$/i) )
+if(@ARGV > 0 && $ARGV[0] =~ /^-?-padding$/i)
 {
   shift;
   $padding = shift;
@@ -76,22 +81,25 @@ $vcf->print_header();
 my $num_of_entries = 0;
 my $num_of_printed = 0;
 
-my ($prev_entry, $next_entry);
-my $print_prev = 0;
+my ($prev_entry, $entry);
+my $var_end;
+my $prev_chrom;
+my $print_prev = 1;
 
 if(defined($prev_entry = $vcf->read_entry()))
 {
   $num_of_entries++;
-  $print_prev = 1;
+  $prev_chrom = $prev_entry->{'CHROM'};
+  $var_end = $prev_entry->{'true_POS'} + length($prev_entry->{'REF'}) - 1;
 }
 
-while(defined($next_entry = $vcf->read_entry()))
+while(defined($entry = $vcf->read_entry()))
 {
   $num_of_entries++;
 
-  if($prev_entry->{'CHROM'} ne $next_entry->{'CHROM'} ||
-     $prev_entry->{'true_POS'} + length($prev_entry->{'true_REF'}) + $padding
-      < $next_entry->{'true_POS'})
+  my $same_chrom = ($entry->{'CHROM'} eq $prev_entry->{'CHROM'});
+
+  if(!$same_chrom || $var_end + $padding < $entry->{'true_POS'})
   {
     if($print_prev)
     {
@@ -106,7 +114,9 @@ while(defined($next_entry = $vcf->read_entry()))
     $print_prev = 0;
   }
 
-  $prev_entry = $next_entry;
+  my $entry_end = $entry->{'true_POS'} + length($entry->{'REF'}) - 1;
+  $var_end = $same_chrom ? max($var_end, $entry_end) : $entry_end;
+  $prev_entry = $entry;
 }
 
 if($print_prev)

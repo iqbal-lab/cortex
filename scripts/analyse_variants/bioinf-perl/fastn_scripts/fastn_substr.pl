@@ -19,8 +19,8 @@ sub print_usage
   print STDERR "" .
 "Usage: ./fastn_substr.pl [--allow_dupes|--file <f.pos>] [chr:pos:len,chr:pos-end,.] " .
   "[in1.fa in2.fq ..]\n" .
-"  Prints substrings from FASTA/Q files (or STDIN if '-').  Takes comma-\n" .
-"  separated list of regions.\n" .
+"  Prints substrings from FASTA/Q files (or STDIN if '-').  Takes comma-separated\n" .
+"  list of regions.\n" .
 "  \n" .
 "  * Regions must be 'chr:start:length,..' or 'chr:start-end,..' or 'chrX:*'\n" .
 "  * (coordinates are 1-based)  \n" .

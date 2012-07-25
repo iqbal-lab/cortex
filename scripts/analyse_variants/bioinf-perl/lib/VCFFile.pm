@@ -782,7 +782,8 @@ sub print_entry
   print $out_handle "\n";
 }
 
-# cmp variants (by chrom, pos, SVLEN, ref-allele, alt-allele)
+# sort variants (by chrom, pos, SVLEN,
+#                   case insensitive ref-allele, case insensitive alt-allele)
 sub cmp_variants
 {
   my $order = $a->{'CHROM'} cmp $b->{'CHROM'};
@@ -815,7 +816,8 @@ sub cmp_variants
   return 0;
 }
 
-# sort variants (by chrom, pos, SVLEN, ref-allele, alt-allele)
+# sort variants (by chrom, pos, SVLEN,
+#                   case insensitive ref-allele, case insensitive alt-allele)
 sub vcf_sort_variants
 {
   my ($variants) = @_;
