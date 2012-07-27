@@ -78,7 +78,7 @@ my (
 	$callfile,             $outdir,
 	$outvcf_filename_stub, $colours,
 	$number_of_colours,    $reference_colour,
-	                       $apply_filter_one_allele_must_be_ref,
+#	                       $apply_filter_one_allele_must_be_ref,
 	$classif,              $prefix,
 	$ploidy,               $require_one_allele_is_ref,
 	$stampy_hash_stub,     $ref_fasta, $unioncalls, $caller_type,
@@ -97,7 +97,7 @@ $colours                             = '';
 $number_of_colours                   = 0;
 $reference_colour                    = -1;
 $ploidy                              = 2;
-$apply_filter_one_allele_must_be_ref = "unknown";
+#$apply_filter_one_allele_must_be_ref = "unknown";
 $stampy_hash_stub                    = "";
 $ref_fasta                           = "unspecified";
 $unioncalls                          = "unspecified";
@@ -117,8 +117,8 @@ my $help = '';    #default false
 	'refcol|r:i'                           => \$reference_colour,
 	                                          # ignore this colour for the VCF - dont 
                                                   #print out anything. if there is no reference in your colours, use -1
-	'require_one_allele_is_ref|a:s'        => \$apply_filter_one_allele_must_be_ref,
-	                                          #must be "yes" or "no". Usually in VCF require one allele is the ref allele and matches the reference
+#	'require_one_allele_is_ref|a:s'        => \$apply_filter_one_allele_must_be_ref,
+#	                                          #must be "yes" or "no". Usually in VCF require one allele is the ref allele and matches the reference
 	'pop_classifier|c:s'                   => \$classif,
 	                                          ## file containing output of the population filter (classifier.R), or -1 if not used (default)
 	'prefix|p:s'                           => \$prefix,            ## this allows you to add a prefix to any var name. By default, it uses what is in the cortex callfile
@@ -254,12 +254,12 @@ if ($stampy_hash_stub eq "")
     die("You must specify Stanpy hash (either hardcode or using --stampy_hash \n");
 }
 
-if ( $apply_filter_one_allele_must_be_ref eq "unknown" )
-{
-	die(
-"You have not specified the mandatory argument --require_one_allele_is_ref, which must be either \"yes\" or \"no\"\n"
-	);
-}
+#if ( $apply_filter_one_allele_must_be_ref eq "unknown" )
+#{
+#	die(
+#"You have not specified the mandatory argument --require_one_allele_is_ref, which must be either \"yes\" or \"no\"\n"
+#	);
+#}
 
 if ( ( !( -e $stampy_bin ) ) || ( !( -d $cortex_dir ) ) )
 {
@@ -329,13 +329,13 @@ if ( !( -e $needleman_wunsch_bin ) )
 
 #print "Using reference colour $reference_colour\n";
 
-if (   ( $apply_filter_one_allele_must_be_ref eq "yes" )
-	&& ( $reference_colour == -1 ) )
-{
-	die(
-"If you say yes to apply_filter_one_allele_must_be_ref then you must specify the ref colour"
-	);
-}
+#if (   ( $apply_filter_one_allele_must_be_ref eq "yes" )
+#	&& ( $reference_colour == -1 ) )
+#{
+#	die(
+#"If you say yes to apply_filter_one_allele_must_be_ref then you must specify the ref colour"
+#	);
+#}
 if (   ( $caller_type eq "PD"  )
 	&& ( $reference_colour == -1 ) )
 {
@@ -570,12 +570,12 @@ if ($ref_fasta eq "unspecified")
 {
     ## just sort the file and PV tag it
 
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_simple";
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --filter_txt DUP_CALL  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_simple";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
     print "$ret1\n";
 
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --tag PV LEFT $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_decomp ";
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --tag PV LEFT $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --filter_txt DUP_CALL   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_decomp ";
     print "$cmd2\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
@@ -594,7 +594,7 @@ else # sort and PV tag and remove ref mismatches
     print "$ret1\n";
 
     print "Remove sites where Stampy has placed variant in wrong place\n";
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_simple ";
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl > $final_simple ";
     print "$cmd1\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
@@ -609,7 +609,7 @@ else # sort and PV tag and remove ref mismatches
     my $ret3 = qx{$cmd3};
     print "$ret3\n";
 
-    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  > $final_decomp ";
+    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_decomp ";
     print "$cmd4\n";
     my $ret4 = qx{$cmd4};
     print "$ret4\n";
@@ -1159,7 +1159,7 @@ sub  filter_calls_where_entire_ref_allele_is_multicopy
     else
     {
 	print
-	    "totally unexpected error on  $line - contact zam\@well.ox.ac.uk\n";
+	    "Unexpected error on  $line. Expected the read-id of 5prime flank in callfile to be of the form (optional_text)var_(number)_5p_flank. This bug is probably due to Zam's changes to support the new format of callfiles but also stay legacy format compatible - contact zam\@well.ox.ac.uk\n";
 	die();
     }
     close($fh);
@@ -1288,29 +1288,30 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 		return 0;
 	}
 
-	if ( $apply_filter_one_allele_must_be_ref eq "yes" )
-	{
-		## if neither allele is the ref allele - ignore this
-		if ( $which_is_ref eq "neither" )
-		{
-
-			print "Ignore var $var_name, both alleles non ref!\n";
-			return 1;
-		}
-		elsif ( $which_is_ref eq "b" )
-		{
-		      ## let Isaac's scripts handle this
-			#print "Ignore var $var_name, both alleles REF!\n";
-			#return 1;
-		}
-	}
-	else
-	{
+#	if ( $apply_filter_one_allele_must_be_ref eq "yes" )
+#	{
+#		## if neither allele is the ref allele - ignore this
+#	    ## Doesn't matter if using a fake ref or a real ref, one allele MUST match the ref!
+#		if ( $which_is_ref eq "neither" )
+#		{
+#
+#			print "This is not an error: just for auditing:  filter this variant $var_name, as both alleles are non-reference (can't go in a VCF based on the reference)\n";
+#			return 1;
+#		}
+#		elsif ( $which_is_ref eq "b" )
+#		{
+##		      ## let Isaac's scripts handle this
+#			#print "Ignore var $var_name, both alleles REF!\n";
+#			#return 1;
+#		}
+#	}
+#	else
+#	{
 		if ( ( $which_is_ref eq "neither" ) || ( $which_is_ref eq "b" ) )
 		{
-			$which_is_ref = 1;
+			$which_is_ref = 1;# this will be caught by post-processing scripts.
 		}
-	}
+#	}
 
 	if ( ( $var_name ne $var_name2 ) || ( $var_name ne $var_name3 ) )
 	{
@@ -2680,7 +2681,8 @@ sub get_next_var_from_callfile
 	else
 	{
 		print
-		  "totally unexpected error on  $line - contact zam\@well.ox.ac.uk\n";
+	    "Parsing next line of callfile - unexpected error on  $line. Expected the read-id of 5prime flank in callfile to be of the form (optional_text)var_(number)_5p_flank. This bug is probably due to Zam's changes to support the new format of callfiles but also stay legacy format compatible - contact zam\@well.ox.ac.uk\n";
+
 		die();
 	}
 }

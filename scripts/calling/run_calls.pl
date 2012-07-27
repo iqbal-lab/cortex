@@ -87,6 +87,11 @@ if (!(-e $make_table_script))
 {
     die("Cannot find script for making table of read-lengths/covgs, $make_table_script\n");
 }
+my $make_fake_ref_script = $analyse_variants_dir."make_fake_reference.pl";
+if (!(-e $make_fake_ref_script))
+{
+    die("Cannot find script for making fake reference, $make_fake_ref_script");
+}
 
 #use lib $isaac_bioinf_dir;
 use Descriptive;
@@ -108,9 +113,9 @@ my (
         $outdir,               $fastaq_index, 
 	$outvcf_filename_stub, 
         $number_of_colours,    $use_ref,
-        $apply_filter_one_allele_must_be_ref,
+#        $apply_filter_one_allele_must_be_ref,
 	$apply_classif,  $prefix,
-	$ploidy,                $require_one_allele_is_ref,
+	$ploidy,                #$require_one_allele_is_ref,
 	$stampy_hash_stub,
         $outdir_binaries,      $outdir_calls,   $outdir_vcfs, 
         $qthresh,              $dups,           $homopol,
@@ -141,7 +146,7 @@ $pd_col_args="";
 $pd_out_stub="PD";
 $outdir="cortex_results/";
 $fastaq_index="";
-$require_one_allele_is_ref           = "yes";
+#$require_one_allele_is_ref           = "yes";
 $prefix                              = "cortex";
 $outvcf_filename_stub                = "default_vcfname";
 $workflow                      = "unspecified";
@@ -150,8 +155,8 @@ $workflow                      = "unspecified";
 #$samplenames                          = '';
 #$number_of_colours                   = 0;
 $use_ref                             = "unspecified";
-$ploidy                              = 2;
-$apply_filter_one_allele_must_be_ref = "unknown";
+$ploidy                              = -1;
+#$apply_filter_one_allele_must_be_ref = "unknown";
 $apply_classif                       ='';
 $qthresh                             =-1;
 $dups                                ='';
@@ -193,7 +198,7 @@ my $help = '';    #default false
     'outvcf:s'             => \$outvcf_filename_stub,
     'ref:s'             => \$use_ref, 
     'ploidy:i'             => \$ploidy,
-    'require_one_allele_is_ref' => \$apply_filter_one_allele_must_be_ref,
+#    'require_one_allele_is_ref' => \$apply_filter_one_allele_must_be_ref,
     'apply_pop_classifier'   => \$apply_classif,
     'prefix:s'             => \$prefix,            ## this will prefix any var name
     'stampy_hash:s'        => \$stampy_hash_stub, #stampy creates blah.sthash and blah.stidx. You should enter --stampy_hash blah
@@ -211,7 +216,7 @@ my $help = '';    #default false
     'help'                   => \$help,
     'genome_size:i'        => \$genome_size,
     'refbindir:s'          =>\$refbindir,
-    'expt_type:s'          =>\$expt_type,
+#    'expt_type:s'          =>\$expt_type,
     'list_ref_fasta:s'     =>\$list_ref_fasta,
     'vcftools_dir:s'       =>\$vcftools_dir,
     'manual_override_cleaning:s' => \$manual_override_cleaning,
@@ -246,7 +251,7 @@ if ($help)
 	print "--outvcf\t\t\t\tVCFs generated will have names that start with the text you enter here\n";
 	print "--ref\t\t\t\tSpecify if you are using a reference, and if so, how.\n\t\t\t\t\tValid values are CoordinatesOnly, CoordinatesAndInCalling, and Absent\n";
 	print "--ploidy\t\t\t\tMust be 1 or 2.\n";
-	print "--require_one_allele_is_ref\t\t\t\tyes or no. Highly recommended if you want a VCF with ref chromosome positions\n";
+#	print "--require_one_allele_is_ref\t\t\t\tyes or no. Highly recommended if you want a VCF with ref chromosome positions\n";
 	print "--prefix\t\t\t\tIf you want your variant calls to have names with a specific prefix, use this\n";
 	print "--stampy_hash\t\t\t\tMANDATORY. Build a hash of your reference genome, and specify here the path to it. if stampy makes blah.stdidx etc then specify blah.\n";
 	print "--stampy_bin\t\t\t\tSpecify the path to your Stampy binary. Or manually edit this at the top of the file (it's marked out for you)\n";
@@ -262,7 +267,7 @@ if ($help)
 	print "--genome_size\t\t\t\tGenome length in base pairs - needed for genotyping\n";
 	print "--refbindir\t\t\t\tDiorectry containing binaries built of the reference at all the kmers you want to use. \n";
 	print "\t\t\t\t\tThe binary filename should contain the kmer value, eg refbinary.k31.ctx\n";
-	print "--expt_type\t\t\t\tAs in Cortex input\n";
+#	print "--expt_type\t\t\t\tAs in Cortex input\n";
 	print "--list_ref_fasta\t\t\t\tFile listing the fasta files (one per chromosome) for the reference. Needed for the PD caller\n";
 	print "--vcftools_dir\t\t\t\tVCFtools is used to generate VCFs - mandatory to either specify this on cmd-line, or manually edit the path at the top of this script\n";
 	print "--do_union\t\t\t\tHaving made per-sample callsets (per kmer and cleaning), should we combine all calls into a union set, and genotype all samples? Valid values are yes and no. Default is no.\n";
@@ -287,7 +292,6 @@ run_checks();
 
 
 
-
 ## sort out loggin
 if ($global_logfile ne "")
 {
@@ -295,6 +299,27 @@ if ($global_logfile ne "")
     *STDOUT = *GLOBAL;
 }
 
+
+if ( ($ploidy==1) && ($use_ref eq "Absent"))
+{
+    $expt_type = "EachColourAHaploidSample";
+}
+elsif ( ($ploidy==1) && ( ($use_ref eq "CoordinatesOnly") || ($use_ref eq "CoordinatesAndInCalling") ) )
+{
+    $expt_type = "EachColourAHaploidSampleExceptTheRefColour";
+}
+elsif ( ($ploidy==2) && ($use_ref eq "Absent"))
+{
+    $expt_type = "EachColourADiploidSample";
+}
+elsif ( ($ploidy==2) && ( ($use_ref eq "CoordinatesOnly") || ($use_ref eq "CoordinatesAndInCalling") ) )
+{
+    $expt_type = "EachColourADiploidSampleExceptTheRefColour";
+}
+else
+{
+    die("Either your ploidy is mis-specified (should be 1 or 2), or your --ref argument is wrong (should be Absent, CoordinatesOnly, or CoordinatesAndInCalling\n");
+}
 
 ## print start time
 print "Start time: ";
@@ -316,9 +341,10 @@ if (!(-e $classifier))
 $outdir_binaries=$outdir."binaries/";
 $outdir_calls=$outdir."calls/";
 $outdir_vcfs=$outdir."vcfs/";
+my $fake_ref_dir=$outdir."fake_reference/";
 my $tmpdir_working_vcfs = $outdir_vcfs."tmp_working/";
 my @new_dirs=($outdir_binaries, $outdir_calls, $outdir_vcfs, $tmpdir_working_vcfs);
-make_sure_dirs_exist_and_create_if_necessary(\@new_dirs); 
+make_sure_dirs_exist_and_create_if_necessary(\@new_dirs, $use_ref, $fake_ref_dir); 
 
 
 ## Now the process we will follow is
@@ -440,7 +466,10 @@ foreach my $s (@samples)
 	print LIST_ALL "$b\n";
     }
 }
-print LIST_ALL $k_to_refbin{$first_kmer};
+if ($use_ref ne "Absent")
+{
+    print LIST_ALL $k_to_refbin{$first_kmer};
+}
 close(LIST_ALL);
 my $list_all_clean_pop = $list_all_clean.".pop";
 open(LIST_ALL_CLEAN_POP, ">".$list_all_clean_pop)||die("Cannot open $list_all_clean_pop");
@@ -628,7 +657,11 @@ if  ($workflow eq "joint" )## then just assume is BC only
 	for ($cl=0; $cl < $num_cleanings; $cl++)
 	{	
 	    my $do_it = 1;
-	    my $num_cols = scalar(@samples)+1;
+	    my $num_cols = scalar(@samples);
+	    if ($use_ref ne "Absent")
+	    {
+		$num_cols++;
+	    }
 
 	    my $ctx_bin = get_right_binary($K, $cortex_dir,$num_cols);
 	    my $str;
@@ -641,9 +674,14 @@ if  ($workflow eq "joint" )## then just assume is BC only
 		$str = "exc_ref_from_calling";
 	    }
 	    my $uniqid = "joint_".$str ."kmer".$K."_cleaning_level".$cl;
-	    my $colour_list = get_colourlist_for_joint($K, $cl);
+	    my $colour_list = get_colourlist_for_joint($K, $cl, $str);
 	    
-	    my $cmd = $ctx_bin." --kmer_size $K --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list  --print_colour_coverages --ref_colour 0  --experiment_type $expt_type --genome_size $genome_size";
+	    my $cmd = $ctx_bin." --kmer_size $K --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list  --print_colour_coverages  --experiment_type $expt_type --genome_size $genome_size";
+
+	    if ($use_ref ne "Absent")
+	    {
+		$cmd = $cmd." --ref_colour 0 ";
+	    }
 	    my $bubble_output = $dir_for_joint_calls."bubble_calls_".$uniqid;
 
 	    if (!(-e $bubble_output))## we want to do it and not already done
@@ -657,6 +695,11 @@ if  ($workflow eq "joint" )## then just assume is BC only
 		elsif ($use_ref eq "CoordinatesOnly")
 		{
 		    $cmd = $cmd." --detect_bubbles1 \*0/\*0 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len ";
+		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
+		}
+		elsif ($use_ref eq "Absent")
+		{
+		    $cmd = $cmd." --detect_bubbles1 -1/-1 --output_bubbles1 $bubble_output --max_var_len $max_var_len ";
 		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
 		}
 		
@@ -677,7 +720,7 @@ if  ($workflow eq "joint" )## then just assume is BC only
 		}
 		else
 		{
-		    die("ZAM TODO - in case where no reference at all, auto generate a ref");
+		    $joint_callfiles{$K}{$cl} =  $bubble_output ;
 		}
 
 		$do_it=0;
@@ -904,9 +947,7 @@ if ($do_union eq "yes")
 ##    the ref allele does not match the reference. Check each line has right number of fields.
 ######################################################################################################
 
-## Now we have a bunch of VCFs, and we need to remove duplicate lines, sort them, 
-	#print "\n****** Clean the union VCFs  ***\n";
-	#clean_all_vcfs(\%vcfs_needing_post_processing);
+
     }
 }
 
@@ -1051,7 +1092,7 @@ sub get_refbin_name
 }
 sub get_colourlist_for_joint
 {
-    my ($kmer, $level) = @_;
+    my ($kmer, $level, $str) = @_;
 
 
     my $tmpdir = $outdir_calls."tmp_filelists/";
@@ -1060,23 +1101,29 @@ sub get_colourlist_for_joint
 	my $c = "mkdir -p $tmpdir";
 	qx{$c};
     }
-    if ($refbindir !~ /\/$/)
-    {
-	$refbindir=$refbindir.'/';
-    }
 
-    
-    my $ref_bin_list = $tmpdir."filelist_refbin_for_joint_k".$kmer;
-    open(REF, ">".$ref_bin_list)||die("Cannot open $ref_bin_list");
-    print REF $refbindir;
-    print REF get_refbin_name($refbindir, $kmer);
-    print REF "\n";
-    close(REF);
-      
-    
-    my $outfile = $tmpdir."tmp_colourlist_joint_kmer".$kmer."_level".$level;
+    my $outfile = $tmpdir."tmp_colourlist_joint_".$str."_kmer".$kmer."_level".$level;
     open(OUT, ">".$outfile)||die("Cannot open $outfile");
-    print OUT  $ref_bin_list."\n";
+
+
+    if ($use_ref ne "Absent")
+    {
+	if ($refbindir !~ /\/$/)
+	{
+	    $refbindir=$refbindir.'/';
+	}
+
+
+	my $ref_bin_list = $tmpdir."filelist_refbin_for_joint_".$str."_k".$kmer;
+
+	open(REF, ">".$ref_bin_list)||die("Cannot open $ref_bin_list");
+	print REF $refbindir;
+	print REF get_refbin_name($refbindir, $kmer);
+	print REF "\n";
+	close(REF);
+
+	print OUT  $ref_bin_list."\n";
+    }
 
 
     foreach my $sample (@samples)
@@ -1125,62 +1172,6 @@ sub get_num_cleaning_levels
     }
 
     return $num;
-}
-sub clean_all_vcfs
-{
-    my ($href) = @_;
-    foreach my $k (keys %$href)
-    {
-	clean_vcf($k);
-    }
-}
-
-
-sub clean_vcf
-{
-    my ($file) = @_;
-    die("deprecated");
-    my $type="";
-    if ($file=~ /raw/)
-    {
-	$type="raw";
-    }
-    elsif ($file =~ /decomp/)
-    {
-	$type="decomp";
-    }
-    else
-    {
-	die("Trying to clean a VCF that is neither raw nor decomp - $file\n");
-    }
-
-    #my $tmpdir = $outdir_vcfs."tmpdir";
-    #if (!(-d $tmpdir))
-    #{#
-	#my $c = "mkdir -p $tmpdir";
-	#qx{$c};
-    #}
-
-    my $ref_fa = get_ref_fasta($list_ref_fasta); 
-    #my $bname = basename($file);
-    #my $cleaned_file = $tmpdir.'/'."$bname".".cleaned";
-    my $final_file = $file.".clean.sorted";
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $file $ref_fa  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --filter_txt OVERLAPPING | grep -v vcf_remove_dupes.pl  > $final_file";
-    print "$cmd1\n";
-    my $ret1 = qx{$cmd1};
-    print "$ret1\n";
-
-
-    ##now sort
-    #
-    #my $sortcmd = "(cat $cleaned_file  | head -100 | grep ^#; cat $cleaned_file  | grep -v ^# | sort -k1,1d -k2,2n;) > $final_file";
-    #qx{$sortcmd};
-
-
-    ## Now remove variants where the ref allele does not match the ref allele at that position in the ref (mapping error)    
-    ## <<<< fill in
-
-
 }
 
 
@@ -1289,9 +1280,10 @@ sub merge_list_of_vcfs
 	}
 	close($catout_fh);
 
-	## Now cleanup - remove dups.
-
-	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl > $outfilename";
+	## Now cleanup - remove dups etc
+#	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_combine_alleles.pl  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl > $outfilename";	
+	#debug
+	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_combine_alleles.pl  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl > $outfilename";
 	print "$cmd1\n";
 	my $ret1 = qx{$cmd1};
 	print "$ret1\n";
@@ -1381,13 +1373,29 @@ sub build_vcfs
 	}
 	close(COL);
     }
-    my $cmd = "perl ".$proc_calls." --callfile $file --callfile_log $call_log --kmer $kmer_size --caller $which_caller --outdir $directory --outvcf $string --samplename_list $colournames --num_cols $num  --ploidy $ploidy --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin --vcftools_dir $vcftools_dir ";
+
+    my $ref_fa;
+    if ($use_ref eq "Absent")
+    {
+	## make a fake reference.
+	($ref_fa, $stampy_hash_stub) = make_fake_reference(\%joint_callfiles, $make_fake_ref_script, $stampy_bin, $fake_ref_dir);
+    }
+    else
+    {
+	$ref_fa = get_ref_fasta($list_ref_fasta); 
+    }
+
+    my $cmd = "perl ".$proc_calls." --callfile $file --callfile_log $call_log --kmer $kmer_size --caller $which_caller --outdir $directory --outvcf $string --samplename_list $colournames --num_cols $num  --ploidy $ploidy --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin --vcftools_dir $vcftools_dir --ref_fasta $ref_fa ";
     if ($use_ref ne "Absent")
     {
-	my $ref_fa = get_ref_fasta($list_ref_fasta); 
-	$cmd = $cmd." --ref_fasta $ref_fa ";
-	$cmd = $cmd." --refcol 0 --require_one_allele_is_ref yes"; 
+	#$cmd = $cmd." --refcol 0 --require_one_allele_is_ref yes"; 
+	$cmd = $cmd." --refcol 0 "; 
     }
+    else#no reference
+    {
+	#$cmd = $cmd." --require_one_allele_is_ref no ";
+    }
+
     if ($which_caller eq "BC")
     {
 	## no need for this - it will take it from the callfile/genotype file
@@ -1428,7 +1436,34 @@ sub build_vcfs
 }
 
 
+#pass in variant calls, make a ref fasta, build a stampy hash, and return them
+sub make_fake_reference
+{
+    my ($href_callfiles, $make_ref_bin, $stampy_bin, $fake_ref_dir) = @_;
 
+    ## specify ref fasta name
+    my $fa = $fake_ref_dir."fake.fa";
+
+    ## make the reference
+    my $log = $fake_ref_dir."output_make_fake_ref.log";
+    my $mk_ref_cmd = "perl $make_ref_bin --callfile $callfile --outfile $fa  > $log 2>&1 ";
+    print "$mk_ref_cmd\n";
+    my $ret_ref_cmd = qx{$mk_ref_cmd};
+    print "$ret_ref_cmd\n";
+
+    my $stampy_hash_stub = $fake_ref_dir."fake";
+    ##make the stampy hash in that directory
+    my $stampylog = $fake_ref_dir."output_run_stampy_on_fakeref.log";
+    my $st_cmd1 = "$stampy_bin --assembly=fake_reference -G $stampy_hash_stub $fa > $stampylog  2>&1" ;
+    qx{$st_cmd1};
+
+    my $st_cmd2 = "$stampy_bin  -g $stampy_hash_stub -H $stampy_hash_stub  >> $stampylog  2>&1" ;
+    qx{$st_cmd2};
+
+    
+    return ($fa, $stampy_hash_stub);
+
+}
 
 sub make_multicol_filelist
 {
@@ -1965,6 +2000,15 @@ sub get_number_samples
 
 sub run_checks
 {
+    if ( ($ploidy!=1) && ($ploidy!=2) )
+    {
+	die("You must specify ploidy, using --ploidy 1 (haploid) or --ploidy 2 (diploid). Currently run_calls doesn't support other ploidy\n");
+    }
+#    if ( ($use_ref eq "Absent") && ($require_one_allele_is_ref eq "yes") )
+#    {
+#	$require_one_allele_is_ref="no";
+ #   }
+
     if ($use_ref eq "unspecified")
     {
 	die("You must specify whether you are using a reference, using --ref\n");
@@ -1981,6 +2025,16 @@ sub run_checks
     {
 	$workflow="independent";
     }
+
+    if ( ($workflow eq "independent") && ($use_ref eq "Absent") )
+    {
+	die("The Independent workflow must have --ref CoordinatesAndInCalling. If you want to use no reference at all, use the joint workflow. If you want the independent workflow, use CoordinatesAndInCalling\n");
+    }
+    if ( ($workflow eq "independent") && ($use_ref eq "CoordinatesOnly") )
+    {
+	die("The Independent workflow must have --ref CoordinatesAndInCalling. If you want to use the reference for Coordinates only, use the joint workflow. If you want the independent workflow, use CoordinatesAndInCalling\n");
+    }
+
     if ($global_logfile =~ /^([^,]+),f$/)
     {
 	## user has specified to forcibly output to this file, even if it already exists.
@@ -2013,10 +2067,7 @@ sub run_checks
     {
 	$number_of_colours = get_number_samples($fastaq_index)+1;
     }
-    if ($expt_type eq "")
-    {
-	die("You must specify --expt_type as one of EachColourADiploidSample, EachColourADiploidSampleExceptTheRefColour,  EachColourAHaploidSample,EachColourAHaploidSampleExceptTheRefColour\n");
-    }
+
     if ($do_pd eq "yes")
     {
 	if ( $list_ref_fasta eq "nonexistent_nonsense" )
@@ -2041,6 +2092,14 @@ sub run_checks
     if ( ($use_ref ne "Absent") && ($refbindir eq ""))
     {
 	die("Since you specified $use_ref for --ref, You must also specify a directory with pre-built binaries of the reference genome, at the kmers you use, using --refbindir");
+    }
+    if ( ($use_ref eq "Absent") && ($refbindir ne ""))
+    {
+	die("Since you specified --ref Absent, you cannot also specify --refbindir ");
+    }
+    if ( ($use_ref eq "Absent") && ($list_ref_fasta ne "nonexistent_nonsense"))
+    {
+	die("Since you specified --ref Absent, you cannot also specify --list_ref_fasta");
     }
     if ($refbindir ne "")
     {
@@ -2097,32 +2156,35 @@ sub run_checks
 	die("--kmer_step must have positive integer argument");
     }
 
-    ## check ref binary exists
-
-    opendir (DIR, $refbindir) or die("Cannot open reference binary directory $refbindir\n");
-    my @files=();
-    while (my $file = readdir(DIR)) {
-	push @files, $file;
-    }
-    my $z;
-    for ($z=$first_kmer; $z<=$last_kmer; $z+=$kmer_step)
+    if ($use_ref ne "Absent")
     {
-	# is there a binary with this k in its name in that directory
-	my $found=0;
-	foreach my $f (@files)
+	## check ref binary exists
+	opendir (DIR, $refbindir) or die("Cannot open reference binary directory $refbindir\n");
+	my @files=();
+	while (my $file = readdir(DIR)) {
+	    push @files, $file;
+	}
+	my $z;
+	for ($z=$first_kmer; $z<=$last_kmer; $z+=$kmer_step)
 	{
-	    
-	    if (($f =~ /k$z/) && ($f =~ /.ctx/))
+	    # is there a binary with this k in its name in that directory
+	    my $found=0;
+	    foreach my $f (@files)
 	    {
-		$found=1;
-		$k_to_refbin{$z}=$refbindir.$f;
+		
+		if (($f =~ /k$z/) && ($f =~ /.ctx/))
+		{
+		    $found=1;
+		    $k_to_refbin{$z}=$refbindir.$f;
+		}
+	    }
+	    if ($found==0)
+	    {
+		die("Cannot find a reference binary for k=$z in the specified dir $refbindir. run_calls.pl expects you to have built these reference binaries in advance, and places them in a single directory. The filename must contain the letter k, followed by the kmer value; for example the k=21 binary must have a filename containing \"k21\". \n");
 	    }
 	}
-	if ($found==0)
-	{
-	    die("Cannot find a reference binary for k=$z in the specified dir $refbindir. run_calls.pl expects you to have built these reference binaries in advance, and places them in a single directory. The filename must contain the letter k, followed by the kmer value; for example the k=21 binary must have a filename containing \"k21\". \n");
-	}
     }
+
     if ( ($do_auto_cleaning ne "yes") && ($do_auto_cleaning ne "no") && ($do_auto_cleaning ne "stringent") )
     {
 	print ("--auto_cleaning takes an argument that must be \"yes\" or \"no\", but you have given it this value ");

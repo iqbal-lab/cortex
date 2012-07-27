@@ -10473,7 +10473,7 @@ void print_ultra_minimal_fasta_from_path(FILE *fout,
   
   if (include_first_kmer==false)
     {
-      fprintf(fout,">%s length:%i\n%s kmer:%d\n", name, length, string, kmer_size);
+      fprintf(fout,">%s length:%i kmer:%d\n%s\n", name, length, kmer_size, string);
     }
   else
     {
