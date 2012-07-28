@@ -59,11 +59,7 @@ use Descriptive;
 ###******** Description of process_calls.pl ##################################################################
 # process_call.pl Takes as input a set of variant calls made by Cortex, maps the flanks, aligns
 # branches against each other to determine variant type, splits out SNPs from clusters so we have precise loci,
-# It assumes you have a reference to map to - VCF format needs a chromosome and coordinate
-# If you do not have a reference, and want a VCF-like thing, (suppose you have 20,000 variant calls) I suggest you make a reference genome
-# which consists of 20,000 "chromosomes". Each chromosome is 5p-flank + branch1 + 3p flank, cat-ed together.
-# Build a stampy hash of this reference, and use process_calls. Each call will then be on its own chromosome, and you
-# will get a VCF4.0 file that shows you all your calls, which samples have which alleles, and how your alleles related to each other
+# 
 ##############################################################################################################
 
 
@@ -80,15 +76,15 @@ my (
 	$number_of_colours,    $reference_colour,
 #	                       $apply_filter_one_allele_must_be_ref,
 	$classif,              $prefix,
-	$ploidy,               $require_one_allele_is_ref,
+	$ploidy,               #$require_one_allele_is_ref,
 	$stampy_hash_stub,     $ref_fasta, $unioncalls, $caller_type,
-        $callfile_log,         $kmer
+        $callfile_log,         $kmer, $global_var_ctr
 );
 
 #set defaults
 my $pooled_colour = -1;    #deprecated
 $classif                             = -1;
-$require_one_allele_is_ref           = "yes";
+#$require_one_allele_is_ref           = "yes";
 $prefix                              = "";
 $outdir                              = ".";
 $outvcf_filename_stub                = '';
@@ -104,6 +100,8 @@ $unioncalls                          = "unspecified";
 $caller_type                         = "unspecified";
 $callfile_log                        = "unspecified";
 $kmer                                = -1;
+$global_var_ctr                      =0;
+
 my $help = '';    #default false
 
 
@@ -132,6 +130,7 @@ my $help = '';    #default false
                                                                 ##  is sometimes annotated with KMER, which we may want to preserve
         'caller|l:s'                           => \$caller_type,# BC or PD
         'kmer|k:i'                             => \$kmer,
+        'global_var_ctr:i'                      => \$global_var_ctr,## for internal use only, used by run_calls.pl
 	'help'                                 => \$help,
 );
 
@@ -249,10 +248,6 @@ if ($vcftools_dir eq "/path/to/vcftools/dir")
     die("You must specify the VCFTools directory, either on the commandline with --vcftools_dir, or by editing process_calls.pl manually (it's highlighted for you at the top of the file)\n");
 }
 
-if ($stampy_hash_stub eq "")
-{
-    die("You must specify Stanpy hash (either hardcode or using --stampy_hash \n");
-}
 
 #if ( $apply_filter_one_allele_must_be_ref eq "unknown" )
 #{
@@ -261,12 +256,16 @@ if ($stampy_hash_stub eq "")
 #	);
 #}
 
-if ( ( !( -e $stampy_bin ) ) || ( !( -d $cortex_dir ) ) )
-{
+if ( ( !( -e $stampy_bin )) && ($reference_colour != -1) )
+{ 
 	print(
-"Please manually modify the two lines at the top of process_calls.pl to give the paths to stampy.py, and your Cortex install directory."
+"Since you have specified a reference colour (--refcol), I assume you are using a reference. In this case, this script requires Stampy be installed, but it cannot find it. I tlooked for $stampy_bin which is either the default (Zam's path) or the file you entered as the argument of --stampy_bin. Please can you re-run, entering a valid path to Stampy. eg /home/myname/path/to/stampy.py\n"
 	);
 	die();
+}
+if (!( -d $cortex_dir ) )
+{
+    die("I have tried to get the path to your Cortex directory, but I seem to have failed. I think it is $cortex_dir, but this does not exist (or your fileserver suddenly went down). Please email zam and tell him what happened\n");
 }
 
 if ( $number_of_colours == 0 )
@@ -298,6 +297,18 @@ if ( ( $reference_colour < 0 ) && ( $reference_colour != -1 ) )
 	die(
 "Reference colour must be -1 (meaning there is no reference), or >=0 - you entered $reference_colour"
 	);
+}
+if ( ( $reference_colour!=-1 ) && ( $stampy_hash_stub eq "" ) )
+{
+	die(
+"If you are using a reference in the graph, then you must provide a stampy hash\n"
+	);
+}
+
+if ( ( $reference_colour==-1 ) && ( $stampy_hash_stub ne "" ) )
+{
+    print("You can either use a reference, or not. If you use a reference, specify --refcol AND --stampy_hash. \n");
+    die("If you have not used a reference in the Cortex graph, then do not specify --refcol and do not specify --stampy_hash\n");
 }
 
 if ( ( $ploidy != 1 ) && ( $ploidy != 2 ) )
@@ -408,41 +419,48 @@ my %colour_to_totalseq=();
 get_covg_and_total_seq_from_log($callfile_log, \%colour_to_readlen, \%colour_to_totalseq);
 
 
-
 ## 1. Map 5p flanks
 my $bname     = basename($callfile);
 my $flankfile = $outdir . $bname . ".5pflanks";
+my $mapped_flanks = $flankfile . ".sam";
+my %var_name_to_cut_flank = ();
+my %var_name_to_flank_mq_filter           = ();
 
-if ( !-e $flankfile )
+## Only map the flanks if there is a reference to map to!
+if ($reference_colour !=-1) 
 {
+    if ( !-e $flankfile )
+    {
 	my $flank_cmd = "perl $flank_bin $callfile > $flankfile";
 	print "$flank_cmd\n";
 	my $flank_ret = qx{$flank_cmd};
 	print "$flank_ret\n";
-}
-
-if ( ( !( -e $flankfile ) ) || ( -z $flankfile ) )
-{
+    }
+    
+    if ( ( !( -e $flankfile ) ) || ( -z $flankfile ) )
+    {
 	die( "$flankfile either failed to be created, or was created with size zero"
-	);
-}
-
-my $mapped_flanks = $flankfile . ".sam";
-if ( -e $mapped_flanks )
-{
+	    );
+    }
+    
+    
+    if ( -e $mapped_flanks )
+    {
 	print("$mapped_flanks already exists, so wont re-do it\n");
-}
-else
-{
+    }
+    else
+    {
 	my $map_flanks_cmd =
-"$stampy_bin -g $stampy_hash_stub -h $stampy_hash_stub --norefoutput --inputformat=fasta -M $flankfile -o $mapped_flanks";
+	    "$stampy_bin -g $stampy_hash_stub -h $stampy_hash_stub --norefoutput --inputformat=fasta -M $flankfile -o $mapped_flanks";
 	print "$map_flanks_cmd\n";
 	my $map_flanks_ret = qx{$map_flanks_cmd};
 	print "$map_flanks_ret\n";
+    }
+    get_list_vars_with_cut_flanks( $mapped_flanks, \%var_name_to_cut_flank );
+    filter_by_flank_mapqual( $mapped_flanks, \%var_name_to_flank_mq_filter );
 }
 
-my %var_name_to_cut_flank = ();
-get_list_vars_with_cut_flanks( $mapped_flanks, \%var_name_to_cut_flank );
+
 
 ## 2. Align branches against each other
 my $proc_bub_output = $outdir . $bname . ".aligned_branches";
@@ -451,33 +469,21 @@ if ( !( -e $proc_bub_output ) )
 {
 	wrap_needleman( $needleman_wunsch_bin, $callfile, $prefix,
 		$proc_bub_output );
-
-#    my $proc_bub_cmd = "perl $wrap_isaac_bin $needleman_wunsch_bin $callfile $prefix > $proc_bub_output 2>&1";
-#   print "$proc_bub_cmd\n";
-#  my $proc_bub_ret = qx{$proc_bub_cmd};
-# print "$proc_bub_ret\n";
-
-#    my $proc_bub_cmd = "perl $process_bubbles_bin $callfile $prefix > $proc_bub_output 2>&1";
-#    print "$proc_bub_cmd\n";
-#    my $proc_bub_ret = qx{$proc_bub_cmd};
-#    print "$proc_bub_ret\n";
 }
 else
 {
-	print
-"Not aligning branches against each other, as $proc_bub_output already exists\n";
+	print "Not aligning branches against each other, as $proc_bub_output already exists\n";
 }
 
 ##  3. Apply filters, and collect a list of good calls.
 
-my %var_name_to_flank_mq_filter           = ();
+
 my %var_name_to_covg_and_branch_filter    = ();
 my %var_name_to_pd_filter                 = ();
 my %var_name_to_combined_filtering_result = ();
 my %pop_classifier                        = ();
 my %pop_classifier_confidence             = ();
 
-filter_by_flank_mapqual( $mapped_flanks, \%var_name_to_flank_mq_filter );
 if ( $classif ne "-1" )
 {
 	get_pop_filter_info( $classif, \%pop_classifier,
@@ -500,14 +506,19 @@ my $fh_proc_bub;
 my $fh_simple_vcf;
 my $fh_decomp_vcf;
 
+## open file handles
 open( $fh_calls,      $callfile )        || die("Cannot open $callfile");
-open( $fh_map_flanks, $mapped_flanks )   || die("Cannot open $mapped_flanks");
 open( $fh_proc_bub,   $proc_bub_output ) || die("Cannot open $proc_bub_output");
 my $simple_vcf_name = $outdir . $outvcf_filename_stub . ".raw.vcf.uncleaned";
 open( $fh_simple_vcf, "> $simple_vcf_name" ) || die("Cannot open ");
 my $decomp_vcf_name = $outdir . $outvcf_filename_stub . ".decomp.vcf.uncleaned";
-open( $fh_decomp_vcf, "> $decomp_vcf_name" )
-  || die("Cannot open $decomp_vcf_name");
+open( $fh_decomp_vcf, "> $decomp_vcf_name" )  || die("Cannot open $decomp_vcf_name");
+
+if ($reference_colour!=-1)
+{
+    open( $fh_map_flanks, $mapped_flanks )   || die("Cannot open $mapped_flanks");
+}
+
 
 ##print vcf header
 my $header = get_vcf_header($colours);
@@ -523,13 +534,16 @@ while ( $ret == 1 )
 		$fh_proc_bub,            \%var_name_to_combined_filtering_result,
 		\%var_name_to_cut_flank, 1,
 		1,                       $fh_simple_vcf,
-		$fh_decomp_vcf,          \%pop_classifier_confidence
+		$fh_decomp_vcf,          \%pop_classifier_confidence,
+	        $reference_colour
 	);
 }
 close($fh_calls);
-close($fh_map_flanks);
 close($fh_proc_bub);
-
+if ($reference_colour !=-1)
+{
+    close($fh_map_flanks);
+}
 
 ### cleanup
 
@@ -570,12 +584,12 @@ if ($ref_fasta eq "unspecified")
 {
     ## just sort the file and PV tag it
 
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --filter_txt DUP_CALL  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_simple";
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --filter_txt DUP_CALL  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --filter_txt OVERLAPPING_SITE > $final_simple";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
     print "$ret1\n";
 
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --tag PV LEFT $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --filter_txt DUP_CALL   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_decomp ";
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --tag PV LEFT $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --filter_txt DUP_CALL   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --filter_txt OVERLAPPING_SITE > $final_decomp ";
     print "$cmd2\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
@@ -594,7 +608,7 @@ else # sort and PV tag and remove ref mismatches
     print "$ret1\n";
 
     print "Remove sites where Stampy has placed variant in wrong place\n";
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl > $final_simple ";
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --filter_txt OVERLAPPING_SITE > $final_simple ";
     print "$cmd1\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
@@ -609,7 +623,7 @@ else # sort and PV tag and remove ref mismatches
     my $ret3 = qx{$cmd3};
     print "$ret3\n";
 
-    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  > $final_decomp ";
+    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --filter_txt OVERLAPPING_SITE  > $final_decomp ";
     print "$cmd4\n";
     my $ret4 = qx{$cmd4};
     print "$ret4\n";
@@ -1232,7 +1246,8 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 		$file_handle_proc_bubble_output, $href_varname_to_passing_all_filters,
 		$href_var_name_to_cut_flank,     $print_easy_vcf,
 		$print_decomp_vcf,               $fh_easy,
-		$fh_decomp,                      $href_pop_classifier_confidence
+		$fh_decomp,                      $href_pop_classifier_confidence,
+	        $colour_ref
 	) = @_;
 
 	##1. Get next var info from all three files
@@ -1243,9 +1258,20 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 		$genotype,     $llk_hom1,       $llk_het,       $llk_hom2, $extra_info_fields
 	) = get_next_var_from_callfile( $file_handle_calls, $ploidy );
 
-	#print "Got back extra info: $extra_info_fields for $var_name\n";
-	my ( $eof2, $var_name2, $strand, $chr, $coord ) =
-	  get_next_var_from_flank_mapfile($file_handle_map_flanks);
+
+	my ( $eof2, $var_name2, $strand, $chr, $coord );
+	if ($colour_ref !=-1)
+	{
+	    ## then we have already mapped the flanks to the reference:
+	    ( $eof2, $var_name2, $strand, $chr, $coord )=
+		get_next_var_from_flank_mapfile($file_handle_map_flanks);
+	}
+	else
+	{
+	    ( $eof2, $var_name2, $strand, $chr, $coord )
+		= ($eof, $var_name, 0, $global_var_ctr, 1000000);#give it fake position of 1million, so can add/subtract flank and still be >0.
+	    $global_var_ctr++;
+	}
 
 	my (
 		$eof3,
@@ -1327,7 +1353,7 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 	}
 	else
 	{
-		$filter_result = "FAILS_MAPQ";
+		$filter_result = "PASS";
 	}
 
 	if ( $print_easy_vcf == 1 )

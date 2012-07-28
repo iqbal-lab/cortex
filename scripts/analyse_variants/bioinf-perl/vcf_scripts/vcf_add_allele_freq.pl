@@ -21,12 +21,12 @@ sub print_usage
   exit;
 }
 
-if(@ARGV > 1)
-{
-  print_usage();
-}
-
 my $vcf_file = shift;
+
+if(@ARGV > 0)
+{
+  print_usage("Too many arguments!");
+}
 
 #
 # Open VCF Handle
@@ -73,22 +73,37 @@ while(defined($vcf_entry = $vcf->read_entry()))
   my @alleles = split(/,/, $vcf_entry->{'ALT'});
 
   my %allele_counts = ();
+  my $ploidy;
 
   for my $sample (@sample_names)
   {
-    if($vcf_entry->{$sample} =~ /^(\d+)[\/\|](\d+)/)
+    if(!defined($vcf_entry->{$sample}->{'GT'}))
     {
-      $allele_counts{$1}++;
-      $allele_counts{$2}++;
+      print_usage("vcf_add_allele_freq.pl: Missing genotype " .
+                  "[sample:$sample; var:" . $vcf_entry->{'ID'} . " " .
+                  "format:" . join(":", @{$vcf_entry->{'FORMAT'}}) . "]");
     }
-    else
+  
+    my @sample_alleles = split(/[\/\|]/, $vcf_entry->{$sample}->{'GT'});
+
+    if(defined($ploidy) && @sample_alleles != $ploidy)
     {
-      die("vcf_add_allele_freq.pl: Invalid entry '$vcf_entry->{$sample}'");
+      print_usage("vcf_add_allele_freq.pl: Ploidy mismatch " .
+                  "[ploidy:$ploidy sample:$sample; " .
+                  "var:" . $vcf_entry->{'ID'} . " " .
+                  "GT:" . $vcf_entry->{$sample}->{'GT'} . "]");
+    }
+
+    $ploidy = scalar(@sample_alleles);
+
+    for my $sample_allele (@sample_alleles)
+    {
+      $allele_counts{$sample_allele}++;
     }
   }
 
   my @alt_freqs = ();
-  my $total_ploidy = 2 * @sample_names;
+  my $total_ploidy = $ploidy * @sample_names;
 
   for(my $i = 1; $i <= @alleles; $i++)
   {
@@ -97,7 +112,7 @@ while(defined($vcf_entry = $vcf->read_entry()))
   }
 
   $vcf_entry->{'INFO'}->{'AF'} = join(",", @alt_freqs);
-  
+
   $vcf->print_entry($vcf_entry);
 }
 

@@ -147,6 +147,16 @@ sub new
     $columns_hash{$columns_arr[$i]} = $i;
   }
 
+  # Get sample names
+  my %usual_fields = ();
+  my @standard_cols = get_standard_vcf_columns();
+
+  for my $standard_col (@standard_cols) {
+    $usual_fields{uc($standard_col)} = 1;
+  }
+
+  my @sample_names = grep {!defined($usual_fields{uc($_)})} @columns_arr;
+
   #print "Meta tags: " . join(",", sort keys %header_metainfo) . "\n";
   #print "header tags:" . join(",", sort keys %header_tags) . "\n";
 
@@ -158,6 +168,7 @@ sub new
       _header_extra_line => \@header_extra_lines,
       _columns_hash => \%columns_hash,
       _columns_arr => \@columns_arr,
+      _sample_names => \@sample_names,
       _unread_entries => []
   };
 
@@ -314,7 +325,7 @@ sub _check_valid_header_tag
     carp("VCF header ALT/FILTER tags cannot have Number attributes\n");
     return 0;
   }
-  elsif(defined($tag->{'Type'}))
+  elsif(defined($tag->{'Type'}) && $tag->{'Type'} !~ /^FLAG$/i)
   {
     carp("VCF header ALT/FILTER tags cannot have Type attributes " .
          "('$tag->{'Type'}')\n");
@@ -526,18 +537,7 @@ sub get_header_tags
 sub get_list_of_sample_names
 {
   my ($self) = @_;
-
-  my @cols_array = $self->get_columns_array();
-
-  my %usual_fields = ();
-  my @standard_cols = get_standard_vcf_columns();
-
-  for my $standard_col (@standard_cols) {
-    $usual_fields{uc($standard_col)} = 1;
-  }
-
-  my @samples = grep {!defined($usual_fields{uc($_)})} @cols_array;
-  return @samples;
+  return @{$self->{_sample_names}};
 }
 
 
@@ -683,22 +683,52 @@ sub read_entry
     }
   }
 
-  my %info_col = ();
-  my @info_entries = split(";", $entry_cols[$vcf_columns{'INFO'}]);
+  # Split up sample info
+  my $samples_arr = $self->{_sample_names};
+  my $format_str = $self->{_columns_hash}->{'FORMAT'};
 
+  if(scalar(@$samples_arr) > 0 && defined($format_str))
+  {
+    my @format_fields = split(":", $entry_cols[$vcf_columns{'FORMAT'}]);
+
+    $entry{'FORMAT'} = \@format_fields;
+
+    for my $sample (@$samples_arr)
+    {
+      my @sample_fields = split(":", $entry{$sample});
+
+      if(scalar(@sample_fields) != scalar(@format_fields))
+      {
+        croak("Sample does not match genotype format " .
+              "[sample: '$sample'; var: " . $entry{'ID'} . "]");
+      }
+
+      my %entry_sample = ();
+      @entry_sample{@format_fields} = @sample_fields;
+      $entry{$sample} = \%entry_sample;
+    }
+  }
+
+  # Get info data
+  my %info_col = ();
   my %info_flags = ();
 
-  for my $info_entry (@info_entries)
+  my @info_entries = split(";", $entry_cols[$vcf_columns{'INFO'}]);
+
+  if(!(@info_entries == 1 && $info_entries[0] eq "."))
   {
-    if($info_entry =~ /(.*)=(.*)/)
+    for my $info_entry (@info_entries)
     {
-      # key=value pair
-      $info_col{$1} = $2;
-    }
-    else
-    {
-      # Flag
-      $info_flags{$info_entry} = 1;
+      if($info_entry =~ /(.*)=(.*)/)
+      {
+        # key=value pair
+        $info_col{$1} = $2;
+      }
+      else
+      {
+        # Flag
+        $info_flags{$info_entry} = 1;
+      }
     }
   }
 
@@ -756,10 +786,13 @@ sub print_entry
 
   my @columns_arr = @{$self->{_columns_arr}};
 
-  print $out_handle $entry->{$columns_arr[0]};
-
-  for(my $i = 1; $i < @columns_arr; $i++)
+  for(my $i = 0; $i < @columns_arr; $i++)
   {
+    if($i > 0)
+    {
+      print $out_handle "\t";
+    }
+
     if($columns_arr[$i] eq "INFO")
     {
       my $info_hashref = $entry->{'INFO'};
@@ -771,11 +804,20 @@ sub print_entry
       # Sort INFO entries
       @entries = sort {$a cmp $b} @entries;
       
-      print $out_handle "\t" . join(";", @entries);
+      print $out_handle (@entries > 0 ? join(";", @entries) : '.');
+    }
+    elsif($columns_arr[$i] eq "FORMAT")
+    {
+      print $out_handle join(":", @{$entry->{'FORMAT'}});
+    }
+    elsif(ref($entry->{$columns_arr[$i]}) eq "HASH")
+    {
+      print $out_handle join(":", map {$entry->{$columns_arr[$i]}->{$_}}
+                                      @{$entry->{'FORMAT'}});
     }
     else
     {
-      print $out_handle "\t" . $entry->{$columns_arr[$i]};
+      print $out_handle $entry->{$columns_arr[$i]};
     }
   }
 
@@ -838,6 +880,22 @@ sub vcf_add_filter_txt
   {
     $variant->{'FILTER'} = $variant->{'FILTER'}.";".$filter_txt;
   }
+}
+
+sub get_ploidy
+{
+  my ($self, $var) = @_;
+
+  for my $sample (@{$self->{_sample_names}})
+  {
+    if(defined($var->{$sample}->{'GT'}))
+    {
+      my @gts = split(/[\/\|]/, $var->{$sample}->{'GT'});
+      return scalar(@gts);
+    }
+  }
+
+  return undef;
 }
 
 # returns 0 or 1

@@ -129,7 +129,7 @@ sub count_calls_in_callfile
 
 sub make_sure_dirs_exist_and_create_if_necessary
 {
-    my ($aref, $use_ref, $fake_ref_dir) = @_;
+    my ($aref) = @_;
     foreach my $dir (@$aref)
     {
 	if (! (-d $dir))
@@ -139,14 +139,6 @@ sub make_sure_dirs_exist_and_create_if_necessary
 	}
     }
 
-    if ($use_ref eq "Absent")
-    {
-	if (! (-d $fake_ref_dir))
-	{
-	    my $c = "mkdir -p $fake_ref_dir";
-	    qx{$c};
-	}
-    }
 }
 
 sub get_max_cleaning_for_given_sample

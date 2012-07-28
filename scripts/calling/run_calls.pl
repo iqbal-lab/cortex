@@ -87,11 +87,7 @@ if (!(-e $make_table_script))
 {
     die("Cannot find script for making table of read-lengths/covgs, $make_table_script\n");
 }
-my $make_fake_ref_script = $analyse_variants_dir."make_fake_reference.pl";
-if (!(-e $make_fake_ref_script))
-{
-    die("Cannot find script for making fake reference, $make_fake_ref_script");
-}
+
 
 #use lib $isaac_bioinf_dir;
 use Descriptive;
@@ -341,10 +337,9 @@ if (!(-e $classifier))
 $outdir_binaries=$outdir."binaries/";
 $outdir_calls=$outdir."calls/";
 $outdir_vcfs=$outdir."vcfs/";
-my $fake_ref_dir=$outdir."fake_reference/";
 my $tmpdir_working_vcfs = $outdir_vcfs."tmp_working/";
 my @new_dirs=($outdir_binaries, $outdir_calls, $outdir_vcfs, $tmpdir_working_vcfs);
-make_sure_dirs_exist_and_create_if_necessary(\@new_dirs, $use_ref, $fake_ref_dir); 
+make_sure_dirs_exist_and_create_if_necessary(\@new_dirs); 
 
 
 ## Now the process we will follow is
@@ -370,6 +365,9 @@ if ($use_ref ne "Absent")
 
 my @kmers=();
 get_kmers(\@kmers, $first_kmer, $last_kmer, $kmer_step);
+
+
+my $global_var_ctr=0; ##keeping track of total number of vars put into VCFs, needed for joint workflow with Absent ref.
 
 
 
@@ -838,9 +836,10 @@ if ($do_union eq "yes")
 								 $number_of_colours, $use_ref, 
 								 $km, $genome_size, $ploidy);
 		    }
+		    $global_var_ctr = 
 		    build_vcfs($gt_bc_out, $gt_bc_log, $outvcf_filename_stub."_union_BC_calls_k".$km, $number_of_colours, 
 			       $outdir_vcfs."output_proc_union_bc_k".$km, $outdir_vcfs, \%vcfs_needing_merging, 
-			       $kmer_to_union_callset{$km}{"BC"}, "BC", $pop_classif_file, $km);
+			       $kmer_to_union_callset{$km}{"BC"}, "BC", $pop_classif_file, $km, $global_var_ctr, "");
 		}
 		
 		if ($do_pd eq "yes")
@@ -864,9 +863,10 @@ if ($do_union eq "yes")
 		    }
 		    
 		    
-		    build_vcfs($gt_pd_out, $gt_pd_log, $outvcf_filename_stub."_union_PD_calls_k".$km, $number_of_colours, 
-			       $outdir_vcfs."output_proc_union_pd_k".$km, $outdir_vcfs, \%vcfs_needing_merging, 
-			       $kmer_to_union_callset{$km}{"PD"}, "PD", $pop_classif_file, $km);
+		    $global_var_ctr = 
+			build_vcfs($gt_pd_out, $gt_pd_log, $outvcf_filename_stub."_union_PD_calls_k".$km, $number_of_colours, 
+				   $outdir_vcfs."output_proc_union_pd_k".$km, $outdir_vcfs, \%vcfs_needing_merging, 
+				   $kmer_to_union_callset{$km}{"PD"}, "PD", $pop_classif_file, $km, $global_var_ctr, "");
 		    
 		}
 	    }
@@ -894,13 +894,14 @@ if ($do_union eq "yes")
 								 $number_of_colours, $use_ref, 
 								 $K, $genome_size, $ploidy);
 		    }
-		    build_vcfs($joint_callfiles{$K}{$cl}, $joint_callfiles_logs{$K}{$cl},
-			       $outvcf_filename_stub."_union_joint_BC_calls_k".$K."_clean_level".$cl, 
-			       $number_of_colours, 
-			       $outdir_vcfs."output_proc_joint_union_bc_k".$K."_cl".$cl, 
-			       $outdir_vcfs, 
-			       \%vcfs_needing_merging, "", "BC", 
-			       $pop_classif_file, $K);
+		    $global_var_ctr = 
+			build_vcfs($joint_callfiles{$K}{$cl}, $joint_callfiles_logs{$K}{$cl},
+				   $outvcf_filename_stub."_union_joint_BC_calls_k".$K."_clean_level".$cl, 
+				   $number_of_colours, 
+				   $outdir_vcfs."output_proc_joint_union_bc_k".$K."_cl".$cl, 
+				   $outdir_vcfs, 
+				   \%vcfs_needing_merging, "", "BC", 
+				   $pop_classif_file, $K, $global_var_ctr, "k$K"."_cl".$cl."_BC");
 		}
 	    }
 
@@ -915,13 +916,28 @@ if ($do_union eq "yes")
 	print "\n\n\n*** Now combine all preexisting vcfs\n\n";
 
 	my $pref;
+	my $refstr;
+	if ($use_ref eq "Absent")
+	{
+	    $refstr = "RefAbs";
+	}
+	elsif ($use_ref eq "CoordinatesOnly")
+	{
+	    $refstr = "RefCO";
+	}
+	elsif($use_ref eq "CoordinatesAndInCalling")
+	{
+	    $refstr = "RefCC";
+	}
+
+
 	if ($workflow eq "independent")
 	{
-	    $pref=$outvcf_filename_stub."_wk_flow_I_FINAL";
+	    $pref=$outvcf_filename_stub."_wk_flow_I_".$refstr."_FINAL";
 	}
 	else
 	{
-	    $pref=$outvcf_filename_stub."_wk_flow_J_FINAL";
+	    $pref=$outvcf_filename_stub."_wk_flow_J_".$refstr."_FINAL";
 	}
 	my $final_BC_vcf_raw    = $outdir_vcfs.$pref."combined_BC_calls_at_all_k.raw.vcf";
 	my $final_BC_vcf_decomp = $outdir_vcfs.$pref."combined_BC_calls_at_all_k.decomp.vcf";
@@ -1281,9 +1297,9 @@ sub merge_list_of_vcfs
 	close($catout_fh);
 
 	## Now cleanup - remove dups etc
-#	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_combine_alleles.pl  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl > $outfilename";	
+#	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_combine_alleles.pl  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --filter_txt OVERLAPPING_SITE > $outfilename";	
 	#debug
-	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_combine_alleles.pl  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl > $outfilename";
+	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_combine_alleles.pl  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --filter_txt OVERLAPPING_SITE > $outfilename";
 	print "$cmd1\n";
 	my $ret1 = qx{$cmd1};
 	print "$ret1\n";
@@ -1341,7 +1357,7 @@ sub build_vcfs
     ## I now intend to use it to collect vcfs to be MERGED (as we make one vcf per kmer)
     my ($file, $call_log, $string, $num, $log, $directory, 
 	$href_store_vcf_names, $fasta_file_of_just_calls, $which_caller, $classifier_output,
-	$kmer_size) = @_;
+	$kmer_size, $g_ctr, $short_unique_str) = @_;
     if (!(-e $file))
     {
 	return;
@@ -1374,25 +1390,21 @@ sub build_vcfs
 	close(COL);
     }
 
-    my $ref_fa;
-    if ($use_ref eq "Absent")
-    {
-	## make a fake reference.
-	($ref_fa, $stampy_hash_stub) = make_fake_reference(\%joint_callfiles, $make_fake_ref_script, $stampy_bin, $fake_ref_dir);
-    }
-    else
-    {
-	$ref_fa = get_ref_fasta($list_ref_fasta); 
-    }
 
-    my $cmd = "perl ".$proc_calls." --callfile $file --callfile_log $call_log --kmer $kmer_size --caller $which_caller --outdir $directory --outvcf $string --samplename_list $colournames --num_cols $num  --ploidy $ploidy --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin --vcftools_dir $vcftools_dir --ref_fasta $ref_fa ";
+    my $cmd = "perl ".$proc_calls." --callfile $file --callfile_log $call_log --kmer $kmer_size --caller $which_caller --outdir $directory --outvcf $string --samplename_list $colournames --num_cols $num  --ploidy $ploidy  --vcftools_dir $vcftools_dir ";
+
     if ($use_ref ne "Absent")
     {
 	#$cmd = $cmd." --refcol 0 --require_one_allele_is_ref yes"; 
-	$cmd = $cmd." --refcol 0 "; 
+	my $ref_fa = get_ref_fasta($list_ref_fasta); 
+	$cmd = $cmd." --refcol 0 --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin --ref_fasta $ref_fa "; 
     }
     else#no reference
     {
+	## you are going to call proc_calls repeatedly, and want to make sure each variant gets a differnt/unique chromosome
+	$cmd = $cmd." --global_var_ctr $g_ctr --prefix $short_unique_str";
+
+
 	#$cmd = $cmd." --require_one_allele_is_ref no ";
     }
 
@@ -1433,38 +1445,22 @@ sub build_vcfs
     push @{$href_store_vcf_names->{$which_caller}->{"DECOMP"}}, $directory.$string.".decomp.vcf";
     push @{$href_store_vcf_names->{$which_caller}->{"RAW"}}, $directory.$string.".raw.vcf";
 
+
+
+    my $total_calls_so_far = $g_ctr + count_calls($directory.$string.".decomp.vcf");
+    return $total_calls_so_far;
 }
 
 
-#pass in variant calls, make a ref fasta, build a stampy hash, and return them
-sub make_fake_reference
+
+sub count_calls
 {
-    my ($href_callfiles, $make_ref_bin, $stampy_bin, $fake_ref_dir) = @_;
-
-    ## specify ref fasta name
-    my $fa = $fake_ref_dir."fake.fa";
-
-    ## make the reference
-    my $log = $fake_ref_dir."output_make_fake_ref.log";
-    my $mk_ref_cmd = "perl $make_ref_bin --callfile $callfile --outfile $fa  > $log 2>&1 ";
-    print "$mk_ref_cmd\n";
-    my $ret_ref_cmd = qx{$mk_ref_cmd};
-    print "$ret_ref_cmd\n";
-
-    my $stampy_hash_stub = $fake_ref_dir."fake";
-    ##make the stampy hash in that directory
-    my $stampylog = $fake_ref_dir."output_run_stampy_on_fakeref.log";
-    my $st_cmd1 = "$stampy_bin --assembly=fake_reference -G $stampy_hash_stub $fa > $stampylog  2>&1" ;
-    qx{$st_cmd1};
-
-    my $st_cmd2 = "$stampy_bin  -g $stampy_hash_stub -H $stampy_hash_stub  >> $stampylog  2>&1" ;
-    qx{$st_cmd2};
-
-    
-    return ($fa, $stampy_hash_stub);
-
+    my ($vcf) = @_;
+    my $cmd = "cat $vcf | grep -v \"\#\" | wc -l";
+    my $ret = qx{$cmd};
+    chomp $ret;
+    return $ret;
 }
-
 sub make_multicol_filelist
 {
     my ($aref_bins) = @_;

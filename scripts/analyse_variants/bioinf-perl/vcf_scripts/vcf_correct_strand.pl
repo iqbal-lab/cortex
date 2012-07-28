@@ -188,58 +188,41 @@ while(defined($vcf_entry = $vcf->read_entry()))
         $vcf_entry->{'ALT'} = $tmp;
 
         # Switch genotypes
-        my $format = $vcf_entry->{'FORMAT'};
-
-        if(!defined($format))
+        if(!defined($vcf_entry->{'FORMAT'}))
         {
           die("No format column");
         }
 
-        my @formats = split(":", $format);
+        my @formats = @{$vcf_entry->{'FORMAT'}};
         @format_fields{@formats} = 1;
 
         for my $sample (@samples)
         {
-          my @genotype = split(":", $vcf_entry->{$sample});
-
-          if(@genotype != @formats)
+          if(defined($vcf_entry->{$sample}->{'GT'}))
           {
-            die("Sample does not match format field " .
-                "[var: $vcf_entry->{'ID'}; sample: $sample]");
+            if($vcf_entry->{$sample}->{'GT'} =~ /^([01])([\/\|])([01])$/)
+            {
+              my ($gt1,$gt_sep,$gt2) = ($1,$2,$3);
+              $gt1 = $gt1 == 0 ? 1 : 0;
+              $gt2 = $gt2 == 0 ? 1 : 0;
+              $vcf_entry->{$sample}->{'GT'} = $gt1.$gt_sep.$gt2;
+            }
+            else
+            {
+              die("Invalid GT format [var:$vcf_entry->{'ID'}; sample:$sample]");
+            }
           }
-
-          my $new_genotype = "";
-
-          for(my $i = 0; $i < @genotype; $i++)
+          elsif(defined($vcf_entry->{$sample}->{'COV'}))
           {
-            my $result = $genotype[$i];
-
-            if($formats[$i] eq "GT")
+            if($vcf_entry->{$sample}->{'COV'} =~ /^(\d+),(\d+)$/)
             {
-              if($genotype[$i] =~ /^([01])([\/\|])([01])$/)
-              {
-                my ($gt1,$gt_sep,$gt2) = ($1,$2,$3);
-                $gt1 = $gt1 == 0 ? 1 : 0;
-                $gt2 = $gt2 == 0 ? 1 : 0;
-                $result = $gt1.$gt_sep.$gt2;
-              }
-              else
-              {
-                die("Invalid format [var: $vcf_entry->{'ID'}; sample: $sample]");
-              }
+              $vcf_entry->{$sample}->{'COV'} = $2.",".$1;
             }
-            elsif($formats[$i] eq "COV")
+            else
             {
-              if($genotype[$i] =~ /^(\d+),(\d+)$/)
-              {
-                $result = $2.",".$1;
-              }
+              die("Invalid COV format [var:$vcf_entry->{'ID'}; sample:$sample]");
             }
-
-            $new_genotype .= ($i > 0 ? ":" : "") . $result;
           }
-
-          $vcf_entry->{$sample} = $new_genotype;
         }
       }
       else

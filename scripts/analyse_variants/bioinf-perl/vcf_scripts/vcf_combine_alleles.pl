@@ -13,6 +13,11 @@ use UsefulModule; # num2str
 use VCFFile;
 use RefGenome;
 
+# Config
+my $multiallelic_tag = 'MULTIALLELIC';
+my $dupallele_tag = 'DUP_ALLELE';
+#
+
 sub print_usage
 {
   for my $err (@_) {
@@ -53,6 +58,12 @@ else
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+$vcf->add_header_tag("FILTER", $multiallelic_tag, 0, undef,
+                     "Variant formed from merged alleles");
+
+$vcf->add_header_tag("FILTER", $dupallele_tag, 0, undef,
+                     "Allele has been merged");
 
 $vcf->print_header();
 
@@ -130,7 +141,7 @@ sub print_list
   }
   else
   {
-    # Sort byt length of ref allele
+    # Sort by length of ref allele
     @vars_at_same_pos = sort {length($a->{'REF'}) <=> length($b->{'REF'})}
                              @vars_at_same_pos;
 
@@ -160,25 +171,106 @@ sub print_list
 
         # @vars_at_same_pos[$start..$end] all share the same ref site
         # merge and print a single entry
-        my $alts = join(",", map {$_->{'ALT'}} @vars_at_same_pos[$start..$end]);
+        my @alleles_arr = map {$_->{'ALT'}} @vars_at_same_pos[$start..$end];
+        my %alleles_hash = ();
+        @alleles_hash{@alleles_arr} = 1;
+        @alleles_arr = sort keys %alleles_hash;
 
-        # Use $vars_at_same_pos[$start] for merge
-        $vars_at_same_pos[$start]->{'ALT'} = $alts;
+        # Store allele numbers in this hash
+        @alleles_hash{$vars_at_same_pos[$end]->{'REF'}} = 0;
 
-        # Reset samples
+        for(my $indx = 1; $indx <= @alleles_arr; $indx++)
+        {
+          @alleles_hash{$alleles_arr[$indx-1]} = $indx;
+        }
+
+        my $alts = join(",", @alleles_arr);
+
+        # Create new variant entry for merge
+        my %new_entry_cpy = %{$vars_at_same_pos[$start]};
+        my $new_entry = \%new_entry_cpy;
+
+        $new_entry->{'ID'} .= "_merge";
+        $new_entry->{'ALT'} = $alts;
+
         for my $sample (@samples)
         {
-          $vars_at_same_pos[$start]->{$sample} = '.';
+          $new_entry->{$sample} = {};
+        }
+
+        # Get ploidy
+        my $ploidy;
+        for(my $var = $start; !defined($ploidy) && $var <= $end; $var++)
+        {
+          $ploidy = $vcf->get_ploidy($vars_at_same_pos[$var]);
+        }
+
+        if(!defined($ploidy))
+        {
+          $ploidy = 2;
+        }
+
+        $new_entry->{'FORMAT'} = ['GT'];
+
+        # For each sample, pick GT with highest conf
+        for my $sample (@samples)
+        {
+          my $max_gt_conf_var;
+
+          for(my $var = $start; $var <= $end; $var++)
+          {
+            my $gt_conf = $vars_at_same_pos[$var]->{$sample}->{'GT_CONF'};
+            my $sample_gt = $vars_at_same_pos[$var]->{$sample}->{'GT_CONF'};
+
+            if(defined($gt_conf) && defined($sample_gt) && $gt_conf ne ".")
+            {
+              if(!defined($max_gt_conf_var) ||
+                 $max_gt_conf_var->{$sample}->{'GT_CONF'}
+                   > $vars_at_same_pos[$var]->{$sample}->{'GT_CONF'})
+              {
+                $max_gt_conf_var = $vars_at_same_pos[$var];
+              }
+            }
+          }
+
+          if(defined($max_gt_conf_var))
+          {
+            my $new_gt_call = "";
+            my $prev_gt = $max_gt_conf_var->{$sample}->{'GT'};
+
+            # Get alts
+            my @alts = split(",", $max_gt_conf_var->{'ALT'});
+            unshift(@alts, $max_gt_conf_var->{'REF'});
+
+            while($prev_gt =~ /([\/\|]*)(\d+)/g)
+            {
+              $new_gt_call .= $1.$alleles_hash{$alts[$2]};
+            }
+
+            $new_entry->{$sample}->{'GT'} = $new_gt_call;
+          }
+          else
+          {
+            $new_entry->{$sample}->{'GT'} = join("/", ('.') x $ploidy);
+          }
         }
 
         # Set filter field
-        vcf_add_filter_txt($vars_at_same_pos[$start], 'MULTIALLELIC');
+        vcf_add_filter_txt($new_entry, $multiallelic_tag);
 
-        # Print single entry
-        $vcf->print_entry($vars_at_same_pos[$start]);
+        # Print new entry
+        $vcf->print_entry($new_entry);
         $num_of_printed++;
 
+        # Print merged entries
+        for(my $var = $start; $var <= $end; $var++)
+        {
+          vcf_add_filter_txt($vars_at_same_pos[$var], $dupallele_tag);
+          $vcf->print_entry($vars_at_same_pos[$var]);
+        }
+
         my $vars_merged = $end-$start+1;
+        $num_of_printed += $vars_merged;
 
         $biggest_merge = max($biggest_merge, $vars_merged);
         $num_of_vars_merged += $vars_merged;
