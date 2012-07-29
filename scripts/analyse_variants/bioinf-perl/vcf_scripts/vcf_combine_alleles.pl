@@ -176,104 +176,118 @@ sub print_list
         @alleles_hash{@alleles_arr} = 1;
         @alleles_arr = sort keys %alleles_hash;
 
-        # Store allele numbers in this hash
-        @alleles_hash{$vars_at_same_pos[$end]->{'REF'}} = 0;
+        # May only be one alt allele (duplicated variant)...
+        # in which case just print the variants
 
-        for(my $indx = 1; $indx <= @alleles_arr; $indx++)
+        if(@alleles_arr == 1)
         {
-          @alleles_hash{$alleles_arr[$indx-1]} = $indx;
-        }
-
-        my $alts = join(",", @alleles_arr);
-
-        # Create new variant entry for merge
-        my %new_entry_cpy = %{$vars_at_same_pos[$start]};
-        my $new_entry = \%new_entry_cpy;
-
-        $new_entry->{'ID'} .= "_merge";
-        $new_entry->{'ALT'} = $alts;
-
-        for my $sample (@samples)
-        {
-          $new_entry->{$sample} = {};
-        }
-
-        # Get ploidy
-        my $ploidy;
-        for(my $var = $start; !defined($ploidy) && $var <= $end; $var++)
-        {
-          $ploidy = $vcf->get_ploidy($vars_at_same_pos[$var]);
-        }
-
-        if(!defined($ploidy))
-        {
-          $ploidy = 2;
-        }
-
-        $new_entry->{'FORMAT'} = ['GT'];
-
-        # For each sample, pick GT with highest conf
-        for my $sample (@samples)
-        {
-          my $max_gt_conf_var;
-
           for(my $var = $start; $var <= $end; $var++)
           {
-            my $gt_conf = $vars_at_same_pos[$var]->{$sample}->{'GT_CONF'};
-            my $sample_gt = $vars_at_same_pos[$var]->{$sample}->{'GT_CONF'};
+            $vcf->print_entry($vars_at_same_pos[$var]);
+            $num_of_printed++;
+          }
+        }
+        else
+        {
+          # Store allele numbers in this hash
+          @alleles_hash{$vars_at_same_pos[$end]->{'REF'}} = 0;
 
-            if(defined($gt_conf) && defined($sample_gt) && $gt_conf ne ".")
+          for(my $indx = 1; $indx <= @alleles_arr; $indx++)
+          {
+            @alleles_hash{$alleles_arr[$indx-1]} = $indx;
+          }
+
+          my $alts = join(",", @alleles_arr);
+
+          # Create new variant entry for merge
+          my %new_entry_cpy = %{$vars_at_same_pos[$start]};
+          my $new_entry = \%new_entry_cpy;
+
+          $new_entry->{'ID'} .= "_merge";
+          $new_entry->{'ALT'} = $alts;
+
+          for my $sample (@samples)
+          {
+            $new_entry->{$sample} = {};
+          }
+
+          # Get ploidy
+          my $ploidy;
+          for(my $var = $start; !defined($ploidy) && $var <= $end; $var++)
+          {
+            $ploidy = $vcf->get_ploidy($vars_at_same_pos[$var]);
+          }
+
+          if(!defined($ploidy))
+          {
+            $ploidy = 2;
+          }
+
+          $new_entry->{'FORMAT'} = ['GT'];
+
+          # For each sample, pick GT with highest conf
+          for my $sample (@samples)
+          {
+            my $max_gt_conf_var;
+
+            for(my $var = $start; $var <= $end; $var++)
             {
-              if(!defined($max_gt_conf_var) ||
-                 $max_gt_conf_var->{$sample}->{'GT_CONF'}
-                   > $vars_at_same_pos[$var]->{$sample}->{'GT_CONF'})
+              my $gt_conf = $vars_at_same_pos[$var]->{$sample}->{'GT_CONF'};
+              my $sample_gt = $vars_at_same_pos[$var]->{$sample}->{'GT_CONF'};
+
+              if(defined($gt_conf) && defined($sample_gt) && $gt_conf ne ".")
               {
-                $max_gt_conf_var = $vars_at_same_pos[$var];
+                if(!defined($max_gt_conf_var) ||
+                   $max_gt_conf_var->{$sample}->{'GT_CONF'}
+                     > $vars_at_same_pos[$var]->{$sample}->{'GT_CONF'})
+                {
+                  $max_gt_conf_var = $vars_at_same_pos[$var];
+                }
               }
             }
-          }
 
-          if(defined($max_gt_conf_var))
-          {
-            my $new_gt_call = "";
-            my $prev_gt = $max_gt_conf_var->{$sample}->{'GT'};
-
-            # Get alts
-            my @alts = split(",", $max_gt_conf_var->{'ALT'});
-            unshift(@alts, $max_gt_conf_var->{'REF'});
-
-            while($prev_gt =~ /([\/\|]*)(\d+)/g)
+            if(defined($max_gt_conf_var))
             {
-              $new_gt_call .= $1.$alleles_hash{$alts[$2]};
+              my $new_gt_call = "";
+              my $prev_gt = $max_gt_conf_var->{$sample}->{'GT'};
+
+              # Get alts
+              my @alts = split(",", $max_gt_conf_var->{'ALT'});
+              unshift(@alts, $max_gt_conf_var->{'REF'});
+
+              while($prev_gt =~ /([\/\|]*)(\d+)/g)
+              {
+                $new_gt_call .= $1.$alleles_hash{$alts[$2]};
+              }
+
+              $new_entry->{$sample}->{'GT'} = $new_gt_call;
             }
-
-            $new_entry->{$sample}->{'GT'} = $new_gt_call;
+            else
+            {
+              $new_entry->{$sample}->{'GT'} = join("/", ('.') x $ploidy);
+            }
           }
-          else
+
+          # Set filter field
+          vcf_add_filter_txt($new_entry, $multiallelic_tag);
+
+          # Print new entry
+          $vcf->print_entry($new_entry);
+          $num_of_printed++;
+
+          # Print merged entries
+          for(my $var = $start; $var <= $end; $var++)
           {
-            $new_entry->{$sample}->{'GT'} = join("/", ('.') x $ploidy);
+            vcf_add_filter_txt($vars_at_same_pos[$var], $dupallele_tag);
+            $vcf->print_entry($vars_at_same_pos[$var]);
           }
+
+          my $vars_merged = $end-$start+1;
+          $num_of_printed += $vars_merged;
+
+          $biggest_merge = max($biggest_merge, $vars_merged);
+          $num_of_vars_merged += $vars_merged;
         }
-
-        # Set filter field
-        vcf_add_filter_txt($new_entry, $multiallelic_tag);
-
-        # Print new entry
-        $vcf->print_entry($new_entry);
-        $num_of_printed++;
-
-        # Print merged entries
-        for(my $var = $start; $var <= $end; $var++)
-        {
-          vcf_add_filter_txt($vars_at_same_pos[$var], $dupallele_tag);
-          $vcf->print_entry($vars_at_same_pos[$var]);
-        }
-
-        my $vars_merged = $end-$start+1;
-        $num_of_printed += $vars_merged;
-
-        $biggest_merge = max($biggest_merge, $vars_merged);
-        $num_of_vars_merged += $vars_merged;
 
         # Update $i
         $i = $end;

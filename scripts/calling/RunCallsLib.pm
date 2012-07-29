@@ -111,7 +111,7 @@ sub count_calls_in_callfile
     print "$cmd\n";
     my $ret = qx{$cmd};
     my $num=-1;
-    if ($ret =~ /\S+_var_(\d+)_5p_flank/)
+    if ($ret =~ /var_(\d+)_5p_flank/)
     {
 	$num = $1;
     }

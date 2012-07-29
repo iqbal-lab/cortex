@@ -944,9 +944,14 @@ if ($do_union eq "yes")
 	my $final_PD_vcf_raw    = $outdir_vcfs.$pref."combined_PD_calls_at_all_k.raw.vcf";
 	my $final_PD_vcf_decomp = $outdir_vcfs.$pref."combined_PD_calls_at_all_k.decomp.vcf";
 	    
-	merge_vcfs(\%vcfs_needing_merging, "BC", $final_BC_vcf_raw, $final_BC_vcf_decomp, \%final_vcfs, $tmpdir_working_vcfs);
-	merge_vcfs(\%vcfs_needing_merging, "PD", $final_PD_vcf_raw, $final_PD_vcf_decomp, \%final_vcfs, $tmpdir_working_vcfs);
-
+	if ($do_bc eq "yes")
+	{
+	    merge_vcfs(\%vcfs_needing_merging, "BC", $final_BC_vcf_raw, $final_BC_vcf_decomp, \%final_vcfs, $tmpdir_working_vcfs);
+	}
+	if ($do_pd eq "yes")
+	{
+	    merge_vcfs(\%vcfs_needing_merging, "PD", $final_PD_vcf_raw, $final_PD_vcf_decomp, \%final_vcfs, $tmpdir_working_vcfs);
+	}
 
 
 
