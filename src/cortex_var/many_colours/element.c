@@ -344,26 +344,58 @@ boolean element_is_key(Key key, Element e, short kmer_size){
   return binary_kmer_comparison_operator(*key, e.kmer);
 }
 
-Key element_get_key(BinaryKmer* kmer, short kmer_size, Key preallocated_key){
-  
+// For a given kmer, get the BinaryKmer 'key':
+// the lower of the kmer vs reverse complement of itself
+Key element_get_key(BinaryKmer* kmer, short kmer_size, Key preallocated_key)
+{
+  // Get first and last nucleotides
+  Nucleotide first = binary_kmer_get_first_nucleotide(kmer, kmer_size);
+  Nucleotide last = binary_kmer_get_last_nucleotide(kmer);
+  Nucleotide rev_last = ~last & 0x3;
+
+  if(first < rev_last)
+  {
+    binary_kmer_assignment_operator((BinaryKmer*)preallocated_key, kmer);
+  }
+  else if(first > rev_last)
+  {
+    binary_kmer_reverse_complement(kmer, kmer_size, (BinaryKmer*)preallocated_key);
+  }
+  else
+  {
+    // Don't know which is going to be correct
+    // This will happen 1 in 4 times
+    binary_kmer_reverse_complement(kmer, kmer_size, (BinaryKmer*)preallocated_key);
+
+    if(binary_kmer_less_than(kmer, (BinaryKmer*)preallocated_key, kmer_size))
+    {
+      binary_kmer_assignment_operator((BinaryKmer*)preallocated_key, kmer);
+    }
+  }
+
+  return preallocated_key;
+}
+
+/*
+Key element_get_key(BinaryKmer* kmer, short kmer_size, Key preallocated_key)
+{
   BinaryKmer local_rev_kmer;
   binary_kmer_initialise_to_zero(&local_rev_kmer);
 
   binary_kmer_reverse_complement(kmer,kmer_size, &local_rev_kmer);
   
   if (binary_kmer_less_than(local_rev_kmer,*kmer, kmer_size))
-    {
-      binary_kmer_assignment_operator(*((BinaryKmer*)preallocated_key),local_rev_kmer);
-    }
+  {
+    binary_kmer_assignment_operator(*((BinaryKmer*)preallocated_key),local_rev_kmer);
+  }
   else
-    {
-      binary_kmer_assignment_operator(*((BinaryKmer*)preallocated_key),*kmer);
-    }
+  {
+    binary_kmer_assignment_operator(*((BinaryKmer*)preallocated_key),*kmer);
+  }
 
   return preallocated_key;
-
 }
-
+*/
 
 void element_initialise(Element * e, Key kmer, short kmer_size){
 

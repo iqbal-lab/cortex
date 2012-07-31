@@ -368,134 +368,140 @@ void test_seq_to_binary_kmer_and_binary_kmer_to_seq(){
   
 }
 
-void test_binary_kmer_reverse_complement(){
-  
+void test_binary_kmer_reverse_complement()
+{
   BinaryKmer kmer, kmer_reverse;
-  char seq7[7];
-  char seq1[1];
-  char seq31[31];
-  char seq33[33];
-  char seq37[37];
-  char seq57[57];
-  char seq63[63];
-  char seq65[65];
-  char seq81[81];
-  char seq97[97];
-  char seq127[127];
-  char seq159[159];
-  char seq255[255];
+  char seq[1000];
 
-
-  //test with various different kmer sizes
-
-
-  seq_to_binary_kmer("ATCGCGC",7, &kmer);
+  // test with various different kmer sizes
+  seq_to_binary_kmer("ATCGCGC", 7, &kmer);
   binary_kmer_reverse_complement(&kmer, 7, &kmer_reverse);  
-  CU_ASSERT_STRING_EQUAL("GCGCGAT",binary_kmer_to_seq(&kmer_reverse,7,seq7));
+  CU_ASSERT_STRING_EQUAL("GCGCGAT",binary_kmer_to_seq(&kmer_reverse, 7, seq));
 
-  seq_to_binary_kmer("A",1, &kmer);
+  seq_to_binary_kmer("A", 1, &kmer);
   binary_kmer_reverse_complement(&kmer, 1, &kmer_reverse);
-  CU_ASSERT_STRING_EQUAL("T",binary_kmer_to_seq(&kmer_reverse,1,seq1));
+  CU_ASSERT_STRING_EQUAL("T", binary_kmer_to_seq(&kmer_reverse, 1, seq));
 
 
   seq_to_binary_kmer("GGCCCCGCCCCGCCCCGCCCCGCCCCGCCCC",31, &kmer);
   binary_kmer_reverse_complement(&kmer, 31, &kmer_reverse);
-  CU_ASSERT_STRING_EQUAL("GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCC", binary_kmer_to_seq(&kmer_reverse,31,seq31));
+  CU_ASSERT_STRING_EQUAL("GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCC",
+                         binary_kmer_to_seq(&kmer_reverse, 31, seq));
 
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    seq_to_binary_kmer("AAACGTAACGTAACGTAACGTTTTTTCATGGCA", 33, &kmer);
+    binary_kmer_reverse_complement(&kmer, 33, &kmer_reverse);
+    CU_ASSERT_STRING_EQUAL("TGCCATGAAAAAACGTTACGTTACGTTACGTTT",
+                           binary_kmer_to_seq(&kmer_reverse, 33, seq));
 
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
-    {
+    seq_to_binary_kmer("AAACGTAACGTAACGTAACGTTTTTTCATGGCAACGT", 37, &kmer);
+    binary_kmer_reverse_complement(&kmer, 37, &kmer_reverse);
+    CU_ASSERT_STRING_EQUAL("ACGTTGCCATGAAAAAACGTTACGTTACGTTACGTTT",
+                           binary_kmer_to_seq(&kmer_reverse, 37, seq));
   
-      seq_to_binary_kmer("AAACGTAACGTAACGTAACGTTTTTTCATGGCA",33, &kmer);
-      binary_kmer_reverse_complement(&kmer, 33, &kmer_reverse);
-      CU_ASSERT_STRING_EQUAL("TGCCATGAAAAAACGTTACGTTACGTTACGTTT", binary_kmer_to_seq(&kmer_reverse,33,seq33));
-  
-      seq_to_binary_kmer("AAACGTAACGTAACGTAACGTTTTTTCATGGCAACGT",37, &kmer);
-      binary_kmer_reverse_complement(&kmer, 37, &kmer_reverse);
-      CU_ASSERT_STRING_EQUAL("ACGTTGCCATGAAAAAACGTTACGTTACGTTACGTTT", binary_kmer_to_seq(&kmer_reverse,37,seq37));
-  
-      seq_to_binary_kmer("ACGTTGCCATGAAAAAACGTTACGTTACGTTACGTTTAAAAAAAAAACCCCCCCCCC",57, &kmer);
-      binary_kmer_reverse_complement(&kmer, 57, &kmer_reverse);
-      CU_ASSERT_STRING_EQUAL("GGGGGGGGGGTTTTTTTTTTAAACGTAACGTAACGTAACGTTTTTTCATGGCAACGT", binary_kmer_to_seq(&kmer_reverse,57,seq57));
+    seq_to_binary_kmer("ACGTTGCCATGAAAAAACGTTACGTTACGTTACGTTTAAAAAAAAAACCCCCCCCCC",
+                       57, &kmer);
+    binary_kmer_reverse_complement(&kmer, 57, &kmer_reverse);
+    CU_ASSERT_STRING_EQUAL("GGGGGGGGGGTTTTTTTTTTAAACGTAACGTAACGTAACGTTTTTTCATGG"
+                           "CAACGT",binary_kmer_to_seq(&kmer_reverse, 57, seq));
 
-      seq_to_binary_kmer("ACGTTGCCATGAAAAAACGTTACGTTACGTTACGTTTAAAAAAAAAACCCCCCCCCCGGGTAC",63, &kmer);
-      binary_kmer_reverse_complement(&kmer, 63, &kmer_reverse);
-      CU_ASSERT_STRING_EQUAL("GTACCCGGGGGGGGGGTTTTTTTTTTAAACGTAACGTAACGTAACGTTTTTTCATGGCAACGT", binary_kmer_to_seq(&kmer_reverse,63,seq63));
-    }
+    seq_to_binary_kmer("ACGTTGCCATGAAAAAACGTTACGTTACGTTACGTTTAAAAAAAAAACCCCCCCC"
+                       "CCGGGTAC", 63, &kmer);
+    binary_kmer_reverse_complement(&kmer, 63, &kmer_reverse);
+    CU_ASSERT_STRING_EQUAL("GTACCCGGGGGGGGGGTTTTTTTTTTAAACGTAACGTAACGTAACGTTTTT"
+                           "TCATGGCAACGT",
+                           binary_kmer_to_seq(&kmer_reverse, 63, seq));
+  }
 
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>2)
-    {
-
-      seq_to_binary_kmer("TACGTTGCCATGAAAAAACGTTACGTTACGTTACGTTTAAAAAAAAAACCCCCCCCCCGGGTACC",65, &kmer);
-      binary_kmer_reverse_complement(&kmer, 65, &kmer_reverse);
-      CU_ASSERT_STRING_EQUAL("GGTACCCGGGGGGGGGGTTTTTTTTTTAAACGTAACGTAACGTAACGTTTTTTCATGGCAACGTA", binary_kmer_to_seq(&kmer_reverse,65,seq65));
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 2)
+  {
+    seq_to_binary_kmer("TACGTTGCCATGAAAAAACGTTACGTTACGTTACGTTTAAAAAAAAAACCCCCCC"
+                       "CCCGGGTACC", 65, &kmer);
+    binary_kmer_reverse_complement(&kmer, 65, &kmer_reverse);
+    CU_ASSERT_STRING_EQUAL("GGTACCCGGGGGGGGGGTTTTTTTTTTAAACGTAACGTAACGTAACGTTTT"
+                           "TTCATGGCAACGTA",
+                           binary_kmer_to_seq(&kmer_reverse,65,seq));
       
-      seq_to_binary_kmer("AACGTGTGTGCCCATACAGGAACGTGTGTGCCCATACAGGAACGTGTGTGCCCATACAGGAACGTGTGTGCCCATACAGGG", 81, &kmer);
-      binary_kmer_reverse_complement(&kmer, 81, &kmer_reverse);
-      CU_ASSERT_STRING_EQUAL("CCCTGTATGGGCACACACGTTCCTGTATGGGCACACACGTTCCTGTATGGGCACACACGTTCCTGTATGGGCACACACGTT", binary_kmer_to_seq(&kmer_reverse,81,seq81));
-    }
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>3)
-    {
-      seq_to_binary_kmer("CCCCCCCCCTATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCA",97, &kmer);
-      binary_kmer_reverse_complement(&kmer, 97, &kmer_reverse);
-      CU_ASSERT_STRING_EQUAL("TGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATAGGGGGGGGG", binary_kmer_to_seq(&kmer_reverse,97,seq97));
+    seq_to_binary_kmer("AACGTGTGTGCCCATACAGGAACGTGTGTGCCCATACAGGAACGTGTGTGCCCAT"
+                       "ACAGGAACGTGTGTGCCCATACAGGG", 81, &kmer);
+    binary_kmer_reverse_complement(&kmer, 81, &kmer_reverse);
+    CU_ASSERT_STRING_EQUAL("CCCTGTATGGGCACACACGTTCCTGTATGGGCACACACGTTCCTGTATGGG"
+                           "CACACACGTTCCTGTATGGGCACACACGTT",
+                           binary_kmer_to_seq(&kmer_reverse, 81, seq));
+  }
 
-      seq_to_binary_kmer("CCCCCCCCTATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCAC", 127, &kmer);
-      binary_kmer_reverse_complement(&kmer, 127, &kmer_reverse);
-      CU_ASSERT_STRING_EQUAL("GTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATAGGGGGGGG", binary_kmer_to_seq(&kmer_reverse,127,seq127));
+  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 3)
+  {
+    seq_to_binary_kmer("CCCCCCCCCTATGGGCACATATGGGCACATATGGGCACATATGGGCACATATG"
+                       "GGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCA", 97, &kmer);
+    binary_kmer_reverse_complement(&kmer, 97, &kmer_reverse);
+    CU_ASSERT_STRING_EQUAL("TGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATAT"
+                           "GTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATAGGGGGGGGG",
+                           binary_kmer_to_seq(&kmer_reverse, 97, seq));
 
-    }
+    seq_to_binary_kmer("CCCCCCCCTATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGG"
+                       "GCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCA"
+                       "CATATGGGCACATATGGGCAC", 127, &kmer);
+    binary_kmer_reverse_complement(&kmer, 127, &kmer_reverse);
+    CU_ASSERT_STRING_EQUAL("GTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATA"
+                           "TGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCAT"
+                           "ATGTGCCCATATGTGCCCATAGGGGGGGG",
+                           binary_kmer_to_seq(&kmer_reverse, 127, seq));
+  }
 
+  // If you think all these tests are paranoid - this next one found a bug in
+  // how the far left bitfield was treated.
 
+  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 4)
+  {
+    seq_to_binary_kmer("TGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGC"
+                       "CCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATA"
+                       "TGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATAGGGGGGGGG", 159,
+                       &kmer);
+    binary_kmer_reverse_complement(&kmer, 159, &kmer_reverse);
+    CU_ASSERT_STRING_EQUAL("CCCCCCCCCTATGGGCACATATGGGCACATATGGGCACATATGGGCACATA"
+                           "TGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATAT"
+                           "GGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATG"
+                           "GGCACA",  
+			                     binary_kmer_to_seq(&kmer_reverse, 159, seq));
+  }
 
-
-  //if you think all these tests are paranoid - this next one found a bug in how the far left bitfield was treated.
-
-
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>4)
-    {
-
-      seq_to_binary_kmer("TGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATAGGGGGGGGG", 159, &kmer);
-      binary_kmer_reverse_complement(&kmer, 159, &kmer_reverse);
-      CU_ASSERT_STRING_EQUAL("CCCCCCCCCTATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACA",  
-			     binary_kmer_to_seq(&kmer_reverse,159,seq159));
-    }
-
-
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>7)
-    {
-      
-      seq_to_binary_kmer("CCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCGGGGG", 255, &kmer);
-      binary_kmer_reverse_complement(&kmer, 255, &kmer_reverse);
-      CU_ASSERT_STRING_EQUAL("CCCCCGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGG",  binary_kmer_to_seq(&kmer_reverse,255,seq255));
-      
-  
+  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 7)
+  {    
+    seq_to_binary_kmer("CCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATA"
+                       "TGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGC"
+                       "CCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATA"
+                       "TGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGCCCATATGTGC"
+                       "CCATATGTGCCCATATGTGCCCATATGTGCGGGGG", 255, &kmer);
+    binary_kmer_reverse_complement(&kmer, 255, &kmer_reverse);
+    CU_ASSERT_STRING_EQUAL("CCCCCGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACAT"
+                           "ATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATA"
+                           "TGGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATAT"
+                           "GGGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATG"
+                           "GGCACATATGGGCACATATGGGCACATATGGGCACATATGGGCACATATGG",
+                           binary_kmer_to_seq(&kmer_reverse, 255, seq));  
     }  
-
-
-
-  
 }
 
 
-void test_seq_reverse_complement(){
-  
+void test_seq_reverse_complement()
+{
   char out[100];
   char * seq = "AAAAAA";
-  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq,6,out),"TTTTTT");
+  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq, 6, out), "TTTTTT");
   
   seq = "ATAAAA";
-  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq,6,out),"TTTTAT");
+  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq, 6, out), "TTTTAT");
   
   seq = "CGATAAAA";
-  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq,8,out),"TTTTATCG");
+  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq, 8, out), "TTTTATCG");
  
   seq = "CGATAAAAGG";
-  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq,10,out),"CCTTTTATCG");
+  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq, 10, out), "CCTTTTATCG");
    
   seq = "";
-  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq,0,out),"");
-  
+  CU_ASSERT_STRING_EQUAL(seq_reverse_complement(seq, 0, out), "");
 }
 
 

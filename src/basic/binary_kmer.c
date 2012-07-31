@@ -484,7 +484,39 @@ char * binary_kmer_to_seq(BinaryKmer* bkmer, short kmer_size, char * seq){
   return seq;
 }
 
+#define MIN(x,y) ((x) <= (y) ? (x) : (y))
 
+//does not affect the kmer passed in as argument 1
+BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size,
+                                           BinaryKmer* prealloc_reverse_kmer)
+{
+  binary_kmer_initialise_to_zero(prealloc_reverse_kmer);
+
+  int i, j;
+  int dst_count = 0;
+
+  for(i = 0; i < NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+  {
+    // Get complement of word
+    bitfield_of_64bits word = (*kmer)[i] ^ ~0;
+
+    int limit = MIN(32, kmer_size - dst_count);
+    dst_count += limit;
+    int num_of_bits = limit * 2;
+
+    for(j = 0; j < num_of_bits; j += 2)
+    {
+      binary_kmer_left_shift_one_base(*prealloc_reverse_kmer, kmer_size);
+
+      (*prealloc_reverse_kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]
+        |= (word >> j) & 0x3;
+    }
+  }
+
+  return prealloc_reverse_kmer;
+}
+
+/*
 //does not affect the kmer passed in as argument 1
 BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size, BinaryKmer* prealloc_reverse_kmer){
   binary_kmer_initialise_to_zero(prealloc_reverse_kmer);
@@ -518,7 +550,7 @@ BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size, Bi
 
   return prealloc_reverse_kmer;
 }
-
+*/
 
 Nucleotide binary_kmer_get_last_nucleotide(BinaryKmer* kmer){
   
