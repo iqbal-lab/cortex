@@ -99,7 +99,14 @@ long long calculate_mean(long long* array, long long len)
       sum += i*array[i];
       num += array[i];
     }
-  return  (sum/num);
+  if (num>0)
+    {
+      return  (sum/num);
+    }
+  else
+    {
+      return 0;
+    }
 }
 
 

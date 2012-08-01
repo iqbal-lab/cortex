@@ -31,6 +31,14 @@ sub print_usage
   exit;
 }
 
+## Test for filtering
+my $skip_failed_vars = 0;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  $skip_failed_vars = 1;
+}
+##
+
 my $max_indel;
 
 if(@ARGV > 1 && $ARGV[0] =~ /^-?-max_indel$/i)
@@ -78,6 +86,9 @@ else
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+# Skip non-PASS variants if -p passed
+if($skip_failed_vars) { $vcf->set_filter_failed(undef);}
 
 my $num_of_variants = 0;
 my $num_of_complex = 0;

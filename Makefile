@@ -131,7 +131,7 @@ NUMCOLS_AND_TEST = $(join "_c", $(NUM_COLS))
 
 
 cortex_var : remove_objects $(CORTEX_VAR_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR)  $(OPT) $(OPT_COLS) -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ) -lm -lgsl -lgslcblas
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR)  $(OPT) $(OPT_COLS) -L/home/zam/dev/hg/CORTEX_release/gsl-1.15 -L/home/zam/dev/hg/CORTEX_release/gsl-1.15/gsl -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ) -lm -lgsl -lgslcblas
 
 run_basic_tests : remove_objects $(BASIC_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(OPT) $(CFLAGS_BASIC) $(CFLAGS_CUNIT) -o $(BIN)/run_basic_tests_$(MAXK) $(BASIC_TESTS_OBJ) -lcunit

@@ -20,12 +20,22 @@ sub print_usage
     print STDERR "Error: $err\n";
   }
 
-  print STDERR "Usage: ./vcf_add_rmsk_distance.pl <rmsk.txt> [in.vcf]\n";
-  print STDERR "  Add repeat annoations to variants, using INFO tags:\n";
-  print STDERR "  - rmsk_CLASS_left, rmsk_CLASS_right\n";
-  print STDERR "    (distances (bp) to the left/right to nearest element\n";
+  print STDERR "" .
+"Usage: ./vcf_add_rmsk_distance.pl <rmsk.txt> [in.vcf]
+  Add repeat annoations to variants, using INFO tags:
+  - rmsk_CLASS_left, rmsk_CLASS_right
+    (distances (bp) to the left/right to nearest element\n";
+
   exit;
 }
+
+## Test for filtering
+my $failed_vars_out = undef;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  open($failed_vars_out, ">-");
+}
+##
 
 if(@ARGV < 1 || @ARGV > 2)
 {
@@ -119,6 +129,9 @@ for my $rmsk_chr (keys %repeat_elements_by_chr)
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+# Print non-PASS variants straight to stdout if -p passed
+$vcf->set_filter_failed($failed_vars_out);
 
 # Add header tags
 for my $class (@rmsk_classes)

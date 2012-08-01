@@ -18,9 +18,8 @@ sub print_usage
   }
 
   print STDERR "" .
-"Usage: ./vcf_filter_variants.pl [--invert] <INDEL|CLEAN_INDEL|SNP|MNP|NP> " .
-  "[in.vcf]\n" .
-"  Prints variants of a particular type
+"Usage: ./vcf_filter_variants.pl [--invert] <INDEL|CLEAN_INDEL|SNP|MNP|NP> [in.vcf]
+  Prints variants of a particular type
   --invert      Everything but option
 
   Options:
@@ -33,6 +32,14 @@ sub print_usage
 
   exit;
 }
+
+## Test for filtering
+my $failed_vars_out = undef;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  open($failed_vars_out, ">-");
+}
+##
 
 if(@ARGV < 1 || @ARGV > 3)
 {
@@ -88,6 +95,9 @@ else
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+# Print non-PASS variants straight to stdout if -p passed
+$vcf->set_filter_failed($failed_vars_out);
 
 $vcf->print_header();
 

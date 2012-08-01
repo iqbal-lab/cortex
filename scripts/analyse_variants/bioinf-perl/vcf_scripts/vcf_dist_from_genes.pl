@@ -20,18 +20,28 @@ sub print_usage
     print STDERR "Error: $err\n";
   }
   
-  print STDERR "Usage: ./vcf_dist_from_genes.pl <ensGene.txt> <CDS/TX> " .
-               "<chr_lengths.csv> <binsize> <out> [in.vcf]\n";
-  print STDERR "  Get distribution of variants around genes\n";
-  print STDERR "  <CDS/TX> whether to use coding or transcription start\n";
-  print STDERR "  <binsize> is the size of bins in kbp\n";
-  print STDERR "  Saves: <out>.upstream.csv, <out>.downstream.csv, " .
-               "<out>.intron.csv, <out>.exon.csv\n";
-  print STDERR "         <out>.preexon.csv & <out>.postexon.csv>\n";
+  print STDERR "" .
+"Usage: ./vcf_dist_from_genes.pl <ensGene.txt> <CDS/TX> " .
+  "<chr_lengths.csv> <binsize> <out> [in.vcf] 
+  Get distribution of variants around genes
+  <CDS/TX> whether to use coding or transcription start
+  <binsize> is the size of bins in kbp
+  Saves: <out>.upstream.csv, <out>.downstream.csv,
+         <out>.intron.csv, <out>.exon.csv,
+         <out>.preexon.csv & <out>.postexon.csv>\n";
   exit;
 }
 
-if(@ARGV < 5 || @ARGV > 6) {
+## Test for filtering
+my $skip_failed_vars = 0;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  $skip_failed_vars = 1;
+}
+##
+
+if(@ARGV < 5 || @ARGV > 6)
+{
   print_usage();
 }
 
@@ -209,6 +219,12 @@ close($genes_handle);
 print "Reading VCF...\n";
 
 my $vcf = new VCFFile($vcf_handle);
+
+# Skip non-PASS variants if -p passed
+if($skip_failed_vars) { $vcf->set_filter_failed(undef); }
+
+# Print non-PASS variants straight to stdout if -p passed
+$vcf->set_filter_failed($failed_vars_out);
 
 my @positions = ();
 

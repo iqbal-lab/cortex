@@ -1302,9 +1302,7 @@ sub merge_list_of_vcfs
 	close($catout_fh);
 
 	## Now cleanup - remove dups etc
-#	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_combine_alleles.pl  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --filter_txt OVERLAPPING_SITE > $outfilename";	
-	#debug
-	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_combine_alleles.pl  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --filter_txt OVERLAPPING_SITE > $outfilename";
+	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --take_first --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_combine_alleles.pl --pass  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass --filter_txt OVERLAPPING_SITE > $outfilename";	
 	print "$cmd1\n";
 	my $ret1 = qx{$cmd1};
 	print "$ret1\n";
@@ -1987,7 +1985,10 @@ sub get_number_samples
 	my @sp = split(/\t/, $line);
 	if (scalar (@sp) != 4)
 	{
-	    die("Format error in fastaq index $index - each line should be tab separated with 4 fields. Name of sample\tse_list\tpe_list1\tpe_list2\n");
+	    print("Format error in fastaq index $index - each line should be tab separated with 4 fields. Name of sample\tse_list\tpe_list1\tpe_list2\n");
+	    print("This line:\n$line\n has ");
+	    print scalar(@sp);
+	    print(" tab sep fields in it\n");
 	}
 	else
 	{

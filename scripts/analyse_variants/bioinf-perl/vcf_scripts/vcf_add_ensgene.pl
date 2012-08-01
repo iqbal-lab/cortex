@@ -17,11 +17,19 @@ sub print_usage
   }
 
   print STDERR "" .
-"Usage: ./vcf_count_entries.pl <ensgene.txt> [file.vcf]\n" .
+"Usage: ./vcf_add_ensgene.pl <ensgene.txt> [file.vcf]\n" .
 "  Label VCF entries if in a gene.  Adds GENE, GENES_STRAND & GENES_POS tags\n" .
 "  to the INFO field.  If no [file.vcf] given (or given '-'), reads STDIN\n";
   exit;
 }
+
+## Test for filtering
+my $failed_vars_out = undef;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  open($failed_vars_out, ">-");
+}
+##
 
 if(@ARGV < 1 || @ARGV > 2)
 {
@@ -103,6 +111,9 @@ while(my ($chr, $genes) = each(%genes_by_chr))
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+# Print non-PASS variants straight to stdout if -p passed
+$vcf->set_filter_failed($failed_vars_out);
 
 $vcf->add_header_tag("INFO", "GENES", 1, "String", "Ensembl gene name/key");
 $vcf->add_header_tag("INFO", "GENES_STRAND", 1, "String", "Strand gene is on +/-");

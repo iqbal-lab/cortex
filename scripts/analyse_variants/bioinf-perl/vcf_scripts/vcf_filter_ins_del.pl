@@ -27,6 +27,14 @@ sub print_usage
   exit;
 }
 
+## Test for filtering
+my $failed_vars_out = undef;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  open($failed_vars_out, ">-");
+}
+##
+
 my $invert = 0;
 my $clean_only = 0;
 my $filter_insertions;
@@ -104,6 +112,9 @@ else
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+# Print non-PASS variants straight to stdout if -p passed
+$vcf->set_filter_failed($failed_vars_out);
 
 $vcf->print_header();
 

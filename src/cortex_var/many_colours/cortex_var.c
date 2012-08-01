@@ -806,7 +806,10 @@ int main(int argc, char **argv){
 								    cmd_line->max_read_length, 0, db_graph);
 
       //update the graph info object
-      graph_info_update_mean_readlen_and_total_seq(db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line->max_read_length+1)), bases_pass_filters_and_loaded);
+      graph_info_update_mean_readlen_and_total_seq(db_graph_info, 0, 
+						   calculate_mean(readlen_distrib, 
+								  (long long) (cmd_line->max_read_length+1)), 
+						   bases_pass_filters_and_loaded);
       if (cmd_line->entered_sampleid_as_cmdline_arg==true)
 	{
 	  graph_info_set_sample_ids(cmd_line->colour_sample_ids, 1, db_graph_info, 0);

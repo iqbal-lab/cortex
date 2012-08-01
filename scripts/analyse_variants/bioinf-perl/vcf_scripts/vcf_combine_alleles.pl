@@ -32,6 +32,14 @@ sub print_usage
   exit;
 }
 
+## Test for filtering
+my $failed_vars_out = undef;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  open($failed_vars_out, ">-");
+}
+##
+
 my $vcf_file = shift;
 
 #
@@ -58,6 +66,9 @@ else
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+# Print non-PASS variants straight to stdout if -p passed
+$vcf->set_filter_failed($failed_vars_out);
 
 $vcf->add_header_tag("FILTER", $multiallelic_tag, 0, undef,
                      "Variant formed from merged alleles");
@@ -160,8 +171,6 @@ sub print_list
         my $start = $i;
         my $end = $i+1;
 
-        $num_of_merges++;
-
         while($end+1 < @vars_at_same_pos &&
               length($vars_at_same_pos[$end]->{'REF'}) ==
                 length($vars_at_same_pos[$end+1]->{'REF'}))
@@ -189,6 +198,8 @@ sub print_list
         }
         else
         {
+          $num_of_merges++;
+
           # Store allele numbers in this hash
           @alleles_hash{$vars_at_same_pos[$end]->{'REF'}} = 0;
 

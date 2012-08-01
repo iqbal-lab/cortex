@@ -15,26 +15,36 @@ sub print_usage
     print "Error: $err\n";
   }
 
-  print STDERR "Usage: ./vcf_header.pl [--entries] <vcf> [header1 ..]\n";
-  print STDERR "  Print vcf file header (reads from STDIN if <file> is '-').\n";
-  print STDERR "  Adds extra headers if passed after file.\n";
-  print STDERR "\n";
-  print STDERR "  [header] should be of the following forms:\n";
-  print STDERR "  1) to add a header:\n";
-  print STDERR "    +tag:INFO,ID,Number,Type,Description    e.g. +tag:INFO,T,0,Flag,T number\n";
-  print STDERR "    +tag:FORMAT,ID,Number,Type,Description  e.g. +tag:FORMAT,T,1,String,T number\n";
-  print STDERR "    +tag:FILTER,ID,Description              e.g. +tag:FILTER,T,T number\n";
-  print STDERR "    +tag:ALT,ID,Description                 e.g. +tag:ALT,T,T number\n";
-  print STDERR "  2) to remove a header:\n";
-  print STDERR "    -tag:ID                                 e.g. -tag:DP\n";
-  print STDERR "  3) to add metainfo:\n";
-  print STDERR "    +meta:ID=value                          e.g. +meta:date,today\n";
-  print STDERR "  4) to remove metainfo:\n";
-  print STDERR "    -meta:ID                                e.g. -meta:date\n";
-  print STDERR "\n";
-  print STDERR "  --entries  Print VCF entries as well as header\n";
+  print STDERR "" .
+"Usage: ./vcf_header.pl [--entries] <vcf> [header1 ..]
+  Print vcf file header (reads from STDIN if <file> is '-').
+  Adds extra headers if passed after file.
+
+  [header] should be of the following forms:
+  1) to add a header:
+    +tag:INFO,ID,Number,Type,Description    e.g. +tag:INFO,T,0,Flag,T number
+    +tag:FORMAT,ID,Number,Type,Description  e.g. +tag:FORMAT,T,1,String,T number
+    +tag:FILTER,ID,Description              e.g. +tag:FILTER,T,T number
+    +tag:ALT,ID,Description                 e.g. +tag:ALT,T,T number
+  2) to remove a header:
+    -tag:ID                                 e.g. -tag:DP
+  3) to add metainfo:
+    +meta:ID=value                          e.g. +meta:date,today
+  4) to remove metainfo:
+    -meta:ID                                e.g. -meta:date
+
+  --entries  Print VCF entries as well as header\n";
+
   exit;
 }
+
+## Test for filtering
+my $failed_vars_out = undef;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  open($failed_vars_out, ">-");
+}
+##
 
 if(@ARGV == 0)
 {
@@ -71,6 +81,9 @@ else
 }
 
 my $vcf = new VCFFile($vcf_handle);
+
+# Print non-PASS variants straight to stdout if -p passed
+$vcf->set_filter_failed($failed_vars_out);
 
 for my $extra_header (@extra_headers)
 {

@@ -21,17 +21,25 @@ sub print_usage
     print STDERR "Error: $err\n";
   }
 
-  print STDERR "Usage: ./vcf_add_flanks.pl [FILTERS] <flank_size> <in.vcf> " .
-               "<ref_name> <ref1.fa ..>\n";
-  print STDERR "  Adds the flanking sequence to VCF files\n";
-  print STDERR "  --filter_ref_match: remove variants where ref allele " .
-               "doesn't match\n";
-  print STDERR "  --filter_Ns: remove variants where flank+[ref/alt]+flank " .
-               "contains Ns or flanks aren't long enough\n";
-  print STDERR "  - <ref_name> is used in the VCF header\n";
-  print STDERR "  - If <in.vcf> is '-', reads from stdin\n";
+  print STDERR "" .
+"Usage: ./vcf_add_flanks.pl [FILTERS] <flank_size> <in.vcf> <ref_name> <ref1.fa ..>
+  Adds the flanking sequence to VCF files
+  --filter_ref_match: remove variants where ref allele doesn't match
+  --filter_Ns: remove variants where flank+[ref/alt]+flank contains Ns or flanks
+               aren't long enough
+  - <ref_name> is used in the VCF header
+  - If <in.vcf> is '-', reads from stdin\n";
+
   exit;
 }
+
+## Test for filtering
+my $failed_vars_out = undef;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  open($failed_vars_out, ">-");
+}
+##
 
 if(@ARGV < 4)
 {
@@ -84,6 +92,11 @@ else
   print_usage("Must specify or pipe in a VCF file");
 }
 
+my $vcf = new VCFFile($vcf_handle);
+
+# Print non-PASS variants straight to stdout if -p passed
+$vcf->set_filter_failed($failed_vars_out);
+
 #
 # Load reference files
 #
@@ -93,7 +106,6 @@ $genome->load_from_files(@ref_files);
 #
 # Read VCF
 #
-my $vcf = new VCFFile($vcf_handle);
 
 # Add tags to header and print
 my $tag_description = "$flank_size bp adjacent in ref genome '$ref_name'";

@@ -23,7 +23,7 @@ sub new
   my $class = shift;
   my $handle = shift;
   my $next_line = <$handle>;
-  
+
   if(!defined($next_line))
   {
     croak("VCF file is empty");
@@ -68,7 +68,7 @@ sub new
       # header meta info line
       my ($key,$value) = ($1,$2);
       chomp($value);
-      
+
       if(defined($header_metainfo{$key}))
       {
         carp("Multiple metainfo tags with ID '$key' " .
@@ -120,7 +120,7 @@ sub new
     my @col_values = split(/\t/, $next_line);
 
     my @expected_cols = get_standard_vcf_columns();
-    
+
     # Can be more columns that standard to include all samples,
     # but fewer needs to be reported (fatal)
     if(@col_values < @expected_cols)
@@ -160,6 +160,9 @@ sub new
   #print "Meta tags: " . join(",", sort keys %header_metainfo) . "\n";
   #print "header tags:" . join(",", sort keys %header_tags) . "\n";
 
+  # Set _failed_vars_out to undef to skip non-PASS variants
+  # Set _failed_vars_out to filehandle print non-PASS variants elsewhere
+
   my $self = {
       _handle => $handle,
       _next_line => $next_line,
@@ -187,10 +190,23 @@ sub _read_line
   my ($self) = @_;
   my $temp_line = $self->{_next_line};
   my $handle = $self->{_handle};
-  
+
   $self->{_next_line} = <$handle>;
-  
+
   return $temp_line;
+}
+
+sub set_filter_failed
+{
+  my ($self, $out_fh) = @_;
+
+  $self->{_failed_vars_out} = $out_fh;
+}
+
+sub unset_filter_failed
+{
+  my ($self) = @_;
+  delete($self->{_failed_vars_out});
 }
 
 #
@@ -357,14 +373,14 @@ sub _cmp_header_tags
     {
       "Error: " . join(";", map {"$_ => $a->{$_}"} keys %$a)."\n";
     }
-    
+
     if(!defined($b->{$tag_field}))
     {
       "Error: " . join(";", map {"$_ => $b->{$_}"} keys %$b)."\n";
     }
 
     my $cmp = $a->{$tag_field} cmp $b->{$tag_field};
-  
+
     if($cmp != 0)
     {
       return $cmp;
@@ -559,7 +575,7 @@ sub get_columns_hash
 sub set_columns_with_hash
 {
   my ($self, $cols_hashref) = @_;
-  
+
   my @cols_arr = sort {$cols_hashref->{$a} <=> $cols_hashref->{$b}}
                    keys %$cols_hashref;
 
@@ -630,6 +646,37 @@ sub read_entry
   {
     return pop(@{$self->{_entry_buffered}});
   }
+
+  my $entry;
+
+  if(defined(my $fail_out = $self->{_failed_vars_out}))
+  {
+    # Print non-PASS variants to the given file handle
+    while(($entry = $self->_read_entry_from_file()) &&
+          defined($entry->{'FILTER'}) && $entry->{'FILTER'} ne "." &&
+          uc($entry->{'FILTER'}) ne "PASS")
+    {
+      $self->print_entry($entry, $fail_out);
+    }
+  }
+  elsif(exists($self->{_failed_vars_out}))
+  {
+    # Skip non-PASS variants
+    while(($entry = $self->_read_entry_from_file()) &&
+          defined($entry->{'FILTER'}) && $entry->{'FILTER'} ne "." &&
+          uc($entry->{'FILTER'}) ne "PASS") {}
+  }
+  else
+  {
+    $entry = $self->_read_entry_from_file();
+  }
+
+  return $entry;
+}
+
+sub _read_entry_from_file
+{
+  my ($self) = @_;
 
   # store details in this hash
   my %entry = ();
@@ -797,13 +844,13 @@ sub print_entry
     {
       my $info_hashref = $entry->{'INFO'};
       my $flags_hashref = $entry->{'INFO_flags'};
-      
+
       my @entries = map {$_ . "=" . $info_hashref->{$_}} keys %$info_hashref;
       push(@entries, keys %$flags_hashref);
-      
+
       # Sort INFO entries
       @entries = sort {$a cmp $b} @entries;
-      
+
       print $out_handle (@entries > 0 ? join(";", @entries) : '.');
     }
     elsif($columns_arr[$i] eq "FORMAT")
@@ -839,7 +886,7 @@ sub cmp_variants
   {
     return $order;
   }
-  
+
   if(($order = $a->{'INFO'}->{'SVLEN'} <=> $b->{'INFO'}->{'SVLEN'}) != 0)
   {
     return $order;
@@ -902,10 +949,10 @@ sub get_ploidy
 sub is_snp
 {
   my ($vcf_entry) = @_;
-  
+
   my $ref_len = length($vcf_entry->{'true_REF'});
   my $alt_len = length($vcf_entry->{'true_ALT'});
-  
+
   return ($ref_len == 1 && $alt_len == 1);
 }
 
@@ -913,7 +960,7 @@ sub is_snp
 sub get_clean_indel
 {
   my ($vcf_entry) = @_;
-  
+
   my $ref = $vcf_entry->{'true_REF'};
   my $alt = $vcf_entry->{'true_ALT'};
   my $svlen = $vcf_entry->{'INFO'}->{'SVLEN'};

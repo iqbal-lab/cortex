@@ -54,7 +54,7 @@ tablefile            <- args[7]
 genome.size          <- as.integer(args[8]);
 kmer                 <- as.integer(args[9]);
 ploidy               <- as.integer(args[10]);
-outfile              <- as.integer(args[11]);
+outfile              <- args[11];
 
 ## covg file will contain two char columns (var name, whether this looks like a ref bubble) which are 
 ## not used by the classifier, followed by 2 numeric columns (length branch1, length branch2)

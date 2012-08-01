@@ -17,25 +17,35 @@ sub print_usage
     print STDERR "Error: $err\n";
   }
 
-  print STDERR "Usage: ./vcf_filter_by_regions.pl [OPTIONS] <region1 ..> [in.vcf]\n";
-  print STDERR "  Filter by regions.  Range is inclusive. " .
-               "Does not assume VCF is sorted.  \n";
-  print STDERR "\n";
-  print STDERR "  Options:\n";
-  print STDERR "   --file         file containing one region per line\n";
-  print STDERR "   --invert       invert selection\n";
-  print STDERR "   --flag <flag>  Print all entries, flag hits\n";
-  print STDERR "\n";
-  print STDERR "  Regions:\n";
-  print STDERR "   chr:*          an entire chromosome\n";
-  print STDERR "   chr:start-end  a region of a chromosome\n";
-  print STDERR "\n";
-  print STDERR "  Examples:\n";
-  print STDERR "  \$ ./vcf_regions.pl --flag IN_CHR1 chr1:10,000-12,000 data.vcf\n";
-  print STDERR "  \$ ./vcf_regions.pl --file --invert regions.txt data.vcf\n";
-  print STDERR "  \$ cat data.vcf | ./vcf_regions.pl chr1:* chr2:500-1000\n";
+  print STDERR "" .
+"Usage: ./vcf_filter_by_regions.pl [OPTIONS] <region1 ..> [in.vcf]
+  Filter by regions.  Range is inclusive. " .
+               "Does not assume VCF is sorted.  
+
+  Options:
+   --file         file containing one region per line
+   --invert       invert selection
+   --flag <flag>  Print all entries, flag hits
+
+  Regions:
+   chr:*          an entire chromosome
+   chr:start-end  a region of a chromosome
+
+  Examples:
+  \$ ./vcf_regions.pl --flag IN_CHR1 chr1:10,000-12,000 data.vcf
+  \$ ./vcf_regions.pl --file --invert regions.txt data.vcf
+  \$ cat data.vcf | ./vcf_regions.pl chr1:* chr2:500-1000\n";
+
   exit;
 }
+
+## Test for filtering
+my $failed_vars_out = undef;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  open($failed_vars_out, ">-");
+}
+##
 
 if(@ARGV == 0)
 {
@@ -140,6 +150,9 @@ else
 #
 my $vcf = new VCFFile($vcf_handle);
 
+# Print non-PASS variants straight to stdout if -p passed
+$vcf->set_filter_failed($failed_vars_out);
+
 $vcf->print_header();
 
 my $num_of_filtered_entries = 0;
@@ -185,11 +198,9 @@ while(defined($vcf_entry = $vcf->read_entry()))
 }
 
 # Print filtered rate
-my $printed_percent = 100 * $num_of_filtered_entries / $total_num_entries;
-
-print STDERR "vcf_filter_by_regions.pl: " . num2str($num_of_filtered_entries) .
-             " / " . num2str($total_num_entries) . " " .
-             "(" . sprintf("%.2f", $printed_percent) . "%) variants printed\n";
+print STDERR "vcf_filter_by_regions.pl: " .
+             pretty_fraction($num_of_filtered_entries, $total_num_entries) .
+             " variants printed\n";
 
 close($vcf_handle);
 

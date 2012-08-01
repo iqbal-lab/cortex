@@ -16,12 +16,22 @@ sub print_usage
     print STDERR "Error: $err\n";
   }
 
-  print STDERR "Usage: ./vcf_add_ins_del_tags.pl [file.vcf]\n";
-  print STDERR "  Adds INFO tags using AA and SVLEN INFO tags:\n";
-  print STDERR "   * INDEL=INS|DEL (for clean insertions / deletions)\n";
-  print STDERR "   * AALEN=(derived-ancestral allele length)\n";
+  print STDERR "" .
+"Usage: ./vcf_add_ins_del_tags.pl [file.vcf]
+  Adds INFO tags using AA and SVLEN INFO tags:
+   * INDEL=INS|DEL (for clean insertions / deletions)
+   * AALEN=(derived-ancestral allele length)\n";
+
   exit;
 }
+
+## Test for filtering
+my $failed_vars_out = undef;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  open($failed_vars_out, ">-");
+}
+##
 
 if(@ARGV > 1)
 {
@@ -53,6 +63,9 @@ else
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+# Print non-PASS variants straight to stdout if -p passed
+$vcf->set_filter_failed($failed_vars_out);
 
 # Add tag and print header
 my $tag_description = "Indel mutation: INS=insertion, DEL=deletion or .=unknown";
