@@ -68,7 +68,7 @@ else
 my $vcf = new VCFFile($vcf_handle);
 
 # Print non-PASS variants straight to stdout if -p passed
-$vcf->set_filter_failed($failed_vars_out);
+if(defined($failed_vars_out)) { $vcf->set_filter_failed($failed_vars_out);}
 
 $vcf->add_header_tag("FILTER", $multiallelic_tag, 0, undef,
                      "Variant formed from merged alleles");

@@ -1,4 +1,4 @@
- #!/usr/bin/perl -w
+#!/usr/bin/perl -w
 use strict;
 use File::Basename;
 use Getopt::Long;
@@ -676,6 +676,12 @@ if  ($workflow eq "joint" )## then just assume is BC only
 	    
 	    my $cmd = $ctx_bin." --kmer_size $K --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list  --print_colour_coverages  --experiment_type $expt_type --genome_size $genome_size";
 
+	    if ($format eq "FASTA")
+	    {
+		#let's assume we are genotyping reference genomes, so tiny sequencing error rate
+		printf("Note - since you passed in fasta, we assume these are reference genomes, with a very low per-base error rate, of 0.0000001, in order to genotype\n");
+		$cmd = $cmd." --estimated_error_rate 0.000001 ";
+	    }
 	    if ($use_ref ne "Absent")
 	    {
 		$cmd = $cmd." --ref_colour 0 ";
@@ -825,7 +831,7 @@ if ($do_union eq "yes")
 				   0, $kmer_to_union_callset{$km}{"BC"}, 
 				   $gt_bc_out, $gt_bc_log, "BC", 
 				   $union_callset_to_max_read_len{$km}{"BC"}, 
-				   $expt_type,  $genome_size);
+				   $expt_type,  $genome_size, $format);
 		    
 		    my $pop_classif_file="";
 		    if ($apply_classif)
@@ -851,7 +857,7 @@ if ($do_union eq "yes")
 				   0, $kmer_to_union_callset{$km}{"PD"}, 
 				   $gt_pd_out, $gt_pd_log, "PD", 
 				   $union_callset_to_max_read_len{$km}{"PD"}, 
-				   $expt_type,  $genome_size);
+				   $expt_type,  $genome_size, $format);
 		    my $pop_classif_file;
 		    if ($apply_classif)
 		    {
@@ -1302,7 +1308,7 @@ sub merge_list_of_vcfs
 	close($catout_fh);
 
 	## Now cleanup - remove dups etc
-	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --take_first --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_combine_alleles.pl --pass  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass --filter_txt OVERLAPPING_SITE > $outfilename";	
+	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --take_first --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_combine_alleles.pl --pass  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass --filter_txt OVERLAPPING_SITE | $vcftools_dir/perl/vcf-sort > $outfilename";	
 	print "$cmd1\n";
 	my $ret1 = qx{$cmd1};
 	print "$ret1\n";

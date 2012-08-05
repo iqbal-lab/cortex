@@ -223,9 +223,6 @@ my $vcf = new VCFFile($vcf_handle);
 # Skip non-PASS variants if -p passed
 if($skip_failed_vars) { $vcf->set_filter_failed(undef); }
 
-# Print non-PASS variants straight to stdout if -p passed
-$vcf->set_filter_failed($failed_vars_out);
-
 my @positions = ();
 
 my @upstream_bins = ();

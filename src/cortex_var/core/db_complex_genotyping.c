@@ -826,7 +826,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   //then do allele 2 in identical manner
 
   //Option 2 - Ignore for now
-  //traverse allele 1 abd then allele 2. For a given chunk, take full covg, but use combined mult in alleles 1 and 2 to determine poisson mean, and then mark chunk visited and do not return to visited chunks.
+  //traverse allele 1 abd then allele 2. For a given chunk, take full covg, but use combined mult in alleles 1 and 2 to determne poisson mean, and then mark chunk visited and do not return to visited chunks.
 
   //Option 3 - Ignore for now  - dont use chunks at all, use supernodes <<< will come with sup hash
 

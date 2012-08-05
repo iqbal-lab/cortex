@@ -45,10 +45,10 @@ OPTIONS:
 }
 
 ## Test for filtering
-my $failed_vars_out = undef;
+my $skip_failed_vars = 0;
 if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
 {
-  open($failed_vars_out, ">-");
+  $skip_failed_vars = 1;
 }
 ##
 
@@ -180,7 +180,7 @@ $genome->load_from_files(@ref_files);
 my $vcf = new VCFFile($vcf_handle);
 
 # Print non-PASS variants straight to stdout if -p passed
-$vcf->set_filter_failed($failed_vars_out);
+if($skip_failed_vars) { $vcf->set_filter_failed(undef);}
 
 if($view_as_vcf)
 {

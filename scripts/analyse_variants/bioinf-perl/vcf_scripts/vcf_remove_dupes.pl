@@ -12,11 +12,12 @@ use lib $FindBin::Bin;
 use VCFFile;
 use UsefulModule; # for pretty_fraction
 
-use constant {DUPE_SELECT_NOT_SET => 0,
+use constant {DUPE_SELECT_NONE => 0,
               DUPE_SELECT_LOWEST_TAG => 1,
               DUPE_SELECT_HIGHEST_TAG => 2,
               DUPE_SELECT_FIRST => 3,
-              DUPE_SELECT_LAST => 4};
+              DUPE_SELECT_LAST => 4,
+              DUPE_SELECT_RANDOM => 5};
 
 sub print_usage
 {
@@ -31,8 +32,10 @@ sub print_usage
   Order duplicates by an INFO tag and take the variant with highest/lowest value:
   --take_lowest <tag>  OR
   --take_highest <tag> OR
-  --take_first         OR
-  --take_last          
+  --take_first         OR  [default]
+  --take_last          OR
+  --take_random        OR
+  --take_none
 
   --removed_tag <tag>  Used with --take_[lowest|highest], adds the removed
                        values as a list to the selected variant
@@ -89,6 +92,17 @@ while(@ARGV >= 1)
     shift;
     $select_dupe = DUPE_SELECT_LAST;
   }
+  elsif($ARGV[0] =~ /^-?-take_none$/i)
+  {
+    shift;
+    $select_dupe = DUPE_SELECT_NONE;
+  }
+  elsif($ARGV[0] =~ /^-?-take_random$/i)
+  {
+    print "TAKE RANDOM\n";
+    shift;
+    $select_dupe = DUPE_SELECT_RANDOM;
+  }
   elsif($ARGV[0] =~ /^-?-removed_tag$/i)
   {
     shift;
@@ -120,7 +134,7 @@ if(!defined($select_dupe))
     print_usage("Must use --take_lowest or --take_highest with --removed_tag");
   }
 
-  $select_dupe = defined($filter_txt) ? DUPE_SELECT_NOT_SET : DUPE_SELECT_FIRST;
+  $select_dupe = defined($filter_txt) ? DUPE_SELECT_NONE : DUPE_SELECT_FIRST;
 }
 
 #
@@ -148,8 +162,11 @@ else
 #
 my $vcf = new VCFFile($vcf_handle);
 
+my $num_of_duplicate_sets = 0;
+my $num_of_duplicate_vars = 0;
+
 # Print non-PASS variants straight to stdout if -p passed
-$vcf->set_filter_failed($failed_vars_out);
+if(defined($failed_vars_out)) { $vcf->set_filter_failed($failed_vars_out);}
 
 if(defined($filter_txt))
 {
@@ -159,7 +176,7 @@ if(defined($filter_txt))
   {
     $description = "Duplicated variant that was not the first seen";
   }
-  elsif($select_dupe == DUPE_SELECT_FIRST)
+  elsif($select_dupe == DUPE_SELECT_LAST)
   {
     $description = "Duplicated variant that was not the last seen";
   }
@@ -172,6 +189,10 @@ if(defined($filter_txt))
   {
     $description = "Duplicated variant that didn't have the highest value of " .
                    $select_tag;
+  }
+  elsif($select_dupe == DUPE_SELECT_RANDOM)
+  {
+    $description = "Duplicated variant that wasn't randomly selected";
   }
   else
   {
@@ -218,6 +239,13 @@ while(defined($curr_variant = $vcf->read_entry()))
 
 print_variants();
 
+print STDERR "vcf_remove_dupes.pl: " . num2str($num_of_duplicate_sets) .
+             " sets of duplicates\n";
+
+print STDERR "vcf_remove_dupes.pl: " .
+      pretty_fraction($num_of_duplicate_vars, $num_of_entries) . " variants " .
+      "involved in duplicates\n";
+
 print STDERR "vcf_remove_dupes.pl: " .
       pretty_fraction($num_of_printed, $num_of_entries) . " variants printed\n";
 
@@ -227,6 +255,8 @@ close($vcf_handle);
 
 sub print_variants
 {
+  # print "print_variants: " . join(",", map {$_->{'ID'}} @variants) . "\n";
+
   if(@variants == 1)
   {
     $vcf->print_entry($variants[0]);
@@ -293,7 +323,11 @@ sub process_dupes
     $_[0]->{'print'} = 1;
     return;
   }
-  elsif($select_dupe == DUPE_SELECT_NOT_SET)
+
+  $num_of_duplicate_sets++;
+  $num_of_duplicate_vars += scalar(@_);
+
+  if($select_dupe == DUPE_SELECT_NONE)
   {
     if(defined($filter_txt))
     {
@@ -336,6 +370,10 @@ sub process_dupes
     elsif($select_dupe == DUPE_SELECT_LAST)
     {
       $selected_variant = $_[$#_];
+    }
+    elsif($select_dupe == DUPE_SELECT_RANDOM)
+    {
+      $selected_variant = $_[int(rand() * scalar(@_))];
     }
 
     if(defined($list_removed_tag) && @_ > 1)

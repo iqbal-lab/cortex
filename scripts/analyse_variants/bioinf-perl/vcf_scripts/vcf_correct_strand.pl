@@ -24,9 +24,11 @@ sub print_usage
   If the REF allele doesn't match the reference but the ALT allele does, switch
   them and correct the genotypes.
   
-  --remove_mismatches     Remove mismatches that cannot be fixed
-  --flag_mismatches <tag> Stick an INFO flag on variants still don't match
-  --flag_swapped <tag>    Stick an INFO flag on variants that are swapped\n";
+  --remove_mismatches       Remove mismatches that cannot be fixed
+  --flag_mismatches <tag>   Add an INFO flag to variants that don't match REF
+  --filter_mismatches <tag> Add a FILTER flag to variants that don't match REF
+  --flag_swapped <tag>      Add an INFO flag to variants that were swapped
+  --filter_swapped <tag>    Add a FILTER flag to variants that were swapped\n";
 
   exit;
 }
@@ -46,6 +48,7 @@ if(@ARGV < 2)
 
 my $remove_ref_mismatch = 0;
 my ($flag_mismatches, $flag_swapped);
+my ($filter_mismatches, $filter_swapped);
 
 while(@ARGV > 0)
 {
@@ -63,6 +66,15 @@ while(@ARGV > 0)
       print_usage("--flag_mismatches <tag> needs a tag name!");
     }
   }
+  elsif($ARGV[0] =~ /^-?-filter_mismatches$/i)
+  {
+    shift;
+
+    if(!defined($filter_mismatches = shift))
+    {
+      print_usage("--filter_mismatches <tag> needs a tag name!");
+    }
+  }
   elsif($ARGV[0] =~ /^-?-flag_swapped$/i)
   {
     shift;
@@ -70,6 +82,15 @@ while(@ARGV > 0)
     if(!defined($flag_swapped = shift))
     {
       print_usage("--flag_swapped <tag> needs a tag name!");
+    }
+  }
+  elsif($ARGV[0] =~ /^-?-filter_swapped$/i)
+  {
+    shift;
+
+    if(!defined($filter_swapped = shift))
+    {
+      print_usage("--filter_swapped <tag> needs a tag name!");
     }
   }
   elsif(substr($ARGV[0],0,1) eq "-")
@@ -85,10 +106,23 @@ while(@ARGV > 0)
 my $vcf_file = shift;
 my @ref_files = @ARGV;
 
-if($remove_ref_mismatch && defined($flag_mismatches))
+if(@ref_files == 0)
 {
-  print_usage("Cannot set --remove_ref_mismatch and --flag_mismatches... " .
-              "it just doesn't make sense!");
+  print_usage("Not enough arguments.");
+}
+
+if($remove_ref_mismatch)
+{
+  if(defined($flag_mismatches))
+  {
+    print_usage("Cannot set --remove_ref_mismatch and --flag_mismatches... " .
+                "it just doesn't make sense!");
+  }
+  elsif(defined($filter_mismatches))
+  {
+    print_usage("Cannot set --remove_ref_mismatch and --filter_mismatches... " .
+                "it just doesn't make sense!");
+  }
 }
 
 #
@@ -123,7 +157,7 @@ $genome->load_from_files(@ref_files);
 my $vcf = new VCFFile($vcf_handle);
 
 # Print non-PASS variants straight to stdout if -p passed
-$vcf->set_filter_failed($failed_vars_out);
+if(defined($failed_vars_out)) { $vcf->set_filter_failed($failed_vars_out);}
 
 $vcf->print_header();
 
@@ -193,6 +227,11 @@ while(defined($vcf_entry = $vcf->read_entry()))
           $vcf_entry->{'INFO_flags'}->{$flag_swapped} = 1;
         }
 
+        if(defined($filter_swapped))
+        {
+          vcf_add_filter_txt($vcf_entry, $filter_swapped);
+        }
+
         # Switch alleles
         my $tmp = $vcf_entry->{'REF'};
         $vcf_entry->{'REF'} = $vcf_entry->{'ALT'};
@@ -223,7 +262,8 @@ while(defined($vcf_entry = $vcf->read_entry()))
               die("Invalid GT format [var:$vcf_entry->{'ID'}; sample:$sample]");
             }
           }
-          elsif(defined($vcf_entry->{$sample}->{'COV'}))
+
+          if(defined($vcf_entry->{$sample}->{'COV'}))
           {
             if($vcf_entry->{$sample}->{'COV'} =~ /^(\d+),(\d+)$/)
             {
@@ -245,6 +285,11 @@ while(defined($vcf_entry = $vcf->read_entry()))
         {
           $vcf_entry->{'INFO_flags'}->{$flag_mismatches} = 1;
         }
+
+        if(defined($filter_mismatches))
+        {
+          vcf_add_filter_txt($vcf_entry, $filter_mismatches);
+        }
       }
     }
   }
@@ -259,9 +304,12 @@ my @format_field_names
   = grep {uc($_) ne "GT" && uc($_) ne "COV"}
     sort keys %format_fields;
 
-print STDERR "vcf_correct_strand.pl: Ignored format fields: " .
-             join(",", @format_field_names) . "\n";
-print STDERR "                       (I only manipulate GT & COVG)\n";
+if(@format_field_names > 0)
+{
+  print STDERR "vcf_correct_strand.pl: Ignored format fields: " .
+               join(",", @format_field_names) . "\n";
+  print STDERR "                       (I only manipulate GT & COVG)\n";
+}
 
 my @missing_chr_names = sort keys %missing_chrs;
 
@@ -291,13 +339,25 @@ print STDERR "vcf_correct_strand.pl: " .
 if(defined($flag_mismatches))
 {
   print STDERR "vcf_correct_strand.pl: variants that don't match the ref genome " .
-               "were labelled with '$flag_mismatches' flag\n";
+               "were labelled with '$flag_mismatches' INFO flag\n";
+}
+
+if(defined($filter_mismatches))
+{
+  print STDERR "vcf_correct_strand.pl: variants that don't match the ref genome " .
+               "were labelled with FILTER '$filter_mismatches'\n";
 }
 
 if(defined($flag_swapped))
 {
   print STDERR "vcf_correct_strand.pl: variants that had alleles swapped were " .
-               "labelled with '$flag_swapped' flag\n";
+               "labelled with '$flag_swapped' INFO flag\n";
+}
+
+if(defined($filter_swapped))
+{
+  print STDERR "vcf_correct_strand.pl: variants that had alleles swapped were " .
+               "labelled with FILTER '$filter_swapped'\n";
 }
 
 close($vcf_handle);

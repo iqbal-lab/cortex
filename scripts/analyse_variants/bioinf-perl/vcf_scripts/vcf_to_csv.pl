@@ -25,10 +25,10 @@ sub print_usage
 }
 
 ## Test for filtering
-my $failed_vars_out = undef;
+my $skip_failed_vars = 0;
 if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
 {
-  open($failed_vars_out, ">-");
+  $skip_failed_vars = 1;
 }
 ##
 
@@ -61,8 +61,8 @@ else
 #
 my $vcf = new VCFFile($vcf_handle);
 
-# Print non-PASS variants straight to stdout if -p passed
-$vcf->set_filter_failed($failed_vars_out);
+# Skip non-PASS variants if -p passed
+if($skip_failed_vars) { $vcf->set_filter_failed(undef);}
 
 my @vcf_cols = $vcf->get_columns_array();
 

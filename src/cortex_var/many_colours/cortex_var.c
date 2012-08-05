@@ -912,7 +912,6 @@ int main(int argc, char **argv){
 		}
 	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
 		     cmd_line->colour_list,cmd_line->clean_colour);
-	      printf("\n\n\n\n ZAMZAMZAM first col is %d\n\n\n\n", first_colour_data_starts_going_into);
 	      graph_info_set_specific_colour_to_cleaned_against_pool(db_graph_info,  first_colour_data_starts_going_into, 
 								      cmd_line->multicolour_bin, cmd_line->clean_colour);
 

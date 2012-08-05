@@ -71,6 +71,11 @@ my $justify = lc(shift);
 my $vcf_file = shift;
 my @ref_files = @ARGV;
 
+if(@ref_files == 0)
+{
+  print_usage("Not enough arguments.");
+}
+
 if($justify ne "left" && $justify ne "right")
 {
   print_usage("neither 'left' nor 'right' given");
@@ -107,7 +112,7 @@ $genome->load_from_files(@ref_files);
 my $vcf = new VCFFile($vcf_handle);
 
 # Print non-PASS variants straight to stdout if -p passed
-$vcf->set_filter_failed($failed_vars_out);
+if(defined($failed_vars_out)) { $vcf->set_filter_failed($failed_vars_out);}
 
 # Add justify info to header and print
 $vcf->add_header_metainfo("variants_justified", $justify);

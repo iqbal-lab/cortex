@@ -113,7 +113,7 @@ while(my ($chr, $genes) = each(%genes_by_chr))
 my $vcf = new VCFFile($vcf_handle);
 
 # Print non-PASS variants straight to stdout if -p passed
-$vcf->set_filter_failed($failed_vars_out);
+if(defined($failed_vars_out)) { $vcf->set_filter_failed($failed_vars_out);}
 
 $vcf->add_header_tag("INFO", "GENES", 1, "String", "Ensembl gene name/key");
 $vcf->add_header_tag("INFO", "GENES_STRAND", 1, "String", "Strand gene is on +/-");

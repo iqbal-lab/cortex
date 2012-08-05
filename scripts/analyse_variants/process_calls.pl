@@ -584,12 +584,12 @@ if ($ref_fasta eq "unspecified")
 {
     ## just sort the file and PV tag it
 
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass --filter_txt OVERLAPPING_SITE > $final_simple";
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  -p --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass --filter_txt OVERLAPPING_SITE > $final_simple";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
     print "$ret1\n";
 
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --tag PV LEFT $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass  --filter_txt OVERLAPPING_SITE > $final_decomp ";
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl -p --tag PV LEFT $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass  --filter_txt OVERLAPPING_SITE > $final_decomp ";
     print "$cmd2\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
@@ -602,13 +602,13 @@ else # sort and PV tag and remove ref mismatches
     my $tmp1 = $simple_vcf_name.".corrected_ref_mismatch";
     print "Switch ref/alt bases in raw vcf on those sites where we know we have placed them back to front:\n";
 
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl $simple_vcf_name $ref_fasta > $tmp1";
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl --filter_mismatches MISMAPPED_UNPLACEABLE $simple_vcf_name $ref_fasta > $tmp1";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
     print "$ret1\n";
 
     print "Remove sites where Stampy has placed variant in wrong place\n";
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --take_first --pass --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE > $final_simple ";
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  -p --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --take_first --pass --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE > $final_simple ";
     print "$cmd1\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
@@ -618,12 +618,13 @@ else # sort and PV tag and remove ref mismatches
     my $tmp3 = $decomp_vcf_name.".corrected_ref_mismatch";
     print "Switch ref/alt bases in decomp vcf on those sites where we know we have placed them back to front:\n";
 
-    my $cmd3 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl $decomp_vcf_name $ref_fasta > $tmp3 ";
+    my $cmd3 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl --filter_mismatches MISMAPPED_UNPLACEABLE $decomp_vcf_name $ref_fasta > $tmp3 ";
     print "$cmd3\n";
     my $ret3 = qx{$cmd3};
     print "$ret3\n";
 
-    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl --remove_ref_mismatch --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE  > $final_decomp ";
+
+    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl -p  --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE  > $final_decomp ";
     print "$cmd4\n";
     my $ret4 = qx{$cmd4};
     print "$ret4\n";
@@ -934,6 +935,12 @@ sub get_vcf_header
 	  . "##ALT=<ID=COMPLEX,Description=\"Complex variant, collection of SNPs and indels\">\n";
 	$head = $head
 	  . "##FILTER=<ID=MAPQ,Description=\"5prime flank maps to reference with mapping quality below $mapping_qual_thresh\">\n";
+	$head = $head
+	  . "##FILTER=<ID=MISMAPPED_UNPLACEABLE,Description=\"Stampy mapped the variant (using the 5p-flank) confidently (mapqual> $mapping_qual_thresh) to a place where the ref-allele does not match\">\n";
+	$head = $head
+	  . "##FILTER=<ID=MULTIALLELIC, Description=\"Cortex does not call multiallelic sites, but combining run_calls VCFs can produce them. Filtered as current genotyper assumes biallelic.\">\n";
+	$head = $head
+	  . "##FILTER=<ID=OVERLAPPING_SITE, Description=\"If Stampy (or combining VCFs) has placed two biallelic variants overlapping, they are filtered\">\n";
 
 	$head = $head . "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t";
 	#if ( $colourfile !~ /,/ )

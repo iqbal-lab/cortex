@@ -122,7 +122,7 @@ for my $chr (keys %repeat_elements_by_chr)
 my $vcf = new VCFFile($vcf_handle);
 
 # Print non-PASS variants straight to stdout if -p passed
-$vcf->set_filter_failed($failed_vars_out);
+if(defined($failed_vars_out)) { $vcf->set_filter_failed($failed_vars_out);}
 
 # Add header tags
 $vcf->add_header_tag("INFO", "rmsk", 1, "String", "RMSK elements a variant is inside");

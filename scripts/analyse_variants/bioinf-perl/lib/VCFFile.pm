@@ -162,6 +162,7 @@ sub new
 
   # Set _failed_vars_out to undef to skip non-PASS variants
   # Set _failed_vars_out to filehandle print non-PASS variants elsewhere
+  # Do not set / delete() failed_vars_out to get all variants
 
   my $self = {
       _handle => $handle,
