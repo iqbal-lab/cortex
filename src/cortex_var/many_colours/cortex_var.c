@@ -1087,6 +1087,9 @@ int main(int argc, char **argv){
 
   if (cmd_line->remv_low_covg_sups_threshold!=-1)
     {
+      printf("Clip tips first\n");
+      db_graph_clip_tips_in_union_of_all_colours(db_graph);
+
       printf("Remove low coverage supernodes covg (<= %d) \n", cmd_line->remv_low_covg_sups_threshold);
       db_graph_remove_errors_considering_covg_and_topology(cmd_line->remv_low_covg_sups_threshold,
 							   db_graph, 
@@ -1101,6 +1104,7 @@ int main(int argc, char **argv){
       for (z=0; z<NUMBER_OF_COLOURS; z++)
 	{
 	  graph_info_set_remv_low_cov_sups(db_graph_info, z, cmd_line->remv_low_covg_sups_threshold);
+	  graph_info_set_tip_clipping(db_graph_info, z);
 	}
     }
   else if (cmd_line->remove_low_coverage_nodes==true)
