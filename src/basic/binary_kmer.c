@@ -484,38 +484,6 @@ char * binary_kmer_to_seq(BinaryKmer* bkmer, short kmer_size, char * seq){
   return seq;
 }
 
-#define MIN(x,y) ((x) <= (y) ? (x) : (y))
-
-//does not affect the kmer passed in as argument 1
-BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size,
-                                           BinaryKmer* prealloc_reverse_kmer)
-{
-  binary_kmer_initialise_to_zero(prealloc_reverse_kmer);
-
-  int i, j;
-  int dst_count = 0;
-
-  for(i = 0; i < NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-  {
-    // Get complement of word
-    bitfield_of_64bits word = (*kmer)[i] ^ ~0;
-
-    int limit = MIN(32, kmer_size - dst_count);
-    dst_count += limit;
-    int num_of_bits = limit * 2;
-
-    for(j = 0; j < num_of_bits; j += 2)
-    {
-      binary_kmer_left_shift_one_base(*prealloc_reverse_kmer, kmer_size);
-
-      (*prealloc_reverse_kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]
-        |= (word >> j) & 0x3;
-    }
-  }
-
-  return prealloc_reverse_kmer;
-}
-
 /*
 //does not affect the kmer passed in as argument 1
 BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size, BinaryKmer* prealloc_reverse_kmer){
@@ -552,28 +520,86 @@ BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size, Bi
 }
 */
 
-Nucleotide binary_kmer_get_last_nucleotide(BinaryKmer* kmer){
-  
-  bitfield_of_64bits bf = (*kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] & 3; // mask against (11)base 2
+// kmer and prealloc_reverse_kmer may point to the same address
+// This is a highly optimised version of the above function
+BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size,
+                                           BinaryKmer* prealloc_reverse_kmer)
+{
+  BinaryKmer kmer_copy;
 
-  return (Nucleotide) bf;
-  
+  // Copy
+  memcpy(kmer_copy, kmer, BINARY_KMER_BYTES);
+
+  // Complement
+  int i;
+  for(i = 0; i < NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
+  {
+    kmer_copy[i] = ~kmer_copy[i];
+  }
+
+  // Reverse
+  // Loop over full bitfields
+  int j, k;
+  for(i = NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1; i > 0; i--)
+  {
+    for(j = 0; j < 32; j++)
+    {
+      // Shift destination left
+      for(k = 0; k < NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1; k++)
+      {
+        (*prealloc_reverse_kmer)[k] <<= 2;
+        (*prealloc_reverse_kmer)[k] |= ((*prealloc_reverse_kmer)[k+1] >> 62);
+      }
+
+      (*prealloc_reverse_kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] <<= 2;
+
+      // Append new base
+      (*prealloc_reverse_kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] |= kmer_copy[i] & 0x3;
+
+      // Shift source right
+      kmer_copy[i] >>= 2;
+    }
+  }
+
+  // Do remaining bases in last bitfield [0]
+  int top_bases = kmer_size % 32;
+
+  for(i = 0; i < top_bases; i++)
+  {
+    // Shift destination left
+    for(k = 0; k < NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1; k++)
+    {
+      (*prealloc_reverse_kmer)[k] <<= 2;
+      (*prealloc_reverse_kmer)[k] |= ((*prealloc_reverse_kmer)[k+1] >> 62);
+    }
+
+    (*prealloc_reverse_kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] <<= 2;
+
+    // Append new base
+    (*prealloc_reverse_kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] |= kmer_copy[0] & 0x3;
+    
+    // Shift source right
+    kmer_copy[0] >>= 2;
+  }
+
+  // Mask top word (we didn't zero at the beginning!)
+  short top_bits = 2 * top_bases; // bits in top word
+  (*prealloc_reverse_kmer)[0] &= (~(uint64_t)0 >> (64 - top_bits));
+
+  return prealloc_reverse_kmer;
 }
 
-Nucleotide binary_kmer_get_first_nucleotide(BinaryKmer* kmer,short kmer_size){
+Nucleotide binary_kmer_get_first_nucleotide(BinaryKmer* kmer, short kmer_size)
+{
+  int number_of_bits_in_most_sig_bitfield = 2 * (kmer_size % 32);
 
-  int number_of_bitfields_fully_used = kmer_size/32;
-  int number_of_bits_in_most_sig_bitfield = 2* (kmer_size-(32*number_of_bitfields_fully_used));
-
-  bitfield_of_64bits bf = (*kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER - number_of_bitfields_fully_used -1] & (3 <<  (number_of_bits_in_most_sig_bitfield-2));
-  
-  bf >>= (number_of_bits_in_most_sig_bitfield-2);
-  return bf;
-  
+  return ((*kmer)[0] >> (number_of_bits_in_most_sig_bitfield - 2)) & 0x3;
 }
 
-
-
+Nucleotide binary_kmer_get_last_nucleotide(BinaryKmer* kmer)
+{
+  return (*kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] & 0x3;
+}
 
 
 void binary_kmer_alloc_kmers_set(KmerSlidingWindowSet * windows, int max_windows, int max_kmers){
