@@ -33,6 +33,14 @@ sub print_usage
   exit;
 }
 
+## Test for filtering
+my $failed_vars_out = undef;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  open($failed_vars_out, ">-");
+}
+##
+
 if(@ARGV < 3)
 {
   print_usage();
@@ -62,6 +70,11 @@ while(@ARGV > 3)
 my $justify = lc(shift);
 my $vcf_file = shift;
 my @ref_files = @ARGV;
+
+if(@ref_files == 0)
+{
+  print_usage("Not enough arguments.");
+}
 
 if($justify ne "left" && $justify ne "right")
 {
@@ -97,6 +110,9 @@ $genome->load_from_files(@ref_files);
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+# Print non-PASS variants straight to stdout if -p passed
+if(defined($failed_vars_out)) { $vcf->set_filter_failed($failed_vars_out);}
 
 # Add justify info to header and print
 $vcf->add_header_metainfo("variants_justified", $justify);

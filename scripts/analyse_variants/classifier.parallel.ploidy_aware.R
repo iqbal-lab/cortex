@@ -54,7 +54,7 @@ tablefile            <- args[7]
 genome.size          <- as.integer(args[8]);
 kmer                 <- as.integer(args[9]);
 ploidy               <- as.integer(args[10]);
-
+outfile              <- args[11];
 
 ## covg file will contain two char columns (var name, whether this looks like a ref bubble) which are 
 ## not used by the classifier, followed by 2 numeric columns (length branch1, length branch2)
@@ -79,7 +79,7 @@ d<-read.table(covgfile, as.is=T, head=F,
 		comment.char = "", sep="\t"); 
 
 
-outfile<-paste(covgfile, "split_start_", first_var, sep="")
+#outfile<-paste(covgfile, "split_start_", first_var, sep="")
 logfile              <- paste(outfile, ".log", sep="");
 last_var             <- first_var + num_vars_to_process -1
 

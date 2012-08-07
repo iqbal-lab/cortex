@@ -980,7 +980,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
     case 't': // --gt - genotype a list of sites, given in Cortex output format (ie as if called by Cortex)
       {
-	printf("ZAM - parsing --gt\n");
+
 	if (optarg==NULL)
 	  errx(1,"[--gt] option requires an input filename (should be a file of Cortex calls, just 5p, branches and 3p, no colour-coverage output), an output filename, and either BC or PD to specify which caller was used.\n");
 	
@@ -990,7 +990,6 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    int err= parse_arguments_for_genotyping(cmdline_ptr, optarg, msg);
 	    if (err==0)
 	      {
-		printf("ZAMIQBAL - set TRUE - will do genotyping\n");
 		cmdline_ptr->do_genotyping_of_file_of_sites=true;
 	      }
 	    else
@@ -3127,7 +3126,7 @@ int parse_commasep_or_open_square_brack_sep_list(CmdLine* cmd, char* arg, int le
 
 int parse_arguments_for_genotyping(CmdLine* cmdline, char* argmt, char* msg)
 {
-  printf("ZAMZMZAM - start parse_arguments_for_genotyping\n");
+
   //argument should be of form inputfilename,outputfilename,<CALLER>  where CALLER is "BC" or "PD".
   msg[0]='\0';
   char* filename1=NULL;

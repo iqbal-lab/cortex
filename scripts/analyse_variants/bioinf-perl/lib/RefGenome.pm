@@ -264,6 +264,7 @@ sub get_chr
   return defined($name) ? $self->{_chroms}->{$name} : undef;
 }
 
+# 0-based
 sub get_chr_substr
 {
   my ($self, $chrom, $start, $end) = @_;

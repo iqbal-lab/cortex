@@ -93,11 +93,11 @@ else
 my $out_counter = -1;
 my $out_fh;
 
-my ($title, $seq, $qual) = $fastn->read_next();
+my ($title, $seq, $qual);
 
 my $file_counter = 0;
 
-while(defined($title))
+while((($title, $seq, undef, $qual) = $fastn->read_next()) && defined($title))
 {
   if($file_counter >= $limit || !defined($out_fh))
   {
@@ -125,8 +125,6 @@ while(defined($title))
   {
     $file_counter++;
   }
-
-  ($title, $seq, $qual) = $fastn->read_next();
 }
 
 if(defined($out_fh))

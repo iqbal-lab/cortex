@@ -1494,7 +1494,9 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 								  int* mean_readlen, long long* total_seq,
 								  boolean all_entries_are_unique, EdgeArrayType type, int index,
 								  boolean only_load_kmers_already_in_hash, int colour_clean,
-								  boolean load_all_kmers_but_only_increment_covg_on_new_ones)//last arg is to load the "union" of two graphs.
+								  char* sample_identity,
+								  boolean load_all_kmers_but_only_increment_covg_on_new_ones)
+								  //last arg is to load the "union" of two graphs.)
 {
 
   if ( (only_load_kmers_already_in_hash==true) && (colour_clean>=NUMBER_OF_COLOURS) )
@@ -1538,6 +1540,8 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
     {
       *mean_readlen = ginfo->mean_read_length[0];
       *total_seq    = ginfo->total_sequence[0];
+      sample_identity[0]='\0';
+      strcat(sample_identity, ginfo->sample_ids[0]);
     }
 
   if (binfo.number_of_colours!=1)
@@ -1603,9 +1607,13 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 // then set only_load_kmers_already_in_hash==true, and specify colour_clean to be that clean graph colour. Usually this is zero,
 // we compile for 2 colours only, and we are loading into colour 1.
 long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename, //_plus_maybe_samplename,  
-											   dBGraph* db_graph, GraphInfo* db_graph_info, 
-											   boolean all_entries_are_unique, EdgeArrayType type, int index,
-											   boolean only_load_kmers_already_in_hash, int colour_clean,
+											   dBGraph* db_graph, 
+											   GraphInfo* db_graph_info, 
+											   boolean all_entries_are_unique, 
+											   EdgeArrayType type, 
+											   int index,
+											   boolean only_load_kmers_already_in_hash, 
+											   int colour_clean,
 											   boolean load_all_kmers_but_only_increment_covg_on_new_ones)
 {
 
@@ -1637,6 +1645,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 	load_single_colour_binary_data_from_filename_into_graph(line, db_graph, &mean_read_len_in_this_binary,&total_seq_in_this_binary,
 								all_entries_are_unique, individual_edge_array, index,
 								only_load_kmers_already_in_hash, colour_clean,
+								db_graph_info->sample_ids[index],
 								load_all_kmers_but_only_increment_covg_on_new_ones);
       all_entries_are_unique=false;
       graph_info_update_mean_readlen_and_total_seq(db_graph_info, index,mean_read_len_in_this_binary, total_seq_in_this_binary);
@@ -1771,7 +1780,12 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_c
       char outfile[1000];
       outfile[0]='\0';
       sprintf(outfile,"%s_%s.ctx",line,suffix);
-      db_graph_dump_single_colour_binary_of_specified_colour(outfile, &db_node_check_status_not_pruned,db_graph,db_graph_info,in_colour, BINVERSION);
+      db_graph_dump_single_colour_binary_of_specified_colour(outfile, 
+							     &db_node_check_status_not_pruned,
+							     db_graph,
+							     db_graph_info,
+							     in_colour, 
+							     BINVERSION);
       //reset that colour:
       db_graph_wipe_colour(in_colour,db_graph);
       graph_info_set_seq(db_graph_info, in_colour,0);

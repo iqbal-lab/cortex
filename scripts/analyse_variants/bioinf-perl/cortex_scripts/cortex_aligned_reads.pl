@@ -3,13 +3,13 @@
 use strict;
 use warnings;
 
+use List::Util qw(min max sum);
+
 use CortexCovgFile;
 
 #
-# Read in and print out .colour_covg cortex output
-#
 # Isaac Turner <isaac.turner@dtc.ox.ac.uk>
-# 13 Nov 2011
+# 23 July 2012
 #
 
 ## Config
@@ -22,10 +22,10 @@ sub print_usage
   {
     print STDERR "Error: $err\n";
   }
-  
+
   print STDERR "" .
-"Usage: ./test_read_align.pl [.colour_covgs]
-  Example script for reading in alignments from .colour_covg files\n";
+"Usage: ./cortex_aligned_reads.pl [.colour_covgs]
+  Print out read names that have coverage >0 in any kmer in any colour\n";
 
   exit;
 }
@@ -56,10 +56,6 @@ else
   print_usage("Must specify or pipe in a Cortex .colour_covgs file");
 }
 
-#
-# Read .colour_covg data
-#
-
 my $covgfile = new CortexCovgFile($covg_handle);
 
 # Start reading aligned entries
@@ -68,13 +64,17 @@ my ($read_name, $sequence, $colours_arrref);
 while((($read_name, $sequence, $colours_arrref) = $covgfile->read_align_entry()) &&
       defined($read_name))
 {
-  print "$read_name ($sequence)\n";
-  
-  for my $col (@$colours_arrref)
+  for my $col_covgs (@$colours_arrref)
   {
-    print "  ".join(",",@$col)."\n";
+    if(max(@$col_covgs) > 0)
+    {
+      print "$read_name\n";
+      #print join(" ", @$col_covgs) . "\n";
+      #print "$sequence\n";
+    }
   }
 }
 
 close($covg_handle);
+
 

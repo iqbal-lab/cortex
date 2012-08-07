@@ -4378,7 +4378,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 
 	    return is_supernode_pruned;//do nothing. This supernode has no interior, is just 1 or 2 nodes, so cannot prune it
 	  }
-	else //if (length_sup <= 2*db_graph->kmer_size +2)
+	else if (length_sup <= 2*db_graph->kmer_size +2)
 	  {
 	    int i;
 	    //to look like an error, must all have actual coverage, caused by an actual errored read, BUT must have low covg, <=threshold
@@ -4404,13 +4404,12 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 							);
 		  }
 	      }
-	    //else//interior nodes do not look like error
-	    //  {
+	    else//interior nodes do not look like error
+	      {
 		//don't prune - some interior ode has high coverage
-	    //	is_supernode_pruned=false;
-
-	    //	printf("zahara - DO NOT PRUNE - soe interior node has covg > thresh \n");
-	    //}
+	    	is_supernode_pruned=false;
+	      }
+	  
 	  }
       }
   else//debug only
@@ -10473,7 +10472,7 @@ void print_ultra_minimal_fasta_from_path(FILE *fout,
   
   if (include_first_kmer==false)
     {
-      fprintf(fout,">%s length:%i\n%s kmer:%d\n", name, length, string, kmer_size);
+      fprintf(fout,">%s length:%i kmer:%d\n%s\n", name, length, kmer_size, string);
     }
   else
     {
@@ -10499,7 +10498,7 @@ void print_ultra_minimal_fasta_from_path(FILE *fout,
 	  
 	  binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq);
 	  
-	  fprintf(fout,">%s length:%i kmer:%d\n", name,length+kmer_size, kmer_size);
+	  fprintf(fout,">%s length:%i INFO:KMER=%d\n", name,length+kmer_size, kmer_size);
 	  fprintf(fout,"%s", fst_seq);
 	  fprintf(fout,"%s\n",string);
       

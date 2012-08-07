@@ -826,7 +826,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   //then do allele 2 in identical manner
 
   //Option 2 - Ignore for now
-  //traverse allele 1 abd then allele 2. For a given chunk, take full covg, but use combined mult in alleles 1 and 2 to determine poisson mean, and then mark chunk visited and do not return to visited chunks.
+  //traverse allele 1 abd then allele 2. For a given chunk, take full covg, but use combined mult in alleles 1 and 2 to determne poisson mean, and then mark chunk visited and do not return to visited chunks.
 
   //Option 3 - Ignore for now  - dont use chunks at all, use supernodes <<< will come with sup hash
 
@@ -1409,23 +1409,28 @@ void wipe_colour_and_load_binaries(dBGraph* db_graph, int colour, char* bin1, ch
   db_graph_wipe_colour(colour, db_graph);
   int mean_readlen=0;
   long long seq=0;
+  char dummy_sample_id[MAX_LEN_SAMPLE_NAME];
+  dummy_sample_id[0]='\0';
   if (bin1 != NULL)
     {
       load_single_colour_binary_data_from_filename_into_graph(bin1, db_graph, &mean_readlen, &seq,
 							      false, individual_edge_array, colour,
-							      false, 0, false);
+							      false, 0, dummy_sample_id, false);
     }
   if ( (bin2 !=NULL) && (strcmp(bin2, bin1) !=0) )
     {
       load_single_colour_binary_data_from_filename_into_graph(bin2, db_graph, &mean_readlen, &seq,
 							      false, individual_edge_array, colour,
-							      false, 0, false);
+							      false, 0, dummy_sample_id, false);
     }
 }
 
 void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int colour2,
 					    char* binary11, char* binary12, char* binary21, char* binary22)
 {
+  char dummy_sample_id[MAX_LEN_SAMPLE_NAME];
+  dummy_sample_id[0]='\0';
+
   db_graph_wipe_two_colours_in_one_traversal(colour1, colour2, db_graph);
   int mean_readlen=0;
   long long seq=0;
@@ -1434,26 +1439,26 @@ void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int 
     {
       load_single_colour_binary_data_from_filename_into_graph(binary11, db_graph, &mean_readlen, &seq,
 							      false, individual_edge_array, colour1,
-							      false, 0, false);
+							      false, 0,dummy_sample_id,  false);
     }
   if ( (binary12 != NULL) && (strcmp(binary12, binary11)!=0) )
     {
       load_single_colour_binary_data_from_filename_into_graph(binary12, db_graph, &mean_readlen, &seq,
 							      false, individual_edge_array, colour1,
-							      false, 0, false);
+							      false, 0, dummy_sample_id, false);
     }
   //same for 2net
   if (binary21 != NULL)
     {
       load_single_colour_binary_data_from_filename_into_graph(binary21, db_graph, &mean_readlen, &seq,
 							      false, individual_edge_array, colour2,
-							      false, 0, false);
+							      false, 0, dummy_sample_id, false);
     }
   if ( (binary22 != NULL) && (strcmp(binary22, binary21) !=0) )
     {
       load_single_colour_binary_data_from_filename_into_graph(binary22, db_graph, &mean_readlen, &seq,
 							      false, individual_edge_array, colour2,
-							      false, 0, false);
+							      false, 0, dummy_sample_id, false);
     }
 
 

@@ -529,11 +529,13 @@ void test_load_singlecolour_binary()
   dBGraph* db_graph_post = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
   int mean_readlen=0;
   long long total_seq=0;
+  char dummy[MAX_LEN_SAMPLE_NAME];
+  dummy[0]='\0';
   graph_info_initialise(ginfo);//zero it, and see if you get your data back
   int seq_length_post = load_single_colour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_single_colour_cortex_var_graph.ctx", 
 										db_graph_post,
 										&mean_readlen, &total_seq,
-										true, individual_edge_array,0, false,0, false);
+										true, individual_edge_array,0, false,0, dummy, false);
 
 
 
@@ -5246,8 +5248,11 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
   //OK, finally we are ready for our real test. Load the singlecolour uncleaned binary into colour1, but only load the bits that overlap the cleaned graph (ie colour 0)
   int mean_len;
   long long totseq;
+  char dummy[MAX_LEN_SAMPLE_NAME];
+  dummy[0]='\0';
+
   load_single_colour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph.singlecol.ctx",db_graph_post,&mean_len, &totseq,
-							  false,individual_edge_array,1,true,0, false);
+							  false,individual_edge_array,1,true,0, dummy, false);
 
 
 

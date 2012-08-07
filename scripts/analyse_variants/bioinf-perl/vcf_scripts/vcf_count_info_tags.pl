@@ -19,11 +19,21 @@ sub print_usage
     print STDERR "Error: $err\n";
   }
 
-  print STDERR "Usage: ./vcf_print_tag.pl <file.vcf> <infotag1 ..>\n";
-  print STDERR "  Prints comma separated histogram of info tag value counts\n";
-  print STDERR "  If <file.vcf> is '-' reads from STDIN\n";
+  print STDERR "" .
+"Usage: ./vcf_print_tag.pl <file.vcf> <infotag1 ..>
+  Prints comma separated histogram of info tag value counts
+  If <file.vcf> is '-' reads from STDIN\n";
+
   exit;
 }
+
+## Test for filtering
+my $skip_failed_vars = 0;
+if(scalar(@ARGV) != scalar(@ARGV = grep {$_ !~ /^-?-p(ass(es)?)?$/i} @ARGV))
+{
+  $skip_failed_vars = 1;
+}
+##
 
 if(@ARGV < 2)
 {
@@ -57,6 +67,9 @@ else
 # Read VCF
 #
 my $vcf = new VCFFile($vcf_handle);
+
+# Skip non-PASS variants if -p passed
+if($skip_failed_vars) { $vcf->set_filter_failed(undef); }
 
 my $counts = {};
 

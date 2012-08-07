@@ -806,7 +806,10 @@ int main(int argc, char **argv){
 								    cmd_line->max_read_length, 0, db_graph);
 
       //update the graph info object
-      graph_info_update_mean_readlen_and_total_seq(db_graph_info, 0, calculate_mean(readlen_distrib, (long long) (cmd_line->max_read_length+1)), bases_pass_filters_and_loaded);
+      graph_info_update_mean_readlen_and_total_seq(db_graph_info, 0, 
+						   calculate_mean(readlen_distrib, 
+								  (long long) (cmd_line->max_read_length+1)), 
+						   bases_pass_filters_and_loaded);
       if (cmd_line->entered_sampleid_as_cmdline_arg==true)
 	{
 	  graph_info_set_sample_ids(cmd_line->colour_sample_ids, 1, db_graph_info, 0);
@@ -909,7 +912,6 @@ int main(int argc, char **argv){
 		}
 	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
 		     cmd_line->colour_list,cmd_line->clean_colour);
-	      printf("\n\n\n\n ZAMZAMZAM first col is %d\n\n\n\n", first_colour_data_starts_going_into);
 	      graph_info_set_specific_colour_to_cleaned_against_pool(db_graph_info,  first_colour_data_starts_going_into, 
 								      cmd_line->multicolour_bin, cmd_line->clean_colour);
 

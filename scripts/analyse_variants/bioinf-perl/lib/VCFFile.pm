@@ -23,7 +23,7 @@ sub new
   my $class = shift;
   my $handle = shift;
   my $next_line = <$handle>;
-  
+
   if(!defined($next_line))
   {
     croak("VCF file is empty");
@@ -68,7 +68,7 @@ sub new
       # header meta info line
       my ($key,$value) = ($1,$2);
       chomp($value);
-      
+
       if(defined($header_metainfo{$key}))
       {
         carp("Multiple metainfo tags with ID '$key' " .
@@ -120,7 +120,7 @@ sub new
     my @col_values = split(/\t/, $next_line);
 
     my @expected_cols = get_standard_vcf_columns();
-    
+
     # Can be more columns that standard to include all samples,
     # but fewer needs to be reported (fatal)
     if(@col_values < @expected_cols)
@@ -147,8 +147,22 @@ sub new
     $columns_hash{$columns_arr[$i]} = $i;
   }
 
+  # Get sample names
+  my %usual_fields = ();
+  my @standard_cols = get_standard_vcf_columns();
+
+  for my $standard_col (@standard_cols) {
+    $usual_fields{uc($standard_col)} = 1;
+  }
+
+  my @sample_names = grep {!defined($usual_fields{uc($_)})} @columns_arr;
+
   #print "Meta tags: " . join(",", sort keys %header_metainfo) . "\n";
   #print "header tags:" . join(",", sort keys %header_tags) . "\n";
+
+  # Set _failed_vars_out to undef to skip non-PASS variants
+  # Set _failed_vars_out to filehandle print non-PASS variants elsewhere
+  # Do not set / delete() failed_vars_out to get all variants
 
   my $self = {
       _handle => $handle,
@@ -158,6 +172,7 @@ sub new
       _header_extra_line => \@header_extra_lines,
       _columns_hash => \%columns_hash,
       _columns_arr => \@columns_arr,
+      _sample_names => \@sample_names,
       _unread_entries => []
   };
 
@@ -176,10 +191,23 @@ sub _read_line
   my ($self) = @_;
   my $temp_line = $self->{_next_line};
   my $handle = $self->{_handle};
-  
+
   $self->{_next_line} = <$handle>;
-  
+
   return $temp_line;
+}
+
+sub set_filter_failed
+{
+  my ($self, $out_fh) = @_;
+
+  $self->{_failed_vars_out} = $out_fh;
+}
+
+sub unset_filter_failed
+{
+  my ($self) = @_;
+  delete($self->{_failed_vars_out});
 }
 
 #
@@ -314,7 +342,7 @@ sub _check_valid_header_tag
     carp("VCF header ALT/FILTER tags cannot have Number attributes\n");
     return 0;
   }
-  elsif(defined($tag->{'Type'}))
+  elsif(defined($tag->{'Type'}) && $tag->{'Type'} !~ /^FLAG$/i)
   {
     carp("VCF header ALT/FILTER tags cannot have Type attributes " .
          "('$tag->{'Type'}')\n");
@@ -346,14 +374,14 @@ sub _cmp_header_tags
     {
       "Error: " . join(";", map {"$_ => $a->{$_}"} keys %$a)."\n";
     }
-    
+
     if(!defined($b->{$tag_field}))
     {
       "Error: " . join(";", map {"$_ => $b->{$_}"} keys %$b)."\n";
     }
 
     my $cmp = $a->{$tag_field} cmp $b->{$tag_field};
-  
+
     if($cmp != 0)
     {
       return $cmp;
@@ -526,18 +554,7 @@ sub get_header_tags
 sub get_list_of_sample_names
 {
   my ($self) = @_;
-
-  my @cols_array = $self->get_columns_array();
-
-  my %usual_fields = ();
-  my @standard_cols = get_standard_vcf_columns();
-
-  for my $standard_col (@standard_cols) {
-    $usual_fields{uc($standard_col)} = 1;
-  }
-
-  my @samples = grep {!defined($usual_fields{uc($_)})} @cols_array;
-  return @samples;
+  return @{$self->{_sample_names}};
 }
 
 
@@ -559,7 +576,7 @@ sub get_columns_hash
 sub set_columns_with_hash
 {
   my ($self, $cols_hashref) = @_;
-  
+
   my @cols_arr = sort {$cols_hashref->{$a} <=> $cols_hashref->{$b}}
                    keys %$cols_hashref;
 
@@ -631,6 +648,37 @@ sub read_entry
     return pop(@{$self->{_entry_buffered}});
   }
 
+  my $entry;
+
+  if(defined(my $fail_out = $self->{_failed_vars_out}))
+  {
+    # Print non-PASS variants to the given file handle
+    while(($entry = $self->_read_entry_from_file()) &&
+          defined($entry->{'FILTER'}) && $entry->{'FILTER'} ne "." &&
+          uc($entry->{'FILTER'}) ne "PASS")
+    {
+      $self->print_entry($entry, $fail_out);
+    }
+  }
+  elsif(exists($self->{_failed_vars_out}))
+  {
+    # Skip non-PASS variants
+    while(($entry = $self->_read_entry_from_file()) &&
+          defined($entry->{'FILTER'}) && $entry->{'FILTER'} ne "." &&
+          uc($entry->{'FILTER'}) ne "PASS") {}
+  }
+  else
+  {
+    $entry = $self->_read_entry_from_file();
+  }
+
+  return $entry;
+}
+
+sub _read_entry_from_file
+{
+  my ($self) = @_;
+
   # store details in this hash
   my %entry = ();
   my @entry_cols;
@@ -683,22 +731,52 @@ sub read_entry
     }
   }
 
-  my %info_col = ();
-  my @info_entries = split(";", $entry_cols[$vcf_columns{'INFO'}]);
+  # Split up sample info
+  my $samples_arr = $self->{_sample_names};
+  my $format_str = $self->{_columns_hash}->{'FORMAT'};
 
+  if(scalar(@$samples_arr) > 0 && defined($format_str))
+  {
+    my @format_fields = split(":", $entry_cols[$vcf_columns{'FORMAT'}]);
+
+    $entry{'FORMAT'} = \@format_fields;
+
+    for my $sample (@$samples_arr)
+    {
+      my @sample_fields = split(":", $entry{$sample});
+
+      if(scalar(@sample_fields) != scalar(@format_fields))
+      {
+        croak("Sample does not match genotype format " .
+              "[sample: '$sample'; var: " . $entry{'ID'} . "]");
+      }
+
+      my %entry_sample = ();
+      @entry_sample{@format_fields} = @sample_fields;
+      $entry{$sample} = \%entry_sample;
+    }
+  }
+
+  # Get info data
+  my %info_col = ();
   my %info_flags = ();
 
-  for my $info_entry (@info_entries)
+  my @info_entries = split(";", $entry_cols[$vcf_columns{'INFO'}]);
+
+  if(!(@info_entries == 1 && $info_entries[0] eq "."))
   {
-    if($info_entry =~ /(.*)=(.*)/)
+    for my $info_entry (@info_entries)
     {
-      # key=value pair
-      $info_col{$1} = $2;
-    }
-    else
-    {
-      # Flag
-      $info_flags{$info_entry} = 1;
+      if($info_entry =~ /(.*)=(.*)/)
+      {
+        # key=value pair
+        $info_col{$1} = $2;
+      }
+      else
+      {
+        # Flag
+        $info_flags{$info_entry} = 1;
+      }
     }
   }
 
@@ -756,33 +834,46 @@ sub print_entry
 
   my @columns_arr = @{$self->{_columns_arr}};
 
-  print $out_handle $entry->{$columns_arr[0]};
-
-  for(my $i = 1; $i < @columns_arr; $i++)
+  for(my $i = 0; $i < @columns_arr; $i++)
   {
+    if($i > 0)
+    {
+      print $out_handle "\t";
+    }
+
     if($columns_arr[$i] eq "INFO")
     {
       my $info_hashref = $entry->{'INFO'};
       my $flags_hashref = $entry->{'INFO_flags'};
-      
+
       my @entries = map {$_ . "=" . $info_hashref->{$_}} keys %$info_hashref;
       push(@entries, keys %$flags_hashref);
-      
+
       # Sort INFO entries
       @entries = sort {$a cmp $b} @entries;
-      
-      print $out_handle "\t" . join(";", @entries);
+
+      print $out_handle (@entries > 0 ? join(";", @entries) : '.');
+    }
+    elsif($columns_arr[$i] eq "FORMAT")
+    {
+      print $out_handle join(":", @{$entry->{'FORMAT'}});
+    }
+    elsif(ref($entry->{$columns_arr[$i]}) eq "HASH")
+    {
+      print $out_handle join(":", map {$entry->{$columns_arr[$i]}->{$_}}
+                                      @{$entry->{'FORMAT'}});
     }
     else
     {
-      print $out_handle "\t" . $entry->{$columns_arr[$i]};
+      print $out_handle $entry->{$columns_arr[$i]};
     }
   }
 
   print $out_handle "\n";
 }
 
-# cmp variants (by chrom, pos, SVLEN, ref-allele, alt-allele)
+# sort variants (by chrom, pos, SVLEN,
+#                   case insensitive ref-allele, case insensitive alt-allele)
 sub cmp_variants
 {
   my $order = $a->{'CHROM'} cmp $b->{'CHROM'};
@@ -796,7 +887,7 @@ sub cmp_variants
   {
     return $order;
   }
-  
+
   if(($order = $a->{'INFO'}->{'SVLEN'} <=> $b->{'INFO'}->{'SVLEN'}) != 0)
   {
     return $order;
@@ -815,7 +906,8 @@ sub cmp_variants
   return 0;
 }
 
-# sort variants (by chrom, pos, SVLEN, ref-allele, alt-allele)
+# sort variants (by chrom, pos, SVLEN,
+#                   case insensitive ref-allele, case insensitive alt-allele)
 sub vcf_sort_variants
 {
   my ($variants) = @_;
@@ -838,14 +930,30 @@ sub vcf_add_filter_txt
   }
 }
 
+sub get_ploidy
+{
+  my ($self, $var) = @_;
+
+  for my $sample (@{$self->{_sample_names}})
+  {
+    if(defined($var->{$sample}->{'GT'}))
+    {
+      my @gts = split(/[\/\|]/, $var->{$sample}->{'GT'});
+      return scalar(@gts);
+    }
+  }
+
+  return undef;
+}
+
 # returns 0 or 1
 sub is_snp
 {
   my ($vcf_entry) = @_;
-  
+
   my $ref_len = length($vcf_entry->{'true_REF'});
   my $alt_len = length($vcf_entry->{'true_ALT'});
-  
+
   return ($ref_len == 1 && $alt_len == 1);
 }
 
@@ -853,7 +961,7 @@ sub is_snp
 sub get_clean_indel
 {
   my ($vcf_entry) = @_;
-  
+
   my $ref = $vcf_entry->{'true_REF'};
   my $alt = $vcf_entry->{'true_ALT'};
   my $svlen = $vcf_entry->{'INFO'}->{'SVLEN'};
