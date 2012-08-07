@@ -1,4 +1,80 @@
 +++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.6
+
+** New Features **
+
+1. --print_novel_contigs  allows the user to specify a reference colour, and then will dump novel contigs
+   which have a (user-specified) maximum homology with the reference, and minimum length.
+
+2. Cortex now supports genotyping separately from discovery. Previous releases did discovery and genotyping 
+   at the same time. Now the user can do discovery (potentially separately on various samples),
+   and then pass the output from discovery back into Cortex to be genotyped (potentially on different samples
+   to those discovery was done on). The option is --gt. This is to allow indepdent discovery on different samples
+   and/or populations, followed by genotyping at a union set.
+
+3. The Path Divergence caller has been updated slightly. Previously it supported variant calling
+   comparing a colour (or union of colours) against a reference. It now also supports comparing
+   colour 1 against the reference, then colour 4, then colour 27, ..etc. The syntax is slightly ugly.
+
+4.  --sample_id - you can now specifyt a sample name when building a binary/graph. This information,
+    along with mean read length, total sequence in the graph, and what error cleaning has been done,
+    is stored in the graph. You now see this information on loading a binary file
+
+SUMMARY:
+Colour  SampleID        MeanReadLen     TotalSeq        ErrorCleaning   LowCovSupsThresh        LowCovNodesThresh       PoolagainstWhichCleaned
+0       my_dad       97   2887848273 UNCLEANED       -1      -1      undefined
+
+
+5.  process_calls.pl is much improved, about 100x faster, and has a sensible UI.
+
+6.  Cortex now has a new set of "workflows", and a wrapper script called run_calls.pl
+    which allows you to pass in an index file specifying which fastq go with which samples,
+    and then it will run a full multisample analysis, at multiple kmer values and multiple
+    cleaning thresholds, and make a union callset, and then genotype all samples at this union set.
+    The New user manual, on the Cortex website, will document all this.
+
+7. The population filter now supports haploid and diploid samples.
+
+
+
+** Removed features **
+
+1. detect_bubbles2 - I have removed legacy support for running two bubble calls one after the other
+   In my younger more innocent days, this was to support looking for homs and then hets, but
+   this was confusing discovery and genotyping.
+
+2. --remove_seq_errors has been removed. I recommend you use remove_low_coverage_supernodes
+
+
+** Performance **
+
+Performance improvement, courtesy of Isaac Turner - binary loading accelerated by about 20-30%.
+
+
+Main Contributers to this release
+Isaac Turner, Alex Dilthey, Zam Iqbal
+
+Thanks to:
+The many people who have beta tested, and sent in bug reports and fixes.
+Thanks especially to (I hope I don't forget anyone):
+Fernando Cruz, Henk den Bakker, Hideo Imamura, Janina Dordel, 
+Adam Auton, Xiao Chunlin,  Paul O'Neill , Houabin Hu
+
+
+
+
+
+
+
+
++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.4,  v1.0.5.5
+Release candidates, seen only by Beta testers
+
+
+
+
++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.3
 Version associated with the first Cortex publication,
 "De novo assembly and genotyping of variants using 
