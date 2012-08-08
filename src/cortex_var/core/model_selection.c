@@ -419,7 +419,7 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
 
 double get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info)
 {
-  double allele_balance_prior=5;//goes into symmetric Beta
+  //  double allele_balance_prior=5;//goes into symmetric Beta
   return 0; //ZAM - commented this out when I moved to one seq error rate per colour, as I have not modified calculate_integrated_loglikelihood_of_snp_model_given_data to support that
   //commenting out as I know I have to reimplement this anyway
 

@@ -350,26 +350,26 @@ Key element_get_key(BinaryKmer* kmer, short kmer_size, Key preallocated_key)
 {
   // Get first and last nucleotides
   Nucleotide first = binary_kmer_get_first_nucleotide(kmer, kmer_size);
-  Nucleotide last = binary_kmer_get_last_nucleotide(kmer);
+  Nucleotide last  = binary_kmer_get_last_nucleotide(kmer);
   Nucleotide rev_last = ~last & 0x3;
 
   if(first < rev_last)
   {
-    binary_kmer_assignment_operator((BinaryKmer*)preallocated_key, kmer);
+    binary_kmer_assignment_operator(*((BinaryKmer*)preallocated_key), *kmer);
   }
   else if(first > rev_last)
   {
-    binary_kmer_reverse_complement(kmer, kmer_size, (BinaryKmer*)preallocated_key);
+    binary_kmer_reverse_complement(kmer, kmer_size, (BinaryKmer*)preallocated_key );
   }
   else
   {
     // Don't know which is going to be correct
     // This will happen 1 in 4 times
-    binary_kmer_reverse_complement(kmer, kmer_size, (BinaryKmer*)preallocated_key);
+    binary_kmer_reverse_complement(kmer, kmer_size, (BinaryKmer*)preallocated_key );
 
-    if(binary_kmer_less_than(kmer, (BinaryKmer*)preallocated_key, kmer_size))
+    if(binary_kmer_less_than(*kmer, *((BinaryKmer*)preallocated_key), kmer_size))
     {
-      binary_kmer_assignment_operator((BinaryKmer*)preallocated_key, kmer);
+      binary_kmer_assignment_operator( *((BinaryKmer*)preallocated_key) , *kmer);
     }
   }
 
