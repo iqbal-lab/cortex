@@ -41,6 +41,10 @@
 ### arg 8  - estimated genome size. (Don't panic if not exact)
 ### arg 9  - kmer size
 ### arg 10 - ploidy. 1 for haploid, 2 for diploid, no other value acceptable.
+### arg 11 - output file name
+
+
+
 
 args <- commandArgs(trailingOnly = TRUE) ##  one argument only -  start number 
 
