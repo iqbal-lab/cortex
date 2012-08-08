@@ -56,7 +56,7 @@ typedef enum{
 #define VERSION 1
 #define SUBVERSION 0
 #define SUBSUBVERSION 5
-#define SUBSUBSUBVERSION 6
+#define SUBSUBSUBVERSION 7
 boolean DEBUG;
 
 

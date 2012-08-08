@@ -1,3 +1,18 @@
+++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.7
+
+
+** Bugfixes **
+The main reason for this release is that I released 1.0.5.6 with a broken GSL, missing
+some files and therefore which would not compile. Apologies to those of you
+who downloaded it.
+
+** Performance Improvements **
+Another performance speedup, courtesy of Isaac Turner,
+seems to give 20-40% speed increase for building and traversing graphs.
+
+
+
 +++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.6
 
