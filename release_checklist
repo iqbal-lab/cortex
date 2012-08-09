@@ -4,28 +4,5 @@ Remember:
  - mkdir gsl-1.15/user_install
  - edit Makefile as follows
 
-remove these lines:
-IDIR_CUNIT = /home/zam/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
-
-IDIR_CUNIT = /Users/zam/dev/hg/laptop_local/repos/CUnit/CUnit-2.1-0/CUnit/Headers
-
-CFLAGS_CUNIT          = -L/home/zam/bin/lib
-
-and remove the ifdef/endif around these lines
-
-ifdef NOT_ZAM
-        IDIR_CUNIT = /opt/local/include/CUnit
-        CFLAGS_CUNIT           = -L/opt/local/lib -lncurses
-endif
-
-
-
-Finally, replace this text
-
--L/home/zam/dev/hg/CORTEX_release/gsl-1.15 -L/home/zam/dev/hg/CORTEX_release/gsl-1.15/gsl -L/home/zam/dev/hg/CORTEX_release/gsl-1.15/user_install
-
-with this
-
--L/full/path/to/your/install/of/CORTEX_release_v1.0.5.8/gsl-1.15 -L/full/path/to/your/install/of/CORTEX_release_v1.0.5.8/gsl-1.15/gsl -L/full/path/to/your/install/of/CORTEX_release_v1.0.5.8/gsl-1.15/user_install
-
-(using whatever is the appropriate version)
+uncomment this line:
+#NOT_ZAM=1
