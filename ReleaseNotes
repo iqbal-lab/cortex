@@ -1,4 +1,13 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.8
+
+Small modifications to Makefile, and to Install directions.
+Hopefully this will resolve the GSL install issues some
+users have had.
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.7
 
 
@@ -8,7 +17,7 @@ some files and therefore which would not compile. Apologies to those of you
 who downloaded it.
 
 ** Performance Improvements **
-Another performance speedup, courtesy of Isaac Turner,
+Another significant performance speedup, courtesy of Isaac Turner,
 seems to give 20-40% speed increase for building and traversing graphs.
 
 
@@ -49,6 +58,21 @@ Colour  SampleID        MeanReadLen     TotalSeq        ErrorCleaning   LowCovSu
     The New user manual, on the Cortex website, will document all this.
 
 7. The population filter now supports haploid and diploid samples.
+
+
+** Compatibility Issues **
+
+From Version 1.0.5.6 the Cortex binary file format has changed - specifically the header now includes more
+metadata (eg for each colour, store sample-id, what error cleaning was done, in addition to mead read-length and total sequence loaded
+which were already there).
+
+a) The result of this is that v1.0.5.6 cOrtex and later can read old and new binaries, but only dump binaries in the new format.
+b) If you build a binary with a NEW version of Cortex, and then try to load it with an OLD version, it will not work.
+
+
+** Binary File Format **
+
+I'll stick a definition of this format up, either on the web or in the next release.
 
 
 
