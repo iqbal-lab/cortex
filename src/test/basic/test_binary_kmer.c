@@ -329,37 +329,33 @@ void test_seq_to_binary_kmer_and_binary_kmer_to_seq(){
   
   BinaryKmer kmer;
   binary_kmer_initialise_to_zero(&kmer);
-  char seq[7];
+  char kmer_seq[1000];
   
   seq_to_binary_kmer("ATCGCGC",7, &kmer);
  
-  CU_ASSERT_STRING_EQUAL("ATCGCGC",binary_kmer_to_seq(&kmer,7,seq));
+  CU_ASSERT_STRING_EQUAL("ATCGCGC",binary_kmer_to_seq(&kmer,7,kmer_seq));
 
   if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>1)
     {
-      char seq2[37];
       binary_kmer_initialise_to_zero(&kmer);
       seq_to_binary_kmer("CATCAGTGGGACATAAACCACACAGATGACACACACA",37, &kmer);
-      CU_ASSERT_STRING_EQUAL("CATCAGTGGGACATAAACCACACAGATGACACACACA",binary_kmer_to_seq(&kmer,37,seq2));
+      CU_ASSERT_STRING_EQUAL("CATCAGTGGGACATAAACCACACAGATGACACACACA",binary_kmer_to_seq(&kmer,37,kmer_seq));
 
 
-      char seq3[63];
       binary_kmer_initialise_to_zero(&kmer);
       seq_to_binary_kmer("CATCAGTGGGACATAAACCACACAGATGACACACACACATCAGTGGGACATAAACCACACAGA",63, &kmer);
-      CU_ASSERT_STRING_EQUAL("CATCAGTGGGACATAAACCACACAGATGACACACACACATCAGTGGGACATAAACCACACAGA",binary_kmer_to_seq(&kmer,63,seq3));
+      CU_ASSERT_STRING_EQUAL("CATCAGTGGGACATAAACCACACAGATGACACACACACATCAGTGGGACATAAACCACACAGA",binary_kmer_to_seq(&kmer,63,kmer_seq));
     }
 
   if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>2)
     {
-      char seq2[80];
       binary_kmer_initialise_to_zero(&kmer);
       seq_to_binary_kmer("CATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTCATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGT",80, &kmer);
-      CU_ASSERT_STRING_EQUAL("CATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTCATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGT",binary_kmer_to_seq(&kmer,80,seq2));
+      CU_ASSERT_STRING_EQUAL("CATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTCATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGT",binary_kmer_to_seq(&kmer,80,kmer_seq));
 
-      char seq3[95];
       binary_kmer_initialise_to_zero(&kmer);
       seq_to_binary_kmer("CATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTCATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTGGGGGGGGTTTTCAC",95, &kmer);
-      CU_ASSERT_STRING_EQUAL("CATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTCATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTGGGGGGGGTTTTCAC",binary_kmer_to_seq(&kmer,95,seq3));
+      CU_ASSERT_STRING_EQUAL("CATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTCATCAGGGGTCAGTCAGTCACACAAAAACGTCAGTCGTGTGGGGGGGGTTTTCAC",binary_kmer_to_seq(&kmer,95,kmer_seq));
 
     }
 
@@ -552,7 +548,7 @@ void test_get_sliding_windows_from_sequence(){
     char * seq  = "AAAAANNTTTTGGGG";
     char qual0[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    char kmer_seq3[3];
+    char kmer_seq3[4];
 
     int nkmers1 = get_sliding_windows_from_sequence(seq,qual0,strlen(seq),0,3,windows,20,20, false, 0);
 
@@ -616,7 +612,7 @@ void test_get_sliding_windows_from_sequence(){
     CU_ASSERT_EQUAL(windows->nwindows,0);
     CU_ASSERT_EQUAL(nkmers4, 0);
 
-    char kmer_seq5[5];
+    char kmer_seq5[6];
     int nkmers5 = get_sliding_windows_from_sequence(seq,qual0,strlen(seq),0,5,windows,20,20, false,0);
     
     CU_ASSERT_EQUAL(windows->nwindows,2);
@@ -647,7 +643,7 @@ void test_get_sliding_windows_from_sequence(){
 	char qual_all_30s_except_for_the_one_33mer[144] = { 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 30};
 
 
-	char kmer_seq33[33];
+	char kmer_seq33[34];
 	int quality_cutoff=0;
 	short kmer_size=33;
 	int nkmers_33 = get_sliding_windows_from_sequence(seq_contains_only_one_good_33mer,qual_144_zeroes,strlen(seq_contains_only_one_good_33mer),quality_cutoff,kmer_size,windows,40,40, false,0);
@@ -701,7 +697,7 @@ void test_breaking_homopolymers_in_get_sliding_windows ()
     char * seq  = "AAAAANNTCAGAT";
     char qual0[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    char kmer_seq3[3];
+    char kmer_seq3[4];
 
     //break at homopolymers of length 4. ie you should never load any homopolymer of length >3, and when you reach one of length >=4, you don't start your next window
     //until after the end of the homopolymer
@@ -764,7 +760,7 @@ void test_breaking_homopolymers_in_get_sliding_windows ()
 
     seq  = "AAAAANNTCTCCCCCTAGATGGGGGGGGGGGGGCCACCCNCCCCGTGATAT";
     char qual_other[51] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    char kmer_seq7[7];
+    char kmer_seq7[8];
 
     //first of all - not breaking homopolymers, only the N's cause problems:
     nkmers1 = get_sliding_windows_from_sequence(seq,qual_other,strlen(seq),0,7,windows,40,40, false, 0);
@@ -859,7 +855,7 @@ void test_breaking_homopolymers_in_get_sliding_windows ()
 	char* seq_contains_only_one_good_33mer="CCCCCCCCTANTGGGCACATATGGGCACATATGGNGCACATATGGGCACATATGGGCACATATGGNGCACATATGGNNNNNNNNNNGCACATATGGGNCANCATATGNNGCACATATGGGCACATATGGGCACATATGGGCANC";
         char qual_144_zeroes[144] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	char kmer_seq33[33];
+	char kmer_seq33[34];
 	int quality_cutoff=0;
 	short kmer_size=33;
 	//let's put a homopolymer cutoff of 4 - should have no effect, as the one good 33mer contains none longer than 3
