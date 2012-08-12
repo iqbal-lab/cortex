@@ -20,11 +20,11 @@ void test_count_reads_where_snp_makes_clean_bubble1()
   //first set up the hash/graph
   int kmer_size = 7;
   int number_of_bits = 8;
-  int bucket_size    = 10;
-  long long bad_reads = 0; 
-  int max_retries=10;
+  int bucket_size = 10;
+  int max_retries = 10;
 
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph *hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
 
   if (hash_table==NULL)
     {
@@ -32,12 +32,24 @@ void test_count_reads_where_snp_makes_clean_bubble1()
       exit(1);
     }
 
-  long long seq_read=0;
-  long long seq_loaded=0;
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  load_population_as_fasta("../data/test/genome_complexity/pop_first_test", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
 
-
+  load_se_filelist_into_graph_colour(
+    "../data/test/genome_complexity/pop_first_test.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   //and use this file of reads: /data/test/genome_complexity/test_allele_clean_file2.fa
   //  >read lies entirely in graph defined by test_allele_clean_file1.fa, and is clean (forms supernode at k=7)

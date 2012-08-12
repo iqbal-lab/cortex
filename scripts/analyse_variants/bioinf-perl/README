@@ -1,16 +1,22 @@
 Bioinformatics perl scripts
-20 Dec 2011
+27 April 2012
 Isaac Turner
+turner.isaac@gmail.com
 
-Move lib/*.pm files to a directory in perl's @INC.  To add a directory to perl's
-@INC paths, add the following lines to ~/.profile
+== Install ==
+
+0) git clone git://github.com/noporpoise/bioinf-perl.git
+
+1) Add the lib directory to perl's @INC path by adding the following lines to
+   your ~/.profile
 
 PERL5LIB=${PERL5LIB}:${HOME}/perl/lib/
 export PERL5LIB
 
+2) That's it!  Now run some scripts.  
+
 
 == Development ==
 
-Todo:
-- create vcf_merge.pl
-- create vcf_remove_dupes.pl
+The code is updated regularly.  Run 'git pull' from the bioinf-perl directory to
+update.  Get in touch if you have feature requests (turner.isaac@gmail.com).  

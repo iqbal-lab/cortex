@@ -606,7 +606,7 @@ void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(Anno
   double theta_one = ((double)(sequencing_depth_of_coverage * annovar->var->len_one_allele))/( (double) read_length );
   double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
 
-  printf("ZAMZAM GOT HERE\n\n");
+
   annovar->gen_log_lh[colour].log_lh[hom_one]   = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
 								     initial_covg_plus_upward_jumps_branch1, 
@@ -685,7 +685,7 @@ void get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(
 double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2, 
 									double theta_one, double theta_other, int kmer)
 {
-  printf("DEBUG covg branch 1 is %d, and branch2 is %d, and theta 1,2 are %f, %f, and error ratew per base is %f\n", covg_branch_1, covg_branch_2, theta_one, theta_other, error_rate_per_base);
+  //  printf("DEBUG covg branch 1 is %d, and branch2 is %d, and theta 1,2 are %f, %f, and error ratew per base is %f\n", covg_branch_1, covg_branch_2, theta_one, theta_other, error_rate_per_base);
   if (genotype==hom_one)
     {
       //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no unique segment, one shared segment

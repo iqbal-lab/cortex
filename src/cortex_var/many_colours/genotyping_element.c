@@ -571,8 +571,8 @@ Orientation db_genotyping_node_get_orientation(BinaryKmer* k, GenotypingElement 
     }
   
   printf("programming error - you have called  db_genotyping_node_get_orientation with a kmer that is neither equal to the kmer in this node, nor its rev comp\n");
-  char tmpseq1[kmer_size];
-  char tmpseq2[kmer_size];
+  char tmpseq1[kmer_size+1];
+  char tmpseq2[kmer_size+1];
   printf("Arg 1 Kmer is %s and Arg 2 node kmer is %s\n", binary_kmer_to_seq(k, kmer_size, tmpseq1), binary_kmer_to_seq(&(e->kmer), kmer_size, tmpseq2));
   exit(1);
   
@@ -605,13 +605,13 @@ void db_genotyping_node_add_labeled_edge(GenotypingElement * e, Orientation o, N
 boolean db_genotyping_node_add_edge(GenotypingElement * src_e, GenotypingElement * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size, EdgeArrayType edge_type, int edge_index){
 
   BinaryKmer src_k, tgt_k, tmp_kmer; 
-  char seq1[kmer_size];
-  char seq2[kmer_size];
+  char seq1[kmer_size+1];
+  char seq2[kmer_size+1];
 
   binary_kmer_assignment_operator(src_k, src_e->kmer);
   binary_kmer_assignment_operator(tgt_k, tgt_e->kmer);
 
-  char tmp_seq[kmer_size];
+  char tmp_seq[kmer_size+1];
  
   if (src_o == reverse){
     binary_kmer_assignment_operator(src_k, *(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer)));

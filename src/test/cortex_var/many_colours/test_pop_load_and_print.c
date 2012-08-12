@@ -41,11 +41,11 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 4;
-  int bucket_size    = 4;
-  long long bad_reads = 0; 
-  int max_retries=10;
+  int bucket_size = 4;
+  int max_retries = 10;
 
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph * hash_table = hash_table_new(number_of_bits, bucket_size,
+                                        max_retries, kmer_size);
 
   if (hash_table==NULL)
     {
@@ -53,11 +53,28 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
       exit(1);
     }
 
-  long long seq_read=0;
-  long long seq_loaded=0;
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+
   //printf("Number of bases loaded is %d",seq_loaded);
+  
   CU_ASSERT(seq_loaded == 44);
   CU_ASSERT(seq_read == 44);
   CU_ASSERT(bad_reads==0);
@@ -208,7 +225,7 @@ void test_take_three_people_each_with_one_read_and_find_variants()
 
   long long seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/three_indiv_simple/three_individuals_simple.txt", &bad_reads, hash_table, NULL);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/three_indiv_simple/three_individuals_simple.colours", &bad_reads, hash_table, NULL);
 
   //printf("take 3 people test Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 55);
@@ -359,7 +376,7 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
 
   long long seq_loaded=0;
 
-  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/two_people.txt",  &bad_reads,hash_table, NULL);
+  seq_loaded = load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/two_people.colours",  &bad_reads,hash_table, NULL);
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 677);
   CU_ASSERT(bad_reads ==0);

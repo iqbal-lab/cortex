@@ -45,60 +45,67 @@ void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta()
   //first set up the hash/graph
   int kmer_size = 7;
   int number_of_bits = 10;
-  int bucket_size    = 4;
-  long long bad_reads = 0; 
-  long long dup_reads=0;
-  int max_retries=10;
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
-  int max_read_length= 200;
-  long long* readlen_distrib=(long long*) malloc(sizeof(long long) * (max_read_length+1));
-  long long** readlen_distrib_ptrs = (long long**) malloc(sizeof(long long*) * (max_read_length+1));
-  
-  if ( (readlen_distrib==NULL) || (readlen_distrib_ptrs==NULL) )
-    {
-      printf("Unable to malloc array to hold readlen distirbution!Exit.\n");
-      exit(1);
-    }
-  int i;
-  for (i=0; i<=max_read_length; i++)
-    {
-      readlen_distrib[i]=0;
-      readlen_distrib_ptrs[i]=&readlen_distrib[i];
-    }
-  
+  int bucket_size = 4;
+  int max_retries = 10;
 
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph *db_graph = hash_table_new(number_of_bits, bucket_size,
+                                     max_retries, kmer_size);
 
-  long long seq_read=0;
-  long long seq_loaded=0;
+  // Genome length 89bp, basically load 20 copies of the same genome
 
-  //genome length 89bp, basically load 20 copies of the same genome
-  load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(true, false, 
-								"../data/test/pop_graph/seq_error_estimation/list_sample1", 
-								NULL, NULL,
-								&seq_read, &seq_loaded, readlen_distrib_ptrs,
-								0,false, false, false, 
-								0, 33, FASTA, max_read_length, 0, db_graph);
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_read = 0, seq_loaded = 0;
+
+  unsigned long readlen_distrib_arrlen = 200;
+  unsigned long *readlen_distrib
+    = (unsigned long*) malloc(sizeof(unsigned long) * readlen_distrib_arrlen);
+
+  if(readlen_distrib == NULL)
+  {
+    printf("Unable to malloc array to hold readlen distirbution! Exiting.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  unsigned long i;
+  for(i = 0; i < readlen_distrib_arrlen; i++)
+  {
+    readlen_distrib[i] = 0;
+  }
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/seq_error_estimation/list_sample1.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    readlen_distrib, readlen_distrib_arrlen);
 
 
-  //initialise a graph_info object
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
-  graph_info_update_mean_readlen_and_total_seq(&ginfo, 0, calculate_mean(readlen_distrib, (long long) (max_read_length+1)), seq_loaded);  
+  // Initialise a graph_info object
+  GraphInfo* ginfo = graph_info_alloc_and_init();
+
+  unsigned long mean_readlen = calculate_mean_ulong(readlen_distrib,
+                                                    readlen_distrib_arrlen);
+
+  graph_info_update_mean_readlen_and_total_seq(ginfo, 0, mean_readlen, seq_loaded);  
   
   long double default_err_rate = 0.01;
-  estimate_seq_error_rate_from_snps_for_each_colour("../data/test/pop_graph/seq_error_estimation/colour_list_test_sample1", &ginfo, db_graph, -1, 89, default_err_rate, NULL);
+  estimate_seq_error_rate_from_snps_for_each_colour("../data/test/pop_graph/seq_error_estimation/colour_list_test_sample1", ginfo, db_graph, -1, 89, default_err_rate, NULL);
 
-  CU_ASSERT_DOUBLE_EQUAL(ginfo.seq_err[0],0.0, 0.0001);
+  CU_ASSERT_DOUBLE_EQUAL(ginfo->seq_err[0],0.0, 0.0001);
 
 
 
   hash_table_free(&db_graph);
-  free(readlen_distrib_ptrs);
+  graph_info_free(ginfo);
   free(readlen_distrib);
-  
 }
 
 
@@ -110,63 +117,69 @@ void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta_test2()
       printf("This test assumes 11 colours. recompile\n");
       return;
     }
-  //first set up the hash/graph
+
+  // First set up the hash/graph
   int kmer_size = 31;
   int number_of_bits = 13;
-  int bucket_size    = 100;
-  long long bad_reads = 0; 
-  long long dup_reads=0;
-  int max_retries=10;
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
-  int max_read_length= 5000;
-  long long* readlen_distrib=(long long*) malloc(sizeof(long long) * (max_read_length+1));
-  long long** readlen_distrib_ptrs = (long long**) malloc(sizeof(long long*) * (max_read_length+1));
-  
-  if ( (readlen_distrib==NULL) || (readlen_distrib_ptrs==NULL) )
-    {
-      printf("Unable to malloc array to hold readlen distirbution!Exit.\n");
-      exit(1);
-    }
-  int i;
-  for (i=0; i<=max_read_length; i++)
-    {
-      readlen_distrib[i]=0;
-      readlen_distrib_ptrs[i]=&readlen_distrib[i];
-    }
-  
+  int bucket_size = 100;
+  int max_retries = 10;
 
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph *db_graph = hash_table_new(number_of_bits, bucket_size,
+                                     max_retries, kmer_size);
 
-  long long seq_read=0;
-  long long seq_loaded=0;
+  // Genome length 770bp, basically load 100 copies of the same genome,
+  // plus two read errors
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  //genome length 770bp, basically load 100 copies of the same genome, plus two read errors
-  load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(true, false, 
-								"../data/test/pop_graph/seq_error_estimation/list_sample2", 
-								NULL, NULL,
-								&seq_read, &seq_loaded, readlen_distrib_ptrs,
-								0,false, false, false, 
-								0, 33, FASTA, max_read_length, 0, db_graph);
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_read = 0, seq_loaded = 0;
 
+  unsigned long readlen_distrib_arrlen = 5000;
+  unsigned long *readlen_distrib
+    = (unsigned long*) malloc(sizeof(unsigned long) * readlen_distrib_arrlen);
 
-  //initialise a graph_info object
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
-  graph_info_update_mean_readlen_and_total_seq(&ginfo, 0, calculate_mean(readlen_distrib, (long long) (max_read_length+1)), seq_loaded);  
+  if(readlen_distrib == NULL)
+  {
+    printf("Unable to malloc array to hold readlen distirbution! Exiting.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  unsigned long i;
+  for(i = 0; i < readlen_distrib_arrlen; i++)
+  {
+    readlen_distrib[i] = 0;
+  }
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/seq_error_estimation/list_sample2.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    readlen_distrib, readlen_distrib_arrlen);
+
+  // Initialise a graph_info object
+  GraphInfo* ginfo = graph_info_alloc_and_init();
+
+  unsigned long mean_readlen = calculate_mean_ulong(readlen_distrib,
+                                                    readlen_distrib_arrlen);
+
+  graph_info_update_mean_readlen_and_total_seq(ginfo, 0, mean_readlen, seq_loaded);  
   
   long double default_err_rate = 0.01;
-  printf("ZAMMER  - before estimation got seq err rate %Lf\n", ginfo.seq_err[0]);
-  estimate_seq_error_rate_from_snps_for_each_colour("../data/test/pop_graph/seq_error_estimation/colour_list_test_sample2", &ginfo, db_graph, -1, 770, default_err_rate, NULL);
+  printf("ZAMMER  - before estimation got seq err rate %Lf\n", ginfo->seq_err[0]);
+  estimate_seq_error_rate_from_snps_for_each_colour("../data/test/pop_graph/seq_error_estimation/colour_list_test_sample2", ginfo, db_graph, -1, 770, default_err_rate, NULL);
 
-  printf("ZAMMER got seq err rate %Lf\n", ginfo.seq_err[0]);
-  CU_ASSERT_DOUBLE_EQUAL(ginfo.seq_err[0],0.0909, 0.01);
-
+  printf("ZAMMER got seq err rate %Lf\n", ginfo->seq_err[0]);
+  CU_ASSERT_DOUBLE_EQUAL(ginfo->seq_err[0],0.0909, 0.01);
 
 
   hash_table_free(&db_graph);
-  free(readlen_distrib_ptrs);
+  graph_info_free(ginfo);
   free(readlen_distrib);
-  
 }

@@ -47,12 +47,15 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
       return;
     }
 
-  // load a single fasta, containing a single bubble. Then run several iterations of a local function
-  // that resets all the coverage values on the two branches in many colours to different scenarios.
-  //Scenarios I want to test are
+  // Load a single fasta, containing a single bubble. Then run several
+  // iterations of a local function that resets all the coverage values on the
+  // two branches in many colours to different scenarios.
 
-  // 1. All colours have both alleles with equal coverage - is repeat, so negative bayes factor
-  // 2. Allele has 50% frequency, so 50% of people are hets, and 25 of each type of hom - call as a variant
+  // Scenarios I want to test are:
+  // 1. All colours have both alleles with equal coverage - is repeat, so
+  //    negative bayes factor
+  // 2. Allele has 50% frequency, so 50% of people are hets, and 25 of each type
+  //    of hom - call as a variant
 
 
   void set_coverage_on_bubble(int br1cov, int br2cov, VariantBranchesAndFlanks* var, int colour)
@@ -85,43 +88,44 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 
 
 
-  //first set up the hash/graph
+  // First set up the hash/graph
   int kmer_size = 13;
   int number_of_bits = 10;
-  int bucket_size    = 10;
-  long long bad_reads=0; 
-  long long dup_reads=0;
-
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
+  int bucket_size = 10;
   
-  
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  dBGraph *db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
 
-  //****************************************************************************************************************
+  // ===========================================================================
   // Then load a single bubble into the graph
-  //****************************************************************************************************************
-  
+  // ===========================================================================
 
-  
+  // Read sequence
+  int fq_quality_cutoff = 20;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  long long seq_read=0;
-  long long seq_loaded=0;
-  int max_chunk_length = 30;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/example1_for_testing_genotyping.allele1.fasta",&seq_read, &seq_loaded,NULL,
-								     &bad_reads, &dup_reads, max_chunk_length, 
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-								     db_graph, individual_edge_array, 0);
-  
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/example1_for_testing_genotyping.allele2.fasta",&seq_read, &seq_loaded,NULL,
-								     &bad_reads, &dup_reads, max_chunk_length, 
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-								     db_graph, individual_edge_array, 0);
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_read = 0, seq_loaded = 0;
 
+  load_se_seq_data_into_graph_colour(
+    "../data/test/pop_graph/example1_for_testing_genotyping.allele1.fa",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph,
+    &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
-  //Now read each allele into an array of nodes, so we can use them
-  
+  load_se_seq_data_into_graph_colour(
+    "../data/test/pop_graph/example1_for_testing_genotyping.allele2.fa",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph,
+    &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  // Now read each allele into an array of nodes, so we can use them
 
   int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
     long long ret;
@@ -178,11 +182,11 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   
   //end of intialisation 
 
-  FILE* br1_fptr = fopen("../data/test/pop_graph/example1_for_testing_genotyping.allele1.fasta", "r");
-  FILE* br2_fptr = fopen("../data/test/pop_graph/example1_for_testing_genotyping.allele2.fasta", "r");
+  FILE* br1_fptr = fopen("../data/test/pop_graph/example1_for_testing_genotyping.allele1.fa", "r");
+  FILE* br2_fptr = fopen("../data/test/pop_graph/example1_for_testing_genotyping.allele2.fa", "r");
   if ( (br1_fptr==NULL) || (br2_fptr==NULL) )
     {
-      printf("Cannot open one of ../data/test/pop_graph/example1_for_testing_genotyping.allele1.fasta and ../data/test/pop_graph/example1_for_testing_genotyping.allele2.fasta\n");
+      printf("Cannot open one of ../data/test/pop_graph/example1_for_testing_genotyping.allele1.fa and ../data/test/pop_graph/example1_for_testing_genotyping.allele2.fa\n");
       exit(1);
     }
   
@@ -203,21 +207,22 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   var->len_other_allele = br2len;
 
   int i;
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
+  GraphInfo* ginfo = graph_info_alloc_and_init();
+
   for (i=0; i<100; i++)
     {
-      long long total_seq = 4000;
-      int mean_read_len = 24; //these choices explained below
-      graph_info_set_seq(&ginfo, i, total_seq);
-      graph_info_set_mean_readlen(&ginfo, i, mean_read_len);
+      int total_seq = 4000;
+      int mean_read_len = 24; // these choices explained below
+      graph_info_set_seq(ginfo, i, total_seq);
+      graph_info_set_mean_readlen(ginfo, i, mean_read_len);
     }
+
   GraphAndModelInfo model_info;
   long long genome_len=100;
   double mu = 0.8; //param of geometric describing repeat copy num
   double err = 0.01;
   int ref_colour=-1;//no reference colour
-  initialise_model_info(&model_info, &ginfo, genome_len, mu, ref_colour, NUMBER_OF_COLOURS*2, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
+  initialise_model_info(&model_info, ginfo, genome_len, mu, ref_colour, NUMBER_OF_COLOURS*2, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
   AnnotatedPutativeVariant annovar;
 
 
@@ -441,5 +446,5 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   free(br1_or);
   free(br2_or);
   hash_table_free(&db_graph);
-
+  graph_info_free(ginfo);
 }

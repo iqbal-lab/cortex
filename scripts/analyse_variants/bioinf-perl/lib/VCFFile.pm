@@ -8,7 +8,11 @@ use Carp;
 
 # All methods are object methods except these:
 use base 'Exporter';
-our @EXPORT = qw(get_standard_vcf_columns is_snp get_clean_indel);
+our @EXPORT = qw(get_standard_vcf_columns
+                 vcf_sort_variants
+                 vcf_add_filter_txt
+                 is_snp get_clean_indel
+                 vcf_get_ancestral_true_allele);
 
 my @header_tag_columns = qw(ALT FILTER FORMAT INFO);
 my @header_tag_types = qw(Integer Float Character String Flag);
@@ -96,7 +100,7 @@ sub new
         carp("VCF columns missing");
       }
 
-      # Peak at first entry
+      # Peek at first entry
       $next_line = <$handle>;
       last;
     }
@@ -161,7 +165,7 @@ sub new
   return $self;
 }
 
-sub _peak_line
+sub _peek_line
 {
   my ($self) = @_;
   return $self->{_next_line};
@@ -305,9 +309,15 @@ sub _check_valid_header_tag
       return 0;
     }
   }
-  elsif(defined($tag->{'Number'}) || defined($tag->{'Type'}))
+  elsif(defined($tag->{'Number'}) && $tag->{'Number'} != 0)
   {
-    #carp("VCF header ALT/FILTER tags cannot have Number or Type attributes\n");
+    carp("VCF header ALT/FILTER tags cannot have Number attributes\n");
+    return 0;
+  }
+  elsif(defined($tag->{'Type'}))
+  {
+    carp("VCF header ALT/FILTER tags cannot have Type attributes " .
+         "('$tag->{'Type'}')\n");
     return 0;
   }
 
@@ -385,7 +395,9 @@ sub print_header
     $desc =~ s/\\/\\\\/g;
     $desc =~ s/\"/\\\"/g;
 
-    if($tag->{'column'} =~ /^(?:ALT|FILTER)$/)
+    print "";
+
+    if($tag->{'column'} =~ /^(ALT|FILTER)$/i)
     {
       print $out "##" . $tag->{'column'} . "=<" .
                  "ID=" . $tag->{'ID'} . "," .
@@ -461,10 +473,6 @@ sub add_header_tag
   # INFO, FILTER, FORMAT.. column is in upper case
   $tag_col = uc($tag_col);
 
-  # Integer, String.. lowercase with uppercase first letter
-  $tag_type = lc($tag_type);
-  substr($tag_type,0,1) = uc(substr($tag_type,0,1));
-
   my $tag = {'column' => $tag_col,
              'ID' => $tag_id,
              'Description' => $tag_description};
@@ -474,8 +482,12 @@ sub add_header_tag
     $tag->{'Number'} = $tag_number;
   }
 
-  if(defined($tag_number))
+  if(defined($tag_type))
   {
+    # Integer, String.. lowercase with uppercase first letter
+    $tag_type = lc($tag_type);
+    substr($tag_type,0,1) = uc(substr($tag_type,0,1));
+
     $tag->{'Type'} = $tag_type;
   }
 
@@ -485,6 +497,11 @@ sub add_header_tag
   if(_check_valid_header_tag($tag))
   {
     $self->{_header_tags}->{$tag_id} = $tag;
+  }
+  else
+  {
+    print STDERR "VCFFile::add_header_tag(): " .
+                 "Not a valid header tag: '$tag_id'\n";
   }
 }
 
@@ -500,6 +517,7 @@ sub get_header_tags
   my ($self) = @_;
   return %{$self->{_header_tags}};
 }
+
 
 #
 # Samples
@@ -613,43 +631,56 @@ sub read_entry
     return pop(@{$self->{_entry_buffered}});
   }
 
+  # store details in this hash
+  my %entry = ();
+  my @entry_cols;
+
   my $vcf_line;
-
-  # Read over empty line
-  while(defined($vcf_line = $self->_read_line()) && $vcf_line =~ /^\s*$/) {}
-
-  # no entries found
-  if(!defined($vcf_line))
-  {
-    return undef;
-  }
-
-  chomp($vcf_line);
-
-  my %entry = (); # store details in this hash
-  my @entry_cols = split(/\t/, $vcf_line);
 
   my %vcf_columns = %{$self->{_columns_hash}};
 
-  for my $col_name (keys %vcf_columns)
+  # Read until we get the correct number of columns
+  while(1)
   {
-    if($col_name ne "INFO")
+    # Read over empty line
+    while(defined($vcf_line = $self->_read_line()) && $vcf_line =~ /^\s*$/) {}
+
+    # no entries found
+    if(!defined($vcf_line))
     {
-      $entry{$col_name} = @entry_cols[$vcf_columns{$col_name}];
+      return undef;
     }
-  }
 
-  my $num_of_cols = scalar(@{$self->{_columns_arr}});
+    chomp($vcf_line);
 
-  if(@entry_cols < $num_of_cols)
-  {
-    croak("Not enough columns in VCF entry (ID: ".$entry{'ID'}."; " .
-          "got " . @entry_cols . " columns, expected " . $num_of_cols . ")");
-  }
-  elsif(@entry_cols > $num_of_cols)
-  {
-    croak("Too many columns in VCF entry (ID: ".$entry{'ID'}."; " .
-          "got " . @entry_cols . " columns, expected " . $num_of_cols . ")");
+    # Reset entry
+    %entry = ();
+    @entry_cols = split(/\t/, $vcf_line);
+
+    for my $col_name (keys %vcf_columns)
+    {
+      if($col_name ne "INFO")
+      {
+        $entry{$col_name} = @entry_cols[$vcf_columns{$col_name}];
+      }
+    }
+
+    my $num_of_cols = scalar(@{$self->{_columns_arr}});
+
+    if(@entry_cols < $num_of_cols)
+    {
+      warn("Not enough columns in VCF entry (ID: ".$entry{'ID'}."; " .
+           "got " . @entry_cols . " columns, expected " . $num_of_cols . ")");
+    }
+    elsif(@entry_cols > $num_of_cols)
+    {
+      warn("Too many columns in VCF entry (ID: ".$entry{'ID'}."; " .
+           "got " . @entry_cols . " columns, expected " . $num_of_cols . ")");
+    }
+    else
+    {
+      last;
+    }
   }
 
   my %info_col = ();
@@ -674,30 +705,26 @@ sub read_entry
   $entry{'INFO'} = \%info_col;
   $entry{'INFO_flags'} = \%info_flags;
 
-  # Auto-correct chromosome names
-  #if($entry{'CHROM'} !~ /^chr/)
-  #{
-  #  if($entry{'CHROM'} =~ /^chr(.*)$/i)
-  #  {
-      # matches only with case-insensitive
-  #    $entry{'CHROM'} = 'chr'.$1;
-  #  }
-  #  else {
-  #    $entry{'CHROM'} = 'chr'.$entry{'CHROM'};
-  #  }
-  #}
-
-  #if($entry{'CHROM'} =~ /^chr([xy])$/i)
-  #{
-  #  $entry{'CHROM'} = 'chr'.uc($1);
-  #}
-  #else
-  #{
-  #  $entry{'CHROM'} = lc($entry{'CHROM'});
-  #}
-
   # Correct SVLEN
   $entry{'INFO'}->{'SVLEN'} = length($entry{'ALT'}) - length($entry{'REF'});
+
+  # Correct AALEN
+  if(defined($entry{'INFO'}->{'AA'}) && $entry{'INFO'}->{'AA'} =~ /^\d$/)
+  {
+    if($entry{'INFO'}->{'AA'} == 0)
+    {
+      $entry{'INFO'}->{'AALEN'} = length($entry{'ALT'}) - length($entry{'REF'});
+    }
+    elsif($entry{'INFO'}->{'AA'} == 1)
+    {
+      $entry{'INFO'}->{'AALEN'} = length($entry{'REF'}) - length($entry{'ALT'});
+    }
+    else
+    {
+      # Invalid AA value
+      $entry{'INFO'}->{'AALEN'} = undef;
+    }
+  }
 
   if(length($entry{'REF'}) != 1 || length($entry{'ALT'}) != 1)
   {
@@ -755,6 +782,62 @@ sub print_entry
   print $out_handle "\n";
 }
 
+# cmp variants (by chrom, pos, SVLEN, ref-allele, alt-allele)
+sub cmp_variants
+{
+  my $order = $a->{'CHROM'} cmp $b->{'CHROM'};
+
+  if(($order = $a->{'CHROM'} cmp $b->{'CHROM'}) != 0)
+  {
+    return $order;
+  }
+
+  if(($order = $a->{'POS'} <=> $b->{'POS'}) != 0)
+  {
+    return $order;
+  }
+  
+  if(($order = $a->{'INFO'}->{'SVLEN'} <=> $b->{'INFO'}->{'SVLEN'}) != 0)
+  {
+    return $order;
+  }
+
+  if(($order = uc($a->{'REF'}) cmp uc($b->{'REF'})) != 0)
+  {
+    return $order;
+  }
+
+  if(($order = uc($a->{'ALT'}) cmp uc($b->{'ALT'})) != 0)
+  {
+    return $order;
+  }
+
+  return 0;
+}
+
+# sort variants (by chrom, pos, SVLEN, ref-allele, alt-allele)
+sub vcf_sort_variants
+{
+  my ($variants) = @_;
+
+  @$variants = sort cmp_variants @$variants;
+}
+
+# Add FILTER column txt
+sub vcf_add_filter_txt
+{
+  my ($variant, $filter_txt) = @_;
+
+  if($variant->{'FILTER'} eq "." || $variant->{'FILTER'} =~ /^PASS$/i)
+  {
+    $variant->{'FILTER'} = $filter_txt;
+  }
+  else
+  {
+    $variant->{'FILTER'} = $variant->{'FILTER'}.";".$filter_txt;
+  }
+}
+
 # returns 0 or 1
 sub is_snp
 {
@@ -783,6 +866,20 @@ sub get_clean_indel
   {
     return undef;
   }
+}
+
+sub vcf_get_ancestral_true_allele
+{
+  my ($vcf_entry) = @_;
+
+  my $ancestral = $vcf_entry->{'INFO'}->{'AA'};
+
+  if(!defined($ancestral))
+  {
+    return undef;
+  }
+
+  return ($ancestral == 0 ? $vcf_entry->{'true_REF'} : $vcf_entry->{'true_ALT'});
 }
 
 1;

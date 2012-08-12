@@ -239,34 +239,49 @@ void build_and_save_temp_binaries(char* filelist_binaries,
 				  char* first_allele_net_fasta, char* second_allele_net_fasta, char* stub,
 				  int kmer, int number_of_bits, int bucket_size)
 {
-  long long bad_reads = 0; 
-  long long dup_reads=0;
-  int max_retries=10;
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer);
+  int max_retries = 10;
+  
+  dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size,
+                                      max_retries, kmer);
 
-  long long seq_read=0;
-  long long seq_loaded=0;
-  int max_read_length=2000;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(first_allele_net_fasta,
-								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,0);
-  char bin1[100];
+  // Read sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_read = 0, seq_loaded = 0;
+
+  load_se_seq_data_into_graph_colour(
+    first_allele_net_fasta,
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph,
+    &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  char bin1[200];
   bin1[0]='\0';
   sprintf(bin1, "../data/tempfiles_can_be_deleted/%s_allele1_temp.ctx", stub);
-  db_graph_dump_single_colour_binary_of_colour0(bin1, &db_node_check_status_not_pruned, db_graph, NULL);
+  db_graph_dump_single_colour_binary_of_colour0(bin1, &db_node_check_status_not_pruned,
+                                                db_graph, NULL, BINVERSION);
   db_graph_wipe_colour(0, db_graph);
 
+  load_se_seq_data_into_graph_colour(
+    second_allele_net_fasta,
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph,
+    &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(second_allele_net_fasta,
-								     &seq_read, &seq_loaded,NULL, &bad_reads, &dup_reads, max_read_length, 
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,0);
   char bin2[100];
   bin2[0]='\0';
   sprintf(bin2, "../data/tempfiles_can_be_deleted/%s_allele2_temp.ctx", stub);
-  db_graph_dump_single_colour_binary_of_colour0(bin2, &db_node_check_status_not_pruned, db_graph, NULL);
+  db_graph_dump_single_colour_binary_of_colour0(bin2, &db_node_check_status_not_pruned,
+                                                db_graph, NULL, BINVERSION);
   db_graph_wipe_colour(0, db_graph);
 
   FILE* fp = fopen(filelist_binaries, "w");
@@ -294,12 +309,12 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 {
   if (NUMBER_OF_COLOURS<6)
     {
-      printf("Need >=6 colouyrs for test_calc_log_likelihood_of_genotype_with_complex_alleles - recompile\n");
+      printf("Need >=6 colours for test_calc_log_likelihood_of_genotype_with_complex_alleles - recompile\n");
       exit(1);
     }
   int colour_allele1 = 0;
-  int colour_allele2 =1;
-  int colour_ref_minus_site=2;
+  int colour_allele2 = 1;
+  int colour_ref_minus_site = 2;
   int colour_indiv = 3;
   int working_colour1 = 4;
   int working_colour2 = 5;
@@ -309,41 +324,64 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   //first set up the hash/graph
   int kmer_size = kmer;
   //int number_of_bits = 15;
-  //int bucket_size    = 100;
-  long long bad_reads = 0; 
-  long long dup_reads=0;
-  int max_retries=10;
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
+  //int bucket_size = 100;
+  int max_retries = 10;
 
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size,
+                                      max_retries, kmer_size);
 
-  long long seq_read=0;
-  long long seq_loaded=0;
-  int max_read_length=2000;
+  // Load them into colour indiv so it has the right edges. Coverages will be
+  // fixed up later, and edges in other colours dont matter for this test
 
-  //load them into colour indiv so it has the right edges. Coverages will be fixed up later, and edges in other colours dont matter for this test
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(fasta_allele1,
-								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,colour_indiv);
+  // Read sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(fasta_allele2,
-								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,colour_indiv);
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_read = 0, seq_loaded = 0;
 
-  //now we don't want to load the whole of the rest of the genome - just to annotate these nodes with whether they touch the rest of the genome,
-  //***create local temporary new hash, load rest of genome, dump binary, then reload those nodes that are ALREADY in our allele1/2 hash
+  load_se_seq_data_into_graph_colour(
+    fasta_allele1,
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    colour_indiv, db_graph,
+    &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
-  dBGraph * temp_db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(fasta_genome_minus_site, 
-  								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
-  								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,temp_db_graph, individual_edge_array,0);
-  GraphInfo temp_db_graph_info;
-  graph_info_set_seq(&temp_db_graph_info, 0, 1);//unnecessary - never used
-  graph_info_set_mean_readlen(&temp_db_graph_info, 0, 1);//unnecessary - never used
-  db_graph_dump_single_colour_binary_of_specified_colour("../data/tempfiles_can_be_deleted/ref_minus_genome.ctx", &db_node_condition_always_true,temp_db_graph,&temp_db_graph_info,0);
+  load_se_seq_data_into_graph_colour(
+    fasta_allele2,
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    colour_indiv, db_graph,
+    &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  // Now we don't want to load the whole of the rest of the genome - just to
+  // annotate these nodes with whether they touch the rest of the genome,
+  // create local temporary new hash, load rest of genome, dump binary, then
+  // reload those nodes that are ALREADY in our allele1/2 hash
+
+  dBGraph * temp_db_graph = hash_table_new(number_of_bits, bucket_size,
+                                           max_retries, kmer_size);
+
+  load_se_seq_data_into_graph_colour(
+    fasta_genome_minus_site,
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    0, temp_db_graph,
+    &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  GraphInfo* temp_db_graph_info = graph_info_alloc_and_init();
+
+  graph_info_set_seq(temp_db_graph_info, 0, 1);//unnecessary - never used
+  graph_info_set_mean_readlen(temp_db_graph_info, 0, 1);//unnecessary - never used
+  db_graph_dump_single_colour_binary_of_specified_colour("../data/tempfiles_can_be_deleted/ref_minus_genome.ctx", &db_node_condition_always_true,temp_db_graph,temp_db_graph_info,0, BINVERSION);
   hash_table_free(&temp_db_graph);
+  graph_info_free(temp_db_graph_info);
+
   int mean_r;
   long long tot_s;
   int clean_colour = 0;
@@ -489,14 +527,14 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   int num_depths=1;
 
   int p;
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
+  GraphInfo* ginfo=graph_info_alloc_and_init();
   GraphAndModelInfo model_info;
 
   float repeat_geometric_param_mu = 0.8;//not used in this
   // int genome_size = 554;//554 is length of one allele + rest of reference
   int num_chroms_in_expt=2;
-  initialise_model_info(&model_info, &ginfo, genome_size, repeat_geometric_param_mu, -1, num_chroms_in_expt, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
+  initialise_model_info(&model_info, ginfo, genome_size, repeat_geometric_param_mu, 
+			-1, num_chroms_in_expt, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
   zygosity true_genotype;
   for (p=0; p<num_depths; p++)
     {
@@ -651,6 +689,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   free(lengths_of_alleles);
   free(array_of_allele_names);
   hash_table_free(&db_graph);
+  graph_info_free(ginfo);
 }
 
 
@@ -698,10 +737,10 @@ void test_calc_log_likelihood_of_genotype_with_complex_alleles3()
 							 "../data/test/pop_graph/variations/complex_genotyping/hlab_two_alleles_then_ref.fa",
 							 "../data/test/pop_graph/variations/complex_genotyping/both_hlab_alleles.fa", 50,31,89978,15,100,10, false,//change 24 to 15
 							 true, 
-							 "../data/test/pop_graph/variations/complex_genotyping/hlab_070201_extended.single_errors.fasta", 
-							 "../data/test/pop_graph/variations/complex_genotyping/hlab_070201_extended.double_errors.fasta", 
-							 "../data/test/pop_graph/variations/complex_genotyping/hlab_550104_extended.single_errors.fasta", 
-							 "../data/test/pop_graph/variations/complex_genotyping/hlab_550104_extended.double_errors.fasta");
+							 "../data/test/pop_graph/variations/complex_genotyping/hlab_070201_extended.single_errors.fa", 
+							 "../data/test/pop_graph/variations/complex_genotyping/hlab_070201_extended.double_errors.fa", 
+							 "../data/test/pop_graph/variations/complex_genotyping/hlab_550104_extended.single_errors.fa", 
+							 "../data/test/pop_graph/variations/complex_genotyping/hlab_550104_extended.double_errors.fa");
 }
 
 /*
@@ -961,30 +1000,30 @@ Colour:	MeanReadLen	TotalSeq
 
    */
 
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
-  graph_info_set_seq(&ginfo, 0, 2912760135);
-  graph_info_set_seq(&ginfo, 1, 18286122352 );
-  graph_info_set_seq(&ginfo, 2, 16816361244);
-  graph_info_set_seq(&ginfo, 3, 18039181209);
-  graph_info_set_seq(&ginfo, 4, 15879192506);
-  graph_info_set_seq(&ginfo, 5, 17729089947);
-  graph_info_set_seq(&ginfo, 6, 15750659112);
-  graph_info_set_seq(&ginfo, 7, 26196361173);
-  graph_info_set_seq(&ginfo, 8, 20202087523);
-  graph_info_set_seq(&ginfo, 9, 18907785783);
-  graph_info_set_seq(&ginfo, 10, 16870486574);
-  graph_info_set_mean_readlen(&ginfo, 0, 0);
-  graph_info_set_mean_readlen(&ginfo, 1, 50);
-  graph_info_set_mean_readlen(&ginfo, 2, 50);
-  graph_info_set_mean_readlen(&ginfo, 3, 50);
-  graph_info_set_mean_readlen(&ginfo, 4, 50);
-  graph_info_set_mean_readlen(&ginfo, 5, 50);
-  graph_info_set_mean_readlen(&ginfo, 6, 50);
-  graph_info_set_mean_readlen(&ginfo, 7, 50);
-  graph_info_set_mean_readlen(&ginfo, 8, 52);
-  graph_info_set_mean_readlen(&ginfo, 9, 50);
-  graph_info_set_mean_readlen(&ginfo, 10, 50);
+  GraphInfo* ginfo = graph_info_alloc_and_init();
+
+  graph_info_set_seq(ginfo, 0, 2912760135);
+  graph_info_set_seq(ginfo, 1, 18286122352 );
+  graph_info_set_seq(ginfo, 2, 16816361244);
+  graph_info_set_seq(ginfo, 3, 18039181209);
+  graph_info_set_seq(ginfo, 4, 15879192506);
+  graph_info_set_seq(ginfo, 5, 17729089947);
+  graph_info_set_seq(ginfo, 6, 15750659112);
+  graph_info_set_seq(ginfo, 7, 26196361173);
+  graph_info_set_seq(ginfo, 8, 20202087523);
+  graph_info_set_seq(ginfo, 9, 18907785783);
+  graph_info_set_seq(ginfo, 10, 16870486574);
+  graph_info_set_mean_readlen(ginfo, 0, 0);
+  graph_info_set_mean_readlen(ginfo, 1, 50);
+  graph_info_set_mean_readlen(ginfo, 2, 50);
+  graph_info_set_mean_readlen(ginfo, 3, 50);
+  graph_info_set_mean_readlen(ginfo, 4, 50);
+  graph_info_set_mean_readlen(ginfo, 5, 50);
+  graph_info_set_mean_readlen(ginfo, 6, 50);
+  graph_info_set_mean_readlen(ginfo, 7, 50);
+  graph_info_set_mean_readlen(ginfo, 8, 52);
+  graph_info_set_mean_readlen(ginfo, 9, 50);
+  graph_info_set_mean_readlen(ginfo, 10, 50);
  
 
   GraphAndModelInfo model_info;
@@ -993,7 +1032,7 @@ Colour:	MeanReadLen	TotalSeq
   int ref_colour=0;
   int num_chroms=20; 
   long long genome_len = 3000000000;
-  initialise_model_info(&model_info, &ginfo, genome_len, mu, //seq_err_rate_per_base, 
+  initialise_model_info(&model_info, ginfo, genome_len, mu, //seq_err_rate_per_base, 
 			ref_colour, num_chroms, EachColourADiploidSampleExceptTheRefColour, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
 
   var.one_allele       = branch1;
@@ -1064,7 +1103,7 @@ Colour:	MeanReadLen	TotalSeq
     {
       free(branch2[i]);
     }
-
+  graph_info_free(ginfo);
 }
 
 
@@ -1162,60 +1201,61 @@ Covg in indiv:
 
 
 
-  //first set up the hash/graph
+  // First set up the hash/graph
 
   int number_of_bits = 18;
-  int bucket_size    = 100;
-  long long bad_reads = 0; 
-  long long dup_reads=0;
-  int max_retries=10;
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
+  int bucket_size = 100;
+  int max_retries = 10;
 
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size,
+                                      max_retries, kmer_size);
 
+  // I load this into the graph so the kmers are there, but then I am going to
+  // just create a var object with the covgs I want
 
-  long long seq_read=0;
-  long long seq_loaded=0;
-  int max_read_len = 300;
+  // Read sequence
+  int fq_quality_cutoff = 20;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  //I load this into the graph so the kmers are there, but then I am going to just create a var object with the covgs I want
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_read = 0, seq_loaded = 0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example1_branch1andflanks.fasta",
-								     &seq_read, &seq_loaded, NULL, 
-								     &bad_reads, &dup_reads, 
-								     max_read_len, 
-								     remove_duplicates_single_endedly, 
-								     break_homopolymers, 
-								     homopolymer_cutoff,db_graph,individual_edge_array,0);
+  // Load into colour 0
+  load_se_seq_data_into_graph_colour(
+    "../data/test/pop_graph/variations/complex_genotyping/pd_example1_branch1andflanks.fa",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    0, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example1_branch2andflanks.fasta",
-								     &seq_read, &seq_loaded, NULL, 
-								     &bad_reads, &dup_reads, 
-								     max_read_len, 
-								     remove_duplicates_single_endedly, 
-								     break_homopolymers, 
-								     homopolymer_cutoff,db_graph,individual_edge_array,1);
+  // Load into colour 1
+  load_se_seq_data_into_graph_colour(
+    "../data/test/pop_graph/variations/complex_genotyping/pd_example1_branch2andflanks.fa",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    1, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
-  //for second var/test
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example2_branch1_and_flanks.fasta",
-								     &seq_read, &seq_loaded, NULL, 
-								     &bad_reads, &dup_reads, 
-								     max_read_len, 
-								     remove_duplicates_single_endedly, 
-								     break_homopolymers, 
-								     homopolymer_cutoff,db_graph,individual_edge_array,0);
+  // For second var/test
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/pop_graph/variations/complex_genotyping/pd_example2_branch2_and_flanks.fasta",
-								     &seq_read, &seq_loaded, NULL, 
-								     &bad_reads, &dup_reads, 
-								     max_read_len, 
-								     remove_duplicates_single_endedly, 
-								     break_homopolymers, 
-								     homopolymer_cutoff,db_graph,individual_edge_array,1);
+  // Load into colour 0
+  load_se_seq_data_into_graph_colour(
+    "../data/test/pop_graph/variations/complex_genotyping/pd_example2_branch1_and_flanks.fa",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    0, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
-
+  // Load into colour 1
+  load_se_seq_data_into_graph_colour(
+    "../data/test/pop_graph/variations/complex_genotyping/pd_example2_branch2_and_flanks.fa",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    1, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   VariantBranchesAndFlanks var;
   dBNode** branch1 = (dBNode**) malloc(sizeof(dBNode*) * max_read_length);
@@ -1230,10 +1270,10 @@ Covg in indiv:
     }
 
 
-  FILE* fp = fopen("../data/test/pop_graph/variations/complex_genotyping/pd_example1_just_alleles.fasta", "r");
+  FILE* fp = fopen("../data/test/pop_graph/variations/complex_genotyping/pd_example1_just_alleles.fa", "r");
   if (fp==NULL)
     {
-      printf("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example1_just_alleles.fasta\n");
+      printf("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example1_just_alleles.fa\n");
       exit(1);
     }
   boolean full_entry=true;
@@ -1289,17 +1329,17 @@ Colour 0 = reference
 ****************************************
 */
 
-  GraphInfo ginfo;
-  graph_info_initialise(&ginfo);
-  graph_info_set_seq(&ginfo, 0, 200);
-  graph_info_set_seq(&ginfo, 1, 73500000000 );
-  graph_info_set_mean_readlen(&ginfo, 0, 100);
-  graph_info_set_mean_readlen(&ginfo, 1, 90);
+  GraphInfo* ginfo=graph_info_alloc_and_init();
+
+  graph_info_set_seq(ginfo, 0, 200);
+  graph_info_set_seq(ginfo, 1, 73500000000 );
+  graph_info_set_mean_readlen(ginfo, 0, 100);
+  graph_info_set_mean_readlen(ginfo, 1, 90);
 
   for (j=2; j<NUMBER_OF_COLOURS; j++)
     { 
-      graph_info_set_seq(&ginfo, j, 0 );
-      graph_info_set_mean_readlen(&ginfo, j, 0);
+      graph_info_set_seq(ginfo, j, 0 );
+      graph_info_set_mean_readlen(ginfo, j, 0);
     }
 
   GraphAndModelInfo model_info;
@@ -1308,7 +1348,7 @@ Colour 0 = reference
   int ref_colour=0;
   int num_chroms=2; 
   long long genome_len = 3000000000;
-  initialise_model_info(&model_info, &ginfo, genome_len, mu, //seq_err_rate_per_base, 
+  initialise_model_info(&model_info, ginfo, genome_len, mu, //seq_err_rate_per_base, 
 			ref_colour, num_chroms, EachColourADiploidSampleExceptTheRefColour, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);
 
   var.one_allele       = branch1;
@@ -1350,10 +1390,10 @@ Colour 0 = reference
   //******************
   /// second test
 
-  fp = fopen("../data/test/pop_graph/variations/complex_genotyping/pd_example2_just_alleles.fasta", "r");
+  fp = fopen("../data/test/pop_graph/variations/complex_genotyping/pd_example2_just_alleles.fa", "r");
   if (fp==NULL)
     {
-      printf("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example2_just_alleles.fasta\n");
+      printf("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example2_just_alleles.fa\n");
       exit(1);
     }
   num_kmers_br1 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch1, branch1_o, false, &full_entry,&file_reader_fasta, 
@@ -1425,7 +1465,7 @@ Colour 0 = reference
   free(branch2);
   free(branch1_o);
   free(branch2_o);
-
+  graph_info_free(ginfo);
 
 
 

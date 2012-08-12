@@ -54,10 +54,10 @@ void test_read_sequence_from_fasta(){
   alloc_sequence(seq,200,LINE_MAX);
 
   int length_seq;
-  FILE* fp1 = fopen("../data/test/basic/one_entry.fasta", "r");
+  FILE* fp1 = fopen("../data/test/basic/one_entry.fa", "r");
   
   if (fp1 == NULL){
-    fputs("cannot open file:../data/test/basic/one_entry.fasta\n",stderr);
+    fputs("cannot open file:../data/test/basic/one_entry.fa\n",stderr);
     exit(1);
   }
 
@@ -76,7 +76,7 @@ void test_read_sequence_from_fasta(){
   CU_ASSERT(full_entry);
   fclose(fp1);
 
-  FILE* fp2 = fopen("../data/test/basic/three_entries.fasta", "r");
+  FILE* fp2 = fopen("../data/test/basic/three_entries.fa", "r");
 
   // 2. Read from fasta:
   //>Zam1
@@ -145,10 +145,10 @@ void test_read_sequence_from_long_fasta(){
   alloc_sequence(seq,200,LINE_MAX);
 
   int length_seq;
-  FILE* fp1 = fopen("../data/test/basic/long_entries.fasta", "r");
+  FILE* fp1 = fopen("../data/test/basic/long_entries.fa", "r");
   
   if (fp1 == NULL){							
-    fputs("cannot open file: ../data/test/basic/long_entries.fasta\n",stderr);	
+    fputs("cannot open file: ../data/test/basic/long_entries.fa\n",stderr);	
     exit(1);								
   }
   
@@ -240,7 +240,7 @@ void test_read_sequence_from_fasta_when_file_has_bad_reads()
   int max_read_length=100;
   alloc_sequence(seq,max_read_length,LINE_MAX);
  
-  FILE* fp2= fopen("../data/test/basic/includes_reads_that_have_bad_characters.fasta", "r");
+  FILE* fp2= fopen("../data/test/basic/includes_reads_that_have_bad_characters.fa", "r");
 
   // >read1
   // AAAAAAAAAAAA9
@@ -311,7 +311,7 @@ void test_read_sequence_from_fasta_when_file_has_bad_reads()
 
   //now make sure we do not get trapped in an infinite loop if the last read of a file is bad
 
-  FILE* fp3= fopen("../data/test/basic/includes_final_read_that_has_bad_characters.fasta", "r");
+  FILE* fp3= fopen("../data/test/basic/includes_final_read_that_has_bad_characters.fa", "r");
 
   // >read1
   // AAAAAAAAAAAA9
@@ -391,7 +391,7 @@ void test_shift_last_kmer_to_start_of_sequence(){
   //pre-allocate space where to read the sequences
   alloc_sequence(seq,200,LINE_MAX);
 
-  FILE* fp1 = fopen("../data/test/basic/long_entries.fasta", "r");
+  FILE* fp1 = fopen("../data/test/basic/long_entries.fa", "r");
 
   int length_seq = read_sequence_from_fasta(fp1,seq,10,true,&full_entry,0);
 
@@ -424,7 +424,7 @@ void test_read_sequence_from_fastq(){
   alloc_sequence(seq,200,LINE_MAX);
   
   int length_seq;
-  FILE* fp1 = fopen("../data/test/basic/one_entry.fastq", "r");
+  FILE* fp1 = fopen("../data/test/basic/one_entry.fq", "r");
 
   // 1. Read from simple fasta:
   // >Zam
@@ -443,7 +443,7 @@ void test_read_sequence_from_fastq(){
 
 
 
-  FILE* fp2 = fopen("../data/test/basic/three_entries.fastq", "r");
+  FILE* fp2 = fopen("../data/test/basic/three_entries.fq", "r");
   
   //2. Read from fastq:
 
@@ -525,7 +525,7 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   
   int length_seq;
   
-  FILE* fp1 = fopen("../data/test/basic/includes_one_read_that_is_too_long.fastq", "r");
+  FILE* fp1 = fopen("../data/test/basic/includes_one_read_that_is_too_long.fq", "r");
   
   // @read1
   // ACGT
@@ -583,7 +583,7 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   fclose(fp1);
   
 
-  FILE* fp2 = fopen("../data/test/basic/includes_reads_with_bad_characters.fastq", "r");
+  FILE* fp2 = fopen("../data/test/basic/includes_reads_with_bad_characters.fq", "r");
 
   //@read1
   //ACGTACGTACGTACGT
@@ -620,7 +620,7 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
 
 
 
-  FILE* fp3 = fopen("../data/test/basic/includes_one_read_where_quality_is_longer_than_seq.fastq", "r");
+  FILE* fp3 = fopen("../data/test/basic/includes_one_read_where_quality_is_longer_than_seq.fq", "r");
 
   //@read1
   //ACGTACGTACGTACGT
@@ -650,7 +650,7 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   
   fclose(fp3);
 
-  FILE* fp4 = fopen("../data/test/basic/includes_multiline_reads.fastq", "r");
+  FILE* fp4 = fopen("../data/test/basic/includes_multiline_reads.fq", "r");
 
   // @read1
   // ACGT

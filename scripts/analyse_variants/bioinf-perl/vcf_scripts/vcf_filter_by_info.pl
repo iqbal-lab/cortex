@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 
+use Switch;
+
 # Use current directory to find modules
 use FindBin;
 use lib $FindBin::Bin;
@@ -16,13 +18,16 @@ sub print_usage
     print STDERR "Error: $err\n";
   }
 
-  print STDERR "Usage: ./vcf_filter_by_info.pl [--invert] <file.vcf> " .
-               "[<INFO_FIELD> <VALUE_REGEX>] ..\n";
-  print STDERR "  Isaac Turner <isaac.turner\@dtc.ox.ac.uk> 2011/03/26\n";
+  print STDERR "" .
+"Usage: ./vcf_filter_by_info.pl [--invert] <file.vcf> [<FIELD> <OP> <SEARCH>] ..
+  <OP> must be one of: =~ =~i !~ !~i == != > >= < <= eq eqi ne gt ge lt le
+       =~i, !~i & eqi are case-insensitive comparisons
+       =~ peforms a regex and !~ is the same as using --invert with =~\n";
   exit;
 }
 
-if(@ARGV < 1)
+# At least three arguments required for searching
+if(@ARGV < 3)
 {
   print_usage();
 }
@@ -37,16 +42,28 @@ if($ARGV[0] =~ /^-?-invert$/i)
 
 my $vcf_file = shift;
 
-if((@ARGV % 2) != 0)
+if((@ARGV % 3) != 0)
 {
   print_usage();
 }
 
-my %searches = ();
+my @searches = ();
 
-for(my $i = 0; $i < @ARGV; $i+=2)
+for(my $i = 0; $i < @ARGV; $i += 3)
 {
-  $searches{$ARGV[$i]} = $ARGV[$i+1];
+  my ($field, $op, $search) = ($ARGV[$i], $ARGV[$i+1], $ARGV[$i+2]);
+
+  if($op eq "=")
+  {
+    $op = "==";
+  }
+
+  if(!grep {$op eq $_} qw(=~ =~i !~ !~i == != > >= < <= eq eqi ne gt ge lt le))
+  {
+    print_usage("Unknown operator '$op'");
+  }
+
+  push(@searches, [$field, $op, $search]);
 }
 
 #
@@ -58,7 +75,8 @@ if(defined($vcf_file) && $vcf_file ne "-")
 {
   open($vcf_handle, $vcf_file) or die("Cannot open VCF file '$vcf_file'\n");
 }
-elsif(-p STDIN) {
+elsif(-p STDIN)
+{
   # STDIN is connected to a pipe
   open($vcf_handle, "<&=STDIN") or die("Cannot read pipe");
 }
@@ -86,17 +104,18 @@ while(defined($vcf_entry = $vcf->read_entry()))
   my $info_hashref = $vcf_entry->{'INFO'};
   my $flags_hashref = $vcf_entry->{'INFO_flags'};
 
-  my $match = 1;
+  my $match = 0;
 
-  my ($key,$search);
-
-  for my $key (keys %searches)
+  for my $search_arr (@searches)
   {
-    if(!defined($flags_hashref->{$key}) &&
-       (!defined($info_hashref->{$key}) ||
-        $info_hashref->{$key} !~ /$searches{$key}/i))
+    my ($field, $op, $search) = @$search_arr;
+
+    if(defined($flags_hashref->{$field}) &&
+       cmp_search($flags_hashref->{$field}, $op, $search) ||
+       defined($info_hashref->{$field}) &&
+       cmp_search($info_hashref->{$field}, $op, $search))
     {
-      $match = 0;
+      $match = 1;
       last;
     }
   }
@@ -109,10 +128,40 @@ while(defined($vcf_entry = $vcf->read_entry()))
 }
 
 # Print stats
-my $printed_percent = 100 * $num_of_filtered_entries / $total_num_entries;
-
-print STDERR "vcf_filter_by_info.pl: " . num2str($num_of_filtered_entries) .
-             " / " . num2str($total_num_entries) . " " .
-             "(" . sprintf("%.2f", $printed_percent) . "%) variants printed\n";
+print STDERR "vcf_filter_by_info.pl: " .
+             pretty_fraction($num_of_filtered_entries, $total_num_entries) .
+             " variants printed\n";
 
 close($vcf_handle);
+
+
+sub cmp_search
+{
+  my ($value, $op, $search_str) = @_;
+
+  switch($op)
+  {
+    # Regex
+    case "=~" { return ($value =~ /$search_str/); }
+    case "=~i" { return ($value =~ /$search_str/i); }
+    case "!~" { return ($value !~ /$search_str/); }
+    case "!~i" { return ($value !~ /$search_str/i); }
+
+    # Numerical comparisons
+    case "==" { return ($value == $search_str); }
+    case "!=" { return ($value != $search_str); }
+    case ">"  { return ($value >  $search_str); }
+    case ">=" { return ($value >= $search_str); }
+    case "<"  { return ($value <  $search_str); }
+    case "<=" { return ($value <= $search_str); }
+
+    # String comparisons
+    case "eq" { return ($value eq $search_str); }
+    case "eqi" { return (lc($value) eq lc($search_str)); }
+    case "ne" { return ($value ne $search_str); }
+    case "gt" { return ($value gt $search_str); }
+    case "ge" { return ($value ge $search_str); }
+    case "lt" { return ($value lt $search_str); }
+    case "le" { return ($value le $search_str); }
+  }
+}

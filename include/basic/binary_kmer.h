@@ -35,7 +35,7 @@
 #include <global.h>
 #include <event_encoding.h>
 
-#define BINVERSION 5
+#define BINVERSION 6
 
 // *** Basic constants to allow compile-time configuration of what kmer-sizes we support ****
 #define ALLOW_KMERS_UP_TO_31 1
@@ -122,7 +122,8 @@ BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size, Bi
 
 Nucleotide binary_kmer_get_last_nucleotide(BinaryKmer* kmer);
 
-Nucleotide binary_kmer_get_first_nucleotide(BinaryKmer* kmer, short kmer_size);
+// Buggy & not used
+//Nucleotide binary_kmer_get_first_nucleotide(BinaryKmer* kmer, short kmer_size);
 
 //BinaryKmer binary_kmer_add_nucleotide_shift(BinaryKmer kmer,Nucleotide nucleotide, short kmer_size);
 

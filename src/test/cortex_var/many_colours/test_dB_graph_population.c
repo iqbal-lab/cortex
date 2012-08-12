@@ -39,7 +39,8 @@
 #include <stdlib.h>
 #include <limits.h>
 
-
+// DEV: check db_graph and colourlist passed correctly in
+//      load_se_filelist_into_graph_colour
 
 //MARIO - I am going to delete this test from graph/ as I think there are more detailed tests in test_file_reader. OK with you?
 
@@ -50,7 +51,7 @@ void test_writing_reading_binary(){
   int kmer_size = 3;
   boolean test_read;
 
-  char seq[kmer_size];
+  char seq[kmer_size+1];
   
   BinaryKmer tmp_kmer;
 
@@ -96,15 +97,11 @@ void test_hash_table_find()
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 4;
-  int bucket_size    = 4;
-  long long bad_reads = 0; 
-  long long dup_reads=0;
-  int max_retries=10;
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
+  int bucket_size = 4;
+  int max_retries = 10;
 
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size,
+                                      max_retries, kmer_size);
 
   //Load the following fasta:
   //    >read1
@@ -113,11 +110,24 @@ void test_hash_table_find()
   //    GGCT
   //    >read3
   //    TAGG
-  long long seq_read=0;
-  long long seq_loaded=0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/test_dB_graph.fasta",&seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, 20, 
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,db_graph, individual_edge_array,0);
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/graph/test_dB_graph.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist not colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   //length of sequence read in from file
   CU_ASSERT(seq_read == 16);
@@ -203,12 +213,7 @@ void test_tip_clipping()
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 4;
-  int bucket_size    = 4;
-  long long bad_reads=0; 
-  long long dup_reads=0;
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
+  int bucket_size = 4;
 
   int min_coverage, max_coverage;
   double avg_coverage;
@@ -216,9 +221,8 @@ void test_tip_clipping()
   BinaryKmer tmp_kmer1;
   BinaryKmer tmp_kmer2;
 
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
   
-
   //Load the following fasta:
   
   //>main_trunk
@@ -226,14 +230,23 @@ void test_tip_clipping()
   //>tip
   //CGTTT
 
-  long long seq_read=0;
-  long long seq_loaded=0;
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_tip.fasta", &seq_read, &seq_loaded, NULL, 
-								     &bad_reads, &dup_reads, 20,
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-								     db_graph, individual_edge_array,0);
-  
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/graph/generates_graph_with_tip.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   CU_ASSERT_EQUAL(seq_read,14);
   CU_ASSERT_EQUAL(seq_loaded,14);
@@ -313,14 +326,7 @@ void test_pruning_low_coverage_nodes()
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 4;
-  int bucket_size    = 4;
-  long long bad_reads=0; 
-  long long dup_reads=0;
-
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
-
+  int bucket_size = 4;
 
   BinaryKmer tmp_kmer1;
   BinaryKmer tmp_kmer2;
@@ -334,14 +340,25 @@ void test_pruning_low_coverage_nodes()
   //GCGTCCCAT
   //>tip
   //CGTTT
-
-  long long seq_read=0;
-  long long seq_loaded=0;
-
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_tip.fasta",&seq_read, &seq_loaded,NULL, &bad_reads, &dup_reads, 20, 
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-								     db_graph, individual_edge_array, 0);
   
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/graph/generates_graph_with_tip.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
   CU_ASSERT_EQUAL(seq_read,14);
   CU_ASSERT_EQUAL(seq_loaded,14);
 
@@ -378,13 +395,8 @@ void test_get_perfect_path_in_one_colour()
  
   //first set up the hash/graph
   int kmer_size = 3;
-  int number_of_bits=4;
-  int bucket_size   = 10;
-  int seq_length;
-  long long bad_reads=0; long long dup_reads=0;
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
+  int number_of_bits = 4;
+  int bucket_size = 10;
 
   dBNode * path_nodes[100];
   Orientation path_orientations[100];
@@ -394,7 +406,7 @@ void test_get_perfect_path_in_one_colour()
   double  avg_coverage;
   int min_coverage, max_coverage;
 
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
 
  
   //1. Sequence of tests as follows
@@ -408,13 +420,23 @@ void test_get_perfect_path_in_one_colour()
   //  Sequence is :  ACGTAC
   // ****
 
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  long long seq_read=0;
-  long long seq_loaded=0;
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_two_self_loops.fasta", &seq_read, &seq_loaded, NULL,  &bad_reads, &dup_reads, 20,  
-										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-										  db_graph, individual_edge_array,0);
+  load_se_filelist_into_graph_colour(
+    "../data/test/graph/generates_graph_with_two_self_loops.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
    CU_ASSERT_EQUAL(seq_read,6);
    CU_ASSERT_EQUAL(seq_loaded,6);
@@ -456,21 +478,25 @@ void test_get_perfect_path_in_one_colour()
    
    //first set up the hash/graph
    kmer_size = 3;
-   number_of_bits= 4;
-   bucket_size   = 10;
+   number_of_bits = 4;
+   bucket_size = 10;
 
-   bad_reads = 0;
    
-   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-   
-  seq_read=0;
-  seq_loaded=0;
+   db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_one_long_supernode_with_conflict_at_end.fasta",
-								     &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads,20,
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-								     db_graph, individual_edge_array,0);
+  files_loaded = 0;
+  bad_reads = 0;
+  dup_reads = 0;
+  seq_loaded = 0;
+  seq_read = 0;
 
+  load_se_filelist_into_graph_colour(
+    "../data/test/graph/generates_graph_with_one_long_supernode_with_conflict_at_end.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
    CU_ASSERT_EQUAL(seq_read,13);
    CU_ASSERT_EQUAL(seq_loaded,13);
@@ -524,18 +550,24 @@ void test_get_perfect_path_in_one_colour()
    //first set up the hash/graph
    kmer_size = 3;
    number_of_bits = 4;
-   bucket_size    = 5;
+   bucket_size = 5;
    bad_reads = 0;
 
-   db_graph = hash_table_new(number_of_bits, bucket_size,10,kmer_size);
-   
-   seq_read=0;
-   seq_loaded=0;
-   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_one_long_supernode_with_inward_conflict_at_end.fasta", 
-								      &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, 20,  
-								      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-								      db_graph, individual_edge_array,0);
+   db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
 
+  files_loaded = 0;
+  bad_reads = 0;
+  dup_reads = 0;
+  seq_loaded = 0;
+  seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/graph/generates_graph_with_one_long_supernode_with_inward_conflict_at_end.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
    CU_ASSERT_EQUAL(seq_read,13);
    CU_ASSERT_EQUAL(seq_loaded,13);
@@ -589,19 +621,24 @@ void test_get_perfect_path_in_one_colour()
   
    //first set up the hash/graph
    kmer_size = 3;
-   number_of_bits=8;
-   bucket_size   =4;
+   number_of_bits = 8;
+   bucket_size = 4;
 
-   bad_reads = 0;
-
-   db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-   seq_read=0;
-   seq_loaded=0;
-   load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_infinite_loop.fasta",&seq_read, &seq_loaded, NULL,
-								      &bad_reads, &dup_reads,30,
-								      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-								      db_graph, individual_edge_array,0);
+   db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
    
+  bad_reads = 0;
+  dup_reads = 0;
+  seq_loaded = 0;
+  seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/graph/generates_graph_with_infinite_loop.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
 
    CU_ASSERT_EQUAL(seq_read,25);
    CU_ASSERT_EQUAL(seq_loaded,25);
@@ -799,18 +836,37 @@ void test_detect_and_smooth_bubble(){
   db_node_add_edge(node5, node9, reverse,reverse, db_graph->kmer_size, individual_edge_array, 0);
 
 
-  bubble = db_graph_detect_bubble_for_specific_person_or_population(node1,forward,db_graph->kmer_size+1,
+  bubble = db_graph_detect_bubble_for_specific_person_or_population(node1,forward,
+								    db_graph->kmer_size+2,
 								    &db_node_action_set_status_visited,
-								    &length1,path_nodes1,orientations1,labels1,
-								    seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
-								    &length2,path_nodes2,orientations2,labels2,
-								    seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
-								    db_graph, individual_edge_array, 0);
+								    &length1,
+								    path_nodes1,
+								    orientations1,
+								    labels1,
+								    seq1,
+								    &avg_coverage1,
+								    &min_coverage1,
+								    &max_coverage1,
+								    &length2,
+								    path_nodes2,
+								    orientations2,
+								    labels2,
+								    seq2,
+								    &avg_coverage2,
+								    &min_coverage2,
+								    &max_coverage2,
+								    db_graph, 
+								    individual_edge_array, 
+								    0);
 
 
   CU_ASSERT(bubble);
 
-  CU_ASSERT(((labels1[0] == Adenine) && (labels2[0] == Thymine)) || ((labels2[0] == Adenine) && (labels1[0] == Thymine)));
+  CU_ASSERT(
+	    ((labels1[0] == Adenine) && (labels2[0] == Thymine)) 
+	    || 
+	    ((labels2[0] == Adenine) && (labels1[0] == Thymine))
+	    );
 
   CU_ASSERT_EQUAL(labels1[1],Cytosine);
   CU_ASSERT_EQUAL(labels1[2],Thymine);
@@ -947,19 +1003,25 @@ void test_detect_and_smooth_bubble(){
   number_of_buckets = 4; //2**4 buckets
   bucket_size = 40;
   db_graph = hash_table_new(number_of_buckets,bucket_size,10,kmer_size);
-  
-  long long bad_reads=0;
-  long long dup_reads=0;
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
 
-  long long seq_read=0;
-  long long seq_loaded=0;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generate_bubble_with_unequal_branch_sizes.fa", &seq_read, &seq_loaded, NULL, 
-										      &bad_reads, &dup_reads, 200, 
-										      remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-										      db_graph, individual_edge_array, 0);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/graph/generate_bubble_with_unequal_branch_sizes.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   CU_ASSERT_EQUAL(seq_read,343);
 
@@ -1070,6 +1132,7 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour(){
 }
 
 
+// DEV: is this code needed?
 /* - ready to be uncommented when N50 cde is upgraded to use db_graph_supernode
 void test_get_N50()
 {
@@ -1097,7 +1160,7 @@ void test_get_N50()
   
    int max_read_length=70;
 
-   seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/n50_example1.fasta",&bad_reads, &dup_reads, max_read_length,  
+   seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/n50_example1.fa",&bad_reads, &dup_reads, max_read_length,  
 										   remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 										   db_graph, individual_edge_array, 0);
    
@@ -1113,7 +1176,7 @@ void test_get_N50()
 
 
 
-   //***************************************
+   // ==========================================================================
    // example 2:
 
    // >read1
@@ -1141,7 +1204,7 @@ void test_get_N50()
    //count_kmers=0;
    bad_reads=0;
    seq_length=0;
-   seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/n50_example2.fasta",&bad_reads, &dup_reads, max_read_length,  
+   seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/n50_example2.fa",&bad_reads, &dup_reads, max_read_length,  
 										   remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
 										   db_graph, individual_edge_array, 0);
 
@@ -1169,22 +1232,13 @@ void test_is_condition_true_for_all_nodes_in_supernode()
 {
   //first set up the hash/graph
   int kmer_size = 3;
-  int number_of_bits=4;
-  int bucket_size   = 10;
-  long long seq_read=0;
-  long long seq_loaded=0;
-
-  long long bad_reads=0; long long dup_reads=0;
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
+  int number_of_bits = 4;
+  int bucket_size = 10;
 
   BinaryKmer tmp_kmer1;
   BinaryKmer tmp_kmer2;
 
-  
-
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
+  dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
 
  
   //1. Sequence of tests as follows
@@ -1196,12 +1250,25 @@ void test_is_condition_true_for_all_nodes_in_supernode()
   //  Sequence is :  ACGTAC
   // ****
 
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/generates_graph_with_two_self_loops.fasta", &seq_read, &seq_loaded, NULL, 
-								     &bad_reads, &dup_reads, 20,  
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-								     db_graph, individual_edge_array, 0);
-  
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/graph/generates_graph_with_two_self_loops.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
   CU_ASSERT_EQUAL(seq_read,6);
   CU_ASSERT_EQUAL(seq_loaded,6);
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph),2);
@@ -1324,26 +1391,32 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
   //first set up the hash/graph
   int kmer_size = 3;
-  int number_of_bits=4;
-  int bucket_size   = 10;
-  long long bad_reads=0; long long dup_reads=0;;
-  boolean remove_duplicates_single_endedly=false; 
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
+  int number_of_bits = 4;
+  int bucket_size = 10;
 
-  int max_read_length=30;
-
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,10,kmer_size);
-
-  long long seq_read=0;
-  long long seq_loaded=0;
-
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person.fasta", &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-								     db_graph, individual_edge_array, 0);
+  dBGraph *db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
   
-  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/chrom1.fasta", db_graph);
-  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/chrom2.fasta", db_graph);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/graph/person.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/chrom1.fa", db_graph);
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/chrom2.fa", db_graph);
   
   //Now see if it correctly gets the supernode that does not intersect a chromosome
   dBNode * nodes_path[100];
@@ -1393,21 +1466,29 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   // now a harder example.
   //first set up the hash/graph
   kmer_size = 31;
-  number_of_bits=10;
-  bucket_size   = 10;
-  bad_reads=0;
-  max_read_length=2000;
+  number_of_bits = 10;
+  bucket_size = 10;
+
   int max_rehash_tries=10;
 
-  db_graph = hash_table_new(number_of_bits,bucket_size,max_rehash_tries,kmer_size);
+  db_graph = hash_table_new(number_of_bits, bucket_size,
+                            max_rehash_tries, kmer_size);
 
-  seq_read=0;
-  seq_loaded=0;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person2.fasta", &seq_read, &seq_loaded, NULL,  &bad_reads, &dup_reads, max_read_length, 
-								     remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-								     db_graph, individual_edge_array, 0);
-  
-  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
+  files_loaded = 0;
+  bad_reads = 0;
+  dup_reads = 0;
+  seq_loaded = 0;
+  seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/graph/person2.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fa", db_graph);
 
 
   //Now see if it correctly gets the supernode that does not intersect a chromosome
@@ -1450,20 +1531,27 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 
   //first set up the hash/graph
   kmer_size = 31;
-  number_of_bits=20;
-  bucket_size   = 10;
-  bad_reads=0;
-  max_read_length=2000;
-  max_rehash_tries=10;
+  number_of_bits = 20;
+  bucket_size = 10;
 
-  db_graph = hash_table_new(number_of_bits,bucket_size,max_rehash_tries,kmer_size);
+  max_rehash_tries = 10;
 
-  seq_read=0;
-  seq_loaded=0;
-  load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/person3.fasta", &seq_read, &seq_loaded, NULL, &bad_reads, &dup_reads, max_read_length, 
-										  remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-										  db_graph, individual_edge_array, 0);
+  db_graph = hash_table_new(number_of_bits, bucket_size,
+                            max_rehash_tries, kmer_size);
 
+  files_loaded = 0;
+  bad_reads = 0;
+  dup_reads = 0;
+  seq_loaded = 0;
+  seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/graph/person3.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   // fasta looks like this:
   /*
@@ -1494,7 +1582,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   // GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
   
 
-  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fasta", db_graph);
+  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fa", db_graph);
 
   char** array_of_supernodes_for_person3= (char**) calloc(10,sizeof(char*));
   array_of_supernodes_for_person3[0]= (char*)calloc(100,sizeof(char));
@@ -1638,16 +1726,31 @@ void test_db_graph_supernode_for_specific_person_or_pop()
  //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 8;
-  int bucket_size    = 8;
-  long long bad_reads = 0;
-  int max_retries=10;
-
+  int bucket_size = 8;
+  int max_retries = 10;
   
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  long long seq_read=0;
-  long long seq_loaded=0;
+  dBGraph * hash_table = hash_table_new(number_of_bits, bucket_size,
+                                        max_retries, kmer_size);
 
-  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end", &seq_read, &seq_loaded,&bad_reads, hash_table, NULL);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(bad_reads==0);
 
@@ -1723,10 +1826,21 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   // ******** try another example ******************
   
 
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  seq_read=0;
-  seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  hash_table = hash_table_new(number_of_bits, bucket_size,
+                              max_retries, kmer_size);
+
+  bad_reads = 0;
+  dup_reads = 0;
+  seq_loaded = 0;
+  seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   //person 1:
   //>person1_read1
@@ -1774,7 +1888,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   length = db_graph_supernode_for_specific_person_or_pop(test_elem1,max_expected_supernode_length, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
 							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
+							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fa - sorry, offset by 1
 
 
   CU_ASSERT(length==1); //just one edge - self loop
@@ -1812,7 +1926,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   length = db_graph_supernode_for_specific_person_or_pop(test_elem2,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
 							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
+							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fa - sorry, offset by 1
 
 
   CU_ASSERT(length==3);
@@ -1855,7 +1969,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   length = db_graph_supernode_for_specific_person_or_pop(test_elem3,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
 							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
+							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fa - sorry, offset by 1
   
 
   CU_ASSERT(length==3);
@@ -1892,7 +2006,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   length = db_graph_supernode_for_specific_person_or_pop(test_elem4,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
 							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fasta - sorry, offset by 1
+							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fa - sorry, offset by 1
   
   
   CU_ASSERT(length==3);
@@ -1954,12 +2068,12 @@ void test_is_supernode_end()
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 8;
-  int bucket_size    = 8;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 8;
+  int max_retries = 10;
   BinaryKmer tmp_kmer1, tmp_kmer2;
 
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph * hash_table = hash_table_new(number_of_bits, bucket_size,
+                                        max_retries, kmer_size);
 
  
   //1. Sequence of tests as follows
@@ -1973,10 +2087,25 @@ void test_is_supernode_end()
   //  Sequence is :  ACGTAC
   // ****
 
-  long long seq_read=0;
-  long long seq_loaded=0;
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_two_self_loops", &seq_read, &seq_loaded,  &bad_reads, hash_table, NULL);
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/supernode/one_person_two_self_loops.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
   CU_ASSERT(seq_loaded==6);
   CU_ASSERT(seq_read==6);
   CU_ASSERT(seq_read==6);
@@ -2017,10 +2146,21 @@ void test_is_supernode_end()
   bad_reads = 0;
   max_retries=10;
 
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  seq_read=0;
-  seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end", &seq_read, &seq_loaded,&bad_reads, hash_table, NULL);
+  hash_table = hash_table_new(number_of_bits, bucket_size,
+                              max_retries, kmer_size);
+
+  bad_reads = 0;
+  dup_reads = 0;
+  seq_loaded = 0;
+  seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/supernode/one_person_one_long_supernode_with_conflict_at_end.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(seq_read==13);
@@ -2075,11 +2215,21 @@ void test_is_supernode_end()
   max_retries=10;
 
 
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  hash_table = hash_table_new(number_of_bits, bucket_size,
+                              max_retries, kmer_size);
 
-  seq_read=0;
-  seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_one_long_supernode_with_inward_conflict_at_end",&seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  bad_reads = 0;
+  dup_reads = 0;
+  seq_loaded = 0;
+  seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/supernode/one_person_one_long_supernode_with_inward_conflict_at_end.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(seq_read==13);
@@ -2141,11 +2291,22 @@ void test_is_supernode_end()
   max_retries=10;
 
 
-  hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  hash_table = hash_table_new(number_of_bits, bucket_size,
+                              max_retries, kmer_size);
 
-  seq_read=0;
-  seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/supernode/one_person_infiniteloop", &seq_read, &seq_loaded,  &bad_reads, hash_table, NULL);
+  bad_reads = 0;
+  dup_reads = 0;
+  seq_loaded = 0;
+  seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/supernode/one_person_infiniteloop.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
   CU_ASSERT(bad_reads==0);
   CU_ASSERT(seq_loaded==25);
   CU_ASSERT(seq_read==25);
@@ -2182,12 +2343,11 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 4;
-  int bucket_size    = 4;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 4;
+  int max_retries = 10;
 
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-
+  dBGraph * hash_table = hash_table_new(number_of_bits, bucket_size,
+                                        max_retries, kmer_size);
   
   if (hash_table==NULL)
     {
@@ -2195,11 +2355,27 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
       exit(1);
     }
 
-  long long seq_loaded=0;
-  long long seq_read=0;
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
   //printf("Number of bases loaded is %d",seq_loaded);
+  
   CU_ASSERT(seq_loaded == 44);
   CU_ASSERT(bad_reads==0);
 
@@ -2230,12 +2406,12 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 4;
-  int bucket_size    = 4;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 4;
+  int max_retries = 10;
   BinaryKmer tmp_kmer1, tmp_kmer2;
 
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph * hash_table = hash_table_new(number_of_bits, bucket_size,
+                                        max_retries, kmer_size);
 
   
   if (hash_table==NULL)
@@ -2243,9 +2419,6 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-
-  long long seq_loaded=0;
-  long long seq_read=0;
 
 
   //start with an example with just oner person - note this is an example with the same kmer occuring twice in one read :) - CCG
@@ -2273,8 +2446,25 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
 
   //double coverness of hairpin must not confuse read coverage
 
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  load_population_as_fasta("../data/test/pop_graph/coverage/one_person", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/coverage/one_person.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 24);
   CU_ASSERT(seq_read == 24);
@@ -2310,19 +2500,36 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
   //first set up the hash/graph
   int kmer_size = 7;
   int number_of_bits = 8;
-  int bucket_size    = 10;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 10;
+  int max_retries = 10;
 
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size,
+                                      max_retries, kmer_size);
+
   if (db_graph==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/one_person_for_testing_array_loading", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
+
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/one_person_for_testing_array_loading.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   //>one read
   //AATAGACGCCCACACCTGATAGACCCCACACTCTAA
@@ -2330,10 +2537,10 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
   
   CU_ASSERT(seq_loaded==36);
   
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/one_person.fasta", "r");
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/one_person.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ./data/test/pop_graph/one_person.fasta\n");
+      printf("Cannot open ./data/test/pop_graph/one_person.fa\n");
       exit(1);
     }
 
@@ -2548,49 +2755,66 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
 {
 
 
-  // ******************************************************************************************************************************
-  // 1. NULL test. Load short fake reference, and load a person whose sequence is identical. This should find nothing.
-  // ******************************************************************************************************************************
+  // ===========================================================================
+  // 1. NULL test. Load short fake reference, and load a person whose sequence
+  //    is identical. This should find nothing.
+  // ===========================================================================
 
 
   //first set up the hash/graph
   int kmer_size = 7;
   int number_of_bits = 8;
-  int bucket_size    = 10;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 10;
+  int max_retries = 10;
 
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph * hash_table = hash_table_new(number_of_bits, bucket_size,
+                                        max_retries, kmer_size);
+
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
 
-  
-  load_population_as_fasta("../data/test/pop_graph/one_person_with_Ns_on_end", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/one_person_with_Ns_on_end.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   //>one read
   //AATAGACGCCCACACCTGATAGACCCCACAC 
 
 
   // The de Bruijn graph of this in 7mers is as follows:
-  // a line of 8 nodes, with a loop of length 16 off the 9th node. ie all nodes have 1-in and 1-out, except the 9th node, CCCACAC, which has 2 ins and 2 outs.
-  // so it's a supernode of length 8, a loop-supernode of length 16,
-
-  // our algorithm should look at the supernode starting with AATAGAC, then the supernode starting at CCCACAC, then stop
+  // a line of 8 nodes, with a loop of length 16 off the 9th node. ie all nodes
+  // have 1-in and 1-out, except the 9th node, CCCACAC, which has 2 ins and
+  // 2 outs. So it's a supernode of length 8, a loop-supernode of length 16,
+  // our algorithm should look at the supernode starting with AATAGAC, then the
+  // supernode starting at CCCACAC, then stop
 
 
   
   CU_ASSERT(seq_read==1462);
   CU_ASSERT(seq_loaded==31);
 
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fasta", "r");
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ./data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fasta\n");
+      printf("Cannot open ./data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fa\n");
       exit(1);
     }
 
@@ -2627,28 +2851,47 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
 void test_db_graph_make_reference_path_based_sv_calls_null_test_2()
 {
 
-  // ******************************************************************************************************************************
-  // 2. Harder NULL test. Reference=an ALU and load a person whose sequence is also that ALU. This should find nothing.
-  //     Our implementation of db_graph_make_reference_path_based_sv_calls assumes we have a very large ref fasta, so we load big arrays of bases
-  //     which are much longer than we expect any of the supernodes to be. In this case, we know the supernode is as long as the Alu.  
-  // ******************************************************************************************************************************
+  // ===========================================================================
+  // 2. Harder NULL test. Reference=an ALU and load a person whose sequence is
+  //    also that ALU. This should find nothing. Our implementation of
+  //    db_graph_make_reference_path_based_sv_calls assumes we have a very large
+  //    ref fasta, so we load big arrays of bases which are much longer than we
+  //    expect any of the supernodes to be. In this case, we know the supernode
+  //    is as long as the Alu.  
+  // ===========================================================================
 
   int kmer_size = 31;
   int number_of_bits = 8;
-  int bucket_size    = 10;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 10;
+  int max_retries = 10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
-  //just load one person who's sequence is an Alu. Then take reference which is that same sequence and try to find variants
-  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/just_one_of_the_two_people.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/just_one_of_the_two_people.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   //   >7SLRNA#SINE/Alu  plus GTTCAGAG at start and GTCAGCGTAG at end
   //   GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
@@ -2664,10 +2907,10 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_2()
   CU_ASSERT(seq_read==5158);//length of input sequence
   CU_ASSERT(seq_loaded==339);//amount loaded (ie removing Ns in this case)
   
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fasta", "r");
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fasta");
+      printf("Cannot open ../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fa");
       exit(1);
     }
 
@@ -2699,43 +2942,64 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
 {
 
 
-  // ******************************************************************************************************************************
-  // 3. Reference = Alu-NNNNN- same Alu, and person is identical to reference. This should find nothing
-  //    Note this really is testing something different. Since the reference is basically the same sequence repeated twice (with N's in between),
-  //    there is a risk that we would match the 5' anchor of the (one and only) supernode at the start of the reference, and the 3' anchor at
-  //    the end of the 2nd copy of the repeat.
+  // ===========================================================================
+  // 3. Reference = Alu-NNNNN- same Alu, and person is identical to reference.
+  //    This should find nothing. Note this really is testing something
+  //    different. Since the reference is basically the same sequence repeated
+  //    twice (with N's in between), there is a risk that we would match the
+  //    5' anchor of the (one and only) supernode at the start of the reference,
+  //    and the 3' anchor at the end of the 2nd copy of the repeat.
   //    To be clear, look at this:
   //        Ref:  ZamZamZamNNNNNNNNNNNNNNNNZamZamZam
   //        Indiv ZamZamZamNNNNNNNNNNNNNNNNZamZamZam
-  //      So we look at supernode ZamZamzZam. We could, if we implemented things wrong, do this:
+  //      So we look at supernode ZamZamzZam. We could, if we implemented things
+  //      wrong, do this:
   //
   //        Ref: ZamZamZamNNNNNNNNNNNNNNNNZamZamZam
   //             Zam............................Zam
   //              ^                              ^
-  //             5' anchor                    3' anchor    match start of supernode ZamZamZam with start of reference, and end of supernode with end of reference
-  //     this would be a  bug - failing to realise that the entire supernode matches exactly the reference on the first instance of the repeat ZamZamZam
+  //             5' anchor                    3' anchor    match start of
+  //     supernode ZamZamZam with start of reference, and end of supernode with
+  //     end of reference this would be a  bug - failing to realise that the
+  //     entire supernode matches exactly the reference on the first instance of
+  //     the repeat ZamZamZam
   //
   //    In fact, I found exactly this bug through this test.
-  // ******************************************************************************************************************************
+  // ===========================================================================
 
 
   int kmer_size = 31;
   int number_of_bits = 8;
-  int bucket_size    = 10;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 10;
+  int max_retries = 10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+  
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
-  
-  load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_alu_Ns_then_same_alu", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/one_person_is_alu_Ns_then_same_alu.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
   
   //   >7SLRNA#SINE/Alu  
   // GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
@@ -2759,10 +3023,10 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
   CU_ASSERT(seq_loaded==678);//not a typo - removing Ns
 
 
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu.fasta", "r");
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu.fasta");
+      printf("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu.fa");
       exit(1);
     }
 
@@ -2795,33 +3059,50 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
 void test_db_graph_make_reference_path_based_sv_calls_null_test_4()
 {
 
-  // ******************************************************************************************************************************
-  // 4. Reference = 10kb of chromosome 1. Individual is that same sequence. This should find nothing.
-  // ******************************************************************************************************************************
+  // ===========================================================================
+  // 4. Reference = 10kb of chromosome 1. Individual is that same sequence. This
+  //    should find nothing.
+  // ===========================================================================
 
   int kmer_size = 31;
   int number_of_bits = 13;
-  int bucket_size    = 10;
-  long long  bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 10;
+  int max_retries = 10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+  
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/variations/one_person_is_10kb_of_chrom1", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/one_person_is_10kb_of_chrom1.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
   
   CU_ASSERT(seq_read==16320);
   
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_1kb_chrom1.fasta", "r");
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_1kb_chrom1.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_1kb_chrom1.fasta");
+      printf("Cannot open ../data/test/pop_graph/variations/person_1kb_chrom1.fa");
       exit(1);
     }
 
@@ -2855,35 +3136,52 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_4()
 void test_db_graph_make_reference_path_based_sv_calls_null_test_5()
 {
 
-  // ***************************************************************************************************************************************************
-  // Reference is two copies of a single sequence, tandem repeat of about 36 bases. Individual is the same, with an Alu inserted between
-  // Since the supernode in the individual has one copy of th repeat, and then the Alu, and then stops, you should be unable to find
-  // an anchor at the Alu-end of the supernode. So this should find nothing.
-  // ***************************************************************************************************************************************************
+  // ===========================================================================
+  // Reference is two copies of a single sequence, tandem repeat of about 36
+  // bases. Individual is the same, with an Alu inserted between. Since the
+  // supernode in the individual has one copy of th repeat, and then the Alu,
+  // and then stops, you should be unable to find an anchor at the Alu-end of
+  // the supernode. So this should find nothing.
+  // ===========================================================================
 
 
   int kmer_size = 31;
   int number_of_bits = 15;
-  int bucket_size    = 10;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 10;
+  int max_retries = 10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
 
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_insertion", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
 
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_alu.fasta", "r");
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/two_people_one_with_alu_insertion.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_alu.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_without_alu.fasta");
+      printf("Cannot open ../data/test/pop_graph/variations/person_without_alu.fa");
       exit(1);
     }
 
@@ -2919,35 +3217,52 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
 {
 
 
-  // ***************************************************************************************************************************************************
-  // 1. Reference  = short sequence, individual is idential except for one base change
-  // ***************************************************************************************************************************************************
+  // ===========================================================================
+  // 1. Reference = short sequence
+  //    Individual is idential except for one base change
+  // ===========================================================================
 
 
 
   int kmer_size = 7;
   int number_of_bits = 8;
-  int bucket_size    = 10;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 10;
+  int max_retries = 10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+  
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
 
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_short_seq_with_one_base_difference", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/two_people_short_seq_with_one_base_difference.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   CU_ASSERT(seq_read==192);
   
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fasta", "r");
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fasta");
+      printf("Cannot open ../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fa");
       exit(1);
     }
 
@@ -3051,34 +3366,54 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
 {
 
 
-  // ***************************************************************************************************************************************************
-  // 2. Reference = Alu-NNNNN- same Alu, and person is identical to reference except for a single base difference. This should find the single variant!
-  //     It is also an example where we traverse the supernode in the reverse direction to that in which is appears in our array. This is 
-  //      therefore a good unit test to ensure that our code works in this case
-  //     Final comment - note that the coverage is double on a lot of these nodes because we have 2 copies of the Alu. But that doesn't in any way add credence
-  //      to the variant call - it's paralogous sequence that doubles the coverage.
-  // ***************************************************************************************************************************************************
+  // ===========================================================================
+  // 2. Reference = Alu-NNNNN- same Alu, and person is identical to reference
+  //    except for a single base difference. This should find the single variant!
+  //    It is also an example where we traverse the supernode in the reverse
+  //    direction to that in which is appears in our array. This is therefore a
+  //    good unit test to ensure that our code works in this case.
+  //    Note that the coverage is double on a lot of these nodes because we have
+  //    two copies of the Alu. But that doesn't in any way add credence to the
+  //    variant call - it's paralogous sequence that doubles the coverage.
+  // ===========================================================================
 
   int kmer_size = 31;
   int number_of_bits = 8;
-  int bucket_size    = 10;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 10;
+  int max_retries = 10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_both_alu_Ns_alu_with_one_base_difference", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fasta", "r");
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/two_people_both_alu_Ns_alu_with_one_base_difference.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fasta");
+      printf("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fa");
       exit(1);
     }
 
@@ -3165,32 +3500,51 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
 
 void test_db_graph_make_reference_path_based_sv_calls_test_3()
 {
-  // ***************************************************************************************************************************************************
-  // 3. Reference is just a short sequence. Individual is missing 2 bases in the middle--> we should find this
-  //     Note this test is also interesting because the reference and individual both contain a closed loop in their de Bruijn graph
-  // ***************************************************************************************************************************************************
+  // ===========================================================================
+  // 3. Reference is just a short sequence. Individual is missing 2 bases in the
+  //    middle--> we should find this. Note this test is also interesting
+  //    because the reference and individual both contain a closed loop in their
+  //    de Bruijn graph
+  // ===========================================================================
 
 
   int kmer_size = 7;
   int number_of_bits = 8;
-  int bucket_size    = 10;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 10;
+  int max_retries = 10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_2_bases_missing", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
 
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_2_bases_missing.fasta", "r");
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/two_people_one_with_2_bases_missing.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_2_bases_missing.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_without_2_bases_missing.fasta");
+      printf("Cannot open ../data/test/pop_graph/variations/person_without_2_bases_missing.fa");
       exit(1);
     }
 
@@ -3284,33 +3638,50 @@ void test_db_graph_make_reference_path_based_sv_calls_test_3()
 
 void test_db_graph_make_reference_path_based_sv_calls_test_4()
 {
-  // ***************************************************************************************************************************************************
-  // Reference is just a short sequence. Individual has an extra 2 bases in the middle--> we should find this
-  // ***************************************************************************************************************************************************
+  // ===========================================================================
+  // Reference is just a short sequence. Individual has an extra 2 bases in the
+  // middle--> we should find this
+  // ===========================================================================
 
   int kmer_size = 7;
   int number_of_bits = 8;
   int bucket_size    = 10;
-  long long bad_reads = 0;
   int max_retries=10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
 
+  // We use the same two people as last time, but swap their roles
 
-  //we use the same two people as last time, but swap their roles
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_2_bases_missing", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_2_bases_missing.fasta", "r");
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/two_people_one_with_2_bases_missing.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_2_bases_missing.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_with_2_bases_missing.fasta");
+      printf("Cannot open ../data/test/pop_graph/variations/person_with_2_bases_missing.fa");
       exit(1);
     }
 
@@ -3407,37 +3778,53 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
 {
 
 
-  // ***************************************************************************************************************************************************
-  // 5. Reference is a single sequence which is a single supernode. Individual is the same, with an Alu inserted in the middle
-  // Should be able to find anchors at both ends this time, and find the insertion
-  // Note that by missing the alu in the reference, it has a load of nodes that won't be seen in the individual, so for example here
-  // we will ask for a min 3' flank of 8. This actually means 31+8 bases of agreement.
-  // ***************************************************************************************************************************************************
+  // ===========================================================================
+  // 5. Reference is a single sequence which is a single supernode. Individual
+  //    is the same, with an Alu inserted in the middle. Should be able to find
+  //    anchors at both ends this time, and find the insertion.
+  //    Note that by missing the alu in the reference, it has a load of nodes
+  //    that won't be seen in the individual, so for example here we will ask
+  //    for a min 3' flank of 8. This actually means 31+8 bases of agreement.
+  // ===========================================================================
 
 
   int kmer_size = 31;
   int number_of_bits = 15;
-  int bucket_size    = 10;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 10;
+  int max_retries = 10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
 
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
 
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_inserted_mid_supernode", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/two_people_one_with_alu_inserted_mid_supernode.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fasta", "r");
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fasta");
+      printf("Cannot open ../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fa");
       exit(1);
     }
 
@@ -3534,35 +3921,53 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
 {
 
 
-  // ***************************************************************************************************************************************************
-  // 6. Reverse the roles of previous test. Reference has an Alu, individual does not. 
-  // Should be able to find anchors at both ends this time, and find the deletion
-  // ***************************************************************************************************************************************************
+  // ===========================================================================
+  // 6. Reverse the roles of previous test. Reference has an Alu, individual
+  //    does not. Should be able to find anchors at both ends this time, and
+  //    find the deletion
+  // ===========================================================================
 
 
   int kmer_size = 31;
   int number_of_bits = 15;
-  int bucket_size    = 10;
-  long long  bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 10;
+  int max_retries = 10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
+
+  // We use the same two people as last time, but swap their roles
+
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/two_people_one_with_alu_inserted_mid_supernode.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
 
-  //we use the same two people as last time, but swap their roles
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_alu_inserted_mid_supernode", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
-
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fasta", "r");
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fasta");
+      printf("Cannot open ../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fa");
       exit(1);
     }
 
@@ -3657,35 +4062,51 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
 void test_db_graph_make_reference_path_based_sv_calls_test_7()
 {
 
-  // ***************************************************************************************************************************************************
-  // 7. Reference is an Alu with a different Alu inserted in the middle. Individual is just the first Alu - ie they have a deletion of an Alu from within an Alu.
-  // 
-  // ***************************************************************************************************************************************************
-
+  // ===========================================================================
+  // 7. Reference is an Alu with a different Alu inserted in the middle.
+  //    Individual is just the first Alu - ie they have a deletion of an Alu
+  //    from within an Alu.
+  // ===========================================================================
 
   int  kmer_size = 31;
   int  number_of_bits = 15;
-  int  bucket_size    = 10;
-  long long bad_reads = 0;
-  int  max_retries=10;
+  int  bucket_size = 10;
+  int  max_retries = 10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+  
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
 
+  // We use the same two people as last time, but swap their roles
 
-  //we use the same two people as last time, but swap their roles
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_is_alu_other_has_2nd_alu_inserted", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fasta", "r");
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/two_people_one_is_alu_other_has_2nd_alu_inserted.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fasta");
+      printf("Cannot open ../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fa");
       exit(1);
     }
 
@@ -3814,32 +4235,49 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
 {
 
 
-  // ***************************************************************************************************************************************************
-  // 8. Reference is 10 kb of chromosome 1 plus 1kb of sequence inserted mid-supernode, and person is identical, except for that 1kb is missing 
-  // ***************************************************************************************************************************************************
-
+  // ===========================================================================
+  // 8. Reference is 10 kb of chromosome 1 plus 1kb of sequence inserted
+  //    mid-supernode, and person is identical, except for that 1kb is missing 
+  // ===========================================================================
 
   int  kmer_size = 31;
   int  number_of_bits = 15;
-  int  bucket_size    = 10;
-  long long bad_reads = 0;
-  int  max_retries=10;
+  int  bucket_size = 10;
+  int  max_retries = 10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
 
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_1kb_deletion", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta", "r");
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/two_people_one_with_1kb_deletion.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta");
+      printf("Cannot open ../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fa");
       exit(1);
     }
 
@@ -3990,33 +4428,52 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
 void test_db_graph_make_reference_path_based_sv_calls_test_9()
 {
 
-  // ***************************************************************************************************************************************************
-  // 9. Identical to previous test, but each person has identical 600 lines of chromosome 12 added before the sequence that was there in previous tes
-  //     This is purely to test that the start coordinate of the variant is found correctly, even when you have to load more and more sequence into the array.
-  // ***************************************************************************************************************************************************
+  // ===========================================================================
+  // 9. Identical to previous test, but each person has identical 600 lines of
+  //    chromosome 12 added before the sequence that was there in previous test
+  //    This is purely to test that the start coordinate of the variant is found
+  //    correctly, even when you have to load more and more sequence into the
+  //    array.
+  // ===========================================================================
   
 
   int  kmer_size = 31;
   int  number_of_bits = 15;
-  int  bucket_size    = 10;
-  long long   bad_reads = 0;
-  int  max_retries=10;
+  int  bucket_size = 10;
+  int  max_retries = 10;
 
-  dBGraph* hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph* hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
-  long long seq_loaded=0;
-  long long seq_read=0;
 
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_one_with_1kb_deletion_both_with_600lineschrom12_beforehand", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta", "r");
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/two_people_one_with_1kb_deletion_both_with_600lineschrom12_beforehand.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fasta");
+      printf("Cannot open ../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fa");
       exit(1);
     }
 
@@ -4123,21 +4580,35 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
 void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
 {
 
-
- //first set up the hash/graph
+  // First set up the hash/graph
   int kmer_size = 5;
   int number_of_bits = 8;
-  int bucket_size    = 8;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 8;
+  int max_retries = 10;
+
   BinaryKmer tmp_kmer1, tmp_kmer2;
 
-  
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  long long seq_read=0;
-  long long seq_loaded=0;
+  dBGraph * hash_table = hash_table_new(number_of_bits, bucket_size,
+                                        max_retries, kmer_size);
 
-  load_population_as_fasta("../data/test/pop_graph/one_person_two_reads", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/one_person_two_reads.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   //>read1
   //AAAACGAAAAAATTCGAG
@@ -4266,20 +4737,35 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
 void test_apply_to_all_nodes_in_path_defined_by_fasta()
 {
 
- //first set up the hash/graph
+  // First set up the hash/graph
   int kmer_size = 5;
   int number_of_bits = 10;
-  int bucket_size    = 8;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 8;
+  int max_retries = 10;
 
-  dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-  long long seq_read=0;
-  long long seq_loaded=0;
+  dBGraph *db_graph = hash_table_new(number_of_bits, bucket_size,
+                                     max_retries, kmer_size);
 
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_short_seq_with_one_base_difference", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  //load two people, one of whom contains this:
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/two_people_short_seq_with_one_base_difference.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  // Load two people, one of whom contains this:
 
   // >read 1
   // AATAGACGCCCACACCTGATAGAAGCCACACTGTACTTGTANNNNNNNNNNNN
@@ -4306,7 +4792,7 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
     }
 
   
-  char tmpseq[db_graph->kmer_size];
+  char tmpseq[db_graph->kmer_size+1];
   int count=0;
 
   BinaryKmer marked_kmer; //will have all longlongs in array being ~0
@@ -4334,7 +4820,7 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
 
     }
 
-  FILE* fasta_fptr = fopen("../data/test/pop_graph/variations/first_person_short_seq.fasta", "r");
+  FILE* fasta_fptr = fopen("../data/test/pop_graph/variations/first_person_short_seq.fa", "r");
   apply_to_all_nodes_in_path_defined_by_fasta(&test_func, fasta_fptr, 10, db_graph);
   fclose(fasta_fptr);
 
@@ -4356,11 +4842,22 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
 
 
   
-  //now load some more fastas, including one which has some N's in the middle Make sure we can get the right kmers when we follow that path
-  seq_read=0;
-  seq_loaded=0;
-  load_population_as_fasta("../data/test/pop_graph/variations/two_people_both_alu_Ns_alu_with_one_base_difference", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
+  // Now load some more fastas, including one which has some N's in the middle
+  // Make sure we can get the right kmers when we follow that path
 
+  files_loaded = 0;
+  bad_reads = 0;
+  dup_reads = 0;
+  seq_loaded = 0;
+  seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/variations/two_people_both_alu_Ns_alu_with_one_base_difference.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
 
   //cleanup results
 
@@ -4370,7 +4867,7 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
     }
   count =0;
 
-  fasta_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu.fasta", "r");
+  fasta_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu.fa", "r");
 
   /*
     >7SLRNA#SINE/Alu 
@@ -4418,18 +4915,34 @@ void test_does_this_path_exist_in_this_colour()
       //first set up the hash/graph                                                                                                                                                                            
       int kmer_size = 7;
       int number_of_bits = 10;
-      int bucket_size    = 8;
-      long long bad_reads = 0;
-      int max_retries=10;
-      int max_read_length=100;
+      int bucket_size = 8;
+      int max_retries = 10;
       
-      dBGraph * db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
-      long long seq_read=0;
-      long long seq_loaded=0;
+      dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size,
+                                          max_retries, kmer_size);
 
-      load_population_as_fasta("../data/test/pop_graph/three_colours", &seq_read, &seq_loaded, &bad_reads, db_graph, NULL);
-      
-      //annoyingly, I have called these file colour1 and colour2, but in the hash table they are colours 0 and 1. Sorry for this. From here on, I use colour0 colour1 - the original filenames irrelevant
+      // Read FASTA sequence
+      int fq_quality_cutoff = 0;
+      int homopolymer_cutoff = 0;
+      boolean remove_duplicates_se = false;
+      char ascii_fq_offset = 33;
+      int into_colour = 0;
+
+      unsigned int files_loaded = 0;
+      unsigned long long bad_reads = 0, dup_reads = 0;
+      unsigned long long seq_loaded = 0, seq_read = 0;
+
+      load_se_filelist_into_graph_colour(
+        "../data/test/pop_graph/three_colours.colours",
+        fq_quality_cutoff, homopolymer_cutoff,
+        remove_duplicates_se, ascii_fq_offset,
+        into_colour, db_graph, 1, // 0 => falist/fqlist; 1 => colourlist
+        &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+        NULL, 0);
+
+      // Annoyingly, I have called these file colour1 and colour2, but in the
+      // hash table they are colours 0 and 1. Sorry for this. From here on, I
+      // use colour0 colour1 - the original filenames irrelevant
       /* in colour 0 we have
 	 
 	 >read1
@@ -4444,9 +4957,10 @@ void test_does_this_path_exist_in_this_colour()
 	 >read3
 	 TTTGTGTTTTGTGTG
 	 
-	 
 	 and in colour2  - which is NOT loaded into th hgraph, we have
-	 >read4 bridges read2 and read3 - so if you mix colours 0 and 1, you'll get one long contig joining read2 and read3
+	 >read4 bridges read2 and read3 - so if you mix colours 0 and 1, you'll get
+   one long contig joining read2 and read3
+
 	 TTCCCCTTTGTGTTTTGTGTG
 	 
       */
@@ -4454,6 +4968,7 @@ void test_does_this_path_exist_in_this_colour()
       //----------------------------------
       // allocate the memory used to read the sequences
       //----------------------------------
+      int max_read_length = 100;
       Sequence * seq = malloc(sizeof(Sequence));
       if (seq == NULL){
 	fputs("Out of memory trying to allocate Sequence\n",stderr);
@@ -4500,10 +5015,10 @@ void test_does_this_path_exist_in_this_colour()
       
       //so let's check read1 - should see it in colour1 and colour2, and the union of colours 1 and 2
       
-      FILE* fp = fopen("../data/test/pop_graph/colour0.fasta", "r");
+      FILE* fp = fopen("../data/test/pop_graph/colour0.fa", "r");
       if (fp==NULL)
 	{
-	  printf("Cannot open ../data/test/pop_graph/colour0.fasta");
+	  printf("Cannot open ../data/test/pop_graph/colour0.fa");
 	  exit(1);
 	}
       boolean f_entry=true;
@@ -4524,10 +5039,10 @@ void test_does_this_path_exist_in_this_colour()
       
       //now try the other fasta file and check read1 and 3
       fclose(fp);
-      fp = fopen("../data/test/pop_graph/colour1.fasta", "r");
+      fp = fopen("../data/test/pop_graph/colour1.fa", "r");
       if (fp==NULL)
 	{
-	  printf("Cannot open ../data/test/pop_graph/colour1.fasta");
+	  printf("Cannot open ../data/test/pop_graph/colour1.fa");
 	  exit(1);
 	}
       
@@ -4547,10 +5062,10 @@ void test_does_this_path_exist_in_this_colour()
       
       //now for the final test, take a read which is there in the union of two colours, but not in either
       fclose(fp);
-      fp = fopen("../data/test/pop_graph/colour2.fasta", "r");
+      fp = fopen("../data/test/pop_graph/colour2.fa", "r");
       if (fp==NULL)
 	{
-	  printf("Cannot open ../data/test/pop_graph/colour2.fasta");
+	  printf("Cannot open ../data/test/pop_graph/colour2.fa");
 	  exit(1);
 	}
       f_entry=true;

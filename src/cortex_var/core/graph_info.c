@@ -28,14 +28,88 @@
 #include <dB_graph.h>
 #include <graph_info.h>
 #include <file_reader.h>
+#include <string.h>
+#include <global.h>
+#include <stdlib.h>
 
-void error_cleaning_initialise(ErrorCleaning cl)
+int MAX_LEN_SAMPLE_NAME=1000;
+
+ErrorCleaning* error_cleaning_alloc_and_init()
 {
-  cl.tip_clipping=false;
-  cl.remv_low_cov_sups=false;
-  cl.remv_low_cov_nodes=false;
-  cl.remv_low_cov_sups_thresh=-1;
-  cl.remv_low_cov_nodes_thresh=-1;
+  ErrorCleaning* ec = (ErrorCleaning*) malloc(sizeof(ErrorCleaning));
+  if (ec==NULL)
+    {
+      printf("Cannot even alloc a tiny error-cleaning info object. Must be some OOM problem. Abort\n");
+      exit(1);
+    }
+  memset(ec, 0, sizeof(ErrorCleaning));
+  ec->name_of_graph_against_which_was_cleaned = (char*) malloc(sizeof(char)*MAX_FILENAME_LENGTH);
+  if (ec->name_of_graph_against_which_was_cleaned==NULL)
+    {
+      printf("Cannot even alloc a tiny error-cleaning info object. Must be some OOM problem. Abort\n");
+      exit(1);      
+    }
+  error_cleaning_initialise(ec);
+  return ec;
+}
+void error_cleaning_free(ErrorCleaning* cl)
+{
+  free(cl->name_of_graph_against_which_was_cleaned);
+  free(cl);
+}
+
+void error_cleaning_initialise(ErrorCleaning* cl)
+{
+  cl->tip_clipping=false;
+  cl->remv_low_cov_sups=false;
+  cl->remv_low_cov_nodes=false;
+  cl->cleaned_against_another_graph=false;
+  cl->remv_low_cov_sups_thresh=-1;
+  cl->remv_low_cov_nodes_thresh=-1;
+  cl->name_of_graph_against_which_was_cleaned[0]='\0';
+  strcat(cl->name_of_graph_against_which_was_cleaned, "undefined");
+  cl->len_name_of_graph_against_which_was_cleaned=
+    strlen(cl->name_of_graph_against_which_was_cleaned);
+}
+
+GraphInfo* graph_info_alloc_and_init()
+{
+  GraphInfo* ginfo = (GraphInfo*) malloc(sizeof(GraphInfo));
+  if (ginfo==NULL)
+    {
+      printf("Cannot even alloc a GraphInfo object. Your machine must be severely out of memory. Abort\n");
+      exit(1);
+    }
+  else
+    {
+      memset(ginfo, 0, sizeof(GraphInfo));
+      int i;
+      for (i=0; i<NUMBER_OF_COLOURS; i++)
+	{
+	  ginfo->sample_ids[i] = (char*) malloc(sizeof(char)*MAX_LEN_SAMPLE_NAME) ;
+	  if (ginfo->sample_ids[i]==NULL)
+	    {
+	      printf("Cannot even alloc a GraphInfo object. Your machine must be severely out of memory. Abort\n");
+	      exit(1);
+	    }
+	  ginfo->cleaning[i]=error_cleaning_alloc_and_init(); //will abort if cannot alloc. Should never happen
+	}
+      
+      graph_info_initialise(ginfo);
+      return ginfo;
+    }
+  return NULL;
+}
+
+void graph_info_free(GraphInfo* ginfo)
+{
+  int i;
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      free(ginfo->sample_ids[i]);
+      error_cleaning_free(ginfo->cleaning[i]);
+    }
+  free(ginfo);
 }
 
 void graph_info_initialise(GraphInfo* ginfo)
@@ -44,6 +118,10 @@ void graph_info_initialise(GraphInfo* ginfo)
 
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
+      (ginfo->sample_ids[i])[0]='\0';
+      strcat(ginfo->sample_ids[i], "undefined");
+      ginfo->sample_id_lens[i]=strlen(ginfo->sample_ids[i]);
+
       graph_info_set_seq(ginfo, i, 0);
       graph_info_set_mean_readlen(ginfo, i, 0);
       ginfo->seq_err[i]=0.01;
@@ -99,8 +177,9 @@ int graph_info_update_mean_readlen(GraphInfo* ginfo, int colour, int previous_me
   return new_mean;
 }
 
-void graph_info_update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,int mean_readlen_in_added_data, 
-				       long long added_seq)
+void graph_info_update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,
+                                                  unsigned long mean_readlen_in_added_data,
+				                                  unsigned long long added_seq)
 {
   graph_info_update_mean_readlen(ginfo, colour, 
 		      ginfo->mean_read_length[colour], ginfo->total_sequence[colour], 
@@ -109,7 +188,19 @@ void graph_info_update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,i
 }
 
 
-
+void graph_info_set_sample_ids(char** sample_ids, int num_ids, GraphInfo* ginfo, int first_col)
+{
+  if (first_col+num_ids-1>NUMBER_OF_COLOURS-1)
+    {
+      printf("Coding error in graph_info_set_sample_ids - trying to load sample id into a colour greater than the number of supported colours you have compiled for. Should have been caught earlier - please tell Zam\n");
+      exit(1);
+    }
+  int i;
+  for (i=first_col; i<first_col+num_ids; i++)
+    {
+      strcpy(ginfo->sample_ids[i], sample_ids[i]);
+    }
+}
 double get_total_depth_of_coverage_across_colours(GraphInfo* ginfo, long long genome_length)
 {
   int i;

@@ -1,6 +1,6 @@
-ifndef CC
-  CC = gcc	
-endif
+#ifndef CC
+  CC = gcc
+#endif
 
 BIN = bin
 
@@ -56,36 +56,48 @@ ifeq ($(UNAME),Darwin)
 	MAC = 1
 endif
 
+# Library paths
+IDIR_GSL = libs/gsl-1.15
+IDIR_GSL_ALSO = libs/gsl-1.15/gsl
+IDIR_STRS = libs/string_buffer
+IDIR_SEQ = libs/seq_file
+IDIR_BAM = libs/samtools-0.1.18
 
-#main program includes
-IDIR_BASIC =include/basic
+# Main program includes
+IDIR_BASIC = include/basic
 IDIR_BASE_ENCODING = ${IDIR_BASIC}/event_encoding/base_encoding
 IDIR_COLOUR_ENCODING = ${IDIR_BASIC}/event_encoding/solid_colour_encoding
-IDIR_HASH  =include/hash_table 
+IDIR_HASH = include/hash_table 
 IDIR_CORTEX_CON = include/cortex_con
-IDIR_CORTEX_VAR =include/cortex_var/many_colours 
+IDIR_CORTEX_VAR = include/cortex_var/many_colours 
 IDIR_CORTEX_VAR_CORE = include/cortex_var/core
-IDIR_CORTEX_VAR_CMD_LINE =include/cortex_var/many_colours
-IDIR_GSL=libs/gsl-1.15
-IDIR_GSL_ALSO=libs/gsl-1.15/gsl
-IDIR_STRS=libs/string_buffer
-IDIR_SEQ=libs/seq_file
-IDIR_BAM=libs/samtools-0.1.18
+IDIR_CORTEX_VAR_CMD_LINE = include/cortex_var/many_colours
 
-## test code includes
-IDIR_BASIC_TESTS =include/test/basic
-IDIR_HASH_TABLE_TESTS =include/test/hash_table
-IDIR_CORTEX_CON_TESTS=include/test/graph
-IDIR_CORTEX_VAR_TESTS=include/test/cortex_var/many_colours
+# Test code includes
+IDIR_BASIC_TESTS = include/test/basic
+IDIR_HASH_TABLE_TESTS = include/test/hash_table
+IDIR_CORTEX_CON_TESTS = include/test/graph
+IDIR_CORTEX_VAR_TESTS = include/test/cortex_var/many_colours
 
-IDIR_CUNIT = /home/zam/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
+# Correct for zam's paths for CUNIT
+#NOT_ZAM=1
 
+ifdef NOT_ZAM
+	IDIR_CUNIT = /opt/local/include/CUnit
+	LDIR_CUNIT = /opt/local/lib
+else
+	IDIR_CUNIT = /home/zam/dev/hg/CUnit/CUnit-2.1-0/CUnit/Headers
+
+	ifdef MAC
+		IDIR_CUNIT = /Users/zam/dev/hg/laptop_local/repos/CUnit/CUnit-2.1-0/CUnit/Headers
+	else
+		LDIR_CUNIT = /home/zam/bin/lib
+	endif
+endif
 
 ifdef MAC
- MACFLAG    = -fnested-functions
- IDIR_CUNIT = /Users/zi/dev/hg/laptop_local/repos/CUnit/CUnit-2.1-0/CUnit/Headers
+ MACFLAG = -fnested-functions
 endif 
-
 
 ARCH =  -m64 
 
@@ -93,36 +105,31 @@ ifdef 32_BITS
  ARCH =  
 endif
 
-# Add -Wextra
-OPT  		      = $(ARCH) -Wall -O3  $(MACFLAG) -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) -DNUMBER_OF_COLOURS=$(NUM_COLS)
+# DEV: Add -Wextra
+OPT = $(ARCH) -Wall -O3 $(MACFLAG) -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) -DNUMBER_OF_COLOURS=$(NUM_COLS)
 
 ifdef DEBUG
- OPT                  = $(ARCH) -Wall -O0 -g $(MACFLAG) -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) -DNUMBER_OF_COLOURS=$(NUM_COLS)
+ OPT = $(ARCH) -Wall -O0 -g $(MACFLAG) -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) -DNUMBER_OF_COLOURS=$(NUM_COLS)
 endif
 
-LIBLIST = -lm -lgsl -lgslcblas -lbam -lstrbuf -lseqfile -lz
+LIBLIST = -lgsl -lgslcblas -lseqfile -lbam -lstrbuf -lz -lm
+TEST_LIBLIST = -lcunit -lncurses $(LIBLIST)
 
-CFLAGS_CUNIT          = -L/home/zam/bin/lib
+LIBINCS = -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO) -I$(IDIR_BAM) -I$(IDIR_SEQ) -I$(IDIR_STRS) -L$(IDIR_GSL) -L$(IDIR_GSL_ALSO) -L$(IDIR_BAM) -L$(IDIR_SEQ) -L$(IDIR_STRS)
+TEST_LIBINCS = -I$(IDIR_CUNIT) -L$(LDIR_CUNIT) $(LIBINCS)
 
-CFLAGS_BASIC          = -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING)
-CFLAGS_GRAPH          = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_BASE_ENCODING)
-CFLAGS_CORTEX_VAR     = -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_BASIC)  -I$(IDIR_HASH)  -I$(IDIR_CORTEX_VAR) -I$(IDIR_BASE_ENCODING) -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO) -I$(IDIR_BAM) -L$(IDIR_BAM) -I$(IDIR_SEQ) -L$(IDIR_SEQ) -I$(IDIR_STRS) -L$(IDIR_STRS)
+CFLAGS_BASIC          = -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) $(LIBINCS)
+CFLAGS_GRAPH          = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_BASE_ENCODING) $(LIBINCS)
+CFLAGS_CORTEX_VAR     = -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CORTEX_VAR) -I$(IDIR_BASE_ENCODING) $(LIBINCS)
 
-ifdef NOT_ZAM
-	IDIR_CUNIT = /opt/local/include/CUnit
-	CFLAGS_CUNIT           = -L/opt/local/lib -lncurses
-endif
-
-CFLAGS_BASIC_TESTS = -I$(IDIR_BASIC_TESTS)  -I$(IDIR_BASIC)  -I$(IDIR_BASE_ENCODING) -I$(IDIR_CUNIT) 
-CFLAGS_HASH_TABLE_TESTS =  -I$(IDIR_HASH) -I$(IDIR_HASH_TABLE_TESTS) -I$(IDIR_CUNIT)  -I$(IDIR_CORTEX_VAR) 
-CFLAGS_GRAPH_TESTS = -I$(IDIR_GRAPH_TESTS)  -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_CUNIT) 
-CFLAGS_CORTEX_VAR_TESTS = -I$(IDIR_CORTEX_VAR_TESTS) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_HASH) -I$(IDIR_CORTEX_VAR) -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_CUNIT) -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO) -I$(IDIR_SEQ) -I$(IDIR_STRS)
-CFLAGS_CORTEX_VAR_CMD_LINE_TESTS = -I$(IDIR_CORTEX_VAR_TESTS) -I$(IDIR_CORTEX_VAR_CMD_LINE) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_CUNIT) 
+CFLAGS_BASIC_TESTS      = -I$(IDIR_BASIC_TESTS) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) $(TEST_LIBINCS)
+CFLAGS_HASH_TABLE_TESTS = -I$(IDIR_HASH) -I$(IDIR_HASH_TABLE_TESTS) -I$(IDIR_CUNIT) -I$(IDIR_CORTEX_VAR) $(TEST_LIBINCS)
+CFLAGS_GRAPH_TESTS      = -I$(IDIR_GRAPH_TESTS) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) $(TEST_LIBINCS)
+CFLAGS_CORTEX_VAR_TESTS = -I$(IDIR_CORTEX_VAR_TESTS) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) -I$(IDIR_HASH) -I$(IDIR_CORTEX_VAR) -I$(IDIR_CORTEX_VAR_CORE) $(TEST_LIBINCS)
+CFLAGS_CORTEX_VAR_CMD_LINE_TESTS = -I$(IDIR_CORTEX_VAR_TESTS) -I$(IDIR_CORTEX_VAR_CMD_LINE) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) $(TEST_LIBINCS)
 
 
-#  $(IDIR_STRS)/string_buffer.o  $(IDIR_SEQ)/seq_file.o
-
-GRAPH_OBJ      = src/obj/cortex_con/cmd_line.o src/obj/cortex_con/binary_kmer.o  src/obj/cortex_con/event_encoding.o src/obj/cortex_con/seq.o src/obj/cortex_con/element.o src/obj/cortex_con/hash_value.o src/obj/cortex_con/hash_table.o src/obj/cortex_con/dB_graph.o src/obj/cortex_con/file_reader.o src/obj/cortex_con/cortex_con.o
+GRAPH_OBJ = src/obj/cortex_con/cmd_line.o src/obj/cortex_con/binary_kmer.o  src/obj/cortex_con/event_encoding.o src/obj/cortex_con/seq.o src/obj/cortex_con/element.o src/obj/cortex_con/hash_value.o src/obj/cortex_con/hash_table.o src/obj/cortex_con/dB_graph.o src/obj/cortex_con/file_reader.o src/obj/cortex_con/cortex_con.o
 
 CORTEX_VAR_OBJ = src/obj/cortex_var/many_colours/genotyping_element.o src/obj/cortex_var/many_colours/little_hash_for_genotyping.o src/obj/cortex_var/many_colours/model_info.o src/obj/cortex_var/many_colours/genome_complexity.o src/obj/cortex_var/many_colours/global.o src/obj/cortex_var/many_colours/db_complex_genotyping.o src/obj/cortex_var/many_colours/cortex_var.o src/obj/cortex_var/many_colours/binary_kmer.o src/obj/cortex_var/many_colours/element.o src/obj/cortex_var/many_colours/seq.o src/obj/cortex_var/many_colours/hash_value.o src/obj/cortex_var/many_colours/hash_table.o src/obj/cortex_var/many_colours/dB_graph.o src/obj/cortex_var/many_colours/dB_graph_population.o  src/obj/cortex_var/many_colours/db_variants.o src/obj/cortex_var/many_colours/cmd_line.o src/obj/cortex_var/many_colours/event_encoding.o src/obj/cortex_var/many_colours/graph_info.o src/obj/cortex_var/many_colours/db_differentiation.o src/obj/cortex_var/many_colours/model_selection.o src/obj/cortex_var/many_colours/maths.o src/obj/cortex_var/many_colours/seq_error_rate_estimation.o src/obj/cortex_var/many_colours/file_reader.o
 
@@ -137,21 +144,20 @@ CORTEX_VAR_CMD_LINE_TESTS_OBJ = src/obj/cortex_var/many_colours/cmd_line.o src/o
 MAXK_AND_TEXT = $(join "", $(MAXK))
 NUMCOLS_AND_TEST = $(join "_c", $(NUM_COLS))
 
-
 cortex_var : remove_objects $(CORTEX_VAR_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR)  $(OPT) $(OPT_COLS) -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ) $(LIBLIST)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) $(OPT_COLS) -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ) $(LIBLIST)
 
 run_basic_tests : remove_objects $(BASIC_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(OPT) $(CFLAGS_BASIC) $(CFLAGS_CUNIT) -o $(BIN)/run_basic_tests_$(MAXK) $(BASIC_TESTS_OBJ) -lcunit
+	mkdir -p $(BIN); $(CC) $(CFLAGS_BASIC_TESTS) $(OPT) -o $(BIN)/run_basic_tests_$(MAXK) $(BASIC_TESTS_OBJ) $(TEST_LIBLIST)
 
 run_hash_table_tests : remove_objects $(HASH_TABLE_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(OPT) $(CFLAGS_CUNIT) $(CFLAGS_HASH_TABLE_TESTS) -o $(BIN)/run_hash_table_tests_$(MAXK) $(HASH_TABLE_TESTS_OBJ) -lcunit
+	mkdir -p $(BIN); $(CC) $(CFLAGS_HASH_TABLE_TESTS) $(OPT) -o $(BIN)/run_hash_table_tests_$(MAXK) $(HASH_TABLE_TESTS_OBJ) $(TEST_LIBLIST)
 
 run_cortex_var_cmdline_tests : remove_objects $(CORTEX_VAR_CMD_LINE_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS)  $(OPT)  -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) -lm -lgsl -lgslcblas -lcunit
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS)  $(OPT)  -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) $(TEST_LIBLIST)
 
 run_cortex_var_tests : remove_objects $(CORTEX_VAR_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_TESTS)  $(OPT)  -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) $(CFLAGS_CUNIT) -lm -lgsl -lgslcblas -lcunit
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_TESTS)  $(OPT)  -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) $(TEST_LIBLIST)
 
 
 .PHONY : clean

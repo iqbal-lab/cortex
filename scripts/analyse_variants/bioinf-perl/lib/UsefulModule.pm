@@ -12,7 +12,7 @@ use base 'Exporter';
 # the namespace of the using code.
 
 our @EXPORT = qw(num2str mem2str round_int round_decimal
-                 pretty_fraction binary_search_nearest);
+                 pretty_fraction binary_search_nearest trim);
 
 =head1 NAME
  
@@ -191,6 +191,16 @@ sub binary_search_nearest
   {
     return $middle;
   }
+}
+
+sub trim
+{
+  my ($str) = @_;
+
+  $str =~ s/^\s+//;
+  $str =~ s/\s+$//;
+
+  return $str;
 }
 
 1;

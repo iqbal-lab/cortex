@@ -1,13 +1,10 @@
 # use glob syntax.
-syntax: glob
-*.o
-*.pyc
-*~
-*.mk
-*.d
-bin/valgrind.log
-bin/*
-*.bin
-libs/*
-.*
-scripts/analyse_variants/bioinf-perl/.git/*
+syntax: regexp
+\.o$
+\.pyc$
+~$
+\.mk$
+\.d$
+^bin/
+\.bin$
+(^|/)\.

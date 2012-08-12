@@ -526,4 +526,14 @@ LittleHashTable * little_hash_table_load_from_dump(FILE * fp, int max_rehash_tri
 }
 
   
+//wipes a colour clean - for all nodes, sets covg=0, edge=0.
+void little_graph_wipe_colour(int colour, LittleHashTable* little_graph)
+{
+  void wipe_node(GenotypingElement* node)
+  {
+    node->individual_edges[colour]=0;
+    node->coverage[colour]=0;
+  }
+  little_hash_table_traverse(&wipe_node, little_graph);
+}
 

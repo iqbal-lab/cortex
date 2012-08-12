@@ -1,0 +1,33 @@
+
+1) uncomment this line in Makefile:
+#NOT_ZAM=1
+
+2) Get libraries:
+
+cd libs
+wget http://downloads.sourceforge.net/project/samtools/samtools/0.1.18/samtools-0.1.18.tar.bz2
+tar xfvj samtools-0.1.18.tar.bz2
+cd samtools-0.1.18
+make
+cd ..
+
+wget ftp://ftp.gnu.org/gnu/gsl/gsl-1.15.tar.gz
+tar xfvz gsl-1.15.tar.gz
+cd gsl-1.15
+./configure
+make
+cd ..
+
+git clone git://github.com/noporpoise/seq_file.git
+cd seq_file
+make
+cd ..
+
+git clone https://github.com/noporpoise/string_buffer.git
+cd string_buffer
+make
+cd ..
+cd ..
+
+3) Possibly add some line to the Makefile or documentation to ensure libraries
+   are recompiled by the end-user

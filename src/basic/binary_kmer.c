@@ -528,6 +528,8 @@ Nucleotide binary_kmer_get_last_nucleotide(BinaryKmer* kmer){
   
 }
 
+// Buggy & not used
+/*
 Nucleotide binary_kmer_get_first_nucleotide(BinaryKmer* kmer,short kmer_size){
 
   int number_of_bitfields_fully_used = kmer_size/32;
@@ -539,7 +541,7 @@ Nucleotide binary_kmer_get_first_nucleotide(BinaryKmer* kmer,short kmer_size){
   return bf;
   
 }
-
+*/
 
 
 

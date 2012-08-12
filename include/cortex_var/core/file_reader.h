@@ -39,20 +39,78 @@
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;
 
+typedef enum {
+  EValid                        = 0,
+  ECannotReadMagicNumber        = 1,
+  ECanReadMagicNumberButIsWrong = 2,
+  ECannotReadBinversion         = 3,
+  EValidButOldBinVersion        = 4,
+  EInvalidBinversion            = 5,
+  ECannotReadKmer               = 6,
+  EWrongKmer                    = 7,
+  ECannotReadNumBitfields       = 8,
+  EWrongNumberBitfields         = 9,
+  ECannotReadNumColours         = 10,
+  EBadColours                   = 11,
+  EFailedToReadReadLensAndCovgs = 12,
+  ECannotReadEndOfHeaderMagicNumber = 13,
+  EFailedToReadSampleIds        =14,
+  EFailedToReadSampleIdsSeemsTooLong = 15,
+  EFailedToReadSeqErrRates      =16,
+  EFailedToReadErrorCleaningInfo=17,
+  ECanReadEndOfHeaderMagicNumberButIsWrong = 18,
+  EGarbage = 19,
+} BinaryHeaderErrorCode;
+typedef struct {
+  int version;
+  int kmer_size;
+  int number_of_bitfields;
+  int number_of_colours;
+  GraphInfo* ginfo;
+} BinaryHeaderInfo;
+
 // mkpath - ensure all directories in path exist
 // Returns 1 on success, 0 on failure
 // Adapted from Jonathan Leffler http://stackoverflow.com/a/675193/431087
 char mkpath(const char *path, mode_t mode);
 
-void load_se_and_pe_filelists_into_graph_colour(
-  char* se_filelist_path, char* pe_filelist_path1, char* pe_filelist_path2,
-  unsigned long long *bases_read,
-  unsigned long long *bases_pass_filters_and_loaded,
-  unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
-  int qual_thresh, boolean remv_dups_se, boolean remv_dups_pe, 
-  boolean break_homopolymers, int homopol_limit, char ascii_fq_offset,
-  int colour, dBGraph* db_graph);
+void load_se_seq_data_into_graph_colour(
+  const char *file_path,
+  char quality_cutoff, int homopolymer_cutoff, boolean remove_dups_se,
+  char ascii_fq_offset, int colour_index, dBGraph *db_graph,
+  unsigned long long *bad_reads, unsigned long long *dup_reads,
+  unsigned long long *bases_read, unsigned long long *bases_loaded,
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size);
 
+void load_pe_seq_data_into_graph_colour(
+  const char *file_path1, const char *file_path2,
+  char quality_cutoff, int homopolymer_cutoff, boolean remove_dups_pe,
+  char ascii_fq_offset, int colour_index, dBGraph *db_graph,
+  unsigned long long *bad_reads, unsigned long long *dup_reads,
+  unsigned long long *bases_read, unsigned long long *bases_loaded,
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size);
+
+void load_se_filelist_into_graph_colour(
+  char* se_filelist_path,
+  int qual_thresh, int homopol_limit, boolean remove_dups_se,
+  char ascii_fq_offset, int colour, dBGraph* db_graph, char is_colour_list,
+  unsigned int *total_files_loaded,
+  unsigned long long *total_bad_reads, unsigned long long *total_dup_reads,
+  unsigned long long *total_bases_read, unsigned long long *total_bases_loaded,
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size);
+
+void load_pe_filelists_into_graph_colour(
+  char* pe_filelist_path1, char* pe_filelist_path2,
+  int qual_thresh, int homopol_limit, boolean remove_dups_pe,
+  char ascii_fq_offset, int colour, dBGraph* db_graph, char is_colour_lists,
+  unsigned int *total_file_pairs_loaded,
+  unsigned long long *total_bad_reads, unsigned long long *total_dup_reads,
+  unsigned long long *total_bases_read, unsigned long long *total_bases_loaded,
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size);
+
+void initialise_binary_header_info(BinaryHeaderInfo* binfo, GraphInfo* ginfo);
+
+/*
 //pass in bases_read to track amount of sequence read in, and bases_pass_filters_and_loaded to see how much passed filters and got into the graph
 void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, boolean pe, char* se_f, char* pe_f1, char* pe_f2,
 								   long long* bases_read, long long* bases_pass_filters_and_loaded,long long** readlen_count_array,
@@ -77,7 +135,7 @@ void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* fi
 									long long * bad_reads, long long* dup_reads, int max_chunk_length, 
 									boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, 
 									dBGraph* db_graph, EdgeArrayType type, int index);
-
+*/
 
 void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
 											      boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
@@ -90,6 +148,7 @@ void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, S
 					       int max_array_size, 
 					       boolean require_nodes_to_lie_in_given_colour, int colour);
 
+/*
 //penultimate argument is to specify whether to discard potential PCR duplicate reads single-endedly - ie if read starts at same kmer
 // as a previous read, then discard it. This is a pretty harsh filter, and if ppssible, prefer to use paired end info.
 // So in general when calling this function, would expect that boolean remove_dups_single_endedly to be set to false, unless you know you have low coverage, so have
@@ -117,7 +176,7 @@ void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_
 
 
 void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded, long long* bad_reads, dBGraph* db_graph, long long** readlen_count_array);
-
+*/
 
 //use preallocated sliding window, and get all the kmers from the passed-in sequence. Any kmer that would have contained an N is returned as NULL
 int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short kmer_size, KmerSlidingWindow* kmer_window, dBGraph* db_graph);
@@ -141,9 +200,9 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
 
 //functions for loading multicolour graphs
-long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
-							   int* num_cols_in_loaded_binary, int** array_mean_readlens, long long** array_total_seqs);
-
+//long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
+//							   int* num_cols_in_loaded_binary, int** array_mean_readlens, long long** array_total_seqs);
+long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, GraphInfo* ginfo, int* num_cols_in_loaded_binary); 
 
 long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
 								  int* mean_readlen, long long* total_seq,
@@ -240,10 +299,22 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 					   Sequence* seq, Sequence* seq_inc_prev_kmer, KmerSlidingWindow* kmer_window);
 
 
-void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_mean_readlens, long long* array_total_seq);
-boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary, int** array_mean_readlens, long long** array_total_seqs, int *return_binversion);
+//void print_binary_signature(FILE * fp,int kmer_size, int num_cols, int* array_mean_readlens, long long* array_total_seq);
+void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo* ginfo, int first_col, int version);
+
+//boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary, int** array_mean_readlens, long long** array_total_seqs, int *return_binversion);
+boolean check_binary_signature_NEW(FILE * fp,int kmer_size, 
+				   BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
 
 boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* num_bitfields, int* number_of_colours_in_binary); //return true if binary header readable and has magic number
+boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+void print_error_cleaning_object(FILE* fp, GraphInfo* ginfo, int colour);
+
+boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+boolean read_next_error_cleaning_object(FILE* fp, ErrorCleaning* cl);
+
 
 int get_number_of_files_and_check_existence_from_filelist(char* filelist);
 void get_filenames_from_list(char* filelist, char** array, int len);

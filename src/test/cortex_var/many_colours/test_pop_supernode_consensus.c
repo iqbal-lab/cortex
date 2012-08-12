@@ -61,13 +61,15 @@ void test_find_first_node_in_supernode()
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 4;
-  int bucket_size    = 4;
-  long long bad_reads = 0;
-  int max_retries=10;
-  BinaryKmer tmp_kmer1, tmp_kmer2;
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  int bucket_size = 4;
+  int max_retries = 10;
 
-  char tmp_seq[hash_table->kmer_size];
+  BinaryKmer tmp_kmer1, tmp_kmer2;
+
+  dBGraph *hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
+
+  char tmp_seq[hash_table->kmer_size+1];
 
   
   if (hash_table==NULL)
@@ -76,12 +78,28 @@ void test_find_first_node_in_supernode()
       exit(1);
     }
 
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  long long seq_loaded=0;
-  long long seq_read=0;
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
 
-  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+
   //printf("Number of bases loaded is %d",seq_loaded);
+
   CU_ASSERT(seq_loaded == 44);
   CU_ASSERT(seq_read == 44);
   CU_ASSERT(bad_reads==0);
@@ -241,28 +259,44 @@ void test_find_next_node_in_supernode()
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 4;
-  int bucket_size    = 4;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 4;
+  int max_retries = 10;
+
   BinaryKmer tmp_kmer1, tmp_kmer2;
 
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph *hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
 
+  char tmp_seq[hash_table->kmer_size+1];
 
-  char tmp_seq[hash_table->kmer_size];
-
-  
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");
       exit(1);
     }
 
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
 
-  long long seq_loaded=0;
-  long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/test_pop_load_and_print/two_individuals_simple.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+
   //printf("Number of bases loaded is %d",seq_loaded);
+
   CU_ASSERT(seq_loaded == 44);
   CU_ASSERT(seq_read == 44);
 
@@ -345,12 +379,13 @@ void test_correctly_find_subsection_of_supernode()
   //first set up the hash/graph
   int kmer_size = 5;
   int number_of_bits = 5;
-  int bucket_size    = 7;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 7;
+  int max_retries = 10;
+
   BinaryKmer tmp_kmer1, tmp_kmer2;
 
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph *hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
   
   if (hash_table==NULL)
     {
@@ -358,10 +393,28 @@ void test_correctly_find_subsection_of_supernode()
       exit(1);
     }
 
-  long long seq_loaded=0;
-  long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/two_people_test_consensus.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/two_people_test_consensus.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+
   //printf("Number of bases loaded is %d",seq_loaded);
+
   CU_ASSERT(seq_loaded == 23);
   CU_ASSERT(seq_read == 23);
 
@@ -476,16 +529,15 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
   //first set up the hash/graph
   int kmer_size = 5;
   int number_of_bits = 6;
-  int bucket_size    = 4;
-  long long bad_reads = 0;
-  int max_retries=10;
+  int bucket_size = 4;
+  int max_retries = 10;
+
   BinaryKmer tmp_kmer1, tmp_kmer2;
 
-  dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+  dBGraph *hash_table = hash_table_new(number_of_bits, bucket_size,
+                                       max_retries, kmer_size);
 
-
-  char tmp_seq[hash_table->kmer_size];
-
+  char tmp_seq[hash_table->kmer_size+1];
 
   if (hash_table==NULL)
     {
@@ -493,10 +545,28 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
       exit(1);
     }
 
-  long long seq_loaded=0;
-  long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/two_people_test_consensus.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/two_people_test_consensus.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+
   //printf("Number of bases loaded is %d",seq_loaded);
+
   CU_ASSERT(seq_loaded == 23);
 
 
@@ -564,15 +634,15 @@ void test_get_population_consensus_supernode()
    //first set up the hash/graph
    int kmer_size = 5;
    int number_of_bits = 6;
-   int bucket_size    = 4;
-   long long bad_reads = 0;
-   int max_retries=10;
+   int bucket_size = 4;
+   int max_retries = 10;
+
    BinaryKmer tmp_kmer1, tmp_kmer2;
 
-   dBGraph * hash_table = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+   dBGraph *hash_table = hash_table_new(number_of_bits, bucket_size,
+                                        max_retries, kmer_size);
    
-   
-   char tmp_seq[hash_table->kmer_size];
+   char tmp_seq[hash_table->kmer_size+1];
    
   if (hash_table==NULL)
     {
@@ -580,10 +650,27 @@ void test_get_population_consensus_supernode()
       exit(1);
     }
 
-  long long seq_loaded=0;
-  long long seq_read=0;
-  load_population_as_fasta("../data/test/pop_graph/five_people_test.txt", &seq_read, &seq_loaded, &bad_reads, hash_table, NULL);
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/five_people_test.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
   //printf("Number of bases loaded is %d",seq_loaded);
+
   CU_ASSERT(seq_loaded == 155);
 
 

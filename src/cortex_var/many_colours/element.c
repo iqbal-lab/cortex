@@ -524,8 +524,8 @@ Orientation db_node_get_orientation(BinaryKmer* k, dBNode * e, short kmer_size){
     }
   
   printf("programming error - you have called  db_node_get_orientation with a kmer that is neither equal to the kmer in this node, nor its rev comp\n");
-  char tmpseq1[kmer_size];
-  char tmpseq2[kmer_size];
+  char tmpseq1[kmer_size+1];
+  char tmpseq2[kmer_size+1];
   printf("Arg 1 Kmer is %s and Arg 2 node kmer is %s\n", binary_kmer_to_seq(k, kmer_size, tmpseq1), binary_kmer_to_seq(&(e->kmer), kmer_size, tmpseq2));
   exit(1);
   
@@ -558,13 +558,13 @@ void db_node_add_labeled_edge(dBNode * e, Orientation o, Nucleotide base, EdgeAr
 boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size, EdgeArrayType edge_type, int edge_index){
 
   BinaryKmer src_k, tgt_k, tmp_kmer; 
-  char seq1[kmer_size];
-  char seq2[kmer_size];
+  char seq1[kmer_size+1];
+  char seq2[kmer_size+1];
 
   binary_kmer_assignment_operator(src_k, src_e->kmer);
   binary_kmer_assignment_operator(tgt_k, tgt_e->kmer);
 
-  char tmp_seq[kmer_size];
+  char tmp_seq[kmer_size+1];
  
   if (src_o == reverse){
     binary_kmer_assignment_operator(src_k, *(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer)));
@@ -1088,7 +1088,7 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 	  node->individual_edges[i] = individual_edges_reading_from_binary[i];
 	}
     }
-  else
+  else//higher than 4
     {
       BinaryKmer kmer;
       uint32_t covg_reading_from_binary[num_colours_in_binary];
@@ -1238,6 +1238,73 @@ void db_node_action_set_status_visited(dBNode * node){
 void db_node_action_set_status_special_visited(dBNode * node){
   db_node_set_status(node,special_visited);
 }
+
+boolean db_node_check_status_special(dBNode* node)
+{
+  if (  (db_node_check_status(node, special_none)==true)
+	||
+	(db_node_check_status(node, special_visited)==true)
+	||
+	(db_node_check_status(node, special_pruned)==true)
+	)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
+void db_node_action_specialise_status(dBNode * node){
+  if (db_node_check_status(node, visited)==true)
+    {
+      db_node_set_status(node,special_visited);      
+    }
+  else if (db_node_check_status(node, none)==true)
+    {
+      db_node_set_status(node,special_none);      
+    }
+  else if (db_node_check_status(node, pruned)==true)
+    {
+      db_node_set_status(node,special_pruned);      
+    }
+  else if ( (db_node_check_status(node, read_start_forward)==true)
+	    ||
+	    (db_node_check_status(node, read_start_reverse)==true)
+	    ||
+	    (db_node_check_status(node, read_start_forward_and_reverse)==true)
+	    )
+    {
+      db_node_set_status(node,special_none);//happy to lose PCR dup info at this stage
+      printf("Warn Zam (zam@well.ox.ac.uk) that you met a PCR dup status during genotyping. He knows how to fix it\n"); 
+    }
+  else if (db_node_check_status_special(node)==false)
+    {
+      NodeStatus ret = node->status;
+      printf("Warn Zam (zam@well.ox.ac.uk) that you met a status of %d. Could signal a subtle (but now, with your information, fixable) bug.\n", (int) ret); 
+    }
+  
+}
+
+
+
+void db_node_action_unspecialise_status(dBNode * node){
+  if (db_node_check_status(node, special_visited)==true)
+    {
+      db_node_set_status(node,visited);      
+    }
+  else if (db_node_check_status(node, special_none)==true)
+    {
+      db_node_set_status(node,none);      
+    }
+  else if (db_node_check_status(node, special_pruned)==true)
+    {
+      db_node_set_status(node,pruned);      
+    }
+  
+}
+
 
 void db_node_action_set_status_ignore_this_node(dBNode * node)
 {
@@ -1426,6 +1493,8 @@ void db_node_set_read_start_status(dBNode* node, Orientation ori)
 }
 
 
+// DEV: these are redundant
+// just call db_node_check_read_start
 
 boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2)
 {

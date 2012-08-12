@@ -8,6 +8,7 @@ use FindBin;
 use lib $FindBin::Bin;
 
 use FASTNFile;
+use RefGenome;
 
 sub print_usage
 {
@@ -165,10 +166,10 @@ if(keys(%search_chrs) > 0)
   {
     my $array_ref = $search_chrs{$chr};
 
-    for(my $i = 0; $i < @$array_ref; $i++) {
-      my $start = $array_ref->[$i]->[0];
-      my $length = $array_ref->[$i]->[1];
-      print STDERR "# Warning: Couldn't find $chr:$start:$length\n";
+    for(my $i = 0; $i < @$array_ref; $i++)
+    {
+      my $term_str = search_term_to_str($chr, $array_ref->[$i]);
+      print STDERR "# fastn_substr.pl Warning: Couldn't find $term_str\n";
     }
   }
 }
@@ -201,28 +202,39 @@ sub search_file
   my $fastn = new FASTNFile($handle);
 
   # Read in
-  my ($name, $seq) = $fastn->read_next();
+  my $array_ref;
 
-  while(defined($name))
+  while(my ($fasta_name, $seq) = $fastn->read_next())
   {
-    #print STDERR "Read: '$name' (length ".length($seq).")\n";
-  
-    my $array_ref = $search_chrs{$name};
+    my $search_name = $fasta_name;
+    my $array_ref = $search_chrs{$search_name};
+
+    if(!defined($array_ref))
+    {
+      $search_name = guess_plain_name($fasta_name, keys %search_chrs);
+
+      if(defined($search_name))
+      {
+        $array_ref = $search_chrs{$search_name};
+      }
+    }
 
     if(defined($array_ref))
     {
       # Print substrings on this chromosome
       for(my $i = 0; $i < @$array_ref; $i++)
       {
-        my ($start,$length,$end,$all) = @{$array_ref->[$i]};
+        my ($start, $length, $end, $all) = @{$array_ref->[$i]};
 
         if($all)
         {
-          print ">$name\n";
+          print ">$search_name\n";
           print "$seq\n";
         }
         else
         {
+          my $search_str = search_term_to_str($search_name, $array_ref->[$i]);
+
           if($start < 0)
           {
             # still in 1-based coords
@@ -237,18 +249,19 @@ sub search_file
             }
 
             $length = $end-$start+1;
-            print ">$name:$start-$end\n";
+            print ">$search_str\n";
           }
           else
           {
             $end = $start+$length-1;
-            print ">$name:$start:$length\n";
+            print ">$search_str\n";
           }
 
           if($end > length($seq))
           {
-            print STDERR "# Warning: $name:$start:$length is out of bounds of " .
-                         "$name:1:".length($seq)."\n";
+            
+            print STDERR "# Warning: $search_str is out of bounds of " .
+                         "$fasta_name:1:".length($seq)."\n";
           }
 
           # Correct for 1-based coords here (convert to 0-based)
@@ -259,19 +272,43 @@ sub search_file
       if(!$allow_dupes)
       {
         # Only return the first result for each search - so exit
-        delete($search_chrs{$name});
+        delete($search_chrs{$search_name});
       }
     }
-  
+
     if(keys(%search_chrs) == 0)
     {
       last;
     }
-
-    ($name, $seq) = $fastn->read_next();
   }
 
   close($handle);
+}
+
+sub search_term_to_str
+{
+  my $chrom_str = shift;
+  my @results = ();
+
+  foreach my $term (@_)
+  {
+    my ($start, $length, $end, $all) = @$term;
+
+    if(defined($all))
+    {
+      push(@results, $chrom_str.":*");
+    }
+    elsif(defined($length))
+    {
+      push(@results, $chrom_str.":".$start.":".$length);
+    }
+    else
+    {
+      push(@results, $chrom_str.":".$start."-".$end);
+    }
+  }
+
+  return @results == 1 && !wantarray() ? $results[0] : @results;
 }
 
 sub parse_search_term

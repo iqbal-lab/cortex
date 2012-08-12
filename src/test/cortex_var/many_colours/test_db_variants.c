@@ -86,7 +86,7 @@ void test_count_reads_on_allele_in_specific_colour()
 
   
   //what if allele is short?
-  CU_ASSERT(count_reads_on_allele_in_specific_colour(node_array, 1, colour0,&too_short)==-1);
+  CU_ASSERT(count_reads_on_allele_in_specific_colour(node_array, 1, colour0,&too_short)==0);
   CU_ASSERT(too_short==true);
 
 

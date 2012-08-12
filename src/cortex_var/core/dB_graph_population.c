@@ -29,26 +29,21 @@
   dB_graph_population.c - implementation
  */
 
-// standard libraries
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <limits.h>
-#include <math.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <libgen.h>
-
-#include <gsl_sf_gamma.h>
 
 #include <element.h>
 #include <open_hash/hash_table.h>
 #include <dB_graph.h>
 #include <dB_graph_population.h>
 #include <seq.h>
+#include <string.h>
+#include <limits.h>
 #include <file_reader.h>
 #include <model_selection.h>
 #include <maths.h>
+#include <math.h> //we need both!
+#include <gsl_sf_gamma.h>
 #include <db_variants.h>
 #include <db_complex_genotyping.h>
 
@@ -767,7 +762,7 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
     current_node        = next_node;
     current_orientation = next_orientation;
     
-  } while (length<limit && 
+  } while (length<(limit-1) && 
 	   !((next_node == node) && (next_orientation == orientation)) && //loop
 	   db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2, type, index) && //multiple entries
 	   db_node_has_precisely_one_edge(current_node, current_orientation,&nucleotide, type, index)); //has one next edge only
@@ -801,6 +796,12 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
     }
   */
   
+
+  if (length>=limit)
+    {
+      printf("Stopped becase supernode length limit exceeded: length %d and limit %d\n", length, limit);
+      exit(1);
+    }
   
    seq[length] = '\0';
   *avg_coverage = (length-1<=0) ? 0 : (double) sum_coverage/(double) (length-1);
@@ -1732,7 +1733,8 @@ int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_
 											      get_colour, get_covg);
     if (length==limit)
       {
-	printf("Warning. You implicitly specified a maximum expected length of supernode %d, probably when you set --max_var_len. Cortex has just encountered a longer supernode. Continuing, but I advise rerunning with a longer --max_var_len", limit);
+	printf("Warning. You implicitly specified a maximum expected length of supernode %d, probably when you set --max_var_len. Cortex has just encountered a longer supernode. Aborting - I advise rerunning with a longer --max_var_len", limit);
+	exit(1);
       }
   }
   else{
@@ -2532,7 +2534,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    /*
 	    //debug only
 	    int zim;
-	    char zaffy[db_graph->kmer_size];
+	    char zaffy[db_graph->kmer_size+1];
 	    printf( "\n\n5p flank\n");
 	    for (zim=0; zim<=var.len_flank5p; zim++)
 	      {
@@ -4454,7 +4456,7 @@ void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, Edge
   long long count_kmers=0;
 
   void print_coverage(dBNode * node){
-    char seq[db_graph->kmer_size];
+    char seq[db_graph->kmer_size+1];
 
     printf("%qd\t%s\t%i\n",count_kmers,binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq),db_node_get_coverage(node, type, index));
     count_kmers++;;
@@ -4746,7 +4748,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 
   if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
     {
-      //printf("Ignore as status us not none\n\n");
+      //printf("zahara DEBUG - Ignore suoernode as status us not none, it is %c\n\n", node->status);
       *supernode_len=-1;//caller can check this
       is_supernode_pruned=false;
       return is_supernode_pruned;
@@ -4775,9 +4777,10 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 	if (length_sup <=1)
 	  {
 	    is_supernode_pruned=false;
+
 	    return is_supernode_pruned;//do nothing. This supernode has no interior, is just 1 or 2 nodes, so cannot prune it
 	  }
-	else if (length_sup <= 2*db_graph->kmer_size +2)
+	else //if (length_sup <= 2*db_graph->kmer_size +2)
 	  {
 	    int i;
 	    //to look like an error, must all have actual coverage, caused by an actual errored read, BUT must have low covg, <=threshold
@@ -4792,6 +4795,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 
 	    if (interior_nodes_look_like_error==true)
 	      {
+
 		for (i=1; (i<=length_sup-1); i++)
 		  {
 
@@ -4802,16 +4806,17 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 							);
 		  }
 	      }
-	    else//interior nodes do not look like error
-	      {
+	    //else//interior nodes do not look like error
+	    //  {
 		//don't prune - some interior ode has high coverage
-		is_supernode_pruned=false;
-	      }
+	    //	is_supernode_pruned=false;
+
+	    //	printf("zahara - DO NOT PRUNE - soe interior node has covg > thresh \n");
+	    //}
 	  }
       }
   else//debug only
     {
-      //printf("OK - query node has too much covg to consider removing\n");
       is_supernode_pruned=false;
     }
     return is_supernode_pruned;
@@ -5175,25 +5180,25 @@ void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph *
 
 
 //if you don't want to/care about graph_info, pass in NULL
-int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info){
-  FILE * fout; //binary output
-  fout= fopen(filename, "w"); 
+int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info, int version){
+
+  FILE* fout= fopen(filename, "w"); 
+  if (fout==NULL)
+    {
+      printf("Unable to dump binary file %s, as cannot open it with write-access.Permissions issue? Directory does not exist? Out of disk?\n",
+	     filename);
+      exit(1);
+    }
   
   if (db_graph_info==NULL)
     {
-      int i;
-      int means[NUMBER_OF_COLOURS];
-      long long tots[NUMBER_OF_COLOURS];
-      for (i=0; i<NUMBER_OF_COLOURS; i++)
-	{
-	  means[i]=0;
-	  tots[i]=0;
-	}
-      print_binary_signature(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, means, tots);
+      GraphInfo* ginfo_dummy=graph_info_alloc_and_init();//no need to check return - will abort if does not alloc
+      print_binary_signature_NEW(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, ginfo_dummy, 0, version);//0 means start from colour 0,
+      graph_info_free(ginfo_dummy);
     }
   else
     {
-      print_binary_signature(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, db_graph_info->mean_read_length, db_graph_info->total_sequence);
+      print_binary_signature_NEW(fout, db_graph->kmer_size, NUMBER_OF_COLOURS, db_graph_info, 0, version);
     }
 
   long long count=0;
@@ -5208,27 +5213,14 @@ int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), d
   hash_table_traverse(&print_node_multicolour_binary,db_graph); 
   fclose(fout);
 
-  printf("%qd kmers dumped\n",count);
+  printf("%qd kmers dumped to file %s\n",count, filename);
   return count;
 }
 
 
-void db_graph_dump_single_colour_binary_of_colour0(char * filename,
-                                                   boolean (*condition)(dBNode * node),
-                                                   dBGraph * db_graph,
-                                                   GraphInfo* db_graph_info)
-{
-  // Create directory path for output
-  char* pathcopy = strdup(filename);
-  char* dir_name = dirname(pathcopy);
 
-  if(!mkpath(dir_name, 0777))
-  {
-  	fprintf("Couldn't create output directory: '%s'\n", dir_name);
-  }
-
-  free(pathcopy);
-
+void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*condition)(dBNode * node), 
+						   dBGraph * db_graph, GraphInfo* db_graph_info, int version){
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   if (fout==NULL)
@@ -5239,13 +5231,13 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename,
 
   if (db_graph_info==NULL)
     {
-      int means=0;
-      long long tots=0;
-      print_binary_signature(fout, db_graph->kmer_size,1, &means, &tots);
+      GraphInfo* ginfo_dummy=graph_info_alloc_and_init();//no need to check return
+      print_binary_signature_NEW(fout, db_graph->kmer_size,1, ginfo_dummy, 0, version);
+      graph_info_free(ginfo_dummy);
     }
   else
     {
-      print_binary_signature(fout, db_graph->kmer_size, 1, &(db_graph_info->mean_read_length[0]), &(db_graph_info->total_sequence[0]) );
+      print_binary_signature_NEW(fout, db_graph->kmer_size, 1, db_graph_info, 0, version);
     }
 
 
@@ -5268,7 +5260,9 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename,
 
 
 
-void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boolean (*condition)(dBNode * node), dBGraph * db_graph, GraphInfo* db_graph_info, int colour){
+void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boolean (*condition)(dBNode * node), 
+							    dBGraph * db_graph, GraphInfo* db_graph_info, int colour,
+							    int version){
 
   if ( (colour<0) || (colour>=NUMBER_OF_COLOURS) )
     {
@@ -5287,14 +5281,13 @@ void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boo
 
   if (db_graph_info==NULL)
     {
-      int means=0;
-      long long tots=0;
-
-      print_binary_signature(fout, db_graph->kmer_size,1, &means, &tots);
+      GraphInfo* ginfo_dummy=graph_info_alloc_and_init();//no need to check return
+      print_binary_signature_NEW(fout, db_graph->kmer_size,1, ginfo_dummy, colour, version);
+      graph_info_free(ginfo_dummy);
     }
   else
     {
-      print_binary_signature(fout, db_graph->kmer_size, 1, &(db_graph_info->mean_read_length[colour]), &(db_graph_info->total_sequence[colour]) );
+      print_binary_signature_NEW(fout, db_graph->kmer_size, 1, db_graph_info, colour, version);
     }
 
 
@@ -5821,7 +5814,7 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
   //  printf("Reimplement db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop using db_grapg_supernode");
 
     
-  char tmp_seq[db_graph->kmer_size];
+  char tmp_seq[db_graph->kmer_size+1];
 
   if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
     {
@@ -5921,7 +5914,7 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
 
 dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* node, Orientation orientation, Orientation* next_orientation, EdgeArrayType type, int index, dBGraph* db_graph)
 {
-  char tmp_seq[db_graph->kmer_size];
+  char tmp_seq[db_graph->kmer_size+1];
 
   if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
     {
@@ -6122,7 +6115,7 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
 //returns 0 if successfully, 1 otherwise
 int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index, dBGraph* db_graph)
 {
-  char tmp_seq[db_graph->kmer_size];
+  char tmp_seq[db_graph->kmer_size+1];
 
   //printf("CALL GET SUBSECTION With start %d and end %d\n\n", start, end);
   if ( (start<0) || (end<0) || (end-start<0) )
@@ -6237,7 +6230,7 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 
   //TODO - reimplement this whole section using db_graph_supernode. 
 
-  char tmp_seq[db_graph->kmer_size];
+  char tmp_seq[db_graph->kmer_size+1];
 
   if (first_node_in_supernode==NULL)
     {
@@ -6397,7 +6390,7 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 void print_node_to_file_according_to_how_many_people_share_it(HashTable* db_graph, dBNode * node, FILE** list_of_file_ptrs)
 {
   int i;
-  char tmp_seq[db_graph->kmer_size];
+  char tmp_seq[db_graph->kmer_size+1];
   
   int number_of_individuals_with_this_node=0;
 
@@ -6423,7 +6416,7 @@ void print_node_to_file_according_to_how_many_people_share_it(HashTable* db_grap
 void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTable* db_graph, dBNode * node, int** array_of_counts, int number_of_people)
 {
 
-  //  char tmp_seq[db_graph->kmer_size];
+  //  char tmp_seq[db_graph->kmer_size+1];
   int i;
 
   if (number_of_people>NUMBER_OF_COLOURS)
@@ -7220,7 +7213,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   coord_of_start_of_array_in_trusted_fasta=0;
 
 
-  char tmp_zam[db_graph->kmer_size];
+  char tmp_zam[db_graph->kmer_size+1];
   BinaryKmer tmp_kmer;
   
 
@@ -7307,7 +7300,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      exit(1);
 	    }
 
-	  //char tmp_seqzam[db_graph->kmer_size];
+	  //char tmp_seqzam[db_graph->kmer_size+1];
 	  //printf("Start looking at the supernode in indiv nucleated at query node %s\n Query node position is %d, Supernode is %s\n", 
 	  //	 binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_seqzam), index_of_query_node_in_supernode_array, supernode_string);
 
@@ -7539,8 +7532,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  //debug
 		  //if ( (chrom_path_array[start_of_3prime_anchor_in_chrom + j] != NULL)&& (current_supernode[start_of_3prime_anchor_in_sup + k]!=NULL) )
 		  // {
-		  //   char tmp_dbg1[db_graph->kmer_size];
-		  //   char tmp_dbg2[db_graph->kmer_size];
+		  //   char tmp_dbg1[db_graph->kmer_size+1];
+		  //   char tmp_dbg2[db_graph->kmer_size+1];
 		      //printf("Compare chrom node %d, %s,  and supernode node %d, %s,\n", start_of_3prime_anchor_in_chrom + j, 
 		      //	     binary_kmer_to_seq(chrom_path_array[start_of_3prime_anchor_in_chrom + j]->kmer, db_graph->kmer_size, tmp_dbg1),
 		      //	     start_of_3prime_anchor_in_sup + k,
@@ -7644,8 +7637,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  
 		  
 		  //debug
-		  //char tmp_dbg1[db_graph->kmer_size];
-		  //char tmp_dbg2[db_graph->kmer_size];
+		  //char tmp_dbg1[db_graph->kmer_size+1];
+		  //char tmp_dbg2[db_graph->kmer_size+1];
 		  //if (chrom_path_array[start_of_3prime_anchor_in_chrom - j]==NULL)
 		  //  {
 		      //printf("Cannot extend further - have hit an N in the trsuted path\n");
@@ -7758,8 +7751,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  
 
 		  
-		  //char tmp_dbg1[db_graph->kmer_size];
-		  //char tmp_dbg2[db_graph->kmer_size];
+		  //char tmp_dbg1[db_graph->kmer_size+1];
+		  //char tmp_dbg2[db_graph->kmer_size+1];
 		  //printf("Extending 3prime anchor in 3prime dir. Compare chrom node %d, %s,  and supernode node %d, %s,\n", 
 		  //	 start_of_3prime_anchor_in_chrom + j,
 		  //	 binary_kmer_to_seq(chrom_path_array[start_of_3prime_anchor_in_chrom + j]->kmer, db_graph->kmer_size, tmp_dbg1),
@@ -8732,7 +8725,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   coord_of_start_of_array_in_trusted_fasta=0;
 
 
-  char tmp_zam[db_graph->kmer_size];
+  char tmp_zam[db_graph->kmer_size+1];
   BinaryKmer tmp_kmer;
   
 
@@ -8816,7 +8809,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	      exit(1);
 	    }
 
-	  //char tmp_seqzam[db_graph->kmer_size];
+	  //char tmp_seqzam[db_graph->kmer_size+1];
 	  //printf("Start looking at the supernode in indiv nucleated at query node %s\n Query node position is %d, Supernode is %s\n", 
 	  //	 binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_seqzam), index_of_query_node_in_supernode_array, supernode_string);
 
@@ -9048,8 +9041,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		  //debug
 		  //if ( (chrom_path_array[start_of_3prime_anchor_in_chrom + j] != NULL)&& (current_supernode[start_of_3prime_anchor_in_sup + k]!=NULL) )
 		  // {
-		  //   char tmp_dbg1[db_graph->kmer_size];
-		  //   char tmp_dbg2[db_graph->kmer_size];
+		  //   char tmp_dbg1[db_graph->kmer_size+1];
+		  //   char tmp_dbg2[db_graph->kmer_size+1];
 		      //printf("Compare chrom node %d, %s,  and supernode node %d, %s,\n", start_of_3prime_anchor_in_chrom + j, 
 		      //	     binary_kmer_to_seq(chrom_path_array[start_of_3prime_anchor_in_chrom + j]->kmer, db_graph->kmer_size, tmp_dbg1),
 		      //	     start_of_3prime_anchor_in_sup + k,
@@ -9730,7 +9723,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	      /*
 	      printf("These are the branches and flanks as defined for genotyping - does not affect printing of call\n");
 	      int zim;
-	      char zam[db_graph->kmer_size];
+	      char zam[db_graph->kmer_size+1];
 	      BinaryKmer rev;
 	      printf("flank5p is \n");
 	      for (zim=0; zim<=var->len_flank5p; zim++)
@@ -11182,7 +11175,7 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 	  //local function
 	  long long overlap_cols_i_and_j(Element* node)
 	  {
-	    char str[db_graph->kmer_size];
+	    char str[db_graph->kmer_size+1];
 
 	    if ( 
 		(db_node_is_this_node_in_this_person_or_populations_graph(node, individual_edge_array, first_col_list[i])==true)

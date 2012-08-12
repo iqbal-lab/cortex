@@ -184,7 +184,8 @@ boolean hash_table_apply_or_insert(Key key, void (*f)(Element *), HashTable * ha
 	      rehash++;
 	      if (rehash>hash_table->max_rehash_tries)
 		{
-		  fprintf(stderr,"too much rehashing!! Rehash=%d\n", rehash);
+		  //fprintf(stderr,"too much rehashing!! Rehash=%d\n", rehash);
+ 		  fprintf(stderr,"Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
 		  exit(1);
 		}
 	    }
@@ -283,7 +284,8 @@ Element * hash_table_find(Key key, HashTable * hash_table)
 	  rehash++; 
 	  if (rehash>hash_table->max_rehash_tries)
 	    {
-	      fprintf(stderr,"too much rehashing!! Rehash=%d\n", rehash);
+	      //fprintf(stderr,"too much rehashing!! Rehash=%d\n", rehash);
+ 		  fprintf(stderr,"Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
 	      exit(1);
 	    }
 	}
@@ -339,7 +341,8 @@ Element * hash_table_find_or_insert(Key key, boolean * found,  HashTable * hash_
 	    rehash++;
 	    if (rehash>hash_table->max_rehash_tries)
 	      {
-		fprintf(stderr,"too much rehashing!! Reserve more memory. Rehash=%d\n", rehash);
+		//fprintf(stderr,"too much rehashing!! Reserve more memory. Rehash=%d\n", rehash);
+ 		  fprintf(stderr,"Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
 		exit(1);
 	      }
 	  }
@@ -401,7 +404,8 @@ Element * hash_table_insert(Key key, HashTable * hash_table){
 	rehash++;
 	if (rehash>hash_table->max_rehash_tries)
 	  {
-	    fprintf(stderr,"too much rehashing!! Reserve more memory.  Rehash=%d\n", rehash);
+	    //fprintf(stderr,"too much rehashing!! Reserve more memory.  Rehash=%d\n", rehash);
+	    fprintf(stderr,"Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
 	    exit(1);
 	  }
       }

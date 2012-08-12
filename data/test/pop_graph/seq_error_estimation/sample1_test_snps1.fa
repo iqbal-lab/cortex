@@ -1,0 +1,8 @@
+>we expect this to NOT be in the sample
+AAAAAATAAAAAA
+>we expect this to be monomorhpic
+AAAAAAAAAAAAA
+>we expect this to not be in the sample - in fact neither allele in sample
+GGGTACAGATACA
+>we expect this to be in and monomorphic, but in fact neither allele in sample
+GGGTACTGATACA
