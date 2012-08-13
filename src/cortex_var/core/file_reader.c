@@ -3017,7 +3017,7 @@ boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCo
 	  read = fread(&(binfo->version),sizeof(int),1,fp);
 	  if (read>0)
 	    {//can read version
-	      if ((binfo->version >=5) && (binfo->version<=BINVERSION) )
+	      if ((binfo->version >=4) && (binfo->version<=BINVERSION) )
 		{//version is good
 		  read = fread(&(binfo->kmer_size),sizeof(int),1,fp);
 		  if (read>0)
@@ -3100,7 +3100,7 @@ boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCo
 boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
 {
   boolean no_problem=true;
-  if (binfo->version==5)
+  if ( (binfo->version==5) || (binfo->version==4) )//legacy
     {
       no_problem = get_read_lengths_and_total_seqs_from_header(fp, binfo, ecode);
     }
