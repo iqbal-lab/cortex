@@ -139,7 +139,7 @@ Edges* genotyping_node_get_edge(GenotypingElement e, EdgeArrayType type,int inde
 	  printf("Called genotyping_node_get_edge with index %d which is >= MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2 which is %d. Exist\n", index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2);
 	  exit(1);
 	}
-      return &e.individual_edges[index];//compiler thinks this is returning a local variable, but assuming e is in the hash table, it has a lifetime beyond that of this function.
+      return e.individual_edges + index;
     }
  else 
     {

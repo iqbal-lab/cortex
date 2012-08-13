@@ -642,8 +642,6 @@ void test_get_population_consensus_supernode()
    dBGraph *hash_table = hash_table_new(number_of_bits, bucket_size,
                                         max_retries, kmer_size);
    
-   char tmp_seq[hash_table->kmer_size+1];
-   
   if (hash_table==NULL)
     {
       printf("unable to alloc the hash table. dead before we even started. OOM");

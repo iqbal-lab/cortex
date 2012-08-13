@@ -1,8 +1,0 @@
-Remember:
-
- - replace GSL dir with a brand new one
- - mkdir gsl-1.15/user_install
- - edit Makefile as follows
-
-uncomment this line:
-#NOT_ZAM=1

@@ -576,8 +576,9 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
       //printf("%s", ctime(&now));
 
 
-      char filelist_1net_binaries[]="../data/tempfiles_can_be_deleted/filelist_hom1_1net_bins";//one binary per allele
-      char filelist_2net_binaries[]="../data/tempfiles_can_be_deleted/filelist_hom1_2net_bins";
+      //one binary per allele
+      char filelist_1net_binaries[]="../data/tempfiles_can_be_deleted/filelist_hom1_1net.ctxlist";
+      char filelist_2net_binaries[]="../data/tempfiles_can_be_deleted/filelist_hom1_2net.ctxlist";
 
 
 
@@ -1222,43 +1223,47 @@ Covg in indiv:
   int homopolymer_cutoff = 0;
   boolean remove_duplicates_se = false;
   char ascii_fq_offset = 33;
-  int into_colour = 0;
+  int into_colour;
 
   unsigned long long bad_reads = 0, dup_reads = 0;
   unsigned long long seq_read = 0, seq_loaded = 0;
 
   // Load into colour 0
+  into_colour = 0;
   load_se_seq_data_into_graph_colour(
     "../data/test/pop_graph/variations/complex_genotyping/pd_example1_branch1andflanks.fa",
     fq_quality_cutoff, homopolymer_cutoff,
     remove_duplicates_se, ascii_fq_offset,
-    0, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    into_colour, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
     NULL, 0);
 
   // Load into colour 1
+  into_colour = 1;
   load_se_seq_data_into_graph_colour(
     "../data/test/pop_graph/variations/complex_genotyping/pd_example1_branch2andflanks.fa",
     fq_quality_cutoff, homopolymer_cutoff,
     remove_duplicates_se, ascii_fq_offset,
-    1, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    into_colour, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
     NULL, 0);
 
   // For second var/test
 
   // Load into colour 0
+  into_colour = 0;
   load_se_seq_data_into_graph_colour(
     "../data/test/pop_graph/variations/complex_genotyping/pd_example2_branch1_and_flanks.fa",
     fq_quality_cutoff, homopolymer_cutoff,
     remove_duplicates_se, ascii_fq_offset,
-    0, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    into_colour, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
     NULL, 0);
 
   // Load into colour 1
+  into_colour = 1;
   load_se_seq_data_into_graph_colour(
     "../data/test/pop_graph/variations/complex_genotyping/pd_example2_branch2_and_flanks.fa",
     fq_quality_cutoff, homopolymer_cutoff,
     remove_duplicates_se, ascii_fq_offset,
-    1, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    into_colour, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
     NULL, 0);
 
   VariantBranchesAndFlanks var;
@@ -1289,7 +1294,7 @@ Covg in indiv:
 
 
   fclose(fp);
-  int i,j;
+  int j;
 
   int br1_covg_0[]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 

@@ -154,13 +154,11 @@ int  main()
     return CU_get_error();
   }
 
-  // DEV: commented out for now as it fails with a seg_fault
-  /*
+  // DEV: comment out to avoid failing with a seg_fault on some systems
   if (NULL == CU_add_test(pPopGraphSuite, "Test loading of three binaries as dumped by graph into sv_trio as separate people", test_load_individual_binaries_into_sv_trio )) {
     CU_cleanup_registry();
     return CU_get_error();
   }
-  */
 
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for getting supernode containing a given node",   test_db_graph_supernode_for_specific_person_or_pop)) {

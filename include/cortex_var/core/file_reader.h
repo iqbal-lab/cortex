@@ -108,34 +108,10 @@ void load_pe_filelists_into_graph_colour(
   unsigned long long *total_bases_read, unsigned long long *total_bases_loaded,
   unsigned long *readlen_count_array, unsigned long readlen_count_array_size);
 
+// End of loading sequence data
+
 void initialise_binary_header_info(BinaryHeaderInfo* binfo, GraphInfo* ginfo);
 
-/*
-//pass in bases_read to track amount of sequence read in, and bases_pass_filters_and_loaded to see how much passed filters and got into the graph
-void load_se_and_pe_filelists_into_graph_of_specific_person_or_pop(boolean se, boolean pe, char* se_f, char* pe_f1, char* pe_f2,
-								   long long* bases_read, long long* bases_pass_filters_and_loaded,long long** readlen_count_array,
-								   int qual_thresh, boolean remv_dups_se, boolean remv_dups_pe, 
-								   boolean break_homopolymers, int homopol_limit, int ascii_fq_offset, FileFormat format, 
-								   int max_read_length, int colour, dBGraph* db_graph);
-
-void load_fastq_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded, long long** readlen_count_array,
-									     long long * bad_reads,  char quality_cut_off, long long* dup_reads, int max_read_length, 
-									     boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff,
-									     int fastq_ascii_offset,
-									     dBGraph* db_graph, EdgeArrayType type, int index);
-
-void  load_paired_end_data_from_filenames_into_graph_of_specific_person_or_pop(char* filename1, char* filename2, FileFormat format,
-									       long long* bases_read, long long* bases_pass_filters_and_loaded,long long** readlen_count_array,
-									       long long * bad_reads,  char quality_cut_off, int max_read_length, 
-									       long long* dup_reads, boolean remove_duplicates, boolean break_homopolymers, int homopolymer_cutoff, 
-									       int fastq_ascii_offset,
-									       dBGraph* db_graph, EdgeArrayType type, int index );
-
-void load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(char* filename, long long* bases_read, long long* bases_pass_filters_and_loaded, long long** readlen_count_array,
-									long long * bad_reads, long long* dup_reads, int max_chunk_length, 
-									boolean remove_duplicates_single_endedly, boolean break_homopolymers, int homopolymer_cutoff, 
-									dBGraph* db_graph, EdgeArrayType type, int index);
-*/
 
 void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
 											      boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
@@ -148,35 +124,6 @@ void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, S
 					       int max_array_size, 
 					       boolean require_nodes_to_lie_in_given_colour, int colour);
 
-/*
-//penultimate argument is to specify whether to discard potential PCR duplicate reads single-endedly - ie if read starts at same kmer
-// as a previous read, then discard it. This is a pretty harsh filter, and if ppssible, prefer to use paired end info.
-// So in general when calling this function, would expect that boolean remove_dups_single_endedly to be set to false, unless you know you have low coverage, so have
-// low probability of two reads starting at the same point.
-void load_seq_data_into_graph_of_specific_person_or_pop(FILE* fp, long long* bases_read, long long* bases_pass_filters_and_loaded,long long** readlen_count_array,
-							int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 
-							long long * bad_reads, char quality_cut_off, long long* dup_reads, 
-							int max_read_length, boolean remove_dups_single_endedly, 
-							boolean break_homopolymers, int homopolymer_cutoff, dBGraph * db_graph, EdgeArrayType type, int index);
-
-
-//assume we have two lists of equal length, of mate files in the same order in each file
-void load_list_of_paired_end_files_into_graph_of_specific_person_or_pop(char* list_of_left_mates, char* list_of_right_mates, FileFormat format,
-									char quality_cut_off, int max_read_length, 
-									long long* bases_read, long long* bases_loaded,long long** readlen_count_array,
-									long long* bad_reads, long long* num_dups, int* count_file_pairs, boolean remove_dups, 
-									boolean break_homopolymers, int homopolymer_cutoff, int fq_ascii_cutoff, 
-									dBGraph* db_graph, EdgeArrayType type, int index);
-
-//index tells you which person within a population it is
-//bases_read is passed in to find out how much sequence there was in the files read-in.
-//bases_loaded is passed in to find out how much sequence passed filters (qual, PCR dup, homopol) and was loaded into the graph
-void load_all_fasta_for_given_person_given_filename_of_file_listing_their_fasta_files(char* f_name, long long* bases_read, long long* bases_loaded, long long** readlen_count_array,
-										      long long* bad_reads, dBGraph* db_graph, int index);
-
-
-void load_population_as_fasta(char* filename, long long* bases_read, long long* bases_loaded, long long* bad_reads, dBGraph* db_graph, long long** readlen_count_array);
-*/
 
 //use preallocated sliding window, and get all the kmers from the passed-in sequence. Any kmer that would have contained an N is returned as NULL
 int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short kmer_size, KmerSlidingWindow* kmer_window, dBGraph* db_graph);
@@ -275,11 +222,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_bases_to_load, int lengt
 			    dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char* path_string,
 			    Sequence* seq, KmerSlidingWindow* kmer_window, boolean expecting_new_fasta_entry,  dBGraph * db_graph);
 
-void ignore_next_read(FILE* fp, int max_read_length, boolean* full_entry,
-		      int (* file_reader)(FILE * fp, Sequence * seq, 
-					  int max_read_length,boolean new_entry, 
-					  boolean * full_entry), 
-		      Sequence* seq);
+
 int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length, dBNode** array_nodes, Orientation* array_orientations, 
 						   boolean require_nodes_to_lie_in_given_colour, boolean* full_entry,
 						   int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,boolean new_entry, boolean * full_entry), 

@@ -38,7 +38,7 @@ endif
 
 ifndef BITFIELDS
    BITFIELDS = 1
-   MAXK = 31	
+   MAXK = 31
 endif
 
 
@@ -67,9 +67,9 @@ IDIR_BAM = libs/samtools-0.1.18
 IDIR_BASIC = include/basic
 IDIR_BASE_ENCODING = ${IDIR_BASIC}/event_encoding/base_encoding
 IDIR_COLOUR_ENCODING = ${IDIR_BASIC}/event_encoding/solid_colour_encoding
-IDIR_HASH = include/hash_table 
+IDIR_HASH = include/hash_table
 IDIR_CORTEX_CON = include/cortex_con
-IDIR_CORTEX_VAR = include/cortex_var/many_colours 
+IDIR_CORTEX_VAR = include/cortex_var/many_colours
 IDIR_CORTEX_VAR_CORE = include/cortex_var/core
 IDIR_CORTEX_VAR_CMD_LINE = include/cortex_var/many_colours
 
@@ -97,12 +97,12 @@ endif
 
 ifdef MAC
  MACFLAG = -fnested-functions
-endif 
+endif
 
-ARCH =  -m64 
+ARCH = -m64
 
 ifdef 32_BITS
- ARCH =  
+ ARCH =
 endif
 
 # DEV: Add -Wextra
@@ -118,9 +118,9 @@ TEST_LIBLIST = -lcunit -lncurses $(LIBLIST)
 LIBINCS = -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO) -I$(IDIR_BAM) -I$(IDIR_SEQ) -I$(IDIR_STRS) -L$(IDIR_GSL) -L$(IDIR_GSL_ALSO) -L$(IDIR_BAM) -L$(IDIR_SEQ) -L$(IDIR_STRS)
 TEST_LIBINCS = -I$(IDIR_CUNIT) -L$(LDIR_CUNIT) $(LIBINCS)
 
-CFLAGS_BASIC          = -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) $(LIBINCS)
-CFLAGS_GRAPH          = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_BASE_ENCODING) $(LIBINCS)
-CFLAGS_CORTEX_VAR     = -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CORTEX_VAR) -I$(IDIR_BASE_ENCODING) $(LIBINCS)
+CFLAGS_BASIC      = -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) $(LIBINCS)
+CFLAGS_GRAPH      = -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CORTEX_CON) -I$(IDIR_BASE_ENCODING) $(LIBINCS)
+CFLAGS_CORTEX_VAR = -I$(IDIR_CORTEX_VAR_CORE) -I$(IDIR_BASIC) -I$(IDIR_HASH) -I$(IDIR_CORTEX_VAR) -I$(IDIR_BASE_ENCODING) $(LIBINCS)
 
 CFLAGS_BASIC_TESTS      = -I$(IDIR_BASIC_TESTS) -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) $(TEST_LIBINCS)
 CFLAGS_HASH_TABLE_TESTS = -I$(IDIR_HASH) -I$(IDIR_HASH_TABLE_TESTS) -I$(IDIR_CUNIT) -I$(IDIR_CORTEX_VAR) $(TEST_LIBINCS)
@@ -154,10 +154,10 @@ run_hash_table_tests : remove_objects $(HASH_TABLE_TESTS_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_HASH_TABLE_TESTS) $(OPT) -o $(BIN)/run_hash_table_tests_$(MAXK) $(HASH_TABLE_TESTS_OBJ) $(TEST_LIBLIST)
 
 run_cortex_var_cmdline_tests : remove_objects $(CORTEX_VAR_CMD_LINE_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS)  $(OPT)  -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) $(TEST_LIBLIST)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS) $(OPT) -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) $(TEST_LIBLIST)
 
 run_cortex_var_tests : remove_objects $(CORTEX_VAR_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_TESTS)  $(OPT)  -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) $(TEST_LIBLIST)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_TESTS) $(OPT) -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) $(TEST_LIBLIST)
 
 
 .PHONY : clean
@@ -178,73 +178,73 @@ remove_objects:
 
 
 src/obj/cortex_con/%.o : src/cortex_con/%.c include/cortex_con/%.h
-	mkdir -p src/obj/cortex_con;  $(CC) $(CFLAGS_GRAPH) $(OPT) -c $< -o $@
+	mkdir -p src/obj/cortex_con; $(CC) $(CFLAGS_GRAPH) $(OPT) -c $< -o $@
 
 src/obj/cortex_con/%.o : src/basic/%.c include/basic/%.h
-	mkdir -p src/obj/cortex_con;  $(CC) $(CFLAGS_GRAPH) $(OPT) -c $< -o $@
+	mkdir -p src/obj/cortex_con; $(CC) $(CFLAGS_GRAPH) $(OPT) -c $< -o $@
 
 src/obj/cortex_con/%.o : src/basic/event_encoding/base_encoding/%.c include/basic/event_encoding/base_encoding/%.h
-	mkdir -p src/obj/cortex_con;  $(CC) $(CFLAGS_GRAPH) $(OPT) -c $< -o $@
+	mkdir -p src/obj/cortex_con; $(CC) $(CFLAGS_GRAPH) $(OPT) -c $< -o $@
 
 src/obj/cortex_con/%.o : src/hash_table/hash_key/bob_jenkins/%.c include/hash_table/hash_value.h
-	mkdir -p src/obj/cortex_con;  $(CC) $(CFLAGS_GRAPH) $(OPT) -c $< -o $@
+	mkdir -p src/obj/cortex_con; $(CC) $(CFLAGS_GRAPH) $(OPT) -c $< -o $@
 
 src/obj/cortex_con/%.o : src/hash_table/open_hash/%.c include/hash_table/open_hash/%.h
-	mkdir -p src/obj/cortex_con;  $(CC) $(CFLAGS_GRAPH) $(OPT) -c $< -o $@
+	mkdir -p src/obj/cortex_con; $(CC) $(CFLAGS_GRAPH) $(OPT) -c $< -o $@
 
-src/obj/cortex_con/%.o : src/cortex_con/%.c 
-	mkdir -p src/obj/cortex_con;  $(CC) $(CFLAGS_GRAPH) $(OPT) -c $? -o $@
+src/obj/cortex_con/%.o : src/cortex_con/%.c
+	mkdir -p src/obj/cortex_con; $(CC) $(CFLAGS_GRAPH) $(OPT) -c $? -o $@
 
 src/obj/cortex_var/many_colours/%.o : src/cortex_var/many_colours/%.c include/cortex_var/many_colours/%.h
-	mkdir -p src/obj/cortex_var/many_colours; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT)  -c $< -o $@
+	mkdir -p src/obj/cortex_var/many_colours; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) -c $< -o $@
 
-src/obj/basic/%.o : src/basic/%.c  include/basic/%.h
+src/obj/basic/%.o : src/basic/%.c include/basic/%.h
 	mkdir -p src/obj/basic/; $(CC) $(CFLAGS_BASIC) $(OPT) -c $< -o $@
 
 src/obj/basic/%.o : src/basic/event_encoding/base_encoding/%.c  include/basic/event_encoding/base_encoding/%.h
 	mkdir -p src/obj/basic/; $(CC) $(CFLAGS_BASIC) $(OPT) -c $< -o $@
 
-src/obj/test/basic/%.o :  src/test/basic/%.c include/test/basic/%.h
+src/obj/test/basic/%.o : src/test/basic/%.c include/test/basic/%.h
 	mkdir -p src/obj/test/basic; $(CC) $(CFLAGS_BASIC_TESTS) $(OPT) -c $< -o $@
 
 src/obj/test/hash_table/open_hash/%.o : src/hash_table/open_hash/%.c include/hash_table/open_hash/%.h
-	mkdir -p src/obj/test/hash_table/open_hash; $(CC) $(CFLAGS_HASH_TABLE_TESTS) $(OPT)  -c $< -o $@
+	mkdir -p src/obj/test/hash_table/open_hash; $(CC) $(CFLAGS_HASH_TABLE_TESTS) $(OPT) -c $< -o $@
 
 src/obj/test/hash_table/hash_key/bob_jenkins/%.o : src/hash_table/hash_key/bob_jenkins/%.c include/hash_table/hash_key/bob_jenkins/%.h
-	mkdir -p src/obj/test/hash_table/hash_key/bob_jenkins; $(CC) $(CFLAGS_HASH_TABLE_TESTS) $(OPT)  -c $< -o $@
+	mkdir -p src/obj/test/hash_table/hash_key/bob_jenkins; $(CC) $(CFLAGS_HASH_TABLE_TESTS) $(OPT) -c $< -o $@
 
 src/obj/graph/hash_table/open_hash/%.o : src/hash_table/open_hash/%.c include/hash_table/open_hash/%.h
-	mkdir -p src/obj/graph/hash_table/open_hash; $(CC) $(CFLAGS_GRAPH) $(OPT)  -c $< -o $@
+	mkdir -p src/obj/graph/hash_table/open_hash; $(CC) $(CFLAGS_GRAPH) $(OPT) -c $< -o $@
 
 src/obj/graph/hash_table/hash_key/bob_jenkins/%.o : src/hash_table/hash_key/bob_jenkins/%.c
-	mkdir -p src/obj/graph/hash_table/hash_key/bob_jenkins; $(CC) $(CFLAGS_GRAPH) $(OPT)  -c $< -o $@
+	mkdir -p src/obj/graph/hash_table/hash_key/bob_jenkins; $(CC) $(CFLAGS_GRAPH) $(OPT) -c $< -o $@
 
 src/obj/test/hash_table/%.o : src/test/hash_table/%.c include/test/hash_table/%.h
 	mkdir -p src/obj/test/hash_table; $(CC) $(CFLAGS_CORTEX_VAR) $(CFLAGS_HASH_TABLE_TESTS) $(OPT) -c $< -o $@
 
 
 src/obj/cortex_var/many_colours/%.o : src/basic/event_encoding/base_encoding/%.c include/basic/event_encoding/base_encoding/%.h
-	mkdir -p src/obj/cortex_var/many_colours;  $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) -c $< -o $@
+	mkdir -p src/obj/cortex_var/many_colours; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) -c $< -o $@
 
-src/obj/cortex_var/many_colours/hash_table/open_hash/%.o :  src/hash_table/open_hash/%.c include/hash_table/open_hash/%.h
-	mkdir -p src/obj/cortex_var/many_colours/hash_table/open_hash; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT)  -c $< -o $@
+src/obj/cortex_var/many_colours/hash_table/open_hash/%.o : src/hash_table/open_hash/%.c include/hash_table/open_hash/%.h
+	mkdir -p src/obj/cortex_var/many_colours/hash_table/open_hash; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) -c $< -o $@
 
-src/obj/cortex_var/many_colours/hash_table/hash_key/bob_jenkins/%.o :  src/hash_table/hash_key/bob_jenkins/%.c include/hash_table/hash_key/bob_jenkins/%.h
-	mkdir -p src/obj/cortex_var/many_colours/hash_table/hash_key/bob_jenkins; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT)  -c $< -o $@
+src/obj/cortex_var/many_colours/hash_table/hash_key/bob_jenkins/%.o : src/hash_table/hash_key/bob_jenkins/%.c include/hash_table/hash_key/bob_jenkins/%.h
+	mkdir -p src/obj/cortex_var/many_colours/hash_table/hash_key/bob_jenkins; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) -c $< -o $@
 
 
-src/obj/cortex_var/many_colours/%.o :  src/basic/%.c include/basic/%.h
-	mkdir -p src/obj/cortex_var/many_colours; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT)  -c $< -o $@
+src/obj/cortex_var/many_colours/%.o : src/basic/%.c include/basic/%.h
+	mkdir -p src/obj/cortex_var/many_colours; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) -c $< -o $@
 
-src/obj/cortex_var/many_colours/%.o :  src/hash_table/hash_key/bob_jenkins/%.c include/hash_table/%.h
-	mkdir -p src/obj/cortex_var/many_colours; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT)  -c $< -o $@
+src/obj/cortex_var/many_colours/%.o : src/hash_table/hash_key/bob_jenkins/%.c include/hash_table/%.h
+	mkdir -p src/obj/cortex_var/many_colours; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) -c $< -o $@
 
-src/obj/cortex_var/many_colours/%.o :  src/hash_table/open_hash/%.c include/hash_table/open_hash/%.h
-	mkdir -p src/obj/cortex_var/many_colours; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT)  -c $< -o $@
+src/obj/cortex_var/many_colours/%.o : src/hash_table/open_hash/%.c include/hash_table/open_hash/%.h
+	mkdir -p src/obj/cortex_var/many_colours; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) -c $< -o $@
 
-src/obj/cortex_var/many_colours/%.o :  src/cortex_var/core/%.c include/cortex_var/core/%.h
-	mkdir -p src/obj/cortex_var/many_colours; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT)  -c $< -o $@
+src/obj/cortex_var/many_colours/%.o : src/cortex_var/core/%.c include/cortex_var/core/%.h
+	mkdir -p src/obj/cortex_var/many_colours; $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) -c $< -o $@
 
-src/obj/test/cortex_var/many_colours/%.o :  src/test/cortex_var/many_colours/%.c include/test/cortex_var/many_colours/%.h
-	mkdir -p src/obj/test/cortex_var/many_colours; $(CC)  $(CFLAGS_CORTEX_VAR_TESTS) $(OPT)  -c $< -o $@
+src/obj/test/cortex_var/many_colours/%.o : src/test/cortex_var/many_colours/%.c include/test/cortex_var/many_colours/%.h
+	mkdir -p src/obj/test/cortex_var/many_colours; $(CC) $(CFLAGS_CORTEX_VAR_TESTS) $(OPT) -c $< -o $@
 

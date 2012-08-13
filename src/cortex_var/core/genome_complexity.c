@@ -188,7 +188,8 @@ void count_reads_where_snp_makes_clean_bubble(dBGraph* db_graph, char* fasta, bo
 			  modify_character(alt, char_to_modify, rand() % 3 );
 			  
 			  //turn it into a sliding window 
-			  int nkmers = get_single_kmer_sliding_window_from_sequence(alt,strlen(alt),
+			  //int nkmers =
+          get_single_kmer_sliding_window_from_sequence(alt,strlen(alt),
 										    db_graph->kmer_size, 
 										    kmer_window, db_graph);
 			  //work through the sliding window and put nodes into the array you pass in. 
@@ -227,12 +228,12 @@ double estimate_genome_complexity(dBGraph* db_graph, char* filename_fastaq,
 				  )
 {
 
-  //***********************************************
+  // ===========================================================================
   //   initialise stuff for reading of fasta;
   //     - since we support reading a LIST of fasta/q
   //       we alloc/init all this stuff then pass it
   //       down into the function that reads a single fasta
-  //***********************************************
+  // ===========================================================================
   
 
   //----------------------------------
@@ -640,7 +641,8 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 	      modify_character(alt, char_to_modify, rand() % 3 );
 	      
 	      //turn it into a sliding window 
-	      int nkmers = get_single_kmer_sliding_window_from_sequence(alt,strlen(alt),
+	      //int nkmers =
+          get_single_kmer_sliding_window_from_sequence(alt,strlen(alt),
 									db_graph->kmer_size, 
 									kmer_window, db_graph);
 

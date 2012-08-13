@@ -90,11 +90,11 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
 
   //these counters are used to make sure none of the files of printed out supernodes get too big. In fact
   //they are completely unused in test code, as we don't print anything
-  long supernode_count_person1=0;
-  long supernode_count_person2=0;
+  //long supernode_count_person1=0;
+  //long supernode_count_person2=0;
   
   //this on the other hand is used in testing.
-  int number_of_supernodes_in_person_1=0;
+  //int number_of_supernodes_in_person_1=0;
 
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
 

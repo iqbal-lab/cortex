@@ -719,7 +719,6 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity
 
 void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl)
 {
-  int i;
   gl->log_lh[hom_one]=0;
   gl->log_lh[het]=0;
   gl->log_lh[hom_other]=0;

@@ -847,7 +847,7 @@ int main(int argc, char **argv){
     printf("Total bases parsed:%llu\n", num_bases_parsed);
     printf("Total bases passing filters and loaded into graph:%llu\n",
            num_bases_loaded);
-    printf("Mean read length after filters applied:%d\n", mean_contig_length);
+    printf("Mean read length after filters applied:%lu\n", mean_contig_length);
 
     if(cmd_line->dump_readlen_distrib == true)
     {

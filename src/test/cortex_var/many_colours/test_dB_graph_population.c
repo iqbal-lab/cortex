@@ -24,8 +24,17 @@
  *
  * **********************************************************************
  */
+ 
+// System libraries
+#include <stdio.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <limits.h>
 
+// Third party libraries
 #include <CUnit.h>
+
+// Our headers
 #include <Basic.h>
 #include <dB_graph.h>
 #include <element.h>
@@ -34,60 +43,6 @@
 #include "test_dB_graph_population.h"
 #include "dB_graph_population.h"
 #include <global.h>
-#include <stdio.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <limits.h>
-
-// DEV: check db_graph and colourlist passed correctly in
-//      load_se_filelist_into_graph_colour
-
-//MARIO - I am going to delete this test from graph/ as I think there are more detailed tests in test_file_reader. OK with you?
-
-/*
-void test_writing_reading_binary(){
-
-  dBNode node1, node2;
-  int kmer_size = 3;
-  boolean test_read;
-
-  char seq[kmer_size+1];
-  
-  BinaryKmer tmp_kmer;
-
-  element_initialise(&node1,seq_to_binary_kmer("AAA",kmer_size, &tmp_kmer),kmer_size);
-  node1.edges = 'a'; // ie 64 = (0110 0100)2
-  node1.coverage = 10;
-
-  FILE* fp1 = fopen("../data/test/graph/dump_element.ctx", "w");
-  db_node_print_binary(fp1,&node1);
-  fclose(fp1);
-
-  FILE* fp2 = fopen("../data/test/graph/dump_element.ctx", "r");
-  
-  test_read = db_node_read_binary(fp2,kmer_size,&node2);
-
-  CU_ASSERT_EQUAL(test_read, true);
-
-  CU_ASSERT(binary_kmer_comparison_operator(node1.kmer, node2.kmer));
-  CU_ASSERT_EQUAL(node1.edges, node2.edges);
-
-  CU_ASSERT_STRING_EQUAL("AAA", binary_kmer_to_seq(&(node1.kmer),kmer_size,seq));
-  CU_ASSERT_STRING_EQUAL("AAA", binary_kmer_to_seq(&(node2.kmer),kmer_size,seq));
-  
-  CU_ASSERT_EQUAL(node1.edges, node2.edges);
-  CU_ASSERT_EQUAL(node1.edges, 'a');
-  CU_ASSERT_EQUAL(node2.edges, 'a');
- 
-  CU_ASSERT_EQUAL(node2.coverage, 10);
-
-  test_read = db_node_read_binary(fp2,kmer_size,&node2);
-  CU_ASSERT_EQUAL(test_read, false);
-
-  fclose(fp2);
-}
-   
-*/
 
 // there are "pure" hash table tests which know nothing of the graph. This on the other hand
 // is a sanity check one level up from those

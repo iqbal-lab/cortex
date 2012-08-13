@@ -124,12 +124,8 @@ char * seq_reverse_complement(char * in, int length, char * out);
 
 BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size, BinaryKmer* prealloc_reverse_kmer);
 
+Nucleotide binary_kmer_get_first_nucleotide(BinaryKmer* kmer, short kmer_size);
 Nucleotide binary_kmer_get_last_nucleotide(BinaryKmer* kmer);
-
-// Buggy & not used
-//Nucleotide binary_kmer_get_first_nucleotide(BinaryKmer* kmer, short kmer_size);
-
-//BinaryKmer binary_kmer_add_nucleotide_shift(BinaryKmer kmer,Nucleotide nucleotide, short kmer_size);
 
 char reverse_char_nucleotide(char c);
 

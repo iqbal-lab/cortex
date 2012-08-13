@@ -98,7 +98,7 @@ Edges* get_edge(Element e, EdgeArrayType type,int index)
 	  printf("Called get_edge with index %d which is >= NUMBER_OF_COLOURS which is %d. Exist\n", index, NUMBER_OF_COLOURS);
 	  exit(1);
 	}
-      return &e.individual_edges[index];//compiler thinks this is returning a local variable, but assuming e is in the hash table, it has a lifetime beyond that of this function.
+    return e.individual_edges + index;
     }
  else 
     {

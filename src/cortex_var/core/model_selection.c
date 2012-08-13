@@ -53,7 +53,7 @@ boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, Graph
 {
   //demand variant is 100 times as likely as repeat
   int lthresh = log(100);
-  double allele_balance_prior = 5;
+  //double allele_balance_prior = 5;
 
   if (annovar->len_start<=2)
     {
@@ -88,9 +88,9 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
 {
    double step = (0.98-0.02)/NUM_STEPS; //grid/mesh/step  value for frequency
   
-  //**********
+  //
   //sort out priors for frequency and genotype
-  //*********
+  //
   double prior_freq[NUM_STEPS+1];
   int i;
   int j;
@@ -128,9 +128,9 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
       total_covg_br2 +=annovar->theta2[i];
     }
 
-  //*************
+  //
   //Expected covg per allele on each sample
-  //**********
+  //
   //len is the number of nodes on this branch we are cconsidering as informative
   double len = (double) annovar->len_start+ 1 - 2; // IMPORTANT   - +1 because number of nodes is var->len_one/other_allele +1, and subtract 2, so you ignore the first and last nodes
   //double len = (double) annovar->len_start - 2; // IMPORTANT   -  subtract 2, so you ignore the first and last nodes

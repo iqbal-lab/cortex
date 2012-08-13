@@ -10771,8 +10771,6 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 	  //local function
 	  long long overlap_cols_i_and_j(Element* node)
 	  {
-	    char str[db_graph->kmer_size+1];
-
 	    if ( 
 		(db_node_is_this_node_in_this_person_or_populations_graph(node, individual_edge_array, first_col_list[i])==true)
 		&&
