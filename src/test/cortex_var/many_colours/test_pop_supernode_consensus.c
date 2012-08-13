@@ -313,7 +313,7 @@ void test_find_next_node_in_supernode()
 
 
   //now start walking 
-  Orientation start_orientation, next_orientation, current_orientation;
+  Orientation start_orientation = forward, next_orientation, current_orientation;
   dBNode* current_node=testnode;
 
   if (db_node_is_supernode_end(testnode, forward, individual_edge_array, 1, hash_table))
