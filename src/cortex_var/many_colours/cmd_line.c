@@ -49,7 +49,7 @@ int isNumeric (const char * s)
   if (s == NULL || *s == '\0')
     return 0;
   char * p;
-  strtod (s, &p);
+  (void)strtod (s, &p); // void to indicate we are ignoring return value
   return *p == '\0';
 }
 

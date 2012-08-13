@@ -227,7 +227,7 @@ void add_edges(Element* e, EdgeArrayType type, int index, Edges edge_char)
     {
       if (index>=NUMBER_OF_COLOURS)
 	{
-	  printf("in element's add_edges function. index is %d, and should be at most %d", index, NUMBER_OF_COLOURS-1);
+	  printf("In element's add_edges function. index is %d, and should be at most %d\n", index, NUMBER_OF_COLOURS-1);
 	  exit(1);
 	}
       e->individual_edges[index] |= edge_char;
@@ -248,7 +248,7 @@ void set_edges(Element* e, EdgeArrayType type, int index, Edges edge_char)
     {
       if (index>=NUMBER_OF_COLOURS)
 	{
-	  printf("in element's set_edges function. index is %d,and should be at most %d", index, NUMBER_OF_COLOURS);
+	  printf("In element's set_edges function. index is %d,and should be at most %d\n", index, NUMBER_OF_COLOURS);
 	  exit(1);
 	}
       e->individual_edges[index] = edge_char;
