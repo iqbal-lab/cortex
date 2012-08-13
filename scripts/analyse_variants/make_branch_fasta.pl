@@ -11,20 +11,20 @@ my $kmer = -1;
 
 &GetOptions(
 	'callfile|f:s'                         => \$callfile,
-        'kmer:k:i'                             => \$kmer,
+        'kmer|k:i'                             => \$kmer,
 	'help'                                 => \$help,
 );
 
 if ($help)
 {
     print "Script for making a fasta just of the branches of a set of calls, including the k-1 bases at the end of the 5p flank\n";
-    print "Usage: perl make_fake_reference.pl --callfile <filename of output of bubble caller or PD caller, does no matter if you used --print_colour_coverages>\n";
-    print "                                   --kmer <kmer size used to call variants>\n";
-    print "Will create a file with name = callfile.branches.fasta.\nWill abort if such a file already exists\n"
+    print "Usage: perl make_branch_fasta.pl --callfile <filename of output of bubble caller or PD caller, does no matter if you used --print_colour_coverages>\n";
+    print "                                 --kmer <kmer size used to call variants>\n";
+    print "Will create a file with name = callfile.branches.fasta.\nWill abort if such a file already exists\n";
     exit(0);
 }
 
-my $out100 = $file.".branches.fasta";
+my $out100 = $callfile.".branches.fasta";
 
 check_args($callfile, $out100, $kmer);
 
@@ -37,7 +37,7 @@ my $k_plus_one = $kmer+1;
 while (<FILE>)
 {
     my $line = $_;
-    if ($line =~ /^(>var_\d+_5p_flank)/)
+    if ($line =~ /var_\d+_5p_flank/)
     {
 	$line =<FILE>;## 5p flank sequence
 	my $last_k = substr($line, -$k_plus_one);

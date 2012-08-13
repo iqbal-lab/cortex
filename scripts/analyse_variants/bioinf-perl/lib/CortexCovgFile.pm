@@ -202,24 +202,21 @@ sub parse_bubble_graphline
 
   my %data = ('seq' => $seq_line);
 
-  my $regex = '^>(\S+)\s+length:\s*(\d+)\s*average_coverage:\s*([\d\.]+)\s*' .
-              'min_coverage:\s*(\d+)\s*max_coverage:\s*(\d+)\s*' .
-              'fst_coverage:\s*(\d+)\s*fst_kmer:\s*([ACGT]*)\s*' .#fst
-              'fst_r:\s*([ACGT]*)\s*fst_f:([ACGT]*)\s*' .
-              'lst_coverage:\s*(\d+)\s*lst_kmer:\s*([ACGT]*)\s*' .#lst
-              'lst_r:\s*([ACGT]*)\s*lst_f:([ACGT]*)';
+  my $regex = '^>(\S+)';
 
-  my @keys = qw{name length average_coverage min_coverage max_coverage
-                fst_coverage fst_kmer fst_r fst_f
-                lst_coverage lst_kmer lst_r fst_f};
-
-  if($header_line =~ /$regex/)
+  if($header_line =~ /^(\S+)/)
   {
-    @data{@keys} = ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13);
+    $data{'name'} = $1;
   }
   else
   {
-    croak("Unexpected bubble line '$header_line'");
+    croak("Couldn't parse header line '$header_line'\n");
+  }
+
+  # Looks for 'tag: value' entries
+  while($header_line =~ /\b(\S+):\s*(\S*)\b/)
+  {
+    $data{$1} = $2;
   }
 
   return \%data;
@@ -234,7 +231,8 @@ sub read_align_entry
 
   my $read_name = $self->read_line();
   
-  if(!defined($read_name)) {
+  if(!defined($read_name))
+  {
     return undef;
   }
   

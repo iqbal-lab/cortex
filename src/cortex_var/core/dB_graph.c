@@ -77,7 +77,6 @@ dBNode * db_graph_get_next_node(dBNode * current_node, Orientation current_orien
   else
     {
       // debug
-      BinaryKmer tmpzam;
       char tmpzamseq[db_graph->kmer_size+1];
       printf("Cannot find %s so get a NULL node\n", binary_kmer_to_seq(&tmp_kmer, db_graph->kmer_size, tmpzamseq));
     }

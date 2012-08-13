@@ -831,6 +831,11 @@ int main(int argc, char **argv){
                                                  mean_contig_length,
                                                  num_bases_loaded);
 
+    if(cmd_line->entered_sampleid_as_cmdline_arg == true)
+    {
+      graph_info_set_sample_ids(cmd_line->colour_sample_ids, 1, db_graph_info, 0);
+    }
+
     // Cleanup marks left on nodes by loading process (for PE reads)
     hash_table_traverse(&db_node_set_status_to_none, db_graph);
 
@@ -893,6 +898,7 @@ int main(int argc, char **argv){
 	  timestamp();
 
 	  //normal use
+
 	  if (cmd_line->successively_dump_cleaned_colours==false)
 	    {
 	      
@@ -919,7 +925,7 @@ int main(int argc, char **argv){
 	      timestamp();
 	      printf("Finished loading single_colour binaries\n");
 	    }
-	  else
+	  else//we are going to clean a list of binaries against one of the colours in the multicolir bin
 	    {
 	      //we have loaded a multicolour binary, and we have checked that the clean_colour is one of the colours in that binary
 	      if (cmd_line->load_colours_only_where_overlap_clean_colour==false)
@@ -930,8 +936,15 @@ int main(int argc, char **argv){
 		}
 	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
 		     cmd_line->colour_list,cmd_line->clean_colour);
+	      graph_info_set_specific_colour_to_cleaned_against_pool(db_graph_info,  first_colour_data_starts_going_into, 
+								      cmd_line->multicolour_bin, cmd_line->clean_colour);
+
+	      db_graph_info->cleaning[first_colour_data_starts_going_into]->cleaned_against_another_graph=true;
 	      dump_successive_cleaned_binaries(cmd_line->colour_list, first_colour_data_starts_going_into,cmd_line->clean_colour,
 					       cmd_line->successively_dump_cleaned_colours_suffix, db_graph, db_graph_info);
+
+	      graph_info_unset_specific_colour_from_cleaned_against_pool(db_graph_info, first_colour_data_starts_going_into);
+	      db_graph_info->cleaning[first_colour_data_starts_going_into]->cleaned_against_another_graph=false;
 	      printf("Completed dumping of clean binaries\n");
 	    }
 
@@ -1052,6 +1065,7 @@ int main(int argc, char **argv){
 
       
   printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));	  
+  printf("The following is a summary of the data that has been loaded, immediately after loading (prior to any error cleaning, calling etc)\n");
   printf("****************************************\n");
   printf("SUMMARY:\nColour\tSampleID\tMeanReadLen\tTotalSeq\tErrorCleaning\tLowCovSupsThresh\tLowCovNodesThresh\tPoolagainstWhichCleaned\n");
 
@@ -1097,21 +1111,24 @@ int main(int argc, char **argv){
 
   if (cmd_line->remv_low_covg_sups_threshold!=-1)
     {
-      //printf("Clip tips first\n");
-      //db_graph_clip_tips_in_union_of_all_colours(db_graph); zahara
+      printf("Clip tips first\n");
+      db_graph_clip_tips_in_union_of_all_colours(db_graph);
 
       printf("Remove low coverage supernodes covg (<= %d) \n", cmd_line->remv_low_covg_sups_threshold);
-      db_graph_remove_errors_considering_covg_and_topology(cmd_line->remv_low_covg_sups_threshold,db_graph, &element_get_covg_union_of_all_covgs, &element_get_colour_union_of_all_colours,
-							   &apply_reset_to_specific_edge_in_union_of_all_colours, &apply_reset_to_all_edges_in_union_of_all_colours,
+      db_graph_remove_errors_considering_covg_and_topology(cmd_line->remv_low_covg_sups_threshold,
+							   db_graph, 
+							   &element_get_covg_union_of_all_covgs, 
+							   &element_get_colour_union_of_all_colours,
+							   &apply_reset_to_specific_edge_in_union_of_all_colours, 
+							   &apply_reset_to_all_edges_in_union_of_all_colours,
 							   cmd_line->max_var_len);
       timestamp();
       printf("Error correction done\n");
       int z;
       for (z=0; z<NUMBER_OF_COLOURS; z++)
 	{
-	  db_graph_info->cleaning[z]->tip_clipping=false;
-	  db_graph_info->cleaning[z]->remv_low_cov_sups=true;
-	  db_graph_info->cleaning[z]->remv_low_cov_sups_thresh = cmd_line->remv_low_covg_sups_threshold;
+	  graph_info_set_remv_low_cov_sups(db_graph_info, z, cmd_line->remv_low_covg_sups_threshold);
+	  graph_info_set_tip_clipping(db_graph_info, z);
 	}
     }
   else if (cmd_line->remove_low_coverage_nodes==true)
@@ -1119,13 +1136,13 @@ int main(int argc, char **argv){
       timestamp();
       printf("Start to to remove nodes with covg (in union of all colours)  <= %d\n", cmd_line->node_coverage_threshold);
       db_graph_remove_low_coverage_nodes_ignoring_colours(cmd_line->node_coverage_threshold, db_graph);
+
       timestamp();
       printf("Error correction done\n");
       int z;
       for (z=0; z<NUMBER_OF_COLOURS; z++)
 	{
-	  db_graph_info->cleaning[z]->remv_low_cov_nodes=true;
-	  db_graph_info->cleaning[z]->remv_low_cov_nodes_thresh = cmd_line->node_coverage_threshold;
+	  graph_info_set_remv_low_cov_nodes(db_graph_info, z, cmd_line->node_coverage_threshold);
 	}
       
     }
@@ -1169,8 +1186,11 @@ int main(int argc, char **argv){
       timestamp();
       printf("Print contigs(supernodes) in the graph created by the union of all colours.\n");
       
-      db_graph_print_supernodes_defined_by_func_of_colours(cmd_line->output_supernodes, "", cmd_line->max_var_len,// max_var_len is the public face of maximum expected supernode size
-							   db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
+      db_graph_print_supernodes_defined_by_func_of_colours(cmd_line->output_supernodes, "", 
+							   cmd_line->max_var_len,// max_var_len is the public face of maximum expected supernode size
+							   db_graph, 
+							   &element_get_colour_union_of_all_colours, 
+							   &element_get_covg_union_of_all_covgs, 
 							   &print_appropriate_extra_supernode_info);
 
 
@@ -1382,7 +1402,7 @@ int main(int argc, char **argv){
 
       //reload the binary you dumped, clean off the edges, and then dump again.
       //malloc a new hash table. Only needs to be as large as you need.
-      float s = log(num_kmers_dumped_after_alignment/bucket_size)/log(2); 
+      //float s = log(num_kmers_dumped_after_alignment/bucket_size)/log(2); 
       // now 2^s = num_kmers_dumped_after_alignment/bucket_size, so s is my height
       dBGraph* db_graph2;
       printf("Reload and fix dangling edges in the temporary binary we have created\n");
@@ -1397,7 +1417,7 @@ int main(int argc, char **argv){
       GraphInfo* temp_info = graph_info_alloc_and_init();
 
       int num_c;//number of colours in binary      
-      long long  n  = load_multicolour_binary_from_filename_into_graph(tmp_dump,db_graph2, temp_info, &num_c);
+      load_multicolour_binary_from_filename_into_graph(tmp_dump,db_graph2, temp_info, &num_c);
 
 
       //this is why we are going to all this bother - cleaning edges
@@ -1413,7 +1433,7 @@ int main(int argc, char **argv){
 
   cmd_line_free(cmd_line);
 
-  printf("Cortex completed - have a nice day!\n");
+  printf("Cortex completed - y'all have a nice day!\n");
   return 0;
 }
 

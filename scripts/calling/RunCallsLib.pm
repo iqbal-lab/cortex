@@ -111,7 +111,7 @@ sub count_calls_in_callfile
     print "$cmd\n";
     my $ret = qx{$cmd};
     my $num=-1;
-    if ($ret =~ /\S+_var_(\d+)_5p_flank/)
+    if ($ret =~ /var_(\d+)_5p_flank/)
     {
 	$num = $1;
     }
@@ -138,6 +138,7 @@ sub make_sure_dirs_exist_and_create_if_necessary
 	    qx{$c};
 	}
     }
+
 }
 
 sub get_max_cleaning_for_given_sample
@@ -180,12 +181,18 @@ sub genotype_union
 {
     my ($ctx_bin, $colour_list, $kmer_size, $mem_height, $mem_width, 
 	$ref_colour, $file_to_genotype,$outfile, $logfile, 
-	$which_caller, $max_read_len, $expt_type, $genome_size) = @_;
-	
+	$which_caller, $max_read_len, $expt_type, $genome_size, $format) = @_;
+	#format is a proxy for whether or not the input is a ref genome
     	    
     if (!(-e $outfile))
 	    {
-		my $gt_cmd = $ctx_bin." --colour_list $colour_list  --kmer_size $kmer_size --mem_height $mem_height --mem_width $mem_width --ref_colour $ref_colour --gt $file_to_genotype,$outfile,$which_caller --max_read_len $max_read_len  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size > $logfile  2>&1  ";
+		my $gt_cmd = $ctx_bin." --colour_list $colour_list  --kmer_size $kmer_size --mem_height $mem_height --mem_width $mem_width --ref_colour $ref_colour --gt $file_to_genotype,$outfile,$which_caller --max_read_len $max_read_len  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size ";
+		if ($format eq "FASTA")
+		{
+		    printf("Note - since you passed in fasta, we assume these are reference genomes, with a very low per-base error rate, of 0.0000001, in order to genotype\n");
+		    $gt_cmd = $gt_cmd." --estimated_error_rate 0.000001 ";
+		}
+		$gt_cmd = $gt_cmd." > $logfile  2>&1  ";
 		print "$gt_cmd\n";
 		my $gt_ret = qx{$gt_cmd};
 		print "$gt_ret\n";

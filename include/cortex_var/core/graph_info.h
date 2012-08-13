@@ -71,6 +71,17 @@ void graph_info_set_seq(GraphInfo* ginfo, int colour, long long num_bp);
 long long graph_info_increment_seq(GraphInfo* ginfo, int colour, long long num_bp);
 //set mean read length in a colour
 void graph_info_set_mean_readlen(GraphInfo* ginfo, int colour, int len);
+void graph_info_set_tip_clipping(GraphInfo* ginfo, int colour);
+void graph_info_unset_tip_clipping(GraphInfo* ginfo, int colour);
+void graph_info_set_remv_low_cov_sups(GraphInfo* ginfo, int colour, int thresh);
+void graph_info_unset_remv_low_cov_sups(GraphInfo* ginfo, int colour);
+void graph_info_set_remv_low_cov_nodes(GraphInfo* ginfo, int colour, int thresh);
+void graph_info_UNset_remv_low_cov_nodes(GraphInfo* ginfo, int colour);
+void graph_info_set_seq_err(GraphInfo* ginfo, int col, long double err);
+
+void graph_info_set_specific_colour_to_cleaned_against_pool(GraphInfo* ginfo, int colour, char* multicol_binary, int colour_in_multicol);
+void graph_info_unset_specific_colour_from_cleaned_against_pool(GraphInfo* ginfo, int colour);
+
 //update mean read length in a colour, eg when you merge a new binary
 int graph_info_update_mean_readlen(GraphInfo* ginfo, int colour, int previous_mean, long long previous_seq, int mean_readlen_in_added_data, long long added_seq);
 void graph_info_update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,

@@ -689,12 +689,14 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity
   if (genotype==hom_one)
     {
       //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no unique segment, one shared segment
-      return covg_branch_1*log(theta_one) - theta_one - gsl_sf_lnfact(covg_branch_1)  + covg_branch_2 *log(error_rate_per_base) ;
+      return covg_branch_1*log(theta_one) - theta_one
+	- gsl_sf_lnfact(covg_branch_1)  + covg_branch_2 *log(error_rate_per_base) ;
     }
   else if (genotype==hom_other)
     {
       //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no unique segment, one shared segment
-      return covg_branch_2*log(theta_other) - theta_other - gsl_sf_lnfact(covg_branch_2) + covg_branch_1 *log(error_rate_per_base)  ;
+      return covg_branch_2*log(theta_other) - theta_other
+	- gsl_sf_lnfact(covg_branch_2) + covg_branch_1 *log(error_rate_per_base)  ;
     }
   else if (genotype==het)
     {

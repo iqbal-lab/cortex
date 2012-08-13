@@ -82,9 +82,12 @@ void test_dump_load_sv_trio_binary()
 
   graph_info_set_seq(ginfo, 0, seq_read);
   graph_info_set_mean_readlen(ginfo, 0, 5);
-
-  db_graph_dump_binary("../data/tempfiles_can_be_deleted/dump_cortex_var_graph.ctx",
-   &db_node_condition_always_true, db_graph_pre, ginfo, BINVERSION);
+  graph_info_set_specific_colour_to_cleaned_against_pool(ginfo, 0, "zammo.ctx", 401);
+  graph_info_set_seq_err(ginfo, 0, 0.456);
+  graph_info_set_remv_low_cov_sups(ginfo, 0, 178);
+   
+  db_graph_dump_binary("../data/tempfiles_can_be_deleted/dump_cortex_var_graph.ctx", 
+		&db_node_condition_always_true, db_graph_pre, ginfo, BINVERSION);
 
 
   hash_table_free(&db_graph_pre);
@@ -104,6 +107,14 @@ void test_dump_load_sv_trio_binary()
   CU_ASSERT(ginfo->mean_read_length[0]==5);
   CU_ASSERT(ginfo->total_sequence[0]==seq_read);
 
+  CU_ASSERT(ginfo->seq_err[0]-0.456<0.0001);
+  CU_ASSERT(ginfo->cleaning[0]->tip_clipping==false);
+  CU_ASSERT(ginfo->cleaning[0]->remv_low_cov_sups==true);
+  CU_ASSERT(ginfo->cleaning[0]->remv_low_cov_sups_thresh==178);
+  CU_ASSERT(ginfo->cleaning[0]->remv_low_cov_nodes==false);
+  CU_ASSERT(ginfo->cleaning[0]->remv_low_cov_nodes_thresh==-1);
+  CU_ASSERT(strcmp(ginfo->cleaning[0]->name_of_graph_against_which_was_cleaned, "zammo.ctx (colour 401)")==0);
+  CU_ASSERT(ginfo->cleaning[0]->len_name_of_graph_against_which_was_cleaned==strlen("zammo.ctx (colour 401)"));
   // load_multicolour_binary_data_from_filename_into_graph returns total number
   // of unique kmers loaded, times kmer_length
   CU_ASSERT_EQUAL(seq_length_post,15);
@@ -513,16 +524,16 @@ void test_load_singlecolour_binary()
   dBGraph* db_graph_post = hash_table_new(number_of_bits, bucket_size,
                                           10, kmer_size);
 
-  int mean_readlen = 0;
-  long long total_seq = 0;
+  int mean_readlen=0;
+  long long total_seq=0;
 
-  graph_info_initialise(ginfo);// zero it, and see if you get your data back
-
-  int seq_length_post
-    = load_single_colour_binary_data_from_filename_into_graph(
-        "../data/test/pop_graph/dump_single_colour_cortex_var_graph.ctx",
-        db_graph_post, &mean_readlen, &total_seq, true, individual_edge_array,
-        0, false, 0, false);
+  char dummy[MAX_LEN_SAMPLE_NAME];
+  dummy[0]='\0';
+  graph_info_initialise(ginfo);//zero it, and see if you get your data back
+  int seq_length_post = load_single_colour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_single_colour_cortex_var_graph.ctx", 
+										db_graph_post,
+										&mean_readlen, &total_seq,
+										true, individual_edge_array,0, false,0, dummy, false);
 
   CU_ASSERT(seq_length_post==25);//kmers loaded * length of kmer
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post), 5);
@@ -773,7 +784,223 @@ void test_load_individual_binaries_into_sv_trio()
 
     if(test_element1_person2 == NULL)
     {
-      printf("test_element1_person2 is NULL");
+      
+      //prepare a hash table
+      
+      int kmer_size = 31;
+      int number_of_bits = 0;
+      int bucket_size = 41;
+      //int seq_len=0;
+      int max_retries=82;
+      BinaryKmer tmp_kmer1, tmp_kmer2;
+      
+      dBGraph* db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+      
+      
+
+
+     //first dump 3 single-colour graphs
+      
+      //Person 0: created binary from this fasta
+      //  >read1 taken from an Alu
+      //  GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGGGCTGTAGTGCGCTATGCC
+      
+      //Person 1:
+      //  > read1 different line from same Alu as person1, so will be supernode of its own
+      //  GATCGGGTGTCCGCACTAAGTTCGGCATCAATATGGTGACCTCCCGGGAG
+      
+      //Person2:
+      //  > read1 matches first kmer of person 0, followed by a final A not G
+      //  GTGGGAGGATCGCTTGAGTCCAGGAGTTCTGA
+
+
+     boolean remove_duplicates_single_endedly=false;
+     boolean break_homopolymers=false;
+     long long dup_reads=0;
+     int homopolymer_cutoff=0;
+     long long bad_reads=0;
+     long long seq_read=0;
+     long long seq_loaded1=0;
+     long long seq_loaded2=0;
+     long long seq_loaded3=0;
+     load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person0.fasta", &seq_read, &seq_loaded1,NULL, 
+									&bad_reads, &dup_reads, 200,
+									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+									db_graph, individual_edge_array,0);
+
+     GraphInfo* ginfo=graph_info_alloc_and_init();
+
+     graph_info_set_seq(ginfo, 0, seq_loaded1);
+     db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person0_kmer31.ctx", 
+						   &db_node_condition_always_true, db_graph, ginfo, BINVERSION);
+     hash_table_free(&db_graph);
+
+
+     db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+     load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person1.fasta", &seq_read,&seq_loaded2, NULL, 
+									&bad_reads, &dup_reads, 200,
+									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+									db_graph, individual_edge_array,0);
+     graph_info_initialise(ginfo);
+     graph_info_set_seq(ginfo, 0, seq_loaded2);
+
+     db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person1_kmer31.ctx", 
+						   &db_node_condition_always_true, db_graph, ginfo, BINVERSION);
+     hash_table_free(&db_graph);
+
+
+
+
+     db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+     load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person2.fasta", &seq_read,&seq_loaded3, NULL, 
+									&bad_reads, &dup_reads, 200,
+									remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff,
+									db_graph, individual_edge_array,0);
+     graph_info_initialise(ginfo);
+     graph_info_set_seq(ginfo, 0, seq_loaded3);
+
+     db_graph_dump_single_colour_binary_of_colour0("../data/test/pop_graph/fasta_for_dumping_by_graph_and_reload_by_sv_trio_person2_kmer31.ctx", 
+						   &db_node_condition_always_true, db_graph, ginfo, BINVERSION);
+     hash_table_free(&db_graph);
+
+
+     
+     db_graph = hash_table_new(number_of_bits,bucket_size,max_retries,kmer_size);
+     graph_info_initialise(ginfo);
+     int first_colour=0;
+     load_population_as_binaries_from_graph("../data/test/pop_graph/trio_filelist_for_testing_loading_singlecolour_bins_into_multicol_bin", first_colour, true, db_graph, ginfo,
+					    false, 0, false);
+
+     CU_ASSERT(ginfo->total_sequence[0]==seq_loaded1);
+     CU_ASSERT(ginfo->total_sequence[1]==seq_loaded2);
+     CU_ASSERT(ginfo->total_sequence[2]==seq_loaded3);
+      
+     CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph), 41);
+     
+     
+     //start with a kmer that should be in person0 and person 2 only
+     
+     dBNode* test_element1_person0 = db_graph_find_node_restricted_to_specific_person_or_population(
+												     element_get_key(seq_to_binary_kmer("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
+												     db_graph, individual_edge_array, 0);
+      
+      //look for reverse complement of GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG
+      dBNode* test_element2_person0 = db_graph_find_node_restricted_to_specific_person_or_population(
+												     element_get_key(seq_to_binary_kmer("CAGAACTCCTGGACTCAAGCGATCCTCCCAC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
+												     db_graph, individual_edge_array, 0);
+      
+      dBNode* test_element1_person1 = db_graph_find_node_restricted_to_specific_person_or_population(
+												     element_get_key(seq_to_binary_kmer("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
+												     db_graph, individual_edge_array, 1);
+      
+      //look for reverse complement of GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG
+      dBNode* test_element2_person1 = db_graph_find_node_restricted_to_specific_person_or_population(
+												     element_get_key(seq_to_binary_kmer("CAGAACTCCTGGACTCAAGCGATCCTCCCAC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
+												     db_graph, individual_edge_array, 1);
+      
+      
+      dBNode* test_element1_person2 = db_graph_find_node_restricted_to_specific_person_or_population(
+												     element_get_key(seq_to_binary_kmer("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
+												     db_graph, individual_edge_array, 2);
+      
+      //look for reverse complement of GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG
+      dBNode* test_element2_person2 = db_graph_find_node_restricted_to_specific_person_or_population(
+												     element_get_key(seq_to_binary_kmer("CAGAACTCCTGGACTCAAGCGATCCTCCCAC",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
+												     db_graph, individual_edge_array, 2);
+      
+      
+      
+      CU_ASSERT(test_element1_person0 !=NULL);
+      CU_ASSERT(test_element2_person0 !=NULL);
+      CU_ASSERT(test_element1_person0==test_element2_person0);
+      CU_ASSERT(test_element1_person1 ==NULL);
+      CU_ASSERT(test_element2_person1 ==NULL);
+      CU_ASSERT(test_element1_person2 !=NULL);
+      CU_ASSERT(test_element2_person2 !=NULL);
+      CU_ASSERT(test_element1_person2==test_element2_person0);
+      CU_ASSERT(test_element1_person0==test_element1_person2);
+      
+      
+      //Now some kmers that exist in person 2 only
+      
+      dBNode* test_element3_person0 = db_graph_find_node_restricted_to_specific_person_or_population(element_get_key(seq_to_binary_kmer("GATCGGGTGTCCGCACTAAGTTCGGCATCAA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
+												     db_graph, individual_edge_array, 0);
+      
+      dBNode* test_element3_person1 = db_graph_find_node_restricted_to_specific_person_or_population(element_get_key(seq_to_binary_kmer("GATCGGGTGTCCGCACTAAGTTCGGCATCAA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
+												     db_graph, individual_edge_array, 1);
+      
+      dBNode* test_element3_person2 = db_graph_find_node_restricted_to_specific_person_or_population(element_get_key(seq_to_binary_kmer("GATCGGGTGTCCGCACTAAGTTCGGCATCAA",  kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
+												     db_graph, individual_edge_array, 2);
+      
+      
+      CU_ASSERT(test_element3_person0==NULL);
+      CU_ASSERT(test_element3_person1!=NULL);
+      CU_ASSERT(test_element3_person2==NULL);
+      
+      if (test_element3_person1==NULL)
+	{
+	  printf("test_element3_person1 is NULL");
+	}
+      if (test_element1_person2==NULL)
+	{
+	  printf("test_element1_person2 is NULL");
+	}
+      
+      //now check the edges
+      
+      //in person1 we know this kmer GATCGGGTGTCCGCACTAAGTTCGGCATCAA has an Thymine edge. This is in the forward direction with respect to the node, as the reverse complement
+      //  of GATCGGGTGTCCGCACTAAGTTCGGCATCAA starts with an T, and so is bigger
+      Nucleotide base;
+      CU_ASSERT(db_node_has_precisely_one_edge(test_element3_person1, forward,&base, individual_edge_array, 1)==true);
+      CU_ASSERT(db_node_edge_exist(test_element3_person1, Thymine, forward, individual_edge_array, 1)==true);
+      
+      
+      //and the coup de grace. Does this kmer GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG node have two different edges, for person 0 and person 2. ie does person 0 have precisely a G,
+      // and person 2 an A?
+      
+      CU_ASSERT(db_node_has_precisely_one_edge(test_element1_person0, reverse,&base, individual_edge_array, 0)==true);
+      CU_ASSERT(db_node_edge_exist(test_element1_person0, Guanine, reverse, individual_edge_array, 0)==true);
+      CU_ASSERT(db_node_has_precisely_one_edge(test_element1_person2, reverse,&base, individual_edge_array, 2)==true);
+      CU_ASSERT(db_node_edge_exist(test_element1_person2, Adenine, reverse, individual_edge_array, 2)==true);
+      
+      
+      //from now on we are pretty happy. It's loading the right nodes, and putting the edges in the right place.
+      //the following is not ideal from a modular code point of view - I'm going to use code in db_graph_population to get supernodes, and see if they are what I expect.
+      
+      
+      int max_expected_supernode_length=30;
+      dBNode * nodes_path[max_expected_supernode_length];
+      Orientation orientations_path[max_expected_supernode_length];
+      Nucleotide labels_path[max_expected_supernode_length];
+      char seq[max_expected_supernode_length+db_graph->kmer_size+1];
+      
+      double avg_coverage=0;
+      int max_coverage=0;
+      int min_coverage=0;
+      boolean is_cycle=false;
+      
+      
+      db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(test_element1_person0, reverse, max_expected_supernode_length, Guanine, &db_node_action_do_nothing,
+									   nodes_path,orientations_path, labels_path, seq,
+									   &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
+									   db_graph, individual_edge_array, 0);
+      
+      CU_ASSERT_STRING_EQUAL("GGCTGTAGTGCGCTATGCC", seq);
+      
+      
+      db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(test_element1_person0, reverse, max_expected_supernode_length, Adenine, &db_node_action_do_nothing,
+									   nodes_path,orientations_path, labels_path, seq,
+									   &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
+									   db_graph, individual_edge_array, 2);
+      
+      CU_ASSERT_STRING_EQUAL("A", seq);
+      
+      
+      
+      
+      
+      graph_info_free(ginfo);
+      hash_table_free(&db_graph);
     }
 
     // Now check the edges
@@ -1171,10 +1398,10 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
 
   // last read contains two kmers that are in the graph, but which have no edge between them. This function is not sensitive to that, and should just get one window
 
-  printf("Start interesting\n");
   len = read_sequence_from_fastq(fp, seq, max_read_length,ascii_fq_offset);
   get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq, seq->qual, len, fq_quality_cutoff,
     windows, max_windows, max_kmers, db_graph);
+
   CU_ASSERT(windows->nwindows==1);
   CU_ASSERT((windows->window[0]).nkmers==5);
 
@@ -5595,11 +5822,12 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
   // (ie colour 0)
   int mean_len;
   long long totseq;
+  char dummy[MAX_LEN_SAMPLE_NAME];
+  dummy[0]='\0';
 
-  load_single_colour_binary_data_from_filename_into_graph(
-    "../data/test/pop_graph/dump_cortex_var_graph.singlecol.ctx",
-    db_graph_post, &mean_len, &totseq,
-    false, individual_edge_array, 1 ,true, 0, false);
+  load_single_colour_binary_data_from_filename_into_graph("../data/test/pop_graph/dump_cortex_var_graph.singlecol.ctx",db_graph_post,&mean_len, &totseq,
+							  false,individual_edge_array,1,true,0, dummy, false);
+
 
 
   BinaryKmer tmp_kmer1, tmp_kmer2;

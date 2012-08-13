@@ -113,7 +113,14 @@ long long calculate_mean(long long* array, long long len)
       sum += i*array[i];
       num += array[i];
     }
-  return  (sum/num);
+  if (num>0)
+    {
+      return  (sum/num);
+    }
+  else
+    {
+      return 0;
+    }
 }
 
 void set_int_array_to_zero(int* array, int len)

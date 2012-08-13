@@ -2489,9 +2489,9 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	      Nucleotide label;
 	      Orientation next_orientation;
 	     
-	      dBNode * lst_node = db_graph_get_next_node_in_subgraph_defined_by_func_of_colours(nodes5p[length_flank5p_reverse-1],orientations5p[length_flank5p_reverse-1],
-												&next_orientation, labels_flank5p[length_flank5p_reverse-1],&label,
-												db_graph, get_colour);
+	      db_graph_get_next_node_in_subgraph_defined_by_func_of_colours(nodes5p[length_flank5p_reverse-1],orientations5p[length_flank5p_reverse-1],
+									    &next_orientation, labels_flank5p[length_flank5p_reverse-1],&label,
+									    db_graph, get_colour);
 	      
 	      length_flank5p = db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(nodes5p[length_flank5p_reverse],
 														opposite_orientation(orientations5p[length_flank5p_reverse]),
@@ -3495,10 +3495,10 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
   Nucleotide *  path_labels;
   char * seq;
   boolean is_cycle;
-  double avg_coverage;
-  int min,max;
-  
-  
+  double avg_coverage=0;
+  int min=0;
+  int max=0;
+
   path_nodes        = calloc(max_length,sizeof(dBNode*));
   path_orientations = calloc(max_length,sizeof(Orientation));
   path_labels       = calloc(max_length,sizeof(Nucleotide));
@@ -3523,9 +3523,9 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
       if (length>0){	
 	sprintf(name,"node_%i",count_nodes);
 
-	print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout1,name,length,avg_coverage,min,max,
-									     path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
-									     db_graph->kmer_size,true, get_colour, get_covg);
+	print_ultra_minimal_fasta_from_path(fout1,name,length,
+					    path_nodes[0],path_orientations[0], seq,
+					    db_graph->kmer_size,true);
 	if (length==max_length){
 	  printf("contig length equals max length [%i] for node_%i\n",max_length,count_nodes);
 	}
@@ -3538,9 +3538,9 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 	if (do_we_print_singletons==true)
 	  {
 	    sprintf(name,"node_%qd",count_sing);
-	    print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(fout2,name,length,avg_coverage,min,max,
-										 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
-										 db_graph->kmer_size,true, get_colour, get_covg);
+	    print_ultra_minimal_fasta_from_path(fout2,name,length,
+						path_nodes[0],path_orientations[0],seq,
+						db_graph->kmer_size,true);
 	    //fprintf(fout2, "extra information:\n");
 	    print_extra_info(path_nodes, path_orientations, length, fout2);
 	  }
@@ -3574,8 +3574,6 @@ void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int 
 							    boolean (*condition)(dBNode**, int, int*), int* bins_1_not_2, int* bins_2_not_1){
 
 
-  int count_nodes=0;
-  
   dBNode * *    path_nodes;
   Orientation * path_orientations;
   Nucleotide *  path_labels;
@@ -3594,7 +3592,6 @@ void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int 
 
   void parse_supernode(dBNode * node){
     
-    char name[100];
 
     if (db_node_check_status(node, none) == true)
       {
@@ -3702,7 +3699,7 @@ void db_graph_get_covgs_in_all_colours_of_col0union1_sups(int max_length, dBGrap
     return cov;
   }
 
-  int count_nodes=0;
+
   
   dBNode * *    path_nodes;
   Orientation * path_orientations;
@@ -3722,7 +3719,6 @@ void db_graph_get_covgs_in_all_colours_of_col0union1_sups(int max_length, dBGrap
 
   void parse_supernode(dBNode * node, int* pgf, int* cox, int* data1, int* data2, int* data3, int* data4, int* data5){
     
-    char name[100];
 
     if (db_node_check_status(node, none) == true)
       {
@@ -3781,7 +3777,7 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
     return cov;
   }
 
-  int count_nodes=0;
+
   
   dBNode * *    path_nodes;
   Orientation * path_orientations;
@@ -3803,8 +3799,6 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
 
   void parse_supernode(dBNode * node){
     
-    char name[100];
-
     if (db_node_check_status(node, none) == true)
       {
 	int length = db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_length,&db_node_action_set_status_visited,
@@ -3938,402 +3932,6 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
   free(path_labels);
   free(seq);
 }
-
-
-
-
-void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length, FILE* fout, GraphAndModelInfo* model_info)
-{
-
-  int col_pgf_gdna = 0; //from pure PGF gDNA cell line
-  int col_cox_gdna = 1; //from pure COX gDNA cell line
-  int col_pgf_rna = 2; //from pure PGF RNA from cell line
-  int col_cox_rna = 3; //from pure COX RNA from cell line
-  int col_data1 = 4;
-  int col_data2 = 5;
-  int col_data3 = 6;
-  int col_data4 = 7;
-  int col_data5 = 8;
-  int col_PGF_reference = 9; //for choosing ref allele for VCF
-
-  // int col_PGF_ref = 9;
-  //int col_COX_ref = 10;
-  int datacols[]={4,5,6,7,8};
-  int num_datacols=5;
-
-  Edges get_colour_PGF_GDNA(const dBNode* e)
-  {
-    Edges edges=get_edge_copy(*e, individual_edge_array,col_pgf_gdna);
-    return edges;
-  }
-  Edges get_colour_COX_GDNA(const dBNode* e)
-  {
-    Edges edges=get_edge_copy(*e, individual_edge_array,col_cox_gdna);
-    return edges;
-  }
-  Edges get_colour_data1(const dBNode* e)
-  {
-    Edges edges=get_edge_copy(*e, individual_edge_array,col_data1);
-    return edges;
-  }
-  Edges get_colour_data2(const dBNode* e)
-  {
-    Edges edges=get_edge_copy(*e, individual_edge_array,col_data2);
-    return edges;
-  }
-  Edges get_colour_data3(const dBNode* e)
-  {
-    Edges edges=get_edge_copy(*e, individual_edge_array,col_data3);
-    return edges;
-  }
-  Edges get_colour_data4(const dBNode* e)
-  {
-    Edges edges=get_edge_copy(*e, individual_edge_array,col_data4);
-    return edges;
-  }
-  Edges get_colour_data5(const dBNode* e)
-  {
-    Edges edges=get_edge_copy(*e, individual_edge_array,col_data5);
-    return edges;
-  }
-  int get_covg_PGF_GDNA(const dBNode* e)
-  {
-    return e->coverage[col_pgf_gdna];
-  }
-  int get_covg_COX_GDNA(const dBNode* e)
-  {
-    return e->coverage[col_cox_gdna];
-  }
-  int get_covg_data1(const dBNode* e)
-  {
-    return e->coverage[col_data1];
-  }
-  int get_covg_data2(const dBNode* e)
-  {
-    return e->coverage[col_data2];
-  }
-  int get_covg_data3(const dBNode* e)
-  {
-    return e->coverage[col_data3];
-  }
-  int get_covg_data4(const dBNode* e)
-  {
-    return e->coverage[col_data4];
-  }
-  int get_covg_data5(const dBNode* e)
-  {
-    return e->coverage[col_data5];
-  }
-
-  int i;
-  for (i=0; i<num_datacols; i++)
-    {
-      int datac=datacols[i];
-
-      
-      /*
-
-      //mark bubbles in PGF GDNA to be ignored
-      db_graph_detect_vars(NULL, max_length, db_graph, 
-			   &detect_vars_condition_always_false,
-			   &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
-			   &db_node_action_set_status_visited, //mark everything else as visited
-			   get_colour_PGF_GDNA, get_covg_PGF_GDNA, &print_no_extra_info, false, NULL, NULL);
-      
-      //unset the nodes marked as visited, but not those marked as to be ignored
-      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
-      
-      //same for COX GDNA
-      db_graph_detect_vars(NULL, max_length, db_graph, 
-			   &detect_vars_condition_always_false,
-			   &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
-			   &db_node_action_set_status_visited, //mark everything else as visited
-			   get_colour_COX_GDNA, get_covg_COX_GDNA, &print_no_extra_info, false, NULL, NULL);
-      
-      //unset the nodes marked as visited, but not those marked as to be ignored
-      hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
-
-      */
-
-      //detect bubbles in our dataset, and print ratio of covgs on the two alleles, 
-      // PROVIDED the two alleles distinguish COX and PGF gDNA (exon capture), AND RNA
-      int list[]={datac};
-      int len_list=1;
-
-      boolean splits_two_colours(VariantBranchesAndFlanks* var, int col1, int col2)
-      {
-	boolean all_br1_nodes_in_col1=true;
-        boolean all_br1_nodes_in_col2=true;
-        boolean all_br2_nodes_in_col1=true;
-        boolean all_br2_nodes_in_col2=true;
-	boolean no_br1_nodes_in_col1=true;
-        boolean no_br1_nodes_in_col2=true;
-        boolean no_br2_nodes_in_col1=true;
-        boolean no_br2_nodes_in_col2=true;
-	int p;
-	for (p=1; p<var->len_one_allele; p++)
-	  {
-	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col1)==0)
-	      {
-		all_br1_nodes_in_col1=false;
-	      }
-	    else
-	      {
-		no_br1_nodes_in_col1=false;
-	      }
-	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col2)==0)
-	      {
-		all_br1_nodes_in_col2=false;
-	      }
-	    else
-	      {
-		no_br1_nodes_in_col2=false;
-	      }
-	  }
-	for (p=1; p<var->len_other_allele; p++)
-	  {
-	    if (db_node_get_coverage(var->other_allele[p], individual_edge_array, col1)==0)
-	      {
-		all_br2_nodes_in_col1=false;
-	      }
-	    else
-	      {
-		no_br2_nodes_in_col1=false;
-	      }
-	    if (db_node_get_coverage(var->other_allele[p], individual_edge_array, col2)==0)
-	      {
-		all_br2_nodes_in_col2=false;
-	      }
-	    else
-	      {
-		no_br2_nodes_in_col2=false;
-	      }
-	  }
-
-	if (  (all_br1_nodes_in_col1==true) && (all_br1_nodes_in_col2==false)
-	      && (all_br2_nodes_in_col2==true) && (all_br2_nodes_in_col1==false) )
-	  {
-	    return true;
-	  }
-	else if (  (all_br1_nodes_in_col2==true) && (all_br1_nodes_in_col1==false)
-	      && (all_br2_nodes_in_col1==true) && (all_br2_nodes_in_col2==false) )
-	  {
-	    return true;
-	  }
-	else
-	  {
-	    return false;
-	  }
-      }
-
-
-      boolean splits_gDNA_and_RNA(VariantBranchesAndFlanks* var)
-      {
-	return splits_two_colours(var, col_pgf_gdna, col_cox_gdna)
-	  && splits_two_colours(var, col_pgf_rna, col_cox_rna);
-      }
-
-      /*
-      boolean condition_bubble_splits_PGF_and_COX_gDNA_and_RNA(VariantBranchesAndFlanks* var)
-      {
-	int p;
-	boolean all_br1_nodes_in_PGF_gDNA=true;
-	boolean all_br1_nodes_in_COX_gDNA=true;
-	boolean all_br2_nodes_in_PGF_gDNA=true;
-	boolean all_br2_nodes_in_COX_gDNA=true;
-	boolean all_br1_nodes_in_PGF_RNA=true;
-	boolean all_br1_nodes_in_COX_RNA=true;
-	boolean all_br2_nodes_in_PGF_RNA=true;
-	boolean all_br2_nodes_in_COX_RNA=true;
-	for (p=1; p<var->len_one_allele; p++)
-	  {
-	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col_pgf_gdna)==0)
-	      {
-		all_br1_nodes_in_PGF_gDNA=false;
-	      }
-	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col_cox_gdna)==0)
-	      {
-		all_br1_nodes_in_COX_gDNA=false;
-	      }
-
-	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col_pgf_rna)==0)
-	      {
-		all_br1_nodes_in_PGF_RNA=false;
-	      }
-	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col_cox_rna)==0)
-	      {
-		all_br1_nodes_in_COX_RNA=false;
-	      }
-	  }
-	for (p=1; p<var->len_other_allele; p++)
-	  {
-	    if (db_node_get_coverage(var->other_allele[p], individual_edge_array, col_pgf_gdna)==0)
-	      {
-		all_br2_nodes_in_PGF_gDNA=false;
-	      }
-	    if (db_node_get_coverage(var->other_allele[p], individual_edge_array, col_cox_gdna)==0)
-	      {
-		all_br2_nodes_in_COX_gDNA=false;
-	      }
-	    if (db_node_get_coverage(var->other_allele[p], individual_edge_array, col_pgf_rna)==0)
-	      {
-		all_br2_nodes_in_PGF_RNA=false;
-	      }
-	    if (db_node_get_coverage(var->other_allele[p], individual_edge_array, col_cox_rna)==0)
-	      {
-		all_br2_nodes_in_COX_RNA=false;
-	      }
-
-	  }
-
-	//exclude sites that are not hom in the "hom" lines
-	if ((all_br1_nodes_in_PGF_gDNA==true) && (all_br2_nodes_in_PGF_gDNA==true) )
-	  {
-	    return false;
-	  }
-	else if ( (all_br1_nodes_in_COX_gDNA==true) && (all_br2_nodes_in_COX_gDNA==true) )
-	  {
-	    return false;
-	  }
-	else
-	  {
-	    return true;//not a bubble in either COX or PGF gDNA
-	  }
-		  
-      }
-
-      boolean condition_splits_haplotypes(VariantBranchesAndFlanks* var)
-      {
-	if (detect_vars_condition_branches_not_marked_to_be_ignored(var)==false)
-	  {
-	    return false;
-	  }
-
-	boolean all_br1_nodes_in_COX=true;
-	boolean no_br1_nodes_in_COX = true;
-	boolean all_br1_nodes_in_PGF=true;
-	boolean no_br1_nodes_in_PGF=true;
-
-	boolean all_br2_nodes_in_COX=true;
-	boolean no_br2_nodes_in_COX = true;
-	boolean all_br2_nodes_in_PGF=true;
-	boolean no_br2_nodes_in_PGF=true;
-	int p;
-	for (p=1; p<var->len_one_allele; p++)
-	  {
-	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col_pgf_rna)==0)
-	      {
-		all_br1_nodes_in_PGF=false;
-	      }
-	    else
-	      {
-		no_br1_nodes_in_PGF=false;
-	      }
-	    if (db_node_get_coverage(var->one_allele[p], individual_edge_array, col_cox_rna)==0)
-	      {
-		all_br1_nodes_in_COX=false;
-	      }
-	    else
-	      {
-		no_br1_nodes_in_COX=false;
-	      }
-	  }
-	for (p=1; p<var->len_other_allele; p++)
-	  {
-	    if (db_node_get_coverage(var->other_allele[p], individual_edge_array, col_pgf_rna)==0)
-	      {
-		all_br2_nodes_in_PGF=false;
-	      }
-	    else
-	      {
-		no_br2_nodes_in_PGF=false;
-	      }
-	    if (db_node_get_coverage(var->other_allele[p], individual_edge_array, col_cox_rna)==0)
-	      {
-		all_br2_nodes_in_COX=false;
-	      }
-	    else
-	      {
-		no_br2_nodes_in_COX=false;
-	      }
-	  }
-	
-	
-	if ( (all_br1_nodes_in_PGF==true) && (no_br1_nodes_in_COX==true) && (all_br2_nodes_in_COX==true) && (no_br2_nodes_in_PGF==true) )
-	  {
-	    return true;
-	  }
-	else if ((all_br1_nodes_in_COX==true)&&(no_br1_nodes_in_PGF==true) &&(all_br2_nodes_in_PGF==true) && (no_br2_nodes_in_COX==true)   )
-	  {
-	    return true;
-	  }
-	else
-	  {
-	    return false;
-	  }
-      }
-
-      boolean condition_splits_haplotypes_and_not_in_hom_gDNA(VariantBranchesAndFlanks* var)
-      {
-	return (condition_bubble_not_in_PGF_or_COX_gDNA(var) && condition_splits_haplotypes(var) );
-      }
-*/
-      void print_covg_ratio(VariantBranchesAndFlanks* var, FILE* fptr_out)
-      {
-	boolean too_short=false;
-	int cov1 = count_reads_on_allele_in_specific_colour(var->one_allele,   var->len_one_allele,   datac, &too_short);
-	int cov2 = count_reads_on_allele_in_specific_colour(var->other_allele, var->len_other_allele, datac, &too_short);
-	if (too_short)
-	  {
-	    fprintf(fptr_out, "COLOUR %d\tVAR\tIGNORE_TOO_SHORT\n", datac);
-	  }
-	else
-	  {
-	    if ((cov1==cov2) && (cov1==0) )
-	      {
-		fprintf(fptr_out, "COLOUR %d\tVAR\tIGNORE_BOTH_ALLELES_NO_COVG_IMPOSSIBLE\n", datac);
-	      }
-	    else if (cov1>=cov2)
-	      {
-		float ratio = (float)cov1/((float)(cov1+cov2));
-		fprintf(fptr_out, "COLOUR %d\tVAR\tALLELE_RATIO %.2f\t%d\n", datac, ratio, cov1);
-	      }
-	    else
-	      {
-		float ratio = (float)cov2/((float)(cov1+cov2));
-		fprintf(fptr_out, "COLOUR %d\tVAR\tALLELE_RATIO %.2f\t%d\n", datac, ratio, cov2);
-	      }
-	  }
-      }
-
-      boolean model_selection_condition(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info)
-      {
-	return true;
-      }
-
-      db_graph_detect_vars_given_lists_of_colours(fout, max_length, db_graph,
-						  list, len_list, list, len_list,
-						  &splits_gDNA_and_RNA,
-						  //&detect_vars_condition_always_true,
-						  //&condition_splits_haplotypes,
-						  //&print_covg_ratio,
-						  &print_standard_extra_info,
-						  false, NULL, NULL, false, &model_selection_condition, model_info);
-
-
-
-      //proper cleanup
-      hash_table_traverse(&db_node_action_set_status_none, db_graph);
-    }
-
-
-
-  
-
-}
-
-
-
 
 
 
@@ -4780,7 +4378,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 
 	    return is_supernode_pruned;//do nothing. This supernode has no interior, is just 1 or 2 nodes, so cannot prune it
 	  }
-	else //if (length_sup <= 2*db_graph->kmer_size +2)
+	else if (length_sup <= 2*db_graph->kmer_size +2)
 	  {
 	    int i;
 	    //to look like an error, must all have actual coverage, caused by an actual errored read, BUT must have low covg, <=threshold
@@ -4806,13 +4404,12 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 							);
 		  }
 	      }
-	    //else//interior nodes do not look like error
-	    //  {
+	    else//interior nodes do not look like error
+	      {
 		//don't prune - some interior ode has high coverage
-	    //	is_supernode_pruned=false;
-
-	    //	printf("zahara - DO NOT PRUNE - soe interior node has covg > thresh \n");
-	    //}
+	    	is_supernode_pruned=false;
+	      }
+	  
 	  }
       }
   else//debug only
@@ -8207,7 +7804,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      */
 	      
 	      Orientation dir_traversing_sup=forward;
-	      int coord_of_last_node_where_two_branches_agree=left_most_coord_of_var_branch_in_supernode_array-1;//this should not be <0 as we have a flank
+
 	      if (traverse_sup_left_to_right==false)
 		{
 		  dir_traversing_sup=reverse;
@@ -9693,7 +9290,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	      */
 
 	      Orientation dir_traversing_sup=forward;
-	      int coord_of_last_node_where_two_branches_agree=left_most_coord_of_var_branch_in_supernode_array-1;//this should not be <0 as we have a flank
+
 	      if (traverse_sup_left_to_right==false)
 		{
 		  dir_traversing_sup=reverse;
@@ -10875,7 +10472,7 @@ void print_ultra_minimal_fasta_from_path(FILE *fout,
   
   if (include_first_kmer==false)
     {
-      fprintf(fout,">%s length:%i\n%s\n", name, length, string);
+      fprintf(fout,">%s length:%i kmer:%d\n%s\n", name, length, kmer_size, string);
     }
   else
     {
@@ -10901,7 +10498,7 @@ void print_ultra_minimal_fasta_from_path(FILE *fout,
 	  
 	  binary_kmer_to_seq(&fst_kmer,kmer_size,fst_seq);
 	  
-	  fprintf(fout,">%s length:%i\n", name,length+kmer_size);
+	  fprintf(fout,">%s length:%i INFO:KMER=%d\n", name,length+kmer_size, kmer_size);
 	  fprintf(fout,"%s", fst_seq);
 	  fprintf(fout,"%s\n",string);
       
@@ -11071,7 +10668,6 @@ long long db_graph_clean_orphan_edges(dBGraph * db_graph){
   Nucleotide reverse_nucleotide;
   Orientation next_orientation;
   long long count_nodes=0;
-  char tmp_seq[db_graph->kmer_size+1]; 
 
   void check_node_with_orientation(dBNode * node, Orientation orientation){
 

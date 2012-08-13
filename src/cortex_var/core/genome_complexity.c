@@ -394,9 +394,9 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
     }
   kmer_window->nkmers=0;
 
-  int max_windows = max_read_length/(db_graph->kmer_size+1);
+  //int max_windows = max_read_length/(db_graph->kmer_size+1);
   //number of possible kmers in a 'perfect' read
-  int max_kmers   = max_read_length-db_graph->kmer_size+1;
+  //int max_kmers   = max_read_length-db_graph->kmer_size+1;
 
   KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
   if (windows == NULL){
@@ -525,14 +525,6 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
   
 
   //load the fasta into the working colour
-  long long bases_read=0;
-  long long bases_loaded=0;
-  long long bad_reads=0;
-  long long dup_reads=0;
-  boolean remove_duplicates_single_endedly=false;
-  boolean break_homopolymers=false;
-  int homopol=0;
-
   /*  
   if (format==FASTA)
     {

@@ -32,6 +32,9 @@
 
 #ifndef BINARY_KMER_H_
 #define BINARY_KMER_H_
+
+#include <inttypes.h>
+
 #include <global.h>
 #include <event_encoding.h>
 
@@ -63,11 +66,12 @@
   } Nucleotide ;
 */
 
-//platform specific
-typedef unsigned long long bitfield_of_64bits;
+typedef uint64_t bitfield_of_64bits;
 
-typedef bitfield_of_64bits BinaryKmer[NUMBER_OF_BITFIELDS_IN_BINARY_KMER];  //think of NUMBER_OF_BITFIELDS_IN_BINARY_KMER as the number of long longs we encode the kmer in
+// Think of NUMBER_OF_BITFIELDS_IN_BINARY_KMER as the number of long longs we encode the kmer in
+typedef bitfield_of_64bits BinaryKmer[NUMBER_OF_BITFIELDS_IN_BINARY_KMER];
 
+#define BINARY_KMER_BYTES ((NUMBER_OF_BITFIELDS_IN_BINARY_KMER) * sizeof(uint64_t))
 
 
 typedef struct

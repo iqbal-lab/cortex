@@ -134,7 +134,7 @@ sub read_next_fastq
   }
   
   chomp($line);
-  
+
   my $title = substr($line,1);
 
   my $sequence = "";

@@ -697,7 +697,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 
 
   //new option - look at errors more closely
-  int number_bad_errors=0; //errors > 1 SNP from genotype
+  //int number_bad_errors=0; //errors > 1 SNP from genotype
 
   //  hash_table_traverse_passing_ints_and_path(&count_errors_1bp_and_further_from_desired_genotype  ,db_graph, &number_errors, &number_bad_errors,
   //					    p_nodes, p_orientations, p_labels, p_string, max_allele_length);
@@ -732,8 +732,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 
   //double m=(model_info->seq_error_rate_per_base) ;
   double m=model_info->ginfo->seq_err[colour_indiv];
-  int kmer=(db_graph->kmer_size);
-  double prop = max_allele_length/(model_info->genome_len);
+  //int kmer=(db_graph->kmer_size);
+  //double prop = max_allele_length/(model_info->genome_len);
   if (assump==AssumeUncleaned)
     {
       //commented out
@@ -815,7 +815,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
     {
       hap_D_over_R=0;
     }
-  int eff_r_plus_one = model_info->ginfo->mean_read_length[colour_indiv] - db_graph->kmer_size;
+  //int eff_r_plus_one = model_info->ginfo->mean_read_length[colour_indiv] - db_graph->kmer_size;
 
   //printf("total sequence is %qd and genome len is %qd , and hapD is %f and hapD over R is %f\n", model_info->ginfo->total_sequence[colour_indiv], model_info->genome_len, hap_D, hap_D_over_R);
 
@@ -826,7 +826,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   //then do allele 2 in identical manner
 
   //Option 2 - Ignore for now
-  //traverse allele 1 abd then allele 2. For a given chunk, take full covg, but use combined mult in alleles 1 and 2 to determine poisson mean, and then mark chunk visited and do not return to visited chunks.
+  //traverse allele 1 abd then allele 2. For a given chunk, take full covg, but use combined mult in alleles 1 and 2 to determne poisson mean, and then mark chunk visited and do not return to visited chunks.
 
   //Option 3 - Ignore for now  - dont use chunks at all, use supernodes <<< will come with sup hash
 
@@ -1169,9 +1169,6 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   void count_reads_in_1net(GenotypingElement* e, int* total_1net, int* total_2net, int* total_3net,
 			   dBNode** p_nod, Orientation* p_or, Nucleotide* p_lab, char* p_str, int max_len)
   {
-    char zamzam[db_graph->kmer_size+1];
-    //printf("Zam1 - traversing little graph, look at %s\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, zamzam));
-
     //zam - fixed tis in debugging if ( (db_genotyping_node_check_status(e, in_desired_genotype)==true) || (db_genotyping_node_check_status(e, visited)==true) )
     if (db_genotyping_node_check_status(e, in_desired_genotype)==true)
       {
@@ -1201,7 +1198,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 								   &avg_coverage,&min,&max,&is_cycle,
 								   db_graph, individual_edge_array, colour_indiv);
 	//assume everything in supernode is bad. Not using 1net2net etc
-	int i;
+
 	boolean too_short=false;
 	int ct = count_reads_on_allele_in_specific_colour(p_nod, length, colour_indiv, &too_short);
 	if (too_short==false)
@@ -1241,11 +1238,11 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	  }
 	else 
 	  {
-	    int length = db_graph_supernode_for_specific_person_or_pop(node_corresponding_to_e,max_len,
-								       &db_node_action_unspecialise_status,
-								       p_nod,p_or,p_lab, p_str,
-								       &avg_coverage,&min,&max,&is_cycle,
-								       db_graph, individual_edge_array, colour_indiv);
+	    db_graph_supernode_for_specific_person_or_pop(node_corresponding_to_e,max_len,
+							  &db_node_action_unspecialise_status,
+							  p_nod,p_or,p_lab, p_str,
+							  &avg_coverage,&min,&max,&is_cycle,
+							  db_graph, individual_edge_array, colour_indiv);
 	    
 	    
 	  }
@@ -1265,7 +1262,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   int total_len_alleles = (var->len_one_allele + var->len_other_allele);
 
   //new option - look at errors more closely
-  int number_bad_errors=0; //errors > 1 SNP from genotype
+  // int number_bad_errors=0; //errors > 1 SNP from genotype
 
   //printf("Zam start traverse to count\n");
   little_hash_table_traverse_passing_3ints_and_big_graph_path(&count_reads_in_1net, little_db_graph, 
@@ -1284,12 +1281,12 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   // Errors on union of two alleles occur as a Poisson process with rate = sequencing_error_rate_per_base * kmer * length of two alleles
 
   double poisson_1net_err_rate=0;
-  double poisson_2net_err_rate=0;
-  double poisson_3net_err_rate=0;
+  //double poisson_2net_err_rate=0;
+  //double poisson_3net_err_rate=0;
 
   //double m=(model_info->seq_error_rate_per_base) ;
   double m=model_info->ginfo->seq_err[colour_indiv];
-  int kmer=(db_graph->kmer_size);
+  //int kmer=(db_graph->kmer_size);
   //double prop = max_allele_length/(model_info->genome_len);
 
   if (assump==AssumeUncleaned)
@@ -1314,8 +1311,6 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   // 2.  Get sum of log likelihoods of all the subchunks of the two alleles
 
 
-  int working_array_self_count=0;
-  int working_array_shared_count=0;
   double log_prob_data=0;
   double hap_D  = (double) (model_info->ginfo->total_sequence[colour_indiv])/(double) (2*model_info->genome_len) ;
   double hap_D_over_R = hap_D/(model_info->ginfo->mean_read_length[colour_indiv]);
@@ -1414,23 +1409,28 @@ void wipe_colour_and_load_binaries(dBGraph* db_graph, int colour, char* bin1, ch
   db_graph_wipe_colour(colour, db_graph);
   int mean_readlen=0;
   long long seq=0;
+  char dummy_sample_id[MAX_LEN_SAMPLE_NAME];
+  dummy_sample_id[0]='\0';
   if (bin1 != NULL)
     {
       load_single_colour_binary_data_from_filename_into_graph(bin1, db_graph, &mean_readlen, &seq,
 							      false, individual_edge_array, colour,
-							      false, 0, false);
+							      false, 0, dummy_sample_id, false);
     }
   if ( (bin2 !=NULL) && (strcmp(bin2, bin1) !=0) )
     {
       load_single_colour_binary_data_from_filename_into_graph(bin2, db_graph, &mean_readlen, &seq,
 							      false, individual_edge_array, colour,
-							      false, 0, false);
+							      false, 0, dummy_sample_id, false);
     }
 }
 
 void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int colour2,
 					    char* binary11, char* binary12, char* binary21, char* binary22)
 {
+  char dummy_sample_id[MAX_LEN_SAMPLE_NAME];
+  dummy_sample_id[0]='\0';
+
   db_graph_wipe_two_colours_in_one_traversal(colour1, colour2, db_graph);
   int mean_readlen=0;
   long long seq=0;
@@ -1439,26 +1439,26 @@ void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int 
     {
       load_single_colour_binary_data_from_filename_into_graph(binary11, db_graph, &mean_readlen, &seq,
 							      false, individual_edge_array, colour1,
-							      false, 0, false);
+							      false, 0,dummy_sample_id,  false);
     }
   if ( (binary12 != NULL) && (strcmp(binary12, binary11)!=0) )
     {
       load_single_colour_binary_data_from_filename_into_graph(binary12, db_graph, &mean_readlen, &seq,
 							      false, individual_edge_array, colour1,
-							      false, 0, false);
+							      false, 0, dummy_sample_id, false);
     }
   //same for 2net
   if (binary21 != NULL)
     {
       load_single_colour_binary_data_from_filename_into_graph(binary21, db_graph, &mean_readlen, &seq,
 							      false, individual_edge_array, colour2,
-							      false, 0, false);
+							      false, 0, dummy_sample_id, false);
     }
   if ( (binary22 != NULL) && (strcmp(binary22, binary21) !=0) )
     {
       load_single_colour_binary_data_from_filename_into_graph(binary22, db_graph, &mean_readlen, &seq,
 							      false, individual_edge_array, colour2,
-							      false, 0, false);
+							      false, 0, dummy_sample_id, false);
     }
 
 
@@ -1750,7 +1750,6 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
       exit(1);
     }
 
-  int index_alleles_with_nonzero_covg=0;
 
   for (j=0; j<= number_alleles-1; j++)
     {
@@ -2070,8 +2069,6 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
       first_allele_is_ref=false;
       len_ref=annovar->var->len_other_allele;
     }
-  int number_alleles=2;
-
 
   //initialise the little graph - set all nodes to unassigned
   wipe_little_graph(little_db_graph);
@@ -2098,7 +2095,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 	{
 	  //we have just inserted a new node into the little hash. Fill in its data from the main graph:
 	  genotyping_element_initialise_from_normal_element(ge, annovar->var->one_allele[i], true);
-	  char tmpzam[db_graph->kmer_size+1];
+	  //char tmpzam[db_graph->kmer_size+1];
 	  //printf("Zam added %s to little hash\n", binary_kmer_to_seq(&(ge->kmer), db_graph->kmer_size, tmpzam));
 	}
       else
@@ -2131,7 +2128,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 	{
 	  //we have just inserted a new node into the little hash. Fill in its data from the main graph:
 	  genotyping_element_initialise_from_normal_element(ge, annovar->var->other_allele[i], true);
-	  char tmpzam[db_graph->kmer_size+1];
+	  //char tmpzam[db_graph->kmer_size+1];
 	  //printf("Zam added %s to little hash\n", binary_kmer_to_seq(&(ge->kmer), db_graph->kmer_size, tmpzam));
 
 	}
@@ -2165,7 +2162,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 
 
 
-  int j;
+
 
   //  MultiplicitiesAndOverlapsOfBiallelicVariant* mobv= alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(annovar->var->len_one_allele, 
   //												       annovar->var->len_other_allele);
@@ -2336,8 +2333,6 @@ void get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(Annot
 	     annovar->var->len_one_allele, annovar->var->len_other_allele, gwp->max_allele_len);
       exit(1);
     }
-  int i;
-
   calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele(annovar, assump,
 											  model_info, little_db_graph, db_graph,
 											  working_g_e_one, working_o_one, 
@@ -2356,8 +2351,8 @@ void get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(Annotate
 {
   boolean too_short = false;
   //next two lines are an expenseive way of setting too_short!!
-  int initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
-  int initial_covg_plus_upward_jumps_branch2 = count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
+  count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
+  count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
 
   if (too_short==true)
     {
