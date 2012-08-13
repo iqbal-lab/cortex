@@ -1,0 +1,59 @@
+*******************************
+Binary File Format Version 6:
+
+Header: 6 chars (the word "CORTEX")
+        1 int (version number)
+        1 int (kmer size)
+        1 int (number of uint64_t encoding the kmer)
+        1 int (number of colours = num_cols)
+        num_cols ints (mean read length for each colour)
+        num_cols long longs (total sequence loaded into each colour)
+	
+	for (i=0 to num_cols-1)
+	  1 int (length L of name/sample-id of i-th colour)	
+          L chars (sample id for colour i)
+
+	for (i=0 to num_cols-1)
+          1 long double - estimated sequencing error rate for colour i
+
+	for (i=0 to num_cols-1) ## error cleaning info for each colour
+	  1 boolean -was there top clipping
+	  1 boolean -was --remove_low_coverage_supernodes used
+	  1 boolean -was --remove_low_coverage_kmers used
+	  1 boolean - was this colour cleaned against another graph
+	  1 int - threshold for --remove_low_coverage_supernodes
+	  1 int - threshold for --remove_low_coverage_kmer
+	  1 int length L  of name of graph against which this colour was cleaned
+	  L chars - name of graph against which this colour was cleaned
+
+        6 chars (the word "CORTEX")
+
+Followed by consecutive nodes. Each node consists of:
+        1 BinaryKmer (defined in include/basic/binary_kmer.h
+        1 int (coverage)
+        1 char (typedefed to Edges)
+
+
+
+
+*******************************
+Binary File Format Version 5:
+Identical for v4, except coverage is written as uint32_t.
+
+
+
+*******************************
+Binary File format Version 4:
+
+Header: 6 chars (the word "CORTEX")
+        1 int (version number)
+        1 int (kmer size)
+        1 int (number of long longs encoding the kmer)
+        1 int (number of colours = num_cols)
+        num_cols ints (mean read length for each colour)
+        num_cols long longs (total sequence loaded into each colour)
+        6 chars (the word "CORTEX")
+Followed by consecutive nodes. Each node consists of:
+        1 BinaryKmer (defined in include/basic/binary_kmer.h
+        1 int (coverage)
+        1 char (typedefed to Edges)

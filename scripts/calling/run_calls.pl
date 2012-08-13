@@ -217,7 +217,7 @@ my $help = '';    #default false
     'vcftools_dir:s'       =>\$vcftools_dir,
     'manual_override_cleaning:s' => \$manual_override_cleaning,
     'do_union:s'         =>\$do_union,
-    'build_per_sample_vcfs:s' =>\$build_per_sample_vcfs,
+#    'build_per_sample_vcfs:s' =>\$build_per_sample_vcfs,
     'logfile:s'           => \$global_logfile,
     'workflow:s'          => \$workflow,
     'squeeze_mem'          =>\$squeeze_mem
@@ -266,9 +266,10 @@ if ($help)
 #	print "--expt_type\t\t\t\tAs in Cortex input\n";
 	print "--list_ref_fasta\t\t\t\tFile listing the fasta files (one per chromosome) for the reference. Needed for the PD caller\n";
 	print "--vcftools_dir\t\t\t\tVCFtools is used to generate VCFs - mandatory to either specify this on cmd-line, or manually edit the path at the top of this script\n";
+	print "              \t\t\t\tThis should be the VCFtools root dir, which has subdirectories called: bin,  cpp,  lib ..\n";
 	print "--do_union\t\t\t\tHaving made per-sample callsets (per kmer and cleaning), should we combine all calls into a union set, and genotype all samples? Valid values are yes and no. Default is no.\n";
 	print "--manual_override_cleaning\t\t\t\tYou can specify specific thresholds for specific samples by giving a file here, each line has three (tab sep) columns: sample name, kmer, and comma-separated thresholds\nDon't use this unless you know what you are doing\n";
-	print "--build_per_sample_vcfs\t\t\t\tThis script repeatedly runs Cortex BC and PD callers, calling on each sample separately, and then by default builds one pair (raw/decomp) of VCFs for the union set. If in addition you want VCFs built for each callset, enter \"yes\" here. In general, do not do this, it is very slow.\n";
+#	print "--build_per_sample_vcfs\t\t\t\tThis script repeatedly runs Cortex BC and PD callers, calling on each sample separately, and then by default builds one pair (raw/decomp) of VCFs for the union set. If in addition you want VCFs built for each callset, enter \"yes\" here. In general, do not do this, it is very slow.\n";
 	print "--logfile\t\t\t\tOutput always goes to a logfile, not to stdout/screen. If you do not specify a name here, it goes to a file called \"default_logfile\". So, enter a filename for yout logfile here. Use filename,f to force overwriting of that file even if it already exists. Otherwise run_calls will abort to prevent overwriting.\n";
 	print "--workflow\t\t\t\tMandatory to specify this. Valid arguments are \"joint\" and \"independent\"\n";
 	print "--apply_pop_classifier\t\t\t\tApply the Cortex population filter, to classify putative sites as repeat, variant or error. \n\t\t\t\t\tThis is a very powerful method of removing false calls\n\t\t\t\t\t but it requires population information to do so - ie only use it if you have at least 10 samples\n\t\t\t\t\tThis is just a flag (takes no argument)\n";
