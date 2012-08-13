@@ -30,13 +30,18 @@
  *
  */
 
-#include <CUnit.h>
-#include <Basic.h>
-#include <binary_kmer.h>
+// System libraries
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+
+// Third party libraries
+#include <CUnit.h>
+#include <Basic.h>
+
+// Our headers
+#include <binary_kmer.h>
 #include <test_binary_kmer.h>
 
 
@@ -149,7 +154,7 @@ void test_binary_kmer_less_than()
 	
 	if (binary_kmer_less_than(bk1,bk2, kmer_size)!=true)
 	  {
-	    printf("Breaks at kmer = %d, i=%d, j=%llu\n",kmer_size, i,j);
+	    printf("Breaks at kmer = %d, i=%d, j=%lu\n",kmer_size, i, (unsigned long)j);
 	    printf("num of bitfields fully used is %d, and number of bits in most sig is %d\n", number_of_bitfields_fully_used, number_of_bits_in_most_sig_bitfield);
 	    exit(1);
 	  }

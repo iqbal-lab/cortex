@@ -1,8 +1,6 @@
+# Isaac Turner, Mon 13 Aug 2012
 
-1) uncomment this line in Makefile:
-#NOT_ZAM=1
-
-2) Get libraries:
+1) Get libraries:
 
 mkdir -p libs
 cd libs
@@ -30,5 +28,35 @@ make
 cd ..
 cd ..
 
+2) Attempt to correct CUnit paths?  NOT_ZAM=1 currently works on mac only. 
+   Need to know common linux CUnit paths.  
+
 3) Possibly add some line to the Makefile or documentation to ensure libraries
    are recompiled by the end-user
+
+The following bash code would do:
+
+cd libs
+
+cd samtools-0.1.18
+make clean
+make
+cd ..
+
+cd gsl-1.15
+make clean
+./configure
+make
+cd ..
+
+cd seq_file
+make clean
+make
+cd ..
+
+cd string_buffer
+make clean
+make
+cd ..
+
+cd ..
