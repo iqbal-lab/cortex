@@ -37,9 +37,15 @@ If this fails, consult the manual at : http://cortexassembler.sourceforge.net/co
    The run_calls.pl and process_calls.pl will need to know where stampy.py is (I pass the path in as an argument)
 
 
-2. Add /path/to/CORTEX_release_v_whatever/scripts/analyse_variants/bioinf-perl/lib/ to your PERL5LIB
+2. Add 
+   /path/to/CORTEX_release_v_whatever/scripts/analyse_variants/bioinf-perl/lib/
+   and
+   /path/to/CORTEX_release_v_whatever/scripts/calling/
+   to your PERL5LIB
 
-3. cd scripts/analyse_variants/needleman_wunsch-0.3.0/
+3. Add /path/to/CORTEX_release_v_whatever/scripts/analyse_variants/needleman_wunsch-0.3.0/ to your PATH
+
+4. cd scripts/analyse_variants/needleman_wunsch-0.3.0/
    make clean
    make
 

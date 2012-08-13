@@ -150,6 +150,9 @@ if ($help)
 	print
 "--num_cols                    : nUmber of colours in your graph (and callfile output)\n";
 	print
+"--stampy_bin                  : Path to stampy bin - default is set via variable in script. \n";
+
+	print
 "--stampy_hash                 : VCF format needs a chromosome and position. You have two options:\n";
 	print
 "                                 1. Use a reference genome to place yout variants. If you do this, process_calls.pl will\n";
@@ -173,23 +176,16 @@ if ($help)
 "                                 3. You have no decent reference but you have a rough consensus draft assembly - same as case 1\n";
 	print
 "                                 In all cases, you must use Stampy (http://www.well.ox.ac.uk/project-stampy)\n";
-	print
-"--require_one_allele_is_ref   : Do you want to discard calls where both or neither alleles match the reference colour\n";
-	print
-"                                Acceptable values are \"yes\" or \"no\". If you are using a reference which is not too diverged from your samples\n";
-	print
-"                                then I would use \"yes\". However this will filter out some calls where BOTH alleles don't match the reference\n";
-	print
-"                                If you want to dig in and see which calls got filtered out, you can compare the VCF with the original callfile and see which calls are missing\n";
+
 	print
  "--vcftools_dir                : VCFtools is used to generate VCFs - mandatory to either specify this on cmd-line, or manually edit the path at the top of this script\n";
+	print 
+	    "                                 This should be the VCFtools root directory, which has subdirectories called: bin,  cpp,  lib ..\n";
 	print
 	    "--caller                      : Which caller generated this callset. Acceptable arguments are BC or PD.\n";
 	print
 	    "--kmer                        : What kmer value was used in generating this callfile\n";
 	print "*****   Optional arguments ******* \n";
-	print
-"--stampy_bin                  : Path to stampy bin - default is set via variable in script. \n";
 	print
 "--refcol                      : if one of the colours is the reference genome, specify this colour number. Default is -1 (meaning no reference present), but if you \n";
 	print

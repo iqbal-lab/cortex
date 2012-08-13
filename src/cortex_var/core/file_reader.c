@@ -1802,8 +1802,25 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
     {
       *mean_readlen = ginfo->mean_read_length[0];
       *total_seq    = ginfo->total_sequence[0];
-      sample_identity[0]='\0';
-      strcat(sample_identity, ginfo->sample_ids[0]);
+      if  (strcmp(sample_identity, "undefined")==0)//we don't already have a name for this colour
+	{
+	  if (strcmp(ginfo->sample_ids[0], "undefined")!=0)//we've got  a name from this binary
+	    {
+	      sample_identity[0]='\0';
+	      strcat(sample_identity, ginfo->sample_ids[0]);
+	    }
+	}
+      else//we already have a name for this colour in our main GraphInfo
+	{
+	  if ( (strcmp(ginfo->sample_ids[0], "undefined")!=0) //we got a proper name from loading this binary
+	       &&
+	       (strcmp(ginfo->sample_ids[0], sample_identity)!=0) )
+	    {
+	      //then we have two different names for this colour. It must be a pool!
+	      sample_identity[0]='\0';
+	      strcat(sample_identity, "pool");
+	    }
+	}
     }
 
   if (binfo.number_of_colours!=1)
@@ -2516,7 +2533,7 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
 
   char tmpseq[db_graph->kmer_size+1];
-  tmpseq[db_graph->kmer_size]='\0';
+  tmpseq[db_graph->kmer_size+1]='\0';
   tmpseq[0]='\0';
   
 
@@ -2658,7 +2675,7 @@ void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
 
   char tmpseq[db_graph->kmer_size+1];
-  tmpseq[db_graph->kmer_size]='\0';
+  tmpseq[db_graph->kmer_size+1]='\0';
   tmpseq[0]='\0';
   
 
@@ -2899,7 +2916,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
   //so we have got the 5prime flank. Now we need to get all the kmers joining it to the branches
   char last_kmer_5p[db_graph->kmer_size+1];
   last_kmer_5p[0]='\0';
-  last_kmer_5p[db_graph->kmer_size]='\0';
+  last_kmer_5p[db_graph->kmer_size+1]='\0';
   strncpy(last_kmer_5p, seq->seq+ (int)strlen(seq->seq)-db_graph->kmer_size, db_graph->kmer_size);
   //printf("We think this %s is the last kmer in the 5p flank %s\n", last_kmer_5p, seq->seq);
 
@@ -2910,7 +2927,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
   char last_kmer_of_branch1[db_graph->kmer_size+1];
   last_kmer_of_branch1[0]='\0';
-  last_kmer_of_branch1[db_graph->kmer_size]='\0';
+  last_kmer_of_branch1[db_graph->kmer_size+1]='\0';
 
   var->len_one_allele = -1 + 
     given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_5p, fptr, max_read_length, 
@@ -3268,7 +3285,7 @@ boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCo
 	  read = fread(&(binfo->version),sizeof(int),1,fp);
 	  if (read>0)
 	    {//can read version
-	      if ((binfo->version >=5) && (binfo->version<=BINVERSION) )
+	      if ((binfo->version >=4) && (binfo->version<=BINVERSION) )
 		{//version is good
 		  read = fread(&(binfo->kmer_size),sizeof(int),1,fp);
 		  if (read>0)
@@ -3351,7 +3368,7 @@ boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCo
 boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
 {
   boolean no_problem=true;
-  if (binfo->version==5)
+  if ( (binfo->version==5) || (binfo->version==4) )//legacy
     {
       no_problem = get_read_lengths_and_total_seqs_from_header(fp, binfo, ecode);
     }

@@ -1063,41 +1063,46 @@ int main(int argc, char **argv){
     }
   */
 
-      
-  printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));	  
-  printf("The following is a summary of the data that has been loaded, immediately after loading (prior to any error cleaning, calling etc)\n");
-  printf("****************************************\n");
-  printf("SUMMARY:\nColour\tSampleID\tMeanReadLen\tTotalSeq\tErrorCleaning\tLowCovSupsThresh\tLowCovNodesThresh\tPoolagainstWhichCleaned\n");
 
-  for (j=0; j<NUMBER_OF_COLOURS; j++)
-    {
-      //colour sampleid readlen totalseq 
-      printf("%d\t%s\t%d\t%qd\t", 
-	     j, 
-	     db_graph_info->sample_ids[j],
-	     db_graph_info->mean_read_length[j], 
-	     db_graph_info->total_sequence[j]);
-      if ( (db_graph_info->cleaning[j]->tip_clipping==false)
-	   &&
-	   (db_graph_info->cleaning[j]->remv_low_cov_sups==false)
-	   &&
-	   (db_graph_info->cleaning[j]->remv_low_cov_nodes==false)
-	   &&
-	   (db_graph_info->cleaning[j]->cleaned_against_another_graph==false)
-	   )
+  if (cmd_line->successively_dump_cleaned_colours==false)
+    {      
+      printf("Total kmers in table: %qd\n", hash_table_get_unique_kmers(db_graph));	  
+      printf("The following is a summary of the data that has been loaded, immediately after loading (prior to any error cleaning, calling etc)\n");
+      printf("****************************************\n");
+      printf("SUMMARY:\nColour\tSampleID\tMeanReadLen\tTotalSeq\tErrorCleaning\tLowCovSupsThresh\tLowCovNodesThresh\tPoolagainstWhichCleaned\n");
+      
+      for (j=0; j<NUMBER_OF_COLOURS; j++)
 	{
-	  printf("UNCLEANED\t");
+	  //colour sampleid readlen totalseq 
+	  printf("%d\t%s\t%d\t%qd\t", 
+		 j, 
+		 db_graph_info->sample_ids[j],
+		 db_graph_info->mean_read_length[j], 
+		 db_graph_info->total_sequence[j]);
+	  if ( (db_graph_info->cleaning[j]->tip_clipping==false)
+	       &&
+	       (db_graph_info->cleaning[j]->remv_low_cov_sups==false)
+	       &&
+	       (db_graph_info->cleaning[j]->remv_low_cov_nodes==false)
+	       &&
+	       (db_graph_info->cleaning[j]->cleaned_against_another_graph==false)
+	       )
+	    {
+	      printf("UNCLEANED\t");
+	    }
+	  else
+	    {
+	      printf("CLEANED\t");
+	    }
+	  printf("%d\t%d\t%s\n",
+		 db_graph_info->cleaning[j]->remv_low_cov_sups_thresh,
+		 db_graph_info->cleaning[j]->remv_low_cov_nodes_thresh,
+		 db_graph_info->cleaning[j]->name_of_graph_against_which_was_cleaned);
 	}
-      else
-	{
-	  printf("CLEANED\t");
-	}
-      printf("%d\t%d\t%s\n",
-	     db_graph_info->cleaning[j]->remv_low_cov_sups_thresh,
-	     db_graph_info->cleaning[j]->remv_low_cov_nodes_thresh,
-	     db_graph_info->cleaning[j]->name_of_graph_against_which_was_cleaned);
+      printf("****************************************\n");
     }
-  printf("****************************************\n");
+
+
 
   if (cmd_line->health_check==true)
     {

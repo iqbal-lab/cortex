@@ -286,7 +286,7 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length, int 
 		    if (! good_base(line[i]))
 		    {
 		      good_read=false;
-		      fprintf(stderr,"Invalid symbol [%c] pos:%i in entry %s - skip read\n",line[i],i,seq->name);
+		      fprintf(stderr,"Invalid symbol [%c] pos:%i in entry %s\n",line[i],i,seq->name);
 		    }
 
 
