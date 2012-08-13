@@ -370,8 +370,8 @@ void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_
 	  
 	  
 	  if (DEBUG){
-	    char kmer_seq[db_graph->kmer_size];
-	    char kmer_seq2[db_graph->kmer_size];
+	    char kmer_seq[db_graph->kmer_size+1];
+	    char kmer_seq2[db_graph->kmer_size+1];
 	    
 	    printf("kmer i:%i j:%i:  %s %s %i\n",i,j,binary_kmer_to_seq(&(current_window->kmer[j]),db_graph->kmer_size,kmer_seq),
 		   binary_kmer_to_seq(binary_kmer_reverse_complement(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph->kmer_size,kmer_seq2),
@@ -1189,7 +1189,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
       if (current_node == NULL){
 	BinaryKmer tmp_dbg_kmer;
-	char tmp_dbg_seq[db_graph->kmer_size];
+	char tmp_dbg_seq[db_graph->kmer_size+1];
 
 	printf("Problem in load_seq_into_array - current kmer not found %s\n",
 	       binary_kmer_to_seq(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_dbg_kmer), db_graph->kmer_size,tmp_dbg_seq));
@@ -1207,7 +1207,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
 
       if (DEBUG){
-	char kmer_seq[db_graph->kmer_size];
+	char kmer_seq[db_graph->kmer_size+1];
 	printf("j=%d, Current node kmer is  %s\n",j, binary_kmer_to_seq(&(kmer_window->kmer[j]),db_graph->kmer_size,kmer_seq));
 	if (current_orientation==forward)
 	  printf("Current orientation is forward\n");
@@ -2271,7 +2271,7 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
 
   char tmpseq[db_graph->kmer_size+1];
-  tmpseq[db_graph->kmer_size]='\0';
+  tmpseq[db_graph->kmer_size+1]='\0';
   tmpseq[0]='\0';
   
 
@@ -2413,7 +2413,7 @@ void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
 
   char tmpseq[db_graph->kmer_size+1];
-  tmpseq[db_graph->kmer_size]='\0';
+  tmpseq[db_graph->kmer_size+1]='\0';
   tmpseq[0]='\0';
   
 
@@ -2665,7 +2665,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
   //so we have got the 5prime flank. Now we need to get all the kmers joining it to the branches
   char last_kmer_5p[db_graph->kmer_size+1];
   last_kmer_5p[0]='\0';
-  last_kmer_5p[db_graph->kmer_size]='\0';
+  last_kmer_5p[db_graph->kmer_size+1]='\0';
   strncpy(last_kmer_5p, seq->seq+ (int)strlen(seq->seq)-db_graph->kmer_size, db_graph->kmer_size);
   //printf("We think this %s is the last kmer in the 5p flank %s\n", last_kmer_5p, seq->seq);
 
@@ -2676,7 +2676,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
   char last_kmer_of_branch1[db_graph->kmer_size+1];
   last_kmer_of_branch1[0]='\0';
-  last_kmer_of_branch1[db_graph->kmer_size]='\0';
+  last_kmer_of_branch1[db_graph->kmer_size+1]='\0';
 
   var->len_one_allele = -1 + 
     given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_5p, fptr, max_read_length, 

@@ -4054,7 +4054,7 @@ void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, Edge
   long long count_kmers=0;
 
   void print_coverage(dBNode * node){
-    char seq[db_graph->kmer_size];
+    char seq[db_graph->kmer_size+1];
 
     printf("%qd\t%s\t%i\n",count_kmers,binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq),db_node_get_coverage(node, type, index));
     count_kmers++;;
@@ -5411,8 +5411,8 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
   //  printf("Reimplement db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop using db_grapg_supernode");
 
     
-  char tmp_seq[db_graph->kmer_size];
-
+  char tmp_seq[db_graph->kmer_size+1];
+  tmp_seq[db_graph->kmer_size]='\0';
   if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
     {
       if (node==NULL)
@@ -5511,8 +5511,8 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
 
 dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* node, Orientation orientation, Orientation* next_orientation, EdgeArrayType type, int index, dBGraph* db_graph)
 {
-  char tmp_seq[db_graph->kmer_size];
-
+  char tmp_seq[db_graph->kmer_size+1];
+  tmp_seq[db_graph->kmer_size]='\0';
   if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
     {
       //printf("\nThis node is not in the graph of this person\n");
@@ -5712,7 +5712,8 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
 //returns 0 if successfully, 1 otherwise
 int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char* subsection, dBNode* node, int start, int end, EdgeArrayType type, int index, dBGraph* db_graph)
 {
-  char tmp_seq[db_graph->kmer_size];
+  char tmp_seq[db_graph->kmer_size+1];
+  tmp_seq[db_graph->kmer_size]='\0';
 
   //printf("CALL GET SUBSECTION With start %d and end %d\n\n", start, end);
   if ( (start<0) || (end<0) || (end-start<0) )
@@ -5827,8 +5828,8 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 
   //TODO - reimplement this whole section using db_graph_supernode. 
 
-  char tmp_seq[db_graph->kmer_size];
-
+  char tmp_seq[db_graph->kmer_size+1];
+  tmp_seq[db_graph->kmer_size]='\0';
   if (first_node_in_supernode==NULL)
     {
       printf("do not give null pointer to get_best_sub_supernode function");
@@ -5987,8 +5988,9 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 void print_node_to_file_according_to_how_many_people_share_it(HashTable* db_graph, dBNode * node, FILE** list_of_file_ptrs)
 {
   int i;
-  char tmp_seq[db_graph->kmer_size];
-  
+  char tmp_seq[db_graph->kmer_size+1];
+  tmp_seq[db_graph->kmer_size]='\0';
+
   int number_of_individuals_with_this_node=0;
 
   for (i=0; i<NUMBER_OF_COLOURS; i++)
@@ -6810,7 +6812,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   coord_of_start_of_array_in_trusted_fasta=0;
 
 
-  char tmp_zam[db_graph->kmer_size];
+  char tmp_zam[db_graph->kmer_size+1];
+  tmp_zam[db_graph->kmer_size]='\0';
   BinaryKmer tmp_kmer;
   
 
@@ -8322,7 +8325,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   coord_of_start_of_array_in_trusted_fasta=0;
 
 
-  char tmp_zam[db_graph->kmer_size];
+  char tmp_zam[db_graph->kmer_size+1];
+  tmp_zam[db_graph->kmer_size]='\0';
   BinaryKmer tmp_kmer;
   
 
@@ -10602,6 +10606,7 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph){
   Orientation next_orientation;
   long long count_nodes=0;
   char tmp_seq[db_graph->kmer_size+1]; 
+  tmp_seq[db_graph->kmer_size]='\0';
 
   void check_node_with_orientation(dBNode * node, Orientation orientation){
 
@@ -10771,8 +10776,8 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 	  //local function
 	  long long overlap_cols_i_and_j(Element* node)
 	  {
-	    char str[db_graph->kmer_size];
-
+	    char str[db_graph->kmer_size+1];
+	    str[db_graph->kmer_size]='\0';
 	    if ( 
 		(db_node_is_this_node_in_this_person_or_populations_graph(node, individual_edge_array, first_col_list[i])==true)
 		&&

@@ -1183,7 +1183,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	dBNode* node_corresponding_to_e = hash_table_find(&(e->kmer), db_graph);
 	if (node_corresponding_to_e==NULL)
 	  {
-	    char tmp[db_graph->kmer_size];
+	    char tmp[db_graph->kmer_size+1];
+	    tmp[db_graph->kmer_size]='\0';
 	    printf("During counting, cannot find node %s (which IS in the little graph) in the main graph. Abort.\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, tmp));
 	    exit(1);
 	  }
@@ -1232,7 +1233,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	dBNode* node_corresponding_to_e = hash_table_find(&(e->kmer), db_graph);
 	if (node_corresponding_to_e==NULL)
 	  {
-	    char tmp[db_graph->kmer_size];
+	    char tmp[db_graph->kmer_size+1];
+	    tmp[db_graph->kmer_size+1];
 	    printf("During genotyping reset, cannot find node %s (which IS in the little graph) in the main graph. Abort.\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, tmp));
 	    exit(1);
 	  }
