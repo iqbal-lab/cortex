@@ -4,6 +4,7 @@
 
 2) Get libraries:
 
+mkdir -p libs
 cd libs
 wget http://downloads.sourceforge.net/project/samtools/samtools/0.1.18/samtools-0.1.18.tar.bz2
 tar xfvj samtools-0.1.18.tar.bz2
