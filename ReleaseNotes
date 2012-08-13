@@ -1,4 +1,22 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.9
+
+Bugfix release:
+Thansk to Alex Dilthey for pointing out v1.0.5.8 had a bug
+in the support for old version of Cortex's binary file format.
+To the user this is all invisible, but in the last
+public release, a binary file stored the mean
+read length and sequence loaded into each colour.
+I have modified the file format twice since then,
+once to use uint64_t, not int for coverage,
+and once to add a lot of extra metadata
+(sample_id, what kind of error cleaning each
+colour underwent).
+
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.8
 
 Small modifications to Makefile, and to Install directions.
@@ -18,8 +36,9 @@ who downloaded it.
 
 ** Performance Improvements **
 Another significant performance speedup, courtesy of Isaac Turner,
-seems to give 20-40% speed increase for building and traversing graphs.
-
+seems to give 20-70% speed increase for loading, building and traversing graphs.
+For example, loading a GRC37 human reference genome binary at k=31 now
+takes 15 minutes, where it used to take 45 minutes.
 
 
 +++++++++++++++++++++++++++++++++++++++++++++

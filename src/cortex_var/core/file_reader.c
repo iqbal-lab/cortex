@@ -1540,8 +1540,25 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
     {
       *mean_readlen = ginfo->mean_read_length[0];
       *total_seq    = ginfo->total_sequence[0];
-      sample_identity[0]='\0';
-      strcat(sample_identity, ginfo->sample_ids[0]);
+      if  (strcmp(sample_identity, "undefined")==0)//we don't already have a name for this colour
+	{
+	  if (strcmp(ginfo->sample_ids[0], "undefined")!=0)//we've got  a name from this binary
+	    {
+	      sample_identity[0]='\0';
+	      strcat(sample_identity, ginfo->sample_ids[0]);
+	    }
+	}
+      else//we already have a name for this colour in our main GraphInfo
+	{
+	  if ( (strcmp(ginfo->sample_ids[0], "undefined")!=0) //we got a proper name from loading this binary
+	       &&
+	       (strcmp(ginfo->sample_ids[0], sample_identity)!=0) )
+	    {
+	      //then we have two different names for this colour. It must be a pool!
+	      sample_identity[0]='\0';
+	      strcat(sample_identity, "pool");
+	    }
+	}
     }
 
   if (binfo.number_of_colours!=1)
