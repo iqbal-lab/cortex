@@ -523,6 +523,10 @@ void load_se_seq_data_into_graph_colour(
 {
   short kmer_size = db_graph->kmer_size;
 
+  // DEV:
+  // First check if this is a cortex binary
+  // -> Load binary
+
   // Open file
   SeqFile *sf = seq_file_open(file_path);
 
@@ -1768,7 +1772,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
     }
 
 
-  //printf("Open single colour binary: %s\n", filename);
+  printf("Open single colour binary: %s\n", filename);
 
   FILE* fp_bin = fopen(filename, "r");
   long long  seq_length = 0;
@@ -1895,48 +1899,80 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 											   int colour_clean,
 											   boolean load_all_kmers_but_only_increment_covg_on_new_ones)
 {
+  // Get absolute path
+  char absolute_path[PATH_MAX+1];
+  char* filename_abs_path = realpath(filename, absolute_path);
 
+  if(filename_abs_path == NULL)
+  {
+    fprintf(stderr, "Cannot get absolute path to ctxlist: %s\n", filename);
+    exit(EXIT_FAILURE);
+  }
 
-  FILE* fptr = fopen(filename, "r");//this might be the same as filename
+  printf("loading ctxlist: %s\n", filename_abs_path);
+
+  FILE* fptr = fopen(filename, "r");
   if (fptr == NULL)
-    {
-      printf("cannot open %s which is supposed to list all .ctx files for person with index %d \n",filename, index);
-      exit(1); 
-    }
+  {
+    printf("cannot open %s which is supposed to list all .ctx files for person "
+           "with index %d\n", filename, index);
+    exit(1); 
+  }
+
+  // Get directory path
+  StrBuf *dir = _get_strbuf_of_dir_path(filename_abs_path);
 
   //file contains a list of .ctx filenames
-  char line[MAX_FILENAME_LENGTH+1];//just about willing to do this on the stack
-  
-  int total_seq_loaded=0;
-  
-  while(fgets(line,MAX_FILENAME_LENGTH, fptr) !=NULL)
-    {
+  StrBuf *line = strbuf_new();
 
-      //remove newline from endof line- replace with \0
-      char* p;
-      if ((p = strchr(line, '\n')) != NULL)
-	*p = '\0';
+  int total_seq_loaded = 0;
+
+  while(strbuf_reset_readline(line, fptr))
+  {
+    strbuf_chomp(line);
+
+    if(strbuf_len(line) > 0)
+    {
+      // Get paths relative to filelist dir
+      if(strbuf_get_char(line, 0) != '/')
+        strbuf_insert(line, 0, dir, 0, strbuf_len(dir));
+
+      // Get absolute paths
+      char* path_ptr = realpath(line->buff, absolute_path);
       
+      if(path_ptr == NULL)
+      {
+        fprintf(stderr, "Cannot find .ctx binary: %s\n", line->buff);
+        exit(EXIT_FAILURE);
+      }
+
       //printf("Load this binary: %s, into this colour : %d\n", line, index);
       int mean_read_len_in_this_binary=0;
       long long total_seq_in_this_binary=0;
       total_seq_loaded += 
-	load_single_colour_binary_data_from_filename_into_graph(line, db_graph, &mean_read_len_in_this_binary,&total_seq_in_this_binary,
-								all_entries_are_unique, individual_edge_array, index,
-								only_load_kmers_already_in_hash, colour_clean,
-								db_graph_info->sample_ids[index],
-								load_all_kmers_but_only_increment_covg_on_new_ones);
-      all_entries_are_unique=false;
-      graph_info_update_mean_readlen_and_total_seq(db_graph_info, index,mean_read_len_in_this_binary, total_seq_in_this_binary);
-      printf("Loaded next binary; total kmers in graph is now %qd\n",  hash_table_get_unique_kmers(db_graph) );
+        load_single_colour_binary_data_from_filename_into_graph(path_ptr, db_graph,
+          &mean_read_len_in_this_binary,&total_seq_in_this_binary,
+          all_entries_are_unique, individual_edge_array, index,
+          only_load_kmers_already_in_hash, colour_clean,
+          db_graph_info->sample_ids[index],
+          load_all_kmers_but_only_increment_covg_on_new_ones);
+      
+      all_entries_are_unique = false;
+      
+      graph_info_update_mean_readlen_and_total_seq(db_graph_info, index,
+        mean_read_len_in_this_binary, total_seq_in_this_binary);
+
+      printf("Loaded next binary; total kmers in graph is now %qd\n",
+             hash_table_get_unique_kmers(db_graph));
     }
+  }
+
+  strbuf_free(line);
+  strbuf_free(dir);
 
   fclose(fptr);
   //  free(temp1);
-  return total_seq_loaded;
-
-
-  
+  return total_seq_loaded;  
 }
 
 
@@ -1951,69 +1987,101 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 						 dBGraph* db_graph, GraphInfo* db_graph_info, boolean only_load_kmers_already_in_hash, int colour_clean,
 						 boolean load_all_kmers_but_only_increment_covg_on_new_ones)
 {
-
-  if ( (about_to_load_first_binary_into_empty_graph==true) && (only_load_kmers_already_in_hash==true) )
-    {
-      printf("You are trying to load binaries into an empty hash table, but are specifying that they should be compared with the existing hash table. User error\n");
-      exit(1);
-    }
-
-  //printf("Open this list of colours: %s\n", filename);
-  FILE* fp = fopen(filename, "r");
-  if (fp == NULL){
-    printf("load_population_as_binaries_from_graph cannot open file:%s\n",filename);
-    exit(1); //TODO - prfer to print warning and skip file and reutnr an error code?
+  if(about_to_load_first_binary_into_empty_graph == true &&
+     only_load_kmers_already_in_hash == true)
+  {
+    printf("You are trying to load binaries into an empty hash table, but are "
+           "specifying that they should be compared with the existing hash "
+           "table. User error\n");
+    exit(EXIT_FAILURE);
   }
 
-  char line[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
+  // Get absolute path
+  char absolute_path[PATH_MAX+1];
+  char* filename_abs_path = realpath(filename, absolute_path);
 
-  int total_seq_loaded=0;
-  int which_colour=first_colour;
+  if(filename_abs_path == NULL)
+  {
+    fprintf(stderr, "Cannot get absolute path to colours: %s\n", filename_abs_path);
+    exit(EXIT_FAILURE);
+  }
 
+  // Get directory path
+  StrBuf *dir = _get_strbuf_of_dir_path(filename_abs_path);
 
+  printf("Open this list of colours: %s\n", filename_abs_path);
 
-  while(fgets(line,MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME, fp) !=NULL)
+  FILE* fp = fopen(filename, "r");
+  if (fp == NULL)
+  {
+    //TODO - prefer to print warning and skip file and reutnr an error code?
+    printf("load_population_as_binaries_from_graph cannot open file:%s\n", filename);
+    exit(EXIT_FAILURE);
+  }
+
+  StrBuf *line = strbuf_new();
+
+  int total_seq_loaded = 0;
+  int which_colour = first_colour;
+
+  while(strbuf_reset_readline(line, fp))
+  {
+    strbuf_chomp(line);
+
+    if(strbuf_len(line) > 0)
     {
-      
-      //remove newline from end of line - replace with \0
-      char* p;
-      if ((p = strchr(line, '\n')) != NULL)
-	*p = '\0';
+      if(which_colour >= NUMBER_OF_COLOURS)
+      {
+        printf("This filelist contains too many people, remember we have set a "
+               "population limit of %d in variable NUMBER_OF_COLOURS. Cannot "
+               "load into colour %d\n", NUMBER_OF_COLOURS, which_colour);
+        exit(EXIT_FAILURE);
+      }
 
-      char temp1[MAX_FILENAME_LENGTH];
-      temp1[0]='\0';
-      strcpy(temp1, line);
-      char delims[] = "\t";
-      char* proper_filename = strtok(temp1, delims);
-      
-      if (which_colour>NUMBER_OF_COLOURS-1)
-	{
-	  printf("This filelist contains too many people, remember we have set a population limit of %d in variable NUMBER_OF_COLOURS. Cannot load into colour %d", 
-	       NUMBER_OF_COLOURS, which_colour);
-	exit(1);
+      // Get paths relative to filelist dir
+      if(strbuf_get_char(line, 0) != '/')
+        strbuf_insert(line, 0, dir, 0, strbuf_len(dir));
+
+      // Replace the first '\t' with '\0'
+      strtok(line->buff, "\t");
+
+      // Get absolute paths
+      char* path_ptr = realpath(line->buff, absolute_path);
+
+      if(path_ptr == NULL)
+      {
+        fprintf(stderr, "Cannot find ctxlist: %s\n",
+                line->buff);
+        exit(EXIT_FAILURE);
       }
 
       //printf("Open this filelist of binaries, %s,  all corresponding to the same colour:%d\n",
       //	     line, which_colour-1);
 
-      
       total_seq_loaded = total_seq_loaded + 
-	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(proper_filename, db_graph,db_graph_info, 
-											 about_to_load_first_binary_into_empty_graph, 
-											 individual_edge_array, which_colour,
-											 only_load_kmers_already_in_hash, colour_clean,
-											 load_all_kmers_but_only_increment_covg_on_new_ones);
-      about_to_load_first_binary_into_empty_graph=false;
-      //printf("Loaded person %d, total kmers in graph %qd\n", which_colour, hash_table_get_unique_kmers(db_graph) );
+        load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(
+          path_ptr, db_graph,db_graph_info, 
+          about_to_load_first_binary_into_empty_graph, 
+          individual_edge_array, which_colour,
+          only_load_kmers_already_in_hash, colour_clean,
+          load_all_kmers_but_only_increment_covg_on_new_ones);
+
+      about_to_load_first_binary_into_empty_graph = false;
+
+      //printf("Loaded person %d, total kmers in graph %qd\n", which_colour,
+      //       hash_table_get_unique_kmers(db_graph));
+
       which_colour++;
     }
+  }
+
+  strbuf_free(line);
+  strbuf_free(dir);
 
   fclose(fp);
 
   //printf("Finished loading population, with total seq loaded %d\n",total_seq_loaded); 
   return total_seq_loaded;
-
-
 }
 
 
@@ -2023,53 +2091,83 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 // First take person 0's list of binaries and load them all into colour in_colour, BUT only load nodes that are already in the hash,
 //  and only load those edges that are in the clean colour. Then dump a single-colour binary of colour in_colour,
 // with filename = colour name PLUS a suffix added on the end.
-void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_colour, char* suffix, 
-				      dBGraph* db_graph, GraphInfo* db_graph_info)
+void dump_successive_cleaned_binaries(char* filename, int in_colour,
+  int clean_colour, char* suffix, dBGraph* db_graph, GraphInfo* db_graph_info)
 {
-
-  if (in_colour==clean_colour)
-    {
-      printf("In dump_successive_cleaned_binaries You cannot specify the same colour as both clean_colour and in_colour\n");
-      exit(1);
-    }
-
-  //printf("Open this list of colours: %s\n", filename);
-  FILE* fp = fopen(filename, "r");
-  if (fp == NULL){
-    printf("dump_successive_cleaned_binaries cannot open file:%s\n",filename);
-    exit(1);
+  if(in_colour == clean_colour)
+  {
+    printf("In dump_successive_cleaned_binaries You cannot specify the same "
+           "colour as both clean_colour and in_colour\n");
+    exit(EXIT_FAILURE);
   }
 
-  char line[MAX_FILENAME_LENGTH+1];
+  // Get absolute path
+  char absolute_path[PATH_MAX+1];
+  char* filename_abs_path = realpath(filename, absolute_path);
 
-  int total_seq_loaded=0;
+  if(filename_abs_path == NULL)
+  {
+    fprintf(stderr, "Cannot get absolute path to .colours file: %s\n", filename);
+    exit(EXIT_FAILURE);
+  }
 
-  while(fgets(line,MAX_FILENAME_LENGTH, fp) !=NULL)
+  //printf("Open this list of colours: %s\n", filename);
+
+  FILE* fp = fopen(filename, "r");
+  if(fp == NULL)
+  {
+    printf("dump_successive_cleaned_binaries cannot open file:%s\n", filename);
+    exit(EXIT_FAILURE);
+  }
+
+  int total_seq_loaded = 0;
+
+  // Get directory path
+  StrBuf *dir = _get_strbuf_of_dir_path(filename_abs_path);
+  // Create buffer for reading in lines
+  StrBuf *line = strbuf_new();
+
+  while(strbuf_reset_readline(line, fp))
+  {
+    strbuf_chomp(line);
+
+    if(strbuf_len(line) > 0)
     {
-      
-      //remove newline from end of line - replace with \0
-      char* p;
-      if ((p = strchr(line, '\n')) != NULL)
-	*p = '\0';
+      // Get paths relative to filelist dir
+      if(strbuf_get_char(line, 0) != '/')
+        strbuf_insert(line, 0, dir, 0, strbuf_len(dir));
 
-      total_seq_loaded = total_seq_loaded + 
-	load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(line, db_graph,db_graph_info, false,
-											 individual_edge_array, in_colour,
-											 true, clean_colour, false);
+      // Get absolute paths
+      char* path_ptr = realpath(line->buff, absolute_path);
+
+      if(path_ptr == NULL)
+      {
+        fprintf(stderr, "Cannot find ctxlist: %s\n", line->buff);
+        exit(EXIT_FAILURE);
+      }
+
+      total_seq_loaded +=
+        load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(
+          path_ptr, db_graph,db_graph_info, false, individual_edge_array,
+          in_colour, true, clean_colour, false);
+      
       char outfile[1000];
       outfile[0]='\0';
-      sprintf(outfile,"%s_%s.ctx",line,suffix);
-      db_graph_dump_single_colour_binary_of_specified_colour(outfile, 
-							     &db_node_check_status_not_pruned,
-							     db_graph,
-							     db_graph_info,
-							     in_colour, 
-							     BINVERSION);
+      sprintf(outfile, "%s_%s.ctx", line->buff, suffix);
+
+      db_graph_dump_single_colour_binary_of_specified_colour(
+        outfile, &db_node_check_status_not_pruned, db_graph, db_graph_info,
+        in_colour, BINVERSION);
+
       //reset that colour:
-      db_graph_wipe_colour(in_colour,db_graph);
-      graph_info_set_seq(db_graph_info, in_colour,0);
+      db_graph_wipe_colour(in_colour, db_graph);
+      graph_info_set_seq(db_graph_info, in_colour, 0);
       graph_info_set_mean_readlen(db_graph_info, in_colour, 0);
     }
+  }
+
+  strbuf_free(line);
+  strbuf_free(dir);
 
   fclose(fp);
 }
@@ -2533,7 +2631,7 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
 
   char tmpseq[db_graph->kmer_size+1];
-  tmpseq[db_graph->kmer_size+1]='\0';
+  tmpseq[db_graph->kmer_size]='\0';
   tmpseq[0]='\0';
   
 
@@ -2675,7 +2773,7 @@ void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
 
   char tmpseq[db_graph->kmer_size+1];
-  tmpseq[db_graph->kmer_size+1]='\0';
+  tmpseq[db_graph->kmer_size]='\0';
   tmpseq[0]='\0';
   
 
@@ -2916,7 +3014,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
   //so we have got the 5prime flank. Now we need to get all the kmers joining it to the branches
   char last_kmer_5p[db_graph->kmer_size+1];
   last_kmer_5p[0]='\0';
-  last_kmer_5p[db_graph->kmer_size+1]='\0';
+  last_kmer_5p[db_graph->kmer_size]='\0';
   strncpy(last_kmer_5p, seq->seq+ (int)strlen(seq->seq)-db_graph->kmer_size, db_graph->kmer_size);
   //printf("We think this %s is the last kmer in the 5p flank %s\n", last_kmer_5p, seq->seq);
 
@@ -2927,7 +3025,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
   char last_kmer_of_branch1[db_graph->kmer_size+1];
   last_kmer_of_branch1[0]='\0';
-  last_kmer_of_branch1[db_graph->kmer_size+1]='\0';
+  last_kmer_of_branch1[db_graph->kmer_size]='\0';
 
   var->len_one_allele = -1 + 
     given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_5p, fptr, max_read_length, 
