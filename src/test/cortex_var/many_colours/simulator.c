@@ -186,7 +186,7 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
 
       //give the each allele depth which is taken from a Poisson with mean =  (D/2) * (R-k+1)/R  * (1-k*epsilon)
       //printf("Depth %d, var->len one allele - k,er +1 = %d, and 1-kmer * seq_err = %f     \n", depth, (var->len_one_allele)-kmer+1, 1-kmer*seq_err_per_base    )    ;
-      double exp_depth_on_allele1; 
+      double exp_depth_on_allele1 = 0;
       if (true_gt==het)
 	//het. So 1/3 of seq errors on the other allele end up on this one
       	{
@@ -205,7 +205,7 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
 	  exp_depth_on_allele1 = ((double) depth) *
 	    ( (double)(read_len+(var->len_other_allele)-kmer+1)/read_len) * kmer*seq_err_per_base/3;// 1/3 of the errors on the true allele are on this one
 	}
-      double exp_depth_on_allele2;
+      double exp_depth_on_allele2 = 0;
       if (true_gt==het)
 	//het. So 1/3 of seq errors are not a problem. So loss of covg is (1-k*(2/3)*e)
       	{
