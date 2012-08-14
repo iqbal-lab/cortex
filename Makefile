@@ -164,6 +164,7 @@ run_cortex_var_tests : remove_objects $(CORTEX_VAR_TESTS_OBJ)
 clean :
 	rm -rf $(BIN)/*
 	rm -rf src/obj
+	rm -rf data/tempfiles_can_be_deleted/*
 
 remove_objects:
 	rm -rf src/obj/*
