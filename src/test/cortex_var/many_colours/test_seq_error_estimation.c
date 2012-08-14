@@ -97,7 +97,7 @@ void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta()
   graph_info_update_mean_readlen_and_total_seq(ginfo, 0, mean_readlen, seq_loaded);  
   
   long double default_err_rate = 0.01;
-  estimate_seq_error_rate_from_snps_for_each_colour("../data/test/pop_graph/seq_error_estimation/colour_list_test_sample1", ginfo, db_graph, -1, 89, default_err_rate, NULL);
+  estimate_seq_error_rate_from_snps_for_each_colour("../data/test/pop_graph/seq_error_estimation/test_sample1.falist", ginfo, db_graph, -1, 89, default_err_rate, NULL);
 
   CU_ASSERT_DOUBLE_EQUAL(ginfo->seq_err[0],0.0, 0.0001);
 
@@ -173,7 +173,7 @@ void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta_test2()
   
   long double default_err_rate = 0.01;
 
-  estimate_seq_error_rate_from_snps_for_each_colour("../data/test/pop_graph/seq_error_estimation/colour_list_test_sample2", ginfo, db_graph, -1, 770, default_err_rate, NULL);
+  estimate_seq_error_rate_from_snps_for_each_colour("../data/test/pop_graph/seq_error_estimation/test_sample2.falist", ginfo, db_graph, -1, 770, default_err_rate, NULL);
 
 
   CU_ASSERT_DOUBLE_EQUAL(ginfo->seq_err[0],0.0909, 0.01);

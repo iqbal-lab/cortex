@@ -26,19 +26,26 @@
  */
 
 
+#include <stdlib.h>
+
 #include <CUnit.h>
 #include <Basic.h>
+
 #include <file_reader.h>
 #include <dB_graph_population.h>
 #include <dB_graph_supernode.h>
 #include <element.h>
 #include <open_hash/hash_table.h>
-#include <stdlib.h>
 #include "supernode_cmp.h"
 
 
 void test_find_first_node_in_supernode()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   printf("\nplease reimplement (not urgent as no current users of this code) conssensus code using db_graph_supernode NULL TEST\n. ");
 
@@ -195,10 +202,8 @@ void test_find_first_node_in_supernode()
   CU_ASSERT( !strcmp(tmp_seq, "ACG") || !strcmp(tmp_seq, "CGT")  || !strcmp(tmp_seq, "TTG") || !strcmp(tmp_seq, "CAA") );
   
 
-
   //*****
   // then do the kmers you expect to find only in person1 (not person 2) (horrible having index from 0 to 1 and people labelled 1 and 2 - stupid of me)
-
 
   // *** AAA
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
@@ -212,8 +217,6 @@ void test_find_first_node_in_supernode()
   //confirm not seen in person1
   testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
   CU_ASSERT(testnode==NULL);
-
-
 
   // *** GTT
 
@@ -235,9 +238,13 @@ void test_find_first_node_in_supernode()
 }
 
 
-
 void test_find_next_node_in_supernode()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   printf("\nplease reimplement (not urgent as no current users of this code) conssensus code using db_graph_supernode NULL TEST\n. ");
 
@@ -370,8 +377,11 @@ void test_find_next_node_in_supernode()
 
 void test_correctly_find_subsection_of_supernode()
 {
-
-
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   printf("\nplease reimplement (not urgent as no current users of this code) conssensus code using db_graph_supernode NULL TEST\n. ");
 
@@ -522,6 +532,11 @@ void test_correctly_find_subsection_of_supernode()
 
 void test_find_best_subsection_of_supernode_with_just_two_people()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   printf("\nplease reimplement (not urgent as no current users of this code) conssensus code using db_graph_supernode NULL TEST\n. ");
 
@@ -579,9 +594,9 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
   //notice the people share CTGGA
   //notice that each person basically has one big supernode, so the "breaking of supernodes" only occurs when you compare people.
 
-  //******** 1. *************************************************
-  //Let's pick a node that happens to be in both people's graphs
-  // ************************************************************
+  //
+  // 1. Let's pick a node that happens to be in both people's graphs
+  //
   dBNode* node = hash_table_find(element_get_key(seq_to_binary_kmer("TGGAG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(node != NULL);
 
@@ -616,18 +631,18 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
   CU_ASSERT( ( index_of_start_of_best_sub_supernode==1)  || ( index_of_start_of_best_sub_supernode==2) ); 
   CU_ASSERT( length_of_best_sub_supernode==3);
 
-
-
-  hash_table_free(&hash_table);
-  
-  
+  hash_table_free(&hash_table);  
 }
 
 
 // need to fix this so works for 3 people only
 void test_get_population_consensus_supernode()
 {
-
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   printf("\nplease reimplement (not urgent as no current users of this code) conssensus code using db_graph_supernode NULL TEST\n. ");
 

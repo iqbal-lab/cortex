@@ -327,6 +327,13 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   //int bucket_size = 100;
   int max_retries = 10;
 
+  if(kmer_size > NUMBER_OF_BITFIELDS_IN_BINARY_KMER*32 ||
+     kmer_size < (NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1)*32)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
+
   dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size,
                                       max_retries, kmer_size);
 
@@ -817,10 +824,17 @@ Covg in Colour 10:
 void regression_test_1_single_bubble_call_one_allele_shorter_than_k_one_very_long()
 {
   if (NUMBER_OF_COLOURS<11)
-    {
-      printf("This test requires >=11 colours, skipping\n");
-      return;
-    }
+  {
+    printf("This test requires >=11 colours, skipping\n");
+    return;
+  }
+
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
+
 
   VariantBranchesAndFlanks var;
   dBNode* branch1[22];
@@ -1115,11 +1129,12 @@ Colour:	MeanReadLen	TotalSeq
 
 void regression_test_2_genotyping_of_PD_SNP_call()
 {
-  if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER<2)
-    {
-      printf("Null test - compile for k=55\n");
-      return;
-    }
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER != 2)
+  {
+    printf("Null test - compile for k=55\n");
+    return;
+  }
+
   int kmer_size = 55;
 
   if (NUMBER_OF_COLOURS<2)

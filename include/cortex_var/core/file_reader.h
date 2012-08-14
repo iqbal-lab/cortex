@@ -30,6 +30,8 @@
 
 #include <sys/stat.h>
 
+#include <string_buffer.h>
+
 #include <seq.h>
 #include <dB_graph.h>
 #include <file_format.h>
@@ -73,6 +75,8 @@ typedef struct {
 // Returns 1 on success, 0 on failure
 // Adapted from Jonathan Leffler http://stackoverflow.com/a/675193/431087
 char mkpath(const char *path, mode_t mode);
+
+StrBuf* file_reader_get_strbuf_of_dir_path(char* path);
 
 void load_se_seq_data_into_graph_colour(
   const char *file_path,

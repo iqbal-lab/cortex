@@ -17,15 +17,16 @@ cd gsl-1.15
 make
 cd ..
 
-git clone git://github.com/noporpoise/seq_file.git
-cd seq_file
-make
-cd ..
-
 git clone https://github.com/noporpoise/string_buffer.git
 cd string_buffer
 make
 cd ..
+
+git clone git://github.com/noporpoise/seq_file.git
+cd seq_file
+make STRING_BUF_PATH=../string_buffer SAMPATH=../samtools-0.1.18
+cd ..
+
 cd ..
 
 2) Attempt to correct CUnit paths?  NOT_ZAM=1 currently works on mac only. 
@@ -49,14 +50,14 @@ make clean
 make
 cd ..
 
-cd seq_file
+cd string_buffer
 make clean
 make
 cd ..
 
-cd string_buffer
+cd seq_file
 make clean
-make
+make STRING_BUF_PATH=../string_buffer SAMPATH=../samtools-0.1.18
 cd ..
 
 cd ..

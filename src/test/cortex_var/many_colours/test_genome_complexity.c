@@ -6,6 +6,11 @@
 
 void test_count_reads_where_snp_makes_clean_bubble1()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   //  simple test. Use this refernece genome which I load into colour 0:
 

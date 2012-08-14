@@ -118,48 +118,79 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
 
 
 
+  // Get absolute path
+  char absolute_path[PATH_MAX+1];
+  char* filename_abs_path = realpath(colourlist_snp_alleles, absolute_path);
 
+  if(filename_abs_path == NULL)
+  {
+    fprintf(stderr, "Cannot get absolute path to seq_error colours: %s\n",
+            filename_abs_path);
+    exit(EXIT_FAILURE);
+  }
+
+  // Get directory path
+  StrBuf *dir = file_reader_get_strbuf_of_dir_path(filename_abs_path);
 
   printf("Open colourlist %s\n", colourlist_snp_alleles);
+
   FILE* fp = fopen(colourlist_snp_alleles, "r");
-  if (fp==NULL)
-    {
-      printf("Cannot open %s\n", colourlist_snp_alleles);
-      exit(1);
-    }
+  if(fp == NULL)
+  {
+    printf("Cannot open %s\n", colourlist_snp_alleles);
+    exit(1);
+  }
 
-  char filename[MAX_FILENAME_LENGTH];
-  int colour=-1;
-  while (feof(fp) ==0)
+  StrBuf *line = strbuf_new();
+
+  int colour = -1;
+
+  while(strbuf_reset_readline(line, fp))
+  {
+    strbuf_chomp(line);
+
+    if(strbuf_len(line) > 0)
     {
-      if (fgets(filename,MAX_FILENAME_LENGTH, fp) !=NULL)
+      colour++;
+
+      if(colour != ref_colour)
+      {
+        // Get paths relative to filelist dir
+        if(strbuf_get_char(line, 0) != '/')
+          strbuf_insert(line, 0, dir, 0, strbuf_len(dir));
+
+        // Get absolute paths
+        char* path_ptr = realpath(line->buff, absolute_path);
+
+        if(path_ptr == NULL)
         {
-	  char* p;
-	  if ((p = strchr(filename, '\n')) != NULL)
-	    {
-	      *p = '\0';
-	    }
-	  
-	  colour++;
-	  if (colour != ref_colour)
-	    {
-	      int num_snps_tested=0;
-	      db_graph_info->seq_err[colour]=estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(filename, db_graph, colour, 
-												     seq, kmer_window, &file_reader_fasta,
-												     array_nodes, array_or, &num_snps_tested,
-													  max_read_length, default_seq_err_rate, fout);
+          fprintf(stderr, "Cannot find sequence file for seq_error_estimation: %s\n",
+                  line->buff);
+          exit(EXIT_FAILURE);
+        }
 
-	    }
+        int num_snps_tested = 0;
 
-	}
+        db_graph_info->seq_err[colour]
+          = estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(
+              path_ptr, db_graph, colour, seq, kmer_window, &file_reader_fasta,
+              array_nodes, array_or, &num_snps_tested, max_read_length,
+              default_seq_err_rate, fout);
+      }
     }
+  }
+
+  // Cleanup
+  strbuf_free(line);
+  strbuf_free(dir);
+
   fclose(fp);
 
-  //cleanup
-  if (output_file != NULL)
-    {
-      fclose(fout);
-    }
+  if(output_file != NULL)
+  {
+    fclose(fout);
+  }
+
   free_sequence(&seq);
   free(kmer_window->kmer);
   free(kmer_window);

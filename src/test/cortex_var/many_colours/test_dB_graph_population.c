@@ -48,6 +48,11 @@
 // is a sanity check one level up from those
 void test_hash_table_find()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   //first set up the hash/graph
   int kmer_size = 3;
@@ -159,11 +164,15 @@ void test_hash_table_find()
   
   hash_table_free(&db_graph);
   CU_ASSERT(db_graph == NULL);
-  
 }
 
 void test_tip_clipping()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   //first set up the hash/graph
   int kmer_size = 3;
@@ -266,17 +275,19 @@ void test_tip_clipping()
   CU_ASSERT(db_node_check_status(node4,visited));
   CU_ASSERT(db_node_check_status(node5,visited));
   CU_ASSERT(db_node_check_status(node6,visited));
-   
 
   hash_table_free(&db_graph);
   CU_ASSERT(db_graph == NULL);
-  
-
 }
 
 
 void test_pruning_low_coverage_nodes()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   //first set up the hash/graph
   int kmer_size = 3;
@@ -346,7 +357,12 @@ void test_pruning_low_coverage_nodes()
 }
 
 void test_get_perfect_path_in_one_colour() 
- {
+{
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
  
   //first set up the hash/graph
   int kmer_size = 3;
@@ -716,7 +732,14 @@ void test_get_perfect_path_in_one_colour()
 
 
 
-void test_detect_and_smooth_bubble(){
+void test_detect_and_smooth_bubble()
+{
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
+
   int kmer_size = 3;
   int number_of_buckets = 4;
   int bucket_size = 3;
@@ -1019,7 +1042,14 @@ void test_detect_and_smooth_bubble(){
 
 
 
-void test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour(){ 
+void test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour()
+{
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
+
   int kmer_size = 3;
   int number_of_bits = 4;
   int bucket_size = 4;
@@ -1172,12 +1202,7 @@ void test_get_N50()
  
    //clean-up
    hash_table_free(&db_graph);
-   
-   
-   
-   
-   
-   
+
 }
 */
 
@@ -1185,6 +1210,12 @@ void test_get_N50()
 
 void test_is_condition_true_for_all_nodes_in_supernode()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
+
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 4;
@@ -1235,7 +1266,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
   dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("ACG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element2!=NULL);
 
-  int limit =50;
+  int limit = 50;
   dBNode * nodes_path[limit];
   Orientation orientations_path[limit];
   Nucleotide labels_path[limit];
@@ -1343,6 +1374,11 @@ void test_is_condition_true_for_all_nodes_in_supernode()
 
 void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   //first set up the hash/graph
   int kmer_size = 3;
@@ -1558,10 +1594,6 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   dBNode* test_element3 =  hash_table_find(element_get_key(seq_to_binary_kmer("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
   CU_ASSERT(test_element3!=NULL);
 
-
-
-
-
   db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_is_not_exists_in_reference, min_covg_required, NULL,
 									       true, array_of_supernodes_for_person3, &number_of_supernodes, individual_edge_array, 0);
 
@@ -1665,18 +1697,17 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   free(array_of_supernodes_for_person3) ;
 
   hash_table_free(&db_graph);
-
-  
-
-  
+ 
 }
-
-
 
 
 void test_db_graph_supernode_for_specific_person_or_pop()
 {
-
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
  //first set up the hash/graph
   int kmer_size = 3;
@@ -1741,9 +1772,6 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   int min_coverage=0;
   boolean is_cycle=false;
 
-
-
-
   int length = db_graph_supernode_for_specific_person_or_pop(test_elem1,max_expected_supernode_length, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							     nodes_path,orientations_path, labels_path, seq,
 							     &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
@@ -1768,11 +1796,6 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   CU_ASSERT(db_node_check_status(test_elem1, visited));
   CU_ASSERT(db_node_check_status(test_elem2, visited));
   CU_ASSERT(db_node_check_status(test_elem3, visited));
-
-
-
-
-
 
 
   hash_table_free(&hash_table);
@@ -1831,14 +1854,10 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   CU_ASSERT(!(test_elem8 == NULL));
   CU_ASSERT(!(test_elem9 == NULL));
 
-
   avg_coverage=0;
   min_coverage=0;
   max_coverage=0;
   is_cycle=false;
-
-
-
 
   length = db_graph_supernode_for_specific_person_or_pop(test_elem1,max_expected_supernode_length, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
@@ -1956,8 +1975,6 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   CU_ASSERT(db_node_check_status(test_elem9, visited)==true);
 
 
-
-
   length = db_graph_supernode_for_specific_person_or_pop(test_elem4,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
 							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
@@ -1992,8 +2009,6 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   CU_ASSERT(db_node_check_status(test_elem8, none)==true);
   CU_ASSERT(db_node_check_status(test_elem9, visited)==true);
 
-
-
   //and now a trap! This node is not there in person 1, but is in person 2
   length = db_graph_supernode_for_specific_person_or_pop(test_elem6,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
@@ -2010,15 +2025,17 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   CU_ASSERT(length==3);
   CU_ASSERT_STRING_EQUAL(seq, "CAA");  
 
-
-  
-
   hash_table_free(&hash_table);
 }
 
 
 void test_is_supernode_end()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   //first set up the hash/graph
   int kmer_size = 3;
@@ -2093,7 +2110,6 @@ void test_is_supernode_end()
   // ****
 
 
-
   //first set up the hash/graph
   kmer_size = 3;
   number_of_bits = 4;
@@ -2153,9 +2169,7 @@ void test_is_supernode_end()
   CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
 
-
   hash_table_free(&hash_table);
-
 
   // ****
   //1.3 Fasta file that generate a graph with one long supernode, with a conflict at the end
@@ -2165,10 +2179,9 @@ void test_is_supernode_end()
   //first set up the hash/graph
   kmer_size = 3;
   number_of_bits = 4;
-  bucket_size    = 4;
+  bucket_size = 4;
   bad_reads = 0;
-  max_retries=10;
-
+  max_retries = 10;
 
   hash_table = hash_table_new(number_of_bits, bucket_size,
                               max_retries, kmer_size);
@@ -2227,10 +2240,7 @@ void test_is_supernode_end()
   CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
 
-
   hash_table_free(&hash_table);
-
-
 
   // ****
   //1.4 Fasta file that generate a graph with an infinite loop at a single kmer
@@ -2244,7 +2254,6 @@ void test_is_supernode_end()
   bucket_size    = 4;
   bad_reads = 0;
   max_retries=10;
-
 
   hash_table = hash_table_new(number_of_bits, bucket_size,
                               max_retries, kmer_size);
@@ -2272,16 +2281,18 @@ void test_is_supernode_end()
   CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
   CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
 
-
   hash_table_free(&hash_table);
-
 
 }
 
 
 void test_getting_stats_of_how_many_indivduals_share_a_node()
 { 
-
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   //       >person1_read1
   //        AAAAAAAAAAAAAAA
@@ -2357,6 +2368,11 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
 
 void test_get_min_and_max_covg_of_nodes_in_supernode()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   //first set up the hash/graph
   int kmer_size = 3;
@@ -2424,7 +2440,6 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
   CU_ASSERT(seq_loaded == 24);
   CU_ASSERT(seq_read == 24);
   CU_ASSERT(bad_reads==0);
-  
 
   dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAC",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
@@ -2439,14 +2454,17 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
   CU_ASSERT(db_node_get_coverage(query_node, individual_edge_array, 0)==4); //NOTE this is only 4 because we cound kmer coverage. CCG occurs twice in read r1, once on each strand
   //printf("Expect covg ccg is 4, but is %d", db_node_get_coverage(query_node, individual_edge_array, 0));
 
-
   hash_table_free(&hash_table);
-
 }
 
 
 void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   int length_of_arrays=14;
   int number_of_nodes_to_load=7;
@@ -2684,8 +2702,6 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
   CU_ASSERT(chrom_path_array[12]==NULL);
   CU_ASSERT(chrom_path_array[13]==NULL);
 
-
-
   //cleanup
 
   free(kmer_window->kmer);
@@ -2701,14 +2717,19 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
 }
 
 
-
-  //A fundamental assumption in our implementation is that the fasta whose path you are following is long, much longer than the longest supernode
-  // you are going to find. This is fine when running using reference chromosomes. However in tests, this is a pain, and so I am using fasta's for these tests
-  // that are padded at the end with N's.
+// A fundamental assumption in our implementation is that the fasta whose path
+// you are following is long, much longer than the longest supernode you are
+// going to find. This is fine when running using reference chromosomes. However
+// in tests, this is a pain, and so I am using fasta's for these tests that are
+// padded at the end with N's.
 
 void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
 {
-
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // ===========================================================================
   // 1. NULL test. Load short fake reference, and load a person whose sequence
@@ -2753,14 +2774,12 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
   //>one read
   //AATAGACGCCCACACCTGATAGACCCCACAC 
 
-
   // The de Bruijn graph of this in 7mers is as follows:
   // a line of 8 nodes, with a loop of length 16 off the 9th node. ie all nodes
   // have 1-in and 1-out, except the 9th node, CCCACAC, which has 2 ins and
   // 2 outs. So it's a supernode of length 8, a loop-supernode of length 16,
   // our algorithm should look at the supernode starting with AATAGAC, then the
   // supernode starting at CCCACAC, then stop
-
 
   
   CU_ASSERT(seq_read==1462);
@@ -2781,8 +2800,6 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
   int max_covg = 10;
   int max_expected_size_of_supernode=20;
 
-
-
   
   int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 							individual_edge_array,1,
@@ -2796,15 +2813,17 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
 
-
 }
-
-
 
 
 
 void test_db_graph_make_reference_path_based_sv_calls_null_test_2()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // ===========================================================================
   // 2. Harder NULL test. Reference=an ALU and load a person whose sequence is
@@ -2887,15 +2906,16 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_2()
 
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
-
 }
-
-
 
 
 void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
 {
-
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // ===========================================================================
   // 3. Reference = Alu-NNNNN- same Alu, and person is identical to reference.
@@ -2971,12 +2991,10 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
   // ACGGAGCAGGTCAAAACTCCCGTGCTGATCAGTAGTGGGATCGCGCCTGT
   // GAATAGCCACTGCACTCCAGCCTGAGCAACATAGCGAGACCCCGTCTCTT
   // AAAAAAAAAAAAAAAAAAAAGTCAGCCGTAG
-    
-  
-  
+
+
   CU_ASSERT(seq_read==697);
   CU_ASSERT(seq_loaded==678);//not a typo - removing Ns
-
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu.fa", "r");
   if (chrom_fptr==NULL)
@@ -3004,15 +3022,16 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
 
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
-
-
 }
-
-
 
 
 void test_db_graph_make_reference_path_based_sv_calls_null_test_4()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // ===========================================================================
   // 4. Reference = 10kb of chromosome 1. Individual is that same sequence. This
@@ -3075,21 +3094,21 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_4()
 							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
 							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
 
-  
   CU_ASSERT(ret==0);
-
-
 
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
 
-
 }
-
 
 
 void test_db_graph_make_reference_path_based_sv_calls_null_test_5()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // ===========================================================================
   // Reference is two copies of a single sequence, tandem repeat of about 36
@@ -3160,17 +3179,19 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_5()
   
   CU_ASSERT(ret==0);
 
-
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
-
 
 }
 
 //numbering of tests goes back to 1 - these unti tests are for cases where we DO expect to find a variant
 void test_db_graph_make_reference_path_based_sv_calls_test_1()
 {
-
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // ===========================================================================
   // 1. Reference = short sequence
@@ -3292,10 +3313,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
   CU_ASSERT_STRING_EQUAL("AAGCCACA", return_branch2_array[0]);
   CU_ASSERT_STRING_EQUAL("CTGTACTTGTA", return_flank3p_array[0]);
 
-
   CU_ASSERT(return_variant_start_coords_array[0]==23);
-
-
 
   //cleanup
   hash_table_free(&hash_table);
@@ -3313,13 +3331,13 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
 
 
 
-
-
-
-
 void test_db_graph_make_reference_path_based_sv_calls_test_2()
 {
-
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // ===========================================================================
   // 2. Reference = Alu-NNNNN- same Alu, and person is identical to reference
@@ -3451,10 +3469,14 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
 }
 
 
-
-
 void test_db_graph_make_reference_path_based_sv_calls_test_3()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
+
   // ===========================================================================
   // 3. Reference is just a short sequence. Individual is missing 2 bases in the
   //    middle--> we should find this. Note this test is also interesting
@@ -3584,15 +3606,17 @@ void test_db_graph_make_reference_path_based_sv_calls_test_3()
   free(return_trusted_branch_array);
   free(return_branch2_array);
 
-
-  
 }
-
-
 
 
 void test_db_graph_make_reference_path_based_sv_calls_test_4()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
+
   // ===========================================================================
   // Reference is just a short sequence. Individual has an extra 2 bases in the
   // middle--> we should find this
@@ -3699,9 +3723,6 @@ void test_db_graph_make_reference_path_based_sv_calls_test_4()
 							&make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
 							&print_no_extra_info, NULL, NoIdeaWhatCleaning);
 
-  
-
-
   fclose(fp);
 
   CU_ASSERT(ret==1);
@@ -3723,15 +3744,16 @@ void test_db_graph_make_reference_path_based_sv_calls_test_4()
   free(return_flank3p_array);
   free(return_trusted_branch_array);
   free(return_branch2_array);
-
-
 }
-
 
 
 void test_db_graph_make_reference_path_based_sv_calls_test_5()
 {
-
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // ===========================================================================
   // 5. Reference is a single sequence which is a single supernode. Individual
@@ -3842,9 +3864,6 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
 											       &print_no_extra_info, NULL, NoIdeaWhatCleaning,0); //last 0 - start numbering variant at 0
   fclose(fp);
 
-
-
-
   CU_ASSERT(ret==1);
 
   //first base of Alu insert = first base of displaced sequence. ie we had xxxxGyyyy and then we insert Alu: xxxx[G-Alu]Gyyyy. So first base of Alu look slike is in flank5p
@@ -3865,16 +3884,17 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
   free(return_trusted_branch_array);
   free(return_branch2_array);
 
-
-
-
 }
 
 
 
 void test_db_graph_make_reference_path_based_sv_calls_test_6()
 {
-
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // ===========================================================================
   // 6. Reverse the roles of previous test. Reference has an Alu, individual
@@ -3927,7 +3947,6 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
     }
 
 
-
   int  min_fiveprime_flank_anchor = 3;
   int  min_threeprime_flank_anchor= 8;
   int  max_anchor_span =500;
@@ -3971,10 +3990,8 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
   int* return_variant_start_coords_array_ptr[2];    
   return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
   return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
-
   
   FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test6", "w");
-
 
   int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
 							individual_edge_array,0,
@@ -4007,15 +4024,16 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
   free(return_flank3p_array);
   free(return_trusted_branch_array);
   free(return_branch2_array);
-
 }
-
-
-
 
 
 void test_db_graph_make_reference_path_based_sv_calls_test_7()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // ===========================================================================
   // 7. Reference is an Alu with a different Alu inserted in the middle.
@@ -4170,7 +4188,6 @@ void test_db_graph_make_reference_path_based_sv_calls_test_7()
   CU_ASSERT_STRING_EQUAL("GCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGAGGATCGCTTGAGCCCAGGAGTTCGAGACCAGCCTGGGCAACATAGCGAGACCCCGTCTCTACAAAAAATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAGTCCCAGCTACTCGGGAGGCTGAGGCAGGAGGATCGCTTGAGCCCAGGAGTTCGAGGCTGCAGTGAGCTATGATCGCGCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACCCTGTCTCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACGGGGGACCACCAGGTTGCCTAAGGAGGGGT", return_trusted_branch_array[0]);
   CU_ASSERT(return_variant_start_coords_array[0]==151); 
 
-
   hash_table_free(&hash_table);
   fclose(chrom_fptr);
   free(return_flank5p_array[0]);
@@ -4181,14 +4198,16 @@ void test_db_graph_make_reference_path_based_sv_calls_test_7()
   free(return_flank3p_array);
   free(return_trusted_branch_array);
   free(return_branch2_array);
-
 }
-
 
 
 void test_db_graph_make_reference_path_based_sv_calls_test_8()
 {
-
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // ===========================================================================
   // 8. Reference is 10 kb of chromosome 1 plus 1kb of sequence inserted
@@ -4382,6 +4401,11 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
 
 void test_db_graph_make_reference_path_based_sv_calls_test_9()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // ===========================================================================
   // 9. Identical to previous test, but each person has identical 600 lines of
@@ -4480,10 +4504,6 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
 
   FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test9", "w");
 
-
-
-
-
   int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 							individual_edge_array,1,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
@@ -4523,10 +4543,6 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
   free(return_trusted_branch_array);
   free(return_branch2_array);
 
-
-
-
-
 }
 
 
@@ -4534,6 +4550,11 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
 
 void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // First set up the hash/graph
   int kmer_size = 5;
@@ -4665,7 +4686,6 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
   qsort(coverages_of_nodes_in_array1_not_array2, num_nodes_in_array1_not_array2, sizeof(int), int_cmp); 
   qsort(coverages_of_nodes_in_array2_not_array1, num_nodes_in_array2_not_array1, sizeof(int), int_cmp); 
 
-
   CU_ASSERT(coverages_of_nodes_in_array1_not_array2[0]==1);
   CU_ASSERT(coverages_of_nodes_in_array1_not_array2[1]==1);
   CU_ASSERT(coverages_of_nodes_in_array1_not_array2[2]==1);
@@ -4681,9 +4701,7 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
   CU_ASSERT(coverages_of_nodes_in_array2_not_array1[1]==1);
   CU_ASSERT(coverages_of_nodes_in_array2_not_array1[2]==2);
 
-
   hash_table_free(&hash_table);
-  
 }
 
 
@@ -4691,6 +4709,11 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
 
 void test_apply_to_all_nodes_in_path_defined_by_fasta()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   // First set up the hash/graph
   int kmer_size = 5;
@@ -4864,6 +4887,11 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
 
 void test_does_this_path_exist_in_this_colour()
 {
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
 
   if (NUMBER_OF_COLOURS>=3)
     {

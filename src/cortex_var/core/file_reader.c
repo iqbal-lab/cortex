@@ -37,11 +37,9 @@
 #include <libgen.h> // dirname
 #include <errno.h>
 #include <ctype.h> // tolower
-#include <sys/stat.h>
 
 // Third party libraries
 #include <seq_file.h>
-#include <string_buffer.h>
 
 // Our headers
 #include <binary_kmer.h>
@@ -51,7 +49,6 @@
 #include <global.h>
 #include <dB_graph_supernode.h>
 #include <dB_graph_population.h>
-#include <file_format.h>
 
 #define MIN(x,y) ((x) <= (y) ? (x) : (y))
 #define MAX(x,y) ((x) >= (y) ? (x) : (y))
@@ -816,7 +813,7 @@ void load_pe_seq_data_into_graph_colour(
   seq_file_close(sf2);
 }
 
-StrBuf* _get_strbuf_of_dir_path(char* path)
+StrBuf* file_reader_get_strbuf_of_dir_path(char* path)
 {
   char *tmp = strdup(path);
   StrBuf *dir = strbuf_create(dirname(tmp));
@@ -867,7 +864,7 @@ void load_se_filelist_into_graph_colour(
   }
 
   // Get directory path
-  StrBuf *dir = _get_strbuf_of_dir_path(se_filelist_abs_path);
+  StrBuf *dir = file_reader_get_strbuf_of_dir_path(se_filelist_abs_path);
 
   // Stats
   unsigned int se_files_loaded = 0;
@@ -1001,8 +998,8 @@ void load_pe_filelists_into_graph_colour(
   }
 
   // Get directory paths for filelist files
-  StrBuf *dir1 = _get_strbuf_of_dir_path(pe_filelist_abs_path1);
-  StrBuf *dir2 = _get_strbuf_of_dir_path(pe_filelist_abs_path2);
+  StrBuf *dir1 = file_reader_get_strbuf_of_dir_path(pe_filelist_abs_path1);
+  StrBuf *dir2 = file_reader_get_strbuf_of_dir_path(pe_filelist_abs_path2);
 
   // Stats
   unsigned int pe_file_pairs_loaded = 0;
@@ -1920,7 +1917,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
   }
 
   // Get directory path
-  StrBuf *dir = _get_strbuf_of_dir_path(filename_abs_path);
+  StrBuf *dir = file_reader_get_strbuf_of_dir_path(filename_abs_path);
 
   //file contains a list of .ctx filenames
   StrBuf *line = strbuf_new();
@@ -1947,8 +1944,9 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
       }
 
       //printf("Load this binary: %s, into this colour : %d\n", line, index);
-      int mean_read_len_in_this_binary=0;
-      long long total_seq_in_this_binary=0;
+      int mean_read_len_in_this_binary = 0;
+      long long total_seq_in_this_binary = 0;
+
       total_seq_loaded += 
         load_single_colour_binary_data_from_filename_into_graph(path_ptr, db_graph,
           &mean_read_len_in_this_binary,&total_seq_in_this_binary,
@@ -2007,7 +2005,7 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
   }
 
   // Get directory path
-  StrBuf *dir = _get_strbuf_of_dir_path(filename_abs_path);
+  StrBuf *dir = file_reader_get_strbuf_of_dir_path(filename_abs_path);
 
   printf("Open this list of colours: %s\n", filename_abs_path);
 
@@ -2123,7 +2121,7 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
   int total_seq_loaded = 0;
 
   // Get directory path
-  StrBuf *dir = _get_strbuf_of_dir_path(filename_abs_path);
+  StrBuf *dir = file_reader_get_strbuf_of_dir_path(filename_abs_path);
   // Create buffer for reading in lines
   StrBuf *line = strbuf_new();
 
