@@ -43,13 +43,17 @@
 //#define LEN_ERROR_STRING 400
 #define MAX_LINE 500
 
+// Supress a warning from the compiler about an unused variable
+#define UNUSED(x) ((void)(x))
 
 int isNumeric (const char * s)
 {
   if (s == NULL || *s == '\0')
     return 0;
   char * p;
-  (void)strtod (s, &p); // void to indicate we are ignoring return value
+  double d = strtod(s, &p);
+  // to supress warning from compiler
+  UNUSED(d);
   return *p == '\0';
 }
 
