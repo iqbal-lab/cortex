@@ -3,6 +3,7 @@
 #endif
 
 BIN = bin
+TEMP_TEST_DIR = data/tempfiles_can_be_deleted
 
 ifeq ($(MAXK),31)
    BITFIELDS = 1
@@ -148,23 +149,23 @@ cortex_var : remove_objects $(CORTEX_VAR_OBJ)
 	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) $(OPT_COLS) -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ) $(LIBLIST)
 
 run_basic_tests : remove_objects $(BASIC_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_BASIC_TESTS) $(OPT) -o $(BIN)/run_basic_tests_$(MAXK) $(BASIC_TESTS_OBJ) $(TEST_LIBLIST)
+	mkdir -p $(BIN); mkdir -p $(TEMP_TEST_DIR); $(CC) $(CFLAGS_BASIC_TESTS) $(OPT) -o $(BIN)/run_basic_tests_$(MAXK) $(BASIC_TESTS_OBJ) $(TEST_LIBLIST)
 
 run_hash_table_tests : remove_objects $(HASH_TABLE_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_HASH_TABLE_TESTS) $(OPT) -o $(BIN)/run_hash_table_tests_$(MAXK) $(HASH_TABLE_TESTS_OBJ) $(TEST_LIBLIST)
+	mkdir -p $(BIN); mkdir -p $(TEMP_TEST_DIR); $(CC) $(CFLAGS_HASH_TABLE_TESTS) $(OPT) -o $(BIN)/run_hash_table_tests_$(MAXK) $(HASH_TABLE_TESTS_OBJ) $(TEST_LIBLIST)
 
 run_cortex_var_cmdline_tests : remove_objects $(CORTEX_VAR_CMD_LINE_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS) $(OPT) -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) $(TEST_LIBLIST)
+	mkdir -p $(BIN); mkdir -p $(TEMP_TEST_DIR); $(CC) $(CFLAGS_CORTEX_VAR_CMD_LINE_TESTS) $(OPT) -o $(BIN)/run_cortex_var_cmdline_tests $(CORTEX_VAR_CMD_LINE_TESTS_OBJ) $(TEST_LIBLIST)
 
 run_cortex_var_tests : remove_objects $(CORTEX_VAR_TESTS_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR_TESTS) $(OPT) -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) $(TEST_LIBLIST)
+	mkdir -p $(BIN); mkdir -p $(TEMP_TEST_DIR); $(CC) $(CFLAGS_CORTEX_VAR_TESTS) $(OPT) -o $(BIN)/run_cortex_var_tests_$(MAXK) $(CORTEX_VAR_TESTS_OBJ) $(TEST_LIBLIST)
 
 
 .PHONY : clean
 clean :
 	rm -rf $(BIN)/*
 	rm -rf src/obj
-	rm -rf data/tempfiles_can_be_deleted/*
+	rm -rf $(TEMP_TEST_DIR)/*
 
 remove_objects:
 	rm -rf src/obj/*
