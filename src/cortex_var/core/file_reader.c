@@ -2271,7 +2271,7 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
 
   char tmpseq[db_graph->kmer_size+1];
-  tmpseq[db_graph->kmer_size+1]='\0';
+  tmpseq[db_graph->kmer_size]='\0';
   tmpseq[0]='\0';
   
 
@@ -2413,7 +2413,7 @@ void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
 
   char tmpseq[db_graph->kmer_size+1];
-  tmpseq[db_graph->kmer_size+1]='\0';
+  tmpseq[db_graph->kmer_size]='\0';
   tmpseq[0]='\0';
   
 
@@ -2665,7 +2665,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
   //so we have got the 5prime flank. Now we need to get all the kmers joining it to the branches
   char last_kmer_5p[db_graph->kmer_size+1];
   last_kmer_5p[0]='\0';
-  last_kmer_5p[db_graph->kmer_size+1]='\0';
+  last_kmer_5p[db_graph->kmer_size]='\0';
   strncpy(last_kmer_5p, seq->seq+ (int)strlen(seq->seq)-db_graph->kmer_size, db_graph->kmer_size);
   //printf("We think this %s is the last kmer in the 5p flank %s\n", last_kmer_5p, seq->seq);
 
@@ -2676,7 +2676,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
   char last_kmer_of_branch1[db_graph->kmer_size+1];
   last_kmer_of_branch1[0]='\0';
-  last_kmer_of_branch1[db_graph->kmer_size+1]='\0';
+  last_kmer_of_branch1[db_graph->kmer_size]='\0';
 
   var->len_one_allele = -1 + 
     given_prev_kmer_align_next_read_to_graph_and_return_node_array_including_overlap(last_kmer_5p, fptr, max_read_length, 

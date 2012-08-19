@@ -1,4 +1,13 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.10
+
+Bugfix release:
+Thanks to Akdes Serin for reporting a bug in run_calls.pl,
+where it fails to properly parse a log file.
+If you use run_calls, I advise migrating up to this release.
+Apologies for the inconvenience.
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.9
 
 Bugfix release:
