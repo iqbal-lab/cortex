@@ -45,7 +45,7 @@ my $colour_list = make_colour_list($cleaned_pool, $ref, $pop, $outdir);
 
 my $bubbles = $outdir.$pop."_bubbles_thresh".$thresh;
 my $log = $bubbles.".log";
-my $cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list --detect_bubbles1 1/1 --output_bubbles1 $bubbles  --exclude_ref_bubbles --print_colour_coverages --ref_colour 0 > $log 2>&1";
+my $cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list --detect_bubbles1 1/1 --output_bubbles1 $bubbles  --exclude_ref_bubbles  --ref_colour 0 > $log 2>&1";
 print "$cmd\n";
 my $ret = qx{$cmd};
 print "$ret\n";
