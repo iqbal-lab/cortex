@@ -2,7 +2,8 @@
 v1.0.5.11
 
 Bugfix release:
-Something I have not advertised is the fact that in the last few releases,
+
+1. Something I have not advertised is the fact that in the last few releases,
 I have added a scripts/1000genomes directory, which contains scripts forming
 a template for running Cortex on a population of samples
 with large genomes - eg for running on hundreds of the 1000 Genomes samples.
@@ -14,6 +15,8 @@ run Cortex on different populations.
 
 Thanks to Holly Zheng for finding an error in one of the scripts,
 the fix for which is the reason for this release.
+
+2. A few small array overflow bugfixes
 
 ++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.10
