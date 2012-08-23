@@ -5,6 +5,7 @@
 2. cd gsl-1.15/
 3. Type
 
+mkdir user_install
 make clean
 ./configure --prefix=/path/to/Cortex_release_v1.0.whatever/gsl-1.15/user_install
 make
@@ -45,7 +46,12 @@ If this fails, consult the manual at : http://cortexassembler.sourceforge.net/co
 
 3. Add /path/to/CORTEX_release_v_whatever/scripts/analyse_variants/needleman_wunsch-0.3.0/ to your PATH
 
-4. cd scripts/analyse_variants/needleman_wunsch-0.3.0/
+4. Add /path/to/CORTEX_release_v_whatever/gsl-1.15/user_install/lib
+   to your LD_LIBRARY_PATh environment variable. If your shell is bash, you would do that like this:
+
+   export LD_LIBRARY_PATH=/path/to/CORTEX_release_v_whatever/gsl-1.15/user_install/lib
+
+5. cd scripts/analyse_variants/needleman_wunsch-0.3.0/
    make clean
    make
 
