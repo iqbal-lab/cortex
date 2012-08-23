@@ -321,7 +321,7 @@ if ( !( -e $flank_bin ) )
 }
 
 my $needleman_wunsch_bin = $cortex_dir
-  . "/scripts/analyse_variants/needleman_wunsch-0.3.0/needleman_wunsch";
+  . "/scripts/analyse_variants/needleman_wunsch/needleman_wunsch";
 if ( !( -e $needleman_wunsch_bin ) )
 {
 	print("Cannot find the needleman_wunsch binary. Either:\n");
