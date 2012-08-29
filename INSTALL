@@ -20,7 +20,12 @@ so that the three instances of
 /full/path/to/your/install/of/
 are replaced with the appropriate path for your install
 
-5. Type 
+5. Add /path/to/CORTEX_release_v_whatever/gsl-1.15/user_install/lib
+   to your LD_LIBRARY_PATh environment variable. If your shell is bash, you would do that like this:
+
+   export LD_LIBRARY_PATH=/path/to/CORTEX_release_v_whatever/gsl-1.15/user_install/lib:$LD_LIBRARY_PATH
+
+6. Type 
 make cortex_var
 
 If this fails, consult the manual at : http://cortexassembler.sourceforge.net/cortex_var_user_manual.pdf
@@ -46,12 +51,8 @@ If this fails, consult the manual at : http://cortexassembler.sourceforge.net/co
 
 3. Add /path/to/CORTEX_release_v_whatever/scripts/analyse_variants/needleman_wunsch-0.3.0/ to your PATH
 
-4. Add /path/to/CORTEX_release_v_whatever/gsl-1.15/user_install/lib
-   to your LD_LIBRARY_PATh environment variable. If your shell is bash, you would do that like this:
 
-   export LD_LIBRARY_PATH=/path/to/CORTEX_release_v_whatever/gsl-1.15/user_install/lib
-
-5. cd scripts/analyse_variants/needleman_wunsch-0.3.0/
+4. cd scripts/analyse_variants/needleman_wunsch-0.3.0/
    make clean
    make
 
