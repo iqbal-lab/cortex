@@ -1436,7 +1436,7 @@ sub build_vcfs
 	$cmd = $cmd. " --unioncalls $fasta_file_of_just_calls ";	
     }
 
-    $cmd = $cmd."  >& $log" ;
+    $cmd = $cmd." >& $log" ;
 
 
     if ( (!(-e $directory.$string.".decomp.vcf"))  || (!(-e $directory.$string.".raw.vcf")) )
@@ -1947,8 +1947,9 @@ sub build_unclean
     }
 
     $cmd = $cmd." >& $log";
+    print "$cmd\n";
     my $ret = qx{$cmd};
-    print "$cmd\n$ret\n";
+    print "$ret\n";
     if (!(-e $ctx))
     {
 	die("Unable to build $ctx");
