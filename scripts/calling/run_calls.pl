@@ -478,7 +478,7 @@ if ($squeeze_mem)
 {
     my $count_log = $list_all_clean_pop.".log";
     my $ctx_bin_for_count = get_right_binary($first_kmer, $cortex_dir,scalar(@samples)+1);
-    my $cmd_count_kmers = $ctx_bin_for_count." --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width  --colour_list $list_all_clean_pop >& $count_log";
+    my $cmd_count_kmers = $ctx_bin_for_count." --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width  --colour_list $list_all_clean_pop &> $count_log";
     print "Load all k=$first_kmer cleaned binaries into one colour, and check how many kmers. Having done this, we can know how much memory to use for the multicolour graphs. This is just a memory saving device\n";
     qx{$cmd_count_kmers};
     my $num_kmers_in_cleaned_pool=0; ##will be number of kmers
@@ -624,7 +624,7 @@ if  ($workflow eq "independent" )
 
 
 
-		    $cmd = $cmd." >& $log";
+		    $cmd = $cmd." &> $log";
 		    print "$cmd\n";
 		    my $ret = qx{$cmd};
 		    print "$ret\n";
@@ -736,7 +736,7 @@ if  ($workflow eq "joint" )## then just assume is BC only
 	    if ($do_it==1)
 	    {
 		print "Run joint calls:\n";
-		$cmd = $cmd." >& $log";
+		$cmd = $cmd." &> $log";
 		print "$cmd\n";
 		my $ret = qx{$cmd};
 		print "$ret\n";
@@ -1436,7 +1436,7 @@ sub build_vcfs
 	$cmd = $cmd. " --unioncalls $fasta_file_of_just_calls ";	
     }
 
-    $cmd = $cmd." >& $log" ;
+    $cmd = $cmd." &> $log" ;
 
 
     if ( (!(-e $directory.$string.".decomp.vcf"))  || (!(-e $directory.$string.".raw.vcf")) )
@@ -1624,7 +1624,7 @@ sub build_clean_binary
 
 
     my $cortex_binary = get_right_binary($kmer, $cortex_dir,1 );##one colour
-    my $cmd2 = $cortex_binary." --kmer_size $kmer --mem_height $height --mem_width $width --dump_binary $ctx --remove_low_coverage_supernodes $clean_thresh --multicolour_bin $uncleaned >& $log";
+    my $cmd2 = $cortex_binary." --kmer_size $kmer --mem_height $height --mem_width $width --dump_binary $ctx --remove_low_coverage_supernodes $clean_thresh --multicolour_bin $uncleaned &> $log";
     my $ret2 = qx{$cmd2};
     print "$cmd2\n$ret2\n";
     $sample_to_cleaned_bin{$sample}{$kmer}{$clean_thresh}=$ctx;
@@ -1946,7 +1946,7 @@ sub build_unclean
 	$cmd = $cmd." --remove_pcr_duplicates ";
     }
 
-    $cmd = $cmd." >& $log";
+    $cmd = $cmd." &> $log";
     print "$cmd\n";
     my $ret = qx{$cmd};
     print "$ret\n";
