@@ -1486,7 +1486,7 @@ sub make_multicol_filelist
     my $i;
     for ($i=0; $i<scalar(@$aref_bins); $i++)
     {
-	print TMP "$tmpdir/colour$i"."_filelist\n";
+	print TMP "colour$i"."_filelist\n";
     }
     close(TMP);
     for ($i=0; $i<scalar(@$aref_bins); $i++)
@@ -1513,7 +1513,7 @@ sub make_2sample_filelist
     }
     my $colourlist = $tmpdir."/tmp_col_list_".$uniq_id;
     open(TMP, ">".$colourlist)||die("Cannot open $colourlist");
-    print TMP "$tmpdir/$str1\n$tmpdir/$str2\n";
+    print TMP "$str1\n$str2\n";
     close(TMP);
     
     open(TMP, ">".$tmpdir."/$str1")||die();
