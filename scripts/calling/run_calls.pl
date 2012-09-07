@@ -1387,7 +1387,7 @@ sub build_vcfs
     my $colournames=$outdir_vcfs.'/'."SAMPLES";
     if (!(-e $colournames))
     {
-	open(COL, ">".$colournames)||die();
+	open(COL, ">$colournames") or die("Cannot open file '$colournames'");
 	if ($use_ref ne "Absent")
 	{
 	    print COL "REF\n";
@@ -1483,7 +1483,7 @@ sub make_multicol_filelist
 	qx{$cmd1};
     }
     my $colourlist = $tmpdir."/tmp_multicol_col_list";
-    open(TMP, ">".$colourlist)||die();
+    open(TMP, ">$colourlist") or die("Cannot open file '$colourlist'");
     my $i;
     for ($i=0; $i<scalar(@$aref_bins); $i++)
     {
@@ -1491,10 +1491,10 @@ sub make_multicol_filelist
     }
     close(TMP);
     for ($i=0; $i<scalar(@$aref_bins); $i++)
-    {    
-	open(TMP, ">"."$tmpdir/colour$i"."_filelist")||die();
-	print TMP $aref_bins->[$i];
-	print TMP "\n";
+    {
+    my $tmp_out_file = $tmpdir.'/colour'.$i.'_filelist';
+	open(TMP, ">tmp_out_file") or die("Cannot open file '$tmp_out_file'");
+	print TMP $aref_bins->[$i] . "\n";
 	close(TMP);
     }
     return $colourlist;
@@ -1513,14 +1513,17 @@ sub make_2sample_filelist
 	qx{$cmd1};
     }
     my $colourlist = $tmpdir."/tmp_col_list_".$uniq_id;
-    open(TMP, ">".$colourlist)||die("Cannot open $colourlist");
+    open(TMP, ">".$colourlist) or die("Cannot open file '$colourlist'");
     print TMP "$str1\n$str2\n";
     close(TMP);
-    
-    open(TMP, ">".$tmpdir."/$str1")||die();
+
+    my $tmp_file = $tmpdir."/".$str1;
+    open(TMP, ">$tmp_file") or die("Cannot open file '$tmp_file'");
     print TMP "$bin1\n";
     close(TMP);
-    open(TMP, ">".$tmpdir."/$str2")||die();
+
+    $tmp_file = $tmpdir."/".$str2;
+    open(TMP, ">$tmp_file") or die("Cannot open file '$tmp_file'");
     print TMP "$bin2\n";
     close(TMP);
     return $colourlist;
@@ -2211,10 +2214,10 @@ sub run_checks
     {
 	if ( ($user_min_clean==0) && ($user_max_clean==0)  )
 	{
-	    print ("If you specify --user_clean that means you want to tell the script what cleaning threshold(s) to use.\n");
-	    print "If you want to use just one threshold, say 2, use --user_min_clean 2\n";
-	    print "If you want to do many then do --user_min_clean 2 --user_max_clean 10 --user_clean_step 2\n";
-	    print "This will do 2,4,6,8,10\n";
+	    print STDERR "If you specify --user_clean that means you want to tell the script what cleaning threshold(s) to use.\n";
+	    print STDERR "If you want to use just one threshold, say 2, use --user_min_clean 2\n";
+	    print STDERR "If you want to do many then do --user_min_clean 2 --user_max_clean 10 --user_clean_step 2\n";
+	    print STDERR "This will do 2,4,6,8,10\n";
 	    die();
 	}
 	else
@@ -2328,7 +2331,7 @@ sub get_expected_depth_and_cvg_distrib
 {
     my ($file, $kmer, $genome_len) = @_;
 
-    open(LOG, $file)||die();
+    open(LOG, $file) or die("Cannot open log file '$file'");
     while (<LOG>)
     {
 	my $logline = $_;
@@ -2361,7 +2364,7 @@ sub get_expected_depth_and_cvg_distrib
 sub get_cleaning_thresh_and_distrib
 {
     my ($file, $exp_covg, $aref) = @_;
-    open(CLEANINGFILE, $file)||die();
+    open(CLEANINGFILE, $file) or die("Cannot open file '$file'");
     my @covgs=();
     my $count=1;
     my $min_index=1;
@@ -2451,7 +2454,7 @@ sub get_ref_fasta
 	my $c = "rm $out";
 	qx{$c};
     }
-    open(LI, $list)||die();
+    open(LI, $list) or die("Cannot open file '$list'");
     while (<LI>)
     {
 	my $lyn = $_;

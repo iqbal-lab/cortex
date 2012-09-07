@@ -12,8 +12,9 @@ if (-e $outfile)
 {
     die("Halting make_covg_file.pl as the output file $outfile already exists. Do you really mean to overwrite it? Delete it first and rerun, or save it somewhere else\n");
 }
-open(CALLS, $callfile)||die();
-open(OUT, ">".$outfile)||die();
+
+open(CALLS, $callfile) or die("Cannot open file '$callfile'");
+open(OUT, ">$outfile") or die("Cannot open file '$outfile'");
 
 
 #print OUT "VAR\tREF_FILTER\tBR1_LEN\tBR2_LEN\tREF_COV_BR1\tREF_COV_BR2\tSAMPLES...\n";
