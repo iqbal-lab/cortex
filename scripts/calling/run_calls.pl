@@ -449,8 +449,9 @@ if (!(-d $tmpdir))
     qx{$c};
 }
 
-my $list_all_clean = $tmpdir."/tmp_list_all_clean_bins_k".$first_kmer;
-open(LIST_ALL, ">".$list_all_clean)||die("Unable to open $list_all_clean");
+my $list_all_clean_file = "tmp_list_all_clean_bins_k".$first_kmer;
+my $list_all_clean_path = $tmpdir."/".$list_all_clean_file;
+open(LIST_ALL, ">$list_all_clean_path")||die("Unable to open $list_all_clean_path");
 foreach my $s (@samples)
 {
     #get binary
@@ -470,9 +471,9 @@ if ($use_ref ne "Absent")
     print LIST_ALL $k_to_refbin{$first_kmer};
 }
 close(LIST_ALL);
-my $list_all_clean_pop = $list_all_clean.".pop";
+my $list_all_clean_pop = $list_all_clean_path.".pop";
 open(LIST_ALL_CLEAN_POP, ">".$list_all_clean_pop)||die("Cannot open $list_all_clean_pop");
-print LIST_ALL_CLEAN_POP "$list_all_clean\n";
+print LIST_ALL_CLEAN_POP "$list_all_clean_file\n";
 close(LIST_ALL_CLEAN_POP);
 if ($squeeze_mem)
 {
