@@ -146,7 +146,11 @@ MAXK_AND_TEXT = $(join "", $(MAXK))
 NUMCOLS_AND_TEST = $(join "_c", $(NUM_COLS))
 
 cortex_var : remove_objects $(CORTEX_VAR_OBJ)
+<<<<<<< local
 	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) $(OPT_COLS) -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ) $(LIBLIST)
+=======
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR)  $(OPT) $(OPT_COLS) -L/home/zam/dev/hg/CORTEX_release/gsl-1.15 -L/home/zam/dev/hg/CORTEX_release/gsl-1.15/gsl -L/home/zam/dev/hg/CORTEX_release/gsl-1.15/user_install/lib -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ) -lm -lgsl -lgslcblas
+>>>>>>> other
 
 run_basic_tests : remove_objects $(BASIC_TESTS_OBJ)
 	mkdir -p $(BIN); mkdir -p $(TEMP_TEST_DIR); $(CC) $(CFLAGS_BASIC_TESTS) $(OPT) -o $(BIN)/run_basic_tests_$(MAXK) $(BASIC_TESTS_OBJ) $(TEST_LIBLIST)

@@ -1,4 +1,33 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.11
+
+Bugfix release:
+
+1. Something I have not advertised is the fact that in the last few releases,
+I have added a scripts/1000genomes directory, which contains scripts forming
+a template for running Cortex on a population of samples
+with large genomes - eg for running on hundreds of the 1000 Genomes samples.
+A PDF in that directory explains how you can do this.
+
+I'm releasing these without any guarantees for the moment, they 
+are to enable various collaborators in the 1000 Genomes Project to
+run Cortex on different populations.
+
+Thanks to Holly Zheng for finding an error in one of the scripts,
+the fix for which is the reason for this release.
+
+2. A few small array overflow bugfixes
+
+++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.10
+
+Bugfix release:
+Thanks to Akdes Serin for reporting a bug in run_calls.pl,
+where it fails to properly parse a log file.
+If you use run_calls, I advise migrating up to this release.
+Apologies for the inconvenience.
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.9
 
 Bugfix release:

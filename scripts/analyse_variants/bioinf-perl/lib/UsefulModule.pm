@@ -46,10 +46,11 @@ sub num2str
 {
   my $num = shift;
   my $sep = shift; # optional
+  my $num_decimals = shift; # optional
   
   my @places = split(/\./, abs($num));
   my $intDigits = $places[0];
-  
+
   # add commas or spaces to $intDigits
 
   my $initialPlaces = length($intDigits) % 3;
@@ -73,7 +74,14 @@ sub num2str
   
   if(@places > 1)
   {
-    $strNum .= "." . $places[1];
+    if(!defined($num_decimals) || length($places[1]) <= $num_decimals)
+    {
+      $strNum .= "." . $places[1];
+    }
+    else
+    {
+      $strNum .= "." . substr($places[1], 0, $num_decimals);
+    }
   }
   
   return $strNum;

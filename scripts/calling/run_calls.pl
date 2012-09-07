@@ -240,9 +240,9 @@ if ($help)
 	print "--user_cleaning\t\t\t\tValid arguments are yes and no. Default is no. Make your own cleanig choices\n";
 	print "--user_min_clean\t\t\t\tIf you want to try a range. Use this also if you only want to use one threshold.\n";
 	print "--user_max_clean\t\t\t\tIf you want to try a range. Ignore this if you only want to use one threshold\n";
-	print "--use_clean_step\t\t\t\tIncrement between cleaning thresholds.\n";
+	print "--user_clean_step\t\t\t\tIncrement between cleaning thresholds.\n";
 	print "--bc\t\t\t\tMake Bubble Calls. You must enter yes or no. Default (if you don't use --bc) is no.\n";
-	print "--pd\t\t\t\tMake Path Divergence Calls. You must enter yes or no. Default (if you don't use --bc) is no.\n";
+	print "--pd\t\t\t\tMake Path Divergence Calls. You must enter yes or no. Default (if you don't use --pd) is no.\n";
 	print "--outdir\t\t\t\tOutput directory. Everything will go into dsubdirectories of this directory\n";
 	print "--outvcf\t\t\t\tVCFs generated will have names that start with the text you enter here\n";
 	print "--ref\t\t\t\tSpecify if you are using a reference, and if so, how.\n\t\t\t\t\tValid values are CoordinatesOnly, CoordinatesAndInCalling, and Absent\n";
@@ -1645,7 +1645,7 @@ sub build_clean_binary
     print "$ret2\n";
 
     $sample_to_cleaned_bin{$sample}{$kmer}{$clean_thresh}=$ctx;
-    print "add $sample  $kmer $clean_thresh = $ctx\n";
+    #print "add $sample  $kmer $clean_thresh = $ctx\n";
     if (!(-e $ctx))
     {
 	die("Unable to build $ctx\n");
@@ -2233,9 +2233,9 @@ sub run_checks
 	    print STDERR "This will do 2,4,6,8,10\n";
 	    die();
 	}
-	else
+	elsif ( ($user_min_clean>0) && ($user_max_clean==0) )
 	{
-	
+	    $user_max_clean=$user_min_clean;
 	}
 	if ( ($user_max_clean-$user_min_clean) % $user_clean_step !=0)
 	{
@@ -2243,7 +2243,8 @@ sub run_checks
 	}
 
     }
-    if ( (($do_auto_cleaning eq "yes")|| ($do_auto_cleaning eq "no")) && ($do_user_spec_cleaning eq "yes") )
+#    if ( (($do_auto_cleaning eq "yes")|| ($do_auto_cleaning eq "no")) && ($do_user_spec_cleaning eq "yes") )
+    if ( ($do_auto_cleaning eq "yes") && ($do_user_spec_cleaning eq "yes") )
     {
 	die("You cannot specify both automatic cleaning and user-specified cleaning\n");
     }
@@ -2251,7 +2252,7 @@ sub run_checks
     {
 	if ($user_min_clean > $user_max_clean)
 	{
-	    die("you have specified --user_min_clean above --user_max_clean\n");
+	    die("you have specified --user_min_clean $user_min_clean above --user_max_clean $user_max_clean\n");
 	}
     }
     #if ($bc_col_args ne "")
@@ -2353,7 +2354,7 @@ sub get_expected_depth_and_cvg_distrib
 	{
 	    <LOG>;
 	    $logline = <LOG>;
-	    if ($logline =~ /\d+\s+(\d+)\s+(\d+)/)
+	    if ($logline =~ /\d+\s+\S+\s+(\d+)\s+(\d+)/)
 	    {
 		my $mean_read_len = $1;
 		my $bases = $2;

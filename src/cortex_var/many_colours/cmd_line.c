@@ -219,7 +219,7 @@ const char* usage=
   // -m
 "   [--quality_score_threshold INT] \t\t\t\t=\t Filter for quality scores in the input file (default 0).\n" \
   // -j
-"   [--remove_pcr_duplicates] \t\t\t\t\t=\t Removes PCR duplicate reads by ignoring read pairs if both \n\t\t\t\t\t\t\t\t\t reads start at the same k-mer as a previous read,\n\t\t\t\t\t\t\t\t\t and single-ended reads if they start at the same k-mer as a previous read\n" \
+"   [--remove_pcr_duplicates] \t\t\t\t\t=\t Removes PCR duplicate reads by ignoring read pairs if both \n\t\t\t\t\t\t\t\t\t reads start at the same k-mer as a previous read,\n" \
   // -k
 "   [--cut_homopolymers INT] \t\t\t\t\t=\t Breaks reads at homopolymers of length >= this threshold.\n\t\t\t\t\t\t\t\t\t (i.e. max homopolymer in filtered read==threshold-1, and New read starts after homopolymer)\n" \
   // -O
@@ -242,7 +242,7 @@ const char* usage=
   // -y
 "   [--max_var_len INT] \t\t\t\t\t\t=\t Maximum variant size searched for. Default 10kb. \n" \
   // -r
-"   [--detect_bubbles1 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Find all the bubbles in the graph where the two branches lie in the specified colours\n\t\t\t\t\t\t\t\t\t (after applying all specified actions on graph).\n\t\t\t\t\t\t\t\t\t Typical use would be --detect_bubbles1 1/1 to find hets in colour 1,\n\t\t\t\t\t\t\t\t\t or --detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch is in colour 0 (and not colour1)\n\t\t\t\t\t\t\t\t\t and the other branch is in colour1 (but not colour 0).\n\t\t\t\t\t\t\t\t\t However, one can do more complex things:\n\t\t\t\t\t\t\t\t\t e.g.  --detect_bubbles1 1,2,3/4,5,6 to find bubbles where one branch is in 1,2 or 3 (and not 4,5 or 6)\n\t\t\t\t\t\t\t\t\t and the other branch in colour 4,5 or 6 (but not 1,2, or 3).\n\t\t\t\t\t\t\t\t\t See the manual for a detailed description of the syntax. It is possible to\n\t\t\t\t\t\t\t\t\t specify \"all colour\" rather than enumerate them eplicitly, and also to exclude colours\n" \
+"   [--detect_bubbles1 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Find all the bubbles in the graph where the two branches lie in the specified colours\n\t\t\t\t\t\t\t\t\t (after applying all specified actions on graph).\n\t\t\t\t\t\t\t\t\t Typical use would be --detect_bubbles1 1/1 to find hets in colour 1,\n\t\t\t\t\t\t\t\t\t or --detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch is in colour 0 (and not colour1)\n\t\t\t\t\t\t\t\t\t and the other branch is in colour1 (but not colour 0).\n\t\t\t\t\t\t\t\t\t However, one can do more complex things:\n\t\t\t\t\t\t\t\t\t e.g.  --detect_bubbles1 1,2,3/4,5,6 to find bubbles where one branch is in 1,2 or 3 (and not 4,5 or 6)\n\t\t\t\t\t\t\t\t\t and the other branch in colour 4,5 or 6 (but not 1,2, or 3).\n\t\t\t\t\t\t\t\t\t See the manual for a detailed description of the syntax. It is possible to\n\t\t\t\t\t\t\t\t\t specify \"all colour\" rather than enumerate them explicitly, and also to exclude colours\n" \
   // -s
 "   [--output_bubbles1 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles1 are dumped to this file.\n" \
   // -x
@@ -257,7 +257,7 @@ const char* usage=
   // -l
 "   [--path_divergence_caller [args]] \t\t\t\t\t= Make Path Divergence variant calls. Arguments can be specified in 2 ways.\n\t\t\t\t\t\t\t\t\t Option 1. Calls once, comparing reference and one colour (or union)\n\t\t\t\t\t\t\t\t\t e.g. --path_divergence_caller 1,2 --ref_colour 0 will look for differences\n\t\t\t\t\t\t\t\t\t between the union of colours 1,2 and the reference in colour 0\n\t\t\t\t\t\t\t\t\t Option2. Make several successive independent runs of the PD caller, each time against a different colour\n\t\t\t\t\t\t\t\t\tTo do this, use a square open bracket [ PRECEDED AND SEPARATED list\n\t\t\t\t\t\t\t\t\t For example --path_divergence_caller [2[3[10 --ref_colour 0 will make calls on samples 2 then 3 then 10)\n\t\t\t\t\t\t\t\t\t all output to the same file, with globally unique variant names. The caller will call against each colour in turn\n\t\t\t\t\t\t\t\t\t You must also specify --ref_colour and --list_ref_fasta\n" \
   // -I
-"   [--path_divergence_caller_output PATH_STUB]\t\t\t=\t Specifies the path and beginning of filenames of Path Divergence caller output files.\n\t\t\t\t\t\t\t\t\t One output file will be created per  reference fasta listed in --list_ref_fasta\n" \
+"   [--path_divergence_caller_output PATH_STUB]\t\t\t=\t Specifies the path and beginning of filename of Path Divergence caller output file.\n" \
   // -i
 "   [--ref_colour INT] \t\t\t\t\t\t=\t Colour of reference genome.\n" \
  // -z

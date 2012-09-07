@@ -5,6 +5,7 @@
 2. cd gsl-1.15/
 3. Type
 
+mkdir user_install
 make clean
 ./configure --prefix=/path/to/Cortex_release_v1.0.whatever/gsl-1.15/user_install
 make
@@ -13,13 +14,18 @@ make install
 3. Change directory back to the root directory.
 4. Open the Makefile with a text editor, and change this text
 
--L/full/path/to/your/install/of/CORTEX_release_v1.0.5.8/gsl-1.15 -L/full/path/to/your/install/of/CORTEX_release_v1.0.5.8/gsl-1.15/gsl -L/full/path/to/your/install/of/CORTEX_release_v1.0.5.8/gsl-1.15/user_install
+-L/full/path/to/your/install/of/CORTEX_release_v1.0.5.10/gsl-1.15 -L/full/path/to/your/install/of/CORTEX_release_v1.0.5.10/gsl-1.15/gsl -L/full/path/to/your/install/of/CORTEX_release_v1.0.5.10/gsl-1.15/user_install
 
 so that the three instances of 
 /full/path/to/your/install/of/
 are replaced with the appropriate path for your install
 
-5. Type 
+5. Add /path/to/CORTEX_release_v_whatever/gsl-1.15/user_install/lib
+   to your LD_LIBRARY_PATh environment variable. If your shell is bash, you would do that like this:
+
+   export LD_LIBRARY_PATH=/path/to/CORTEX_release_v_whatever/gsl-1.15/user_install/lib:$LD_LIBRARY_PATH
+
+6. Type 
 make cortex_var
 
 If this fails, consult the manual at : http://cortexassembler.sourceforge.net/cortex_var_user_manual.pdf
@@ -44,6 +50,7 @@ If this fails, consult the manual at : http://cortexassembler.sourceforge.net/co
    to your PERL5LIB
 
 3. Add /path/to/CORTEX_release_v_whatever/scripts/analyse_variants/needleman_wunsch-0.3.0/ to your PATH
+
 
 4. cd scripts/analyse_variants/needleman_wunsch-0.3.0/
    make clean

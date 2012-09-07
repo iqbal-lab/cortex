@@ -11,7 +11,7 @@ my $mem_height = 27;
 my $mem_width = 110;
 
 &GetOptions(
-        'list:s'                                 => \$list_sample_uncleaned_bins,
+        'list:s'                                 => \$list_sample_uncleaned_bins,## give full patho
         'outdir:s'                               =>\$outdir,
         'pop:s'                                  => \$pop, #population identifier, eg LWK
          'mem_height:i'                          =>\$mem_height,
