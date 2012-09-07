@@ -1127,8 +1127,10 @@ sub get_colourlist_for_joint
     my $tmpdir = $outdir_calls."tmp_filelists/";
     if (!(-d $tmpdir))
     {
-	my $c = "mkdir -p $tmpdir";
-	qx{$c};
+	my $mkdir_cmd = "mkdir -p $tmpdir";
+    print "$mkdir_cmd\n";
+	my $mkdir_ret = qx{$mkdir_cmd};
+    print "$mkdir_ret\n";
     }
 
     my $outfile = $tmpdir."tmp_colourlist_joint_".$str."_kmer".$kmer."_level".$level;
@@ -1216,8 +1218,10 @@ sub build_per_sample_vcfs
     }
     if (!(-d $dir))
     {
-	my $c = "mkdir -p $dir";
-	qx{$c};
+	my $mkdir_cmd = "mkdir -p $dir";
+	print "$mkdir_cmd\n";
+    my $mkdir_ret = qx{$mkdir_cmd};
+    print "$mkdir_ret\n";
     }
 
     foreach my $k (@kmers)
@@ -1227,8 +1231,10 @@ sub build_per_sample_vcfs
 	    my $samdir = $dir.$sam;
 	    if (!(-e $samdir))
 	    {
-		my $s = "mkdir -p $samdir";
-		qx{$s};
+		my $mkdir_cmd = "mkdir -p $samdir";
+        print "$mkdir_cmd\n";
+		my $mkdir_ret = qx{$mkdir_cmd};
+        print "$mkdir_ret\n";
 	    }
 	    
 	    foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}{$k}})
@@ -1378,7 +1384,10 @@ sub build_vcfs
 	$directory = $directory.'/';
     }
     my $w = "wc -l $file";
+    print "$w\n";
     my $rw = qx{$w};
+    print "$rw\n";
+
     if ($rw =~ /^0\s+$file/)
     {
 	return;
@@ -1468,7 +1477,9 @@ sub count_calls
 {
     my ($vcf) = @_;
     my $cmd = "cat $vcf | grep -v \"\#\" | wc -l";
+    print "$cmd\n";
     my $ret = qx{$cmd};
+    print "$ret\n";
     chomp $ret;
     return $ret;
 }
@@ -1629,8 +1640,10 @@ sub build_clean_binary
 
     my $cortex_binary = get_right_binary($kmer, $cortex_dir,1 );##one colour
     my $cmd2 = $cortex_binary." --kmer_size $kmer --mem_height $height --mem_width $width --dump_binary $ctx --remove_low_coverage_supernodes $clean_thresh --multicolour_bin $uncleaned &> $log";
+    print "$cmd2\n";
     my $ret2 = qx{$cmd2};
-    print "$cmd2\n$ret2\n";
+    print "$ret2\n";
+
     $sample_to_cleaned_bin{$sample}{$kmer}{$clean_thresh}=$ctx;
     print "add $sample  $kmer $clean_thresh = $ctx\n";
     if (!(-e $ctx))

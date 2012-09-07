@@ -73,7 +73,7 @@ sub apply_pop_classifier
     
     ## second make a table of covgs etc
     my $table = $genotyping_output_log.".table";
-    my $cmd2 = "perl $make_table_script $genotyping_output_log > $table 2>&1";
+    my $cmd2 = "perl $make_table_script $genotyping_output_log &> $table";
     print "$cmd2\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
@@ -110,6 +110,7 @@ sub count_calls_in_callfile
     print "Count how many calls in $file\n";
     print "$cmd\n";
     my $ret = qx{$cmd};
+    print "$ret\n";
     my $num=-1;
     if ($ret =~ /var_(\d+)_5p_flank/)
     {
@@ -134,8 +135,10 @@ sub make_sure_dirs_exist_and_create_if_necessary
     {
 	if (! (-d $dir))
 	{
-	    my $c = "mkdir -p $dir";
-	    qx{$c};
+	    my $mkdir_cmd = "mkdir -p $dir";
+      print "$mkdir_cmd\n";
+	    my $mkdir_ret = qx{$mkdir_cmd};
+      print "$mkdir_ret";
 	}
     }
 
@@ -192,14 +195,14 @@ sub genotype_union
 		    printf("Note - since you passed in fasta, we assume these are reference genomes, with a very low per-base error rate, of 0.0000001, in order to genotype\n");
 		    $gt_cmd = $gt_cmd." --estimated_error_rate 0.000001 ";
 		}
-		$gt_cmd = $gt_cmd." > $logfile  2>&1  ";
+		$gt_cmd = $gt_cmd." &> $logfile";
 		print "$gt_cmd\n";
 		my $gt_ret = qx{$gt_cmd};
 		print "$gt_ret\n";
 	    }
 	    else
 	    {
-		print "$outfile already exists so no need to genotype the union of $which_caller  calls at kmer $kmer_size\n";
+		print "$outfile already exists so no need to genotype the union of $which_caller calls at kmer $kmer_size\n";
 	    }
 }
 
@@ -310,11 +313,12 @@ sub make_index_and_union_callset_for_specific_k
     
     my $stub = "UNION_".$which_caller."_k".$k;
 
-    my $cmd = "perl $make_union --kmer $k --index $index_name --varname_stub $stub  --outfile $outfilename > $outfile_log  2>&1";
+    my $cmd = "perl $make_union --kmer $k --index $index_name --varname_stub $stub  --outfile $outfilename &> $outfile_log";
     if (! -e($outfilename))
     {
 	print "$cmd\n";
 	my $ret = qx{$cmd};
+  print "$ret\n";
     }
     else
     {
