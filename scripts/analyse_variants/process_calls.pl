@@ -580,12 +580,12 @@ if ($ref_fasta eq "unspecified")
 {
     ## just sort the file and PV tag it
 
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  -p --tag PV LEFT $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass --filter_txt OVERLAPPING_SITE > $final_simple";
+    my $cmd1 = "cat $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass --filter_txt OVERLAPPING_SITE > $final_simple";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
     print "$ret1\n";
 
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl -p --tag PV LEFT $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass  --filter_txt OVERLAPPING_SITE > $final_decomp ";
+    my $cmd2 = "cat $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass  --filter_txt OVERLAPPING_SITE > $final_decomp ";
     print "$cmd2\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
@@ -1754,17 +1754,17 @@ sub print_vcf_entry
 			my $two_alleles = $aref_indel_alleles->[ $cnt - 1 ];
 			my $this_indel_ref_allele;
 			my $this_indel_alt_allele;
-			if ( $two_alleles =~ /^([ACGT]+)_([ACGT]+)$/ )
+			if ( $two_alleles =~ /^([ACGTN]+)_([ACGTN]+)$/ )
 			{
 				$this_indel_ref_allele = $1;
 				$this_indel_alt_allele = $2;
 			}
-			elsif ( $two_alleles =~ /^_([ACGT]+)$/ )
+			elsif ( $two_alleles =~ /^_([ACGTN]+)$/ )
 			{
 				$this_indel_ref_allele = "";
 				$this_indel_alt_allele = $1;
 			}
-			elsif ( $two_alleles =~ /^([ACGT]+)_$/ )
+			elsif ( $two_alleles =~ /^([ACGTN]+)_$/ )
 			{
 				$this_indel_ref_allele = $1;
 				$this_indel_alt_allele = "";
