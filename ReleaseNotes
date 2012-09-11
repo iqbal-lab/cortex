@@ -1,4 +1,24 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.12
+
+Bugfix release:
+
+Fixes for run_calls and the VCF-dumping script process_calls.
+
+This release fixes
+1. a bug found and fixed by Brad Chapman (process_calls complaining
+   when it saw an N in one allele)
+2. a bug in run_calls, found by Janina Dordel, when running in completely de novo (--ref Absent)
+   mode (basically makes it impossible to use --ref Absent, many apologies, big oversight on my part). 
+   If you are going to run run_calls like that, you should take
+   this fix.
+
+Many thanks to Brad and Janina who have both been testing/pushing Cortex (and me!)
+
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.11
 
 Bugfix release:
