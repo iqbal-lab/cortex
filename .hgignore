@@ -1,11 +1,19 @@
 # use glob syntax.
 syntax: regexp
+
+# File extensions
 \.o$
 \.pyc$
 \.orig$
 ~$
 \.mk$
 \.d$
-^bin/
 \.bin$
+
+# Directories
+^bin/
+^libs/
+^obj/
+
+# Files beginning with a dot
 (^|/)\.
