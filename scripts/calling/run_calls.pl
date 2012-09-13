@@ -1504,7 +1504,7 @@ sub make_multicol_filelist
     for ($i=0; $i<scalar(@$aref_bins); $i++)
     {
     my $tmp_out_file = $tmpdir.'/colour'.$i.'_filelist';
-	open(TMP, ">tmp_out_file") or die("Cannot open file '$tmp_out_file'");
+	open(TMP, ">$tmp_out_file") or die("Cannot open file '$tmp_out_file'");
 	print TMP $aref_bins->[$i] . "\n";
 	close(TMP);
     }
