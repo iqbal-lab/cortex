@@ -1956,7 +1956,7 @@ sub build_unclean
     }
     if ($hp>0)
     {
-	$cmd = $cmd."--cut_homopolymers $hp";
+	$cmd = $cmd." --cut_homopolymers $hp";
     }
     if ($dupremoval)
     {

@@ -3908,7 +3908,7 @@ boolean check_colour_list(char* filename, int kmer)
       int check = query_binary_NEW(fptr, &binfo, &ecode);
       if (check==true)
 	{
-	  printf("Error with input arguments. SUmmary: you have passed in a list of binaries, not a list of lists of binaries.\n--colour_list requires a list of files, each of which represent a colour.\n Inside each of those ");
+	  printf("Error with input arguments. Summary: you have passed in a list of binaries, not a list of lists of binaries.\n--colour_list requires a list of files, each of which represent a colour.\n Inside each of those ");
 	  printf("should be a list of cortex binaries. \nHowever your colour list %s contains this file %s which is itself a cortex binary not a list of binaries\n", filename, list_cols[i]);
 	  exit(1);
 	}
