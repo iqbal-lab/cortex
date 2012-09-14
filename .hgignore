@@ -13,7 +13,8 @@ syntax: regexp
 # Directories
 ^bin/
 ^libs/
-^obj/
+^build/
+^data/tempfiles_can_be_deleted/
 
 # Files beginning with a dot
 (^|/)\.
