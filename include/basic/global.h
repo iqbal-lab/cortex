@@ -34,10 +34,7 @@
 #ifndef GLOBAL_H_
 #define GLOBAL_H_
 
-
-#include <err.h> 
-
-
+#include <err.h>
 
 typedef signed char boolean;
 #ifndef true
@@ -61,5 +58,11 @@ boolean DEBUG;
 
 
 boolean test_file_existence(char* file);
+
+void die(const char* fmt, ...)
+  __attribute__ ((format(printf, 1, 2)))
+  __attribute__ ((noreturn));
+
+// 
 
 #endif /* GLOBAL_H_ */

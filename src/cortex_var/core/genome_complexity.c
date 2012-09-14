@@ -81,8 +81,7 @@ boolean allele_is_clean(dBNode** array_nodes,Orientation* array_or,
 {
   if ( (colour_cleaned_genome<0) || (colour_cleaned_genome>=NUMBER_OF_COLOURS) )
     {
-      printf("Cortex has been compiled for %d colours, but you are passing colour numnber %d into allele_is_clean\n", NUMBER_OF_COLOURS, colour_cleaned_genome);
-      exit(1);
+      die("Cortex has been compiled for %d colours, but you are passing colour numnber %d into allele_is_clean\n", NUMBER_OF_COLOURS, colour_cleaned_genome);
     }
   int i;
   boolean all_nodes_look_ok=true;
@@ -116,8 +115,7 @@ void count_reads_where_snp_makes_clean_bubble(dBGraph* db_graph, char* fasta, bo
 {
   FILE* fp = fopen(fasta, "r");
   if (fp == NULL){
-    printf("estimate_genome_complexity  cannot open file:%s\n",fasta);
-    exit(1);
+    die("estimate_genome_complexity cannot open file:%s\n",fasta);
   }
 
   srand ( time(NULL) );
@@ -131,8 +129,7 @@ void count_reads_where_snp_makes_clean_bubble(dBGraph* db_graph, char* fasta, bo
 
       if (!f_entry)
 	{
-	  printf("One of these SNP reads is longer than the specified max read length\n");
-	  exit(1);
+	  die("One of these SNP reads is longer than the specified max read length\n");
 	}
       if ((num_kmers_read>0)&&(strlen(seq->seq)>db_graph->kmer_size /2)&& (fnmatch("N", seq->seq, 0)!=0) ) 
 	//not end of file & reasonable length read
@@ -241,8 +238,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* filename_fastaq,
   //----------------------------------
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
   
@@ -250,16 +246,14 @@ double estimate_genome_complexity(dBGraph* db_graph, char* filename_fastaq,
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window in estimate_genome_complexity. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window in estimate_genome_complexity. Exit.\n");
     }
   
 
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer in estimate_genome_complexity. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer in estimate_genome_complexity. Exit.\n");
     }
   kmer_window->nkmers=0;
   
@@ -273,8 +267,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* filename_fastaq,
     int offset = 0;
     if (new_entry == false){
       offset = db_graph->kmer_size;
-      //printf("new_entry must be true in hsi test function");
-      //exit(1);
+      //die("new_entry must be true in hsi test function");
     }
     ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
     
@@ -285,8 +278,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* filename_fastaq,
     * full_entry = true;
 
     if (new_entry!= true){
-      puts("new_entry has to be true for fastq\n");
-      exit(1);
+      die("new_entry has to be true for fastq");
     }
 
     return read_sequence_from_fastq(fp,seq,max_read_length,fastq_ascii_offset);
@@ -296,8 +288,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* filename_fastaq,
 
   if (max_read_length>MAX_READLEN_FOR_GEN_COMPLEXITY)
     {
-      printf("estime_genome_complexity is set up to handle short reads, and you have used max_read_lengh %d - not permitted\n", max_read_length);
-      exit(1);
+      die("estime_genome_complexity is set up to handle short reads, and you have used max_read_lengh %d - not permitted\n", max_read_length);
     }
   dBNode* array_nodes[max_read_length+db_graph->kmer_size+1];
   Orientation array_or[max_read_length+db_graph->kmer_size+1];
@@ -373,8 +364,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
   //----------------------------------
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
   
@@ -382,16 +372,14 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window in estimate_genome_complexity. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window in estimate_genome_complexity. Exit.\n");
     }
   
 
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size+2));
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer in estimate_genome_complexity. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer in estimate_genome_complexity. Exit.\n");
     }
   kmer_window->nkmers=0;
 
@@ -401,8 +389,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 
   KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
   if (windows == NULL){
-    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
-    exit(1);
+    die("Out of memory trying to allocate a KmerArraySet");
   }  
   windows->window=kmer_window;
   windows->nwindows=1;
@@ -417,8 +404,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
     int offset = 0;
     if (new_entry == false){
       offset = db_graph->kmer_size;
-      //printf("new_entry must be true in hsi test function");
-      //exit(1);
+      //die("new_entry must be true in hsi test function");
     }
     ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
     
@@ -429,8 +415,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
     * full_entry = true;
 
     if (new_entry!= true){
-      puts("new_entry has to be true for fastq\n");
-      exit(1);
+      die("new_entry has to be true for fastq");
     }
 
     return read_sequence_from_fastq(fp,seq,max_read_length,fastq_ascii_offset);
@@ -447,16 +432,17 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
     }
   else
     {
-      printf("Bad file format - in gen comp.\n");
-      exit(1);
+      die("Bad file format - in gen comp.\n");
     }
   
 
   if (max_read_length>MAX_READLEN_FOR_GEN_COMPLEXITY)
     {
-      printf("estime_genome_complexity is set up to handle relatively short reads, and you have used max_read_lengh %d - not permitted\n", max_read_length);
-      printf("Remove any reads longer than %d and retry. Sorry - this is not very graceful.\n", MAX_READLEN_FOR_GEN_COMPLEXITY);
-      exit(1);
+      die(
+"estime_genome_complexity is set up to handle relatively short reads, and you \n"
+"have used max_read_lengh %d - not permitted.  Remove any reads longer than %d\n"
+"and retry. Sorry - this is not very graceful\n",
+          max_read_length, MAX_READLEN_FOR_GEN_COMPLEXITY);
     }
 
   
@@ -480,8 +466,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
        || (p1_nodes==NULL) || (p1_or==NULL) || (p1_lab==NULL) || (p1_str==NULL)
        || (p2_nodes==NULL) || (p2_or==NULL) || (p2_lab==NULL) || (p2_str==NULL) )
     {
-      printf("Cannot malloc node arrays for estimating genome complexity - you must be very short of memor\n");
-      exit(1);
+      die("Cannot malloc node arrays for estimating genome complexity - you must be very short of memor\n");
     }
        
   /*
@@ -505,8 +490,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
   
   if ( (readlen_distrib==NULL) || (readlen_distrib_ptrs==NULL) )
     {
-      printf("Unable to malloc array to hold readlen distirbution!Exit.\n");
-      exit(1);
+      die("Unable to malloc array to hold readlen distirbution!Exit.\n");
     }
   int i;
   for (i=0; i<=max_read_length; i++)
@@ -541,8 +525,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 
       if ( (readlen_distrib==NULL) || (readlen_distrib_ptrs==NULL) )
 	{
-	  printf("Unable to malloc array to hold readlen distirbution!Exit.\n");
-	  exit(1);
+	  die("Unable to malloc array to hold readlen distirbution!Exit.\n");
 	}
       int i;
       for (i=0; i<=max_read_length; i++)
@@ -570,8 +553,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 
   FILE* fp = fopen(fastaq, "r");
   if (fp == NULL){
-    printf("estimate_genome_complexity  cannot open file:%s\n",fastaq);
-    exit(1);
+    die("estimate_genome_complexity  cannot open file:%s\n",fastaq);
   }
 
   srand ( time(NULL) );
@@ -586,8 +568,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 
       if (!f_entry)
 	{
-	  printf("One of these reads is longer than the specified max read length\n");
-	  exit(1);
+	  die("One of these reads is longer than the specified max read length\n");
 	}
       if ((num_kmers_read>0)&&(strlen(seq->seq)>1+db_graph->kmer_size /2) ) 
 	//not end of file & reasonable length read 

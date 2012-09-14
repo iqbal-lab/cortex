@@ -1282,9 +1282,8 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
 
   if(fp == NULL)
   {
-    printf("Cannot open ../data/test/graph/person3_with_errors_extended_file.fq "
-           "in test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph");
-    exit(1);
+    die("Cannot open ../data/test/graph/person3_with_errors_extended_file.fq\n"
+"in test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph");
   }
 
 
@@ -1292,8 +1291,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
   int max_read_length=100;
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
 
@@ -1314,8 +1312,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
   //----------------------------------
   KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));
   if (windows == NULL){
-    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
-    exit(1);
+    die("Out of memory trying to allocate a KmerArraySet");
   }
   //allocate memory for the sliding windows
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
@@ -1576,9 +1573,8 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   FILE* fp = fopen("../data/test/graph/person3_with_errors_extended_file.fq", "r");
   if(fp == NULL)
   {
-    printf("Cannot open ../data/test/graph/person3_with_errors_extended_file.fq "
-           "in test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph");
-    exit(1);
+    die("Cannot open ../data/test/graph/person3_with_errors_extended_file.fq\n"
+        "in test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph\n");
   }
 
 
@@ -1586,8 +1582,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   int max_read_length=100;
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
 
@@ -1609,8 +1604,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   //----------------------------------
   KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));
   if (windows == NULL){
-    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
-    exit(1);
+    die("Out of memory trying to allocate a KmerArraySet");
   }
   //allocate memory for the sliding windows
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
@@ -1858,9 +1852,8 @@ void test_dumping_of_clean_fasta()
   FILE* fptr = fopen("../data/test/graph/person3_with_errors.fq", "r");
   if(fptr == NULL)
   {
-    printf("Cannot open ../data/test/graph/person3_with_errors.fq in "
-           "test_dumping_of_clean_fasta. Exiting.\n");
-    exit(1);
+    die("Cannot open ../data/test/graph/person3_with_errors.fq in\n"
+        "test_dumping_of_clean_fasta. Exiting.");
   }
 
   int file_reader(FILE * fp, Sequence * seq, int max_read_length,
@@ -1869,8 +1862,7 @@ void test_dumping_of_clean_fasta()
     * full_entry = true;
 
     if (new_entry!= true){
-      puts("new_entry has to be true for fastq\n");
-      exit(1);
+      die("new_entry has to be true for fastq");
     }
 
     return read_sequence_from_fastq(fp,seq,max_read_length, ascii_fq_offset);
@@ -2195,8 +2187,7 @@ void test_load_seq_into_array()
 
   if(db_graph == NULL)
   {
-    printf("unable to alloc the hash table. dead before we even started. OOM");
-    exit(1);
+    die("Unable to alloc the hash table.");
   }
 
   // Read sequence
@@ -2230,8 +2221,7 @@ void test_load_seq_into_array()
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (path_string==NULL))
   {
-    printf("Failed to allocate arrays for test\n");
-    exit(1);
+    die("Failed to allocate arrays for test");
   }
 
   int i=0;
@@ -2256,8 +2246,7 @@ void test_load_seq_into_array()
 
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   alloc_sequence(seq, num_of_nodes_to_read+db_graph->kmer_size, 10);
 
@@ -2269,8 +2258,7 @@ void test_load_seq_into_array()
 
   if (fptr==NULL)
   {
-    printf("Cannot open ../data/test/pop_graph/simple1.fa\n");
-    exit(1);
+    die("Error: Cannot open ../data/test/pop_graph/simple1.fa");
   }
 
   int retvalue = load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string,
@@ -2332,8 +2320,7 @@ void test_load_seq_into_array()
 
   if (fptr==NULL)
   {
-    printf("Cannot open ../data/test/pop_graph/simple2.fa\n");
-    exit(1);
+    die("Cannot open ../data/test/pop_graph/simple2.fa");
   }
 
   num_of_nodes_to_read = 2;
@@ -2407,8 +2394,7 @@ void test_load_seq_into_array()
 
   if (fptr==NULL)
   {
-    printf("Cannot open ../data/test/pop_graph/simple3.fa\n");
-    exit(1);
+    die("Cannot open ../data/test/pop_graph/simple3.fa");
   }
 
   num_of_nodes_to_read = 9;
@@ -2419,8 +2405,7 @@ void test_load_seq_into_array()
 
   if(seq == NULL)
   {
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
 
   alloc_sequence(seq, num_of_nodes_to_read+db_graph->kmer_size, 10);
@@ -2498,8 +2483,7 @@ void test_load_seq_into_array()
   fptr = fopen("../data/test/pop_graph/simple4.fa", "r");
   if (fptr==NULL)
   {
-    printf("Cannot open ../data/test/pop_graph/simple4.fa\n");
-    exit(1);
+    die("Cannot open ../data/test/pop_graph/simple4.fa\n");
   }
 
 
@@ -2509,8 +2493,7 @@ void test_load_seq_into_array()
   free_sequence(&seq);
   seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   alloc_sequence(seq, num_of_nodes_to_read+db_graph->kmer_size, 10);
 
@@ -2526,8 +2509,7 @@ void test_load_seq_into_array()
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (path_string==NULL))
   {
-    printf("Failed to allocate arrays for test\n");
-    exit(1);
+    die("Failed to allocate arrays for test\n");
   }
 
   //initialise
@@ -2689,8 +2671,7 @@ void test_load_seq_into_array()
 
   if (db_graph==NULL)
   {
-    printf("unable to alloc the hash table. dead before we even started. OOM");
-    exit(1);
+    die("Unable to alloc the hash table.\n");
   }
 
   seq_read = 0;
@@ -2711,8 +2692,7 @@ void test_load_seq_into_array()
 
   if (fptr==NULL)
   {
-    printf("Cannot open ../data/test/pop_graph/simple5.fa\n");
-    exit(1);
+    fprintf(stderr, "Cannot open ../data/test/pop_graph/simple5.fa\n");
   }
 
 
@@ -2722,8 +2702,7 @@ void test_load_seq_into_array()
 
   seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   alloc_sequence(seq, num_of_nodes_to_read+db_graph->kmer_size, 10);
 
@@ -2738,8 +2717,7 @@ void test_load_seq_into_array()
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (path_string==NULL))
   {
-    printf("Failed to allocate arrays for test\n");
-    exit(1);
+    die("Failed to allocate arrays for test\n");
   }
 
   //initialise
@@ -2843,8 +2821,7 @@ void test_load_seq_into_array()
 
   if (fptr==NULL)
   {
-    printf("Cannot open ../data/test/pop_graph/simple6.fa\n");
-    exit(1);
+    die("Cannot open ../data/test/pop_graph/simple6.fa\n");
   }
 
 
@@ -2932,8 +2909,7 @@ void test_load_seq_into_array()
   fptr = fopen("../data/test/pop_graph/simple7.fa", "r");
   if (fptr==NULL)
   {
-    printf("Cannot open ../data/test/pop_graph/simple7.fa\n");
-    exit(1);
+    die("Cannot open ../data/test/pop_graph/simple7.fa\n");
   }
 
   num_of_nodes_to_read=42;//number of bases is 72
@@ -3024,8 +3000,7 @@ void test_load_seq_into_array()
 
   if (db_graph==NULL)
   {
-    printf("unable to alloc the hash table. dead before we even started. OOM");
-    exit(1);
+    die("Unable to alloc the hash table.\n");
   }
 
 
@@ -3037,8 +3012,7 @@ void test_load_seq_into_array()
   free_sequence(&seq);
   seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   alloc_sequence(seq, num_of_nodes_to_read+db_graph->kmer_size, 10);
 
@@ -3053,8 +3027,7 @@ void test_load_seq_into_array()
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (path_string==NULL))
   {
-    printf("Failed to allocate arrays for test\n");
-    exit(1);
+    fprintf(stderr, "Failed to allocate arrays for test\n");
   }
 
 
@@ -3089,8 +3062,7 @@ void test_load_seq_into_array()
 
   if (fptr==NULL)
   {
-    printf("Cannot open ../data/test/pop_graph/simple8.fa\n");
-    exit(1);
+    fprintf(stderr, "Cannot open ../data/test/pop_graph/simple8.fa\n");
   }
 
   retvalue = load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
@@ -3130,8 +3102,7 @@ void test_load_seq_into_array()
   free_sequence(&seq);
   seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   alloc_sequence(seq, num_of_nodes_to_read+db_graph->kmer_size, 10);
 
@@ -3152,8 +3123,7 @@ void test_load_seq_into_array()
   fptr = fopen("../data/test/pop_graph/simple9.fa", "r");
   if (fptr==NULL)
   {
-    printf("Cannot open ../data/test/pop_graph/simple9.fa\n");
-    exit(1);
+    die("Cannot open ../data/test/pop_graph/simple9.fa\n");
   }
 
   //initialise
@@ -3240,8 +3210,7 @@ void test_load_seq_into_array()
 
   if (db_graph==NULL)
   {
-    printf("unable to alloc the hash table. dead before we even started. OOM");
-    exit(1);
+    die("Unable to alloc the hash table.\n");
   }
 
 
@@ -3250,8 +3219,7 @@ void test_load_seq_into_array()
 
   seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   alloc_sequence(seq, length_of_arrays+db_graph->kmer_size, 10);
 
@@ -3263,8 +3231,7 @@ void test_load_seq_into_array()
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (path_string==NULL))
   {
-    printf("Failed to allocate arrays for test\n");
-    exit(1);
+    die("Failed to allocate arrays for test\n");
   }
 
   //initialise
@@ -3299,8 +3266,7 @@ void test_load_seq_into_array()
 
   if (fptr==NULL)
   {
-    printf("Cannot open ../data/test/pop_graph/simple10.fa\n");
-    exit(1);
+    fprintf(stderr, "Cannot open ../data/test/pop_graph/simple10.fa\n");
   }
 
   //initialise the arrays
@@ -3464,8 +3430,7 @@ void test_load_seq_into_array()
 
   if (db_graph==NULL)
   {
-    printf("unable to alloc the hash table. dead before we even started. OOM");
-    exit(1);
+    die("Unable to alloc the hash table. \n");
   }
 
 
@@ -3474,8 +3439,7 @@ void test_load_seq_into_array()
 
   seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   // 40 is max length of read name
   alloc_sequence(seq, length_of_arrays+db_graph->kmer_size, 40);
@@ -3488,8 +3452,7 @@ void test_load_seq_into_array()
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (path_string==NULL))
   {
-    printf("Failed to allocate arrays for test\n");
-    exit(1);
+    fprintf(stderr, "Failed to allocate arrays for test\n");
   }
 
   //initialise
@@ -3523,7 +3486,6 @@ void test_load_seq_into_array()
   if (fptr==NULL)
   {
     printf("Cannot open ../data/test/pop_graph/simple10.fa\n");
-    exit(1);
   }
 
   // Initialise the arrays
@@ -3862,7 +3824,6 @@ void test_load_seq_into_array()
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
     fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
 
@@ -3871,7 +3832,6 @@ void test_load_seq_into_array()
   if (kmer_window==NULL)
   {
     printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-    exit(1);
   }
 
 
@@ -3879,7 +3839,6 @@ void test_load_seq_into_array()
   if (kmer_window->kmer==NULL)
   {
     printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-    exit(1);
   }
   kmer_window->nkmers=0;
 
@@ -3896,7 +3855,6 @@ void test_load_seq_into_array()
     int offset = 0;
     if (new_entry == false){
       printf("new_entry must be true in hsi test function");
-      exit(1);
     }
     ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
 
@@ -3929,7 +3887,6 @@ void test_load_seq_into_array()
   {
     printf("Cannot open ../data/test/graph/person3.fa in "
            "test_align_next_read_to_graph_and_return_node_array\n");
-    exit(1);
   }
 
 
@@ -4050,14 +4007,12 @@ void test_read_next_variant_from_full_flank_file()
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
     fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
 
   Sequence * seq_inc_prev_kmer = malloc(sizeof(Sequence));
   if (seq == NULL){
     fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
   }
   alloc_sequence(seq_inc_prev_kmer,max_read_length+kmer_size,LINE_MAX);
 
@@ -4067,7 +4022,6 @@ void test_read_next_variant_from_full_flank_file()
   if (kmer_window==NULL)
   {
     printf("Failed to malloc kmer sliding window in a test. Exit.\n");
-    exit(1);
   }
 
 
@@ -4076,7 +4030,6 @@ void test_read_next_variant_from_full_flank_file()
   if (kmer_window->kmer==NULL)
   {
     printf("Failed to malloc kmer_window->kmer in test . Exit.\n");
-    exit(1);
   }
   kmer_window->nkmers=0;
 
@@ -4104,8 +4057,7 @@ void test_read_next_variant_from_full_flank_file()
   FILE* fout_bubble = fopen("../data/tempfiles_can_be_deleted/tmp_test.bubbles", "w");
   if (fout_bubble==NULL)
   {
-    printf("Unable to open ../data/tempfiles_can_be_deleted/tmp_test.bubbles\n");
-    exit(1);
+    die("Unable to open: ../data/tempfiles_can_be_deleted/tmp_test.bubbles");
   }
 
   int max_branch_len=10;
@@ -4162,8 +4114,7 @@ void test_read_next_variant_from_full_flank_file()
   VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(40,40,40,40,kmer_size);
   if (var==NULL)
   {
-    printf("Failed to malloc var\n");
-    exit(1);
+    die("Failed to malloc var");
   }
 
   //FILE* var_fptr =  fopen("tmp_test_read_next_variant_from_full_flank_file_bubble.fff", "r");
@@ -4406,15 +4357,13 @@ void test_read_next_variant_from_full_flank_file_2()
   int max_read_length = 50;
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
 
   Sequence * seq_inc_prev_kmer = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq_inc_prev_kmer,max_read_length+kmer_size,LINE_MAX);
 
@@ -4423,8 +4372,7 @@ void test_read_next_variant_from_full_flank_file_2()
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
   {
-    printf("Failed to malloc kmer sliding window in a test. Exit.\n");
-    exit(1);
+    die("Failed to malloc kmer sliding window in a test. Exit.");
   }
 
 
@@ -4432,8 +4380,7 @@ void test_read_next_variant_from_full_flank_file_2()
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length+1));
   if (kmer_window->kmer==NULL)
   {
-    printf("Failed to malloc kmer_window->kmer in test . Exit.\n");
-    exit(1);
+    die("Failed to malloc kmer_window->kmer in test . Exit.");
   }
   kmer_window->nkmers=0;
 
@@ -4451,8 +4398,7 @@ void test_read_next_variant_from_full_flank_file_2()
   
   if(fout_bubble==NULL)
   {
-    printf("Unable to open  ../data/tempfiles_can_be_deleted/tmp_test.bubbles ");
-    exit(1);
+    die("Unable to open: ../data/tempfiles_can_be_deleted/tmp_test.bubbles");
   }
 
   int max_branch_len=10;
@@ -4508,8 +4454,7 @@ void test_read_next_variant_from_full_flank_file_2()
   VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(40,40,40,40,kmer_size);
   if (var==NULL)
   {
-    printf("Failed to malloc var 2\n");
-    exit(1);
+    die("Failed to malloc var 2");
   }
 
 
@@ -4723,15 +4668,13 @@ void test_read_next_variant_from_full_flank_file_3()
   int max_read_length = 50;
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
 
   Sequence * seq_inc_prev_kmer = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq_inc_prev_kmer,max_read_length+kmer_size,LINE_MAX);
 
@@ -4740,8 +4683,7 @@ void test_read_next_variant_from_full_flank_file_3()
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
   {
-    printf("Failed to malloc kmer sliding window in a test. Exit.\n");
-    exit(1);
+    die("Failed to malloc kmer sliding window in a test. Exit.");
   }
 
   //  kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
@@ -4749,8 +4691,7 @@ void test_read_next_variant_from_full_flank_file_3()
 
   if (kmer_window->kmer==NULL)
   {
-    printf("Failed to malloc kmer_window->kmer in test . Exit.\n");
-    exit(1);
+    die("Failed to malloc kmer_window->kmer in test . Exit.");
   }
 
   kmer_window->nkmers = 0;
@@ -4770,8 +4711,7 @@ void test_read_next_variant_from_full_flank_file_3()
   FILE* fout_bubble = fopen("../data/tempfiles_can_be_deleted/tmp_test.bubbles", "w");
   if (fout_bubble==NULL)
   {
-    printf("Unable to open  ../data/tempfiles_can_be_deleted/tmp_test.bubbles ");
-    exit(1);
+    die("Unable to open: ../data/tempfiles_can_be_deleted/tmp_test.bubbles");
   }
 
   int max_branch_len=10;
@@ -4829,8 +4769,7 @@ void test_read_next_variant_from_full_flank_file_3()
   VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(40,40,40,40,kmer_size);
   if (var==NULL)
   {
-    printf("Failed to malloc var 3\n");
-    exit(1);
+    die("Failed to malloc var 3");
   }
 
 
@@ -5035,15 +4974,13 @@ void test_read_next_variant_from_full_flank_file_4()
   int max_read_length = 50;
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
 
   Sequence * seq_inc_prev_kmer = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq_inc_prev_kmer,max_read_length+kmer_size,LINE_MAX);
 
@@ -5052,8 +4989,7 @@ void test_read_next_variant_from_full_flank_file_4()
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
   {
-    printf("Failed to malloc kmer sliding window in a test. Exit.\n");
-    exit(1);
+    die("Failed to malloc kmer sliding window in a test. Exit.");
   }
 
 
@@ -5061,8 +4997,7 @@ void test_read_next_variant_from_full_flank_file_4()
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length+1));
   if (kmer_window->kmer==NULL)
   {
-    printf("Failed to malloc kmer_window->kmer in test . Exit.\n");
-    exit(1);
+    die("Failed to malloc kmer_window->kmer in test. Exit.");
   }
   kmer_window->nkmers=0;
 
@@ -5082,8 +5017,7 @@ void test_read_next_variant_from_full_flank_file_4()
   FILE* fout_bubble = fopen("../data/tempfiles_can_be_deleted/tmp_test.bubbles", "w");
   if (fout_bubble==NULL)
   {
-    printf("Unable to open  ../data/tempfiles_can_be_deleted/tmp_test.bubbles ");
-    exit(1);
+    die("Unable to open: ../data/tempfiles_can_be_deleted/tmp_test.bubbles");
   }
 
   int max_branch_len=10;
@@ -5141,8 +5075,7 @@ void test_read_next_variant_from_full_flank_file_4()
   VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(40,40,40,40,kmer_size);
   if (var==NULL)
   {
-    printf("Failed to malloc var 4\n");
-    exit(1);
+    die("Failed to malloc var 4");
   }
 
   //FILE* var_fptr =  fopen("tmp_test_read_next_variant_from_full_flank_file_bubble.fff", "r");

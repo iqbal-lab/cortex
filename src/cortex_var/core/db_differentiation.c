@@ -38,11 +38,12 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 
   if ( (format != FASTA) && (format !=FASTQ) )
     {
-      printf("Calling align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours with file format not set to fasta or fastq\n");
-      exit(1);
+      die("Calling align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours "
+          "with file format not set to fasta or fastq");
     }
 
-  //For each file in list_of_fasta, go through the reads, and for each read, print one  "coverage read" per colour (space separated)
+  //For each file in list_of_fasta, go through the reads, and for each read,
+  // print one  "coverage read" per colour (space separated)
   // e.g. for a read print
   //    >read_id colour 0
   //    coverages of each of the nodes in the ref (colour 0)
@@ -57,8 +58,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
   //----------------------------------
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
   
@@ -66,8 +66,8 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window in "
+          "align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.");
     }
   
 
@@ -75,8 +75,8 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size+1));
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer in "
+          "align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.");
     }
   kmer_window->nkmers=0;
   
@@ -90,8 +90,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
     int offset = 0;
     if (new_entry == false){
       offset = db_graph->kmer_size;
-      //printf("new_entry must be true in hsi test function");
-      //exit(1);
+      //die("new_entry must be true in hsi test function");
     }
     ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
     
@@ -102,8 +101,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
     * full_entry = true;
 
     if (new_entry!= true){
-      puts("new_entry has to be true for fastq\n");
-      exit(1);
+      die("new_entry has to be true for fastq");
     }
 
     return read_sequence_from_fastq(fp,seq,max_read_length,fastq_ascii_offset);
@@ -115,8 +113,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
   Orientation*  array_or = (Orientation*) malloc(sizeof(Orientation)*(max_read_length+db_graph->kmer_size+1) );
   if ( (array_nodes==NULL) || (array_or==NULL) )
     {
-      printf("Unable to malloc arrays for alignment\n");
-      exit(1);
+      die("Unable to malloc arrays for alignment");
     }
   
   //loop through the fasta/q in list_of_fasta/q, and for each, print out a new coverage fasta
@@ -124,8 +121,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
   FILE* list_fptr = fopen(list_of_fastaq, "r");
   if (list_fptr==NULL)
     {
-      printf("Cannot open %s\n", list_of_fastaq);
-      exit(1);
+      die("Cannot open %s\n", list_of_fastaq);
     }
   //printf("List of fasta is %s\n", list_of_fastaq);
 
@@ -148,16 +144,14 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
       FILE* out = fopen(outputfile, "w");
       if (out ==NULL)
 	{
-	  printf("Cannot open %s, exiting", outputfile);
-	  exit(1);
+	  die("Cannot open %s, exiting", outputfile);
 	}
       //printf("Output to %s\n", outputfile);
       
       FILE* fp = fopen(line, "r");
       if (fp==NULL)
 	{
-	  printf("Cannot open %s. Exit.\n", line);
-	  exit(1);
+	  die("Cannot open %s. Exit.\n", line);
 	}
       
       int dummy_colour_ignored=0;//this will be ignored, as setting to false - we don't want to demand the read all lies in any colour

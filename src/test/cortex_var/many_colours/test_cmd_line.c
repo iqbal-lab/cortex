@@ -131,8 +131,7 @@ void test_get_numbers_from_comma_sep_list()
 
   if (NUMBER_OF_COLOURS<10)
     {
-      printf("We need NUMBER_OF_COLOURS>=10 to run all these cmdline tests - recompile please!\n");
-      exit(1);
+      die("We need NUMBER_OF_COLOURS>=10 to run all these cmdline tests - recompile please!\n");
     }
   //list which is *1,3,4
   char list9[]="*1,3,4";
@@ -338,8 +337,7 @@ void test_parse_genotype_site_argument()
   
   if (NUMBER_OF_COLOURS-6<=0)
     {
-      printf("We need >6 colours to run the cmdline tests. Recompile.\n");
-      exit(1);
+      die("We need >6 colours to run the cmdline tests. Recompile.\n");
     }
   CU_ASSERT(num_cols_to_gt2==(NUMBER_OF_COLOURS-6));
   int j;
@@ -374,8 +372,7 @@ void test_parse_genotype_site_argument()
   
   if (NUMBER_OF_COLOURS-7<=0)
     {
-      printf("We need >7 colours to run the cmdline tests. Recompile.\n");
-      exit(1);
+      die("We need >7 colours to run the cmdline tests. Recompile.\n");
     }
   CU_ASSERT(num_cols_to_gt3==3);
 

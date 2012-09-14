@@ -137,8 +137,7 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
 
   if (len<=0)
     {
-      printf("Should not call calculate_integrated_loglikelihood_of_snp_model_given_data when len_start <=2. Coding error somewhere");
-      exit(1);
+      die("Should not call calculate_integrated_loglikelihood_of_snp_model_given_data when len_start <=2. Coding error somewhere");
     }
 
   double  lambda_s[NUMBER_OF_COLOURS];//expected Poisson parameter for depth of covg, for each sample, haploid (ie per allele)
@@ -149,8 +148,7 @@ double calculate_integrated_loglikelihood_of_snp_model_given_data(AnnotatedPutat
       int  read_len = model_info->ginfo->mean_read_length[i];
       if ( (read_len<=0) && (i != model_info->ref_colour ) )
 	{
-	  printf("Exiting - you seem to have read length %d in colour %d \n", read_len, i);
-	  exit(1);
+	  die("Exiting - you seem to have read length %d in colour %d", read_len, i);
 	}
       lambda_s[i]=  (depth * len /(2*read_len)) ;
 
@@ -272,8 +270,7 @@ int factorial(int n)
 {
   if (n<0)
     {
-      printf("Passing neg number %d into factorial\n", n);
-      exit(1);
+      die("Passing neg number %d into factorial", n);
     }
   if (n==0)
     {
@@ -388,8 +385,7 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
 	  max = copy_number_arr[r];
 	  if (r>1)
 	    {
-	      printf("Should never happen - had positive maximum after the first step\n");
-	      exit(1);
+	      die("Should never happen - had positive maximum after the first step\n");
 	    }
 	}
       if (copy_number_arr[r]>max)

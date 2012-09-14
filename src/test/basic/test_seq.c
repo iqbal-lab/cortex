@@ -46,8 +46,7 @@ void test_read_sequence_from_fasta(){
   boolean full_entry;
 
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
 
   //pre-allocate space where to read the sequences
@@ -57,8 +56,7 @@ void test_read_sequence_from_fasta(){
   FILE* fp1 = fopen("../data/test/basic/one_entry.fa", "r");
   
   if (fp1 == NULL){
-    fputs("cannot open file:../data/test/basic/one_entry.fa\n",stderr);
-    exit(1);
+    die("cannot open file:../data/test/basic/one_entry.fa\n");
   }
 
   // 1. Read from simple fasta:
@@ -138,8 +136,7 @@ void test_read_sequence_from_long_fasta(){
   boolean full_entry;
 
   if (seq == NULL){							
-    fputs("Out of memory trying to allocate Sequence\n",stderr);	
-    exit(1);								
+    die("Out of memory trying to allocate Sequence\n");								
   }
   //pre-allocate space where to read the sequences
   alloc_sequence(seq,200,LINE_MAX);
@@ -148,8 +145,7 @@ void test_read_sequence_from_long_fasta(){
   FILE* fp1 = fopen("../data/test/basic/long_entries.fa", "r");
   
   if (fp1 == NULL){							
-    fputs("cannot open file: ../data/test/basic/long_entries.fa\n",stderr);	
-    exit(1);								
+    die("cannot open file: ../data/test/basic/long_entries.fa\n");								
   }
   
   length_seq = read_sequence_from_fasta(fp1,seq,10,true,&full_entry,0);
@@ -233,8 +229,7 @@ void test_read_sequence_from_fasta_when_file_has_bad_reads()
   boolean full_entry;
   
   if (seq == NULL){							
-    fputs("Out of memory trying to allocate Sequence\n",stderr);	
-    exit(1);								
+    die("Out of memory trying to allocate Sequence\n");								
   }
   //pre-allocate space where to read the sequences
   int max_read_length=100;
@@ -385,8 +380,7 @@ void test_shift_last_kmer_to_start_of_sequence(){
   boolean full_entry;
 
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   //pre-allocate space where to read the sequences
   alloc_sequence(seq,200,LINE_MAX);
@@ -417,8 +411,7 @@ void test_read_sequence_from_fastq(){
   //pre-allocate space where to read the sequences
   Sequence* seq = malloc(sizeof(Sequence));
   if (seq==NULL){
-    fputs("Out of memory trying to allocate a Sequence",stderr);
-      exit(1);
+    die("Out of memory trying to allocate a Sequence");
   }
   
   alloc_sequence(seq,200,LINE_MAX);
@@ -514,8 +507,7 @@ void test_read_sequence_from_fastq_with_bad_reads_and_long_reads()
   //pre-allocate space where to read the sequences
   Sequence* seq = malloc(sizeof(Sequence));
   if (seq==NULL){
-    fputs("Out of memory trying to allocate a Sequence",stderr);
-      exit(1);
+    die("Out of memory trying to allocate a Sequence");
   }
 
   int max_read_length=200;

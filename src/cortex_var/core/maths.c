@@ -35,8 +35,7 @@ float log_factorial(int number)
 {
   if (number<0)
     {
-      printf("Do not call log_factorial with negative argument %d\n", number);
-      exit(1);
+      die("Do not call log_factorial with negative argument %d\n", number);
     }
   int i;
   float ret=0;
@@ -52,8 +51,7 @@ float log_factorial_ll(long long number)
 {
   if (number<0)
     {
-      printf("Do not call log_factorial with negative argument %lld\n", number);
-      exit(1);
+      die("Do not call log_factorial with negative argument %lld\n", number);
     }
   long long i;
   float ret=0;

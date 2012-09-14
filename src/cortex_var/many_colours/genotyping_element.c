@@ -45,8 +45,7 @@ GenotypingElement* new_genotyping_element()
 
   if (e==NULL)
     {
-      printf("Unable to allocate a new genotyping_element");
-      exit(1);
+      die("Unable to allocate a new genotyping_element");
     }
   
   binary_kmer_initialise_to_zero(&(e->kmer));
@@ -136,19 +135,18 @@ Edges* genotyping_node_get_edge(GenotypingElement e, EdgeArrayType type,int inde
     {
       if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
 	{
-	  printf("Called genotyping_node_get_edge with index %d which is >= MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2 which is %d. Exist\n", index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2);
-	  exit(1);
+	  die("Called genotyping_node_get_edge with index %d which is \n"
+        ">= MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2 which is %d.\n",
+        index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2);
 	}
       Edges *edges = e.individual_edges + index;
       return edges;
     }
  else 
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
-      exit(1);
+      die("Coding error. Only expecting enum of edge array types to contain \n"
+          "one type - individual_edge_array, but we are getting type %d", type);
     }
-
-  exit(1);
 }
 
 
@@ -160,18 +158,15 @@ Edges genotyping_node_get_edge_copy(const GenotypingElement e, EdgeArrayType typ
     {
       if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
 	{
-	  printf("Trying to access a colour beyond the compile-time limit. Exit.\n");
-	  exit(1);
+	  die("Trying to access a colour beyond the compile-time limit. Exit.\n");
 	}
       return e.individual_edges[index];
     }
   else 
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
-      exit(1);
+      die("Coding error. Only expecting enum of edge array types to contain \n"
+          "one type - individual_edge_array, but we are getting type %d", type);
     }
-
-  exit(1);
 }
 
 
@@ -268,16 +263,16 @@ void genotyping_node_add_edges(GenotypingElement* e, EdgeArrayType type, int ind
     {
       if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
 	{
-	  printf("in genotyping_element's add_edges function. index is %d, and should be at most %d", index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2-1);
-	  exit(1);
+	  die("in genotyping_element's add_edges function. index is %d, and should be at most %d",
+        index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2-1);
 	}
       e->individual_edges[index] |= edge_char;
     }
 
   else
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
-      exit(1);
+      die("Coding error. Only expecting enum of edge array types to contain \n"
+          "one type - individual_edge_array, but we are getting type %d", type);
     }
   
 }
@@ -289,16 +284,16 @@ void genotyping_node_set_edges(GenotypingElement* e, EdgeArrayType type, int ind
     {
       if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
 	{
-	  printf("in genotyping_element's set_edges function. index is %d,and should be at most %d", index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2);
-	  exit(1);
+	  die("in genotyping_element's set_edges function. index is %d,and should be at most %d",
+        index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2);
 	}
       e->individual_edges[index] = edge_char;
     }
 
   else
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
-      exit(1);
+      die("Coding error. Only expecting enum of edge array types to contain \n"
+          "one type - individual_edge_array, but we are getting type %d", type);
     }
   
 }
@@ -321,8 +316,8 @@ void genotyping_node_reset_one_edge(GenotypingElement* e, Orientation orientatio
     {
       if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
 	{
-	  printf("in genotyping_element's reset_one_edge function. index is %d,and should be at most %d - 1", index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2);
-	  exit(1);
+	  die("in genotyping_element's reset_one_edge function. index is %d,and should be at most %d - 1",
+        index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2);
 	}
 
       char edge = 1 << nucleotide;      
@@ -338,8 +333,8 @@ void genotyping_node_reset_one_edge(GenotypingElement* e, Orientation orientatio
     }
   else
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
-      exit(1);
+      die("Coding error. Only expecting enum of edge array types to contain \n"
+          "one type - individual_edge_array, but we are getting type %d", type);
     }
   
 }
@@ -361,8 +356,8 @@ int genotyping_element_get_number_of_people_or_pops_containing_this_element(Geno
     }
   else
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
-      exit(1);
+      die("Coding error. Only expecting enum of edge array types to contain \n"
+          "one type - individual_edge_array, but we are getting type %d", type);
     }
 
   return count;
@@ -409,8 +404,7 @@ void genotyping_element_initialise(GenotypingElement * e, Key kmer, short kmer_s
 
   if (e==NULL)
     {
-      printf("Called elemtn_initialise on NULL ptr");
-      exit(1);
+      die("Called elemtn_initialise on NULL ptr");
     }
 
   BinaryKmer tmp_kmer;
@@ -439,8 +433,7 @@ void genotyping_element_initialise_kmer_covgs_edges_and_status_to_zero(Genotypin
 
   if (e==NULL)
     {
-      printf("Called genotyping_element_initialise_covgs_and_edges_to_zero  on NULL ptr");
-      exit(1);
+      die("Called genotyping_element_initialise_covgs_and_edges_to_zero  on NULL ptr");
     }
 
   binary_kmer_initialise_to_zero(&(e->kmer));
@@ -464,8 +457,7 @@ void genotyping_element_set_kmer(GenotypingElement * e, Key kmer, short kmer_siz
 
   if (e==NULL)
     {
-      printf("Called element_set_kmer on NULL ptr");
-      exit(1);
+      die("Called element_set_kmer on NULL ptr");
     }
 
   BinaryKmer tmp_kmer;
@@ -569,12 +561,14 @@ Orientation db_genotyping_node_get_orientation(BinaryKmer* k, GenotypingElement 
       return reverse;
     }
   
-  printf("programming error - you have called  db_genotyping_node_get_orientation with a kmer that is neither equal to the kmer in this node, nor its rev comp\n");
   char tmpseq1[kmer_size+1];
   char tmpseq2[kmer_size+1];
-  printf("Arg 1 Kmer is %s and Arg 2 node kmer is %s\n", binary_kmer_to_seq(k, kmer_size, tmpseq1), binary_kmer_to_seq(&(e->kmer), kmer_size, tmpseq2));
-  exit(1);
-  
+
+  die("programming error - you have called db_genotyping_node_get_orientation \n"
+      "with a kmer that is neither equal to the kmer in this node, nor its rev comp\n"
+      "Arg 1 Kmer is %s and Arg 2 node kmer is %s\n",
+      binary_kmer_to_seq(k, kmer_size, tmpseq1),
+      binary_kmer_to_seq(&(e->kmer), kmer_size, tmpseq2));  
 }
 
 

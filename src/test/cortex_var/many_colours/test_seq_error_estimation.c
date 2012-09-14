@@ -69,8 +69,7 @@ void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta()
 
   if(readlen_distrib == NULL)
   {
-    printf("Unable to malloc array to hold readlen distirbution! Exiting.\n");
-    exit(EXIT_FAILURE);
+    die("Unable to malloc array to hold readlen distirbution! Exiting.");
   }
 
   unsigned long i;
@@ -145,8 +144,7 @@ void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta_test2()
 
   if(readlen_distrib == NULL)
   {
-    printf("Unable to malloc array to hold readlen distirbution! Exiting.\n");
-    exit(EXIT_FAILURE);
+    die("Unable to malloc array to hold readlen distirbution! Exiting.");
   }
 
   unsigned long i;

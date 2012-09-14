@@ -28,7 +28,9 @@
 
 #include <global.h>
 #include <stdlib.h>
+#include <stdarg.h> // needed for va_list
 #include <stdio.h>
+#include <string.h>
 
 boolean test_file_existence(char* file)
 {
@@ -42,4 +44,25 @@ boolean test_file_existence(char* file)
       fclose(fp);
       return true;
     }
+}
+
+void die(const char* fmt, ...)
+{
+  fflush(stdout);
+
+  // Print error
+  fprintf(stderr, "Error: ");
+
+  va_list argptr;
+  va_start(argptr, fmt);
+  vfprintf(stderr, fmt, argptr);
+  va_end(argptr);
+
+  // Check if we need to print a newline
+  if(*(fmt+strlen(fmt)-1) != '\n')
+  {
+    fprintf(stderr, "\n");
+  }
+
+  exit(EXIT_FAILURE);
 }

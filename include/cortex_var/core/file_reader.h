@@ -267,7 +267,9 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
 boolean read_next_error_cleaning_object(FILE* fp, ErrorCleaning* cl);
 
 
-int get_number_of_files_and_check_existence_from_filelist(char* filelist);
-void get_filenames_from_list(char* filelist, char** array, int len);
+int load_paths_from_filelist(char* filelist_path, char** path_array);
+
 boolean check_colour_list(char* filename, int kmer);
+boolean check_ctx_list(char* filename, int kmer);
+
 #endif /* FILE_READER_H_ */

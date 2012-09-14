@@ -706,8 +706,9 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity
     }
   else
     {
-      printf("Programming error. called get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller with bad genotype");
-      exit(1);
+      die("Programming error. called "
+          "get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller "
+          "with bad genotype");
     }
 }
 

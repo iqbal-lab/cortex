@@ -61,8 +61,7 @@ void test_binary_kmer_assignment_operator()
 
   if (NUMBER_OF_BITFIELDS_IN_BINARY_KMER>10)
     {
-      printf("Had assumed you would never try going higher than 10 long longs in a BinaryKmer. Fix the test - very simple fix");
-      exit(1);
+      die("Had assumed you would never try going higher than 10 long longs in a BinaryKmer. Fix the test - very simple fix");
     }
 
   //set up your test kmer
@@ -154,9 +153,10 @@ void test_binary_kmer_less_than()
 	
 	if (binary_kmer_less_than(bk1,bk2, kmer_size)!=true)
 	  {
-	    printf("Breaks at kmer = %d, i=%d, j=%lu\n",kmer_size, i, (unsigned long)j);
-	    printf("num of bitfields fully used is %d, and number of bits in most sig is %d\n", number_of_bitfields_fully_used, number_of_bits_in_most_sig_bitfield);
-	    exit(1);
+      die("Breaks at kmer = %d, i=%d, j=%lu\n"
+          "num of bitfields fully used is %d, and number of bits in most sig is %d\n",
+          kmer_size, i, (unsigned long)j,
+          number_of_bitfields_fully_used, number_of_bits_in_most_sig_bitfield);
 	  }
 	
 	CU_ASSERT(binary_kmer_less_than(bk2,bk1, kmer_size)==false);
@@ -558,8 +558,7 @@ void test_get_sliding_windows_from_sequence(){
    //----------------------------------
     KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
     if (windows == NULL){
-      fputs("Out of memory trying to allocate a KmerSlidingWindowSet",stderr);
-      exit(1);
+      die("Out of memory trying to allocate a KmerSlidingWindowSet");
     } 
 
     binary_kmer_alloc_kmers_set(windows,20,30);
@@ -712,8 +711,7 @@ void test_breaking_homopolymers_in_get_sliding_windows ()
    //----------------------------------
     KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
     if (windows == NULL){
-      fputs("Out of memory trying to allocate a KmerSlidingWindowSet",stderr);
-      exit(1);
+      die("Out of memory trying to allocate a KmerSlidingWindowSet");
     } 
 
     binary_kmer_alloc_kmers_set(windows,20,30);

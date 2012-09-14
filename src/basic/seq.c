@@ -58,28 +58,23 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_chunk_length,bool
   boolean good_read;
 
   if (fp == NULL){
-    fputs("File not defined\n",stderr);
-    exit(1);
+    die("read_sequence_from_fasta.c: File not defined");
   }
 
   if (seq == NULL){
-    fputs("Cannot pass a NULL pointer for seq\n",stderr);
-    exit(1);
+    die("read_sequence_from_fasta.c: Cannot pass a NULL pointer for seq");
   }
 
   if (seq->seq == NULL){
-    fputs("Dont give me a null pointer for seq->seq - alloc memory yourself and give me that\n",stderr);
-    exit(1);
+    die("Dont give me a null pointer for seq->seq - alloc memory yourself and give me that\n");
   }
 
   if (seq->qual == NULL){
-    fputs("Dont give me a null pointer for seq->qual - alloc memory yourself and give me that\n",stderr);
-    exit(1);
+    die("Dont give me a null pointer for seq->qual - alloc memory yourself and give me that\n");
   }
 
   if (seq->name == NULL){
-    fputs("Dont give me a null pointer for seq->name - alloc memory yourself and give me that\n",stderr);
-    exit(1);
+    die("Dont give me a null pointer for seq->name - alloc memory yourself and give me that\n");
   }
 
  
@@ -95,8 +90,7 @@ int read_sequence_from_fasta(FILE *fp, Sequence * seq, int max_chunk_length,bool
 	seq->name[i-1] = '\0';
       }
       else{
-	fprintf(stderr,"syntax error in fasta entry %s\n",line);
-	exit(1);
+	die("Syntax error in fasta entry %s",line);
       }
     }
     
@@ -213,28 +207,23 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length, int 
   
 
   if (fp == NULL){
-    fputs("File not defined\n",stderr);
-    exit(1);
+    die("File not defined");
   }
 
   if (seq == NULL){
-    fputs("Cannot pass a NULL pointer for seq\n",stderr);
-    exit(1);
+    die("Cannot pass a NULL pointer for seq");
   }
 
   if (seq->seq == NULL){
-    fputs("Dont give me a null pointer for seq->seq - alloc memory yourself and give me that\n",stderr);
-    exit(1);
+    die("Dont give me a null pointer for seq->seq - alloc memory yourself and give me that");
   }
 
   if (seq->name == NULL){
-    fputs("Dont give me a null pointer for seq->name - alloc memory yourself and give me that\n",stderr);
-    exit(1);
+    die("Dont give me a null pointer for seq->name - alloc memory yourself and give me that");
   }
 
   if (seq->qual == NULL){
-    fputs("Dont give me a null pointer for seq->qual - alloc memory yourself and give me that\n",stderr);
-    exit(1);
+    die("Dont give me a null pointer for seq->qual - alloc memory yourself and give me that");
   }
 
   boolean end_of_file=false;
@@ -258,8 +247,7 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length, int 
 		  }
 		if(i>LINE_MAX)
 		  {
-		    fputs("Name too long\n",stderr);
-		    exit(1);
+		    die("Name too long");
 		  }
 		seq->name[i-1] = line[i];
 	      }
@@ -292,7 +280,7 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length, int 
 
 		    if (j>=max_read_length){
 		      fprintf(stdout,"read [%s] too long [%i]. Skip read\n",seq->name,j);
-		      //exit(1);
+		      //exit(EXIT_FAILURE);
 		      good_read=false;
 		    }
 
@@ -329,8 +317,7 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length, int 
 		    
 		    if (q==max_read_length)
 		      {
-			fprintf(stdout,"qualities for [%s] longer than the max read length  [%i]. Exiting...\n",seq->name,q);
-			exit(1);
+			die("Qualities for [%s] longer than the max read length  [%i]. Exiting...",seq->name,q);
 		      }
 		    
 		  }
@@ -348,8 +335,7 @@ int read_sequence_from_fastq(FILE *fp, Sequence * seq, int max_read_length, int 
 	  }//if line starts with @
 	else
 	  {
-	    fputs("syntax error in fastq file -- it misses @\n",stderr);
-	    exit(1);
+	    die("syntax error in fastq file -- it misses @\n");
 	  }
       }
     else
@@ -369,23 +355,19 @@ void alloc_sequence(Sequence * seq, int max_read_length, int max_name_length){
  
  
   if (seq == NULL){							
-    fputs("Cannot pass a null seq to sequence_alloc\n",stderr);	
-    exit(1);								
+    die("Cannot pass a null seq to sequence_alloc");								
   }
   seq->name = malloc(sizeof(char) * max_name_length);
   if (seq->name == NULL){
-    fputs("Out of memory trying to allocate string\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate string");
   }
   seq->seq  = malloc(sizeof(char) * (max_read_length+1));
   if (seq->seq == NULL){
-    fputs("Out of memory trying to allocate string\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate string");
   }
   seq->qual  = malloc(sizeof(char) * (max_read_length+1));
   if (seq->qual == NULL){
-    fputs("Out of memory trying to allocate string\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate string");
   }
 
   seq->seq[max_read_length]='\0';
@@ -425,8 +407,7 @@ void shift_last_kmer_to_start_of_sequence(Sequence * sequence, int length, short
   int i;
 
   if (length-kmer_size<kmer_size){
-    puts("kmer_size too long\n");
-    exit(1);
+    die("kmer_size too long");
   }
 
   for(i=0;i<kmer_size; i++){

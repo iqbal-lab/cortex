@@ -81,8 +81,7 @@ void test_find_first_node_in_supernode()
   
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("Unable to alloc the hash table. dead before we even started.");
     }
 
   // Read FASTA sequence
@@ -278,8 +277,7 @@ void test_find_next_node_in_supernode()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started.");
     }
 
   // Read FASTA sequence
@@ -399,8 +397,7 @@ void test_correctly_find_subsection_of_supernode()
   
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("Unable to alloc the hash table. dead before we even started.");
     }
 
   // Read FASTA sequence
@@ -556,8 +553,7 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. ");
     }
 
   // Read FASTA sequence
@@ -659,8 +655,7 @@ void test_get_population_consensus_supernode()
    
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("Unable to alloc the hash table. dead before we even started. ");
     }
 
   // Read FASTA sequence
@@ -710,15 +705,13 @@ void test_get_population_consensus_supernode()
   Sequence* popseq_obj = malloc(sizeof(Sequence));
   if (popseq_obj==NULL)
     {
-      printf("OOM alloc seq in test of pop consensus supernode");
-      exit(1);
+      die("Cannot allocate seq in test of pop consensus supernode");
     }
 
   popseq_obj->seq= malloc(sizeof(char)*40);
   if (popseq_obj->seq==NULL)
     {
-      printf("OOM alloc seq in test of pop consensus supernode");
-      exit(1);
+      die("Cannot allocate seq in test of pop consensus supernode");
     }
   popseq_obj->name=NULL;
   popseq_obj->qual=NULL;

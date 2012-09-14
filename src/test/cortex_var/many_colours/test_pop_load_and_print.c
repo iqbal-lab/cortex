@@ -53,8 +53,7 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("Unable to alloc the hash table. dead before we even started.");
     }
 
   // Read FASTA sequence
@@ -88,8 +87,7 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
 
   if ( (array_of_supernodes_for_person1==NULL) || (array_of_supernodes_for_person2==NULL))
     {
-      printf("cant start - OOM");
-      exit(1);
+      die("Cant start - OOM\n");
     }
 
   //these counters are used to make sure none of the files of printed out supernodes get too big. In fact
@@ -227,8 +225,7 @@ void test_take_three_people_each_with_one_read_and_find_variants()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("Unable to alloc the hash table. dead before we even started.");
     }
 
 
@@ -246,8 +243,7 @@ void test_take_three_people_each_with_one_read_and_find_variants()
   
   if ( (array_of_supernodes_for_person1==NULL) || (array_of_supernodes_for_person2==NULL) || (array_of_supernodes_for_person3==NULL) )
     {
-      printf("cant start - OOM");
-      exit(1);
+      die("Cant start - OOM\n");
     }
 
   
@@ -383,8 +379,7 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("Unable to alloc the hash table. dead before we even started.");
     }
 
 
@@ -400,8 +395,7 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
   
   if ( (array_of_supernodes_for_person1==NULL) || (array_of_supernodes_for_person2==NULL) )
     {
-      printf("cant start - OOM");
-      exit(1);
+      die("Cant start - OOM\n");
     }
 
   

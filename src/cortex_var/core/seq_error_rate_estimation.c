@@ -56,8 +56,7 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
   //----------------------------------
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
   
@@ -65,8 +64,7 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
     }
   
 
@@ -74,8 +72,7 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size+1));
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
     }
   kmer_window->nkmers=0;
   
@@ -88,8 +85,7 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
     int offset = 0;
     if (new_entry == false){
       offset = db_graph->kmer_size;
-      //printf("new_entry must be true in hsi test function");
-      //exit(1);
+      //die("new_entry must be true in hsi test function");
     }
     ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
     
@@ -100,8 +96,7 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
   Orientation*  array_or = (Orientation*) malloc(sizeof(Orientation)*(max_read_length+db_graph->kmer_size+1) );
   if ( (array_nodes==NULL) || (array_or==NULL) )
     {
-      printf("Unable to malloc arrays for sequencing eror rate estimation - is your server low on memory?\n");
-      exit(1);
+      die("Unable to malloc arrays for sequencing eror rate estimation - is your server low on memory?\n");
     }
 
   FILE* fout=NULL;
@@ -110,8 +105,7 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
       fout = fopen(output_file, "w");
       if (fout==NULL)
 	{
-	  printf("Unable to open output file %s\n", output_file);
-	  exit(1);
+	  die("Unable to open output file %s\n", output_file);
 	}
     }
   //end of initialisation 
@@ -124,9 +118,7 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
 
   if(filename_abs_path == NULL)
   {
-    fprintf(stderr, "Cannot get absolute path to seq_error colours: %s\n",
-            filename_abs_path);
-    exit(EXIT_FAILURE);
+    die("Cannot get absolute path to seq_error colours: %s\n", filename_abs_path);
   }
 
   // Get directory path
@@ -137,8 +129,7 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
   FILE* fp = fopen(colourlist_snp_alleles, "r");
   if(fp == NULL)
   {
-    printf("Cannot open %s\n", colourlist_snp_alleles);
-    exit(1);
+    die("Cannot open %s\n", colourlist_snp_alleles);
   }
 
   StrBuf *line = strbuf_new();
@@ -164,9 +155,8 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
 
         if(path_ptr == NULL)
         {
-          fprintf(stderr, "Cannot find sequence file for seq_error_estimation: %s\n",
-                  line->buff);
-          exit(EXIT_FAILURE);
+          die("Cannot find sequence file for seq_error_estimation: %s\n",
+              line->buff);
         }
 
         int num_snps_tested = 0;
@@ -235,8 +225,7 @@ long double estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(char* f
   FILE* fptr = fopen(fasta, "r");
   if (fptr==NULL)
     {
-      printf("Unable to open file Z%sZ. Abort.\n", fasta);
-      exit(1);
+      die("Unable to open file Z%sZ. Abort.\n", fasta);
     }
   
   int num_kmers=0;

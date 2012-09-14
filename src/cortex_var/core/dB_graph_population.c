@@ -328,9 +328,10 @@ int db_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop(dBNode
        next_node = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide,&reverse_nucleotide,db_graph, type, index);
        
        if(next_node == NULL){
-	 printf("dB_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
-	 exit(1);
-       }	           
+	 die("dB_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop: "
+       "didnt find node in hash table: %s",
+       binary_kmer_to_seq(element_get_kmer(node), db_graph->kmer_size, seq));
+       }
        
        length ++;
 
@@ -433,9 +434,10 @@ int db_graph_db_node_clip_tip_with_orientation_in_subgraph_defined_by_func_of_co
 	  next_node = db_graph_get_next_node_in_subgraph_defined_by_func_of_colours(node,orientation,&next_orientation,nucleotide,&reverse_nucleotide,db_graph, get_colour);
 	  
 	  if(next_node == NULL){
-	    printf("dB_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq));
-	    exit(1);
-	  }	           
+	    die("dB_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop: "
+          "didnt find node in hash table: %s",
+          binary_kmer_to_seq(element_get_kmer(node), db_graph->kmer_size, seq));
+	  }
 	  
 	  length ++;
 	  
@@ -697,8 +699,8 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
   //sanity checks
   if (node == NULL)
     {
-      printf("db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop: can't pass a null node\n");
-      exit(1);
+      die("db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop: "
+          "can't pass a null node");
     }
   else if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
     {
@@ -741,8 +743,10 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
     //sanity check
     if(next_node == NULL)
       {
-	fprintf(stderr,"db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop: didnt find node in hash table: %s %c %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq),binary_nucleotide_to_char(nucleotide), current_orientation == forward ? "forward" : "reverse");
-	exit(1);
+	die("db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop: "
+      "didnt find node in hash table: %s %c %s",
+      binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq),
+      binary_nucleotide_to_char(nucleotide), current_orientation == forward ? "forward" : "reverse");
       }
 
 
@@ -799,8 +803,7 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
 
   if (length>=limit)
     {
-      printf("Stopped becase supernode length limit exceeded: length %d and limit %d\n", length, limit);
-      exit(1);
+      die("Stopped becase supernode length limit exceeded: length %d and limit %d", length, limit);
     }
   
    seq[length] = '\0';
@@ -854,8 +857,8 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
   //sanity checks
   if (node == NULL)
     {
-      printf("db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours: can't pass a null node\n");
-      exit(1);
+      die("db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours:"
+          "can't pass a null node");
     }
   else if (! (db_node_is_this_node_in_subgraph_defined_by_func_of_colours(node, get_colour)))
     {
@@ -898,8 +901,11 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
     //sanity check
     if(next_node == NULL)
       {
-	fprintf(stderr,"db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours: didnt find node in hash table: %s %c %s\n", binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq),binary_nucleotide_to_char(nucleotide), current_orientation == forward ? "forward" : "reverse");
-	exit(1);
+	die("db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours: "
+      "didnt find node in hash table: %s %c %s",
+      binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq),
+      binary_nucleotide_to_char(nucleotide),
+      current_orientation == forward ? "forward" : "reverse");
       }
 
 
@@ -969,8 +975,7 @@ int db_graph_get_perfect_path_for_specific_person_or_pop(dBNode * node, Orientat
 
   //sanity check
   if (node == NULL){
-    printf("db_graph_get_perfect_path_for_specific_person_or_pop: can't pass a null node\n");
-    exit(1);
+    die("db_graph_get_perfect_path_for_specific_person_or_pop: can't pass a null node");
   }
 
   path_nodes[0]         = node;
@@ -1020,8 +1025,7 @@ int db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(dBNode * no
 
   //sanity check
   if (node == NULL){
-    printf("db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours: can't pass a null node\n");
-    exit(1);
+    die("db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours: can't pass a null node");
   }
 
   path_nodes[0]         = node;
@@ -1076,8 +1080,7 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
 
   if (node==NULL)
     {
-      printf("Do not call db_graph_detect_bubble_for_specific_person_or_population with NULL node. Exiting\n");
-      exit(1);
+      die("Do not call db_graph_detect_bubble_for_specific_person_or_population with NULL node. Exiting");
     }
   else if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
     {
@@ -1204,8 +1207,7 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 
   if (node==NULL)
     {
-      printf("Do not call db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours with NULL node. Exiting\n");
-      exit(1);
+      die("Do not call db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours with NULL node. Exiting");
     }
   else if (! (db_node_is_this_node_in_subgraph_defined_by_func_of_colours(node, get_colour)))
     // this will include pruned nodes
@@ -1454,8 +1456,7 @@ int db_graph_supernode_for_specific_person_or_pop(dBNode * node,int limit,void (
     
     //sanity check
     if (lst_node != nodes_reverse[length_reverse]){
-      puts("db_graph_supernode broken!\n");
-      exit(1);
+      die("db_graph_supernode broken!");
     }
     
     
@@ -1534,8 +1535,7 @@ int db_graph_supernode_in_subgraph_defined_by_func_of_colours(dBNode * node,int 
     
     //sanity check
     if (lst_node != nodes_reverse[length_reverse]){
-      puts("db_graph_supernode broken!\n");
-      exit(1);
+      die("db_graph_supernode broken!");
     }
     
     
@@ -1638,8 +1638,7 @@ int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(dBNo
     
     //sanity check
     if (lst_node != nodes_reverse[length_reverse]){
-      puts("db_graph_supernode broken!\n");
-      exit(1);
+      die("db_graph_supernode broken!");
     }
     
     
@@ -1718,8 +1717,8 @@ int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_
     
     //sanity check
     if (lst_node != nodes_reverse[length_reverse]){
-      puts("db_graph_supernode broken in db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_colours\n");
-      exit(1);
+      die("db_graph_supernode broken in "
+          "db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_colours");
     }
     
 
@@ -1733,8 +1732,10 @@ int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_
 											      get_colour, get_covg);
     if (length==limit)
       {
-	printf("Warning. You implicitly specified a maximum expected length of supernode %d, probably when you set --max_var_len. Cortex has just encountered a longer supernode. Aborting - I advise rerunning with a longer --max_var_len", limit);
-	exit(1);
+	die(
+"You implicitly specified a maximum expected length of supernode %d, probably "
+"when you set --max_var_len. Cortex has just encountered a longer supernode. "
+"Aborting - I advise rerunning with a longer --max_var_len", limit);
       }
   }
   else{
@@ -2410,8 +2411,9 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
        || (nodes5p==NULL) || (nodes3p==NULL) || (orientations5p==NULL) || (orientations3p==NULL)
        || (labels_flank5p==NULL) || (labels_flank3p==NULL) || (seq5p==NULL) || (seq3p==NULL) )
     {
-      printf("Could not allocate arrays in db_graph_detect_vars. Out of memory, or you asked for unreasonably big max branch size: %d\n", max_length);
-      exit(1);
+      die("Could not allocate arrays in db_graph_detect_vars. \n"
+          "Out of memory, or you asked for unreasonably big max branch size: %d",
+          max_length);
     }
 
 
@@ -2419,9 +2421,9 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
     VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(flanking_length, max_length, max_length, flanking_length, db_graph->kmer_size);
     if (var==NULL)
       {
-	printf("Unable to allocate a var object at the start of the Bubble Caller. Abort. V low on memory, or you have asked for max var length which is too big\n");
-	exit(1);	
-      }
+	die("Unable to allocate a var object at the start of the Bubble Caller. Abort. \n"
+      "V low on memory, or you have asked for max var length which is too big");
+	   }
   */
 
   
@@ -2851,8 +2853,8 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 
   //if ( (exclude_ref_bubbles_first==true) && (apply_model_selection==true) )
   //  {
-  //    printf("Cannot call db_graph_detect_vars_given_lists_of_colours and simultaneoulsy have exclude_ref_bubbles_first=true AND apply_model_selection=true\n");
-  //    exit(1);
+  //    die("Cannot call db_graph_detect_vars_given_lists_of_colours and "
+  //        "simultaneously have exclude_ref_bubbles_first=true AND apply_model_selection=true");
   //  }
 
   boolean model_selection_condition_including_modelinfo(AnnotatedPutativeVariant* annovar)
@@ -3467,23 +3469,23 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
   fout1= fopen(filename_sups, "w"); 
   if (fout1==NULL)
     {
-      printf("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours\n", filename_sups);
-      exit(1);
+      die("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours",
+          filename_sups);
     }
 
   FILE * fout2=NULL; //file to which we will write all "singleton" supernodes, that are just  1 node, in fasta format
   if ( strcmp(filename_sings, "")==0 )
     {
-      printf("Only printing supernodes consisting of >1 node (ie contigs longer than %d bases)\n", db_graph->kmer_size);
-      do_we_print_singletons=false;
+      die("Only printing supernodes consisting of >1 node (ie contigs longer than %d bases)",
+          db_graph->kmer_size);
     }
   else
     {
       fout2= fopen(filename_sings, "w"); 
       if (fout2==NULL)
 	{
-	  printf("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours\n", filename_sings);
-	  exit(1);
+	  die("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours",
+        filename_sings);
 	}
     }
 
@@ -3627,8 +3629,7 @@ void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int 
 		      }
 		    else if (bin<0)
 		      {
-			printf("Negative bin. num reads is %d, length is %d and bin is %d\n", num_reads, bin, length);
-			exit(1);
+			die("Negative bin. num reads is %d, length is %d and bin is %d", num_reads, bin, length);
 		      }
 		  }
 		else if (which_colour==colour2)
@@ -3644,8 +3645,7 @@ void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int 
 		      }
 		    else if (bin<0)
 		      {
-			printf("Negative bin. num reads is %d, length is %d and bin is %d\n", num_reads, bin, length);
-			exit(1);
+			die("Negative bin. num reads is %d, length is %d and bin is %d", num_reads, bin, length);
 		      }
 		  }
 
@@ -3825,8 +3825,7 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
 	      }
 	    else
 	      {
-		printf("imposdible. specific to %d\n", which_haplotype);
-		exit(1);
+		die("impossible. specific to %d", which_haplotype);
 	      }
 	    boolean too_short=false;
 	    int pgf = count_reads_on_allele_in_specific_colour(path_nodes, length, 0, &too_short);
@@ -3948,8 +3947,7 @@ void db_graph_print_supernodes_defined_by_func_of_colours_given_condition(char *
   fout1= fopen(filename_sups, "w"); 
   if (fout1==NULL)
     {
-      printf("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours\n", filename_sups);
-      exit(1);
+      die("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours", filename_sups);
     }
 
   FILE * fout2=NULL; //file to which we will write all "singleton" supernodes, that are just  1 node, in fasta format
@@ -3963,8 +3961,7 @@ void db_graph_print_supernodes_defined_by_func_of_colours_given_condition(char *
       fout2= fopen(filename_sings, "w"); 
       if (fout2==NULL)
 	{
-	  printf("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours\n", filename_sings);
-	  exit(1);
+	  die("Cannot open file %s in db_graph_print_supernodes_defined_by_func_of_colours", filename_sings);
 	}
     }
 
@@ -4072,8 +4069,7 @@ void print_covg_stats_for_timestamps_for_supernodes(char* outfile, dBGraph * db_
   FILE* fout = fopen(outfile, "w");
   if (fout==NULL)
     {
-      printf("Cannot open output file %s in print_covg_stats_for_timestamps_for_supernodes. Exit\n", outfile);
-      exit(1);
+      die("Cannot open output file %s in print_covg_stats_for_timestamps_for_supernodes. Exit", outfile);
     }
 
   dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*max_expected_sup); 
@@ -4083,8 +4079,7 @@ void print_covg_stats_for_timestamps_for_supernodes(char* outfile, dBGraph * db_
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
     {
-      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
-      exit(1);
+      die("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
     }
 
 
@@ -4175,8 +4170,7 @@ void print_likelihoods_of_realseq_and_error_models_for_supernodes(dBGraph * db_g
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
     {
-      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
-      exit(1);
+      die("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
     }
 
 
@@ -4241,8 +4235,7 @@ boolean db_graph_clean_multicoloured_graph_by_frequency(dBGraph * db_graph, bool
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
     {
-      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
-      exit(1);
+      die("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
     }
   
   boolean remove_low_freq_sups(dBNode* node)
@@ -4251,8 +4244,7 @@ boolean db_graph_clean_multicoloured_graph_by_frequency(dBGraph * db_graph, bool
     
     if (node==NULL)
       {
-	printf("Called remove_low_freq_sups in db_graph_clean_multicoloured_graph_by_frequency  with a NULL node. Programming error\n");
-	exit(1);
+	die("Called remove_low_freq_sups in db_graph_clean_multicoloured_graph_by_frequency  with a NULL node. Programming error\n");
       }
 
     if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
@@ -4340,8 +4332,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 
   if (node==NULL)
     {
-      printf("Called db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_error with a NULL node. Programming error\n");
-      exit(1);
+      die("Called db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_error with a NULL node. Programming error\n");
     }
 
   if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
@@ -4483,8 +4474,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
 
   if (node==NULL)
     {
-       printf("Called db_graph_remove_supernode_containing_this_node_if_more_likely_error_than_sampling  with a NULL node. Programming error\n");
-      exit(1);
+       die("Called db_graph_remove_supernode_containing_this_node_if_more_likely_error_than_sampling  with a NULL node. Programming error\n");
     }
 
   if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
@@ -4570,8 +4560,7 @@ long long db_graph_remove_supernodes_more_likely_errors_than_sampling(dBGraph * 
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
     {
-      printf("Cannot malloc arrays for db_graph_remove_supernodes_more_likely_errors_than_sampling");
-      exit(1);
+      die("Cannot malloc arrays for db_graph_remove_supernodes_more_likely_errors_than_sampling");
     }
 
 
@@ -4637,8 +4626,7 @@ long long db_graph_remove_errors_from_pool_according_to_model(dBGraph * db_graph
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
     {
-      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
-      exit(1);
+      die("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
     }
 
 
@@ -4695,8 +4683,7 @@ long long db_graph_remove_errors_considering_covg_and_topology(int coverage, dBG
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
     {
-      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
-      exit(1);
+      die("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
     }
 
 
@@ -4782,9 +4769,8 @@ int db_graph_dump_binary(char * filename, boolean (*condition)(dBNode * node), d
   FILE* fout= fopen(filename, "w"); 
   if (fout==NULL)
     {
-      printf("Unable to dump binary file %s, as cannot open it with write-access.Permissions issue? Directory does not exist? Out of disk?\n",
+      die("Unable to dump binary file %s, as cannot open it with write-access.Permissions issue? Directory does not exist? Out of disk?\n",
 	     filename);
-      exit(1);
     }
   
   if (db_graph_info==NULL)
@@ -4822,8 +4808,7 @@ void db_graph_dump_single_colour_binary_of_colour0(char * filename, boolean (*co
   fout= fopen(filename, "w"); 
   if (fout==NULL)
     {
-      printf("Unable to open output file %s\n", filename);
-      exit(1);
+      die("Unable to open output file %s\n", filename);
     }
 
   if (db_graph_info==NULL)
@@ -4863,17 +4848,15 @@ void db_graph_dump_single_colour_binary_of_specified_colour(char * filename, boo
 
   if ( (colour<0) || (colour>=NUMBER_OF_COLOURS) )
     {
-      printf("Cannot call db_graph_dump_single_colour_binary_of_specified_colour and try to dump a colour not in 0....%d when %d is the compile time max number of colours supported\n",
+      die("Cannot call db_graph_dump_single_colour_binary_of_specified_colour and try to dump a colour not in 0....%d when %d is the compile time max number of colours supported\n",
 	     NUMBER_OF_COLOURS-1, NUMBER_OF_COLOURS);
-      exit(1);
     }
 
   FILE * fout; //binary output
   fout= fopen(filename, "w"); 
   if (fout==NULL)
     {
-      printf("Unable to open output file %s\n", filename);
-      exit(1);
+      die("Unable to open output file %s\n", filename);
     }
 
   if (db_graph_info==NULL)
@@ -4966,8 +4949,7 @@ boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, EdgeA
     }
 
   //to keep compiler happy
-  printf("We have got the end of of the is_supernode_end function - should not reach here");
-  exit(1);
+  die("We have got the end of of the is_supernode_end function - should not reach here");
   return true;
 }
 
@@ -5034,22 +5016,19 @@ void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArray
   FILE* fout=fopen(filename, "w");
   if (fout==NULL)
     {
-      printf("Cannot open %s\n", filename);
-      exit(1);
+      die("Cannot open %s\n", filename);
     }
 
 
   long long* covgs = (long long*) malloc(sizeof(long long) * 10001);
   if (covgs==NULL)
     {
-      printf("Could not alloc array to hold covg distrib\n");
-      exit(1);
+      die("Could not alloc array to hold covg distrib\n");
     }
   long long** covgs_ptrs = (long long**) malloc(sizeof(long long*) * 10001);
   if (covgs_ptrs==NULL)
     {
-      printf("Could not alloc array to hold covg distrib\n");
-      exit(1);
+      die("Could not alloc array to hold covg distrib\n");
     }
 
   for (i=0; i<=10000; i++)
@@ -5136,14 +5115,12 @@ void db_graph_get_covg_distribution_on_bubbles(dBGraph* db_graph, EdgeArrayType 
   long long* covgs = (long long*) malloc(sizeof(long long) * 10001);
   if (covgs==NULL)
     {
-      printf("Could not alloc array to hold covg distrib\n");
-      exit(1);
+      die("Could not alloc array to hold covg distrib\n");
     }
   long long** covgs_ptrs = (long long**) malloc(sizeof(long long*) * 10001);
   if (covgs_ptrs==NULL)
     {
-      printf("Could not alloc array to hold covg distrib\n");
-      exit(1);
+      die("Could not alloc array to hold covg distrib\n");
     }
 
   for (i=0; i<=10000; i++)
@@ -5240,8 +5217,7 @@ void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Elem
 
   if (length_of_supernode>length_of_array-1)
     {
-      printf("We have a supernode of length %d, but have only allocated space to record lengths up to %d", length_of_supernode, length_of_array);
-      exit(1);
+      die("We have a supernode of length %d, but have only allocated space to record lengths up to %d", length_of_supernode, length_of_array);
     }
   *(array_of_supernode_lengths[length_of_supernode])=*(array_of_supernode_lengths[length_of_supernode])+1;
   return ;
@@ -5304,8 +5280,7 @@ int db_graph_get_N50_of_supernodes(dBGraph* db_graph, EdgeArrayType type, int in
   //3. Start at the max supernode length and work your way down until the length so far is half the total. Where you are is the n50
   if (ctr<0)
     {
-      printf("negative ctr");
-      exit(1);
+      die("negative ctr");
     }
 
 
@@ -5327,8 +5302,7 @@ int db_graph_get_N50_of_supernodes(dBGraph* db_graph, EdgeArrayType type, int in
     }
   
   //should not get here
-  printf("Should  not get here. Exiting in N50 calc code");
-  exit(1);
+  die("Should  not get here. Exiting in N50 calc code");
   return 1;
 }
 */
@@ -5397,8 +5371,7 @@ void db_graph_traverse_to_gather_statistics_about_people(void (*f)(HashTable*, E
 
 void db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population(dBGraph* hash_table, EdgeArrayType type, int index)
 {
-  printf("not implemented db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population yet");
-  exit(1);
+  die("not implemented db_graph_set_all_visited_nodes_to_status_none_for_specific_person_or_population yet");
 }
 
 
@@ -5454,8 +5427,7 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
     next_node =  db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide1,&rev_nucleotide,db_graph, type, index);
     
     if(next_node == NULL){
-      printf("db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size, tmp_seq));
-      exit(1);
+      die("db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size, tmp_seq));
     }	         
 
     if (DEBUG)
@@ -5543,9 +5515,8 @@ dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* n
   dBNode* next_node =  db_graph_get_next_node_for_specific_person_or_pop(node,orientation ,next_orientation,nucleotide_for_only_edge,&reverse_nucleotide_for_only_edge, db_graph, type, index);
   
   if(next_node == NULL){
-    printf("dB_graph: didnt find node in hash table: %s\n", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size, tmp_seq));
-    exit(1);
-  }	         
+    die("dB_graph: didnt find node in hash table: %s", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size, tmp_seq));
+  }
 
   if (DEBUG)
     {
@@ -5567,8 +5538,7 @@ dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* n
       //double check
       if (node ==NULL)
 	{
-	  printf("programming error. returning null node when my model in my head says impossible\n");
-	  exit(1);
+	  die("programming error. returning null node when my model in my head says impossible");
 	}
       return node; //we have gone as far as we can go - the next node has multiple entries. So we are now at the first node of the supernode
     }
@@ -5580,8 +5550,7 @@ dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* n
       //double check
       if (node ==NULL)
 	{
-          printf("programming error. returning null node when my model in my head says impossible\n");
-	  exit(1);
+          die("programming error. returning null node when my model in my head says impossible");
         }
 
 	return node; //we have a kmer that loops back on itself
@@ -5672,16 +5641,16 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
   //printf("We think the person with best supernodenode is %d and length is %d\n",  person_with_best_sub_supernode, length_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode]); 
   if (max==0)
     {
-      printf("This should be impossible. Max size of sub supernode over all people is 0. Since we start wth a kmer that is in the graph, at least one person ought to have it\n");
-      exit(1);
+      die("This should be impossible. Max size of sub supernode over all people is 0. "
+          "Since we start wth a kmer that is in the graph, at least one person ought to have it");
     }
   
   else
     {
       if (max > max_length_of_supernode)
 	{
-	  printf("pop_consensus_supernode not big enough - only alloced %d and we need %d\n", max_length_of_supernode, max);
-	  exit(1);
+	  die("pop_consensus_supernode not big enough - only alloced %d and we need %d",
+        max_length_of_supernode, max);
 	}
 
 
@@ -5689,8 +5658,9 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
       int end =    start+ length_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode]-1;
       if ((start<0) || (end<0))
 	{
-	  printf("This is wrong. start is %d and end is %d for person %d and their length is %d\n", start,end, person_with_best_sub_supernode, length_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode]);
-	  exit(1);
+	  die("This is wrong. start is %d and end is %d for person %d and their length is %d\n",
+        start, end, person_with_best_sub_supernode,
+        length_of_best_sub_supernode_in_each_person[person_with_best_sub_supernode]);
 	}      
       //      if (start==end)
       //	{
@@ -5700,8 +5670,7 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
   
       else if (db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(pop_consensus_supernode->seq, node, start, end, individual_edge_array, person_with_best_sub_supernode, db_graph)==1)
 	{
-	  printf("Aborting - something wrong with gettig the subsection");
-	  exit(1);
+	  die("Aborting - something wrong with gettig the subsection");
 	}
       //printf("OKOK found bvest subsection for is %s\n", pop_consensus_supernode->seq);
     }
@@ -5835,8 +5804,7 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 
   if (first_node_in_supernode==NULL)
     {
-      printf("do not give null pointer to get_best_sub_supernode function");
-      exit(1);
+      die("do not give null pointer to get_best_sub_supernode function");
     }
 
   // OK - which direction do we walk?
@@ -6023,8 +5991,7 @@ void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTab
 
   if (number_of_people>NUMBER_OF_COLOURS)
     {
-      printf("Cannot call find_out_how_many_individuals_share_this_node_and_add_to_statistics with number_of_people = %d, as it's bigger than the NUMBER per pop, %d", number_of_people,NUMBER_OF_COLOURS);
-      exit(1);
+      die("Cannot call find_out_how_many_individuals_share_this_node_and_add_to_statistics with number_of_people = %d, as it's bigger than the NUMBER per pop, %d", number_of_people,NUMBER_OF_COLOURS);
     }
   int number_of_individuals_with_this_node=0;
 
@@ -6086,15 +6053,16 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
 
  if (length_of_arrays%2 !=0)
     {
-      printf("Must only call db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta  with even length_of_arrays\n");
-      exit(1);
+      die(
+"Must only call db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta "
+"with even length_of_arrays");
     }
 
   if (number_of_nodes_to_load>length_of_arrays)
     {
-      printf("Insufficient space in arrays, length %d, to load %d nodes, in db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta\n", 
-	     length_of_arrays, number_of_nodes_to_load);
-      exit(1);
+      die("Insufficient space in arrays, length %d, to load %d nodes, in "
+          "db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta", 
+	        length_of_arrays, number_of_nodes_to_load);
     }
 
 
@@ -6123,8 +6091,7 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
       //sanity
       if (number_of_nodes_loaded_last_time==0)
 	{
-	  printf("Not expecting a new fasta entry, but did not load any nodes last time - programming error\n");
-	  exit(1);
+	  die("Not expecting a new fasta entry, but did not load any nodes last time - programming error");
 	}
 	
       // When about to load a new set of nodes, decide whether to preload seq with the last kmer of the previous set. Do this iff you are not expecting the start of a new entry.
@@ -6592,23 +6559,23 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   //makes life much simpler to insist the array is even length.
   if (length_of_arrays%2 !=0)
     {
-      printf("Must only call db_graph_make_reference_path_based_sv_calls  with even length_of_arrays\n");
-      exit(1);
+      die("Must only call db_graph_make_reference_path_based_sv_calls with even length_of_arrays");
     }
 
   //insist max_anchor_span=length_of_arrays/2
   if (max_anchor_span!=length_of_arrays/2)
     {
-      printf("You have max_anchor_span = %d, and length_of_arrays = %d. If calling db_graph_make_reference_path_based_sv_calls, must have max_anchor span as half of length_of_arrays.\n",
-	     max_anchor_span, length_of_arrays);
-      exit(1);
+      die("You have max_anchor_span = %d, and length_of_arrays = %d. If calling "
+          "db_graph_make_reference_path_based_sv_calls, must have max_anchor "
+          "span as half of length_of_arrays.", max_anchor_span, length_of_arrays);
     }
 
   //insist max length of supernodes <= max_anchor_span
   if (max_expected_size_of_supernode>max_anchor_span)
     {
-      printf("You have called db_graph_make_reference_path_based_sv_calls  with arguments: max_expected_size_of_supernode=%d, and max_anchor_span=%d", max_expected_size_of_supernode, max_anchor_span);
-      exit(1);
+      die("You have called db_graph_make_reference_path_based_sv_calls with "
+          "arguments: max_expected_size_of_supernode=%d, and max_anchor_span=%d",
+          max_expected_size_of_supernode, max_anchor_span);
     }
 
   int number_of_nodes_to_load=length_of_arrays/2;
@@ -6642,16 +6609,15 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   LittleHashTable* little_db_graph = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
   if (little_db_graph==NULL)
     {
-      printf("Something very wrong here. Cant even alloc a tiny toy hash table\n");
-      exit(1);
+      die("Something very wrong here. Cant even alloc a tiny toy hash table");
     }
 
   
   if ( (chrom_path_array==NULL) || (chrom_orientation_array==NULL) || (chrom_labels==NULL) || (chrom_string==NULL)
        || (current_supernode==NULL) || (curr_sup_orientations==NULL) || (curr_sup_labels==NULL) || (supernode_string==NULL) || (gwp==NULL) )
     {
-      printf("Cannot malloc arrays for PD calls. give up. Your machine is low on memory or you have asked for ridiculously large variants\n");
-      exit(1);
+      die("Cannot malloc arrays for PD calls. give up. Your machine is low on "
+          "memory or you have asked for ridiculously large variants");
     }
 
   int n;
@@ -6675,8 +6641,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,number_of_nodes_to_load+db_graph->kmer_size+1,LINE_MAX);
   seq->seq[0]='\0';
@@ -6685,15 +6650,15 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window in "
+          "db_graph_make_reference_path_based_sv_calls. Exit.");
     }
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*length_of_arrays);    //*(number_of_nodes_to_load + db_graph->kmer_size));
   //kmer_window->kmer = (BinaryKmer*) malloc(sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER*length_of_arrays);    //*(number_of_nodes_to_load + db_graph->kmer_size));
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer in "
+          "db_graph_make_reference_path_based_sv_calls. Exit.");
     }
   
   kmer_window->nkmers=0;
@@ -6704,8 +6669,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
   
   if ( (trusted_branch==NULL) || (variant_branch==NULL) )
     {
-      printf("OOM. Unable to malloc trusted and variant branches. Exit. \n");
-      exit(1);
+      die("Unable to malloc trusted and variant branches. Exit.");
     }
 
   int k;
@@ -6737,15 +6701,13 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
   if ( (working_array1==NULL) || (working_array2==NULL)  ) 
     {
-      printf("OOM at start - cannot alloc working arrays. Exit");
-      exit(1);
+      die("Cannot alloc working arrays. Exit");
     }
 
   if ( (covgs_in_trusted_not_variant==NULL) || (covgs_in_variant_not_trusted==NULL) )
     // || (covgs_of_indiv_on_trusted_path==NULL) || (covgs_of_ref_on_trusted_path==NULL)  || (covgs_of_indiv_on_variant_path==NULL) || (covgs_of_ref_on_variant_path==NULL) )
     {
-      printf("OOM at start  - cannot malloc covg arrays. Exit\n");
-      exit(1);
+      printf("Cannot malloc covg arrays. Exit\n");
     }
 
   int** ptrs_to_covgs_in_trusted_not_variant = (int**) malloc(sizeof(int*)*length_of_arrays);
@@ -6753,8 +6715,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
   if ( (ptrs_to_covgs_in_trusted_not_variant==NULL) || (ptrs_to_covgs_in_variant_not_trusted==NULL) )
     {
-      printf("Cannot alloc ptr arrays for covgs in make_ref assisted calls fn");
-      exit(1);
+      die("Cannot alloc ptr arrays for covgs in make_ref assisted calls fn");
     }
 
   for (k=0; k< length_of_arrays; k++)
@@ -6900,8 +6861,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 	  if (length_curr_supernode>max_anchor_span)
 	    {
-	      printf("Warning - bad choice of params. Current supernode is length %d, but max anchro size is %d\n", length_curr_supernode, max_anchor_span);
-	      exit(1);
+	      die("Current supernode is length %d, but max anchro size is %d\n",
+            length_curr_supernode, max_anchor_span);
 	    }
 
 	  //char tmp_seqzam[db_graph->kmer_size+1];
@@ -6911,9 +6872,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 	  if (index_of_query_node_in_supernode_array==-1)
 	    {
-	      printf("Warning - red alert!!!  - failed to get index of query\n");
-	      start_node_index++;
-	      exit(1);
+	      die("Failed to get index of query");
 	    }
 
 
@@ -6970,23 +6929,22 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	  // complete paranoia - might delete these checks
 	  if (chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome]!=current_supernode[index_in_supernode_where_supernode_differs_from_chromosome])
 	    {
-	      printf("WARNING 1. two arrays do not meet at start.");
-	      exit(1);
+	      die("WARNING 1. two arrays do not meet at start.");
 	    }
 	  else if (index_in_supernode_where_supernode_differs_from_chromosome > length_curr_supernode )  
 	    {
-	      printf("WARNING 2.index is %d and length of sup is %d", index_in_supernode_where_supernode_differs_from_chromosome, length_curr_supernode);
-	      exit(1);
+	      die("WARNING 2.index is %d and length of sup is %d",
+            index_in_supernode_where_supernode_differs_from_chromosome,
+            length_curr_supernode);
 	    }
 	  else if (index_in_supernode_where_supernode_differs_from_chromosome<0)
 	    {
-	      printf("WARNING 3. Index is %d\n", index_in_supernode_where_supernode_differs_from_chromosome);
-	      exit(1);
+	      die("WARNING 3. Index is %d\n",
+            index_in_supernode_where_supernode_differs_from_chromosome);
 	    }
 	  else if (first_index_in_chrom_where_supernode_differs_from_chromosome-start_node_index >= max_anchor_span)
 	    {
-	      printf("WARNING 4\n");
-	      exit(1);
+	      die("WARNING 4\n");
 	    }
 
 
@@ -7027,10 +6985,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 	  if (index_in_supernode_where_supernode_differs_from_chromosome==index_of_query_node_in_supernode_array)
 	    {
-	      printf("WARNING Did not even go into loop working way along ref - so supernode only touches ref at initial node - I don't think this should be possible, should go into that loop once\n");
-	      start_node_index++;
-	      exit(1);
-	      continue;
+	      die("WARNING Did not even go into loop working way along ref - so "
+            "supernode only touches ref at initial node. \nI don't think this "
+            "should be possible, should go into that loop once");
 	    }
 
 
@@ -7296,31 +7253,45 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  if (start_of_3prime_anchor_in_chrom-how_many_steps_in_5prime_dir_can_we_extend<=first_index_in_chrom_where_supernode_differs_from_chromosome)
 		    {
 		      //something has gone wrong
-		      printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point at which the variant starts in the TRUSTED array!!\n");
-		      printf("start_of_3prime_anchor_in_chrom = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, first_index_in_chrom_where_supernode_differs_from_chromosome=%d\n",
-		  	     start_of_3prime_anchor_in_chrom, how_many_steps_in_5prime_dir_can_we_extend,  first_index_in_chrom_where_supernode_differs_from_chromosome);
-		      exit(1);
+		      die(
+"We are extending the 3prime anchor in 5prime direction and have gone back beyond\n"
+"the point at which the variant starts in the TRUSTED array!!\n"
+"start_of_3prime_anchor_in_chrom = %d\n"
+"how_many_steps_in_5prime_dir_can_we_extend=%d\n"
+"first_index_in_chrom_where_supernode_differs_from_chromosome=%d\n",
+		  	     start_of_3prime_anchor_in_chrom,
+             how_many_steps_in_5prime_dir_can_we_extend,
+             first_index_in_chrom_where_supernode_differs_from_chromosome);
 		    }
 		  if (traverse_sup_left_to_right)
 		    {
 		      if (start_of_3prime_anchor_in_sup - how_many_steps_in_5prime_dir_can_we_extend <= index_in_supernode_where_supernode_differs_from_chromosome)
 			{
-			  printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point in the supernode where it separated from the 5prime flank. Should not reach here.\n");
-			  printf("start_of_3prime_anchor_in_sup = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, index_in_supernode_where_supernode_differs_from_chromosome=%d\n",
-				 start_of_3prime_anchor_in_sup, how_many_steps_in_5prime_dir_can_we_extend, index_in_supernode_where_supernode_differs_from_chromosome);
-			  printf("We are traversing supernode from left to right. Exit.\n");
-			  exit(1);
+			  die(
+"We are extending the 3prime anchor in 5prime direction and have gone back beyond\n"
+"the point in the supernode where it separated from the 5prime flank. Should not reach here.\n"
+"start_of_3prime_anchor_in_sup = %d\n"
+"how_many_steps_in_5prime_dir_can_we_extend=%d\n"
+"index_in_supernode_where_supernode_differs_from_chromosome=%d\n"
+"We are traversing supernode from left to right. Exit.\n",
+				 start_of_3prime_anchor_in_sup,
+         how_many_steps_in_5prime_dir_can_we_extend,
+         index_in_supernode_where_supernode_differs_from_chromosome);
 			}
 		    }
 		  else
 		    {
 		      if (start_of_3prime_anchor_in_sup + how_many_steps_in_5prime_dir_can_we_extend >= index_in_supernode_where_supernode_differs_from_chromosome)
 			{
-			  printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point in the supernode where it separated from the 5prime flank. Should not reach here.\n");
-			  printf("start_of_3prime_anchor_in_sup = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, index_in_supernode_where_supernode_differs_from_chromosome=%d\n",
-				 start_of_3prime_anchor_in_sup, how_many_steps_in_5prime_dir_can_we_extend, index_in_supernode_where_supernode_differs_from_chromosome);
-			  printf("We are traversing supernode from right to left. Exit.\n");
-			  exit(1);
+			  die(
+"We are extending the 3prime anchor in 5prime direction and have gone back beyond\n"
+"the point in the supernode where it separated from the 5prime flank. Should not reach here.\n"
+"start_of_3prime_anchor_in_sup = %d\n"
+"how_many_steps_in_5prime_dir_can_we_extend=%d\n, index_in_supernode_where_supernode_differs_from_chromosome=%d\n"
+"We are traversing supernode from right to left. Exit.\n",
+				 start_of_3prime_anchor_in_sup,
+         how_many_steps_in_5prime_dir_can_we_extend,
+         index_in_supernode_where_supernode_differs_from_chromosome);
 			}
 		      
 		    }
@@ -7385,10 +7356,15 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  if (start_of_3prime_anchor_in_chrom + length_3p_flank+ how_many_steps_in_3prime_dir_can_we_extend >= length_of_arrays-1)
 		    {
 		      //something has gone wrong
-		      printf("We are extending the 3prime anchor in 3prime direction and have reached the end of our array. I don't believe it!!\n");
-		      printf("start_of_3prime_anchor_in_chrom = %d\nhow_many_steps_in_3prime_dir_can_we_extend=%d\n, length_of_arrays=%d\n",
-			     start_of_3prime_anchor_in_chrom, how_many_steps_in_3prime_dir_can_we_extend,  length_of_arrays);
-		      exit(1);
+		      die(
+"We are extending the 3prime anchor in 3prime direction and have reached the end\n"
+"of our array. I don't believe it!!\n"
+"start_of_3prime_anchor_in_chrom = %d\n"
+"how_many_steps_in_3prime_dir_can_we_extend=%d\n"
+"length_of_arrays=%d\n",
+			        start_of_3prime_anchor_in_chrom,
+              how_many_steps_in_3prime_dir_can_we_extend,
+              length_of_arrays);
 		    }
 
 		}		  
@@ -7423,10 +7399,13 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      //sanity
 	      if (start_of_3prime_anchor_in_chrom<= first_index_in_chrom_where_supernode_differs_from_chromosome)
 		{
-		  printf("Exit. start_of_3prime_anchor_in_chrom is %d and is less than first_index_in_chrom_where_supernode_differs_from_chromosome is %d. This is terrible. ", 
-			 start_of_3prime_anchor_in_chrom, first_index_in_chrom_where_supernode_differs_from_chromosome);
-		  printf("Start node index is %d, and coordinate in fasta file is %d\n", start_node_index, start_coord_of_variant_in_trusted_path_fasta);
-		  exit(1);
+		  die(
+"start_of_3prime_anchor_in_chrom is %d and is less than first_index_in_chrom_where_supernode_differs_from_chromosome is %d.\n"
+"Start node index is %d, and coordinate in fasta file is %d\n",
+          start_of_3prime_anchor_in_chrom,
+          first_index_in_chrom_where_supernode_differs_from_chromosome,
+          start_node_index,
+          start_coord_of_variant_in_trusted_path_fasta);
 		}
 	      
 
@@ -7514,8 +7493,9 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      //sanity
 	      if ( (len_trusted_branch<=0) || (len_trusted_branch>length_of_arrays-1) )
 		{
-		  printf("len_trusted_branch is %d, and length of arrays is %d - this should never happen. Exit.\n", len_trusted_branch, length_of_arrays);
-		  exit(1);;
+		  die("len_trusted_branch is %d, and length of arrays is %d - "
+          "this should never happen. Exit.",
+          len_trusted_branch, length_of_arrays);
 		}
 
 	      strncpy(trusted_branch, chrom_string+first_index_in_chrom_where_supernode_differs_from_chromosome-1, len_trusted_branch);
@@ -7565,24 +7545,26 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  //sanity. Note it is legitimate for len_branch2 to be zero
 		  if (len_branch2<0)
 		    {
-		      printf("Traversing supernode left to right, but len_branch2 is %d, which is <=0 - this should be impossible. Exit\n", len_branch2);
-		      exit(1);
+		      die("Traversing supernode left to right, but len_branch2 is %d, "
+              "which is <=0 - this should be impossible. Exit", len_branch2);
 		    }
 		  else if (len_branch2> length_curr_supernode)
 		    {
-		      printf("Traversing supernode left to right, but len_branch2 is %d, which is > length of supernode %d - this should be impossible. Exit\n", len_branch2, length_curr_supernode);
-		      exit(1);
+		      die("Traversing supernode left to right, but len_branch2 is %d, which "
+              "is > length of supernode %d - this should be impossible. Exit",
+              len_branch2, length_curr_supernode);
 		    }
 
 		  //sanity
 		  if (index_of_query_node_in_supernode_array+length_5p_flank+len_branch2>max_expected_size_of_supernode-length_3p_flank)
 		    {
-		      printf("Programming error. index_of_query_node_in_supernode_array+length_5p_flank+len_branch2 = %d is > max_expected_size_of_supernode-length_3p_flank %d, which should never happen.\n",
-			     index_of_query_node_in_supernode_array+length_5p_flank+len_branch2,
-			     max_expected_size_of_supernode-length_3p_flank );
-		      printf("index_of_query_node_in_supernode_array is %d, length_5p_flank is %d, len_branch2 is %d, \n", index_of_query_node_in_supernode_array, length_5p_flank, len_branch2);
-		      printf(" max_expected_size_of_supernode is %d, length_3p_flank is %d",  max_expected_size_of_supernode, length_3p_flank);
-		      exit(1);
+		      die("Programming error. index_of_query_node_in_supernode_array+length_5p_flank+len_branch2 = %d is > max_expected_size_of_supernode-length_3p_flank %d, which should never happen.\n"
+              "index_of_query_node_in_supernode_array is %d, length_5p_flank is %d, len_branch2 is %d, \n"
+              " max_expected_size_of_supernode is %d, length_3p_flank is %d",
+			        index_of_query_node_in_supernode_array+length_5p_flank+len_branch2,
+			        max_expected_size_of_supernode-length_3p_flank,
+              index_of_query_node_in_supernode_array, length_5p_flank, len_branch2,
+		          max_expected_size_of_supernode, length_3p_flank);
 		    }
 
 		  strncpy(variant_branch, supernode_string + index_of_query_node_in_supernode_array+length_5p_flank, len_branch2);
@@ -7632,15 +7614,19 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  //sanity. Note it is legitimate for len_branch2 to be zero
 		  if (len_branch2<0)
 		    {
-		      printf("Traversing supernode right to left, but len_branch2 is %d, which is <=0 - this should be impossible.\n", len_branch2);
-		      printf("index_in_supernode_where_supernode_differs_from_chromosome is %d, and start_of_3prime_anchor_in_sup is %d. Exit.\n", 
-			     index_in_supernode_where_supernode_differs_from_chromosome, start_of_3prime_anchor_in_sup);
-		      exit(1);
+		      die("Traversing supernode right to left, but len_branch2 is %d,\n"
+              "which is <= 0 -- this should be impossible.\n"
+              "index_in_supernode_where_supernode_differs_from_chromosome is %d\n"
+              "start_of_3prime_anchor_in_sup is %d. Exit.\n",
+              len_branch2,
+              index_in_supernode_where_supernode_differs_from_chromosome,
+              start_of_3prime_anchor_in_sup);
 		    }
 		  else if (len_branch2> length_curr_supernode)
 		    {
-		      printf("Traversing supernode right to left, but len_branch2 is %d, which is > length of supernode %d - this should be impossible. Exit\n", len_branch2, length_curr_supernode);
-		      exit(1);
+		      die("Traversing supernode right to left, but len_branch2 is %d, which "
+              "is > length of supernode %d - this should be impossible. Exit",
+              len_branch2, length_curr_supernode);
 		    }
 
 
@@ -7668,12 +7654,17 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		  //sanity
 		  if ( (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0) || (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode) )
 		    {
-		      printf("Programming error. Either index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0\n");
-		      printf(" or index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode.\n");
-		      printf("Neither should be possible. \n");
-		      printf("index_of_query_node_in_supernode_array is %d, length_5p_flank is %d, len_branch2 is %d, max_expected_size_of_supernode is %d", 
-			     index_of_query_node_in_supernode_array, length_5p_flank, len_branch2, max_expected_size_of_supernode );
-		      exit(1);
+		      die("Programming error. \n"
+"Either index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0\n"
+" or index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode.\n"
+"Neither should be possible.\n"
+"index_of_query_node_in_supernode_array is %d\n"
+"length_5p_flank is %d\n"
+"len_branch2 is %d\n"
+"max_expected_size_of_supernode is %d",
+              index_of_query_node_in_supernode_array,
+              length_5p_flank, len_branch2,
+              max_expected_size_of_supernode);
 		    }
 		  strncpy(variant_branch, temp+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2, len_branch2);
 
@@ -7722,13 +7713,13 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 	      //sanity
 	      if (start_of_3prime_anchor_in_chrom<0)
 		{
-		  printf("Start of 3rime anchor in chrom <0 - impossible!\n");
-		  exit(1);
+		  die("Start of 3rime anchor in chrom <0 - impossible!");
 		}
 	      else if (start_of_3prime_anchor_in_chrom+ length_3p_flank>length_of_arrays)
 		{
-		  printf("Problem. start_of_3prime_anchor_in_chrom is %d and length_3p_flank is %d, and they add up to more thn length of arrays: %d\n", start_of_3prime_anchor_in_chrom, length_3p_flank, length_of_arrays);
-		  exit(1);
+		  die("Problem. start_of_3prime_anchor_in_chrom is %d and length_3p_flank is %d, "
+          "and they add up to more thn length of arrays: %d",
+          start_of_3prime_anchor_in_chrom, length_3p_flank, length_of_arrays);
 		}
 	      strncpy(flank3p, chrom_string+start_of_3prime_anchor_in_chrom, length_3p_flank);
 	      flank3p[length_3p_flank]='\0';
@@ -8102,23 +8093,25 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   //makes life much simpler to insist the array is even length.
   if (length_of_arrays%2 !=0)
     {
-      printf("Must only call db_graph_make_reference_path_based_sv_calls  with even length_of_arrays\n");
-      exit(1);
+      die("Must only call db_graph_make_reference_path_based_sv_calls with even "
+          "length_of_arrays");
     }
 
   //insist max_anchor_span=length_of_arrays/2
   if (max_anchor_span!=length_of_arrays/2)
     {
-      printf("You have max_anchor_span = %d, and length_of_arrays = %d. If calling db_graph_make_reference_path_based_sv_calls, must have max_anchor span as half of length_of_arrays.\n",
-	     max_anchor_span, length_of_arrays);
-      exit(1);
+      die("You have max_anchor_span = %d, and length_of_arrays = %d. "
+          "If calling db_graph_make_reference_path_based_sv_calls, must have "
+          "max_anchor span as half of length_of_arrays.",
+	        max_anchor_span, length_of_arrays);
     }
 
   //insist max length of supernodes <= max_anchor_span
   if (max_expected_size_of_supernode>max_anchor_span)
     {
-      printf("You have called db_graph_make_reference_path_based_sv_calls  with arguments: max_expected_size_of_supernode=%d, and max_anchor_span=%d", max_expected_size_of_supernode, max_anchor_span);
-      exit(1);
+      die("You have called db_graph_make_reference_path_based_sv_calls with arguments: "
+          "max_expected_size_of_supernode=%d, and max_anchor_span=%d",
+          max_expected_size_of_supernode, max_anchor_span);
     }
 
   int number_of_nodes_to_load=length_of_arrays/2;
@@ -8148,8 +8141,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   if ( (chrom_path_array==NULL) || (chrom_orientation_array==NULL) || (chrom_labels==NULL) || (chrom_string==NULL)
        || (current_supernode==NULL) || (curr_sup_orientations==NULL) || (curr_sup_labels==NULL) || (supernode_string==NULL) || (gwp==NULL) )
     {
-      printf("Cannot malloc arrays for PD calls. give up. Your machine is low on memory or you have asked for ridiculously large variants\n");
-      exit(1);
+      die("Cannot malloc arrays for PD calls. Your machine is low on memory "
+          "or you have asked for ridiculously large variants");
     }
 
   //number of kmers we want to support in the little hash = 2* (max possible kmers in the two alleles) = 2* (2 * max_allele_length) = 4*max_anchor_span
@@ -8159,8 +8152,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   LittleHashTable* little_db_graph = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
   if (little_db_graph==NULL)
     {
-      printf("Something very wrong here. Cant even alloc a tiny toy hash table\n");
-      exit(1);
+      die("Something very wrong here. Cant even alloc a tiny toy hash table");
     }
 
   int n;
@@ -8184,8 +8176,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,number_of_nodes_to_load+db_graph->kmer_size+1,LINE_MAX);
   seq->seq[0]='\0';
@@ -8194,15 +8185,13 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.");
     }
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*length_of_arrays);    //*(number_of_nodes_to_load + db_graph->kmer_size));
   //kmer_window->kmer = (BinaryKmer*) malloc(sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER*length_of_arrays);    //*(number_of_nodes_to_load + db_graph->kmer_size));
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.");
     }
   
   kmer_window->nkmers=0;
@@ -8213,8 +8202,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   
   if ( (trusted_branch==NULL) || (variant_branch==NULL) )
     {
-      printf("OOM. Unable to malloc trusted and variant branches. Exit. \n");
-      exit(1);
+      die("Unable to malloc trusted and variant branches. Exit.");
     }
 
   int k;
@@ -8246,15 +8234,13 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
   if ( (working_array1==NULL) || (working_array2==NULL)  ) 
     {
-      printf("OOM at start - cannot alloc working arrays. Exit");
-      exit(1);
+      die("Cannot alloc working arrays. Exit");
     }
 
   if ( (covgs_in_trusted_not_variant==NULL) || (covgs_in_variant_not_trusted==NULL) )
     // || (covgs_of_indiv_on_trusted_path==NULL) || (covgs_of_ref_on_trusted_path==NULL)  || (covgs_of_indiv_on_variant_path==NULL) || (covgs_of_ref_on_variant_path==NULL) )
     {
-      printf("OOM at start  - cannot malloc covg arrays. Exit\n");
-      exit(1);
+      die("Cannot malloc covg arrays. Exit");
     }
 
   int** ptrs_to_covgs_in_trusted_not_variant = (int**) malloc(sizeof(int*)*length_of_arrays);
@@ -8262,8 +8248,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
   if ( (ptrs_to_covgs_in_trusted_not_variant==NULL) || (ptrs_to_covgs_in_variant_not_trusted==NULL) )
     {
-      printf("Cannot alloc ptr arrays for covgs in make_ref assisted calls fn");
-      exit(1);
+      die("Cannot alloc ptr arrays for covgs in make_ref assisted calls fn");
     }
 
   for (k=0; k< length_of_arrays; k++)
@@ -8285,8 +8270,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 					  db_graph->kmer_size);
   if (var==NULL)
     {
-      printf("Out of memory - cannt malloc my variant object. Either you have set a MASSIVE max_var_len, or your machine is out of memory\n");
-      exit(1);
+      die("Cannt malloc my variant object. Either you have set a MASSIVE "
+          "max_var_len, or your machine is out of memory");
     }
 
 
@@ -8411,8 +8396,9 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 	  if (length_curr_supernode>max_anchor_span)
 	    {
-	      printf("Warning - bad choice of params. Current supernode is length %d, but max anchro size is %d\n", length_curr_supernode, max_anchor_span);
-	      exit(1);
+	      die("Warning - bad choice of params. Current supernode is length %d, "
+            "but max anchro size is %d",
+            length_curr_supernode, max_anchor_span);
 	    }
 
 	  //char tmp_seqzam[db_graph->kmer_size+1];
@@ -8422,9 +8408,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 	  if (index_of_query_node_in_supernode_array==-1)
 	    {
-	      printf("Warning - red alert!!!  - failed to get index of query\n");
-	      start_node_index++;
-	      exit(1);
+	      die("Warning - red alert!!! - failed to get index of query");
 	    }
 
 
@@ -8481,23 +8465,22 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	  // complete paranoia - might delete these checks
 	  if (chrom_path_array[first_index_in_chrom_where_supernode_differs_from_chromosome]!=current_supernode[index_in_supernode_where_supernode_differs_from_chromosome])
 	    {
-	      printf("WARNING 1. two arrays do not meet at start.");
-	      exit(1);
+	      die("WARNING 1. two arrays do not meet at start.");
 	    }
 	  else if (index_in_supernode_where_supernode_differs_from_chromosome > length_curr_supernode )  
 	    {
-	      printf("WARNING 2.index is %d and length of sup is %d", index_in_supernode_where_supernode_differs_from_chromosome, length_curr_supernode);
-	      exit(1);
+	      die("WARNING 2.index is %d and length of sup is %d",
+            index_in_supernode_where_supernode_differs_from_chromosome,
+            length_curr_supernode);
 	    }
 	  else if (index_in_supernode_where_supernode_differs_from_chromosome<0)
 	    {
-	      printf("WARNING 3. Index is %d\n", index_in_supernode_where_supernode_differs_from_chromosome);
-	      exit(1);
+	      die("WARNING 3. Index is %d\n",
+            index_in_supernode_where_supernode_differs_from_chromosome);
 	    }
 	  else if (first_index_in_chrom_where_supernode_differs_from_chromosome-start_node_index >= max_anchor_span)
 	    {
-	      printf("WARNING 4\n");
-	      exit(1);
+	      die("WARNING 4\n");
 	    }
 
 
@@ -8538,11 +8521,11 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 	  if (index_in_supernode_where_supernode_differs_from_chromosome==index_of_query_node_in_supernode_array)
 	    {
-	      printf("WARNING  - Did not even go into loop working way along ref - so supernode only touches ref at initial node - I don't think this should be possible, should go into that loop once\nContact Zam - this bug has not been seen for over a year");
-	      start_node_index++;
-	      exit(1);
-	      continue;
-	    }
+	      die("WARNING  - Did not even go into loop working way along ref - "
+            "so supernode only touches ref at initial node - "
+            "I don't think this should be possible, should go into that loop once\n"
+            "Contact Zam - this bug has not been seen for over a year");
+	     }
 
 
 	  if ( ( (traverse_sup_left_to_right) && (index_in_supernode_where_supernode_differs_from_chromosome>=length_curr_supernode) )
@@ -8789,31 +8772,48 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		  if (start_of_3prime_anchor_in_chrom-how_many_steps_in_5prime_dir_can_we_extend<=first_index_in_chrom_where_supernode_differs_from_chromosome)
 		    {
 		      //something has gone wrong
-		      printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point at which the variant starts in the TRUSTED array!!\n");
-		      printf("start_of_3prime_anchor_in_chrom = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, first_index_in_chrom_where_supernode_differs_from_chromosome=%d\n",
-		  	     start_of_3prime_anchor_in_chrom, how_many_steps_in_5prime_dir_can_we_extend,  first_index_in_chrom_where_supernode_differs_from_chromosome);
-		      exit(1);
+		      die(
+"We are extending the 3prime anchor in 5prime direction and have gone back\n"
+"beyond the point at which the variant starts in the TRUSTED array!!\n"
+"start_of_3prime_anchor_in_chrom = %d\n"
+"how_many_steps_in_5prime_dir_can_we_extend=%d\n"
+"first_index_in_chrom_where_supernode_differs_from_chromosome=%d\n",
+		  	     start_of_3prime_anchor_in_chrom,
+             how_many_steps_in_5prime_dir_can_we_extend,
+             first_index_in_chrom_where_supernode_differs_from_chromosome);
 		    }
 		  if (traverse_sup_left_to_right)
 		    {
 		      if (start_of_3prime_anchor_in_sup - how_many_steps_in_5prime_dir_can_we_extend <= index_in_supernode_where_supernode_differs_from_chromosome)
 			{
-			  printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point in the supernode where it separated from the 5prime flank. Should not reach here.\n");
-			  printf("start_of_3prime_anchor_in_sup = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, index_in_supernode_where_supernode_differs_from_chromosome=%d\n",
-				 start_of_3prime_anchor_in_sup, how_many_steps_in_5prime_dir_can_we_extend, index_in_supernode_where_supernode_differs_from_chromosome);
-			  printf("We are traversing supernode from left to right. Exit.\n");
-			  exit(1);
+        die(
+"We are extending the 3prime anchor in 5prime direction and have gone back\n"
+"beyond the point in the supernode where it separated from the 5prime flank.\n"
+"Should not reach here.\n"
+"start_of_3prime_anchor_in_sup = %d\n"
+"how_many_steps_in_5prime_dir_can_we_extend=%d\n"
+"index_in_supernode_where_supernode_differs_from_chromosome=%d\n"
+"We are traversing supernode from left to right. Exit.\n",
+            start_of_3prime_anchor_in_sup,
+            how_many_steps_in_5prime_dir_can_we_extend,
+            index_in_supernode_where_supernode_differs_from_chromosome);
 			}
 		    }
 		  else
 		    {
 		      if (start_of_3prime_anchor_in_sup + how_many_steps_in_5prime_dir_can_we_extend >= index_in_supernode_where_supernode_differs_from_chromosome)
 			{
-			  printf("We are extending the 3prime anchor in 5prime direction and have gone back beyond the point in the supernode where it separated from the 5prime flank. Should not reach here.\n");
-			  printf("start_of_3prime_anchor_in_sup = %d\nhow_many_steps_in_5prime_dir_can_we_extend=%d\n, index_in_supernode_where_supernode_differs_from_chromosome=%d\n",
-				 start_of_3prime_anchor_in_sup, how_many_steps_in_5prime_dir_can_we_extend, index_in_supernode_where_supernode_differs_from_chromosome);
-			  printf("We are traversing supernode from right to left. Exit.\n");
-			  exit(1);
+			  die(
+"We are extending the 3prime anchor in 5prime direction and have gone back\n"
+"beyond the point in the supernode where it separated from the 5prime flank.\n"
+"Should not reach here.\n"
+"start_of_3prime_anchor_in_sup = %d\n"
+"how_many_steps_in_5prime_dir_can_we_extend=%d\n"
+"index_in_supernode_where_supernode_differs_from_chromosome=%d\n"
+"We are traversing supernode from right to left. Exit.\n",
+				 start_of_3prime_anchor_in_sup,
+         how_many_steps_in_5prime_dir_can_we_extend,
+         index_in_supernode_where_supernode_differs_from_chromosome);
 			}
 		      
 		    }
@@ -8869,10 +8869,15 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		  if (start_of_3prime_anchor_in_chrom + length_3p_flank+ how_many_steps_in_3prime_dir_can_we_extend >= length_of_arrays-1)
 		    {
 		      //something has gone wrong
-		      printf("We are extending the 3prime anchor in 3prime direction and have reached the end of our array. I don't believe it!!\n");
-		      printf("start_of_3prime_anchor_in_chrom = %d\nhow_many_steps_in_3prime_dir_can_we_extend=%d\n, length_of_arrays=%d\n",
-			     start_of_3prime_anchor_in_chrom, how_many_steps_in_3prime_dir_can_we_extend,  length_of_arrays);
-		      exit(1);
+		      die(
+"We are extending the 3prime anchor in 3prime direction and have reached the\n"
+"end of our array. \n"
+"start_of_3prime_anchor_in_chrom = %d\n"
+"how_many_steps_in_3prime_dir_can_we_extend=%d\n"
+"length_of_arrays=%d\n",
+			       start_of_3prime_anchor_in_chrom,
+             how_many_steps_in_3prime_dir_can_we_extend,
+             length_of_arrays);
 		    }
 
 		}		  
@@ -8907,10 +8912,13 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	      //sanity
 	      if (start_of_3prime_anchor_in_chrom<= first_index_in_chrom_where_supernode_differs_from_chromosome)
 		{
-		  printf("Exit. start_of_3prime_anchor_in_chrom is %d and is less than first_index_in_chrom_where_supernode_differs_from_chromosome is %d. This is terrible. ", 
-			 start_of_3prime_anchor_in_chrom, first_index_in_chrom_where_supernode_differs_from_chromosome);
-		  printf("Start node index is %d, and coordinate in fasta file is %d\n", start_node_index, start_coord_of_variant_in_trusted_path_fasta);
-		  exit(1);
+		  die(
+"start_of_3prime_anchor_in_chrom is %d and is less than\n"
+"first_index_in_chrom_where_supernode_differs_from_chromosome is %d.\n"
+"Start node index is %d, and coordinate in fasta file is %d\n",
+			    start_of_3prime_anchor_in_chrom,
+          first_index_in_chrom_where_supernode_differs_from_chromosome,
+		      start_node_index, start_coord_of_variant_in_trusted_path_fasta);
 		}
 	      
 
@@ -8998,8 +9006,9 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	      //sanity
 	      if ( (len_trusted_branch<=0) || (len_trusted_branch>length_of_arrays-1) )
 		{
-		  printf("len_trusted_branch is %d, and length of arrays is %d - this should never happen. Exit.\n", len_trusted_branch, length_of_arrays);
-		  exit(1);;
+		  die("len_trusted_branch is %d, and length of arrays is %d - "
+          "this should never happen. Exit.",
+          len_trusted_branch, length_of_arrays);
 		}
 
 	      strncpy(trusted_branch, chrom_string+first_index_in_chrom_where_supernode_differs_from_chromosome-1, len_trusted_branch);
@@ -9050,24 +9059,29 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		  //sanity. Note it is legitimate for len_branch2 to be zero
 		  if (len_branch2<0)
 		    {
-		      printf("Traversing supernode left to right, but len_branch2 is %d, which is <=0 - this should be impossible. Exit\n", len_branch2);
-		      exit(1);
+		      die("Traversing supernode left to right, but len_branch2 is %d, "
+              "which is <=0 - this should be impossible. Exit", len_branch2);
 		    }
 		  else if (len_branch2> length_curr_supernode)
 		    {
-		      printf("Traversing supernode left to right, but len_branch2 is %d, which is > length of supernode %d - this should be impossible. Exit\n", len_branch2, length_curr_supernode);
-		      exit(1);
+		      die("Traversing supernode left to right, but len_branch2 is %d, "
+              "which is > length of supernode %d - this should be impossible. Exit",
+              len_branch2, length_curr_supernode);
 		    }
 
 		  //sanity
 		  if (index_of_query_node_in_supernode_array+length_5p_flank+len_branch2>max_expected_size_of_supernode-length_3p_flank)
 		    {
-		      printf("Programming error. index_of_query_node_in_supernode_array+length_5p_flank+len_branch2 = %d is > max_expected_size_of_supernode-length_3p_flank %d, which should never happen.\n",
-			     index_of_query_node_in_supernode_array+length_5p_flank+len_branch2,
-			     max_expected_size_of_supernode-length_3p_flank );
-		      printf("index_of_query_node_in_supernode_array is %d, length_5p_flank is %d, len_branch2 is %d, \n", index_of_query_node_in_supernode_array, length_5p_flank, len_branch2);
-		      printf(" max_expected_size_of_supernode is %d, length_3p_flank is %d",  max_expected_size_of_supernode, length_3p_flank);
-		      exit(1);
+          die("Programming error\n"
+"index_of_query_node_in_supernode_array+length_5p_flank+len_branch2 = %d\n"
+"is > max_expected_size_of_supernode-length_3p_flank %d, which should never happen.\n"
+"index_of_query_node_in_supernode_array is %d, length_5p_flank is %d, len_branch2 is %d\n"
+"max_expected_size_of_supernode is %d, length_3p_flank is %d\n",
+			        index_of_query_node_in_supernode_array + length_5p_flank + len_branch2,
+			        max_expected_size_of_supernode - length_3p_flank,
+		          index_of_query_node_in_supernode_array,
+              length_5p_flank, len_branch2,
+		          max_expected_size_of_supernode, length_3p_flank);
 		    }
 
 		  strncpy(variant_branch, supernode_string + index_of_query_node_in_supernode_array+length_5p_flank, len_branch2);
@@ -9121,15 +9135,19 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		  //sanity. Note it is legitimate for len_branch2 to be zero
 		  if (len_branch2<0)
 		    {
-		      printf("Traversing supernode right to left, but len_branch2 is %d, which is <=0 - this should be impossible.\n", len_branch2);
-		      printf("index_in_supernode_where_supernode_differs_from_chromosome is %d, and start_of_3prime_anchor_in_sup is %d. Exit.\n", 
-			     index_in_supernode_where_supernode_differs_from_chromosome, start_of_3prime_anchor_in_sup);
-		      exit(1);
+          die("Traversing supernode right to left, but len_branch2 is %d, "
+              "which is <=0 - this should be impossible.\n"
+              "index_in_supernode_where_supernode_differs_from_chromosome is %d, "
+              "and start_of_3prime_anchor_in_sup is %d. Exit.\n",
+		          len_branch2,
+              index_in_supernode_where_supernode_differs_from_chromosome,
+              start_of_3prime_anchor_in_sup);
 		    }
 		  else if (len_branch2> length_curr_supernode)
 		    {
-		      printf("Traversing supernode right to left, but len_branch2 is %d, which is > length of supernode %d - this should be impossible. Exit\n", len_branch2, length_curr_supernode);
-		      exit(1);
+		      die("Traversing supernode right to left, but len_branch2 is %d, "
+              "which is > length of supernode %d - this should be impossible. Exit",
+              len_branch2, length_curr_supernode);
 		    }
 
 
@@ -9157,12 +9175,14 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		  //sanity
 		  if ( (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0) || (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode) )
 		    {
-		      printf("Programming error. Either index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0\n");
-		      printf(" or index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode.\n");
-		      printf("Neither should be possible. \n");
-		      printf("index_of_query_node_in_supernode_array is %d, length_5p_flank is %d, len_branch2 is %d, max_expected_size_of_supernode is %d", 
-			     index_of_query_node_in_supernode_array, length_5p_flank, len_branch2, max_expected_size_of_supernode );
-		      exit(1);
+          die(
+"Programming error. Either index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0\n"
+" or index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode.\n"
+"Neither should be possible. \n"
+"index_of_query_node_in_supernode_array is %d, length_5p_flank is %d,\n"
+"len_branch2 is %d, max_expected_size_of_supernode is %d",
+			        index_of_query_node_in_supernode_array, length_5p_flank,
+              len_branch2, max_expected_size_of_supernode);
 		    }
 		  strncpy(variant_branch, temp+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2, len_branch2);
 
@@ -9211,13 +9231,13 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	      //sanity
 	      if (start_of_3prime_anchor_in_chrom<0)
 		{
-		  printf("Start of 3rime anchor in chrom <0 - impossible!\n");
-		  exit(1);
+		  die("Start of 3rime anchor in chrom <0 - impossible!\n");
 		}
 	      else if (start_of_3prime_anchor_in_chrom+ length_3p_flank>length_of_arrays)
 		{
-		  printf("Problem. start_of_3prime_anchor_in_chrom is %d and length_3p_flank is %d, and they add up to more thn length of arrays: %d\n", start_of_3prime_anchor_in_chrom, length_3p_flank, length_of_arrays);
-		  exit(1);
+		  die("Problem. start_of_3prime_anchor_in_chrom is %d and length_3p_flank is %d, "
+          "and they add up to more thn length of arrays: %d",
+          start_of_3prime_anchor_in_chrom, length_3p_flank, length_of_arrays);
 		}
 	      strncpy(flank3p, chrom_string+start_of_3prime_anchor_in_chrom, length_3p_flank);
 	      flank3p[length_3p_flank]='\0';
@@ -9697,8 +9717,9 @@ int db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_
   FILE* fptr = fopen(chrom_fasta, "r");
   if (fptr==NULL)
     {
-      printf("Cannot open %s the first tme in  db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_ignored", chrom_fasta);
-      exit(1);
+      die("Cannot open %s the first tme in "
+          "db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_ignored",
+          chrom_fasta);
     }
   //call variants in the reference colour
   int num_false_vars_masked = db_graph_make_reference_path_based_sv_calls(fptr, which_array_holds_ref, index_for_ref_in_edge_array, which_array_holds_ref, index_for_ref_in_edge_array, 
@@ -9716,8 +9737,9 @@ int db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_
   fptr = fopen(chrom_fasta, "r");
   if (fptr==NULL)
     {
-      printf("Cannot open %s the second tme in  db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_ignored", chrom_fasta);
-      exit(1);
+      die("Cannot open %s the second time in "
+          "db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_ignored",
+          chrom_fasta);
     }
   int num_vars_found = db_graph_make_reference_path_based_sv_calls(fptr, which_array_holds_indiv, index_for_indiv_in_edge_array, which_array_holds_ref, index_for_ref_in_edge_array, 
 								   min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
@@ -9799,8 +9821,8 @@ void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fa
 
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence in apply_to_all_nodes_in_path_defined_by_fasta\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence in "
+        "apply_to_all_nodes_in_path_defined_by_fasta");
   }
   alloc_sequence(seq,chunk_size+db_graph->kmer_size+1,LINE_MAX);
   seq->seq[0]='\0';
@@ -9809,15 +9831,15 @@ void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fa
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window in apply_to_all_nodes_in_path_defined_by_fasta. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window in "
+          "apply_to_all_nodes_in_path_defined_by_fasta. Exit.");
     }
 
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*length_of_arrays);   
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer in apply_to_all_nodes_in_path_defined_by_fastadb_graph. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer in "
+          "apply_to_all_nodes_in_path_defined_by_fastadb_graph. Exit.");
     }  
   kmer_window->nkmers=0;
 
@@ -9927,8 +9949,8 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 
   if (fout==NULL)
     {
-      printf("Exiting - have passed a null file pointer to print_fasta_from_path_for_specific_person_or_pop\n");
-      exit(1);
+      die("Exiting - have passed a null file pointer to "
+          "print_fasta_from_path_for_specific_person_or_pop\n");
     }
   
   if ( (fst_node==NULL) || (lst_node==NULL) )
@@ -10042,8 +10064,8 @@ void print_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *fout,
 {
   if (fout==NULL)
     {
-      printf("Exiting - have passed a null file pointer to print_fasta_from_path_for_specific_person_or_pop\n");
-      exit(1);
+      die("Exiting - have passed a null file pointer to "
+          "print_fasta_from_path_for_specific_person_or_pop\n");
     }
   
   if ( (fst_node==NULL) || (lst_node==NULL) )
@@ -10163,8 +10185,8 @@ void print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(FILE *f
 
   if (fout==NULL)
     {
-      printf("Exiting - have passed a null file pointer to print_fasta_from_path_for_specific_person_or_pop\n");
-      exit(1);
+      die("Exiting - have passed a null file pointer to "
+          "print_fasta_from_path_for_specific_person_or_pop\n");
     }
   
   if ( (fst_node==NULL) || (lst_node==NULL) )
@@ -10285,8 +10307,8 @@ void print_minimal_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 
   if (fout==NULL)
     {
-      printf("Exiting - have passed a null file pointer to print_fasta_from_path_for_specific_person_or_pop\n");
-      exit(1);
+      die("Exiting - have passed a null file pointer to "
+          "print_fasta_from_path_for_specific_person_or_pop\n");
     }
   
   if ( (fst_node==NULL) || (lst_node==NULL) )
@@ -10383,8 +10405,8 @@ void print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *
 
   if (fout==NULL)
     {
-      printf("Exiting - have passed a null file pointer to print_fasta_from_path_for_specific_person_or_pop\n");
-      exit(1);
+      die("Exiting - have passed a null file pointer to "
+          "print_fasta_from_path_for_specific_person_or_pop\n");
     }
   
   if ( (fst_node==NULL) || (lst_node==NULL) )
@@ -10474,8 +10496,8 @@ void print_ultra_minimal_fasta_from_path(FILE *fout,
 
   if (fout==NULL)
     {
-      printf("Exiting - have passed a null file pointer to print_ultra_minimal_fasta_from_path\n");
-      exit(1);
+      die("Exiting - have passed a null file pointer to "
+          "print_ultra_minimal_fasta_from_path\n");
     }
   
   
@@ -10487,8 +10509,8 @@ void print_ultra_minimal_fasta_from_path(FILE *fout,
     {
       if ( fst_node==NULL )
 	{
-	  fprintf(fout, "WARNING - print_ultra_minimal_fasta_from_path command has been given a NULL node as first node, and needs to dereference it.\n");
-	  exit(1);
+	  die("WARNING - print_ultra_minimal_fasta_from_path command has been "
+        "given a NULL node as first node, and needs to dereference it.");
 	}
       else
 	{
@@ -10832,11 +10854,9 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
     }
   else
     {
-      printf("You are trying to read in a set of Cortex calls, for genotyping, but you have not specified the model (is it diploid/haploid, genome size etc. Aborting.)\n");
-      exit(1);
-      //      initialise_putative_variant(&annovar, &var, which_caller, 
-      //			  NULL, -1, -1,
-      //			  db_graph->kmer_size, -1, Unspecified);
+      die(
+"You are trying to read in a set of Cortex calls, for genotyping, but you have\n"
+"not specified the model (is it diploid/haploid, genome size etc.) Aborting.\n");
     }
   if (annovar.too_short==false)//too short means length 0 or 1 supernode
     {		    
@@ -10962,8 +10982,7 @@ void calculate_statistics_of_some_function_of_supernodes(dBGraph * db_graph, Gra
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
     {
-      printf("Cannot malloc arrays for db_graph_remove_supernodes_more_likely_errors_than_sampling");
-      exit(1);
+      die("Cannot malloc arrays for db_graph_remove_supernodes_more_likely_errors_than_sampling");
     }
 
 

@@ -41,8 +41,7 @@ HashTable * hash_table_new(unsigned int number_buckets, short kmer_size){
   hash_table->table = calloc(number_buckets, sizeof(PQueue));
   
   if (hash_table == NULL || hash_table->table == NULL) {
-    fprintf(stderr,"could not allocate hash table of size %i\n",number_buckets);
-    exit(1);
+    die("Could not allocate hash table of size %i", number_buckets);
   }
   
   hash_table->number_buckets = number_buckets;
@@ -69,8 +68,7 @@ boolean hash_table_apply_or_insert(Key key,void (*f)(Element *), HashTable * has
   int hashval = hash_value(key,hash_table->number_buckets);
  
   if (hash_table == NULL) {
-    puts("NULL table!");
-    exit(1);
+    die("NULL table!");
   }
   
   return pqueue_apply_or_insert(key,f,&(hash_table->table[hashval]),hash_table->kmer_size);

@@ -94,8 +94,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
   FILE* fp = fopen(cmd_line->file_of_calls_to_be_genotyped, "r");
   if (fp==NULL)
     {
-      printf("Cannot open file %s\n", cmd_line->file_of_calls_to_be_genotyped);
-      exit(1);
+      die("Cannot open file %s\n", cmd_line->file_of_calls_to_be_genotyped);
     }
   else
     {
@@ -103,8 +102,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 	long long ret;
 	int offset = 0;
 	if (new_entry!= true){
-	  printf("new_entry has to be true for read_next_variant_from_full_flank_file\n");
-	  exit(1);
+	  die("new_entry has to be true for read_next_variant_from_full_flank_file\n");
 	}	
 	ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
 	return ret;
@@ -116,15 +114,13 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
       //----------------------------------
       Sequence * seq = malloc(sizeof(Sequence));
       if (seq == NULL){
-	fputs("Out of memory trying to allocate Sequence\n",stderr);
-	exit(1);
+	die("Out of memory trying to allocate Sequence");
       }
       alloc_sequence(seq,cmd_line->max_read_length,LINE_MAX);
 
       Sequence * seq_inc_prev_kmer = malloc(sizeof(Sequence));
       if (seq == NULL){
-	fputs("Out of memory trying to allocate Sequence\n",stderr);
-	exit(1);
+	die("Out of memory trying to allocate Sequence");
       }
       alloc_sequence(seq_inc_prev_kmer,cmd_line->max_read_length+db_graph->kmer_size,LINE_MAX);
 
@@ -134,15 +130,16 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
       KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
       if (kmer_window==NULL)
 	{
-	  printf("Failed to malloc kmer sliding window for genotyping. Exit.\n");
-	  exit(1);
+	  die("Failed to malloc kmer sliding window for genotyping. Exit.\n");
 	}
       kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(cmd_line->max_read_length-db_graph->kmer_size-1));
       if (kmer_window->kmer==NULL)
 	{
-	  printf("Failed to malloc kmer_window->kmer for genotyping. Tried to alloc  an array of %d binary kmers. Max read len:%d, kmer size %d,Exit.\n", 
-		 cmd_line->max_read_length-db_graph->kmer_size-1, cmd_line->max_read_length, db_graph->kmer_size);
-	  exit(1);
+	  die("Failed to malloc kmer_window->kmer for genotyping. Tried to alloc\n"
+        "an array of %d binary kmers. Max read len:%d, kmer size %d. Exit.\n", 
+		    cmd_line->max_read_length-db_graph->kmer_size-1,
+        cmd_line->max_read_length,
+        db_graph->kmer_size);
 	}
       kmer_window->nkmers=0;
       
@@ -150,8 +147,8 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 									    cmd_line->max_read_length+1, cmd_line->max_read_length+1, db_graph->kmer_size);
       if (var==NULL)
 	{
-	  printf("Abort - unable to allocate memory for buffers for reading callfile - either sever oom conditions or you have specified very very large max_read_len\n");
-	  exit(1);
+	  die("Abort - unable to allocate memory for buffers for reading callfile - \n"
+        "either sever oom conditions or you have specified very very large max_read_len\n");
 	}
       GenotypingWorkingPackage* gwp=NULL;
       LittleHashTable* little_dbg=NULL;
@@ -167,8 +164,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 					      NUMBER_OF_COLOURS+1);
 	  if (gwp==NULL)
 	    {
-	      printf("Unable to alloc resources for genotyping prior to starting. Abort\n");
-	      exit(1);
+	      die("Unable to alloc resources for genotyping prior to starting. Abort\n");
 	    }
 	  int little_width=100;
 	  int little_height=(int) log((cmd_line->max_read_length) *4)+1;
@@ -177,8 +173,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
 	  little_dbg = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
 	  if (little_dbg==NULL)
 	    {
-	      printf("Out of memory - failed to alloc tiny auxiliary hash table\n");
-	      exit(1);
+	      die("Out of memory - failed to alloc tiny auxiliary hash table\n");
 	    }
 	  var->which=first;
 	}
@@ -187,8 +182,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_
       FILE* fout = fopen(cmd_line->output_genotyping, "w");
       if (fout==NULL)
 	{
-	  printf("Unable to open output file %s - abort.\n", cmd_line->output_genotyping);
-	  exit(1);
+	  die("Unable to open output file %s - abort.\n", cmd_line->output_genotyping);
 	}
       
       int ret=1;
@@ -273,60 +267,27 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
       printf("Since you did not specify the genome size/length, Cortex cannot calculate genotype likelihoods or call genotypes\n");
     }
 
-  //this will also check that all the ref chrom fasta files exist
-  int num_ref_chroms = get_number_of_files_and_check_existence_from_filelist(cmd_line->ref_chrom_fasta_list);
+  // This will also check that all the ref chrom files exist
+  int num_ref_chroms = load_paths_from_filelist(cmd_line->ref_chrom_fasta_list,
+                                                NULL);
 
-  char** ref_chroms = malloc( sizeof(char*) * num_ref_chroms);
-  if (ref_chroms==NULL)
-    {
-      printf("OOM. Give up can't even allocate space for the names of the ref chromosome files\n");
-      exit(1);
-    }
-  int i;
-  for (i=0; i< num_ref_chroms; i++)
-    {
-      ref_chroms[i] = malloc(sizeof(char)*500);
-      if (ref_chroms[i]==NULL)
-	{
-	  printf("OOM. Giveup can't even allocate space for the names of the ref chromosome file i = %d\n",i);
-	  exit(1);
-	}
-    }
+  char** ref_chroms = malloc(sizeof(char*) * num_ref_chroms);
 
-  get_filenames_from_list(cmd_line->ref_chrom_fasta_list, ref_chroms, num_ref_chroms);
+  if(ref_chroms==NULL)
+  {
+    die("Can't allocate memory for paths to ref chromosome files\n");
+  }
 
-  //now set up output file names
-  /*
-  char** output_files = malloc( sizeof(char*) * num_ref_chroms); //one for each chromosome
-  if (output_files==NULL)
-    {
-      printf("OOM. Give up can't even allocate space for the names of the output  files \n");
-      exit(1);
-    }
-	
-  for (i=0; i< num_ref_chroms; i++)
-    {
-      output_files[i] = malloc(sizeof(char)*1000); 
-      if (output_files[i]==NULL)
-	{
-	  printf("OOM. Giveup can't even allocate space for the names of the ref chromosome file i = %d\n",i);
-	  exit(1);
-	}
-    }
-  for (i=0; i<num_ref_chroms; i++)
-    {
-      sprintf(output_files[i], "%s_pd_chr_%i", cmd_line->path_divergence_caller_output_stub, i+1);
-    }
+  load_paths_from_filelist(cmd_line->ref_chrom_fasta_list, ref_chroms);
 
-  */
+  // Now set up output file names
   char* output_file = malloc(sizeof(char)*1000);
   sprintf(output_file, "%s_pd_calls", cmd_line->path_divergence_caller_output_stub);
 
   FILE* out_fptr = fopen(output_file, "w");
   if (out_fptr==NULL)
     {
-      printf("Cannot open %s for output\n", output_file);
-      exit(1);
+      die("Cannot open %s for output\n", output_file);
     }
 
 
@@ -338,7 +299,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
   int min_covg =1;
   int max_covg = 10000000;//this is ignored. will be changing API
   int max_expected_size_of_supernode=cmd_line -> max_var_len;
-	
+	int i;
       
   if (cmd_line->pd_calls_against_each_listed_colour_consecutively==false)
     {
@@ -350,8 +311,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 	  FILE* chrom_fptr = fopen(ref_chroms[i], "r");
 	  if (chrom_fptr==NULL)
 	    {
-	      printf("Cannot open %s \n", ref_chroms[i]);
-	      exit(1);
+	      die("Cannot open %s \n", ref_chroms[i]);
 	    }
 	  
 	  
@@ -384,8 +344,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 	      FILE* chrom_fptr = fopen(ref_chroms[i], "r");
 	      if (chrom_fptr==NULL)
 		{
-		  printf("Cannot open %s \n", ref_chroms[i]);
-		  exit(1);
+		  die("Cannot open %s \n", ref_chroms[i]);
 		}
 	      
 	      
@@ -503,13 +462,12 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
     {
       if (which==1)
 	{
-	  printf("Cannot open %s. Exit.", cmd_line->output_detect_bubbles1);
+	  die("Cannot open %s. Exit.", cmd_line->output_detect_bubbles1);
 	}
       else
 	{
-	  printf("Cannot open %s. Exit.", cmd_line->output_detect_bubbles2);
+	  die("Cannot open %s. Exit.", cmd_line->output_detect_bubbles2);
 	}
-      exit(1);
     }
   
   boolean (*mod_sel_criterion)(AnnotatedPutativeVariant* annovar,  GraphAndModelInfo* model_info)=NULL;
@@ -566,8 +524,7 @@ int main(int argc, char **argv){
   CmdLine* cmd_line = cmd_line_alloc();
   if (cmd_line==NULL)
     {
-      printf("Out of memory!! Cannot even malloc the space to store your command-line arguments. Check who else is using your server, you seem to have severe problems\n");
-      exit(1);
+      die("Out of memory!! Cannot even malloc the space to store your command-line arguments. Check who else is using your server, you seem to have severe problems\n");
     }
   
   parse_cmdline(cmd_line, argc,argv,sizeof(Element));
@@ -633,15 +590,14 @@ int main(int argc, char **argv){
 
     if (cmd_line->using_ref==false)
       {
-	printf("Do not call get_colour_ref when --using_ref was not specified. Exiting - coding error\n");
-	exit(1);
+	die("Do not call get_colour_ref when --using_ref was not specified. Exiting - coding error\n");
       }
 
     if ( (cmd_line->ref_colour<0) || (cmd_line->ref_colour>NUMBER_OF_COLOURS-1) )
       {
-	printf("Calling get_colour_ref, but the reference colour %d has not been specified, or is > than the compile-time limit, of %d\n", 
+	die("Calling get_colour_ref, but the reference colour %d has not been specified, "
+      "or is > than the compile-time limit, of %d\n", 
 	       cmd_line->ref_colour, NUMBER_OF_COLOURS-1);
-	exit(1);
       }
     Edges ed = get_edge_copy(*e, individual_edge_array, cmd_line->ref_colour);
     return ed;
@@ -685,15 +641,14 @@ int main(int argc, char **argv){
   int min_kmer_size = ((NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1) * sizeof(bitfield_of_64bits) * 4) + 1;
 
   if (number_of_bitfields != NUMBER_OF_BITFIELDS_IN_BINARY_KMER){
-    printf("K-mer %i  is not in current range of kmers [%i - %i] required for this executable.!\n",kmer_size,min_kmer_size,max_kmer_size);
-    exit(0);
+    die("K-mer %i  is not in current range of kmers [%i - %i] required for this executable.!\n",
+        kmer_size, min_kmer_size, max_kmer_size);
   }
   
   printf("Maximum k-mer size (compile-time setting): %ld\n", (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1);
   
   if (cmd_line->kmer_size> (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1){
-    printf("k-mer size is too big [%i]!",cmd_line->kmer_size);
-    exit(1);
+    die("k-mer size is too big [%i]!",cmd_line->kmer_size);
   }
   printf("Actual K-mer size: %d\n", cmd_line->kmer_size);
 
@@ -703,8 +658,7 @@ int main(int argc, char **argv){
   db_graph = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
   if (db_graph==NULL)
     {
-      printf("Giving up - unable to allocate memory for the hash table\n");
-      exit(1);
+      die("Giving up - unable to allocate memory for the hash table\n");
     }
   printf("Hash table created, number of buckets: %d\n",1 << hash_key_bits);
 
@@ -784,8 +738,7 @@ int main(int argc, char **argv){
 
     if(readlen_distrib == NULL)
     {
-      printf("Unable to malloc array to hold readlen distirbution!Exit.\n");
-      exit(1);
+      die("Unable to malloc array to hold readlen distirbution!Exit.\n");
     }
 
     int i;
@@ -930,9 +883,11 @@ int main(int argc, char **argv){
 	      //we have loaded a multicolour binary, and we have checked that the clean_colour is one of the colours in that binary
 	      if (cmd_line->load_colours_only_where_overlap_clean_colour==false)
 		{
-		  printf("If you specify --successively_dump_cleaned_colours, you must also specify --load_colours_only_where_overlap_clean_colour\n");
-		  printf("That should fix your problem, however, this should have been caught as soon as Cortex parsed your command-line. Please inform Zam Iqbal (zam@well.ox.ac.uk) so he can fix that UI bug\n");
-		  exit(1);
+		  die(
+"If you specify --successively_dump_cleaned_colours, you must also specify\n"
+"--load_colours_only_where_overlap_clean_colour That should fix your problem,\n"
+"however, this should have been caught as soon as Cortex parsed your command-line.\n"
+"Please inform Zam Iqbal (zam@well.ox.ac.uk) so he can fix that UI bug\n");
 		}
 	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
 		     cmd_line->colour_list,cmd_line->clean_colour);
@@ -989,8 +944,7 @@ int main(int argc, char **argv){
 	  FILE* fp_err = fopen(cmd_line->manually_entered_seq_error_rates_file, "r");
 	  if (fp_err==NULL)
 	    {
-	      printf("Unable to open file %s\n", cmd_line->manually_entered_seq_error_rates_file);
-	      exit(1);
+	      die("Unable to open file %s\n", cmd_line->manually_entered_seq_error_rates_file);
 	    }
 	  read_estimated_seq_errors_from_file(db_graph_info, fp_err);
 	  fclose(fp_err);
@@ -1038,8 +992,7 @@ int main(int argc, char **argv){
     }
   else
     {
-      printf("Coding error - expt type not specified - not even as Unspecified");
-      exit(1);
+      die("Coding error - expt type not specified - not even as Unspecified");
     }
 
   AssumptionsOnGraphCleaning assump = AssumeUncleaned;
@@ -1266,8 +1219,7 @@ int main(int argc, char **argv){
 	  array_of_colournames[j]=(char*)malloc(sizeof(char) * 50);
 	  if (array_of_colournames[j]==NULL)
 	    {
-	      printf("Severe lack of memory. Cannot even allocate 50 chars. Give up\n");
-	      exit(1);
+	      die("Severe lack of memory. Cannot even allocate 50 chars. Give up\n");
 	    }
 	  sprintf(array_of_colournames[j], "colour_%d", j);
 	}
@@ -1321,22 +1273,28 @@ int main(int argc, char **argv){
 	{
 	  if (db_graph_info->mean_read_length[cmd_line->list_colours_to_genotype[k]] < db_graph->kmer_size )
 	    {
-	      printf("This will not work. If you scroll up to the summary of read-lengths and covgs in your colours, you will see that\n");
-	      printf("at least one of the colours you want to genotype has mean read length < kmer_size. We only know of one way this can happen:\n");
-	      printf("If you load fastA files, then cortex does not store read-length/covg data, essentially because the only real use-cases for\n");
-	      printf("fasta files are a)testing of code and b) reference genomes. So I suggest that either you are\n");
-	      printf("running a test on fasta files (in which case please use fastq) or you have accidentally specified the wrong colour to be genotyped\n");
-	      exit(1);
+	      die(
+"This will not work. If you scroll up to the summary of read-lengths and covgs\n"
+"in your colours, you will see that at least one of the colours you want to\n"
+"genotype has mean read length < kmer_size. We only know of one way this can\n"
+"happen: If you load fastA files, then cortex does not store read-length/covg\n"
+"data, essentially because the only real use-cases for fasta files are:\n"
+"  a) testing of code and b) reference genomes. \n"
+"So I suggest that either you are running a test on fasta files (in which case\n"
+"please use fastq) or you have accidentally specified the wrong colour to be genotyped\n");
 	    }
 
 	  if (db_graph_info->total_sequence[cmd_line->list_colours_to_genotype[k]]==0)
 	    {
-	      printf("This will not work. If you scroll up to the summary of read-lengths and covgs in your colours, you will see that\n");
-	      printf("at least one of the colours you want to genotype has total sequence 0. We only know of one way this can happen:\n");
-	      printf("If you load fastA files, then cortex does not store read-length/covg data, essentially because the only real use-cases for\n");
-	      printf("fasta files are a)testing of code and b) reference genomes. So I suggest that either you are\n");
-	      printf("running a test on fasta files (in which case please use fastq) or you have accidentally specified the wrong colour to be genotyped\n");
-	      exit(1);
+	      die(
+"This will not work. If you scroll up to the summary of read-lengths and covgs\n"
+"in your colours, you will see that at least one of the colours you want to\n"
+"genotype has total sequence 0. We only know of one way this can happen:\n"
+"If you load fastA files, then cortex does not store read-length/covg data,\n"
+"essentially because the only real use-cases for fasta files are:\n"
+"  a) testing of code and b) reference genomes. \n"
+"So I suggest that either you are running a test on fasta files (in which case\n"
+"please use fastq) or you have accidentally specified the wrong colour to be genotyped\n");
 	    }
 	}
 
@@ -1414,8 +1372,7 @@ int main(int argc, char **argv){
       db_graph2 = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
       if (db_graph2==NULL)
 	{
-	  printf("Cortex has nearly finished. It's done everything you asked it to do, and has dumped a binary of the overlap of your alignment with the graph. However, by \"ripping out\" nodes from the main graph, that dumped binary now has edges pointing out to nodes that are not in the binary. So the idea is that we have deallocated the main graph now, and we were going to load the dumped binary, clean it up and re-dump it. However that has failed, becaause we could not malloc the memory to do it - the most likely reason is that someone else is sharing your server and their mempory use has gone up.\n");
-	  exit(1);
+	  die("Cortex has nearly finished. It's done everything you asked it to do, and has dumped a binary of the overlap of your alignment with the graph. However, by \"ripping out\" nodes from the main graph, that dumped binary now has edges pointing out to nodes that are not in the binary. So the idea is that we have deallocated the main graph now, and we were going to load the dumped binary, clean it up and re-dump it. However that has failed, becaause we could not malloc the memory to do it - the most likely reason is that someone else is sharing your server and their mempory use has gone up.\n");
 	}
       
       //this is all for the API - we wont use this info

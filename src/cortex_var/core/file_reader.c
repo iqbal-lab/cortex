@@ -152,11 +152,9 @@ short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
     if(!is_base_char(kmer_str[i]))
     {
       // die -- invalid base
-      fprintf(stderr, "%s:%d: Invalid base character '%i' "
-                      "[path: %s; line: %lu]\n",
-              __FILE__, __LINE__, (int)kmer_str[i],
-              seq_get_path(sf), seq_curr_line_number(sf));
-      exit(EXIT_FAILURE);
+      die("%s:%d: Invalid base character '%i' [path: %s; line: %lu]\n",
+          __FILE__, __LINE__, (int)kmer_str[i],
+          seq_get_path(sf), seq_curr_line_number(sf));
     }
     else if(kmer_str[i] == 'n' || kmer_str[i] == 'N')
     {
@@ -213,10 +211,9 @@ inline char _read_base(SeqFile *sf, char *b, char *q, char read_qual)
   if(!is_base_char(*b))
   {
     // die -- invalid base
-    fprintf(stderr, "%s:%d: Invalid base character %i [path: %s; line: %lu]\n",
-            __FILE__, __LINE__, (int)*b,
-            seq_get_path(sf), seq_curr_line_number(sf));
-    exit(EXIT_FAILURE);
+    die("%s:%d: Invalid base character %i [path: %s; line: %lu]\n",
+        __FILE__, __LINE__, (int)*b,
+        seq_get_path(sf), seq_curr_line_number(sf));
   }
 
   if(read_qual && !seq_read_qual(sf, q))
@@ -529,8 +526,7 @@ void load_se_seq_data_into_graph_colour(
 
   if(sf == NULL)
   {
-    fprintf(stderr, "Couldn't open single-end sequence file '%s'\n", file_path);
-    exit(EXIT_FAILURE);
+    die("Couldn't open single-end sequence file '%s'\n", file_path);
   }
 
   seq_set_fastq_ascii_offset(sf, ascii_fq_offset);
@@ -642,13 +638,11 @@ void load_pe_seq_data_into_graph_colour(
 
   if(sf1 == NULL)
   {
-    fprintf(stderr, "Couldn't open paired-end sequence file '%s'\n", file_path1);
-    exit(EXIT_FAILURE);
+    die("Couldn't open paired-end sequence file '%s'\n", file_path1);
   }
   else if(sf2 == NULL)
   {
-    fprintf(stderr, "Couldn't open paired-end sequence file '%s'\n", file_path2);
-    exit(EXIT_FAILURE);
+    die("Couldn't open paired-end sequence file '%s'\n", file_path2);
   }
 
   seq_set_fastq_ascii_offset(sf1, ascii_fq_offset);
@@ -679,10 +673,10 @@ void load_pe_seq_data_into_graph_colour(
 
     if(read1 != read2)
     {
-      fprintf(stderr, "Paired-end files don't have the same number of reads\n");
-      fprintf(stderr, "file1: %s\n", file_path1);
-      fprintf(stderr, "file2: %s\n", file_path2);
-      exit(EXIT_FAILURE);
+      die("Paired-end files don't have the same number of reads\n"
+          "file1: %s\n"
+          "file2: %s\n",
+          file_path1, file_path2);
     }
     else if(!read1)
     {
@@ -847,9 +841,7 @@ void load_se_filelist_into_graph_colour(
 
   if(se_filelist_abs_path == NULL)
   {
-    fprintf(stderr, "Cannot get absolute path to filelist of SE files: %s\n",
-            se_filelist_path);
-    exit(EXIT_FAILURE);
+    die("Cannot get absolute path to filelist of SE files: %s\n", se_filelist_path);
   }
 
   printf("  path: %s\n", se_filelist_abs_path);
@@ -858,9 +850,7 @@ void load_se_filelist_into_graph_colour(
 
   if(se_list_file == NULL)
   {
-    fprintf(stderr, "Cannot open filelist of SE files: %s\n",
-            se_filelist_abs_path);
-    exit(EXIT_FAILURE);
+    die("Cannot open filelist of SE files: %s\n", se_filelist_abs_path);
   }
 
   // Get directory path
@@ -892,10 +882,9 @@ void load_se_filelist_into_graph_colour(
 
       if(path_ptr == NULL)
       {
-        fprintf(stderr, is_colour_list ? "Cannot find filelist of SE files: %s\n"
-                                       : "Cannot find sequence file: %s\n",
-                line->buff);
-        exit(EXIT_FAILURE);
+        die(is_colour_list ? "Cannot find filelist of SE files: %s\n"
+                           : "Cannot find sequence file: %s\n",
+            line->buff);
       }
 
       if(is_colour_list)
@@ -969,15 +958,13 @@ void load_pe_filelists_into_graph_colour(
 
   if(pe_filelist_abs_path1 == NULL)
   {
-    fprintf(stderr, "Cannot get absolute path to filelist of PE files: %s\n",
-            pe_filelist_path1);
-    exit(EXIT_FAILURE);
+    die("Cannot get absolute path to filelist of PE files: %s\n",
+        pe_filelist_path1);
   }
   else if(pe_filelist_abs_path2 == NULL)
   {
-    fprintf(stderr, "Cannot get absolute path to filelist of PE files: %s\n",
-            pe_filelist_path2);
-    exit(EXIT_FAILURE);
+    die("Cannot get absolute path to filelist of PE files: %s\n",
+        pe_filelist_path2);
   }
 
   // Open files
@@ -986,15 +973,11 @@ void load_pe_filelists_into_graph_colour(
 
   if(pe_list_file1 == NULL)
   {
-    fprintf(stderr, "Cannot open filelist of PE files: %s\n",
-            pe_filelist_abs_path1);
-    exit(EXIT_FAILURE);
+    die("Cannot open filelist of PE files: %s\n", pe_filelist_abs_path1);
   }
   else if(pe_list_file2 == NULL)
   {
-    fprintf(stderr, "Cannot open filelist of PE files: %s\n",
-            pe_filelist_abs_path2);
-    exit(EXIT_FAILURE);
+    die("Cannot open filelist of PE files: %s\n", pe_filelist_abs_path2);
   }
 
   // Get directory paths for filelist files
@@ -1026,10 +1009,9 @@ void load_pe_filelists_into_graph_colour(
 
     if((strbuf_len(line1) == 0) != (strbuf_len(line2) == 0))
     {
-      fprintf(stderr, "Paired-end files don't have the same number of lines:\n");
-      fprintf(stderr, "File 1: %s", pe_filelist_path1);
-      fprintf(stderr, "File 2: %s", pe_filelist_path2);
-      exit(EXIT_FAILURE);
+      die("Paired-end files don't have the same number of lines:\n"
+          "File 1: %s\n"
+          "File 2: %s", pe_filelist_path1, pe_filelist_path2);
     }
     else if(strbuf_len(line1) > 0)
     {
@@ -1046,17 +1028,15 @@ void load_pe_filelists_into_graph_colour(
 
       if(path_ptr1 == NULL)
       {
-        fprintf(stderr, is_colour_lists ? "Cannot find filelist of PE files: %s\n"
-                                        : "Cannot find sequence file: %s\n",
-                line1->buff);
-        exit(EXIT_FAILURE);
+        die(is_colour_lists ? "Cannot find filelist of PE files: %s\n"
+                            : "Cannot find sequence file: %s\n",
+            line1->buff);
       }
       else if(path_ptr2 == NULL)
       {
-        fprintf(stderr, is_colour_lists ? "Cannot find filelist of PE files: %s\n"
-                                        : "Cannot find sequence file: %s\n",
-                line2->buff);
-        exit(EXIT_FAILURE);
+        die(is_colour_lists ? "Cannot find filelist of PE files: %s\n"
+                            : "Cannot find sequence file: %s\n",
+            line2->buff);
       }
 
       // Print file paths
@@ -1172,8 +1152,7 @@ void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_
 	  boolean found = false;
 	  current_node = hash_table_find_or_insert(element_get_key(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),&found,db_graph);	  
 	  if (current_node == NULL){
-	    fputs("file_reader: problem - current kmer not found\n",stderr);
-	    exit(1);
+	    die("file_reader: problem - current kmer not found\n");
 	  }
 	  
 	  if (! (i==0 && j==0 && *prev_full_ent == false && current_node == previous_node)){ //otherwise is the same old last entry
@@ -1208,9 +1187,10 @@ void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_
 	  if (j>0){
 	    
 	    if (previous_node == NULL){
-	      printf("PROBLEM i:%i j:%i bases loaded:%qd nkmers:%i prev_full_entry:%s\n",i,j,*(bases_loaded),current_window->nkmers,*prev_full_ent == true ? "true" : "false");
-	      fputs("file_reader: problem - prev kmer not found\n",stderr);
-	      exit(1);
+	      die("i:%i j:%i bases loaded:%qd nkmers:%i prev_full_entry:%s\n"
+            "file_reader: problem - prev kmer not found\n",
+            i, j, *bases_loaded, current_window->nkmers,
+            *prev_full_ent == true ? "true" : "false");
 	    }
 	    else{ //this is the point at which the new element/node gets associated with the specific person
 	      db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size, type, index);
@@ -1246,21 +1226,18 @@ void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, S
 	
       if (kmer_window->nkmers>max_array_size)
 	{
-	  printf("Cannot load_kmers_from_sliding_window_into_array as max_array_size %d < number f kmers in the window %d\n", max_array_size, kmer_window->nkmers);
-	  exit(1);
+	  die("Cannot load_kmers_from_sliding_window_into_array as max_array_size %d < number f kmers in the window %d\n", max_array_size, kmer_window->nkmers);
 	}
 
       for(j=0;j<kmer_window->nkmers;j++){ //for each kmer in window
 	current_node = hash_table_find(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph);	  
 	if (current_node == NULL){
-	  //printf("load_kmers_from_sliding_window_into_array: problem - current kmer not found\n");
-	  //exit(1);
+	  //die("load_kmers_from_sliding_window_into_array: problem - current kmer not found\n");
 	}
 	if ( (require_nodes_to_lie_in_given_colour==true) && 
 	     (db_node_is_this_node_in_this_person_or_populations_graph(current_node, individual_edge_array, colour)==false) )
 	  {
-	    printf("This current node does not exist in colour %d\n", colour);
-	    exit(1);
+	    die("This current node does not exist in colour %d\n", colour);
 	  }
 
 	  
@@ -1321,8 +1298,7 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
 
   if ( (kmer_window==NULL) || (seq==NULL))
     {
-      printf("Do not pass NULL pointer to get_single_kmer_sliding_window_from_sequence\n");
-      exit(1);
+      die("Do not pass NULL pointer to get_single_kmer_sliding_window_from_sequence\n");
     }
   
   int number_of_steps_before_current_kmer_is_good=0; //good means free of bad characters. 
@@ -1489,8 +1465,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
       if (offset<0)
 	{
-	  printf("Error, offset<0. NOT expecting new fasta entry, length of arrays is %d, num of bases to load is %d, and offset is %d, their difference\n", length_of_arrays, number_of_nodes_to_load, offset);
-	  exit(1);
+	  die("Error, offset<0. NOT expecting new fasta entry, length of arrays is %d, num of bases to load is %d, and offset is %d, their difference\n", length_of_arrays, number_of_nodes_to_load, offset);
 	}
    
     }
@@ -1500,10 +1475,11 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
       if (offset<0)
         {
-          printf("Error, offset<0. YES, expecting new fasta entry, length of arrays is %d, num of bases to load is %d, and offset is %d, defined by length - (bases to load _ kmer_size -1)\n", 
-		 length_of_arrays, number_of_nodes_to_load, offset);
-	  exit(1);
-        }
+          die("Error, offset<0. YES, expecting new fasta entry, length of arrays is %d,\n"
+              "num of bases to load is %d, and offset is %d, defined by \n"
+              "length - (bases to load _ kmer_size -1)\n", 
+		          length_of_arrays, number_of_nodes_to_load, offset);
+	      }
     }
 
   long long seq_length=0;
@@ -1556,8 +1532,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
     {      
       if (num_nodes > number_of_nodes_to_load) 
 	{
-	  printf("Returned more nodes than asked for in load_seq_into_array. Exit/\n");
-	  exit(1);
+	  die("Returned more nodes than asked for in load_seq_into_array. Exit/\n");
 	}
     }
   else
@@ -1565,8 +1540,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
       //we expect number of nodes = num_of_nodes_to_load , except we had to preload seq with kmer_size bases, so that will give us an extra node at the start, which we need to get the first edge 
       if (num_nodes > number_of_nodes_to_load+1) 
 	{
-          printf("Returned morenodes than asked for inload_seq_into_array. Exit/\n");
-          exit(1);
+          die("Returned morenodes than asked for inload_seq_into_array. Exit/\n");
 
 	}
     }
@@ -1607,9 +1581,11 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	BinaryKmer tmp_dbg_kmer;
 	char tmp_dbg_seq[db_graph->kmer_size+1];
 
-	printf("Problem in load_seq_into_array - current kmer not found %s\n",
-	       binary_kmer_to_seq(element_get_key(&(kmer_window->kmer[j]),db_graph->kmer_size, &tmp_dbg_kmer), db_graph->kmer_size,tmp_dbg_seq));
-	exit(1);
+	die("Problem in load_seq_into_array - current kmer not found %s\n",
+	    binary_kmer_to_seq(element_get_key(&(kmer_window->kmer[j]),
+                                         db_graph->kmer_size, &tmp_dbg_kmer),
+                         db_graph->kmer_size, tmp_dbg_seq));
+
 	/* potential bug, and fix/more robust solution:
 	previous_node=NULL; 
 	continue;
@@ -1705,8 +1681,7 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
   int count=0;
 
   if (fp_bin == NULL){
-    printf("load_multicolour_binary_from_filename_into_graph cannot open file:%s\n",filename);
-    exit(1); 
+    die("load_multicolour_binary_from_filename_into_graph cannot open file:%s\n",filename); 
   }
 
   BinaryHeaderErrorCode ecode = EValid;
@@ -1715,9 +1690,9 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
 
   if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode)))
     {
-      printf("Cannot load this binary(%s) - signature check fails. Wrong max kmer, number of colours, or binary version. Exiting, error code %d\n", 
-	     filename, ecode);
-      exit(1);
+      die("Cannot load this binary(%s) - signature check fails. Wrong max kmer, "
+          "number of colours, or binary version. Exiting, error code %d\n", 
+	        filename, ecode);
     }
   else
     {
@@ -1764,8 +1739,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 
   if ( (only_load_kmers_already_in_hash==true) && (colour_clean>=NUMBER_OF_COLOURS) )
     {
-      printf("Called load_single_colour_binary_data_from_filename_into_graph and specified as clean-colour, colour %d, when this executable is compiled for %d colours only. Exit.\n", colour_clean, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Called load_single_colour_binary_data_from_filename_into_graph and specified as clean-colour, colour %d, when this executable is compiled for %d colours only. Exit.\n", colour_clean, NUMBER_OF_COLOURS);
     }
 
 
@@ -1781,9 +1755,8 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 
   if (fp_bin == NULL)
     {
-      //  exit(1); //TODO - prefer to print warning and skip file and return an error code?
-      printf("Unable to open this binary %s\n", filename);
-      exit(1);
+      //TODO - prefer to print warning and skip file and return an error code?
+      die("Unable to open this binary %s\n", filename);
     }
 
 
@@ -1796,8 +1769,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 
   if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode)))
     {
-      printf("Cannot load this binary - fails signature check with error code %d. Exiting.\n", ecode);
-      exit(1);
+      die("Cannot load this binary - fails signature check with error code %d. Exiting.\n", ecode);
     }
   else
     {
@@ -1826,8 +1798,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 
   if (binfo.number_of_colours!=1)
     {
-      printf("Expecting a single colour binary, but instead this one has %d colours\n. Exiting.\n", binfo.number_of_colours);
-      exit(1);
+      die("Expecting a single colour binary, but instead this one has %d colours\n. Exiting.\n", binfo.number_of_colours);
     }
   graph_info_free(ginfo);
   
@@ -1902,8 +1873,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 
   if(filename_abs_path == NULL)
   {
-    fprintf(stderr, "Cannot get absolute path to ctxlist: %s\n", filename);
-    exit(EXIT_FAILURE);
+    die("Cannot get absolute path to ctxlist: %s\n", filename);
   }
 
   printf("loading ctxlist: %s\n", filename_abs_path);
@@ -1911,9 +1881,8 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
   FILE* fptr = fopen(filename, "r");
   if (fptr == NULL)
   {
-    printf("cannot open %s which is supposed to list all .ctx files for person "
-           "with index %d\n", filename, index);
-    exit(1); 
+    die("cannot open %s which is supposed to list all .ctx files for person "
+        "with index %d\n", filename, index);
   }
 
   // Get directory path
@@ -1939,8 +1908,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
       
       if(path_ptr == NULL)
       {
-        fprintf(stderr, "Cannot find .ctx binary: %s\n", line->buff);
-        exit(EXIT_FAILURE);
+        die("Cannot find .ctx binary: %s\n", line->buff);
       }
 
       //printf("Load this binary: %s, into this colour : %d\n", line, index);
@@ -1988,10 +1956,9 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
   if(about_to_load_first_binary_into_empty_graph == true &&
      only_load_kmers_already_in_hash == true)
   {
-    printf("You are trying to load binaries into an empty hash table, but are "
-           "specifying that they should be compared with the existing hash "
-           "table. User error\n");
-    exit(EXIT_FAILURE);
+    die("You are trying to load binaries into an empty hash table, but are\n"
+        "specifying that they should be compared with the existing hash "
+        "table. User error\n");
   }
 
   // Get absolute path
@@ -2000,8 +1967,7 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 
   if(filename_abs_path == NULL)
   {
-    fprintf(stderr, "Cannot get absolute path to colours: %s\n", filename_abs_path);
-    exit(EXIT_FAILURE);
+    die("Cannot get absolute path to colours: %s\n", filename_abs_path);
   }
 
   // Get directory path
@@ -2013,8 +1979,7 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
   if (fp == NULL)
   {
     //TODO - prefer to print warning and skip file and reutnr an error code?
-    printf("load_population_as_binaries_from_graph cannot open file:%s\n", filename);
-    exit(EXIT_FAILURE);
+    die("load_population_as_binaries_from_graph cannot open file:%s\n", filename);
   }
 
   StrBuf *line = strbuf_new();
@@ -2030,10 +1995,9 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
     {
       if(which_colour >= NUMBER_OF_COLOURS)
       {
-        printf("This filelist contains too many people, remember we have set a "
-               "population limit of %d in variable NUMBER_OF_COLOURS. Cannot "
-               "load into colour %d\n", NUMBER_OF_COLOURS, which_colour);
-        exit(EXIT_FAILURE);
+        die("This filelist contains too many people, remember we have set a \n"
+            "population limit of %d in variable NUMBER_OF_COLOURS. Cannot "
+            "load into colour %d\n", NUMBER_OF_COLOURS, which_colour);
       }
 
       // Get paths relative to filelist dir
@@ -2048,9 +2012,7 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 
       if(path_ptr == NULL)
       {
-        fprintf(stderr, "Cannot find ctxlist: %s\n",
-                line->buff);
-        exit(EXIT_FAILURE);
+        die("Cannot find ctxlist: %s\n", line->buff);
       }
 
       //printf("Open this filelist of binaries, %s,  all corresponding to the same colour:%d\n",
@@ -2094,9 +2056,8 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
 {
   if(in_colour == clean_colour)
   {
-    printf("In dump_successive_cleaned_binaries You cannot specify the same "
-           "colour as both clean_colour and in_colour\n");
-    exit(EXIT_FAILURE);
+    die("In dump_successive_cleaned_binaries You cannot specify the same "
+        "colour as both clean_colour and in_colour\n");
   }
 
   // Get absolute path
@@ -2105,8 +2066,7 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
 
   if(filename_abs_path == NULL)
   {
-    fprintf(stderr, "Cannot get absolute path to .colours file: %s\n", filename);
-    exit(EXIT_FAILURE);
+    die("Cannot get absolute path to .colours file: %s\n", filename);
   }
 
   //printf("Open this list of colours: %s\n", filename);
@@ -2114,8 +2074,7 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
   FILE* fp = fopen(filename, "r");
   if(fp == NULL)
   {
-    printf("dump_successive_cleaned_binaries cannot open file:%s\n", filename);
-    exit(EXIT_FAILURE);
+    die("dump_successive_cleaned_binaries cannot open file:%s\n", filename);
   }
 
   int total_seq_loaded = 0;
@@ -2140,8 +2099,7 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
 
       if(path_ptr == NULL)
       {
-        fprintf(stderr, "Cannot find ctxlist: %s\n", line->buff);
-        exit(EXIT_FAILURE);
+        die("Cannot find ctxlist: %s\n", line->buff);
       }
 
       total_seq_loaded +=
@@ -2182,8 +2140,7 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
   //----------------------------------
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
   
@@ -2213,8 +2170,7 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
   //----------------------------------
   KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
   if (windows == NULL){
-    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
-    exit(1);
+    die("Out of memory trying to allocate a KmerArraySet");
   }  
   //allocate memory for the sliding windows 
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
@@ -2287,8 +2243,9 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
 //return total number of kmers read
 //The third argument - length - is the length in bases of the sequence.
 //return total number of kmers read
-int get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(char * seq,  char * qualities, int length, char quality_cut_off, 
-										  KmerSlidingWindowSet * windows, int max_windows, int max_kmers, dBGraph* db_graph)  
+int get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(
+  char * seq, char * qualities, int length, char quality_cut_off, 
+  KmerSlidingWindowSet * windows, int max_windows, int max_kmers, dBGraph* db_graph)  
 {
 
 
@@ -2307,8 +2264,7 @@ int get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_grap
   int count_kmers = 0;
 
   if (seq == NULL){
-    fputs("in get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph, seq is NULL\n",stderr);    
-    exit(1);
+    die("in get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph, seq is NULL\n");
   }
 
   if (length < kmer_size || max_windows == 0 || max_kmers == 0){
@@ -2354,8 +2310,7 @@ int get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_grap
 
       //new sliding window
       if (index_windows>=max_windows){
-	  fputs("number of windows is bigger than max_windows",stderr);
-	  exit(1);
+	  die("number of windows is bigger than max_windows");
 	}
 
       KmerSlidingWindow * current_window =&(windows->window[index_windows]);
@@ -2371,8 +2326,7 @@ int get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_grap
       while(i<length){
 	
 	if (index_kmers>=max_kmers){
-	  fputs("number of kmers is bigger than max_kmers\n",stderr);
-	  exit(1);
+	  die("number of kmers is bigger than max_kmers\n");
 	}
 
 	Nucleotide current_base = char_to_binary_nucleotide(seq[i]);
@@ -2445,8 +2399,7 @@ int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_g
   int count_kmers = 0;
 
   if (seq == NULL){
-    fputs("in get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph, seq is NULL\n",stderr);    
-    exit(1);
+    die("in get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph, seq is NULL\n");
   }
 
   if (length < kmer_size || max_windows == 0 || max_kmers == 0){
@@ -2498,8 +2451,7 @@ int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_g
 
       //new sliding window
       if (index_windows>=max_windows){
-	  fputs("number of windows is bigger than max_windows",stderr);
-	  exit(1);
+	  die("number of windows is bigger than max_windows");
 	}
 
       KmerSlidingWindow * current_window =&(windows->window[index_windows]);
@@ -2515,8 +2467,7 @@ int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_g
       while(i<length){
 	
 	if (index_kmers>=max_kmers){
-	  fputs("number of kmers is bigger than max_kmers\n",stderr);
-	  exit(1);
+	  die("number of kmers is bigger than max_kmers\n");
 	}
 
 	Nucleotide current_base = char_to_binary_nucleotide(seq[i]);
@@ -2596,8 +2547,7 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
   //----------------------------------
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
   
@@ -2622,8 +2572,7 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
   //----------------------------------
   KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
   if (windows == NULL){
-    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
-    exit(1);
+    die("Out of memory trying to allocate a KmerArraySet");
   }  
   //allocate memory for the sliding windows 
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
@@ -2738,8 +2687,7 @@ void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_
   //----------------------------------
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
   
@@ -2764,8 +2712,7 @@ void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_
   //----------------------------------
   KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
   if (windows == NULL){
-    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
-    exit(1);
+    die("Out of memory trying to allocate a KmerArraySet");
   }  
   //allocate memory for the sliding windows 
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
@@ -2876,8 +2823,7 @@ void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_referen
   FILE* fptr = fopen(f_name, "r");
   if (fptr == NULL)
     {
-      printf("cannot open chromosome fasta file:%s\n",f_name);
-      exit(1);
+      die("cannot open chromosome fasta file:%s\n",f_name);
     }
 
   read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(fptr, &file_reader, max_read_length, db_graph);
@@ -2981,8 +2927,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 									 seq, kmer_window, db_graph, colour);
   if (!f_entry)
     {
-      printf("One of these reads (5p flank) is longer than specified max read length. Last chunk we get was %s\n", seq->seq);
-      exit(1);
+      die("One of these reads (5p flank) is longer than specified max read length. Last chunk we get was %s\n", seq->seq);
     }
 
   if (var->len_flank5p==-1)
@@ -2995,8 +2940,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
   char* sub_ptr = strstr(seq->name, "_5p_flank");
   if (sub_ptr==NULL)
     {
-      printf("Abort. Mandatory format for read-id of 5p flanks is >..some text.._5p_flank - but in this read, names %s, I cannot find the text \"_5p_flank\"\n", seq->name);
-      exit(1);
+      die("Abort. Mandatory format for read-id of 5p flanks is >..some text.._5p_flank - but in this read, names %s, I cannot find the text \"_5p_flank\"\n", seq->name);
     }
   else
     {
@@ -3032,8 +2976,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 										     seq, seq_inc_prev_kmer,kmer_window, db_graph, colour);
   if (!f_entry)
     {
-      printf("One of these reads (branch1) is longer than specified max read length. The last chunk we got was %s\n", seq->seq);
-      exit(1);
+      die("One of these reads (branch1) is longer than specified max read length. The last chunk we got was %s\n", seq->seq);
     }
 
   strncpy(last_kmer_of_branch1, seq_inc_prev_kmer->seq + (int)strlen(seq_inc_prev_kmer->seq)-db_graph->kmer_size, db_graph->kmer_size);
@@ -3050,8 +2993,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
   //printf("alt allele: %s, length %d\n", seq->seq, *len_branch_other );
   if (!f_entry)
     {
-      printf("One of these reads (branch2) is longer than specified max read length Last chunk we got was %s\n\n", seq->seq);
-      exit(1);
+      die("One of these reads (branch2) is longer than specified max read length Last chunk we got was %s\n\n", seq->seq);
     }
 
 
@@ -3067,8 +3009,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
   if (!f_entry)
     {
-      printf("One of these reads (3p flank) is longer than specified max read length\n");
-      exit(1);
+      die("One of these reads (3p flank) is longer than specified max read length\n");
     }
 
   //save the sequence we have read:
@@ -3701,305 +3642,182 @@ boolean read_next_error_cleaning_object(FILE* fp, ErrorCleaning* cl)
 
 }
 
-/*
-//return true if signature is readable
-boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* number_of_bitfields, int* number_of_colours_in_binary){
-  int read;
-  char magic_number[6];
-  
 
-  read = fread(magic_number,sizeof(char),6,fp);
-  if (read>0 &&
-      magic_number[0]=='C' &&
-      magic_number[1]=='O' &&
-      magic_number[2]=='R' &&
-      magic_number[3]=='T' &&
-      magic_number[4]=='E' &&
-      magic_number[5]=='X' ){
+// Given a 'filelist' file, check all files pointed to exist. 
+// If path_array is not NULL, populate it with the paths.
+// Exits with error if a file doesn't exist or isn't readable.
+// Return the number of files pointed to.
+int load_paths_from_filelist(char* filelist_path, char** path_array)
+{
+  // Get absolute path
+  char absolute_path[PATH_MAX+1];
+  char* filelist_abs_path = realpath(filelist_path, absolute_path);
 
-    int version;
-    read = fread(&version,sizeof(int),1,fp);
-    if (read>0)
-      {
-	int kmer_size2;
-	read = fread(&kmer_size2,sizeof(int),1,fp);
-	if (read>0)
-	  {
-	    int num_bitfields;
-	    read = fread(&num_bitfields,sizeof(int),1,fp);
-
-	    if ( read>0 )
-	      {
-		int num_cols;
-		read = fread(&num_cols,sizeof(int),1,fp);
-		
-		if ( read>0  )
-		  { 
-		    //int* binary_version, int* kmer_size, int* num_bitfields, int* number_of_colours_in_binar
-		    *binary_version = version;
-		    *kmer_size = kmer_size2;
-		    *number_of_bitfields = num_bitfields;
-		    *number_of_colours_in_binary = num_cols;
-		  }
-		else
-		  {
-		    return false;
-		  }
-	      }
-	    else
-	      {
-		return false;
-	      }
-	  }
-	else
-	  {
-	    return false;
-	  }
-      }
-    else
-      {
-	return false;
-      }
+  if(filelist_abs_path == NULL)
+  {
+    die( "Cannot get absolute path to filelist: %s\n", filelist_path);
   }
-  else
+
+  FILE* filelist_handle = fopen(filelist_abs_path, "r");
+
+  if(filelist_handle == NULL)
+  {
+    die( "Cannot open filelist: %s\n", filelist_abs_path);
+  }
+
+  // Get directory path
+  StrBuf *dir = file_reader_get_strbuf_of_dir_path(filelist_abs_path);
+
+  // Read filelist
+  int num_of_files = 0;
+
+  StrBuf *line = strbuf_new();
+
+  while(strbuf_reset_readline(line, filelist_handle))
+  {
+    strbuf_chomp(line);
+
+    if(strbuf_len(line) > 0)
     {
-      return false;
+      // Get paths relative to filelist dir
+      if(strbuf_get_char(line, 0) != '/')
+        strbuf_insert(line, 0, dir, 0, strbuf_len(dir));
+
+      // Replace the first '\t' with '\0'
+      strtok(line->buff, "\t");
+
+      // Get absolute paths
+      char* path_ptr = realpath(line->buff, absolute_path);
+
+      if(path_ptr == NULL)
+      {
+        die( "Cannot find filelist: %s\n", line->buff);
+      }
+      else if(access(path_ptr, R_OK) == -1)
+      {
+        die("Cannot access file '%s' listed in '%s'\n", path_ptr, filelist_path);
+      }
+
+      if(path_array != NULL)
+      {
+        path_array[num_of_files] = strdup(line->buff);
+
+        if(path_array[num_of_files] == NULL)
+        {
+          die("Ran out of memory loading filelist: %s\n", filelist_path);
+        }
+      }
+
+      num_of_files++;
     }
+  }
 
-  return true;
-}
-*/
+  strbuf_free(line);
+  strbuf_free(dir);
 
+  fclose(filelist_handle);
 
-//given a list of filenames, check they all exist, and return the number of them
-int get_number_of_files_and_check_existence_from_filelist(char* filelist)
-{
-  
-  int count=0;
-  
-
-  FILE* fp = fopen(filelist, "r");
-  if (fp==NULL)
-    {
-      printf("Cannot open %s\n", filelist);
-      exit(1);
-    }
-
-
-  char file[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
-  file[0]='\0';
-  
-  while (feof(fp)==0)
-    {
-      if (fgets(file, MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME, fp) != NULL)
-	{
-	  //remove newline from end of line - replace with \0
-	  char* p;
-	  if ((p = strchr(file, '\n')) != NULL)
-	    {
-	      *p = '\0';
-	    }
-	  
-	  char temp1[MAX_FILENAME_LENGTH];
-	  temp1[0]='\0';
-	  strcpy(temp1, file);
-	  char delims[] = "\t";
-	  char* proper_filename = strtok(temp1, delims);
-
-	  if (access(proper_filename, R_OK)==-1)
-	    {
-	      printf("Cannot access file %s listed in %s\n", proper_filename, filelist);
-	      exit(1);
-	    }
-	  else
-	    {
-	      count++;
-	    }
-
-	}
-    }
-  fclose(fp);
-
-  return count;
-}
-
-//assumes we already know how many files in the list, and have preallocated an array to hold the filenames
-void get_filenames_from_list(char* filelist, char** array, int len)
-{
-  int count=0;
-
-  FILE* fp = fopen(filelist, "r");
-  if (fp==NULL)
-    {
-      printf("Cannot open %s\n", filelist);
-      exit(1);
-    }
-
-  char file[MAX_FILENAME_LENGTH+MAX_LEN_SAMPLE_NAME+1];
-  file[0]='\0';
-  
-  while ( (feof(fp)==0) && (count<len) )
-    {
-      if (fgets(file, MAX_FILENAME_LENGTH, fp) != NULL)
-	{
-	  //remove newline from end of line - replace with \0
-	  char* p;
-	  if ((p = strchr(file, '\n')) != NULL)
-	    {
-	      *p = '\0';
-	    }
-
-
-	  char temp1[MAX_FILENAME_LENGTH];
-	  temp1[0]='\0';
-	  strcpy(temp1, file);
-	  char delims[] = "\t";
-	  char* proper_filename = strtok(temp1, delims);
-
-	  strcpy(array[count], proper_filename);
-	  count++;
-	}
-    }
-  fclose(fp);
-
-
-  
+  return num_of_files;
 }
 
-// filename is a list of files, one for each colour (with optional second column of sample-ids). Check they all exists, there are not too many,
-// ad that each of them contains a alist of valid binaries.
-boolean check_colour_list(char* filename, int kmer)
+boolean _check_colour_or_ctx_list(char* list_path, int kmer,
+                                  char is_ctxlist)
 {
-  int num_cols_in_list = get_number_of_files_and_check_existence_from_filelist(filename);
+  int num_files_in_list = load_paths_from_filelist(list_path, NULL);
 
+  char** file_paths = malloc(sizeof(char*) * num_files_in_list);
 
-  char** list_cols = malloc( sizeof(char*) * num_cols_in_list);
-  if (list_cols==NULL)
-    {
-      printf("OOM. Give up can't even allocate space for the names of colourss\n");
-      exit(1);
-    }
+  if(file_paths == NULL)
+  {
+    die( "OOM. Can't allocate memory for the file paths\n");
+  }
+
+  load_paths_from_filelist(list_path, file_paths);
+
+  // If this is a colour list, count the number of colours
+  int num_of_colours = 0;
+
   int i;
-  for (i=0; i< num_cols_in_list; i++)
+  for(i = 0; i < num_files_in_list; i++)
+  {
+    FILE* ctxlist_handle = fopen(file_paths[i], "r");
+    
+    if(ctxlist_handle == NULL)
     {
-      list_cols[i] = malloc(sizeof(char)*500);
-      if (list_cols[i]==NULL)
-	{
-	  printf("OOM. Giveup can't even allocate space for the names of the colour file i = %d\n",i);
-	  exit(1);
-	}
+      die("Cannot open %s from list %s\n", file_paths[i], list_path);
     }
 
-  get_filenames_from_list(filename, list_cols,num_cols_in_list);
+    GraphInfo* ginfo = graph_info_alloc_and_init();
+    BinaryHeaderErrorCode ecode = EValid;
+    BinaryHeaderInfo binfo;
+    initialise_binary_header_info(&binfo, ginfo);
+    int check = query_binary_NEW(ctxlist_handle, &binfo, &ecode);
 
-  //first - none of these files should be a cortex binary - typical mistake, and worth checking for
-  for (i=0; i< num_cols_in_list; i++)
+    graph_info_free(ginfo);
+    fclose(ctxlist_handle);
+
+    if(is_ctxlist)
     {
-      FILE* fptr = fopen(list_cols[i], "r");
-      if (fptr==NULL)
-	{
-	  printf("Cannot open %s from list %s\n", list_cols[i], filename);
-	  exit(1);
-	}
-      GraphInfo* ginfo=graph_info_alloc_and_init();
-      BinaryHeaderErrorCode ecode=EValid;
-      BinaryHeaderInfo binfo;
-      initialise_binary_header_info(&binfo, ginfo);
-      int check = query_binary_NEW(fptr, &binfo, &ecode);
-      if (check==true)
-	{
-	  printf("Error with input arguments. Summary: you have passed in a list of binaries, not a list of lists of binaries.\n--colour_list requires a list of files, each of which represent a colour.\n Inside each of those ");
-	  printf("should be a list of cortex binaries. \nHowever your colour list %s contains this file %s which is itself a cortex binary not a list of binaries\n", filename, list_cols[i]);
-	  exit(1);
-	}
-      else
-	{
-	  //check it contains only cortex binaries.
-
-	  int count=0;
-
-	  FILE* fp = fopen(list_cols[i], "r");
-	  if (fp==NULL)
-	    {
-	      printf("Cannot open %s\n", list_cols[i]);
-	      exit(1);
-	    }
-
-	  char file[MAX_FILENAME_LENGTH+1];
-	  file[0]='\0';
-	  
-	  while ( feof(fp)==0 )
-	    {
-	      if (fgets(file, MAX_FILENAME_LENGTH, fp) != NULL)
-		{
-		  //remove newline from end of line - replace with \0
-		  char* p;
-		  if ((p = strchr(file, '\n')) != NULL)
-		    {
-		      *p = '\0';
-		    }
-		  FILE* fp_putative_binary=fopen(file, "r");
-		  if (fp_putative_binary==NULL)
-		    {
-		      printf("Cannot open this file %s\n", file);
-		      exit(1);
-		    }
-		  
-		  GraphInfo* ginfo2=graph_info_alloc_and_init();
-		  BinaryHeaderErrorCode ecode2=EValid;
-		  BinaryHeaderInfo binfo2;
-		  initialise_binary_header_info(&binfo2, ginfo2);
-		  int check2 = query_binary_NEW(fp_putative_binary, &binfo2, &ecode2);
-		  fclose(fp_putative_binary);
-		  if (check2==false)
-		    {
-		      printf("Error with input arguments. --colour_list requires a list of files, each of which represent a colour. Inside each of those ");
-		      printf("should be a list of cortex binaries. Therefore your colour list %s contains this file %s which should be a list of cortex binaries\n", filename, list_cols[i]);
-		      printf("However it contains %s, which is not a cortex binary\n", file);
-		      exit(1);
-		    }
-		  else if (binfo2.kmer_size != kmer)
-		    {
-		      printf("This binary %s is a kmer %d binary, and cannot be loaded into the main graph which has kmer %d\n", file,binfo.kmer_size, kmer);
-		      exit(1);
-		    }
-		  else if (binfo2.number_of_bitfields != NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
-		    {
-		      printf("Cannot load this binary %s, as it was built with max_kmer_size=%d, whereas the current graph has this set to %d. Incompatible binary.\n",
-			     file, binfo2.number_of_bitfields, NUMBER_OF_BITFIELDS_IN_BINARY_KMER);
-		      exit(1);
-		    }
-		  else if (binfo2.number_of_colours !=1)
-		    {
-		      printf("Input error. --colour_list requires a list of colour files, each one containing a list of single-colour binaries\n");
-		      printf("This binary %s is not a single colour binary - it has %d colours.\n", file, binfo2.number_of_colours);
-		      exit(1);
-		    }
-		  count++;
-		  graph_info_free(ginfo2);
-		}
-	    }
-	  fclose(fp);
-
-
-
-
-	}
-
-
-      fclose(fptr);
-      graph_info_free(ginfo);
+      // If this is a ctxlist all paths should point to ctx binaries
+      if(check == false)
+      {
+        die(
+"--colour_list requires a list of files, each of which represent a colour.\n"
+"  Inside each of those should be a list of cortex binaries. But your\n"
+"  ctx list: %s\n"
+"  contains this file: %s\n"
+"  which is not a cortex binary. \n", list_path, file_paths[i]);
+      }
     }
-
-
-  //cleanup
-  for (i=0; i<num_cols_in_list; i++)
+    else
     {
-      free(list_cols[i]);
+      // If this is a colour list all paths should point to ctxlists -
+      // not ctx binares!
+      if(check == true)
+      {
+        die(
+"You have passed in a list of binaries, not a list of lists of binaries.\n"
+"  --colour_list requires a list of files, each of which represent a colour.\n"
+"  Inside each of those should be a list of cortex binaries. However your\n"
+"  colour list: %s\n"
+"  contains this file: %s\n"
+"  which is itself a cortex binary not a list of binaries\n",
+        list_path, file_paths[i]);
+      }
+
+      check_ctx_list(file_paths[i], kmer);
+
+      num_of_colours++;
     }
-  free(list_cols);
+  }
+
+  if(!is_ctxlist && num_of_colours > NUMBER_OF_COLOURS)
+  {
+    die("Too many colours [%i] in colourlist: %s\n"
+        "  Please recompile with more colours.\n",
+        num_of_colours, list_path);
+  }
+
+  // Cleanup
+  for(i = 0; i < num_files_in_list; i++)
+  {
+    free(file_paths[i]);
+  }
+
+  free(file_paths);
 
   return true;
 }
 
+// filename is a list of files, one for each colour (with optional second column
+// of sample-ids). Check they all exists, there are not too many, and that each
+// of them contains a list of valid binaries.
+boolean check_colour_list(char* file_path, int kmer)
+{
+  return _check_colour_or_ctx_list(file_path, kmer, 0);
+}
 
+boolean check_ctx_list(char* file_path, int kmer)
+{
+  return _check_colour_or_ctx_list(file_path, kmer, 1);
+}

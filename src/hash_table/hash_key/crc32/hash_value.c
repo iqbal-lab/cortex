@@ -79,9 +79,7 @@ int hash_value(Key key, int number_buckets)
   //return hash_value;
 
 
-  printf("This has not been modified to support big kmers. Implement it!");
-  exit(1);
-    
+  die("This has not been modified to support big kmers. Implement it!");    
   
   int hash_value = 0 ;
  

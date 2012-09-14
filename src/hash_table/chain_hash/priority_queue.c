@@ -33,8 +33,7 @@ PQueue * pqueue_new(){
   PQueue * pqueue = malloc(sizeof(PQueue));
   
   if (pqueue == NULL){
-    fprintf(stderr,"could not allocate pqueue\n");
-    exit(1);
+    die("Could not allocate pqueue");
   }
 
   pqueue->max_size = 0;
@@ -61,8 +60,8 @@ boolean pqueue_realloc(PQueue * pqueue, int realloc_size){
     pqueue->max_size += realloc_size;
     
     if (new_ptr == NULL){
-      puts("priority queue: cannot allocate memory");
-      exit(1);//so no need to worry about orphaned pointer at this stage.
+      die("priority queue: cannot allocate memory");
+      //so no need to worry about orphaned pointer at this stage.
     }
     
     pqueue->elements = new_ptr;

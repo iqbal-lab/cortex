@@ -79,8 +79,7 @@ int main(int argc, char **argv){
     * full_entry = true;
 
     if (new_entry!= true){
-      puts("new_entry has to be true for fastq\n");
-      exit(1);
+      die("new_entry has to be true for fastq");
     }
 
     return read_sequence_from_fastq(fp,seq,max_read_length);
@@ -107,8 +106,7 @@ int main(int argc, char **argv){
   fastq            = atoi(argv[5]);
 
   if (kmer_size>31){
-    fprintf(stderr,"kmer size [%i] exceeds 31\n",kmer_size);
-    exit(1);
+    die("kmer size [%i] exceeds 31");
   }
 
   fprintf(stderr,"Input file of filenames: %s\n",argv[1]);
@@ -138,8 +136,7 @@ int main(int argc, char **argv){
   //----------------------------------
   seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
   
@@ -163,8 +160,7 @@ int main(int argc, char **argv){
   
   KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
   if (windows == NULL){
-    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
-    exit(1);
+    die("Out of memory trying to allocate a KmerArraySet");
   }  
   //allocate memory for the sliding windows 
   binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
@@ -178,8 +174,7 @@ int main(int argc, char **argv){
     
     fp_file = fopen(filename, "r");
     if (fp_file == NULL){
-      printf("cannot open file:%s\n",filename);
-      exit(1);
+      die("cannot open file:%s",filename);
     }
     
     long long seq_length = 0;
@@ -211,8 +206,7 @@ int main(int argc, char **argv){
 	     Element * current_entry = hash_table_find_or_insert(element_get_key(current_window->kmer[j],kmer_size),&found,hash_table);	
  
 	     if (current_entry == NULL){
-	       fputs("file_reader: problem - current kmer not found\n",stderr);
-	       exit(1);
+	       die("file_reader: problem - current kmer not found");
 	     }
 	     
 	     if (! (i==0 && j==0 && prev_full_entry == false && current_entry == prev_entry)){ //otherwise is the same old last entry 

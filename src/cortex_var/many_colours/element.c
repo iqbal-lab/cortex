@@ -47,8 +47,7 @@ Element* new_element()
 
   if (e==NULL)
     {
-      printf("Unable to allocate a new element");
-      exit(1);
+      die("Unable to allocate a new element");
     }
   
   binary_kmer_initialise_to_zero(&(e->kmer));
@@ -95,19 +94,17 @@ Edges* get_edge(Element e, EdgeArrayType type,int index)
     {
       if (index>=NUMBER_OF_COLOURS)
 	{
-	  printf("Called get_edge with index %d which is >= NUMBER_OF_COLOURS which is %d. Exist\n", index, NUMBER_OF_COLOURS);
-	  exit(1);
+	  die("Called get_edge with index %d which is >= NUMBER_OF_COLOURS which is %d. Exit",
+        index, NUMBER_OF_COLOURS);
 	}
     Edges *edges = e.individual_edges + index;
     return edges;
     }
  else 
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
-      exit(1);
+      die("Coding error. Only expecting enum of edge array types to contain one "
+          "type - individual_edge_array, but we are getting type %d", type);
     }
-
-  exit(1);
 }
 
 
@@ -119,18 +116,15 @@ Edges get_edge_copy(const Element e, EdgeArrayType type,int index)
     {
       if (index>=NUMBER_OF_COLOURS)
 	{
-	  printf("Trying to access a colour beyond the compile-time limit. Exit.\n");
-	  exit(1);
+	  die("Trying to access a colour beyond the compile-time limit. Exit.");
 	}
       return e.individual_edges[index];
     }
   else 
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
-      exit(1);
+      die("Coding error. Only expecting enum of edge array types to contain one "
+          "type - individual_edge_array, but we are getting type %d", type);
     }
-
-  exit(1);
 }
 
 
@@ -227,16 +221,16 @@ void add_edges(Element* e, EdgeArrayType type, int index, Edges edge_char)
     {
       if (index>=NUMBER_OF_COLOURS)
 	{
-	  printf("In element's add_edges function. index is %d, and should be at most %d\n", index, NUMBER_OF_COLOURS-1);
-	  exit(1);
+	  die("In element's add_edges function. index is %d, and should be at most %d\n",
+        index, NUMBER_OF_COLOURS-1);
 	}
       e->individual_edges[index] |= edge_char;
     }
 
   else
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
-      exit(1);
+      die("Coding error. Only expecting enum of edge array types to contain one "
+          "type - individual_edge_array, but we are getting type %d", type);
     }
   
 }
@@ -248,16 +242,16 @@ void set_edges(Element* e, EdgeArrayType type, int index, Edges edge_char)
     {
       if (index>=NUMBER_OF_COLOURS)
 	{
-	  printf("In element's set_edges function. index is %d,and should be at most %d\n", index, NUMBER_OF_COLOURS);
-	  exit(1);
+	  die("In element's set_edges function. index is %d,and should be at most %d",
+        index, NUMBER_OF_COLOURS);
 	}
       e->individual_edges[index] = edge_char;
     }
 
   else
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
-      exit(1);
+      die("Coding error. Only expecting enum of edge array types to contain one "
+          "type - individual_edge_array, but we are getting type %d", type);
     }
   
 }
@@ -274,14 +268,15 @@ void db_node_reset_all_edges_for_all_people_and_pops_to_zero(Element* e)
 
 }
 
-void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, EdgeArrayType type, int index)
+void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide,
+                    EdgeArrayType type, int index)
 {
   if (type == individual_edge_array)
     {
       if (index>=NUMBER_OF_COLOURS)
 	{
-	  printf("in element's reset_one_edge function. index is %d,and should be at most %d - 1", index, NUMBER_OF_COLOURS);
-	  exit(1);
+	  die("in element's reset_one_edge function. index is %d,and should be at most %d - 1",
+        index, NUMBER_OF_COLOURS);
 	}
 
       char edge = 1 << nucleotide;      
@@ -297,14 +292,16 @@ void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, 
     }
   else
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
-      exit(1);
+      die("Coding error. Only expecting enum of edge array types to contain one "
+          "type - individual_edge_array, but we are getting type %d", type);
     }
   
 }
 
 
-int element_get_number_of_people_or_pops_containing_this_element(Element* e, EdgeArrayType type, int index)
+int element_get_number_of_people_or_pops_containing_this_element(Element* e,
+                                                                 EdgeArrayType type,
+                                                                 int index)
 {
   int i;
   int count=0;
@@ -320,8 +317,8 @@ int element_get_number_of_people_or_pops_containing_this_element(Element* e, Edg
     }
   else
     {
-      printf("Coding error. Only expecting enum of edge array types to contain one type - individual_edge_array, but we are getting type %d", type);
-      exit(1);
+      die("Coding error. Only expecting enum of edge array types to contain one \n"
+          "type: individual_edge_array, but we are getting type %d", type);
     }
 
   return count;
@@ -402,8 +399,7 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
 
   if (e==NULL)
     {
-      printf("Called elemtn_initialise on NULL ptr");
-      exit(1);
+      die("Called element_initialise on NULL ptr");
     }
 
   BinaryKmer tmp_kmer;
@@ -432,8 +428,7 @@ void element_initialise_kmer_covgs_edges_and_status_to_zero(Element * e){
 
   if (e==NULL)
     {
-      printf("Called element_initialise_covgs_and_edges_to_zero  on NULL ptr");
-      exit(1);
+      die("Called element_initialise_covgs_and_edges_to_zero on NULL ptr");
     }
 
   binary_kmer_initialise_to_zero(&(e->kmer));
@@ -457,8 +452,7 @@ void element_set_kmer(Element * e, Key kmer, short kmer_size){
 
   if (e==NULL)
     {
-      printf("Called element_set_kmer on NULL ptr");
-      exit(1);
+      die("Called element_set_kmer on NULL ptr");
     }
 
   BinaryKmer tmp_kmer;
@@ -553,13 +547,15 @@ Orientation db_node_get_orientation(BinaryKmer* k, dBNode * e, short kmer_size){
     {
       return reverse;
     }
-  
-  printf("programming error - you have called  db_node_get_orientation with a kmer that is neither equal to the kmer in this node, nor its rev comp\n");
+
   char tmpseq1[kmer_size+1];
   char tmpseq2[kmer_size+1];
-  printf("Arg 1 Kmer is %s and Arg 2 node kmer is %s\n", binary_kmer_to_seq(k, kmer_size, tmpseq1), binary_kmer_to_seq(&(e->kmer), kmer_size, tmpseq2));
-  exit(1);
-  
+
+  die("programming error - you have called  db_node_get_orientation with a kmer\n"
+      "that is neither equal to the kmer in this node, nor its rev comp\n"
+      "Arg 1 Kmer is %s and Arg 2 node kmer is %s\n",
+      binary_kmer_to_seq(k, kmer_size, tmpseq1),
+      binary_kmer_to_seq(&(e->kmer), kmer_size, tmpseq2));
 }
 
 
@@ -1031,14 +1027,12 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 
     read = fread(covg, sizeof(int), NUMBER_OF_COLOURS, fp);    
     if (read==0){
-      puts("error with input file - failed to read covg in db_node_read_sv_trio_binary. You have tried to read an incompatible binary - this error message should not happen - you should have hit other checks first.. Please contact mario.caccamo@bbsrc.ac.uk and zam@well.ox.ac.uk\n");
-      exit(1);
+      die("error with input file - failed to read covg in db_node_read_sv_trio_binary. You have tried to read an incompatible binary - this error message should not happen - you should have hit other checks first.. Please contact mario.caccamo@bbsrc.ac.uk and zam@well.ox.ac.uk\n");
     }
 
     read = fread(individual_edges, sizeof(Edges), NUMBER_OF_COLOURS, fp);
     if (read==0){
-      puts("error with input file - failed to read Edges in db_node_read_sv_trio_binary. You have tried to read an incompatible binary - this error message should not happen - you should have hit other checks first.. Please contact mario.caccamo@bbsrc.ac.uk and zam@well.ox.ac.uk\n");
-      exit(1);
+      die("error with input file - failed to read Edges in db_node_read_sv_trio_binary. You have tried to read an incompatible binary - this error message should not happen - you should have hit other checks first.. Please contact mario.caccamo@bbsrc.ac.uk and zam@well.ox.ac.uk\n");
     }
 
 
@@ -1075,9 +1069,8 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
        (num_colours_in_binary<=0)
        )
     {
-      printf("You should not call db_node_read_multicolour_binary with %d as final argument.\n", num_colours_in_binary);
-      printf("NUMBER_OF_COLOURS is %d\n", NUMBER_OF_COLOURS);
-      exit(1);
+      die("You should not call db_node_read_multicolour_binary with %d as final argument.\n"
+          "NUMBER_OF_COLOURS is %d", num_colours_in_binary, NUMBER_OF_COLOURS);
     }
 
   
@@ -1093,14 +1086,12 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 	
 	read = fread(covg_reading_from_binary, sizeof(int), num_colours_in_binary, fp);    
 	if (read==0){
-	  puts("error with input file - failed to read covg in db_node_read_multicolour_binary\n");
-	  exit(1);
+	  die("error with input file - failed to read covg in db_node_read_multicolour_binary\n");
 	}
 	
 	read = fread(individual_edges_reading_from_binary, sizeof(Edges), num_colours_in_binary, fp);
 	if (read==0){
-	  puts("error with input file - failed to read Edges in db_node_read_multicolour_binary\n");
-	  exit(1);
+	  die("error with input file - failed to read Edges in db_node_read_multicolour_binary\n");
 	}
       }
       else{
@@ -1131,14 +1122,12 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
 	
 	read = fread(covg_reading_from_binary, sizeof(uint32_t), num_colours_in_binary, fp);    
 	if (read==0){
-	  puts("error with input file - failed to read covg in db_node_read_multicolour_binary\n");
-	  exit(1);
+	  die("Failed to read covg in db_node_read_multicolour_binary\n");
 	}
 	
 	read = fread(individual_edges_reading_from_binary, sizeof(Edges), num_colours_in_binary, fp);
 	if (read==0){
-	  puts("error with input file - failed to read Edges in db_node_read_multicolour_binary\n");
-	  exit(1);
+	  die("Failed to read Edges in db_node_read_multicolour_binary\n");
 	}
       }
       else{
@@ -1168,8 +1157,7 @@ boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * n
 
   if ( (index<0) || (index>=NUMBER_OF_COLOURS))
     {
-      printf("Invalid index for which person to load binary into: %d. Exiting.", index);
-      exit(1);
+      die("Invalid index for which person to load binary into: %d. Exiting.", index);
     }
 
   if (binversion_in_binheader==4)//legacy
@@ -1184,13 +1172,11 @@ boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * n
       if (read>0){
 	read = fread(&coverage,sizeof(int),1,fp);    
 	if (read==0){
-	  puts("error with input file - failed to read cvg, incompatible binary format?\n");
-	  exit(1);
+	  die("Failed to read cvg, incompatible binary format?");
 	}
 	read = fread(&edges,sizeof(Edges),1,fp);
 	if (read==0){
-	  puts("error with input file - failed to read edges, incompatible binary format?\n");
-	  exit(1);
+	  die("Failed to read edges, incompatible binary format?");
 	}   
       }
       else{
@@ -1216,13 +1202,11 @@ boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * n
       if (read>0){
 	read = fread(&coverage,sizeof(uint32_t),1,fp);    
 	if (read==0){
-	  puts("error with input file - failed to read cvg, incompatible binary format?\n");
-	  exit(1);
+	  die("Failed to read cvg, incompatible binary format?");
 	}
 	read = fread(&edges,sizeof(Edges),1,fp);
 	if (read==0){
-	  puts("error with input file - failed to read edges, incompatible binary format?\n");
-	  exit(1);
+	  die("Failed to read edges, incompatible binary format?");
 	}   
       }
       else{
@@ -1494,8 +1478,7 @@ void db_node_set_read_start_status(dBNode* node, Orientation ori)
     }
   else if (db_node_check_status(node, unassigned) )
     {
-      printf("Warning - setting status of an unassigned node to read_start. Exit");
-      exit(1);
+      die("Setting status of an unassigned node to read_start. Exit");
     }
   else if (db_node_check_status(node, read_start_forward) && (ori==reverse) )
     {
@@ -1515,8 +1498,7 @@ void db_node_set_read_start_status(dBNode* node, Orientation ori)
     }
   else
     {
-      printf("Programming error in read start setting of node");
-      exit(1);
+      die("Programming error in read start setting of node");
     }
   
 }

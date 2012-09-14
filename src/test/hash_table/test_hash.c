@@ -97,9 +97,8 @@ void test_hash_table_find_or_insert()
 	    }
 	  else
 	    {
-	      printf("e is NULL for i=%lld - unable to find\n",i);
-	      exit(1);
-	    }
+        die("Error: e is NULL for i=%lld - unable to find\n",i);
+	     }
 	}
       
       hash_table_free(&hash_table);

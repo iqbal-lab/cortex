@@ -104,8 +104,7 @@ GenotypingWorkingPackage* alloc_genotyping_work_package(int max_allele_len, int 
   GenotypingWorkingPackage* gwp =(GenotypingWorkingPackage*)  malloc(sizeof(GenotypingWorkingPackage));
   if (gwp==NULL)
     {
-      printf("Unable to malloc GenotypingWorkingPackage 1\n");
-      exit(1);
+      die("Unable to malloc GenotypingWorkingPackage 1");
     }
   gwp->max_allele_len = max_allele_len;
   gwp->max_sup_len    = max_sup_len;
@@ -135,8 +134,7 @@ GenotypingWorkingPackage* alloc_genotyping_work_package(int max_allele_len, int 
        (gwp->path_labels== NULL) ||
        (gwp->path_string  == NULL) )
     {
-      printf("Unable to alloc GenotypingWorkingPackage members\n");
-      exit(1);
+      die("Unable to alloc GenotypingWorkingPackage members");
     }
 
   set_int_array_to_zero(gwp->working_array_self, gwp->max_allele_len);
@@ -173,8 +171,7 @@ GenotypingWorkingPackage* alloc_genotyping_work_package(int max_allele_len, int 
 
   if (mobv==NULL)
     {
-      printf("Ridiculous - failed to alloc an array of 4 ints\n");
-      exit(1);
+      die("Ridiculous - failed to alloc an array of 4 ints");
     }
   mobv->mult11=(int*) malloc( (sizeof(int))*len_allele1);
   mobv->mult12=(int*) malloc( (sizeof(int))*len_allele1);
@@ -407,8 +404,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
 
   if ( (using_1net==false) && (using_2net==true))
     {
-      printf("you cannot use the 2net woithout using the 1net - code error\n");
-      exit(1);
+      die("you cannot use the 2net woithout using the 1net - code error");
     }
 
   Edges element_get_colour_indiv(const Element* e)
@@ -1184,8 +1180,9 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	if (node_corresponding_to_e==NULL)
 	  {
 	    char tmp[db_graph->kmer_size+1];
-	    printf("During counting, cannot find node %s (which IS in the little graph) in the main graph. Abort.\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, tmp));
-	    exit(1);
+	    die("During counting, cannot find node %s (which IS in the little graph) "
+          "in the main graph. Abort.",
+          binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, tmp));
 	  }
 	else if (db_node_check_status_special(node_corresponding_to_e)==true)
 	  {
@@ -1233,8 +1230,9 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 	if (node_corresponding_to_e==NULL)
 	  {
 	    char tmp[db_graph->kmer_size+1];
-	    printf("During genotyping reset, cannot find node %s (which IS in the little graph) in the main graph. Abort.\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, tmp));
-	    exit(1);
+	    die("During genotyping reset, cannot find node %s "
+          "(which IS in the little graph) in the main graph. Abort.",
+          binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, tmp));
 	  }
 	else 
 	  {
@@ -1354,8 +1352,8 @@ char** alloc_array_and_get_files_from_list(char* filelist, int num_files_in_list
   char** array_files=(char**) malloc(num_files_in_list*sizeof(char*));
   if (array_files==NULL)
     {
-      printf("Unable to malloc a filelist array! Either your machine is critically OOM, or you have trying to use an obscene number of colours accidentally\n");
-      exit(1);
+      die("Unable to malloc a filelist array! Either your machine is out-of-mem, "
+          "or you have trying to use an obscene number of colours accidentally");
     }
   int i;
   for (i=0; i<num_files_in_list; i++)
@@ -1363,8 +1361,8 @@ char** alloc_array_and_get_files_from_list(char* filelist, int num_files_in_list
       array_files[i]=(char*)malloc(MAX_FILENAME_LENGTH*sizeof(char));
       if (array_files[i]==NULL)
 	{
-	  printf("Unable to malloc the %d -th filename in an array, max filename length set to %d\n", i, MAX_FILENAME_LENGTH);
-	  exit(1);
+	  die("Unable to malloc the %d -th filename in an array, max filename length "
+        "set to %d", i, MAX_FILENAME_LENGTH);
 	}
       array_files[i][0]='\0';
     }
@@ -1373,8 +1371,8 @@ char** alloc_array_and_get_files_from_list(char* filelist, int num_files_in_list
   FILE* fp = fopen(filelist, "r");
   if (fp==NULL)
     {
-      printf("Unable to open the filelist of 1net or2net binaries %s - surprised this did not get caught by checks of the commandline\n", filelist);
-      exit(1);
+      die("Unable to open the filelist of 1net or2net binaries %s - surprised "
+          "this did not get caught by checks of the commandline", filelist);
     }
 
   char filename1[MAX_FILENAME_LENGTH+1];
@@ -1394,8 +1392,8 @@ char** alloc_array_and_get_files_from_list(char* filelist, int num_files_in_list
 	}
       else
 	{
-	  printf("Expected %d files in this list:%s, but failed to read the %d-th one from it\n", num_files_in_list, filelist, i);
-	  exit(1);
+	  die("Expected %d files in this list:%s, but failed to read the %d-th one from it",
+        num_files_in_list, filelist, i);
 	}
     }
   fclose(fp);
@@ -1496,8 +1494,8 @@ void modify_character(char* str, int which_base, int which_mutant)
     }
   else
     {
-      printf("Bug - str[which_base] is %c, whole string is %s, which_base is %d\n", str[which_base], str, which_base);
-      exit(1);
+      die("Bug - str[which_base] is %c, whole string is %s, which_base is %d",
+          str[which_base], str, which_base);
     }
 
   str[which_base]=mutants[which_mutant];
@@ -1628,8 +1626,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
   //----------------------------------
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_allele_length,MAX_READ_NAME_LEN);
   
@@ -1637,16 +1634,16 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window in "
+          "db_graph_make_reference_path_based_sv_calls. Exit.");
     }
   
   
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_allele_length-db_graph->kmer_size-1));
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer in "
+          "db_graph_make_reference_path_based_sv_calls. Exit.");
     }
   kmer_window->nkmers=0;
   
@@ -1663,8 +1660,8 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
   
   if ( (array_of_node_arrays==NULL) || (array_of_or_arrays==NULL) || (lengths_of_alleles==NULL) || (array_of_allele_names==NULL) )
     {
-      printf("Cannot alloc arrays of arrays in print_log_liks_of_specified_set_of_genotypes_of_complex_site\n");
-      exit(1);
+      die("Cannot alloc arrays of arrays in "
+          "print_log_liks_of_specified_set_of_genotypes_of_complex_site");
     }
   
   for (i=0; i<number_alleles; i++)
@@ -1675,8 +1672,8 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
       
       if ( (array_of_node_arrays[i]==NULL) || (array_of_or_arrays[i]==NULL) || (array_of_allele_names==NULL) )
 	{
-	  printf("Cannot alloc the %d -th node and or array in print_log_liks_of_specified_set_of_genotypes_of_complex_site", i);
-	  exit(1);
+	  die("Cannot alloc the %d -th node and or array in "
+        "print_log_liks_of_specified_set_of_genotypes_of_complex_site", i);
 	}
       lengths_of_alleles[i]=0;
       array_of_allele_names[i][0]='\0';
@@ -1691,8 +1688,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (path_string==NULL) )
     {
-      printf("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
-      exit(1);
+      die("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
     }
 
   
@@ -1705,8 +1701,9 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
   
   if ( (mobv==NULL)||(working_array_self==NULL) || (working_array_shared==NULL))
     {
-      printf("Cannot alloc all the arrays in calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site.  Give up and exit.");
-      exit(1);
+      die("Cannot alloc all the arrays in "
+          "calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site. "
+          "Give up and exit.");
     }
   
 
@@ -1733,8 +1730,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
     long long ret;
     int offset = 0;
     if (new_entry == false){
-      printf("new_entry must be true in hsi test function");
-      exit(1);
+      die("new_entry must be true in hsi test function");
     }
     ret =  read_sequence_from_fasta(fp,seq,max_allele_length,new_entry,full_entry,offset);
     
@@ -1746,8 +1742,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
   FILE* fp = fopen(fasta, "r");
   if (fp==NULL)
     {
-      printf("UNable to open %s. Exit", fasta);
-      exit(1);
+      die("UNable to open %s. Exit", fasta);
     }
 
 
@@ -1760,8 +1755,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 								     false, &f_entry, file_reader, seq, kmer_window, db_graph, 0);
       if (!f_entry)
 	{
-	  printf("One of these alleles is longer than the specified max_read_len\n");
-	  exit(1);
+	  die("One of these alleles is longer than the specified max_read_len");
 	}
       strcat(array_of_allele_names[j], seq->name);
       lengths_of_alleles[j]=num_kmers;
@@ -1842,8 +1836,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	    }
 	  else if ((using_2net==true)&&(using_1net==false))
 	    {
-	      printf("Using 2net and not 1net? SHould have caight this earlier\n");
-	      exit(1);
+	      die("Using 2net and not 1net? SHould have caight this earlier");
 	      //wipe_colour_and_load_binaries(db_graph, working_colour_2net, array_files_2net_binaries[i], array_files_2net_binaries[j]);
 	    }
 	  else if ((using_1net==true)&& (using_2net==true) )
@@ -1896,9 +1889,9 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	      char name[300];
 	      if (strlen(array_of_allele_names[i]) + strlen(array_of_allele_names[j])>=300 )
 		{
-		  printf("Names of alleles %s and %s are too long (%d) - concatenated, Cortex requires them to be less than 300 characters", 
+		  die("Names of alleles %s and %s are too long (%d) - concatenated, Cortex "
+          "requires them to be less than 300 characters", 
 			 array_of_allele_names[i], array_of_allele_names[j],(int)( strlen(array_of_allele_names[i]) + strlen(array_of_allele_names[j])) );
-		  exit(1);
 		}
 	      sprintf(name, "%s/%s", array_of_allele_names[i], array_of_allele_names[j]); 
 	      
@@ -1970,8 +1963,8 @@ double* alloc_ML_results_array(int num_samples_to_genotype)
   double* retarray = (double*) malloc(sizeof(double) * num_samples_to_genotype);
   if (retarray==NULL)
     {
-      printf("UNable to malloc %d colours in alloc_ML_results_array\n",num_samples_to_genotype);
-      exit(1);
+      die("Unable to malloc %d colours in alloc_ML_results_array",
+          num_samples_to_genotype);
     }
   int i;
   for (i=0; i<num_samples_to_genotype; i++)
@@ -1986,8 +1979,7 @@ char** alloc_ML_results_names_array(int num_samples_to_genotype)
   char** retarray = (char**) malloc(sizeof(char*) * num_samples_to_genotype);
   if (retarray==NULL)
     {
-      printf("Ridiculous - unanle to malloc array of names in alloc_ML_results_names_array");
-      exit(1);
+      die("Ridiculous - unanle to malloc array of names in alloc_ML_results_names_array");
     }
   int i;
   for (i=0; i<num_samples_to_genotype; i++)
@@ -1995,8 +1987,7 @@ char** alloc_ML_results_names_array(int num_samples_to_genotype)
       retarray[i] = (char*) malloc(sizeof(char) * MAX_READ_NAME_LEN);
       if (retarray[i]==NULL)
 	{
-	  printf("Unable to malloc name array in alloc_ML_results_names_array\n");
-	  exit(1);
+	  die("Unable to malloc name array in alloc_ML_results_names_array");
 	}
       else
 	{
@@ -2056,8 +2047,8 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 
   if (annovar->var->which==unknown)
     {
-      printf("Cannot call calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele unless the annovar specifies which allele is ref\n");
-      exit(1);
+      die("Cannot call calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele "
+          "unless the annovar specifies which allele is ref");
     }
   else if (annovar->var->which==first)//this should always be true for PD
     {
@@ -2088,8 +2079,8 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
       GenotypingElement* ge = little_hash_table_find_or_insert(&(annovar->var->one_allele[i]->kmer), &found, little_db_graph);
       if (ge==NULL)
 	{
-	  printf("Error - could neither find nor insert into the little hash - coding error, should be learge enough\n");
-	  exit(1);
+	  die("Could neither find nor insert into the little hash - coding error, "
+        "should be large enough");
 	}
       if (found==false)
 	{
@@ -2121,8 +2112,8 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
       GenotypingElement* ge = little_hash_table_find_or_insert(&(annovar->var->other_allele[i]->kmer), &found, little_db_graph);
       if (ge==NULL)
 	{
-	  printf("Error - could neither find nor insert into the little hash - coding error, should be learge enough\n");
-	  exit(1);
+	  die("Could neither find nor insert into the little hash - coding error, "
+        "should be large enough");
 	}
       if (found==false)
 	{
@@ -2169,8 +2160,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
   
   if (mobv==NULL)
     {
-      printf("Cannot alloc all the arrays in calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele.  Give up and exit.");
-      exit(1);
+      die("Cannot alloc all the arrays in calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele.  Give up and exit.");
     }
   
 
@@ -2321,17 +2311,15 @@ void get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(Annot
   //  if ( (working_colour1<0) || (working_colour1>=NUMBER_OF_COLOURS+1) || 
   //     (working_colour2<0) || (working_colour2>=NUMBER_OF_COLOURS+1)  )
   //  {
-  //    printf("Calling get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour with bad working colours %d, %d\n", working_colour1, working_colour2);
-  //    exit(1);
+  //    die("Calling get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour with bad working colours %d, %d\n", working_colour1, working_colour2);
   //  }
   if ( (annovar->var->len_one_allele> gwp->max_allele_len)
        ||
        (annovar->var->len_other_allele> gwp->max_allele_len)
        )
     {
-      printf("Trying to genotype a variant where one of the alleles (lengths %d, %d) is longer than the arrays we have malloced (length %d)\n",
+      die("Trying to genotype a variant where one of the alleles (lengths %d, %d) is longer than the arrays we have malloced (length %d)",
 	     annovar->var->len_one_allele, annovar->var->len_other_allele, gwp->max_allele_len);
-      exit(1);
     }
   calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_known_ref_allele(annovar, assump,
 											  model_info, little_db_graph, db_graph,
@@ -2412,16 +2400,16 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 	}
       else
 	{
-	  printf("Abort - asking to genotype a putative site without specifying the model\n");
-	  exit(1);
+	  die("Abort - asking to genotype a putative site without specifying the model");
 	}
     }
 
   int number_individals=NUMBER_OF_COLOURS;
   if ( (ref_colour !=-1) && ( (ref_colour<0) || (ref_colour>=NUMBER_OF_COLOURS) ) )
     {
-      printf("Called initialise_putative_variant with a ref_colour which is not -1, nor one of the colours this executable is compiled for. Coding error - this should have been caught earlier - call Zam\n");
-      exit(1);
+      die("Called initialise_putative_variant with a ref_colour which is not -1, "
+          "nor one of the colours this executable is compiled for. \n"
+          "Coding error - this should have been caught earlier - call Zam");
     }
   if (ref_colour != -1)
     {

@@ -2317,8 +2317,7 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
   
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -2387,8 +2386,7 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
   
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
 
@@ -2481,8 +2479,7 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
 
   if (db_graph==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -2513,8 +2510,7 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
   FILE* chrom_fptr = fopen("../data/test/pop_graph/one_person.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ./data/test/pop_graph/one_person.fa\n");
-      exit(1);
+      die("Cannot open ./data/test/pop_graph/one_person.fa\n");
     }
 
   //*************************************
@@ -2538,8 +2534,7 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
 
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   alloc_sequence(seq,number_of_nodes_to_load+db_graph->kmer_size+1,LINE_MAX);
   seq->seq[0]='\0';
@@ -2548,14 +2543,12 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window . Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window . Exit.\n");
     }
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*1000);    //*(number_of_nodes_to_load + db_graph->kmer_size));
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer ");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer");
     }
   
   kmer_window->nkmers=0;
@@ -2748,8 +2741,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -2788,8 +2780,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ./data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fa\n");
-      exit(1);
+      die("Cannot open ./data/test/pop_graph/first_person_with_one_read_and_Ns_on_end.fa\n");
     }
 
   int min_fiveprime_flank_anchor = 2;
@@ -2844,8 +2835,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_2()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -2884,8 +2874,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_2()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/test_pop_load_and_print/two_people_sharing_alu/person1.fa");
     }
 
   int min_fiveprime_flank_anchor = 10;
@@ -2953,8 +2942,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
   
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -2999,8 +2987,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu.fa");
     }
 
   int min_fiveprime_flank_anchor = 10;
@@ -3048,8 +3035,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_4()
   
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -3076,8 +3062,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_4()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_1kb_chrom1.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_1kb_chrom1.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/variations/person_1kb_chrom1.fa");
     }
 
   int min_fiveprime_flank_anchor = 20;
@@ -3129,8 +3114,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_5()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -3155,8 +3139,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_5()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_alu.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_without_alu.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/variations/person_without_alu.fa");
     }
 
 
@@ -3210,8 +3193,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
   
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -3238,8 +3220,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/variations/second_person_same_short_seq_one_base_diff.fa");
     }
 
   int min_fiveprime_flank_anchor = 5;
@@ -3261,8 +3242,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
   
   if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
     {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
+      die("Failed to alloc return_something_array - cannot start test\n");
     }
 
   return_flank5p_array[0] = (char*) malloc( sizeof(char) * 30);
@@ -3272,8 +3252,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
 
   if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
      {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
+      die("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
     }
   
   return_flank5p_array[0][0]='\0';
@@ -3360,8 +3339,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -3386,8 +3364,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fa");
     }
 
   int min_fiveprime_flank_anchor = 10;
@@ -3406,8 +3383,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
   
   if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
     {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
+      die("Failed to alloc return_something_array - cannot start test\n");
     }
 
   return_flank5p_array[0] = (char*) malloc( sizeof(char) * 400);
@@ -3417,8 +3393,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
 
   if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
      {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
+      die("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
     }
   
   return_flank5p_array[0][0]='\0';
@@ -3495,8 +3470,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_3()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -3521,8 +3495,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_3()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_2_bases_missing.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_without_2_bases_missing.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/variations/person_without_2_bases_missing.fa");
     }
 
 
@@ -3542,8 +3515,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_3()
   
   if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
     {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
+      die("Failed to alloc return_something_array - cannot start test\n");
     }
 
   return_flank5p_array[0] = (char*) malloc( sizeof(char) * 80);
@@ -3553,8 +3525,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_3()
 
   if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
      {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
+      die("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
     }
   
   return_flank5p_array[0][0]='\0';
@@ -3632,8 +3603,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_4()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // We use the same two people as last time, but swap their roles
@@ -3660,8 +3630,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_4()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_2_bases_missing.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_with_2_bases_missing.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/variations/person_with_2_bases_missing.fa");
     }
 
 
@@ -3681,8 +3650,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_4()
   
   if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
     {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
+      die("Failed to alloc return_something_array - cannot start test\n");
     }
 
   return_flank5p_array[0] = (char*) malloc( sizeof(char) * 80);
@@ -3692,8 +3660,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_4()
 
   if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
      {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
+      die("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
     }
   
   return_flank5p_array[0][0]='\0';
@@ -3775,8 +3742,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -3801,8 +3767,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fa");
     }
 
 
@@ -3822,8 +3787,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
   
   if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
     {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
+      die("Failed to alloc return_something_array - cannot start test\n");
     }
 
   return_flank5p_array[0] = (char*) malloc( sizeof(char) * 500);
@@ -3833,8 +3797,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
 
   if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
      {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
+      die("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
     }
   
   return_flank5p_array[0][0]='\0';
@@ -3913,8 +3876,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // We use the same two people as last time, but swap their roles
@@ -3942,8 +3904,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fa");
     }
 
 
@@ -3963,8 +3924,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
   
   if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
     {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
+      die("Failed to alloc return_something_array - cannot start test\n");
     }
 
   return_flank5p_array[0] = (char*) malloc( sizeof(char) * 500);
@@ -3974,8 +3934,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
 
   if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
      {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
+      die("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
     }
   
   return_flank5p_array[0][0]='\0';
@@ -4051,8 +4010,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_7()
   
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // We use the same two people as last time, but swap their roles
@@ -4079,8 +4037,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_7()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fa");
     }
 
 
@@ -4134,8 +4091,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_7()
   
   if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
     {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
+      die("Failed to alloc return_something_array - cannot start test\n");
     }
 
   return_flank5p_array[0] = (char*) malloc( sizeof(char) * 500);
@@ -4145,8 +4101,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_7()
 
   if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
      {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
+      die("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
     }
   
   return_flank5p_array[0][0]='\0';
@@ -4224,8 +4179,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -4251,8 +4205,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fa");
     }
 
   // Let's be clear about what this test looks like. 
@@ -4321,8 +4274,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
   
   if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
     {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
+      die("Failed to alloc return_something_array - cannot start test\n");
     }
 
   return_flank5p_array[0] = (char*) malloc( sizeof(char) * 5600);
@@ -4332,8 +4284,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
 
   if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
      {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
+      die("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
     }
   
   return_flank5p_array[0][0]='\0';
@@ -4426,8 +4377,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("unable to alloc the hash table. dead before we even started. OOM");
     }
 
   // Read FASTA sequence
@@ -4452,8 +4402,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fa", "r");
   if (chrom_fptr==NULL)
     {
-      printf("Cannot open ../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fa");
-      exit(1);
+      die("Cannot open ../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fa");
     }
 
 
@@ -4473,8 +4422,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
   
   if ( (return_flank5p_array==NULL) || (return_flank3p_array==NULL) || (return_trusted_branch_array==NULL) || (return_branch2_array==NULL) )
     {
-      printf("Failed to alloc return_something_array - cannot start test\n");
-      exit(1);
+      die("Failed to alloc return_something_array - cannot start test\n");
     }
 
   return_flank5p_array[0] = (char*) malloc( sizeof(char) * 5600);
@@ -4484,8 +4432,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
 
   if ( (return_flank5p_array[0]==NULL )||(return_flank3p_array[0]==NULL )|| (return_trusted_branch_array[0] ==NULL) || (return_branch2_array[0]==NULL))
      {
-      printf("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
-      exit(1);
+      die("Failed to malloc the [0] entry of one of the return arrays. Cannot start test.");
     }
   
   return_flank5p_array[0][0]='\0';
@@ -4754,8 +4701,7 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
   char** results_array= (char**) malloc(sizeof(char*)*1000);
   if (results_array==NULL)
     {
-      printf("Cannot alloc results_array in test of apply fn - exit.");
-      exit(1);
+      die("Cannot alloc results_array in test of apply fn - exit.");
     }
   int i;
   for(i=0; i< 1000; i++)
@@ -4763,8 +4709,7 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
       results_array[i]=(char*) malloc(sizeof(char)*6);
       if (results_array[i]==NULL)
 	{
-	  printf("Cannot alloc results array - quit");
-	  exit(1);
+	  die("Cannot alloc results array - quit");
 	}
       results_array[i][0]='\0';
     }
@@ -4954,8 +4899,7 @@ void test_does_this_path_exist_in_this_colour()
       int max_read_length = 100;
       Sequence * seq = malloc(sizeof(Sequence));
       if (seq == NULL){
-	fputs("Out of memory trying to allocate Sequence\n",stderr);
-	exit(1);
+	die("Out of memory trying to allocate Sequence");
       }
       alloc_sequence(seq,max_read_length,LINE_MAX);
       
@@ -4963,16 +4907,14 @@ void test_does_this_path_exist_in_this_colour()
       KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
       if (kmer_window==NULL)
 	{
-	  printf("Failed to malloc kmer sliding window in test_does_this_path_exist_in_this_colour. Exit.\n");
-	  exit(1);
+	  die("Failed to malloc kmer sliding window in test_does_this_path_exist_in_this_colour. Exit.");
 	}
       
       
       kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
       if (kmer_window->kmer==NULL)
 	{
-	  printf("Failed to malloc kmer_window->kmer in test_does_this_path_exist_in_this_colour. Exit.\n");
-	  exit(1);
+	  die("Failed to malloc kmer_window->kmer in test_does_this_path_exist_in_this_colour. Exit.");
 	}
       kmer_window->nkmers=0;
       
@@ -4981,8 +4923,7 @@ void test_does_this_path_exist_in_this_colour()
 	long long ret;
 	int offset = 0;
 	if (new_entry == false){
-	  printf("new_entry must be true in hsi test function");
-	  exit(1);
+	  die("new_entry must be true in hsi test function");
 	}
 	ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
 	
@@ -5001,8 +4942,7 @@ void test_does_this_path_exist_in_this_colour()
       FILE* fp = fopen("../data/test/pop_graph/colour0.fa", "r");
       if (fp==NULL)
 	{
-	  printf("Cannot open ../data/test/pop_graph/colour0.fa");
-	  exit(1);
+	  die("Cannot open ../data/test/pop_graph/colour0.fa");
 	}
       boolean f_entry=true;
       int len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, &f_entry, file_reader, seq, kmer_window, db_graph, 0);
@@ -5025,8 +4965,7 @@ void test_does_this_path_exist_in_this_colour()
       fp = fopen("../data/test/pop_graph/colour1.fa", "r");
       if (fp==NULL)
 	{
-	  printf("Cannot open ../data/test/pop_graph/colour1.fa");
-	  exit(1);
+	  die("Cannot open ../data/test/pop_graph/colour1.fa");
 	}
       
       
@@ -5048,8 +4987,7 @@ void test_does_this_path_exist_in_this_colour()
       fp = fopen("../data/test/pop_graph/colour2.fa", "r");
       if (fp==NULL)
 	{
-	  printf("Cannot open ../data/test/pop_graph/colour2.fa");
-	  exit(1);
+	  die("Cannot open ../data/test/pop_graph/colour2.fa");
 	}
       f_entry=true;
       len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, &f_entry,file_reader, seq, kmer_window, db_graph, 0);

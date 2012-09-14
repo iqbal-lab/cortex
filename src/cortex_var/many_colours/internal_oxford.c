@@ -39,8 +39,7 @@ void set_ref_chromosome_file_pointers(char** reference_chromosome_file_ptrs, int
 {
   //  if ( (num_chromosomes != 25) && (num_chromosomes != 24) )
   //  {
-  //    printf("Expected 24 or 25 ref chromosomes. Exit");
-  //    exit(1);
+  //    die("Expected 24 or 25 ref chromosomes. Exit");
   //  }
   
 
@@ -67,8 +66,7 @@ void create_uniqueness_file(char** ref_chroms, dBGraph* db_graph)
   char** uniq_files = malloc( sizeof(char*) * 25); //one for each chromosome, ignoring haplotypes like MHC
   if (uniq_files==NULL)
     {
-      printf("OOM. Give up can't even allocate space for the names of the uniq  files \n");
-      exit(1);
+      die("Out of memory. Give up can't even allocate space for the names of the uniq files");
     }
   int i;
   for (i=0; i< 25; i++)
@@ -76,8 +74,7 @@ void create_uniqueness_file(char** ref_chroms, dBGraph* db_graph)
       uniq_files[i] = malloc(sizeof(char)*100); 
       if (uniq_files[i]==NULL)
 	{
-	  printf("OOM. Giveup can't even allocate space for the names of the uniqueness files for  i = %d\n",i);
-	  exit(1);
+	  die("Out of memory. Giveup can't even allocate space for the names of the uniqueness files for  i = %d",i);
 	}
     }
   
@@ -97,15 +94,13 @@ void create_uniqueness_file(char** ref_chroms, dBGraph* db_graph)
       FILE* chrom_fptr = fopen(ref_chroms[i], "r");
       if (chrom_fptr==NULL)
 	{
-	  printf("Cannot open %s \n", ref_chroms[i]);
-	  exit(1);
+	  die("Cannot open %s", ref_chroms[i]);
 	}
       
       FILE* out_fptr = fopen(uniq_files[i], "w");
       if (out_fptr==NULL)
 	{
-	  printf("Cannot open %s for output\n", uniq_files[i]);
-	  exit(1);
+	  die("Cannot open %s for output", uniq_files[i]);
 	}
       
       BinaryKmer marked_kmer; //will have all longlongs in array being ~0
@@ -154,8 +149,7 @@ void print_coverage_and_ref_multiplicities_for_list_of_fasta(char* list_of_fasta
 	FILE* fptr = fopen(list_of_fasta, "r");
 	if (fptr==NULL)
 	  {
-	    printf("Cannot open %s\n", list_of_fasta);
-	    exit(1);
+	    die("Cannot open %s", list_of_fasta);
 	  }
 
 	//file contains a list of fasta file names
@@ -173,8 +167,7 @@ void print_coverage_and_ref_multiplicities_for_list_of_fasta(char* list_of_fasta
 	    FILE* path_fptr = fopen(line, "r");
 	    if (path_fptr==NULL)
 	      {
-		printf("Cannot open %s\n", line);
-		exit(1);
+		die("Cannot open %s", line);
 	      }
 
 	    //create output file 
@@ -184,8 +177,7 @@ void print_coverage_and_ref_multiplicities_for_list_of_fasta(char* list_of_fasta
 	    FILE* out_fptr = fopen(name, "w");
 	    if (out_fptr==NULL)
 	      {
-		printf("Cannot open %s\n", name);
-		exit(1);
+		die("Cannot open %s", name);
 	      }
 
 

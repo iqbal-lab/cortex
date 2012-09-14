@@ -73,7 +73,7 @@ sub apply_pop_classifier
     
     ## second make a table of covgs etc
     my $table = $genotyping_output_log.".table";
-    my $cmd2 = "perl $make_table_script $genotyping_output_log &> $table";
+    my $cmd2 = "perl $make_table_script $genotyping_output_log > $table 2>&1";
     print "$cmd2\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
@@ -195,7 +195,7 @@ sub genotype_union
 		    printf("Note - since you passed in fasta, we assume these are reference genomes, with a very low per-base error rate, of 0.0000001, in order to genotype\n");
 		    $gt_cmd = $gt_cmd." --estimated_error_rate 0.000001 ";
 		}
-		$gt_cmd = $gt_cmd." &> $logfile";
+		$gt_cmd = $gt_cmd." > $logfile 2>&1";
 		print "$gt_cmd\n";
 		my $gt_ret = qx{$gt_cmd};
 		print "$gt_ret\n";
@@ -313,7 +313,7 @@ sub make_index_and_union_callset_for_specific_k
     
     my $stub = "UNION_".$which_caller."_k".$k;
 
-    my $cmd = "perl $make_union --kmer $k --index $index_name --varname_stub $stub  --outfile $outfilename &> $outfile_log";
+    my $cmd = "perl $make_union --kmer $k --index $index_name --varname_stub $stub  --outfile $outfilename > $outfile_log 2>&1";
     if (! -e($outfilename))
     {
 	print "$cmd\n";

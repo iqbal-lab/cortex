@@ -225,8 +225,7 @@ Nucleotide reverse_binary_nucleotide(Nucleotide n)
     case Thymine:
       return Adenine;
     default:
-      printf("Calling reverse_binary_nucleotide on non-existent nucleotide %i\n",n);
-      exit(1);
+      die("Calling reverse_binary_nucleotide on non-existent nucleotide %i",n);
     }
 }
 */
@@ -235,8 +234,7 @@ Nucleotide reverse_binary_nucleotide(Nucleotide n)
 char * nucleotides_to_string(Nucleotide * nucleotides, int length, char * string){
   
   if (string == NULL){
-    fputs("seq argument cannot be NULL",stderr);
-    exit(1);
+    die("Seq argument cannot be NULL");
   }
 
   int i;
@@ -269,8 +267,7 @@ int get_sliding_windows_from_sequence(char * sequence,  char * qualities, int le
   int count_kmers = 0;
 
   if (sequence == NULL){
-    fputs("in get_sliding_windows_from_sequence, sequence is NULL\n",stderr);    
-    exit(1);
+    die("In get_sliding_windows_from_sequence, sequence is NULL");
   }
 
   if (length < kmer_size || max_windows == 0 || max_kmers == 0){
@@ -337,9 +334,9 @@ int get_sliding_windows_from_sequence(char * sequence,  char * qualities, int le
 
       //new sliding window
       if (index_windows>=max_windows){
-	  fputs("number of windows is bigger than max_windows in get_sliding_windows_from_sequence",stderr);
-	  exit(1);
-	}
+    die("number of windows is bigger than max_windows in "
+        "get_sliding_windows_from_sequence");
+	 }
 
       KmerSlidingWindow * current_window =&(windows->window[index_windows]);
 
@@ -355,8 +352,8 @@ int get_sliding_windows_from_sequence(char * sequence,  char * qualities, int le
       while(i<length){
 	
 	if (index_kmers>=max_kmers){
-	  fputs("number of kmers is bigger than max_kmers in get_sliding_windows_from_sequence - second check\n",stderr);
-	  exit(1);
+	  die("Number of kmers is bigger than max_kmers in "
+        "get_sliding_windows_from_sequence - second check");
 	}
 
 	Nucleotide current_base = char_to_binary_nucleotide(sequence[i]);
@@ -421,13 +418,13 @@ BinaryKmer* seq_to_binary_kmer(char * seq, short kmer_size, BinaryKmer* prealloc
   //sanity checks
   if (seq==NULL)
     {
-      printf("DO not passs null ptr to seq_to_binary_kmer. Exiting..\n");
-      exit(1);
+      die("Do not passs null ptr to seq_to_binary_kmer. Exiting..");
     }
   if (strlen(seq) != kmer_size)
     {
-      printf("Calling seq_to_binary_kmer with  a sequence %s of length %d, but kmer size %d, which is different. Exiting", seq, (int) strlen(seq),  kmer_size);
-      exit(1);
+      die("Calling seq_to_binary_kmer with  a sequence %s of length %d, "
+          "but kmer size %d, which is different. Exiting",
+          seq, (int) strlen(seq),  kmer_size);
     }
   
   int j;
@@ -436,8 +433,7 @@ BinaryKmer* seq_to_binary_kmer(char * seq, short kmer_size, BinaryKmer* prealloc
   for(j=0;j<kmer_size;j++){
 
     if (char_to_binary_nucleotide(seq[j]) == Undefined){
-      fputs("seq contains an undefined char\n",stderr);
-      exit(1);
+      die("Seq contains an undefined char\n");
     }
 
     binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(prealloced_kmer, char_to_binary_nucleotide(seq[j]), kmer_size ); 
@@ -463,8 +459,7 @@ char * binary_kmer_to_seq(BinaryKmer* bkmer, short kmer_size, char * seq){
   binary_kmer_assignment_operator(local_bkmer, *bkmer);
 
   if (seq == NULL){
-      fputs("seq argument cannot be NULL",stderr);
-      exit(1);
+      die("Seq argument cannot be NULL");
     }
 
   int mask = 3; // 0000011 mask used to extract the two least significative bits
@@ -605,8 +600,7 @@ Nucleotide binary_kmer_get_last_nucleotide(BinaryKmer* kmer)
 void binary_kmer_alloc_kmers_set(KmerSlidingWindowSet * windows, int max_windows, int max_kmers){
 
   if (windows == NULL){
-    fputs("Cannot pass a NULL window to alloc",stderr);
-    exit(1);
+    die("Cannot pass a NULL window to alloc");
   } 
   
   //allocate memory for the sliding windows         
@@ -614,8 +608,7 @@ void binary_kmer_alloc_kmers_set(KmerSlidingWindowSet * windows, int max_windows
 
   windows->window = malloc(sizeof(KmerSlidingWindow) * max_windows);       
   if (windows->window== NULL){
-    fputs("Out of memory trying to allocate an array of KmerSlidingWindow",stderr);
-    exit(1);
+    die("Out of memory trying to allocate an array of KmerSlidingWindow");
   }
   windows->nwindows = 0;
   
@@ -626,8 +619,7 @@ void binary_kmer_alloc_kmers_set(KmerSlidingWindowSet * windows, int max_windows
     //windows->window[w].kmer = malloc(sizeof(BinaryKmer) * max_kmers);
     windows->window[w].kmer = (BinaryKmer*) malloc(sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER * max_kmers);
     if (windows->window[w].kmer == NULL){
-      fputs("binary_kmer: Out of memory trying to allocate an array of BinaryKmer",stderr);
-      exit(1);
+      die("binary_kmer: Out of memory trying to allocate an array of BinaryKmer");
     }      
   }      
   

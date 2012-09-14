@@ -43,14 +43,14 @@ HashTable * hash_table_new(int number_bits, int bucket_size, int max_rehash_trie
   if (hash_table == NULL) {
     fprintf(stderr,"could not allocate hash table\n");
     return NULL;
-    //exit(1);
+    //exit(EXIT_FAILURE);
   }
   
   hash_table->collisions = calloc(max_rehash_tries, sizeof(long long));
   if (hash_table->collisions == NULL) {
     fprintf(stderr,"could not allocate memory\n");
     return NULL;
-    //exit(1);
+    //exit(EXIT_FAILURE);
   }
   
   hash_table->unique_kmers = 0;
@@ -64,14 +64,14 @@ HashTable * hash_table_new(int number_bits, int bucket_size, int max_rehash_trie
   if (hash_table->table == NULL) {
     fprintf(stderr,"could not allocate hash table of size %qd\n",hash_table->number_buckets * hash_table->bucket_size);
     return NULL;
-    //exit(1);
+    //exit(EXIT_FAILURE);
   }
    
   hash_table->next_element = calloc(hash_table->number_buckets, sizeof(int));
   if (hash_table->table == NULL) {
     fprintf(stderr,"could not allocate array of pointers for next available element in buckets [%qd]\n",hash_table->number_buckets);
     return NULL;
-    //exit(1);
+    //exit(EXIT_FAILURE);
   }
 
   hash_table->kmer_size      = kmer_size;
@@ -118,8 +118,7 @@ boolean hash_table_find_in_bucket(Key key, long long * current_pos, boolean * ov
     //sanity check -- to avoid out of boundary access
     if (*current_pos >= hash_table->number_buckets * hash_table->bucket_size || *current_pos<0)
       {
-	printf("out of bounds problem found in hash table_find_with_position\n");
-	exit(1);
+	die("out of bounds problem found in hash table_find_with_position\n");
       }
     
     //element found
@@ -152,8 +151,7 @@ boolean hash_table_find_in_bucket(Key key, long long * current_pos, boolean * ov
 //currently not used, and must add a test
 boolean hash_table_apply_or_insert(Key key, void (*f)(Element *), HashTable * hash_table){
   if (hash_table == NULL) {
-    puts("NULL table!");
-    exit(1);
+    die("NULL table!");
   }
   
   long long current_pos;
@@ -171,8 +169,7 @@ boolean hash_table_apply_or_insert(Key key, void (*f)(Element *), HashTable * ha
 	    {
 	      //sanity check
 	      if (!db_node_check_for_flag_ALL_OFF(&hash_table->table[current_pos])){
-		printf("Out of bounds - trying to insert new node beyond end of bucket\n");
-		exit(1);
+		die("Out of bounds - trying to insert new node beyond end of bucket\n");
 	      }
 
 	      element_initialise(&element,key, hash_table->kmer_size);
@@ -184,9 +181,10 @@ boolean hash_table_apply_or_insert(Key key, void (*f)(Element *), HashTable * ha
 	      rehash++;
 	      if (rehash>hash_table->max_rehash_tries)
 		{
-		  //fprintf(stderr,"too much rehashing!! Rehash=%d\n", rehash);
- 		  fprintf(stderr,"Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
-		  exit(1);
+ 		  die("Dear user - you have not allocated enough memory to contain your sequence data. \n"
+          "Either allocate more memory (have you done your calculations right?\n"
+          "Have you allowed for sequencing errors?), or threshold more harshly on\n"
+          "quality score, and try again. Aborting mission.\n");
 		}
 	    }
 	}
@@ -261,8 +259,7 @@ Element * hash_table_find(Key key, HashTable * hash_table)
 {
   if (hash_table == NULL) 
     {
-      puts("hash_table_find has been called with a NULL table! Exiting");
-      exit(1);
+      die("hash_table_find has been called with a NULL table! Exiting");
     }
 
   Element * ret = NULL;
@@ -285,8 +282,7 @@ Element * hash_table_find(Key key, HashTable * hash_table)
 	  if (rehash>hash_table->max_rehash_tries)
 	    {
 	      //fprintf(stderr,"too much rehashing!! Rehash=%d\n", rehash);
- 		  fprintf(stderr,"Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
-	      exit(1);
+ 		  die("Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
 	    }
 	}
     } while(overflow);
@@ -298,8 +294,7 @@ Element * hash_table_find(Key key, HashTable * hash_table)
 Element * hash_table_find_or_insert(Key key, boolean * found,  HashTable * hash_table){
   
   if (hash_table == NULL) {
-    puts("NULL table!");
-    exit(1);
+    die("NULL table!");
   }
   
   Element element;
@@ -320,8 +315,7 @@ Element * hash_table_find_or_insert(Key key, boolean * found,  HashTable * hash_
 	    //sanity check
 	    if (!db_node_check_for_flag_ALL_OFF(&hash_table->table[current_pos]))
 	      {
-		fprintf(stderr,"error trying to write on an occupied element\n");
-		exit(1);
+		die("error trying to write on an occupied element\n");
 	      }
       
 	    //insert element
@@ -342,8 +336,7 @@ Element * hash_table_find_or_insert(Key key, boolean * found,  HashTable * hash_
 	    if (rehash>hash_table->max_rehash_tries)
 	      {
 		//fprintf(stderr,"too much rehashing!! Reserve more memory. Rehash=%d\n", rehash);
- 		  fprintf(stderr,"Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
-		exit(1);
+ 		  die("Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
 	      }
 	  }
       }
@@ -364,8 +357,7 @@ Element * hash_table_find_or_insert(Key key, boolean * found,  HashTable * hash_
 Element * hash_table_insert(Key key, HashTable * hash_table){
   
   if (hash_table == NULL) {
-    puts("NULL table!");
-    exit(1);
+    die("NULL table!");
   }
   
   Element element;
@@ -387,8 +379,7 @@ Element * hash_table_insert(Key key, HashTable * hash_table){
 
 	//sanity check
 	if (!db_node_check_for_flag_ALL_OFF(&hash_table->table[current_pos])){
-	  printf("Out of bounds - trying to insert new node beyond end of bucket\n");
-	  exit(1);
+	  die("Out of bounds - trying to insert new node beyond end of bucket\n");
 	}
   
       
@@ -405,8 +396,7 @@ Element * hash_table_insert(Key key, HashTable * hash_table){
 	if (rehash>hash_table->max_rehash_tries)
 	  {
 	    //fprintf(stderr,"too much rehashing!! Reserve more memory.  Rehash=%d\n", rehash);
-	    fprintf(stderr,"Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
-	    exit(1);
+	    die("Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
 	  }
       }
     
@@ -446,8 +436,7 @@ void hash_table_dump_to_file(FILE * fp, HashTable * hash_table)
   long long i;
   for(i=0;i<hash_table->number_buckets*hash_table->bucket_size;i++){
     if( fwrite(&(hash_table->table[i]), sizeof(Element),1, fp) != 1) {
-      printf("hash_table_dump_to_file: I/O error -- cannot dump hash table\n");
-      exit(1);
+      die("hash_table_dump_to_file: I/O error -- cannot dump hash table\n");
     }
     if (i % 1000000 == 0){
       printf(".");
@@ -519,14 +508,14 @@ HashTable * hash_table_load_from_dump(FILE * fp, int max_rehash_tries){
 	    if (hash_table == NULL) {
 	      fprintf(stderr,"could not allocate hash table of size %qd\n", (long long) bucket_size * number_buckets);
 	      return NULL;
-	      //exit(1);
+	      //exit(EXIT_FAILURE);
 	    }
 
 	    hash_table->collisions = calloc(max_rehash_tries, sizeof(long long));
 	    if (hash_table->collisions == NULL) {
 	      fprintf(stderr,"could not allocate memory\n");
 	      return NULL;
-	      //exit(1);
+	      //exit(EXIT_FAILURE);
 	    }
 	    
 	    hash_table->kmer_size = kmer_size;
@@ -541,7 +530,7 @@ HashTable * hash_table_load_from_dump(FILE * fp, int max_rehash_tries){
 	    if (hash_table->table == NULL) {
 	      fprintf(stderr,"could not allocate hash table of size %qd\n",hash_table->number_buckets * hash_table->bucket_size);
 	      return NULL;
-	      //exit(1);
+	      //exit(EXIT_FAILURE);
 	    }
 	    
 	    
@@ -555,7 +544,7 @@ HashTable * hash_table_load_from_dump(FILE * fp, int max_rehash_tries){
 	      if (read!= 1){
 		fprintf(stderr,"could not load data from file\n");
 		return NULL;
-		//exit(1);
+		//exit(EXIT_FAILURE);
 	      }	    
 	    }
 	    printf("\n");

@@ -16,8 +16,7 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
 
   if (NUMBER_OF_COLOURS<6)
     {
-      printf("Must compile for >=6 colours. recompile\n");
-      exit(1);
+      die("Must compile for >=6 colours. recompile\n");
     }
   
   int working_colour1 = 2;
@@ -287,8 +286,7 @@ void build_and_save_temp_binaries(char* filelist_binaries,
   FILE* fp = fopen(filelist_binaries, "w");
   if (fp==NULL)
     {
-      printf("Cannot open %s\n", filelist_binaries);
-      exit(1);
+      die("Cannot open %s\n", filelist_binaries);
     }
   fprintf(fp, "%s\n%s\n", bin1, bin2);
   fclose(fp);
@@ -309,8 +307,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 {
   if (NUMBER_OF_COLOURS<6)
     {
-      printf("Need >=6 colours for test_calc_log_likelihood_of_genotype_with_complex_alleles - recompile\n");
-      exit(1);
+      die("Need >=6 colours for test_calc_log_likelihood_of_genotype_with_complex_alleles - recompile\n");
     }
   int colour_allele1 = 0;
   int colour_allele2 = 1;
@@ -417,8 +414,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   //----------------------------------
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_allele_length,MAX_READ_NAME_LEN);
   
@@ -426,16 +422,14 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
     }
   
   
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_allele_length-db_graph->kmer_size-1));
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
     }
   kmer_window->nkmers=0;
   
@@ -449,8 +443,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   
   if ( (array_of_node_arrays==NULL) || (array_of_or_arrays==NULL) || (lengths_of_alleles==NULL) || (array_of_allele_names==NULL) )
     {
-      printf("Cannot alloc arrays of arrays in test_db_complex_genotyping.c\n");
-      exit(1);
+      die("Cannot alloc arrays of arrays in test_db_complex_genotyping.c\n");
     }
   
   int i;
@@ -462,8 +455,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
       
       if ( (array_of_node_arrays[i]==NULL) || (array_of_or_arrays[i]==NULL) || (array_of_allele_names==NULL) )
 	{
-	  printf("Cannot alloc the %d -th node and or array in print_log_liks_of_specified_set_of_genotypes_of_complex_site", i);
-	  exit(1);
+	  die("Cannot alloc the %d -th node and or array in print_log_liks_of_specified_set_of_genotypes_of_complex_site", i);
 	}
       lengths_of_alleles[i]=0;
       array_of_allele_names[i][0]='\0';
@@ -474,8 +466,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   //  MultiplicitiesAndOverlapsOfBiallelicVariant* mobv = alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(max_allele_length, max_allele_length);
   //if (mobv==NULL)
   //  {
-  //    printf("Failed to alloc mobv\n");
-  //    exit(1);
+  //    die("Failed to alloc mobv\n");
   //  }
   int* working_array_self = (int*) malloc(sizeof(int) * max_allele_length);
   int* working_array_shared = (int*) malloc(sizeof(int) * max_allele_length);
@@ -483,8 +474,9 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 // if ( (mobv==NULL)||(working_array_self==NULL) || (working_array_shared==NULL))
   if ( (working_array_self==NULL) || (working_array_shared==NULL))
     {
-      printf("Cannot alloc all the arrays in calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site.  Give up and exit.");
-      exit(1);
+      die("Cannot alloc all the arrays in "
+          "calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site."
+          "Give up and exit.");
     }
   
 
@@ -493,8 +485,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
     long long ret;
     int offset = 0;
     if (new_entry == false){
-      printf("new_entry must be true in hsi test function");
-      exit(1);
+      die("new_entry must be true in hsi test function");
     }
     ret =  read_sequence_from_fasta(fp,seq,max_allele_length,new_entry,full_entry,offset);
     
@@ -508,8 +499,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   FILE* fp = fopen(fasta_alleles_then_genome, "r");
   if (fp==NULL)
     {
-      printf("UNable to open %s. Exit", fasta_alleles_then_genome);
-      exit(1);
+      die("Unable to open %s. Exit", fasta_alleles_then_genome);
     }
 
 
@@ -524,8 +514,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
 								     false, &f_entry, file_reader, seq, kmer_window, db_graph, -1);
       if (!f_entry)
 	{
-	  printf("Read too long to be read in one go - in test - error\n");
-	  exit(1);
+	  die("Read too long to be read in one go - in test - error\n");
 	}
     
       strcat(array_of_allele_names[j], seq->name);
@@ -1148,8 +1137,7 @@ void regression_test_2_genotyping_of_PD_SNP_call()
     int offset = 0;
     if (new_entry == false){
       //offset = kmer_size;
-      printf("new_entry must be true in hsi test function");
-      exit(1);
+      die("new_entry must be true in hsi test function");
     }
     ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
     
@@ -1166,8 +1154,7 @@ void regression_test_2_genotyping_of_PD_SNP_call()
 
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_read_length,max_read_length);
   
@@ -1175,16 +1162,14 @@ void regression_test_2_genotyping_of_PD_SNP_call()
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
     }
   
 
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-kmer_size-1));
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
     }
   kmer_window->nkmers=0;
   
@@ -1289,16 +1274,14 @@ Covg in indiv:
 
   if (  (branch1==NULL) || (branch2==NULL) || (branch1_o==NULL) || (branch2_o==NULL) )
     {
-      printf("Unable to malloc branch arrays in test\n");
-      exit(1);
+      die("Unable to malloc branch arrays in test\n");
     }
 
 
   FILE* fp = fopen("../data/test/pop_graph/variations/complex_genotyping/pd_example1_just_alleles.fa", "r");
   if (fp==NULL)
     {
-      printf("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example1_just_alleles.fa\n");
-      exit(1);
+      die("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example1_just_alleles.fa\n");
     }
   boolean full_entry=true;
   int num_kmers_br1 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch1, branch1_o, false, &full_entry, &file_reader_fasta, 
@@ -1391,8 +1374,7 @@ Colour 0 = reference
   GenotypingWorkingPackage* gwp = alloc_genotyping_work_package(60,1000,NUMBER_OF_COLOURS, NUMBER_OF_COLOURS+1);
   if (gwp==NULL)
     {
-      printf("Unable to malloc genotyping work package. Out of memory. Abort\n");
-      exit(1);
+      die("Unable to malloc genotyping work package. Out of memory. Abort\n");
     }
 
   //DEBUG ONLY
@@ -1417,8 +1399,7 @@ Colour 0 = reference
   fp = fopen("../data/test/pop_graph/variations/complex_genotyping/pd_example2_just_alleles.fa", "r");
   if (fp==NULL)
     {
-      printf("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example2_just_alleles.fa\n");
-      exit(1);
+      die("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example2_just_alleles.fa\n");
     }
   num_kmers_br1 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch1, branch1_o, false, &full_entry,&file_reader_fasta, 
 								      seq, kmer_window, db_graph, 0);

@@ -137,8 +137,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
     int offset = 0;
 
     if (new_entry!= true){
-      printf("new_entry has to be true for read_next_variant_from_full_flank_file\n");
-      exit(1);
+      die("new_entry has to be true for ead_next_variant_from_full_flank_file");
     }
 
     ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
@@ -152,8 +151,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   int max_read_length = 30;
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence");
   }
   alloc_sequence(seq,max_read_length,LINE_MAX);
   
@@ -161,14 +159,14 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window in "
+          "db_graph_make_reference_path_based_sv_calls. Exit.\n");
     }
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer in "
+          "db_graph_make_reference_path_based_sv_calls. Exit.\n");
     }
   kmer_window->nkmers=0;
   
@@ -181,8 +179,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   
   if ( (br1_path==NULL) || (br2_path==NULL) || (br1_or==NULL) || (br2_or==NULL) )
     {
-      printf("Unable to alloc array for genotyping test\n");
-      exit(1);
+      die("Unable to alloc array for genotyping test\n");
     }
   
   //end of intialisation 
@@ -191,8 +188,9 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
   FILE* br2_fptr = fopen("../data/test/pop_graph/example1_for_testing_genotyping.allele2.fa", "r");
   if ( (br1_fptr==NULL) || (br2_fptr==NULL) )
     {
-      printf("Cannot open one of ../data/test/pop_graph/example1_for_testing_genotyping.allele1.fa and ../data/test/pop_graph/example1_for_testing_genotyping.allele2.fa\n");
-      exit(1);
+      die("Cannot open one of:\n"
+"../data/test/pop_graph/example1_for_testing_genotyping.allele1.fa and\n"
+"../data/test/pop_graph/example1_for_testing_genotyping.allele2.fa\n");
     }
   
   boolean f_entry=true;

@@ -70,8 +70,7 @@ Nucleotide reverse_binary_nucleotide(Nucleotide n)
     case Three:
       return Three;
     default:
-      printf("Calling reverse_binary_nucleotide on non-existent nucleotide %i\n",n);
-      exit(1);
+      die("Calling reverse_binary_nucleotide on non-existent nucleotide %i", n);
     }
 }
 

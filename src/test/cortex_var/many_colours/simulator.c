@@ -105,8 +105,7 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
 
   if (NUMBER_OF_COLOURS<4)
     {
-      printf("Cannot run the simulator with <4 colours. Recompile.\n");
-      exit(1);
+      die("Cannot run the simulator with <4 colours. Recompile.\n");
     }
 
 
@@ -123,8 +122,9 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
     int max_allele_length=100000;
     if ( (var->len_one_allele>max_allele_length)||(var->len_other_allele > max_allele_length) )
       {
-	exit(1);
+        die("simulator.c exited!");
       }
+
     int colours_to_genotype[]={colour_indiv};
 
     char ml_genotype_name[100]="";

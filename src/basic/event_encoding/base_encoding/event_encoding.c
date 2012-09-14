@@ -78,8 +78,7 @@ Nucleotide reverse_binary_nucleotide(Nucleotide n)
     case Thymine:
       return Adenine;
     default:
-      printf("Calling reverse_binary_nucleotide on non-existent nucleotide %i\n",n);
-      exit(1);
+      die("Calling reverse_binary_nucleotide on non-existent nucleotide %i", n);
     }
 }
 

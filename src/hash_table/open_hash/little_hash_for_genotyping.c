@@ -44,14 +44,14 @@ LittleHashTable * little_hash_table_new(int number_bits, int bucket_size,
   if (little_hash_table == NULL) {
     fprintf(stderr,"could not allocate hash table\n");
     return NULL;
-    //exit(1);
+    //exit(EXIT_FAILURE);
   }
   
   little_hash_table->collisions = calloc(max_rehash_tries, sizeof(long long));
   if (little_hash_table->collisions == NULL) {
     fprintf(stderr,"could not allocate memory\n");
     return NULL;
-    //exit(1);
+    //exit(EXIT_FAILURE);
   }
   
   little_hash_table->unique_kmers = 0;
@@ -65,14 +65,14 @@ LittleHashTable * little_hash_table_new(int number_bits, int bucket_size,
   if (little_hash_table->table == NULL) {
     fprintf(stderr,"could not allocate hash table of size %qd\n",little_hash_table->number_buckets * little_hash_table->bucket_size);
     return NULL;
-    //exit(1);
+    //exit(EXIT_FAILURE);
   }
    
   little_hash_table->next_element = calloc(little_hash_table->number_buckets, sizeof(int));
   if (little_hash_table->table == NULL) {
     fprintf(stderr,"could not allocate array of pointers for next available genotyping_element in buckets [%qd]\n",little_hash_table->number_buckets);
     return NULL;
-    //exit(1);
+    //exit(EXIT_FAILURE);
   }
 
   little_hash_table->kmer_size      = kmer_size;
@@ -119,8 +119,7 @@ boolean little_hash_table_find_in_bucket(Key key, long long * current_pos, boole
     //sanity check -- to avoid out of boundary access
     if (*current_pos >= little_hash_table->number_buckets * little_hash_table->bucket_size || *current_pos<0)
       {
-	printf("out of bounds problem found in hash table_find_with_position\n");
-	exit(1);
+	die("out of bounds problem found in hash table_find_with_position\n");
       }
     
     //element found
@@ -221,8 +220,7 @@ GenotypingElement * little_hash_table_find(Key key, LittleHashTable * little_has
 {
   if (little_hash_table == NULL) 
     {
-      puts("little_hash_table_find has been called with a NULL table! Exiting");
-      exit(1);
+      die("little_hash_table_find has been called with a NULL table! Exiting");
     }
 
   GenotypingElement * ret = NULL;
@@ -244,8 +242,7 @@ GenotypingElement * little_hash_table_find(Key key, LittleHashTable * little_has
 	  rehash++; 
 	  if (rehash>little_hash_table->max_rehash_tries)
 	    {
-	      fprintf(stderr,"too much rehashing!! Rehash=%d\n", rehash);
-	      exit(1);
+	      die("Too much rehashing!! Rehash=%d", rehash);
 	    }
 	}
     } while(overflow);
@@ -257,8 +254,7 @@ GenotypingElement * little_hash_table_find(Key key, LittleHashTable * little_has
 GenotypingElement * little_hash_table_find_or_insert(Key key, boolean * found,  LittleHashTable * little_hash_table){
   
   if (little_hash_table == NULL) {
-    puts("NULL table!");
-    exit(1);
+    die("NULL table!");
   }
   
   GenotypingElement element;
@@ -279,8 +275,7 @@ GenotypingElement * little_hash_table_find_or_insert(Key key, boolean * found,  
 	    //sanity check
 	    if (!db_genotyping_node_check_for_flag_ALL_OFF(&little_hash_table->table[current_pos]))
 	      {
-		fprintf(stderr,"error trying to write on an occupied element\n");
-		exit(1);
+		die("error trying to write on an occupied element\n");
 	      }
       
 	    //insert element
@@ -300,8 +295,7 @@ GenotypingElement * little_hash_table_find_or_insert(Key key, boolean * found,  
 	    rehash++;
 	    if (rehash>little_hash_table->max_rehash_tries)
 	      {
-		fprintf(stderr,"too much rehashing!! Reserve more memory. Rehash=%d\n", rehash);
-		exit(1);
+		die("too much rehashing!! Reserve more memory. Rehash=%d\n", rehash);
 	      }
 	  }
       }
@@ -322,8 +316,7 @@ GenotypingElement * little_hash_table_find_or_insert(Key key, boolean * found,  
 GenotypingElement * little_hash_table_insert(Key key, LittleHashTable * little_hash_table){
   
   if (little_hash_table == NULL) {
-    puts("NULL table!");
-    exit(1);
+    die("NULL table!");
   }
   
   GenotypingElement element;
@@ -345,8 +338,7 @@ GenotypingElement * little_hash_table_insert(Key key, LittleHashTable * little_h
 
 	//sanity check
 	if (!db_genotyping_node_check_for_flag_ALL_OFF(&little_hash_table->table[current_pos])){
-	  printf("Out of bounds - trying to insert new node beyond end of bucket\n");
-	  exit(1);
+	  die("Out of bounds - trying to insert new node beyond end of bucket\n");
 	}
   
       
@@ -362,8 +354,7 @@ GenotypingElement * little_hash_table_insert(Key key, LittleHashTable * little_h
 	rehash++;
 	if (rehash>little_hash_table->max_rehash_tries)
 	  {
-	    fprintf(stderr,"too much rehashing!! Reserve more memory.  Rehash=%d\n", rehash);
-	    exit(1);
+	    die("Too much rehashing!! Reserve more memory.  Rehash=%d\n", rehash);
 	  }
       }
     
@@ -403,8 +394,7 @@ void little_hash_table_dump_to_file(FILE * fp, LittleHashTable * little_hash_tab
   long long i;
   for(i=0;i<little_hash_table->number_buckets*little_hash_table->bucket_size;i++){
     if( fwrite(&(little_hash_table->table[i]), sizeof(GenotypingElement),1, fp) != 1) {
-      printf("little_hash_table_dump_to_file: I/O error -- cannot dump hash table\n");
-      exit(1);
+      die("little_hash_table_dump_to_file: I/O error -- cannot dump hash table\n");
     }
     if (i % 1000000 == 0){
       printf(".");
@@ -476,14 +466,14 @@ LittleHashTable * little_hash_table_load_from_dump(FILE * fp, int max_rehash_tri
 	    if (little_hash_table == NULL) {
 	      fprintf(stderr,"could not allocate hash table of size %qd\n", (long long) bucket_size * number_buckets);
 	      return NULL;
-	      //exit(1);
+	      //exit(EXIT_FAILURE);
 	    }
 
 	    little_hash_table->collisions = calloc(max_rehash_tries, sizeof(long long));
 	    if (little_hash_table->collisions == NULL) {
 	      fprintf(stderr,"could not allocate memory\n");
 	      return NULL;
-	      //exit(1);
+	      //exit(EXIT_FAILURE);
 	    }
 	    
 	    little_hash_table->kmer_size = kmer_size;
@@ -498,7 +488,7 @@ LittleHashTable * little_hash_table_load_from_dump(FILE * fp, int max_rehash_tri
 	    if (little_hash_table->table == NULL) {
 	      fprintf(stderr,"could not allocate hash table of size %qd\n",little_hash_table->number_buckets * little_hash_table->bucket_size);
 	      return NULL;
-	      //exit(1);
+	      //exit(EXIT_FAILURE);
 	    }
 	    
 	    
@@ -512,7 +502,7 @@ LittleHashTable * little_hash_table_load_from_dump(FILE * fp, int max_rehash_tri
 	      if (read!= 1){
 		fprintf(stderr,"could not load data from file\n");
 		return NULL;
-		//exit(1);
+		//exit(EXIT_FAILURE);
 	      }	    
 	    }
 	    printf("\n");

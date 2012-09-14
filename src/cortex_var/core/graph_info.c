@@ -39,15 +39,13 @@ ErrorCleaning* error_cleaning_alloc_and_init()
   ErrorCleaning* ec = (ErrorCleaning*) malloc(sizeof(ErrorCleaning));
   if (ec==NULL)
     {
-      printf("Cannot even alloc a tiny error-cleaning info object. Must be some OOM problem. Abort\n");
-      exit(1);
+      die("Cannot even alloc a tiny error-cleaning info object. Must be some OOM problem. Abort\n");
     }
   memset(ec, 0, sizeof(ErrorCleaning));
   ec->name_of_graph_against_which_was_cleaned = (char*) malloc(sizeof(char)*MAX_FILENAME_LENGTH);
   if (ec->name_of_graph_against_which_was_cleaned==NULL)
     {
-      printf("Cannot even alloc a tiny error-cleaning info object. Must be some OOM problem. Abort\n");
-      exit(1);      
+      die("Cannot even alloc a tiny error-cleaning info object. Must be some OOM problem. Abort\n");      
     }
   error_cleaning_initialise(ec);
   return ec;
@@ -77,8 +75,7 @@ GraphInfo* graph_info_alloc_and_init()
   GraphInfo* ginfo = (GraphInfo*) malloc(sizeof(GraphInfo));
   if (ginfo==NULL)
     {
-      printf("Cannot even alloc a GraphInfo object. Your machine must be severely out of memory. Abort\n");
-      exit(1);
+      die("Cannot even alloc a GraphInfo object. Your machine must be severely out of memory. Abort\n");
     }
   else
     {
@@ -89,8 +86,7 @@ GraphInfo* graph_info_alloc_and_init()
 	  ginfo->sample_ids[i] = (char*) malloc(sizeof(char)*MAX_LEN_SAMPLE_NAME) ;
 	  if (ginfo->sample_ids[i]==NULL)
 	    {
-	      printf("Cannot even alloc a GraphInfo object. Your machine must be severely out of memory. Abort\n");
-	      exit(1);
+	      die("Cannot even alloc a GraphInfo object. Your machine must be severely out of memory. Abort\n");
 	    }
 	  ginfo->cleaning[i]=error_cleaning_alloc_and_init(); //will abort if cannot alloc. Should never happen
 	}
@@ -133,8 +129,7 @@ void graph_info_set_tip_clipping(GraphInfo* ginfo, int colour)
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   ginfo->cleaning[colour]->tip_clipping=true;
 }
@@ -143,8 +138,7 @@ void graph_info_unset_tip_clipping(GraphInfo* ginfo, int colour)
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   ginfo->cleaning[colour]->tip_clipping=false;
 }
@@ -153,8 +147,7 @@ void graph_info_set_remv_low_cov_sups(GraphInfo* ginfo, int colour, int thresh)
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   ginfo->cleaning[colour]->remv_low_cov_sups=true;
   ginfo->cleaning[colour]->remv_low_cov_sups_thresh = thresh;
@@ -164,8 +157,7 @@ void graph_info_unset_remv_low_cov_sups(GraphInfo* ginfo, int colour)
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   ginfo->cleaning[colour]->remv_low_cov_sups=false;
   ginfo->cleaning[colour]->remv_low_cov_sups_thresh = -1;
@@ -175,8 +167,7 @@ void graph_info_set_remv_low_cov_nodes(GraphInfo* ginfo, int colour, int thresh)
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   ginfo->cleaning[colour]->remv_low_cov_nodes=true;
   ginfo->cleaning[colour]->remv_low_cov_nodes_thresh=thresh;
@@ -186,8 +177,7 @@ void graph_info_unset_remv_low_cov_nodes(GraphInfo* ginfo, int colour)
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   ginfo->cleaning[colour]->remv_low_cov_nodes=false;
   ginfo->cleaning[colour]->remv_low_cov_nodes_thresh=-1;
@@ -198,8 +188,7 @@ void graph_info_set_seq_err(GraphInfo* ginfo, int colour, long double err)
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   ginfo->seq_err[colour]=err;
 }
@@ -207,8 +196,7 @@ void graph_info_set_specific_colour_to_cleaned_against_pool(GraphInfo* ginfo, in
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   //set the "name" to be "binary_blah.ctx colour 5", for example
   ginfo->cleaning[colour]->name_of_graph_against_which_was_cleaned[0]='\0';
@@ -230,8 +218,7 @@ void graph_info_unset_specific_colour_from_cleaned_against_pool(GraphInfo* ginfo
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   ginfo->cleaning[colour]->name_of_graph_against_which_was_cleaned[0]='\0';
   strcat(ginfo->cleaning[colour]->name_of_graph_against_which_was_cleaned, "undefined");
@@ -243,8 +230,7 @@ void graph_info_set_seq(GraphInfo* ginfo, int colour, long long num_bp)
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   ginfo->total_sequence[colour]=num_bp;
 }
@@ -254,8 +240,7 @@ long long graph_info_increment_seq(GraphInfo* ginfo, int colour, long long num_b
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   ginfo->total_sequence[colour]+=num_bp;
   return ginfo->total_sequence[colour];
@@ -265,8 +250,7 @@ void graph_info_set_mean_readlen(GraphInfo* ginfo, int colour, int len)
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   ginfo->mean_read_length[colour]=len;
 }
@@ -280,8 +264,7 @@ int graph_info_update_mean_readlen(GraphInfo* ginfo, int colour, int previous_me
 {
   if (colour>NUMBER_OF_COLOURS-1)
     {
-      printf("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
-      exit(1);
+      die("Setting a graph_info error cleaning flag with a colour (%d) that is bigger than you have compiled for (%d). Coding error, the UI should have prevented this. Call Zam\n", colour, NUMBER_OF_COLOURS);
     }
   if (added_seq==0)
     {
@@ -320,8 +303,7 @@ void graph_info_set_sample_ids(char** sample_ids, int num_ids, GraphInfo* ginfo,
 {
   if (first_col+num_ids-1>NUMBER_OF_COLOURS-1)
     {
-      printf("Coding error in graph_info_set_sample_ids - trying to load sample id into a colour greater than the number of supported colours you have compiled for. Should have been caught earlier - please tell Zam\n");
-      exit(1);
+      die("Coding error in graph_info_set_sample_ids - trying to load sample id into a colour greater than the number of supported colours you have compiled for. Should have been caught earlier - please tell Zam\n");
     }
   int i;
   for (i=first_col; i<first_col+num_ids; i++)

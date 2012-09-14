@@ -33,8 +33,7 @@ void test_count_reads_where_snp_makes_clean_bubble1()
 
   if (hash_table==NULL)
     {
-      printf("unable to alloc the hash table. dead before we even started. OOM");
-      exit(1);
+      die("Unable to alloc the hash table.");
     }
 
   // Read FASTA sequence
@@ -75,8 +74,7 @@ void test_count_reads_where_snp_makes_clean_bubble1()
   //----------------------------------
   Sequence * seq = malloc(sizeof(Sequence));
   if (seq == NULL){
-    fputs("Out of memory trying to allocate Sequence\n",stderr);
-    exit(1);
+    die("Out of memory trying to allocate Sequence\n");
   }
   int max_read_length=2000;
   alloc_sequence(seq,max_read_length,LINE_MAX);
@@ -85,16 +83,14 @@ void test_count_reads_where_snp_makes_clean_bubble1()
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      printf("Failed to malloc kmer sliding window in test. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer sliding window in test. Exit.\n");
     }
   
 
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-hash_table->kmer_size-1));
   if (kmer_window->kmer==NULL)
     {
-      printf("Failed to malloc kmer_window->kmer in test. Exit.\n");
-      exit(1);
+      die("Failed to malloc kmer_window->kmer in test. Exit.\n");
     }
   kmer_window->nkmers=0;
   
@@ -108,8 +104,7 @@ void test_count_reads_where_snp_makes_clean_bubble1()
     int offset = 0;
     if (new_entry == false){
       offset = hash_table->kmer_size;
-      //printf("new_entry must be true in hsi test function");
-      //exit(1);
+      //die("new_entry must be true in hsi test function");
     }
     ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
     

@@ -75,8 +75,7 @@ boolean check_files_in_list_exist_ignoring_ref_line(char* filelist, char* error_
   FILE* fp = fopen(filelist, "r");
   if (fp==NULL)
     {
-      printf("Cannot open %s\n", filelist);
-      exit(1);
+      die("Cannot open %s\n", filelist);
     }
 
   char filename[MAX_LINE];
@@ -124,8 +123,7 @@ boolean more_than_one_colour_in_list(char* file)
   FILE* fp = fopen(file, "r");
   if (fp==NULL)
     {
-      printf("Cannot open %s\n", file);
-      exit(1);
+      die("Cannot open %s\n", file);
     }
 
   char filename[MAX_LINE];
@@ -162,8 +160,7 @@ boolean more_than_one_colour_in_multicol_binary(char* file, int kmer_size)
   FILE* fp = fopen(file, "r");
   if (fp==NULL)
     {
-      printf("Cannot open %s\n", file);
-      exit(1);
+      die("Cannot open %s\n", file);
     }
 
 
@@ -495,14 +492,12 @@ CmdLine* cmd_line_alloc()
   CmdLine* cmd = (CmdLine*) malloc(sizeof(CmdLine));
   if (cmd==NULL)
     {
-      printf("Out of memory before we even start Cortex, cannot alloc space to hold the commandline variables! Abort\n");
-      exit(1);
+      die("Out of memory before we even start Cortex, cannot alloc space to hold the commandline variables! Abort\n");
     }
   cmd->colour_sample_ids=(char**) malloc(sizeof(char*) * NUMBER_OF_COLOURS);
   if (cmd->colour_sample_ids==NULL)
     {
-      printf("Out of memory before we even start Cortex, cannot alloc space to hold the commandline variables! Abort\n");
-      exit(1);      
+      die("Out of memory before we even start Cortex, cannot alloc space to hold the commandline variables! Abort\n");      
     }
   int i;
   for (i=0; i<NUMBER_OF_COLOURS; i++)
@@ -510,8 +505,7 @@ CmdLine* cmd_line_alloc()
       cmd->colour_sample_ids[i]=(char*) malloc(sizeof(char)*(MAX_LEN_SAMPLE_NAME+1));
       if (cmd->colour_sample_ids[i]==NULL)
 	{
-	  printf("Out of memory before we even start Cortex, cannot alloc space to hold the commandline variables! Abort\n");
-	  exit(1);      
+	  die("Out of memory before we even start Cortex, cannot alloc space to hold the commandline variables! Abort\n");      
 	}
       
     }
@@ -649,7 +643,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	    if (colour_list_has_samples==false)
 	      {
 		//how many colours in this filelist?
-		num_cols_in_input_list=get_number_of_files_and_check_existence_from_filelist(col_list);
+		num_cols_in_input_list = load_paths_from_filelist(col_list, NULL);
 	      }
 	    else //colour list has two columns and includes samples
 	      {
@@ -998,14 +992,12 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	      }
 	    else
 	      {
-		printf("[--gt] error - %s\n", msg);
-		exit(1);
+		die("[--gt] error - %s\n", msg);
 	      }
 	  }
 	else
 	  {
-	    printf("[--gt] argument too long [%s]",optarg);
-	    exit(1);
+	    die("[--gt] argument too long [%s]",optarg);
 	  }
 	break; 
       }
@@ -1136,16 +1128,14 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 	if (optarg==NULL)
 	  {
-	    printf("[--remove_low_coverage_kmers] option requires int argument [node coverage cut off]");
-	    exit(1);
+	    die("[--remove_low_coverage_kmers] option requires int argument [node coverage cut off]");
 	  }
 	cmdline_ptr->node_coverage_threshold = atoi(optarg);
 	cmdline_ptr->remove_low_coverage_nodes = true;
 	
 	if (cmdline_ptr->node_coverage_threshold <= 0)
 	  {
-	    printf("[--remove_low_coverage_kmers] option requires int argument bigger than 0");
-	    exit(1);
+	    die("[--remove_low_coverage_kmers] option requires int argument bigger than 0");
 	  }
 	break;    
 	
@@ -1182,21 +1172,18 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       {
         if (optarg==NULL)
 	  {
-            printf("[--load_colours_only_where_overlap_clean_colour] option requires int argument [which is the clean/preferred colour]");
-            exit(1);
+            die("[--load_colours_only_where_overlap_clean_colour] option requires int argument [which is the clean/preferred colour]");
           }
 	cmdline_ptr->load_colours_only_where_overlap_clean_colour=true;
 	cmdline_ptr->clean_colour=atoi(optarg);
 
         if (cmdline_ptr->clean_colour<0)
           {
-            printf("[--load_colour_list_only_where_overlap_clean_colour] option requires int argument bigger than 0");
-            exit(1);
+            die("[--load_colour_list_only_where_overlap_clean_colour] option requires int argument bigger than 0");
           }
 	else if  (cmdline_ptr->clean_colour>=NUMBER_OF_COLOURS)
           {
-            printf("[--load_colour_list_only_where_overlap_clean_colour] option requires int argument <=  max colour limit");
-            exit(1);
+            die("[--load_colour_list_only_where_overlap_clean_colour] option requires int argument <=  max colour limit");
           }
         break;
 
@@ -1531,8 +1518,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "You can't use successively_dump_cleaned_colours and load a colour_list in \"union\" mode\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1543,8 +1529,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char error_msg[2*MAX_FILENAME_LEN];
       if (check_files_in_list_exist_ignoring_ref_line(cmd_ptr->colourlist_snp_alleles, error_msg, cmd_ptr->ref_colour)==false)
 	{
-	  printf("%s\n",error_msg);
-	  exit(1);
+	  die("%s\n",error_msg);
 	}
     }
   if ( (cmd_ptr->do_genotyping_of_file_of_sites==true) && (cmd_ptr->max_read_length==0) )
@@ -1552,8 +1537,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "If you use --gt, then you must specify --max_read_len (and it must be >= any of the reads (including flanks) in your input file).\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1566,8 +1550,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "If you use --gt, and specify that the calls to genotype were called with the Path Divergence caller, then you must specify --ref_colour.\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1582,8 +1565,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "If you use --gt, and specify that the calls to genotype were called with the Path Divergence caller, then you must specify --experiment_type to be EachColourADiploidSampleExceptTheRefColour or EachColourAHaploidSampleExceptTheRefColour.\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1597,8 +1579,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "You have specified a max_read_length < kmer_size\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1612,8 +1593,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "If you specify --gt, you must also set --genome_size and --experiment_type\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1626,8 +1606,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "You must specify kmer_size\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1644,8 +1623,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	      char tmp[] = "in detect_bubbles1 Cannot specify a number > %d, which you specified at compile time as the number of colours supported. Recompile/see manual.\n";
 	      if (strlen(tmp)>LEN_ERROR_STRING)
 		{
-		  printf("coding error - this string is too long:\n%s\n", tmp);
-		  exit(1);
+		  die("coding error - this string is too long:\n%s\n", tmp);
 		}
 	      strcpy(error_string, tmp);
 	      return -1;
@@ -1660,8 +1638,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	      char tmp[] = "In detect_bubbles1 , you cannot specify a number > %d, which you specified at compile time as the number of colours supported. Recompile/see manual.\n";
 	      if (strlen(tmp)>LEN_ERROR_STRING)
 		{
-		  printf("coding error - this string is too long:\n%s\n", tmp);
-		  exit(1);
+		  die("coding error - this string is too long:\n%s\n", tmp);
 		}
 	      strcpy(error_string, tmp);
 	      return -1;
@@ -1682,8 +1659,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	      char tmp[] = "in detect_bubbles2, you cannot specify a number > %d, which you specified at compile time as the number of colours supported. Recompile/see manual.\n";
 	      if (strlen(tmp)>LEN_ERROR_STRING)
 		{
-		  printf("coding error - this string is too long:\n%s\n", tmp);
-		  exit(1);
+		  die("coding error - this string is too long:\n%s\n", tmp);
 		}
 	      strcpy(error_string, tmp);
 	      return -1;
@@ -1700,8 +1676,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	      char tmp[] = "In detect_bubbles2, you cannot specify a number > %d, which you specified at compile time as the number of colours supported. Recompile/see manual.\n";
 	      if (strlen(tmp)>LEN_ERROR_STRING)
 		{
-		  printf("coding error - this string is too long:\n%s\n", tmp);
-		  exit(1);
+		  die("coding error - this string is too long:\n%s\n", tmp);
 		}
 	      strcpy(error_string, tmp);
 	      return -1;
@@ -1716,8 +1691,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "Experiment type is specified to allow genotyping, but to do that we also need genome length. Please also specify --genome_size\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1729,8 +1703,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "If you specify the experiment as EachColourADiploidSampleExceptTheRefColour, then you need to specify the ref colour\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1741,8 +1714,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "If you specify the experiment as EachColourAHaploidSampleExceptTheRefColour, then you need to specify the ref colour\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1753,8 +1725,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "You have specified a reference colour, and yet also set experiment type to EachColourADiploidSample. Surely you meant EachColourADiploidSampleExceptTheRefColour\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1765,8 +1736,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "You have specified a reference colour, and yet also set experiment type to EachColourAHaploidSample. Surely you meant EachColourAHaploidSampleExceptTheRefColour\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1781,8 +1751,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "If you specify --exclude_ref_bubbles, then you must specify a reference colour with --ref_colour\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1793,8 +1762,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "Cannot pass in both binary and sequence (fasta/fastq) data\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1805,8 +1773,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[] = "You can only use --sample_id when loading sequence data (fasta/q), not loading binaries\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1819,9 +1786,10 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       
       if ( (cmd_ptr->successively_dump_cleaned_colours==false) && (cmd_ptr->num_colours_in_input_colour_list>NUMBER_OF_COLOURS) )
 	{
-	  printf("You are trying to load more colours than you have compiled cortex for. Your colour_list contains %d colours, but cortex_var is compiled for a maximum of %d\n",
-		 cmd_ptr->num_colours_in_input_colour_list, NUMBER_OF_COLOURS);
-	  exit(1);
+	  die("You are trying to load more colours than you have compiled cortex for. \n"
+        "Your colour_list contains %d colours, but cortex_var is compiled for a "
+        "maximum of %d\n",
+		    cmd_ptr->num_colours_in_input_colour_list, NUMBER_OF_COLOURS);
 	}
 
    }
@@ -1836,8 +1804,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
      	  char tmp[]="If you want to specify --load_colours_only_where_overlap_clean_colour, then you need to have a prespecified colour already in the graph before you load your colour list. This must therefore be loaded by --multicolour_bin, but you have not specified that.\n";
 	  if (strlen(tmp)>LEN_ERROR_STRING)
 	    {
-	      printf("coding error - this string is too long:\n%s\n", tmp);
-	      exit(1);
+	      die("coding error - this string is too long:\n%s\n", tmp);
 	    }
 	  strcpy(error_string, tmp);
 	  return -1;
@@ -1849,8 +1816,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
      	  char tmp[]="If you specify --successively_dump_cleaned_colours, you must also specify --load_colours_only_where_overlap_clean_colour\n";
 	  if (strlen(tmp)>LEN_ERROR_STRING)
 	    {
-	      printf("coding error - this string is too long:\n%s\n", tmp);
-	      exit(1);
+	      die("coding error - this string is too long:\n%s\n", tmp);
 	    }
 	  strcpy(error_string, tmp);
 	  return -1;
@@ -1870,8 +1836,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  char tmp[]="Cannot open the specified multicolour binary\n";
 	  if (strlen(tmp)>LEN_ERROR_STRING)
 	    {
-	      printf("coding error - this string is too long:\n%s\n", tmp);
-	      exit(1);
+	      die("coding error - this string is too long:\n%s\n", tmp);
 	    }
 	  strcpy(error_string, tmp);
 	  return -1;
@@ -1890,8 +1855,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  char tmp[]="Specified clean colour number is > number of colours in the multicolour binary. Consult the manual.\n";
 	  if (strlen(tmp)>LEN_ERROR_STRING)
 	    {
-	      printf("coding error - this string is too long:\n%s\n", tmp);
-	      exit(1);
+	      die("coding error - this string is too long:\n%s\n", tmp);
 	    }
 	  strcpy(error_string, tmp);
 	  return -1;
@@ -1906,8 +1870,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  char tmp[]="Must specify either binary (--colour_list or --multicolour_bin), or sequence data (--se_list and/or --pe_list) as input \n";
 	  if (strlen(tmp)>LEN_ERROR_STRING)
 	    {
-	      printf("coding error - this string is too long:\n%s\n", tmp);
-	      exit(1);
+	      die("coding error - this string is too long:\n%s\n", tmp);
 	    }
 	  strcpy(error_string, tmp);
 	  return -1;
@@ -1922,8 +1885,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="[-k/--kmer_size] must be odd";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1937,8 +1899,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="Error-correction techniques should not be used on a graph including a reference genome.\nWe recommend error-correcting single-colour binaries of sequencing data, and then loading them into a multicolour graph including a reference\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1950,8 +1911,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="--dump_filtered_readlen_distribution is only supported for fastq input";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1972,8 +1932,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="Incompatible cmd line arguments. Error cleaning options only allowed on single-colour graphs\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -1990,8 +1949,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="Do not specify --detect_bubbles2 unless you have already specified --detect_bubbles1. Consult manual for further information\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -2003,8 +1961,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="If you specify --require_hw, you must also specify --detect_bubbles1";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -2017,8 +1974,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="If you specify --require_hw, you must also specify --genome_size";
       if (strlen(tmp)>LEN_ERROR_STRING)
         {
-          printf("coding error - this string is too long:\n%s\n", tmp);
-          exit(1);
+          die("coding error - this string is too long:\n%s\n", tmp);
         }
       strcpy(error_string, tmp);
       return -1;
@@ -2034,8 +1990,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="If you specify --detect_bubbles1, you must also specify an output file with --output_bubbles1";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -2046,8 +2001,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="If you specify --detect_bubbles2, you must also specify an output file with --output_bubbles2";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -2058,8 +2012,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="You are not allowed to set maximum read length >100000 when loading fasta/q into a graph. (However it IS allowed if you are aligning fasta/q to  preexisting graph, or genotyping a file of calls (which might be very long)). Since you have not specified --align, Cortex has exited.\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -2072,8 +2025,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="If doing alignment, max read length is 300Mb (for whole chromosomes)\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -2085,8 +2037,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="Must specify max read-length if inputting fasta/fastq data\n";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -2101,8 +2052,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 
 	  if (strlen(tmp)>LEN_ERROR_STRING)
 	    {
-	      printf("coding error - this string is too long:\n%s\n", tmp);
-	      exit(1);
+	      die("coding error - this string is too long:\n%s\n", tmp);
 	    }
 	  strcpy(error_string, tmp);
 	  return -1;
@@ -2113,8 +2063,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  char tmp[]="If --path_divergence_caller is specified, then must also specify --path_divergence_caller_output";
           if (strlen(tmp)>LEN_ERROR_STRING)
             {
-              printf("coding error - this string is too long:\n%s\n", tmp);
-              exit(1);
+              die("coding error - this string is too long:\n%s\n", tmp);
             }
           strcpy(error_string, tmp);
           return -1;
@@ -2126,8 +2075,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       char tmp[]="If --path_divergence_caller_output is specified, then must also specify --path_divergence_caller";
       if (strlen(tmp)>LEN_ERROR_STRING)
 	{
-	  printf("coding error - this string is too long:\n%s\n", tmp);
-	  exit(1);
+	  die("coding error - this string is too long:\n%s\n", tmp);
 	}
       strcpy(error_string, tmp);
       return -1;
@@ -2333,8 +2281,7 @@ void parse_cmdline(CmdLine* cmd_line, int argc, char* argv[], int unit_size)
 
   if (err==-1) 
     {
-      printf("Error in cmd-line input: %s\n", error_string);
-      exit(1);
+      die("Error in cmd-line input: %s\n", error_string);
     }
 
 
@@ -2346,8 +2293,7 @@ void parse_cmdline(CmdLine* cmd_line, int argc, char* argv[], int unit_size)
 
   if (err == -1)
     {
-      printf("Error in cmd-line input: %s\n", error_string2);
-      exit(1);
+      die("Error in cmd-line input: %s\n", error_string2);
     }
   
   
@@ -2372,8 +2318,7 @@ int get_numbers_from_comma_sep_list(char* list, int* return_list, int max_len_re
       int j;
       if (max_len_return_list<NUMBER_OF_COLOURS)
 	{
-	  printf("Passing array limit of %d int get_numbers_from_comma_sep_list which is less than the number of colours\n", max_len_return_list);
-	  exit(1);
+	  die("Passing array limit of %d int get_numbers_from_comma_sep_list which is less than the number of colours\n", max_len_return_list);
 	}
       for (j=0; j<NUMBER_OF_COLOURS; j++)
 	{
@@ -2492,8 +2437,7 @@ int get_numbers_from_open_square_brack_sep_list(char* list, int* return_list,
       int j;
       if (max_len_return_list<NUMBER_OF_COLOURS)
 	{
-	  printf("Passing array limit of %d int get_numbers_from_comma_sep_list which is less than the number of colours\n", max_len_return_list);
-	  exit(1);
+	  die("Passing array limit of %d int get_numbers_from_comma_sep_list which is less than the number of colours\n", max_len_return_list);
 	}
       for (j=0; j<NUMBER_OF_COLOURS; j++)
 	{
@@ -2635,8 +2579,7 @@ int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* 
       *num_colours_to_genotype  = get_numbers_from_comma_sep_list(commaseplist, colours_to_genotype_list, NUMBER_OF_COLOURS);
       if (*num_colours_to_genotype==-1)
 	{
-	  printf("cmdline error - Failed to parse out the colours which we should genotype in --genotype_site");
-	  exit(1);
+	  die("cmdline error - Failed to parse out the colours which we should genotype in --genotype_site");
 	}
 
     }
@@ -2857,8 +2800,7 @@ int parse_novelseq_args(char* arg, int* array_colours_to_look_in, int* num_cols_
   *num_cols_in_look_list = get_numbers_from_comma_sep_list(commaseplist1, array_colours_to_look_in, NUMBER_OF_COLOURS);
   if (*num_cols_in_look_list==-1)
     {
-      printf("Badly formatted/chosen arguments for --print_novel_contigs. Consult the manual\n");
-      exit(1);
+      die("Badly formatted/chosen arguments for --print_novel_contigs. Consult the manual\n");
     }
 
 
@@ -2872,13 +2814,11 @@ int parse_novelseq_args(char* arg, int* array_colours_to_look_in, int* num_cols_
   *num_cols_in_avoid_list = get_numbers_from_comma_sep_list(commaseplist2, array_colours_to_avoid, NUMBER_OF_COLOURS);
   if (*num_cols_in_avoid_list==-1)
     {
-      printf("Badly formatted/chosen arguments for --print_novel_contigs. Consult the manual\n");
-      exit(1);
+      die("Badly formatted/chosen arguments for --print_novel_contigs. Consult the manual\n");
     }
   else if (*num_cols_in_avoid_list>=NUMBER_OF_COLOURS)
     {
-      printf("[--print_novel_contigs] option requires an argument of the form a,b,../c,d,../x/y/filename. You have listed ALL the colours in the graph in c,d (either by enumerating them all, or by entering -1). this is meaningless - the idea is to look for stuff in the graph that is NOT in colours c,d,etc\n");
-      exit(1);
+      die("[--print_novel_contigs] option requires an argument of the form a,b,../c,d,../x/y/filename. You have listed ALL the colours in the graph in c,d (either by enumerating them all, or by entering -1). this is meaningless - the idea is to look for stuff in the graph that is NOT in colours c,d,etc\n");
     }
   char* min_contig_len_as_char = strtok(NULL, delims ); 
   if (min_contig_len_as_char==NULL)
@@ -2908,20 +2848,17 @@ int parse_novelseq_args(char* arg, int* array_colours_to_look_in, int* num_cols_
 	}
       else if (tmp<=0)
 	{
-	  printf("[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename, where y is the minimum percentage of the kmers in a contig which we require to NOT be in any colours c,d,.... ie if we want to be very stringent, we set y=100, and demand ALL kmers be novel (ie outside colours c,d..). You have chosen a value for y which is <0, which we do not allow\n");
-	  exit(1);
+	  die("[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename, where y is the minimum percentage of the kmers in a contig which we require to NOT be in any colours c,d,.... ie if we want to be very stringent, we set y=100, and demand ALL kmers be novel (ie outside colours c,d..). You have chosen a value for y which is <0, which we do not allow\n");
 	}
       else if (tmp>100)
 	{
-	  printf("[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename, where y is the minimum percentage of the kmers in a contig which we require to NOT be in any colours c,d,.... ie if we want to be very stringent, we set y=100, and demand ALL kmers be novel (ie outside colours c,d..). You have chosen a value for y which is >100, which is meaningless\n");
-	  exit(1);
+	  die("[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename, where y is the minimum percentage of the kmers in a contig which we require to NOT be in any colours c,d,.... ie if we want to be very stringent, we set y=100, and demand ALL kmers be novel (ie outside colours c,d..). You have chosen a value for y which is >100, which is meaningless\n");
 	  
 	}
     }
   else
     {
-	  printf("[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename, where y is the minimum percentage of the kmers in a contig which we require to NOT be in any colours c,d,.... ie if we want to be very stringent, we set y=100, and demand ALL kmers be novel (ie outside colours c,d..). You have chosen a NON_NUMERIC value for y\n");
-	  exit(1);
+	  die("[--print_novel_contigs] option requires an argument of the form a,b/c,d/x/y/filename, where y is the minimum percentage of the kmers in a contig which we require to NOT be in any colours c,d,.... ie if we want to be very stringent, we set y=100, and demand ALL kmers be novel (ie outside colours c,d..). You have chosen a NON_NUMERIC value for y\n");
       
     }
 
@@ -3048,15 +2985,13 @@ int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_f
 	      }
 	    else
 	      {
-		printf("Unexpected argument to parse_colourinfo_argument, which_detect_bubbles is not 1,2 or 3");
-		exit(1);
+		die("Unexpected argument to parse_colourinfo_argument, which_detect_bubbles is not 1,2 or 3");
 	      }
 	    
 	  }
   else
     {
-      printf("Coding error. Have colour info argument longer than %d, which should not happen - but should have been caught before now\n", MAX_LEN_DETECT_BUB_COLOURINFO);
-      exit(1);
+      die("Coding error. Have colour info argument longer than %d, which should not happen - but should have been caught before now\n", MAX_LEN_DETECT_BUB_COLOURINFO);
     }
 
   return 0;
@@ -3120,8 +3055,7 @@ int parse_commasep_or_open_square_brack_sep_list(CmdLine* cmd, char* arg, int le
 	  }
   else
     {
-      printf("Coding error. Have colour info argument longer than %d, which should not happen - but should have been caught before now\n", MAX_LEN_DETECT_BUB_COLOURINFO);
-      exit(1);
+      die("Coding error. Have colour info argument longer than %d, which should not happen - but should have been caught before now\n", MAX_LEN_DETECT_BUB_COLOURINFO);
     }
 
   return 0;
@@ -3184,6 +3118,7 @@ int parse_arguments_for_genotyping(CmdLine* cmdline, char* argmt, char* msg)
   
 }
 
+/*
 //returns true if it did find a sample identifier on the top line of the se/pe list.
 //will exit if it finds an identifier, but finds the id is already set (means an identifier was
 // set in some other file also) and it does not match. ASSUMPTION is fasta/q only goes into colour 0,
@@ -3194,8 +3129,7 @@ boolean get_sample_id_from_se_pe_list(char* cmdline_sampleid, char* se_pe_list)
   FILE* fp = fopen(se_pe_list, "r");
   if (fp==NULL)
     {
-      printf("Unable to open se/pe filelist %s\n", se_pe_list);
-      exit(1);
+      die("Unable to open se/pe filelist %s\n", se_pe_list);
     }
   else
     {
@@ -3221,8 +3155,7 @@ boolean get_sample_id_from_se_pe_list(char* cmdline_sampleid, char* se_pe_list)
 	    }
 	  else if (access(file, R_OK)==-1)
 	    {
-	      printf("Cannot access file %s listed in %s. Cortex thinks this is a filename. Either you are trying to list sample_identifiers in your se_list or pe_list file, (in which case - make sure you have a tab between the filename (first column) and sample-id (second column)), or you have listed a file without the right path, as it does not seem to exist/have the right permissions\n", file, se_pe_list);
-	      exit(1);
+	      die("Cannot access file %s listed in %s. Cortex thinks this is a filename. Either you are trying to list sample_identifiers in your se_list or pe_list file, (in which case - make sure you have a tab between the filename (first column) and sample-id (second column)), or you have listed a file without the right path, as it does not seem to exist/have the right permissions\n", file, se_pe_list);
 	    }
 	  else
 	    {
@@ -3237,8 +3170,7 @@ boolean get_sample_id_from_se_pe_list(char* cmdline_sampleid, char* se_pe_list)
 		  else if (strcmp(cmdline_sampleid, sample_name)!=0)
 		    {
 		      //you seem to have got a second sample id for the same data/sample
-		      printf("Your se/pe lists seem to contain TWO sample id's, %s and %s. One identifier only allowed when loading FASTA/Q, as it all goes into colour 0, and is treated like one sample\n", cmdline_sampleid, sample_name);
-		      exit(1);
+		      die("Your se/pe lists seem to contain TWO sample id's, %s and %s. One identifier only allowed when loading FASTA/Q, as it all goes into colour 0, and is treated like one sample\n", cmdline_sampleid, sample_name);
 		    }
 
 		}
@@ -3248,6 +3180,7 @@ boolean get_sample_id_from_se_pe_list(char* cmdline_sampleid, char* se_pe_list)
     }
   return found_an_id;
 }
+*/
 
 //returns number of filenames/colours in this file
 int get_number_of_files_and_check_existence_and_get_samplenames_from_col_list(char* colour_list, CmdLine* cmd)
@@ -3257,8 +3190,7 @@ int get_number_of_files_and_check_existence_and_get_samplenames_from_col_list(ch
   FILE* fp = fopen(colour_list, "r");
   if (fp==NULL)
     {
-      printf("Running initial sanity check: Cannot open the colourlist %s. Abort.\n", colour_list);
-      exit(1);
+      die("Running initial sanity check: Cannot open the colourlist %s. Abort.\n", colour_list);
     }
 
   char line[2*MAX_FILENAME_LENGTH];
@@ -3282,13 +3214,11 @@ int get_number_of_files_and_check_existence_and_get_samplenames_from_col_list(ch
 	  file = strtok(line, delims);
 	  if (file==NULL)
 	    {
-	      printf("Format issue in %s. Started off looking like two columns (tab sep), but one of the lines looks bad\n", line);
-	      exit(1);
+	      die("Format issue in %s. Started off looking like two columns (tab sep), but one of the lines looks bad\n", line);
 	    }
 	  else if (access(file, R_OK)==-1)
 	    {
-	      printf("Cannot access file %s listed in %s. Cortex thinks this is a filename. If you are trying to list sample_identifiers in your colour_list file, make sure you have a tab between the filename (first column) and sample-id (second column)\n", file, colour_list);
-	      exit(1);
+	      die("Cannot access file %s listed in %s. Cortex thinks this is a filename. If you are trying to list sample_identifiers in your colour_list file, make sure you have a tab between the filename (first column) and sample-id (second column)\n", file, colour_list);
 	    }
 	  else
 	    {
@@ -3312,8 +3242,7 @@ boolean check_if_colourlist_contains_samplenames(char* filename)
   FILE* fp = fopen(filename, "r");
   if (fp==NULL)
     {
-      printf("Running initial sanity check: Cannot open the colourlist %s. Abort.\n", filename);
-      exit(1);
+      die("Running initial sanity check: Cannot open the colourlist %s. Abort.\n", filename);
     }
 
   char line[2*MAX_FILENAME_LENGTH];
@@ -3337,8 +3266,7 @@ boolean check_if_colourlist_contains_samplenames(char* filename)
 	  file = strtok(line, delims);
 	  if (file==NULL)
 	    {
-	      printf("Format issue in %s. I don't see how this can happen - please send me your colourlist!\n",line );
-	      exit(1);
+	      die("Format issue in %s. I don't see how this can happen - please send me your colourlist!\n",line );
 	    }
 	  else
 	    {

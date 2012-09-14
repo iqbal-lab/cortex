@@ -479,7 +479,7 @@ if ($squeeze_mem)
 {
     my $count_log = $list_all_clean_pop.".log";
     my $ctx_bin_for_count = get_right_binary($first_kmer, $cortex_dir,scalar(@samples)+1);
-    my $cmd_count_kmers = $ctx_bin_for_count." --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width  --colour_list $list_all_clean_pop &> $count_log";
+    my $cmd_count_kmers = $ctx_bin_for_count." --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width  --colour_list $list_all_clean_pop > $count_log 2>&1";
     print "Load all k=$first_kmer cleaned binaries into one colour, and check how many kmers. Having done this, we can know how much memory to use for the multicolour graphs. This is just a memory saving device\n";
     qx{$cmd_count_kmers};
     my $num_kmers_in_cleaned_pool=0; ##will be number of kmers
@@ -571,7 +571,7 @@ if  ($workflow eq "independent" )
 		my $uniqid = "sample_".$sam."_kmer".$k."_cleaning".$cleaning;
 		my $colour_list = make_2sample_filelist($ref_name.".".$uniqid, $sam.".".$uniqid, $k_to_refbin{$k}, $sample_to_cleaned_bin{$sam}{$k}{$cleaning}, $uniqid );
 		## load reference binary and make calls. 
-		my $cmd = $ctx_bin." --kmer_size $k --mem_height $mem_height --mem_width $mem_width --ref_colour 0 --colour_list $colour_list  --print_colour_coverages ";
+		my $cmd = $ctx_bin." --kmer_size $k --mem_height $mem_height --mem_width $mem_width --ref_colour 0 --colour_list $colour_list  --print_colour_coverages";
 		print "Load reference $k_to_refbin{$k} in colour 0, and sample ";
 		print $sample_to_cleaned_bin{$sam}{$k}{$cleaning};
 		print " into colour 1\n";
@@ -593,18 +593,18 @@ if  ($workflow eq "independent" )
 		
 		if ( ($do_bc eq "yes") && (!(-e $bubble_output)) )## we want to do it and not already done
 		{
-		    $cmd = $cmd." --detect_bubbles1 -1/-1 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len ";
-		    $sample_to_bc_callfile{$sam}{$k}{$cleaning} =  $bubble_output ;
+		    $cmd = $cmd." --detect_bubbles1 -1/-1 --output_bubbles1 $bubble_output --exclude_ref_bubbles --max_var_len $max_var_len";
+		    $sample_to_bc_callfile{$sam}{$k}{$cleaning} = $bubble_output;
 		}
 		elsif  ( ($do_bc eq "yes") && (-e $bubble_output) )## we want t do it but it has already been done
 		{
 		    print "Bubble calling already seems to have been done - will not rerun\n";
 		    $bc_already_done = "yes";
-		    $sample_to_bc_callfile{$sam}{$k}{$cleaning} =  $bubble_output ;
+		    $sample_to_bc_callfile{$sam}{$k}{$cleaning} = $bubble_output;
 		}
 		if ( ($do_pd eq "yes") && (!(-e $pd_output."_pd_calls")) )
 		{
-		    $cmd = $cmd." --path_divergence_caller 1 --path_divergence_caller_output $pd_output --list_ref_fasta $list_ref_fasta --max_var_len $max_var_len ";
+		    $cmd = $cmd." --path_divergence_caller 1 --path_divergence_caller_output $pd_output --list_ref_fasta $list_ref_fasta --max_var_len $max_var_len";
 		    $sample_to_pd_callfile{$sam}{$k}{$cleaning} =  $pd_output."_pd_calls"
 		}
 		elsif ( ($do_pd eq "yes") && (-e $pd_output."_pd_calls"))
@@ -625,7 +625,7 @@ if  ($workflow eq "independent" )
 
 
 
-		    $cmd = $cmd." &> $log";
+		    $cmd = $cmd." > $log 2>&1";
 		    print "$cmd\n";
 		    my $ret = qx{$cmd};
 		    print "$ret\n";
@@ -676,7 +676,7 @@ if  ($workflow eq "joint" )## then just assume is BC only
 	    my $uniqid = "joint_".$str ."kmer".$K."_cleaning_level".$cl;
 	    my $colour_list = get_colourlist_for_joint($K, $cl, $str);
 	    
-	    my $cmd = $ctx_bin." --kmer_size $K --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list  --print_colour_coverages  --experiment_type $expt_type --genome_size $genome_size";
+	    my $cmd = $ctx_bin." --kmer_size $K --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size";
 
 	    if ($format eq "FASTA")
 	    {
@@ -737,7 +737,7 @@ if  ($workflow eq "joint" )## then just assume is BC only
 	    if ($do_it==1)
 	    {
 		print "Run joint calls:\n";
-		$cmd = $cmd." &> $log";
+		$cmd = $cmd." > $log 2>&1";
 		print "$cmd\n";
 		my $ret = qx{$cmd};
 		print "$ret\n";
@@ -1446,7 +1446,7 @@ sub build_vcfs
 	$cmd = $cmd. " --unioncalls $fasta_file_of_just_calls ";	
     }
 
-    $cmd = $cmd." &> $log" ;
+    $cmd = $cmd." > $log 2>&1" ;
 
 
     if ( (!(-e $directory.$string.".decomp.vcf"))  || (!(-e $directory.$string.".raw.vcf")) )
@@ -1639,7 +1639,7 @@ sub build_clean_binary
 
 
     my $cortex_binary = get_right_binary($kmer, $cortex_dir,1 );##one colour
-    my $cmd2 = $cortex_binary." --kmer_size $kmer --mem_height $height --mem_width $width --dump_binary $ctx --remove_low_coverage_supernodes $clean_thresh --multicolour_bin $uncleaned &> $log";
+    my $cmd2 = $cortex_binary." --kmer_size $kmer --mem_height $height --mem_width $width --dump_binary $ctx --remove_low_coverage_supernodes $clean_thresh --multicolour_bin $uncleaned > $log 2>&1";
     print "$cmd2\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
@@ -1944,11 +1944,11 @@ sub build_unclean
     my $cmd = $cortex_binary." --sample_id $name --kmer_size $km --mem_height $height --mem_width $width --dump_binary $ctx --max_read_len $max_r  --format $format --dump_covg_distribution $covg";
     if ($se ne "NO")
     {
-	$cmd = $cmd." --se_list $se ";
+	$cmd = $cmd." --se_list $se";
     }
     if ($pe ne "NO")
     {
-	$cmd = $cmd." --pe_list $pe ";
+	$cmd = $cmd." --pe_list $pe";
     }
     if ($q>0)
     {
@@ -1960,10 +1960,10 @@ sub build_unclean
     }
     if ($dupremoval)
     {
-	$cmd = $cmd." --remove_pcr_duplicates ";
+	$cmd = $cmd." --remove_pcr_duplicates";
     }
 
-    $cmd = $cmd." &> $log";
+    $cmd = $cmd." > $log 2>&1";
     print "$cmd\n";
     my $ret = qx{$cmd};
     print "$ret\n";
