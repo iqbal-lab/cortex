@@ -205,12 +205,14 @@ int element_get_covg_last_colour(const dBNode* e)
   return e->coverage[NUMBER_OF_COLOURS-1];
 }
 
+#if NUMBER_OF_COLOURS > 1
+
 int element_get_covg_colour1(const dBNode* e)
 {
   return e->coverage[1];
 }
 
-
+#endif /* NUMBER_OF_COLOURS > 1 */
 
 
 

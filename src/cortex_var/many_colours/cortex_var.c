@@ -534,7 +534,7 @@ int main(int argc, char **argv){
   short kmer_size;
 
   //next two needed much later
-  int num_kmers_dumped_after_alignment=0;
+  //int num_kmers_dumped_after_alignment=0;
   char tmp_dump[300];
 
 
@@ -1236,9 +1236,11 @@ int main(int argc, char **argv){
       sprintf(tmp_dump, "%s.temporary_delete_me", cmd_line->output_aligned_overlap_binname);
       printf("In the process we have to create a temporary file, %s, which you can/should delete when cortex has completed\n", tmp_dump);
 
-      num_kmers_dumped_after_alignment = db_graph_dump_binary(tmp_dump, &db_node_check_status_to_be_dumped, db_graph, db_graph_info, BINVERSION);
-      hash_table_traverse(&db_node_action_set_status_of_unpruned_to_none, db_graph);	
+      //num_kmers_dumped_after_alignment = db_graph_dump_binary(tmp_dump, &db_node_check_status_to_be_dumped, db_graph, db_graph_info, BINVERSION);
+      db_graph_dump_binary(tmp_dump, &db_node_check_status_to_be_dumped,
+                           db_graph, db_graph_info, BINVERSION);
 
+      hash_table_traverse(&db_node_action_set_status_of_unpruned_to_none, db_graph);
     }
   if (cmd_line->print_colour_overlap_matrix==true)
     {
