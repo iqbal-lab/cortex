@@ -3757,9 +3757,6 @@ void db_graph_get_covgs_in_all_colours_of_col0union1_sups(int max_length, dBGrap
   free(seq);
 }
 
-#endif /* NUMBER_OF_COLOURS > 1 */
-
-
 void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_graph,
 						int tot_pgf, int tot_cox, 
 						int tot_data1, int tot_data2, int tot_data3, int tot_data4, int tot_data5,
@@ -3935,6 +3932,7 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
   free(seq);
 }
 
+#endif /* NUMBER_OF_COLOURS > 1 */
 
 
 
