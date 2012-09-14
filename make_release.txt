@@ -24,7 +24,7 @@ cd ..
 
 git clone git://github.com/noporpoise/seq_file.git
 cd seq_file
-make STRING_BUF_PATH=../string_buffer SAMPATH=../samtools-0.1.18
+make STRING_BUF_PATH=../string_buffer PATH_TO_SAMTOOLS=../samtools-0.1.18
 cd ..
 
 cd ..
