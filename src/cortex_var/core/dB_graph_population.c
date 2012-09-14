@@ -3679,6 +3679,8 @@ void traverse_hash_collecting_sums(void (*f)(Element *, int*, int*, int*, int*, 
 }
 
 
+#if NUMBER_OF_COLOURS > 1
+
 //get supernodes in union of colour 0 and 1.Traverse just these supernodes, and collect total covg in all colours
 void db_graph_get_covgs_in_all_colours_of_col0union1_sups(int max_length, dBGraph * db_graph,
 							  int* pgf, int* cox, 
@@ -3755,6 +3757,7 @@ void db_graph_get_covgs_in_all_colours_of_col0union1_sups(int max_length, dBGrap
   free(seq);
 }
 
+#endif /* NUMBER_OF_COLOURS > 1 */
 
 
 void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_graph,
@@ -5407,7 +5410,7 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
     }
   
 
-  boolean is_cycle;
+  //boolean is_cycle;
   Nucleotide nucleotide1, nucleotide2, rev_nucleotide;
   Orientation original_orientation, next_orientation, orientation;
   dBNode * original_node=node;
@@ -5418,7 +5421,7 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
   // as far as you can go.
   original_orientation = reverse; 
   orientation = reverse;
-  is_cycle = false;
+  //is_cycle = false;
 
 
   while(db_node_has_precisely_one_edge(node,orientation,&nucleotide1, type, index)) {
@@ -5461,7 +5464,7 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
     if ((next_node == original_node) && (next_orientation == original_orientation))
       {      
 
-	is_cycle = true;
+	//is_cycle = true;
 	//break;
 	
 	//printf("We have a loop, so original node will do, with kmer %s\n", binary_kmer_to_seq(original_node->kmer, db_graph->kmer_size, tmp_seq));
@@ -5890,15 +5893,18 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 	  in_middle_of_a_good_section=false;
 
 	  //rest of this if clause should be DEBUG only
-	  char* next_kmer;
-	  if (next_orientation==forward)
+	  //char* next_kmer;
+	  
+    if (next_orientation==forward)
 	    {
-	      next_kmer = binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size, tmp_seq);
+	      //next_kmer = binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size, tmp_seq);
+        binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size, tmp_seq);
 	    }
 	  else
 	    {
 	      BinaryKmer tmp_kmer;
-	      next_kmer=binary_kmer_to_seq( binary_kmer_reverse_complement(&(next_node->kmer),db_graph->kmer_size, &tmp_kmer), db_graph->kmer_size, tmp_seq );
+        //next_kmer=binary_kmer_to_seq( binary_kmer_reverse_complement(&(next_node->kmer),db_graph->kmer_size, &tmp_kmer), db_graph->kmer_size, tmp_seq );
+	      binary_kmer_to_seq( binary_kmer_reverse_complement(&(next_node->kmer),db_graph->kmer_size, &tmp_kmer), db_graph->kmer_size, tmp_seq );
 	    }
 	  
 	  
@@ -10803,8 +10809,8 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 	  //local function
 	  long long overlap_cols_i_and_j(Element* node)
 	  {
-      char str[db_graph->kmer_size+1];
-	    str[db_graph->kmer_size]='\0';
+      //char str[db_graph->kmer_size+1];
+	    //str[db_graph->kmer_size]='\0';
 
 	    if ( 
 		(db_node_is_this_node_in_this_person_or_populations_graph(node, individual_edge_array, first_col_list[i])==true)

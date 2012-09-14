@@ -1218,9 +1218,9 @@ void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, S
 {
 
       Element * current_node  = NULL;
-      Element * previous_node  = NULL;
+      //Element * previous_node  = NULL;
       Orientation current_orientation=forward;
-      Orientation previous_orientation=forward;
+      //Orientation previous_orientation=forward;
       BinaryKmer tmp_kmer;
       int j;
 	
@@ -1253,8 +1253,8 @@ void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, S
 	array_nodes[j]        = current_node;
 	array_orientations[j] = current_orientation;
 	    
-	previous_node = current_node;
-	previous_orientation = current_orientation;
+	//previous_node = current_node;
+	//previous_orientation = current_orientation;
 	  
       }
 }
