@@ -1616,7 +1616,7 @@ sub build_clean_binary
     my $uncleaned = $hash_sample_to_uncleaned->{$sample}->{$kmer};
     my $uncleaned_bname = basename($uncleaned);
     
-    my $ctx = $outdr.'/'.$uncleaned_bname;
+    my $ctx = $uncleaned_bname;
     $ctx =~ s/.unclean//;
     $ctx =~ s/.ctx//;
     $ctx = $ctx."cleaned_".$clean_thresh.".ctx";

@@ -60,7 +60,7 @@
                          (x) == 'n' || (x) == 'N')
 
 // Uncomment this to print contigs+read names as they are loaded
-// #define DEBUG_CONTIGS 1
+#define DEBUG_CONTIGS 1
 
 // Note: parsing of homopolymers means input is different if reads are read
 //       forward vs reverse-complemented!
@@ -492,7 +492,7 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
     (*bases_loaded) += contig_length;
 
     #ifdef DEBUG_CONTIGS
-    printf(" [%i]\n", contig_length);
+    printf(" [%lu]\n", contig_length);
     #endif
 
     // Store contig length
@@ -3691,7 +3691,7 @@ int load_paths_from_filelist(char* filelist_path, char** path_array)
 
       if(path_ptr == NULL)
       {
-        die( "Cannot find filelist: %s\n", line->buff);
+        die( "Cannot find file: %s\n", line->buff);
       }
       else if(access(path_ptr, R_OK) == -1)
       {
