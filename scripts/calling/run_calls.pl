@@ -477,7 +477,7 @@ close(LIST_ALL_CLEAN_POP);
 if ($squeeze_mem)
 {
     my $count_log = $list_all_clean_pop.".log";
-    my $ctx_bin_for_count = get_right_binary($first_kmer, $cortex_dir,scalar(@samples)+1);
+    my $ctx_bin_for_count = get_right_binary($first_kmer, $cortex_dir,1);
     my $cmd_count_kmers = $ctx_bin_for_count." --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width  --colour_list $list_all_clean_pop > $count_log 2>&1";
     print "Load all k=$first_kmer cleaned binaries into one colour, and check how many kmers. Having done this, we can know how much memory to use for the multicolour graphs. This is just a memory saving device\n";
     qx{$cmd_count_kmers};
