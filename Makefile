@@ -107,6 +107,7 @@ ifdef 32_BITS
 endif
 
 # DEV: Add -Wextra
+# DEV: Add -DNDEBUG=1 to turn off assert() calls
 OPT = $(ARCH) -Wall -O3 $(MACFLAG) -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) -DNUMBER_OF_COLOURS=$(NUM_COLS)
 
 ifdef DEBUG

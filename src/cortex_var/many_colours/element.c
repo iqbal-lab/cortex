@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <assert.h>
 
 //currently noone calls this in normal use
 // In normal use, the priority queue allocates space to put the eloement directly within,
@@ -953,6 +954,7 @@ boolean db_node_is_this_node_in_subgraph_defined_by_func_of_colours(dBNode* node
 //prints all colours
 void db_node_print_multicolour_binary(FILE * fp, dBNode * node)
 {
+  assert(node != NULL);
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
@@ -976,6 +978,7 @@ void db_node_print_multicolour_binary(FILE * fp, dBNode * node)
 
 void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node)
 {
+  assert(node != NULL);
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
@@ -995,6 +998,7 @@ void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node)
 
 void db_node_print_single_colour_binary_of_specified_colour(FILE * fp, dBNode * node, int colour)
 {
+  assert(node != NULL);
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );

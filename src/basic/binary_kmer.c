@@ -420,7 +420,7 @@ BinaryKmer* seq_to_binary_kmer(char * seq, short kmer_size, BinaryKmer* prealloc
     {
       die("Do not passs null ptr to seq_to_binary_kmer. Exiting..");
     }
-  if (strlen(seq) != kmer_size)
+  if (strlen(seq) != (unsigned)kmer_size)
     {
       die("Calling seq_to_binary_kmer with  a sequence %s of length %d, "
           "but kmer size %d, which is different. Exiting",

@@ -2135,7 +2135,8 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
 
 
 
-
+/*
+// Flagged for removal
 void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
 									    int max_read_length, dBGraph * db_graph)
 {
@@ -2235,7 +2236,7 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
   binary_kmer_free_kmers_set(&windows);
 
 }
-
+*/
 
 
 
@@ -2541,7 +2542,7 @@ int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_g
 
 
 
-
+// Dev: roll into mark_graph_nodes_as_existing_in_reference
 void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
 						  long long * bad_reads, int max_read_length, dBGraph * db_graph,
 						  boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index)
@@ -2804,8 +2805,8 @@ void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_
   
 }
 
-
-
+/*
+// Flagged for removal
 void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(char* f_name, dBGraph* db_graph)
 {
 
@@ -2834,7 +2835,18 @@ void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_referen
 
 
 }
+*/
 
+// DEV: re-write this to use seq_file
+// Replaces: align_next_read_to_graph_and_return_node_array
+int align_next_read_to_graph(SeqFile *sf, dBNode **array_nodes,
+                             Orientation* array_orientations, 
+                             boolean require_nodes_to_lie_in_given_colour,
+                             dBGraph * db_graph, int colour)
+{
+
+  return 0;
+}
 
 //returns the number of kmers loaded
 int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length, dBNode** array_nodes, Orientation* array_orientations, 
@@ -3724,10 +3736,15 @@ int load_paths_from_filelist(char* filelist_path, char** path_array)
   return num_of_files;
 }
 
-boolean _check_colour_or_ctx_list(char* list_path, int kmer,
-                                  char is_ctxlist)
+void _check_colour_or_ctx_list(char* list_path, int kmer, char is_ctxlist)
 {
   int num_files_in_list = load_paths_from_filelist(list_path, NULL);
+
+  // Empty lists are valid
+  if(num_files_in_list == 0)
+  {
+    return;
+  }
 
   char** file_paths = malloc(sizeof(char*) * num_files_in_list);
 
@@ -3809,19 +3826,18 @@ boolean _check_colour_or_ctx_list(char* list_path, int kmer,
   }
 
   free(file_paths);
-
-  return true;
 }
 
 // filename is a list of files, one for each colour (with optional second column
 // of sample-ids). Check they all exists, there are not too many, and that each
 // of them contains a list of valid binaries.
-boolean check_colour_list(char* file_path, int kmer)
+// Die with error if not valid
+void check_colour_list(char* file_path, int kmer)
 {
-  return _check_colour_or_ctx_list(file_path, kmer, 0);
+  _check_colour_or_ctx_list(file_path, kmer, 0);
 }
 
-boolean check_ctx_list(char* file_path, int kmer)
+void check_ctx_list(char* file_path, int kmer)
 {
-  return _check_colour_or_ctx_list(file_path, kmer, 1);
+  _check_colour_or_ctx_list(file_path, kmer, 1);
 }

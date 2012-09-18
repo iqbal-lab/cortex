@@ -33,7 +33,7 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour();
 void test_is_supernode_end();
 //void test_get_N50();
 void test_is_condition_true_for_all_nodes_in_supernode();
-void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference();
+//void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference();
 void test_getting_stats_of_how_many_indivduals_share_a_node();
 void test_get_min_and_max_covg_of_nodes_in_supernode();
 void test_db_graph_supernode_for_specific_person_or_pop();
