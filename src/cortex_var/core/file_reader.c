@@ -60,7 +60,7 @@
                          (x) == 'n' || (x) == 'N')
 
 // Uncomment this to print contigs+read names as they are loaded
-#define DEBUG_CONTIGS 1
+//#define DEBUG_CONTIGS 1
 
 // Note: parsing of homopolymers means input is different if reads are read
 //       forward vs reverse-complemented!
