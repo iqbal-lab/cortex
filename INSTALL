@@ -14,7 +14,7 @@ make install
 3. Change directory back to the root directory.
 4. Open the Makefile with a text editor, and change this text
 
--L/full/path/to/your/install/of/CORTEX_release_v1.0.5.10/gsl-1.15 -L/full/path/to/your/install/of/CORTEX_release_v1.0.5.10/gsl-1.15/gsl -L/full/path/to/your/install/of/CORTEX_release_v1.0.5.10/gsl-1.15/user_install
+-L/full/path/to/your/install/of/CORTEX_release_v1.0.5.12/gsl-1.15 -L/full/path/to/your/install/of/CORTEX_release_v1.0.5.12/gsl-1.15/gsl -L/full/path/to/your/install/of/CORTEX_release_v1.0.5.12/gsl-1.15/user_install
 
 so that the three instances of 
 /full/path/to/your/install/of/

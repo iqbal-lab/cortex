@@ -478,7 +478,7 @@ close(LIST_ALL_CLEAN_POP);
 if ($squeeze_mem)
 {
     my $count_log = $list_all_clean_pop.".log";
-    my $ctx_bin_for_count = get_right_binary($first_kmer, $cortex_dir,scalar(@samples)+1);
+    my $ctx_bin_for_count = get_right_binary($first_kmer, $cortex_dir,1);
     my $cmd_count_kmers = $ctx_bin_for_count." --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width  --colour_list $list_all_clean_pop > $count_log 2>&1";
     print "Load all k=$first_kmer cleaned binaries into one colour, and check how many kmers. Having done this, we can know how much memory to use for the multicolour graphs. This is just a memory saving device\n";
     qx{$cmd_count_kmers};
@@ -1738,7 +1738,9 @@ sub get_auto_thresholds
     my $auto_thresh  = get_cleaning_thresh_and_distrib($href_covg->{$sample}->{$kmer}, $deff,  \@distrib);
     if ($deff<$auto_thresh)
     {
-	die("WARNING - the auto-estimator for cleaning has estimated a cleaning threshold higher than the expected covg. Look at the covg profile - is there something odd?\n");
+	my $cov_file = $href_covg->{$sample}->{$kmer};
+	my $log_file = $href_logfiles->{$sample}->{$kmer};
+	die("WARNING - the auto-estimator for cleaning has estimated a cleaning threshold $auto_thresh (from $cov_file) which is higher than the expected covg $deff (estimated from $log_file) . Look at the covg profile - is there something odd?\n");
     }
 
     my $i;
@@ -2354,6 +2356,7 @@ sub get_expected_depth_and_cvg_distrib
 	{
 	    <LOG>;
 	    $logline = <LOG>;
+	    ##  Colour  SampleID        MeanReadLen     TotalSeq        ErrorCleaning   LowCovSupsThresh        LowCovNodesThresh       PoolagainstWhichCleaned
 	    if ($logline =~ /\d+\s+\S+\s+(\d+)\s+(\d+)/)
 	    {
 		my $mean_read_len = $1;

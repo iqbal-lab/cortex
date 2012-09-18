@@ -287,9 +287,9 @@ thresh<-log(10);
 llk.thresh<- -40;
 #cv.cov.thresh<-10;
 
-no.cov<-apply((d[1:to.do,2*ii+3]+d[1:to.do,2*ii+4])>0, 1, sum);
-var.cov<-apply((d[1:to.do,2*ii+3]+d[1:to.do,2*ii+4]), 1, var);
-cv.cov<-var.cov/apply((d[1:to.do,2*ii+3]+d[1:to.do,2*ii+4]), 1, mean);
+no.cov<-apply((d[1:to.do,2*ii+3, drop=FALSE]+d[1:to.do,2*ii+4, drop=FALSE])>0, 1, sum);
+var.cov<-apply((d[1:to.do,2*ii+3, drop=FALSE]+d[1:to.do,2*ii+4, drop=FALSE]), 1, var);
+cv.cov<-var.cov/apply((d[1:to.do,2*ii+3, drop=FALSE]+d[1:to.do,2*ii+4, drop=FALSE]), 1, mean);
 #which.snp<-which((op[,7]==1) & ((op[,3]-apply(op[,4:5], 1, max))>thresh) & 
 #	(no.cov>=min.cov) & op[,3]>llk.thresh & cv.cov<cv.cov.thresh & op[,7]>hwe.thresh);
 which.snp<-which((op[,7]==1) & ((op[,3]-apply(op[,4:5], 1, max))>thresh) ) 
