@@ -40,6 +40,7 @@
 
 // Third party libraries
 #include <seq_file.h>
+#include <string_buffer.h>
 
 // Our headers
 #include <binary_kmer.h>
@@ -56,8 +57,7 @@
 #define is_base_char(x) ((x) == 'a' || (x) == 'A' || \
                          (x) == 'c' || (x) == 'C' || \
                          (x) == 'g' || (x) == 'G' || \
-                         (x) == 't' || (x) == 'T' || \
-                         (x) == 'n' || (x) == 'N')
+                         (x) == 't' || (x) == 'T')
 
 // Uncomment this to print contigs+read names as they are loaded
 //#define DEBUG_CONTIGS 1
@@ -131,13 +131,20 @@ char mkpath(const char *path, mode_t mode)
   return status;
 }
 
+
 //
-// Isaac's re-write
+// Sequence file loading
 //
 
 // cut-offs:
 //  > quality_cutoff valid
 //  < homopolymer_cutoff valid
+
+void invalid_base_warning(SeqFile *sf, char b)
+{
+  fprintf(stderr, "Invalid sequence [%c] [path: %s; line: %lu]\n",
+          b, seq_get_path(sf), seq_curr_line_number(sf));
+}
 
 short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
                    short kmer_size, char read_qual,
@@ -151,14 +158,13 @@ short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
   {
     if(!is_base_char(kmer_str[i]))
     {
-      // die -- invalid base
-      die("%s:%d: Invalid base character '%i' [path: %s; line: %lu]\n",
-          __FILE__, __LINE__, (int)kmer_str[i],
-          seq_get_path(sf), seq_curr_line_number(sf));
-    }
-    else if(kmer_str[i] == 'n' || kmer_str[i] == 'N')
-    {
-      // skip N
+      if(kmer_str[i] != 'n' && kmer_str[i] != 'N')
+      {
+        // Invalid base
+        invalid_base_warning(sf, kmer_str[i]);
+      }
+
+      // skip
       num_bp_to_skip = i+1;
       break;
     }
@@ -169,7 +175,7 @@ short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
     // Find latest poor-quality base position
     for(i = kmer_size-1; i >= 0; i--)
     {
-      // lt/le
+      // Dev: we don't do any validation on the quality scores
       if(qual_str[i] <= quality_cutoff)
       {
         num_bp_to_skip = i+1;
@@ -189,7 +195,6 @@ short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
       else
         run_length = 1;
 
-      // lt/le
       if(run_length >= homopolymer_cutoff)
         num_bp_to_skip = MAX(i+1, num_bp_to_skip);
     }
@@ -208,12 +213,13 @@ inline char _read_base(SeqFile *sf, char *b, char *q, char read_qual)
     return 0;
   }
 
-  if(!is_base_char(*b))
+  if(!is_base_char(*b) && *b != 'n' && *b != 'N')
   {
-    // die -- invalid base
-    die("%s:%d: Invalid base character %i [path: %s; line: %lu]\n",
-        __FILE__, __LINE__, (int)*b,
-        seq_get_path(sf), seq_curr_line_number(sf));
+    // Invalid base
+    invalid_base_warning(sf, *b);
+  
+    // Default to 'N'
+    *b = 'N';
   }
 
   if(read_qual && !seq_read_qual(sf, q))
@@ -412,8 +418,7 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
     while((keep_reading = _read_base(sf, &base, &qual, read_qual)))
     {
       // Check for Ns and low quality scores
-      // lt/le
-      if(base == 'n' || base == 'N' || (read_qual && qual <= quality_cutoff))
+      if(base == 'N' || (read_qual && qual <= quality_cutoff))
       {
         keep_reading = _read_first_kmer(sf, kmer_str, qual_str,
                                         kmer_size, read_qual,
@@ -429,7 +434,6 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
         {
           homopol_length++;
 
-          // lt/le
           if(homopol_length >= homopolymer_cutoff)
           {
             // Skip the rest of these bases
