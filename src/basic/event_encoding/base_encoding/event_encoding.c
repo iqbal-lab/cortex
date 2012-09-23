@@ -84,20 +84,19 @@ Nucleotide reverse_binary_nucleotide(Nucleotide n)
 
 char binary_nucleotide_to_char(Nucleotide n)
 {
-	switch (n) {
-	case Adenine:
-	  return 'A';
-	case Cytosine:
-	  return 'C';
-	case Guanine:
-	  return 'G';
-	case Thymine:
-	  return 'T';
-	default:
-	  printf("Non existent binary nucleotide %d\n",n);
-	  assert(0); 
-	  return 'N'; //Don't really return this, must fail before this point. But stops compiler warning.
-	}
+  switch (n)
+  {
+    case Adenine:
+      return 'A';
+    case Cytosine:
+      return 'C';
+    case Guanine:
+      return 'G';
+    case Thymine:
+      return 'T';
+    default:
+      die("Non existent binary nucleotide %d\n",n);
+  }
 }
 
 

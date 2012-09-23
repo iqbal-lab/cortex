@@ -3543,6 +3543,7 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
 	  if (binfo->ginfo->sample_id_lens[i]<MAX_LEN_SAMPLE_NAME)
 	    {
 	      read = fread(binfo->ginfo->sample_ids[i],sizeof(char),binfo->ginfo->sample_id_lens[i],fp);
+        binfo->ginfo->sample_ids[i][binfo->ginfo->sample_id_lens[i]] = '\0';
 	      if (read==0)
 		{
 		  no_problem=false;

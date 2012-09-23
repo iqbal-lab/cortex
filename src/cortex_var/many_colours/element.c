@@ -87,28 +87,6 @@ void element_assign(Element* e1, Element* e2)
 }
 
 
-//gets you a pointer to the edge you are referring to
-//Don't use this if you can use get_edge_copy instead
-Edges* get_edge(Element e, EdgeArrayType type,int index)
-{
-  if (type == individual_edge_array)
-    {
-      if (index>=NUMBER_OF_COLOURS)
-	{
-	  die("Called get_edge with index %d which is >= NUMBER_OF_COLOURS which is %d. Exit",
-        index, NUMBER_OF_COLOURS);
-	}
-    Edges *edges = e.individual_edges + index;
-    return edges;
-    }
- else 
-    {
-      die("Coding error. Only expecting enum of edge array types to contain one "
-          "type - individual_edge_array, but we are getting type %d", type);
-    }
-}
-
-
 //return a copy of the edge you are referring to
 Edges get_edge_copy(const Element e, EdgeArrayType type,int index)
 {
@@ -584,9 +562,11 @@ void db_node_add_labeled_edge(dBNode * e, Orientation o, Nucleotide base, EdgeAr
 
 //adding an edge between two nodes implies adding two labeled edges (one in each direction)
 //be aware that in the case of self-loops in palindromes the two labeled edges collapse in one
-
-boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size, EdgeArrayType edge_type, int edge_index){
-
+// DEV: improve this!
+boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e,
+                         Orientation src_o, Orientation tgt_o,
+                         short kmer_size, EdgeArrayType edge_type, int colour_index)
+{
   BinaryKmer src_k, tgt_k, tmp_kmer; 
   char seq1[kmer_size+1];
   char seq2[kmer_size+1];
@@ -607,20 +587,20 @@ boolean db_node_add_edge(dBNode * src_e, dBNode * tgt_e, Orientation src_o, Orie
     printf("add edge %s -%c-> %s to edge type %d, and edge index %d\n",
 	   binary_kmer_to_seq(&src_k,kmer_size, seq1),
 	   binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(&tgt_k)),
-	   binary_kmer_to_seq(&tgt_k,kmer_size, seq2), edge_type, edge_index);
+	   binary_kmer_to_seq(&tgt_k,kmer_size, seq2), edge_type, colour_index);
   }
 
-  db_node_add_labeled_edge(src_e,src_o,binary_kmer_get_last_nucleotide(&tgt_k), edge_type, edge_index);
+  db_node_add_labeled_edge(src_e,src_o,binary_kmer_get_last_nucleotide(&tgt_k), edge_type, colour_index);
 
   if (DEBUG){
 
     printf("add edge %s -%c-> %s to edge type %d, and edge index %d\n",
 	   binary_kmer_to_seq(&tgt_k,kmer_size,seq1),
 	   binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer))),
-	   binary_kmer_to_seq(&src_k,kmer_size, seq2),  edge_type, edge_index);
+	   binary_kmer_to_seq(&src_k,kmer_size, seq2),  edge_type, colour_index);
   }
 
-  db_node_add_labeled_edge(tgt_e,opposite_orientation(tgt_o),binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer)), edge_type, edge_index );
+  db_node_add_labeled_edge(tgt_e,opposite_orientation(tgt_o),binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer)), edge_type, colour_index);
 
   return true;
 }
@@ -951,6 +931,7 @@ boolean db_node_is_this_node_in_subgraph_defined_by_func_of_colours(dBNode* node
  
 }
 
+// DEV: combine some of these functions, remove local copying
 //prints all colours
 void db_node_print_multicolour_binary(FILE * fp, dBNode * node)
 {
@@ -968,10 +949,9 @@ void db_node_print_multicolour_binary(FILE * fp, dBNode * node)
       individual_edges[i]= get_edge_copy(*node, individual_edge_array, i);
     }      
 				  
-  fwrite(&kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
+  fwrite(kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
   fwrite(covg, sizeof(uint32_t), NUMBER_OF_COLOURS, fp); 
   fwrite(individual_edges, sizeof(Edges), NUMBER_OF_COLOURS, fp);
-
   
 }
 
@@ -988,7 +968,7 @@ void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node)
   covg             = (uint32_t) db_node_get_coverage(node, individual_edge_array, 0);
   individual_edges = get_edge_copy(*node, individual_edge_array, 0);
   
-  fwrite(&kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
+  fwrite(kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
   fwrite(&covg, sizeof(uint32_t), 1, fp); 
   fwrite(&individual_edges, sizeof(Edges), 1, fp);
   fflush(fp); //zahara - debug only
@@ -1009,7 +989,7 @@ void db_node_print_single_colour_binary_of_specified_colour(FILE * fp, dBNode * 
   individual_edges = get_edge_copy(*node, individual_edge_array, colour);
   
 				  
-  fwrite(&kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
+  fwrite(kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
   fwrite(&covg, sizeof(uint32_t), 1, fp); 
   fwrite(&individual_edges, sizeof(Edges), 1, fp);
 
