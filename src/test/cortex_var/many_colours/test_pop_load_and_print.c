@@ -41,7 +41,11 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
     printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
-
+  if (NUMBER_OF_COLOURS<2)
+    {
+      printf("Test needs >=2 colours\n");
+      return;
+    }
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 4;
