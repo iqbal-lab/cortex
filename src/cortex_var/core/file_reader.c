@@ -833,8 +833,10 @@ void load_se_filelist_into_graph_colour(
 {
   qual_thresh += ascii_fq_offset;
 
+  /* COMMENT_OUT_DURING_TESTS */
   printf(is_colour_list ? "Load single-ended sequence colour list\n"
-                        : "Load single-ended files\n");
+	 : "Load single-ended files\n");
+  /*  */
 
   // Get absolute path
   char absolute_path[PATH_MAX+1];
@@ -845,8 +847,9 @@ void load_se_filelist_into_graph_colour(
     die("Cannot get absolute path to filelist of SE files: %s\n", se_filelist_path);
   }
 
+  /* COMMENT_OUT_DURING_TESTS */
   printf("  path: %s\n", se_filelist_abs_path);
-
+  /*  */
   FILE* se_list_file = fopen(se_filelist_abs_path, "r");
 
   if(se_list_file == NULL)
@@ -927,13 +930,16 @@ void load_se_filelist_into_graph_colour(
   *total_bases_read += se_bases_read;
   *total_bases_loaded += se_bases_loaded;
 
-  // Print SE stats for this set of files
-  printf("\nNum SE files loaded:%u\n", se_files_loaded);
-  printf("\tKmers:%llu\n", hash_table_get_unique_kmers(db_graph));
-  printf("\tNumber of bad reads:%llu\n", se_bad_reads);
-  printf("\tNumber of dupe reads:%llu\n", se_dup_reads);
-  printf("\tSE sequence parsed:%llu\n", se_bases_read);
-  printf("\tTotal SE sequence that passed filters:%llu\n", se_bases_loaded);
+
+      // Print SE stats for this set of files
+  /* COMMENT_OUT_DURING_TESTS */
+      printf("\nNum SE files loaded:%u\n", se_files_loaded);
+      printf("\tKmers:%llu\n", hash_table_get_unique_kmers(db_graph));
+      printf("\tNumber of bad reads:%llu\n", se_bad_reads);
+      printf("\tNumber of dupe reads:%llu\n", se_dup_reads);
+      printf("\tSE sequence parsed:%llu\n", se_bases_read);
+      printf("\tTotal SE sequence that passed filters:%llu\n", se_bases_loaded);
+      /* */
 }
 
 // Go through all the files, loading data into the graph
@@ -948,9 +954,10 @@ void load_pe_filelists_into_graph_colour(
 {
   qual_thresh += ascii_fq_offset;
 
+  /* COMMENT_OUT_DURING_TESTS */
   printf(is_colour_lists ? "Load paired-ended sequence colour list\n"
                          : "Load paired-ended files\n");
-
+  /*  */
   // Get absolute paths
   char absolute_path1[PATH_MAX+1], absolute_path2[PATH_MAX+1];
 
@@ -1040,12 +1047,14 @@ void load_pe_filelists_into_graph_colour(
             line2->buff);
       }
 
+      /* COMMENT_OUT_DURING_TESTS */
       // Print file paths
       printf(is_colour_lists ? "Paired-end colourlists:\n"
                              : "Paired-end seq files:\n");
 
       printf("  File 1: %s\n", path_ptr1);
       printf("  File 2: %s\n", path_ptr2);
+      /*   */
 
       // Read
       if(is_colour_lists)
@@ -1093,12 +1102,14 @@ void load_pe_filelists_into_graph_colour(
   *total_bases_loaded += pe_bases_loaded;
 
   // Print SE stats for this set of files
+  /* COMMENT_OUT_DURING_TESTS */
   printf("\nNum PE file pairs loaded:%u\n", pe_file_pairs_loaded);
   printf("\tKmers:%llu\n", hash_table_get_unique_kmers(db_graph));
   printf("\tNumber of bad reads:%llu\n", pe_bad_reads);
   printf("\tNumber of dupe reads:%llu\n", pe_dup_reads);
   printf("\tPE sequence parsed:%llu\n", pe_bases_read);
   printf("\tTotal PE sequence that passed filters:%llu\n", pe_bases_loaded);
+  /*   */
 }
 
 
@@ -1585,7 +1596,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	BinaryKmer tmp_dbg_kmer;
 	char tmp_dbg_seq[db_graph->kmer_size+1];
 
-	die("Problem in load_seq_into_array - current kmer not found %s\n",
+	die("Problem in load_seq_into_array - current kmer not found %s. Are you using the PD caller with a reference that has not been loaded into the graph? The PD caller expects the reference to be in the graph in its own colour.\n",
 	    binary_kmer_to_seq(element_get_key(&(kmer_window->kmer[j]),
                                          db_graph->kmer_size, &tmp_dbg_kmer),
                          db_graph->kmer_size, tmp_dbg_seq));
@@ -1746,8 +1757,9 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
       die("Called load_single_colour_binary_data_from_filename_into_graph and specified as clean-colour, colour %d, when this executable is compiled for %d colours only. Exit.\n", colour_clean, NUMBER_OF_COLOURS);
     }
 
-
+  /* COMMENT_OUT_DURING_TESTS */
   printf("Open single colour binary: %s\n", filename);
+  /*  */
 
   FILE* fp_bin = fopen(filename, "r");
   long long  seq_length = 0;
@@ -1880,7 +1892,9 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
     die("Cannot get absolute path to ctxlist: %s\n", filename);
   }
 
+  /* COMMENT_OUT_DURING_TESTS */
   printf("loading ctxlist: %s\n", filename_abs_path);
+  /*  */
 
   FILE* fptr = fopen(filename, "r");
   if (fptr == NULL)
@@ -1932,8 +1946,10 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
       graph_info_update_mean_readlen_and_total_seq(db_graph_info, index,
         mean_read_len_in_this_binary, total_seq_in_this_binary);
 
+      /* COMMENT_OUT_DURING_TESTS */
       printf("Loaded next binary; total kmers in graph is now %qd\n",
              hash_table_get_unique_kmers(db_graph));
+      /*  */
     }
   }
 
@@ -1977,8 +1993,9 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
   // Get directory path
   StrBuf *dir = file_reader_get_strbuf_of_dir_path(filename_abs_path);
 
+  /* COMMENT_OUT_DURING_TESTS */
   printf("Open this list of colours: %s\n", filename_abs_path);
-
+  /* */
   FILE* fp = fopen(filename, "r");
   if (fp == NULL)
   {
@@ -2132,111 +2149,6 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
   fclose(fp);
 }
 
-
-
-
-/*
-// Flagged for removal
-void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
-									    int max_read_length, dBGraph * db_graph)
-{
-    //----------------------------------
-  // preallocate the memory used to read the sequences
-  //----------------------------------
-  Sequence * seq = malloc(sizeof(Sequence));
-  if (seq == NULL){
-    die("Out of memory trying to allocate Sequence\n");
-  }
-  alloc_sequence(seq,max_read_length,LINE_MAX);
-  
-  
-  int seq_length=0;
-  short kmer_size = db_graph->kmer_size;
-
-  //max_read_length/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
-  int max_windows = max_read_length/(kmer_size+1);
- 
-  //number of possible kmers in a 'perfect' read
-  int max_kmers   = max_read_length-kmer_size+1;
-
-  //we will be calling functions that apply to fastq as well as fasta. Since we are loading a ref fasta, we do not want to cut homopolymers,
-  // and since we have fastq, the qualit-cutfoff os redundant
-  boolean break_homopolymers=false;
-  int homopolymer_cutoff=0;
-  char quality_cut_off=0;
-  
-
-  //----------------------------------
-  //preallocate the space of memory used to keep the sliding_windows. NB: this space of memory is reused for every call -- with the view 
-  //to avoid memory fragmentation
-  //NB: this space needs to preallocate memory for orthogonal situations: 
-  //    * a good read -> few windows, many kmers per window
-  //    * a bad read  -> many windows, few kmers per window    
-  //----------------------------------
-  KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
-  if (windows == NULL){
-    die("Out of memory trying to allocate a KmerArraySet");
-  }  
-  //allocate memory for the sliding windows 
-  binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
-
-  BinaryKmer tmp_kmer;
-
-  boolean full_entry = true;
-  boolean prev_full_entry = true;
-  
-  int entry_length;
-
-  while ((entry_length = file_reader(fp,seq,max_read_length, full_entry, &full_entry))){
-
-    if (DEBUG){
-      printf ("\nsequence %s\n",seq->seq);
-    }
-    
-    int i,j;
-    seq_length += (long long) (entry_length - (prev_full_entry==false ? db_graph->kmer_size : 0));
-
-    
-    //last two arguments mean not to break at homopolymers
-    int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,entry_length,quality_cut_off,db_graph->kmer_size,windows,max_windows, 
-						   max_kmers,break_homopolymers, homopolymer_cutoff);
-    
-    if (nkmers == 0) {
-      //(*bad_reads)++;
-    }
-    else {
-      Element * current_node  = NULL;
-
-      
-      for(i=0;i<windows->nwindows;i++){ //for each window
-	KmerSlidingWindow * current_window = &(windows->window[i]);
-	
-	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
-
-	  	  current_node = hash_table_find(element_get_key(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph);	  	 
-
-	  if (current_node){
-	    db_node_set_status(current_node, exists_in_reference);
-	  }
-	  
-	}
-	
-      }
-    }
-   
-    if (full_entry == false){
-      shift_last_kmer_to_start_of_sequence(seq,entry_length,db_graph->kmer_size);
-    }
-
-    prev_full_entry = full_entry;
-
-  }
-  
-  free_sequence(&seq);
-  binary_kmer_free_kmers_set(&windows);
-
-}
-*/
 
 
 
@@ -3548,6 +3460,10 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
 		{
 		  no_problem=false;
 		  *ecode = EFailedToReadSampleIds;
+		}
+	      else
+		{
+		  binfo->ginfo->sample_ids[i][binfo->ginfo->sample_id_lens[i]] = '\0';
 		}
 	    }
 	  else

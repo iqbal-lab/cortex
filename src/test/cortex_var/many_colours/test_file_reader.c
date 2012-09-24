@@ -5244,11 +5244,12 @@ void _test_getting_readlength_dist_with_file(
         for(j = 0; j < readlen_distrib_arrlen; j++)
           readlen_counts[j] = 0;
 
+	/*
         printf("Running test: kmer: %i; fq_quality_cutoff: %i; "
                "homopolymer_cutoff: %i; remove_dupes: %s\n",
                kmer_size, fq_quality_cutoff, homopolymer_cutoff,
                (remove_duplicates == true ? "on" : "off"));
-
+	*/
         dBGraph *db_graph = hash_table_new(number_of_bits, bucket_size,
                                            max_retries, kmer_size);
 
@@ -6273,6 +6274,7 @@ void test_load_binversion5_binary()
     CU_ASSERT(db_node_edge_exist(test_element1, Thymine, reverse, individual_edge_array, 0)==true);
 
     hash_table_free(&db_graph_post);
+    graph_info_free(ginfo);
     CU_ASSERT(db_graph_post == NULL);
   }
 
@@ -6427,6 +6429,7 @@ void test_load_binversion5_binary()
 
     // OK. Looks good.
     hash_table_free(&db_graph_post);
+    graph_info_free(ginfo);
   }
 
   // Finally a test case which found a bug in binary read/write which no other
@@ -6542,5 +6545,6 @@ void test_load_binversion5_binary()
 
     hash_table_free(&db_graph_post);
     graph_info_free(ginfo);
+
   }
 }

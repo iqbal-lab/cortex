@@ -1117,7 +1117,7 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour()
 }
 
 
-// DEV: is this code needed?
+// DEV: is this code needed? Zam: It needs fixing - it's functionality I want to work - both th main function and this test
 /* - ready to be uncommented when N50 cde is upgraded to use db_graph_supernode
 void test_get_N50()
 {
@@ -1379,7 +1379,11 @@ void test_db_graph_supernode_for_specific_person_or_pop()
     warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
-
+  if (NUMBER_OF_COLOURS<2)
+    {
+      printf("Test eeds >=2 colours\n");
+      return;
+    }
  //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 8;

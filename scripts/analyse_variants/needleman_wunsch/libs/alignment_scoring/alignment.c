@@ -51,7 +51,7 @@ void alignment_print_matrices(score_t* match_score, score_t* gap_a_score,
     printf("%3i:", j);
     for(i = 0; i <= length_a; i++)
     {
-      printf(" %3i", ARR_LOOKUP(match_score, score_width, i, j));
+      printf(" %3i", (int)ARR_LOOKUP(match_score, score_width, i, j));
     }
     printf("\n");
   }
@@ -61,7 +61,7 @@ void alignment_print_matrices(score_t* match_score, score_t* gap_a_score,
     printf("%3i:", j);
     for(i = 0; i <= length_a; i++)
     {
-      printf(" %3i", ARR_LOOKUP(gap_a_score, score_width, i, j));
+      printf(" %3i", (int)ARR_LOOKUP(gap_a_score, score_width, i, j));
     }
     printf("\n");
   }
@@ -71,7 +71,7 @@ void alignment_print_matrices(score_t* match_score, score_t* gap_a_score,
     printf("%3i:", j);
     for(i = 0; i <= length_a; i++)
     {
-      printf(" %3i", ARR_LOOKUP(gap_b_score, score_width, i, j));
+      printf(" %3i", (int)ARR_LOOKUP(gap_b_score, score_width, i, j));
     }
     printf("\n");
   }

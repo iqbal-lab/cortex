@@ -446,33 +446,17 @@ void element_initialise_kmer_covgs_edges_and_status_to_zero(Element * e)
 }
 
 
-
-void element_set_kmer(Element * e, Key kmer, short kmer_size){
-
-  if (e==NULL)
-    {
-      die("Called element_set_kmer on NULL ptr");
-    }
-
+void element_set_kmer(Element * e, Key kmer, short kmer_size)
+{
   BinaryKmer tmp_kmer;
   binary_kmer_initialise_to_zero(&tmp_kmer);
   binary_kmer_assignment_operator( e->kmer, *(element_get_key(kmer, kmer_size, &tmp_kmer)));
-
 }
-
-
-
-
 
 
 
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
 {
-  if (e==NULL)
-    {
-      return;
-    }
-
   db_node_update_coverage(e, type, index, 1);
 }
 
@@ -500,30 +484,13 @@ void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, int updat
 
 uint32_t db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index)
 {
-
-  if (e==NULL)
-    {
-      return 0;
-    }
-  else
-    {
-      return e->coverage[index];
-    }
+  return e->coverage[index];
 }
 
 
 void db_node_set_coverage(dBNode* e, EdgeArrayType type, int colour, uint32_t covg)
 {
-
-  if (e==NULL)
-    {
-      return;
-    }
-  else
-    {
-      e->coverage[colour] = covg;
-      return;
-    }
+  e->coverage[colour] = covg;
 }
 
 
@@ -1529,7 +1496,7 @@ void db_node_set_read_start_status(dBNode* node, Orientation ori)
 }
 
 
-// DEV: these are redundant
+// DEV: these are redundant - ZAM - don't see what you mean.
 // just call db_node_check_read_start
 
 boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2)

@@ -101,10 +101,10 @@ void print_usage(char* err_fmt, ...)
 "\n");
 
   fprintf(stderr,
-"    --match <score>      default: %i\n"
-"    --mismatch <score>   default: %i\n"
-"    --gapopen <score>    default: %i\n"
-"    --gapextend <score>  default: %i\n",
+"    --match <score>      [default: %i]\n"
+"    --mismatch <score>   [default: %i]\n"
+"    --gapopen <score>    [default: %i]\n"
+"    --gapextend <score>  [default: %i]\n",
           scoring->match, scoring->mismatch,
           scoring->gap_open, scoring->gap_extend);
 

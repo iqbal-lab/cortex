@@ -2530,37 +2530,6 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    set_variant_branches_and_flanks(&var, nodes5p, orientations5p, length_flank5p, path_nodes1, path_orientations1, length1, 
 	    				    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p, unknown);
 	    
-	    /*
-	    //debug only
-	    int zim;
-	    char zaffy[db_graph->kmer_size+1];
-	    printf( "\n\n5p flank\n");
-	    for (zim=0; zim<=var.len_flank5p; zim++)
-	      {
-		printf("%s ", binary_kmer_to_seq(&(var.flank5p[zim]->kmer), db_graph->kmer_size, zaffy));
-		printf("\n");
-	      }
-	    printf("\n\nbranch 1\n");
-	    for (zim=0; zim<=var.len_one_allele; zim++)
-	      {
-		printf("%s ", binary_kmer_to_seq(&(var.one_allele[zim]->kmer), db_graph->kmer_size, zaffy));
-		printf("\n");
-	      }
-	    printf("\n\nbranch2 \n");
-	    for (zim=0; zim<=var.len_other_allele; zim++)
-	      {
-		printf("%s ", binary_kmer_to_seq(&(var.other_allele[zim]->kmer), db_graph->kmer_size, zaffy));
-		printf("\n");
-	      }
-	    printf("\n\n3p flank\n");
-	    for (zim=0; zim<=var.len_flank3p; zim++)
-	      {
-		printf("%s ", binary_kmer_to_seq(&(var.flank3p[zim]->kmer), db_graph->kmer_size, zaffy));
-		printf("\n");
-	      }
-	    printf("\n\n");
-	    //end debug only
-	    */
 
 
 	    if (condition(&var)==true) 
@@ -4992,7 +4961,7 @@ void db_graph_traverse_with_array_of_longlongs(void (*f)(HashTable*, Element *, 
 }
 
 
-// DEV: clean this up
+
 void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArrayType type, int index, boolean (*condition)(dBNode* elem) )
 {
   int i;
@@ -5027,6 +4996,10 @@ void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArray
       {
 	int bin = e->coverage[colour];
 	if (bin>10000)
+	  {
+	    bin = 10000;
+	  }
+	else if (bin<0)
 	  {
 	    bin = 10000;
 	  }
@@ -7077,17 +7050,6 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 		      potential_anchor=false;
 		    }
 
-
-		  //debug
-		  //if ( (chrom_path_array[start_of_3prime_anchor_in_chrom + j] != NULL)&& (current_supernode[start_of_3prime_anchor_in_sup + k]!=NULL) )
-		  // {
-		  //   char tmp_dbg1[db_graph->kmer_size+1];
-		  //   char tmp_dbg2[db_graph->kmer_size+1];
-		      //printf("Compare chrom node %d, %s,  and supernode node %d, %s,\n", start_of_3prime_anchor_in_chrom + j, 
-		      //	     binary_kmer_to_seq(chrom_path_array[start_of_3prime_anchor_in_chrom + j]->kmer, db_graph->kmer_size, tmp_dbg1),
-		      //	     start_of_3prime_anchor_in_sup + k,
-		      //	     binary_kmer_to_seq(current_supernode[start_of_3prime_anchor_in_sup + k]->kmer, db_graph->kmer_size, tmp_dbg2));
-		  // }
 
 
 		}

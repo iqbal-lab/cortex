@@ -2006,6 +2006,7 @@ sub print_all_genotypes_and_covgs
 		my $cov;
 		my $gtype;
 		my $confidence = -99999;
+		my $no_data=0;
 		if ( $do_we_have_genotypes == 1 )
 		{
 			if ( $ploidy == 2 )
@@ -2018,6 +2019,12 @@ sub print_all_genotypes_and_covgs
 			{
 				$confidence =
 				  get_confidence_haploid( $llk_hom1->[$j], $llk_hom2->[$j] );
+			}
+
+
+			if ( ($aref_br1_cov->[$j]==0) && ($aref_br2_cov->[$j]==0) )
+			{
+			    $no_data=1;
 			}
 		}
 		my $site_conf = -99999;
@@ -2040,37 +2047,46 @@ sub print_all_genotypes_and_covgs
 		    }
 		    else
 		    {
-			$site_conf = "ZAMBO";
-			print "cannot find site conf for $name or $stripped_name\n";
+			$site_conf = "ERROR";
+			print "Cannot find site conf for $name or $stripped_name\n";
 			print "keys are ";
 			print join("\n", keys %$href_pop_conf);
+			print "There is some problem with your input file. Contact Zam with your commandline and describe your situation\n";
 			die();
 		    }
 		}
 		if ( $which_is_ref == 1 )
 		{
-			if ( $do_we_have_genotypes == 1 )
+			if ( ( $do_we_have_genotypes == 1 ) && ($no_data==0) )
 			{
-				$gtype = $genotype->[$j];
+			    $gtype = $genotype->[$j];
+			}
+			else
+			{
+			    $gtype="./.";
 			}
 			$cov = $aref_br1_cov->[$j] . "," . $aref_br2_cov->[$j];
 		}
 		else
 		{
-			if ( $do_we_have_genotypes == 1 )
+			if ( ($do_we_have_genotypes == 1 ) && ($no_data==0) )
 			{
 				$gtype = switch_genotype( $genotype->[$j] );
 			}
+			else
+			{
+			    $gtype="./.";
+			}
 			if ( scalar @$aref_br2_cov != $number_of_colours )
 			{
-				print("Don't have enough covgs for branch2 - just have ");
+				print("Parsing problem. Don't have enough covgs for branch2 - just have ");
 				print scalar @$aref_br2_cov;
 				die();
 			}
 
 			if ( scalar @$aref_br1_cov != $number_of_colours )
 			{
-				print("Don't have enough covgs for branch1 - just have ");
+				print("Parsing problem. Don't have enough covgs for branch1 - just have ");
 				print scalar @$aref_br1_cov;
 				die();
 

@@ -155,18 +155,35 @@ char parse_entire_ulonglong(const char *str, unsigned long long *result)
   }
 }
 
-// Compare integers
+/* qsort comparison methods */
 
-int int_cmp(const void *aa, const void *bb)
+int cmp_int(const void *aa, const void *bb)
 {
   const int *a = aa, *b = bb;
   return (*a < *b) ? -1 : (*a > *b);
 }
 
-// Convert an int to a string of 0 or 1 characters
-char* int_to_binary(const int x)
+int cmp_uint(const void *aa, const void *bb)
 {
-  char *b = (char*) malloc(sizeof(char)*(32+1));
+  const unsigned int *a = aa, *b = bb;
+  return (*a < *b) ? -1 : (*a > *b);
+}
+
+int cmp_long(const void *aa, const void *bb)
+{
+  const long *a = aa, *b = bb;
+  return (*a < *b) ? -1 : (*a > *b);
+}
+
+int cmp_ulong(const void *aa, const void *bb)
+{
+  const unsigned long *a = aa, *b = bb;
+  return (*a < *b) ? -1 : (*a > *b);
+}
+
+// Convert an int to a string of 0 or 1 characters
+void int_to_binary(const int x, char b[33])
+{
   char *p = b;
 
   unsigned int z;
@@ -177,14 +194,11 @@ char* int_to_binary(const int x)
   }
 
   *p = '\0';
-
-  return b;
 }
 
 // Convert an long to a string of 0 or 1 characters
-char* long_to_binary(const long x)
+void long_to_binary(const long x, char b[66])
 {
-  char *b = (char*) malloc(sizeof(char)*(64+1));
   char *p = b;
 
   unsigned long z;
@@ -195,10 +209,10 @@ char* long_to_binary(const long x)
   }
 
   *p = '\0';
-
-  return b;
 }
 
+
+/* Input */
 
 // Checks if anything is piping in
 int stdin_is_ready()
@@ -212,67 +226,4 @@ int stdin_is_ready()
   timeout.tv_usec = 1; // was 0
     
   return select(1, &fdset, NULL, NULL, &timeout) == 1 ? 1 : 0;
-}
-
-char string_is_all_whitespace(const char* s)
-{
-  int i;
-
-  for(i = 0; s[i] != '\0'; i++)
-  {
-    if(!isspace(s[i]))
-    {
-      return 0;
-    }
-  }
-
-  return 1;
-}
-
-char* next_nonwhitespace(const char* s)
-{
-  while(*s != '\0')
-  {
-    if(!isspace(*s))
-    {
-      return (char*)s;
-    }
-
-    s++;
-  }
-
-  return NULL;
-}
-
-char* trim(char* str)
-{
-  while(isspace(*str))
-  {
-    str++;
-  }
-
-  size_t len = strlen(str);
-
-  while(isspace(*(str+len-1)))
-  {
-    len--;
-  }
-
-  *(str+len) = '\0';
-
-  return str;
-}
-
-long count_strchr(const char* str, const int c)
-{
-  int count = 0;
-  const char *tmp = str;
-
-  while((tmp = strchr(tmp,c)) != NULL)
-  {
-    tmp++;
-    count++;
-  }
-
-  return count;
 }

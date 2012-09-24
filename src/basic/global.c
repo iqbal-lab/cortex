@@ -35,16 +35,22 @@
 boolean test_file_existence(char* file)
 {
   FILE* fp = fopen(file, "r");
-  if (fp==NULL)
-    {
-      return false;
-    }
+  if(fp == NULL)
+  {
+    return false;
+  }
   else
-    {
-      fclose(fp);
-      return true;
-    }
+  {
+    fclose(fp);
+    return true;
+  }
 }
+
+void set_string_to_null(char* str, int len)
+{
+  memset(str, 0, sizeof(char)*len);
+}
+
 
 void die(const char* fmt, ...)
 {
@@ -71,7 +77,7 @@ void warn(const char* fmt, ...)
 {
   fflush(stdout);
 
-  // Print error
+  // Print warning
   fprintf(stderr, "Warning: ");
 
   va_list argptr;

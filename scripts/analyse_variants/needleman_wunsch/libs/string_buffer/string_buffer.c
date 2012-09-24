@@ -77,11 +77,7 @@ STRING_BUFFER* string_buff_create(const char* str)
 void string_buff_reset(STRING_BUFFER* sbuf)
 {
   sbuf->len = 0;
-  
-  if(sbuf->size > 0)
-  {
-    sbuf->buff[0] = '\0';
-  }
+  sbuf->buff[0] = '\0';
 }
 
 void string_buff_free(STRING_BUFFER* sbuf)
@@ -90,7 +86,15 @@ void string_buff_free(STRING_BUFFER* sbuf)
   free(sbuf);
 }
 
-STRING_BUFFER* string_buff_clone(STRING_BUFFER* sbuf)
+// Free sbuf struct, but retain and return the char array
+char* string_buff_free_get_str(STRING_BUFFER* sbuf)
+{
+  char *buff = sbuf->buff;
+  free(sbuf->buff);
+  return buff;
+}
+
+STRING_BUFFER* string_buff_clone(const STRING_BUFFER* sbuf)
 {
   // One byte for the string end / null char \0
   STRING_BUFFER* sbuf_cpy = string_buff_init(sbuf->len+1);
@@ -103,31 +107,77 @@ STRING_BUFFER* string_buff_clone(STRING_BUFFER* sbuf)
   return sbuf_cpy;
 }
 
+// Get a copy of this STRING_BUFFER as a char array
+// Returns NULL if not enough memory
+char* string_buff_as_str(const STRING_BUFFER* sbuf)
+{
+  char* cpy = (char*) malloc(sbuf->len+1);
+
+  if(cpy == NULL)
+  {
+    return NULL;
+  }
+
+  memcpy(cpy, sbuf->buff, sbuf->len);
+  cpy[sbuf->len] = '\0';
+
+  return cpy;
+}
+
 // Get string length
-inline t_buf_pos string_buff_strlen(STRING_BUFFER* sbuf)
+inline t_buf_pos string_buff_strlen(const STRING_BUFFER* sbuf)
 {
   return sbuf->len;
 }
 
 // Get buffer length
-inline t_buf_pos string_buff_size(STRING_BUFFER* sbuf)
+inline t_buf_pos string_buff_size(const STRING_BUFFER* sbuf)
 {
   return sbuf->size;
 }
 
 // Get / set characters
 
-inline char string_buff_get_char(STRING_BUFFER *sbuf, const t_buf_pos index)
+inline char string_buff_get_char(const STRING_BUFFER *sbuf,
+                                 const t_buf_pos index)
 {
+  // Bounds checking
+  if(index >= sbuf->len)
+  {
+    fprintf(stderr, "STRING_BUFFER OutOfBounds Error: "
+                    "string_buff_get_char(index: %lu) [strlen: %lu]\n",
+            (unsigned long)index, (unsigned long)sbuf->len);
+
+    return -1;
+  }
+
   return sbuf->buff[index];
 }
 
 inline void string_buff_set_char(STRING_BUFFER *sbuf, const t_buf_pos index,
                                  const char c)
 {
-  sbuf->buff[index] = c;
-}
+  // Bounds checking
+  if(index > sbuf->len)
+  {
+    fprintf(stderr, "STRING_BUFFER OutOfBounds Error: "
+                    "string_buff_set_char(index: %lu, %c) [strlen: %lu]\n",
+            (unsigned long)index, c, (unsigned long)sbuf->len);
 
+    return;
+  }
+  else if(index == sbuf->len)
+  {
+    // Extend
+    string_buff_ensure_capacity(sbuf, sbuf->len + 1);
+    sbuf->buff[sbuf->len++] = c;
+    sbuf->buff[sbuf->len] = '\0';
+  }
+  else
+  {
+    sbuf->buff[index] = c;
+  }
+}
 
 /******************************/
 /*  Resize Buffer Functions   */
@@ -225,6 +275,17 @@ void string_buff_append_char(STRING_BUFFER* sbuf, const char c)
   sbuf->buff[sbuf->len] = '\0';
 }
 
+// Copy a STRING_BUFFER to the end of this STRING_BUFFER
+void string_buff_append_buff(STRING_BUFFER* dst, STRING_BUFFER* src)
+{
+  string_buff_ensure_capacity(dst, dst->len + src->len);
+
+  memcpy(dst->buff + dst->len, src->buff, src->len);
+
+  dst->len += src->len;
+  dst->buff[dst->len] = '\0';
+}
+
 void string_buff_chomp(STRING_BUFFER *sbuf)
 {
   while(sbuf->len >= 1)
@@ -245,20 +306,19 @@ void string_buff_chomp(STRING_BUFFER *sbuf)
 char* string_buff_substr(STRING_BUFFER *sbuf, const t_buf_pos start,
                          const t_buf_pos len)
 {
-  char* mem_start = sbuf->buff + start;
-  t_buf_pos mem_length = MIN(len, sbuf->buff + sbuf->len - mem_start);
-
-  if (mem_length < 0)
+  // Bounds checking
+  if(start + len >= sbuf->len)
   {
-    fprintf(stderr, "string_buff_substr(%lui, %lui) end < start on "
-                    "STRING_BUFFER with length %lui\n",
-            start, len, sbuf->len);
-    exit(-1);
+    fprintf(stderr, "STRING_BUFFER OutOfBounds Error: "
+                    "string_buff_substr(start: %lui, len: %lui) [strlen: %lu]\n",
+            (unsigned long)start, (unsigned long)len, (unsigned long)sbuf->len);
+
+    return NULL;
   }
 
-  char* new_string = (char*) malloc(mem_length+1);
-  strncpy(new_string, mem_start, mem_length);
-  new_string[mem_length] = '\0';
+  char* new_string = (char*) malloc(len+1);
+  strncpy(new_string, sbuf->buff + start, len);
+  new_string[len] = '\0';
 
   return new_string;
 }
@@ -285,14 +345,54 @@ void string_buff_to_lowercase(STRING_BUFFER *sbuf)
   }
 }
 
-void string_buff_str_copy(STRING_BUFFER* dst, const t_buf_pos dst_pos,
-                          char* src, const t_buf_pos src_pos,
-                          const t_buf_pos len)
+void string_buff_copy(STRING_BUFFER* dst, const t_buf_pos dst_pos,
+                      const STRING_BUFFER* src, const t_buf_pos src_pos,
+                      const t_buf_pos len)
 {
-  // Check if dest buffer can handle string plus \0
+  if(dst_pos > dst->len)
+  {
+    fprintf(stderr, "STRING_BUFFER OutOfBounds Error: "
+                    "string_buff_copy [dst; pos: %lu; len: %lu; strlen: %lu]",
+            (unsigned long)dst_pos, (unsigned long)len, (unsigned long)dst->len);
+
+    return;
+  }
+  else if(src_pos + len > src->len)
+  {
+    fprintf(stderr, "STRING_BUFFER OutOfBounds Error: "
+                    "string_buff_copy [src; pos: %lu; len: %lu; strlen: %lu]",
+            (unsigned long)src_pos, (unsigned long)len, (unsigned long)src->len);
+
+    return;
+  }
+
+  string_buff_str_copy(dst, dst_pos, src->buff+src_pos, len);
+}
+
+void string_buff_str_copy(STRING_BUFFER* dst, const t_buf_pos ddst_pos,
+                          const char* src, const t_buf_pos len)
+{
+  t_buf_pos dst_pos = ddst_pos;
+
+  if(src == NULL || len == 0)
+  {
+    return;
+  }
+  else if(dst_pos > dst->len)
+  {
+    // Insert position cannot be greater than current string length
+    fprintf(stderr, "STRING_BUFFER OutOfBounds Error: "
+                    "string_buff_str_copy(index: %lu) [strlen: %lu]",
+            (unsigned long)dst_pos, (unsigned long)dst->len);
+
+    return;
+  }
+
+  // Check if dest buffer can handle string
   string_buff_ensure_capacity(dst, dst_pos + len);
 
-  strncpy(dst->buff+dst_pos, src+src_pos, len);
+  // memmove instead of strncpy, as it can handle overlapping regions
+  memmove(dst->buff+dst_pos, src, (size_t)len);
 
   if(dst_pos + len > dst->len)
   {
@@ -302,12 +402,63 @@ void string_buff_str_copy(STRING_BUFFER* dst, const t_buf_pos dst_pos,
   }
 }
 
-void string_buff_copy(STRING_BUFFER* dst, const t_buf_pos dst_pos,
-                      STRING_BUFFER* src, const t_buf_pos src_pos,
-                      const t_buf_pos len)
+void string_buff_insert(STRING_BUFFER* dst, const t_buf_pos dst_pos,
+                        const STRING_BUFFER* src, const t_buf_pos src_pos,
+                        const t_buf_pos len)
 {
-  string_buff_str_copy(dst, dst_pos, src->buff, src_pos, len);
+  if(dst_pos > dst->len)
+  {
+    fprintf(stderr, "STRING_BUFFER OutOfBounds Error: "
+                    "string_buff_insert(index: %lu) [strlen: %lu]",
+            (unsigned long)dst_pos, (unsigned long)dst->len);
+
+    return;
+  }
+
+  string_buff_str_insert(dst, dst_pos, src->buff+src_pos, len);
 }
+
+void string_buff_str_insert(STRING_BUFFER* dst, const t_buf_pos ddst_pos,
+                            const char* src, const t_buf_pos len)
+{
+  t_buf_pos dst_pos = ddst_pos;
+
+  if(src == NULL || len == 0)
+  {
+    return;
+  }
+  else if(dst_pos > dst->len)
+  {
+    // Insert position cannot be greater than current string length
+    fprintf(stderr, "STRING_BUFFER OutOfBounds Error: "
+                    "string_buff_str_insert(index: %lu) [strlen: %lu]",
+            (unsigned long)dst_pos, (unsigned long)dst->len);
+
+    return;
+  }
+
+  // Check if dest buffer can handle string plus \0
+  string_buff_ensure_capacity(dst, dst_pos + len);
+
+  if(dst_pos <= dst->len - 1)
+  {
+    // Shift some characters up
+    memmove(dst->buff + dst_pos + len,
+            dst + dst_pos,
+            (size_t)(dst->len - dst_pos));
+  }
+
+  // Insert
+  memmove(dst->buff + dst_pos, src, (size_t)len);
+
+  if(dst_pos + len > dst->len)
+  {
+    // Update size
+    dst->len = dst_pos + len;
+    dst->buff[dst->len] = '\0';
+  }
+}
+
 
 /*****************/
 /* File handling */
@@ -434,6 +585,16 @@ t_buf_pos string_buff_gzskip_line(gzFile *gz_file)
 void string_buff_vsprintf(STRING_BUFFER *sbuf, const t_buf_pos pos,
                           const char* fmt, va_list argptr)
 {
+  // Bounds check
+  if(pos > sbuf->len)
+  {
+    fprintf(stderr, "STRING_BUFFER OutOfBounds Error: "
+                    "string_buff_vsprintf(index: %lu) [strlen: %lu]",
+            (unsigned long)pos, (unsigned long)sbuf->len);
+
+    return;
+  }
+
   // Length of remaining buffer
   size_t buf_len = (size_t)(sbuf->size - pos);
 
@@ -487,6 +648,16 @@ void string_buff_sprintf(STRING_BUFFER *sbuf, const char* fmt, ...)
 void string_buff_sprintf_at(STRING_BUFFER *sbuf, const t_buf_pos pos,
                             const char* fmt, ...)
 {
+  // Bounds check
+  if(pos > sbuf->len)
+  {
+    fprintf(stderr, "STRING_BUFFER OutOfBounds Error: "
+                    "string_buff_sprintf_at(index: %lu) [strlen: %lu]",
+            (unsigned long)pos, (unsigned long)sbuf->len);
+
+    return;
+  }
+
   va_list argptr;
   va_start(argptr, fmt);
   string_buff_vsprintf(sbuf, pos, fmt, argptr);
@@ -498,6 +669,16 @@ void string_buff_sprintf_at(STRING_BUFFER *sbuf, const t_buf_pos pos,
 void string_buff_sprintf_noterm(STRING_BUFFER *sbuf, const t_buf_pos pos,
                                 const char* fmt, ...)
 {
+  // Bounds check
+  if(pos > sbuf->len)
+  {
+    fprintf(stderr, "STRING_BUFFER OutOfBounds Error: "
+                    "string_buff_sprintf_noterm(index: %lu) [strlen: %lu]",
+            (unsigned long)pos, (unsigned long)sbuf->len);
+
+    return;
+  }
+
   va_list argptr;
   va_start(argptr, fmt);
 
@@ -531,7 +712,91 @@ void string_buff_sprintf_noterm(STRING_BUFFER *sbuf, const t_buf_pos pos,
 /* Other String Functions */
 /**************************/
 
-long split_str(const char* split, const char* txt, char*** result)
+char string_is_all_whitespace(const char* s)
+{
+  int i;
+
+  for(i = 0; s[i] != '\0'; i++)
+  {
+    if(!isspace(s[i]))
+    {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+char* string_next_nonwhitespace(const char* s)
+{
+  while(*s != '\0')
+  {
+    if(!isspace(*s))
+    {
+      return (char*)s;
+    }
+
+    s++;
+  }
+
+  return NULL;
+}
+
+// Strips whitepace from the end of the string with \0, and returns pointer to
+// first non-whitespace character
+char* string_trim(char* str)
+{
+  // Work backwards
+  size_t len = strlen(str);
+
+  while(len > 0 && isspace(*(str+len-1)))
+  {
+    len--;
+  }
+
+  *(str+len) = '\0';
+
+  // Work forwards
+  while(isspace(*str)) // don't need start < len because will hit \0
+  {
+    str++;
+  }
+
+  return str;
+}
+
+// Removes \r and \n from the ends of a string and returns the new length
+size_t string_chomp(char* str)
+{
+  size_t len = strlen(str);
+
+  while(len > 0 && (str[len-1] == '\r' || str[len-1] == '\n'))
+  {
+    len--;
+  }
+
+  str[len] = '\0';
+
+  return len;
+}
+
+// Returns count
+size_t string_count_char(const char* str, const int c)
+{
+  size_t count = 0;
+  const char *tmp = str;
+
+  while((tmp = strchr(tmp, c)) != NULL)
+  {
+    tmp++;
+    count++;
+  }
+
+  return count;
+}
+
+// Returns the number of strings resulting from the split
+long string_split(const char* split, const char* txt, char*** result)
 {
   size_t split_len = strlen(split);
   size_t txt_len = strlen(txt);
