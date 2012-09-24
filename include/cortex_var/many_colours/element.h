@@ -103,7 +103,6 @@ void element_assign(Element* e1, Element* e2);
 //utility function for getting the desired edge char, by specifying if talking about a population or an individual
 // and giving the appropriate index in the relevant array
 
-Edges* get_edge(Element, EdgeArrayType, int); //gets pointer to actual edge, so you can modify it
 Edges get_edge_copy(const Element e, EdgeArrayType type,int index); //gets copy of edge
 Edges get_union_of_edges(Element e);
 Edges element_get_colour_union_of_all_colours(const Element*);
