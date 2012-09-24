@@ -1371,7 +1371,8 @@ void test_is_condition_true_for_all_nodes_in_supernode()
   
 }
 
-
+/*
+// flagged for removal
 void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
@@ -1571,7 +1572,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
   // >node 4 - no overlap with chromosome
   // GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
-  
+  /*
 
   read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fa", db_graph);
 
@@ -1660,7 +1661,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
 	    
 	     );
   */
-
+/*
 
 
  CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0],"AACCCT") || !strcmp(array_of_supernodes_for_person3[1],"AACCCT")
@@ -1699,7 +1700,7 @@ void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_re
   hash_table_free(&db_graph);
  
 }
-
+*/
 
 void test_db_graph_supernode_for_specific_person_or_pop()
 {

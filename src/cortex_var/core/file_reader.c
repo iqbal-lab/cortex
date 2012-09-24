@@ -40,6 +40,7 @@
 
 // Third party libraries
 #include <seq_file.h>
+#include <string_buffer.h>
 
 // Our headers
 #include <binary_kmer.h>
@@ -56,11 +57,10 @@
 #define is_base_char(x) ((x) == 'a' || (x) == 'A' || \
                          (x) == 'c' || (x) == 'C' || \
                          (x) == 'g' || (x) == 'G' || \
-                         (x) == 't' || (x) == 'T' || \
-                         (x) == 'n' || (x) == 'N')
+                         (x) == 't' || (x) == 'T')
 
 // Uncomment this to print contigs+read names as they are loaded
-// #define DEBUG_CONTIGS 1
+//#define DEBUG_CONTIGS 1
 
 // Note: parsing of homopolymers means input is different if reads are read
 //       forward vs reverse-complemented!
@@ -131,13 +131,20 @@ char mkpath(const char *path, mode_t mode)
   return status;
 }
 
+
 //
-// Isaac's re-write
+// Sequence file loading
 //
 
 // cut-offs:
 //  > quality_cutoff valid
 //  < homopolymer_cutoff valid
+
+void invalid_base_warning(SeqFile *sf, char b)
+{
+  fprintf(stderr, "Invalid sequence [%c] [path: %s; line: %lu]\n",
+          b, seq_get_path(sf), seq_curr_line_number(sf));
+}
 
 short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
                    short kmer_size, char read_qual,
@@ -151,14 +158,13 @@ short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
   {
     if(!is_base_char(kmer_str[i]))
     {
-      // die -- invalid base
-      die("%s:%d: Invalid base character '%i' [path: %s; line: %lu]\n",
-          __FILE__, __LINE__, (int)kmer_str[i],
-          seq_get_path(sf), seq_curr_line_number(sf));
-    }
-    else if(kmer_str[i] == 'n' || kmer_str[i] == 'N')
-    {
-      // skip N
+      if(kmer_str[i] != 'n' && kmer_str[i] != 'N')
+      {
+        // Invalid base
+        invalid_base_warning(sf, kmer_str[i]);
+      }
+
+      // skip
       num_bp_to_skip = i+1;
       break;
     }
@@ -169,7 +175,7 @@ short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
     // Find latest poor-quality base position
     for(i = kmer_size-1; i >= 0; i--)
     {
-      // lt/le
+      // Dev: we don't do any validation on the quality scores
       if(qual_str[i] <= quality_cutoff)
       {
         num_bp_to_skip = i+1;
@@ -189,7 +195,6 @@ short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
       else
         run_length = 1;
 
-      // lt/le
       if(run_length >= homopolymer_cutoff)
         num_bp_to_skip = MAX(i+1, num_bp_to_skip);
     }
@@ -208,12 +213,13 @@ inline char _read_base(SeqFile *sf, char *b, char *q, char read_qual)
     return 0;
   }
 
-  if(!is_base_char(*b))
+  if(!is_base_char(*b) && *b != 'n' && *b != 'N')
   {
-    // die -- invalid base
-    die("%s:%d: Invalid base character %i [path: %s; line: %lu]\n",
-        __FILE__, __LINE__, (int)*b,
-        seq_get_path(sf), seq_curr_line_number(sf));
+    // Invalid base
+    invalid_base_warning(sf, *b);
+  
+    // Default to 'N'
+    *b = 'N';
   }
 
   if(read_qual && !seq_read_qual(sf, q))
@@ -412,8 +418,7 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
     while((keep_reading = _read_base(sf, &base, &qual, read_qual)))
     {
       // Check for Ns and low quality scores
-      // lt/le
-      if(base == 'n' || base == 'N' || (read_qual && qual <= quality_cutoff))
+      if(base == 'N' || (read_qual && qual <= quality_cutoff))
       {
         keep_reading = _read_first_kmer(sf, kmer_str, qual_str,
                                         kmer_size, read_qual,
@@ -429,7 +434,6 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
         {
           homopol_length++;
 
-          // lt/le
           if(homopol_length >= homopolymer_cutoff)
           {
             // Skip the rest of these bases
@@ -492,7 +496,7 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
     (*bases_loaded) += contig_length;
 
     #ifdef DEBUG_CONTIGS
-    printf(" [%i]\n", contig_length);
+    printf(" [%lu]\n", contig_length);
     #endif
 
     // Store contig length
@@ -2131,7 +2135,8 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
 
 
 
-
+/*
+// Flagged for removal
 void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
 									    int max_read_length, dBGraph * db_graph)
 {
@@ -2231,7 +2236,7 @@ void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE
   binary_kmer_free_kmers_set(&windows);
 
 }
-
+*/
 
 
 
@@ -2537,7 +2542,7 @@ int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_g
 
 
 
-
+// Dev: roll into mark_graph_nodes_as_existing_in_reference
 void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
 						  long long * bad_reads, int max_read_length, dBGraph * db_graph,
 						  boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index)
@@ -2800,8 +2805,8 @@ void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_
   
 }
 
-
-
+/*
+// Flagged for removal
 void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(char* f_name, dBGraph* db_graph)
 {
 
@@ -2830,7 +2835,18 @@ void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_referen
 
 
 }
+*/
 
+// DEV: re-write this to use seq_file
+// Replaces: align_next_read_to_graph_and_return_node_array
+int align_next_read_to_graph(SeqFile *sf, dBNode **array_nodes,
+                             Orientation* array_orientations, 
+                             boolean require_nodes_to_lie_in_given_colour,
+                             dBGraph * db_graph, int colour)
+{
+
+  return 0;
+}
 
 //returns the number of kmers loaded
 int align_next_read_to_graph_and_return_node_array(FILE* fp, int max_read_length, dBNode** array_nodes, Orientation* array_orientations, 
@@ -3527,6 +3543,7 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
 	  if (binfo->ginfo->sample_id_lens[i]<MAX_LEN_SAMPLE_NAME)
 	    {
 	      read = fread(binfo->ginfo->sample_ids[i],sizeof(char),binfo->ginfo->sample_id_lens[i],fp);
+        binfo->ginfo->sample_ids[i][binfo->ginfo->sample_id_lens[i]] = '\0';
 	      if (read==0)
 		{
 		  no_problem=false;
@@ -3695,7 +3712,7 @@ int load_paths_from_filelist(char* filelist_path, char** path_array)
 
       if(path_ptr == NULL)
       {
-        die( "Cannot find filelist: %s\n", line->buff);
+        die( "Cannot find file: %s\n", line->buff);
       }
       else if(access(path_ptr, R_OK) == -1)
       {
@@ -3724,10 +3741,15 @@ int load_paths_from_filelist(char* filelist_path, char** path_array)
   return num_of_files;
 }
 
-boolean _check_colour_or_ctx_list(char* list_path, int kmer,
-                                  char is_ctxlist)
+void _check_colour_or_ctx_list(char* list_path, int kmer, char is_ctxlist)
 {
   int num_files_in_list = load_paths_from_filelist(list_path, NULL);
+
+  // Empty lists are valid
+  if(num_files_in_list == 0)
+  {
+    return;
+  }
 
   char** file_paths = malloc(sizeof(char*) * num_files_in_list);
 
@@ -3809,19 +3831,18 @@ boolean _check_colour_or_ctx_list(char* list_path, int kmer,
   }
 
   free(file_paths);
-
-  return true;
 }
 
 // filename is a list of files, one for each colour (with optional second column
 // of sample-ids). Check they all exists, there are not too many, and that each
 // of them contains a list of valid binaries.
-boolean check_colour_list(char* file_path, int kmer)
+// Die with error if not valid
+void check_colour_list(char* file_path, int kmer)
 {
-  return _check_colour_or_ctx_list(file_path, kmer, 0);
+  _check_colour_or_ctx_list(file_path, kmer, 0);
 }
 
-boolean check_ctx_list(char* file_path, int kmer)
+void check_ctx_list(char* file_path, int kmer)
 {
-  return _check_colour_or_ctx_list(file_path, kmer, 1);
+  _check_colour_or_ctx_list(file_path, kmer, 1);
 }

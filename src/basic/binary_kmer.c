@@ -124,7 +124,8 @@ boolean binary_kmer_less_than(const BinaryKmer const left, const BinaryKmer cons
 
 
 
-//implicit in this is the idea that you shift left, and mask to 0 the bits that fall off the left hand end
+// Implicit in this is the idea that you shift left,
+// and mask to 0 the bits that fall off the left hand end
 void binary_kmer_right_shift_one_base(BinaryKmer kmer)
 {
   int i;
@@ -420,7 +421,7 @@ BinaryKmer* seq_to_binary_kmer(char * seq, short kmer_size, BinaryKmer* prealloc
     {
       die("Do not passs null ptr to seq_to_binary_kmer. Exiting..");
     }
-  if (strlen(seq) != kmer_size)
+  if (strlen(seq) != (unsigned)kmer_size)
     {
       die("Calling seq_to_binary_kmer with  a sequence %s of length %d, "
           "but kmer size %d, which is different. Exiting",
@@ -478,42 +479,6 @@ char * binary_kmer_to_seq(BinaryKmer* bkmer, short kmer_size, char * seq){
   
   return seq;
 }
-
-/*
-//does not affect the kmer passed in as argument 1
-BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size, BinaryKmer* prealloc_reverse_kmer){
-  binary_kmer_initialise_to_zero(prealloc_reverse_kmer);
-  BinaryKmer local_copy_of_input_kmer;
-  binary_kmer_assignment_operator(local_copy_of_input_kmer, *kmer);
-
-
-  bitfield_of_64bits  mask = 3; //000..0011
-  int j;
-
-  //first complement the original kmer - xor with all 1's  
-  for (j=0; j<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; j++)
-    {
-      local_copy_of_input_kmer[j] ^= ~0;           
-    }
-
-
-  //then reverse
-  for(j=0;j<kmer_size;j++){
-
-    //make space for new base  
-    binary_kmer_left_shift_one_base(*prealloc_reverse_kmer, kmer_size);
-
-    //add base
-    (*prealloc_reverse_kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] 
-      = (*prealloc_reverse_kmer)[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] | (local_copy_of_input_kmer[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] & mask);
-
-    binary_kmer_right_shift_one_base(local_copy_of_input_kmer);
-
-  }
-
-  return prealloc_reverse_kmer;
-}
-*/
 
 // kmer and prealloc_reverse_kmer may point to the same address
 // This is a highly optimised version of the above function

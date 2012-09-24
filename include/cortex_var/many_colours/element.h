@@ -41,7 +41,7 @@
 #include <binary_kmer.h>
 #include <global.h>
 #include <stdio.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 //type definitions
 
@@ -76,7 +76,7 @@ typedef enum{
 
 typedef struct{
   BinaryKmer kmer;
-  int        coverage[NUMBER_OF_COLOURS];
+  uint32_t   coverage[NUMBER_OF_COLOURS];
   Edges      individual_edges[NUMBER_OF_COLOURS];
   char       status; //will case a NodeStatus to char
 } Element;

@@ -3445,8 +3445,10 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
   FILE * fout2=NULL; //file to which we will write all "singleton" supernodes, that are just  1 node, in fasta format
   if ( strcmp(filename_sings, "")==0 )
     {
-      die("Only printing supernodes consisting of >1 node (ie contigs longer than %d bases)",
-          db_graph->kmer_size);
+      printf("Only printing supernodes consisting of >1 node "
+             "(ie contigs longer than %d bases)", db_graph->kmer_size);
+    
+      do_we_print_singletons = false;
     }
   else
     {
@@ -3923,8 +3925,10 @@ void db_graph_print_supernodes_defined_by_func_of_colours_given_condition(char *
   FILE * fout2=NULL; //file to which we will write all "singleton" supernodes, that are just  1 node, in fasta format
   if ( strcmp(filename_sings, "")==0 )
     {
-      printf("Only printing supernodes consisting of >1 node (ie contigs longer than %d bases)\n", db_graph->kmer_size);
-      do_we_print_singletons=false;
+      printf("Only printing supernodes consisting of >1 node "
+             "(ie contigs longer than %d bases)\n", db_graph->kmer_size);
+
+      do_we_print_singletons = false;
     }
   else
     {
@@ -4978,7 +4982,7 @@ void db_graph_traverse_with_array_of_longlongs(void (*f)(HashTable*, Element *, 
 }
 
 
-
+// DEV: clean this up
 void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArrayType type, int index, boolean (*condition)(dBNode* elem) )
 {
   int i;
