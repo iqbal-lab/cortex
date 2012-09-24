@@ -70,8 +70,8 @@ void error_cleaning_initialise(ErrorCleaning* cl)
     strlen(cl->name_of_graph_against_which_was_cleaned);
 }
 
-// DEV: this looks buggy
-// Possibly remove sample_ids_lens array?
+// Dev - Isaac - you see any problems here now?
+// Possibly remove sample_ids_lens array? Why?
 GraphInfo* graph_info_alloc_and_init()
 {
   GraphInfo* ginfo = (GraphInfo*) malloc(sizeof(GraphInfo));

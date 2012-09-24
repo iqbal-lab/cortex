@@ -1117,7 +1117,7 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour()
 }
 
 
-// DEV: is this code needed?
+// DEV: is this code needed? Zam: It needs fixing - it's functionality I want to work - both th main function and this test
 /* - ready to be uncommented when N50 cde is upgraded to use db_graph_supernode
 void test_get_N50()
 {

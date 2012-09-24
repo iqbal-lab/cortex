@@ -4982,7 +4982,7 @@ void db_graph_traverse_with_array_of_longlongs(void (*f)(HashTable*, Element *, 
 }
 
 
-// DEV: clean this up
+
 void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArrayType type, int index, boolean (*condition)(dBNode* elem) )
 {
   int i;

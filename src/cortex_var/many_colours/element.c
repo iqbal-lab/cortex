@@ -1499,7 +1499,7 @@ void db_node_set_read_start_status(dBNode* node, Orientation ori)
 }
 
 
-// DEV: these are redundant
+// DEV: these are redundant - ZAM - don't see what you mean.
 // just call db_node_check_read_start
 
 boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2)
