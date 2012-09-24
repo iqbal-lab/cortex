@@ -83,9 +83,4 @@ Element * hash_table_find(Key key, HashTable * hash_table);
 
 long long hash_table_get_capacity(HashTable * hash_table);
 
-void hash_table_dump_to_file(FILE * fp, HashTable * hash_table);
-
-void print_hash_table_signature(FILE * fp,HashTable * hash_table);
-
-HashTable * hash_table_load_from_dump(FILE* fp, int max_rehash_tries);
 #endif /* HASH_H_ */

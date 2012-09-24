@@ -66,3 +66,22 @@ void die(const char* fmt, ...)
 
   exit(EXIT_FAILURE);
 }
+
+void warn(const char* fmt, ...)
+{
+  fflush(stdout);
+
+  // Print error
+  fprintf(stderr, "Warning: ");
+
+  va_list argptr;
+  va_start(argptr, fmt);
+  vfprintf(stderr, fmt, argptr);
+  va_end(argptr);
+
+  // Check if we need to print a newline
+  if(*(fmt+strlen(fmt)-1) != '\n')
+  {
+    fprintf(stderr, "\n");
+  }
+}

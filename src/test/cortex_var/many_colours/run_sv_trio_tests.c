@@ -60,12 +60,6 @@ int  main()
   /* add the tests to the suites */
 
 
-
-
-  if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge", test_get_edge)) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge copy", test_get_edge_copy)) {
     CU_cleanup_registry();
     return CU_get_error();

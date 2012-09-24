@@ -36,14 +36,18 @@
 #include <string.h>
 #include <stdint.h>
 #include <assert.h>
+#include <limits.h>
+
+#include "global.h"
+
+// Only print covg overflow warning once
+char overflow_warning_printed = 0;
 
 //currently noone calls this in normal use
 // In normal use, the priority queue allocates space to put the eloement directly within,
 // and calls element_initialise
 Element* new_element()
 {
-
-
   Element* e = malloc(sizeof(Element));
 
   if (e==NULL)
@@ -75,14 +79,15 @@ void free_element(Element** element)
 
 void element_assign(Element* e1, Element* e2)
 {
+  binary_kmer_assignment_operator(e1->kmer, e2->kmer);
 
-  binary_kmer_assignment_operator( (*e1).kmer, (*e2).kmer);
   int i;
   for (i=0; i< NUMBER_OF_COLOURS; i++)
     {
       e1->individual_edges[i] = e2->individual_edges[i];
       e1->coverage[i]         = e2->coverage[i];
     }
+
   e1->status = e2->status;
 }
 
@@ -159,34 +164,85 @@ Edges element_get_colour1(const Element* e)
 
 
 
-int element_get_covg_union_of_all_covgs(const dBNode* e)
+uint32_t element_get_covg_union_of_all_covgs(const dBNode* e)
 {
   int i;
-  int covg=0;
+  uint32_t sum_covg = 0;
   
-  for (i=0; i< NUMBER_OF_COLOURS; i++)
+  for(i = 0; i < NUMBER_OF_COLOURS; i++)
+  {
+    if(UINT_MAX - e->coverage[i] >= sum_covg)
     {
-      covg += e->coverage[i];
+      sum_covg += e->coverage[i];
     }
+    else
+    {
+      sum_covg = UINT_MAX;
 
-  return covg;
+      if(!overflow_warning_printed)
+      {
+        warn("%s:%i: caught integer overflow"
+             "(some kmer coverages may be underestimates)",
+             __FILE__, __LINE__);
+
+        overflow_warning_printed = 1;
+      }
+
+      break;
+    }
+  }
+
+  return sum_covg;
+}
+
+uint32_t element_get_covg_for_colourlist(const dBNode* e, int* colour_list,
+                                         int list_len)
+{
+  int i;
+  uint32_t sum_covg = 0;
   
+  for(i = 0; i < list_len; i++)
+  {
+    int col = colour_list[i];
+
+    if(UINT_MAX - e->coverage[col] >= sum_covg)
+    {
+      sum_covg += e->coverage[col];
+    }
+    else
+    {
+      sum_covg = UINT_MAX;
+
+      if(!overflow_warning_printed)
+      {
+        warn("%s:%i: caught integer overflow"
+             "(some kmer coverages may be underestimates)",
+             __FILE__, __LINE__);
+
+        overflow_warning_printed = 1;
+      }
+
+      break;
+    }
+  }
+
+  return sum_covg;
 }
 
 
-int element_get_covg_colour0(const dBNode* e)
+uint32_t element_get_covg_colour0(const dBNode* e)
 {
   return e->coverage[0];
 }
 
-int element_get_covg_last_colour(const dBNode* e)
+uint32_t element_get_covg_last_colour(const dBNode* e)
 {
   return e->coverage[NUMBER_OF_COLOURS-1];
 }
 
 #if NUMBER_OF_COLOURS > 1
 
-int element_get_covg_colour1(const dBNode* e)
+uint32_t element_get_covg_colour1(const dBNode* e)
 {
   return e->coverage[1];
 }
@@ -279,28 +335,19 @@ void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide,
   
 }
 
-
-int element_get_number_of_people_or_pops_containing_this_element(Element* e,
-                                                                 EdgeArrayType type,
-                                                                 int index)
+// DEV: why is this using edges and not coverage?
+int element_get_number_of_people_or_pops_containing_this_element(Element* e)
 {
   int i;
-  int count=0;
-  if (type == individual_edge_array)
+  int count = 0;
+  
+  for(i = 0; i < NUMBER_OF_COLOURS; i++)
+  {
+    if(e->individual_edges[i] != 0)
     {
-      for (i=0; i< NUMBER_OF_COLOURS; i++)
-	{
-	  if ( (e->individual_edges)[i] != 0)
-	    {
-	      count++;
-	    }
-	}
+      count++;
     }
-  else
-    {
-      die("Coding error. Only expecting enum of edge array types to contain one \n"
-          "type: individual_edge_array, but we are getting type %d", type);
-    }
+  }
 
   return count;
 }
@@ -313,7 +360,8 @@ boolean element_smaller(Element  e1, Element e2){
 
 
 
-//WARNING - this gives you a pointer to a the binary kmer in the node. You could modify contents of the hash table
+// WARNING: this gives you a pointer to a the binary kmer in the node.
+// You could modify contents of the hash table
 BinaryKmer* element_get_kmer(Element * e){
   return &(e->kmer);
 }
@@ -355,26 +403,6 @@ Key element_get_key(BinaryKmer* kmer, short kmer_size, Key preallocated_key)
   return preallocated_key;
 }
 
-/*
-Key element_get_key(BinaryKmer* kmer, short kmer_size, Key preallocated_key)
-{
-  BinaryKmer local_rev_kmer;
-  binary_kmer_initialise_to_zero(&local_rev_kmer);
-
-  binary_kmer_reverse_complement(kmer,kmer_size, &local_rev_kmer);
-  
-  if (binary_kmer_less_than(local_rev_kmer,*kmer, kmer_size))
-  {
-    binary_kmer_assignment_operator(*((BinaryKmer*)preallocated_key),local_rev_kmer);
-  }
-  else
-  {
-    binary_kmer_assignment_operator(*((BinaryKmer*)preallocated_key),*kmer);
-  }
-
-  return preallocated_key;
-}
-*/
 
 void element_initialise(Element * e, Key kmer, short kmer_size){
 
@@ -403,29 +431,19 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
 
 
 
-
-
-void element_initialise_kmer_covgs_edges_and_status_to_zero(Element * e){
-
-  if (e==NULL)
-    {
-      die("Called element_initialise_covgs_and_edges_to_zero on NULL ptr");
-    }
-
+void element_initialise_kmer_covgs_edges_and_status_to_zero(Element * e)
+{
   binary_kmer_initialise_to_zero(&(e->kmer));
-  //binary_kmer_assignment_operator( e->kmer, &tmp_kmer);
 
   int i;
   for (i=0; i<NUMBER_OF_COLOURS; i++)
-    {
-      e->individual_edges[i]=0;
-      e->coverage[i]=0;
-    }
+  {
+    e->individual_edges[i] = 0;
+    e->coverage[i] = 0;
+  }
 
   db_node_set_status(e, none);
-
 }
-
 
 
 
@@ -454,18 +472,33 @@ void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
     {
       return;
     }
-  e->coverage[index]=e->coverage[index]+1;
+
+  db_node_update_coverage(e, type, index, 1);
 }
 
 void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, int update)
 {
+  if(UINT_MAX - update >= e->coverage[index])
+  {
+    e->coverage[index] += update;
+  }
+  else
+  {
+    e->coverage[index] = UINT_MAX;
 
-  e->coverage[index] += update;
+    if(!overflow_warning_printed)
+    {
+      warn("%s:%i: caught integer overflow"
+           "(some kmer coverages may be underestimates)",
+           __FILE__, __LINE__);
 
+      overflow_warning_printed = 1;
+    }
+  }
 }
 
 
-int db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index)
+uint32_t db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index)
 {
 
   if (e==NULL)
@@ -479,7 +512,7 @@ int db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index)
 }
 
 
-void db_node_set_coverage(dBNode* e, EdgeArrayType type, int colour, int covg)
+void db_node_set_coverage(dBNode* e, EdgeArrayType type, int colour, uint32_t covg)
 {
 
   if (e==NULL)
@@ -494,8 +527,9 @@ void db_node_set_coverage(dBNode* e, EdgeArrayType type, int colour, int covg)
 }
 
 
-
-int db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, int (*get_covg)(const dBNode*) )
+// DEV: why is this needed?
+// replace with (e == NULL ? 0 : get_covg(e))
+uint32_t db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, uint32_t (*get_covg)(const dBNode*) )
 {
 
   if (e==NULL)
@@ -510,9 +544,9 @@ int db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* co
 
 
 
-Orientation opposite_orientation(Orientation o){
+Orientation opposite_orientation(Orientation o)
+{
   return o ^ 1;
-  
 }
 
 Orientation db_node_get_orientation(BinaryKmer* k, dBNode * e, short kmer_size){
@@ -804,9 +838,10 @@ boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayTy
   if (orientation == reverse){
     edges >>= 4;
   }
-  
-  edges &= 15; // AND with 00001111 so that we only look at the 4 least significant bits
-  
+
+  // AND with 00001111 so that we only look at the 4 least significant bits
+  edges &= 15;
+
   return edges == 0;
 }
 
@@ -1275,13 +1310,17 @@ void db_node_action_specialise_status(dBNode * node){
 	    (db_node_check_status(node, read_start_forward_and_reverse)==true)
 	    )
     {
-      db_node_set_status(node,special_none);//happy to lose PCR dup info at this stage
-      printf("Warn Zam (zam@well.ox.ac.uk) that you met a PCR dup status during genotyping. He knows how to fix it\n"); 
+      // happy to lose PCR dup info at this stage
+      db_node_set_status(node,special_none);
+      warn("Warn Zam (zam@well.ox.ac.uk) that you met a PCR dup status during "
+           "genotyping. He knows how to fix it\n"); 
     }
   else if (db_node_check_status_special(node)==false)
     {
       NodeStatus ret = node->status;
-      printf("Warn Zam (zam@well.ox.ac.uk) that you met a status of %d. Could signal a subtle (but now, with your information, fixable) bug.\n", (int) ret); 
+      warn("Warn Zam (zam@well.ox.ac.uk) that you met a status of %d. \n"
+           "Could signal a subtle (but with your information, fixable) bug.\n",
+           (int)ret); 
     }
   
 }
@@ -1460,7 +1499,7 @@ void db_node_set_read_start_status(dBNode* node, Orientation ori)
 {
   if (db_node_check_status(node, visited) )
     {
-      printf("Warning - setting status of a visisted node to read_start\n");
+      warn("setting status of a visisted node to read_start\n");
     }
   else if (db_node_check_status(node, unassigned) )
     {

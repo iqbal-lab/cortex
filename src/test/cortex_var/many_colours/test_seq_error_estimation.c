@@ -37,11 +37,12 @@
 
 void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta()
 {
-  if (NUMBER_OF_COLOURS!=11)
+  if (NUMBER_OF_COLOURS < 11)
     {
-      printf("This test assumes 11 colours. recompile\n");
+      warn("This test requires 11 colours. Please recompile\n");
       return;
     }
+
   //first set up the hash/graph
   int kmer_size = 7;
   int number_of_bits = 10;
@@ -111,9 +112,9 @@ void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta()
 
 void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta_test2()
 {
-  if (NUMBER_OF_COLOURS!=11)
+  if (NUMBER_OF_COLOURS < 11)
     {
-      printf("This test assumes 11 colours. recompile\n");
+      warn("This test assumes 11 colours. Please recompile\n");
       return;
     }
 

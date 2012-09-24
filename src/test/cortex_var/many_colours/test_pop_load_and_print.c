@@ -38,7 +38,7 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -104,7 +104,7 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   int i;
 
 
-  printf("Upgrade this test to use the NEW PRINT FUNCTION and then uncomment it.\n");
+  warn("Upgrade this test to use the NEW PRINT FUNCTION and then uncomment it.\n");
   /*
 
   //  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person1, individual_edge_array, 0, 
@@ -204,7 +204,7 @@ void test_take_three_people_each_with_one_read_and_find_variants()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -358,7 +358,7 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 

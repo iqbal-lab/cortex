@@ -70,8 +70,9 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
   mobv.mult21=mult21;
   mobv.len1=4;
   mobv.len2=4;
-  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, &mobv, true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
-								      working_colour1, working_colour2);
+  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
+    &var, &mobv, true, &element_get_colour_union_of_all_colours,
+    &element_get_covg_union_of_all_covgs, working_colour1, working_colour2);
 
   int p;
   for (p=0; p<3; p++)
@@ -79,7 +80,7 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
       CU_ASSERT(mobv.mult11[p]==1);
       if (mobv.mult11[p] != 1)
 	{
-	  printf("Failed for p=%d. mult11[p] =%d\n", p, mobv.mult11[p]);
+	  warn("Failed for p=%d. mult11[p] =%d\n", p, mobv.mult11[p]);
 	}
       CU_ASSERT(mobv.mult22[p]==1);
       CU_ASSERT(mobv.mult12[p]==0);
@@ -90,7 +91,9 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
   //second test - two branches of equal length, one branch containing a repeated node
   array1[1]=e1;//so array1[0]==array1[1]
   reset_MultiplicitiesAndOverlapsOfBiallelicVariant(&mobv);
-  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, &mobv, true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, working_colour1, working_colour2);
+  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
+    &var, &mobv, true, &element_get_colour_union_of_all_colours,
+    &element_get_covg_union_of_all_covgs, working_colour1, working_colour2);
 
   CU_ASSERT(mobv.mult11[0]==2);
   CU_ASSERT(mobv.mult11[1]==2);
@@ -106,7 +109,7 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
       CU_ASSERT(mobv.mult11[p]==1);
       if (mobv.mult11[p] != 1)
 	{
-	  printf("Failed for p=%d. mult11[p] =%d\n", p, mobv.mult11[p]);
+	  warn("Failed for p=%d. mult11[p] =%d\n", p, mobv.mult11[p]);
 	}
       CU_ASSERT(mobv.mult22[p]==1);
       CU_ASSERT(mobv.mult12[p]==0);
@@ -139,7 +142,9 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
   mobv.len1 = 4;
   mobv.len2 = 7;
 
-  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, &mobv, true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, working_colour1, working_colour2);
+  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
+    &var, &mobv, true, &element_get_colour_union_of_all_colours,
+    &element_get_covg_union_of_all_covgs, working_colour1, working_colour2);
 
 
 
@@ -195,7 +200,9 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
   mobv.len1 = 4;
   mobv.len2 = 4;
 
-  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, &mobv, true, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, working_colour1, working_colour2);
+  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
+    &var, &mobv, true, &element_get_colour_union_of_all_colours,
+    &element_get_covg_union_of_all_covgs, working_colour1, working_colour2);
 
 
 
@@ -327,7 +334,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   if(kmer_size > NUMBER_OF_BITFIELDS_IN_BINARY_KMER*32 ||
      kmer_size < (NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1)*32)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -455,7 +462,8 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
       
       if ( (array_of_node_arrays[i]==NULL) || (array_of_or_arrays[i]==NULL) || (array_of_allele_names==NULL) )
 	{
-	  die("Cannot alloc the %d -th node and or array in print_log_liks_of_specified_set_of_genotypes_of_complex_site", i);
+	  die("Cannot alloc the %d -th node and or array in "
+        "print_log_liks_of_specified_set_of_genotypes_of_complex_site", i);
 	}
       lengths_of_alleles[i]=0;
       array_of_allele_names[i][0]='\0';
@@ -814,13 +822,13 @@ void regression_test_1_single_bubble_call_one_allele_shorter_than_k_one_very_lon
 {
   if (NUMBER_OF_COLOURS<11)
   {
-    printf("This test requires >=11 colours, skipping\n");
+    warn("This test requires >=11 colours, skipping\n");
     return;
   }
 
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -1120,7 +1128,7 @@ void regression_test_2_genotyping_of_PD_SNP_call()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER != 2)
   {
-    printf("Null test - compile for k=55\n");
+    warn("Null test - compile for k=55\n");
     return;
   }
 
@@ -1128,7 +1136,7 @@ void regression_test_2_genotyping_of_PD_SNP_call()
 
   if (NUMBER_OF_COLOURS<2)
     {
-      printf("This test requires >=2 colours, skipping\n");
+      warn("This test requires >=2 colours, skipping\n");
       return;
     }
 
@@ -1162,14 +1170,18 @@ void regression_test_2_genotyping_of_PD_SNP_call()
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
     {
-      die("Failed to malloc kmer sliding window in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
+      die("Failed to malloc kmer sliding window in "
+          "align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. "
+          "Exit.\n");
     }
   
 
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-kmer_size-1));
   if (kmer_window->kmer==NULL)
     {
-      die("Failed to malloc kmer_window->kmer in align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. Exit.\n");
+      die("Failed to malloc kmer_window->kmer in "
+          "align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours. "
+          "Exit.\n");
     }
   kmer_window->nkmers=0;
   

@@ -24,7 +24,9 @@
  *
  * **********************************************************************
  */
-
+/*
+  test_pop_supernode_consensus.c
+*/
 
 #include <stdlib.h>
 
@@ -43,11 +45,13 @@ void test_find_first_node_in_supernode()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
-  printf("\nplease reimplement (not urgent as no current users of this code) conssensus code using db_graph_supernode NULL TEST\n. ");
+  warn("%s:%i: please reimplement (not urgent as no current users of this code)\n"
+       "conssensus code using db_graph_supernode NULL TEST\n. ",
+       __FILE__, __LINE__);
 
 
   //*********************************************************************************
@@ -531,11 +535,13 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
-  printf("\nplease reimplement (not urgent as no current users of this code) conssensus code using db_graph_supernode NULL TEST\n. ");
+  warn("%s:%i: please reimplement (not urgent as no current users of this code)\n"
+       "conssensus code using db_graph_supernode NULL TEST\n. ",
+       __FILE__, __LINE__);
 
 
   //first set up the hash/graph
@@ -636,11 +642,13 @@ void test_get_population_consensus_supernode()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
-  printf("\nplease reimplement (not urgent as no current users of this code) conssensus code using db_graph_supernode NULL TEST\n. ");
+  warn("%s:%i: please reimplement (not urgent as no current users of this code)\n"
+       "conssensus code using db_graph_supernode NULL TEST\n. ",
+       __FILE__, __LINE__);
 
    //first set up the hash/graph
    int kmer_size = 5;

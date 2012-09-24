@@ -834,7 +834,10 @@ int count_reads_on_allele_in_specific_colour_given_array_of_cvgs(int* covgs, int
 
 //does not count covg on first or last nodes, as they are bifurcation nodes
 //if length==0 or 1  returns -1.
-int count_reads_on_allele_in_specific_func_of_colours(dBNode** allele, int len, int (*sum_of_covgs_in_desired_colours)(const Element *), boolean* too_short)
+int count_reads_on_allele_in_specific_func_of_colours(
+  dBNode** allele, int len,
+  uint32_t (*sum_of_covgs_in_desired_colours)(const Element *),
+  boolean* too_short)
 {
 
   if ( (len==0) || (len==1) )

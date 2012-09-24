@@ -142,8 +142,8 @@ char mkpath(const char *path, mode_t mode)
 
 void invalid_base_warning(SeqFile *sf, char b)
 {
-  fprintf(stderr, "Invalid sequence [%c] [path: %s; line: %lu]\n",
-          b, seq_get_path(sf), seq_curr_line_number(sf));
+  warn("Invalid sequence [%c] [path: %s; line: %lu]\n",
+       b, seq_get_path(sf), seq_curr_line_number(sf));
 }
 
 short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
@@ -224,10 +224,9 @@ inline char _read_base(SeqFile *sf, char *b, char *q, char read_qual)
 
   if(read_qual && !seq_read_qual(sf, q))
   {
-    fprintf(stderr, "%s:%d: Couldn't read quality scores "
-                    "[read: %s; path: %s; line: %lu]",
-            __FILE__, __LINE__, seq_get_read_name(sf), seq_get_path(sf),
-            seq_curr_line_number(sf));
+    warn("%s:%d: Couldn't read quality scores [read: %s; path: %s; line: %lu]",
+         __FILE__, __LINE__, seq_get_read_name(sf), seq_get_path(sf),
+         seq_curr_line_number(sf));
   }
 
   // Convert to upper case
@@ -246,10 +245,9 @@ inline char _read_k_bases(SeqFile *sf, char *bases, char *quals, int k,
 
   if(read_qual && !seq_read_k_quals(sf, quals, k))
   {
-    fprintf(stderr, "%s:%d: Couldn't read quality scores "
-                    "[read: %s; path: %s; line: %lu]",
-            __FILE__, __LINE__, seq_get_read_name(sf), seq_get_path(sf),
-            seq_curr_line_number(sf));
+    warn("%s:%d: Couldn't read quality scores [read: %s; path: %s; line: %lu]",
+         __FILE__, __LINE__, seq_get_read_name(sf), seq_get_path(sf),
+         seq_curr_line_number(sf));
   }
 
   // Convert to upper case
@@ -268,10 +266,9 @@ inline char _read_all_bases(SeqFile *sf, StrBuf *bases, StrBuf *quals,
 
   if(read_qual && !seq_read_all_quals(sf, quals))
   {
-    fprintf(stderr, "%s:%d: Couldn't read quality scores "
-                    "[read: %s; path: %s; line: %lu]",
-            __FILE__, __LINE__, seq_get_read_name(sf), seq_get_path(sf),
-            seq_curr_line_number(sf));
+    warn("%s:%d: Couldn't read quality scores [read: %s; path: %s; line: %lu]",
+         __FILE__, __LINE__, seq_get_read_name(sf), seq_get_path(sf),
+         seq_curr_line_number(sf));
   }
 
   // Convert to upper case
@@ -1287,7 +1284,10 @@ void set_binary_kmer_to_something_not_in_the_hash_table(BinaryKmer* bkmer, dBGra
       count++;
       if ((count>10000) && (found==true) )
 	{
-	  printf("Cortex needs, for non-obvious reasons, to find a kmer which is NOT in your graph, but after %d random tries, has failed to find one. Still looking.\nIf you are using a very small k, so the graph is saturating the kmer-space, this will go on forever....\n", count);
+	  warn("Cortex needs, for non-obvious reasons, to find a kmer which is NOT\n"
+"in your graph, but after %d random tries, has failed to find one. Still looking.\n"
+"If you are using a very small k, so the graph is saturating the kmer-space, \n"
+"this will go on forever....\n", count);
 	}
     }
   
@@ -2607,7 +2607,7 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
     // int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,entry_length,0,db_graph->kmer_size,windows,max_windows, max_kmers);
     int nkmers = get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(seq->seq,seq->qual,entry_length,0,
 											       windows,max_windows, max_kmers, db_graph);
-    
+
     if (nkmers == 0) 
       {
 	(*bad_reads)++;
@@ -2636,28 +2636,28 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
 	    
 	    if (all_kmers_in_this_window_are_in_graph==true)
 	      {
-		//print out this window as a "read". If this read has many windows, we will print each as a separate read (provided they lie in the graph)
-		if (is_for_testing == false)
-		  {
-		    fprintf(fout, "> %s part %d \n", seq->name, i );
-		    fprintf(fout, "%s", binary_kmer_to_seq(&(current_window->kmer[0]), db_graph->kmer_size, tmpseq) );
-		    for(j=1;j<current_window->nkmers;j++){ 
-		      fprintf(fout, "%c", binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(&(current_window->kmer[j]))) );
-		    }
-		    fprintf(fout, "\n");
-		  }
-		else
-		  {
-		    for_test_array_of_clean_reads[*for_test_index][0]='\0';
-		    strcat(for_test_array_of_clean_reads[*for_test_index], binary_kmer_to_seq(&(current_window->kmer[0]), db_graph->kmer_size, tmpseq) );
-		    for(j=1;j<current_window->nkmers;j++){ 
-		      char tmp_ch[2];
-		      tmp_ch[0]=binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(&(current_window->kmer[j])));
-		      tmp_ch[1]='\0';
-		      strcat(for_test_array_of_clean_reads[*for_test_index], tmp_ch );
-		    }
-		    *for_test_index=*for_test_index+1;
-		  }
+	    //print out this window as a "read". If this read has many windows, we will print each as a separate read (provided they lie in the graph)
+	    if (is_for_testing == false)
+	      {
+		fprintf(fout, "> %s part %d \n", seq->name, i );
+		fprintf(fout, "%s", binary_kmer_to_seq(&(current_window->kmer[0]), db_graph->kmer_size, tmpseq) );
+		for(j=1;j<current_window->nkmers;j++){ 
+		  fprintf(fout, "%c", binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(&(current_window->kmer[j]))) );
+		}
+		fprintf(fout, "\n");
+	      }
+	    else
+	      {
+		for_test_array_of_clean_reads[*for_test_index][0]='\0';
+		strcat(for_test_array_of_clean_reads[*for_test_index], binary_kmer_to_seq(&(current_window->kmer[0]), db_graph->kmer_size, tmpseq) );
+		for(j=1;j<current_window->nkmers;j++){ 
+		  char tmp_ch[2];
+		  tmp_ch[0]=binary_nucleotide_to_char(binary_kmer_get_last_nucleotide(&(current_window->kmer[j])));
+		  tmp_ch[1]='\0';
+		  strcat(for_test_array_of_clean_reads[*for_test_index], tmp_ch );
+		}
+		*for_test_index=*for_test_index+1;
+	      }
 	      }
 	  //else
 	  //  {
@@ -2665,18 +2665,18 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
 	  
 	  }
       }
-    
+	
     if (full_entry == false){
       shift_last_kmer_to_start_of_sequence(seq,entry_length,db_graph->kmer_size);
     }
-
+    
     prev_full_entry = full_entry;
-
+    
   }
   
   free_sequence(&seq);
   binary_kmer_free_kmers_set(&windows);
-
+  
 }
 
 
@@ -3035,7 +3035,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
   return 1;
 
 }
-					   
+
 
 /*
 

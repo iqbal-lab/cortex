@@ -63,6 +63,9 @@ void die(const char* fmt, ...)
   __attribute__ ((format(printf, 1, 2)))
   __attribute__ ((noreturn));
 
+void warn(const char* fmt, ...)
+  __attribute__ ((format(printf, 1, 2)));
+
 // 
 
 #endif /* GLOBAL_H_ */

@@ -180,24 +180,17 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour, int clean_c
 
 //functions for comparing graph with reference, or comparing reads with the graph
 
-/*
-// Flagged for removal
-void read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(FILE* fp, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
-                                                                            int max_read_length, dBGraph * db_graph);
-
-void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(char* f_name, dBGraph* db_graph);
-void read_all_ref_chromosomes_and_mark_graph(dBGraph* db_graph);
-*/
-
 void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
                                                   long long * bad_reads, int max_read_length, dBGraph * db_graph,
                                                   boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index);
+
+
 void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_not_in_graph(FILE* fp, FILE* fout,
-											     int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, 
-														 boolean * full_entry), 
-											     long long * bad_reads, int max_read_length, dBGraph * db_graph, 
-											     EdgeArrayType type, int index,
-											     boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index);
+                           int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, 
+                             boolean * full_entry), 
+                           long long * bad_reads, int max_read_length, dBGraph * db_graph, 
+                           EdgeArrayType type, int index,
+                           boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index);
 
 int get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(char * seq,  char * qualities, int length, char quality_cut_off, 
 										  KmerSlidingWindowSet * windows, int max_windows, int max_kmers, dBGraph* db_graph);
@@ -209,14 +202,6 @@ int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_g
 void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
 						  long long * bad_reads, int max_read_length, dBGraph * db_graph,
 						  boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index);
-
-
-void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_not_in_graph(FILE* fp, FILE* fout,
-                                                                                             int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry,
-                                                                                                                 boolean * full_entry),
-                                                                                             long long * bad_reads, int max_read_length, dBGraph * db_graph,
-                                                                                             EdgeArrayType type, int index,
-                                                                                             boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index);
 
 
 

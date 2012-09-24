@@ -93,7 +93,10 @@ boolean check_files_in_list_exist_ignoring_ref_line(char* filelist, char* error_
 	      
 	      if (access(filename,R_OK)==-1) 
 		{
-		  sprintf(error_msg,"File Z%sZ on line %d (numbering lines from 0)  (corresponding to colour %d) of file %s cannot be accessed - bad path?\n", filename, count, count, filelist );
+		  sprintf(error_msg,
+              "File Z%sZ on line %d (numbering lines from 0) (corresponding to "
+              "colour %d) of file %s cannot be accessed - bad path?\n",
+              filename, count, count, filelist);
 		  return false;
 		}
 	    }
@@ -103,7 +106,12 @@ boolean check_files_in_list_exist_ignoring_ref_line(char* filelist, char* error_
 
   if (count!=NUMBER_OF_COLOURS-1)
     {
-      sprintf(error_msg,"File %s is supposed to contain one line per colour in your graph (the assumption is your graph contains a ref-colour, plus a set of colours, all of which contain data from samples for who you want to estimate the sequencing error rate). However in fact it contains %d lines\n", filelist, count);
+      sprintf(error_msg,
+              "File %s is supposed to contain one line per colour in your graph "
+              "(the assumption is your graph contains a ref-colour, plus a set "
+              "of colours, all of which contain data from samples for who you "
+              "want to estimate the sequencing error rate). However in fact it "
+              "contains %d lines\n", filelist, count);
       return false;
       
     }

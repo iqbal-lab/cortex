@@ -192,10 +192,7 @@ char reverse_char_nucleotide(char c)
     case 't':
       return 'a';
     default:
-      printf("Non-existent nucleotide %c\n",c);
-      assert(0);
-      return 'N';
-      //return Adenine; 
+      die("Non-existent nucleotide %c\n",c);
     }
 }
 

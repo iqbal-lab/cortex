@@ -88,7 +88,7 @@ void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* mode
 
 
 void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_extra_variant_info)(VariantBranchesAndFlanks*, FILE*), 
-		    Edges(*get_col_ref) (const dBNode* e),int (*get_cov_ref)(const dBNode* e),
+		    Edges(*get_col_ref) (const dBNode* e),uint32_t (*get_cov_ref)(const dBNode* e),
 		    GraphInfo* db_graph_info, GraphAndModelInfo* model_info)
 {
   FILE* fp = fopen(cmd_line->file_of_calls_to_be_genotyped, "r");
@@ -389,7 +389,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph, 
 		      void (*print_appropriate_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
 		      Edges(*get_col_ref) (const dBNode* e),
-		      int (*get_cov_ref)(const dBNode* e),
+		      uint32_t (*get_cov_ref)(const dBNode* e),
 		      GraphInfo* db_graph_info, GraphAndModelInfo* model_info
 		      )
 {
@@ -603,20 +603,20 @@ int main(int argc, char **argv){
     return ed;
   }
 
-  int get_covg_ref(const dBNode* e)
+  uint32_t get_covg_ref(const dBNode* e)
   {
     if (cmd_line->using_ref==false)
       {
-	printf("Do not call get_coverage_ref when --using_ref was not specified. Exiting - coding error\n");
+	die("Do not call get_coverage_ref when --using_ref was not specified. Exiting - coding error\n");
       }
     
     return e->coverage[cmd_line->ref_colour];
   }
 
 
-  int get_covg_in_union_all_colours_except_ref(const dBNode* e)
+  uint32_t get_covg_in_union_all_colours_except_ref(const dBNode* e)
   {
-    int cov = element_get_covg_union_of_all_covgs(e);
+    uint32_t cov = element_get_covg_union_of_all_covgs(e);
     if (cmd_line->ref_colour!=-1)
       {
 	cov -= e->coverage[cmd_line->ref_colour];
@@ -962,7 +962,7 @@ int main(int argc, char **argv){
     }
   else
     {
-      printf("ZAM shouldnever get here\n");
+      die("Should never reach here %s:%i", __FILE__, __LINE__);
     }
 
   
