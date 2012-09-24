@@ -1875,15 +1875,22 @@ sub get_fastq_filelists
 sub get_num_lines
 {
     my ($file) = @_;
-    my $cmd = "wc -l $file";
-    my $ret = qx{$cmd};
-    if ($ret =~ /(\d+)\s+$file/)
+    if ($file eq ".")
     {
-	return $1;
+	return 0;
     }
     else
     {
-	die("$cmd returns $ret - unexpected")
+	my $cmd = "wc -l $file";
+	my $ret = qx{$cmd};
+	if ($ret =~ /(\d+)\s+$file/)
+	{
+	    return $1;
+	}
+	else
+	{
+	    die("$cmd returns $ret - unexpected")
+	}
     }
 }
 sub build_all_unclean_binaries

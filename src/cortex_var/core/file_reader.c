@@ -1581,7 +1581,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 	BinaryKmer tmp_dbg_kmer;
 	char tmp_dbg_seq[db_graph->kmer_size+1];
 
-	die("Problem in load_seq_into_array - current kmer not found %s\n",
+	die("Problem in load_seq_into_array - current kmer not found %s. Are you using the PD caller with a reference that has not been loaded into the graph? The PD caller expects the reference to be in the graph in its own colour.\n",
 	    binary_kmer_to_seq(element_get_key(&(kmer_window->kmer[j]),
                                          db_graph->kmer_size, &tmp_dbg_kmer),
                          db_graph->kmer_size, tmp_dbg_seq));
