@@ -60,6 +60,7 @@ if ( ($check_perl5_ret !~ /$isaac_libdir/) || ($check_perl5_ret !~ /$callingscri
 use RunCallsLib;
 
 
+my $current_dir = get_current_dir();
 
 
 
@@ -261,7 +262,7 @@ if ($help)
 	print "--format\t\t\t\tFASTA or FASTQ\n";
 	print "--max_var_len\t\t\t\tSee Cortex manual - max var length to look for. Default value 40000 (bp)\n";
 	print "--genome_size\t\t\t\tGenome length in base pairs - needed for genotyping\n";
-	print "--refbindir\t\t\t\tDiorectry containing binaries built of the reference at all the kmers you want to use. \n";
+	print "--refbindir\t\t\t\tFULL PATH to Directory containing binaries built of the reference at all the kmers you want to use. Binary names must include k-kmer (eg k31) and end in .ctx\n";
 	print "\t\t\t\t\tThe binary filename should contain the kmer value, eg refbinary.k31.ctx\n";
 #	print "--expt_type\t\t\t\tAs in Cortex input\n";
 	print "--list_ref_fasta\t\t\t\tFile listing the fasta files (one per chromosome) for the reference. Needed for the PD caller\n";
@@ -1030,6 +1031,17 @@ close(GLOBAL);
 #######################################################################################################
 #######################################################################################################
 
+sub get_current_dir
+{
+    my $cmd = "pwd";
+    my $ret  = qx{$cmd};
+    chomp $ret;
+    if ($ret !~ /\/$/)
+    {
+	$ret = $ret.'/';
+    }
+    return $ret;
+}
 sub print_report
 {
     my ($href_vcfs_needing_merging, $href_final_vcfs) = @_;
@@ -1136,6 +1148,7 @@ sub get_colourlist_for_joint
     my $outfile = $tmpdir."tmp_colourlist_joint_".$str."_kmer".$kmer."_level".$level;
     open(OUT, ">".$outfile)||die("Cannot open $outfile");
 
+    ## Now - latest change to all these colourlists etc. The binary filelists are relative to wherever the colour list is
 
     if ($use_ref ne "Absent")
     {
@@ -1144,8 +1157,7 @@ sub get_colourlist_for_joint
 	    $refbindir=$refbindir.'/';
 	}
 
-
-	my $ref_bin_list = $tmpdir."filelist_refbin_for_joint_".$str."_k".$kmer;
+	my $ref_bin_list = $refbindir."filelist_refbin_for_joint_".$str."_k".$kmer;
 
 	open(REF, ">".$ref_bin_list)||die("Cannot open $ref_bin_list");
 	print REF $refbindir;
@@ -1159,10 +1171,11 @@ sub get_colourlist_for_joint
 
     foreach my $sample (@samples)
     {
-	my $f = $tmpdir."sample_".$sample."_kmer.".$kmer."_cleaning_level".$level."_binary";
-	print OUT "$f\n";
+	my $f = "sample_".$sample."_kmer.".$kmer."_cleaning_level".$level."_binary";
+	print OUT "$f\n";#colourlist and sample filelist in
+	$f = $tmpdir.$f;
 	open(F, ">".$f)||die("Cannot open $f");
-
+	print F $current_dir; 
        	if ($sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level] !=0)
 	{
 	    print F $sample_to_cleaned_bin{$sample}{$kmer}{$sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level]};

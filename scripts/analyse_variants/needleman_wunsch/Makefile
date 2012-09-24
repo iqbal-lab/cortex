@@ -22,7 +22,12 @@ endif
 FLAGS := $(FLAGS) -DCOMPILE_TIME='"$(shell date)"' -DSCORE_TYPE='int'
 
 all:
-	gcc -o needleman_wunsch $(FLAGS) -Wall -lz -I . -I $(UTILITY_LIB_PATH) -I $(STRING_BUF_PATH) -I $(BIOINF_LIB_PATH) -I $(SCORING_PATH) nw_cmdline.c needleman_wunsch.c $(SCORING_PATH)/alignment_scoring.c $(SCORING_PATH)/alignment.c $(SCORING_PATH)/alignment_scoring_load.c $(UTILITY_LIB_PATH)/utility_lib.c $(BIOINF_LIB_PATH)/bioinf.c $(STRING_BUF_PATH)/string_buffer.c
+	gcc -o needleman_wunsch $(FLAGS) -Wall  \
+	-I . -I $(UTILITY_LIB_PATH) -I $(STRING_BUF_PATH) \
+	-I $(BIOINF_LIB_PATH) -I $(SCORING_PATH) \
+	nw_cmdline.c needleman_wunsch.c \
+	$(SCORING_PATH)/*.c $(UTILITY_LIB_PATH)/utility_lib.c \
+	$(BIOINF_LIB_PATH)/bioinf.c $(STRING_BUF_PATH)/string_buffer.c -lz
 
 clean:
 	if test -e needleman_wunsch; then rm needleman_wunsch; fi

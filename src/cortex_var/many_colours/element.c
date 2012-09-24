@@ -467,24 +467,33 @@ void element_set_kmer(Element * e, Key kmer, short kmer_size){
 
 
 
-
-
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index)
 {
   if (e==NULL)
     {
       return;
     }
-  e->coverage[index]=e->coverage[index]+1;
+  
+  int t = e->coverage[index]+1;
+  if (t>0)
+    {
+      e->coverage[index]=t;
+    }
 }
 
 void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, int update)
 {
-
-  e->coverage[index] += update;
+  if (e==NULL)
+    {
+      return;
+    }
+  int t = e->coverage[index]+update;
+  if (t>0)
+    {
+      e->coverage[index] =t;
+    }
 
 }
-
 
 int db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index)
 {

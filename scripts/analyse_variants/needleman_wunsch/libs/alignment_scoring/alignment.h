@@ -40,7 +40,8 @@ char *align_col_mismatch, *align_col_indel, *align_col_context, *align_col_stop;
 
 // Methods
 void alignment_print_matrices(score_t* match_score, score_t* gap_a_score,
-                              score_t* gap_b_score, int length_a, int length_b);
+                              score_t* gap_b_score,
+                              int length_a, int length_b);
 
 void alignment_colour_print_against(char *alignment_a, char *alignment_b,
                                     char case_sensitive);

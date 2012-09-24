@@ -37,31 +37,26 @@ char parse_entire_longlong(const char *str, long long *result);
 char parse_entire_ulonglong(const char *str, unsigned long long *result);
 
 // Sort comparison function on int
-int int_cmp(const void *aa, const void *bb);
+int cmp_int(const void *aa, const void *bb);
+int cmp_uint(const void *aa, const void *bb);
+int cmp_long(const void *aa, const void *bb);
+int cmp_ulong(const void *aa, const void *bb);
 
 //
 // Binary
 //
 
 // Convert an int/long to a string of zeros and ones
-char* int_to_binary(const int x);
-char* long_to_binary(const long x);
+void int_to_binary(const int x, char b[33]);
+void long_to_binary(const long x, char b[66]);
 
 //
-// Strings
+// Input
 //
 
 // Checks if anything is piping in
 int stdin_is_ready();
 
-char string_is_all_whitespace(const char* s);
-
-char* next_nonwhitespace(const char* s);
-
-// Move pointer to first nonwhitespace position
-// Remove trailing whitespace characters (trim with '\0')
-char* trim(char* str);
-
-long count_strchr(const char* str, const int c);
+// String methods moved to string_buffer
 
 #endif

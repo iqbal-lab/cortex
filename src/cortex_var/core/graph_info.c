@@ -114,7 +114,7 @@ void graph_info_initialise(GraphInfo* ginfo)
 
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
-      (ginfo->sample_ids[i])[0]='\0';
+      set_string_to_null(ginfo->sample_ids[i], MAX_LEN_SAMPLE_NAME);
       strcat(ginfo->sample_ids[i], "undefined");
       ginfo->sample_id_lens[i]=strlen(ginfo->sample_ids[i]);
 

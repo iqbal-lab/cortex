@@ -30,7 +30,7 @@
 #include <ctype.h> // tolower isspace
 #include <limits.h> // INT_MAX, INT_MIN
 
-// utility_lib: string_is_all_whitespace(char*), next_nonwhitespace(char*)
+// utility_lib: string_is_all_whitespace(char*), string_next_nonwhitespace(char*)
 #include "utility_lib.h"
 #include "string_buffer.h"
 
@@ -110,7 +110,7 @@ void align_scoring_load_matrix(gzFile* file, char* file_path,
   {
     char* next = sbuf->buff;
 
-    while((next = next_nonwhitespace(next+1)) != NULL)
+    while((next = string_next_nonwhitespace(next+1)) != NULL)
     {
       characters[num_of_chars++] = case_sensitive ? *next : tolower(*next);
     }
@@ -120,7 +120,7 @@ void align_scoring_load_matrix(gzFile* file, char* file_path,
     {
       string_buff_chomp(sbuf);
 
-      char* from_char_pos = next_nonwhitespace(sbuf->buff);
+      char* from_char_pos = string_next_nonwhitespace(sbuf->buff);
 
       if(from_char_pos == NULL || sbuf->buff[0] == '#')
       {
@@ -145,7 +145,7 @@ void align_scoring_load_matrix(gzFile* file, char* file_path,
                          file_path, line_num, 1);
         }
       
-        score_txt = next_nonwhitespace(score_txt+1);
+        score_txt = string_next_nonwhitespace(score_txt+1);
         
         char* strtol_last_char_ptr = score_txt;
         score = (int)strtol(strtol_last_char_ptr, &strtol_last_char_ptr, 10);

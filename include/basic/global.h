@@ -59,6 +59,8 @@ boolean DEBUG;
 
 boolean test_file_existence(char* file);
 
+void set_string_to_null(char* str, int len);
+
 void die(const char* fmt, ...)
   __attribute__ ((format(printf, 1, 2)))
   __attribute__ ((noreturn));

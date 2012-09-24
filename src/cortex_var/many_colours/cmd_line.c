@@ -25,6 +25,7 @@
  * **********************************************************************
  */
 
+#include <global.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -313,14 +314,6 @@ void copy_list(int* from_list, int len_from_list, int* to_list, int len_to_list)
 
 
 
-void set_string_to_null(char* str, int len)
-{
-  int i;
-  for (i=0; i<len; i++)
-    {
-      str[i]='\0';
-    }
-}
 
 
 void initialise_int_list(int* list, int len)

@@ -5047,6 +5047,10 @@ void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArray
 	  {
 	    bin = 10000;
 	  }
+	else if (bin<0)
+	  {
+	    bin = 10000;
+	  }
 	*(arr[bin]) = *(arr[bin]) +1; 
       }
   }

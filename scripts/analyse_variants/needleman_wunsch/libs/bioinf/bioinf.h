@@ -55,4 +55,24 @@ void sort_chroms(STRING_BUFFER*** chrom_names,
                  STRING_BUFFER*** chrom_seqs,
                  const int num_of_chroms);
 
+
+// SAM file waiting here
+typedef struct SAM_ENTRY
+{
+  char *qname;
+  int flag;
+  char *rname;
+  int pos, mapq;
+  char *cigar, *rnext;
+  int pnext, tlen;
+  char *seq, *qual;
+} SAM_ENTRY;
+
+SAM_ENTRY* sam_alloc();
+
+void sam_entry_alloc(SAM_ENTRY* sam_entry);
+void sam_entry_free(SAM_ENTRY* sam_entry);
+
+char sam_read(FILE* sam_file, SAM_ENTRY* sam_entry);
+
 #endif

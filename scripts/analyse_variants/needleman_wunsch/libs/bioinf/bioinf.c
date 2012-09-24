@@ -194,7 +194,6 @@ enum SEQ_FILE_TYPE seq_file_get_type(SEQ_FILE* file)
   return file->file_type;
 }
 
-// DEV: add FASTQ support
 void seq_file_read(SEQ_FILE* file, STRING_BUFFER* title, STRING_BUFFER* sequence)
 {
   string_buff_reset(title);
@@ -214,8 +213,10 @@ void seq_file_read(SEQ_FILE* file, STRING_BUFFER* title, STRING_BUFFER* sequence
 
     do
     {
-      chars_read = (file != NULL) ? string_buff_readline(sequence, file->file)
-                                  : string_buff_gzreadline(sequence, file->gz_file);
+      chars_read
+        = (file->file != NULL) ? string_buff_readline(sequence, file->file)
+                               : string_buff_gzreadline(sequence, file->gz_file);
+
       string_buff_chomp(sequence);
     } while(chars_read > 0 && string_buff_strlen(sequence) == 0);
   }

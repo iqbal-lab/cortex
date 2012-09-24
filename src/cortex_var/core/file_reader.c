@@ -3532,6 +3532,10 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
 		  no_problem=false;
 		  *ecode = EFailedToReadSampleIds;
 		}
+	      else
+		{
+		  binfo->ginfo->sample_ids[i][binfo->ginfo->sample_id_lens[i]] = '\0';
+		}
 	    }
 	  else
 	    {
