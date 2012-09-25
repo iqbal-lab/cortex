@@ -112,14 +112,14 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   warn("Upgrade this test to use the NEW PRINT FUNCTION and then uncomment it.\n");
   /*
 
-  //  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person1, individual_edge_array, 0, 
+  //  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person1, 0, 
   //								  true, array_of_supernodes_for_person1,&number_of_supernodes_in_person_1);
 
   //printf("PERSON 1 has %d supernodes\n", number_of_supernodes_in_person_1);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
 
   int number_of_supernodes_in_person_2=0;
-  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person2, individual_edge_array, 1, 
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person2, 1, 
   					   true, array_of_supernodes_for_person2,&number_of_supernodes_in_person_2);
   //printf("PERSON 2 has %d supernodes\n", number_of_supernodes_in_person_2);
 
@@ -261,7 +261,7 @@ void test_take_three_people_each_with_one_read_and_find_variants()
 
   int number_of_supernodes_in_person_1=0;
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
-  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person1, individual_edge_array, 0, 
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person1, 0, 
 					   true, array_of_supernodes_for_person1,&number_of_supernodes_in_person_1);
   //printf("PERSON 1 has %d supernodes\n", number_of_supernodes_in_person_1);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
@@ -274,7 +274,7 @@ void test_take_three_people_each_with_one_read_and_find_variants()
 
   
   int number_of_supernodes_in_person_2=0;
-  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table,&supernode_count_person2, individual_edge_array, 1, 
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table,&supernode_count_person2, 1, 
 					   true, array_of_supernodes_for_person2,&number_of_supernodes_in_person_2);
   // printf("PERSON 2 has %d supernodes\n", number_of_supernodes_in_person_2);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
@@ -286,7 +286,7 @@ void test_take_three_people_each_with_one_read_and_find_variants()
 
 
   int number_of_supernodes_in_person_3=0;
-  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person3, individual_edge_array, 2, 
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person3, 2, 
 					   true, array_of_supernodes_for_person3,&number_of_supernodes_in_person_3);
   printf("PERSON 3 has %d supernodes\n", number_of_supernodes_in_person_3);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
@@ -410,7 +410,7 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
   
   int  number_of_supernodes_in_person_1=0;
   //print_supernode will, in debug mode, alloc memory for you in your array, and put the supernode in it
-  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person1, individual_edge_array, 0, 
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person1, 0, 
 					   true, array_of_supernodes_for_person1,&number_of_supernodes_in_person_1);
   printf("PERSON 1 has %d supernodes\n", number_of_supernodes_in_person_1);
   db_graph_set_all_visited_nodes_to_status_none(hash_table);
@@ -423,7 +423,7 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
 
   
   int number_of_supernodes_in_person_2=0;
-  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person2, individual_edge_array, 1, 
+  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person2, 1, 
 					   true, array_of_supernodes_for_person2,&number_of_supernodes_in_person_2);
  printf("PERSON 2 has %d supernodes\n", number_of_supernodes_in_person_2);
  db_graph_set_all_visited_nodes_to_status_none(hash_table);

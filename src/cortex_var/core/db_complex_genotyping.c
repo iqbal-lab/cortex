@@ -469,7 +469,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(
 	int length = db_graph_supernode_for_specific_person_or_pop(e,max_len,&db_node_action_set_status_visited,
 								   p_nodes,p_or,p_lab, p_str,
 								   &avg_coverage,&min,&max,&is_cycle,
-								   db_graph, individual_edge_array, colour_indiv);
+								   db_graph, colour_indiv);
 	int i;
 	typedef enum
 	{
@@ -601,7 +601,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(
 	int length = db_graph_supernode_for_specific_person_or_pop(e,max_len,&db_node_action_set_status_visited,
 								   p_nodes,p_or,p_lab, p_str,
 								   &avg_coverage,&min,&max,&is_cycle,
-								   db_graph, individual_edge_array, colour_indiv);
+								   db_graph, colour_indiv);
 	int i;
 	boolean at_least_one_node_in_sup_is_in_desired=false;
 	for (i=0; i<length; i++)
@@ -714,7 +714,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(
   //number_errors=number_errors/db_graph->kmer_size;
   
   /*
-    long long better_number_errors = db_graph_count_error_supernodes(max_allele_length, db_graph, individual_edge_array, colour_indiv, 
+    long long better_number_errors = db_graph_count_error_supernodes(max_allele_length, db_graph, colour_indiv, 
 								   p_nodes, p_orientations, p_labels, p_string,
 								   &db_node_check_status_is_not_visited, &condition_is_error_supernode,&db_node_action_set_status_visited);
   number_errors=(int)better_number_errors;
@@ -1201,7 +1201,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 								   &db_node_action_specialise_status,
 								   p_nod,p_or,p_lab, p_str,
 								   &avg_coverage,&min,&max,&is_cycle,
-								   db_graph, individual_edge_array, colour_indiv);
+								   db_graph, colour_indiv);
 	//assume everything in supernode is bad. Not using 1net2net etc
 
 	boolean too_short=false;
@@ -1248,7 +1248,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
 							  &db_node_action_unspecialise_status,
 							  p_nod,p_or,p_lab, p_str,
 							  &avg_coverage,&min,&max,&is_cycle,
-							  db_graph, individual_edge_array, colour_indiv);
+							  db_graph, colour_indiv);
 	    
 	    
 	  }

@@ -503,7 +503,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 
   //  if (genome_graph_built_from_seq_data==true)
   //  {
-  //       db_graph_smooth_bubbles_for_specific_person_or_pop(6,db_graph->kmer_size+1, db_graph, individual_edge_array, colour_cleaned_genome);
+  //       db_graph_smooth_bubbles_for_specific_person_or_pop(6,db_graph->kmer_size+1, db_graph, colour_cleaned_genome);
       //  }
   
 
@@ -513,7 +513,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
     {
       load_fasta_data_from_filename_into_graph_of_specific_person_or_pop(fastaq, &bases_read, &bases_loaded, &bad_reads, &dup_reads, max_read_length,
 									 remove_duplicates_single_endedly, break_homopolymers, homopol, 
-									 db_graph, individual_edge_array, working_colour);
+									 db_graph, working_colour);
     }
   else
     {
@@ -539,7 +539,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 									 max_read_length,
 									 remove_duplicates_single_endedly, break_homopolymers,
 									 homopol,fastq_ascii_offset, 
-									 db_graph, individual_edge_array, working_colour);
+									 db_graph, working_colour);
       free(readlen_distrib);
       free(readlen_distrib_ptrs);
     }

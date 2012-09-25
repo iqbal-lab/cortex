@@ -219,7 +219,7 @@ void test_tip_clipping()
 
   CU_ASSERT(node1 != NULL);
   
-  int tip_length = db_graph_db_node_clip_tip_for_specific_person_or_pop(node1, 10,&db_node_action_set_status_pruned,db_graph, individual_edge_array,0);
+  int tip_length = db_graph_db_node_clip_tip_for_specific_person_or_pop(node1, 10,&db_node_action_set_status_pruned,db_graph, 0);
   
   CU_ASSERT_EQUAL(tip_length,2);
 
@@ -241,9 +241,9 @@ void test_tip_clipping()
 
   //now check that if you look to see if the cipped kmers "exist" in the person's graph, you do not find them, as there is no edge
   CU_ASSERT(db_graph_find_node_restricted_to_specific_person_or_population(element_get_key(seq_to_binary_kmer("GTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) , 
-									   db_graph, individual_edge_array,0)==NULL);
+									   db_graph, 0)==NULL);
   CU_ASSERT(db_graph_find_node_restricted_to_specific_person_or_population(element_get_key(seq_to_binary_kmer("TTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) , 
-									   db_graph, individual_edge_array,0)==NULL);
+									   db_graph, 0)==NULL);
 
   //check tip clip works well with db_graph_supernode (ie that the tip was really removed)
   dBNode * nodes_path[100];
@@ -254,7 +254,7 @@ void test_tip_clipping()
   int length_supernode = db_graph_supernode_for_specific_person_or_pop(node3,100,&db_node_action_set_status_visited,
 								       nodes_path,orientations_path,labels_path,
 								       tmp_seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								       db_graph, individual_edge_array,0);
+								       db_graph, 0);
 
   CU_ASSERT_EQUAL(length_supernode,6);
   CU_ASSERT_STRING_EQUAL("GGACGC",tmp_seq);
@@ -431,7 +431,7 @@ void test_get_perfect_path_in_one_colour()
 									   &db_node_action_do_nothing,
 									   path_nodes,path_orientations,path_labels,
 									   tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
-									   &is_cycle,db_graph, individual_edge_array,0);
+									   &is_cycle,db_graph, 0);
 
     CU_ASSERT(is_cycle);
     CU_ASSERT_EQUAL(test1_length,4);
@@ -487,7 +487,7 @@ void test_get_perfect_path_in_one_colour()
 						&db_node_action_do_nothing,
 						path_nodes,path_orientations,path_labels,
 						tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
-						&is_cycle,db_graph, individual_edge_array, 0);
+						&is_cycle,db_graph, 0);
 
    CU_ASSERT(!is_cycle);
    CU_ASSERT_EQUAL(test2_length,2);
@@ -501,7 +501,7 @@ void test_get_perfect_path_in_one_colour()
 					    &db_node_action_do_nothing,
 					    path_nodes,path_orientations,path_labels,
 					    tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
-					    &is_cycle,db_graph, individual_edge_array, 0);
+					    &is_cycle,db_graph, 0);
 
   
    CU_ASSERT(!is_cycle);
@@ -557,7 +557,7 @@ void test_get_perfect_path_in_one_colour()
 						&db_node_action_do_nothing,
 						path_nodes,path_orientations,path_labels,
 						tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
-						&is_cycle,db_graph, individual_edge_array, 0);
+						&is_cycle,db_graph, 0);
 
    CU_ASSERT(!is_cycle);
 
@@ -573,7 +573,7 @@ void test_get_perfect_path_in_one_colour()
 					    &db_node_action_do_nothing,
 					    path_nodes,path_orientations,path_labels,
 					    tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
-					    &is_cycle,db_graph, individual_edge_array, 0);
+					    &is_cycle,db_graph, 0);
 
    CU_ASSERT(!is_cycle);
 
@@ -626,7 +626,7 @@ void test_get_perfect_path_in_one_colour()
 						&db_node_action_do_nothing,
 						path_nodes,path_orientations,path_labels,
 						tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
-						&is_cycle,db_graph, individual_edge_array, 0);
+						&is_cycle,db_graph, 0);
    CU_ASSERT(is_cycle);//this time it should find a cycle
    CU_ASSERT_STRING_EQUAL(tmp_seq,"A");
    CU_ASSERT_EQUAL(test4_length,1);
@@ -638,7 +638,7 @@ void test_get_perfect_path_in_one_colour()
 					    &db_node_action_do_nothing,
 					    path_nodes,path_orientations,path_labels,
 					    tmp_seq, &avg_coverage, &min_coverage, &max_coverage,
-					    &is_cycle,db_graph, individual_edge_array, 0);
+					    &is_cycle,db_graph, 0);
 
    CU_ASSERT(is_cycle);//this time it should find a cycle
    CU_ASSERT_EQUAL(test4_length,1);
@@ -695,7 +695,7 @@ void test_get_perfect_path_in_one_colour()
 					    &db_node_action_set_status_visited,
 					    nodes, orientations, bases,
 					    tmp_seq,&avg_coverage,&min_coverage,&max_coverage,
-					    &is_cycle,db_graph,individual_edge_array, 0);
+					    &is_cycle,db_graph, 0);
 
   CU_ASSERT_EQUAL(test5_length,3);
   
@@ -834,7 +834,7 @@ void test_detect_and_smooth_bubble()
 								    &min_coverage2,
 								    &max_coverage2,
 								    db_graph, 
-								    individual_edge_array, 
+								     
 								    0);
 
 
@@ -875,7 +875,7 @@ void test_detect_and_smooth_bubble()
 									&db_node_action_set_status_visited,
 									nodes5p,orientations5p, labels_flank5p,
 									tmp_seq,&avg_coverage,&min_coverage,&max_coverage,
-									&is_cycle5p,db_graph, individual_edge_array, 0);
+									&is_cycle5p,db_graph, 0);
 
   CU_ASSERT_EQUAL(length_flank5p,0);
   CU_ASSERT_EQUAL(nodes5p[0],node1);
@@ -885,7 +885,7 @@ void test_detect_and_smooth_bubble()
 									&db_node_action_set_status_visited,
 									nodes3p,orientations3p, labels_flank3p,
 									tmp_seq,&avg_coverage,&min_coverage,&max_coverage,
-									&is_cycle3p,db_graph, individual_edge_array, 0);
+									&is_cycle3p,db_graph, 0);
  
   
   CU_ASSERT_EQUAL(length_flank3p,1);
@@ -912,7 +912,7 @@ void test_detect_and_smooth_bubble()
 								    seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
 								    &length2,path_nodes2,orientations2,labels2,
 								    seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
-								    db_graph,  individual_edge_array, 0);
+								    db_graph,   0);
   
 
   CU_ASSERT(bubble);
@@ -924,13 +924,13 @@ void test_detect_and_smooth_bubble()
   //remove a branch
   //this one should fail -- because of limit 0 on min coverage
   boolean removed = db_graph_db_node_smooth_bubble_for_specific_person_or_pop(node1,forward,db_graph->kmer_size+1,1,
-									      &db_node_action_set_status_pruned,db_graph,  individual_edge_array, 0);
+									      &db_node_action_set_status_pruned,db_graph,   0);
   CU_ASSERT(!removed);
 
 
   //this one should work
   removed = db_graph_db_node_smooth_bubble_for_specific_person_or_pop(node1,forward,db_graph->kmer_size+1,10,
-								      &db_node_action_set_status_pruned,db_graph,  individual_edge_array, 0);
+								      &db_node_action_set_status_pruned,db_graph,   0);
   
   CU_ASSERT(removed);
   //check that correct path was removed
@@ -959,7 +959,7 @@ void test_detect_and_smooth_bubble()
   int length_supernode = db_graph_supernode_for_specific_person_or_pop(node2,100,&db_node_action_set_status_visited,
 								       nodes_path,orientations_path,labels_path,
 								       tmp_seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								       db_graph,  individual_edge_array, 0);
+								       db_graph, 0);
   
   CU_ASSERT_STRING_EQUAL(tmp_seq,"ACTTA");
   
@@ -967,7 +967,7 @@ void test_detect_and_smooth_bubble()
   length_supernode = db_graph_supernode_for_specific_person_or_pop(node7,100,&db_node_action_set_status_visited,
 								   nodes_path,orientations_path,labels_path,
 								   tmp_seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								   db_graph, individual_edge_array, 0);
+								   db_graph, 0);
   
   CU_ASSERT_STRING_EQUAL(tmp_seq,"");
   
@@ -1014,7 +1014,7 @@ void test_detect_and_smooth_bubble()
 								    seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
 								    &length2,path_nodes2,orientations2,labels2,
 								    seq2,&avg_coverage2,&min_coverage2,&max_coverage2,
-								    db_graph, individual_edge_array, 0);
+								    db_graph, 0);
   
 
   CU_ASSERT(bubble);
@@ -1074,7 +1074,7 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour()
   db_node_add_edge(node1, node3, forward,forward, db_graph->kmer_size, 0);
 
   boolean one_edge1 = db_graph_db_node_has_precisely_n_edges_with_status_for_specific_person_or_pop(node1,forward,none,1,
-												    next_node,next_orientation,next_base,db_graph, individual_edge_array, 0);
+												    next_node,next_orientation,next_base,db_graph, 0);
 
 
   CU_ASSERT_EQUAL(one_edge1,false);
@@ -1082,7 +1082,7 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour()
   db_node_set_status(node2,visited);
 
   boolean one_edge2 = db_graph_db_node_has_precisely_n_edges_with_status_for_specific_person_or_pop(node1,forward,none,1,
-												    next_node,next_orientation,next_base,db_graph, individual_edge_array, 0);
+												    next_node,next_orientation,next_base,db_graph, 0);
 
  
   CU_ASSERT_EQUAL(one_edge2,true);
@@ -1095,7 +1095,7 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour()
   db_node_add_edge(node1, node4, forward, forward, db_graph->kmer_size, 0);
    
   boolean one_edge3 = db_graph_db_node_has_precisely_n_edges_with_status_for_specific_person_or_pop(node1,forward,none,2,
-												    next_node,next_orientation,next_base,db_graph, individual_edge_array, 0);
+												    next_node,next_orientation,next_base,db_graph, 0);
   
 
   
@@ -1147,14 +1147,14 @@ void test_get_N50()
 
    seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/n50_example1.fa",&bad_reads, &dup_reads, max_read_length,  
 										   remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-										   db_graph, individual_edge_array, 0);
+										   db_graph, 0);
    
 
    CU_ASSERT_EQUAL(seq_length,58);
    //CU_ASSERT_EQUAL(count_kmers,14);
    CU_ASSERT_EQUAL(bad_reads,0);
 
-   CU_ASSERT(db_graph_get_N50_of_supernodes(db_graph, individual_edge_array, 0)==13);
+   CU_ASSERT(db_graph_get_N50_of_supernodes(db_graph, 0)==13);
 
    //clean-up
    hash_table_free(&db_graph);
@@ -1191,14 +1191,14 @@ void test_get_N50()
    seq_length=0;
    seq_length = load_fasta_data_from_filename_into_graph_of_specific_person_or_pop("../data/test/graph/n50_example2.fa",&bad_reads, &dup_reads, max_read_length,  
 										   remove_duplicates_single_endedly, break_homopolymers, homopolymer_cutoff, 
-										   db_graph, individual_edge_array, 0);
+										   db_graph, 0);
 
    CU_ASSERT_EQUAL(seq_length,46);
    //  CU_ASSERT_EQUAL(count_kmers,12);
    CU_ASSERT_EQUAL(bad_reads,0);
 
 
-   CU_ASSERT(db_graph_get_N50_of_supernodes(db_graph, individual_edge_array, 0)==1); //remember this leaves the nodes all visited
+   CU_ASSERT(db_graph_get_N50_of_supernodes(db_graph, 0)==1); //remember this leaves the nodes all visited
  
    //clean-up
    hash_table_free(&db_graph);
@@ -1282,7 +1282,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
 								  &db_node_action_do_nothing, 
 								  nodes_path, orientations_path, labels_path, &length_path,
 								  seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								  db_graph, individual_edge_array, 0)==true);
+								  db_graph, 0)==true);
   CU_ASSERT(db_node_check_status(test_element1, none));
   //  printf("set status of one node to visited\n");
   db_node_set_status(test_element1, visited);
@@ -1294,7 +1294,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
 								   &db_node_action_do_nothing, 
 								   nodes_path, orientations_path, labels_path, &length_path, 
 								   seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								   db_graph, individual_edge_array, 0));
+								   db_graph, 0));
 
 
   //  printf("double check statuses of nodes unchanged\n");
@@ -1307,7 +1307,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
 								   &db_node_action_do_nothing, 
 								   nodes_path, orientations_path, labels_path, &length_path,
 								   seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								   db_graph, individual_edge_array, 0));
+								   db_graph, 0));
 
 
   //check again, but this time, set all nodes to visited in the process
@@ -1317,14 +1317,14 @@ void test_is_condition_true_for_all_nodes_in_supernode()
 								   &db_node_action_set_status_visited_or_visited_and_exists_in_reference, 
 								   nodes_path, orientations_path, labels_path, &length_path, 
 								   seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								   db_graph, individual_edge_array, 0));
+								   db_graph, 0));
   //and now this time it SHOULD BE TRUE
   CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, 
 								  &db_node_check_status_visited,
 								  &db_node_action_do_nothing, 
 								  nodes_path, orientations_path, labels_path, &length_path, 
 								  seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								  db_graph, individual_edge_array, 0));
+								  db_graph, 0));
 
   // and should still be true
   CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50,
@@ -1332,7 +1332,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
 								  &db_node_action_do_nothing, 
 								  nodes_path, orientations_path, labels_path, &length_path, 
 								  seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								  db_graph, individual_edge_array, 0));
+								  db_graph, 0));
   
 
   //printf("Nodes currently all visited. Set all nodes to none while checking them all to confirm that they are currently all visited (before doing the set-to-none)\n");
@@ -1341,14 +1341,14 @@ void test_is_condition_true_for_all_nodes_in_supernode()
 								  &db_node_action_set_status_none, 
 								  nodes_path, orientations_path, labels_path, &length_path,
 								  seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								  db_graph, individual_edge_array, 0));
+								  db_graph, 0));
 
   CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50,
 								  &db_node_check_status_none,
 								  &db_node_action_do_nothing, 
 								  nodes_path, orientations_path, labels_path, &length_path, 
 								  seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								  db_graph, individual_edge_array, 0));
+								  db_graph, 0));
   
   db_node_set_status(test_element2, exists_in_reference);
   CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50,
@@ -1356,14 +1356,14 @@ void test_is_condition_true_for_all_nodes_in_supernode()
 								   &db_node_action_do_nothing, 
 								   nodes_path, orientations_path, labels_path, &length_path, 
 								   seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								   db_graph, individual_edge_array, 0));
+								   db_graph, 0));
 
   CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element2, 50,
 								   &db_node_check_status_none,
 								   &db_node_action_do_nothing, 
 								   nodes_path, orientations_path, labels_path, &length_path,
 								   seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								   db_graph, individual_edge_array, 0));
+								   db_graph, 0));
 
    
   hash_table_free(&db_graph);
@@ -1451,7 +1451,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   int length = db_graph_supernode_for_specific_person_or_pop(test_elem1,max_expected_supernode_length, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							     nodes_path,orientations_path, labels_path, seq,
 							     &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-							     hash_table, individual_edge_array, 0); //0 because we are looking at person 0 - the only person in the graph
+							     hash_table, 0); //0 because we are looking at person 0 - the only person in the graph
 
   CU_ASSERT(length==2);
   CU_ASSERT(avg_coverage==1);
@@ -1538,7 +1538,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   length = db_graph_supernode_for_specific_person_or_pop(test_elem1,max_expected_supernode_length, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
 							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fa - sorry, offset by 1
+							 hash_table, 0); //person 0 int his array is person in person1.fa - sorry, offset by 1
 
 
   CU_ASSERT(length==1); //just one edge - self loop
@@ -1576,7 +1576,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   length = db_graph_supernode_for_specific_person_or_pop(test_elem2,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
 							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fa - sorry, offset by 1
+							 hash_table, 0); //person 0 int his array is person in person1.fa - sorry, offset by 1
 
 
   CU_ASSERT(length==3);
@@ -1619,7 +1619,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   length = db_graph_supernode_for_specific_person_or_pop(test_elem3,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
 							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fa - sorry, offset by 1
+							 hash_table, 0); //person 0 int his array is person in person1.fa - sorry, offset by 1
   
 
   CU_ASSERT(length==3);
@@ -1654,7 +1654,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   length = db_graph_supernode_for_specific_person_or_pop(test_elem4,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
 							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-							 hash_table, individual_edge_array, 0); //person 0 int his array is person in person1.fa - sorry, offset by 1
+							 hash_table, 0); //person 0 int his array is person in person1.fa - sorry, offset by 1
   
   
   CU_ASSERT(length==3);
@@ -1689,7 +1689,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   length = db_graph_supernode_for_specific_person_or_pop(test_elem6,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
 							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-							 hash_table, individual_edge_array, 0);   
+							 hash_table, 0);   
   CU_ASSERT(length==0);
 
 
@@ -1697,7 +1697,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
   length = db_graph_supernode_for_specific_person_or_pop(test_elem6,max_expected_supernode_length,&db_node_action_set_status_visited_or_visited_and_exists_in_reference,
 							 nodes_path,orientations_path, labels_path, seq,
 							 &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-							 hash_table, individual_edge_array, 1); 
+							 hash_table,  1); 
   CU_ASSERT(length==3);
   CU_ASSERT_STRING_EQUAL(seq, "CAA");  
 
@@ -1762,20 +1762,20 @@ void test_is_supernode_end()
   //GTA is not the end of a supernode in either direction
   dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("GTA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, 0, hash_table));
 
   //CGT is not the end of a supernode in either direction
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("CGT",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, 0, hash_table));
 
   //ACG is not  the end of a supernode in the reverse direction
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, 0, hash_table));
 
   hash_table_free(&hash_table);
 
@@ -1816,34 +1816,34 @@ void test_is_supernode_end()
   //ACA IS  the end of a supernode in the reverse direction
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, 0, hash_table));
   
 
   //ATG is not a supernode end
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ATG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, 0, hash_table));
 
 
   //ATT IS  the end of a supernode in the reverse direction
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ATT",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, 0, hash_table));
   
   //TTC is a supernode end in both directions
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TTC",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, 0, hash_table));
 
   //TTG is a supernode end in both directions
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TTG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, 0, hash_table));
 
   hash_table_free(&hash_table);
 
@@ -1882,39 +1882,39 @@ void test_is_supernode_end()
   //ACA IS  the end of a supernode in the reverse direction
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, 0, hash_table));
   
   //ATG is not a supernode end
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ATG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, reverse, 0, hash_table));
 
 
   //ATT IS  the end of a supernode in the reverse direction
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ATT",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, 0, hash_table));
   
   //TTC is a supernode end in both directions
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TTC",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, 0, hash_table));
 
   //AAT is a supernode end in reverse directions
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAT",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(!db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, 0, hash_table));
 
   //TAA is a supernode end in both directions
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TAA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, 0, hash_table));
 
   hash_table_free(&hash_table);
 
@@ -1954,8 +1954,8 @@ void test_is_supernode_end()
   //AAA is a supernode end in both directions
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(db_node_is_supernode_end(query_node, forward, individual_edge_array, 0, hash_table));
-  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, individual_edge_array, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, forward, 0, hash_table));
+  CU_ASSERT(db_node_is_supernode_end(query_node, reverse, 0, hash_table));
 
   hash_table_free(&hash_table);
 
@@ -2468,8 +2468,8 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
   int max_expected_size_of_supernode=20;
 
   
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-							individual_edge_array,1,
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, 0, 
+							1,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
@@ -2560,8 +2560,8 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_2()
   int min_covg =1;
   int max_covg = 10;
   int max_expected_size_of_supernode=370;
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-							individual_edge_array,1,
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, 0, 
+							1,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
@@ -2673,8 +2673,8 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
   int min_covg =1;
   int max_covg = 10;
   int max_expected_size_of_supernode=370;
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-							individual_edge_array,1,
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, 0, 
+							1,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
@@ -2748,8 +2748,8 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_4()
   int min_covg =1;
   int max_covg = 10;
   int max_expected_size_of_supernode=10000;
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-							individual_edge_array,1,
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, 0, 
+							1,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
@@ -2829,8 +2829,8 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_5()
 
 
 
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
-							individual_edge_array,0,
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr,  1, 
+							0,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, NULL,
 							0, NULL, NULL, NULL, NULL, NULL, &make_reference_path_based_sv_calls_condition_always_true, &action_set_flanks_and_branches_to_be_ignored,
@@ -3089,8 +3089,8 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
 
   FILE* fp = fopen("../data/tempfiles_can_be_deleted/temp_outputfile_trustedpath_sv_caller_test2", "w");
 
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-							individual_edge_array,1,
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, 0, 
+							1,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array,return_variant_start_coords_array_ptr,
@@ -3223,8 +3223,8 @@ void test_db_graph_make_reference_path_based_sv_calls_test_3()
 
 
   //individual has 2 missing bases, reference does not
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-							individual_edge_array,1,
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, 0, 
+							1,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr,
@@ -3358,8 +3358,8 @@ void test_db_graph_make_reference_path_based_sv_calls_test_4()
 
 
   //cf previous test - we are using individua with index 1, not 0 as last time. ie we have swapped which is individual and which is reference
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
-							individual_edge_array,1,
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr,  1, 
+							1,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, return_variant_start_coords_array_ptr,
@@ -3628,8 +3628,8 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
   
   FILE* fp = fopen("../data/tempfiles_can_be_deleted/temp_outputfile_trustedpath_sv_caller_test6", "w");
 
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
-							individual_edge_array,0,
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr,  1, 
+							0,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, 
@@ -3798,8 +3798,8 @@ void test_db_graph_make_reference_path_based_sv_calls_test_7()
 
 
 
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
-							individual_edge_array,0,
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr,  1, 
+							0,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table, fp,
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, 
@@ -3983,8 +3983,8 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
 
 
 
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-							individual_edge_array,1,
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, 0, 
+							1,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table,  fp,
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, 
@@ -4127,8 +4127,8 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
 
   FILE* fp = fopen("../data/tempfiles_can_be_deleted/temp_outputfile_trustedpath_sv_caller_test9", "w");
 
-  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
-							individual_edge_array,1,
+  int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, 0, 
+							1,
 							min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
 							max_expected_size_of_supernode, length_of_arrays, hash_table,  fp,
 							1, return_flank5p_array, return_trusted_branch_array, return_branch2_array, return_flank3p_array, 
@@ -4299,7 +4299,7 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
 
   get_covg_of_nodes_in_one_but_not_other_of_two_arrays(array1, array2, 14,6,&num_nodes_in_array1_not_array2 , &num_nodes_in_array2_not_array1, 
 						       ptrs_to_coverages_of_nodes_in_array1_not_array2, ptrs_to_coverages_of_nodes_in_array2_not_array1, 
-						       working_array1, working_array2, individual_edge_array,0);
+						       working_array1, working_array2,0);
 
   CU_ASSERT(num_nodes_in_array1_not_array2==10 );
   CU_ASSERT(num_nodes_in_array2_not_array1==3 );

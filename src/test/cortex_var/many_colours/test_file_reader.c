@@ -492,7 +492,7 @@ void test_dump_load_sv_trio_binary()
     boolean is_cycle;
     int len  = db_graph_supernode_for_specific_person_or_pop(test_element1, limit, &db_node_action_do_nothing,
       path_nodes, path_orientations, path_labels, path_string,
-      &avg_covg, &min_covg, &max_covg, &is_cycle, db_graph_post, individual_edge_array, 0);
+      &avg_covg, &min_covg, &max_covg, &is_cycle, db_graph_post, 0);
 
     CU_ASSERT(len==4);
     CU_ASSERT(is_cycle==false);
@@ -777,30 +777,30 @@ void test_load_individual_binaries_into_sv_trio()
 
     dBNode* test_element1_person0 = db_graph_find_node_restricted_to_specific_person_or_population(
       element_get_key(seq_to_binary_kmer("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG", kmer_size, &tmp_kmer1),
-                      kmer_size, &tmp_kmer2), db_graph, individual_edge_array, 0);
+                      kmer_size, &tmp_kmer2), db_graph, 0);
 
       //look for reverse complement of GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG
     dBNode* test_element2_person0 = db_graph_find_node_restricted_to_specific_person_or_population(
       element_get_key(seq_to_binary_kmer("CAGAACTCCTGGACTCAAGCGATCCTCCCAC", kmer_size, &tmp_kmer1),
-                      kmer_size, &tmp_kmer2), db_graph, individual_edge_array, 0);
+                      kmer_size, &tmp_kmer2), db_graph, 0);
 
     dBNode* test_element1_person1 = db_graph_find_node_restricted_to_specific_person_or_population(
       element_get_key(seq_to_binary_kmer("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG", kmer_size, &tmp_kmer1),
-                      kmer_size, &tmp_kmer2), db_graph, individual_edge_array, 1);
+                      kmer_size, &tmp_kmer2), db_graph, 1);
 
       //look for reverse complement of GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG
     dBNode* test_element2_person1 = db_graph_find_node_restricted_to_specific_person_or_population(
       element_get_key(seq_to_binary_kmer("CAGAACTCCTGGACTCAAGCGATCCTCCCAC", kmer_size, &tmp_kmer1),
-                      kmer_size, &tmp_kmer2), db_graph, individual_edge_array, 1);
+                      kmer_size, &tmp_kmer2), db_graph, 1);
 
     dBNode* test_element1_person2 = db_graph_find_node_restricted_to_specific_person_or_population(
       element_get_key(seq_to_binary_kmer("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG", kmer_size, &tmp_kmer1),
-                      kmer_size, &tmp_kmer2), db_graph, individual_edge_array, 2);
+                      kmer_size, &tmp_kmer2), db_graph, 2);
 
       //look for reverse complement of GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG
     dBNode* test_element2_person2 = db_graph_find_node_restricted_to_specific_person_or_population(
       element_get_key(seq_to_binary_kmer("CAGAACTCCTGGACTCAAGCGATCCTCCCAC", kmer_size, &tmp_kmer1),
-                      kmer_size, &tmp_kmer2), db_graph, individual_edge_array, 2);
+                      kmer_size, &tmp_kmer2), db_graph, 2);
 
     CU_ASSERT(test_element1_person0 != NULL);
     CU_ASSERT(test_element2_person0 != NULL);
@@ -818,19 +818,19 @@ void test_load_individual_binaries_into_sv_trio()
       = db_graph_find_node_restricted_to_specific_person_or_population(
           element_get_key(seq_to_binary_kmer("GATCGGGTGTCCGCACTAAGTTCGGCATCAA",
                           kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
-          db_graph, individual_edge_array, 0);
+          db_graph, 0);
 
     dBNode* test_element3_person1
       = db_graph_find_node_restricted_to_specific_person_or_population(
           element_get_key(seq_to_binary_kmer("GATCGGGTGTCCGCACTAAGTTCGGCATCAA",
                           kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
-        db_graph, individual_edge_array, 1);
+        db_graph, 1);
 
     dBNode* test_element3_person2
       = db_graph_find_node_restricted_to_specific_person_or_population(
           element_get_key(seq_to_binary_kmer("GATCGGGTGTCCGCACTAAGTTCGGCATCAA",
                           kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
-          db_graph, individual_edge_array, 2);
+          db_graph, 2);
 
 
     CU_ASSERT(test_element3_person0==NULL);
@@ -962,7 +962,7 @@ void test_load_individual_binaries_into_sv_trio()
 					  element_get_key(seq_to_binary_kmer("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG", 
                                                kmer_size, &tmp_kmer1),
                             kmer_size, &tmp_kmer2),
-            db_graph, individual_edge_array, 0);
+            db_graph, 0);
       
       //look for reverse complement of GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG
       dBNode* test_element2_person0
@@ -970,14 +970,14 @@ void test_load_individual_binaries_into_sv_trio()
             element_get_key(seq_to_binary_kmer("CAGAACTCCTGGACTCAAGCGATCCTCCCAC",
                                                kmer_size, &tmp_kmer1),
                             kmer_size, &tmp_kmer2),
-            db_graph, individual_edge_array, 0);
+            db_graph, 0);
       
       dBNode* test_element1_person1
         = db_graph_find_node_restricted_to_specific_person_or_population(
             element_get_key(seq_to_binary_kmer("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG",
                                                kmer_size, &tmp_kmer1),
                             kmer_size, &tmp_kmer2),
-            db_graph, individual_edge_array, 1);
+            db_graph, 1);
       
       //look for reverse complement of GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG
       dBNode* test_element2_person1
@@ -985,7 +985,7 @@ void test_load_individual_binaries_into_sv_trio()
             element_get_key(seq_to_binary_kmer("CAGAACTCCTGGACTCAAGCGATCCTCCCAC",
                                                kmer_size, &tmp_kmer1),
                             kmer_size, &tmp_kmer2),
-            db_graph, individual_edge_array, 1);
+            db_graph, 1);
       
       
       dBNode* test_element1_person2
@@ -993,7 +993,7 @@ void test_load_individual_binaries_into_sv_trio()
             element_get_key(seq_to_binary_kmer("GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG",
                                                kmer_size, &tmp_kmer1),
                             kmer_size, &tmp_kmer2),
-            db_graph, individual_edge_array, 2);
+            db_graph, 2);
       
       //look for reverse complement of GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG
       dBNode* test_element2_person2
@@ -1001,7 +1001,7 @@ void test_load_individual_binaries_into_sv_trio()
             element_get_key(seq_to_binary_kmer("CAGAACTCCTGGACTCAAGCGATCCTCCCAC",
                                                kmer_size, &tmp_kmer1),
                             kmer_size, &tmp_kmer2),
-            db_graph, individual_edge_array, 2);
+            db_graph, 2);
 
       CU_ASSERT(test_element1_person0 !=NULL);
       CU_ASSERT(test_element2_person0 !=NULL);
@@ -1020,19 +1020,19 @@ void test_load_individual_binaries_into_sv_trio()
         = db_graph_find_node_restricted_to_specific_person_or_population(
             element_get_key(seq_to_binary_kmer("GATCGGGTGTCCGCACTAAGTTCGGCATCAA",
                             kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
-            db_graph, individual_edge_array, 0);
+            db_graph, 0);
 
       dBNode* test_element3_person1
       = db_graph_find_node_restricted_to_specific_person_or_population(
           element_get_key(seq_to_binary_kmer("GATCGGGTGTCCGCACTAAGTTCGGCATCAA",
                           kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
-          db_graph, individual_edge_array, 1);
+          db_graph, 1);
 
       dBNode* test_element3_person2
         = db_graph_find_node_restricted_to_specific_person_or_population(
             element_get_key(seq_to_binary_kmer("GATCGGGTGTCCGCACTAAGTTCGGCATCAA",
                             kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),
-            db_graph, individual_edge_array, 2);
+            db_graph, 2);
       
       
       CU_ASSERT(test_element3_person0==NULL);
@@ -1086,7 +1086,7 @@ void test_load_individual_binaries_into_sv_trio()
         test_element1_person0, reverse, max_expected_supernode_length, Guanine,
         &db_node_action_do_nothing, nodes_path, orientations_path, labels_path,
         seq, &avg_coverage, &min_coverage, &max_coverage, &is_cycle, db_graph,
-        individual_edge_array, 0);
+        0);
 
       CU_ASSERT_STRING_EQUAL("GGCTGTAGTGCGCTATGCC", seq);
 
@@ -1094,7 +1094,7 @@ void test_load_individual_binaries_into_sv_trio()
         test_element1_person0, reverse, max_expected_supernode_length, Adenine,
         &db_node_action_do_nothing, nodes_path,orientations_path, labels_path,
         seq, &avg_coverage, &min_coverage, &max_coverage, &is_cycle, db_graph,
-        individual_edge_array, 2);
+        2);
 
       CU_ASSERT_STRING_EQUAL("A", seq);
 
@@ -1143,7 +1143,7 @@ void test_load_individual_binaries_into_sv_trio()
     db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(test_element1_person0, reverse, max_expected_supernode_length, Guanine, &db_node_action_do_nothing,
       nodes_path,orientations_path, labels_path, seq,
       &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-      db_graph, individual_edge_array, 0);
+      db_graph, 0);
 
     CU_ASSERT_STRING_EQUAL("GGCTGTAGTGCGCTATGCC", seq);
 
@@ -1151,7 +1151,7 @@ void test_load_individual_binaries_into_sv_trio()
     db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(test_element1_person0, reverse, max_expected_supernode_length, Adenine, &db_node_action_do_nothing,
       nodes_path,orientations_path, labels_path, seq,
       &avg_coverage, &min_coverage, &max_coverage, &is_cycle,
-      db_graph, individual_edge_array, 2);
+      db_graph, 2);
 
     CU_ASSERT_STRING_EQUAL("A", seq);
 
@@ -6537,7 +6537,7 @@ void test_load_binversion5_binary()
           test_element1, limit, &db_node_action_do_nothing,
           path_nodes, path_orientations, path_labels, path_string,
           &avg_covg, &min_covg, &max_covg, &is_cycle, db_graph_post,
-          individual_edge_array, 0);
+          0);
 
     CU_ASSERT(len == 4);
     CU_ASSERT(is_cycle == false);

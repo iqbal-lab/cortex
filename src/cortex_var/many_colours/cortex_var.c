@@ -54,7 +54,7 @@ double  get_histogram_for_kmers_in_just_one_haplotype(long long** arr, int max, 
   long long total_kmers_hit=0; 
 
 
-  void analyse_kmer(dBGraph* db_graph, dBNode* node, int** array, int len, EdgeArrayType type, int colour)
+  void analyse_kmer(dBGraph* db_graph, dBNode* node, int** array, int len, int colour)
   {
     if ( (node->coverage[in_colour]>0) && (node->coverage[not_in_colour]==0) )
       {
@@ -75,7 +75,7 @@ double  get_histogram_for_kmers_in_just_one_haplotype(long long** arr, int max, 
 	  }
       }
   }
-  db_graph_traverse_with_array_of_longlongs(&analyse_kmer, (HashTable*) db_graph, arr, max , individual_edge_array, -1);//the -1 is ignored
+  db_graph_traverse_with_array_of_longlongs(&analyse_kmer, (HashTable*) db_graph, arr, max , -1);//the -1 is ignored
   return ((double) total_kmers_possible)/((double) total_kmers_hit);
 }
 */

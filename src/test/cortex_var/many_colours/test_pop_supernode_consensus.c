@@ -126,13 +126,13 @@ void test_find_first_node_in_supernode()
 
   dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("GGG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT((query_node!=NULL));
-  dBNode* testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 0, hash_table);
+  dBNode* testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 0, hash_table);
   
   //this kmer doesn't exist in person 1.
   CU_ASSERT(testnode==NULL);
 
   //try again for person 2:
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 1, hash_table);
   CU_ASSERT(testnode != NULL);  
   binary_kmer_to_seq(element_get_kmer(testnode), hash_table->kmer_size, tmp_seq);
   CU_ASSERT( !strcmp(tmp_seq, "GGG") || !strcmp(tmp_seq, "CCC") );
@@ -141,13 +141,13 @@ void test_find_first_node_in_supernode()
   // *** then TTG
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TTG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT((query_node!=NULL));
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 0, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 0, hash_table);
   
   //this kmer doesn't exist in person 1.
   CU_ASSERT(testnode==NULL);
 
   //try again for person 2:
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 1, hash_table);
   CU_ASSERT(testnode != NULL);  
   binary_kmer_to_seq(element_get_kmer(testnode), hash_table->kmer_size, tmp_seq);
   CU_ASSERT( !strcmp(tmp_seq, "TTG") || !strcmp(tmp_seq, "CAA") || !strcmp(tmp_seq, "CGT") || !strcmp(tmp_seq, "ACG") );
@@ -157,13 +157,13 @@ void test_find_first_node_in_supernode()
   // *****then TGA
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("TGA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT((query_node!=NULL));
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 0, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 0, hash_table);
   
   //this kmer doesn't exist in person 1.
   CU_ASSERT(testnode==NULL);
 
   //try again for person 2:
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 1, hash_table);
   CU_ASSERT(testnode != NULL);  
   binary_kmer_to_seq(element_get_kmer(testnode), hash_table->kmer_size, tmp_seq);
   CU_ASSERT( !strcmp(tmp_seq, "TTG") || !strcmp(tmp_seq, "CAA") || !strcmp(tmp_seq, "CGT") || !strcmp(tmp_seq, "ACG") );
@@ -173,13 +173,13 @@ void test_find_first_node_in_supernode()
   //*** then GAC
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("GAC",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT((query_node!=NULL));
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 0, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 0, hash_table);
   
   //this kmer doesn't exist in person 1.
   CU_ASSERT(testnode==NULL);
 
   //try again for person 2:
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 1, hash_table);
   CU_ASSERT(testnode != NULL);  
   binary_kmer_to_seq(element_get_kmer(testnode), hash_table->kmer_size, tmp_seq);
   CU_ASSERT( !strcmp(tmp_seq, "TTG") || !strcmp(tmp_seq, "CAA") || !strcmp(tmp_seq, "CGT") || !strcmp(tmp_seq, "ACG") );
@@ -191,7 +191,7 @@ void test_find_first_node_in_supernode()
   //check person1
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 0, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 0, hash_table);
   CU_ASSERT(!(testnode==NULL));
   binary_kmer_to_seq(element_get_kmer(testnode), hash_table->kmer_size, tmp_seq);
   CU_ASSERT( !strcmp(tmp_seq, "ACG") || !strcmp(tmp_seq, "AAC")  || !strcmp(tmp_seq, "CGT") || !strcmp(tmp_seq, "GTT") );
@@ -199,7 +199,7 @@ void test_find_first_node_in_supernode()
 
 
   //then person2
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 1, hash_table);
   CU_ASSERT(!(testnode==NULL));
   binary_kmer_to_seq(element_get_kmer(testnode), hash_table->kmer_size, tmp_seq);
   CU_ASSERT( !strcmp(tmp_seq, "ACG") || !strcmp(tmp_seq, "CGT")  || !strcmp(tmp_seq, "TTG") || !strcmp(tmp_seq, "CAA") );
@@ -211,28 +211,28 @@ void test_find_first_node_in_supernode()
   // *** AAA
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 0, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 0, hash_table);
   CU_ASSERT(!(testnode==NULL));
   binary_kmer_to_seq(element_get_kmer(testnode), hash_table->kmer_size, tmp_seq);
   CU_ASSERT( !strcmp(tmp_seq, "AAA") || !strcmp(tmp_seq, "TTT") );
   
 
   //confirm not seen in person1
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 1, hash_table);
   CU_ASSERT(testnode==NULL);
 
   // *** GTT
 
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("GTT",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 0, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 0, hash_table);
   CU_ASSERT(!(testnode==NULL));
   binary_kmer_to_seq(element_get_kmer(testnode), hash_table->kmer_size, tmp_seq);
   CU_ASSERT( !strcmp(tmp_seq, "ACG") || !strcmp(tmp_seq, "CGT")  ||  !strcmp(tmp_seq, "GTT") || !strcmp(tmp_seq, "AAC") );
   
 
   //confirm not seen in person1
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 1, hash_table);
   CU_ASSERT(testnode==NULL);
     
   
@@ -314,7 +314,7 @@ void test_find_next_node_in_supernode()
   //first get the first node in the supernode
   dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("GAC",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT((query_node!=NULL));
-  dBNode* testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
+  dBNode* testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 1, hash_table);
   CU_ASSERT(testnode != NULL);  
   binary_kmer_to_seq(element_get_kmer(testnode), hash_table->kmer_size, tmp_seq);
   CU_ASSERT( !strcmp(tmp_seq, "TTG") || !strcmp(tmp_seq, "CGT")  || !strcmp(tmp_seq, "CAA") || !strcmp(tmp_seq, "ACG") );//zax
@@ -325,16 +325,16 @@ void test_find_next_node_in_supernode()
   Orientation start_orientation = forward, next_orientation, current_orientation;
   dBNode* current_node=testnode;
 
-  if (db_node_is_supernode_end(testnode, forward, individual_edge_array, 1, hash_table))
+  if (db_node_is_supernode_end(testnode, forward, 1, hash_table))
     {
       start_orientation=reverse;
     }
-  else if (db_node_is_supernode_end(testnode, reverse, individual_edge_array, 1, hash_table))
+  else if (db_node_is_supernode_end(testnode, reverse, 1, hash_table))
     {
       start_orientation=forward;
     }
 
-  dBNode* next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(testnode, start_orientation, &next_orientation, individual_edge_array, 1, hash_table);
+  dBNode* next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(testnode, start_orientation, &next_orientation, 1, hash_table);
   char* next_kmer= binary_kmer_to_seq(element_get_kmer(next_node), hash_table->kmer_size, tmp_seq);
   CU_ASSERT( !strcmp(next_kmer,"TGA") || !strcmp(next_kmer,"GTC") || !strcmp(next_kmer,"TCA") || !strcmp(next_kmer,"GAC")); 
   
@@ -343,7 +343,7 @@ void test_find_next_node_in_supernode()
   current_node=next_node;
   current_orientation=next_orientation;
 
-  next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(testnode, start_orientation, &next_orientation, individual_edge_array, 1, hash_table);
+  next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(testnode, start_orientation, &next_orientation, 1, hash_table);
   next_kmer= binary_kmer_to_seq(element_get_kmer(next_node), hash_table->kmer_size, tmp_seq);
   CU_ASSERT( !strcmp(next_kmer,"GAC") || !strcmp(next_kmer,"TCA") || !strcmp(next_kmer,"GTC") || !strcmp(next_kmer,"TGA")); 
 
@@ -357,7 +357,7 @@ void test_find_next_node_in_supernode()
   
   //first - does it correctly get itself as the first node of the supernode. It should be end of supernode in both directions
 
-  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, individual_edge_array, 1, hash_table);
+  testnode = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(query_node, 1, hash_table);
   CU_ASSERT(testnode != NULL);  
   binary_kmer_to_seq(element_get_kmer(testnode), hash_table->kmer_size, tmp_seq);
   CU_ASSERT(  !strcmp(tmp_seq, "GGG") || !strcmp(tmp_seq, "CCC") );
@@ -365,7 +365,7 @@ void test_find_next_node_in_supernode()
 
   //now - can it get the next:
 
-  next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(testnode, forward, &next_orientation, individual_edge_array, 1, hash_table);
+  next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(testnode, forward, &next_orientation, 1, hash_table);
   CU_ASSERT(next_node == NULL); //because next node is itself
 
   // OK - now happy with self-loops.
@@ -450,79 +450,79 @@ void test_correctly_find_subsection_of_supernode()
 
   //test the subsections of person1's supernode, startng from the beginning
 
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,1,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,1, 0, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "AAGACT");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,2,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,2, 0, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "AAGACTG");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,3,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,3, 0, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "AAGACTGG");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,4,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,4, 0, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "AAGACTGGA");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,5,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,5, 0, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "AAGACTGGAG");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,6,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,6, 0, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "AAGACTGGAGA");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,7,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,7, 0, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "AAGACTGGAGAT");
 
   //what happens if you go too far?
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,8,individual_edge_array, 0, hash_table)==1);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,8, 0, hash_table)==1);
   //what happens with negative numbers?
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,-1,individual_edge_array, 0, hash_table)==1);
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, -1,8,individual_edge_array, 0, hash_table)==1);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,-1, 0, hash_table)==1);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, -1,8, 0, hash_table)==1);
 
   //what happens if start=end - originally planned to return 1 in this case, but changed behaviour, and so had to fix test. function should work if start=end and return 0
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,0,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,0, 0, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection,"AAGAC");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,1,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,1, 0, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection,"AGACT");
 
   //what happens if start>end
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 5,4,individual_edge_array, 0, hash_table)==1);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 5,4, 0, hash_table)==1);
 
   //now check a few others, not starting from 0
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 3,6,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 3,6, 0, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "ACTGGAGA");
 
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 2,3,individual_edge_array, 0, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 2,3, 0, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "GACTGG");
 
 
   //now do the same kind of thing for the other person
 
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,1,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,1, 1, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "ATCCTG");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,2,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,2, 1, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "ATCCTGG");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,3,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,3, 1, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "ATCCTGGA");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,4,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,4, 1, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "ATCCTGGAG");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,5,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,5, 1, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "ATCCTGGAGA");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,6,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,6, 1, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "ATCCTGGAGAA");
 
   //what happens if you go too far?
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,18,individual_edge_array, 1, hash_table)==1);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,18, 1, hash_table)==1);
   //what happens with negative numbers?
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,-1,individual_edge_array, 1, hash_table)==1);
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, -1,8,individual_edge_array, 1, hash_table)==1);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,-1, 1, hash_table)==1);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, -1,8, 1, hash_table)==1);
 
   //what happens if start=end - again - should not complain
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,0,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 0,0, 1, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection,"ATCCT");
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,1,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,1, 1, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection,"TCCTG");
 
   //what happens if start>end
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 5,4,individual_edge_array, 1, hash_table)==1);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 5,4, 1, hash_table)==1);
   
   //now check a few others, not starting from 0
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,3,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 1,3, 1, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "TCCTGGA");
 
-  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 3,5,individual_edge_array, 1, hash_table)==0);
+  CU_ASSERT(db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(subsection, node, 3,5, 1, hash_table)==0);
   CU_ASSERT_STRING_EQUAL(subsection, "CTGGAGA");
   
 
@@ -608,12 +608,12 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
   int index_of_start_of_best_sub_supernode;
   int length_of_best_sub_supernode;
 
-  dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, 0, hash_table);
+  dBNode* first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, 0, hash_table);
   char* first_kmer= binary_kmer_to_seq(element_get_kmer(first_node), hash_table->kmer_size, tmp_seq);
   //printf("Frst kmer is %s\n", first_kmer);
   CU_ASSERT( !strcmp(first_kmer,"GAGAT") || !strcmp(first_kmer,"ATCTC") || !strcmp(first_kmer,"AAGAC") || !strcmp(first_kmer,"GTCTT") );
 
-  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node, &index_of_start_of_best_sub_supernode, &length_of_best_sub_supernode, 2, 0, individual_edge_array, 0, hash_table);
+  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node, &index_of_start_of_best_sub_supernode, &length_of_best_sub_supernode, 2, 0, 0, hash_table);
 
   //printf("\nindex of start is %d and length is %d", index_of_start_of_best_sub_supernode, length_of_best_sub_supernode);
   CU_ASSERT( ( index_of_start_of_best_sub_supernode==1)  || ( index_of_start_of_best_sub_supernode==4) ); 
@@ -622,12 +622,12 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
 
   //OK - works for person1 (index 0) - what about person 2
 
-  first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, 1, hash_table);
+  first_node = db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, 1, hash_table);
   first_kmer= binary_kmer_to_seq(element_get_kmer(first_node), hash_table->kmer_size, tmp_seq);
   //printf("Frst kmer is %s\n", first_kmer);
   CU_ASSERT( !strcmp(first_kmer,"GAGAA") || !strcmp(first_kmer,"TTCTC") || !strcmp(first_kmer,"ATCCT") || !strcmp(first_kmer,"AGGAT") );
 
-  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node, &index_of_start_of_best_sub_supernode, &length_of_best_sub_supernode, 2, 0, individual_edge_array, 1, hash_table);
+  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node, &index_of_start_of_best_sub_supernode, &length_of_best_sub_supernode, 2, 0, 1, hash_table);
 
   //printf("\nindex of start is %d and length is %d", index_of_start_of_best_sub_supernode, length_of_best_sub_supernode);
   CU_ASSERT( ( index_of_start_of_best_sub_supernode==1)  || ( index_of_start_of_best_sub_supernode==2) ); 

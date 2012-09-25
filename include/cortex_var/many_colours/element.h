@@ -65,12 +65,12 @@ typedef enum
   } NodeStatus;
 
 
-
+/*
 typedef enum{
     individual_edge_array = 0,  
     //ref_edge_array        = 1,
 } EdgeArrayType;
-
+*/
 
 typedef struct{
   BinaryKmer kmer;
