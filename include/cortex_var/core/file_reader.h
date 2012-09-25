@@ -155,13 +155,13 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 //							   int* num_cols_in_loaded_binary, int** array_mean_readlens, long long** array_total_seqs);
 long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, GraphInfo* ginfo, int* num_cols_in_loaded_binary); 
 
+// last arg is to load the "union" of graphs
 long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
 								  int* mean_readlen, long long* total_seq,
 								  boolean all_entries_are_unique, EdgeArrayType type, int index,
 								  boolean only_load_kmers_already_in_hash, int colour_clean,
 								  char* sample_identity,
 								  boolean load_all_kmers_but_only_increment_covg_on_new_ones);
-                                                                  //last arg is to load the "union" of graphs
 								  
 
 long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, GraphInfo* db_graph_info,
@@ -185,12 +185,15 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
                                                   boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index);
 
 
+/*
+// DEV: flagged for removal -- not used, uses old file reader
 void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_not_in_graph(FILE* fp, FILE* fout,
                            int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, 
                              boolean * full_entry), 
                            long long * bad_reads, int max_read_length, dBGraph * db_graph, 
                            EdgeArrayType type, int index,
                            boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index);
+*/
 
 int get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(char * seq,  char * qualities, int length, char quality_cut_off, 
 										  KmerSlidingWindowSet * windows, int max_windows, int max_kmers, dBGraph* db_graph);

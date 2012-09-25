@@ -41,11 +41,12 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
     warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
-  if (NUMBER_OF_COLOURS<2)
-    {
-      printf("Test needs >=2 colours\n");
-      return;
-    }
+  if(NUMBER_OF_COLOURS < 2)
+  {
+    warn("Test needs >=2 colours\n");
+    return;
+  }
+
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 4;
@@ -55,10 +56,10 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   dBGraph * hash_table = hash_table_new(number_of_bits, bucket_size,
                                         max_retries, kmer_size);
 
-  if (hash_table==NULL)
-    {
-      die("Unable to alloc the hash table. dead before we even started.");
-    }
+  if(hash_table == NULL)
+  {
+    die("Unable to alloc the hash table. dead before we even started.");
+  }
 
   // Read FASTA sequence
   int fq_quality_cutoff = 0;

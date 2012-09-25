@@ -516,10 +516,13 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 
 
 
-int main(int argc, char **argv){
-
+int main(int argc, char **argv)
+{
   timestamp();
-  printf("Starting Cortex, version %d.%d.%d.%d\n", VERSION, SUBVERSION, SUBSUBVERSION,SUBSUBSUBVERSION);
+
+  // VERSION_STR is passed from the makefile -- usually last commit hash
+  printf("Starting Cortex, version %d.%d.%d.%d"VERSION_STR"\n",
+         VERSION, SUBVERSION, SUBSUBVERSION, SUBSUBSUBVERSION);
 
   CmdLine* cmd_line = cmd_line_alloc();
   if (cmd_line==NULL)

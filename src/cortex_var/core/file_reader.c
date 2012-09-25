@@ -51,9 +51,6 @@
 #include <dB_graph_supernode.h>
 #include <dB_graph_population.h>
 
-#define MIN(x,y) ((x) <= (y) ? (x) : (y))
-#define MAX(x,y) ((x) >= (y) ? (x) : (y))
-
 #define is_base_char(x) ((x) == 'a' || (x) == 'A' || \
                          (x) == 'c' || (x) == 'C' || \
                          (x) == 'g' || (x) == 'G' || \
@@ -65,8 +62,9 @@
 // Note: parsing of homopolymers means input is different if reads are read
 //       forward vs reverse-complemented!
 
+// These used by external files
 int MAX_FILENAME_LENGTH=500;
-int MAX_READ_LENGTH=10000;//should ONLY be used by test code
+int MAX_READ_LENGTH=10000;// should ONLY be used by test code
 
 // Returns 1 on success, 0 on failure
 // Sets errno to ENOTDIR if already exists but is not directory
@@ -2591,7 +2589,8 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
   
 }
 
-
+/*
+// DEV: flagged for removal -- not used, uses old file reader
 void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_not_in_graph(FILE* fp, FILE* fout,
 											     int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, 
 														 boolean * full_entry), 
@@ -2716,38 +2715,8 @@ void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_
   binary_kmer_free_kmers_set(&windows);
   
 }
-
-/*
-// Flagged for removal
-void read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(char* f_name, dBGraph* db_graph)
-{
-
-  int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry)
-  {
-    long long ret;
-    int offset = 0;
-    if (new_entry == false){
-      offset = db_graph->kmer_size;
-    }
-    ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
-    
-    return ret;
-  }
-
-  int max_read_length = 3000;
-
-
-  FILE* fptr = fopen(f_name, "r");
-  if (fptr == NULL)
-    {
-      die("cannot open chromosome fasta file:%s\n",f_name);
-    }
-
-  read_ref_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference(fptr, &file_reader, max_read_length, db_graph);
-
-
-}
 */
+
 
 // DEV: re-write this to use seq_file
 // Replaces: align_next_read_to_graph_and_return_node_array
@@ -3059,150 +3028,6 @@ void print_error_cleaning_object(FILE* fp, GraphInfo* ginfo, int colour)
 	 ginfo->cleaning[colour]->len_name_of_graph_against_which_was_cleaned, fp);
   
 }
-
-/*
-//return yes if signature is consistent
-boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, 
-			       int* number_of_colours_in_binary, 
-			       int** array_mean_readlens, 
-			       long long** array_total_seqs,
-			       int *return_binversion
-			       )
-{
-  int read;
-  char magic_number[6];
-  boolean ret = false;
-
-  read = fread(magic_number,sizeof(char),6,fp);
-  if (read>0 &&
-      magic_number[0]=='C' &&
-      magic_number[1]=='O' &&
-      magic_number[2]=='R' &&
-      magic_number[3]=='T' &&
-      magic_number[4]=='E' &&
-      magic_number[5]=='X' ){
-
-    int version;
-    read = fread(&version,sizeof(int),1,fp);
-    *return_binversion = version;
-
-    //version 4 was the version I had for ages, up until I moved to using Uint32 in the binary
-    if (read>0 && ( (version==BINVERSION)|| (version==4)) )
-      {
-
-	int kmer_size2;
-	read = fread(&kmer_size2,sizeof(int),1,fp);
-	if ((read>0) && (kmer_size2 == kmer_size) )
-	  {
-
-	    int num_bitfields;
-	    read = fread(&num_bitfields,sizeof(int),1,fp);
-
-	    if ( (read>0) && (num_bitfields==NUMBER_OF_BITFIELDS_IN_BINARY_KMER) )
-	    
-	      {
-		int num_cols;
-		read = fread(&num_cols,sizeof(int),1,fp);
-		
-		if ( (read>0) && (num_cols<=NUMBER_OF_COLOURS) && (num_cols>0)  )
-		  { 
-		    *number_of_colours_in_binary = num_cols;
-
-		    int i;
-		    boolean problem=false;
-		    for (i=0; (i<num_cols) && (problem==false); i++)
-		      {
-			int mean_read_len;
-			read = fread(&mean_read_len,sizeof(int),1,fp);
-			if (read==0)
-			  {
-			    problem=true;
-			  }
-			else
-			  {
-			    *(array_mean_readlens[i]) = mean_read_len;
-			  }
-		      }
-		    if (problem==false)
-		      {
-			for (i=0; (i<num_cols) && (problem==false); i++)
-			  {
-			    long long total_seq;
-			    read = fread(&total_seq,sizeof(long long),1,fp);
-			    if (read==0)
-			      {
-				problem=true;
-			      }
-			    else
-			      {
-				*(array_total_seqs[i]) = total_seq;
-			      }
-			  }
-			
-			magic_number[0]='\0';
-			magic_number[1]='\0';
-			magic_number[2]='\0';
-			magic_number[3]='\0';
-			magic_number[4]='\0';
-			magic_number[5]='\0';
-			read = fread(magic_number,sizeof(char),6,fp);
-			if ( (problem==false)&&
-			     (read>0)&&
-			     magic_number[0]=='C' &&
-			     magic_number[1]=='O' &&
-			     magic_number[2]=='R' &&
-			     magic_number[3]=='T' &&
-			     magic_number[4]=='E' &&
-			     magic_number[5]=='X' )
-			  {
-			    ret = true;
-			  }
-			else
-			  {
-			    printf("Binary is missing read-length/sequence info, or the end-of-header magic number.\n");
-			  }
-		      }
-		    else
-		      {
-			printf("Problem reading chunk from binary. \n");
-		      }
-		  }
-		else
-		  {
-		    printf("You are loading  binary with %d colours into a graph with %d colours - incompatible\n",
-			   num_cols, NUMBER_OF_COLOURS);
-		  }
-	      }
-	    else
-	      {
-		printf("Kmer of binary matches the current graph. However this binary was dumped with a different max_kmer size to that of the current graph\n");
-		printf("This binary uses %d bitfields, and current graph uses %d\n", num_bitfields, NUMBER_OF_BITFIELDS_IN_BINARY_KMER);
-
-	      }
-	  }
-	else
-	  {
-	printf("You are loading a binary with kmer=%d into a graph with kmer=%d - incompatible\n", kmer_size2, kmer_size);
-	  }
-      }
-    else
-      {
-
-      }
-    
-  }
-  else
-    {
-      printf("Binary fails signature check - was build for different kmer, or with different binary version. (For debug purposes: Magic number is %s and read is %d)\n", magic_number, read);
-    }
-
-
-  return ret;
-
-}
-*/
-
-
 
 
 //return yes if signature is consistent

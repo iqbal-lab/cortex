@@ -1379,12 +1379,13 @@ void test_db_graph_supernode_for_specific_person_or_pop()
     warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
-  if (NUMBER_OF_COLOURS<2)
-    {
-      printf("Test eeds >=2 colours\n");
-      return;
-    }
- //first set up the hash/graph
+  if(NUMBER_OF_COLOURS < 2)
+  {
+    warn("Test needs >= 2 colours\n");
+    return;
+  }
+
+  //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 8;
   int bucket_size = 8;

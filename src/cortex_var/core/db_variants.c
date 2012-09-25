@@ -766,22 +766,23 @@ int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colou
     }
 
   //note start at node 1, avoid first node
-  int total= db_node_get_coverage(allele[1], individual_edge_array, colour);
+  int total= db_node_get_coverage_tolerate_null(allele[1], colour);
 
   int i;
 
   //note we do not go as far as the final node, which is where the two branches rejoin
   for (i=2; i<len-1; i++)
     {
-      int jump = db_node_get_coverage(allele[i], individual_edge_array, colour) - db_node_get_coverage(allele[i-1], individual_edge_array, colour);
+      int jump = db_node_get_coverage_tolerate_null(allele[i], colour) -
+                 db_node_get_coverage_tolerate_null(allele[i-1], colour);
 
       //we add a little check to ensure that we ignore isolated nodes with higher covg - we count jumps only if they are signifiers of a new read arriving
       // and one node does not a read make
       int diff_between_next_and_prev=-1;
       if (i<len-2)
 	{
-	  diff_between_next_and_prev=    db_node_get_coverage(allele[i+1], individual_edge_array, colour)
-	                               - db_node_get_coverage(allele[i-1], individual_edge_array, colour);
+	  diff_between_next_and_prev = db_node_get_coverage_tolerate_null(allele[i+1], colour) -
+	                               db_node_get_coverage_tolerate_null(allele[i-1], colour);
 	}
       
       if ( (jump>0) && (diff_between_next_and_prev!=0) )

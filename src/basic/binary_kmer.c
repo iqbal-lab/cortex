@@ -484,6 +484,9 @@ BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size,
 {
   BinaryKmer kmer_copy;
 
+  // DEV
+  binary_kmer_initialise_to_zero(prealloc_reverse_kmer);
+
   // Copy
   memcpy(kmer_copy, kmer, BINARY_KMER_BYTES);
 

@@ -244,11 +244,7 @@ int  main()
     	CU_cleanup_registry();
     	return CU_get_error();
      }
-    /*if (NULL == CU_add_test(pPopGraphSuite, "Test function that reads a reference fasta and marks nodes in the graph with status exists_in_reference",  test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference))
-      {
-    	CU_cleanup_registry();
-    	return CU_get_error();
-     }*/
+    
 
     if (NULL == CU_add_test(pPopGraphSuite, "Unit test of wrapper function for above utility function",  test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_bases_in_a_chrom_fasta))
       {

@@ -238,6 +238,7 @@ boolean db_node_condition_always_true(dBNode* node);
 
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
 void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, int update);
+uint32_t db_node_get_coverage_tolerate_null(const dBNode* const e, int index);
 uint32_t db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index);
 void db_node_set_coverage(dBNode* e, EdgeArrayType type, int colour, uint32_t covg);
 uint32_t db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, uint32_t (*get_covg)(const dBNode*) );
@@ -276,8 +277,11 @@ boolean db_node_check_read_start(dBNode* node, Orientation ori);
 
 void db_node_set_read_start_status(dBNode* node, Orientation ori);
 
+// Flagged for removal - Not called anywhere
 boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2);
 
+
+// Flagged for removal - Not called anywhere
 //we have a read that starts at node in direction o1, and we want to know if a previous read started at that node in that direction
 boolean db_node_check_single_ended_duplicates(dBNode* node1, Orientation o1);
 

@@ -31,19 +31,21 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <limits.h>
+#include <math.h>
+#include <inttypes.h>
+
+#include <gsl_sf_gamma.h>
 
 #include <element.h>
 #include <open_hash/hash_table.h>
 #include <dB_graph.h>
 #include <dB_graph_population.h>
 #include <seq.h>
-#include <string.h>
-#include <limits.h>
 #include <file_reader.h>
 #include <model_selection.h>
 #include <maths.h>
-#include <math.h> //we need both!
-#include <gsl_sf_gamma.h>
 #include <db_variants.h>
 #include <db_complex_genotyping.h>
 
@@ -2876,7 +2878,6 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
   }
 
   
-  // DEV: check for overflow?
   uint32_t get_covg_of_union_first_list_colours(const dBNode* e)
   {
     return element_get_covg_for_colourlist(e, first_list, len_first_list);
@@ -3062,29 +3063,14 @@ void db_graph_print_novel_supernodes(char* outfile, int max_length, dBGraph * db
   }
 
   
-  // DEV: check for overflow?
   uint32_t get_covg_of_union_first_list_colours(const dBNode* e)
   {
-    int i;
-    uint32_t covg=0;
-  
-    for (i=0; i< len_first_list; i++)
-      {
-	covg += e->coverage[first_list[i]];
-      }
-    return covg;
+    return element_get_covg_for_colourlist(e, first_list, len_first_list);
   }
 
   uint32_t get_covg_of_union_second_list_colours(const dBNode* e)
   {
-    int i;
-    uint32_t covg=0;
-  
-    for (i=0; i< len_second_list; i++)
-      {
-	covg += e->coverage[second_list[i]];
-      }
-    return covg;
+    return element_get_covg_for_colourlist(e, second_list, len_second_list);
   }
 
 
@@ -3641,10 +3627,10 @@ void db_graph_get_covgs_in_all_colours_of_col0union1_sups(int max_length, dBGrap
     return edges;
   }
 
-  // DEV: check for overflow?
   uint32_t get_covg(const dBNode* e)  
   {
-    return e->coverage[0] + e->coverage[1];
+    int arr[] = {0,1};
+    return element_get_covg_for_colourlist(e, arr, 2);
   }
 
 
@@ -3717,12 +3703,11 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
     return edges;
   }
 
-  // DEV: check for overflow?
   uint32_t get_covg(const dBNode* e)  
   {
-    return e->coverage[0] + e->coverage[1];
+    int arr[] = {0,1};
+    return element_get_covg_for_colourlist(e, arr, 2);
   }
-
 
   
   dBNode * *    path_nodes;
@@ -4948,73 +4933,59 @@ void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, E
 }
 
 
-void db_graph_traverse_with_array_of_longlongs(void (*f)(HashTable*, Element *, long long**, int, EdgeArrayType, int),
-					       HashTable * hash_table, long long** array, int length_of_array, EdgeArrayType type, int index)
+void db_graph_traverse_with_array_of_uint64(
+  void (*f)(HashTable*, Element *, uint64_t*, int, int),
+  HashTable * hash_table, uint64_t* array, int length_of_array, int colour)
 {
-  
-  long long i;
-  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
-    if (!db_node_check_status(&hash_table->table[i],unassigned)){
-      f(hash_table, &hash_table->table[i], array, length_of_array, type, index);
+  int i;
+
+  for(i = 0; i <hash_table->number_buckets * hash_table->bucket_size; i++)
+  {
+    if(!db_node_check_status(&(hash_table->table[i]),unassigned))
+    {
+      f(hash_table, &(hash_table->table[i]), array, length_of_array, colour);
     }
   }
 }
 
 
 
-void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArrayType type, int index, boolean (*condition)(dBNode* elem) )
+void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArrayType type,
+                                    int index, boolean (*condition)(dBNode* elem))
 {
   int i;
 
-  FILE* fout=fopen(filename, "w");
-  if (fout==NULL)
-    {
-      die("Cannot open %s\n", filename);
-    }
+  FILE* fout = fopen(filename, "w");
 
+  if(fout == NULL)
+    die("Cannot open %s\n", filename);
 
-  long long* covgs = (long long*) malloc(sizeof(long long) * 10001);
-  if (covgs==NULL)
-    {
-      die("Could not alloc array to hold covg distrib\n");
-    }
-  long long** covgs_ptrs = (long long**) malloc(sizeof(long long*) * 10001);
-  if (covgs_ptrs==NULL)
-    {
-      die("Could not alloc array to hold covg distrib\n");
-    }
+  int covgs_len = 10001;
+  uint64_t* covgs = (uint64_t*) malloc(sizeof(uint64_t) * covgs_len);
 
-  for (i=0; i<=10000; i++)
-    {
-      covgs[i]=0;
-      covgs_ptrs[i]=&(covgs[i]);
-    }
+  if(covgs == NULL)
+    die("Could not alloc array to hold covg distrib\n");
 
-  void bin_covg_and_add_to_array(HashTable* htable, Element * e , long long** arr, int len, EdgeArrayType type, int colour)
+  for(i = 0; i < covgs_len; i++)
+    covgs[i] = 0;
+
+  void bin_covg_and_add_to_array(HashTable* htable, Element *e,
+                                 uint64_t* arr, int len, int colour)
   {
-    if (condition(e)==true)
-      {
-	int bin = e->coverage[colour];
-	if (bin>10000)
-	  {
-	    bin = 10000;
-	  }
-	else if (bin<0)
-	  {
-	    bin = 10000;
-	  }
-	*(arr[bin]) = *(arr[bin]) +1; 
-      }
+    if(condition(e)==true)
+    {
+      int bin = MIN(e->coverage[colour], len);
+      arr[bin]++;
+    }
   }
   
-  db_graph_traverse_with_array_of_longlongs(&bin_covg_and_add_to_array, db_graph, covgs_ptrs, 10001, type, index);
+  db_graph_traverse_with_array_of_uint64(&bin_covg_and_add_to_array, db_graph,
+                                         covgs, covgs_len, index);
 
-  for (i=0; i<=10000; i++)
-    {
-      fprintf(fout, "multiplicity:%d\tNumber:%qd\n",i,covgs[i]);
-    }
+  for(i = 0; i < covgs_len; i++)
+    fprintf(fout, "multiplicity:%d\tNumber:%qd\n", i, covgs[i]);
+
   fclose(fout);
-  free(covgs_ptrs);
   free(covgs);
 }
 
@@ -5065,48 +5036,39 @@ long long  db_graph_count_covg2_kmers_in_func_of_colours(dBGraph* db_graph, uint
 
 
 
+/*
+// Flag for removal
 void db_graph_get_covg_distribution_on_bubbles(dBGraph* db_graph, EdgeArrayType type, int index)
 {
   int i;
 
-  long long* covgs = (long long*) malloc(sizeof(long long) * 10001);
-  if (covgs==NULL)
-    {
-      die("Could not alloc array to hold covg distrib\n");
-    }
-  long long** covgs_ptrs = (long long**) malloc(sizeof(long long*) * 10001);
-  if (covgs_ptrs==NULL)
-    {
-      die("Could not alloc array to hold covg distrib\n");
-    }
+  int covgs_len = 10001;
+  uint64_t* covgs = (long long*) malloc(sizeof(int) * covg_len);
+  
+  if(covgs == NULL)
+    die("Could not alloc array to hold covg distrib\n");
 
-  for (i=0; i<=10000; i++)
-    {
-      covgs[i]=0;
-      covgs_ptrs[i]=&(covgs[i]);
-    }
+  for(i = 0; i < covgs_len; i++)
+    covgs[i] = 0;
 
-  void bin_covg_and_add_to_array(HashTable* htable, Element * e , long long** arr, int len, EdgeArrayType type, int colour)
+  void bin_covg_and_add_to_array(HashTable* htable, Element *e, long long* arr,
+                                 int len, int colour)
   {
-    int bin = e->coverage[colour];
-    if (bin>10000)
-      {
-	bin = 10000;
-      }
-    *(arr[bin]) = *(arr[bin]) +1; 
+    uint32_t bin = MIN(e->coverage[colour], len);
+    arr[bin]++;
   }
   
-  db_graph_traverse_with_array_of_longlongs(&bin_covg_and_add_to_array, db_graph, covgs_ptrs, 10001, type, index);
+  db_graph_traverse_with_array_of_uint64(&bin_covg_and_add_to_array, db_graph,
+                                         covgs, covgs_len, index);
 
-  for (i=0; i<=10000; i++)
-    {
-      printf("multiplicity:%d\tNumber:%qd\n",i,covgs[i]);
-    }
+  for(i = 0; i < covgs_len; i++)
+  {
+    printf("multiplicity:%d\tNumber:%qd\n",i,covgs[i]);
+  }
 
-  free(covgs_ptrs);
   free(covgs);
 }
-
+*/
 
 
 
@@ -9616,17 +9578,9 @@ int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(
     return edges;    
   }
 
-  // DEV: check for overflow?
   uint32_t get_covg_of_union_first_list_colours(const dBNode* e)
   {
-    int i;
-    uint32_t covg=0;
-  
-    for (i=0; i< len_list; i++)
-      {
-	covg += e->coverage[list[i]];
-      }
-    return covg;
+    return element_get_covg_for_colourlist(e, list, len_list);
   }
 
   int num_vars_called=db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_colours(chrom_fasta_fptr,

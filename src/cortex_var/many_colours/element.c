@@ -415,7 +415,7 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
   binary_kmer_initialise_to_zero(&tmp_kmer);
   binary_kmer_assignment_operator( e->kmer, *(element_get_key(kmer, kmer_size, &tmp_kmer)));
 
-  //hash table has calloc-ed all elements, so elements fromm the hash table are already initialised to zero.
+  //hash table has calloc-ed all elements, so elements from the hash table are already initialised to zero.
   //however this function is used to reset to 0 Elements that are reused,
   // - see below in the read_binary functions. Also in tests.
   int i;
@@ -482,8 +482,21 @@ void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, int updat
 }
 
 
+// Apparently some code calls to db_node_get_coverage pass
+// dBNode e == NULL and so we need to test for NULL *sometimes*.
+// For an example see: count_reads_on_allele_in_specific_colour
+// (expects zero covg if it passes a NULL)
+// Probably safer (catches bugs) to explicitly have a function that tolerates
+// NULLs and one that throws an error
+uint32_t db_node_get_coverage_tolerate_null(const dBNode* const e, int index)
+{
+  return e == NULL ? 0 : e->coverage[index];
+}
+
 uint32_t db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index)
 {
+  assert(e != NULL);
+
   return e->coverage[index];
 }
 
@@ -1499,6 +1512,15 @@ void db_node_set_read_start_status(dBNode* node, Orientation ori)
 // DEV: these are redundant - ZAM - don't see what you mean.
 // just call db_node_check_read_start
 
+// db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2)
+// same as calling:
+// (db_node_check_read_start(node1, o1) && db_node_check_read_start(node2, o2))
+
+// db_node_check_single_ended_duplicates(dBNode* node1, Orientation o1)
+// same as calling:
+// db_node_check_read_start(node1, o1)
+
+// Flagged for removal - Not called anywhere
 boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2)
 {
   if (      (o1==forward) && (o2==forward) && db_node_check_read_start(node1, forward) && db_node_check_read_start(node2, forward) )
@@ -1523,6 +1545,7 @@ boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, O
     }
 }
 
+// Flagged for removal - Not called anywhere
 //we have a read that starts at node in direction o1, and we want to know if a previous read started at that node in that direction
 boolean db_node_check_single_ended_duplicates(dBNode* node1, Orientation o1)
 {

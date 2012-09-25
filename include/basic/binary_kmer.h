@@ -27,7 +27,6 @@
 
 /*
   binary_kmer.h - basic manipulation of binary kmers
-  
 */
 
 #ifndef BINARY_KMER_H_
@@ -40,35 +39,10 @@
 
 #define BINVERSION 6
 
-// *** Basic constants to allow compile-time configuration of what kmer-sizes we support ****
-#define ALLOW_KMERS_UP_TO_31 1
-#define ALLOW_KMERS_UP_TO_63 2
-#define ALLOW_KMERS_UP_TO_95 3
-#define ALLOW_KMERS_UP_TO_127 4
-#define ALLOW_KMERS_UP_TO_160 5
-#define ALLOW_KMERS_UP_TO_192 6
-#define ALLOW_KMERS_UP_TO_223 7
-#define ALLOW_KMERS_UP_TO_255 8
-
-
-// change this if you want to support different kmer-ranges
-//#define NUMBER_OF_BITFIELDS_IN_BINARY_KMER  ALLOW_KMERS_UP_TO_63
-
-
-
-/*typedef enum
- {
-    Adenine   = 0,
-    Cytosine  = 1,
-    Guanine   = 2,
-    Thymine   = 3,
-    Undefined = 4,
-  } Nucleotide ;
-*/
-
 typedef uint64_t bitfield_of_64bits;
 
-// Think of NUMBER_OF_BITFIELDS_IN_BINARY_KMER as the number of long longs we encode the kmer in
+// Think of NUMBER_OF_BITFIELDS_IN_BINARY_KMER as the number of uint64_t we
+// encode the kmer in
 typedef bitfield_of_64bits BinaryKmer[NUMBER_OF_BITFIELDS_IN_BINARY_KMER];
 
 #define BINARY_KMER_BYTES ((NUMBER_OF_BITFIELDS_IN_BINARY_KMER) * sizeof(uint64_t))
@@ -91,24 +65,17 @@ typedef struct
 
 
 // basic BinaryKmer operations
-void       binary_kmer_initialise_to_zero(BinaryKmer* bkmer);
-void       binary_kmer_assignment_operator(BinaryKmer left, BinaryKmer right);
-void       binary_kmer_set_all_bitfields(BinaryKmer assignee, bitfield_of_64bits val);
-boolean    binary_kmer_comparison_operator(const BinaryKmer const left, const BinaryKmer const right);
-boolean    binary_kmer_less_than(const BinaryKmer const left, const BinaryKmer const right,short kmer_size);
-void       binary_kmer_right_shift_one_base(BinaryKmer kmer);
-void       binary_kmer_left_shift_one_base(BinaryKmer kmer, short kmer_size);
-void       binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(BinaryKmer* bkmer, Nucleotide n, short kmer_size);
+void    binary_kmer_initialise_to_zero(BinaryKmer* bkmer);
+void    binary_kmer_assignment_operator(BinaryKmer left, BinaryKmer right);
+void    binary_kmer_set_all_bitfields(BinaryKmer assignee, bitfield_of_64bits val);
+boolean binary_kmer_comparison_operator(const BinaryKmer const left, const BinaryKmer const right);
+boolean binary_kmer_less_than(const BinaryKmer const left, const BinaryKmer const right,short kmer_size);
+void    binary_kmer_right_shift_one_base(BinaryKmer kmer);
+void    binary_kmer_left_shift_one_base(BinaryKmer kmer, short kmer_size);
+void    binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(BinaryKmer* bkmer, Nucleotide n, short kmer_size);
 
-
-
-//Nucleotide char_to_binary_nucleotide(char c);
-
-//char binary_nucleotide_to_char(Nucleotide n);
 
 char * nucleotides_to_string(Nucleotide * nucleotides, int length, char * string);
-
-//Nucleotide reverse_binary_nucleotide(Nucleotide n);
 
 //get overlapping kmers from sequence
 //int get_sliding_windows_from_sequence(char * sequence,char * qualities, int length, char quality_cutoff, short kmer_size, KmerSlidingWindowSet * windows, int max_windows, int max_kmers); 

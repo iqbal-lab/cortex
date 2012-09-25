@@ -49,13 +49,14 @@ typedef enum{
 
 
 #define MAX_READ_NAME_LEN 300
-#define LENGTH_FILENAME 300
 #define VERSION 1
 #define SUBVERSION 0
 #define SUBSUBVERSION 5
 #define SUBSUBSUBVERSION 12
 boolean DEBUG;
 
+#define MAX(x,y) ((x) >= (y) ? (x) : (y))
+#define MIN(x,y) ((x) <= (y) ? (x) : (y))
 
 boolean test_file_existence(char* file);
 

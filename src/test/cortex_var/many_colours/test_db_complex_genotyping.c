@@ -1134,11 +1134,11 @@ void regression_test_2_genotyping_of_PD_SNP_call()
 
   int kmer_size = 55;
 
-  if (NUMBER_OF_COLOURS<2)
-    {
-      warn("This test requires >=2 colours, skipping\n");
-      return;
-    }
+  if(NUMBER_OF_COLOURS < 2)
+  {
+    warn("This test requires >= 2 colours, skipping\n");
+    return;
+  }
 
   int file_reader_fasta(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
     long long ret;
