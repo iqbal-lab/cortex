@@ -277,12 +277,5 @@ boolean db_node_check_read_start(dBNode* node, Orientation ori);
 
 void db_node_set_read_start_status(dBNode* node, Orientation ori);
 
-// Flagged for removal - Not called anywhere
-boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2);
-
-
-// Flagged for removal - Not called anywhere
-//we have a read that starts at node in direction o1, and we want to know if a previous read started at that node in that direction
-boolean db_node_check_single_ended_duplicates(dBNode* node1, Orientation o1);
 
 #endif /* ELEMENT_H_ */

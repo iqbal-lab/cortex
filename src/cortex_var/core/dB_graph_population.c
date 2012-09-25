@@ -4922,7 +4922,7 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
 
 void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, EdgeArrayType, int),HashTable * hash_table, int** array, int length_of_array, EdgeArrayType type, int index){
   
-  long long i;
+  uint64_t i;
   for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
     if (!db_node_check_status(&hash_table->table[i],unassigned)){
       f(hash_table, &hash_table->table[i], array, length_of_array, type, index);
@@ -4937,7 +4937,7 @@ void db_graph_traverse_with_array_of_uint64(
   void (*f)(HashTable*, Element *, uint64_t*, int, int),
   HashTable * hash_table, uint64_t* array, int length_of_array, int colour)
 {
-  int i;
+  uint64_t i;
 
   for(i = 0; i <hash_table->number_buckets * hash_table->bucket_size; i++)
   {
@@ -4983,7 +4983,7 @@ void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArray
                                          covgs, covgs_len, index);
 
   for(i = 0; i < covgs_len; i++)
-    fprintf(fout, "multiplicity:%d\tNumber:%qd\n", i, covgs[i]);
+    fprintf(fout, "%d\t%" PRIu64 "\n", i, covgs[i]);
 
   fclose(fout);
   free(covgs);
@@ -5036,119 +5036,8 @@ long long  db_graph_count_covg2_kmers_in_func_of_colours(dBGraph* db_graph, uint
 
 
 
+
 /*
-// Flag for removal
-void db_graph_get_covg_distribution_on_bubbles(dBGraph* db_graph, EdgeArrayType type, int index)
-{
-  int i;
-
-  int covgs_len = 10001;
-  uint64_t* covgs = (long long*) malloc(sizeof(int) * covg_len);
-  
-  if(covgs == NULL)
-    die("Could not alloc array to hold covg distrib\n");
-
-  for(i = 0; i < covgs_len; i++)
-    covgs[i] = 0;
-
-  void bin_covg_and_add_to_array(HashTable* htable, Element *e, long long* arr,
-                                 int len, int colour)
-  {
-    uint32_t bin = MIN(e->coverage[colour], len);
-    arr[bin]++;
-  }
-  
-  db_graph_traverse_with_array_of_uint64(&bin_covg_and_add_to_array, db_graph,
-                                         covgs, covgs_len, index);
-
-  for(i = 0; i < covgs_len; i++)
-  {
-    printf("multiplicity:%d\tNumber:%qd\n",i,covgs[i]);
-  }
-
-  free(covgs);
-}
-*/
-
-
-
-//TODO - update this to use db_graph_supernode
-/*
-//the length of the supernode is passed to the caller in the array of supernode lengths that is passed in.
-//the idea is that this function is passed into the traverse function, and the caller of that
-void db_graph_get_supernode_length_marking_it_as_visited(dBGraph* db_graph, Element* node, int** array_of_supernode_lengths, int length_of_array,
-							 EdgeArrayType type, int index)
-{
-
-  if (db_node_check_status(node, visited) || db_node_check_status(node,pruned))
-    {
-      return;
-    }
-
-  int length_of_supernode=1;
-  dBNode* first_node=db_graph_get_first_node_in_supernode_containing_given_node_for_specific_person_or_pop(node, individual_edge_array, 0 , db_graph);
-  dBNode* current_node;
-  dBNode* next_node;
-  current_node=first_node;
-  Orientation start_orientation, current_orientation, next_orientation;
-  db_node_set_status(current_node, visited);
-
-  //work out which direction to leave supernode in. 
-  if (db_node_is_supernode_end(first_node,forward, type, index, db_graph))
-    {
-      if (db_node_is_supernode_end(first_node,reverse, type, index,db_graph))
-	{
-	  //singleton
-	  *(array_of_supernode_lengths[length_of_supernode])=*(array_of_supernode_lengths[length_of_supernode])+1;
-	  return ;
-	}
-      else
-	{
-	  start_orientation=reverse;
-	}
-    }
-  else
-    {
-      start_orientation=forward;
-    }
-
-  current_orientation=start_orientation;
-  
-
-
-  //unfortunately, this means applying is_supernode_end twice altogether to the start_node. TODO - improve this 
-  while (!db_node_is_supernode_end(current_node,current_orientation, type, index, db_graph))
-    {
-      next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(current_node, current_orientation, &next_orientation, type, index, db_graph);
-
-      if ((next_node==first_node) && (next_orientation==start_orientation))//back to the start - will loop forever if not careful ;-0
-	{
-	  break;
-	}
-
-      length_of_supernode++;
-      current_node=next_node;
-      current_orientation=next_orientation;
-      db_node_set_status(current_node, visited);
-
-    }
-
-
-  if (length_of_supernode>length_of_array-1)
-    {
-      die("We have a supernode of length %d, but have only allocated space to record lengths up to %d", length_of_supernode, length_of_array);
-    }
-  *(array_of_supernode_lengths[length_of_supernode])=*(array_of_supernode_lengths[length_of_supernode])+1;
-  return ;
-
-
-  
-}
-
-
-
-
-
 int db_graph_get_N50_of_supernodes(dBGraph* db_graph, EdgeArrayType type, int index)
 {
 
@@ -5228,42 +5117,6 @@ int db_graph_get_N50_of_supernodes(dBGraph* db_graph, EdgeArrayType type, int in
 
 
 
-
-  /* get rid of this
-
-void db_graph_traverse_specific_person_or_pop_for_supernode_printing(void (*f)(HashTable*, Element *, long* , EdgeArrayType, int, boolean, char**, int*),HashTable * hash_table, 
-								     long* supernode_count, 
-								     EdgeArrayType type, int index, boolean is_for_testing, char** for_test, int* index_for_test){
-
-
-  long long i;
-  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
-    if (!db_node_check_status(&hash_table->table[i],unassigned)){
-      f(hash_table, &hash_table->table[i], supernode_count, type,index, is_for_testing, for_test, index_for_test);
-    }
-  }
-
-
-}
-  */
-
-
-/* delete?
-void db_graph_traverse_specific_person_or_pop_for_supernode_and_chromosome_overlap_printing(void (*f)(HashTable*, Element *, long* , EdgeArrayType, int, int, int, boolean, char**, char**, int*, int*),
-											    HashTable * hash_table, long* supernode_count, EdgeArrayType type, int index, int min_covg, int max_covg, 
-											     boolean is_for_testing, char** for_test1, char** for_test2, int* index_for_test1, int* index_for_test2){
-
-  long long i;
-  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
-    if (!db_node_check_status(&hash_table->table[i],unassigned)){
-      f(hash_table, &hash_table->table[i], supernode_count, type, index, min_covg, max_covg, is_for_testing, for_test1, for_test2, index_for_test1, index_for_test2  );
-    }
-  }
-
-
-
-}
-*/
 
 
 

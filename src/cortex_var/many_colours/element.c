@@ -472,8 +472,9 @@ void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, int updat
 
     if(!overflow_warning_printed)
     {
-      warn("%s:%i: caught integer overflow"
-           "(some kmer coverages may be underestimates)",
+      warn("%s:%i: caught integer overflow\n"
+	   "kmer coverages which overflow are capped at a ceiling, and therefore\n"
+           " some kmer coverages may be underestimates)\n",
            __FILE__, __LINE__);
 
       overflow_warning_printed = 1;
@@ -1509,56 +1510,3 @@ void db_node_set_read_start_status(dBNode* node, Orientation ori)
 }
 
 
-// DEV: these are redundant - ZAM - don't see what you mean.
-// just call db_node_check_read_start
-
-// db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2)
-// same as calling:
-// (db_node_check_read_start(node1, o1) && db_node_check_read_start(node2, o2))
-
-// db_node_check_single_ended_duplicates(dBNode* node1, Orientation o1)
-// same as calling:
-// db_node_check_read_start(node1, o1)
-
-// Flagged for removal - Not called anywhere
-boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2)
-{
-  if (      (o1==forward) && (o2==forward) && db_node_check_read_start(node1, forward) && db_node_check_read_start(node2, forward) )
-    {
-      return true;
-    }
-  else if ( (o1==reverse) && (o2==forward) && db_node_check_read_start(node1, reverse) && db_node_check_read_start(node2, forward) )
-    {
-      return true;
-    }
-  else if ( (o1==forward) && (o2==reverse) && db_node_check_read_start(node1, forward) && db_node_check_read_start(node2, reverse) )
-    {
-      return true;
-    }
-  else if ( (o1==reverse) && (o2==reverse) && db_node_check_read_start(node1, reverse) && db_node_check_read_start(node2, reverse) )
-    {
-      return true;
-    }
-  else
-    {
-      return false;
-    }
-}
-
-// Flagged for removal - Not called anywhere
-//we have a read that starts at node in direction o1, and we want to know if a previous read started at that node in that direction
-boolean db_node_check_single_ended_duplicates(dBNode* node1, Orientation o1)
-{
-  if (      (o1==forward) && db_node_check_read_start(node1, forward)  )
-    {
-      return true;
-    }
-  else if ( (o1==reverse) && db_node_check_read_start(node1, reverse) )
-    {
-      return true;
-    }
-  else
-    {
-      return false;
-    }
-}

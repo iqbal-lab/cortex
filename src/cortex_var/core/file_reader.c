@@ -2591,7 +2591,10 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
 }
 
 /*
-// DEV: flagged for removal -- not used, uses old file reader
+// DEV: flagged for upgrade to new file-reading. I don't want this removed, I sometimes use it. Remember these files contain
+        a library of functions sometimes used for specific analyses. You may not see them used in the mainline but they get use
+        in personal branches for specific projects.
+       
 void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_not_in_graph(FILE* fp, FILE* fout,
 											     int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, 
 														 boolean * full_entry), 

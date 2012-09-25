@@ -43,6 +43,7 @@
 #include <math.h>
 #include <maths.h>
 #include <seq_error_rate_estimation.h>
+#include <inttypes.h>
 
 void timestamp();
 
@@ -1033,7 +1034,7 @@ int main(int argc, char **argv)
       for (j=0; j<NUMBER_OF_COLOURS; j++)
 	{
 	  //colour sampleid readlen totalseq 
-	  printf("%d\t%s\t%d\t%qd\t", 
+	  printf("%d\t%s\t%d\t%" PRIu64 "\t", 
 		 j, 
 		 db_graph_info->sample_ids[j],
 		 db_graph_info->mean_read_length[j], 
