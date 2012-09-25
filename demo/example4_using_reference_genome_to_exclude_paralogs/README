@@ -304,7 +304,7 @@ Note we have added --ref_colour 0; if Cortex sees that it assumes you want to ex
 -----
 Fri Apr  8 13:57:56 2011
 Starting Cortex
-Command: ../../bin/cortex_var_31_c2 --kmer_size 17 --colour_list colours --detect_bubbles1 1/1 --output_bubbles1 bubbles_called_in_individual_EXCLUDING_REF_BUBBLES --ref_colour 0 
+Command: ../../bin/cortex_var_31_c2 --kmer_size 17 --colour_list colours --detect_bubbles1 1/1 --output_bubbles1 bubbles_called_in_individual_EXCLUDING_REF_BUBBLES --ref_colour 0 --exclude_ref_bubbles
 colour list is set to colours
 Maximum k-mer size (compile-time setting): 31
 Actual K-mer size: 17

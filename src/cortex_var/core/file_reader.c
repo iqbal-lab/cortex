@@ -370,7 +370,8 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
   char read_qual = seq_has_quality_scores(sf);
 
   char base, qual, prev_base;
-  unsigned long contig_length;
+  unsigned long contig_length;//DEV - Isaac, I think this should be int, as 1. we dont expect reads>2billion bp, and 
+                                  //2. if you do go over 2billion, you pass it as an array index, so it gets cast to int and overflows
   int homopol_length = 1;
 
   char keep_reading = 1;

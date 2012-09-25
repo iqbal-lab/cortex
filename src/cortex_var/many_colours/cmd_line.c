@@ -196,7 +196,7 @@ const char* usage=
 "   [--help] \t\t\t\t\t\t\t=\t This help screen.\n\n" \
 " \n ** DATA LOADING ** \n\n"\
   // -v
-"   [--format TYPE] \t\t\t\t\t\t=\t File format for input in se_list and pe_list. All files assumed to be of the same format.\n\t\t\t\t\t\t\t\t\t Type must be FASTQ or FASTA\n" \
+  //"   [--format TYPE] \t\t\t\t\t\t=\t File format for input in se_list and pe_list. All files assumed to be of the same format.\n\t\t\t\t\t\t\t\t\t Type must be FASTQ or FASTA\n" \
 "   [--colour_list FILENAME] \t\t\t\t\t=\t File of filenames, one per colour. n-th file is a list of\n\t\t\t\t\t\t\t\t\t single-colour binaries to be loaded into colour n.\n\t\t\t\t\t\t\t\t\t Cannot be used with --se_list or --pe_list \n\t\t\t\t\t\t\t\t\t Optionally, this can contain a second column, containing a sample identifier/name for each colour\n" \
 "   [--multicolour_bin FILENAME] \t\t\t\t=\t Filename of a multicolour binary, will be loaded first, into colours 0..n.\n\t\t\t\t\t\t\t\t\t If using --colour_list also, those will be loaded into subsequent colours, after this.\n" \
 "   [--se_list FILENAME] \t\t\t\t\t=\t List of single-end fasta/q to be loaded into a single-colour graph.\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n\t\t\t\t\t\t\t\t\t Optionally, the first line is allowed to have, after the filename, a tab, and then a sample identifier\n" \
@@ -212,7 +212,7 @@ const char* usage=
   // -p
 "   [--dump_binary FILENAME] \t\t\t\t\t=\t Dump a binary file, with this name (after applying error-cleaning, if specified).\n" \
   // -w
-"   [--max_read_len] \t\t\t\t\t\t=\t For fastq, this is the Maximum read length over all input files.\n\t\t\t\t\t\t\t\t\t For fasta it is the size of chunk in which the reads are read (if reading a whole chromosome\n\t\t\t\t\t\t\t\t\t a typical value to use is 10000. Values above 100000 forbidden.\n\t\t\t\t\t\t\t\t\t (Mandatory if fastq or fasta files are input.)\n" \
+"   [--max_read_len] \t\t\t\t\t\t=\t (Unlike previous versions of Cortex) now required only if using --gt or --dump_filtered_readlen_distribution.\n" \
 " \n**** FILTERING AND ERROR CLEANING OPTIONS ****\n\n"\
   // -m
 "   [--quality_score_threshold INT] \t\t\t\t=\t Filter for quality scores in the input file (default 0).\n" \
@@ -544,7 +544,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"output_bubbles1",required_argument, NULL, 's'},    
     {"gt",required_argument, NULL, 't'},
     {"estim_e_with_snps",required_argument, NULL, 'u'},    
-    {"format",required_argument,NULL,'v'},
+    //    {"format",required_argument,NULL,'v'},
     {"max_read_len",required_argument,NULL,'w'},
     {"print_colour_coverages",no_argument,NULL,'x'},
     {"max_var_len",required_argument,NULL,'y'},
@@ -568,7 +568,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"estimated_error_rate", required_argument, NULL, 'Q'},
     {"genotype_site", required_argument, NULL, 'R'},
     //  {"detect_alleles", required_argument, NULL, 'S'},
-    {"estimate_genome_complexity", required_argument, NULL, 'T'},
+    //{"estimate_genome_complexity", required_argument, NULL, 'T'},
     {"print_novel_contigs", required_argument, NULL, 'V'},
     {0,0,0,0}	
   };
@@ -1011,6 +1011,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       	break;        
       } 
      
+      /*
     case 'v': //file format - either fasta, fastq or ctx.
       {
 
@@ -1038,7 +1039,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 
 	break ;
-      }      
+      } 
+      */     
     case 'w'://max_read_length
       {
 	if (optarg==NULL)
@@ -1451,6 +1453,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	cmdline_ptr->genotype_complex_site=true;
 	break;
       }
+      /*
     case 'T'://estimate_genome_complexity
       {
 	if (optarg==NULL)
@@ -1473,6 +1476,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	
 	break;
       }
+      */
     case 'V'://print_novel_contigs
 	{
 	  if (optarg==NULL)
@@ -1505,6 +1509,18 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
+
+  if ( (cmd_ptr->dump_readlen_distrib==true) && (cmd_ptr->max_read_length==0) )
+    {
+      char tmp[] = "If you want to dump the distribution of (filtered) read lengths, you must specify --max_read_len\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  die("coding error - this string is too long:\n%s\n", tmp);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
   
   if ( (cmd_ptr->for_each_colour_load_union_of_binaries==true) && (cmd_ptr->successively_dump_cleaned_colours==true) )
     {
@@ -1899,18 +1915,6 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
     }
 
 
-  if ( (cmd_ptr->dump_readlen_distrib==true) && (cmd_ptr->format_of_input_seq!=FASTQ) )
-    {
-      char tmp[]="--dump_filtered_readlen_distribution is only supported for fastq input";
-      if (strlen(tmp)>LEN_ERROR_STRING)
-	{
-	  die("coding error - this string is too long:\n%s\n", tmp);
-	}
-      strcpy(error_string, tmp);
-      return -1;
-    }
-
-
   /*
   //prevent removal of sequencing errors if we are loading incto >1 colour, or loading a binary with >1 colour
 
@@ -2025,6 +2029,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       
     }
 
+  /*  DEV - to remove - think this is no longer necessary
   if ( (cmd_ptr->input_seq==true) && (cmd_ptr->max_read_length==0) )
     {
       char tmp[]="Must specify max read-length if inputting fasta/fastq data\n";
@@ -2035,7 +2040,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       strcpy(error_string, tmp);
       return -1;
     }
-  
+  */
   //if making path divergence calls, must have >=2 colours, and must specify the ref colour, and give a ref_fasta list
   if (cmd_ptr->make_pd_calls==true)
     {
@@ -2223,6 +2228,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	}
 
     }
+  /*
   if ( (cmd_ptr->estimate_genome_complexity==true) && (cmd_ptr->format_of_input_seq==UNSPECIFIED) )
     {
 	  char tmp[LEN_ERROR_STRING];
@@ -2245,7 +2251,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 	  strcpy(error_string, tmp);
 	  return -1;
     }
-  
+  */
 
 
 

@@ -153,7 +153,7 @@ void binary_kmer_left_shift_one_base(BinaryKmer kmer, short kmer_size)
 
   // Mask top word
   short top_bits = 2 * (kmer_size % 32); // bits in top word
-  kmer[top_word] &= (~(unsigned long long)0 >> (64 - top_bits));
+  kmer[top_word] &= (~ (bitfield_of_64bits)0 >> (64 - top_bits));
 }
 
 
@@ -485,6 +485,8 @@ char * binary_kmer_to_seq(BinaryKmer* bkmer, short kmer_size, char * seq){
 BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size,
                                            BinaryKmer* prealloc_reverse_kmer)
 {
+  binary_kmer_initialise_to_zero(prealloc_reverse_kmer);
+
   BinaryKmer kmer_copy;
 
   // Copy

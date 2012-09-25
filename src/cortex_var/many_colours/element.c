@@ -980,7 +980,7 @@ void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node)
   fwrite(kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
   fwrite(&covg, sizeof(uint32_t), 1, fp); 
   fwrite(&individual_edges, sizeof(Edges), 1, fp);
-  fflush(fp); //zahara - debug only
+  //fflush(fp); //DEV = better performance if avoid flushing? I think so
   
 }
 

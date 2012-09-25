@@ -808,17 +808,20 @@ int main(int argc, char **argv){
 
       if(rd_distrib_fptr == NULL)
       {
-        printf("Cannot open %s, so will dumping distribution of filtered "
-         "read-lengths to stdout\n", cmd_line->readlen_distrib_outfile);
+        printf("Cannot open %s, so dump distribution of filtered "
+         "read-lengths to stdout (ie to the screen)\n", cmd_line->readlen_distrib_outfile);
+
+        rd_distrib_fptr = fdopen(fileno(stdout), "w");
       }
       else
       {
         printf("Dumping distribution of effective read lengths (ie after "
-               "quality, homopolymer and/or PCR duplicate filters to file %s.\n",
+               "quality, homopolymer and/or PCR duplicate filters) to file %s.\n",
                cmd_line->readlen_distrib_outfile);
 
-        rd_distrib_fptr = fdopen(fileno(stdin), "r");
+
       }
+
 
       for(i = db_graph->kmer_size; i < readlen_distrib_size; i++)
       {
@@ -1161,8 +1164,13 @@ int main(int argc, char **argv){
   if (cmd_line->dump_covg_distrib==true)
     {
       timestamp();
-      printf("Dump kmer coverage distribution for colour 0 to file %s\n", cmd_line->covg_distrib_outfile);
-      db_graph_get_covg_distribution(cmd_line->covg_distrib_outfile, db_graph, individual_edge_array, 0, &db_node_check_status_not_pruned);
+      printf("Dump kmer coverage distribution for colour 0 to file %s\n", 
+	     cmd_line->covg_distrib_outfile);
+      db_graph_get_covg_distribution(cmd_line->covg_distrib_outfile, 
+				     db_graph, 
+				     individual_edge_array, 
+				     0, 
+				     &db_node_check_status_not_pruned);
       timestamp();
       printf("Covg distribution dumped\n");
     }
