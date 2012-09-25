@@ -336,36 +336,36 @@ void improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alle
   int i;
   for (i=0; i<var->len_one_allele; i++)
     {
-      db_genotyping_node_increment_coverage(var->one_allele[i], individual_edge_array, working_colour1);
+      db_genotyping_node_increment_coverage(var->one_allele[i], working_colour1);
     }
   //same for allele2
   for (i=0; i<var->len_other_allele; i++)
     {
-      db_genotyping_node_increment_coverage(var->other_allele[i], individual_edge_array, working_colour2);
+      db_genotyping_node_increment_coverage(var->other_allele[i], working_colour2);
     }
   //now, as you walk through allele1, for each node, you can see how many times it occurs in allele1 and in allele2
   for (i=0; i<var->len_one_allele; i++)
     {
-      mult->mult11[i] += db_genotyping_node_get_coverage(var->one_allele[i], individual_edge_array, working_colour1);
-      mult->mult12[i] += db_genotyping_node_get_coverage(var->one_allele[i], individual_edge_array, working_colour2);
+      mult->mult11[i] += db_genotyping_node_get_coverage(var->one_allele[i], working_colour1);
+      mult->mult12[i] += db_genotyping_node_get_coverage(var->one_allele[i], working_colour2);
     }
 
   for (i=0; i<var->len_other_allele; i++)
     {
-      mult->mult21[i] += db_genotyping_node_get_coverage(var->other_allele[i], individual_edge_array, working_colour1);
-      mult->mult22[i] += db_genotyping_node_get_coverage(var->other_allele[i], individual_edge_array, working_colour2);
+      mult->mult21[i] += db_genotyping_node_get_coverage(var->other_allele[i], working_colour1);
+      mult->mult22[i] += db_genotyping_node_get_coverage(var->other_allele[i], working_colour2);
     }
 
   //cleanup
   for (i=0; i<var->len_one_allele; i++)
     {
-      db_genotyping_node_set_coverage(var->one_allele[i], individual_edge_array, working_colour1, 0);
-      db_genotyping_node_set_coverage(var->one_allele[i], individual_edge_array, working_colour2, 0);
+      db_genotyping_node_set_coverage(var->one_allele[i], working_colour1, 0);
+      db_genotyping_node_set_coverage(var->one_allele[i], working_colour2, 0);
     }
   for (i=0; i<var->len_other_allele; i++)
     {
-      db_genotyping_node_set_coverage(var->other_allele[i], individual_edge_array, working_colour1,0);
-      db_genotyping_node_set_coverage(var->other_allele[i], individual_edge_array, working_colour2,0);
+      db_genotyping_node_set_coverage(var->other_allele[i], working_colour1,0);
+      db_genotyping_node_set_coverage(var->other_allele[i], working_colour2,0);
     }
   
 
@@ -1057,7 +1057,7 @@ double get_log_probability_of_covg_on_one_allele_given_second_allele_and_multipl
 	  {
 	    // this node might happen 2 times on allele 1 and 3 times on allele2. in total 5 times, annd here it counts for 2 of them
 	    working_array_shared[working_array_shared_count]= 
-	      db_genotyping_node_get_coverage(allele[k], individual_edge_array, colour_indiv)/(mult_this_allele_in_self[k] + mult_this_allele_in_other[k])  ;
+	      db_genotyping_node_get_coverage(allele[k], colour_indiv)/(mult_this_allele_in_self[k] + mult_this_allele_in_other[k])  ;
 	    //printf("Shared segment: Dividing covg by %d\n", mult_this_allele_in_self[k] + mult_this_allele_in_other[k]);
 	    k++;
 	    working_array_shared_count++;
@@ -1089,7 +1089,7 @@ double get_log_probability_of_covg_on_one_allele_given_second_allele_and_multipl
 	  {
 	    if (mult_this_allele_in_self[k]>0)
 	      {//in PD calls, can have N in the ref allele
-		working_array_self[working_array_self_count]=db_genotyping_node_get_coverage(allele[k], individual_edge_array, colour_indiv)/mult_this_allele_in_self[k];
+		working_array_self[working_array_self_count]=db_genotyping_node_get_coverage(allele[k], colour_indiv)/mult_this_allele_in_self[k];
 		working_array_self_count++;
 	      }
 	    //printf("Self segment: Dividing covg by %d, k is %d and len allele is %d\n", mult_this_allele_in_self[k], k, len_allele);
@@ -1163,7 +1163,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
       }
     else
       {
-	return db_genotyping_node_get_coverage(n, individual_edge_array, colour_ref_minus_site);
+	return db_genotyping_node_get_coverage(n, colour_ref_minus_site);
       }
   }
   
@@ -1178,7 +1178,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
       {
 	//	printf("Zam2 - traversing little graph - ignore this is visited/in genotype %s\n", binary_kmer_to_seq(&(e->kmer), db_graph->kmer_size, zamzam));
       }
-    else if ( (db_genotyping_node_get_coverage(e, individual_edge_array,colour_indiv)>0) && (check_covg_in_ref_with_site_excised(e)==0) )
+    else if ( (db_genotyping_node_get_coverage(e,colour_indiv)>0) && (check_covg_in_ref_with_site_excised(e)==0) )
       {
 	double avg_coverage=0;
 	int min=0; int max=0;
@@ -1228,7 +1228,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
     if (db_genotyping_node_check_status(e, in_desired_genotype)==true)
       {
       }
-    else if ( (db_genotyping_node_get_coverage(e, individual_edge_array,colour_indiv)>0) && (check_covg_in_ref_with_site_excised(e)==0) )
+    else if ( (db_genotyping_node_get_coverage(e,colour_indiv)>0) && (check_covg_in_ref_with_site_excised(e)==0) )
       {
 	double avg_coverage=0;
 	int min=0; int max=0;
@@ -2145,11 +2145,11 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
     {
       if (first_allele_is_ref)
 	{
-	  db_genotyping_node_decrement_coverage(working_g_e_one[i], individual_edge_array, ref_minus_site_col);
+	  db_genotyping_node_decrement_coverage(working_g_e_one[i], ref_minus_site_col);
 	}
       else
 	{
-	  db_genotyping_node_decrement_coverage(working_g_e_other[i], individual_edge_array, ref_minus_site_col);
+	  db_genotyping_node_decrement_coverage(working_g_e_other[i], ref_minus_site_col);
 	}
     }
 

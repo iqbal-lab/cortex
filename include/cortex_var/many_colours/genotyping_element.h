@@ -70,13 +70,15 @@ void genotyping_element_initialise_from_normal_element(GenotypingElement* e1,
 							     Element* e2,
 							     boolean set_status_to_none);
 
-Edges* db_genotyping_node_get_edge(GenotypingElement, EdgeArrayType, int); 
-Edges  db_genotyping_node_get_edge_copy(const GenotypingElement e, EdgeArrayType type,int index); 
+/*
+// Flagged for removal -- these functions aren't implemented
+Edges* db_genotyping_node_get_edge(GenotypingElement, int); 
+Edges  db_genotyping_node_get_edge_copy(const GenotypingElement e, int index); 
 Edges db_genotyping_node_get_union_of_edges(GenotypingElement e);
-void  db_genotyping_node_add_edges(GenotypingElement*, EdgeArrayType, int, Edges);
-void  db_genotyping_node_set_edges(GenotypingElement*, EdgeArrayType, int, Edges);
-void  db_genotyping_node_reset_one_edge(GenotypingElement* e, Orientation orientation, Nucleotide nucleotide, EdgeArrayType type, int index);
-
+void  db_genotyping_node_add_edges(GenotypingElement*, int, Edges);
+void  db_genotyping_node_set_edges(GenotypingElement*, int, Edges);
+void  db_genotyping_node_reset_one_edge(GenotypingElement* e, Orientation orientation, Nucleotide nucleotide, int index);
+*/
 
 
 Edges genotyping_element_get_colour_union_of_all_colours(const GenotypingElement*);
@@ -90,7 +92,7 @@ int genotyping_element_get_covg_colour1(const GenotypingElement* e);
 int genotyping_element_get_covg_last_colour(const GenotypingElement* e);
 
 
-int genotyping_element_get_number_of_people_or_pops_containing_this_element(GenotypingElement* e, EdgeArrayType type, int index);
+int genotyping_element_get_number_of_people_or_pops_containing_this_element(GenotypingElement* e, int index);
 
 
 boolean genotyping_element_smaller(GenotypingElement,GenotypingElement);
@@ -106,12 +108,12 @@ void genotyping_element_set_kmer(GenotypingElement * e, Key kmer, short kmer_siz
 Orientation db_genotyping_node_get_orientation(BinaryKmer*, GenotypingElement *, short kmer_size);
 
 //add an edge between nodes -- NB: it adds both edges: forward and reverse
-boolean db_genotyping_node_add_edge(GenotypingElement *, GenotypingElement *, Orientation, Orientation, short kmer_size, EdgeArrayType edge_type, int edge_index); 
+boolean db_genotyping_node_add_edge(GenotypingElement *, GenotypingElement *, Orientation, Orientation, short kmer_size, int edge_index); 
 
 
 //returns yes if the label defined by the nucleotide coresponds to an 
 //outgoing edge in the side defined by the orientation.   
-boolean db_genotyping_node_edge_exist(GenotypingElement *, Nucleotide, Orientation, EdgeArrayType edge_type, int edge_index);
+boolean db_genotyping_node_edge_exist(GenotypingElement *, Nucleotide, Orientation, int edge_index);
 
 //final argument f is a function that returns an Edge that is a function of the different colured edges in a node.                                                                                       // eg we might be interested in the union of all the coloured edges in the graph, or just the colour/edge for the first person,                                                                          //    or the union of all edges except that corresponding to the reference.
 boolean db_genotyping_node_edge_exist_within_specified_function_of_coloured_edges(GenotypingElement * genotyping_element,Nucleotide base,Orientation orientation, Edges (*f)(const GenotypingElement* ));
@@ -119,7 +121,7 @@ boolean db_genotyping_node_edge_exist_within_specified_function_of_coloured_edge
 
 //returns the label of the first outgoing edge -- leaving from the side 
 //defined by orientation. 
-boolean db_genotyping_node_has_precisely_one_edge(GenotypingElement *, Orientation, Nucleotide *, EdgeArrayType edge_type, int edge_index);
+boolean db_genotyping_node_has_precisely_one_edge(GenotypingElement *, Orientation, Nucleotide *, int edge_index);
 
 
 boolean db_genotyping_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(GenotypingElement * node, Orientation orientation, Nucleotide * nucleotide, 
@@ -127,14 +129,14 @@ boolean db_genotyping_node_has_precisely_one_edge_in_subgraph_defined_by_func_of
 
 boolean db_genotyping_node_has_precisely_one_edge_in_union_graph_over_all_people(GenotypingElement * node, Orientation orientation, Nucleotide * nucleotide);
 
-boolean db_genotyping_node_has_precisely_two_edges(GenotypingElement * node, Orientation orientation, Nucleotide * nucleotide1, Nucleotide * nucleotide2, EdgeArrayType type, int index);
+boolean db_genotyping_node_has_precisely_two_edges(GenotypingElement * node, Orientation orientation, Nucleotide * nucleotide1, Nucleotide * nucleotide2, int index);
 
 void db_genotyping_node_reset_all_edges_for_all_people_and_pops_to_zero(GenotypingElement* e);
 
 //forgets about the edges
-void db_genotyping_node_reset_edges(GenotypingElement *, EdgeArrayType, int  );
+void db_genotyping_node_reset_edges(GenotypingElement *, int  );
 
-void db_genotyping_node_reset_edge(GenotypingElement *, Orientation, Nucleotide, EdgeArrayType, int );
+void db_genotyping_node_reset_edge(GenotypingElement *, Orientation, Nucleotide, int );
 
 
 
@@ -143,7 +145,7 @@ void db_genotyping_node_reset_specified_edges(GenotypingElement * node, Orientat
 
 
 //check that the edges are 0's
-boolean db_genotyping_node_edges_reset(GenotypingElement * node, EdgeArrayType edge_type, int edge_index);
+boolean db_genotyping_node_edges_reset(GenotypingElement * node, int edge_index);
 
 boolean db_genotyping_node_check_status(GenotypingElement * node, NodeStatus status);
 boolean db_genotyping_node_check_status_not_pruned(GenotypingElement * node);
@@ -196,21 +198,21 @@ boolean db_genotyping_node_condition_always_true(GenotypingElement* node);
 
 
 
-void db_genotyping_node_increment_coverage(GenotypingElement* e, EdgeArrayType type, int index);
-void db_genotyping_node_decrement_coverage(GenotypingElement* e, EdgeArrayType type, int index);
-void db_genotyping_node_update_coverage(GenotypingElement* e, EdgeArrayType type, int index, int update);
-int db_genotyping_node_get_coverage(const GenotypingElement* const e, EdgeArrayType type, int index);
-void db_genotyping_node_set_coverage(GenotypingElement* e, EdgeArrayType type, int colour, int covg);
+void db_genotyping_node_increment_coverage(GenotypingElement* e, int index);
+void db_genotyping_node_decrement_coverage(GenotypingElement* e, int index);
+void db_genotyping_node_update_coverage(GenotypingElement* e, int index, int update);
+int db_genotyping_node_get_coverage(const GenotypingElement* const e, int index);
+void db_genotyping_node_set_coverage(GenotypingElement* e, int colour, int covg);
 int db_genotyping_node_get_coverage_in_subgraph_defined_by_func_of_colours(const GenotypingElement* const e, int (*get_covg)(const GenotypingElement*) );
 
 
 
 //check if node doesn't have any edges in a given orientation
-boolean db_genotyping_node_is_blunt_end(GenotypingElement * node, Orientation orientation, EdgeArrayType edge_type, int edge_index);
+boolean db_genotyping_node_is_blunt_end(GenotypingElement * node, Orientation orientation, int edge_index);
 boolean db_genotyping_node_is_blunt_end_in_subgraph_given_by_func_of_colours(GenotypingElement * node, Orientation orientation,  Edges (*get_colour)(const GenotypingElement*) );
 
 
-boolean db_genotyping_node_is_this_node_in_this_person_or_populations_graph(GenotypingElement* node, EdgeArrayType type, int index);
+boolean db_genotyping_node_is_this_node_in_this_person_or_populations_graph(GenotypingElement* node, int index);
 
 
 boolean db_genotyping_node_is_this_node_in_subgraph_defined_by_func_of_colours(GenotypingElement* node, Edges (*get_colour)(const GenotypingElement*) );
@@ -228,9 +230,11 @@ boolean db_genotyping_node_read_multicolour_binary(FILE * fp, short kmer_size, G
 
 
 
+// Flagged for removal -- not implemented
+//
 //read a binary for an individual person, as dumped by the target "graph"
 // the edge array type and index tell you which person you should load this data into
-boolean db_genotyping_node_read_single_colour_binary(FILE * fp, short kmer_size, GenotypingElement * node, EdgeArrayType type, int index, int binversion_in_binheader);
+//boolean db_genotyping_node_read_single_colour_binary(FILE * fp, short kmer_size, GenotypingElement * node, int index, int binversion_in_binheader);
 
 
 boolean db_genotyping_node_check_read_start(GenotypingElement* node, Orientation ori);

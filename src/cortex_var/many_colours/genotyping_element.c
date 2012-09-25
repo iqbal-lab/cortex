@@ -129,11 +129,9 @@ void genotyping_element_initialise_from_normal_element(GenotypingElement* e1,
 
 //gets you a pointer to the edge you are referring to
 //Don't use this if you can use get_edge_copy instead
-Edges* genotyping_node_get_edge(GenotypingElement e, EdgeArrayType type,int index)
+Edges* genotyping_node_get_edge(GenotypingElement e, int index)
 {
-  if (type == individual_edge_array)
-    {
-      if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
+  if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
 	{
 	  die("Called genotyping_node_get_edge with index %d which is \n"
         ">= MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2 which is %d.\n",
@@ -141,32 +139,18 @@ Edges* genotyping_node_get_edge(GenotypingElement e, EdgeArrayType type,int inde
 	}
       Edges *edges = e.individual_edges + index;
       return edges;
-    }
- else 
-    {
-      die("Coding error. Only expecting enum of edge array types to contain \n"
-          "one type - individual_edge_array, but we are getting type %d", type);
-    }
 }
 
 
 //return a copy of the edge you are referring to
-Edges genotyping_node_get_edge_copy(const GenotypingElement e, EdgeArrayType type,int index)
+Edges genotyping_node_get_edge_copy(const GenotypingElement e, int index)
 {
 
-  if (type == individual_edge_array)
-    {
-      if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
+  if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
 	{
 	  die("Trying to access a colour beyond the compile-time limit. Exit.\n");
 	}
       return e.individual_edges[index];
-    }
-  else 
-    {
-      die("Coding error. Only expecting enum of edge array types to contain \n"
-          "one type - individual_edge_array, but we are getting type %d", type);
-    }
 }
 
 
@@ -203,20 +187,20 @@ Edges genotyping_element_get_colour_union_of_all_colours(const GenotypingElement
 
 Edges genotyping_element_get_last_colour(const GenotypingElement* e)
 {
-  Edges edges =  genotyping_node_get_edge_copy(*e, individual_edge_array, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2-1);
+  Edges edges =  genotyping_node_get_edge_copy(*e, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2-1);
   return edges;
 }
 
 
 Edges genotyping_element_get_colour0(const GenotypingElement* e)
 {
-  Edges edges=genotyping_node_get_edge_copy(*e, individual_edge_array,0);
+  Edges edges=genotyping_node_get_edge_copy(*e,0);
   return edges;
 }
 
 Edges genotyping_element_get_colour1(const GenotypingElement* e)
 {
-  Edges edges=genotyping_node_get_edge_copy(*e, individual_edge_array,1);
+  Edges edges=genotyping_node_get_edge_copy(*e,1);
   return edges;
 }
 
@@ -257,45 +241,25 @@ int genotyping_element_get_covg_colour1(const GenotypingElement* e)
 
 
 //adds edges from edge_char to the appropriate person/population edgeset, without removing existing edges
-void genotyping_node_add_edges(GenotypingElement* e, EdgeArrayType type, int index, Edges edge_char)
+void genotyping_node_add_edges(GenotypingElement* e, int index, Edges edge_char)
 {
-  if (type == individual_edge_array)
-    {
-      if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
+  if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
 	{
 	  die("in genotyping_element's add_edges function. index is %d, and should be at most %d",
         index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2-1);
 	}
       e->individual_edges[index] |= edge_char;
-    }
-
-  else
-    {
-      die("Coding error. Only expecting enum of edge array types to contain \n"
-          "one type - individual_edge_array, but we are getting type %d", type);
-    }
-  
 }
 
 
-void genotyping_node_set_edges(GenotypingElement* e, EdgeArrayType type, int index, Edges edge_char)
+void genotyping_node_set_edges(GenotypingElement* e, int index, Edges edge_char)
 {
-  if (type == individual_edge_array)
-    {
-      if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
+  if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
 	{
 	  die("in genotyping_element's set_edges function. index is %d,and should be at most %d",
         index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2);
 	}
       e->individual_edges[index] = edge_char;
-    }
-
-  else
-    {
-      die("Coding error. Only expecting enum of edge array types to contain \n"
-          "one type - individual_edge_array, but we are getting type %d", type);
-    }
-  
 }
 
 
@@ -310,11 +274,9 @@ void db_genotyping_node_reset_all_edges_for_all_people_and_pops_to_zero(Genotypi
 
 }
 
-void genotyping_node_reset_one_edge(GenotypingElement* e, Orientation orientation, Nucleotide nucleotide, EdgeArrayType type, int index)
+void genotyping_node_reset_one_edge(GenotypingElement* e, Orientation orientation, Nucleotide nucleotide, int index)
 {
-  if (type == individual_edge_array)
-    {
-      if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
+  if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
 	{
 	  die("in genotyping_element's reset_one_edge function. index is %d,and should be at most %d - 1",
         index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2);
@@ -328,37 +290,21 @@ void genotyping_node_reset_one_edge(GenotypingElement* e, Orientation orientatio
       edge ^= (unsigned char) 0xFF; //xor with all 1's, ie 00010000 -> 11101111
       
       e->individual_edges[index] &= edge; //reset one edge
-      
-
-    }
-  else
-    {
-      die("Coding error. Only expecting enum of edge array types to contain \n"
-          "one type - individual_edge_array, but we are getting type %d", type);
-    }
-  
 }
 
 
-int genotyping_element_get_number_of_people_or_pops_containing_this_element(GenotypingElement* e, EdgeArrayType type, int index)
+int genotyping_element_get_number_of_people_or_pops_containing_this_element(GenotypingElement* e, int index)
 {
   int i;
   int count=0;
-  if (type == individual_edge_array)
-    {
-      for (i=0; i< MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2; i++)
+  
+  for (i=0; i< MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2; i++)
 	{
 	  if ( (e->individual_edges)[i] != 0)
 	    {
 	      count++;
 	    }
 	}
-    }
-  else
-    {
-      die("Coding error. Only expecting enum of edge array types to contain \n"
-          "one type - individual_edge_array, but we are getting type %d", type);
-    }
 
   return count;
 }
@@ -472,7 +418,7 @@ void genotyping_element_set_kmer(GenotypingElement * e, Key kmer, short kmer_siz
 
 
 
-void db_genotyping_node_increment_coverage(GenotypingElement* e, EdgeArrayType type, int index)
+void db_genotyping_node_increment_coverage(GenotypingElement* e, int index)
 {
   if (e==NULL)
     {
@@ -480,7 +426,7 @@ void db_genotyping_node_increment_coverage(GenotypingElement* e, EdgeArrayType t
     }
   e->coverage[index]=e->coverage[index]+1;
 }
-void db_genotyping_node_decrement_coverage(GenotypingElement* e, EdgeArrayType type, int index)
+void db_genotyping_node_decrement_coverage(GenotypingElement* e, int index)
 {
   if (e==NULL)
     {
@@ -492,7 +438,7 @@ void db_genotyping_node_decrement_coverage(GenotypingElement* e, EdgeArrayType t
     }
 }
 
-void db_genotyping_node_update_coverage(GenotypingElement* e, EdgeArrayType type, int index, int update)
+void db_genotyping_node_update_coverage(GenotypingElement* e, int index, int update)
 {
 
   e->coverage[index] += update;
@@ -500,7 +446,7 @@ void db_genotyping_node_update_coverage(GenotypingElement* e, EdgeArrayType type
 }
 
 
-int db_genotyping_node_get_coverage(const GenotypingElement* const e, EdgeArrayType type, int index)
+int db_genotyping_node_get_coverage(const GenotypingElement* const e, int index)
 {
 
   if (e==NULL)
@@ -514,7 +460,7 @@ int db_genotyping_node_get_coverage(const GenotypingElement* const e, EdgeArrayT
 }
 
 
-void db_genotyping_node_set_coverage(GenotypingElement* e, EdgeArrayType type, int colour, int covg)
+void db_genotyping_node_set_coverage(GenotypingElement* e, int colour, int covg)
 {
 
   if (e==NULL)
@@ -577,7 +523,7 @@ Orientation db_genotyping_node_get_orientation(BinaryKmer* k, GenotypingElement 
 
 //After specifying which individual or population you are talking about, this function
 //adds one edge ("arrow") to the appropriate edge in the appropriate array in the element -- basically sets a bit in the correct edges char
-void db_genotyping_node_add_labeled_edge(GenotypingElement * e, Orientation o, Nucleotide base, EdgeArrayType edge_type, int edge_index){
+void db_genotyping_node_add_labeled_edge(GenotypingElement * e, Orientation o, Nucleotide base, int edge_index){
 
   //set edge 
   char edge = 1 << base; // A (0) -> 0001, C (1) -> 0010, G (2) -> 0100, T (3) -> 1000
@@ -587,7 +533,7 @@ void db_genotyping_node_add_labeled_edge(GenotypingElement * e, Orientation o, N
   }
 
   //update node
-  genotyping_node_add_edges(e, edge_type, edge_index, edge);
+  genotyping_node_add_edges(e, edge_index, edge);
   
 }
 
@@ -595,7 +541,7 @@ void db_genotyping_node_add_labeled_edge(GenotypingElement * e, Orientation o, N
 //adding an edge between two nodes implies adding two labeled edges (one in each direction)
 //be aware that in the case of self-loops in palindromes the two labeled edges collapse in one
 
-boolean db_genotyping_node_add_edge(GenotypingElement * src_e, GenotypingElement * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size, EdgeArrayType edge_type, int edge_index){
+boolean db_genotyping_node_add_edge(GenotypingElement * src_e, GenotypingElement * tgt_e, Orientation src_o, Orientation tgt_o, short kmer_size, int edge_index){
 
   BinaryKmer src_k, tgt_k, tmp_kmer; 
 
@@ -610,21 +556,20 @@ boolean db_genotyping_node_add_edge(GenotypingElement * src_e, GenotypingElement
     binary_kmer_assignment_operator(tgt_k, *(binary_kmer_reverse_complement(&tgt_k,kmer_size, &tmp_kmer)));
   }
     
-   db_genotyping_node_add_labeled_edge(src_e,src_o,binary_kmer_get_last_nucleotide(&tgt_k), 
-				       edge_type, edge_index);
+   db_genotyping_node_add_labeled_edge(src_e,src_o,binary_kmer_get_last_nucleotide(&tgt_k), edge_index);
 
 
-  db_genotyping_node_add_labeled_edge(tgt_e,opposite_orientation(tgt_o),binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer)), edge_type, edge_index );
+  db_genotyping_node_add_labeled_edge(tgt_e,opposite_orientation(tgt_o),binary_kmer_get_last_nucleotide(binary_kmer_reverse_complement(&src_k,kmer_size, &tmp_kmer)), edge_index);
 
   return true;
 }
 
 
 
-boolean db_genotyping_node_edge_exist(GenotypingElement * element,Nucleotide base,Orientation orientation, EdgeArrayType edge_type, int edge_index){
+boolean db_genotyping_node_edge_exist(GenotypingElement * element,Nucleotide base,Orientation orientation, int edge_index){
 
   //get the edge char for this specific person or pop:
-  char edge = genotyping_node_get_edge_copy(*element, edge_type, edge_index);
+  char edge = genotyping_node_get_edge_copy(*element, edge_index);
 
 
   edge >>= base;
@@ -673,12 +618,12 @@ boolean db_genotyping_node_edge_exist_within_specified_function_of_coloured_edge
 
 
 
-void db_genotyping_node_reset_edges(GenotypingElement * node,EdgeArrayType edge_type, int edge_index){
-  genotyping_node_set_edges(node, edge_type, edge_index, 0);
+void db_genotyping_node_reset_edges(GenotypingElement * node, int edge_index){
+  genotyping_node_set_edges(node, edge_index, 0);
 }
 
-void db_genotyping_node_reset_edge(GenotypingElement * node, Orientation orientation, Nucleotide nucleotide, EdgeArrayType edge_type, int edge_index){
-  genotyping_node_reset_one_edge(node, orientation, nucleotide, edge_type, edge_index);
+void db_genotyping_node_reset_edge(GenotypingElement * node, Orientation orientation, Nucleotide nucleotide, int edge_index){
+  genotyping_node_reset_one_edge(node, orientation, nucleotide, edge_index);
 }
 
 //pass in a function which will apply reset_one_edge to whichever of the edges it cares about
@@ -690,15 +635,15 @@ void db_genotyping_node_reset_specified_edges(GenotypingElement * node, Orientat
 
 
 
-boolean db_genotyping_node_edges_reset(GenotypingElement * node, EdgeArrayType edge_type, int edge_index){
-  return genotyping_node_get_edge_copy(*node,edge_type,edge_index) == 0;
+boolean db_genotyping_node_edges_reset(GenotypingElement * node, int edge_index){
+  return genotyping_node_get_edge_copy(*node,edge_index) == 0;
 }
 
 
-boolean db_genotyping_node_has_precisely_one_edge(GenotypingElement * node, Orientation orientation, Nucleotide * nucleotide, EdgeArrayType edge_type, int edge_index){
+boolean db_genotyping_node_has_precisely_one_edge(GenotypingElement * node, Orientation orientation, Nucleotide * nucleotide, int edge_index){
   
   Nucleotide n;
-  Edges edges = genotyping_node_get_edge_copy(*node,edge_type,edge_index);
+  Edges edges = genotyping_node_get_edge_copy(*node,edge_index);
   short edges_count = 0;
 
   if (orientation == reverse){
@@ -776,11 +721,11 @@ boolean db_genotyping_node_has_precisely_one_edge_in_union_graph_over_all_people
 }
 
 //a conflict - bifurcation
-boolean db_genotyping_node_has_precisely_two_edges(GenotypingElement * node, Orientation orientation, Nucleotide * nucleotide1, Nucleotide * nucleotide2, EdgeArrayType type, int index){
+boolean db_genotyping_node_has_precisely_two_edges(GenotypingElement * node, Orientation orientation, Nucleotide * nucleotide1, Nucleotide * nucleotide2, int index){
   
   Nucleotide n;
 
-  Edges edges = genotyping_node_get_edge_copy(*node,type,index);
+  Edges edges = genotyping_node_get_edge_copy(*node,index);
 
   short edges_count = 0;
 
@@ -810,9 +755,9 @@ boolean db_genotyping_node_has_precisely_two_edges(GenotypingElement * node, Ori
 
 
 
-boolean db_genotyping_node_is_blunt_end(GenotypingElement * node, Orientation orientation, EdgeArrayType edge_type, int edge_index){
+boolean db_genotyping_node_is_blunt_end(GenotypingElement * node, Orientation orientation, int edge_index){
   
-  Edges edges = genotyping_node_get_edge_copy(*node, edge_type, edge_index);
+  Edges edges = genotyping_node_get_edge_copy(*node, edge_index);
 
 
   if (orientation == reverse){
@@ -900,7 +845,7 @@ void db_genotyping_node_set_status_to_none(GenotypingElement * node){
 
 
 
-boolean db_genotyping_node_is_this_node_in_this_person_or_populations_graph(GenotypingElement* node, EdgeArrayType type, int index)
+boolean db_genotyping_node_is_this_node_in_this_person_or_populations_graph(GenotypingElement* node, int index)
 {
 
   if (node ==NULL)
@@ -913,7 +858,7 @@ boolean db_genotyping_node_is_this_node_in_this_person_or_populations_graph(Geno
       return false;
     }
 
-  Edges edge_for_this_person_or_pop = genotyping_node_get_edge_copy(*node, type, index);
+  Edges edge_for_this_person_or_pop = genotyping_node_get_edge_copy(*node, index);
 
   if (edge_for_this_person_or_pop == 0)
     {
