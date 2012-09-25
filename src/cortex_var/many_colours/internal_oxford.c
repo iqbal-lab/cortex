@@ -119,7 +119,7 @@ void create_uniqueness_file(char** ref_chroms, dBGraph* db_graph)
 	else
 	  {
 	    // we assume that the reference is individual at index 0.
-	    if (db_node_get_coverage(node, individual_edge_array,0)==1)
+	    if (db_node_get_coverage(node,0)==1)
 	      {
 		//this kmer exists precisely once in the ref
 		fprintf(out_fptr, "1");
@@ -202,8 +202,8 @@ void print_coverage_and_ref_multiplicities_for_list_of_fasta(char* list_of_fasta
 		else
 		  {
 		      // we assume that the reference is individual at index 0.
-		    int ref_covg =  db_node_get_coverage(node, individual_edge_array,0);
-		    int covg     =  db_node_get_coverage(node, individual_edge_array,1);
+		    int ref_covg =  db_node_get_coverage(node,0);
+		    int covg     =  db_node_get_coverage(node,1);
 		    fprintf(out_fptr, "%d/%d\t", covg, ref_covg);
 		  }
 	      }

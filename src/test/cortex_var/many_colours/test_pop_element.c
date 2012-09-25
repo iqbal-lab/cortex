@@ -44,11 +44,11 @@ void test_get_edge_copy()
       my_element->individual_edges[1]=3;
     }
 
-  Edges edges=get_edge_copy( *my_element, individual_edge_array, 0);
+  Edges edges=get_edge_copy( *my_element, 0);
   CU_ASSERT(edges==1);
   if (NUMBER_OF_COLOURS>1)
     {
-      edges=get_edge_copy( *my_element, individual_edge_array, 1);
+      edges=get_edge_copy( *my_element, 1);
       CU_ASSERT(edges==3);
     }
   free_element(&my_element);
@@ -65,11 +65,11 @@ void test_get_edge_copy()
       my_element->individual_edges[1]=4;
     }
 
-  edges=get_edge_copy( *my_element, individual_edge_array, 0);
+  edges=get_edge_copy( *my_element, 0);
   CU_ASSERT(edges==2);
   if (NUMBER_OF_COLOURS>1)
     {
-      edges=get_edge_copy( *my_element, individual_edge_array, 1);
+      edges=get_edge_copy( *my_element, 1);
       CU_ASSERT(edges==4);
     }
   free_element(&my_element);
@@ -81,23 +81,23 @@ void test_get_edge_copy()
 void test_increment_coverage()
 {
   dBNode* e = new_element();
-  db_node_increment_coverage(e,individual_edge_array,0);
+  db_node_increment_coverage(e,0);
   CU_ASSERT(e->coverage[0]==1);
-  db_node_increment_coverage(e,individual_edge_array,0);
+  db_node_increment_coverage(e,0);
   CU_ASSERT(e->coverage[0]==2);
-  db_node_increment_coverage(e,individual_edge_array,0);
+  db_node_increment_coverage(e,0);
   CU_ASSERT(e->coverage[0]==3);
-  db_node_increment_coverage(e,individual_edge_array,0);
+  db_node_increment_coverage(e,0);
   CU_ASSERT(e->coverage[0]==4);
-  db_node_increment_coverage(e,individual_edge_array,0);
+  db_node_increment_coverage(e,0);
   CU_ASSERT(e->coverage[0]==5);
-  db_node_increment_coverage(e,individual_edge_array,0);
+  db_node_increment_coverage(e,0);
   CU_ASSERT(e->coverage[0]==6);
 
   if (NUMBER_OF_COLOURS>1)
     {
       CU_ASSERT(e->coverage[1]==0);
-      db_node_increment_coverage(e,individual_edge_array,1);
+      db_node_increment_coverage(e,1);
       CU_ASSERT(e->coverage[1]==1);
     }
   if (NUMBER_OF_COLOURS>2)
@@ -113,19 +113,19 @@ void test_increment_coverage()
 void test_get_coverage()
 {
   dBNode* e = new_element();
-  db_node_increment_coverage(e,individual_edge_array,0);
-  CU_ASSERT(db_node_get_coverage(e,individual_edge_array,0)==1);
-  db_node_increment_coverage(e,individual_edge_array,0);
-  CU_ASSERT(db_node_get_coverage(e,individual_edge_array,0)==2);
-  db_node_increment_coverage(e,individual_edge_array,0);
-  CU_ASSERT(db_node_get_coverage(e,individual_edge_array,0)==3);
-  db_node_increment_coverage(e,individual_edge_array,0);
-  CU_ASSERT(db_node_get_coverage(e,individual_edge_array,0)==4);
-  db_node_increment_coverage(e,individual_edge_array,0);
-  CU_ASSERT(db_node_get_coverage(e,individual_edge_array,0)==5);
+  db_node_increment_coverage(e,0);
+  CU_ASSERT(db_node_get_coverage(e,0)==1);
+  db_node_increment_coverage(e,0);
+  CU_ASSERT(db_node_get_coverage(e,0)==2);
+  db_node_increment_coverage(e,0);
+  CU_ASSERT(db_node_get_coverage(e,0)==3);
+  db_node_increment_coverage(e,0);
+  CU_ASSERT(db_node_get_coverage(e,0)==4);
+  db_node_increment_coverage(e,0);
+  CU_ASSERT(db_node_get_coverage(e,0)==5);
   
   e->coverage[0]=120;
-  CU_ASSERT(db_node_get_coverage(e,individual_edge_array,0)==120);
+  CU_ASSERT(db_node_get_coverage(e,0)==120);
   
   free_element(&e);
 }
@@ -218,19 +218,19 @@ void test_element_assign()
   element_initialise(&e1, &b1, 31);
   element_initialise(&e2, &b2, 31);
 
-  set_edges(&e1, individual_edge_array, 0, 1);
-  set_edges(&e2, individual_edge_array, 0, 2);
+  set_edges(&e1, 0, 1);
+  set_edges(&e2, 0, 2);
   
   db_node_set_status(&e1, visited);
   db_node_set_status(&e2, pruned);
 
-  db_node_update_coverage(&e1, individual_edge_array, 0, 101);
-  db_node_update_coverage(&e2, individual_edge_array, 0, 202);
+  db_node_update_coverage(&e1, 0, 101);
+  db_node_update_coverage(&e2, 0, 202);
   
   element_assign(&e1, &e2);
 
-  CU_ASSERT(db_node_get_coverage(&e1, individual_edge_array,0)==202);
-  CU_ASSERT(get_edge_copy(e1, individual_edge_array,0)==2 );
+  CU_ASSERT(db_node_get_coverage(&e1,0)==202);
+  CU_ASSERT(get_edge_copy(e1,0)==2 );
   CU_ASSERT(binary_kmer_comparison_operator(e1.kmer,b2) );
   CU_ASSERT(e1.status==pruned );
 }

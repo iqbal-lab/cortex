@@ -388,8 +388,7 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
                                              kmer_size);
 
       // Update coverage
-      db_node_update_coverage(curr_node, 0, colour_index, 1);
-      //db_node_update_coverage(curr_node, colour_index, 1); // EdgeArrayType removed
+      db_node_update_coverage(curr_node, colour_index, 1);
     }
 
     #ifdef DEBUG_CONTIGS
@@ -476,13 +475,12 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
       curr_orient = db_node_get_orientation((BinaryKmer*)curr_kmer, curr_node, kmer_size);
 
       // Update covg
-      db_node_update_coverage(curr_node, 0, colour_index, 1);
-      //db_node_update_coverage(curr_node, colour_index, 1); // EdgeArrayType removed
+      db_node_update_coverage(curr_node, colour_index, 1);
 
       // Add edge
       db_node_add_edge(prev_node, curr_node,
                        prev_orient, curr_orient,
-                       kmer_size, 0, colour_index);
+                       kmer_size, colour_index);
       // db_node_add_edge(prev_node, curr_node,
       //                  prev_orient, curr_orient,
       //                  kmer_size, colour_index); // EdgeArrayType removed
@@ -595,8 +593,7 @@ void load_se_seq_data_into_graph_colour(
       if(!is_dupe)
       {
         // Update coverage
-        db_node_update_coverage(curr_node, 0, colour_index, 1);
-        //db_node_update_coverage(curr_node, colour_index, 1); // EdgeArrayType removed
+        db_node_update_coverage(curr_node, colour_index, 1);
       
         _process_read(sf, kmer_str, qual_str,
                       quality_cutoff, homopolymer_cutoff,
@@ -772,8 +769,7 @@ void load_pe_seq_data_into_graph_colour(
       if(read1)
       {
         // Update coverage
-        db_node_update_coverage(curr_node1, 0, colour_index, 1);
-        //db_node_update_coverage(curr_node1, colour_index, 1); // EdgeArrayType removed
+        db_node_update_coverage(curr_node1, colour_index, 1);
 
         _process_read(sf1, kmer_str1, qual_str1, 
                       quality_cutoff, homopolymer_cutoff,
@@ -786,8 +782,7 @@ void load_pe_seq_data_into_graph_colour(
       if(read2)
       {
         // Update coverage
-        db_node_update_coverage(curr_node2, 0, colour_index, 1);
-        //db_node_update_coverage(curr_node2, colour_index, 1); // EdgeArrayType removed
+        db_node_update_coverage(curr_node2, colour_index, 1);
 
         _process_read(sf2, kmer_str2, qual_str2, 
                       quality_cutoff, homopolymer_cutoff,
@@ -1167,7 +1162,7 @@ void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_
 	  }
 	  
 	  if (! (i==0 && j==0 && *prev_full_ent == false && current_node == previous_node)){ //otherwise is the same old last entry
-	    db_node_update_coverage(current_node,type, index, 1);
+	    db_node_update_coverage(current_node, index, 1);
 	  }
 	  
 	  current_orientation = db_node_get_orientation(&(current_window->kmer[j]),current_node, db_graph->kmer_size);
@@ -1192,7 +1187,7 @@ void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_
 	    
 	    printf("kmer i:%i j:%i:  %s %s %i\n",i,j,binary_kmer_to_seq(&(current_window->kmer[j]),db_graph->kmer_size,kmer_seq),
 		   binary_kmer_to_seq(binary_kmer_reverse_complement(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph->kmer_size,kmer_seq2),
-		   db_node_get_coverage(current_node, type, index));
+		   db_node_get_coverage(current_node, index));
 	  }
 	  
 	  if (j>0){
@@ -1204,7 +1199,7 @@ void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_
             *prev_full_ent == true ? "true" : "false");
 	    }
 	    else{ //this is the point at which the new element/node gets associated with the specific person
-	      db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size, type, index);
+	      db_node_add_edge(previous_node,current_node,previous_orientation,current_orientation, db_graph->kmer_size, index);
 	    }
 	  }
 	  previous_node = current_node;
@@ -1246,7 +1241,7 @@ void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, S
 	  //die("load_kmers_from_sliding_window_into_array: problem - current kmer not found\n");
 	}
 	if ( (require_nodes_to_lie_in_given_colour==true) && 
-	     (db_node_is_this_node_in_this_person_or_populations_graph(current_node, individual_edge_array, colour)==false) )
+	     (db_node_is_this_node_in_this_person_or_populations_graph(current_node, colour)==false) )
 	  {
 	    die("This current node does not exist in colour %d\n", colour);
 	  }
@@ -1727,8 +1722,8 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
     int i;
     for (i=0; i<(*num_cols_in_loaded_binary) ; i++)
       {
-	add_edges(current_node,individual_edge_array, i, get_edge_copy(node_from_file, individual_edge_array, i));
-	db_node_update_coverage(current_node, individual_edge_array, i, db_node_get_coverage(&node_from_file, individual_edge_array,i));
+	add_edges(current_node, i, get_edge_copy(node_from_file, i));
+	db_node_update_coverage(current_node, i, db_node_get_coverage(&node_from_file,i));
       }
 
   }
@@ -1819,7 +1814,7 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
   
   //Go through all the entries in the binary file
   // each time you load the info into a temporary node, and load them *** into colour number index ***
-  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, type, index, binfo.version))
+  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, index, binfo.version))
     {
       count++;
       found=false;//zam just added this
@@ -1836,14 +1831,14 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 	      current_node = hash_table_insert(element_get_key(element_get_kmer(&tmp_node),db_graph->kmer_size, &tmp_kmer), db_graph);
 	    }
 	  seq_length+=db_graph->kmer_size;
-	  add_edges(current_node,individual_edge_array, index, get_edge_copy(tmp_node, individual_edge_array, index));
+	  add_edges(current_node, index, get_edge_copy(tmp_node, index));
 	  if ( (load_all_kmers_but_only_increment_covg_on_new_ones==false)//usual case
 	       ||
 	       ( (load_all_kmers_but_only_increment_covg_on_new_ones==true) && (found==false)) //loading union, and this is new
 	       
 	       )
 	    {
-	      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&tmp_node, individual_edge_array,index) );
+	      db_node_update_coverage(current_node, index, db_node_get_coverage(&tmp_node,index) );
 	    }
 	}
       else
@@ -1851,11 +1846,11 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 	  current_node = hash_table_find(element_get_key(element_get_kmer(&tmp_node),db_graph->kmer_size, &tmp_kmer), db_graph);
 	  if (current_node !=NULL)
 	    {
-	      Edges pre_existing_edge = get_edge_copy(*current_node, individual_edge_array, colour_clean);
-	      Edges edge_from_binary  = get_edge_copy(tmp_node, individual_edge_array, index);
+	      Edges pre_existing_edge = get_edge_copy(*current_node, colour_clean);
+	      Edges edge_from_binary  = get_edge_copy(tmp_node, index);
 	      Edges edge_to_load = pre_existing_edge & edge_from_binary; //only load edge from binary if is in the cleaned colour also.
-	      add_edges(current_node,individual_edge_array, index,edge_to_load);
-	      db_node_update_coverage(current_node, individual_edge_array, index, db_node_get_coverage(&tmp_node, individual_edge_array,index));
+	      add_edges(current_node, index,edge_to_load);
+	      db_node_update_coverage(current_node, index, db_node_get_coverage(&tmp_node,index));
 	    }
 	}
 
@@ -2419,7 +2414,7 @@ int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_g
 	  {
 	    Orientation prev_orientation = db_node_get_orientation(&(current_window->kmer[index_kmers-1]),test_prev_node, kmer_size);
 	    
-	    if (! (db_node_edge_exist(test_prev_node, current_base, prev_orientation, type, index) ) )
+	    if (! (db_node_edge_exist(test_prev_node, current_base, prev_orientation, index) ) )
 	      {
 		//give up
 		//i=length;

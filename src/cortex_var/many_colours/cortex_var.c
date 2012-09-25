@@ -551,7 +551,7 @@ int main(int argc, char **argv)
     int j;
     for (j=0; j<NUMBER_OF_COLOURS; j++)
       {
-	reset_one_edge(node, or, nuc, individual_edge_array, j);
+	reset_one_edge(node, or, nuc, j);
       }
   }
   void apply_reset_to_all_edges_2(dBNode* node )
@@ -559,7 +559,7 @@ int main(int argc, char **argv)
     int j;
     for (j=0; j<NUMBER_OF_COLOURS; j++)
       {
-	      db_node_reset_edges(node, individual_edge_array, j);
+	      db_node_reset_edges(node, j);
       }
   }
   */
@@ -603,7 +603,7 @@ int main(int argc, char **argv)
       "or is > than the compile-time limit, of %d\n", 
 	       cmd_line->ref_colour, NUMBER_OF_COLOURS-1);
       }
-    Edges ed = get_edge_copy(*e, individual_edge_array, cmd_line->ref_colour);
+    Edges ed = get_edge_copy(*e, cmd_line->ref_colour);
     return ed;
   }
 

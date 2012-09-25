@@ -21,7 +21,7 @@ void mark_allele_with_all_1s_or_more(dBNode** allele, int len, int colour)
   int i;
   for (i=0; i<len; i++)
     {
-      db_node_increment_coverage(allele[i], individual_edge_array, colour);
+      db_node_increment_coverage(allele[i], colour);
     }
 }
 
@@ -48,7 +48,7 @@ void update_allele(dBNode** allele, int len, int colour, int covg, int eff_read_
       int j;
       for (j=u; (j<u+eff_read_len) && (j<len); j++)
 	{
-	  db_node_increment_coverage(allele[j], individual_edge_array, colour);
+	  db_node_increment_coverage(allele[j], colour);
 	}
     }
      
@@ -63,10 +63,10 @@ void zero_allele(dBNode** allele, int len, int colour_indiv, int colour_allele1,
   int i;
   for (i=0; i<len; i++)
     {
-      db_node_set_coverage(allele[i], individual_edge_array,  colour_indiv ,0);
-      db_node_set_coverage(allele[i], individual_edge_array,  colour_allele1 ,0);
-      db_node_set_coverage(allele[i], individual_edge_array,  colour_allele2 ,0);
-      db_node_set_coverage(allele[i], individual_edge_array,  colour_ref_minus_site,0);
+      db_node_set_coverage(allele[i],  colour_indiv ,0);
+      db_node_set_coverage(allele[i],  colour_allele1 ,0);
+      db_node_set_coverage(allele[i],  colour_allele2 ,0);
+      db_node_set_coverage(allele[i],  colour_ref_minus_site,0);
     }
 }
 
@@ -80,10 +80,10 @@ void zero_path_except_two_alleles_and_ref(dBNode** allele, int len, int colour_a
 	{
 	  if (!( (j==colour_allele1) || (j==colour_allele2) || (j==colour_ref_minus_site) ))
 	    {
-	      db_node_set_coverage(allele[i], individual_edge_array,  j ,0);
-	      db_node_set_coverage(allele[i], individual_edge_array,  j ,0);
-	      db_node_set_coverage(allele[i], individual_edge_array,  j, 0);
-	      db_node_set_coverage(allele[i], individual_edge_array,  j, 0);
+	      db_node_set_coverage(allele[i],  j ,0);
+	      db_node_set_coverage(allele[i],  j ,0);
+	      db_node_set_coverage(allele[i],  j, 0);
+	      db_node_set_coverage(allele[i],  j, 0);
 	    }
 	}
     }

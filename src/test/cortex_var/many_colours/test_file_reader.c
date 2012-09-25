@@ -154,27 +154,27 @@ void test_dump_load_sv_trio_binary()
     CU_ASSERT(test_element2 != NULL);
     CU_ASSERT(test_element1 == test_element2);
     // Checking that we count KMER coverage. ie this kmer occurs many times in the same read
-    CU_ASSERT(db_node_get_coverage(test_element1,individual_edge_array,0)==6);
+    CU_ASSERT(db_node_get_coverage(test_element1,0)==6);
 
     CU_ASSERT(test_element3 != NULL);
     CU_ASSERT(test_element4 != NULL);
     CU_ASSERT(test_element3 == test_element4);
-    CU_ASSERT(db_node_get_coverage(test_element3,individual_edge_array,0)==1);
+    CU_ASSERT(db_node_get_coverage(test_element3,0)==1);
 
     CU_ASSERT(test_element5 != NULL);
     CU_ASSERT(test_element6 != NULL);
     CU_ASSERT(test_element5 == test_element6);
-    CU_ASSERT(db_node_get_coverage(test_element5,individual_edge_array,0)==1);
+    CU_ASSERT(db_node_get_coverage(test_element5,0)==1);
 
     CU_ASSERT(test_element7 != NULL);
     CU_ASSERT(test_element8 != NULL);
     CU_ASSERT(test_element7 == test_element8);
-    CU_ASSERT(db_node_get_coverage(test_element7,individual_edge_array,0)==1);
+    CU_ASSERT(db_node_get_coverage(test_element7,0)==1);
 
     CU_ASSERT(test_element9 != NULL);
     CU_ASSERT(test_element10 != NULL);
     CU_ASSERT(test_element9 == test_element10);
-    CU_ASSERT(db_node_get_coverage(test_element9,individual_edge_array,0)==1);
+    CU_ASSERT(db_node_get_coverage(test_element9,0)==1);
 
     CU_ASSERT(test_element11 == NULL);
     CU_ASSERT(test_element12 == NULL);
@@ -193,56 +193,56 @@ void test_dump_load_sv_trio_binary()
     Nucleotide base;
 
     // AAA -A-> AAA
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Adenine);
 
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Thymine);
 
     //GGC -T-> GCT
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element3, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element3, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Thymine);
 
 
     //TAG -G-> AGG
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element7, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element7, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Guanine);
 
     //AGC -C-> GCC
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element6, forward,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element6, forward,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Cytosine);
 
     //CCT -A-> CTA
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element10, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element10, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Adenine);
 
     //add one extra arrows by had -- this breaks the graph - it is only to check that the arrows get set correctly
 
-    add_edges(test_element1,individual_edge_array,0,0x02);
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base, individual_edge_array, 0)==false);
+    add_edges(test_element1,0,0x02);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base, 0)==false);
 
 
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Thymine);
 
-    CU_ASSERT(db_node_edge_exist(test_element1, Adenine, forward, individual_edge_array, 0)==true);
-    CU_ASSERT(db_node_edge_exist(test_element1, Cytosine, forward, individual_edge_array, 0)==true);
-    CU_ASSERT(db_node_edge_exist(test_element1, Guanine, forward, individual_edge_array, 0)==false);
-    CU_ASSERT(db_node_edge_exist(test_element1, Thymine, forward, individual_edge_array, 0)==false);
+    CU_ASSERT(db_node_edge_exist(test_element1, Adenine, forward, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1, Cytosine, forward, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1, Guanine, forward, 0)==false);
+    CU_ASSERT(db_node_edge_exist(test_element1, Thymine, forward, 0)==false);
 
 
 
-    add_edges(test_element1, individual_edge_array,0,0x20);
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, individual_edge_array, 0)==false);
+    add_edges(test_element1,0,0x20);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, 0)==false);
 
-    CU_ASSERT(db_node_edge_exist(test_element1, Adenine, forward, individual_edge_array, 0)==true);
-    CU_ASSERT(db_node_edge_exist(test_element1, Cytosine, forward, individual_edge_array, 0)==true);
-    CU_ASSERT(db_node_edge_exist(test_element1, Guanine, forward, individual_edge_array, 0)==false);
-    CU_ASSERT(db_node_edge_exist(test_element1, Thymine, forward, individual_edge_array, 0)==false);
-    CU_ASSERT(db_node_edge_exist(test_element1, Adenine, reverse, individual_edge_array, 0)==false);
-    CU_ASSERT(db_node_edge_exist(test_element1, Cytosine, reverse, individual_edge_array, 0)==true);
-    CU_ASSERT(db_node_edge_exist(test_element1, Guanine, reverse, individual_edge_array, 0)==false);
-    CU_ASSERT(db_node_edge_exist(test_element1, Thymine, reverse, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1, Adenine, forward, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1, Cytosine, forward, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1, Guanine, forward, 0)==false);
+    CU_ASSERT(db_node_edge_exist(test_element1, Thymine, forward, 0)==false);
+    CU_ASSERT(db_node_edge_exist(test_element1, Adenine, reverse, 0)==false);
+    CU_ASSERT(db_node_edge_exist(test_element1, Cytosine, reverse, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1, Guanine, reverse, 0)==false);
+    CU_ASSERT(db_node_edge_exist(test_element1, Thymine, reverse, 0)==true);
 
 
     hash_table_free(&db_graph_post);
@@ -377,24 +377,24 @@ void test_dump_load_sv_trio_binary()
     //Note we know that read1 forms a supernode that is a loop.
 
     // TAACCCTAACCCTAACCCTAACCCTAACCCTAA ----- C ----> AACCCTAACCCTAACCCTAACCCTAACCCTAAC
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Cytosine);
 
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Guanine);
 
     // AACCCTAACCCTAACCCTAACCCTAACCCTAAC ----C  ----> ACCCTAACCCTAACCCTAACCCTAACCCTAACC
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element3, forward,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element3, forward,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Cytosine);
 
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element3, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element3, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Adenine);
 
     // ACCCTAACCCTAACCCTAACCCTAACCCTAACC ---C -----> CCCTAACCCTAACCCTAACCCTAACCCTAACCC
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element5, forward,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element5, forward,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Cytosine);
 
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element5, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element5, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Thymine);
 
     //OK. Looks good.
@@ -617,22 +617,22 @@ void test_load_singlecolour_binary()
   CU_ASSERT(test_element1 != NULL);
   CU_ASSERT(test_element2 != NULL);
   CU_ASSERT(test_element1 == test_element2);
-  CU_ASSERT(db_node_get_coverage(test_element1,individual_edge_array,0)==4);
+  CU_ASSERT(db_node_get_coverage(test_element1,0)==4);
 
   CU_ASSERT(test_element3 != NULL);
   CU_ASSERT(test_element4 != NULL);
   CU_ASSERT(test_element3 == test_element4);
-  CU_ASSERT(db_node_get_coverage(test_element3,individual_edge_array,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element3,0)==2);
 
   CU_ASSERT(test_element5 != NULL);
   CU_ASSERT(test_element6 != NULL);
   CU_ASSERT(test_element5 == test_element6);
-  CU_ASSERT(db_node_get_coverage(test_element5,individual_edge_array,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element5,0)==2);
 
   CU_ASSERT(test_element7 != NULL);
   CU_ASSERT(test_element8 != NULL);
   CU_ASSERT(test_element7 == test_element8);
-  CU_ASSERT(db_node_get_coverage(test_element7,individual_edge_array,0)==1);
+  CU_ASSERT(db_node_get_coverage(test_element7,0)==1);
 
 
   CU_ASSERT(test_element9 != NULL);
@@ -1053,17 +1053,17 @@ void test_load_individual_binaries_into_sv_trio()
       //in person1 we know this kmer GATCGGGTGTCCGCACTAAGTTCGGCATCAA has an Thymine edge. This is in the forward direction with respect to the node, as the reverse complement
       //  of GATCGGGTGTCCGCACTAAGTTCGGCATCAA starts with an T, and so is bigger
       Nucleotide base;
-      CU_ASSERT(db_node_has_precisely_one_edge(test_element3_person1, forward,&base, individual_edge_array, 1)==true);
-      CU_ASSERT(db_node_edge_exist(test_element3_person1, Thymine, forward, individual_edge_array, 1)==true);
+      CU_ASSERT(db_node_has_precisely_one_edge(test_element3_person1, forward,&base, 1)==true);
+      CU_ASSERT(db_node_edge_exist(test_element3_person1, Thymine, forward, 1)==true);
       
       
       //and the coup de grace. Does this kmer GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG node have two different edges, for person 0 and person 2. ie does person 0 have precisely a G,
       // and person 2 an A?
       
-      CU_ASSERT(db_node_has_precisely_one_edge(test_element1_person0, reverse,&base, individual_edge_array, 0)==true);
-      CU_ASSERT(db_node_edge_exist(test_element1_person0, Guanine, reverse, individual_edge_array, 0)==true);
-      CU_ASSERT(db_node_has_precisely_one_edge(test_element1_person2, reverse,&base, individual_edge_array, 2)==true);
-      CU_ASSERT(db_node_edge_exist(test_element1_person2, Adenine, reverse, individual_edge_array, 2)==true);
+      CU_ASSERT(db_node_has_precisely_one_edge(test_element1_person0, reverse,&base, 0)==true);
+      CU_ASSERT(db_node_edge_exist(test_element1_person0, Guanine, reverse, 0)==true);
+      CU_ASSERT(db_node_has_precisely_one_edge(test_element1_person2, reverse,&base, 2)==true);
+      CU_ASSERT(db_node_edge_exist(test_element1_person2, Adenine, reverse, 2)==true);
       
       
       //from now on we are pretty happy. It's loading the right nodes, and putting the edges in the right place.
@@ -1109,18 +1109,18 @@ void test_load_individual_binaries_into_sv_trio()
     // as the reverse complement of GATCGGGTGTCCGCACTAAGTTCGGCATCAA starts
     // with an T, and so is bigger
     Nucleotide base;
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element3_person1, forward,&base, individual_edge_array, 1)==true);
-    CU_ASSERT(db_node_edge_exist(test_element3_person1, Thymine, forward, individual_edge_array, 1)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element3_person1, forward,&base, 1)==true);
+    CU_ASSERT(db_node_edge_exist(test_element3_person1, Thymine, forward, 1)==true);
 
 
     //and the coup de grace. Does this kmer GTGGGAGGATCGCTTGAGTCCAGGAGTTCTG node
     // have two different edges, for person 0 and person 2. ie does person 0
     // have precisely a G, and person 2 an A?
 
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1_person0, reverse,&base, individual_edge_array, 0)==true);
-    CU_ASSERT(db_node_edge_exist(test_element1_person0, Guanine, reverse, individual_edge_array, 0)==true);
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1_person2, reverse,&base, individual_edge_array, 2)==true);
-    CU_ASSERT(db_node_edge_exist(test_element1_person2, Adenine, reverse, individual_edge_array, 2)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1_person0, reverse,&base, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1_person0, Guanine, reverse, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1_person2, reverse,&base, 2)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1_person2, Adenine, reverse, 2)==true);
 
 
     // From now on we are pretty happy. It's loading the right nodes, and
@@ -1215,24 +1215,24 @@ void test_coverage_is_correctly_counted_on_loading_from_file()
   BinaryKmer tmp_kmer2;
 
   dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TTT", kmer_size, &tmp_kmer), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(db_node_get_coverage(test_element1, individual_edge_array,0)==8);
+  CU_ASSERT(db_node_get_coverage(test_element1,0)==8);
   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAT", kmer_size, &tmp_kmer), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(db_node_get_coverage(test_element1, individual_edge_array,0)==9);
+  CU_ASSERT(db_node_get_coverage(test_element1,0)==9);
 
   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size, &tmp_kmer), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(db_node_get_coverage(test_element1, individual_edge_array,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element1,0)==2);
   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GGC", kmer_size, &tmp_kmer), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(db_node_get_coverage(test_element1, individual_edge_array,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element1,0)==2);
   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GCA", kmer_size, &tmp_kmer), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(db_node_get_coverage(test_element1, individual_edge_array,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element1,0)==2);
   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("CAG", kmer_size, &tmp_kmer), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(db_node_get_coverage(test_element1, individual_edge_array,0)==2)
+  CU_ASSERT(db_node_get_coverage(test_element1,0)==2)
   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AGT", kmer_size, &tmp_kmer), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(db_node_get_coverage(test_element1, individual_edge_array,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element1,0)==2);
   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("GTC", kmer_size, &tmp_kmer), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(db_node_get_coverage(test_element1, individual_edge_array,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element1,0)==2);
   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("TCT", kmer_size, &tmp_kmer), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(db_node_get_coverage(test_element1, individual_edge_array,0)==4);
+  CU_ASSERT(db_node_get_coverage(test_element1,0)==4);
 
   hash_table_free(&db_graph);
 }
@@ -5983,93 +5983,93 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
   CU_ASSERT(test_element1 != NULL);
   CU_ASSERT(test_element2 != NULL);
   CU_ASSERT(test_element1 == test_element2);
-  CU_ASSERT(db_node_get_coverage(test_element1,individual_edge_array,0)==6);
-  CU_ASSERT(db_node_get_coverage(test_element1,individual_edge_array,1)==6);
-  CU_ASSERT(get_edge_copy(*test_element1, individual_edge_array,0)==get_edge_copy(*test_element1, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element1,0)==6);
+  CU_ASSERT(db_node_get_coverage(test_element1,1)==6);
+  CU_ASSERT(get_edge_copy(*test_element1,0)==get_edge_copy(*test_element1,1));
 
   CU_ASSERT(test_element3 != NULL);
   CU_ASSERT(test_element4 != NULL);
   CU_ASSERT(test_element3 == test_element4);
-  CU_ASSERT(db_node_get_coverage(test_element3,individual_edge_array,0)==3);
-  CU_ASSERT(db_node_get_coverage(test_element3,individual_edge_array,1)==3);
-  CU_ASSERT(get_edge_copy(*test_element3, individual_edge_array,0)==get_edge_copy(*test_element3, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element3,0)==3);
+  CU_ASSERT(db_node_get_coverage(test_element3,1)==3);
+  CU_ASSERT(get_edge_copy(*test_element3,0)==get_edge_copy(*test_element3,1));
 
   CU_ASSERT(test_element5 != NULL);
   CU_ASSERT(test_element6 != NULL);
   CU_ASSERT(test_element5 == test_element6);
-  CU_ASSERT(db_node_get_coverage(test_element5,individual_edge_array,0)==3);
-  CU_ASSERT(db_node_get_coverage(test_element5,individual_edge_array,1)==3);
-  CU_ASSERT(get_edge_copy(*test_element5, individual_edge_array,0)==get_edge_copy(*test_element5, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element5,0)==3);
+  CU_ASSERT(db_node_get_coverage(test_element5,1)==3);
+  CU_ASSERT(get_edge_copy(*test_element5,0)==get_edge_copy(*test_element5,1));
 
   CU_ASSERT(test_element7 != NULL);
   CU_ASSERT(test_element8 != NULL);
   CU_ASSERT(test_element7 == test_element8);
-  CU_ASSERT(db_node_get_coverage(test_element7,individual_edge_array,0)==3);
-  CU_ASSERT(db_node_get_coverage(test_element7,individual_edge_array,1)==3);
-  CU_ASSERT(get_edge_copy(*test_element7, individual_edge_array,0)==get_edge_copy(*test_element7, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element7,0)==3);
+  CU_ASSERT(db_node_get_coverage(test_element7,1)==3);
+  CU_ASSERT(get_edge_copy(*test_element7,0)==get_edge_copy(*test_element7,1));
 
   CU_ASSERT(test_element9 != NULL);
   CU_ASSERT(test_element10 != NULL);
   CU_ASSERT(test_element9 == test_element10);
-  CU_ASSERT(db_node_get_coverage(test_element9,individual_edge_array,0)==2);
-  CU_ASSERT(db_node_get_coverage(test_element9,individual_edge_array,1)==2);
-  CU_ASSERT(get_edge_copy(*test_element9, individual_edge_array,0)==get_edge_copy(*test_element9, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element9,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element9,1)==2);
+  CU_ASSERT(get_edge_copy(*test_element9,0)==get_edge_copy(*test_element9,1));
 
   CU_ASSERT(test_element11 != NULL);
   CU_ASSERT(test_element12 != NULL);
   CU_ASSERT(test_element11 == test_element12);
-  CU_ASSERT(db_node_get_coverage(test_element11,individual_edge_array,0)==3);
-  CU_ASSERT(db_node_get_coverage(test_element11,individual_edge_array,1)==3);
-  CU_ASSERT(get_edge_copy(*test_element11, individual_edge_array,0)==get_edge_copy(*test_element11, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element11,0)==3);
+  CU_ASSERT(db_node_get_coverage(test_element11,1)==3);
+  CU_ASSERT(get_edge_copy(*test_element11,0)==get_edge_copy(*test_element11,1));
 
   CU_ASSERT(test_element13 != NULL);
   CU_ASSERT(test_element14 != NULL);
   CU_ASSERT(test_element13 == test_element14);
-  CU_ASSERT(db_node_get_coverage(test_element13,individual_edge_array,0)==2);
-  CU_ASSERT(db_node_get_coverage(test_element13,individual_edge_array,1)==2);
-  CU_ASSERT(get_edge_copy(*test_element13, individual_edge_array,0)==get_edge_copy(*test_element13, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element13,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element13,1)==2);
+  CU_ASSERT(get_edge_copy(*test_element13,0)==get_edge_copy(*test_element13,1));
 
   CU_ASSERT(test_element15 != NULL);
   CU_ASSERT(test_element16 != NULL);
   CU_ASSERT(test_element15 == test_element16);
-  CU_ASSERT(db_node_get_coverage(test_element15,individual_edge_array,0)==2);
-  CU_ASSERT(db_node_get_coverage(test_element15,individual_edge_array,1)==2);
-  CU_ASSERT(get_edge_copy(*test_element15, individual_edge_array,0)==get_edge_copy(*test_element15, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element15,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element15,1)==2);
+  CU_ASSERT(get_edge_copy(*test_element15,0)==get_edge_copy(*test_element15,1));
 
   CU_ASSERT(test_element17 != NULL);
   CU_ASSERT(test_element18 != NULL);
   CU_ASSERT(test_element17 == test_element18);
-  CU_ASSERT(db_node_get_coverage(test_element17,individual_edge_array,0)==2);
-  CU_ASSERT(db_node_get_coverage(test_element17,individual_edge_array,1)==2);
-  CU_ASSERT(get_edge_copy(*test_element17, individual_edge_array,0)==get_edge_copy(*test_element17, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element17,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element17,1)==2);
+  CU_ASSERT(get_edge_copy(*test_element17,0)==get_edge_copy(*test_element17,1));
 
   CU_ASSERT(test_element19 != NULL);
   CU_ASSERT(test_element20 != NULL);
   CU_ASSERT(test_element19 == test_element20);
-  CU_ASSERT(db_node_get_coverage(test_element19,individual_edge_array,0)==2);
-  CU_ASSERT(db_node_get_coverage(test_element19,individual_edge_array,1)==2);
-  CU_ASSERT(get_edge_copy(*test_element19, individual_edge_array,0)==get_edge_copy(*test_element19, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element19,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element19,1)==2);
+  CU_ASSERT(get_edge_copy(*test_element19,0)==get_edge_copy(*test_element19,1));
 
   CU_ASSERT(test_element21 != NULL);
   CU_ASSERT(test_element22 != NULL);
   CU_ASSERT(test_element21 == test_element22);
-  CU_ASSERT(db_node_get_coverage(test_element21,individual_edge_array,0)==2);
-  CU_ASSERT(db_node_get_coverage(test_element21,individual_edge_array,1)==2);
-  CU_ASSERT(get_edge_copy(*test_element21, individual_edge_array,0)==get_edge_copy(*test_element21, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element21,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element21,1)==2);
+  CU_ASSERT(get_edge_copy(*test_element21,0)==get_edge_copy(*test_element21,1));
 
   CU_ASSERT(test_element23 != NULL);
   CU_ASSERT(test_element24 != NULL);
   CU_ASSERT(test_element23 == test_element24);
-  CU_ASSERT(db_node_get_coverage(test_element23,individual_edge_array,0)==2);
-  CU_ASSERT(db_node_get_coverage(test_element23,individual_edge_array,1)==2);
-  CU_ASSERT(get_edge_copy(*test_element23, individual_edge_array,0)==get_edge_copy(*test_element23, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element23,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element23,1)==2);
+  CU_ASSERT(get_edge_copy(*test_element23,0)==get_edge_copy(*test_element23,1));
 
   CU_ASSERT(test_element25 != NULL);
   CU_ASSERT(test_element26 != NULL);
   CU_ASSERT(test_element25 == test_element26);
-  CU_ASSERT(db_node_get_coverage(test_element25,individual_edge_array,0)==2);
-  CU_ASSERT(db_node_get_coverage(test_element25,individual_edge_array,1)==2);
-  CU_ASSERT(get_edge_copy(*test_element25, individual_edge_array,0)==get_edge_copy(*test_element25, individual_edge_array,1));
+  CU_ASSERT(db_node_get_coverage(test_element25,0)==2);
+  CU_ASSERT(db_node_get_coverage(test_element25,1)==2);
+  CU_ASSERT(get_edge_copy(*test_element25,0)==get_edge_copy(*test_element25,1));
 
   //these nodes should just not be there
   CU_ASSERT(test_element27 == NULL);
@@ -6187,27 +6187,27 @@ void test_load_binversion5_binary()
     CU_ASSERT(test_element1 == test_element2);
     // Checking that we count KMER coverage.
     // ie this kmer occurs many times in the same read
-    CU_ASSERT(db_node_get_coverage(test_element1,individual_edge_array,0)==6);
+    CU_ASSERT(db_node_get_coverage(test_element1,0)==6);
 
     CU_ASSERT(test_element3 != NULL);
     CU_ASSERT(test_element4 != NULL);
     CU_ASSERT(test_element3 == test_element4);
-    CU_ASSERT(db_node_get_coverage(test_element3,individual_edge_array,0)==1);
+    CU_ASSERT(db_node_get_coverage(test_element3,0)==1);
 
     CU_ASSERT(test_element5 != NULL);
     CU_ASSERT(test_element6 != NULL);
     CU_ASSERT(test_element5 == test_element6);
-    CU_ASSERT(db_node_get_coverage(test_element5,individual_edge_array,0)==1);
+    CU_ASSERT(db_node_get_coverage(test_element5,0)==1);
 
     CU_ASSERT(test_element7 != NULL);
     CU_ASSERT(test_element8 != NULL);
     CU_ASSERT(test_element7 == test_element8);
-    CU_ASSERT(db_node_get_coverage(test_element7,individual_edge_array,0)==1);
+    CU_ASSERT(db_node_get_coverage(test_element7,0)==1);
 
     CU_ASSERT(test_element9 != NULL);
     CU_ASSERT(test_element10 != NULL);
     CU_ASSERT(test_element9 == test_element10);
-    CU_ASSERT(db_node_get_coverage(test_element9,individual_edge_array,0)==1);
+    CU_ASSERT(db_node_get_coverage(test_element9,0)==1);
 
     CU_ASSERT(test_element11 == NULL);
     CU_ASSERT(test_element12 == NULL);
@@ -6225,54 +6225,54 @@ void test_load_binversion5_binary()
     Nucleotide base;
 
     // AAA -A-> AAA
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Adenine);
 
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Thymine);
 
     //GGC -T-> GCT
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element3, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element3, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Thymine);
 
 
     //TAG -G-> AGG
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element7, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element7, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Guanine);
 
     //AGC -C-> GCC
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element6, forward,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element6, forward,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Cytosine);
 
     //CCT -A-> CTA
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element10, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element10, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Adenine);
 
     // Add one extra arrows by had -- this breaks the graph -
     // it is only to check that the arrows get set correctly
 
-    add_edges(test_element1,individual_edge_array,0,0x02);
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base, individual_edge_array, 0)==false);
+    add_edges(test_element1,0,0x02);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base, 0)==false);
 
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Thymine);
 
-    CU_ASSERT(db_node_edge_exist(test_element1, Adenine, forward, individual_edge_array, 0)==true);
-    CU_ASSERT(db_node_edge_exist(test_element1, Cytosine, forward, individual_edge_array, 0)==true);
-    CU_ASSERT(db_node_edge_exist(test_element1, Guanine, forward, individual_edge_array, 0)==false);
-    CU_ASSERT(db_node_edge_exist(test_element1, Thymine, forward, individual_edge_array, 0)==false);
+    CU_ASSERT(db_node_edge_exist(test_element1, Adenine, forward, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1, Cytosine, forward, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1, Guanine, forward, 0)==false);
+    CU_ASSERT(db_node_edge_exist(test_element1, Thymine, forward, 0)==false);
 
-    add_edges(test_element1, individual_edge_array,0,0x20);
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, individual_edge_array, 0)==false);
+    add_edges(test_element1,0,0x20);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, 0)==false);
 
-    CU_ASSERT(db_node_edge_exist(test_element1, Adenine, forward, individual_edge_array, 0)==true);
-    CU_ASSERT(db_node_edge_exist(test_element1, Cytosine, forward, individual_edge_array, 0)==true);
-    CU_ASSERT(db_node_edge_exist(test_element1, Guanine, forward, individual_edge_array, 0)==false);
-    CU_ASSERT(db_node_edge_exist(test_element1, Thymine, forward, individual_edge_array, 0)==false);
-    CU_ASSERT(db_node_edge_exist(test_element1, Adenine, reverse, individual_edge_array, 0)==false);
-    CU_ASSERT(db_node_edge_exist(test_element1, Cytosine, reverse, individual_edge_array, 0)==true);
-    CU_ASSERT(db_node_edge_exist(test_element1, Guanine, reverse, individual_edge_array, 0)==false);
-    CU_ASSERT(db_node_edge_exist(test_element1, Thymine, reverse, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1, Adenine, forward, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1, Cytosine, forward, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1, Guanine, forward, 0)==false);
+    CU_ASSERT(db_node_edge_exist(test_element1, Thymine, forward, 0)==false);
+    CU_ASSERT(db_node_edge_exist(test_element1, Adenine, reverse, 0)==false);
+    CU_ASSERT(db_node_edge_exist(test_element1, Cytosine, reverse, 0)==true);
+    CU_ASSERT(db_node_edge_exist(test_element1, Guanine, reverse, 0)==false);
+    CU_ASSERT(db_node_edge_exist(test_element1, Thymine, reverse, 0)==true);
 
     hash_table_free(&db_graph_post);
     graph_info_free(ginfo);
@@ -6408,24 +6408,24 @@ void test_load_binversion5_binary()
     Nucleotide base;
 
     // TAACCCTAACCCTAACCCTAACCCTAACCCTAA ----- C ----> AACCCTAACCCTAACCCTAACCCTAACCCTAAC
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, forward,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Cytosine);
 
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element1, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Guanine);
 
     // AACCCTAACCCTAACCCTAACCCTAACCCTAAC ----C  ----> ACCCTAACCCTAACCCTAACCCTAACCCTAACC
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element3, forward,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element3, forward,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Cytosine);
 
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element3, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element3, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Adenine);
 
     // ACCCTAACCCTAACCCTAACCCTAACCCTAACC ---C -----> CCCTAACCCTAACCCTAACCCTAACCCTAACCC
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element5, forward,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element5, forward,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Cytosine);
 
-    CU_ASSERT(db_node_has_precisely_one_edge(test_element5, reverse,&base, individual_edge_array, 0)==true);
+    CU_ASSERT(db_node_has_precisely_one_edge(test_element5, reverse,&base, 0)==true);
     CU_ASSERT_EQUAL(base,Thymine);
 
     // OK. Looks good.

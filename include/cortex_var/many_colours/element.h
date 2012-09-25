@@ -24,8 +24,6 @@
  *
  * **********************************************************************
  */
-
-
 /*
   element.h defines the interface for the de Bruijn graph node. The implementation is complemented by 
   a hash table that stores every node indexed by kmers (BinaryKmers). 
@@ -94,11 +92,10 @@ void element_assign(Element* e1, Element* e2);
 
 
 // utility function for getting the desired edge char, by specifying if talking
-// about a population or an individual and giving the appropriate index in the
-// relevant array
+// about a population or an individual and giving the appropriate colour
 
 // gets copy of edge
-Edges get_edge_copy(const Element e, EdgeArrayType type, int index);
+Edges get_edge_copy(const Element e, int colour);
 Edges get_union_of_edges(Element e);
 Edges element_get_colour_union_of_all_colours(const Element*);
 
@@ -118,98 +115,107 @@ uint32_t element_get_covg_colour1(const dBNode* e);
 
 uint32_t element_get_covg_last_colour(const dBNode* e);
 
-void add_edges(Element* e, EdgeArrayType type, int index, Edges edge_char);
-void set_edges(Element* e, EdgeArrayType type, int index, Edges edge_char);
-void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide,
-                    EdgeArrayType type, int index);
+void add_edges(Element* e, int colour, Edges edge_char);
+void set_edges(Element* e, int colour, Edges edge_char);
+void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, int colour);
 
 int element_get_number_of_people_or_pops_containing_this_element(Element* e);
 
 
-boolean element_smaller(Element,Element);
-BinaryKmer* element_get_kmer(Element *);
-boolean element_is_key(Key,Element, short kmer_size);
+boolean element_smaller(Element e1, Element e2);
+BinaryKmer* element_get_kmer(Element *e);
+boolean element_is_key(Key key, Element e, short kmer_size);
 Key element_get_key(BinaryKmer*,short kmer_size, Key preallocated_key);
 void element_initialise(Element *,Key, short kmer_size);
 void element_initialise_kmer_covgs_edges_and_status_to_zero(Element * e);
 
-void element_set_kmer(Element * e, Key kmer, short kmer_size);
+void element_set_kmer(Element *e, Key kmer, short kmer_size);
 
 
-//reverse orientation
+// reverse orientation
 Orientation opposite_orientation(Orientation);
 Orientation db_node_get_orientation(BinaryKmer*, dBNode *, short kmer_size);
 
-//add an edge between nodes -- NB: it adds both edges: forward and reverse
-boolean db_node_add_edge(dBNode *, dBNode *, Orientation, Orientation, short kmer_size, EdgeArrayType edge_type, int edge_index); 
+// add an edge between nodes -- NB: it adds both edges: forward and reverse
+boolean db_node_add_edge(dBNode *, dBNode *, Orientation, Orientation, short kmer_size, int colour); 
 
 
-//returns yes if the label defined by the nucleotide coresponds to an 
-//outgoing edge in the side defined by the orientation.   
-boolean db_node_edge_exist(dBNode *, Nucleotide, Orientation, EdgeArrayType edge_type, int edge_index);
+// returns yes if the label defined by the nucleotide coresponds to an 
+// outgoing edge in the side defined by the orientation.   
+boolean db_node_edge_exist(dBNode *e, Nucleotide n, Orientation o, int colour);
 
-//final argument f is a function that returns an Edge that is a function of the different colured edges in a node.                                                                                       // eg we might be interested in the union of all the coloured edges in the graph, or just the colour/edge for the first person,                                                                          //    or the union of all edges except that corresponding to the reference.
-boolean db_node_edge_exist_within_specified_function_of_coloured_edges(dBNode * element,Nucleotide base,Orientation orientation, Edges (*f)(const Element* ));
+// final argument f is a function that returns an Edge that is a function of the
+// different colured edges in a node. e.g. we might be interested in the union
+// of all the coloured edges in the graph, or just the colour/edge for the first
+// person, or the union of all edges except that corresponding to the reference.
+boolean db_node_edge_exist_within_specified_function_of_coloured_edges(
+  dBNode *element, Nucleotide base,
+  Orientation orientation, Edges (*f)(const Element* ));
 
 
 //returns the label of the first outgoing edge -- leaving from the side 
 //defined by orientation. 
-boolean db_node_has_precisely_one_edge(dBNode *, Orientation, Nucleotide *, EdgeArrayType edge_type, int edge_index);
+boolean db_node_has_precisely_one_edge(dBNode *e, Orientation o, Nucleotide *n, int colour);
 
 
-boolean db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(dBNode * node, Orientation orientation, Nucleotide * nucleotide, 
-									      Edges (*get_colour)(const dBNode*) );
+boolean db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(
+  dBNode * node, Orientation orientation, Nucleotide * nucleotide, 
+	Edges (*get_colour)(const dBNode*) );
 
-boolean db_node_has_precisely_one_edge_in_union_graph_over_all_people(dBNode * node, Orientation orientation, Nucleotide * nucleotide);
+boolean db_node_has_precisely_one_edge_in_union_graph_over_all_people(
+  dBNode * node, Orientation orientation, Nucleotide * nucleotide);
 
-boolean db_node_has_precisely_two_edges(dBNode * node, Orientation orientation, Nucleotide * nucleotide1, Nucleotide * nucleotide2, EdgeArrayType type, int index);
+boolean db_node_has_precisely_two_edges(dBNode * node, Orientation orientation,
+                                        Nucleotide *n1, Nucleotide *n2, int colour);
 
 void db_node_reset_all_edges_for_all_people_and_pops_to_zero(Element* e);
 
 //forgets about the edges
-void db_node_reset_edges(dBNode *, EdgeArrayType, int  );
+void db_node_reset_edges(dBNode *e, int colour);
 
-void db_node_reset_edge(dBNode *, Orientation, Nucleotide, EdgeArrayType, int );
+void db_node_reset_edge(dBNode *e, Orientation o, Nucleotide n, int colour);
 
 
 
 //TODO - maybe do not need to export this:
-void db_node_reset_specified_edges(dBNode * node, Orientation orientation, Nucleotide nucleotide, void (*f)(dBNode*, Orientation, Nucleotide)  );
+void db_node_reset_specified_edges(dBNode * node, Orientation orientation,
+                                   Nucleotide nucleotide,
+                                   void (*f)(dBNode*, Orientation, Nucleotide));
 
 
 //check that the edges are 0's
-boolean db_node_edges_reset(dBNode * node, EdgeArrayType edge_type, int edge_index);
+boolean db_node_edges_reset(dBNode *node, int colour);
 
-boolean db_node_check_status(dBNode * node, NodeStatus status);
-boolean db_node_check_status_not_pruned(dBNode * node);
-boolean db_node_check_status_not_pruned_or_visited(dBNode * node);
-boolean db_node_check_status_to_be_dumped(dBNode * node);
-boolean db_node_check_status_is_not_visited(dBNode* node);
+boolean db_node_check_status(dBNode *node, NodeStatus status);
+boolean db_node_check_status_not_pruned(dBNode *node);
+boolean db_node_check_status_not_pruned_or_visited(dBNode *node);
+boolean db_node_check_status_to_be_dumped(dBNode *node);
+boolean db_node_check_status_is_not_visited(dBNode *node);
 
 
-void db_node_set_status(dBNode * node,NodeStatus status);
-void db_node_trio_aware_set_pruned_status(dBNode * node, int index);
-void db_node_set_status_to_none(dBNode * node);
+void db_node_set_status(dBNode *node,NodeStatus status);
+void db_node_trio_aware_set_pruned_status(dBNode *node, int colour);
+void db_node_set_status_to_none(dBNode *node);
 
 
 
 //actions and conditions 
 
-void db_node_action_set_status_none(dBNode * node);
-void db_node_action_set_status_of_unpruned_to_none(dBNode * node);
+void db_node_action_set_status_none(dBNode *node);
+void db_node_action_set_status_of_unpruned_to_none(dBNode *node);
 
-void db_node_action_set_status_pruned(dBNode * node);
-void db_node_action_set_status_visited(dBNode * node);
-void db_node_action_set_status_special_visited(dBNode * node);
-boolean db_node_check_status_special(dBNode* node);
-void db_node_action_specialise_status(dBNode * node);
-void db_node_action_unspecialise_status(dBNode * node);
+void db_node_action_set_status_pruned(dBNode *node);
+void db_node_action_set_status_visited(dBNode *node);
+void db_node_action_set_status_special_visited(dBNode *node);
+boolean db_node_check_status_special(dBNode*node);
+void db_node_action_specialise_status(dBNode *node);
+void db_node_action_unspecialise_status(dBNode *node);
 
-void db_node_action_set_status_ignore_this_node(dBNode * node);
+void db_node_action_set_status_ignore_this_node(dBNode *node);
 
-void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode * node);
+void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode *node);
 
-void db_node_action_unset_status_visited_or_visited_and_exists_in_reference(dBNode * node);
+void db_node_action_unset_status_visited_or_visited_and_exists_in_reference(dBNode *node);
 
 void db_node_action_unset_status_visited_or_visited_and_exists_in_reference_or_ignore_this_node(dBNode * node);
 
@@ -236,44 +242,50 @@ boolean db_node_condition_always_true(dBNode* node);
 
 
 
-void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
-void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, int update);
-uint32_t db_node_get_coverage_tolerate_null(const dBNode* const e, int index);
-uint32_t db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index);
-void db_node_set_coverage(dBNode* e, EdgeArrayType type, int colour, uint32_t covg);
-uint32_t db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, uint32_t (*get_covg)(const dBNode*) );
+void db_node_increment_coverage(dBNode* e, int colour);
+void db_node_update_coverage(dBNode* e, int colour, int update);
+uint32_t db_node_get_coverage_tolerate_null(const dBNode* const e, int colour);
+uint32_t db_node_get_coverage(const dBNode* const e, int colour);
+void db_node_set_coverage(dBNode* e, int colour, uint32_t covg);
+
+uint32_t db_node_get_coverage_in_subgraph_defined_by_func_of_colours(
+  const dBNode* const e, uint32_t (*get_covg)(const dBNode*) );
 
 
 
 //check if node doesn't have any edges in a given orientation
-boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, EdgeArrayType edge_type, int edge_index);
-boolean db_node_is_blunt_end_in_subgraph_given_by_func_of_colours(dBNode * node, Orientation orientation,  Edges (*get_colour)(const dBNode*) );
+boolean db_node_is_blunt_end(dBNode * node, Orientation orientation, int colour);
+
+boolean db_node_is_blunt_end_in_subgraph_given_by_func_of_colours(
+  dBNode * node, Orientation orientation,  Edges (*get_colour)(const dBNode*));
 
 
-boolean db_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, EdgeArrayType type, int index);
+boolean db_node_is_this_node_in_this_person_or_populations_graph(dBNode* node, int colour);
 
 
-boolean db_node_is_this_node_in_subgraph_defined_by_func_of_colours(dBNode* node, Edges (*get_colour)(const dBNode*) );
+boolean db_node_is_this_node_in_subgraph_defined_by_func_of_colours(
+  dBNode* node, Edges (*get_colour)(const dBNode*));
 
 
 //functions for binary format
-void db_node_print_multicolour_binary(FILE * fp, dBNode * node);
+void db_node_print_multicolour_binary(FILE *fp, dBNode *node);
 
-void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node);
-void db_node_print_single_colour_binary_of_specified_colour(FILE * fp, dBNode * node, int colour);
+void db_node_print_single_colour_binary_of_colour0(FILE *fp, dBNode *node);
+void db_node_print_single_colour_binary_of_specified_colour(FILE *fp, dBNode *node, int colour);
 
 //reading multicolour binaries
-boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * node, int num_colours_in_binary, int binversion_in_binheader);
-//boolean db_node_read_multicolour_binary_with_less_colours(FILE * fp, short kmer_size, dBNode * node, int num_colours_in_binary);
+boolean db_node_read_multicolour_binary(FILE *fp, short kmer_size, dBNode *node,
+                                        int num_colours_in_binary,
+                                        int binversion_in_binheader);
 
 
+// read a binary for an individual person, as dumped by the target "graph"
+// load this data into given colour
+boolean db_node_read_single_colour_binary(FILE *fp, short kmer_size, dBNode *node,
+                                          int colour, int binversion_in_binheader);
 
-//read a binary for an individual person, as dumped by the target "graph"
-// the edge array type and index tell you which person you should load this data into
-boolean db_node_read_single_colour_binary(FILE * fp, short kmer_size, dBNode * node, EdgeArrayType type, int index, int binversion_in_binheader);
 
-
-boolean db_node_check_read_start(dBNode* node, Orientation ori);
+boolean db_node_check_read_start(dBNode*node, Orientation ori);
 
 void db_node_set_read_start_status(dBNode* node, Orientation ori);
 

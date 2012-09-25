@@ -148,7 +148,6 @@ int  main()
     return CU_get_error();
   }
 
-  // DEV: comment out to avoid failing with a seg_fault on some systems
   if (NULL == CU_add_test(pPopGraphSuite, "Test loading of three binaries as dumped by graph into sv_trio as separate people", test_load_individual_binaries_into_sv_trio )) {
     CU_cleanup_registry();
     return CU_get_error();

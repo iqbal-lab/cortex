@@ -185,7 +185,7 @@ dBNode * db_graph_get_next_node_for_specific_person_or_pop(dBNode * current_node
 
 
   //need to check the node is in this person's graph
-  if (! (db_node_is_this_node_in_this_person_or_populations_graph(next_node, type, index)))
+  if (! (db_node_is_this_node_in_this_person_or_populations_graph(next_node, index)))
     {
       return NULL;
     }
@@ -277,7 +277,7 @@ boolean db_graph_db_node_has_precisely_n_edges_with_status_for_specific_person_o
 
    
 
-    if (db_node_edge_exist(node,base,orientation, type, index)){
+    if (db_node_edge_exist(node,base,orientation, index)){
 
       tmp_next_node = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&tmp_next_orientation,
 									base,&rev_base,db_graph, type, index);
@@ -319,11 +319,11 @@ int db_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop(dBNode
   char seq[db_graph->kmer_size+1];
   
   //starting in a blunt end also prevents full loops 
-  if (db_node_is_blunt_end(node, opposite_orientation(orientation), type, index)){
+  if (db_node_is_blunt_end(node, opposite_orientation(orientation), index)){
     
     boolean join_main_trunk = false;
 
-    while(db_node_has_precisely_one_edge(node,orientation,&nucleotide, type, index)) {
+    while(db_node_has_precisely_one_edge(node, orientation, &nucleotide, index)) {
   
        nodes[length] = node;
 
@@ -343,7 +343,7 @@ int db_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop(dBNode
        }
 
        //want to stop when we join another trunk
-       if (!db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide, type, index)){
+       if (!db_node_has_precisely_one_edge(next_node, opposite_orientation(next_orientation), &nucleotide, index)){
 	 join_main_trunk = true;
 	 break;
        }
@@ -366,13 +366,13 @@ int db_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop(dBNode
 	 
 	 node_action(nodes[i]);
 	 //perhaps we want to move this inside the node action?
-	 db_node_reset_edges(nodes[i], type, index);
+	 db_node_reset_edges(nodes[i], index);
        }
 
        if (DEBUG){
 	printf("RESET %c BACK\n",binary_nucleotide_to_char(reverse_nucleotide));
       }
-       db_node_reset_edge(next_node,opposite_orientation(next_orientation),reverse_nucleotide, type, index);
+       db_node_reset_edge(next_node,opposite_orientation(next_orientation),reverse_nucleotide, index);
      }
 
   }
@@ -429,7 +429,7 @@ int db_graph_db_node_clip_tip_with_orientation_in_subgraph_defined_by_func_of_co
     {
       boolean join_main_trunk = false;
 
-      while(db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(node,orientation,&nucleotide, get_colour)) 
+      while(db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(node, orientation, &nucleotide, get_colour)) 
 	{
 	  nodes[length] = node;
 	  
@@ -449,7 +449,7 @@ int db_graph_db_node_clip_tip_with_orientation_in_subgraph_defined_by_func_of_co
 	  }
 	  
 	  //want to stop when we join another trunk
-	  if (!db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(next_node,opposite_orientation(next_orientation),&nucleotide, get_colour)){
+	  if (!db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(next_node, opposite_orientation(next_orientation), &nucleotide, get_colour)){
 	    join_main_trunk = true;
 	    break;
 	  }
@@ -635,7 +635,7 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, uint
       int i;
       for (i=0; i< NUMBER_OF_COLOURS; i++)
 	{
-	  reset_one_edge(node, or, nuc, individual_edge_array, i);
+	  reset_one_edge(node, or, nuc, i);
 	}
   }
   
@@ -644,7 +644,7 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, uint
       int i;
       for (i=0; i< NUMBER_OF_COLOURS; i++)
 	{
-	  db_node_reset_edges(node, individual_edge_array, i);
+	  db_node_reset_edges(node, i);
 	}
   }
 
@@ -693,7 +693,7 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
       die("db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop: "
           "can't pass a null node");
     }
-  else if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
+  else if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, index)))
     {
       //printf("\nThis node is not in the graph of this person - in db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop\n");
       return false;
@@ -743,7 +743,7 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
 
     path_labels[length]        = nucleotide;
     seq[length]                = binary_nucleotide_to_char(nucleotide);
-    coverage                   = db_node_get_coverage(next_node, type, index);
+    coverage                   = db_node_get_coverage(next_node, index);
     
     length++;
 
@@ -759,8 +759,8 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
     
   } while (length<(limit-1) && 
 	   !((next_node == node) && (next_orientation == orientation)) && //loop
-	   db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2, type, index) && //multiple entries
-	   db_node_has_precisely_one_edge(current_node, current_orientation,&nucleotide, type, index)); //has one next edge only
+	   db_node_has_precisely_one_edge(next_node, opposite_orientation(next_orientation), &nucleotide2, index) && //multiple entries
+	   db_node_has_precisely_one_edge(current_node, current_orientation, &nucleotide, index)); //has one next edge only
   
   
   if ((next_node == node) && (next_orientation == orientation)){
@@ -773,11 +773,11 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(dBNode 
     {
       printf("stopped becaise of loop\n");
     }
-  else if (!db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2, type, index))
+  else if (!db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2, index))
     {
       printf("stopped because next node has >1 edge in - multple entries\n");
     }
-  else if (!db_node_has_precisely_one_edge(current_node, current_orientation,&nucleotide, type, index))
+  else if (!db_node_has_precisely_one_edge(current_node, current_orientation, &nucleotide, index))
     {
       printf("stopped because current node has >1 edge\n");
     }
@@ -918,8 +918,8 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
     
   } while (length<limit && 
 	   !((next_node == node) && (next_orientation == orientation)) && //loop
-	   db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(next_node,opposite_orientation(next_orientation),&nucleotide2, get_colour) && //multiple entries
-	   db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(current_node, current_orientation,&nucleotide, get_colour)); //has one next edge only
+	   db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(next_node, opposite_orientation(next_orientation), &nucleotide2, get_colour) && //multiple entries
+	   db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(current_node, current_orientation, &nucleotide, get_colour)); //has one next edge only
   
   
   if ((next_node == node) && (next_orientation == orientation)){
@@ -973,7 +973,7 @@ int db_graph_get_perfect_path_for_specific_person_or_pop(dBNode * node, Orientat
   path_orientations[0]  = orientation;  
  
 
-  if (db_node_has_precisely_one_edge(node,orientation,&nucleotide, type, index))
+  if (db_node_has_precisely_one_edge(node, orientation, &nucleotide, index))
     {
     
       length= db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(node,orientation, limit, nucleotide,
@@ -1023,7 +1023,7 @@ int db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(dBNode * no
   path_orientations[0]  = orientation;  
  
 
-  if (db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(node,orientation,&nucleotide, get_colour))
+  if (db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(node, orientation, &nucleotide, get_colour))
     {
     
       length= db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(node,orientation, limit, nucleotide,
@@ -1073,7 +1073,7 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
     {
       die("Do not call db_graph_detect_bubble_for_specific_person_or_population with NULL node. Exiting");
     }
-  else if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
+  else if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, index)))
     {
       //printf("\nThis node is not in the graph of this person\n");
       return false;
@@ -1096,7 +1096,7 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
   void check_nucleotide(Nucleotide n){
 
     boolean is_cycle;      
-    if (db_node_edge_exist(node,n,orientation, type, index)){
+    if (db_node_edge_exist(node,n,orientation, index)){
 	lengths[i] = db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(node,orientation,
 											 limit,n,
 											 node_action,
@@ -1373,7 +1373,7 @@ boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(dBNode * node,
 	path_orientations_tmp = path_orientations1;
 	path_labels_tmp  = path_labels1;
 	length_tmp     = length1;
-	db_node_reset_edge(node,orientation,path_labels1[0], type, index);
+	db_node_reset_edge(node,orientation,path_labels1[0], index);
       }
       else
 	{
@@ -1381,17 +1381,17 @@ boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(dBNode * node,
 	  length_tmp     = length2;
 	  path_orientations_tmp = path_orientations2;
 	  path_labels_tmp       = path_labels2;
-	  db_node_reset_edge(node,orientation,path_labels2[0], type, index);
+	  db_node_reset_edge(node,orientation,path_labels2[0], index);
 	}
       
       for(i=1;i<length_tmp;i++){
 	node_action(path_nodes_tmp[i]);
-	db_node_reset_edges(path_nodes_tmp[i], type, index);
+	db_node_reset_edges(path_nodes_tmp[i], index);
       }
       
       db_graph_get_next_node_for_specific_person_or_pop(path_nodes_tmp[length_tmp-1],path_orientations_tmp[length_tmp-1],&next_orientation,path_labels_tmp[length_tmp-1],&reverse_nucleotide,
 							db_graph, type, index);
-      db_node_reset_edge(path_nodes_tmp[length_tmp],opposite_orientation(next_orientation),reverse_nucleotide, type, index);
+      db_node_reset_edge(path_nodes_tmp[length_tmp],opposite_orientation(next_orientation),reverse_nucleotide, index);
     }
     
   }
@@ -3225,7 +3225,7 @@ void apply_reset_to_specific_edge_in_union_of_all_colours(dBNode* node, Orientat
   int j;
   for (j=0; j<NUMBER_OF_COLOURS; j++)
     {
-      reset_one_edge(node, or, nuc, individual_edge_array, j);
+      reset_one_edge(node, or, nuc, j);
     }
 }
 
@@ -3234,7 +3234,7 @@ void apply_reset_to_all_edges_in_union_of_all_colours(dBNode* node )
   int j;
   for (j=0; j<NUMBER_OF_COLOURS; j++)
     {
-      db_node_reset_edges(node, individual_edge_array, j);
+      db_node_reset_edges(node, j);
     }
 }
 
@@ -3373,7 +3373,7 @@ long long  db_graph_count_error_supernodes( int max_length, dBGraph * db_graph, 
 		  }
 		else
 		  {
-		    return db_node_get_coverage(path_nodes[0], individual_edge_array, index);
+		    return db_node_get_coverage(path_nodes[0], index);
 		  }
 		//return count_error_covg;
 	      }
@@ -3987,7 +3987,7 @@ void db_graph_print_coverage_for_specific_person_or_pop(dBGraph * db_graph, Edge
   void print_coverage(dBNode * node){
     char seq[db_graph->kmer_size+1];
 
-    printf("%qd\t%s\t%i\n",count_kmers,binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq),db_node_get_coverage(node, type, index));
+    printf("%qd\t%s\t%i\n",count_kmers,binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,seq),db_node_get_coverage(node, index));
     count_kmers++;;
   }
   hash_table_traverse(&print_coverage,db_graph); 
@@ -4841,7 +4841,7 @@ boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, EdgeA
       //printf("Sending null pointer to db_node_is_supernode_end\n");
       return false;
     }
-  char edges = get_edge_copy(*element, edge_type, edge_index);
+  char edges = get_edge_copy(*element, edge_index);
   
   if (orientation == reverse)
     {
@@ -4866,7 +4866,7 @@ boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, EdgeA
       
       //we know this element has only one edge out. What is it? The function db_node_has_precisely_one_edge fills the answer into argument 3
       Nucleotide nuc, reverse_nuc;
-      if (db_node_has_precisely_one_edge(element, orientation, &nuc, edge_type, edge_index))
+      if (db_node_has_precisely_one_edge(element, orientation, &nuc, edge_index))
 	{
 
 	  dBNode* next_node = db_graph_get_next_node_for_specific_person_or_pop(element, orientation, &next_orientation, nuc, &reverse_nuc,db_graph, edge_type, edge_index);
@@ -4875,7 +4875,7 @@ boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, EdgeA
 	    {
 	      return true; //infinite self-loop
 	    }
-	  else if (db_node_has_precisely_one_edge(next_node, opposite_orientation(next_orientation), &nuc, edge_type, edge_index))
+	  else if (db_node_has_precisely_one_edge(next_node, opposite_orientation(next_orientation), &nuc, edge_index))
 	    {
 	      return false;//successor node also has only one edge coming in
 	    }
@@ -4907,7 +4907,7 @@ dBNode *  db_graph_find_node_restricted_to_specific_person_or_population(Key key
   //then you should never see a kmer (node) which is unconnected to another (even if the other is itself)
   //ie to check if this kmer is seen in a given person/pop, it is enough to check if it has an edge
 
-  if (db_node_is_this_node_in_this_person_or_populations_graph(e, type, index)==false)
+  if (db_node_is_this_node_in_this_person_or_populations_graph(e, index)==false)
     {
       return NULL;
     }
@@ -5160,7 +5160,7 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
   char tmp_seq[db_graph->kmer_size+1];
   tmp_seq[db_graph->kmer_size]='\0';
 
-  if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
+  if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, index)))
     {
       if (node==NULL)
 	{
@@ -5194,7 +5194,7 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
   //is_cycle = false;
 
 
-  while(db_node_has_precisely_one_edge(node,orientation,&nucleotide1, type, index)) {
+  while(db_node_has_precisely_one_edge(node, orientation, &nucleotide1, index)) {
  
 
     next_node =  db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,nucleotide1,&rev_nucleotide,db_graph, type, index);
@@ -5214,7 +5214,7 @@ dBNode* db_graph_get_first_node_in_supernode_containing_given_node_for_specific_
     
 
     //check for multiple entry edges 
-    if (db_node_has_precisely_one_edge(next_node,opposite_orientation(next_orientation),&nucleotide2, type, index))
+    if (db_node_has_precisely_one_edge(next_node, opposite_orientation(next_orientation), &nucleotide2, index))
       {
       }
     else
@@ -5260,7 +5260,7 @@ dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* n
   char tmp_seq[db_graph->kmer_size+1];
   tmp_seq[db_graph->kmer_size]='\0';
 
-  if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, type, index)))
+  if (! (db_node_is_this_node_in_this_person_or_populations_graph(node, index)))
     {
       //printf("\nThis node is not in the graph of this person\n");
       return NULL;
@@ -5283,9 +5283,9 @@ dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* n
   Nucleotide nucleotide_for_only_edge, reverse_nucleotide_for_only_edge;
 
   
-  db_node_has_precisely_one_edge(node,orientation,&nucleotide_for_only_edge, type, index);//gives us nucleotide
+  db_node_has_precisely_one_edge(node, orientation, &nucleotide_for_only_edge, index);//gives us nucleotide
   
-  dBNode* next_node =  db_graph_get_next_node_for_specific_person_or_pop(node,orientation ,next_orientation,nucleotide_for_only_edge,&reverse_nucleotide_for_only_edge, db_graph, type, index);
+  dBNode* next_node =  db_graph_get_next_node_for_specific_person_or_pop(node, orientation, next_orientation, nucleotide_for_only_edge,&reverse_nucleotide_for_only_edge, db_graph, type, index);
   
   if(next_node == NULL){
     die("dB_graph: didnt find node in hash table: %s", binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size, tmp_seq));
@@ -5303,7 +5303,7 @@ dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* n
 
   //check for multiple entry edges 
   Nucleotide nuc;
-  if (db_node_has_precisely_one_edge(next_node,opposite_orientation(*next_orientation),&nuc, type, index))
+  if (db_node_has_precisely_one_edge(next_node,opposite_orientation(*next_orientation), &nuc, index))
     {
     }
   else
@@ -5542,7 +5542,7 @@ int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char*
           return 1;
         }
       Nucleotide nuc_for_next_edge;
-      db_node_has_precisely_one_edge(current_node,current_orientation,&nuc_for_next_edge, type, index);
+      db_node_has_precisely_one_edge(current_node, current_orientation, &nuc_for_next_edge, index);
       subsection[i]=binary_nucleotide_to_char(nuc_for_next_edge);
 
       current_node=next_node;
@@ -5598,7 +5598,7 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
   else
     {
       //must therefore be the case that this node is not in this person's graph. Check this
-      if ( ! (db_node_is_this_node_in_this_person_or_populations_graph(first_node_in_supernode, type, index)) )
+      if ( ! (db_node_is_this_node_in_this_person_or_populations_graph(first_node_in_supernode, index)) )
 	{
 	  *index_for_start_of_sub_supernode=0;
 	  *length_of_best_sub_supernode=0;
@@ -5742,7 +5742,7 @@ void print_node_to_file_according_to_how_many_people_share_it(HashTable* db_grap
 
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
-      if (get_edge_copy(*node, individual_edge_array, i) ==0 )
+      if (get_edge_copy(*node, i) ==0 )
 	{
 	}
       else
@@ -5774,7 +5774,7 @@ void find_out_how_many_individuals_share_this_node_and_add_to_statistics(HashTab
   for (i=0; i<number_of_people; i++)
     {
       
-      if (get_edge_copy(*node, individual_edge_array, i) ==0 )
+      if (get_edge_copy(*node, i) ==0 )
 	{
         }
       else
@@ -5940,7 +5940,7 @@ void get_coverage_from_array_of_nodes(dBNode** array, int length, int* min_cover
       
       if (array[i]!= NULL)
 	{
-	  this_covg = db_node_get_coverage(array[i], type, index);
+	  this_covg = db_node_get_coverage(array[i], index);
 	}
       
       coverages[i]=this_covg; //will use this later, for the mode
@@ -6069,7 +6069,7 @@ void get_percent_novel_from_array_of_nodes(dBNode** array, int length, double* p
       if (array[i] != NULL)
 	{
 	  //boolean this_node_is_novel = !(db_node_check_status_exists_in_reference(array[i]) || db_node_check_status_visited_and_exists_in_reference(array[i]) );
-	  boolean this_node_is_novel = !db_node_is_this_node_in_this_person_or_populations_graph(array[i], type_for_reference, index_of_reference_in_array_of_edges);
+	  boolean this_node_is_novel = !db_node_is_this_node_in_this_person_or_populations_graph(array[i], index_of_reference_in_array_of_edges);
 	  if (this_node_is_novel==true)
 	    {
 	      sum_novel++;
@@ -6136,7 +6136,7 @@ void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(dBNode** array1, dBNod
 	{
 	  //this element reused_working_array1[i] is in reused_working_array1 but not reused_working_array2, and is not NULL
 	  *num_nodes_in_array_1not2= *num_nodes_in_array_1not2+1;
-	  *(covgs_in_1not2[*num_nodes_in_array_1not2-1])=db_node_get_coverage(reused_working_array1[i], type, index);	  
+	  *(covgs_in_1not2[*num_nodes_in_array_1not2-1])=db_node_get_coverage(reused_working_array1[i], index);	  
 	}
 
     }
@@ -6171,7 +6171,7 @@ void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(dBNode** array1, dBNod
 	{
 	  //this element reused_working_array2[i] is in reused_working_array2 but not reused_working_array1, and is not NULL
 	  *num_nodes_in_array_2not1= *num_nodes_in_array_2not1+1;
-	  *(covgs_in_2not1[*num_nodes_in_array_2not1-1])=db_node_get_coverage(reused_working_array2[i], type, index);	  
+	  *(covgs_in_2not1[*num_nodes_in_array_2not1-1])=db_node_get_coverage(reused_working_array2[i], index);	  
 	}
 
     }
@@ -6602,7 +6602,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, EdgeArra
 
 
 	  //if this chromosome node does not exist in the person's graph, move on to the next node
-	  if (db_node_is_this_node_in_this_person_or_populations_graph(chrom_path_array[start_node_index], which_array_holds_indiv, index_for_indiv_in_edge_array) == false)
+	  if (db_node_is_this_node_in_this_person_or_populations_graph(chrom_path_array[start_node_index], index_for_indiv_in_edge_array) == false)
 	    {
 	      //printf("ZAM DEBUG node number %d not in the graph of person %d\n", start_node_index, index_for_indiv_in_edge_array);
 
@@ -9518,7 +9518,7 @@ void compute_label(dBNode * node, Orientation o, char * label, EdgeArrayType typ
 
   void check_nucleotide(Nucleotide n){
 
-    if (db_node_edge_exist(node,n,o, type, index)){
+    if (db_node_edge_exist(node,n,o, index)){
 	label[i] =  binary_nucleotide_to_char(n);
 	i++;
       }
@@ -9758,11 +9758,11 @@ void print_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 
       fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i mode_coverage: %i percent_nodes_with_modal_covg: %5.2f percent_novel: %5.2f fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s ", name,
 	      (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, modal_coverage, percent_nodes_with_modal_coverage, percent_novel,
-	      db_node_get_coverage(fst_node, type, index),
+	      db_node_get_coverage(fst_node, index),
 	      fst_seq,
 	      (fst_orientation == forward ? fst_r : fst_f),
 	      (fst_orientation == forward ? fst_f : fst_r),
-	      db_node_get_coverage(lst_node, type, index),
+	      db_node_get_coverage(lst_node, index),
 	      lst_seq,
 	      (lst_orientation == forward ? lst_r : lst_f),
 	      (lst_orientation == forward ? lst_f : lst_r));
@@ -9995,11 +9995,11 @@ void print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(FILE *f
       
       fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i mode_coverage: %i percent_nodes_with_modal_covg: %5.2f percent_novel: %5.2f fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s ", name,
 	      (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, modal_coverage, percent_nodes_with_modal_coverage, percent_novel,
-	      db_node_get_coverage(fst_node, type, index),
+	      db_node_get_coverage(fst_node, index),
 	      fst_seq,
 	      (fst_orientation == forward ? fst_r : fst_f),
 	      (fst_orientation == forward ? fst_f : fst_r),
-	      db_node_get_coverage(lst_node, type, index),
+	      db_node_get_coverage(lst_node, index),
 	      lst_seq,
 	      (lst_orientation == forward ? lst_r : lst_f),
 	      (lst_orientation == forward ? lst_f : lst_r));
@@ -10116,11 +10116,11 @@ void print_minimal_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 
       fprintf(fout,">%s length:%i average_coverage:%5.2f min_coverage:%i max_coverage:%i fst_coverage:%i fst_kmer:%s fst_r:%s fst_f:%s lst_coverage:%i lst_kmer:%s lst_r:%s lst_f:%s ", name,
 	      (include_first_kmer ? length+kmer_size:length),avg_coverage,min_coverage,max_coverage, 
-	      db_node_get_coverage(fst_node, type, index),
+	      db_node_get_coverage(fst_node, index),
 	      fst_seq,
 	      (fst_orientation == forward ? fst_r : fst_f),
 	      (fst_orientation == forward ? fst_f : fst_r),
-	      db_node_get_coverage(lst_node, type, index),
+	      db_node_get_coverage(lst_node, index),
 	      lst_seq,
 	      (lst_orientation == forward ? lst_r : lst_f),
 	      (lst_orientation == forward ? lst_f : lst_r));
@@ -10402,7 +10402,7 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph){
 
 	void check_base(Nucleotide n)
 	{     
-	  if (db_node_edge_exist(node,n,orientation, individual_edge_array, j)==true){
+	  if (db_node_edge_exist(node,n,orientation, j)==true){
 
 	    next_node = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,n,&reverse_nucleotide,db_graph, individual_edge_array, j);
 	    
@@ -10414,12 +10414,12 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph){
 		       orientation == forward ? "forward" : "reverse");
 		if (fix)
 		  {
-		    db_node_reset_edge(node,orientation,n, individual_edge_array, j);
+		    db_node_reset_edge(node,orientation,n, j);
 		  }
 	      }
 	    else
 	      {
-		if (db_node_edge_exist(next_node,reverse_nucleotide,opposite_orientation(next_orientation), individual_edge_array, j)==false)
+		if (db_node_edge_exist(next_node,reverse_nucleotide,opposite_orientation(next_orientation), j)==false)
 		  {
 		    printf("Health check problem - inconsitency return arrow missing: %s %c %s\n",
 			   binary_kmer_to_seq(element_get_kmer(node),db_graph->kmer_size,tmp_seq),
@@ -10427,7 +10427,7 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph){
 			   orientation == forward ? "forward" : "reverse");
 		    if (fix)
 		      {
-			db_node_reset_edge(node,orientation, n, individual_edge_array, j);
+			db_node_reset_edge(node,orientation, n, j);
 		      }
 		  }
 	      }
@@ -10468,19 +10468,19 @@ long long db_graph_clean_orphan_edges(dBGraph * db_graph){
 
 	void check_base(Nucleotide n)
 	{     
-	  if (db_node_edge_exist(node,n,orientation, individual_edge_array, j)==true){
+	  if (db_node_edge_exist(node,n,orientation, j)==true){
 
 	    next_node = db_graph_get_next_node_for_specific_person_or_pop(node,orientation,&next_orientation,n,&reverse_nucleotide,db_graph, individual_edge_array, j);
 	    
 	    if(next_node == NULL)
 	      {
-		db_node_reset_edge(node,orientation,n, individual_edge_array, j);
+		db_node_reset_edge(node,orientation,n, j);
 	      }
 	    else
 	      {
-		if (db_node_edge_exist(next_node,reverse_nucleotide,opposite_orientation(next_orientation), individual_edge_array, j)==false)
+		if (db_node_edge_exist(next_node,reverse_nucleotide,opposite_orientation(next_orientation), j)==false)
 		  {
-		    db_node_reset_edge(node,orientation, n, individual_edge_array, j);
+		    db_node_reset_edge(node,orientation, n, j);
 		  }
 	      }
 	    
@@ -10566,9 +10566,9 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 	    //str[db_graph->kmer_size]='\0';
 
 	    if ( 
-		(db_node_is_this_node_in_this_person_or_populations_graph(node, individual_edge_array, first_col_list[i])==true)
+		(db_node_is_this_node_in_this_person_or_populations_graph(node, first_col_list[i])==true)
 		&&
-		(db_node_is_this_node_in_this_person_or_populations_graph(node, individual_edge_array, second_col_list[j])==true)
+		(db_node_is_this_node_in_this_person_or_populations_graph(node, second_col_list[j])==true)
 		 )
 	      {
 

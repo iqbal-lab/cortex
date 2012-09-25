@@ -52,7 +52,7 @@ void test_count_reads_on_allele_in_specific_colour()
   // start simple - all nodes same covg
   for (i=0; i<10; i++)
     {
-      db_node_set_coverage(node_array[i], individual_edge_array, 0,5);
+      db_node_set_coverage(node_array[i], 0,5);
     }
   
   //number of edges in allele of 10 nodes is 9
@@ -61,25 +61,25 @@ void test_count_reads_on_allele_in_specific_colour()
   CU_ASSERT(too_short==false);
 
   //add one jump
-  db_node_set_coverage(node_array[1], individual_edge_array, colour0, 10);
-  db_node_set_coverage(node_array[2], individual_edge_array, colour0, 10);
+  db_node_set_coverage(node_array[1], colour0, 10);
+  db_node_set_coverage(node_array[2], colour0, 10);
   CU_ASSERT(count_reads_on_allele_in_specific_colour(node_array, 9, colour0,&too_short)==10);
   CU_ASSERT(too_short==false);
   
   //add a drop back to 5
-  db_node_set_coverage(node_array[3], individual_edge_array, colour0, 5);
+  db_node_set_coverage(node_array[3], colour0, 5);
   CU_ASSERT(count_reads_on_allele_in_specific_colour(node_array, 9, colour0,&too_short)==10);
   CU_ASSERT(too_short==false);
 
   //add a second jump, which is an isolated node with higher covg - ignore it!
-  db_node_set_coverage(node_array[5], individual_edge_array, colour0, 8);
+  db_node_set_coverage(node_array[5], colour0, 8);
   CU_ASSERT(count_reads_on_allele_in_specific_colour(node_array, 9, colour0,&too_short)==10);
   CU_ASSERT(too_short==false);
 
 
   //add a third jump, not isolated
-  db_node_set_coverage(node_array[6], individual_edge_array, colour0, 8);
-  db_node_set_coverage(node_array[7], individual_edge_array, colour0, 8);
+  db_node_set_coverage(node_array[6], colour0, 8);
+  db_node_set_coverage(node_array[7], colour0, 8);
   CU_ASSERT(count_reads_on_allele_in_specific_colour(node_array, 9, colour0,&too_short)==13);
   CU_ASSERT(too_short==false);
 

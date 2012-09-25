@@ -338,16 +338,16 @@ void test_pruning_low_coverage_nodes()
   CU_ASSERT(node_pruned);
   CU_ASSERT(db_node_check_status(node1,pruned));
 
-  CU_ASSERT(!db_node_edge_exist(node3,Guanine,reverse, individual_edge_array,0));
-  CU_ASSERT(db_node_edge_exist(node3,Thymine,forward, individual_edge_array,0));
+  CU_ASSERT(!db_node_edge_exist(node3,Guanine,reverse,0));
+  CU_ASSERT(db_node_edge_exist(node3,Thymine,forward,0));
 
-  CU_ASSERT(!db_node_edge_exist(node2,Cytosine,reverse, individual_edge_array,0));
-  CU_ASSERT(db_node_edge_exist(node2,Cytosine,forward, individual_edge_array,0));
+  CU_ASSERT(!db_node_edge_exist(node2,Cytosine,reverse,0));
+  CU_ASSERT(db_node_edge_exist(node2,Cytosine,forward,0));
 
   //check all arrows were removed from node1
   void nucleotide_action(Nucleotide n){
-    CU_ASSERT(!db_node_edge_exist(node1,n,reverse, individual_edge_array,0));
-    CU_ASSERT(!db_node_edge_exist(node1,n,forward, individual_edge_array,0));
+    CU_ASSERT(!db_node_edge_exist(node1,n,reverse,0));
+    CU_ASSERT(!db_node_edge_exist(node1,n,forward,0));
   }
   
   nucleotide_iterator(&nucleotide_action);
@@ -668,20 +668,20 @@ void test_get_perfect_path_in_one_colour()
    
    node1 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CGT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2), &found1, db_graph);
    node2 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("GTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found2, db_graph);
-   db_node_add_edge(node1, node2, reverse,reverse, db_graph->kmer_size, individual_edge_array, 0);
+   db_node_add_edge(node1, node2, reverse,reverse, db_graph->kmer_size, 0);
 
    node3 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TTA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found3, db_graph);
-   db_node_add_edge(node2, node3, reverse,reverse, db_graph->kmer_size, individual_edge_array, 0);
+   db_node_add_edge(node2, node3, reverse,reverse, db_graph->kmer_size, 0);
  
    node4 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TAG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found3, db_graph);
-   db_node_add_edge(node3, node4, reverse,reverse, db_graph->kmer_size, individual_edge_array, 0);
+   db_node_add_edge(node3, node4, reverse,reverse, db_graph->kmer_size, 0);
   
 
    //add coverage
-   db_node_update_coverage(node1,individual_edge_array, 0, 10);
-   db_node_update_coverage(node2,individual_edge_array, 0,2);
-   db_node_update_coverage(node3,individual_edge_array, 0,1);
-   db_node_update_coverage(node4,individual_edge_array, 0,20);
+   db_node_update_coverage(node1, 0, 10);
+   db_node_update_coverage(node2, 0,2);
+   db_node_update_coverage(node3, 0,1);
+   db_node_update_coverage(node4, 0,20);
   
 
 
@@ -772,8 +772,8 @@ void test_detect_and_smooth_bubble()
 
 
   //modify coverage -- used below to clip one branch
-  db_node_update_coverage(node2,individual_edge_array, 0, 5);
-  CU_ASSERT_EQUAL(db_node_get_coverage(node2, individual_edge_array, 0),5);
+  db_node_update_coverage(node2, 0, 5);
+  CU_ASSERT_EQUAL(db_node_get_coverage(node2, 0),5);
 
 
   node3 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CAC", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
@@ -785,8 +785,8 @@ void test_detect_and_smooth_bubble()
   //branch 2
   node6 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
 
-  db_node_update_coverage(node6,individual_edge_array, 0, 1);
-  CU_ASSERT_EQUAL(db_node_get_coverage(node6, individual_edge_array, 0),1);
+  db_node_update_coverage(node6, 0, 1);
+  CU_ASSERT_EQUAL(db_node_get_coverage(node6, 0),1);
 
   node7 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CTC", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
   node8 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TCT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
@@ -795,23 +795,23 @@ void test_detect_and_smooth_bubble()
   node9 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("TTA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),  &found, db_graph);
  
   //branch1
-  db_node_add_edge(node1, node2, forward,forward, db_graph->kmer_size, individual_edge_array, 0);
-  db_node_add_edge(node2, node3, forward,forward, db_graph->kmer_size, individual_edge_array, 0);
-  db_node_add_edge(node3, node4, forward,forward, db_graph->kmer_size, individual_edge_array, 0);
-  db_node_add_edge(node4, node5, forward,reverse, db_graph->kmer_size, individual_edge_array, 0);
+  db_node_add_edge(node1, node2, forward,forward, db_graph->kmer_size, 0);
+  db_node_add_edge(node2, node3, forward,forward, db_graph->kmer_size, 0);
+  db_node_add_edge(node3, node4, forward,forward, db_graph->kmer_size, 0);
+  db_node_add_edge(node4, node5, forward,reverse, db_graph->kmer_size, 0);
 
   
   //branch2
-  db_node_add_edge(node1, node6, forward,reverse, db_graph->kmer_size, individual_edge_array, 0);
-  db_node_add_edge(node6, node7, reverse,forward, db_graph->kmer_size, individual_edge_array, 0);
-  db_node_add_edge(node7, node8, forward,reverse, db_graph->kmer_size, individual_edge_array, 0);
-  db_node_add_edge(node8, node5, reverse,reverse, db_graph->kmer_size, individual_edge_array, 0);
+  db_node_add_edge(node1, node6, forward,reverse, db_graph->kmer_size, 0);
+  db_node_add_edge(node6, node7, reverse,forward, db_graph->kmer_size, 0);
+  db_node_add_edge(node7, node8, forward,reverse, db_graph->kmer_size, 0);
+  db_node_add_edge(node8, node5, reverse,reverse, db_graph->kmer_size, 0);
 
-  CU_ASSERT(db_node_edge_exist(node1,Thymine,forward, individual_edge_array, 0));
-  CU_ASSERT(db_node_edge_exist(node1,Adenine,forward, individual_edge_array, 0));
+  CU_ASSERT(db_node_edge_exist(node1,Thymine,forward, 0));
+  CU_ASSERT(db_node_edge_exist(node1,Adenine,forward, 0));
 
   //add 3p extension
-  db_node_add_edge(node5, node9, reverse,reverse, db_graph->kmer_size, individual_edge_array, 0);
+  db_node_add_edge(node5, node9, reverse,reverse, db_graph->kmer_size, 0);
 
 
   bubble = db_graph_detect_bubble_for_specific_person_or_population(node1,forward,
@@ -946,8 +946,8 @@ void test_detect_and_smooth_bubble()
   //the last node shouldn't be marked 
   CU_ASSERT(db_node_check_status(node5,none));
 
-  CU_ASSERT(!db_node_edge_exist(node1,Thymine,forward, individual_edge_array, 0));
-  CU_ASSERT(db_node_edge_exist(node1,Adenine,forward, individual_edge_array, 0));
+  CU_ASSERT(!db_node_edge_exist(node1,Thymine,forward, 0));
+  CU_ASSERT(db_node_edge_exist(node1,Adenine,forward, 0));
 
   //check arrows by getting a supernode
 
@@ -1070,8 +1070,8 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour()
 
  
 
-  db_node_add_edge(node1, node2, forward,reverse, db_graph->kmer_size, individual_edge_array, 0);
-  db_node_add_edge(node1, node3, forward,forward, db_graph->kmer_size, individual_edge_array, 0);
+  db_node_add_edge(node1, node2, forward,reverse, db_graph->kmer_size, 0);
+  db_node_add_edge(node1, node3, forward,forward, db_graph->kmer_size, 0);
 
   boolean one_edge1 = db_graph_db_node_has_precisely_n_edges_with_status_for_specific_person_or_pop(node1,forward,none,1,
 												    next_node,next_orientation,next_base,db_graph, individual_edge_array, 0);
@@ -1092,7 +1092,7 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour()
   
 
   node4 = hash_table_find_or_insert(element_get_key(seq_to_binary_kmer("CCA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2), &found, db_graph);
-  db_node_add_edge(node1, node4, forward, forward, db_graph->kmer_size, individual_edge_array, 0);
+  db_node_add_edge(node1, node4, forward, forward, db_graph->kmer_size, 0);
    
   boolean one_edge3 = db_graph_db_node_has_precisely_n_edges_with_status_for_specific_person_or_pop(node1,forward,none,2,
 												    next_node,next_orientation,next_base,db_graph, individual_edge_array, 0);
@@ -2117,16 +2117,16 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
 
   dBNode* query_node = hash_table_find(element_get_key(seq_to_binary_kmer("AAC",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(db_node_get_coverage(query_node, individual_edge_array, 0)==4);
-  //printf("Expect covg aac is 4, but is %d", db_node_get_coverage(query_node, individual_edge_array, 0));
+  CU_ASSERT(db_node_get_coverage(query_node, 0)==4);
+  //printf("Expect covg aac is 4, but is %d", db_node_get_coverage(query_node, 0));
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("ACC",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(db_node_get_coverage(query_node, individual_edge_array, 0)==2);
-  //printf("Expect covg acc is 2, but is %d", db_node_get_coverage(query_node, individual_edge_array, 0));
+  CU_ASSERT(db_node_get_coverage(query_node, 0)==2);
+  //printf("Expect covg acc is 2, but is %d", db_node_get_coverage(query_node, 0));
   query_node = hash_table_find(element_get_key(seq_to_binary_kmer("CCG",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
   CU_ASSERT(!(query_node==NULL));
-  CU_ASSERT(db_node_get_coverage(query_node, individual_edge_array, 0)==4); //NOTE this is only 4 because we cound kmer coverage. CCG occurs twice in read r1, once on each strand
-  //printf("Expect covg ccg is 4, but is %d", db_node_get_coverage(query_node, individual_edge_array, 0));
+  CU_ASSERT(db_node_get_coverage(query_node, 0)==4); //NOTE this is only 4 because we cound kmer coverage. CCG occurs twice in read r1, once on each strand
+  //printf("Expect covg ccg is 4, but is %d", db_node_get_coverage(query_node, 0));
 
   hash_table_free(&hash_table);
 }

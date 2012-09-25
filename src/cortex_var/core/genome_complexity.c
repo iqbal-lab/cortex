@@ -64,7 +64,6 @@ boolean does_allele_lie_in_graph(dBNode** array_nodes, int len, int colour_clean
   for (i=0; (ret==true) && (i<len); i++)
     {
       if (db_node_is_this_node_in_this_person_or_populations_graph(array_nodes[i], 
-								   individual_edge_array, 
 								   colour_cleaned_genome)==false)
 	{
 	  ret=false;
@@ -88,11 +87,10 @@ boolean allele_is_clean(dBNode** array_nodes,Orientation* array_or,
   for (i=0; (i<len) && (i<=kmer) ; i++)//interior nodes
     {
       if (db_node_is_this_node_in_this_person_or_populations_graph(array_nodes[i],
-								   individual_edge_array,
 								   colour_cleaned_genome)==true)
 	{
 	  Nucleotide nuc;
-	  if (db_node_has_precisely_one_edge(array_nodes[i], forward, &nuc, individual_edge_array, colour_cleaned_genome)==false)
+	  if (db_node_has_precisely_one_edge(array_nodes[i], forward, &nuc, colour_cleaned_genome)==false)
 	    {
 	      all_nodes_look_ok=false;
 	    }

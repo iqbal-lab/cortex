@@ -68,11 +68,11 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
     int i;
     for (i=0; i<var->len_one_allele; i++)
       {
-	db_node_set_coverage(var->one_allele[i], individual_edge_array, colour, br1cov);
+	db_node_set_coverage(var->one_allele[i], colour, br1cov);
       }
     for (i=0; i<var->len_other_allele; i++)
       {
-	db_node_set_coverage(var->other_allele[i], individual_edge_array, colour, br2cov);
+	db_node_set_coverage(var->other_allele[i], colour, br2cov);
       }
   } 
 
