@@ -50,7 +50,7 @@ void test_hash_table_find()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -170,7 +170,7 @@ void test_tip_clipping()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -285,7 +285,7 @@ void test_pruning_low_coverage_nodes()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -360,7 +360,7 @@ void test_get_perfect_path_in_one_colour()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
  
@@ -736,7 +736,7 @@ void test_detect_and_smooth_bubble()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -1046,7 +1046,7 @@ void test_db_graph_db_node_has_precisely_n_edges_with_status_in_one_colour()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -1212,7 +1212,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -1371,350 +1371,21 @@ void test_is_condition_true_for_all_nodes_in_supernode()
   
 }
 
-/*
-// flagged for removal
-void test_read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference()
-{
-  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
-  {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
-    return;
-  }
-
-  //first set up the hash/graph
-  int kmer_size = 3;
-  int number_of_bits = 4;
-  int bucket_size = 10;
-
-  dBGraph *db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
-  
-  // Read FASTA sequence
-  int fq_quality_cutoff = 0;
-  int homopolymer_cutoff = 0;
-  boolean remove_duplicates_se = false;
-  char ascii_fq_offset = 33;
-  int into_colour = 0;
-
-  unsigned int files_loaded = 0;
-  unsigned long long bad_reads = 0, dup_reads = 0;
-  unsigned long long seq_loaded = 0, seq_read = 0;
-
-  load_se_filelist_into_graph_colour(
-    "../data/test/graph/person.falist",
-    fq_quality_cutoff, homopolymer_cutoff,
-    remove_duplicates_se, ascii_fq_offset,
-    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
-    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
-
-  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/chrom1.fa", db_graph);
-  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/chrom2.fa", db_graph);
-  
-  //Now see if it correctly gets the supernode that does not intersect a chromosome
-  dBNode * nodes_path[100];
-  Orientation orientations_path[100];
-  Nucleotide labels_path[100];
-  char seq[100];
-  int length_path;
-  double avg_coverage;
-  boolean is_cycle;
-  int min_coverage, max_coverage;
-
-  BinaryKmer tmp_kmer1;
-  BinaryKmer tmp_kmer2;
-
-
-  //element on supernode we know intersects chromosomes
-  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(test_element1!=NULL);
-  //elemtn on node that does not intersect chromosomes - is "novel"
-  dBNode* test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GGG", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(test_element2!=NULL);
-
-
-  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50, 
-								   &db_node_check_status_is_not_exists_in_reference,
-								   &db_node_action_set_status_visited, 
-								   nodes_path, orientations_path, labels_path, &length_path, 
-								   seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								   db_graph, individual_edge_array, 0));
-
-  CU_ASSERT(length_path==3);
-  CU_ASSERT_STRING_EQUAL(seq, "TTC");
-
-  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element2, 50,
-								  &db_node_check_status_is_not_exists_in_reference,
-								  &db_node_action_set_status_visited,
-								  nodes_path, orientations_path, labels_path, &length_path, 
-								  seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								  db_graph, individual_edge_array, 0));
-  CU_ASSERT(length_path==2);
-  CU_ASSERT_STRING_EQUAL(seq, "CC");
-
-  hash_table_free(&db_graph);
-
-
-
-  // now a harder example.
-  //first set up the hash/graph
-  kmer_size = 31;
-  number_of_bits = 10;
-  bucket_size = 10;
-
-  int max_rehash_tries=10;
-
-  db_graph = hash_table_new(number_of_bits, bucket_size,
-                            max_rehash_tries, kmer_size);
-
-  files_loaded = 0;
-  bad_reads = 0;
-  dup_reads = 0;
-  seq_loaded = 0;
-  seq_read = 0;
-
-  load_se_filelist_into_graph_colour(
-    "../data/test/graph/person2.falist",
-    fq_quality_cutoff, homopolymer_cutoff,
-    remove_duplicates_se, ascii_fq_offset,
-    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
-    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
-
-  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fa", db_graph);
-
-
-  //Now see if it correctly gets the supernode that does not intersect a chromosome
-
-  //element on supernode we know intersects chromosomes
-  test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AACCCTAACCCTAACCCTAACCCTAACCCTA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(test_element1!=NULL);
-  //elemtn on node that does not intersect chromosomes - is "novel"
-  test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GCGGGGCGGGGCGGGGCGGGGCGGGGCCCCC", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(test_element2!=NULL);
-
-
-  length_path=0;
-  CU_ASSERT(!db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50,  
-								   &db_node_check_status_is_not_exists_in_reference,
-								   &db_node_action_set_status_visited, 
-								   nodes_path, orientations_path, labels_path, &length_path, 
-								   seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								   db_graph, individual_edge_array, 0));
-
-  CU_ASSERT(length_path==6);
-
-  CU_ASSERT_STRING_EQUAL(seq,"ACCCTA");
-  
-  CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element2, 50,
-								  &db_node_check_status_is_not_exists_in_reference,
-								  &db_node_action_set_status_visited, 
-								  nodes_path, orientations_path, labels_path, &length_path,
-								  seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								  db_graph, individual_edge_array, 0));
-
-  CU_ASSERT(length_path==13);
-  CU_ASSERT_STRING_EQUAL(seq, "CCCTCACACACAT");
-	    
-
-  hash_table_free(&db_graph);
-
-  
-  // and now another
-
-  //first set up the hash/graph
-  kmer_size = 31;
-  number_of_bits = 20;
-  bucket_size = 10;
-
-  max_rehash_tries = 10;
-
-  db_graph = hash_table_new(number_of_bits, bucket_size,
-                            max_rehash_tries, kmer_size);
-
-  files_loaded = 0;
-  bad_reads = 0;
-  dup_reads = 0;
-  seq_loaded = 0;
-  seq_read = 0;
-
-  load_se_filelist_into_graph_colour(
-    "../data/test/graph/person3.falist",
-    fq_quality_cutoff, homopolymer_cutoff,
-    remove_duplicates_se, ascii_fq_offset,
-    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
-    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
-
-  // fasta looks like this:
-  /*
-    >read1 overlaps human chrom 1 - it is 9 copies of TAACCC and then TAACC on the end.  
-    TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC
-    > read 2 overlaps human chrom 1 - is has a CCCC in the middle which means any 31-mer will contain CCCC and so not overlap the above
-    ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
-    > read 3 does not
-    GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
-    > read 3 does not
-    GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
-    > read 3 does not
-    GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
-    > read 4 does not, but has too low coverage
-    TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
-  */
-  
-
-  // This person has the following supernodes:
-
-  // >this supernode is the entrety of read2 and is entirely contained in chrom1
-  // ACCCTAACCCTAACCCTAACCCCTAACCCTAACCCTAACCCTAAC
-  // >node_1 - This supernode lies entirely in chrom1 also. However note the supernode is a loop, so you could start printing at various places....
-  // TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCT
-  // > node 3 - overlaps chrom but has low covg
-  // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-  // >node 4 - no overlap with chromosome
-  // GGGGCGGGGCGGGGCGGGGCGGGGCGGGGCCCCCTCACACACAT
-  /*
-
-  read_chromosome_fasta_and_mark_status_of_graph_nodes_as_existing_in_reference("../data/test/graph/Homo_sapiens.NCBI36.52.dna.chromosome.1.first_20_lines.fa", db_graph);
-
-  char** array_of_supernodes_for_person3= (char**) calloc(10,sizeof(char*));
-  array_of_supernodes_for_person3[0]= (char*)calloc(100,sizeof(char));
-  array_of_supernodes_for_person3[1]= (char*)calloc(100,sizeof(char));
-  array_of_supernodes_for_person3[2]= (char*)calloc(100,sizeof(char));
-
-  int number_of_supernodes=0;
-  int min_covg_required = 2;
-
-
-  //element on supernode we know intersects chromosomes
-   test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("ACCCTAACCCTAACCCTAACCCTAACCCTAA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(test_element1!=NULL);
-  //elemtn on node that does not intersect chromosomes - is "novel" - and has coverage 3
-  test_element2 = hash_table_find(element_get_key(seq_to_binary_kmer("GGGCGGGGCGGGGCGGGGCGGGGCCCCCTCA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(test_element2!=NULL);
-  //element does not intersect chrom but has covg only 1
-  dBNode* test_element3 =  hash_table_find(element_get_key(seq_to_binary_kmer("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
-  CU_ASSERT(test_element3!=NULL);
-
-  db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(db_graph, &db_node_check_status_is_not_exists_in_reference, min_covg_required, NULL,
-									       true, array_of_supernodes_for_person3, &number_of_supernodes, individual_edge_array, 0);
-
-
-  CU_ASSERT(number_of_supernodes==1);
-  CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0], "CCCGCCCCGCCCC")
-	     || !strcmp(array_of_supernodes_for_person3[0], "CCCTCACACACAT"));
-  
-  
-  hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);
-
-
-  number_of_supernodes=0;
-  //here just a quick check of the _at_least_ version of the function
-  min_covg_required=1;
-  db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(db_graph,
-										       &db_node_check_status_exists_in_reference,  min_covg_required, 
-										       NULL, true, array_of_supernodes_for_person3, 
-										       &number_of_supernodes, individual_edge_array, 0);
-
-
-  CU_ASSERT(number_of_supernodes==2);
-
-
-  //some of read 1 is in chrom1, and the supernode is printed above, just after we loaded the fasta
-  //the whole of read2 is a supernode, and is in chrom 1. Note this print function prints only the edges, not the first kmer in the path
-
-
-  //one of the supernodes is unambiguous
-  CU_ASSERT(    (!strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAAC")) 
-		|| (!strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAAC"))
-		|| (!strcmp(array_of_supernodes_for_person3[0],"GTTAGGGTTAGGGT")) 
-		|| (!strcmp(array_of_supernodes_for_person3[1],"GTTAGGGTTAGGGT")) 
-		);
-	     
-
-  //the other one is ambiguous because you could start printing at one of 5 places (is a loop of 5 kmers)
-
-  /* - this is what we test for if the print prints the whole supernode including the first 31 bases
-  CU_ASSERT( 
-            !strcmp(array_of_supernodes_for_person3[0],"TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCT") || !strcmp(array_of_supernodes_for_person3[1],"TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCT")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"AGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTA") || !strcmp(array_of_supernodes_for_person3[1],"AGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTA")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"AACCCTAACCCTAACCCTAACCCTAACCCTAACCCTA") || !strcmp(array_of_supernodes_for_person3[1],"AACCCTAACCCTAACCCTAACCCTAACCCTAACCCTA")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"TAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTT") || !strcmp(array_of_supernodes_for_person3[1],"TAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTT")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"ACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAA") || !strcmp(array_of_supernodes_for_person3[1],"ACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAA")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"TTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGT") || !strcmp(array_of_supernodes_for_person3[1],"TTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGT")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"CCCTAACCCTAACCCTAACCCTAACCCTAACCCTAAC") || !strcmp(array_of_supernodes_for_person3[1],"CCCTAACCCTAACCCTAACCCTAACCCTAACCCTAAC")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"GTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGG") || !strcmp(array_of_supernodes_for_person3[1],"GTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGG")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"CCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC") || !strcmp(array_of_supernodes_for_person3[1],"CCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"GGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGG") || !strcmp(array_of_supernodes_for_person3[1],"GGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGG")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"CTAACCCTAACCCTAACCCTAACCCTAACCCTAACCC") || !strcmp(array_of_supernodes_for_person3[1],"CTAACCCTAACCCTAACCCTAACCCTAACCCTAACCC")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"GGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAG") || !strcmp(array_of_supernodes_for_person3[1],"GGGTTAGGGTTAGGGTTAGGGTTAGGGTTAGGGTTAG")
-	    
-	     );
-  */
-/*
-
-
- CU_ASSERT( !strcmp(array_of_supernodes_for_person3[0],"AACCCT") || !strcmp(array_of_supernodes_for_person3[1],"AACCCT")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"AGGGTT") || !strcmp(array_of_supernodes_for_person3[1],"AGGGTT")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"ACCCTA") || !strcmp(array_of_supernodes_for_person3[1],"ACCCTA")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"TAGGGT") || !strcmp(array_of_supernodes_for_person3[1],"TAGGGT")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"CCCTAA") || !strcmp(array_of_supernodes_for_person3[1],"CCCTAA")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"TTAGGG") || !strcmp(array_of_supernodes_for_person3[1],"TTAGGG")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"CCTAAC") || !strcmp(array_of_supernodes_for_person3[1],"CCTAAC")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"GTTAGG") || !strcmp(array_of_supernodes_for_person3[1],"GTTAGG")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"CTAACC") || !strcmp(array_of_supernodes_for_person3[1],"CTAACC")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"GGTTAG") || !strcmp(array_of_supernodes_for_person3[1],"GGTTAG")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"TAACCC") || !strcmp(array_of_supernodes_for_person3[1],"TAACCC")
-	    ||
-	    !strcmp(array_of_supernodes_for_person3[0],"GGGTTA") || !strcmp(array_of_supernodes_for_person3[1],"GGGTTA")
-
-	    
-	     );
-
-
-  free(array_of_supernodes_for_person3[0]) ;
-  free(array_of_supernodes_for_person3[1]) ;
-  free(array_of_supernodes_for_person3[2]) ;
-  free(array_of_supernodes_for_person3) ;
-
-  hash_table_free(&db_graph);
- 
-}
-*/
 
 void test_db_graph_supernode_for_specific_person_or_pop()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
-  if (NUMBER_OF_COLOURS<2)
-    {
-      printf("Test eeds >=2 colours\n");
-      return;
-    }
- //first set up the hash/graph
+  if(NUMBER_OF_COLOURS < 2)
+  {
+    warn("Test needs >= 2 colours\n");
+    return;
+  }
+
+  //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 8;
   int bucket_size = 8;
@@ -2038,7 +1709,7 @@ void test_is_supernode_end()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -2295,7 +1966,7 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
 { 
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -2374,7 +2045,7 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -2465,7 +2136,7 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -2725,7 +2396,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -2817,7 +2488,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_2()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -2907,7 +2578,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -3021,7 +2692,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_4()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -3096,7 +2767,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_5()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -3177,7 +2848,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -3275,7 +2946,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
 
 
   //now do the test!!!
-  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test1", "w");
+  FILE* fp = fopen("../data/tempfiles_can_be_deleted/temp_outputfile_trustedpath_sv_caller_test1", "w");
   //indiv in colour 0, ref in colour 1
   int ret = 
     db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_colours(chrom_fptr, &element_get_colour0, &element_get_covg_colour0, 1,
@@ -3319,7 +2990,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -3416,7 +3087,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
   return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
 
 
-  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test2", "w");
+  FILE* fp = fopen("../data/tempfiles_can_be_deleted/temp_outputfile_trustedpath_sv_caller_test2", "w");
 
   int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 							individual_edge_array,1,
@@ -3453,7 +3124,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_3()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -3548,7 +3219,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_3()
   return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
 
 
-  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test3", "w");
+  FILE* fp = fopen("../data/tempfiles_can_be_deleted/temp_outputfile_trustedpath_sv_caller_test3", "w");
 
 
   //individual has 2 missing bases, reference does not
@@ -3589,7 +3260,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_4()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -3682,7 +3353,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_4()
   return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
   return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
 
-  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test4", "w");
+  FILE* fp = fopen("../data/tempfiles_can_be_deleted/temp_outputfile_trustedpath_sv_caller_test4", "w");
 
 
 
@@ -3723,7 +3394,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -3821,7 +3492,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
 
 
   
-  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test5", "w");
+  FILE* fp = fopen("../data/tempfiles_can_be_deleted/temp_outputfile_trustedpath_sv_caller_test5", "w");
   //indiv colour 0, ref col1
   int ret = db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_colours(chrom_fptr, &element_get_colour0, &element_get_covg_colour0, 1,
 											       min_fiveprime_flank_anchor, min_threeprime_flank_anchor, max_anchor_span, min_covg, max_covg, 
@@ -3860,7 +3531,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -3955,7 +3626,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
   return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
   return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
   
-  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test6", "w");
+  FILE* fp = fopen("../data/tempfiles_can_be_deleted/temp_outputfile_trustedpath_sv_caller_test6", "w");
 
   int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 1, 
 							individual_edge_array,0,
@@ -3995,7 +3666,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_7()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -4123,7 +3794,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_7()
   return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
   return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
 
-  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test7", "w");
+  FILE* fp = fopen("../data/tempfiles_can_be_deleted/temp_outputfile_trustedpath_sv_caller_test7", "w");
 
 
 
@@ -4165,7 +3836,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -4306,7 +3977,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
   return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
   return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
 
-  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test8", "w");
+  FILE* fp = fopen("../data/tempfiles_can_be_deleted/temp_outputfile_trustedpath_sv_caller_test8", "w");
 
 
 
@@ -4359,7 +4030,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -4454,7 +4125,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
   return_variant_start_coords_array_ptr[0]=&(return_variant_start_coords_array[0]);
   return_variant_start_coords_array_ptr[1]=&(return_variant_start_coords_array[1]);
 
-  FILE* fp = fopen("../bin/temp_outputfile_trustedpath_sv_caller_test9", "w");
+  FILE* fp = fopen("../data/tempfiles_can_be_deleted/temp_outputfile_trustedpath_sv_caller_test9", "w");
 
   int ret = db_graph_make_reference_path_based_sv_calls(chrom_fptr, individual_edge_array, 0, 
 							individual_edge_array,1,
@@ -4504,7 +4175,7 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -4663,7 +4334,7 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -4839,181 +4510,180 @@ void test_does_this_path_exist_in_this_colour()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
-  if (NUMBER_OF_COLOURS>=3)
-    {
-      //first set up the hash/graph                                                                                                                                                                            
-      int kmer_size = 7;
-      int number_of_bits = 10;
-      int bucket_size = 8;
-      int max_retries = 10;
-      
-      dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size,
-                                          max_retries, kmer_size);
+  if (NUMBER_OF_COLOURS < 3)
+  {
+    warn("Test is not configured for NUMBER_OF_COLOURS < 3");
+    return;
+  }
 
-      // Read FASTA sequence
-      int fq_quality_cutoff = 0;
-      int homopolymer_cutoff = 0;
-      boolean remove_duplicates_se = false;
-      char ascii_fq_offset = 33;
-      int into_colour = 0;
-
-      unsigned int files_loaded = 0;
-      unsigned long long bad_reads = 0, dup_reads = 0;
-      unsigned long long seq_loaded = 0, seq_read = 0;
-
-      load_se_filelist_into_graph_colour(
-        "../data/test/pop_graph/three_colours.colours",
-        fq_quality_cutoff, homopolymer_cutoff,
-        remove_duplicates_se, ascii_fq_offset,
-        into_colour, db_graph, 1, // 0 => falist/fqlist; 1 => colourlist
-        &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-        NULL, 0);
-
-      // Annoyingly, I have called these file colour1 and colour2, but in the
-      // hash table they are colours 0 and 1. Sorry for this. From here on, I
-      // use colour0 colour1 - the original filenames irrelevant
-      /* in colour 0 we have
-	 
-	 >read1
-	 AAGCATAGACACAGTGAGAGAC
-	 >read2
-	 CCCCCTTTTCCCCCTTTTCCCC
-	 
-	 and in colour1 we have
-	 
-	 >read1
-	 AAGCATAGACACAGTGAGA
-	 >read3
-	 TTTGTGTTTTGTGTG
-	 
-	 and in colour2  - which is NOT loaded into th hgraph, we have
-	 >read4 bridges read2 and read3 - so if you mix colours 0 and 1, you'll get
-   one long contig joining read2 and read3
-
-	 TTCCCCTTTGTGTTTTGTGTG
-	 
-      */
-      
-      //----------------------------------
-      // allocate the memory used to read the sequences
-      //----------------------------------
-      int max_read_length = 100;
-      Sequence * seq = malloc(sizeof(Sequence));
-      if (seq == NULL){
-	die("Out of memory trying to allocate Sequence");
-      }
-      alloc_sequence(seq,max_read_length,LINE_MAX);
-      
-      //We are going to load all the bases into a single sliding window 
-      KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
-      if (kmer_window==NULL)
-	{
-	  die("Failed to malloc kmer sliding window in test_does_this_path_exist_in_this_colour. Exit.");
-	}
-      
-      
-      kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
-      if (kmer_window->kmer==NULL)
-	{
-	  die("Failed to malloc kmer_window->kmer in test_does_this_path_exist_in_this_colour. Exit.");
-	}
-      kmer_window->nkmers=0;
-      
-      //create file reader
-      int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
-	long long ret;
-	int offset = 0;
-	if (new_entry == false){
-	  die("new_entry must be true in hsi test function");
-	}
-	ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
-	
-	return ret;
-      }
-      
-      
-      dBNode* array_nodes[50];//in fact there are 43 17-mers in the first line of the fasta
-      Orientation array_or[50];
-      
-      //end of intialisation 
-      
-      
-      //so let's check read1 - should see it in colour1 and colour2, and the union of colours 1 and 2
-      
-      FILE* fp = fopen("../data/test/pop_graph/colour0.fa", "r");
-      if (fp==NULL)
-	{
-	  die("Cannot open ../data/test/pop_graph/colour0.fa");
-	}
-      boolean f_entry=true;
-      int len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, &f_entry, file_reader, seq, kmer_window, db_graph, 0);
-      CU_ASSERT(f_entry==true);
-      //now the test
-      
-      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==true);
-      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==true);
-      
-      
-      //now read2:
-      f_entry=true;
-      len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, &f_entry, file_reader, seq, kmer_window, db_graph, 0);
-      CU_ASSERT(f_entry=true);
-      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==true);
-      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==false);
-      
-      //now try the other fasta file and check read1 and 3
-      fclose(fp);
-      fp = fopen("../data/test/pop_graph/colour1.fa", "r");
-      if (fp==NULL)
-	{
-	  die("Cannot open ../data/test/pop_graph/colour1.fa");
-	}
-      
-      
-      //this read is in both colours
-      f_entry=true;
-      len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, &f_entry, file_reader, seq, kmer_window, db_graph, 0);
-      CU_ASSERT(f_entry=true);
-      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==true);
-      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==true);
-      //this read is in colour1 only
-      f_entry=true;
-      len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, &f_entry, file_reader, seq, kmer_window, db_graph, 0);
-      CU_ASSERT(f_entry=true);
-      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==false);
-      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==true);
-      
-      //now for the final test, take a read which is there in the union of two colours, but not in either
-      fclose(fp);
-      fp = fopen("../data/test/pop_graph/colour2.fa", "r");
-      if (fp==NULL)
-	{
-	  die("Cannot open ../data/test/pop_graph/colour2.fa");
-	}
-      f_entry=true;
-      len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, &f_entry,file_reader, seq, kmer_window, db_graph, 0);
-      CU_ASSERT(f_entry=true);
-      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==false);
-      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==false);
-      CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour_union_of_all_colours, db_graph)==true);
-      
-      
-      
-      free(kmer_window->kmer);
-      free(kmer_window);
-      free_sequence(&seq);
-      hash_table_free(&db_graph);
-      
-    }
-  else
-    {
-      printf("This test is NULL unless there are >=3 colours\n");
-    }
+  //first set up the hash/graph                                                                                                                                                                            
+  int kmer_size = 7;
+  int number_of_bits = 10;
+  int bucket_size = 8;
+  int max_retries = 10;
   
+  dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size,
+                                      max_retries, kmer_size);
+
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/three_colours.colours",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 1, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  // Annoyingly, I have called these file colour1 and colour2, but in the
+  // hash table they are colours 0 and 1. Sorry for this. From here on, I
+  // use colour0 colour1 - the original filenames irrelevant
+  /* in colour 0 we have
+
+>read1
+AAGCATAGACACAGTGAGAGAC
+>read2
+CCCCCTTTTCCCCCTTTTCCCC
+
+and in colour1 we have
+
+>read1
+AAGCATAGACACAGTGAGA
+>read3
+TTTGTGTTTTGTGTG
+
+and in colour2  - which is NOT loaded into th hgraph, we have
+>read4 bridges read2 and read3 - so if you mix colours 0 and 1, you'll get
+one long contig joining read2 and read3
+
+TTCCCCTTTGTGTTTTGTGTG
+
+  */
+  
+  //----------------------------------
+  // allocate the memory used to read the sequences
+  //----------------------------------
+  int max_read_length = 100;
+  Sequence * seq = malloc(sizeof(Sequence));
+  if (seq == NULL){
+    die("Out of memory trying to allocate Sequence");
+  }
+  alloc_sequence(seq,max_read_length,LINE_MAX);
+  
+  //We are going to load all the bases into a single sliding window 
+  KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
+  if (kmer_window==NULL)
+  {
+    die("Failed to malloc kmer sliding window in test_does_this_path_exist_in_this_colour. Exit.");
+  }
+  
+  
+  kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
+  if (kmer_window->kmer==NULL)
+  {
+    die("Failed to malloc kmer_window->kmer in test_does_this_path_exist_in_this_colour. Exit.");
+  }
+  kmer_window->nkmers=0;
+  
+  //create file reader
+  int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
+long long ret;
+int offset = 0;
+if (new_entry == false){
+die("new_entry must be true in hsi test function");
+}
+ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
+
+return ret;
+  }
+  
+  
+  dBNode* array_nodes[50];//in fact there are 43 17-mers in the first line of the fasta
+  Orientation array_or[50];
+  
+  //end of intialisation 
+  
+  
+  //so let's check read1 - should see it in colour1 and colour2, and the union of colours 1 and 2
+  
+  FILE* fp = fopen("../data/test/pop_graph/colour0.fa", "r");
+  if (fp==NULL)
+  {
+    die("Cannot open ../data/test/pop_graph/colour0.fa");
+  }
+
+  boolean f_entry=true;
+  int len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, &f_entry, file_reader, seq, kmer_window, db_graph, 0);
+  CU_ASSERT(f_entry==true);
+  //now the test
+  
+  CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==true);
+  CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==true);
+  
+  
+  //now read2:
+  f_entry=true;
+  len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, &f_entry, file_reader, seq, kmer_window, db_graph, 0);
+  CU_ASSERT(f_entry=true);
+  CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==true);
+  CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==false);
+  
+  //now try the other fasta file and check read1 and 3
+  fclose(fp);
+  fp = fopen("../data/test/pop_graph/colour1.fa", "r");
+  if (fp==NULL)
+  {
+    die("Cannot open ../data/test/pop_graph/colour1.fa");
+  }
+  
+  
+  //this read is in both colours
+  f_entry=true;
+  len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, &f_entry, file_reader, seq, kmer_window, db_graph, 0);
+  CU_ASSERT(f_entry=true);
+  CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==true);
+  CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==true);
+  //this read is in colour1 only
+  f_entry=true;
+  len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, &f_entry, file_reader, seq, kmer_window, db_graph, 0);
+  CU_ASSERT(f_entry=true);
+  CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==false);
+  CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==true);
+  
+  //now for the final test, take a read which is there in the union of two colours, but not in either
+  fclose(fp);
+  fp = fopen("../data/test/pop_graph/colour2.fa", "r");
+  if (fp==NULL)
+  {
+    die("Cannot open ../data/test/pop_graph/colour2.fa");
+  }
+
+  f_entry=true;
+  len_array = align_next_read_to_graph_and_return_node_array(fp, 50, array_nodes, array_or, false, &f_entry,file_reader, seq, kmer_window, db_graph, 0);
+  CU_ASSERT(f_entry=true);
+  CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour0, db_graph)==false);
+  CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour1, db_graph)==false);
+  CU_ASSERT(does_this_path_exist_in_this_colour(array_nodes, array_or, len_array, &element_get_colour_union_of_all_colours, db_graph)==true);
+  
+  
+  
+  free(kmer_window->kmer);
+  free(kmer_window);
+  free_sequence(&seq);
+  hash_table_free(&db_graph);
 }
 
 

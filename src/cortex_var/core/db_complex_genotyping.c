@@ -224,9 +224,10 @@ void reset_MultiplicitiesAndOverlapsOfBiallelicVariant(MultiplicitiesAndOverlaps
 }
 
 //Utility function - only exported so I can test it.
-void initialise_multiplicities_of_allele_nodes_wrt_both_alleles(VariantBranchesAndFlanks* var, MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
-								boolean only_count_nodes_with_edge_in_specified_colour_func,
-								Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*) )
+void initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
+  VariantBranchesAndFlanks* var, MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
+  boolean only_count_nodes_with_edge_in_specified_colour_func,
+  Edges (*get_colour)(const dBNode*), uint32_t (*get_covg)(const dBNode*) )
 {
 
   void get_mult(dBNode** br_src, int len_br_src, dBNode** br_target, int len_br_target, int* mult_array)
@@ -274,10 +275,11 @@ void utility_set_one_array_equal_to_another(dBNode** src, int len, dBNode** targ
 }
 
 //Utility function - only exported so I can test it.
-void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(VariantBranchesAndFlanks* var, MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
-									 boolean only_count_nodes_with_edge_in_specified_colour_func,
-									 Edges (*get_colour)(const dBNode*), int (*get_covg)(const dBNode*),
-									 int working_colour1, int working_colour2)
+void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
+  VariantBranchesAndFlanks* var, MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
+  boolean only_count_nodes_with_edge_in_specified_colour_func,
+  Edges (*get_colour)(const dBNode*), uint32_t (*get_covg)(const dBNode*),
+  int working_colour1, int working_colour2)
 {
   // *** ASSUME THE WORKING COLOURS ARE CLEAN ***
 
@@ -322,9 +324,10 @@ void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(Variant
 }
 
 
-void improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(GenotypingVariantBranchesAndFlanks* var, 
-										    MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
-										    int working_colour1, int working_colour2)
+void improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alleles(
+  GenotypingVariantBranchesAndFlanks* var, 
+  MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
+  int working_colour1, int working_colour2)
 {
   // *** ASSUME THE WORKING COLOURS ARE CLEAN ***
 
@@ -380,20 +383,22 @@ void improved_initialise_multiplicities_of_allele_genotyping_nodes_wrt_both_alle
 // and return -99999999
 // var_mults must be pre-allocated ***and pre-initialised***
 
-double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFlanks* var,
-							    char* name_of_this_genotype,
-							    MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults,
-							    GraphAndModelInfo* model_info,
-							    int colour_indiv, 
-							    int colour_ref_minus_our_site, dBGraph* db_graph,
-							    int* working_array_self, int* working_array_shared,
-							    double* current_max_lik, double* current_max_but_one_lik,
-							    char* current_max_lik_name, char* current_max_but_one_lik_name,
-							    AssumptionsOnGraphCleaning assump,
-							    dBNode** p_nodes, Orientation* p_orientations, Nucleotide* p_labels, char* p_string, int max_allele_length,
-							    boolean using_1net, int (*get_covg_in_1net_of_genotype)(dBNode*), 
-							    boolean using_2net, int (*get_covg_in_2net_of_genotype)(dBNode*),
-							    double min_acceptable_llk)
+double calc_log_likelihood_of_genotype_with_complex_alleles(
+  VariantBranchesAndFlanks* var,
+  char* name_of_this_genotype,
+  MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults,
+  GraphAndModelInfo* model_info,
+  int colour_indiv, 
+  int colour_ref_minus_our_site, dBGraph* db_graph,
+  int* working_array_self, int* working_array_shared,
+  double* current_max_lik, double* current_max_but_one_lik,
+  char* current_max_lik_name, char* current_max_but_one_lik_name,
+  AssumptionsOnGraphCleaning assump,
+  dBNode** p_nodes, Orientation* p_orientations,
+  Nucleotide* p_labels, char* p_string, int max_allele_length,
+  boolean using_1net, uint32_t (*get_covg_in_1net_of_genotype)(dBNode*), 
+  boolean using_2net, uint32_t (*get_covg_in_2net_of_genotype)(dBNode*),
+  double min_acceptable_llk)
 //assume the  2 working arrays have length = max read length
 {
     
@@ -411,7 +416,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   {
     return e->individual_edges[colour_indiv];
   }
-  int element_get_covg_indiv(const dBNode* e)
+
+  uint32_t element_get_covg_indiv(const dBNode* e)
   {
     return db_node_get_coverage(e, individual_edge_array, colour_indiv);
   }
@@ -718,7 +724,9 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(VariantBranchesAndFl
   set_status_of_nodes_in_branches(var, in_desired_genotype);
   */
 
-  printf("Genotype %s - number errors in 1net %d, 2net  %d and 3net %d\n", name_of_this_genotype, num_1net_errors, num_2net_errors, num_3net_errors);
+  printf("Genotype %s - number errors in 1net %d, 2net  %d and 3net %d\n",
+         name_of_this_genotype, num_1net_errors, num_2net_errors, num_3net_errors);
+
   // Errors on union of two alleles occur as a Poisson process with rate = sequencing_error_rate_per_base * kmer * length of two alleles
   //double poisson_error_rate;
   //double poisson_bad_error_rate;
@@ -1503,7 +1511,7 @@ void modify_character(char* str, int which_base, int which_mutant)
 }
 
 //idea is: first check if is in 1net, and if not, call this. It is now either in the 2net or beyond and this return from this tells you which
-boolean is_this_kmer_beyond_the_2net(dBNode* n, dBGraph* db_graph, int (*get_covg_1net)(dBNode* e) )
+boolean is_this_kmer_beyond_the_2net(dBNode* n, dBGraph* db_graph, uint32_t (*get_covg_1net)(dBNode* e) )
 {
   int i;
 
@@ -1547,7 +1555,7 @@ boolean is_this_kmer_beyond_the_2net(dBNode* n, dBGraph* db_graph, int (*get_cov
 
 
 
-boolean is_this_kmer_in_the_1net(dBNode* n, dBGraph* db_graph, int (*get_covg_1net)(dBNode* e) )
+boolean is_this_kmer_in_the_1net(dBNode* n, dBGraph* db_graph, uint32_t (*get_covg_1net)(dBNode* e) )
 {
   int i;
 
@@ -1602,18 +1610,10 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 										      
 {
   
-  int get_covg_in_union_of_colours_to_genotype(dBNode* e)
+  uint32_t get_covg_in_union_of_colours_to_genotype(dBNode* e)
   {
-    int i;
-    int covg=0;
-
-    for (i=0; i<num_colours_to_genotype; i++)
-      {
-	covg += e->coverage[colours_to_genotype[i]];
-      }
-
-    return covg;
-
+    return element_get_covg_for_colourlist(e, colours_to_genotype,
+                                           num_colours_to_genotype);
   }
 
   //wipe the working colours:
@@ -1848,13 +1848,14 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 						     }*/
 	
 
-	  
-	  int get_covg_in_1net_errors_from_genotype(dBNode* n)
+	  uint32_t get_covg_in_1net_errors_from_genotype(dBNode* n)
 	  {
 	    //return db_node_get_coverage(n, individual_edge_array, working_colour_1net);
-	    return db_node_get_coverage(n, individual_edge_array, i+number_alleles) + db_node_get_coverage(n, individual_edge_array, j+number_alleles);
+      int arr[] = {i+number_alleles, j+number_alleles};
+	    return element_get_covg_for_colourlist(n, arr, 2);
 	  }
-	  int get_covg_in_2net_errors_from_genotype(dBNode* n)
+
+	  uint32_t get_covg_in_2net_errors_from_genotype(dBNode* n)
 	  {
 	    if (is_this_kmer_beyond_the_2net(n, db_graph, &get_covg_in_1net_errors_from_genotype)==false)
 	      {
@@ -2104,7 +2105,8 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
     {
       if (annovar->var->other_allele[i]==NULL)
 	{
-	  printf("WARNING - alt allele to be genotyped contains an N -  unexpected, but will try to continue. Worth telling Zam (zam@well.ox.ac.uk).\n");
+	  warn("alt allele to be genotyped contains an N -  unexpected, but will try "
+         "to continue. Worth telling Zam (zam@well.ox.ac.uk).\n");
 	  continue;
 	}
       
@@ -2487,7 +2489,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 	      //}
 	      if (genome_length==-1)
 		{
-		  printf("Warning - genome length not specified, so assuming is human!!\n");
+		  warn("Genome length not specified, so assuming is human (3,000,000,000bp)\n");
 		  genome_length=3000000000;//default
 		}
 	      int mean_read_len=100;

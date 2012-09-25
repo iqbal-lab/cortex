@@ -84,12 +84,6 @@ GenotypingElement * little_hash_table_find(Key key, LittleHashTable * little_has
 
 long long little_hash_table_get_capacity(LittleHashTable * little_hash_table);
 
-void little_hash_table_dump_to_file(FILE * fp, LittleHashTable * little_hash_table);
-
-void print_little_hash_table_signature(FILE * fp,LittleHashTable * little_hash_table);
-
-LittleHashTable * little_hash_table_load_from_dump(FILE* fp, int max_rehash_tries);
-
 void little_graph_wipe_colour(int colour, LittleHashTable* little_graph);
 
 #endif /* LITTLE_HASH_H_ */

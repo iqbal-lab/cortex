@@ -192,10 +192,7 @@ char reverse_char_nucleotide(char c)
     case 't':
       return 'a';
     default:
-      printf("Non-existent nucleotide %c\n",c);
-      assert(0);
-      return 'N';
-      //return Adenine; 
+      die("Non-existent nucleotide %c\n",c);
     }
 }
 
@@ -488,6 +485,9 @@ BinaryKmer* binary_kmer_reverse_complement(BinaryKmer* kmer, short kmer_size,
   binary_kmer_initialise_to_zero(prealloc_reverse_kmer);
 
   BinaryKmer kmer_copy;
+
+  // DEV
+  binary_kmer_initialise_to_zero(prealloc_reverse_kmer);
 
   // Copy
   memcpy(kmer_copy, kmer, BINARY_KMER_BYTES);

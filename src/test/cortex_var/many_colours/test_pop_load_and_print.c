@@ -38,14 +38,15 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
-  if (NUMBER_OF_COLOURS<2)
-    {
-      printf("Test needs >=2 colours\n");
-      return;
-    }
+  if(NUMBER_OF_COLOURS < 2)
+  {
+    warn("Test needs >=2 colours\n");
+    return;
+  }
+
   //first set up the hash/graph
   int kmer_size = 3;
   int number_of_bits = 4;
@@ -55,10 +56,10 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   dBGraph * hash_table = hash_table_new(number_of_bits, bucket_size,
                                         max_retries, kmer_size);
 
-  if (hash_table==NULL)
-    {
-      die("Unable to alloc the hash table. dead before we even started.");
-    }
+  if(hash_table == NULL)
+  {
+    die("Unable to alloc the hash table. dead before we even started.");
+  }
 
   // Read FASTA sequence
   int fq_quality_cutoff = 0;
@@ -108,7 +109,7 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
   int i;
 
 
-  printf("Upgrade this test to use the NEW PRINT FUNCTION and then uncomment it.\n");
+  warn("Upgrade this test to use the NEW PRINT FUNCTION and then uncomment it.\n");
   /*
 
   //  db_graph_traverse_specific_person_or_pop_for_supernode_printing(&db_graph_choose_output_filename_and_print_supernode_for_specific_person_or_pop, hash_table, &supernode_count_person1, individual_edge_array, 0, 
@@ -208,7 +209,7 @@ void test_take_three_people_each_with_one_read_and_find_variants()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -362,7 +363,7 @@ void test_take_two_people_sharing_an_alu_and_find_supernodes()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 

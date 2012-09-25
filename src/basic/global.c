@@ -35,16 +35,22 @@
 boolean test_file_existence(char* file)
 {
   FILE* fp = fopen(file, "r");
-  if (fp==NULL)
-    {
-      return false;
-    }
+  if(fp == NULL)
+  {
+    return false;
+  }
   else
-    {
-      fclose(fp);
-      return true;
-    }
+  {
+    fclose(fp);
+    return true;
+  }
 }
+
+void set_string_to_null(char* str, int len)
+{
+  memset(str, 0, sizeof(char)*len);
+}
+
 
 void die(const char* fmt, ...)
 {
@@ -67,11 +73,21 @@ void die(const char* fmt, ...)
   exit(EXIT_FAILURE);
 }
 
-void set_string_to_null(char* str, int len)
+void warn(const char* fmt, ...)
 {
-  int i;
-  for (i=0; i<len; i++)
-    {
-      str[i]='\0';
-    }
+  fflush(stdout);
+
+  // Print warning
+  fprintf(stderr, "Warning: ");
+
+  va_list argptr;
+  va_start(argptr, fmt);
+  vfprintf(stderr, fmt, argptr);
+  va_end(argptr);
+
+  // Check if we need to print a newline
+  if(*(fmt+strlen(fmt)-1) != '\n')
+  {
+    fprintf(stderr, "\n");
+  }
 }

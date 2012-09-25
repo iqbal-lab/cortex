@@ -510,7 +510,7 @@ void test_load_singlecolour_binary()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not written for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not written for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -657,14 +657,12 @@ void test_load_individual_binaries_into_sv_trio()
 {
   if(NUMBER_OF_COLOURS < 3)
   {
-    printf("This test is redundant unless the compile-time flag "
-           "NUMBER_OF_COLOURS is set to a value >=3. This is set by typing "
-           "make NUM_COLS=3 blah\n");
+    warn("Test not configured for NUMBER_OF_COLOURS < 3\n");
     return;
   }
   else if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
   else
@@ -841,7 +839,7 @@ void test_load_individual_binaries_into_sv_trio()
 
     if(test_element3_person1 == NULL)
     {
-      printf("test_element3_person1 is NULL");
+      warn("%s:%i: test_element3_person1 is NULL", __FILE__, __LINE__);
     }
 
     if(test_element1_person2 == NULL)
@@ -1043,11 +1041,11 @@ void test_load_individual_binaries_into_sv_trio()
       
       if (test_element3_person1==NULL)
       {
-        printf("test_element3_person1 is NULL");
+        warn("%s:%i: test_element3_person1 is NULL", __FILE__, __LINE__);
       }
       if (test_element1_person2==NULL)
       {
-        printf("test_element1_person2 is NULL");
+        warn("%s:%i: test_element1_person2 is NULL", __FILE__, __LINE__);
       }
       
       //now check the edges
@@ -1165,7 +1163,7 @@ void test_coverage_is_correctly_counted_on_loading_from_file()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -1243,7 +1241,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -1536,7 +1534,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -1810,13 +1808,17 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
 
 
 
+// DEV: propose this is removed or updated
+//      - read_fastq_and_print_reads_that_lie_in_graph() isn't used anywhere else
+//      - Doesn't use new seq_file sequence reader
+//
 //Assumption is that you use a bunch of fastq to build a graph, then clean it.
 //You then want access to a set of fasta files that correspond to the good reads only.
 void test_dumping_of_clean_fasta()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -1923,7 +1925,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -2073,7 +2075,7 @@ void test_loading_of_single_ended_reads_removing_duplicates()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -2163,7 +2165,7 @@ void test_load_seq_into_array()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -2692,7 +2694,7 @@ void test_load_seq_into_array()
 
   if (fptr==NULL)
   {
-    fprintf(stderr, "Cannot open ../data/test/pop_graph/simple5.fa\n");
+    die("Cannot open ../data/test/pop_graph/simple5.fa\n");
   }
 
 
@@ -3027,7 +3029,7 @@ void test_load_seq_into_array()
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (path_string==NULL))
   {
-    fprintf(stderr, "Failed to allocate arrays for test\n");
+    die("%s:%i: Failed to allocate arrays for tests", __FILE__, __LINE__);
   }
 
 
@@ -3062,7 +3064,7 @@ void test_load_seq_into_array()
 
   if (fptr==NULL)
   {
-    fprintf(stderr, "Cannot open ../data/test/pop_graph/simple8.fa\n");
+    die("Cannot open ../data/test/pop_graph/simple8.fa\n");
   }
 
   retvalue = load_seq_into_array(fptr, num_of_nodes_to_read, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
@@ -3266,7 +3268,7 @@ void test_load_seq_into_array()
 
   if (fptr==NULL)
   {
-    fprintf(stderr, "Cannot open ../data/test/pop_graph/simple10.fa\n");
+    die("Cannot open ../data/test/pop_graph/simple10.fa\n");
   }
 
   //initialise the arrays
@@ -3452,7 +3454,7 @@ void test_load_seq_into_array()
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (path_string==NULL))
   {
-    fprintf(stderr, "Failed to allocate arrays for test\n");
+    die("%s:%i: Failed to allocate arrays for test", __FILE__, __LINE__);
   }
 
   //initialise
@@ -3485,7 +3487,7 @@ void test_load_seq_into_array()
   fptr = fopen("../data/test/pop_graph/simple11.fa", "r");
   if (fptr==NULL)
   {
-    printf("Cannot open ../data/test/pop_graph/simple10.fa\n");
+    die("Cannot open ../data/test/pop_graph/simple10.fa\n");
   }
 
   // Initialise the arrays
@@ -3786,7 +3788,7 @@ void test_load_seq_into_array()
  {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -3831,15 +3833,15 @@ void test_load_seq_into_array()
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
   {
-    printf("Failed to malloc kmer sliding window in db_graph_make_reference_path_based_sv_calls. Exit.\n");
+    die("%s:%i: Failed to malloc kmer sliding window", __FILE__, __LINE__);
   }
-
 
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length-db_graph->kmer_size-1));
   if (kmer_window->kmer==NULL)
   {
-    printf("Failed to malloc kmer_window->kmer in db_graph_make_reference_path_based_sv_calls. Exit.\n");
+    die("%s:%i: Failed to malloc kmer_window->kmer", __FILE__, __LINE__);
   }
+
   kmer_window->nkmers=0;
 
 
@@ -3854,7 +3856,7 @@ void test_load_seq_into_array()
     long long ret;
     int offset = 0;
     if (new_entry == false){
-      printf("new_entry must be true in hsi test function");
+      warn("new_entry must be true in hsi test function");
     }
     ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
 
@@ -3885,8 +3887,7 @@ void test_load_seq_into_array()
   FILE* fp = fopen("../data/test/graph/person3.fa", "r");
   if (fp==NULL)
   {
-    printf("Cannot open ../data/test/graph/person3.fa in "
-           "test_align_next_read_to_graph_and_return_node_array\n");
+    die("%s:%i: Cannot open ../data/test/graph/person3.fa", __FILE__, __LINE__);
   }
 
 
@@ -3961,7 +3962,7 @@ void test_read_next_variant_from_full_flank_file()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -4021,7 +4022,7 @@ void test_read_next_variant_from_full_flank_file()
   KmerSlidingWindow* kmer_window = malloc(sizeof(KmerSlidingWindow));
   if (kmer_window==NULL)
   {
-    printf("Failed to malloc kmer sliding window in a test. Exit.\n");
+    die("%s:%i: Failed to malloc kmer sliding window", __FILE__, __LINE__);
   }
 
 
@@ -4029,7 +4030,7 @@ void test_read_next_variant_from_full_flank_file()
   kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(max_read_length+1));
   if (kmer_window->kmer==NULL)
   {
-    printf("Failed to malloc kmer_window->kmer in test . Exit.\n");
+    die("%s:%i: Failed to malloc kmer_window->kmer", __FILE__, __LINE__);
   }
   kmer_window->nkmers=0;
 
@@ -4295,7 +4296,7 @@ void test_read_next_variant_from_full_flank_file_2()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -4605,7 +4606,7 @@ void test_read_next_variant_from_full_flank_file_3()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -4911,7 +4912,7 @@ void test_read_next_variant_from_full_flank_file_4()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -5279,10 +5280,10 @@ void _test_getting_readlength_dist_with_file(
 
           if(readlen_counts[j] != correct_answers_readlens[i][k][j])
           {
-            fprintf(stderr, "%s test: %i; k[%i]: %i; j: %i; got: %lu; correct: %lu\n",
-                    pe ? "pe" : "se",
-                    i, k, kmer_size, j,
-                    readlen_counts[j], correct_answers_readlens[i][k][j]);
+            warn("%s:%i: %s test: %i; k[%i]: %i; j: %i; got: %lu; correct: %lu\n",
+                 __FILE__, __LINE__, (pe ? "pe" : "se"),
+                 i, k, kmer_size, j,
+                 readlen_counts[j], correct_answers_readlens[i][k][j]);
           }
         }
 
@@ -5296,7 +5297,7 @@ void test_getting_readlength_distribution()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 2)
   {
-    fprintf(stderr, "Tests only written for MAXK=31 and MAXK=63\n");
+    warn("Tests only written for MAXK=31 and MAXK=63\n");
     return;
   }
 
@@ -5823,13 +5824,13 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
 {
   if(NUMBER_OF_COLOURS <= 1)
   {
-    printf("This test is redundant with only one colour\n");
+    warn("This test is redundant with only one colour\n");
     return;
   }
 
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 
@@ -6083,6 +6084,7 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
 }
 
 
+// DEV: remove test CU_ASSERT(num_cols_in_binary == NUMBER_OF_COLOURS); ?
 void test_load_binversion5_binary()
 {
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER == 1)

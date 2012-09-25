@@ -42,13 +42,13 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 {
   if(NUMBER_OF_COLOURS < 100)
   {
-    printf("\nThis test requires compilation for support of >=100 colours - skipping\n");
+    warn("This test requires compilation for support of >=100 colours - skipping\n");
     return;
   }
 
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
-    printf("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
 

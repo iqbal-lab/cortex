@@ -97,21 +97,29 @@ else
 endif
 
 ifdef MAC
- MACFLAG = -fnested-functions
+	MACFLAG = -fnested-functions
 endif
 
 ARCH = -m64
 
 ifdef 32_BITS
- ARCH =
+	ARCH =
 endif
+
+# Comment out this line to turn off adding the commit version
+# (it already checks if hg is installed)
+VERSION_STR=$(shell if [ `command -v hg` ]; then echo ' (commit' `hg id --num --id`')'; else echo; fi)
 
 # DEV: Add -Wextra
 # DEV: Add -DNDEBUG=1 to turn off assert() calls
-OPT = $(ARCH) -Wall -O3 $(MACFLAG) -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) -DNUMBER_OF_COLOURS=$(NUM_COLS)
+OPT := $(ARCH) -Wall $(MACFLAG) -DVERSION_STR='"$(VERSION_STR)"' \
+       -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) \
+       -DNUMBER_OF_COLOURS=$(NUM_COLS)
 
 ifdef DEBUG
- OPT = $(ARCH) -Wall -O0 -g $(MACFLAG) -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) -DNUMBER_OF_COLOURS=$(NUM_COLS)
+	OPT := -O0 -g $(OPT)
+else
+	OPT := -O3 $(OPT)
 endif
 
 LIBLIST = -lgsl -lgslcblas -lseqfile -lbam -lstrbuf -lz -lm

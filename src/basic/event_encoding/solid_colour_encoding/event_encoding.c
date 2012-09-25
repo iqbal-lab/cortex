@@ -86,9 +86,7 @@ char binary_nucleotide_to_char(Nucleotide n)
 	case Three:
 	  return '3';
 	default:
-	  printf("Non existent binary nucleotide %d\n",n);
-	  assert(0); 
-	  return 'N'; //Don't really return this, must fail before this point. But stops compiler warning.
+	  die("Non existent binary nucleotide %d\n",n);
 	}
 }
 

@@ -86,13 +86,6 @@ typedef Element dBNode;
 typedef BinaryKmer*  Key;
 
 
-//typedef enum{
-//  overlaps_forwards_only=0,
-//    overlaps_reverse_only = 1,
-//    overlaps_both_directions =2,
-//    does_not_overlap =4,
-//    } Overlap;
-
 typedef Element GraphNode;
 
 Element* new_element();
@@ -100,11 +93,12 @@ void free_element(Element** element);
 void element_assign(Element* e1, Element* e2);
 
 
-//utility function for getting the desired edge char, by specifying if talking about a population or an individual
-// and giving the appropriate index in the relevant array
+// utility function for getting the desired edge char, by specifying if talking
+// about a population or an individual and giving the appropriate index in the
+// relevant array
 
-Edges* get_edge(Element, EdgeArrayType, int); //gets pointer to actual edge, so you can modify it
-Edges get_edge_copy(const Element e, EdgeArrayType type,int index); //gets copy of edge
+// gets copy of edge
+Edges get_edge_copy(const Element e, EdgeArrayType type, int index);
 Edges get_union_of_edges(Element e);
 Edges element_get_colour_union_of_all_colours(const Element*);
 
@@ -112,16 +106,24 @@ Edges element_get_colour0(const Element* e);
 Edges element_get_colour1(const Element* e);
 Edges element_get_last_colour(const Element* e);
 
-int element_get_covg_union_of_all_covgs(const dBNode*);
-int element_get_covg_colour0(const dBNode* e);
-int element_get_covg_colour1(const dBNode* e);
-int element_get_covg_last_colour(const dBNode* e);
+uint32_t element_get_covg_union_of_all_covgs(const dBNode*);
+uint32_t element_get_covg_for_colourlist(const dBNode* e, int* colour_list,
+                                         int list_len);
 
-void add_edges(Element*, EdgeArrayType, int, Edges);
-void set_edges(Element*, EdgeArrayType, int, Edges);
-void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide, EdgeArrayType type, int index);
+uint32_t element_get_covg_colour0(const dBNode* e);
 
-int element_get_number_of_people_or_pops_containing_this_element(Element* e, EdgeArrayType type, int index);
+#if NUMBER_OF_COLOURS > 1
+uint32_t element_get_covg_colour1(const dBNode* e);
+#endif
+
+uint32_t element_get_covg_last_colour(const dBNode* e);
+
+void add_edges(Element* e, EdgeArrayType type, int index, Edges edge_char);
+void set_edges(Element* e, EdgeArrayType type, int index, Edges edge_char);
+void reset_one_edge(Element* e, Orientation orientation, Nucleotide nucleotide,
+                    EdgeArrayType type, int index);
+
+int element_get_number_of_people_or_pops_containing_this_element(Element* e);
 
 
 boolean element_smaller(Element,Element);
@@ -236,9 +238,10 @@ boolean db_node_condition_always_true(dBNode* node);
 
 void db_node_increment_coverage(dBNode* e, EdgeArrayType type, int index);
 void db_node_update_coverage(dBNode* e, EdgeArrayType type, int index, int update);
-int db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index);
-void db_node_set_coverage(dBNode* e, EdgeArrayType type, int colour, int covg);
-int db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, int (*get_covg)(const dBNode*) );
+uint32_t db_node_get_coverage_tolerate_null(const dBNode* const e, int index);
+uint32_t db_node_get_coverage(const dBNode* const e, EdgeArrayType type, int index);
+void db_node_set_coverage(dBNode* e, EdgeArrayType type, int colour, uint32_t covg);
+uint32_t db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, uint32_t (*get_covg)(const dBNode*) );
 
 
 
@@ -274,8 +277,11 @@ boolean db_node_check_read_start(dBNode* node, Orientation ori);
 
 void db_node_set_read_start_status(dBNode* node, Orientation ori);
 
+// Flagged for removal - Not called anywhere
 boolean db_node_check_duplicates(dBNode* node1, Orientation o1, dBNode* node2, Orientation o2);
 
+
+// Flagged for removal - Not called anywhere
 //we have a read that starts at node in direction o1, and we want to know if a previous read started at that node in that direction
 boolean db_node_check_single_ended_duplicates(dBNode* node1, Orientation o1);
 
