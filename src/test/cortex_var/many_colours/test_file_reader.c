@@ -887,7 +887,7 @@ void test_load_individual_binaries_into_sv_trio()
         &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded0,
         NULL, 0);
 
-      GraphInfo* ginfo = graph_info_alloc_and_init();
+      //GraphInfo* ginfo = graph_info_alloc_and_init();
 
       graph_info_set_seq(ginfo, 0, seq_loaded0);
       db_graph_dump_single_colour_binary_of_colour0(
@@ -1156,6 +1156,7 @@ void test_load_individual_binaries_into_sv_trio()
     CU_ASSERT_STRING_EQUAL("A", seq);
 
     hash_table_free(&db_graph);
+    graph_info_free(ginfo);
   }
 }
 

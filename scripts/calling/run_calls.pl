@@ -2412,8 +2412,25 @@ sub get_cleaning_thresh_and_distrib
 	my $line = $_;
 	chomp $line;
 
+	if ($line =~ /KMER_COVG/)
+	{
+	    #ignore header
+	}
+	elsif ($line =~ /^(\d+)\t(\d+)/)
+	{
+	    my $mult = $1;
+	    my $num = $2;
+	    if ($mult != $count)
+	    {
+		die("counting error Kmer coverage is  is $mult and count is is $count");
+	    }
+	    push @covgs, $num;
+	    push @$aref, $num;
+	    
+	}
+	## old format
 	#multiplicity:1  Number:8
-	if ($line =~ /multiplicity:(\d+)\s+Number:(\d+)/)
+	elsif ($line =~ /multiplicity:(\d+)\s+Number:(\d+)/)
 	{
 	    my $mult = $1;
 	    my $num = $2;

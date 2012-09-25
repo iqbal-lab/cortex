@@ -4982,6 +4982,7 @@ void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArray
   db_graph_traverse_with_array_of_uint64(&bin_covg_and_add_to_array, db_graph,
                                          covgs, covgs_len, index);
 
+  fprintf(fout, "KMER_COVG\tFREQUENCY\n");
   for(i = 0; i < covgs_len; i++)
     fprintf(fout, "%d\t%" PRIu64 "\n", i, covgs[i]);
 
