@@ -521,6 +521,7 @@ void cmd_line_free(CmdLine* cmd)
       free(cmd->colour_sample_ids[i]);
     }
   free(cmd->colour_sample_ids);
+  free(cmd);
 }
 
 

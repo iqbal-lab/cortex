@@ -4950,7 +4950,7 @@ void db_graph_traverse_with_array_of_uint64(
 
 
 
-void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, EdgeArrayType type,
+void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, 
                                     int index, boolean (*condition)(dBNode* elem))
 {
   int i;

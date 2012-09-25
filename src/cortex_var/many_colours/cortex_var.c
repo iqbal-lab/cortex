@@ -1172,7 +1172,6 @@ int main(int argc, char **argv)
 	     cmd_line->covg_distrib_outfile);
       db_graph_get_covg_distribution(cmd_line->covg_distrib_outfile, 
 				     db_graph, 
-				     individual_edge_array, 
 				     0, 
 				     &db_node_check_status_not_pruned);
       timestamp();
@@ -1408,7 +1407,7 @@ int main(int argc, char **argv)
 
 
   cmd_line_free(cmd_line);
-
+  graph_info_free(db_graph_info);
   printf("Cortex completed - y'all have a nice day!\n");
   return 0;
 }
