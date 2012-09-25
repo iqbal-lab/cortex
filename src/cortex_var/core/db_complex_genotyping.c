@@ -1420,13 +1420,13 @@ void wipe_colour_and_load_binaries(dBGraph* db_graph, int colour, char* bin1, ch
   if (bin1 != NULL)
     {
       load_single_colour_binary_data_from_filename_into_graph(bin1, db_graph, &mean_readlen, &seq,
-							      false, individual_edge_array, colour,
+							      false, colour,
 							      false, 0, dummy_sample_id, false);
     }
   if ( (bin2 !=NULL) && (strcmp(bin2, bin1) !=0) )
     {
       load_single_colour_binary_data_from_filename_into_graph(bin2, db_graph, &mean_readlen, &seq,
-							      false, individual_edge_array, colour,
+							      false, colour,
 							      false, 0, dummy_sample_id, false);
     }
 }
@@ -1444,26 +1444,26 @@ void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int 
   if (binary11 !=NULL)
     {
       load_single_colour_binary_data_from_filename_into_graph(binary11, db_graph, &mean_readlen, &seq,
-							      false, individual_edge_array, colour1,
+							      false, colour1,
 							      false, 0,dummy_sample_id,  false);
     }
   if ( (binary12 != NULL) && (strcmp(binary12, binary11)!=0) )
     {
       load_single_colour_binary_data_from_filename_into_graph(binary12, db_graph, &mean_readlen, &seq,
-							      false, individual_edge_array, colour1,
+							      false, colour1,
 							      false, 0, dummy_sample_id, false);
     }
   //same for 2net
   if (binary21 != NULL)
     {
       load_single_colour_binary_data_from_filename_into_graph(binary21, db_graph, &mean_readlen, &seq,
-							      false, individual_edge_array, colour2,
+							      false, colour2,
 							      false, 0, dummy_sample_id, false);
     }
   if ( (binary22 != NULL) && (strcmp(binary22, binary21) !=0) )
     {
       load_single_colour_binary_data_from_filename_into_graph(binary22, db_graph, &mean_readlen, &seq,
-							      false, individual_edge_array, colour2,
+							      false, colour2,
 							      false, 0, dummy_sample_id, false);
     }
 

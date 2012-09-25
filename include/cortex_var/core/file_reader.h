@@ -119,7 +119,7 @@ void initialise_binary_header_info(BinaryHeaderInfo* binfo, GraphInfo* ginfo);
 
 void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
 											      boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
-											      dBGraph* db_graph, EdgeArrayType type, int index, long long** read_len_count_array);
+											      dBGraph* db_graph, int index, long long** read_len_count_array);
 
 
 //pass in a single kmer sliding window and the Sequence* it was derived from. Will find the nodes correspinding to this seqeunce
@@ -158,14 +158,14 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
 // last arg is to load the "union" of graphs
 long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
 								  int* mean_readlen, long long* total_seq,
-								  boolean all_entries_are_unique, EdgeArrayType type, int index,
+								  boolean all_entries_are_unique, int index,
 								  boolean only_load_kmers_already_in_hash, int colour_clean,
 								  char* sample_identity,
 								  boolean load_all_kmers_but_only_increment_covg_on_new_ones);
 								  
 
 long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(char* filename,  dBGraph* db_graph, GraphInfo* db_graph_info,
-											   boolean all_entries_are_unique, EdgeArrayType type, int index,
+											   boolean all_entries_are_unique, int index,
 											   boolean only_load_kmers_already_in_hash, int colour_clean,
 											   boolean load_all_kmers_but_only_increment_covg_on_new_ones);
 
@@ -187,20 +187,20 @@ void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* f
 
 /*
 // DEV: flagged for removal -- not used, uses old file reader
-void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_not_in_graph(FILE* fp, FILE* fout,
-                           int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, 
-                             boolean * full_entry), 
-                           long long * bad_reads, int max_read_length, dBGraph * db_graph, 
-                           EdgeArrayType type, int index,
-                           boolean is_for_testing, char** for_test_array_of_clean_reads, int* for_test_index);
+void read_fastq_and_print_subreads_that_lie_in_graph_breaking_at_edges_or_kmers_not_in_graph(
+  FILE* fp, FILE* fout,
+  int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length,
+                      boolean new_entry, boolean * full_entry), 
+  long long * bad_reads, int max_read_length, dBGraph * db_graph, 
+  int index, boolean is_for_testing,
+  char** for_test_array_of_clean_reads, int* for_test_index);
 */
 
 int get_sliding_windows_from_sequence_breaking_windows_when_sequence_not_in_graph(char * seq,  char * qualities, int length, char quality_cut_off, 
 										  KmerSlidingWindowSet * windows, int max_windows, int max_kmers, dBGraph* db_graph);
 
 int get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(char * seq,  char * qualities, int length, char quality_cut_off, 
-										     KmerSlidingWindowSet * windows, int max_windows, int max_kmers, dBGraph* db_graph,
-										     EdgeArrayType type, int index); 
+										     KmerSlidingWindowSet * windows, int max_windows, int max_kmers, dBGraph* db_graph, int index); 
 
 void read_fastq_and_print_reads_that_lie_in_graph(FILE* fp, FILE* fout, int (* file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry), 
 						  long long * bad_reads, int max_read_length, dBGraph * db_graph,

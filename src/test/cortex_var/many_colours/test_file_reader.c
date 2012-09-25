@@ -584,7 +584,7 @@ void test_load_singlecolour_binary()
   int seq_length_post = load_single_colour_binary_data_from_filename_into_graph(
     "../data/tempfiles_can_be_deleted/dump_single_colour_cortex_var_graph.ctx", 
     db_graph_post, &mean_readlen, &total_seq,
-    true, individual_edge_array,0, false,0, dummy, false);
+    true,0, false,0, dummy, false);
 
   CU_ASSERT(seq_length_post==25);//kmers loaded * length of kmer
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post), 5);
@@ -1613,7 +1613,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   int len = read_sequence_from_fastq(fp, seq, max_read_length,ascii_fq_offset);
 
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, fq_quality_cutoff,
-    windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);
+    windows, max_windows, max_kmers, db_graph, 0);
   CU_ASSERT(windows->nwindows==0);
 
 
@@ -1621,7 +1621,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   // GET READ 2 - this one lies entirely in the graph
   len = read_sequence_from_fastq(fp, seq, max_read_length,ascii_fq_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, fq_quality_cutoff,
-    windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);
+    windows, max_windows, max_kmers, db_graph, 0);
   CU_ASSERT(windows->nwindows==1);
   CU_ASSERT((windows->window[0]).nkmers=28);
 
@@ -1672,7 +1672,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   // GET READ 3 - lots of errors again
   len = read_sequence_from_fastq(fp, seq, max_read_length,ascii_fq_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, fq_quality_cutoff,
-    windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);
+    windows, max_windows, max_kmers, db_graph, 0);
   CU_ASSERT(windows->nwindows==0);
 
 
@@ -1680,7 +1680,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
 
   len = read_sequence_from_fastq(fp, seq, max_read_length, ascii_fq_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, fq_quality_cutoff,
-   windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);
+   windows, max_windows, max_kmers, db_graph, 0);
   CU_ASSERT(windows->nwindows==2);
   CU_ASSERT((windows->window[0]).nkmers==3);
 
@@ -1716,7 +1716,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
 
   len = read_sequence_from_fastq(fp, seq, max_read_length, ascii_fq_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, fq_quality_cutoff,
-    windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);
+    windows, max_windows, max_kmers, db_graph, 0);
   CU_ASSERT(windows->nwindows==1);
   CU_ASSERT((windows->window[0]).nkmers==28);
 
@@ -1742,7 +1742,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   // READ 6 - entirely in graph
   len = read_sequence_from_fastq(fp, seq, max_read_length, ascii_fq_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, fq_quality_cutoff,
-    windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);
+    windows, max_windows, max_kmers, db_graph, 0);
   CU_ASSERT(windows->nwindows==1);
   CU_ASSERT((windows->window[0]).nkmers==15);
 
@@ -1756,7 +1756,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
   // READ 7 - first character wrong. Vital test this one. Slightly different code path if the first kmer of all is bad.
   len = read_sequence_from_fastq(fp, seq, max_read_length, ascii_fq_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, fq_quality_cutoff,
-    windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);
+    windows, max_windows, max_kmers, db_graph, 0);
   CU_ASSERT(windows->nwindows==1);
   CU_ASSERT((windows->window[0]).nkmers==27);
 
@@ -1779,13 +1779,13 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
 
   len = read_sequence_from_fastq(fp, seq, max_read_length, ascii_fq_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, fq_quality_cutoff,
-    windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);
+    windows, max_windows, max_kmers, db_graph, 0);
   CU_ASSERT(windows->nwindows==2);
 
   //last read - we shoud get two separate windows, as the kmers have no edge joining them
   len = read_sequence_from_fastq(fp, seq, max_read_length, ascii_fq_offset);
   get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_lie_in_graph(seq->seq, seq->qual, len, fq_quality_cutoff,
-    windows, max_windows, max_kmers, db_graph, individual_edge_array, 0);
+    windows, max_windows, max_kmers, db_graph, 0);
   CU_ASSERT(windows->nwindows==2);
 
   CU_ASSERT((windows->window[0]).nkmers==4);
@@ -5936,7 +5936,7 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
   load_single_colour_binary_data_from_filename_into_graph(
     "../data/tempfiles_can_be_deleted/dump_cortex_var_graph.singlecol.ctx",
     db_graph_post, &mean_len, &totseq,
-    false, individual_edge_array, 1, true, 0, dummy, false);
+    false, 1, true, 0, dummy, false);
 
 
 

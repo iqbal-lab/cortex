@@ -630,7 +630,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 	      long long b_loaded=0;
 
 	      load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows, &prev_full, &full_ent, &b_loaded, false,
-												      db_graph,  individual_edge_array, working_colour, readlen_distrib_ptrs);
+												      db_graph, working_colour, readlen_distrib_ptrs);
 
 	      //work through the sliding window and put nodes into the array you pass in. 
 	      //Note this may find NULL nodes if the kmer is not in the graph
