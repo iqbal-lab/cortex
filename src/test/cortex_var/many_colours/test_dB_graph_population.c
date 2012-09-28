@@ -956,18 +956,18 @@ void test_detect_and_smooth_bubble()
   Nucleotide labels_path[100];
   boolean is_cycle;
 
-  int length_supernode = db_graph_supernode_for_specific_person_or_pop(node2,100,&db_node_action_set_status_visited,
-								       nodes_path,orientations_path,labels_path,
-								       tmp_seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								       db_graph, 0);
+  db_graph_supernode_for_specific_person_or_pop(node2,100,&db_node_action_set_status_visited,
+						nodes_path,orientations_path,labels_path,
+						tmp_seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
+						db_graph, 0);
   
   CU_ASSERT_STRING_EQUAL(tmp_seq,"ACTTA");
   
   
-  length_supernode = db_graph_supernode_for_specific_person_or_pop(node7,100,&db_node_action_set_status_visited,
-								   nodes_path,orientations_path,labels_path,
-								   tmp_seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
-								   db_graph, 0);
+  db_graph_supernode_for_specific_person_or_pop(node7,100,&db_node_action_set_status_visited,
+						nodes_path,orientations_path,labels_path,
+						tmp_seq,&avg_coverage,&min_coverage,&max_coverage,&is_cycle,
+						db_graph, 0);
   
   CU_ASSERT_STRING_EQUAL(tmp_seq,"");
   
@@ -4394,16 +4394,13 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
   char tmpseq[db_graph->kmer_size+1];
   int count=0;
 
-  BinaryKmer marked_kmer; //will have all longlongs in array being ~0
-  for (i=0; i<NUMBER_OF_BITFIELDS_IN_BINARY_KMER; i++)
-    {
-      marked_kmer[i]=~0;
-    }
+
+
 
 
   void test_func(dBNode* node)
     {
-      if ( (node!=NULL) ) //I don't think we need this:   && (!binary_kmer_comparison_operator(*element_get_kmer(node), marked_kmer)) )
+      if ( (node!=NULL) ) 
 	{
 	  BinaryKmer k;
 	  binary_kmer_assignment_operator(k, *element_get_kmer(node));
@@ -4687,3 +4684,76 @@ return ret;
 }
 
 
+
+//this is a regression test to check that there is no problem with either overflowing ints,
+//or dumping causing segfaults. I'm not checking content of the covg distribution.
+void test_dump_covg_distribution()
+{
+
+  if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
+  {
+    warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
+    return;
+  }
+
+  //first set up the hash/graph
+  int kmer_size = 5;
+  int number_of_bits = 3;
+  int bucket_size = 2;
+  int max_retries = 10;
+
+  dBGraph * hash_table = hash_table_new(number_of_bits, bucket_size,
+                                        max_retries, kmer_size);
+
+  if(hash_table == NULL)
+  {
+    die("Unable to alloc the hash table in test_dump_covg_distribution. dead before we even started.");
+  }
+
+  // Read FASTA sequence
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/pop_graph/file_for_testing_dump_covg.fa.filelist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, hash_table, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+  //now let's up the covg on one of the nodes
+  BinaryKmer tmp_kmer1, tmp_kmer2;
+  dBNode* test_element1 = hash_table_find(element_get_key(seq_to_binary_kmer("AAAAA", kmer_size, &tmp_kmer1), kmer_size, &tmp_kmer2) ,hash_table);
+  CU_ASSERT(test_element1!=NULL);
+
+  uint64_t i;
+  for (i=0; i<=8000000000; i++)
+    {
+      db_node_update_coverage(test_element1, 0, 1);
+    }
+  
+  //dump binary, dump covg
+  db_graph_dump_single_colour_binary_of_colour0("../data/tempfiles_can_be_deleted/binary_for_cvg_distrib.ctx", 
+						&db_node_condition_always_true,
+						hash_table, NULL, BINVERSION);
+
+  
+  db_graph_get_covg_distribution("../data/tempfiles_can_be_deleted/covg_distribution",
+				 hash_table, 
+				 0, 
+				 &db_node_check_status_not_pruned);
+  
+  hash_table_free(&hash_table);
+
+
+  
+
+}

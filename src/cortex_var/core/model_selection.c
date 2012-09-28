@@ -65,10 +65,15 @@ boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, Graph
 
   //calling these functions sets the values of the likelihoods inside the annovar object/struct
   
-  // *********    WARNING   - commented out the next 2 lines when I added one seq error rate per colour. uncomment them when you fix those functions to support this
+  // Warning: commented out the next 2 lines when I added one seq error rate per
+  // colour. uncomment them when you fix those functions to support this.
+  // Also delete the line (void)model_info;
   //calculate_integrated_loglikelihood_of_snp_model_given_data(annovar, model_info);
   //calculate_integrated_loglikelihood_of_repeat_model_given_data(annovar, model_info, allele_balance_prior);
   
+  // Let the compiler know that we know that we're not using model_info param
+  (void)model_info;
+
   double log_bf_var_over_rep = annovar->model_llks.llk_var - annovar->model_llks.llk_rep;
 
   if  (log_bf_var_over_rep> lthresh) 

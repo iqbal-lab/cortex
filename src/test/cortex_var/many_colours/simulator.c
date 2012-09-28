@@ -89,18 +89,69 @@ void zero_path_except_two_alleles_and_ref(dBNode** allele, int len, int colour_a
     }
 }
 
+void test(VariantBranchesAndFlanks* var, //MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults, 
+      GraphAndModelInfo* model_info, char* fasta,
+      int colour_ref_minus_site, int colour_indiv,
+      boolean use_1_and_2net, int working_colour1, int working_colour2,
+      int* count_passes, int* count_fails, dBGraph* db_graph,
+      char* true_ml_gt_name)
+{
+
+  int max_allele_length=100000;
+  if ( (var->len_one_allele>max_allele_length)||(var->len_other_allele > max_allele_length) )
+  {
+    die("simulator.c exited!");
+  }
+
+  int colours_to_genotype[]={colour_indiv};
+
+  char ml_genotype_name[100]="";
+  char* ml_genotype_name_array[1];
+  ml_genotype_name_array[0]=ml_genotype_name;
+  char ml_but_one_genotype_name[100]="";
+  char* ml_but_one_genotype_name_array[1];
+  ml_but_one_genotype_name_array[0]=ml_but_one_genotype_name;
+
+  int MIN_LLK = -999999999;
+  double ml_genotype_lik=MIN_LLK;
+  double ml_but_one_genotype_lik=MIN_LLK;
+
+  calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(
+    colours_to_genotype, 1,
+    colour_ref_minus_site, 2, 1,3,
+    max_allele_length, fasta,
+    AssumeUncleaned,
+    &ml_genotype_lik, &ml_but_one_genotype_lik,
+    ml_genotype_name_array, ml_but_one_genotype_name_array,
+    false, model_info, db_graph, working_colour1, working_colour2,
+    use_1_and_2net, use_1_and_2net, MIN_LLK);
+
+  //printf("We get max lik gt %s and we expect %s\n", ml_genotype_name, true_ml_gt_name);
+  if (strcmp(ml_genotype_name, true_ml_gt_name)==0) 
+  {
+    (*count_passes)++;
+  }
+  else
+  {
+    (*count_fails)++;
+  }
+}
 
 //if you want to simulate a true hom, pass in var with both alleles the same
-void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int number_repetitions, 
-	       int colour_indiv, int colour_allele1, int colour_allele2, int colour_ref_minus_site,
-	       VariantBranchesAndFlanks* var, dBNode** genome_minus_site, int len_genome_minus_site,
-	       zygosity true_gt,
-	       //boolean are_the_two_alleles_identical,
-	       GraphAndModelInfo* model_info,
-	       char* fasta, char* true_ml_gt_name, dBGraph* db_graph, int working_colour1, int working_colour2,
-	       boolean using_1and2_nets, 
-	       char* filelist_net1, char* filelist_net2, 
-	       int working_colour_1net, int working_colour_2net)
+void simulator(int depth, int read_len, int kmer, double seq_err_per_base,
+               int number_repetitions,  int colour_indiv,
+               int colour_allele1, int colour_allele2, int colour_ref_minus_site,
+               VariantBranchesAndFlanks* var,
+               int len_genome_minus_site, zygosity true_gt,
+               GraphAndModelInfo* model_info,
+               char* fasta, char* true_ml_gt_name,
+               int working_colour1, int working_colour2,
+               boolean using_1and2_nets,
+               dBGraph* db_graph)
+               //dBNode** genome_minus_site
+               //boolean are_the_two_alleles_identical
+               //char* filelist_net1, char* filelist_net2
+               //int working_colour_1net, int working_colour_2net
 {
 
   if (NUMBER_OF_COLOURS<4)
@@ -108,61 +159,9 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
       die("Cannot run the simulator with <4 colours. Recompile.\n");
     }
 
+  int count_passes = 0;
+  int count_fails = 0;
 
-  int count_passes=0;
-  int count_fails=0;
-
-  ///********* local function **********
-  void test(VariantBranchesAndFlanks* var, //MultiplicitiesAndOverlapsOfBiallelicVariant* var_mults, 
-	    GraphAndModelInfo* model_info, int colour_allele1, int colour_allele2, 
-	    int colour_ref_minus_site, int colour_indiv,
-	    boolean use_1_and_2net, char* flist_net1, char* flist_net2)
-  {
-
-    int max_allele_length=100000;
-    if ( (var->len_one_allele>max_allele_length)||(var->len_other_allele > max_allele_length) )
-      {
-        die("simulator.c exited!");
-      }
-
-    int colours_to_genotype[]={colour_indiv};
-
-    char ml_genotype_name[100]="";
-    char* ml_genotype_name_array[1];
-    ml_genotype_name_array[0]=ml_genotype_name;
-    char ml_but_one_genotype_name[100]="";
-    char* ml_but_one_genotype_name_array[1];
-    ml_but_one_genotype_name_array[0]=ml_but_one_genotype_name;
-
-    int MIN_LLK = -999999999;
-    double ml_genotype_lik=MIN_LLK;
-    double ml_but_one_genotype_lik=MIN_LLK;
-
-    calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(colours_to_genotype, 1,
-										     colour_ref_minus_site, 2,
-										     1,3,
-										     max_allele_length, fasta,
-										     AssumeUncleaned,
-										     &ml_genotype_lik, &ml_but_one_genotype_lik,
-										     ml_genotype_name_array, ml_but_one_genotype_name_array,
-										     false, model_info, db_graph, working_colour1, working_colour2,
-										     use_1_and_2net, use_1_and_2net, MIN_LLK);
-
-    //printf("We get max lik gt %s and we expect %s\n", ml_genotype_name, true_ml_gt_name);
-    if (strcmp(ml_genotype_name, true_ml_gt_name)==0) 
-      {
-	count_passes++;
-      }
-    else
-      {
-	count_fails++;
-      }
-  }
-  ///********* end of local function **********
-
-
-
-     
   const gsl_rng_type * T;
   gsl_rng * r;
   
@@ -232,8 +231,11 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
       update_allele(var->other_allele, var->len_other_allele, 
 		    colour_indiv, sampled_covg_allele2, read_len-kmer+1);
       //update_allele(genome_minus_site,len_genome_minus_site,  colour_indiv, sampled_covg_rest_of_genome);
-      test(var,  model_info, colour_allele1, colour_allele2, colour_ref_minus_site, 
-	   colour_indiv, using_1and2_nets, filelist_net1, filelist_net2);
+
+      test(var, model_info, fasta, colour_ref_minus_site,
+	         colour_indiv, using_1and2_nets,
+           working_colour1, working_colour2,
+           &count_passes, &count_fails, db_graph, true_ml_gt_name);
 
     }
 

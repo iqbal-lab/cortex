@@ -965,7 +965,7 @@ int main(int argc, char **argv)
       estimate_seq_error_rate_from_snps_for_each_colour(cmd_line->colourlist_snp_alleles, 
 							db_graph_info, db_graph, 
 							cmd_line->ref_colour, 
-							cmd_line->genome_size,
+							//cmd_line->genome_size, //unused
 							default_seq_err,
 							"seq_err_estimation.txt");
     }
@@ -1338,7 +1338,7 @@ int main(int argc, char **argv)
     {
       int num_reads_used_in_estimate=0;
       double g = estimate_genome_complexity(db_graph, cmd_line->fastaq_for_estimating_genome_complexity,
-					    true, 0, 1,cmd_line->max_read_length, cmd_line->format_of_input_seq,
+					    true, 1,cmd_line->max_read_length, cmd_line->format_of_input_seq,
 					    cmd_line->quality_score_offset, &num_reads_used_in_estimate);
       printf("We estimate genome complexity at k=%d (for SNPs) as %f\n", db_graph->kmer_size, g);
       printf("This estimate used a sample of %d high-quality reads\n", num_reads_used_in_estimate);

@@ -4064,9 +4064,6 @@ void test_read_next_variant_from_full_flank_file()
   }
 
   int max_branch_len=10;
-  void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
-  {
-  }
 
   db_graph_detect_vars(fout_bubble, max_branch_len,db_graph, &detect_vars_condition_always_true,
    &db_node_action_set_status_visited, &db_node_action_set_status_visited,
@@ -4405,9 +4402,6 @@ void test_read_next_variant_from_full_flank_file_2()
   }
 
   int max_branch_len=10;
-  void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
-  {
-  }
 
   db_graph_detect_vars(fout_bubble, max_branch_len,db_graph, &detect_vars_condition_always_true,
    &db_node_action_set_status_visited, &db_node_action_set_status_visited,
@@ -4718,9 +4712,6 @@ void test_read_next_variant_from_full_flank_file_3()
   }
 
   int max_branch_len=10;
-  void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
-  {
-  }
 
   db_graph_detect_vars(fout_bubble, max_branch_len,db_graph,
                        &detect_vars_condition_always_true,
@@ -5024,9 +5015,6 @@ void test_read_next_variant_from_full_flank_file_4()
   }
 
   int max_branch_len=10;
-  void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
-  {
-  }
 
   db_graph_detect_vars(fout_bubble, max_branch_len,db_graph,
     &detect_vars_condition_always_true, &db_node_action_set_status_visited,

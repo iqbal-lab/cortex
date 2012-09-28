@@ -4942,23 +4942,26 @@ void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, i
 
   for(i = 0; i < num_elements; i++)
   {
-    if (!db_node_check_status(&hash_table->table[i],unassigned)){
+    if(!db_node_check_status(&hash_table->table[i], unassigned))
+    {
       f(hash_table, &hash_table->table[i], array, length_of_array, index);
     }
-  }  
+  }
 }
 
 
-void db_graph_traverse_with_array_of_uint64(
-  void (*f)(HashTable*, Element *, uint64_t*, int, int),
-  HashTable * hash_table, uint64_t* array, int length_of_array, int colour)
+void db_graph_traverse_with_array_of_uint64(void (*f)(HashTable*, Element *,
+                                                      uint64_t*, int, int),
+                                            HashTable * hash_table,
+                                            uint64_t* array,
+                                            int length_of_array, int colour)
 {
   uint64_t i;
   uint64_t num_elements = (uint64_t)hash_table->number_buckets * hash_table->bucket_size;
 
   for(i = 0; i < num_elements; i++)
   {
-    if(!db_node_check_status(&(hash_table->table[i]),unassigned))
+    if(!db_node_check_status(&hash_table->table[i], unassigned))
     {
       f(hash_table, &(hash_table->table[i]), array, length_of_array, colour);
     }
@@ -4992,16 +4995,16 @@ void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph,
   {
     if(condition(e)==true)
     {
-      int bin = MIN(e->coverage[colour], len);
+      uint64_t bin = MIN(e->coverage[colour], len-1);
       arr[bin]++;
     }
   }
   
   db_graph_traverse_with_array_of_uint64(&bin_covg_and_add_to_array, db_graph,
-                                         covgs, covgs_len, index);
+					 covgs, covgs_len, index);
 
   fprintf(fout, "KMER_COVG\tFREQUENCY\n");
-  for(i = 0; i < covgs_len; i++)
+    for(i = 0; i < covgs_len; i++)
     fprintf(fout, "%d\t%" PRIu64 "\n", i, covgs[i]);
 
   fclose(fout);
@@ -9685,9 +9688,21 @@ void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fa
 
 void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
 {
+  // Let the compiler know that we are deliberately doing nothing with our
+  // paramters
+  (void)var;
+  (void)fout;
 }
-void print_no_extra_supernode_info(dBNode** node_array, Orientation* or_array, int len, FILE* fout)
+
+void print_no_extra_supernode_info(dBNode** node_array, Orientation* or_array,
+                                   int len, FILE* fout)
 {
+  // Let the compiler know that we are deliberately doing nothing with our
+  // paramters
+  (void)node_array;
+  (void)or_array;
+  (void)len;
+  (void)fout;
 }
 
 

@@ -233,7 +233,7 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(
 double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
   zygosity genotype, double error_rate_per_base,
   Covg covg_branch_1, Covg covg_branch_2, 
-  double theta_one, double theta_other, int kmer);
+  double theta_one, double theta_other); //int kmer was an unused param
 
 
 long long get_big_theta(AnnotatedPutativeVariant* annovar);

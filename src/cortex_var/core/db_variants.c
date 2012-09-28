@@ -33,7 +33,13 @@
 #include <stdlib.h>
 #include <gsl_sf_gamma.h>
 
-VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p, int kmer_size)
+char variant_overflow_warning_printed = 0;
+
+VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p,
+                                                                int len_br1,
+                                                                int len_br2,
+                                                                int len_3p,
+                                                                int kmer_size)
 {
   VariantBranchesAndFlanks* var = (VariantBranchesAndFlanks*) malloc(sizeof(VariantBranchesAndFlanks));
   if (var==NULL)
@@ -471,7 +477,8 @@ void set_genotyping_variant_branches_but_flanks_to_null(GenotypingVariantBranche
 
 void db_variant_action_do_nothing(VariantBranchesAndFlanks* var)
 {
-  return;
+  // Let the compiler know that we are deliberately not using a parameter
+  (void)var;
 }
 
 
@@ -557,18 +564,18 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
 								     initial_covg_plus_upward_jumps_branch1, 
 								     initial_covg_plus_upward_jumps_branch2, 
-								     theta_one, theta_other, annovar->kmer);
+								     theta_one, theta_other);
   annovar->gen_log_lh[colour].log_lh[het]       = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, seq_error_rate_per_base, 
 								     initial_covg_plus_upward_jumps_branch1, 
 								     initial_covg_plus_upward_jumps_branch2, 
-								     theta_one, theta_other, annovar->kmer);
+								     theta_one, theta_other);
 
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
 								     initial_covg_plus_upward_jumps_branch1, 
 								     initial_covg_plus_upward_jumps_branch2, 
-								     theta_one, theta_other, annovar->kmer);
+								     theta_one, theta_other);
  
 //  printf("Log likelihood of data in colour %d under hom_one is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_one]);
 //  printf("Log likelihood of data in colour %d under het is %f\n", colour, annovar->gen_log_lh[colour].log_lh[het] );
@@ -613,14 +620,14 @@ void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(
       hom_one, seq_error_rate_per_base, 
       initial_covg_plus_upward_jumps_branch1, 
       initial_covg_plus_upward_jumps_branch2, 
-      theta_one, theta_other, annovar->kmer);
+      theta_one, theta_other);
 
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
       hom_other, seq_error_rate_per_base, 
       initial_covg_plus_upward_jumps_branch1, 
       initial_covg_plus_upward_jumps_branch2, 
-      theta_one, theta_other, annovar->kmer);
+      theta_one, theta_other);
 
   //this is not allowed by the model
   annovar->gen_log_lh[colour].log_lh[het]
@@ -664,13 +671,13 @@ void get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
 								     initial_covg_plus_upward_jumps_branch1, 
 								     initial_covg_plus_upward_jumps_branch2, 
-								     theta_one, theta_other, annovar->kmer);
+								     theta_one, theta_other);
 
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
 								     initial_covg_plus_upward_jumps_branch1, 
 								     initial_covg_plus_upward_jumps_branch2, 
-								     theta_one, theta_other, annovar->kmer);
+								     theta_one, theta_other);
 
   //this is not allowed by the model
   annovar->gen_log_lh[colour].log_lh[het] = annovar->gen_log_lh[colour].log_lh[hom_one] + annovar->gen_log_lh[colour].log_lh[hom_other] - 999999;
@@ -688,7 +695,7 @@ void get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(
 double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
   zygosity genotype, double error_rate_per_base,
   Covg covg_branch_1, Covg covg_branch_2,
-  double theta_one, double theta_other, int kmer)
+  double theta_one, double theta_other) // int kmer was an unused param
 {
   //printf("DEBUG covg branch 1 is %d, and branch2 is %d, and theta 1,2 are "
   //       "%f, %f, and error ratew per base is %f\n",
@@ -765,10 +772,14 @@ boolean get_num_effective_reads_on_branch(int* array, dBNode** allele, int how_m
 }
 
 
-
+// DEV: these three functions aren't consistent about where they start/end
+// when looping over nodes
+// count_reads_on_allele_in_specific_colour: 2..len-2
+// count_reads_on_allele_in_specific_colour_given_array_of_cvgs: 1..len-1
+// count_reads_on_allele_in_specific_func_of_colours: 2..len-2
 
 //does not count covg on first or last nodes, as they are bifurcation nodes
-//if length==0 or 1  returns -1.
+//if length==0 or 1  returns 0.
 //note I do not want to create an array on the stack - these things can be very long
 // so relies on the prealloced array of dBNode* 's passed in
 // annoying that can't use templates or something - see below for a similar function with different input
@@ -790,7 +801,7 @@ Covg count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colo
   int i;
 
   //note we do not go as far as the final node, which is where the two branches rejoin
-  for (i=2; i<len-1; i++)
+  for(i = 2; i < len-1; i++)
   {
     long jump = (long)db_node_get_coverage_tolerate_null(allele[i], colour) -
                 (long)db_node_get_coverage_tolerate_null(allele[i-1], colour);
@@ -800,7 +811,7 @@ Covg count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colo
     // and one node does not a read make
     long diff_between_next_and_prev = -1;
 
-    if (i<len-2)
+    if(i < len-2)
   	{
       diff_between_next_and_prev
         = (long)db_node_get_coverage_tolerate_null(allele[i+1], colour) -
@@ -809,7 +820,23 @@ Covg count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colo
 
     if(jump > 0 && diff_between_next_and_prev != 0)
     {
-      num_of_reads += jump;
+      if(COVG_MAX - jump >= num_of_reads)
+      {
+        num_of_reads += jump;
+      }
+      else
+      {
+        num_of_reads = COVG_MAX;
+
+        if(!variant_overflow_warning_printed)
+        {
+          warn("%s:%i: caught integer overflow"
+               "(some kmer coverages may be underestimates)",
+               __FILE__, __LINE__);
+
+          variant_overflow_warning_printed = 1;
+        }
+      }
     }
   }
 
@@ -846,14 +873,30 @@ Covg count_reads_on_allele_in_specific_colour_given_array_of_cvgs(Covg* covgs,
     // and one node does not a read make
     long diff_between_next_and_prev = -1;
 
-    if(i < len - 1)
+    if(i < len-1)
     {
       diff_between_next_and_prev = (long)covgs[i+1] - covgs[i-1];
     }
 
     if(jump > 0 && diff_between_next_and_prev != 0)
     {
-      num_of_reads += jump;
+      if(COVG_MAX - jump >= num_of_reads)
+      {
+        num_of_reads += jump;
+      }
+      else
+      {
+        num_of_reads = COVG_MAX;
+
+        if(!variant_overflow_warning_printed)
+        {
+          warn("%s:%i: caught integer overflow"
+               "(some kmer coverages may be underestimates)",
+               __FILE__, __LINE__);
+
+          variant_overflow_warning_printed = 1;
+        }
+      }
     }
   }
 
@@ -862,7 +905,7 @@ Covg count_reads_on_allele_in_specific_colour_given_array_of_cvgs(Covg* covgs,
 
 
 //does not count covg on first or last nodes, as they are bifurcation nodes
-//if length==0 or 1  returns -1.
+//if length==0 or 1  returns 0.
 Covg count_reads_on_allele_in_specific_func_of_colours(
   dBNode** allele, int len,
   Covg (*sum_of_covgs_in_desired_colours)(const Element *),
@@ -883,21 +926,43 @@ Covg count_reads_on_allele_in_specific_func_of_colours(
   int i;
 
   //note we do not go as far as the final node, which is where the two branches rejoin
-  for(i=2; i<len-1; i++)
+  for(i = 2; i < len-1; i++)
   {
-    int jump = sum_of_covgs_in_desired_colours(allele[i]) - sum_of_covgs_in_desired_colours(allele[i-1]);
+    long jump = (long)sum_of_covgs_in_desired_colours(allele[i]) -
+                (long)sum_of_covgs_in_desired_colours(allele[i-1]);
 
-    //we add a little check to ensure that we ignore isolated nodes with higher covg - we count jumps only if they are signifiers of a new read arriving
+    // we add a little check to ensure that we ignore isolated nodes with higher
+    // covg - we count jumps only if they are signifiers of a new read arriving
     // and one node does not a read make
-    int diff_between_next_and_prev=-1;
-    if (i<len-2)
+    long diff_between_next_and_prev = -1;
+    
+    if(i < len-2)
     {
-      diff_between_next_and_prev=    sum_of_covgs_in_desired_colours(allele[i+1])- sum_of_covgs_in_desired_colours(allele[i-1]);
+      diff_between_next_and_prev
+        = (long)sum_of_covgs_in_desired_colours(allele[i+1]) -
+          (long)sum_of_covgs_in_desired_colours(allele[i-1]);
     }
       
-    if ( (jump>0) && (diff_between_next_and_prev!=0) )
+    if(jump > 0 && diff_between_next_and_prev != 0)
     {
-      num_of_reads += jump;
+      // Increment number of reads -- avoid overflow
+      if(COVG_MAX - jump >= num_of_reads)
+      {
+        num_of_reads += jump;
+      }
+      else
+      {
+        num_of_reads = COVG_MAX;
+
+        if(!variant_overflow_warning_printed)
+        {
+          warn("%s:%i: caught integer overflow"
+               "(some kmer coverages may be underestimates)",
+               __FILE__, __LINE__);
+
+          variant_overflow_warning_printed = 1;
+        }
+      }
     }
   }
 

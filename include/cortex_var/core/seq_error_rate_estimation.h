@@ -37,12 +37,12 @@
 
 
 void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alleles, 
-						       GraphInfo* db_graph_info, 
-						       dBGraph* db_graph, 
-						       int ref_colour, 
-						       long long genome_size,
-						       long double default_seq_err_rate, 
-						       char* output_file);
+                                                       GraphInfo* db_graph_info, 
+                                                       dBGraph* db_graph, 
+                                                       int ref_colour, 
+                                                       //long long genome_size,
+                                                       long double default_seq_err_rate, 
+                                                       char* output_file);
 
 
 
@@ -56,5 +56,5 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
 long double estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(char* fasta, dBGraph* dbg, int colour, 
 									 Sequence* seq, KmerSlidingWindow* kmer_window,
 									 int (*file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
-									 dBNode** array_nodes, Orientation* array_or, int* num_snps_tested, int max_read_length, 
-									 long double default_seq_err, FILE* fout);
+									 dBNode** array_nodes, Orientation* array_or, //int* num_snps_tested,
+									 int max_read_length, long double default_seq_err, FILE* fout);

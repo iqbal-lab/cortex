@@ -227,7 +227,8 @@ void reset_MultiplicitiesAndOverlapsOfBiallelicVariant(MultiplicitiesAndOverlaps
 void initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
   VariantBranchesAndFlanks* var, MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
   boolean only_count_nodes_with_edge_in_specified_colour_func,
-  Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*) )
+  Edges (*get_colour)(const dBNode*))
+  //, Covg (*get_covg)(const dBNode*) //unsued
 {
 
   void get_mult(dBNode** br_src, int len_br_src, dBNode** br_target, int len_br_target, Covg* mult_array)
@@ -277,9 +278,10 @@ void utility_set_one_array_equal_to_another(dBNode** src, int len, dBNode** targ
 //Utility function - only exported so I can test it.
 void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
   VariantBranchesAndFlanks* var, MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
-  boolean only_count_nodes_with_edge_in_specified_colour_func,
-  Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*),
   int working_colour1, int working_colour2)
+  // unused paramters
+  //boolean only_count_nodes_with_edge_in_specified_colour_func,
+  //Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*),
 {
   // *** ASSUME THE WORKING COLOURS ARE CLEAN ***
 
@@ -1904,7 +1906,7 @@ void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex
 	  
 	  set_status_of_nodes_in_branches(&var, in_desired_genotype);
 	  reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
-	  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, mobv, false, NULL, NULL, working_colour1, working_colour2);
+	  improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(&var, mobv, working_colour1, working_colour2);
 	  int z;
 	  for (z=0; z<num_colours_to_genotype; z++)
 	    {

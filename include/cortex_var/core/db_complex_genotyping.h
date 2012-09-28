@@ -86,16 +86,18 @@ void initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
   VariantBranchesAndFlanks* var,
   MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
   boolean only_count_nodes_with_edge_in_specified_colour_func,
-  Edges (*get_colour)(const dBNode*),
-  Covg (*get_covg)(const dBNode*));
+  Edges (*get_colour)(const dBNode*));
+  //Covg (*get_covg)(const dBNode*) // unused
 
 void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
   VariantBranchesAndFlanks* var,
   MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
-  boolean only_count_nodes_with_edge_in_specified_colour_func,
-  Edges (*get_colour)(const dBNode*),
-  Covg (*get_covg)(const dBNode*),
   int working_colour1, int working_colour2);
+  // unused paramaters
+  //boolean only_count_nodes_with_edge_in_specified_colour_func,
+  //Edges (*get_colour)(const dBNode*),
+  //Covg (*get_covg)(const dBNode*),
+  
 
 
 char** alloc_array_and_get_files_from_list(char* filelist, int num_files_in_list);

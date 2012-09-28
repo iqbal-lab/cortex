@@ -1325,6 +1325,8 @@ boolean db_node_check_status_none(dBNode * node){
 }
 
 
+// DEV: replace calls to db_node_check_for_flag_ALL_OFF
+//      with db_node_check_status(node, unassigned)
 //wrapper - in future this will be part of the flags introduced by Mario et al
 boolean db_node_check_for_flag_ALL_OFF(dBNode * node) {
 
@@ -1390,6 +1392,8 @@ boolean db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(d
 
 boolean db_node_condition_always_true(dBNode* node)
 {
+  // Let the compiler know we're deliberately ignoring our parameters
+  (void)node;
   return true;
 }
 
