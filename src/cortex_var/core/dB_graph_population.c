@@ -4918,28 +4918,36 @@ dBNode *db_graph_find_node_restricted_to_specific_person_or_population(Key key, 
 
 
 
-void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, int),HashTable * hash_table, int** array, int length_of_array, int index){
+void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, int),
+				  HashTable * hash_table, 
+				  int** array, 
+				  int length_of_array, 
+				  int index){
   
   uint64_t i;
   for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
-    if (!db_node_check_status(&hash_table->table[i],unassigned)){
-      f(hash_table, &hash_table->table[i], array, length_of_array, index);
-    }
+
+    if (!db_node_check_for_flag_ALL_OFF(&hash_table->table[i]))
+      // if (!db_node_check_status(&hash_table->table[i],unassigned))
+      {
+	f(hash_table, &hash_table->table[i], array, length_of_array, index);
+      }
   }
   
   
 }
 
 
-void db_graph_traverse_with_array_of_uint64(
-  void (*f)(HashTable*, Element *, uint64_t*, int, int),
-  HashTable * hash_table, uint64_t* array, int length_of_array, int colour)
+void db_graph_traverse_with_array_of_uint64(void (*f)(HashTable*, Element *, uint64_t*, int, int),
+					    HashTable * hash_table, 
+					    uint64_t* array, 
+					    int length_of_array, 
+					    int colour)
 {
   uint64_t i;
-
   for(i = 0; i <hash_table->number_buckets * hash_table->bucket_size; i++)
   {
-    if(!db_node_check_status(&(hash_table->table[i]),unassigned))
+    if (!db_node_check_for_flag_ALL_OFF(&hash_table->table[i]))
     {
       f(hash_table, &(hash_table->table[i]), array, length_of_array, colour);
     }
@@ -4972,16 +4980,16 @@ void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph,
   {
     if(condition(e)==true)
     {
-      int bin = MIN(e->coverage[colour], len);
+      uint64_t bin = MIN(e->coverage[colour], len-1);
       arr[bin]++;
     }
   }
   
   db_graph_traverse_with_array_of_uint64(&bin_covg_and_add_to_array, db_graph,
-                                         covgs, covgs_len, index);
+					 covgs, covgs_len, index);
 
   fprintf(fout, "KMER_COVG\tFREQUENCY\n");
-  for(i = 0; i < covgs_len; i++)
+    for(i = 0; i < covgs_len; i++)
     fprintf(fout, "%d\t%" PRIu64 "\n", i, covgs[i]);
 
   fclose(fout);
