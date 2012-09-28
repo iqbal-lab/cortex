@@ -1132,7 +1132,11 @@ int main(int argc, char **argv)
 							db_graph, db_graph_info, BINVERSION);
 	  timestamp();
 	  printf("Binary dumped\n");
-
+	  
+	  printf("ZAM DEBUG Run health check on loaded graph after dumping binary\n");
+	  db_graph_health_check(false, db_graph);
+	  printf("End of health check\n");
+	  timestamp();
 
 	}
       else
@@ -1176,6 +1180,12 @@ int main(int argc, char **argv)
 				     &db_node_check_status_not_pruned);
       timestamp();
       printf("Covg distribution dumped\n");
+
+      printf("ZAM DEBUG Run health check on loaded graph after dumping covg distrib\n");
+      db_graph_health_check(false, db_graph);
+      printf("End of health check\n");
+      timestamp();
+
     }
 
   // DETECT BUBBLES
