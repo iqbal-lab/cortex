@@ -10434,14 +10434,26 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph){
   }
 
 
+  BinaryKmer zerokmer;
+  binary_kmer_initialise_to_zero(&zerokmer);
+  uint64_t  count_num_zero_kmers= (uint64_t) 0;
+
   void check_node(dBNode * node){
     check_node_with_orientation(node,forward);
     check_node_with_orientation(node,reverse);
+    if (binary_kmer_comparison_operator(zerokmer, node->kmer)==true)
+      {
+	count_num_zero_kmers++;
+      }
     count_nodes++;
   }
 
 
   hash_table_traverse(&check_node,db_graph); 
+  if (count_num_zero_kmers>1)
+    {
+      printf("Error: found %" PRIu64 " zero kmers in the graph\n", count_num_zero_kmers);
+    }
   printf("%qd nodes checked\n",count_nodes);
   return count_nodes;
 }

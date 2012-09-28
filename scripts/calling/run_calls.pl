@@ -1620,7 +1620,7 @@ sub build_clean_binary
     {
 	$outdir_bins = $outdir_bins.'/';
     }
-    my $outdr = $outdir_bins."cleaned/k".$kmer;
+    my $outdr = $outdir_bins."cleaned/k".$kmer.'/';
     if (!(-d $outdr))
     {
 	my $cmd1= "mkdir -p $outdr";
@@ -1632,7 +1632,7 @@ sub build_clean_binary
     my $ctx = $uncleaned_bname;
     $ctx =~ s/.unclean//;
     $ctx =~ s/.ctx//;
-    $ctx = $ctx."cleaned_".$clean_thresh.".ctx";
+    $ctx = $outdr.$ctx."cleaned_".$clean_thresh.".ctx";
     my $log = $ctx.".log";
     $href_sam_to_cleaned_bin->{$sample}->{$kmer}->{$clean_thresh}=$ctx;
 
@@ -2406,6 +2406,7 @@ sub get_cleaning_thresh_and_distrib
     my $count=1;
     my $min_index=1;
     my $min_val=999999999999999;
+    <CLEANINGFILE>; #ignore header
     <CLEANINGFILE>;#ignore number with zero covg
     while (<CLEANINGFILE>)
     {
@@ -2427,20 +2428,6 @@ sub get_cleaning_thresh_and_distrib
 	    push @covgs, $num;
 	    push @$aref, $num;
 	    
-	}
-	## old format
-	#multiplicity:1  Number:8
-	elsif ($line =~ /multiplicity:(\d+)\s+Number:(\d+)/)
-	{
-	    my $mult = $1;
-	    my $num = $2;
-	    if ($mult != $count)
-	    {
-		die("counting error mult is $mult and count is $count");
-	    }
-	    push @covgs, $num;
-	    push @$aref, $num;
-
 	}
 	$count++;
     }
