@@ -25,11 +25,14 @@
  * **********************************************************************
  */
 /*
-  element.h defines the interface for the de Bruijn graph node. The implementation is complemented by 
-  a hash table that stores every node indexed by kmers (BinaryKmers). 
+  element.h defines the interface for the de Bruijn graph node. The
+  implementation is complemented by a hash table that stores every node indexed
+  by kmers (BinaryKmers). 
 
-  The element routines, ie the one required by hash_table/priority queue, are prefixed with element_ 
-  The de Bruijn based routines are prefixed with db_node
+  The element routines, ie the one required by hash_table/priority queue, are
+  prefixed with element_
+
+  The de Bruijn based routines are prefixed with db_node_
 */
 
 #include <element.h>
@@ -43,6 +46,9 @@
 
 #include "global.h"
 
+const Covg COVG_MAX = UINT_MAX;
+//const Covg COVG_MAX = INT_MAX;
+
 // Only print covg overflow warning once
 char overflow_warning_printed = 0;
 
@@ -54,22 +60,21 @@ Element* new_element()
   Element* e = malloc(sizeof(Element));
 
   if (e==NULL)
-    {
-      die("Unable to allocate a new element");
-    }
-  
+  {
+    die("Unable to allocate a new element");
+  }
+
   binary_kmer_initialise_to_zero(&(e->kmer));
 
   int i;
   for (i=0; i< NUMBER_OF_COLOURS; i++)
-    {
-      e->individual_edges[i]=0;
-      e->coverage[i]=0;
-    }
+  {
+    e->individual_edges[i]=0;
+    e->coverage[i]=0;
+  }
 
+  e->status = (char)none;
 
-  e->status=none;
-  
   return e;
 }
 
@@ -77,7 +82,7 @@ Element* new_element()
 void free_element(Element** element)
 {
   free(*element);
-  *element=NULL;
+  *element = NULL;
 }
 
 void element_assign(Element* e1, Element* e2)
@@ -86,10 +91,10 @@ void element_assign(Element* e1, Element* e2)
 
   int i;
   for (i=0; i< NUMBER_OF_COLOURS; i++)
-    {
-      e1->individual_edges[i] = e2->individual_edges[i];
-      e1->coverage[i]         = e2->coverage[i];
-    }
+  {
+    e1->individual_edges[i] = e2->individual_edges[i];
+    e1->coverage[i]         = e2->coverage[i];
+  }
 
   e1->status = e2->status;
 }
@@ -110,9 +115,9 @@ Edges get_union_of_edges(Element e)
   Edges edges=0;
 
   for (i=0; i< NUMBER_OF_COLOURS; i++)
-    {
-      edges |= e.individual_edges[i];
-    }
+  {
+    edges |= e.individual_edges[i];
+  }
 
   return edges;
 }
@@ -123,9 +128,9 @@ Edges element_get_colour_union_of_all_colours(const Element* e)
   Edges edges=0;
   
   for (i=0; i< NUMBER_OF_COLOURS; i++)
-    {
-      edges |= e->individual_edges[i];
-    }
+  {
+    edges |= e->individual_edges[i];
+  }
 
   return edges;
   
@@ -154,20 +159,20 @@ Edges element_get_colour1(const Element* e)
 
 
 
-uint32_t element_get_covg_union_of_all_covgs(const dBNode* e)
+Covg element_get_covg_union_of_all_covgs(const dBNode* e)
 {
   int i;
-  uint32_t sum_covg = 0;
+  Covg sum_covg = 0;
   
   for(i = 0; i < NUMBER_OF_COLOURS; i++)
   {
-    if(UINT_MAX - e->coverage[i] >= sum_covg)
+    if(COVG_MAX - e->coverage[i] >= sum_covg)
     {
       sum_covg += e->coverage[i];
     }
     else
     {
-      sum_covg = UINT_MAX;
+      sum_covg = COVG_MAX;
 
       if(!overflow_warning_printed)
       {
@@ -185,23 +190,23 @@ uint32_t element_get_covg_union_of_all_covgs(const dBNode* e)
   return sum_covg;
 }
 
-uint32_t element_get_covg_for_colourlist(const dBNode* e, int* colour_list,
-                                         int list_len)
+Covg element_get_covg_for_colourlist(const dBNode* e, int* colour_list,
+                                     int list_len)
 {
   int i;
-  uint32_t sum_covg = 0;
+  Covg sum_covg = 0;
   
   for(i = 0; i < list_len; i++)
   {
     int col = colour_list[i];
 
-    if(UINT_MAX - e->coverage[col] >= sum_covg)
+    if(COVG_MAX - e->coverage[col] >= sum_covg)
     {
       sum_covg += e->coverage[col];
     }
     else
     {
-      sum_covg = UINT_MAX;
+      sum_covg = COVG_MAX;
 
       if(!overflow_warning_printed)
       {
@@ -220,19 +225,19 @@ uint32_t element_get_covg_for_colourlist(const dBNode* e, int* colour_list,
 }
 
 
-uint32_t element_get_covg_colour0(const dBNode* e)
+Covg element_get_covg_colour0(const dBNode* e)
 {
   return e->coverage[0];
 }
 
-uint32_t element_get_covg_last_colour(const dBNode* e)
+Covg element_get_covg_last_colour(const dBNode* e)
 {
   return e->coverage[NUMBER_OF_COLOURS-1];
 }
 
 #if NUMBER_OF_COLOURS > 1
 
-uint32_t element_get_covg_colour1(const dBNode* e)
+Covg element_get_covg_colour1(const dBNode* e)
 {
   return e->coverage[1];
 }
@@ -319,7 +324,7 @@ BinaryKmer* element_get_kmer(Element * e)
   return &(e->kmer);
 }
 
-boolean element_is_key(Key key, Element e, short kmer_size)
+boolean element_is_key(Key key, Element e)
 {
   //  return key == e.kmer;
   return binary_kmer_comparison_operator(*key, e.kmer);
@@ -414,17 +419,17 @@ void db_node_increment_coverage(dBNode* e, int colour)
   db_node_update_coverage(e, colour, 1);
 }
 
-void db_node_update_coverage(dBNode* e, int colour, int update)
+void db_node_update_coverage(dBNode* e, int colour, long update)
 {
   assert(colour < NUMBER_OF_COLOURS);
 
-  if(UINT_MAX - update >= e->coverage[colour])
+  if(COVG_MAX - update >= e->coverage[colour])
   {
     e->coverage[colour] += update;
   }
   else
   {
-    e->coverage[colour] = UINT_MAX;
+    e->coverage[colour] = COVG_MAX;
 
     if(!overflow_warning_printed)
     {
@@ -445,14 +450,14 @@ void db_node_update_coverage(dBNode* e, int colour, int update)
 // (expects zero covg if it passes a NULL)
 // Probably safer (catches bugs) to explicitly have a function that tolerates
 // NULLs and one that throws an error
-uint32_t db_node_get_coverage_tolerate_null(const dBNode* const e, int colour)
+Covg db_node_get_coverage_tolerate_null(const dBNode* const e, int colour)
 {
   assert(colour < NUMBER_OF_COLOURS);
 
   return e == NULL ? 0 : e->coverage[colour];
 }
 
-uint32_t db_node_get_coverage(const dBNode* const e, int colour)
+Covg db_node_get_coverage(const dBNode* const e, int colour)
 {
   assert(e != NULL);
   assert(colour < NUMBER_OF_COLOURS);
@@ -461,7 +466,7 @@ uint32_t db_node_get_coverage(const dBNode* const e, int colour)
 }
 
 
-void db_node_set_coverage(dBNode* e, int colour, uint32_t covg)
+void db_node_set_coverage(dBNode* e, int colour, Covg covg)
 {
   e->coverage[colour] = covg;
 }
@@ -469,7 +474,7 @@ void db_node_set_coverage(dBNode* e, int colour, uint32_t covg)
 
 // DEV: why is this needed?
 // replace with (e == NULL ? 0 : get_covg(e))
-uint32_t db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, uint32_t (*get_covg)(const dBNode*) )
+Covg db_node_get_coverage_in_subgraph_defined_by_func_of_colours(const dBNode* const e, Covg (*get_covg)(const dBNode*) )
 {
 
   if (e==NULL)
@@ -799,7 +804,7 @@ boolean db_node_is_blunt_end_in_subgraph_given_by_func_of_colours(
 
 boolean db_node_check_status(dBNode * node, NodeStatus status)
 {
-  return node->status == (char) status;
+  return (node->status == (char)status);
 }
 
 boolean db_node_check_status_to_be_dumped(dBNode * node)
@@ -826,22 +831,27 @@ boolean db_node_check_status_not_pruned(dBNode * node)
 
 boolean db_node_check_status_not_pruned_or_visited(dBNode * node)
 {
-  if ( db_node_check_status(node,visited) || db_node_check_status(node,visited_and_exists_in_reference) ||  db_node_check_status(node, pruned)	 ) 
-    {
-      return false;
-    }
+  if(db_node_check_status(node,visited) ||
+     db_node_check_status(node,visited_and_exists_in_reference) ||
+     db_node_check_status(node, pruned))
+  {
+    return false;
+  }
   else
-    {
-      return true;
-    }
+  {
+    return true;
+  }
 }
 
 
-void db_node_set_status(dBNode * node,NodeStatus status){
-  node->status = (char) status;
+void db_node_set_status(dBNode *node, NodeStatus status)
+{
+  node->status = (char)status;
 }
-void db_node_set_status_to_none(dBNode * node){
-  node->status = none;
+
+void db_node_set_status_to_none(dBNode * node)
+{
+  node->status = (char)none;
 }
 
 
@@ -892,13 +902,13 @@ void db_node_print_multicolour_binary(FILE * fp, dBNode * node)
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
-  uint32_t covg[NUMBER_OF_COLOURS];
+  Covg covg[NUMBER_OF_COLOURS];
   Edges individual_edges[NUMBER_OF_COLOURS]; 
 
   int i;
   for (i=0; i< NUMBER_OF_COLOURS; i++)                                                     
   {
-    covg[i]             = (uint32_t) db_node_get_coverage(node, i);
+    covg[i]             = (Covg) db_node_get_coverage(node, i);
     individual_edges[i] = get_edge_copy(*node, i);
   }
 				  
@@ -914,10 +924,10 @@ void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node)
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
-  uint32_t covg;
+  Covg covg;
   Edges individual_edges; 
 
-  covg             = (uint32_t) db_node_get_coverage(node, 0);
+  covg             = (Covg) db_node_get_coverage(node, 0);
   individual_edges = get_edge_copy(*node, 0);
   
   fwrite(kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
@@ -933,13 +943,9 @@ void db_node_print_single_colour_binary_of_specified_colour(FILE * fp, dBNode * 
 
   BinaryKmer kmer;
   binary_kmer_assignment_operator(kmer, *element_get_kmer(node) );
-  uint32_t covg;
-  Edges    individual_edges; 
+  Covg covg = db_node_get_coverage(node, colour);
+  Edges individual_edges = get_edge_copy(*node, colour);
 
-  covg             = (uint32_t) db_node_get_coverage(node, colour);
-  individual_edges = get_edge_copy(*node, colour);
-  
-				  
   fwrite(kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
   fwrite(&covg, sizeof(uint32_t), 1, fp); 
   fwrite(&individual_edges, sizeof(Edges), 1, fp);
@@ -1046,8 +1052,8 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
   else//higher than 4
     {
       BinaryKmer kmer;
-      uint32_t covg_reading_from_binary[num_colours_in_binary];
-      Edges    individual_edges_reading_from_binary[num_colours_in_binary];
+      Covg  covg_reading_from_binary[num_colours_in_binary];
+      Edges individual_edges_reading_from_binary[num_colours_in_binary];
       
       int read;
       
@@ -1129,7 +1135,7 @@ boolean db_node_read_single_colour_binary(FILE *fp, short kmer_size, dBNode *nod
     {
       BinaryKmer kmer;
       Edges edges;
-      uint32_t coverage;
+      Covg coverage;
       int read;
       
       read = fread(&kmer,sizeof(bitfield_of_64bits)*NUMBER_OF_BITFIELDS_IN_BINARY_KMER,1,fp);
@@ -1223,20 +1229,19 @@ void db_node_action_specialise_status(dBNode * node){
 	    ||
 	    (db_node_check_status(node, read_start_forward_and_reverse)==true)
 	    )
-    {
-      // happy to lose PCR dup info at this stage
-      db_node_set_status(node,special_none);
-      warn("Warn Zam (zam@well.ox.ac.uk) that you met a PCR dup status during "
-           "genotyping. He knows how to fix it\n"); 
-    }
+  {
+    // happy to lose PCR dup info at this stage
+    db_node_set_status(node,special_none);
+    warn("Warn Zam (zam@well.ox.ac.uk) that you met a PCR dup status during "
+         "genotyping. He knows how to fix it\n"); 
+  }
   else if (db_node_check_status_special(node)==false)
-    {
-      NodeStatus ret = node->status;
-      warn("Warn Zam (zam@well.ox.ac.uk) that you met a status of %d. \n"
-           "Could signal a subtle (but with your information, fixable) bug.\n",
-           (int)ret); 
-    }
-  
+  {
+    NodeStatus ret = node->status;
+    warn("Warn Zam (zam@well.ox.ac.uk) that you met a status of %d. \n"
+         "Could signal a subtle (but with your information, fixable) bug.\n",
+         (int)ret); 
+  }
 }
 
 
@@ -1308,8 +1313,10 @@ void db_node_action_unset_status_visited_or_visited_and_exists_in_reference_or_i
 
 
 
-void db_node_action_do_nothing(dBNode * node){
-  
+void db_node_action_do_nothing(dBNode * node)
+{
+  // Let the compiler know that we're deliberately not using a paramater
+  (void)node;
 }
 
 

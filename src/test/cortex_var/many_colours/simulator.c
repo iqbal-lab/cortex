@@ -62,12 +62,12 @@ void zero_allele(dBNode** allele, int len, int colour_indiv, int colour_allele1,
 {
   int i;
   for (i=0; i<len; i++)
-    {
-      db_node_set_coverage(allele[i],  colour_indiv ,0);
-      db_node_set_coverage(allele[i],  colour_allele1 ,0);
-      db_node_set_coverage(allele[i],  colour_allele2 ,0);
-      db_node_set_coverage(allele[i],  colour_ref_minus_site,0);
-    }
+  {
+    db_node_set_coverage(allele[i], colour_indiv, 0);
+    db_node_set_coverage(allele[i], colour_allele1, 0);
+    db_node_set_coverage(allele[i], colour_allele2, 0);
+    db_node_set_coverage(allele[i], colour_ref_minus_site, 0);
+  }
 }
 
 
@@ -80,10 +80,10 @@ void zero_path_except_two_alleles_and_ref(dBNode** allele, int len, int colour_a
 	{
 	  if (!( (j==colour_allele1) || (j==colour_allele2) || (j==colour_ref_minus_site) ))
 	    {
-	      db_node_set_coverage(allele[i],  j ,0);
-	      db_node_set_coverage(allele[i],  j ,0);
-	      db_node_set_coverage(allele[i],  j, 0);
-	      db_node_set_coverage(allele[i],  j, 0);
+	      db_node_set_coverage(allele[i], j, 0);
+	      db_node_set_coverage(allele[i], j, 0);
+	      db_node_set_coverage(allele[i], j, 0);
+	      db_node_set_coverage(allele[i], j, 0);
 	    }
 	}
     }
@@ -242,8 +242,8 @@ void simulator(int depth, int read_len, int kmer, double seq_err_per_base, int n
   zero_allele(var->other_allele, var->len_other_allele, colour_indiv, colour_allele1, colour_allele2, colour_ref_minus_site);
 
   CU_ASSERT((double)count_passes/(double)(count_passes+count_fails) > 0.9 );//actually, we could set this to ==1
-  //printf("Number of passes: %d, number of fails %d\n", count_passes, count_fails);
-    
+  printf("Number of passes: %d, number of fails %d\n", count_passes, count_fails);
+
 
   gsl_rng_free (r);
 

@@ -532,9 +532,9 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
 								    double sequencing_depth_of_coverage, int read_length, int colour)
 {
   boolean too_short = false;
-  int initial_covg_plus_upward_jumps_branch1 = 
+  Covg initial_covg_plus_upward_jumps_branch1 = 
     count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
-  int initial_covg_plus_upward_jumps_branch2 = 
+  Covg initial_covg_plus_upward_jumps_branch2 = 
     count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
 
   if (too_short==true)
@@ -582,13 +582,14 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
 
 
 
-void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, 
-									    double sequencing_depth_of_coverage, int read_length, int colour)
+void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(
+  AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, 
+  double sequencing_depth_of_coverage, int read_length, int colour)
 {
   boolean too_short = false;
-  int initial_covg_plus_upward_jumps_branch1 = 
+  Covg initial_covg_plus_upward_jumps_branch1 = 
     count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
-  int initial_covg_plus_upward_jumps_branch2 = 
+  Covg initial_covg_plus_upward_jumps_branch2 = 
     count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
 
   if (too_short==true)
@@ -608,30 +609,31 @@ void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(Anno
 
 
   annovar->gen_log_lh[colour].log_lh[hom_one]   = 
-    get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
-								     initial_covg_plus_upward_jumps_branch1, 
-								     initial_covg_plus_upward_jumps_branch2, 
-								     theta_one, theta_other, annovar->kmer);
+    get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
+      hom_one, seq_error_rate_per_base, 
+      initial_covg_plus_upward_jumps_branch1, 
+      initial_covg_plus_upward_jumps_branch2, 
+      theta_one, theta_other, annovar->kmer);
 
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
-    get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
-								     initial_covg_plus_upward_jumps_branch1, 
-								     initial_covg_plus_upward_jumps_branch2, 
-								     theta_one, theta_other, annovar->kmer);
+    get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
+      hom_other, seq_error_rate_per_base, 
+      initial_covg_plus_upward_jumps_branch1, 
+      initial_covg_plus_upward_jumps_branch2, 
+      theta_one, theta_other, annovar->kmer);
 
   //this is not allowed by the model
-  annovar->gen_log_lh[colour].log_lh[het]       = annovar->gen_log_lh[colour].log_lh[hom_one] + annovar->gen_log_lh[colour].log_lh[hom_other] - 99999;
-
-
-
+  annovar->gen_log_lh[colour].log_lh[het]
+    = annovar->gen_log_lh[colour].log_lh[hom_one] +
+      annovar->gen_log_lh[colour].log_lh[hom_other] - 99999;
 }
 
 /*
 void get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour)
 {
   boolean too_short = false;
-  int initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
-  int initial_covg_plus_upward_jumps_branch2 = count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
+  Covg initial_covg_plus_upward_jumps_branch1 = count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
+  Covg initial_covg_plus_upward_jumps_branch2 = count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
 
   if (too_short==true)
     {
@@ -680,36 +682,50 @@ void get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(
 
 //assuming a pair of branches really do make up a variant, calculate the log likelihood of a genotype
 //under the model described in our paper (eg used for HLA)
-//theta here is as used in the paper: (D/R) * length of branch/allele. NOT the same theta as seen in model_selection.c
+//theta here is as used in the paper: (D/R) * length of branch/allele. 
+// NOT the same theta as seen in model_selection.c
 //assumes called by BubbleCaller, so no overlaps between alleles.
-double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2, 
-									double theta_one, double theta_other, int kmer)
+double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
+  zygosity genotype, double error_rate_per_base,
+  Covg covg_branch_1, Covg covg_branch_2,
+  double theta_one, double theta_other, int kmer)
 {
-  //  printf("DEBUG covg branch 1 is %d, and branch2 is %d, and theta 1,2 are %f, %f, and error ratew per base is %f\n", covg_branch_1, covg_branch_2, theta_one, theta_other, error_rate_per_base);
+  //printf("DEBUG covg branch 1 is %d, and branch2 is %d, and theta 1,2 are "
+  //       "%f, %f, and error ratew per base is %f\n",
+  //       covg_branch_1, covg_branch_2, theta_one, theta_other,
+  //       error_rate_per_base);
+
   if (genotype==hom_one)
-    {
-      //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no unique segment, one shared segment
-      return covg_branch_1*log(theta_one) - theta_one
-	- gsl_sf_lnfact(covg_branch_1)  + covg_branch_2 *log(error_rate_per_base) ;
-    }
+  {
+    // Apply formula for likelihood in section 9.0 of Supp. Methods of paper;
+    // no unique segment, one shared segment
+    return (double)covg_branch_1 * log(theta_one) - theta_one -
+           gsl_sf_lnfact(covg_branch_1) +
+           (double)covg_branch_2 * log(error_rate_per_base);
+  }
   else if (genotype==hom_other)
-    {
-      //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no unique segment, one shared segment
-      return covg_branch_2*log(theta_other) - theta_other
-	- gsl_sf_lnfact(covg_branch_2) + covg_branch_1 *log(error_rate_per_base)  ;
-    }
+  {
+    // Apply formula for likelihood in section 9.0 of Supp. Methods of paper;
+    // no unique segment, one shared segment
+    return (double)covg_branch_2 * log(theta_other) - theta_other -
+           gsl_sf_lnfact(covg_branch_2) +
+           (double)covg_branch_1 * log(error_rate_per_base);
+  }
   else if (genotype==het)
-    {
-      //Apply formula for likelihood in section 9.0 of Supp. Methods of paper; no shared segment, TWO unique segments
-      return (covg_branch_1*log(theta_one/2) - theta_one/2 - gsl_sf_lnfact(covg_branch_1) )
-        + (covg_branch_2*log(theta_other/2) - theta_other/2 - gsl_sf_lnfact(covg_branch_2) );
-    }
+  {
+    // Apply formula for likelihood in section 9.0 of Supp. Methods of paper;
+    // no shared segment, TWO unique segments
+    return ((double)covg_branch_1*log(theta_one/2) - theta_one/2 -
+             gsl_sf_lnfact(covg_branch_1)) +
+           ((double)covg_branch_2*log(theta_other/2) - theta_other/2 -
+            gsl_sf_lnfact(covg_branch_2));
+  }
   else
-    {
-      die("Programming error. called "
-          "get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller "
-          "with bad genotype");
-    }
+  {
+    die("Programming error. called "
+        "get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller "
+        "with bad genotype");
+  }
 }
 
 
@@ -756,120 +772,135 @@ boolean get_num_effective_reads_on_branch(int* array, dBNode** allele, int how_m
 //note I do not want to create an array on the stack - these things can be very long
 // so relies on the prealloced array of dBNode* 's passed in
 // annoying that can't use templates or something - see below for a similar function with different input
-int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colour, boolean* too_short)
+Covg count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colour,
+                                              boolean* too_short)
 {
+  if(len <= 1)
+  {
+    *too_short = true;
+    return 0;
+  }
 
-  if ( (len==0) || (len==1) )
-    {
-      *too_short=true;
-      return 0;//previously this returned -1, which seems perverse to me
-    }
+  // Note: we have to used signed datatypes for this arithmetic
+  //       hence using (long) instead of (Covg -- usually uint32_t)
 
-  //note start at node 1, avoid first node
-  int total= db_node_get_coverage_tolerate_null(allele[1], colour);
+  // note start at node 1, avoid first node
+  Covg num_of_reads = db_node_get_coverage_tolerate_null(allele[1], colour);
 
   int i;
 
   //note we do not go as far as the final node, which is where the two branches rejoin
   for (i=2; i<len-1; i++)
-    {
-      int jump = db_node_get_coverage_tolerate_null(allele[i], colour) -
-                 db_node_get_coverage_tolerate_null(allele[i-1], colour);
+  {
+    long jump = (long)db_node_get_coverage_tolerate_null(allele[i], colour) -
+                (long)db_node_get_coverage_tolerate_null(allele[i-1], colour);
 
-      //we add a little check to ensure that we ignore isolated nodes with higher covg - we count jumps only if they are signifiers of a new read arriving
-      // and one node does not a read make
-      int diff_between_next_and_prev=-1;
-      if (i<len-2)
-	{
-	  diff_between_next_and_prev = db_node_get_coverage_tolerate_null(allele[i+1], colour) -
-	                               db_node_get_coverage_tolerate_null(allele[i-1], colour);
-	}
-      
-      if ( (jump>0) && (diff_between_next_and_prev!=0) )
-        {
-	      total=total+jump;
-        }
+    // we add a little check to ensure that we ignore isolated nodes with higher
+    // covg - we count jumps only if they are signifiers of a new read arriving
+    // and one node does not a read make
+    long diff_between_next_and_prev = -1;
+
+    if (i<len-2)
+  	{
+      diff_between_next_and_prev
+        = (long)db_node_get_coverage_tolerate_null(allele[i+1], colour) -
+          (long)db_node_get_coverage_tolerate_null(allele[i-1], colour);
     }
-  return total;
+
+    if(jump > 0 && diff_between_next_and_prev != 0)
+    {
+      num_of_reads += jump;
+    }
+  }
+
+  return num_of_reads;
 }
 
 
 
-//WARNING - this is for use when we dissect an allele into subchunks, so here we do not want to be ignoring first and last elements (cf above)
-int count_reads_on_allele_in_specific_colour_given_array_of_cvgs(int* covgs, int len, boolean* too_short)
+// WARNING - this is for use when we dissect an allele into subchunks, so here
+// we do not want to be ignoring first and last elements (cf above)
+Covg count_reads_on_allele_in_specific_colour_given_array_of_cvgs(Covg* covgs,
+                                                                  int len,
+                                                                  boolean* too_short)
 {
+  if(len <= 1)
+  {
+    *too_short = true;
+    return 0;
+  }
 
-  if ( (len==0) || (len==1) )
-    {
-      *too_short=true;
-      return -1;
-    }
+  // Note: we have to used signed datatypes for this arithmetic
+  //       hence using (long) instead of (Covg -- usually uint32_t)
 
-
-  int total= covgs[0];
+  Covg num_of_reads = covgs[0];
 
   int i;
 
-  for (i=1; i<len; i++)
+  for(i = 1; i < len; i++)
+  {
+    long jump = (long)covgs[i] - covgs[i-1];
+
+    // we add a little check to ensure that we ignore isolated nodes with higher
+    // covg - we count jumps only if they are signifiers of a new read arriving
+    // and one node does not a read make
+    long diff_between_next_and_prev = -1;
+
+    if(i < len - 1)
     {
-      int jump = covgs[i] - covgs[i-1];
-
-      //we add a little check to ensure that we ignore isolated nodes with higher covg - we count jumps only if they are signifiers of a new read arriving
-      // and one node does not a read make
-      int diff_between_next_and_prev=-1;
-      if (i<len-1)
-	{
-	  diff_between_next_and_prev=  covgs[i+1]-covgs[i-1];
-	}
-      
-      if ( (jump>0) && (diff_between_next_and_prev!=0) )
-        {
-	      total=total+jump;
-        }
+      diff_between_next_and_prev = (long)covgs[i+1] - covgs[i-1];
     }
-  return total;
+
+    if(jump > 0 && diff_between_next_and_prev != 0)
+    {
+      num_of_reads += jump;
+    }
+  }
+
+  return num_of_reads;
 }
-
-
 
 
 //does not count covg on first or last nodes, as they are bifurcation nodes
 //if length==0 or 1  returns -1.
-int count_reads_on_allele_in_specific_func_of_colours(
+Covg count_reads_on_allele_in_specific_func_of_colours(
   dBNode** allele, int len,
-  uint32_t (*sum_of_covgs_in_desired_colours)(const Element *),
+  Covg (*sum_of_covgs_in_desired_colours)(const Element *),
   boolean* too_short)
 {
+  if(len <= 1)
+  {
+    *too_short = true;
+    return 0;
+  }
 
-  if ( (len==0) || (len==1) )
-    {
-      *too_short=true;
-      return -1;
-    }
+  // Note: we have to used signed datatypes for this arithmetic
+  //       hence using (long) instead of (Covg -- usually uint32_t)
 
-  //note start at node 1, avoid first node
-  int total= sum_of_covgs_in_desired_colours(allele[1]);
+  // note start at node 1, avoid first node
+  Covg num_of_reads = sum_of_covgs_in_desired_colours(allele[1]);
 
   int i;
 
   //note we do not go as far as the final node, which is where the two branches rejoin
-  for (i=2; i<len-1; i++)
-    {
-      int jump = sum_of_covgs_in_desired_colours(allele[i]) - sum_of_covgs_in_desired_colours(allele[i-1]);
+  for(i=2; i<len-1; i++)
+  {
+    int jump = sum_of_covgs_in_desired_colours(allele[i]) - sum_of_covgs_in_desired_colours(allele[i-1]);
 
-      //we add a little check to ensure that we ignore isolated nodes with higher covg - we count jumps only if they are signifiers of a new read arriving
-      // and one node does not a read make
-      int diff_between_next_and_prev=-1;
-      if (i<len-2)
-	{
-	  diff_between_next_and_prev=    sum_of_covgs_in_desired_colours(allele[i+1])- sum_of_covgs_in_desired_colours(allele[i-1]);
-	}
-      
-      if ( (jump>0) && (diff_between_next_and_prev!=0) )
-        {
-	      total=total+jump;
-        }
+    //we add a little check to ensure that we ignore isolated nodes with higher covg - we count jumps only if they are signifiers of a new read arriving
+    // and one node does not a read make
+    int diff_between_next_and_prev=-1;
+    if (i<len-2)
+    {
+      diff_between_next_and_prev=    sum_of_covgs_in_desired_colours(allele[i+1])- sum_of_covgs_in_desired_colours(allele[i-1]);
     }
-  return total;
+      
+    if ( (jump>0) && (diff_between_next_and_prev!=0) )
+    {
+      num_of_reads += jump;
+    }
+  }
+
+  return num_of_reads;
 }
 

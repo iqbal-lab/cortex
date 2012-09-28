@@ -25,25 +25,33 @@
  * **********************************************************************
  */
 /*
-  element.h defines the interface for the de Bruijn graph node. The implementation is complemented by 
-  a hash table that stores every node indexed by kmers (BinaryKmers). 
+  element.h defines the interface for the de Bruijn graph node. The
+  implementation is complemented by a hash table that stores every node indexed
+  by kmers (BinaryKmers). 
 
-  The element routines, ie the one required by hash_table/priority queue, are prefixed with element_ 
-  The de Bruijn based routines are prefixed with db_node
+  The element routines, ie the one required by hash_table/priority queue, are
+  prefixed with element_
+
+  The de Bruijn based routines are prefixed with db_node_
 */
 
 #ifndef ELEMENT_H_
 #define ELEMENT_H_
 
-
-#include <binary_kmer.h>
-#include <global.h>
 #include <stdio.h>
 #include <inttypes.h>
 
-//type definitions
+#include "global.h"
+#include "binary_kmer.h"
+
+// type definitions
 
 typedef char Edges;
+
+typedef uint32_t Covg;
+//typedef int Covg
+// COVG_MAX is defined as UINT_MAX in element.c
+const Covg COVG_MAX;
 
 typedef enum
   {
@@ -64,35 +72,25 @@ typedef enum
     special_pruned = 14
   } NodeStatus;
 
-
-/*
-typedef enum{
-    individual_edge_array = 0,  
-    //ref_edge_array        = 1,
-} EdgeArrayType;
-*/
-
 typedef struct{
   BinaryKmer kmer;
-  uint32_t   coverage[NUMBER_OF_COLOURS];
+  Covg       coverage[NUMBER_OF_COLOURS];
   Edges      individual_edges[NUMBER_OF_COLOURS];
-  char       status; //will case a NodeStatus to char
+  char       status; // will cast a NodeStatus to char
 } Element;
 
 
 typedef Element dBNode;
-typedef BinaryKmer*  Key;
+typedef BinaryKmer* Key;
 
-
-typedef Element GraphNode;
 
 Element* new_element();
 void free_element(Element** element);
 void element_assign(Element* e1, Element* e2);
 
 
-// utility function for getting the desired edge char, by specifying if talking
-// about a population or an individual and giving the appropriate colour
+// utility function for getting the desired edge char,
+// by specifying the appropriate colour
 
 // gets copy of edge
 Edges get_edge_copy(const Element e, int colour);
@@ -103,17 +101,17 @@ Edges element_get_colour0(const Element* e);
 Edges element_get_colour1(const Element* e);
 Edges element_get_last_colour(const Element* e);
 
-uint32_t element_get_covg_union_of_all_covgs(const dBNode*);
-uint32_t element_get_covg_for_colourlist(const dBNode* e, int* colour_list,
-                                         int list_len);
+Covg element_get_covg_union_of_all_covgs(const dBNode*);
+Covg element_get_covg_for_colourlist(const dBNode* e, int* colour_list,
+                                     int list_len);
 
-uint32_t element_get_covg_colour0(const dBNode* e);
+Covg element_get_covg_colour0(const dBNode* e);
 
 #if NUMBER_OF_COLOURS > 1
-uint32_t element_get_covg_colour1(const dBNode* e);
+Covg element_get_covg_colour1(const dBNode* e);
 #endif
 
-uint32_t element_get_covg_last_colour(const dBNode* e);
+Covg element_get_covg_last_colour(const dBNode* e);
 
 void add_edges(Element* e, int colour, Edges edge_char);
 void set_edges(Element* e, int colour, Edges edge_char);
@@ -124,7 +122,7 @@ int element_get_number_of_people_or_pops_containing_this_element(Element* e);
 
 boolean element_smaller(Element e1, Element e2);
 BinaryKmer* element_get_kmer(Element *e);
-boolean element_is_key(Key key, Element e, short kmer_size);
+boolean element_is_key(Key key, Element e);
 Key element_get_key(BinaryKmer*,short kmer_size, Key preallocated_key);
 void element_initialise(Element *,Key, short kmer_size);
 void element_initialise_kmer_covgs_edges_and_status_to_zero(Element * e);
@@ -243,13 +241,13 @@ boolean db_node_condition_always_true(dBNode* node);
 
 
 void db_node_increment_coverage(dBNode* e, int colour);
-void db_node_update_coverage(dBNode* e, int colour, int update);
-uint32_t db_node_get_coverage_tolerate_null(const dBNode* const e, int colour);
-uint32_t db_node_get_coverage(const dBNode* const e, int colour);
-void db_node_set_coverage(dBNode* e, int colour, uint32_t covg);
+void db_node_update_coverage(dBNode* e, int colour, long update);
+Covg db_node_get_coverage_tolerate_null(const dBNode* e, int colour);
+Covg db_node_get_coverage(const dBNode* e, int colour);
+void db_node_set_coverage(dBNode* e, int colour, Covg covg);
 
-uint32_t db_node_get_coverage_in_subgraph_defined_by_func_of_colours(
-  const dBNode* const e, uint32_t (*get_covg)(const dBNode*) );
+Covg db_node_get_coverage_in_subgraph_defined_by_func_of_colours(
+  const dBNode* e, Covg (*get_covg)(const dBNode*));
 
 
 

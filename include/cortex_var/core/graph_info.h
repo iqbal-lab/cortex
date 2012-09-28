@@ -28,9 +28,11 @@
 #ifndef GRAPH_INFO_H_
 #define GRAPH_INFO_H_
 
-#include <stdint.h>
-#include <global.h>
 #include <stdio.h>
+#include <stdint.h>
+
+#include "global.h"
+#include "element.h"
 
 #define MAX_LEN_NAME_GRAPH_CLEANED_AGAINST 10000;
 extern int MAX_LEN_SAMPLE_NAME;
@@ -42,8 +44,13 @@ typedef struct
   boolean remv_low_cov_sups;
   boolean remv_low_cov_nodes;
   int len_name_of_graph_against_which_was_cleaned;
-  uint32_t remv_low_cov_sups_thresh;
-  uint32_t remv_low_cov_nodes_thresh;
+
+  // These two are ints as they can be set to -1
+  // DEV: convert to Covg, use remv_low_cov_sups & remv_low_cov_nodes
+  //      instead of remv_low_cov_sups_thresh == -1 and
+  //      remv_low_cov_nodes_thresh == -1
+  int remv_low_cov_sups_thresh;
+  int remv_low_cov_nodes_thresh;
 
   // eg cleaning a low covg sample against cleaned pool of population
   boolean cleaned_against_another_graph;

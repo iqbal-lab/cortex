@@ -124,7 +124,7 @@ boolean hash_table_find_in_bucket(Key key, long long * current_pos, boolean * ov
     //element found
 
    
-    if (element_is_key(key,hash_table->table[*current_pos], hash_table->kmer_size))
+    if (element_is_key(key,hash_table->table[*current_pos]))
       {
 	found = true;
       }
@@ -243,9 +243,11 @@ void hash_table_traverse_passing_ints_and_path(void (*f)(Element *, int*, int*, 
 }
 
 
-void hash_table_traverse_passing_3ints_and_path(void (*f)(Element *, int*, int*, int*, dBNode**, Orientation*, Nucleotide*, char*, int),
-						HashTable * hash_table, int* num1, int* num2, int* num3, 
-					       dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len){
+void hash_table_traverse_passing_3ints_and_path(
+  void (*f)(Element *, int*, int*, int*, dBNode**, Orientation*, Nucleotide*, char*, int),
+  HashTable * hash_table, int* num1, int* num2, int* num3, 
+  dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len)
+{
   long long i;
   for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
     if (!db_node_check_status(&hash_table->table[i],unassigned)){

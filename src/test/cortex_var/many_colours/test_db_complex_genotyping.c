@@ -57,12 +57,16 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
 				  unknown);
 
   
-  int mult11[4]={0,0,0,0};
-  int mult22[4]={0,0,0,0};
-  int mult12[4]={0,0,0,0};
-  int mult21[4]={0,0,0,0};
-  //  MultiplicitiesAndOverlapsOfBiallelicVariant* mobv= alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(10,10);//no allele loinger than 10 in this test
+  Covg mult11[4]={0,0,0,0};
+  Covg mult22[4]={0,0,0,0};
+  Covg mult12[4]={0,0,0,0};
+  Covg mult21[4]={0,0,0,0};
+
+  // No allele loinger than 10 in this test
+  //MultiplicitiesAndOverlapsOfBiallelicVariant* mobv
+  //  = alloc_MultiplicitiesAndOverlapsOfBiallelicVariant(10,10);
   //reset_MultiplicitiesAndOverlapsOfBiallelicVariant(mobv);
+
   MultiplicitiesAndOverlapsOfBiallelicVariant mobv;
   mobv.mult11=mult11;
   mobv.mult22=mult22;
@@ -70,6 +74,7 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
   mobv.mult21=mult21;
   mobv.len1=4;
   mobv.len2=4;
+
   improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
     &var, &mobv, true, &element_get_colour_union_of_all_colours,
     &element_get_covg_union_of_all_covgs, working_colour1, working_colour2);
@@ -130,11 +135,11 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
 				  NULL, NULL, 0,
 				  unknown);
 
-  
-  int mult3_11[4]={0,0,0,0};
-  int mult3_22[7]={0,0,0,0,0,0,0};
-  int mult3_12[4]={0,0,0,0};
-  int mult3_21[7]={0,0,0,0,0,0,0};
+
+  Covg mult3_11[4]={0,0,0,0};
+  Covg mult3_22[7]={0,0,0,0,0,0,0};
+  Covg mult3_12[4]={0,0,0,0};
+  Covg mult3_21[7]={0,0,0,0,0,0,0};
   mobv.mult11=mult3_11;
   mobv.mult22=mult3_22;
   mobv.mult12=mult3_12;
@@ -189,10 +194,10 @@ void test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles()
 				  unknown);
 
   
-  int mult4_11[4]={0,0,0,0};
-  int mult4_22[7]={0,0,0,0};
-  int mult4_12[4]={0,0,0,0};
-  int mult4_21[7]={0,0,0,0};
+  Covg mult4_11[4]={0,0,0,0};
+  Covg mult4_22[7]={0,0,0,0};
+  Covg mult4_12[4]={0,0,0,0};
+  Covg mult4_21[7]={0,0,0,0};
   mobv.mult11=mult4_11;
   mobv.mult22=mult4_22;
   mobv.mult12=mult4_12;

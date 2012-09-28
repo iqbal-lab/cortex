@@ -121,6 +121,7 @@ long long calculate_mean(long long* array, long long len)
     }
 }
 
+/*
 void set_int_array_to_zero(int* array, int len)
 {
   int i;
@@ -129,3 +130,4 @@ void set_int_array_to_zero(int* array, int len)
       array[i]=0;
     }
 }
+*/

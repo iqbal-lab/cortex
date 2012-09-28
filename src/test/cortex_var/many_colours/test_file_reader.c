@@ -487,12 +487,13 @@ void test_dump_load_sv_trio_binary()
     char path_string[100];
     int limit=100;
     double avg_covg;
-    int min_covg;
-    int max_covg;
+    Covg min_covg, max_covg;
     boolean is_cycle;
-    int len  = db_graph_supernode_for_specific_person_or_pop(test_element1, limit, &db_node_action_do_nothing,
-      path_nodes, path_orientations, path_labels, path_string,
-      &avg_covg, &min_covg, &max_covg, &is_cycle, db_graph_post, 0);
+
+    int len = db_graph_supernode_for_specific_person_or_pop(
+                test_element1, limit, &db_node_action_do_nothing,
+                path_nodes, path_orientations, path_labels, path_string,
+                &avg_covg, &min_covg, &max_covg, &is_cycle, db_graph_post, 0);
 
     CU_ASSERT(len==4);
     CU_ASSERT(is_cycle==false);
@@ -1077,8 +1078,8 @@ void test_load_individual_binaries_into_sv_trio()
       char seq[max_expected_supernode_length+db_graph->kmer_size+1];
       
       double avg_coverage = 0;
-      int max_coverage = 0;
-      int min_coverage = 0;
+      Covg max_coverage = 0;
+      Covg min_coverage = 0;
       boolean is_cycle = false;
       
       
@@ -1135,8 +1136,8 @@ void test_load_individual_binaries_into_sv_trio()
     char seq[max_expected_supernode_length+db_graph->kmer_size+1];
 
     double avg_coverage = 0;
-    int max_coverage = 0;
-    int min_coverage = 0;
+    Covg max_coverage = 0;
+    Covg min_coverage = 0;
     boolean is_cycle = false;
 
 
@@ -6526,10 +6527,9 @@ void test_load_binversion5_binary()
     Orientation path_orientations[100];
     Nucleotide path_labels[100];
     char path_string[100];
-    int limit=100;
+    int limit = 100;
     double avg_covg;
-    int min_covg;
-    int max_covg;
+    Covg min_covg, max_covg;
     boolean is_cycle;
 
     int len

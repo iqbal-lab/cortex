@@ -112,7 +112,7 @@ VERSION_STR=$(shell if [ `command -v hg` ]; then echo ' (commit' `hg id --num --
 
 # DEV: Add -Wextra
 # DEV: Add -DNDEBUG=1 to turn off assert() calls
-OPT := $(ARCH) -Wall $(MACFLAG) -DVERSION_STR='"$(VERSION_STR)"' \
+OPT := $(ARCH) -Wall -Wextra $(MACFLAG) -DVERSION_STR='"$(VERSION_STR)"' \
        -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) \
        -DNUMBER_OF_COLOURS=$(NUM_COLS)
 

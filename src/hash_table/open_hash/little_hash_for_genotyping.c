@@ -125,7 +125,7 @@ boolean little_hash_table_find_in_bucket(Key key, long long * current_pos, boole
     //element found
 
    
-    if (genotyping_element_is_key(key,little_hash_table->table[*current_pos], little_hash_table->kmer_size))
+    if (genotyping_element_is_key(key,little_hash_table->table[*current_pos]))
       {
 	found = true;
       }
