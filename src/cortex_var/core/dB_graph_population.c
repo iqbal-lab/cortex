@@ -10413,7 +10413,7 @@ long long db_graph_health_check(boolean fix, dBGraph * db_graph){
   void check_node(dBNode * node){
     check_node_with_orientation(node,forward);
     check_node_with_orientation(node,reverse);
-    if (binary_kmer_comparison_operator(zerokmer, *node)==true)
+    if (binary_kmer_comparison_operator(zerokmer, node->kmer)==true)
       {
 	count_num_zero_kmers++;
       }
