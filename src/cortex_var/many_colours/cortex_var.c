@@ -736,7 +736,12 @@ int main(int argc, char **argv)
     unsigned long long num_bases_loaded = 0;
 
     // Get read-len distribution (after filters):
-    unsigned long readlen_distrib_size = cmd_line->max_read_length + 1;
+    int max_expected_read_len = cmd_line->max_read_length;
+    if (max_expected_read_len==0)
+      {
+	max_expected_read_len=20000;
+      }
+    unsigned long readlen_distrib_size = max_expected_read_len + 1;
     unsigned long *readlen_distrib
     = (unsigned long*) malloc(sizeof(unsigned long) * readlen_distrib_size);
 
