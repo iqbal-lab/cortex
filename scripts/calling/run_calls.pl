@@ -113,7 +113,7 @@ my (
 #        $apply_filter_one_allele_must_be_ref,
 	$apply_classif,  $prefix,
 	$ploidy,                #$require_one_allele_is_ref,
-	$stampy_hash_stub,
+	$stampy_hash_stub,     $format,
         $outdir_binaries,      $outdir_calls,   $outdir_vcfs, 
         $qthresh,              $dups,           $homopol,
         $mem_height,           $mem_width, $binary_colourlist,
@@ -131,6 +131,7 @@ $kmer_step=1;
 $do_auto_cleaning="no";
 $auto_below=0;
 $auto_above=0;
+$format="unspecified";
 $do_user_spec_cleaning="no";
 $user_min_clean=0;
 $user_max_clean=0;
@@ -206,6 +207,7 @@ my $help = '';    #default false
     'mem_height:i'         => \$mem_height,
     'mem_width:i'          => \$mem_width,
     'colourlist:s'         => \$binary_colourlist,
+    'format:s'             =>\$format,
 #    'max_read_len:i'       => \$max_read_len,
     'max_var_len:i'        => \$max_var_len,
     'help'                   => \$help,
@@ -256,6 +258,7 @@ if ($help)
 	print "--homopol\t\t\t\tIf you want to cut homopolymers, threshold specified here\n";
 	print "--mem_height\t\t\t\tFor Cortex\n";
 	print "--mem_width\t\t\t\tFor Cortex\n";
+	print "--format\t\t\t\tFormat FASTA or FASTQ. Cortex doesn't use these, but run_calls looks at what you have specified, and sets estimated sequencing error rate to a tiny value if format=FASTQ, to allow \"genotyping\" of reference genomes\n";
 #	print "--max_read_len\t\t\t\tMax read length\n";
 	print "--max_var_len\t\t\t\tSee Cortex manual - max var length to look for. Default value 40000 (bp)\n";
 	print "--genome_size\t\t\t\tGenome length in base pairs - needed for genotyping\n";
