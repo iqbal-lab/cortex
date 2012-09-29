@@ -3,22 +3,26 @@ use strict;
 use Getopt::Long;
 
 my $sample = "";
+my $root  = "/ddn/projects3/mcvean_res/zam/phase2_cortex/dummyrun/samples/";
+my $outdir = $root.$sample.'/';
+my $cortex_dir = "/ddn/projects3/mcvean_res/zam/phase2_cortex/dummyrun/code/CORTEX_release_v1.0.5.8";
+my $kmer= 31;
+
 &GetOptions(
         'sample|s:s'                               => \$sample,
+        'root|r:s'                               => \$root,
 );
 
 
-my $root = "/ddn/projects3/mcvean_res/zam/phase2_cortex/dummyrun/samples/";
+
 if ($sample eq "")
 {
     die("You must use --sample and enter a sample name, which we assume is also a directory name inside $root");
 }
 
-my $outdir = $root.$sample.'/';
-my $cortex_dir = "/ddn/projects3/mcvean_res/zam/phase2_cortex/dummyrun/code/CORTEX_release_v1.0.5.8";
-my $kmer= 31;
 
-## Assumes fastq are downloaded and unzipped, and filelists are made and valid (contain only files that exists on the filelsystem)
+## Assumes fastq are downloaded (they do NOT need to be unzipped any more), 
+##  and filelists are made and valid (contain only files that exists on the filelsystem)
 
 my $se_list = $outdir.$sample."_se";
 my $pe1_list = $outdir.$sample."_pe1";
@@ -55,7 +59,7 @@ if (!(-e $pe2_list))
 my $binname = $outdir.$sample.".uncleaned.q10.k31.ctx";
 my $log     = $binname.".log";
 
-my $cmd = $ctx_binary." --kmer_size $kmer --sample_id $sample --mem_height 25 --mem_width 150 --se_list $se_list --pe_list $pe1_list,$pe2_list --format FASTQ --quality_score_threshold 10 --max_read_len 200 --dump_binary $binname --remove_pcr_duplicates > $log 2>&1";
+my $cmd = $ctx_binary." --kmer_size $kmer --sample_id $sample --mem_height 25 --mem_width 150 --se_list $se_list --pe_list $pe1_list,$pe2_list  --quality_score_threshold 10  --dump_binary $binname --remove_pcr_duplicates > $log 2>&1";
 print "$cmd\n\n";
 my $ret = qx{$cmd};
 print "$ret\n";

@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Getopt::Long;
+use File::Spec;
 
 ## Pass in a list of uncleaned binaries - all the uncleaned per-sample binaries, in one list
 
@@ -19,7 +20,7 @@ my $mem_width = 110;
 #        'kmer|k:i'                               => \$kmer,
 );
 
-my $cortex_dir = "/ddn/projects3/mcvean_res/zam/phase2_cortex/dummyrun/code/CORTEX_release_v1.0.5.8";
+my $cortex_dir = "/ddn/projects3/mcvean_res/zam/phase2_cortex/dummyrun/code/CORTEX_release_v1.0.5.12";
 my $kmer= 31;
 
 check_args($pop, $list_sample_uncleaned_bins,$outdir, $mem_height, $mem_width);
@@ -59,6 +60,13 @@ sub check_args
     if ($l eq "")
     {
 	die("You must specify a list of uncleaned binaries (one per sample), using --list");
+    }
+    else
+    {
+      if (!(File::Spec->file_name_is_absolute($l)))
+      {
+	  die("You must give an absolute path to $l\n");
+      }
     }
     open(L, $l)||die("Cannot open your list of uncleaned binaries, $l");
     while (<L>)

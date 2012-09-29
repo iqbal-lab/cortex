@@ -117,7 +117,7 @@ my (
         $outdir_binaries,      $outdir_calls,   $outdir_vcfs, 
         $qthresh,              $dups,           $homopol,
         $mem_height,           $mem_width, $binary_colourlist,
-        $max_read_len,         $format, $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
+        $max_read_len,         $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
         $expt_type,            $do_union, $manual_override_cleaning,
         $build_per_sample_vcfs, $global_logfile,  $squeeze_mem,
         $workflow
@@ -163,7 +163,6 @@ $mem_height=-1;
 $mem_width=-1;
 $max_read_len=-1;
 $max_var_len = 30000;
-$format="UNPSECIFIED";
 $genome_size=0;
 $refbindir="";
 $list_ref_fasta = "nonexistent_nonsense";
@@ -207,8 +206,7 @@ my $help = '';    #default false
     'mem_height:i'         => \$mem_height,
     'mem_width:i'          => \$mem_width,
     'colourlist:s'         => \$binary_colourlist,
-    'max_read_len:i'       => \$max_read_len,
-    'format:s'             =>\$format,
+#    'max_read_len:i'       => \$max_read_len,
     'max_var_len:i'        => \$max_var_len,
     'help'                   => \$help,
     'genome_size:i'        => \$genome_size,
@@ -258,8 +256,7 @@ if ($help)
 	print "--homopol\t\t\t\tIf you want to cut homopolymers, threshold specified here\n";
 	print "--mem_height\t\t\t\tFor Cortex\n";
 	print "--mem_width\t\t\t\tFor Cortex\n";
-	print "--max_read_len\t\t\t\tMax read length\n";
-	print "--format\t\t\t\tFASTA or FASTQ\n";
+#	print "--max_read_len\t\t\t\tMax read length\n";
 	print "--max_var_len\t\t\t\tSee Cortex manual - max var length to look for. Default value 40000 (bp)\n";
 	print "--genome_size\t\t\t\tGenome length in base pairs - needed for genotyping\n";
 	print "--refbindir\t\t\t\tFULL PATH to Directory containing binaries built of the reference at all the kmers you want to use. Binary names must include k-kmer (eg k31) and end in .ctx\n";
@@ -392,7 +389,7 @@ if ($fastaq_index ne "")
     build_all_unclean_binaries($fastaq_index, $outdir_binaries, 
 			       \%sample_to_uncleaned, \%sample_to_uncleaned_log,
 			       \%sample_to_uncleaned_covg_distrib,
-			       $cortex_dir, $qthresh, $dups, $homopol, $mem_height, $mem_width, $max_read_len, $format);
+			       $cortex_dir, $qthresh, $dups, $homopol, $mem_height, $mem_width);
 }
 
 
@@ -1899,7 +1896,7 @@ sub build_all_unclean_binaries
 {
     my ($index, $odir_bins,  
 	$href_sam_to_uncleaned, $href_sam_to_uncleaned_log, $href_sam_to_covg,
-	$cortex_directory, $qual, $dup, $hom, $hei, $widt, $max_read, $format) = @_;
+	$cortex_directory, $qual, $dup, $hom, $hei, $widt) = @_;
     my %se_lists=();
     my %pe_lists=();
     get_fastq_filelists(\%se_lists, \%pe_lists, $index, $odir_bins);
@@ -1910,7 +1907,7 @@ sub build_all_unclean_binaries
 	    build_unclean($sample, $se_lists{$sample}, $pe_lists{$sample}, $k, 
 			  $outdir_binaries, $href_sam_to_uncleaned, $href_sam_to_uncleaned_log,
 			  $href_sam_to_covg,
-			  $cortex_directory, $qual, $dup, $hom, $hei, $widt, $max_read, $format);
+			  $cortex_directory, $qual, $dup, $hom, $hei, $widt);
 	}
     }
 }
@@ -1919,7 +1916,7 @@ sub build_all_unclean_binaries
 sub build_unclean
 {
     my ($name, $se, $pe, $km, $out, $href, $href_log, $href_covg, $cdir, $q, $dupremoval, $hp,
-	$height, $width, $max_r, $format) = @_;
+	$height, $width) = @_;
 
     if ($out !~ /\/$/)
     {
@@ -1963,7 +1960,7 @@ sub build_unclean
     }
 
     my $cortex_binary = get_right_binary($km, $cdir,1 );##one colour
-    my $cmd = $cortex_binary." --sample_id $name --kmer_size $km --mem_height $height --mem_width $width --dump_binary $ctx --max_read_len $max_r  --format $format --dump_covg_distribution $covg";
+    my $cmd = $cortex_binary." --sample_id $name --kmer_size $km --mem_height $height --mem_width $width --dump_binary $ctx  --dump_covg_distribution $covg";
     if ($se ne "NO")
     {
 	$cmd = $cmd." --se_list $se";
@@ -2165,17 +2162,7 @@ sub run_checks
     {
 	die("If you want automatic cleaning, you need tos pecify --genome_size");
     }
-    if ($fastaq_index ne "")
-    {
-	if ($max_read_len==-1)
-	{
-	    die("You must specify max read length if you are passing in a fasta/q index");
-	}
-	if ( ($format ne "FASTA") && ($format ne "FASTQ") )
-	{
-	    die("You must specify --format (FASTA or FASTQ)  if you are passing an index");
-	}
-    }
+
     if ( ($fastaq_index eq "") && ($binary_colourlist eq "") )
     {
 	die("Either specify a fastq index or a colourlist");
