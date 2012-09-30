@@ -23,17 +23,23 @@
  *
  * **********************************************************************
  */
+/*
+  test_seq_error_estimation.c
+*/
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+
 #include <CUnit.h>
 #include <Basic.h>
-#include <stdlib.h>
-#include <maths.h>
-#include <element.h>
-#include <file_reader.h>
-#include <seq_error_rate_estimation.h>
-#include <test_seq_error_estimation.h>
+
+// cortex_var headers
+#include "maths.h"
+#include "element.h"
+#include "file_reader.h"
+#include "seq_error_rate_estimation.h"
+#include "test_seq_error_estimation.h"
 
 void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta()
 {

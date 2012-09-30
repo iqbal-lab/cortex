@@ -24,22 +24,27 @@
  *
  * **********************************************************************
  */
+/*
+  model_selection.c
+*/
 
-#include <element.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <file_reader.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
 #include <string.h>
-#include <cmd_line.h>
 #include <time.h>
-#include <graph_info.h>
-#include <db_differentiation.h>
 #include <maths.h>
-#include <math.h> //we need both!
+
 #include <gsl_sf_gamma.h>
-#include <db_variants.h>
+
+#include "element.h"
+#include "file_reader.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
+#include "cmd_line.h"
+#include "graph_info.h"
+#include "db_differentiation.h"
+#include "math.h"
+#include "db_variants.h"
 
 
 

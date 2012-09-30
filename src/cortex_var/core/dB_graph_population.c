@@ -24,10 +24,9 @@
  *
  * **********************************************************************
  */
-
 /*
   dB_graph_population.c - implementation
- */
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,16 +37,17 @@
 
 #include <gsl_sf_gamma.h>
 
-#include <element.h>
-#include <open_hash/hash_table.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
-#include <seq.h>
-#include <file_reader.h>
-#include <model_selection.h>
-#include <maths.h>
-#include <db_variants.h>
-#include <db_complex_genotyping.h>
+// cortex_var headers
+#include "element.h"
+#include "open_hash/hash_table.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
+#include "seq.h"
+#include "file_reader.h"
+#include "model_selection.h"
+#include "maths.h"
+#include "db_variants.h"
+#include "db_complex_genotyping.h"
 
 void print_fasta_from_path_for_specific_person_or_pop(
   FILE *fout, char *name, int length, double avg_coverage,
@@ -5925,17 +5925,6 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
   return load_seq_into_array(chrom_fptr, number_of_nodes_to_load, length_of_arrays, path_nodes, path_orientations, path_labels, path_string, seq, kmer_window, expecting_new_fasta_entry, db_graph);
 
   
-}
-
-
-
-int int_cmp(const void *a, const void *b)
-{
-  const int *ia = (const int *)a; // casting pointer types
-  const int *ib = (const int *)b;
-  return *ia  - *ib;
-  /* integer comparison: returns negative if b > a
-     and positive if a > b */
 }
 
 

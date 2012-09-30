@@ -24,21 +24,25 @@
  *
  * **********************************************************************
  */
+/*
+  db_complex_genotyping.c
+*/
 
-#include <math.h>
-#include <db_variants.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
-#include <maths.h>
-#include <gsl_sf_gamma.h>
-#include <db_complex_genotyping.h>
-#include <string.h>
-#include <model_selection.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <global.h>
-#include <file_reader.h>
-#include <genotyping_element.h>
+#include <string.h>
+#include <math.h>
+
+#include <gsl_sf_gamma.h>
+
+#include "db_variants.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
+#include "maths.h"
+#include "db_complex_genotyping.h"
+#include "model_selection.h"
+#include "file_reader.h"
+#include "genotyping_element.h"
 
 /*
 //assumes 3 colour graph, colour 0 is the union of all alleles, colour 1 is the ref-minus site. colour 2 will be which ever allele has just been loaded

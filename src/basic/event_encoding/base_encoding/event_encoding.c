@@ -25,15 +25,15 @@
  * **********************************************************************
  */
 /* 
-   binary_kmer.c - routines to manipulate binary kmers
- */
+  base_encoding/event_encoding.c
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <event_encoding.h>
-#include <global.h>
 #include <string.h>
+
+#include "event_encoding.h"
 
 //returns Undefined if given non AGCT character
 Nucleotide char_to_binary_nucleotide(char c)

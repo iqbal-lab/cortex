@@ -25,11 +25,9 @@
  *
  * **********************************************************************
  */
-
 /*
- * global.h
- *
- */
+  global.h
+*/
 
 #ifndef GLOBAL_H_
 #define GLOBAL_H_
@@ -42,7 +40,8 @@ typedef signed char boolean;
 #define false 0
 #endif
 
-typedef enum{
+typedef enum
+{
   forward = 0,
   reverse = 1
 } Orientation;
@@ -60,6 +59,8 @@ boolean DEBUG;
 
 boolean test_file_existence(char* file);
 
+int int_cmp(const void *a, const void *b);
+
 void set_string_to_null(char* str, int len);
 
 void die(const char* fmt, ...)
@@ -69,6 +70,8 @@ void die(const char* fmt, ...)
 void warn(const char* fmt, ...)
   __attribute__ ((format(printf, 1, 2)));
 
-// 
+// Placeholder for message() -- a function for standard output
+void message(const char* fmt, ...)
+  __attribute__ ((format(printf, 1, 2)));
 
 #endif /* GLOBAL_H_ */

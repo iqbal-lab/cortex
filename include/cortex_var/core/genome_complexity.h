@@ -24,18 +24,22 @@
  *
  * **********************************************************************
  */
+/*
+  genome_complexity.h
+*/
 
 #ifndef GENOME_COMPLEXITY_H
 #define GENOME_COMPLEXITY_H
 
-#include <dB_graph.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <global.h>
-#include <file_reader.h>
-#include <seq.h>
-#include <file_format.h>
+
+#include "global.h"
+#include "dB_graph.h"
+#include "file_reader.h"
+#include "seq.h"
+#include "file_format.h"
 
 
 #define MAX_READLEN_FOR_GEN_COMPLEXITY 10000

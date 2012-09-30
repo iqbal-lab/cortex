@@ -24,10 +24,9 @@
  *
  * **********************************************************************
  */
-
-
 /*
-  used when genotyping. one colour per allele, plus one for reference plus two spare for working
+  genotyping_element.h -  used when genotyping. one colour per allele, plus one
+  for reference plus two spare for working
 */
 
 #ifndef GENOTYPING_ELEMENT_H_
@@ -37,7 +36,7 @@
 #include <inttypes.h>
 
 #include "global.h"
-#include "element.h" //need this for Edges, etc
+#include "element.h" // need this for Edges, etc
 #include "binary_kmer.h"
 
 
@@ -193,8 +192,6 @@ boolean db_genotyping_node_check_status_is_not_exists_in_reference(GenotypingEle
 boolean db_genotyping_node_check_status_is_not_visited_or_visited_and_exists_in_reference(GenotypingElement * node);
 
 boolean db_genotyping_node_condition_always_true(GenotypingElement* node);
-
-
 
 
 

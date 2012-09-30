@@ -25,15 +25,15 @@
  * **********************************************************************
  */
 /*
-
- */
+  open_hash/little_hash_for_genotyping.c
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <open_hash/little_hash_for_genotyping.h>
-#include <hash_value.h>
 #include <assert.h>
 
+#include "open_hash/little_hash_for_genotyping.h"
+#include "hash_value.h"
 
 
 LittleHashTable * little_hash_table_new(int number_bits, int bucket_size, 

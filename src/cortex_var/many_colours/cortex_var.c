@@ -24,26 +24,31 @@
  *
  * **********************************************************************
  */
+/*
+  cortex_var.c - cortex_var executable source file (contains 'main()' function)
+*/
 
-#include <element.h>
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <file_reader.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
 #include <string.h>
-#include <cmd_line.h>
-#include <time.h>
-#include <graph_info.h>
-#include <db_differentiation.h>
-#include <db_complex_genotyping.h>
-#include <model_selection.h>
-#include <experiment.h>
-#include <genome_complexity.h>
 #include <math.h>
-#include <maths.h>
-#include <seq_error_rate_estimation.h>
 #include <inttypes.h>
+
+// cortex_var headers
+#include "element.h"
+#include "file_reader.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
+#include "cmd_line.h"
+#include "graph_info.h"
+#include "db_differentiation.h"
+#include "db_complex_genotyping.h"
+#include "model_selection.h"
+#include "experiment.h"
+#include "genome_complexity.h"
+#include "maths.h"
+#include "seq_error_rate_estimation.h"
 
 void timestamp();
 

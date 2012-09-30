@@ -24,25 +24,23 @@
  *
  * **********************************************************************
  */
-
 /*
- * test_binary_kmer.c
- *
- */
+  test_binary_kmer.c
+*/
 
-// System libraries
+// system libraries
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 
-// Third party libraries
+// third party libraries
 #include <CUnit.h>
 #include <Basic.h>
 
-// Our headers
-#include <binary_kmer.h>
-#include <test_binary_kmer.h>
+// cortex_var headers
+#include "binary_kmer.h"
+#include "test_binary_kmer.h"
 
 
 void test_that_bitfield_really_is_64bits()

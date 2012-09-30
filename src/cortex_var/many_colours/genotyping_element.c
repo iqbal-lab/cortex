@@ -24,14 +24,16 @@
  *
  * **********************************************************************
  */
-
+/*
+  genotyping_element.c - copy of element.c with modifications
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
 
-#include "global.h"
+// cortex_var headers
 #include "genotyping_element.h"
 
 // Only print covg overflow warning once

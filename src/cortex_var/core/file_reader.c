@@ -25,10 +25,10 @@
  * **********************************************************************
  */
 /*
-  routines to load files into dB Graph 
- */
+  file_reader.c - routines to load files into dB Graph 
+*/
 
-// System libraries
+// system libraries
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -38,18 +38,17 @@
 #include <errno.h>
 #include <ctype.h> // tolower
 
-// Third party libraries
+// third party libraries
 #include <seq_file.h>
 #include <string_buffer.h>
 
-// Our headers
-#include <binary_kmer.h>
-#include <dB_graph.h>
-#include <seq.h>
-#include <file_reader.h>
-#include <global.h>
-#include <dB_graph_supernode.h>
-#include <dB_graph_population.h>
+// cortex_var headers
+#include "binary_kmer.h"
+#include "dB_graph.h"
+#include "seq.h"
+#include "file_reader.h"
+#include "dB_graph_supernode.h"
+#include "dB_graph_population.h"
 
 #define is_base_char(x) ((x) == 'a' || (x) == 'A' || \
                          (x) == 'c' || (x) == 'C' || \
@@ -1123,9 +1122,10 @@ void initialise_binary_header_info(BinaryHeaderInfo* binfo, GraphInfo* ginfo)
 // this is called repeatedly in a loop.  read_len_count_array is used to collect
 // statistics on the length of reads, and needs to allow for the fact that we
 // CUT reads at N's, low quality bases
-void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
-											      boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
-											      dBGraph* db_graph, int index, long long** read_len_count_array)
+void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(
+  KmerSlidingWindowSet * windows, boolean* prev_full_ent, boolean* full_ent,
+  long long* bases_loaded, boolean mark_read_starts, dBGraph* db_graph,
+  int index, long long** read_len_count_array)
 {
   long long total_bases_loaded=0;
 

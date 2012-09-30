@@ -25,7 +25,7 @@
  * **********************************************************************
  */
 /*
-  element.h defines the interface for the de Bruijn graph node. The
+  element.c - defines the interface for the de Bruijn graph node. The
   implementation is complemented by a hash table that stores every node indexed
   by kmers (BinaryKmers). 
 
@@ -35,16 +35,15 @@
   The de Bruijn based routines are prefixed with db_node_
 */
 
-#include <element.h>
 #include <stdlib.h>
-#include <global.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdint.h>
 #include <assert.h>
 #include <limits.h>
+#include <string.h>
 
-#include "global.h"
+// cortex_var headers
+#include "element.h"
 
 const Covg COVG_MAX = UINT_MAX;
 //const Covg COVG_MAX = INT_MAX;

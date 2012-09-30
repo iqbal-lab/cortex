@@ -24,19 +24,21 @@
  *
  * **********************************************************************
  */
-
-
+/*
+  db_complex_genotyping.h
+*/
 
 #ifndef DB_COMPLEX_GENOTYPING_H_
 #define DB_COMPLEX_GENOTYPING_H_
 
-#include <element.h>
-#include <genotyping_element.h>
-#include <db_variants.h>
-#include <graph_info.h>
-#include <model_selection.h>
-#include <open_hash/little_hash_for_genotyping.h>
-#include <genotyping_element.h>
+#include "global.h"
+#include "element.h"
+#include "genotyping_element.h"
+#include "db_variants.h"
+#include "graph_info.h"
+#include "model_selection.h"
+#include "open_hash/little_hash_for_genotyping.h"
+#include "genotyping_element.h"
 
 extern int MIN_LLK;
 
@@ -219,4 +221,4 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar,
                                     LittleHashTable* little_db_graph,
                                     boolean do_genotyping);
 
-#endif
+#endif /* DB_COMPLEX_GENOTYPING_H_ */

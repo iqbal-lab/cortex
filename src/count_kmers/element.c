@@ -25,11 +25,13 @@
  * **********************************************************************
  */
 /*
- * element.c
- */
+ element.c -- possibly redundant now
+*/
 
-#include <element.h>
 #include <stdlib.h>
+
+// cortex_var headers
+#include "element.h"
 
 boolean element_is_key(Key key, Element e, short kmer_size){
 

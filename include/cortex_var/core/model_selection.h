@@ -24,18 +24,18 @@
  *
  * **********************************************************************
  */
-
-
-// model_selection.h
-
+/*
+  model_selection.h
+*/
 
 #ifndef MODEL_SELECTION_H_
 #define MODEL_SELECTION_H_
 
-#include <model_info.h>
-#include <graph_info.h>
-#include <db_variants.h>
-#include <experiment.h>
+#include "global.h"
+#include "model_info.h"
+#include "graph_info.h"
+#include "db_variants.h"
+#include "experiment.h"
 
 
 #define MAX_EXPECTED_REPEAT_COPIES 10

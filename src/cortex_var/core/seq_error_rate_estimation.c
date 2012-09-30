@@ -34,13 +34,14 @@
 #include <math.h>
 #include <time.h>
 
-#include <element.h>
-#include <file_reader.h>
-#include <cmd_line.h>
-#include <graph_info.h>
-#include <db_differentiation.h>
-#include <maths.h>
-#include <seq_error_rate_estimation.h>
+// cortex_var headers
+#include "element.h"
+#include "file_reader.h"
+#include "cmd_line.h"
+#include "graph_info.h"
+#include "db_differentiation.h"
+#include "maths.h"
+#include "seq_error_rate_estimation.h"
 
 void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alleles, 
                                                        GraphInfo* db_graph_info, 

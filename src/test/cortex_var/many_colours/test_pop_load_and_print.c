@@ -24,14 +24,20 @@
  *
  * **********************************************************************
  */
+/*
+  test_pop_load_and_print.c
+*/
+
+#include <stdlib.h>
 
 #include <CUnit.h>
 #include <Basic.h>
-#include <file_reader.h>
-#include <dB_graph_population.h>
-#include <element.h>
-#include <open_hash/hash_table.h>
-#include <stdlib.h>
+
+// cortex_var headers
+#include "file_reader.h"
+#include "dB_graph_population.h"
+#include "element.h"
+#include "open_hash/hash_table.h"
 #include "supernode_cmp.h"
 
 void test_load_two_people_in_same_populations_and_print_separately_their_supernodes()

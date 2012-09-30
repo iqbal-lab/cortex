@@ -24,12 +24,16 @@
  *
  * **********************************************************************
  */
+/*
+  model_info.h
+*/
 
-#ifndef MODEL_INFO
-#define MODEL_INFO
+#ifndef MODEL_INFO_H_
+#define MODEL_INFO_H_
 
-#include <graph_info.h>
-#include <experiment.h>
+#include "global.h"
+#include "graph_info.h"
+#include "experiment.h"
 
 typedef struct{
   GraphInfo* ginfo;
@@ -45,4 +49,4 @@ typedef struct{
 void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo, long long genome_len, double mu, //double seq_err_rate_per_base, 
 			   int ref_colour, int num_chroms, ExperimentType expt_type, AssumptionsOnGraphCleaning assump);
 
-#endif
+#endif /* MODEL_INFO_H_ */

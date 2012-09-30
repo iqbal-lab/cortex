@@ -24,14 +24,22 @@
  *
  * **********************************************************************
  */
+/*
+  db_variants.c
+*/
 
-#include <math.h>
-#include <db_variants.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
-#include <maths.h>
+// system libraries
 #include <stdlib.h>
+#include <math.h>
+
+// third party includes
 #include <gsl_sf_gamma.h>
+
+// cortex_var headers
+#include "db_variants.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
+#include "maths.h"
 
 char variant_overflow_warning_printed = 0;
 

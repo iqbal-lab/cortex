@@ -24,12 +24,18 @@
  *
  * **********************************************************************
  */
-#include <seq.h>
-#include <binary_kmer.h>
-#include <open_hash/hash_table.h>
+/*
+  count_kmers.c - not sure if this file is still used -- doesn't appear to compile
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+
+// cortex_var headers
+#include "seq.h"
+#include "binary_kmer.h"
+#include "open_hash/hash_table.h"
 
 int main(int argc, char **argv){
   Sequence * seq;

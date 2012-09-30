@@ -24,9 +24,14 @@
  *
  * **********************************************************************
  */
+/*
+  chain_hash/priority_queue.c
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <priority_queue.h>
+
+#include "priority_queue.h"
 
 PQueue * pqueue_new(){ 
   

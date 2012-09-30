@@ -24,7 +24,6 @@
  *
  * **********************************************************************
  */
-
 /*
   dB_graph_population.h
 
@@ -33,18 +32,19 @@
 
 */
 
-#ifndef DB_GRAPH__POPULATION_H_
+#ifndef DB_GRAPH_POPULATION_H_
 #define DB_GRAPH_POPULATION_H_
 
-#include <element.h>
-#include <open_hash/hash_table.h>
-#include <seq.h>
-#include <dB_graph.h>
-#include <dB_graph_supernode.h>
-#include <db_variants.h>
-#include <graph_info.h>
-#include <model_selection.h>
-#include <db_complex_genotyping.h>
+#include "global.h"
+#include "element.h"
+#include "open_hash/hash_table.h"
+#include "seq.h"
+#include "dB_graph.h"
+#include "dB_graph_supernode.h"
+#include "db_variants.h"
+#include "graph_info.h"
+#include "model_selection.h"
+#include "db_complex_genotyping.h"
 
 
 typedef struct {
@@ -527,8 +527,6 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
 						   boolean expecting_new_fasta_entry, boolean last_time_was_not_start_of_entry, 
 						   dBGraph* db_graph ) ;
 
-//need to export this?
-int int_cmp(const void *a, const void *b);
 int db_node_addr_cmp(const void *a, const void *b);
 
 void get_coverage_from_array_of_nodes(
@@ -704,4 +702,4 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
 void call_bubbles_distinguishing_cox_pgf(dBGraph* db_graph, int max_length,
                                          FILE* fout, GraphAndModelInfo* model_info);
 
-#endif
+#endif /* DB_GRAPH_POPULATION_H_ */

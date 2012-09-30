@@ -24,21 +24,25 @@
  *
  * **********************************************************************
  */
+/*
+  genome_complexity.c
+*/
 
-#include <db_complex_genotyping.h>
-#include <fnmatch.h>
-#include <genome_complexity.h>
-#include <db_variants.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <global.h>
-#include <file_reader.h>
-#include <maths.h>
+#include <fnmatch.h>
 #include <limits.h>
+
+// cortex_var headers
+#include "db_complex_genotyping.h"
+#include "genome_complexity.h"
+#include "db_variants.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
+#include "file_reader.h"
+#include "maths.h"
 
 
 boolean acgt(char c){

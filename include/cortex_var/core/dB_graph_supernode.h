@@ -24,8 +24,6 @@
  *
  * **********************************************************************
  */
-
-
 /*
   dB_graph_supernode.h defines the interface for dealing with supernodes
 */
@@ -33,7 +31,8 @@
 #ifndef DB_GRAPH_SUPERNODE_H_
 #define DB_GRAPH_SUPERNODE_H_
 
-#include <element.h>
+#include "global.h"
+#include "element.h"
 
 
 // 1.  dBSupernode "inherits" the same orientation as its nodes. Given the hashtable, each node has

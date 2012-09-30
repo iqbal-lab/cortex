@@ -24,10 +24,15 @@
  *
  * **********************************************************************
  */
+/*
+  maths.c - cortex_var mathematical functions
+*/
 
-#include <math.h>
-#include <maths.h>
 #include <stdlib.h>
+#include <math.h>
+
+// cortex_var headers
+#include "maths.h"
 
 
 // log(n!)= sum from i=1 to n, of  (log(i))                                                                                                                                                                          

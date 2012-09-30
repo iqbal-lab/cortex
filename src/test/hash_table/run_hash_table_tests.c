@@ -24,10 +24,15 @@
  *
  * **********************************************************************
  */
+/*
+  run_hash_table_tests.c
+*/
 
 #include <CUnit.h>
 #include <Basic.h>
-#include <test_hash.h>
+
+// cortex_var headers
+#include "test_hash.h"
 
 int  main()
 {

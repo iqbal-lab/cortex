@@ -23,6 +23,14 @@
  *
  * **********************************************************************
  */
+/*
+  test_pop_element.h
+*/
+
+#ifndef TEST_POP_ELEMENT_H_
+#define TEST_POP_ELEMENT_H_
+
+#include "global.h"
 
 void test_get_edge_copy();
 void test_mark_chromosome_overlap();
@@ -32,3 +40,5 @@ void test_increment_coverage();
 void test_get_coverage();
 void test_element_status_set_and_checks();
 void test_element_assign();
+
+#endif /* TEST_POP_ELEMENT_H_ */

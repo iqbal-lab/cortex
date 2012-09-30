@@ -24,14 +24,20 @@
  *
  * **********************************************************************
  */
-
-#include <CUnit.h>
-#include <Basic.h>
-#include <count_kmers.h>
-#include "test_count_kmers.h"
+/*
+  test_count_kmers.c
+*/
 
 #include <stdio.h>
 #include <assert.h>
+
+#include <CUnit.h>
+#include <Basic.h>
+
+// cortex_var headers
+#include "count_kmers.h"
+#include "test_count_kmers.h"
+
 
 void test_count_kmers()
 {

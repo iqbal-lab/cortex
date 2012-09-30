@@ -24,7 +24,14 @@
  *
  * **********************************************************************
  */
+/*
+  run_sv_trio_tests.c
+*/
 
+#include <CUnit.h>
+#include <Basic.h>
+
+// cortex_var headers
 //#include "test_dB_graph.h"
 #include "test_dB_graph_node.h"
 #include "test_dB_graph_population.h"
@@ -34,12 +41,10 @@
 #include "test_db_genotyping.h"
 #include "test_db_variants.h"
 #include "test_model_selection.h"
-#include <test_file_reader.h>
-#include <test_db_complex_genotyping.h>
-#include <test_genome_complexity.h>
-#include <test_seq_error_estimation.h>
-#include <CUnit.h>
-#include <Basic.h>
+#include "test_file_reader.h"
+#include "test_db_complex_genotyping.h"
+#include "test_genome_complexity.h"
+#include "test_seq_error_estimation.h"
 
 int  main()
 {

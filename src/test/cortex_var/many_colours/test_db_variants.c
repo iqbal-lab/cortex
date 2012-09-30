@@ -24,6 +24,9 @@
  *
  * **********************************************************************
  */
+/*
+  test_db_variants.c
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +35,7 @@
 
 #include <CUnit.h>
 
+// cortex_var headers
 #include "element.h"
 #include "file_reader.h"
 #include "dB_graph.h"

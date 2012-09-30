@@ -25,15 +25,15 @@
  * **********************************************************************
  */
 /*
-  hash_table.c -- implementation
- */
+  open_hash/hash_table.c -- implementation
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <open_hash/hash_table.h>
-#include <hash_value.h>
 #include <assert.h>
 
+#include "open_hash/hash_table.h"
+#include "hash_value.h"
 
 
 HashTable * hash_table_new(int number_bits, int bucket_size, int max_rehash_tries, short kmer_size){ 

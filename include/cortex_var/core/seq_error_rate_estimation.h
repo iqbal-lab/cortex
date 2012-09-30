@@ -24,15 +24,23 @@
  *
  * **********************************************************************
  */
+/*
+  seq_error_rate_estimation.h
+*/
 
-#include <element.h>
+#ifndef SEQ_ERR_RATE_H_
+#define SEQ_ERR_RATE_H_
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <file_reader.h>
-#include <graph_info.h>
-#include <db_variants.h>
 #include <math.h>
-#include <maths.h>
+
+#include "global.h"
+#include "element.h"
+#include "file_reader.h"
+#include "graph_info.h"
+#include "db_variants.h"
+#include "maths.h"
 
 
 
@@ -58,3 +66,5 @@ long double estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(char* f
 									 int (*file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
 									 dBNode** array_nodes, Orientation* array_or, //int* num_snps_tested,
 									 int max_read_length, long double default_seq_err, FILE* fout);
+
+#endif /* SEQ_ERR_RATE_H_ */

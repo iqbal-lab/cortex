@@ -33,11 +33,12 @@
 #include <CUnit.h>
 #include <Basic.h>
 
-#include <file_reader.h>
-#include <dB_graph_population.h>
-#include <dB_graph_supernode.h>
-#include <element.h>
-#include <open_hash/hash_table.h>
+// cortex_var headers
+#include "file_reader.h"
+#include "dB_graph_population.h"
+#include "dB_graph_supernode.h"
+#include "element.h"
+#include "open_hash/hash_table.h"
 #include "supernode_cmp.h"
 
 

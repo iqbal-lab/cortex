@@ -25,8 +25,13 @@
  *
  * **********************************************************************
  */
+/*
+  cortex_var.h
+*/
 
-#ifndef GRAPH_H_
-#define GRAPH_H_
+#ifndef CORTEX_VAR_H_
+#define CORTEX_VAR_H_
 
-#endif /* GRAPH_H_ */
+#include "global.h"
+
+#endif /* CORTEX_VAR_H_ */

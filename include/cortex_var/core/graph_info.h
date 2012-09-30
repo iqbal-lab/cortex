@@ -24,6 +24,9 @@
  *
  * **********************************************************************
  */
+/*
+  graph_info.h
+*/
 
 #ifndef GRAPH_INFO_H_
 #define GRAPH_INFO_H_
@@ -104,4 +107,4 @@ int get_mean_readlen_across_colours(GraphInfo* ginfo);
 void read_estimated_seq_errors_from_file(GraphInfo* ginfo, FILE* fp);
 void print_seq_err_rates_to_screen(GraphInfo* ginfo);
 
-#endif
+#endif /* GRAPH_INFO_H_ */

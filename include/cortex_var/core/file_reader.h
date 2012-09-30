@@ -24,6 +24,9 @@
  *
  * **********************************************************************
  */
+/*
+  file_reader.h
+*/
 
 #ifndef FILE_READER_H_
 #define FILE_READER_H_
@@ -32,11 +35,12 @@
 
 #include <string_buffer.h>
 
-#include <seq.h>
-#include <dB_graph.h>
-#include <file_format.h>
-#include <graph_info.h>
-#include <db_variants.h>
+#include "global.h"
+#include "seq.h"
+#include "dB_graph.h"
+#include "file_format.h"
+#include "graph_info.h"
+#include "db_variants.h"
 
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;

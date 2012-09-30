@@ -24,13 +24,16 @@
  *
  * **********************************************************************
  */
-
-#include <element.h>
-#include <dB_graph.h>
-
+/*
+  maths.h
+*/
 
 #ifndef MATHS_H_
 #define MATHS_H_
+
+#include "global.h"
+#include "element.h"
+#include "dB_graph.h"
 
 float log_factorial(int number);
 float log_factorial_ll(long long number);
@@ -41,4 +44,4 @@ long long calculate_mean(long long* array, long long len);
 
 //void set_int_array_to_zero(int* array, int len);
 
-#endif
+#endif /* MATHS_H_ */

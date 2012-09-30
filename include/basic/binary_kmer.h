@@ -24,7 +24,6 @@
  *
  * **********************************************************************
  */
-
 /*
   binary_kmer.h - basic manipulation of binary kmers
 */
@@ -34,8 +33,8 @@
 
 #include <inttypes.h>
 
-#include <global.h>
-#include <event_encoding.h>
+#include "global.h"
+#include "event_encoding.h"
 
 #define BINVERSION 6
 

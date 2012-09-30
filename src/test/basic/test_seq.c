@@ -24,19 +24,20 @@
  *
  * **********************************************************************
  */
-
 /*
- * test_seq.c
- *
- */
+  test_seq.c
+*/
 
-#include <CUnit.h>
-#include <Basic.h>
-#include <seq.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <test_seq.h>
+
+#include <CUnit.h>
+#include <Basic.h>
+
+// cortex_var headers
+#include "seq.h"
+#include "test_seq.h"
 
 
 //test reading several short entries from a fasta file

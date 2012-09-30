@@ -25,7 +25,7 @@
  * **********************************************************************
  */
 /*
-  element.h defines the interface for the de Bruijn graph node. The
+  element.h  - defines the interface for the de Bruijn graph node. The
   implementation is complemented by a hash table that stores every node indexed
   by kmers (BinaryKmers). 
 

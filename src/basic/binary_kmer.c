@@ -24,17 +24,17 @@
  *
  * **********************************************************************
  */
-
 /* 
    binary_kmer.c - routines to 
- */
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <binary_kmer.h>
-#include <event_encoding.h>
-#include <global.h>
 #include <string.h>
+
+#include "binary_kmer.h"
+#include "event_encoding.h"
 
 void binary_kmer_initialise_to_zero(BinaryKmer* bkmer)
 {

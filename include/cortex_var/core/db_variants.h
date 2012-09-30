@@ -24,19 +24,21 @@
  *
  * **********************************************************************
  */
-
-
+/*
+  db_variants.h
+*/
 
 #ifndef DB_VARIANTS_H_
 #define DB_VARIANTS_H_
 
-#include <graph_info.h>
-#include <model_info.h>
-#include <genotyping_element.h>
-#include <element.h>
-#include <experiment.h>
-#include <dB_graph.h>
-#include <experiment.h>
+#include "global.h"
+#include "graph_info.h"
+#include "model_info.h"
+#include "genotyping_element.h"
+#include "element.h"
+#include "experiment.h"
+#include "dB_graph.h"
+#include "experiment.h"
 
 #define MAX_VARNAME_LEN 200
 
@@ -249,4 +251,4 @@ Covg count_reads_on_allele_in_specific_func_of_colours(
   Covg (*sum_of_covgs_in_desired_colours)(const Element *),
   boolean* too_short);
 
-#endif
+#endif /* DB_VARIANTS_H_ */

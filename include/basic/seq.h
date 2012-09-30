@@ -24,12 +24,16 @@
  *
  * **********************************************************************
  */
+/*
+  seq.h
+*/
 
 #ifndef STDSEQ_H_
 #define STDSEQ_H_
 
 #include <stdio.h>
-#include <global.h>
+
+#include "global.h"
 
 typedef struct
 {
@@ -54,4 +58,5 @@ void free_sequence(Sequence ** );
 
 void shift_last_kmer_to_start_of_sequence(Sequence * sequence, int length, short kmer_size);
 boolean good_base(char c);
+
 #endif /* STDSEQ_H_ */

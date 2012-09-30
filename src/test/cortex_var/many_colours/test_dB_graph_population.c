@@ -24,25 +24,27 @@
  *
  * **********************************************************************
  */
+/*
+  test_dB_graph_population.c
+*/
  
-// System libraries
+// system libraries
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <limits.h>
 
-// Third party libraries
+// third party libraries
 #include <CUnit.h>
-
-// Our headers
 #include <Basic.h>
-#include <dB_graph.h>
-#include <element.h>
-#include <binary_kmer.h>
-#include <file_reader.h>
+
+// cortex_var headers
+#include "dB_graph.h"
+#include "element.h"
+#include "binary_kmer.h"
+#include "file_reader.h"
 #include "test_dB_graph_population.h"
 #include "dB_graph_population.h"
-#include <global.h>
 
 // there are "pure" hash table tests which know nothing of the graph. This on the other hand
 // is a sanity check one level up from those
