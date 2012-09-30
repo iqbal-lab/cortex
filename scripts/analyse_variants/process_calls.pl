@@ -598,7 +598,7 @@ else # sort and PV tag and remove ref mismatches
     my $tmp1 = $simple_vcf_name.".corrected_ref_mismatch";
     print "Switch ref/alt bases in raw vcf on those sites where we know we have placed them back to front:\n";
 
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl --filter_mismatches MISMAPPED_UNPLACEABLE $simple_vcf_name $ref_fasta > $tmp1";
+    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl --keep_phased --filter_mismatches MISMAPPED_UNPLACEABLE $simple_vcf_name $ref_fasta > $tmp1";
     print "$cmd1\n";
     my $ret1 = qx{$cmd1};
     print "$ret1\n";
@@ -614,7 +614,7 @@ else # sort and PV tag and remove ref mismatches
     my $tmp3 = $decomp_vcf_name.".corrected_ref_mismatch";
     print "Switch ref/alt bases in decomp vcf on those sites where we know we have placed them back to front:\n";
 
-    my $cmd3 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl --filter_mismatches MISMAPPED_UNPLACEABLE $decomp_vcf_name $ref_fasta > $tmp3 ";
+    my $cmd3 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl --keep_phased --filter_mismatches MISMAPPED_UNPLACEABLE $decomp_vcf_name $ref_fasta > $tmp3 ";
     print "$cmd3\n";
     my $ret3 = qx{$cmd3};
     print "$ret3\n";

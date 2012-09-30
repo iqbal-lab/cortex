@@ -2,8 +2,7 @@
 use strict;
 use File::Basename;
 use Getopt::Long;
-
-
+use Cwd 'abs_path';
 ###******** Description of run_calls.pl ##################################################################
 # This script allows the user to specify a number of kmer values and cleaning thresholds, and then
 # will build graphs, clean them, call with both the bubble caller and PD caller, make union callsets
@@ -339,9 +338,20 @@ if (!(-e $classifier))
     die("Cannot find classifier $classifier in the place I expect to find it: $analyse_variants_dir");
 }
 
-$outdir_binaries=$current_dir.$outdir."binaries/";
-$outdir_calls=$current_dir.$outdir."calls/";
-$outdir_vcfs=$current_dir.$outdir."vcfs/";
+$refbindir=abs_path($refbindir);
+if ($refbindir !~ /\/$/)
+{
+    $refbindir = $refbindir.'/';
+}
+$outdir = abs_path($outdir);
+if ($outdir !~ /\/$/)
+{
+    $outdir = $outdir.'/';
+}
+$outdir_binaries=$outdir."binaries/";
+$outdir_calls   =$outdir."calls/";
+$outdir_vcfs    =$outdir."vcfs/";
+
 my $tmpdir_working_vcfs = $outdir_vcfs."tmp_working/";
 my @new_dirs=($outdir_binaries, $outdir_calls, $outdir_vcfs, $tmpdir_working_vcfs);
 make_sure_dirs_exist_and_create_if_necessary(\@new_dirs); 
@@ -1404,9 +1414,9 @@ sub build_vcfs
 	$directory = $directory.'/';
     }
     my $w = "wc -l $file";
-    print "$w\n";
+    #print "$w\n";
     my $rw = qx{$w};
-    print "$rw\n";
+    #print "$rw\n";
 
     if ($rw =~ /^0\s+$file/)
     {
@@ -2221,7 +2231,7 @@ sub run_checks
 		if (($f =~ /k$z/) && ($f =~ /.ctx/))
 		{
 		    $found=1;
-		    $k_to_refbin{$z}=$current_dir.$refbindir.$f;
+		    $k_to_refbin{$z}=$refbindir.$f;
 		}
 	    }
 	    if ($found==0)
