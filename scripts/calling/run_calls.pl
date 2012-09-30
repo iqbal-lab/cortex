@@ -61,7 +61,10 @@ use RunCallsLib;
 
 
 my $current_dir = get_current_dir();
-
+if ($current_dir !~ /\/$/)
+{
+    $current_dir=$current_dir.'/';
+}
 
 
 
@@ -336,9 +339,9 @@ if (!(-e $classifier))
     die("Cannot find classifier $classifier in the place I expect to find it: $analyse_variants_dir");
 }
 
-$outdir_binaries=$outdir."binaries/";
-$outdir_calls=$outdir."calls/";
-$outdir_vcfs=$outdir."vcfs/";
+$outdir_binaries=$current_dir.$outdir."binaries/";
+$outdir_calls=$current_dir.$outdir."calls/";
+$outdir_vcfs=$current_dir.$outdir."vcfs/";
 my $tmpdir_working_vcfs = $outdir_vcfs."tmp_working/";
 my @new_dirs=($outdir_binaries, $outdir_calls, $outdir_vcfs, $tmpdir_working_vcfs);
 make_sure_dirs_exist_and_create_if_necessary(\@new_dirs); 
@@ -570,7 +573,11 @@ if  ($workflow eq "independent" )
 	    foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}{$k}})
 	    {
 		my $uniqid = "sample_".$sam."_kmer".$k."_cleaning".$cleaning;
-		my $colour_list = make_2sample_filelist($ref_name.".".$uniqid, $sam.".".$uniqid, $k_to_refbin{$k}, $sample_to_cleaned_bin{$sam}{$k}{$cleaning}, $uniqid );
+		my $colour_list = make_2sample_filelist($ref_name.".".$uniqid, 
+							$sam.".".$uniqid, 
+							$k_to_refbin{$k}, 
+							$sample_to_cleaned_bin{$sam}{$k}{$cleaning}, 
+							$uniqid );
 		## load reference binary and make calls. 
 		my $cmd = $ctx_bin." --kmer_size $k --mem_height $mem_height --mem_width $mem_width --ref_colour 0 --colour_list $colour_list  --print_colour_coverages";
 		print "Load reference $k_to_refbin{$k} in colour 0, and sample ";
@@ -1175,7 +1182,7 @@ sub get_colourlist_for_joint
 	print OUT "$f\n";#colourlist and sample filelist in
 	$f = $tmpdir.$f;
 	open(F, ">".$f)||die("Cannot open $f");
-	print F $current_dir; 
+	#print F $current_dir; 
        	if ($sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level] !=0)
 	{
 	    print F $sample_to_cleaned_bin{$sample}{$kmer}{$sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level]};
@@ -2214,7 +2221,7 @@ sub run_checks
 		if (($f =~ /k$z/) && ($f =~ /.ctx/))
 		{
 		    $found=1;
-		    $k_to_refbin{$z}=$refbindir.$f;
+		    $k_to_refbin{$z}=$current_dir.$refbindir.$f;
 		}
 	    }
 	    if ($found==0)

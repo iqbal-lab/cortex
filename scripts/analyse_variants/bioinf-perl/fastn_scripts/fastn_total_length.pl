@@ -33,36 +33,32 @@ my $max_read_length = 0;
 my $total_read_length = 0;
 my $num_of_reads = 0;
 
-if(@ARGV == 0)
+my @files = @ARGV;
+
+if(@files == 0)
 {
-  my $fastn_handle = open_stdin();
+  push(@files, '-');
+}
+
+for my $file (@files)
+{
+  my $fastn_handle;
+  my $descriptor;
+
+  if($file eq "-")
+  {
+    $fastn_handle = open_stdin("Cannot read file -- need to pipe in fasta/fastq");
+    $descriptor = "stdin";
+  }
+  else
+  {
+    open($fastn_handle, $file) or die("Cannot open FASTA/Q file '$file'");
+    $descriptor = $file;
+  }
   
-  get_max_read_in_fastn($fastn_handle, "stdin");
+  get_max_read_in_fastn($fastn_handle, $descriptor);
   
   close($fastn_handle);
-}
-else
-{
-  for my $file (@ARGV)
-  {
-    my $fastn_handle;
-    my $descriptor;
-  
-    if($file eq "-")
-    {
-      $fastn_handle = open_stdin();
-      $descriptor = "stdin";
-    }
-    else
-    {
-      open($fastn_handle, $file) or die("Cannot open FASTA/Q file '$file'");
-      $descriptor = $file;
-    }
-    
-    get_max_read_in_fastn($fastn_handle, $descriptor);
-    
-    close($fastn_handle);
-  }
 }
 
 my $mean_read_length = $total_read_length / $num_of_reads;
@@ -72,21 +68,6 @@ print "Longest read (bp): ".num2str($max_read_length)."\n";
 print "Number of reads:   ".num2str($num_of_reads)."\n";
 print "Mean length (bp):  ".num2str(sprintf("%.2f", $mean_read_length))."\n";
 
-sub open_stdin
-{
-  my $stdin_handle;
-
-  if(-p STDIN) {
-    # STDIN is connected to a pipe
-    open($stdin_handle, "<&=STDIN") or die("Cannot read pipe");
-  }
-  else
-  {
-    print_usage("Must specify or pipe in a FASTA/Q file");
-  }
-  
-  return $stdin_handle;
-}
 
 sub get_max_read_in_fastn
 {

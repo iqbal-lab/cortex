@@ -25,6 +25,7 @@ sub print_usage
   them and correct the genotypes.
   
   --remove_mismatches       Remove mismatches that cannot be fixed
+  --keep_phased             If a variant is phased when switched, maintain phasing
   --flag_mismatches <tag>   Add an INFO flag to variants that don't match REF
   --filter_mismatches <tag> Add a FILTER flag to variants that don't match REF
   --flag_swapped <tag>      Add an INFO flag to variants that were swapped
@@ -47,6 +48,7 @@ if(@ARGV < 2)
 }
 
 my $remove_ref_mismatch = 0;
+my $keep_phased = 0;
 my ($flag_mismatches, $flag_swapped);
 my ($filter_mismatches, $filter_swapped);
 
@@ -56,6 +58,11 @@ while(@ARGV > 0)
   {
     shift;
     $remove_ref_mismatch = 1;
+  }
+  elsif($ARGV[0] =~ /^-?-keep_phased?$/i)
+  {
+    shift;
+    $keep_phased = 1;
   }
   elsif($ARGV[0] =~ /^-?-flag_mismatches$/i)
   {
@@ -250,16 +257,26 @@ while(defined($vcf_entry = $vcf->read_entry()))
         {
           if(defined($vcf_entry->{$sample}->{'GT'}))
           {
-            if($vcf_entry->{$sample}->{'GT'} =~ /^([01])([\/\|])([01])$/)
+            if($vcf_entry->{$sample}->{'GT'} =~ /^([.01])([\/\|])([.01])$/)
             {
               my ($gt1,$gt_sep,$gt2) = ($1,$2,$3);
-              $gt1 = $gt1 == 0 ? 1 : 0;
-              $gt2 = $gt2 == 0 ? 1 : 0;
-              $vcf_entry->{$sample}->{'GT'} = $gt1.$gt_sep.$gt2;
+
+              # Switch genotype [01] => [10], . => .
+              my %switch_gt = ('1' => '0', '0' => '1', '.' => '.');
+
+              if(!$keep_phased)
+              {
+                # Change separator to / (i.e. not genotyped anymore)
+                $gt_sep = '/';
+              }
+
+              $vcf_entry->{$sample}->{'GT'}
+                = $switch_gt{"$gt1"}.$gt_sep.$switch_gt{"$gt2"};
             }
             else
             {
-              die("Invalid GT format [var:$vcf_entry->{'ID'}; sample:$sample]");
+              die("Invalid GT format '".$vcf_entry->{$sample}->{'GT'}."' " .
+                  "[var:$vcf_entry->{'ID'}; sample:$sample]");
             }
           }
 

@@ -3,9 +3,10 @@
 use strict;
 use warnings;
 
-use UsefulModule;
-
 use List::Util qw(max);
+
+# open_sdin
+use UsefulModule;
 
 my $csvsep = ",";
 
@@ -15,7 +16,7 @@ sub print_usage
     print STDERR "Error: $err\n";
   }
 
-  print STDERR "Usage: ./fastn_lengths.pl [--bases] [file]\n";
+  print STDERR "Usage: ./fastn_lengths.pl [--bases] [file1 ..]\n";
   print STDERR " Print the length of each sequence.  " .
                "If file not given (or '-') reads from STDIN\n";
   print STDERR " --bases only count [ACGT] bases, not `N's\n";
@@ -33,10 +34,12 @@ elsif(@ARGV > 0 && $ARGV[0] =~ /^-?-b(ases?)?$/i)
   shift;
   $bases_only = 1;
 }
-elsif(@ARGV > 1)
+elsif(@ARGV == 0)
 {
-  print_usage();
+  print STDERR "fastn_lengths.pl: use -h to read help\n";
 }
+
+my @files = @ARGV;
 
 print "chr,length\n";
 
@@ -45,49 +48,26 @@ print "chr,length\n";
 #
 if(@ARGV == 0)
 {
-  my $fastn_handle = open_stdin();
+  push(@files, '-');
+}
+
+for my $file (@files)
+{
+  my $fastn_handle;
+
+  if($file eq "-")
+  {
+    $fastn_handle = open_stdin("Cannot read file -- need to pipe in fasta/fastq");
+  }
+  else
+  {
+    open($fastn_handle, $file)
+      or print_usage("Cannot open FASTA/Q file '$file'");
+  }
   
   print_read_lengths($fastn_handle);
   
   close($fastn_handle);
-}
-else
-{
-  for my $file (@ARGV)
-  {
-    my $fastn_handle;
-
-    if($file eq "-")
-    {
-      $fastn_handle = open_stdin();
-    }
-    else
-    {
-      open($fastn_handle, $file)
-        or print_usage("Cannot open FASTA/Q file '$file'");
-    }
-    
-    print_read_lengths($fastn_handle);
-    
-    close($fastn_handle);
-  }
-}
-
-
-sub open_stdin
-{
-  my $stdin_handle;
-
-  if(-p STDIN) {
-    # STDIN is connected to a pipe
-    open($stdin_handle, "<&=STDIN") or print_usage("Cannot read STDIN pipe");
-  }
-  else
-  {
-    print_usage("Must specify or pipe in a FASTA/Q file");
-  }
-  
-  return $stdin_handle;
 }
 
 sub print_read_lengths

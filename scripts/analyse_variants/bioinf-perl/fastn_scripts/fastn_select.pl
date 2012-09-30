@@ -9,6 +9,7 @@ use lib $FindBin::Bin;
 
 use FASTNFile;
 use RefGenome;
+use UsefulModule;
 
 sub print_usage
 {
@@ -66,7 +67,7 @@ my @ref_files = @ARGV;
 
 for my $ref_file (@ref_files)
 {
-  if(!(-r $ref_file))
+  if($ref_file ne '-' && !(-r $ref_file))
   {
     print_usage("Cannot read fasta/q file '$ref_file'");
   }
@@ -101,37 +102,31 @@ if(scalar(keys %read_names) == 0)
 #
 if(@ref_files == 0)
 {
-  my $fastn_handle = open_stdin();
+  push(@ref_files, '-');
+}
+
+for my $file (@ref_files)
+{
+  my $fastn_handle;
+
+  if($file eq "-")
+  {
+    $fastn_handle = open_stdin("Cannot read file -- need to pipe in fasta/fastq");
+  }
+  else
+  {
+    open($fastn_handle, $file)
+      or print_usage("Cannot open FASTA/Q file '$file'");
+  }
   
   search_file($fastn_handle);
   
   close($fastn_handle);
-}
-else
-{
-  for my $file (@ref_files)
+  
+  if(keys(%read_names) == 0)
   {
-    my $fastn_handle;
-
-    if($file eq "-")
-    {
-      $fastn_handle = open_stdin();
-    }
-    else
-    {
-      open($fastn_handle, $file)
-        or print_usage("Cannot open FASTA/Q file '$file'");
-    }
-    
-    search_file($fastn_handle);
-    
-    close($fastn_handle);
-    
-    if(keys(%read_names) == 0)
-    {
-      # All entries have been found - no need to open any more files
-      last;
-    }
+    # All entries have been found - no need to open any more files
+    last;
   }
 }
 
@@ -153,22 +148,6 @@ if(keys(%read_names) > 0)
 #
 # Functions
 #
-
-sub open_stdin
-{
-  my $stdin_handle;
-
-  if(-p STDIN) {
-    # STDIN is connected to a pipe
-    open($stdin_handle, "<&=STDIN") or print_usage("Cannot read STDIN pipe");
-  }
-  else
-  {
-    print_usage("Must specify or pipe in a FASTA/Q file");
-  }
-  
-  return $stdin_handle;
-}
 
 sub search_file
 {

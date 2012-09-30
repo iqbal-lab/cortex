@@ -46,22 +46,26 @@ if(@read_stdin > 1)
 if(@files == 0)
 {
   # Read from STDIN
-  read_stdin();
+  push(@files, '-');
 }
 
 for my $file (@files)
 {
+  my $fastn_handle;
+
   if($file eq "-")
   {
-    read_stdin();
+    $fastn_handle = open_stdin("Cannot read ref -- need to pipe in fasta/fastq");
   }
   else
   {
-    my $handle;
-    open($handle, $file) or print_usage("Cannot open fasta/q file '$file'");
-    parse_file($handle);
-    close($handle);
+    open($fastn_handle, $file)
+      or print_usage("Cannot open FASTA/Q file '$file'");
   }
+
+  parse_file($fastn_handle);
+
+  close($fastn_handle);
 }
 
 sub read_stdin

@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 
+use UsefulModule;
+
 ## Config
 my $csvsep = ",";
 ##
@@ -40,33 +42,28 @@ my %kmers = ();
 
 if(@files == 0)
 {
-  # Read from STDIN
+  # Add stdin
+  push(@files, "-");
+}
 
-  if(!(-p STDIN))
-  {
-    # STDIN is not connected to a pipe
-    print_usage("Must specify or pipe in a FASTA/Q file");
-  }
-
+# Read from files
+for my $file (@files)
+{
   my $handle;
-  open($handle, "<&=STDIN") or die("Cannot read pipe");
+
+  if($file eq "-")
+  {
+    $handle = open_stdin("Cannot read file -- need to pipe in fasta/fastq");
+  }
+  else
+  {
+    open($handle, $file)
+      or print_usage("Cannot open FASTA/Q file '$file'");
+  }
 
   load_file($handle);
-
+  
   close($handle);
-}
-else
-{
-  # Read from files
-  for my $file (@files)
-  {
-    my $handle;
-    open($handle, $file) or print_usage("Cannot open fasta/q file '$file'");
-    
-    load_file($handle);
-    
-    close($handle);
-  }
 }
 
 #

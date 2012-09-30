@@ -3,6 +3,8 @@ package UsefulModule;
 use strict;
 use warnings;
 
+use Carp;
+
 # Inherit from the "Exporter" module which handles exporting functions.
 # Most procedural modules make use of this.
 
@@ -12,7 +14,8 @@ use base 'Exporter';
 # the namespace of the using code.
 
 our @EXPORT = qw(num2str mem2str round_int round_decimal
-                 pretty_fraction binary_search_nearest trim);
+                 pretty_fraction binary_search_nearest trim
+                 open_stdin);
 
 =head1 NAME
  
@@ -209,6 +212,21 @@ sub trim
   $str =~ s/\s+$//;
 
   return $str;
+}
+
+sub open_stdin
+{
+  my ($error_msg) = @_;
+
+  my $stdin_handle;
+
+  # -p checks STDIN is connected to a pipe
+  if(!(-p STDIN) || !open($stdin_handle, "<&=STDIN"))
+  {
+    croak(defined($error_msg) ? $error_msg : "Cannot open STDIN");
+  }
+
+  return $stdin_handle;
 }
 
 1;

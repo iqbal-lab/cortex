@@ -4324,11 +4324,11 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 		  {
 
 		    db_graph_db_node_prune_low_coverage(
-          path_nodes[i], coverage,
-					&db_node_action_set_status_pruned, db_graph,
-					sum_of_covgs_in_desired_colours,
-          get_edge_of_interest, apply_reset_to_specified_edges,
-          apply_reset_to_specified_edges_2);
+							path_nodes[i], coverage,
+							&db_node_action_set_status_pruned, db_graph,
+							sum_of_covgs_in_desired_colours,
+							get_edge_of_interest, apply_reset_to_specified_edges,
+							apply_reset_to_specified_edges_2);
 		  }
 	      }
 	    else//interior nodes do not look like error

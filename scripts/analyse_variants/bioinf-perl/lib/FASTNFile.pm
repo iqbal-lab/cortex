@@ -239,8 +239,23 @@ sub read_all_from_files
   {
     my $handle;
 
-    open($handle, $file)
-      or croak("Cannot open fasta file '$file'");
+    if($file eq "-")
+    {
+      if(-p STDIN)
+      {
+        # STDIN is connected to a pipe
+        open($handle, "<&=STDIN") or croak("Cannot read STDIN pipe");
+      }
+      else
+      {
+        croak("Cannot open STDIN to read fasta/fastq");
+      }
+    }
+    else
+    {
+      open($handle, $file)
+        or croak("Cannot open fasta/fastq file '$file'");
+    }
 
     my $fastn_file = new FASTNFile($handle);
 
