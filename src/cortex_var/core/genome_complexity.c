@@ -196,7 +196,7 @@ void count_reads_where_snp_makes_clean_bubble(dBGraph* db_graph, char* fasta, bo
 			  //work through the sliding window and put nodes into the array you pass in. 
 			  //Note this may find NULL nodes if the kmer is not in the graph
 			  //also note seq is not used
-			  load_kmers_from_sliding_window_into_array(kmer_window, seq, 
+			  load_kmers_from_sliding_window_into_array(kmer_window, 
 								    db_graph, array_nodes, array_or, 
 								    2*db_graph->kmer_size+1, false, -1);
 			  if (allele_is_clean(array_nodes, len, colour_cleaned_genome, db_graph->kmer_size)==true)
@@ -632,16 +632,16 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 									kmer_window, db_graph);
 
 	      boolean prev_full=true;
-	      boolean full_ent=true;
 	      long long b_loaded=0;
 
-	      load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows, &prev_full, &full_ent, &b_loaded, false,
-												      db_graph, working_colour, readlen_distrib_ptrs);
+	      load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(
+          windows, &prev_full, &b_loaded, false, db_graph,
+          working_colour, readlen_distrib_ptrs);
 
 	      //work through the sliding window and put nodes into the array you pass in. 
 	      //Note this may find NULL nodes if the kmer is not in the graph
 	      //also note seq is not used
-	      load_kmers_from_sliding_window_into_array(kmer_window, seq, 
+	      load_kmers_from_sliding_window_into_array(kmer_window, 
 							db_graph, array_nodes_mut, array_or_mut, 
 							2*db_graph->kmer_size+1, false, -1);
 	      double av1, av2;

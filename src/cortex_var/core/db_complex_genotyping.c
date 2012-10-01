@@ -1581,7 +1581,9 @@ boolean is_this_kmer_beyond_the_2net(dBNode* n, dBGraph* db_graph, Covg (*get_co
 
 
 
-boolean is_this_kmer_in_the_1net(dBNode* n, dBGraph* db_graph, Covg (*get_covg_1net)(dBNode* e) )
+// Currently noone appears to call this function
+// Removed unused parameter Covg (*get_covg_1net)(dBNode* e)
+boolean is_this_kmer_in_the_1net(dBNode* n, dBGraph* db_graph)
 {
   int i;
 
@@ -1598,7 +1600,11 @@ boolean is_this_kmer_in_the_1net(dBNode* n, dBGraph* db_graph, Covg (*get_covg_1
 	  strcpy(copy_orig, orig_seq);
 	  modify_character(copy_orig, i,p);//modify the i-th character and change it to the p-th of the other 3. eg if the base is C, and p=2 change it to the second one of A,G,T.
 	  BinaryKmer tmp_kmer1, tmp_kmer2;
-	  dBNode* found_node = hash_table_find(element_get_key(seq_to_binary_kmer(copy_orig, db_graph->kmer_size, &tmp_kmer1), db_graph->kmer_size, &tmp_kmer2), db_graph);
+
+    seq_to_binary_kmer(copy_orig, db_graph->kmer_size, &tmp_kmer1);
+    element_get_key(tmp_kmer1, db_graph->kmer_size, &tmp_kmer2);
+	  dBNode* found_node = hash_table_find(&tmp_kmer2, db_graph);
+
 	  if (found_node==NULL)
 	    {
 	      //this particular edit of 1 base does not take you back to the desired genotype, but maybe some other edit does

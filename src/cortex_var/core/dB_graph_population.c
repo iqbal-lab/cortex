@@ -1558,26 +1558,54 @@ int db_graph_supernode_in_subgraph_defined_by_func_of_colours(
 
 
 
-boolean condition_always_true(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
-			      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
+boolean condition_always_true(dBNode** flank_5p, int len5p,
+                              dBNode** ref_branch, int len_ref,
+                              dBNode** var_branch, int len_var,
+                              dBNode** flank_3p, int len3p,
+                              int colour_of_ref, int colour_of_indiv)
 {
+  // (pretend to) use the parameters so the compiler doesn't complain
+  (void)flank_5p;
+  (void)len5p;
+  (void)ref_branch;
+  (void)len_ref;
+  (void)var_branch;
+  (void)len_var;
+  (void)flank_3p;
+  (void)len3p;
+
   return true;
 }
 
 
 //this is the default condition used by the trsuted-path/reference-based SV caller
-// it requires of a potential variant site that (after normalising by factoring out coverage due to the rest of the genome)
-// there is coverage of variant nodes that are not in the ref-allele/trusted-path branch
-// this assumes that we are doing a DIPLOID assembly, and requires you to pass in the expected coverage per chromosome/haplotype
-// i.e if you (total reads*read_length)/length_of_genome = 30x coverage, then pass in 15, as you expect 15x per copy of a chromosome.
-boolean condition_default(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
-			      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
+// it requires of a potential variant site that (after normalising by factoring
+// out coverage due to the rest of the genome) there is coverage of variant nodes
+// that are not in the ref-allele/trusted-path branch this assumes that we are
+// doing a DIPLOID assembly, and requires you to pass in the expected coverage
+// per chromosome/haplotype
+// i.e if your (total reads*read_length)/length_of_genome = 30x coverage,
+// then pass in 15, as you expect 15x per copy of a chromosome.
+boolean condition_default(dBNode** flank_5p, int len5p,
+                          dBNode** ref_branch, int len_ref,
+                          dBNode** var_branch, int len_var,
+                          dBNode** flank_3p, int len3p,
+                          int colour_of_ref, int colour_of_indiv)
 {
-  
-  //basic idea is simple. Take the nodes which are in the variant and not the trusted path
-  
-  return true;
+  // basic idea is simple. Take the nodes which are in the variant and not the
+  // trusted path
 
+  // (pretend to) use the parameters so the compiler doesn't complain
+  (void)flank_5p;
+  (void)len5p;
+  (void)ref_branch;
+  (void)len_ref;
+  (void)var_branch;
+  (void)len_var;
+  (void)flank_3p;
+  (void)len3p;
+
+  return true;
 }
 
 // identical code to db_graph_supernode_for_specific_person_or_pop but this returns the index of the query node (first argument) in th supernode array
@@ -2153,9 +2181,11 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 }
 
 
-
 boolean detect_vars_condition_always_true(VariantBranchesAndFlanks* var)
 {
+  // Let the compiler know that we're deliberately ignoring a parameter
+  (void)var;
+
   return true;
 }
 
@@ -2183,10 +2213,11 @@ boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesA
 
 
 
-
-
 boolean detect_vars_condition_always_false(VariantBranchesAndFlanks* var)
 {
+  // Let the compiler know that we're deliberately ignoring a parameter
+  (void)var;
+
   return false;
 }
 
@@ -10329,8 +10360,12 @@ boolean does_this_path_exist_in_this_colour(dBNode** array_nodes, Orientation* a
 }
 
 
-void print_standard_extra_supernode_info(dBNode** node_array, Orientation* or_array, int len, FILE* fout)
+void print_standard_extra_supernode_info(dBNode** node_array,
+                                         Orientation* or_array,
+                                         int len, FILE* fout)
 {
+  // Let the compiler know that we're deliberately ignoring a parameter
+  (void)or_array;
   
   int col;
   for (col=0; col<NUMBER_OF_COLOURS; col++)

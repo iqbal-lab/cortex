@@ -85,19 +85,21 @@ double  get_histogram_for_kmers_in_just_one_haplotype(long long** arr, int max, 
 }
 */
 
-
+/*
+// Isaac: can this be removed?
 void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* model_info)
 {
-  
 }
+*/
 
 
 
 void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
                     void (*print_whatever_extra_variant_info)(VariantBranchesAndFlanks*, FILE*), 
-                    Edges(*get_col_ref)(const dBNode* e),
-                    Covg (*get_cov_ref)(const dBNode* e),
-                    GraphInfo* db_graph_info, GraphAndModelInfo* model_info)
+                    GraphAndModelInfo* model_info)
+                    //Edges(*get_col_ref)(const dBNode* e)
+                    //Covg (*get_cov_ref)(const dBNode* e)
+                    //GraphInfo* db_graph_info
 {
   FILE* fp = fopen(cmd_line->file_of_calls_to_be_genotyped, "r");
   if (fp==NULL)
@@ -395,11 +397,11 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 }
 
 void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph, 
-		      void (*print_appropriate_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
-		      Edges(*get_col_ref) (const dBNode* e),
-		      Covg (*get_cov_ref)(const dBNode* e),
-		      GraphInfo* db_graph_info, GraphAndModelInfo* model_info
-		      )
+                      void (*print_appropriate_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
+                      Edges(*get_col_ref) (const dBNode* e),
+                      Covg (*get_cov_ref)(const dBNode* e),
+                      //GraphInfo* db_graph_info,
+                      GraphAndModelInfo* model_info)
 {
 
 
@@ -651,19 +653,21 @@ int main(int argc, char **argv)
   int max_kmer_size = (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1;
   int min_kmer_size = ((NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1) * sizeof(bitfield_of_64bits) * 4) + 1;
 
-  if (number_of_bitfields != NUMBER_OF_BITFIELDS_IN_BINARY_KMER){
-    die("K-mer %i  is not in current range of kmers [%i - %i] required for this executable.!\n",
+  if (number_of_bitfields != NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
+  {
+    die("K-mer %i  is not in current range of kmers [%i - %i] required for this executable!\n",
         kmer_size, min_kmer_size, max_kmer_size);
   }
   
-  printf("Maximum k-mer size (compile-time setting): %ld\n", (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1);
-  
-  if (cmd_line->kmer_size> (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1){
+  printf("Maximum k-mer size (compile-time setting): %i\n", max_kmer_size);
+
+  if(cmd_line->kmer_size > max_kmer_size)
+  {
     die("k-mer size is too big [%i]!",cmd_line->kmer_size);
   }
+
   printf("Actual K-mer size: %d\n", cmd_line->kmer_size);
 
-  
   //Create the de Bruijn graph/hash table
   int max_retries=15;
   db_graph = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
@@ -752,7 +756,7 @@ int main(int argc, char **argv)
       die("Unable to malloc array to hold readlen distirbution!Exit.\n");
     }
 
-    int i;
+    unsigned long i;
     for(i = 0; i < readlen_distrib_size; i++)
     {
       readlen_distrib[i] = 0;
@@ -829,14 +833,11 @@ int main(int argc, char **argv)
         printf("Dumping distribution of effective read lengths (ie after "
                "quality, homopolymer and/or PCR duplicate filters) to file %s.\n",
                cmd_line->readlen_distrib_outfile);
-
-
       }
-
 
       for(i = db_graph->kmer_size; i < readlen_distrib_size; i++)
       {
-        fprintf(rd_distrib_fptr, "%i\t%lu\n", i, readlen_distrib[i]);
+        fprintf(rd_distrib_fptr, "%lu\t%lu\n", i, readlen_distrib[i]);
       }
 
       fclose(rd_distrib_fptr);
@@ -1201,7 +1202,8 @@ int main(int argc, char **argv)
     {
       timestamp();
       printf("Start first set of bubble calls\n");
-      run_bubble_calls(cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, db_graph_info, &model_info);
+      run_bubble_calls(cmd_line, 1, db_graph, &print_appropriate_extra_variant_info,
+                       &get_colour_ref, &get_covg_ref, &model_info);
 
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -1213,8 +1215,13 @@ int main(int argc, char **argv)
   if (cmd_line->do_genotyping_of_file_of_sites==true)
     {
       timestamp();
+
       printf("Genotype the calls in this file %s\n", cmd_line->file_of_calls_to_be_genotyped);
-      run_genotyping(cmd_line, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, db_graph_info, &model_info);
+
+      run_genotyping(cmd_line, db_graph, &print_appropriate_extra_variant_info,
+                     //&get_colour_ref, &get_covg_ref, db_graph_info,
+                     &model_info);
+
       //unset the nodes marked as visited, but not those marked as to be ignored
       timestamp();
       printf("Genotyping completed\n");
