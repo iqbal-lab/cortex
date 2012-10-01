@@ -393,17 +393,14 @@ void utility_func_test_complex_genotyping_given_two_alleles(char* first_allele_n
   hash_table_free(&temp_db_graph);
   graph_info_free(temp_db_graph_info);
 
-  int mean_r;
-  long long tot_s;
+  GraphInfo* bin_ginfo=graph_info_alloc_and_init();
   int clean_colour = 0;
   boolean only_load_kmers_already_in_graph = true;
-  char dummy[MAX_LEN_SAMPLE_NAME];
-  dummy[0]='\0';
   load_single_colour_binary_data_from_filename_into_graph("../data/tempfiles_can_be_deleted/ref_minus_genome.ctx", 
-							  db_graph, &mean_r, &tot_s, false, 
+							  db_graph, bin_ginfo, false, 
 							  colour_ref_minus_site, only_load_kmers_already_in_graph, clean_colour, 
-							  dummy, false);
-
+							  false);
+  free(bin_ginfo);
 
   int max_allele_length = 90000;
 
@@ -1296,12 +1293,11 @@ Covg in indiv:
       die("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example1_just_alleles.fa\n");
     }
   boolean full_entry=true;
-  int num_kmers_br1 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch1, branch1_o, false, &full_entry, &file_reader_fasta, 
+  align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch1, branch1_o, false, &full_entry, &file_reader_fasta, 
 								      seq, kmer_window, db_graph, 0);
 
-  int num_kmers_br2 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch2, branch2_o, false, &full_entry, &file_reader_fasta, 
+  align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch2, branch2_o, false, &full_entry, &file_reader_fasta, 
 								      seq, kmer_window, db_graph, 0);
-
 
   fclose(fp);
   int j;
@@ -1413,10 +1409,10 @@ Colour 0 = reference
     {
       die("Unable to open test file ../data/test/pop_graph/variations/complex_genotyping/pd_example2_just_alleles.fa\n");
     }
-  num_kmers_br1 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch1, branch1_o, false, &full_entry,&file_reader_fasta, 
+  align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch1, branch1_o, false, &full_entry,&file_reader_fasta, 
 								      seq, kmer_window, db_graph, 0);
 
-  num_kmers_br2 = align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch2, branch2_o, false, &full_entry,&file_reader_fasta, 
+  align_next_read_to_graph_and_return_node_array(fp, max_read_length, branch2, branch2_o, false, &full_entry,&file_reader_fasta, 
 								      seq, kmer_window, db_graph, 0);
 
 

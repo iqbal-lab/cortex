@@ -70,8 +70,23 @@ void error_cleaning_initialise(ErrorCleaning* cl)
     strlen(cl->name_of_graph_against_which_was_cleaned);
 }
 
-// Dev - Isaac - you see any problems here now?
-// Possibly remove sample_ids_lens array? Why?
+void error_cleaning_assign_with_OR(ErrorCleaning* target, ErrorCleaning* src, boolean dont_set_pool_cleaning)
+{
+  target->tip_clipping |= src->tip_clipping;
+  target->remv_low_cov_sups |= src->remv_low_cov_sups;
+  target->remv_low_cov_nodes |= src->remv_low_cov_nodes;
+  target->cleaned_against_another_graph |=src->cleaned_against_another_graph;
+  target->remv_low_cov_sups_thresh= src->remv_low_cov_sups_thresh;
+  target->remv_low_cov_nodes_thresh= src->remv_low_cov_nodes_thresh;
+  if ((dont_set_pool_cleaning==false) && (strcmp(src->name_of_graph_against_which_was_cleaned, "") !=0))
+    {
+      target->len_name_of_graph_against_which_was_cleaned= src->len_name_of_graph_against_which_was_cleaned;
+      target->name_of_graph_against_which_was_cleaned[0]='\0';
+      strcat(target->name_of_graph_against_which_was_cleaned, src->name_of_graph_against_which_was_cleaned);
+    }
+
+}
+
 GraphInfo* graph_info_alloc_and_init()
 {
   GraphInfo* ginfo = (GraphInfo*) malloc(sizeof(GraphInfo));
@@ -119,13 +134,27 @@ void graph_info_initialise(GraphInfo* ginfo)
       set_string_to_null(ginfo->sample_ids[i], MAX_LEN_SAMPLE_NAME);
       strcat(ginfo->sample_ids[i], "undefined");
       ginfo->sample_id_lens[i]=strlen(ginfo->sample_ids[i]);
-
       graph_info_set_seq(ginfo, i, 0);
       graph_info_set_mean_readlen(ginfo, i, 0);
       ginfo->seq_err[i]=0.01;
       error_cleaning_initialise(ginfo->cleaning[i]);
     }
 }
+
+void graph_info_initialise_one_colour(GraphInfo* ginfo, int colour)
+{
+  set_string_to_null(ginfo->sample_ids[colour], MAX_LEN_SAMPLE_NAME);
+  strcat(ginfo->sample_ids[colour], "undefined");
+  ginfo->sample_id_lens[colour]=strlen(ginfo->sample_ids[colour]);
+  graph_info_set_seq(ginfo, colour, 0);
+  graph_info_set_mean_readlen(ginfo, colour, 0);
+  ginfo->seq_err[colour]=0.01;
+  error_cleaning_initialise(ginfo->cleaning[colour]);
+}
+
+
+
+
 
 void graph_info_set_tip_clipping(GraphInfo* ginfo, int colour)
 {
@@ -313,6 +342,42 @@ void graph_info_set_sample_ids(char** sample_ids, int num_ids, GraphInfo* ginfo,
       strcpy(ginfo->sample_ids[i], sample_ids[i]);
     }
 }
+
+//this is designed to be used when loading multiple binaries into a 
+//single colour, which may have different metadata. In this case,
+// we cumulate covg, get mean read length, and for each type of error cleaning we 
+//say yesif ANY of them did, taking the last threshold for any of them.
+void graph_info_set_all_metadata(GraphInfo* target, GraphInfo* src, int colour, boolean dont_set_pool_cleaning)
+{
+  graph_info_update_mean_readlen(target, colour, 
+				 target->mean_read_length[colour], 
+				 target->total_sequence[colour],
+				 src->mean_read_length[colour],
+				 src->total_sequence[colour]);
+  graph_info_increment_seq(target, colour, src->total_sequence[colour]);
+  target->seq_err[colour]=src->seq_err[colour];
+  error_cleaning_assign_with_OR(target->cleaning[colour], src->cleaning[colour], dont_set_pool_cleaning);
+
+
+  if ( (strcmp(src->sample_ids[colour], "undefined")!=0) //source has nontrivial sample id
+       &&
+       (strcmp(src->sample_ids[colour], target->sample_ids[colour])!=0) //src and target have different sample id
+       && 
+       (strcmp(target->sample_ids[colour],"undefined")!=0)//target has non trivial sample id
+       )
+    {
+      printf("Src has %s and target has %s to set to pool\n", src->sample_ids[colour], target->sample_ids[colour]);
+      set_string_to_null(target->sample_ids[colour], MAX_LEN_SAMPLE_NAME );
+      strcat(target->sample_ids[colour], "pool");
+    }
+  else if (strcmp(src->sample_ids[colour], "undefined")!=0) //src has nontrivial sample id
+    {
+      //either it is the same, or target is undefined. Either way, this is ok:
+      set_string_to_null(target->sample_ids[colour], MAX_LEN_SAMPLE_NAME);
+      strcat(target->sample_ids[colour], src->sample_ids[colour]);
+    }
+}
+
 double get_total_depth_of_coverage_across_colours(GraphInfo* ginfo, long long genome_length)
 {
   int i;

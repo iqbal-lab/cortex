@@ -563,9 +563,10 @@ void test_load_singlecolour_binary()
   GraphInfo* ginfo = graph_info_alloc_and_init();
 
   graph_info_set_seq(ginfo, 0, seq_read);
+  //not setting mean read len, so will not test it
   db_graph_dump_single_colour_binary_of_colour0(
-    "../data/tempfiles_can_be_deleted/dump_single_colour_cortex_var_graph.ctx",
-    &db_node_condition_always_true, db_graph_pre, ginfo, BINVERSION);
+						"../data/tempfiles_can_be_deleted/dump_single_colour_cortex_var_graph.ctx",
+						&db_node_condition_always_true, db_graph_pre, ginfo, BINVERSION);
 
   hash_table_free(&db_graph_pre);
   CU_ASSERT(db_graph_pre == NULL);
@@ -573,20 +574,14 @@ void test_load_singlecolour_binary()
   dBGraph* db_graph_post = hash_table_new(number_of_bits, bucket_size,
                                           10, kmer_size);
 
-  int mean_readlen=0;
-  long long total_seq=0;
-
-  char dummy[MAX_LEN_SAMPLE_NAME];
-  dummy[0]='\0';
-
   // zero it, and see if you get your data back
   graph_info_initialise(ginfo);
-  int seq_length_post = load_single_colour_binary_data_from_filename_into_graph(
-    "../data/tempfiles_can_be_deleted/dump_single_colour_cortex_var_graph.ctx", 
-    db_graph_post, &mean_readlen, &total_seq,
-    true,0, false,0, dummy, false);
-
-  CU_ASSERT(seq_length_post==25);//kmers loaded * length of kmer
+  load_single_colour_binary_data_from_filename_into_graph(
+							  "../data/tempfiles_can_be_deleted/dump_single_colour_cortex_var_graph.ctx", 
+							  db_graph_post, ginfo, 
+							  true,0, false,0, false);
+  
+  CU_ASSERT(ginfo->total_sequence[0]==2809);
   CU_ASSERT_EQUAL(hash_table_get_unique_kmers(db_graph_post), 5);
 
 
@@ -5928,15 +5923,10 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
   // OK, finally we are ready for our real test. Load the singlecolour uncleaned
   // binary into colour1, but only load the bits that overlap the cleaned graph
   // (ie colour 0)
-  int mean_len;
-  long long totseq;
-  char dummy[MAX_LEN_SAMPLE_NAME];
-  dummy[0]='\0';
-
   load_single_colour_binary_data_from_filename_into_graph(
     "../data/tempfiles_can_be_deleted/dump_cortex_var_graph.singlecol.ctx",
-    db_graph_post, &mean_len, &totseq,
-    false, 1, true, 0, dummy, false);
+    db_graph_post, ginfo, 
+    false, 1, true, 0, false);
 
 
 
@@ -6141,10 +6131,11 @@ void test_load_binversion5_binary()
     int num_cols_in_binary = -1;
 
     graph_info_initialise(ginfo);
-    long long seq_length_post = load_multicolour_binary_from_filename_into_graph(
-      "../data/tempfiles_can_be_deleted/dump_cortex_var_graph.ctx.binversion5",
-      db_graph_post, ginfo, &num_cols_in_binary);
-
+    long long seq_length_post = 
+      load_multicolour_binary_from_filename_into_graph(
+						       "../data/tempfiles_can_be_deleted/dump_cortex_var_graph.ctx.binversion5",
+						       db_graph_post, ginfo, &num_cols_in_binary);
+    
     CU_ASSERT(num_cols_in_binary == NUMBER_OF_COLOURS);
     CU_ASSERT(ginfo->mean_read_length[0] == 5);
     CU_ASSERT(ginfo->total_sequence[0] == seq_read);

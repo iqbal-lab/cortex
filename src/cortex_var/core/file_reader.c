@@ -365,8 +365,8 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
   char read_qual = seq_has_quality_scores(sf);
 
   char base, qual, prev_base;
-  unsigned long contig_length;//DEV - Isaac, I think this should be int, as 1. we dont expect reads>2billion bp, and 
-                                  //2. if you do go over 2billion, you pass it as an array index, so it gets cast to int and overflows
+  unsigned long contig_length;
+                              
   int homopol_length = 1;
 
   char keep_reading = 1;
@@ -1674,7 +1674,7 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 //returns number of kmers loaded*kmer_length
  //array_mean_readlens and array_total_seqs are arrays of length NUMBER_OF_COLOURS, so they can hold the mean read length+total seq in every colour
 long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, GraphInfo* ginfo, int* num_cols_in_loaded_binary) 
-//							    int** array_mean_readlens, long long** array_total_seqs)
+
 {
 
   //printf("Load this binary - %s\n", filename);
@@ -1694,7 +1694,8 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
   BinaryHeaderInfo binfo;
   initialise_binary_header_info(&binfo, ginfo);//pass in the main graph info
 
-  if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode)))
+  //load_multicolour always loads into colours starting at 0, hence last argument of following line
+  if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode, 0)))
     {
       die("Cannot load this binary(%s) - signature check fails. Wrong max kmer, "
           "number of colours, or binary version. Exiting, error code %d\n", 
@@ -1731,14 +1732,14 @@ long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGr
 
 
 
+// this is not a special case of load_multicolour..!
 // In some special cases (eg if you have pooled individuals and cleaned the graph, dumped a binary, and then reloaded  that in colour 0,
 // and now want to load binaries into colour 1 only if the kmer is in the (cleaned) colour 0),
 // then we set only_load_kmers_already_in_hash==true. In this case, we only load edges in that overlap with the cleaned graph, in colour_clean
 long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
-								  int* mean_readlen, long long* total_seq,
-								  boolean all_entries_are_unique, int index,
+								  GraphInfo* ginfo,
+								  boolean all_entries_are_unique, int colour_loading_into,
 								  boolean only_load_kmers_already_in_hash, int colour_clean,
-								  char* sample_identity,
 								  boolean load_all_kmers_but_only_increment_covg_on_new_ones)
 								  //last arg is to load the "union" of two graphs.)
 {
@@ -1766,52 +1767,24 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
       die("Unable to open this binary %s\n", filename);
     }
 
-
-  //this will be inefficient once we have thousands of colours, but is only run once.
-  GraphInfo* ginfo=graph_info_alloc_and_init();//no need to check return code
   BinaryHeaderErrorCode ecode=EValid;
   BinaryHeaderInfo binfo;
   initialise_binary_header_info(&binfo, ginfo);
 
-
-  if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode)))
+  //this function call gets the binary header info, and puts it into the binf
+  if (!(check_binary_signature_NEW(fp_bin, db_graph->kmer_size, &binfo, &ecode, colour_loading_into)))
     {
       die("Cannot load this binary - fails signature check with error code %d. Exiting.\n", ecode);
-    }
-  else
-    {
-      *mean_readlen = ginfo->mean_read_length[0];
-      *total_seq    = ginfo->total_sequence[0];
-      if  (strcmp(sample_identity, "undefined")==0)//we don't already have a name for this colour
-	{
-	  if (strcmp(ginfo->sample_ids[0], "undefined")!=0)//we've got  a name from this binary
-	    {
-	      sample_identity[0]='\0';
-	      strcat(sample_identity, ginfo->sample_ids[0]);
-	    }
-	}
-      else//we already have a name for this colour in our main GraphInfo
-	{
-	  if ( (strcmp(ginfo->sample_ids[0], "undefined")!=0) //we got a proper name from loading this binary
-	       &&
-	       (strcmp(ginfo->sample_ids[0], sample_identity)!=0) )
-	    {
-	      //then we have two different names for this colour. It must be a pool!
-	      sample_identity[0]='\0';
-	      strcat(sample_identity, "pool");
-	    }
-	}
     }
 
   if (binfo.number_of_colours!=1)
     {
       die("Expecting a single colour binary, but instead this one has %d colours\n. Exiting.\n", binfo.number_of_colours);
     }
-  graph_info_free(ginfo);
   
   //Go through all the entries in the binary file
-  // each time you load the info into a temporary node, and load them *** into colour number index ***
-  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, index, binfo.version))
+  // each time you load the info into a temporary node, and load them *** into colour number colour_loading_into ***
+  while (db_node_read_single_colour_binary(fp_bin,db_graph->kmer_size,&tmp_node, colour_loading_into, binfo.version))
     {
       count++;
       found=false;//zam just added this
@@ -1828,14 +1801,14 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 	      current_node = hash_table_insert(element_get_key(element_get_kmer(&tmp_node),db_graph->kmer_size, &tmp_kmer), db_graph);
 	    }
 	  seq_length+=db_graph->kmer_size;
-	  add_edges(current_node, index, get_edge_copy(tmp_node, index));
+	  add_edges(current_node, colour_loading_into, get_edge_copy(tmp_node, colour_loading_into));
 	  if ( (load_all_kmers_but_only_increment_covg_on_new_ones==false)//usual case
 	       ||
 	       ( (load_all_kmers_but_only_increment_covg_on_new_ones==true) && (found==false)) //loading union, and this is new
 	       
 	       )
 	    {
-	      db_node_update_coverage(current_node, index, db_node_get_coverage(&tmp_node,index) );
+	      db_node_update_coverage(current_node, colour_loading_into, db_node_get_coverage(&tmp_node,colour_loading_into) );
 	    }
 	}
       else
@@ -1844,10 +1817,10 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 	  if (current_node !=NULL)
 	    {
 	      Edges pre_existing_edge = get_edge_copy(*current_node, colour_clean);
-	      Edges edge_from_binary  = get_edge_copy(tmp_node, index);
+	      Edges edge_from_binary  = get_edge_copy(tmp_node, colour_loading_into);
 	      Edges edge_to_load = pre_existing_edge & edge_from_binary; //only load edge from binary if is in the cleaned colour also.
-	      add_edges(current_node, index,edge_to_load);
-	      db_node_update_coverage(current_node, index, db_node_get_coverage(&tmp_node,index));
+	      add_edges(current_node, colour_loading_into,edge_to_load);
+	      db_node_update_coverage(current_node, colour_loading_into, db_node_get_coverage(&tmp_node,colour_loading_into));
 	    }
 	}
 
@@ -1865,10 +1838,14 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
 // then set only_load_kmers_already_in_hash==true, and specify colour_clean to be that clean graph colour. Usually this is zero,
 // we compile for 2 colours only, and we are loading into colour 1.
 long long load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(
-  char* filename, //_plus_maybe_samplename
-  dBGraph* db_graph, GraphInfo* db_graph_info, boolean all_entries_are_unique,
-  int index, boolean only_load_kmers_already_in_hash, int colour_clean,
-  boolean load_all_kmers_but_only_increment_covg_on_new_ones)
+											   char* filename, 
+											   dBGraph* db_graph, 
+											   GraphInfo* db_graph_info, 
+											   boolean all_entries_are_unique,
+											   int colour_loading_into, 
+											   boolean only_load_kmers_already_in_hash, 
+											   int colour_clean,
+											   boolean load_all_kmers_but_only_increment_covg_on_new_ones)
 {
   // Get absolute path
   char absolute_path[PATH_MAX+1];
@@ -1887,7 +1864,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
   if (fptr == NULL)
   {
     die("cannot open %s which is supposed to list all .ctx files for person "
-        "with index %d\n", filename, index);
+        "with colour_loading_into %d\n", filename, colour_loading_into);
   }
 
   // Get directory path
@@ -1897,6 +1874,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
   StrBuf *line = strbuf_new();
 
   int total_seq_loaded = 0;
+  GraphInfo* local_ginfo = graph_info_alloc_and_init();
 
   while(strbuf_reset_readline(line, fptr))
   {
@@ -1916,35 +1894,42 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
         die("Cannot find .ctx binary: %s\n", line->buff);
       }
 
-      //printf("Load this binary: %s, into this colour : %d\n", line, index);
-      int mean_read_len_in_this_binary = 0;
-      long long total_seq_in_this_binary = 0;
-
+      //printf("Load this binary: %s, into this colour : %d\n", line->buff, colour_loading_into);
+      
+      BinaryHeaderErrorCode ecode=EValid;
+      BinaryHeaderInfo binfo;
+      initialise_binary_header_info(&binfo, local_ginfo);
       total_seq_loaded += 
         load_single_colour_binary_data_from_filename_into_graph(path_ptr, db_graph,
-          &mean_read_len_in_this_binary,&total_seq_in_this_binary,
-          all_entries_are_unique, index,
-          only_load_kmers_already_in_hash, colour_clean,
-          db_graph_info->sample_ids[index],
-          load_all_kmers_but_only_increment_covg_on_new_ones);
+								local_ginfo,
+								all_entries_are_unique, colour_loading_into,
+								only_load_kmers_already_in_hash, colour_clean,
+								load_all_kmers_but_only_increment_covg_on_new_ones);
       
       all_entries_are_unique = false;
-      
-      graph_info_update_mean_readlen_and_total_seq(db_graph_info, index,
-        mean_read_len_in_this_binary, total_seq_in_this_binary);
 
       /* COMMENT_OUT_DURING_TESTS */
       printf("Loaded next binary; total kmers in graph is now %qd\n",
              hash_table_get_unique_kmers(db_graph));
       /*  */
+
+      //Now get metadata.
+      boolean do_not_copy_poolcleaning_metadata_from_local_ginfo =only_load_kmers_already_in_hash;
+      graph_info_set_all_metadata(db_graph_info, local_ginfo, 
+				  colour_loading_into,
+				  do_not_copy_poolcleaning_metadata_from_local_ginfo );
+      graph_info_initialise(local_ginfo);
+      
     }
   }
 
   strbuf_free(line);
   strbuf_free(dir);
+  
+
 
   fclose(fptr);
-  //  free(temp1);
+  free(local_ginfo);
   return total_seq_loaded;  
 }
 
@@ -2110,22 +2095,29 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
       }
 
       total_seq_loaded +=
-        load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(
-          path_ptr, db_graph,db_graph_info, false,
-          in_colour, true, clean_colour, false);
+        load_all_binaries_for_given_person_given_filename_of_file_listing_their_binaries(path_ptr, 
+											 db_graph,
+											 db_graph_info,
+											 false,
+											 in_colour, 
+											 true, 
+											 clean_colour, 
+											 false);
       
       char outfile[1000];
       outfile[0]='\0';
       sprintf(outfile, "%s_%s.ctx", line->buff, suffix);
 
-      db_graph_dump_single_colour_binary_of_specified_colour(
-        outfile, &db_node_check_status_not_pruned, db_graph, db_graph_info,
-        in_colour, BINVERSION);
+      db_graph_dump_single_colour_binary_of_specified_colour(outfile, 
+							     &db_node_check_status_not_pruned, 
+							     db_graph, 
+							     db_graph_info,
+							     in_colour, 
+							     BINVERSION);
 
       //reset that colour:
       db_graph_wipe_colour(in_colour, db_graph);
-      graph_info_set_seq(db_graph_info, in_colour, 0);
-      graph_info_set_mean_readlen(db_graph_info, in_colour, 0);
+      graph_info_initialise_one_colour(db_graph_info, in_colour);
     }
   }
 
@@ -3024,10 +3016,11 @@ void print_error_cleaning_object(FILE* fp, GraphInfo* ginfo, int colour)
 
 //return yes if signature is consistent
 boolean check_binary_signature_NEW(FILE * fp,int kmer_size, 
-				   BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+				   BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode,
+				   int first_colour_loading_into)
 				   
 {
-  boolean bin_header_ok = query_binary_NEW(fp, binfo, ecode);
+  boolean bin_header_ok = query_binary_NEW(fp, binfo, ecode, first_colour_loading_into);
 
   if (bin_header_ok==true)
     {
@@ -3047,7 +3040,7 @@ boolean check_binary_signature_NEW(FILE * fp,int kmer_size,
 
 //return true if signature is readable, checks binversion, number of bitfields, magic number.
 //does not check kmer is compatible with number of bitfields, leaves that to caller.
-boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode, int first_colour_loading_into)
 {
   int read;
   char magic_number[6];
@@ -3087,7 +3080,7 @@ boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCo
 				  
 				  //ok, the basic information looks OK
 				  // get extra information. In all cases, return false and an error code if anything looks bad.
-				  return get_extra_data_from_header(fp, binfo, ecode);
+				  return get_extra_data_from_header(fp, binfo, ecode, first_colour_loading_into);
 				  //also checks for the magic number at the end of the header
 				}
 			      else
@@ -3147,20 +3140,27 @@ boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCo
 // Binary Version 5: mean read lengths (NUMBER_OF_COLOURS of them) and then total sequences
 // Binary Version 6: as 5, and then the Sample Id's for each colour, then the sequencing error rates
 //                         and then the ErrorCleanings
-boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode, int first_colour_loading_into)
 {
   boolean no_problem=true;
+
+  if (first_colour_loading_into+binfo->number_of_colours>NUMBER_OF_COLOURS-1)
+    {
+      *ecode = EBinaryHasTooManyColoursGivenFirstColour;
+      no_problem=false;
+    }
+
   if ( (binfo->version==5) || (binfo->version==4) )//legacy
     {
-      no_problem = get_read_lengths_and_total_seqs_from_header(fp, binfo, ecode);
+      no_problem = get_read_lengths_and_total_seqs_from_header(fp, binfo, ecode, first_colour_loading_into);
     }
   else if (binfo->version==6)
     {
-      no_problem = get_read_lengths_and_total_seqs_from_header(fp, binfo, ecode);
+      no_problem = get_read_lengths_and_total_seqs_from_header(fp, binfo, ecode, first_colour_loading_into);
       if (no_problem==true)
 	{
 	  //get the extra stuff for binary version 6
-	  no_problem = get_binversion6_extra_data(fp, binfo, ecode);
+	  no_problem = get_binversion6_extra_data(fp, binfo, ecode, first_colour_loading_into);
 	}
     }
   else
@@ -3208,13 +3208,14 @@ boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHea
 }
 
 
-boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode,
+						    int first_colour_loading_into)
 {
   int read;
   int i;
   boolean no_problem=true;
   
-  for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+  for (i=first_colour_loading_into; (i<first_colour_loading_into+binfo->number_of_colours) && (no_problem==true); i++)
     {
       int mean_read_len=0;
       read = fread(&mean_read_len, sizeof(int),1,fp);
@@ -3225,12 +3226,12 @@ boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo*
 	}
       else
 	{
-	  binfo->ginfo->mean_read_length[i] = mean_read_len;
+	  binfo->ginfo->mean_read_length[i] += mean_read_len;
 	}
     }
   if (no_problem==true)
     {
-      for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+      for (i=first_colour_loading_into; (i<first_colour_loading_into+binfo->number_of_colours) && (no_problem==true); i++)
 	{
 	  long long tot=0;
 	  read = fread(&tot, sizeof(long long),1,fp);
@@ -3241,7 +3242,7 @@ boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo*
 	    }
 	  else
 	    {
-	      binfo->ginfo->total_sequence[i] =tot;
+	      binfo->ginfo->total_sequence[i] +=tot;
 	    }
 	}
     }
@@ -3250,14 +3251,14 @@ boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo*
 }
 
 //Binary header version 6 includes sample id's, and Seq Error rate and Error Cleaning Info.
-boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode)
+boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode, int first_colour_loading_into)
 {
   int read;
   int i;
   boolean no_problem=true;
 
   //first get sample information
-  for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+  for (i=first_colour_loading_into; (i<first_colour_loading_into+binfo->number_of_colours) && (no_problem==true); i++)
     {
       //get the length of the sample id name
       read = fread(&(binfo->ginfo->sample_id_lens[i]),sizeof(int),1,fp);
@@ -3271,8 +3272,9 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
 	  //now get the actual sample id for colour i
 	  if (binfo->ginfo->sample_id_lens[i]<MAX_LEN_SAMPLE_NAME)
 	    {
-	      read = fread(binfo->ginfo->sample_ids[i],sizeof(char),binfo->ginfo->sample_id_lens[i],fp);
-        binfo->ginfo->sample_ids[i][binfo->ginfo->sample_id_lens[i]] = '\0';
+	      char tmp_name[binfo->ginfo->sample_id_lens[i]+1];
+	      set_string_to_null(tmp_name,binfo->ginfo->sample_id_lens[i]+1);
+	      read = fread(tmp_name,sizeof(char),binfo->ginfo->sample_id_lens[i],fp);
 	      if (read==0)
 		{
 		  no_problem=false;
@@ -3281,6 +3283,8 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
 	      else
 		{
 		  binfo->ginfo->sample_ids[i][binfo->ginfo->sample_id_lens[i]] = '\0';
+		  set_string_to_null(binfo->ginfo->sample_ids[i], binfo->ginfo->sample_id_lens[i]+1);
+		  strcat(binfo->ginfo->sample_ids[i], tmp_name);
 		}
 	    }
 	  else
@@ -3293,7 +3297,7 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
     }
 
   //now get the sequencing error rate
-  for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+  for (i=first_colour_loading_into; (i<first_colour_loading_into+binfo->number_of_colours) && (no_problem==true); i++)
     {
       read = fread(&(binfo->ginfo->seq_err[i]),sizeof(long double),1,fp);
       if (read==0)
@@ -3306,7 +3310,7 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
 
 
   //now get the error cleaning information for each colour
-  for (i=0; (i<binfo->number_of_colours) && (no_problem==true); i++)
+  for (i=first_colour_loading_into; (i<first_colour_loading_into+binfo->number_of_colours) && (no_problem==true); i++)
     {
       no_problem = read_next_error_cleaning_object(fp, (binfo->ginfo->cleaning[i]) );
       if (no_problem==false)
@@ -3470,15 +3474,10 @@ int load_paths_from_filelist(char* filelist_path, char** path_array)
   return num_of_files;
 }
 
-void _check_colour_or_ctx_list(char* list_path, int kmer, char is_ctxlist)
+boolean _check_colour_or_ctx_list(char* list_path, int kmer,
+                                  char is_ctxlist)
 {
   int num_files_in_list = load_paths_from_filelist(list_path, NULL);
-
-  // Empty lists are valid
-  if(num_files_in_list == 0)
-  {
-    return;
-  }
 
   char** file_paths = malloc(sizeof(char*) * num_files_in_list);
 
@@ -3506,7 +3505,7 @@ void _check_colour_or_ctx_list(char* list_path, int kmer, char is_ctxlist)
     BinaryHeaderErrorCode ecode = EValid;
     BinaryHeaderInfo binfo;
     initialise_binary_header_info(&binfo, ginfo);
-    int check = query_binary_NEW(ctxlist_handle, &binfo, &ecode);
+    int check = query_binary_NEW(ctxlist_handle, &binfo, &ecode,0);
 
     graph_info_free(ginfo);
     fclose(ctxlist_handle);
@@ -3560,18 +3559,19 @@ void _check_colour_or_ctx_list(char* list_path, int kmer, char is_ctxlist)
   }
 
   free(file_paths);
+
+  return true;
 }
 
 // filename is a list of files, one for each colour (with optional second column
 // of sample-ids). Check they all exists, there are not too many, and that each
 // of them contains a list of valid binaries.
-// Die with error if not valid
-void check_colour_list(char* file_path, int kmer)
+boolean check_colour_list(char* file_path, int kmer)
 {
-  _check_colour_or_ctx_list(file_path, kmer, 0);
+  return _check_colour_or_ctx_list(file_path, kmer, 0);
 }
 
-void check_ctx_list(char* file_path, int kmer)
+boolean check_ctx_list(char* file_path, int kmer)
 {
-  _check_colour_or_ctx_list(file_path, kmer, 1);
+  return _check_colour_or_ctx_list(file_path, kmer, 1);
 }

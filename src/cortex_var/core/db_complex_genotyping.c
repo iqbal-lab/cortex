@@ -1409,7 +1409,7 @@ char** alloc_array_and_get_files_from_list(char* filelist, int num_files_in_list
 }
 
 
-
+/* 
 void wipe_colour_and_load_binaries(dBGraph* db_graph, int colour, char* bin1, char* bin2)
 {
   db_graph_wipe_colour(colour, db_graph);
@@ -1469,7 +1469,7 @@ void wipe_two_colours_and_load_two_binaries(dBGraph* db_graph, int colour1, int 
 
 
 }
-
+*/
 
 
 

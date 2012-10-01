@@ -178,7 +178,7 @@ boolean more_than_one_colour_in_multicol_binary(char* file, int kmer_size)
   BinaryHeaderInfo binfo;
   initialise_binary_header_info(&binfo, ginfo);
 
-  query_binary_NEW(fp, &binfo, &ecode);
+  query_binary_NEW(fp, &binfo, &ecode,0);
   fclose(fp);
   graph_info_free(ginfo);
   if (binfo.number_of_colours>1)
@@ -1864,7 +1864,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       BinaryHeaderErrorCode ecode=EValid;
       BinaryHeaderInfo binfo;
       initialise_binary_header_info(&binfo, temp_ginfo);
-      query_binary_NEW(fp, &binfo, &ecode);
+      query_binary_NEW(fp, &binfo, &ecode,0);
       fclose(fp);
       graph_info_free(temp_ginfo);
 
@@ -2107,7 +2107,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       BinaryHeaderErrorCode ecode=EValid;      
       BinaryHeaderInfo binfo;
       initialise_binary_header_info(&binfo, ginfo);
-      boolean is_multicol_bin_ok = check_binary_signature_NEW(fp, cmd_ptr->kmer_size, &binfo, &ecode);
+      boolean is_multicol_bin_ok = check_binary_signature_NEW(fp, cmd_ptr->kmer_size, &binfo, &ecode,0);
       fclose(fp);
       graph_info_free(ginfo);
 

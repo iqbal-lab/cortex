@@ -53,7 +53,7 @@ typedef struct
 ErrorCleaning* error_cleaning_alloc_and_init();
 void error_cleaning_initialise(ErrorCleaning* cl);
 void error_cleaning_free(ErrorCleaning* );
-
+void error_cleaning_assign_with_OR(ErrorCleaning* target, ErrorCleaning* src, boolean dont_set_pool_cleaning);
 
 typedef struct{
   int           sample_id_lens[NUMBER_OF_COLOURS];
@@ -67,6 +67,7 @@ typedef struct{
 GraphInfo* graph_info_alloc_and_init();
 void graph_info_free(GraphInfo* ginfo);
 void graph_info_initialise(GraphInfo* ginfo);
+void graph_info_initialise_one_colour(GraphInfo* ginfo, int colour);
 
 //set total amount of sequence in a colour
 void graph_info_set_seq(GraphInfo* ginfo, int colour, long long num_bp);
@@ -81,7 +82,7 @@ void graph_info_unset_remv_low_cov_sups(GraphInfo* ginfo, int colour);
 void graph_info_set_remv_low_cov_nodes(GraphInfo* ginfo, int colour, int thresh);
 void graph_info_UNset_remv_low_cov_nodes(GraphInfo* ginfo, int colour);
 void graph_info_set_seq_err(GraphInfo* ginfo, int col, long double err);
-
+void graph_info_set_all_metadata(GraphInfo* target, GraphInfo* src, int colour, boolean dont_set_pool_cleaning);
 void graph_info_set_specific_colour_to_cleaned_against_pool(GraphInfo* ginfo, int colour, char* multicol_binary, int colour_in_multicol);
 void graph_info_unset_specific_colour_from_cleaned_against_pool(GraphInfo* ginfo, int colour);
 

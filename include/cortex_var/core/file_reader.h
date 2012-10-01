@@ -62,6 +62,7 @@ typedef enum {
   EFailedToReadErrorCleaningInfo=17,
   ECanReadEndOfHeaderMagicNumberButIsWrong = 18,
   EGarbage = 19,
+  EBinaryHasTooManyColoursGivenFirstColour=20, //ie starting at colour 10, loading 100 colours but 110>NUMBER_OF_COLOURS-1
 } BinaryHeaderErrorCode;
 typedef struct {
   int version;
@@ -151,16 +152,14 @@ int load_seq_into_array(FILE* chrom_fptr, int number_of_nodes_to_load, int lengt
 
 
 //functions for loading multicolour graphs
-//long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
-//							   int* num_cols_in_loaded_binary, int** array_mean_readlens, long long** array_total_seqs);
 long long load_multicolour_binary_from_filename_into_graph(char* filename,  dBGraph* db_graph, GraphInfo* ginfo, int* num_cols_in_loaded_binary); 
 
-// last arg is to load the "union" of graphs
+// last arg is to load the "union" of graphs. This is not a special case of load_multicolour
 long long load_single_colour_binary_data_from_filename_into_graph(char* filename,  dBGraph* db_graph, 
-								  int* mean_readlen, long long* total_seq,
-								  boolean all_entries_are_unique, int index,
+								  GraphInfo* ginfo, 
+								  boolean all_entries_are_unique, 
+								  int colour_loading_into,
 								  boolean only_load_kmers_already_in_hash, int colour_clean,
-								  char* sample_identity,
 								  boolean load_all_kmers_but_only_increment_covg_on_new_ones);
 								  
 
@@ -243,22 +242,26 @@ void print_binary_signature_NEW(FILE * fp,int kmer_size, int num_cols, GraphInfo
 
 //boolean check_binary_signature(FILE * fp,int kmer_size, int bin_version, int* number_of_colours_in_binary, int** array_mean_readlens, long long** array_total_seqs, int *return_binversion);
 boolean check_binary_signature_NEW(FILE * fp,int kmer_size, 
-				   BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+				   BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode,
+				   int first_colour_loading_into);
 
-//boolean query_binary(FILE * fp,int* binary_version, int* kmer_size, int* num_bitfields, int* number_of_colours_in_binary); //return true if binary header readable and has magic number
-boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+boolean query_binary_NEW(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode,
+			 int first_colour_loading_into);
 
 void print_error_cleaning_object(FILE* fp, GraphInfo* ginfo, int colour);
 
-boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
-boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
-boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode);
+boolean get_extra_data_from_header(FILE * fp, BinaryHeaderInfo* binfo, 
+				   BinaryHeaderErrorCode* ecode, int first_colour_loading_into);
+boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo* binfo, 
+						    BinaryHeaderErrorCode* ecode, int first_colour_loading_into);
+
+boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode, int first_colour_loading_into);
 boolean read_next_error_cleaning_object(FILE* fp, ErrorCleaning* cl);
 
 
 int load_paths_from_filelist(char* filelist_path, char** path_array);
 
-void check_colour_list(char* filename, int kmer);
-void check_ctx_list(char* filename, int kmer);
+boolean check_colour_list(char* filename, int kmer);
+boolean check_ctx_list(char* filename, int kmer);
 
 #endif /* FILE_READER_H_ */

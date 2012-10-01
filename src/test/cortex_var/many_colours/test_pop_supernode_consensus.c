@@ -322,8 +322,9 @@ void test_find_next_node_in_supernode()
 
 
   //now start walking 
-  Orientation start_orientation = forward, next_orientation, current_orientation;
-  dBNode* current_node=testnode;
+  Orientation start_orientation = forward;
+  Orientation current_orientation,next_orientation;
+  //  dBNode* current_node=testnode;
 
   if (db_node_is_supernode_end(testnode, forward, 1, hash_table))
     {
@@ -340,7 +341,7 @@ void test_find_next_node_in_supernode()
   
 
 
-  current_node=next_node;
+  //  current_node=next_node;
   current_orientation=next_orientation;
 
   next_node = db_graph_get_next_node_in_supernode_for_specific_person_or_pop(testnode, start_orientation, &next_orientation, 1, hash_table);

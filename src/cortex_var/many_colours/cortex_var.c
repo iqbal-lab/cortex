@@ -856,6 +856,11 @@ int main(int argc, char **argv)
 	  timestamp();
 	  printf("Loaded the multicolour binary %s, and got %qd kmers\n", cmd_line->multicolour_bin, bp_loaded/db_graph->kmer_size);
 	  graph_has_had_no_other_binaries_loaded=false;
+	  printf("ZAM DEBUG Run health check on loaded graph immediately on loading \n");
+	  db_graph_health_check(false, db_graph);
+	  printf("End of health check\n");
+	  timestamp();
+
 	}
 
       if (cmd_line->input_colours==true)
@@ -901,6 +906,13 @@ int main(int argc, char **argv)
 "however, this should have been caught as soon as Cortex parsed your command-line.\n"
 "Please inform Zam Iqbal (zam@well.ox.ac.uk) so he can fix that UI bug\n");
 		}
+
+
+	      printf("ZAM DEBUG Run health check on loaded graph just before cleaning \n");
+	      db_graph_health_check(false, db_graph);
+	      printf("End of health check\n");
+	      timestamp();
+
 	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
 		     cmd_line->colour_list,cmd_line->clean_colour);
 	      graph_info_set_specific_colour_to_cleaned_against_pool(db_graph_info,  first_colour_data_starts_going_into, 
@@ -913,6 +925,12 @@ int main(int argc, char **argv)
 	      graph_info_unset_specific_colour_from_cleaned_against_pool(db_graph_info, first_colour_data_starts_going_into);
 	      db_graph_info->cleaning[first_colour_data_starts_going_into]->cleaned_against_another_graph=false;
 	      printf("Completed dumping of clean binaries\n");
+
+	      printf("ZAM DEBUG Run health check on loaded graph after dum[ing cleaned bins\n");
+	      db_graph_health_check(false, db_graph);
+	      printf("End of health check\n");
+	      timestamp();
+
 	    }
 
 
@@ -1069,14 +1087,14 @@ int main(int argc, char **argv)
 
 
 
-  if (cmd_line->health_check==true)
-    {
+  //  if (cmd_line->health_check==true)
+  // {
       timestamp();
-      printf("Run health check on loaded graph\n");
+      printf("Run health check\n");
       db_graph_health_check(false, db_graph);
       printf("End of health check\n");
       timestamp();
-    }
+      //  }
 
 
   if (cmd_line->remv_low_covg_sups_threshold!=-1)
@@ -1138,11 +1156,6 @@ int main(int argc, char **argv)
 	  timestamp();
 	  printf("Binary dumped\n");
 	  
-	  printf("ZAM DEBUG Run health check on loaded graph after dumping binary\n");
-	  db_graph_health_check(false, db_graph);
-	  printf("End of health check\n");
-	  timestamp();
-
 	}
       else
 	{
