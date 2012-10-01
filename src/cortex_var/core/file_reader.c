@@ -1929,7 +1929,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
 
 
   fclose(fptr);
-  free(local_ginfo);
+  graph_info_free(local_ginfo);
   return total_seq_loaded;  
 }
 
@@ -2117,7 +2117,9 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
 
       //reset that colour:
       db_graph_wipe_colour(in_colour, db_graph);
-      graph_info_initialise_one_colour(db_graph_info, in_colour);
+      // ..but maintain the fact that we are dumping cleaned binaries, and the name of the binary against which
+      // we are cleaning
+      graph_info_initialise_one_colour_except_pool_cleaning(db_graph_info, in_colour);
     }
   }
 
@@ -3545,12 +3547,6 @@ boolean _check_colour_or_ctx_list(char* list_path, int kmer,
     }
   }
 
-  if(!is_ctxlist && num_of_colours > NUMBER_OF_COLOURS)
-  {
-    die("Too many colours [%i] in colourlist: %s\n"
-        "  Please recompile with more colours.\n",
-        num_of_colours, list_path);
-  }
 
   // Cleanup
   for(i = 0; i < num_files_in_list; i++)

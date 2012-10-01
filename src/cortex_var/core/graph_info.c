@@ -58,16 +58,25 @@ void error_cleaning_free(ErrorCleaning* cl)
 
 void error_cleaning_initialise(ErrorCleaning* cl)
 {
+  error_cleaning_initialise_except_pool_cleaning(cl);
+
+  cl->cleaned_against_another_graph=false;
+
+  set_string_to_null(cl->name_of_graph_against_which_was_cleaned, MAX_FILENAME_LENGTH);
+  strcat(cl->name_of_graph_against_which_was_cleaned, "undefined");
+
+  cl->len_name_of_graph_against_which_was_cleaned=
+    strlen(cl->name_of_graph_against_which_was_cleaned);
+}
+
+
+void error_cleaning_initialise_except_pool_cleaning(ErrorCleaning* cl)
+{
   cl->tip_clipping=false;
   cl->remv_low_cov_sups=false;
   cl->remv_low_cov_nodes=false;
-  cl->cleaned_against_another_graph=false;
   cl->remv_low_cov_sups_thresh=-1;
   cl->remv_low_cov_nodes_thresh=-1;
-  cl->name_of_graph_against_which_was_cleaned[0]='\0';
-  strcat(cl->name_of_graph_against_which_was_cleaned, "undefined");
-  cl->len_name_of_graph_against_which_was_cleaned=
-    strlen(cl->name_of_graph_against_which_was_cleaned);
 }
 
 void error_cleaning_assign_with_OR(ErrorCleaning* target, ErrorCleaning* src, boolean dont_set_pool_cleaning)
@@ -75,11 +84,11 @@ void error_cleaning_assign_with_OR(ErrorCleaning* target, ErrorCleaning* src, bo
   target->tip_clipping |= src->tip_clipping;
   target->remv_low_cov_sups |= src->remv_low_cov_sups;
   target->remv_low_cov_nodes |= src->remv_low_cov_nodes;
-  target->cleaned_against_another_graph |=src->cleaned_against_another_graph;
   target->remv_low_cov_sups_thresh= src->remv_low_cov_sups_thresh;
   target->remv_low_cov_nodes_thresh= src->remv_low_cov_nodes_thresh;
   if ((dont_set_pool_cleaning==false) && (strcmp(src->name_of_graph_against_which_was_cleaned, "") !=0))
     {
+      target->cleaned_against_another_graph |=src->cleaned_against_another_graph;
       target->len_name_of_graph_against_which_was_cleaned= src->len_name_of_graph_against_which_was_cleaned;
       target->name_of_graph_against_which_was_cleaned[0]='\0';
       strcat(target->name_of_graph_against_which_was_cleaned, src->name_of_graph_against_which_was_cleaned);
@@ -141,7 +150,7 @@ void graph_info_initialise(GraphInfo* ginfo)
     }
 }
 
-void graph_info_initialise_one_colour(GraphInfo* ginfo, int colour)
+void graph_info_initialise_one_colour_except_pool_cleaning(GraphInfo* ginfo, int colour)
 {
   set_string_to_null(ginfo->sample_ids[colour], MAX_LEN_SAMPLE_NAME);
   strcat(ginfo->sample_ids[colour], "undefined");
@@ -149,7 +158,7 @@ void graph_info_initialise_one_colour(GraphInfo* ginfo, int colour)
   graph_info_set_seq(ginfo, colour, 0);
   graph_info_set_mean_readlen(ginfo, colour, 0);
   ginfo->seq_err[colour]=0.01;
-  error_cleaning_initialise(ginfo->cleaning[colour]);
+  error_cleaning_initialise_except_pool_cleaning(ginfo->cleaning[colour]);
 }
 
 

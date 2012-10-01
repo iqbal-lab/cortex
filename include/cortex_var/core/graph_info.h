@@ -51,6 +51,7 @@ typedef struct
 } ErrorCleaning;
 
 ErrorCleaning* error_cleaning_alloc_and_init();
+void error_cleaning_initialise_except_pool_cleaning(ErrorCleaning* cl);
 void error_cleaning_initialise(ErrorCleaning* cl);
 void error_cleaning_free(ErrorCleaning* );
 void error_cleaning_assign_with_OR(ErrorCleaning* target, ErrorCleaning* src, boolean dont_set_pool_cleaning);
@@ -67,7 +68,7 @@ typedef struct{
 GraphInfo* graph_info_alloc_and_init();
 void graph_info_free(GraphInfo* ginfo);
 void graph_info_initialise(GraphInfo* ginfo);
-void graph_info_initialise_one_colour(GraphInfo* ginfo, int colour);
+void graph_info_initialise_one_colour_except_pool_cleaning(GraphInfo* ginfo, int colour);
 
 //set total amount of sequence in a colour
 void graph_info_set_seq(GraphInfo* ginfo, int colour, long long num_bp);
