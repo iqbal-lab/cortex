@@ -23,6 +23,14 @@
  *
  * **********************************************************************
  */
+/*
+  test_file_reader.h
+*/
+
+#ifndef TEST_FILE_READER_H_
+#define TEST_FILE_READER_H_
+
+#include "global.h"
 
 void test_coverage_is_correctly_counted_on_loading_from_file();
 void test_dump_load_sv_trio_binary();
@@ -42,3 +50,5 @@ void test_read_next_variant_from_full_flank_file_4();
 void test_getting_readlength_distribution();
 void test_loading_binary_data_iff_it_overlaps_a_fixed_colour();
 void test_load_binversion5_binary();
+
+#endif /* TEST_FILE_READER_H_ */

@@ -24,13 +24,18 @@
  *
  * **********************************************************************
  */
+/*
+  graph_info.c
+*/
 
-#include <dB_graph.h>
-#include <graph_info.h>
-#include <file_reader.h>
 #include <string.h>
 #include <global.h>
 #include <stdlib.h>
+
+// cortex_var headers
+#include "dB_graph.h"
+#include "graph_info.h"
+#include "file_reader.h"
 
 int MAX_LEN_SAMPLE_NAME=1000;
 

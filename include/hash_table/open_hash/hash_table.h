@@ -31,15 +31,14 @@
   all the routines as prefixed with hash_table
 */
 
+#ifndef OPEN_HASH_TABLE_H_
+#define OPEN_HASH_TABLE_H_
 
-#ifndef HASH_H_
-#define HASH_H_
+#include "global.h"
+#include "element.h"
 
-#include <element.h>
-
-
-
-typedef struct{
+typedef struct
+{
   short kmer_size;
   long long number_buckets;
   int bucket_size;
@@ -62,12 +61,15 @@ boolean hash_table_apply_or_insert(Key key, void (*f)(Element*), HashTable *);
 void hash_table_traverse(void (*f)(Element *),HashTable *);
 long long hash_table_traverse_returning_sum(long long (*f)(Element *),HashTable * hash_table);
 void hash_table_traverse_passing_int(void (*f)(Element *, int*),HashTable * hash_table, int* num);
-void hash_table_traverse_passing_ints_and_path(void (*f)(Element *, int*, int*, dBNode**, Orientation*, Nucleotide*, char*, int),
-					       HashTable * hash_table, int* num1, int* num2, 
-					       dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len);
-void hash_table_traverse_passing_3ints_and_path(void (*f)(Element *, int*, int*, int*, dBNode**, Orientation*, Nucleotide*, char*, int),
-						HashTable * hash_table, int* num1, int* num2, int* num3, 
-						dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len);
+void hash_table_traverse_passing_ints_and_path(
+  void (*f)(Element *, int*, int*, dBNode**, Orientation*, Nucleotide*, char*, int),
+  HashTable * hash_table, int* num1, int* num2, 
+  dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len);
+
+void hash_table_traverse_passing_3ints_and_path(
+  void (*f)(Element *, int*, int*, int*, dBNode**, Orientation*, Nucleotide*, char*, int),
+  HashTable * hash_table, int* num1, int* num2, int* num3, 
+  dBNode** p_n, Orientation* p_o, Nucleotide* p_lab, char* p_str, int len);
 
 
 //if the element is not in table create an element with key and adds it
@@ -83,4 +85,4 @@ Element * hash_table_find(Key key, HashTable * hash_table);
 
 long long hash_table_get_capacity(HashTable * hash_table);
 
-#endif /* HASH_H_ */
+#endif /* OPEN_HASH_TABLE_H_ */

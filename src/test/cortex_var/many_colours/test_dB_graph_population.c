@@ -24,25 +24,27 @@
  *
  * **********************************************************************
  */
+/*
+  test_dB_graph_population.c
+*/
  
-// System libraries
+// system libraries
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <limits.h>
 
-// Third party libraries
+// third party libraries
 #include <CUnit.h>
-
-// Our headers
 #include <Basic.h>
-#include <dB_graph.h>
-#include <element.h>
-#include <binary_kmer.h>
-#include <file_reader.h>
+
+// cortex_var headers
+#include "dB_graph.h"
+#include "element.h"
+#include "binary_kmer.h"
+#include "file_reader.h"
 #include "test_dB_graph_population.h"
 #include "dB_graph_population.h"
-#include <global.h>
 
 // there are "pure" hash table tests which know nothing of the graph. This on the other hand
 // is a sanity check one level up from those
@@ -179,7 +181,7 @@ void test_tip_clipping()
   int number_of_bits = 4;
   int bucket_size = 4;
 
-  int min_coverage, max_coverage;
+  Covg min_coverage, max_coverage;
   double avg_coverage;
   boolean is_cycle;
   BinaryKmer tmp_kmer1;
@@ -375,7 +377,7 @@ void test_get_perfect_path_in_one_colour()
   char tmp_seq[100];
 
   double  avg_coverage;
-  int min_coverage, max_coverage;
+  Covg min_coverage, max_coverage;
 
   dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
 
@@ -760,7 +762,7 @@ void test_detect_and_smooth_bubble()
   boolean bubble;
 
   double avg_coverage1,avg_coverage2;
-  int min_coverage1,max_coverage1, min_coverage2,max_coverage2;
+  Covg min_coverage1, max_coverage1, min_coverage2, max_coverage2;
   
   //check a perfect bubble 
 
@@ -869,7 +871,7 @@ void test_detect_and_smooth_bubble()
   char tmp_seq[101];
 
   double avg_coverage;
-  int min_coverage, max_coverage;
+  Covg min_coverage, max_coverage;
   
   length_flank5p = db_graph_get_perfect_path_for_specific_person_or_pop(node1, reverse,100,
 									&db_node_action_set_status_visited,
@@ -1274,7 +1276,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
   int length_path;
   double avg_coverage;
   boolean is_cycle;
-  int min_coverage, max_coverage;
+  Covg min_coverage, max_coverage;
 
   //  printf("Check if all nodes have status none - this should be true\n");
   CU_ASSERT(db_graph_is_condition_true_for_all_nodes_in_supernode(test_element1, 50,						   
@@ -1444,8 +1446,8 @@ void test_db_graph_supernode_for_specific_person_or_pop()
 
   //coverage variables
   double avg_coverage=0;
-  int max_coverage=0;
-  int min_coverage=0;
+  Covg max_coverage = 0;
+  Covg min_coverage = 0;
   boolean is_cycle=false;
 
   int length = db_graph_supernode_for_specific_person_or_pop(test_elem1,max_expected_supernode_length, &db_node_action_set_status_visited_or_visited_and_exists_in_reference,
@@ -4274,11 +4276,11 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
   int num_nodes_in_array1_not_array2 = 0;
   int num_nodes_in_array2_not_array1 = 0;
 
-  int coverages_of_nodes_in_array1_not_array2[14];
-  int coverages_of_nodes_in_array2_not_array1[6];
+  Covg coverages_of_nodes_in_array1_not_array2[14];
+  Covg coverages_of_nodes_in_array2_not_array1[6];
   
-  int* ptrs_to_coverages_of_nodes_in_array1_not_array2[14];
-  int* ptrs_to_coverages_of_nodes_in_array2_not_array1[6];
+  Covg* ptrs_to_coverages_of_nodes_in_array1_not_array2[14];
+  Covg* ptrs_to_coverages_of_nodes_in_array2_not_array1[6];
 
   dBNode* working_array1[20];
   dBNode* working_array2[20];

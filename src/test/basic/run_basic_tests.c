@@ -24,11 +24,19 @@
  *
  * **********************************************************************
  */
+/*
+  run_basic_tests.c
+*/
 
-#include <test_binary_kmer.h>
-#include <test_seq.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 #include <CUnit.h>
 #include <Basic.h>
+
+// cortex_var headers
+#include "test_binary_kmer.h"
+#include "test_seq.h"
 
 int  main()
 {

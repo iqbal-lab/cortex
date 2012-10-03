@@ -24,10 +24,8 @@
  *
  * **********************************************************************
  */
-
 /*
   cmd_line.h - manipulation of command line
-  
 */
 
 
@@ -35,25 +33,19 @@
 #define CMD_LINE_H_
 
 #include <stdio.h>
-#include <global.h>
-#include <file_format.h>
-#include <model_selection.h>
-#include <db_complex_genotyping.h>
+
+#include "global.h"
+#include "file_format.h"
+#include "model_selection.h"
+#include "db_complex_genotyping.h"
 
 #define MAX_FILENAME_LEN 1000
 #define MAX_SUFFIX_LEN 100
-#define  MAX_LEN_DETECT_BUB_COLOURINFO 500 //will be info of form 1,2,3/5,6,7,8,9 specifying how you call vars between colours
-#define  MAX_COLOURS_ALLOWED_TO_MERGE 3000 //arbitrary limit, can be increased
+// DETECT_BUB_COLOURINFO of form 1,2,3/5,6,7,8,9 specifying how you call vars between colours
+#define MAX_LEN_DETECT_BUB_COLOURINFO 500
+#define MAX_COLOURS_ALLOWED_TO_MERGE 3000 //arbitrary limit, can be increased
 #define LEN_ERROR_STRING 400
 
-//typedef enum
-// {
-//   FASTA = 0,
-//   FASTQ = 1,
-//   CTX   = 2,
-//   UNSPECIFIED = 3,
-   //VAR   = 3,
-// } FileFormat ;
 
 typedef struct
 {

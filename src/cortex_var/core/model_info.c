@@ -24,8 +24,11 @@
  *
  * **********************************************************************
  */
+/*
+  model_info.c
+*/
 
-#include <model_info.h>
+#include "model_info.h"
 
 void initialise_model_info(GraphAndModelInfo* model_info, GraphInfo* ginfo, 
 			   long long genome_len, double mu, //double seq_err_rate_per_base,

@@ -34,21 +34,22 @@
 #include <math.h>
 #include <time.h>
 
-#include <element.h>
-#include <file_reader.h>
-#include <cmd_line.h>
-#include <graph_info.h>
-#include <db_differentiation.h>
-#include <maths.h>
-#include <seq_error_rate_estimation.h>
+// cortex_var headers
+#include "element.h"
+#include "file_reader.h"
+#include "cmd_line.h"
+#include "graph_info.h"
+#include "db_differentiation.h"
+#include "maths.h"
+#include "seq_error_rate_estimation.h"
 
 void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alleles, 
-  GraphInfo* db_graph_info, 
-  dBGraph* db_graph, 
-  int ref_colour, 
-  long long genome_size,
-  long double default_seq_err_rate, 
-  char* output_file)
+                                                       GraphInfo* db_graph_info, 
+                                                       dBGraph* db_graph, 
+                                                       int ref_colour, 
+                                                       //long long genome_size,
+                                                       long double default_seq_err_rate, 
+                                                       char* output_file)
 {
 
   int max_read_length = 2*(db_graph->kmer_size);
@@ -163,13 +164,14 @@ void estimate_seq_error_rate_from_snps_for_each_colour(char* colourlist_snp_alle
             line->buff);
         }
 
-        int num_snps_tested = 0;
+        // unused
+        //int num_snps_tested = 0;
 
 
         long double seq_err = estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(
           path_ptr, db_graph, colour, seq, kmer_window, &file_reader_fasta,
-          array_nodes, array_or, &num_snps_tested, max_read_length,
-          default_seq_err_rate, fout);
+          array_nodes, array_or, //&num_snps_tested,
+          max_read_length, default_seq_err_rate, fout);
 
         db_graph_info->seq_err[colour] = seq_err;
       }
@@ -209,7 +211,7 @@ long double estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta(
   char* fasta, dBGraph* db_graph, int colour, 
   Sequence* seq, KmerSlidingWindow* kmer_window,
   int (*file_reader)(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry),
-  dBNode** array_nodes, Orientation* array_or, int* num_snps_tested,
+  dBNode** array_nodes, Orientation* array_or, //int* num_snps_tested, //unused
   int max_read_length, long double default_seq_err, FILE* fout)
 {
 

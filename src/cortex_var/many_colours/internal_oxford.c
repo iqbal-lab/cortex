@@ -24,15 +24,19 @@
  *
  * **********************************************************************
  */
+/*
+  internal_oxford.c
+*/
 
-#include <element.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <file_reader.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
 #include <string.h>
 
+// cortex_var headers
+#include "element.h"
+#include "file_reader.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
 
 
 void set_ref_chromosome_file_pointers(char** reference_chromosome_file_ptrs, int num_chromosomes)

@@ -24,13 +24,17 @@
  *
  * **********************************************************************
  */
-
-//#include "test_dB_graph.h"
-#include <cmd_line.h>
-#include <test_cmd_line.h>
+/*
+  run_cmd_line_tests.c
+*/
 
 #include <CUnit.h>
 #include <Basic.h>
+
+// cortex_var headers
+#include "cmd_line.h"
+#include "test_cmd_line.h"
+//#include "test_dB_graph.h"
 
 int  main()
 {

@@ -24,7 +24,6 @@
  *
  * **********************************************************************
  */
-
 /*
   dB_graph.h 
 
@@ -34,8 +33,10 @@
 #ifndef DB_GRAPH_H_
 #define DB_GRAPH_H_
 
-#include <open_hash/hash_table.h>
 #include <stdio.h>
+  
+#include "global.h"
+#include "open_hash/hash_table.h"
 
 typedef HashTable dBGraph;
 

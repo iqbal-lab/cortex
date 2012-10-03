@@ -23,6 +23,14 @@
  *
  * **********************************************************************
  */
+/*
+  test_dB_graph_population.h
+*/
+
+#ifndef TEST_DB_GRAPH_POP_H_
+#define TEST_DB_GRAPH_POP_H_
+
+#include "global.h"
 
 void test_hash_table_find();
 void test_tip_clipping();
@@ -56,3 +64,5 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays();
 void test_apply_to_all_nodes_in_path_defined_by_fasta();
 void test_does_this_path_exist_in_this_colour();
 void test_dump_covg_distribution();
+
+#endif /* TEST_DB_GRAPH_POP_H_ */

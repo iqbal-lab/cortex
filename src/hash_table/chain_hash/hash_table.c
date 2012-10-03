@@ -25,14 +25,15 @@
  * **********************************************************************
  */
 /*
-  hash_table.c -- implementation
- */
+  chain_hash/hash_table.c -- implementation
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <hash_table.h>
-#include <priority_queue.h>
-#include <hash_value.h>
+
+#include "hash_table.h"
+#include "priority_queue.h"
+#include "hash_value.h"
 
 HashTable * hash_table_new(unsigned int number_buckets, short kmer_size){ 
   

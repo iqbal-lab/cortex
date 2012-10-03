@@ -24,19 +24,21 @@
  *
  * **********************************************************************
  */
-
-
+/*
+  db_variants.h
+*/
 
 #ifndef DB_VARIANTS_H_
 #define DB_VARIANTS_H_
 
-#include <graph_info.h>
-#include <model_info.h>
-#include <genotyping_element.h>
-#include <element.h>
-#include <experiment.h>
-#include <dB_graph.h>
-#include <experiment.h>
+#include "global.h"
+#include "graph_info.h"
+#include "model_info.h"
+#include "genotyping_element.h"
+#include "element.h"
+#include "experiment.h"
+#include "dB_graph.h"
+#include "experiment.h"
 
 #define MAX_VARNAME_LEN 200
 
@@ -159,7 +161,8 @@ typedef struct {
 
 //functions for VariantBranchesAndFlanks
 
-VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p, int len_br1, int len_br2, int len_3p, int kmer_size);
+VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(
+  int len_5p, int len_br1, int len_br2, int len_3p, int kmer_size);
 
 void free_VariantBranchesAndFlanks_object(VariantBranchesAndFlanks* var);
 
@@ -184,10 +187,10 @@ void set_variant_branches_but_flanks_to_null(VariantBranchesAndFlanks* var,
 
 
 void set_genotyping_variant_branches_and_flanks(GenotypingVariantBranchesAndFlanks* var, 
-						GenotypingElement** flank5p,    Orientation* flank5p_or,    int len_flank5p,
-						GenotypingElement** one_allele, Orientation* one_allele_or, int len_one_allele, 
+						GenotypingElement** flank5p,      Orientation* flank5p_or,      int len_flank5p,
+						GenotypingElement** one_allele,   Orientation* one_allele_or,   int len_one_allele, 
 						GenotypingElement** other_allele, Orientation* other_allele_or, int len_other_allele, 
-						GenotypingElement** flank3p,    Orientation* flank3p_or,    int len_flank3p, WhichAlleleIsRef which);
+						GenotypingElement** flank3p,      Orientation* flank3p_or,      int len_flank3p, WhichAlleleIsRef which);
 
 void set_genotyping_variant_branches_but_flanks_to_null(GenotypingVariantBranchesAndFlanks* var, 
 							GenotypingElement** one_allele, Orientation* one_allele_or, int len_one_allele, 
@@ -197,39 +200,55 @@ void set_genotyping_variant_branches_but_flanks_to_null(GenotypingVariantBranche
 void set_status_of_nodes_in_branches(VariantBranchesAndFlanks* var, NodeStatus status);
 void set_status_of_genotyping_nodes_in_branches(GenotypingVariantBranchesAndFlanks* var, NodeStatus status);
 
-void exact_copy_variant_branches_and_flanks(VariantBranchesAndFlanks copy_to, const VariantBranchesAndFlanks copy_from);
-void copy_variant_branches_and_flanks_switching_branches(VariantBranchesAndFlanks copy_to, const VariantBranchesAndFlanks copy_from);
+void exact_copy_variant_branches_and_flanks(VariantBranchesAndFlanks copy_to,
+                                            const VariantBranchesAndFlanks copy_from);
+
+void copy_variant_branches_and_flanks_switching_branches(
+  VariantBranchesAndFlanks copy_to, const VariantBranchesAndFlanks copy_from);
+
 void action_set_flanks_and_branches_to_be_ignored(VariantBranchesAndFlanks* var);
 
 
 void db_variant_action_do_nothing(VariantBranchesAndFlanks* var);
-boolean  db_variant_precisely_one_allele_is_in_given_func_of_colours(VariantBranchesAndFlanks* var, Edges (*get_colour)(const dBNode*), dBGraph* db_graph, WhichAllele* which);
+boolean db_variant_precisely_one_allele_is_in_given_func_of_colours(
+  VariantBranchesAndFlanks* var, Edges (*get_colour)(const dBNode*),
+  dBGraph* db_graph, WhichAllele* which);
 
 //toy function - do not use
-zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlanks* var, Edges (*get_colour)(const dBNode*), dBGraph* db_graph);
+zygosity db_variant_get_zygosity_in_given_func_of_colours(
+  VariantBranchesAndFlanks* var, Edges (*get_colour)(const dBNode*),
+  dBGraph* db_graph);
 
 
 //genotyping of a site known to be a variant
 void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl);
-void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour);
-void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, double sequencing_depth_of_coverage, int read_length, int colour);
+
+void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(
+  AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base,
+  double sequencing_depth_of_coverage, int read_length, int colour);
+
+void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(
+  AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base,
+  double sequencing_depth_of_coverage, int read_length, int colour);
 
 
-
-
-double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(zygosity genotype, double error_rate_per_base, int covg_branch_1, int covg_branch_2, 
-									double theta_one, double theta_other, int kmer);
-
-
+double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
+  zygosity genotype, double error_rate_per_base,
+  Covg covg_branch_1, Covg covg_branch_2, 
+  double theta_one, double theta_other); //int kmer was an unused param
 
 
 long long get_big_theta(AnnotatedPutativeVariant* annovar);
 
 
-
 //utility functions
 boolean get_num_effective_reads_on_branch(int* array, dBNode** allele, int how_many_nodes);
-int count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colour, boolean* too_short);
-int count_reads_on_allele_in_specific_colour_given_array_of_cvgs(int* covgs, int len, boolean* too_short);
-int count_reads_on_allele_in_specific_func_of_colours(dBNode** allele, int len, uint32_t (*sum_of_covgs_in_desired_colours)(const Element *), boolean* too_short);
-#endif
+Covg count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colour, boolean* too_short);
+Covg count_reads_on_allele_in_specific_colour_given_array_of_cvgs(Covg* covgs, int len, boolean* too_short);
+
+Covg count_reads_on_allele_in_specific_func_of_colours(
+  dBNode** allele, int len,
+  Covg (*sum_of_covgs_in_desired_colours)(const Element *),
+  boolean* too_short);
+
+#endif /* DB_VARIANTS_H_ */

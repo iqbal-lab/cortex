@@ -24,41 +24,43 @@
  *
  * **********************************************************************
  */
+/*
+  genotyping_element.c - copy of element.c with modifications
+*/
 
-
-
-#include <genotyping_element.h>
 #include <stdlib.h>
-#include <global.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
+#include <inttypes.h>
+
+// cortex_var headers
+#include "genotyping_element.h"
+
+// Only print covg overflow warning once
+char genotyping_overflow_warning_printed = 0;
 
 //currently noone calls this in normal use
 // In normal use, the priority queue allocates space to put the eloement directly within,
 // and calls genotyping_element_initialise
 GenotypingElement* new_genotyping_element()
 {
-
-
   GenotypingElement* e = malloc(sizeof(GenotypingElement));
 
   if (e==NULL)
-    {
-      die("Unable to allocate a new genotyping_element");
-    }
+  {
+    die("Unable to allocate a new genotyping_element");
+  }
   
   binary_kmer_initialise_to_zero(&(e->kmer));
 
   int i;
   for (i=0; i< MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2; i++)
-    {
-      e->individual_edges[i]=0;
-      e->coverage[i]=0;
-    }
+  {
+    e->individual_edges[i]=0;
+    e->coverage[i]=0;
+  }
 
-
-  e->status=none;
+  e->status = (char)none;
   
   return e;
 }
@@ -72,19 +74,18 @@ void free_genotyping_element(GenotypingElement** element)
 
 void genotyping_element_assign(GenotypingElement* e1, GenotypingElement* e2)
 {
-
   if ((e1==NULL)||(e2==NULL))
-    {
-      return;
-    }
+  {
+    return;
+  }
 
   binary_kmer_assignment_operator( (*e1).kmer, (*e2).kmer);
   int i;
   for (i=0; i< MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2; i++)
-    {
-      e1->individual_edges[i] = e2->individual_edges[i];
-      e1->coverage[i]         = e2->coverage[i];
-    }
+  {
+    e1->individual_edges[i] = e2->individual_edges[i];
+    e1->coverage[i]         = e2->coverage[i];
+  }
   e1->status = e2->status;
 }
 
@@ -92,8 +93,8 @@ void genotyping_element_assign(GenotypingElement* e1, GenotypingElement* e2)
 // the GenotypingElement has 2 extra colours on the end for working
 // and MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING extra colours before them for the alleles
 void genotyping_element_initialise_from_normal_element(GenotypingElement* e1, 
-						       Element* e2,
-						       boolean set_status_to_none)
+                                                       Element* e2,
+                                                       boolean set_status_to_none)
 						    
 {
   if (e2==NULL)
@@ -105,52 +106,37 @@ void genotyping_element_initialise_from_normal_element(GenotypingElement* e1,
   binary_kmer_assignment_operator( (*e1).kmer, (*e2).kmer);
   int i;
   for (i=0; i< NUMBER_OF_COLOURS; i++)
-    {
-      e1->individual_edges[i] = e2->individual_edges[i];
-      e1->coverage[i]         = e2->coverage[i];
-    }
-  if (set_status_to_none)
-    {
-      e1->status=none;
-    }
+  {
+    e1->individual_edges[i] = e2->individual_edges[i];
+    e1->coverage[i]         = e2->coverage[i];
+  }
+
+  if(set_status_to_none)
+  {
+    e1->status = (char)none;
+  }
   else
-    {
-      e1->status = e2->status;
-    }
+  {
+    e1->status = e2->status;
+  }
   for (i=NUMBER_OF_COLOURS; i<MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2; i++)
-    {
-      e1->individual_edges[i] =0;
-      e1->coverage[i]         =0;
-    }
+  {
+    e1->individual_edges[i] =0;
+    e1->coverage[i]         =0;
+  }
 }
 
-
-
-
-//gets you a pointer to the edge you are referring to
-//Don't use this if you can use get_edge_copy instead
-Edges* genotyping_node_get_edge(GenotypingElement e, int index)
-{
-  if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
-	{
-	  die("Called genotyping_node_get_edge with index %d which is \n"
-        ">= MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2 which is %d.\n",
-        index, MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2);
-	}
-      Edges *edges = e.individual_edges + index;
-      return edges;
-}
 
 
 //return a copy of the edge you are referring to
 Edges genotyping_node_get_edge_copy(const GenotypingElement e, int index)
 {
-
   if (index>=MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2)
 	{
 	  die("Trying to access a colour beyond the compile-time limit. Exit.\n");
 	}
-      return e.individual_edges[index];
+
+  return e.individual_edges[index];
 }
 
 
@@ -162,9 +148,9 @@ Edges genotyping_node_get_union_of_edges(GenotypingElement e)
   Edges edges=0;
 
   for (i=0; i< MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2; i++)
-    {
-      edges |= e.individual_edges[i];
-    }
+  {
+    edges |= e.individual_edges[i];
+  }
 
   return edges;
 }
@@ -175,12 +161,11 @@ Edges genotyping_element_get_colour_union_of_all_colours(const GenotypingElement
   Edges edges=0;
   
   for (i=0; i< MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2; i++)
-    {
-      edges |= e->individual_edges[i];
-    }
+  {
+    edges |= e->individual_edges[i];
+  }
 
   return edges;
-  
 }
 
 
@@ -205,33 +190,49 @@ Edges genotyping_element_get_colour1(const GenotypingElement* e)
 }
 
 
-
-int genotyping_element_get_covg_union_of_all_covgs(const GenotypingElement* e)
+Covg genotyping_element_get_covg_union_of_all_covgs(const GenotypingElement* e)
 {
   int i;
-  int covg=0;
+  Covg sum_covg = 0;
   
-  for (i=0; i< MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2; i++)
+  for(i = 0; i < NUMBER_OF_COLOURS; i++)
+  {
+    if(COVG_MAX - e->coverage[i] >= sum_covg)
     {
-      covg += e->coverage[i];
+      sum_covg += e->coverage[i];
     }
+    else
+    {
+      sum_covg = COVG_MAX;
 
-  return covg;
-  
+      if(!genotyping_overflow_warning_printed)
+      {
+        warn("%s:%i: caught integer overflow"
+             "(some kmer coverages may be underestimates)",
+             __FILE__, __LINE__);
+
+        genotyping_overflow_warning_printed = 1;
+      }
+
+      break;
+    }
+  }
+
+  return sum_covg;
 }
 
 
-int genotyping_element_get_covg_colour0(const GenotypingElement* e)
+Covg genotyping_element_get_covg_colour0(const GenotypingElement* e)
 {
   return e->coverage[0];
 }
 
-int genotyping_element_get_covg_last_colour(const GenotypingElement* e)
+Covg genotyping_element_get_covg_last_colour(const GenotypingElement* e)
 {
   return e->coverage[MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2-1];
 }
 
-int genotyping_element_get_covg_colour1(const GenotypingElement* e)
+Covg genotyping_element_get_covg_colour1(const GenotypingElement* e)
 {
   return e->coverage[1];
 }
@@ -293,7 +294,7 @@ void genotyping_node_reset_one_edge(GenotypingElement* e, Orientation orientatio
 }
 
 
-int genotyping_element_get_number_of_people_or_pops_containing_this_element(GenotypingElement* e, int index)
+int genotyping_element_get_number_of_people_or_pops_containing_this_element(GenotypingElement* e)
 {
   int i;
   int count=0;
@@ -320,7 +321,7 @@ BinaryKmer* genotyping_element_get_kmer(GenotypingElement * e){
   return &(e->kmer);
 }
 
-boolean genotyping_element_is_key(Key key, GenotypingElement e, short kmer_size){
+boolean genotyping_element_is_key(Key key, GenotypingElement e){
   //  return key == e.kmer;
   return binary_kmer_comparison_operator(*key, e.kmer);
 }
@@ -375,41 +376,39 @@ void genotyping_element_initialise(GenotypingElement * e, Key kmer, short kmer_s
 
 
 
-void genotyping_element_initialise_kmer_covgs_edges_and_status_to_zero(GenotypingElement * e){
-
+void genotyping_element_initialise_kmer_covgs_edges_and_status_to_zero(GenotypingElement * e)
+{
   if (e==NULL)
-    {
-      die("Called genotyping_element_initialise_covgs_and_edges_to_zero  on NULL ptr");
-    }
+  {
+    die("Called genotyping_element_initialise_covgs_and_edges_to_zero on NULL ptr");
+  }
 
   binary_kmer_initialise_to_zero(&(e->kmer));
   //binary_kmer_assignment_operator( e->kmer, &tmp_kmer);
 
   int i;
   for (i=0; i<MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2; i++)
-    {
-      e->individual_edges[i]=0;
-      e->coverage[i]=0;
-    }
+  {
+    e->individual_edges[i]=0;
+    e->coverage[i]=0;
+  }
 
   db_genotyping_node_set_status(e, none);
-
 }
 
 
 
 
-void genotyping_element_set_kmer(GenotypingElement * e, Key kmer, short kmer_size){
-
+void genotyping_element_set_kmer(GenotypingElement * e, Key kmer, short kmer_size)
+{
   if (e==NULL)
-    {
-      die("Called element_set_kmer on NULL ptr");
-    }
+  {
+    die("Called element_set_kmer on NULL ptr");
+  }
 
   BinaryKmer tmp_kmer;
   binary_kmer_initialise_to_zero(&tmp_kmer);
   binary_kmer_assignment_operator( e->kmer, *(genotyping_element_get_key(kmer, kmer_size, &tmp_kmer)));
-
 }
 
 
@@ -438,57 +437,52 @@ void db_genotyping_node_decrement_coverage(GenotypingElement* e, int index)
     }
 }
 
-void db_genotyping_node_update_coverage(GenotypingElement* e, int index, int update)
+void db_genotyping_node_update_coverage(GenotypingElement* e, int colour, long update)
 {
-
-  e->coverage[index] += update;
-
+  e->coverage[colour] += update;
 }
 
 
-int db_genotyping_node_get_coverage(const GenotypingElement* const e, int index)
+Covg db_genotyping_node_get_coverage(const GenotypingElement* e, int colour)
 {
-
-  if (e==NULL)
-    {
-      return 0;
-    }
+  if(e == NULL)
+  {
+    return 0;
+  }
   else
-    {
-      return e->coverage[index];
-    }
+  {
+    return e->coverage[colour];
+  }
 }
 
 
-void db_genotyping_node_set_coverage(GenotypingElement* e, int colour, int covg)
+void db_genotyping_node_set_coverage(GenotypingElement* e, int colour, Covg covg)
 {
-
   if (e==NULL)
-    {
-      return;
-    }
+  {
+    return;
+  }
   else
-    {
-      e->coverage[colour] = covg;
-      return;
-    }
+  {
+    e->coverage[colour] = covg;
+    return;
+  }
 }
 
 
 
-int db_genotyping_node_get_coverage_in_subgraph_defined_by_func_of_colours(const GenotypingElement* const e, int (*get_covg)(const GenotypingElement*) )
+Covg db_genotyping_node_get_coverage_in_subgraph_defined_by_func_of_colours(
+  const GenotypingElement* const e, Covg (*get_covg)(const GenotypingElement*))
 {
-
   if (e==NULL)
-    {
-      return 0;
-    }
+  {
+    return 0;
+  }
   else
-    {
-      return get_covg(e);
-    }
+  {
+    return get_covg(e);
+  }
 }
-
 
 
 
@@ -791,61 +785,66 @@ boolean db_genotyping_node_is_blunt_end_in_subgraph_given_by_func_of_colours(Gen
 
 
 
-boolean db_genotyping_node_check_status(GenotypingElement * node, NodeStatus status){
-  return node->status == (char) status;
+boolean db_genotyping_node_check_status(GenotypingElement * node, NodeStatus status)
+{
+  return (node->status == (char)status);
 }
 
-boolean db_genotyping_node_check_status_to_be_dumped(GenotypingElement * node){
+boolean db_genotyping_node_check_status_to_be_dumped(GenotypingElement * node)
+{
   if ( db_genotyping_node_check_status(node, to_be_dumped)==true )
-    {
-      return true;
-    }
+  {
+    return true;
+  }
   else
-    {
-      return false;
-    }
+  {
+    return false;
+  }
 }
 
 boolean db_genotyping_node_check_status_not_pruned(GenotypingElement * node){
   if ( db_genotyping_node_check_status(node, none) || db_genotyping_node_check_status(node,visited))
-    {
-      return true;
-    }
+  {
+    return true;
+  }
   return false;
 }
 
 
 boolean db_genotyping_node_check_status_not_pruned_or_visited(GenotypingElement * node)
 {
-  if ( db_genotyping_node_check_status(node,visited) || db_genotyping_node_check_status(node,visited_and_exists_in_reference) ||  db_genotyping_node_check_status(node, pruned)	 ) 
-    {
-      return false;
-    }
+  if(db_genotyping_node_check_status(node,visited) ||
+     db_genotyping_node_check_status(node,visited_and_exists_in_reference) ||
+     db_genotyping_node_check_status(node, pruned))
+  {
+    return false;
+  }
   else
-    {
-      return true;
-    }
+  {
+    return true;
+  }
 }
 
 
-void db_genotyping_node_set_status(GenotypingElement * node,NodeStatus status){
+void db_genotyping_node_set_status(GenotypingElement * node,NodeStatus status)
+{
   if (node!=NULL)
-    {
-      node->status = (char) status;
-    }
+  {
+    node->status = (char)status;
+  }
 }
 
-void db_genotyping_node_set_status_to_none(GenotypingElement * node){
+void db_genotyping_node_set_status_to_none(GenotypingElement * node)
+{
   if (node!=NULL)
-    {
-      node->status = none;
-    }
+  {
+    node->status = (char)none;
+  }
 }
 
 
-
-
-boolean db_genotyping_node_is_this_node_in_this_person_or_populations_graph(GenotypingElement* node, int index)
+boolean db_genotyping_node_is_this_node_in_this_person_or_populations_graph(
+  GenotypingElement* node, int index)
 {
 
   if (node ==NULL)
@@ -871,7 +870,8 @@ boolean db_genotyping_node_is_this_node_in_this_person_or_populations_graph(Geno
  
 }
 
-boolean db_genotyping_node_is_this_node_in_subgraph_defined_by_func_of_colours(GenotypingElement* node, Edges (*get_colour)(const GenotypingElement*) )
+boolean db_genotyping_node_is_this_node_in_subgraph_defined_by_func_of_colours(
+  GenotypingElement* node, Edges (*get_colour)(const GenotypingElement*))
 {
 
   if (node ==NULL)
@@ -974,8 +974,10 @@ void db_genotyping_node_action_unset_status_visited_or_visited_and_exists_in_ref
 
 
 
-void db_genotyping_node_action_do_nothing(GenotypingElement * node){
-  
+void db_genotyping_node_action_do_nothing(GenotypingElement * node)
+{
+  // Let the compiler know that we're deliberately not using a paramater
+  (void)node;
 }
 
 
@@ -1049,6 +1051,8 @@ boolean db_genotyping_node_check_status_is_not_visited_or_visited_and_exists_in_
 
 boolean db_genotyping_node_condition_always_true(GenotypingElement* node)
 {
+  // Let the compiler know that we're deliberately not using a paramater
+  (void)node;
   return true;
 }
 

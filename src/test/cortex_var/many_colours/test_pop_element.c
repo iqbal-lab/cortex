@@ -24,14 +24,20 @@
  *
  * **********************************************************************
  */
+/*
+  test_pop_element.c
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
 
 #include <CUnit.h>
 #include <Basic.h>
-#include <element.h>
-#include <open_hash/hash_table.h>
+
+// cortex_var headers
+#include "element.h"
+#include "open_hash/hash_table.h"
 #include "test_pop_element.h"
-#include <stdlib.h>
-#include <stdio.h>
 
 void test_get_edge_copy()
 {

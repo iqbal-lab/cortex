@@ -24,23 +24,22 @@
  *
  * **********************************************************************
  */
-
-
+/*
+  annotated_putative_variant.h
+*/
 
 #ifndef ANNOVAR_H_
 #define ANNOVAR_H_
 
+#include "global.h"
+#include "graph_info.h"
+#include "model_selection.h"
+#include "genotyping_element.h"
+#include "element.h"
+#include "experiment.h"
+#include "dB_graph.h"
+#include "graph_info.h"
+#include "experiment.h"
+#include "db_complex_genotyping.h"
 
-#include <global.h>
-
-#include <graph_info.h>
-#include <model_selection.h>
-#include <genotyping_element.h>
-#include <element.h>
-#include <experiment.h>
-#include <dB_graph.h>
-#include <graph_info.h>
-#include <experiment.h>
-#include <db_complex_genotyping.h>
-
-
+#endif /* ANNOVAR_H_ */

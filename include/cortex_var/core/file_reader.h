@@ -24,6 +24,9 @@
  *
  * **********************************************************************
  */
+/*
+  file_reader.h
+*/
 
 #ifndef FILE_READER_H_
 #define FILE_READER_H_
@@ -32,11 +35,12 @@
 
 #include <string_buffer.h>
 
-#include <seq.h>
-#include <dB_graph.h>
-#include <file_format.h>
-#include <graph_info.h>
-#include <db_variants.h>
+#include "global.h"
+#include "seq.h"
+#include "dB_graph.h"
+#include "file_format.h"
+#include "graph_info.h"
+#include "db_variants.h"
 
 extern int MAX_FILENAME_LENGTH;
 extern int MAX_READ_LENGTH;
@@ -118,14 +122,15 @@ void load_pe_filelists_into_graph_colour(
 void initialise_binary_header_info(BinaryHeaderInfo* binfo, GraphInfo* ginfo);
 
 
-void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(KmerSlidingWindowSet * windows, boolean* prev_full_ent, 
-											      boolean* full_ent, long long* bases_loaded, boolean mark_read_starts, 
-											      dBGraph* db_graph, int index, long long** read_len_count_array);
+void  load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(
+  KmerSlidingWindowSet * windows, boolean* prev_full_ent, //boolean* full_ent,
+  long long* bases_loaded, boolean mark_read_starts, dBGraph* db_graph,
+  int index, long long** read_len_count_array);
 
 
 //pass in a single kmer sliding window and the Sequence* it was derived from. Will find the nodes correspinding to this seqeunce
 //and put them in array. Also will check that edges exist as expected from the Sequence*
-void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, Sequence* seq, dBGraph* db_graph, dBNode** array_nodes, Orientation* array_orientations, 
+void load_kmers_from_sliding_window_into_array(KmerSlidingWindow* kmer_window, dBGraph* db_graph, dBNode** array_nodes, Orientation* array_orientations, 
 					       int max_array_size, 
 					       boolean require_nodes_to_lie_in_given_colour, int colour);
 

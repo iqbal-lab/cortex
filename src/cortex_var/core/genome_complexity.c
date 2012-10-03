@@ -24,21 +24,25 @@
  *
  * **********************************************************************
  */
+/*
+  genome_complexity.c
+*/
 
-#include <db_complex_genotyping.h>
-#include <fnmatch.h>
-#include <genome_complexity.h>
-#include <db_variants.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <global.h>
-#include <file_reader.h>
-#include <maths.h>
+#include <fnmatch.h>
 #include <limits.h>
+
+// cortex_var headers
+#include "db_complex_genotyping.h"
+#include "genome_complexity.h"
+#include "db_variants.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
+#include "file_reader.h"
+#include "maths.h"
 
 
 boolean acgt(char c){
@@ -75,7 +79,7 @@ boolean does_allele_lie_in_graph(dBNode** array_nodes, int len, int colour_clean
 //I don't care if the nodes exist in the hash, nor if it is in this colour. 
 //but if it is in the graph and in the colour, none of the interior nodes are 
 //allowed to have in/out degree>1
-boolean allele_is_clean(dBNode** array_nodes,Orientation* array_or, 
+boolean allele_is_clean(dBNode** array_nodes,
 			int len, int colour_cleaned_genome, int kmer)
 {
   if ( (colour_cleaned_genome<0) || (colour_cleaned_genome>=NUMBER_OF_COLOURS) )
@@ -129,13 +133,15 @@ void count_reads_where_snp_makes_clean_bubble(dBGraph* db_graph, char* fasta, bo
 	{
 	  die("One of these SNP reads is longer than the specified max read length\n");
 	}
-      if ((num_kmers_read>0)&&(strlen(seq->seq)>db_graph->kmer_size /2)&& (fnmatch("N", seq->seq, 0)!=0) ) 
-	//not end of file & reasonable length read
+      if(num_kmers_read > 0 &&
+         strlen(seq->seq) > (unsigned)db_graph->kmer_size/2 &&
+         fnmatch("N", seq->seq, 0) != 0)
 	{
+    //not end of file & reasonable length read
 
 	  boolean no_N_in_first_2k_plus_1=true;
 	  int j;
-	  for (j=0; (j<2*db_graph->kmer_size +1) && (j<strlen(seq->seq)); j++)
+	  for (j=0; (j<2*db_graph->kmer_size +1) && (j<(signed)strlen(seq->seq)); j++)
 	    {
 	      if (acgt((seq->seq)[j])==false)
 		{
@@ -165,7 +171,7 @@ void count_reads_where_snp_makes_clean_bubble(dBGraph* db_graph, char* fasta, bo
 		      //this is a testable site/use-able read.
 		      *total_errors_tested = *total_errors_tested +1;
 		      
-		      if (allele_is_clean(array_nodes, array_or, len, colour_cleaned_genome, db_graph->kmer_size)==false)
+		      if (allele_is_clean(array_nodes, len, colour_cleaned_genome, db_graph->kmer_size)==false)
 			{
 			  // error does not make a clean bubble
 			}
@@ -190,10 +196,10 @@ void count_reads_where_snp_makes_clean_bubble(dBGraph* db_graph, char* fasta, bo
 			  //work through the sliding window and put nodes into the array you pass in. 
 			  //Note this may find NULL nodes if the kmer is not in the graph
 			  //also note seq is not used
-			  load_kmers_from_sliding_window_into_array(kmer_window, seq, 
+			  load_kmers_from_sliding_window_into_array(kmer_window, 
 								    db_graph, array_nodes, array_or, 
 								    2*db_graph->kmer_size+1, false, -1);
-			  if (allele_is_clean(array_nodes, array_or, len, colour_cleaned_genome, db_graph->kmer_size)==true)
+			  if (allele_is_clean(array_nodes, len, colour_cleaned_genome, db_graph->kmer_size)==true)
 			    {
 			      *total_errors_forming_clean_bubbles = *total_errors_forming_clean_bubbles+1; 
 			    }
@@ -341,12 +347,12 @@ double estimate_genome_complexity(dBGraph* db_graph, char* filename_fastaq,
 
 */
 
+// removed 'int colour_cleaned_genome' -- unused parameter
 double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
-				   boolean allow_reads_shorter_than_2k_plus_one, 
-				   int colour_cleaned_genome, int working_colour,
-				   int max_read_length, FileFormat format,
-				  int fastq_ascii_offset, int* number_reads_used_in_estimate
-				   )
+                                  boolean allow_reads_shorter_than_2k_plus_one, 
+                                  int working_colour, int max_read_length,
+                                  FileFormat format, int fastq_ascii_offset,
+                                  int* number_reads_used_in_estimate)
 {
 
 
@@ -568,13 +574,13 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 	{
 	  die("One of these reads is longer than the specified max read length\n");
 	}
-      if ((num_kmers_read>0)&&(strlen(seq->seq)>1+db_graph->kmer_size /2) ) 
+      if ((num_kmers_read>0)&&(strlen(seq->seq)>1+(unsigned)db_graph->kmer_size /2) ) 
 	//not end of file & reasonable length read 
 	{
 	  boolean no_N_in_first_2k_plus_1=true;
 	  boolean quality_above_10=true;
 	  int j;
-	  for (j=0; (j<2*db_graph->kmer_size +1) && (j<strlen(seq->seq)); j++)
+	  for (j=0; (j<2*db_graph->kmer_size +1) && (j<(signed)strlen(seq->seq)); j++)
 	    {
 	      if (acgt((seq->seq)[j])==false)
 		{
@@ -609,7 +615,7 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 	      //make a mutated allele
 	      char alt[2*db_graph->kmer_size+2];
 	      int j;
-	      for (j=0; (j<2*db_graph->kmer_size+1) && (j<strlen(seq->seq)); j++)
+	      for (j=0; (j<2*db_graph->kmer_size+1) && (j<(signed)strlen(seq->seq)); j++)
 		{
 		  alt[j]= (seq->seq)[j];
 		}
@@ -626,20 +632,20 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 									kmer_window, db_graph);
 
 	      boolean prev_full=true;
-	      boolean full_ent=true;
 	      long long b_loaded=0;
 
-	      load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(windows, &prev_full, &full_ent, &b_loaded, false,
-												      db_graph, working_colour, readlen_distrib_ptrs);
+	      load_kmers_from_sliding_window_into_graph_marking_read_starts_of_specific_person_or_pop(
+          windows, &prev_full, &b_loaded, false, db_graph,
+          working_colour, readlen_distrib_ptrs);
 
 	      //work through the sliding window and put nodes into the array you pass in. 
 	      //Note this may find NULL nodes if the kmer is not in the graph
 	      //also note seq is not used
-	      load_kmers_from_sliding_window_into_array(kmer_window, seq, 
+	      load_kmers_from_sliding_window_into_array(kmer_window, 
 							db_graph, array_nodes_mut, array_or_mut, 
 							2*db_graph->kmer_size+1, false, -1);
 	      double av1, av2;
-	      int min1,min2,max1,max2;
+	      Covg min1,min2,max1,max2;
 	      int len1=0;
 	      int len2=0;
 	      boolean forms_clean_bubble=db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(array_nodes_mut[0],

@@ -24,13 +24,14 @@
  *
  * **********************************************************************
  */
-
-
+/*
+  experiment.h
+*/
 
 #ifndef EXPERIMENT_H_
 #define EXPERIMENT_H_
 
-
+#include "global.h"
 
 typedef enum
   {

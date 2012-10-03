@@ -27,13 +27,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <seq.h>
 #include <limits.h>
 #include <string.h>
 
-/* Read sequence from file "fp" in FASTA format.
-   it returns the length of the sequence, 0 if no sequence is left in file
-*/
+#include "seq.h"
+
+// Read sequence from file "fp" in FASTA format.
+// it returns the length of the sequence, 0 if no sequence is left in file
 boolean good_base(char c);
 
 

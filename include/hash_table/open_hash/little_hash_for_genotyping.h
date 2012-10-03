@@ -24,18 +24,18 @@
  * **********************************************************************
  */
 /*
-
+  little_hash_for_genotyping.h
 */
-
 
 #ifndef LITTLE_HASH_H_
 #define LITTLE_HASH_H_
 
-#include <genotyping_element.h>
-#include <element.h>
+#include "global.h"
+#include "genotyping_element.h"
+#include "element.h"
 
-
-typedef struct{
+typedef struct
+{
   short kmer_size;
   long long number_buckets;
   int bucket_size;

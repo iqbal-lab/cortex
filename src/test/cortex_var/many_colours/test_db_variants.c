@@ -24,19 +24,25 @@
  *
  * **********************************************************************
  */
+/*
+  test_db_variants.c
+*/
 
-#include <CUnit.h>
-#include <element.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <file_reader.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
-#include <string.h>
-#include <cmd_line.h>
 #include <time.h>
-#include <graph_info.h>
-#include <db_differentiation.h>
+#include <string.h>
+
+#include <CUnit.h>
+
+// cortex_var headers
+#include "element.h"
+#include "file_reader.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
+#include "cmd_line.h"
+#include "graph_info.h"
+#include "db_differentiation.h"
 
 void test_count_reads_on_allele_in_specific_colour()
 {
@@ -100,43 +106,47 @@ void test_count_reads_on_allele_in_specific_colour()
 
 void test_get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller()
 {
+  /*
+  // Looks like this test doesn't rely on a particular kmer size
   if(NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1)
   {
     warn("Test not configured for NUMBER_OF_BITFIELDS_IN_BINARY_KMER > 1\n");
     return;
   }
+  */
 
-  //recall in get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller, theta/2 is the expected depth of covg on the allele - Dl_i/2R in the language of our paper
+  // recall in get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller,
+  // theta/2 is the expected depth of covg on the allele - Dl_i/2R in the language of our paper
 
   double ret_het;
   double ret_hom1;
   double ret_hom2;
-  int kmer=21;
+
   //1. Simple het
-  ret_het = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,10, 20,20,kmer);
-  ret_hom1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,10, 20,20,kmer);
-  ret_hom2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, 0.01, 10,10, 20,20,kmer);
+  ret_het = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,10, 20,20);
+  ret_hom1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,10, 20,20);
+  ret_hom2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, 0.01, 10,10, 20,20);
   CU_ASSERT( (ret_het>ret_hom1) && (ret_het>ret_hom2) );
   CU_ASSERT(ret_hom1 == ret_hom2);
 
   //2. simple hom
-  ret_het = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,0, 20,20,kmer);
-  ret_hom1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,0, 20,20,kmer);
-  ret_hom2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, 0.01, 10,0, 20,20,kmer);
+  ret_het = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,0, 20,20);
+  ret_hom1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,0, 20,20);
+  ret_hom2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, 0.01, 10,0, 20,20);
   CU_ASSERT( (ret_het<ret_hom1) && (ret_hom1>ret_hom2) );
 
-  ret_het = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 0,10, 20,20,kmer);
-  ret_hom1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 0,10, 20,20,kmer);
-  ret_hom2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, 0.01, 0,10, 20,20,kmer);
+  ret_het = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 0,10, 20,20);
+  ret_hom1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 0,10, 20,20);
+  ret_hom2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, 0.01, 0,10, 20,20);
   CU_ASSERT( (ret_het<ret_hom2) && (ret_hom2>ret_hom1) );
 
   //3. if we have coverage one one allele only, but high covg, we call confident hom. but as covg decreases, confidence decreases
   double t1,t2,t3,t4,t5;
-  t1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,0, 20,20,kmer);
-  t2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 8,0, 20,20,kmer);
-  t3 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 6,0, 20,20,kmer);
-  t4 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 4,0, 20,20,kmer);
-  t5 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 1,0, 20,20,kmer);
+  t1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,0, 20,20);
+  t2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 8,0, 20,20);
+  t3 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 6,0, 20,20);
+  t4 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 4,0, 20,20);
+  t5 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 1,0, 20,20);
   CU_ASSERT(t5<t4);
   CU_ASSERT(t4<t3);
   CU_ASSERT(t3<t2);
@@ -145,19 +155,19 @@ void test_get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller()
 
 
   //4. Confidence in a het increases as we increase covg on one of the alleles up from 1
-  t1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,1, 20,20,kmer);
-  t2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,3, 20,20,kmer);
-  t3 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,5, 20,20,kmer);
-  t4 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,10, 20,20,kmer);
+  t1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,1, 20,20);
+  t2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,3, 20,20);
+  t3 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,5, 20,20);
+  t4 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,10, 20,20);
   CU_ASSERT(t4>t3);
   CU_ASSERT(t3>t2);
   CU_ASSERT(t2>t1);
   
   //5. as we increase the sequencing error rate, confidence in hets with low covg on one allele go down
-  t1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het,     0.04, 10,1, 20,20,kmer);
-  t2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.04, 10,1, 20,20,kmer);
-  t3 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het,     0.01, 10,1, 20,20,kmer);
-  t4 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,1, 20,20,kmer);
+  t1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het,     0.04, 10,1, 20,20);
+  t2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.04, 10,1, 20,20);
+  t3 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het,     0.01, 10,1, 20,20);
+  t4 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,1, 20,20);
 
   //higher sequencing error gives lower CONFIDENCE (gap between likelihood of het and hom models)
   CU_ASSERT(t1-t2 < t3-t4);

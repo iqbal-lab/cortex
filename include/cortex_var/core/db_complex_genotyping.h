@@ -24,27 +24,29 @@
  *
  * **********************************************************************
  */
-
-
+/*
+  db_complex_genotyping.h
+*/
 
 #ifndef DB_COMPLEX_GENOTYPING_H_
 #define DB_COMPLEX_GENOTYPING_H_
 
-#include <element.h>
-#include <genotyping_element.h>
-#include <db_variants.h>
-#include <graph_info.h>
-#include <model_selection.h>
-#include <open_hash/little_hash_for_genotyping.h>
-#include <genotyping_element.h>
+#include "global.h"
+#include "element.h"
+#include "genotyping_element.h"
+#include "db_variants.h"
+#include "graph_info.h"
+#include "model_selection.h"
+#include "open_hash/little_hash_for_genotyping.h"
+#include "genotyping_element.h"
 
 extern int MIN_LLK;
 
 typedef struct {
-  int* mult11; //multiplicity of allele 1 nodes in allele 1
-  int* mult12; //multiplicity of allele 1 nodes in allele 2,   etc
-  int* mult21;
-  int* mult22;
+  Covg* mult11; //multiplicity of allele 1 nodes in allele 1
+  Covg* mult12; //multiplicity of allele 1 nodes in allele 2,   etc
+  Covg* mult21;
+  Covg* mult22;
   int len1;//length of array of nodes for allele1 - ie mult11 and mult12
   int len2;
 
@@ -57,8 +59,8 @@ typedef struct {
   Orientation* working_o_one;
   GenotypingElement** working_g_e_other;
   Orientation* working_o_other;
-  int* working_array_self;
-  int* working_array_shared;
+  Covg* working_array_self;
+  Covg* working_array_shared;
   int working_colour1;
   int working_colour2;
   dBNode** path_nodes;
@@ -86,16 +88,18 @@ void initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
   VariantBranchesAndFlanks* var,
   MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
   boolean only_count_nodes_with_edge_in_specified_colour_func,
-  Edges (*get_colour)(const dBNode*),
-  uint32_t (*get_covg)(const dBNode*));
+  Edges (*get_colour)(const dBNode*));
+  //Covg (*get_covg)(const dBNode*) // unused
 
 void improved_initialise_multiplicities_of_allele_nodes_wrt_both_alleles(
   VariantBranchesAndFlanks* var,
   MultiplicitiesAndOverlapsOfBiallelicVariant* mult,
-  boolean only_count_nodes_with_edge_in_specified_colour_func,
-  Edges (*get_colour)(const dBNode*),
-  uint32_t (*get_covg)(const dBNode*),
   int working_colour1, int working_colour2);
+  // unused paramaters
+  //boolean only_count_nodes_with_edge_in_specified_colour_func,
+  //Edges (*get_colour)(const dBNode*),
+  //Covg (*get_covg)(const dBNode*),
+  
 
 
 char** alloc_array_and_get_files_from_list(char* filelist, int num_files_in_list);
@@ -108,14 +112,14 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(
   GraphAndModelInfo* model_info,
   int colour_indiv, 
   int colour_ref_minus_our_site, dBGraph* db_graph,
-  int* working_array_self, int* working_array_shared,
+  Covg* working_array_self, Covg* working_array_shared,
   double* current_max_lik, double* current_max_but_one_lik,
   char* current_max_lik_name, char* current_max_but_one_lik_name,
   AssumptionsOnGraphCleaning assump,
   dBNode** p_nodes, Orientation* p_orientations, Nucleotide* p_labels,
   char* p_string, int max_allele_length,
-  boolean using_1net, uint32_t (*get_covg_in_1net_of_genotype)(dBNode*), 
-  boolean using_2net, uint32_t (*get_covg_in_2net_of_genotype)(dBNode*),
+  boolean using_1net, Covg (*get_covg_in_1net_of_genotype)(dBNode*), 
+  boolean using_2net, Covg (*get_covg_in_2net_of_genotype)(dBNode*),
   double min_acceptable_llk);
 
 
@@ -152,8 +156,8 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
   Orientation* working_o_one,
   GenotypingElement** working_g_e_other, 
   Orientation* working_o_other,
-  int* working_array_self,
-  int* working_array_shared,
+  Covg* working_array_self,
+  Covg* working_array_shared,
   int len_working_arrays,
   MultiplicitiesAndOverlapsOfBiallelicVariant* mobv,
   int colour_to_genotype, int working_colour1, int working_colour2,
@@ -162,20 +166,20 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
 
 
 double calc_log_prob_of_covg_on_chunk(double eff_D_over_R,
-                                      int* working_array, int working_array_len);
+                                      Covg* working_array, int working_array_len);
 
 double get_log_probability_of_covg_on_one_allele_given_second_allele_and_multiplicities(
   double hap_D_over_R, dBNode** allele, int len_allele,
-  int* mult_this_allele_in_self, int* mult_this_allele_in_other,
-  int* working_array_self, int* working_array_shared,
-  int (*check_covg_in_ref_with_site_excised)(dBNode*),
+  Covg* mult_this_allele_in_self, Covg* mult_this_allele_in_other,
+  Covg* working_array_self, Covg* working_array_shared,
+  Covg (*check_covg_in_ref_with_site_excised)(dBNode*),
   int colour_indiv);
 
 double get_log_probability_of_covg_on_one_allele_given_second_allele_and_multiplicities_using_little_hash(
   double hap_D_over_R, GenotypingElement** allele, int len_allele,
-  int* mult_this_allele_in_self, int* mult_this_allele_in_other,
-  int* working_array_self, int* working_array_shared,
-  int (*check_covg_in_ref_with_site_excised)(GenotypingElement*),
+  Covg* mult_this_allele_in_self, Covg* mult_this_allele_in_other,
+  Covg* working_array_self, Covg* working_array_shared,
+  Covg (*check_covg_in_ref_with_site_excised)(GenotypingElement*),
   int colour_indiv);
 
 double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(
@@ -184,7 +188,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(
   GraphAndModelInfo* model_info,
   int colour_indiv, 
   LittleHashTable* little_db_graph, dBGraph* db_graph,
-  int* working_array_self, int* working_array_shared,
+  Covg* working_array_self, Covg* working_array_shared,
   AssumptionsOnGraphCleaning assump,
   dBNode** p_nodes, Orientation* p_orientations,
   Nucleotide* p_labels, char* p_string, 
@@ -217,4 +221,4 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar,
                                     LittleHashTable* little_db_graph,
                                     boolean do_genotyping);
 
-#endif
+#endif /* DB_COMPLEX_GENOTYPING_H_ */

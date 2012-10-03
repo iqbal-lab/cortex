@@ -26,15 +26,17 @@
  */
 /*
   dB_graph.c - implementation
- */
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <binary_kmer.h>
-#include <element.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
 #include <string.h>
+
+// cortex_var headers
+#include "binary_kmer.h"
+#include "element.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
 
 
 //This gets the next node in the graph, and does not care about whether it

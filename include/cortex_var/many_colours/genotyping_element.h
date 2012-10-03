@@ -24,30 +24,27 @@
  *
  * **********************************************************************
  */
-
-
 /*
-  used when genotyping. one colour per allele, plus one for reference plus two spare for working
+  genotyping_element.h -  used when genotyping. one colour per allele, plus one
+  for reference plus two spare for working
 */
 
 #ifndef GENOTYPING_ELEMENT_H_
 #define GENOTYPING_ELEMENT_H_
 
-#include <element.h> //need this for Edges, etc
-#include <binary_kmer.h>
-#include <global.h>
 #include <stdio.h>
-#include <stdint.h>
+#include <inttypes.h>
+
+#include "global.h"
+#include "element.h" // need this for Edges, etc
+#include "binary_kmer.h"
 
 
 //Bubble and PD callers only call biallelic for now
 #define MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING 2
 
 
-
-
 //type definitions
-
 
 typedef struct{
   BinaryKmer kmer;
@@ -55,29 +52,30 @@ typedef struct{
   //preserve all the same colour numbers in the main dBGraph. So colour 3 in a normal element
   // will be colour 3 in the GenotypingElement. AFTER them will come the 2 allele colours and the
   // 2 working colours
-  int        coverage[MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2];
+  Covg       coverage[MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2];
   Edges      individual_edges[MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+2];
   char       status; //will case a NodeStatus to char
 } GenotypingElement;
 
 
 
-
 GenotypingElement* new_genotyping_element();
 void free_genotyping_element(GenotypingElement** genotyping_element);
 void genotyping_element_assign(GenotypingElement* e1, GenotypingElement* e2);
+
 void genotyping_element_initialise_from_normal_element(GenotypingElement* e1, 
-							     Element* e2,
-							     boolean set_status_to_none);
+                                                       Element* e2,
+                                                       boolean set_status_to_none);
 
 /*
-// Flagged for removal -- these functions aren't implemented
-Edges* db_genotyping_node_get_edge(GenotypingElement, int); 
-Edges  db_genotyping_node_get_edge_copy(const GenotypingElement e, int index); 
-Edges db_genotyping_node_get_union_of_edges(GenotypingElement e);
-void  db_genotyping_node_add_edges(GenotypingElement*, int, Edges);
-void  db_genotyping_node_set_edges(GenotypingElement*, int, Edges);
-void  db_genotyping_node_reset_one_edge(GenotypingElement* e, Orientation orientation, Nucleotide nucleotide, int index);
+// Flagged for removal -- No one calls these functions
+// and previously they weren't exported (incorrect function names were here prev)
+Edges  genotyping_node_get_edge_copy(const GenotypingElement e, int index); 
+Edges genotyping_node_get_union_of_edges(GenotypingElement e);
+void  genotyping_node_add_edges(GenotypingElement*, int, Edges);
+void  genotyping_node_set_edges(GenotypingElement*, int, Edges);
+void  genotyping_node_reset_one_edge(GenotypingElement* e, Orientation orientation,
+                                     Nucleotide nucleotide, int index);
 */
 
 
@@ -86,18 +84,18 @@ Edges genotyping_element_get_colour0(const GenotypingElement* e);
 Edges genotyping_element_get_colour1(const GenotypingElement* e);
 Edges genotyping_element_get_last_colour(const GenotypingElement* e);
 
-int genotyping_element_get_covg_union_of_all_covgs(const GenotypingElement*);
-int genotyping_element_get_covg_colour0(const GenotypingElement* e);
-int genotyping_element_get_covg_colour1(const GenotypingElement* e);
-int genotyping_element_get_covg_last_colour(const GenotypingElement* e);
+Covg genotyping_element_get_covg_union_of_all_covgs(const GenotypingElement*);
+Covg genotyping_element_get_covg_colour0(const GenotypingElement* e);
+Covg genotyping_element_get_covg_colour1(const GenotypingElement* e);
+Covg genotyping_element_get_covg_last_colour(const GenotypingElement* e);
 
 
-int genotyping_element_get_number_of_people_or_pops_containing_this_element(GenotypingElement* e, int index);
+int genotyping_element_get_number_of_people_or_pops_containing_this_element(GenotypingElement* e);
 
 
 boolean genotyping_element_smaller(GenotypingElement,GenotypingElement);
 BinaryKmer* genotyping_element_get_kmer(GenotypingElement *);
-boolean genotyping_element_is_key(Key,GenotypingElement, short kmer_size);
+boolean genotyping_element_is_key(Key,GenotypingElement);
 Key genotyping_element_get_key(BinaryKmer*,short kmer_size, Key preallocated_key);
 void genotyping_element_initialise(GenotypingElement *,Key, short kmer_size);
 void genotyping_element_initialise_kmer_covgs_edges_and_status_to_zero(GenotypingElement * e);
@@ -115,7 +113,8 @@ boolean db_genotyping_node_add_edge(GenotypingElement *, GenotypingElement *, Or
 //outgoing edge in the side defined by the orientation.   
 boolean db_genotyping_node_edge_exist(GenotypingElement *, Nucleotide, Orientation, int edge_index);
 
-//final argument f is a function that returns an Edge that is a function of the different colured edges in a node.                                                                                       // eg we might be interested in the union of all the coloured edges in the graph, or just the colour/edge for the first person,                                                                          //    or the union of all edges except that corresponding to the reference.
+//final argument f is a function that returns an Edge that is a function of the different colured edges in a node.
+// eg we might be interested in the union of all the coloured edges in the graph, or just the colour/edge for the first person,                                                                          //    or the union of all edges except that corresponding to the reference.
 boolean db_genotyping_node_edge_exist_within_specified_function_of_coloured_edges(GenotypingElement * genotyping_element,Nucleotide base,Orientation orientation, Edges (*f)(const GenotypingElement* ));
 
 
@@ -196,14 +195,14 @@ boolean db_genotyping_node_condition_always_true(GenotypingElement* node);
 
 
 
-
-
 void db_genotyping_node_increment_coverage(GenotypingElement* e, int index);
 void db_genotyping_node_decrement_coverage(GenotypingElement* e, int index);
-void db_genotyping_node_update_coverage(GenotypingElement* e, int index, int update);
-int db_genotyping_node_get_coverage(const GenotypingElement* const e, int index);
-void db_genotyping_node_set_coverage(GenotypingElement* e, int colour, int covg);
-int db_genotyping_node_get_coverage_in_subgraph_defined_by_func_of_colours(const GenotypingElement* const e, int (*get_covg)(const GenotypingElement*) );
+void db_genotyping_node_update_coverage(GenotypingElement* e, int index, long update);
+Covg db_genotyping_node_get_coverage(const GenotypingElement* e, int index);
+void db_genotyping_node_set_coverage(GenotypingElement* e, int colour, Covg covg);
+
+Covg db_genotyping_node_get_coverage_in_subgraph_defined_by_func_of_colours(
+  const GenotypingElement* e, Covg (*get_covg)(const GenotypingElement*));
 
 
 

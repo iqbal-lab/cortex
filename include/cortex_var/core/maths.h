@@ -24,13 +24,16 @@
  *
  * **********************************************************************
  */
-
-#include <element.h>
-#include <dB_graph.h>
-
+/*
+  maths.h
+*/
 
 #ifndef MATHS_H_
 #define MATHS_H_
+
+#include "global.h"
+#include "element.h"
+#include "dB_graph.h"
 
 float log_factorial(int number);
 float log_factorial_ll(long long number);
@@ -38,6 +41,7 @@ int min_of_ints(int a, int b);
 int max_of_ints(int a, int b);
 unsigned long calculate_mean_ulong(unsigned long* array, unsigned long len);
 long long calculate_mean(long long* array, long long len);
-void set_int_array_to_zero(int* array, int len);
 
-#endif
+//void set_int_array_to_zero(int* array, int len);
+
+#endif /* MATHS_H_ */

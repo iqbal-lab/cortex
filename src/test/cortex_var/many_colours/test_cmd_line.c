@@ -24,14 +24,20 @@
  *
  * **********************************************************************
  */
+/*
+  test_cmd_line.c
+*/
+
+#include <stdlib.h>
+#include <string.h>
 
 #include <CUnit.h>
 #include <Basic.h>
-#include <cmd_line.h>
-#include <string.h>
-#include <element.h>
-#include <stdlib.h>
-#include <db_complex_genotyping.h>
+
+// cortex_var headers
+#include "cmd_line.h"
+#include "element.h"
+#include "db_complex_genotyping.h"
 
 void test_get_numbers_from_comma_sep_list()
 {

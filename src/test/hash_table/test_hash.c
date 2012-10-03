@@ -24,14 +24,19 @@
  *
  * **********************************************************************
  */
+/*
+  test_hash.c
+*/
+
+#include <stdlib.h>
 
 #include <CUnit.h>
 #include <Basic.h>
-#include <element.h>
-#include <open_hash/hash_table.h>
-#include <stdlib.h>
-#include <binary_kmer.h>
 
+// cortex_var headers
+#include "binary_kmer.h"
+#include "element.h"
+#include "open_hash/hash_table.h"
 
 void test_hash_table_find_or_insert()
 {

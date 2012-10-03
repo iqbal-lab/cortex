@@ -24,16 +24,15 @@
  *
  * **********************************************************************
  */
-
 /*
-  binary_kmer.h - basic manipulation of binary kmers
-  
+  solid_colour_event_encoding/event_encoding.h
 */
 
 #ifndef EVENT_ENCODING_H_
 #define EVENT_ENCODING_H_
-#include <global.h>
-#include <event_encoding.h>
+
+#include "global.h"
+#include "event_encoding.h"
 
 typedef enum
  {

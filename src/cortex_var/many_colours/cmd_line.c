@@ -24,21 +24,24 @@
  *
  * **********************************************************************
  */
+/*
+  cmd_line.c
+*/
 
-#include <global.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
-#include <cmd_line.h>
-#include <math.h>
 #include <unistd.h>
-#include <getopt.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <file_reader.h>
-#include <file_format.h>
+#include <math.h>
 #include <err.h>
+
+// cortex_var headers
+#include "cmd_line.h"
+#include "file_reader.h"
+#include "file_format.h"
 
 #define MAX_NUM_DIGITS_IN_COLOUR_ENTERED_ON_CMDLINE_COMMASEP 4
 //#define LEN_ERROR_STRING 400

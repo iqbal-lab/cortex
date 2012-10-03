@@ -24,22 +24,27 @@
  *
  * **********************************************************************
  */
+/*
+  model_selection.c
+*/
 
-#include <element.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <file_reader.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
 #include <string.h>
-#include <cmd_line.h>
 #include <time.h>
-#include <graph_info.h>
-#include <db_differentiation.h>
 #include <maths.h>
-#include <math.h> //we need both!
+
 #include <gsl_sf_gamma.h>
-#include <db_variants.h>
+
+#include "element.h"
+#include "file_reader.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
+#include "cmd_line.h"
+#include "graph_info.h"
+#include "db_differentiation.h"
+#include "math.h"
+#include "db_variants.h"
 
 
 
@@ -65,10 +70,15 @@ boolean basic_model_selection_condition(AnnotatedPutativeVariant* annovar, Graph
 
   //calling these functions sets the values of the likelihoods inside the annovar object/struct
   
-  // *********    WARNING   - commented out the next 2 lines when I added one seq error rate per colour. uncomment them when you fix those functions to support this
+  // Warning: commented out the next 2 lines when I added one seq error rate per
+  // colour. uncomment them when you fix those functions to support this.
+  // Also delete the line (void)model_info;
   //calculate_integrated_loglikelihood_of_snp_model_given_data(annovar, model_info);
   //calculate_integrated_loglikelihood_of_repeat_model_given_data(annovar, model_info, allele_balance_prior);
   
+  // Let the compiler know that we know that we're not using model_info param
+  (void)model_info;
+
   double log_bf_var_over_rep = annovar->model_llks.llk_var - annovar->model_llks.llk_rep;
 
   if  (log_bf_var_over_rep> lthresh) 
@@ -412,12 +422,18 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
 }
 
 
-
-double get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info)
+// Can this be removed?
+double get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVariant* annovar,
+                                                     GraphAndModelInfo* model_info)
 {
+  // These parameters are currently being ignored
+  (void)annovar;
+  (void)model_info;
+
   //  double allele_balance_prior=5;//goes into symmetric Beta
-  return 0; //ZAM - commented this out when I moved to one seq error rate per colour, as I have not modified calculate_integrated_loglikelihood_of_snp_model_given_data to support that
-  //commenting out as I know I have to reimplement this anyway
+  return 0; //ZAM - commented this out when I moved to one seq error rate per colour,
+  // as I have not modified calculate_integrated_loglikelihood_of_snp_model_given_data
+  // to support that commenting out as I know I have to reimplement this anyway
 
 
   //return calculate_integrated_loglikelihood_of_snp_model_given_data(annovar, model_info)

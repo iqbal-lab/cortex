@@ -24,10 +24,15 @@
  *
  * **********************************************************************
  */
+/*
+  maths.c - cortex_var mathematical functions
+*/
 
-#include <math.h>
-#include <maths.h>
 #include <stdlib.h>
+#include <math.h>
+
+// cortex_var headers
+#include "maths.h"
 
 
 // log(n!)= sum from i=1 to n, of  (log(i))                                                                                                                                                                          
@@ -121,6 +126,7 @@ long long calculate_mean(long long* array, long long len)
     }
 }
 
+/*
 void set_int_array_to_zero(int* array, int len)
 {
   int i;
@@ -129,3 +135,4 @@ void set_int_array_to_zero(int* array, int len)
       array[i]=0;
     }
 }
+*/

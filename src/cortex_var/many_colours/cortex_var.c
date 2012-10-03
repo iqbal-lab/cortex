@@ -24,26 +24,31 @@
  *
  * **********************************************************************
  */
+/*
+  cortex_var.c - cortex_var executable source file (contains 'main()' function)
+*/
 
-#include <element.h>
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <file_reader.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
 #include <string.h>
-#include <cmd_line.h>
-#include <time.h>
-#include <graph_info.h>
-#include <db_differentiation.h>
-#include <db_complex_genotyping.h>
-#include <model_selection.h>
-#include <experiment.h>
-#include <genome_complexity.h>
 #include <math.h>
-#include <maths.h>
-#include <seq_error_rate_estimation.h>
 #include <inttypes.h>
+
+// cortex_var headers
+#include "element.h"
+#include "file_reader.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
+#include "cmd_line.h"
+#include "graph_info.h"
+#include "db_differentiation.h"
+#include "db_complex_genotyping.h"
+#include "model_selection.h"
+#include "experiment.h"
+#include "genome_complexity.h"
+#include "maths.h"
+#include "seq_error_rate_estimation.h"
 
 void timestamp();
 
@@ -80,17 +85,21 @@ double  get_histogram_for_kmers_in_just_one_haplotype(long long** arr, int max, 
 }
 */
 
-
+/*
+// Isaac: can this be removed?
 void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* model_info)
 {
-  
 }
+*/
 
 
 
-void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph, void (*print_whatever_extra_variant_info)(VariantBranchesAndFlanks*, FILE*), 
-		    Edges(*get_col_ref) (const dBNode* e),uint32_t (*get_cov_ref)(const dBNode* e),
-		    GraphInfo* db_graph_info, GraphAndModelInfo* model_info)
+void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
+                    void (*print_whatever_extra_variant_info)(VariantBranchesAndFlanks*, FILE*), 
+                    GraphAndModelInfo* model_info)
+                    //Edges(*get_col_ref)(const dBNode* e)
+                    //Covg (*get_cov_ref)(const dBNode* e)
+                    //GraphInfo* db_graph_info
 {
   FILE* fp = fopen(cmd_line->file_of_calls_to_be_genotyped, "r");
   if (fp==NULL)
@@ -388,11 +397,11 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 }
 
 void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph, 
-		      void (*print_appropriate_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
-		      Edges(*get_col_ref) (const dBNode* e),
-		      uint32_t (*get_cov_ref)(const dBNode* e),
-		      GraphInfo* db_graph_info, GraphAndModelInfo* model_info
-		      )
+                      void (*print_appropriate_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
+                      Edges(*get_col_ref) (const dBNode* e),
+                      Covg (*get_cov_ref)(const dBNode* e),
+                      //GraphInfo* db_graph_info,
+                      GraphAndModelInfo* model_info)
 {
 
 
@@ -607,7 +616,7 @@ int main(int argc, char **argv)
     return ed;
   }
 
-  uint32_t get_covg_ref(const dBNode* e)
+  Covg get_covg_ref(const dBNode* e)
   {
     if (cmd_line->using_ref==false)
       {
@@ -618,13 +627,13 @@ int main(int argc, char **argv)
   }
 
 
-  uint32_t get_covg_in_union_all_colours_except_ref(const dBNode* e)
+  Covg get_covg_in_union_all_colours_except_ref(const dBNode* e)
   {
-    uint32_t cov = element_get_covg_union_of_all_covgs(e);
+    Covg cov = element_get_covg_union_of_all_covgs(e);
     if (cmd_line->ref_colour!=-1)
-      {
-	cov -= e->coverage[cmd_line->ref_colour];
-      }
+    {
+      cov -= e->coverage[cmd_line->ref_colour];
+    }
     return cov;
   }
 
@@ -644,19 +653,21 @@ int main(int argc, char **argv)
   int max_kmer_size = (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1;
   int min_kmer_size = ((NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1) * sizeof(bitfield_of_64bits) * 4) + 1;
 
-  if (number_of_bitfields != NUMBER_OF_BITFIELDS_IN_BINARY_KMER){
-    die("K-mer %i  is not in current range of kmers [%i - %i] required for this executable.!\n",
+  if (number_of_bitfields != NUMBER_OF_BITFIELDS_IN_BINARY_KMER)
+  {
+    die("K-mer %i  is not in current range of kmers [%i - %i] required for this executable!\n",
         kmer_size, min_kmer_size, max_kmer_size);
   }
   
-  printf("Maximum k-mer size (compile-time setting): %ld\n", (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1);
-  
-  if (cmd_line->kmer_size> (NUMBER_OF_BITFIELDS_IN_BINARY_KMER * sizeof(bitfield_of_64bits) * 4) -1){
+  printf("Maximum k-mer size (compile-time setting): %i\n", max_kmer_size);
+
+  if(cmd_line->kmer_size > max_kmer_size)
+  {
     die("k-mer size is too big [%i]!",cmd_line->kmer_size);
   }
+
   printf("Actual K-mer size: %d\n", cmd_line->kmer_size);
 
-  
   //Create the de Bruijn graph/hash table
   int max_retries=15;
   db_graph = hash_table_new(hash_key_bits,bucket_size, max_retries, kmer_size);
@@ -750,7 +761,7 @@ int main(int argc, char **argv)
       die("Unable to malloc array to hold readlen distirbution!Exit.\n");
     }
 
-    int i;
+    unsigned long i;
     for(i = 0; i < readlen_distrib_size; i++)
     {
       readlen_distrib[i] = 0;
@@ -827,14 +838,11 @@ int main(int argc, char **argv)
         printf("Dumping distribution of effective read lengths (ie after "
                "quality, homopolymer and/or PCR duplicate filters) to file %s.\n",
                cmd_line->readlen_distrib_outfile);
-
-
       }
-
 
       for(i = db_graph->kmer_size; i < readlen_distrib_size; i++)
       {
-        fprintf(rd_distrib_fptr, "%i\t%lu\n", i, readlen_distrib[i]);
+        fprintf(rd_distrib_fptr, "%lu\t%lu\n", i, readlen_distrib[i]);
       }
 
       fclose(rd_distrib_fptr);
@@ -986,7 +994,7 @@ int main(int argc, char **argv)
       estimate_seq_error_rate_from_snps_for_each_colour(cmd_line->colourlist_snp_alleles, 
 							db_graph_info, db_graph, 
 							cmd_line->ref_colour, 
-							cmd_line->genome_size,
+							//cmd_line->genome_size, //unused
 							default_seq_err,
 							"seq_err_estimation.txt");
     }
@@ -1212,7 +1220,8 @@ int main(int argc, char **argv)
     {
       timestamp();
       printf("Start first set of bubble calls\n");
-      run_bubble_calls(cmd_line, 1, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, db_graph_info, &model_info);
+      run_bubble_calls(cmd_line, 1, db_graph, &print_appropriate_extra_variant_info,
+                       &get_colour_ref, &get_covg_ref, &model_info);
 
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -1224,8 +1233,13 @@ int main(int argc, char **argv)
   if (cmd_line->do_genotyping_of_file_of_sites==true)
     {
       timestamp();
+
       printf("Genotype the calls in this file %s\n", cmd_line->file_of_calls_to_be_genotyped);
-      run_genotyping(cmd_line, db_graph, &print_appropriate_extra_variant_info, &get_colour_ref, &get_covg_ref, db_graph_info, &model_info);
+
+      run_genotyping(cmd_line, db_graph, &print_appropriate_extra_variant_info,
+                     //&get_colour_ref, &get_covg_ref, db_graph_info,
+                     &model_info);
+
       //unset the nodes marked as visited, but not those marked as to be ignored
       timestamp();
       printf("Genotyping completed\n");
@@ -1364,7 +1378,7 @@ int main(int argc, char **argv)
     {
       int num_reads_used_in_estimate=0;
       double g = estimate_genome_complexity(db_graph, cmd_line->fastaq_for_estimating_genome_complexity,
-					    true, 0, 1,cmd_line->max_read_length, cmd_line->format_of_input_seq,
+					    true, 1,cmd_line->max_read_length, cmd_line->format_of_input_seq,
 					    cmd_line->quality_score_offset, &num_reads_used_in_estimate);
       printf("We estimate genome complexity at k=%d (for SNPs) as %f\n", db_graph->kmer_size, g);
       printf("This estimate used a sample of %d high-quality reads\n", num_reads_used_in_estimate);

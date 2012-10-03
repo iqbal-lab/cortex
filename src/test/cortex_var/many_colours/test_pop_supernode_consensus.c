@@ -33,11 +33,12 @@
 #include <CUnit.h>
 #include <Basic.h>
 
-#include <file_reader.h>
-#include <dB_graph_population.h>
-#include <dB_graph_supernode.h>
-#include <element.h>
-#include <open_hash/hash_table.h>
+// cortex_var headers
+#include "file_reader.h"
+#include "dB_graph_population.h"
+#include "dB_graph_supernode.h"
+#include "element.h"
+#include "open_hash/hash_table.h"
 #include "supernode_cmp.h"
 
 
@@ -699,12 +700,14 @@ void test_get_population_consensus_supernode()
   // person4:                                   identical to person 3
   // person5:   TGAGA                  GCACTG
   
-  //spaces signify that they have other sequence in there that is different for each person.
+  // spaces signify that they have other sequence in there that is different for
+  // each person.
 
 
 
-  //All people share the node TGAGA. What is the population consensus supernode rooted at TGAGA?
-  // That depends on what choice on minimum people coverage and minimum supernode length you demand.
+  // All people share the node TGAGA. What is the population consensus supernode
+  // rooted at TGAGA? That depends on what choice on minimum people coverage and
+  // minimum supernode length you demand.
   
 
   dBNode* node = hash_table_find(element_get_key(seq_to_binary_kmer("TGAGA",hash_table->kmer_size, &tmp_kmer1), hash_table->kmer_size, &tmp_kmer2), hash_table);
@@ -727,14 +730,18 @@ void test_get_population_consensus_supernode()
 
   //printf("*********\n\n***********\n\n Start of next test\n\n");
   //min covg 5, min length 6
-  db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj,40,  node, 5, 6, hash_table);
+  db_graph_find_population_consensus_supernode_based_on_given_node(
+    popseq_obj, 40, node, 5, 6, hash_table);
+
   //printf("WE GET BACK %s\n", popseq_obj->seq);
   CU_ASSERT_STRING_EQUAL(popseq_obj->seq, "");
 
   //printf("*********\n\n***********\n\n Start of next test\n\n");
 
   //min covg 5, min length 5
-  db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj, 40, node, 5, 5, hash_table);
+  db_graph_find_population_consensus_supernode_based_on_given_node(
+    popseq_obj, 40, node, 5, 5, hash_table);
+
   //printf("Answer is %s and expect TGAGA or TCTCA\n", popseq_obj->seq); 
   CU_ASSERT( !strcmp(popseq_obj->seq, "TGAGA") || !strcmp(popseq_obj->seq, "TCTCA") );
 
@@ -742,14 +749,18 @@ void test_get_population_consensus_supernode()
   //  printf("*********\n\n***********\n\n Start of next test\n\n");
 
   //min covg 4, min length 6
-  db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj, 40, node, 4, 6, hash_table);
+  db_graph_find_population_consensus_supernode_based_on_given_node(
+    popseq_obj, 40, node, 4, 6, hash_table);
+  
   //printf("Answer is %s and expect TAACTAGGA or TCCTAGTTA\n", popseq_obj->seq); 
   CU_ASSERT( !strcmp(popseq_obj->seq, "TAACTAGGA") || !strcmp(popseq_obj->seq, "TCCTAGTTA") );
 
   //  printf("*********\n\n***********\n\n Start of next test\n\n");
 
   //min covg 2, min length 14
-  db_graph_find_population_consensus_supernode_based_on_given_node(popseq_obj, 40, node, 2, 14, hash_table);
+  db_graph_find_population_consensus_supernode_based_on_given_node(
+    popseq_obj, 40, node, 2, 14, hash_table);
+
   //printf("Answer is %s and expect CTGGCATCCTAGTTATCGTTAGAATCTCACC  or GGTGAGATTCTAACGATAACTAGGATGCCAG \n", popseq_obj->seq); 
   CU_ASSERT( !strcmp(popseq_obj->seq, "CTGGCATCCTAGTTATCGTTAGAATCTCACC") || !strcmp(popseq_obj->seq, "GGTGAGATTCTAACGATAACTAGGATGCCAG") );
 

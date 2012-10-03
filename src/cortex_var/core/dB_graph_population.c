@@ -24,10 +24,9 @@
  *
  * **********************************************************************
  */
-
 /*
   dB_graph_population.c - implementation
- */
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,59 +37,53 @@
 
 #include <gsl_sf_gamma.h>
 
-#include <element.h>
-#include <open_hash/hash_table.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
-#include <seq.h>
-#include <file_reader.h>
-#include <model_selection.h>
-#include <maths.h>
-#include <db_variants.h>
-#include <db_complex_genotyping.h>
+// cortex_var headers
+#include "element.h"
+#include "open_hash/hash_table.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
+#include "seq.h"
+#include "file_reader.h"
+#include "model_selection.h"
+#include "maths.h"
+#include "db_variants.h"
+#include "db_complex_genotyping.h"
 
 void print_fasta_from_path_for_specific_person_or_pop(
   FILE *fout, char *name, int length, double avg_coverage,
-  int min_coverage, int max_coverage, int modal_coverage,
+  Covg min_coverage, Covg max_coverage, Covg modal_coverage,
   double percent_nodes_with_modal_coverage, double percent_novel,
   dBNode *fst_node, Orientation fst_orientation,
   dBNode *lst_node, Orientation lst_orientation,
   char *text_describing_comparison_with_other_path, // may be NULL
-  int *coverages_nodes_in_this_path_but_not_some_other, // may be NULL
+  Covg *coverages_nodes_in_this_path_but_not_some_other, // may be NULL
   int length_of_coverage_array, char * string, // labels of paths
   int kmer_size, boolean include_first_kmer, int index);
 
-void print_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *fout,
-								  char * name,
-								  int length,
-								  double avg_coverage,
-								  int min_coverage,
-								  int max_coverage,
-								  int modal_coverage,
-								  double  percent_nodes_with_modal_coverage,
-								  double percent_novel, 
-								  dBNode * fst_node,
-								  Orientation fst_orientation,
-								  dBNode * lst_node,
-								  Orientation lst_orientation,
-								  char* text_describing_comparison_with_other_path, 
-								     //text_describing_comparison_with_other_path may be NULL 
-								     // - use to allow printing coverages of nodes in this path but not in some specific other path
-								  int* coverages_nodes_in_this_path_but_not_some_other, //may be NULL
-								  int length_of_coverage_array,
-								  char * string, //labels of paths
-								  int kmer_size,
-								  boolean include_first_kmer,
-								  Edges (*get_colour)(const dBNode*),
-								  uint32_t (*get_covg)(const dBNode*)
-								  );
+
+//text_describing_comparison_with_other_path may be NULL 
+// - use to allow printing coverages of nodes in this path but not in some
+// specific other path
+// Covg* coverages_nodes_in_this_path_but_not_some_other may be null
+// char* string is the labels of paths
+void print_fasta_from_path_in_subgraph_defined_by_func_of_colours(
+  FILE *fout, char * name, int length, double avg_coverage,
+  Covg min_coverage, Covg max_coverage, Covg modal_coverage,
+  double percent_nodes_with_modal_coverage, double percent_novel,
+  dBNode * fst_node, Orientation fst_orientation, dBNode * lst_node,
+  Orientation lst_orientation, char* text_describing_comparison_with_other_path,
+  Covg* coverages_nodes_in_this_path_but_not_some_other,
+  int length_of_coverage_array, char * string, int kmer_size,
+  boolean include_first_kmer,
+  Edges (*get_colour)(const dBNode*),
+  Covg (*get_covg)(const dBNode*));
 
 void print_minimal_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 							      char * name,
 							      int length,
 							      double avg_coverage,
-							      int min_coverage,
-							      int max_coverage,
+							      Covg min_coverage,
+							      Covg max_coverage,
 							      dBNode * fst_node,
 							      Orientation fst_orientation,
 							      dBNode * lst_node,
@@ -116,8 +109,8 @@ void print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *
 									  char * name,
 									  int length,
 									  double avg_coverage,
-									  int min_coverage,
-									  int max_coverage,
+									  Covg min_coverage,
+									  Covg max_coverage,
 									  dBNode * fst_node,
 									  Orientation fst_orientation,
 									  dBNode * lst_node,
@@ -126,7 +119,7 @@ void print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *
 									  int kmer_size,
 									  boolean include_first_kmer,
 									  Edges (*get_colour)(const dBNode*),
-									  uint32_t (*get_covg)(const dBNode*)
+									  Covg (*get_covg)(const dBNode*)
 									  );
 
                                                                           
@@ -242,9 +235,10 @@ dBNode * db_graph_get_next_node_in_subgraph_defined_by_func_of_colours(dBNode * 
 
 
 //MARIO Mario - noode seems to call or use this?
-boolean db_graph_db_node_has_precisely_n_edges_with_status_for_specific_person_or_pop(dBNode * node,Orientation orientation,NodeStatus status,int n,
-										      dBNode * * next_node, Orientation * next_orientation, Nucleotide * next_base,
-										      dBGraph * db_graph, int index)
+boolean db_graph_db_node_has_precisely_n_edges_with_status_for_specific_person_or_pop(
+  dBNode * node,Orientation orientation,NodeStatus status,int n,
+  dBNode * * next_node, Orientation * next_orientation, Nucleotide * next_base,
+  dBGraph * db_graph, int index)
 {
 
   if ( (n>4)||(n<0))
@@ -516,10 +510,10 @@ int db_graph_db_node_clip_tip_in_subgraph_defined_by_func_of_colours(dBNode * no
 // 2. the argument get_edge_of_interest is a function that gets the "edge" you are interested in - may be a single edge/colour from the graph, or might be a union of some edges
 // 3 Pass apply_reset_to_specified_edges which applies reset_one_edge to whichever set of edges you care about, 
 // 4 Pass apply_reset_to_specified_edges_2 which applies db_node_reset_edges to whichever set of edges you care about, 
-boolean db_graph_db_node_prune_low_coverage(dBNode * node, uint32_t coverage,
+boolean db_graph_db_node_prune_low_coverage(dBNode * node, Covg coverage,
 					    void (*node_action)(dBNode * node),
 					    dBGraph * db_graph, 
-					    uint32_t (*sum_of_covgs_in_desired_colours)(const Element *), 
+					    Covg (*sum_of_covgs_in_desired_colours)(const Element *), 
 					    Edges (*get_edge_of_interest)(const Element*),
 					    void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide),
 					    void (*apply_reset_to_specified_edges_2)(dBNode*) )
@@ -603,7 +597,7 @@ boolean db_graph_db_node_prune_without_condition(dBNode * node,
 }
 
 
-boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, uint32_t coverage,
+boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, Covg coverage,
 							     void (*node_action)(dBNode * node),
 							     dBGraph * db_graph)
 {
@@ -641,8 +635,6 @@ boolean db_graph_db_node_prune_low_coverage_ignoring_colours(dBNode * node, uint
 					     &get_edge_of_interest,
 					     &apply_reset_to_specified_edges,
 					     &apply_reset_to_specified_edges_2);
-
-
 }
 
 
@@ -663,7 +655,7 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(
   Nucleotide fst_nucleotide,
   void (*node_action)(dBNode *node),
   dBNode **path_nodes, Orientation *path_orientations, Nucleotide *path_labels,
-  char *seq, double *avg_coverage,int *min_coverage, int *max_coverage,
+  char *seq, double *avg_coverage, Covg *min_coverage, Covg *max_coverage,
   boolean *is_cycle, dBGraph *db_graph, int index)
 {
 
@@ -674,8 +666,8 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(
   int length =0;
   char tmp_seq[db_graph->kmer_size+1];
   tmp_seq[db_graph->kmer_size] = '\0';
-  int sum_coverage = 0;
-  int coverage  = 0;
+  Covg sum_coverage = 0;
+  Covg coverage  = 0;
 
   //sanity checks
   if (node == NULL)
@@ -697,7 +689,7 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(
   path_nodes[0]         = node;
   path_orientations[0]  = orientation;  
   *max_coverage         = 0;
-  *min_coverage         = INT_MAX;
+  *min_coverage         = COVG_MAX;
  
   if (DEBUG){
     printf("\n ZAM Node %i in path: %s\n", length, binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq));
@@ -711,8 +703,8 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(
     if (length>0){
       node_action(current_node);
       sum_coverage += coverage;
-      *max_coverage = (*max_coverage < coverage) ? coverage : *max_coverage;
-      *min_coverage = (*min_coverage > coverage) ? coverage : *min_coverage;
+      *max_coverage = MAX(coverage, *max_coverage);
+      *min_coverage = MIN(coverage, *min_coverage);
     }
 
     //this will return NULL if the next node is not in the person's graph. It does NOT check if the edge is in the graph...
@@ -723,12 +715,12 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(
 
     //sanity check
     if(next_node == NULL)
-      {
-	die("db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop: "
-      "didnt find node in hash table: %s %c %s",
+    {
+    	die("db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop: "
+          "didnt find node in hash table: %s %c %s",
       binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq),
       binary_nucleotide_to_char(nucleotide), current_orientation == forward ? "forward" : "reverse");
-      }
+    }
 
 
     path_labels[length]        = nucleotide;
@@ -740,8 +732,10 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(
     path_nodes[length]         = next_node;
     path_orientations[length]  = next_orientation;
     
-    if (DEBUG){
-      printf("\n Length of path so far is  %i : %s\n", length, binary_kmer_to_seq(element_get_kmer(next_node),db_graph->kmer_size,tmp_seq));
+    if (DEBUG)
+    {
+      binary_kmer_to_seq(element_get_kmer(next_node), db_graph->kmer_size, tmp_seq);
+      printf("\n Length of path so far is  %i : %s\n", length, seq);
     }
     
     current_node        = next_node;
@@ -790,10 +784,10 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(
    seq[length] = '\0';
   *avg_coverage = (length-1<=0) ? 0 : (double) sum_coverage/(double) (length-1);
 
-  if (*min_coverage == INT_MAX)
+  if (*min_coverage == COVG_MAX)
     {
       *min_coverage = 0;
-    };
+    }
 
   return length;
   
@@ -815,15 +809,13 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(
 //get_colour returns an edge which is a function of the edges in a node. eg union of all edges, or of colours 1 and 2
 // get covg returns coverge desired - most ikely is sum of covgs in each of colours which are summed/unioned in get_colour
 int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(
-  dBNode * node, Orientation orientation, int limit, 
-										     Nucleotide fst_nucleotide,
-										     void (*node_action)(dBNode * node),
-										     dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
-										     char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
-										     boolean * is_cycle, dBGraph * db_graph, 
-										     Edges (*get_colour)(const dBNode*),
-										     uint32_t (*get_covg)(const dBNode*) 
-										     )
+  dBNode *node, Orientation orientation, int limit, Nucleotide fst_nucleotide,
+  void (*node_action)(dBNode *node), dBNode **path_nodes,
+  Orientation *path_orientations, Nucleotide *path_labels, char *seq,
+  double *avg_coverage, Covg *min_coverage, Covg *max_coverage,
+  boolean *is_cycle, dBGraph *db_graph, 
+  Edges (*get_colour)(const dBNode*),
+  Covg (*get_covg)(const dBNode*))
 {
 
   Orientation  current_orientation,next_orientation;
@@ -833,8 +825,8 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
   int length =0;
   char tmp_seq[db_graph->kmer_size+1];
   tmp_seq[db_graph->kmer_size]='\0';
-  int sum_coverage = 0;
-  int coverage  = 0;
+  Covg sum_coverage = 0;
+  Covg coverage  = 0;
 
   //sanity checks
   if (node == NULL)
@@ -856,7 +848,7 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
   path_nodes[0]         = node;
   path_orientations[0]  = orientation;  
   *max_coverage         = 0;
-  *min_coverage         = INT_MAX;
+  *min_coverage         = COVG_MAX;
  
   if (DEBUG){
     printf("\n ZAM Node %i in path: %s\n", length, binary_kmer_to_seq(element_get_kmer(current_node),db_graph->kmer_size,tmp_seq));
@@ -870,8 +862,8 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
     if (length>0){
       node_action(current_node);
       sum_coverage += coverage;
-      *max_coverage = (*max_coverage < coverage) ? coverage : *max_coverage;
-      *min_coverage = (*min_coverage > coverage) ? coverage : *min_coverage;
+      *max_coverage = MAX(coverage, *max_coverage);
+      *min_coverage = MIN(coverage, *min_coverage);
     }
 
     //this will return NULL if the next node is not in the subgraph specified by get_colour. 
@@ -922,10 +914,10 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
    seq[length] = '\0';
   *avg_coverage = (length-1<=0) ? 0 : (double) sum_coverage/(double) (length-1);
 
-  if (*min_coverage == INT_MAX)
+  if (*min_coverage == COVG_MAX)
     {
       *min_coverage = 0;
-    };
+    }
 
   return length;
   
@@ -945,11 +937,12 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
 // seq is a string with all the labels concatenated (NB: it doesn't contain the kmer in the first node)
 // avg_coverage, min_coverge, max_coverge -> refers to the internal nodes only
 
-int db_graph_get_perfect_path_for_specific_person_or_pop(dBNode * node, Orientation orientation, int limit, 
-							 void (*node_action)(dBNode * node),
-							 dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
-							 char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
-							 boolean * is_cycle, dBGraph * db_graph, int index)
+int db_graph_get_perfect_path_for_specific_person_or_pop(
+  dBNode *node, Orientation orientation, int limit,
+  void (*node_action)(dBNode *node), dBNode **path_nodes,
+  Orientation *path_orientations, Nucleotide *path_labels, char *seq,
+  double *avg_coverage, Covg *min_coverage, Covg *max_coverage,
+  boolean *is_cycle, dBGraph *db_graph, int index)
 {
 
   int length =0;
@@ -993,13 +986,13 @@ int db_graph_get_perfect_path_for_specific_person_or_pop(dBNode * node, Orientat
 // seq is a string with all the labels concatenated (NB: it doesn't contain the kmer in the first node)
 // avg_coverage, min_coverge, max_coverge -> refers to the internal nodes only
 
-int db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(dBNode * node, Orientation orientation, int limit, 
-								     void (*node_action)(dBNode * node),
-								     dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
-								     char * seq, double * avg_coverage,int * min_coverage, int * max_coverage,
-								     boolean * is_cycle, dBGraph * db_graph, 
-								     Edges (*get_colour)(const dBNode*),
-								     uint32_t (*get_covg)(const dBNode*) )
+int db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(
+  dBNode *node, Orientation orientation, int limit,
+  void (*node_action)(dBNode *node), dBNode **path_nodes,
+  Orientation *path_orientations, Nucleotide *path_labels, char *seq,
+  double *avg_coverage, Covg *min_coverage, Covg *max_coverage,
+  boolean *is_cycle, dBGraph *db_graph, 
+  Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*))
 {
 
   int length =0;
@@ -1048,15 +1041,14 @@ int db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(dBNode * no
 
 
 //TODO - could have triallelic
-boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
-								  Orientation orientation,
-								  int limit,
-								  void (*node_action)(dBNode * node), 
-								  int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,
-								  char * seq1, double * avg_coverage1, int * min_coverage1, int * max_coverage1,
-								  int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,
-								  char * seq2, double * avg_coverage2, int * min_coverage2, int * max_coverage2,
-								 dBGraph * db_graph, int index)
+boolean db_graph_detect_bubble_for_specific_person_or_population(
+  dBNode * node, Orientation orientation, int limit,
+  void (*node_action)(dBNode * node), 
+  int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,
+  char * seq1, double * avg_coverage1, Covg *min_coverage1, Covg *max_coverage1,
+  int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,
+  char * seq2, double * avg_coverage2, Covg *min_coverage2, Covg *max_coverage2,
+  dBGraph * db_graph, int index)
 {
 
 
@@ -1080,8 +1072,8 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
   Nucleotide path_labels[4][limit];
   char seq[4][limit+1];
   double avg_coverage[4];
-  int min_coverage[4];
-  int max_coverage[4];
+  Covg min_coverage[4];
+  Covg max_coverage[4];
   int lengths[4];
   int i=0;
   
@@ -1176,16 +1168,20 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode * node,
 // otherwise, pass false, NULL for the last two actions.
 
 //TODO - could have triallelic
-boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * node,
-								      Orientation orientation,
-								      int limit,
-								      void (*node_action)(dBNode * node), 
-								      int * length1,dBNode ** path_nodes1, Orientation * path_orientations1, Nucleotide * path_labels1,char * seq1, 
-								      double * avg_coverage1, int * min_coverage1, int * max_coverage1,
-								      int * length2,dBNode ** path_nodes2, Orientation * path_orientations2, Nucleotide * path_labels2,char * seq2, 
-								      double * avg_coverage2, int * min_coverage2, int * max_coverage2,
-								      dBGraph * db_graph, Edges (*get_colour)(const dBNode*),  uint32_t (*get_covg)(const dBNode*),
-								      boolean apply_special_action_to_branches, void (*special_action)(dBNode * node))
+boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(
+  dBNode *node, Orientation orientation, int limit,
+  void (*node_action)(dBNode *node), 
+  int *length1, dBNode **path_nodes1, Orientation *path_orientations1,
+  Nucleotide *path_labels1, char *seq1, 
+  double *avg_coverage1, Covg *min_coverage1, Covg *max_coverage1,
+  int *length2, dBNode **path_nodes2, Orientation *path_orientations2,
+  Nucleotide *path_labels2, char *seq2, 
+  double *avg_coverage2, Covg *min_coverage2, Covg *max_coverage2,
+  dBGraph *db_graph,
+  Edges (*get_colour)(const dBNode*),
+  Covg (*get_covg)(const dBNode*),
+  boolean apply_special_action_to_branches,
+  void (*special_action)(dBNode *node))
 {
 
   if (node==NULL)
@@ -1207,8 +1203,8 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
   Nucleotide path_labels[4][limit];
   char seq[4][limit+1];
   double avg_coverage[4];
-  int min_coverage[4];
-  int max_coverage[4];
+  Covg min_coverage[4];
+  Covg max_coverage[4];
   int lengths[4];
   int i=0;
   
@@ -1314,7 +1310,7 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(dBNode * n
 
 boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(
   dBNode * node, Orientation orientation, 
-  int limit,int coverage_limit,
+  int limit, Covg coverage_limit,
   void (*node_action)(dBNode * node),
   dBGraph * db_graph, int index)
 {
@@ -1334,11 +1330,11 @@ boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(
 
   char seq1[limit+1];
   double avg_coverage1;
-  int min_coverage1,max_coverage1;
+  Covg min_coverage1, max_coverage1;
 
   char seq2[limit+1];
   double avg_coverage2;
-  int min_coverage2,max_coverage2;
+  Covg min_coverage2, max_coverage2;
 
 
   int length_tmp;
@@ -1400,38 +1396,38 @@ boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(
 // string has to support limit+1 (+1 as you need a space for the \0 at the end)
 // node_action has to be idempotent as it can be applied to the same node twice!!
 // supernode_str returns the string made of the labels of the path (doesn't include first kmer). 
-// returns the length of supernode 
-
+// returns the length of supernode
 
 int db_graph_supernode_for_specific_person_or_pop(
-  dBNode * node,int limit,void (*node_action)(dBNode * node), 
-  dBNode * * path_nodes, Orientation * path_orientations,
-  Nucleotide * path_labels, char * supernode_str, 
-  double * avg_coverage,int * min,int * max, boolean * is_cycle, 
-  dBGraph * db_graph, int index)
+  dBNode *node, int limit, void (*node_action)(dBNode *node), 
+  dBNode **path_nodes, Orientation *path_orientations,
+  Nucleotide *path_labels, char *supernode_str, 
+  double *avg_coverage, Covg *min, Covg *max, boolean *is_cycle, 
+  dBGraph *db_graph, int index)
 {
 
-  
   //use the allocated space as a temporary space
-  dBNode * * nodes_reverse = path_nodes;
-  Orientation * orientations_reverse = path_orientations;
-  Nucleotide * labels_reverse = path_labels;
+  dBNode **nodes_reverse = path_nodes;
+  Orientation *orientations_reverse = path_orientations;
+  Nucleotide *labels_reverse = path_labels;
      
   boolean is_cycler;
   int length_reverse;
   int length = 0;
   
-  int minr,maxr;
+  Covg minr,maxr;
   double avg_coverager;
 
 
   //compute the reverse path until the end of the supernode
   //return is_cycle_reverse == true if the path closes a loop    
   
-  length_reverse = db_graph_get_perfect_path_for_specific_person_or_pop(node,reverse,limit,&db_node_action_do_nothing,
-									nodes_reverse,orientations_reverse,labels_reverse,
-									supernode_str,&avg_coverager,&minr,&maxr,
-									&is_cycler,db_graph, index);
+  length_reverse
+    = db_graph_get_perfect_path_for_specific_person_or_pop(
+        node, reverse, limit, &db_node_action_do_nothing, 
+        nodes_reverse, orientations_reverse, labels_reverse, 
+        supernode_str, &avg_coverager, &minr, &maxr, 
+        &is_cycler, db_graph, index);
   
   if (length_reverse>0){
     //let's re do the last step, we need to do that because the last node could have had multiple entries
@@ -1483,12 +1479,14 @@ int db_graph_supernode_for_specific_person_or_pop(
 // supernode_str returns the string made of the labels of the path (doesn't include first kmer). 
 // returns the length of supernode 
 // last two arguments mean you find supernode in a subgraph of the main graph defined by the edges as returned by get_colour.
-int db_graph_supernode_in_subgraph_defined_by_func_of_colours(dBNode * node,int limit,void (*node_action)(dBNode * node), 
-							      dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, char * supernode_str, 
-							      double * avg_coverage,int * min,int * max, boolean * is_cycle, 
-							      dBGraph * db_graph, 
-							      Edges (*get_colour)(const dBNode*),
-							      uint32_t (*get_covg)(const dBNode*))
+int db_graph_supernode_in_subgraph_defined_by_func_of_colours(
+  dBNode * node,int limit,void (*node_action)(dBNode * node), 
+  dBNode * * path_nodes, Orientation * path_orientations,
+  Nucleotide * path_labels, char * supernode_str, 
+  double * avg_coverage, Covg * min, Covg * max,
+  boolean * is_cycle, dBGraph * db_graph, 
+  Edges (*get_colour)(const dBNode*),
+  Covg (*get_covg)(const dBNode*))
 {
 
   
@@ -1501,7 +1499,7 @@ int db_graph_supernode_in_subgraph_defined_by_func_of_colours(dBNode * node,int 
   int length_reverse;
   int length = 0;
   
-  int minr,maxr;
+  Covg minr, maxr;
   double avg_coverager;
 
 
@@ -1560,26 +1558,54 @@ int db_graph_supernode_in_subgraph_defined_by_func_of_colours(dBNode * node,int 
 
 
 
-boolean condition_always_true(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
-			      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
+boolean condition_always_true(dBNode** flank_5p, int len5p,
+                              dBNode** ref_branch, int len_ref,
+                              dBNode** var_branch, int len_var,
+                              dBNode** flank_3p, int len3p,
+                              int colour_of_ref, int colour_of_indiv)
 {
+  // (pretend to) use the parameters so the compiler doesn't complain
+  (void)flank_5p;
+  (void)len5p;
+  (void)ref_branch;
+  (void)len_ref;
+  (void)var_branch;
+  (void)len_var;
+  (void)flank_3p;
+  (void)len3p;
+
   return true;
 }
 
 
 //this is the default condition used by the trsuted-path/reference-based SV caller
-// it requires of a potential variant site that (after normalising by factoring out coverage due to the rest of the genome)
-// there is coverage of variant nodes that are not in the ref-allele/trusted-path branch
-// this assumes that we are doing a DIPLOID assembly, and requires you to pass in the expected coverage per chromosome/haplotype
-// i.e if you (total reads*read_length)/length_of_genome = 30x coverage, then pass in 15, as you expect 15x per copy of a chromosome.
-boolean condition_default(dBNode** flank_5p, int len5p, dBNode** ref_branch, int len_ref, dBNode** var_branch, int len_var,
-			      dBNode** flank_3p, int len3p, int colour_of_ref, int colour_of_indiv)
+// it requires of a potential variant site that (after normalising by factoring
+// out coverage due to the rest of the genome) there is coverage of variant nodes
+// that are not in the ref-allele/trusted-path branch this assumes that we are
+// doing a DIPLOID assembly, and requires you to pass in the expected coverage
+// per chromosome/haplotype
+// i.e if your (total reads*read_length)/length_of_genome = 30x coverage,
+// then pass in 15, as you expect 15x per copy of a chromosome.
+boolean condition_default(dBNode** flank_5p, int len5p,
+                          dBNode** ref_branch, int len_ref,
+                          dBNode** var_branch, int len_var,
+                          dBNode** flank_3p, int len3p,
+                          int colour_of_ref, int colour_of_indiv)
 {
-  
-  //basic idea is simple. Take the nodes which are in the variant and not the trusted path
-  
-  return true;
+  // basic idea is simple. Take the nodes which are in the variant and not the
+  // trusted path
 
+  // (pretend to) use the parameters so the compiler doesn't complain
+  (void)flank_5p;
+  (void)len5p;
+  (void)ref_branch;
+  (void)len_ref;
+  (void)var_branch;
+  (void)len_var;
+  (void)flank_3p;
+  (void)len3p;
+
+  return true;
 }
 
 // identical code to db_graph_supernode_for_specific_person_or_pop but this returns the index of the query node (first argument) in th supernode array
@@ -1588,8 +1614,8 @@ boolean condition_default(dBNode** flank_5p, int len5p, dBNode** ref_branch, int
 int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(
   dBNode *node,int limit,void (*node_action)(dBNode *node), 
   dBNode **path_nodes, Orientation *path_orientations, Nucleotide *path_labels,
-  char *supernode_str, double *avg_coverage,int *min,int *max, boolean *is_cycle, 
-  int*query_node_posn, dBGraph *db_graph, int index)
+  char *supernode_str, double *avg_coverage, Covg *min, Covg *max,
+  boolean *is_cycle, int *query_node_posn, dBGraph *db_graph, int index)
 {
 
   //use the allocated space as a temporary space
@@ -1601,7 +1627,7 @@ int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(
   int length_reverse;
   int length = 0;
   
-  int minr,maxr;
+  Covg minr,maxr;
   double avg_coverager;
 
 
@@ -1660,18 +1686,18 @@ int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(
 }
 
 
-int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_colours(dBNode * node,int limit,void (*node_action)(dBNode * node), 
-											dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,
-											char * supernode_str, double * avg_coverage,int * min,int * max, boolean * is_cycle, 
-											int* query_node_posn,
-											dBGraph * db_graph, 
-											Edges (*get_colour)(const dBNode*),
-											uint32_t (*get_covg)(const dBNode*) )
+int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_colours(
+  dBNode *node,int limit,void (*node_action)(dBNode *node), 
+  dBNode **path_nodes, Orientation *path_orientations, Nucleotide *path_labels,
+  char *supernode_str, double *avg_coverage, Covg *min, Covg *max,
+  boolean *is_cycle, int *query_node_posn, dBGraph *db_graph, 
+  Edges (*get_colour)(const dBNode*),
+  Covg (*get_covg)(const dBNode*) )
 {
   
   
   //use the allocated space as a temporary space
-  dBNode * * nodes_reverse = path_nodes;
+  dBNode **nodes_reverse = path_nodes;
   Orientation * orientations_reverse = path_orientations;
   Nucleotide * labels_reverse = path_labels;
      
@@ -1679,7 +1705,7 @@ int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_
   int length_reverse;
   int length = 0;
   
-  int minr,maxr;
+  Covg minr, maxr;
   double avg_coverager;
 
 
@@ -1755,13 +1781,15 @@ int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_
 // whether true or false, will return the supernode in path_nodes, path_orientations, path_labels
 // node_action MUST BE IDEMPOTENT
 
-boolean db_graph_logical_operation_on_condition_for_all_nodes_in_supernode(dBNode * node,int limit, 
-									   boolean (*condition_for_all_nodes)(dBNode * node),  
-									   void (*node_action)(dBNode * node),
-									   dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, int* path_length,
-									   char * string, double * avg_coverage,int * min,int * max, boolean * is_cycle, 
-									   boolean big_and, //otherwise is big or
-									   dBGraph * db_graph, int index)
+// If not `big_and` then big or
+boolean db_graph_logical_operation_on_condition_for_all_nodes_in_supernode(
+  dBNode *node,int limit, 
+  boolean (*condition_for_all_nodes)(dBNode *node),  
+  void (*node_action)(dBNode *node),
+  dBNode **path_nodes, Orientation *path_orientations,
+  Nucleotide *path_labels, int*path_length,
+  char *string, double *avg_coverage, Covg *min, Covg *max,
+  boolean *is_cycle, boolean big_and, dBGraph *db_graph, int index)
 {
 
   boolean return_val;
@@ -1814,21 +1842,20 @@ boolean db_graph_logical_operation_on_condition_for_all_nodes_in_supernode(dBNod
 // if condition_for_all_nodes is true for all nodes, and return true, else false.
 // whether true or false, will return the supernode in path_nodes, path_orientations, path_labels
 // node_action MUST BE IDEMPOTENT
-boolean db_graph_is_condition_true_for_all_nodes_in_supernode(dBNode * node,int limit, 						
-							      boolean (*condition_for_all_nodes)(dBNode * node),  
-							      void (*node_action)(dBNode * node),
-							      dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels, int* path_length,
-							      char * string, double * avg_coverage,int * min,int * max, boolean * is_cycle, 
-							      dBGraph * db_graph, int index)
+boolean db_graph_is_condition_true_for_all_nodes_in_supernode(
+  dBNode *node,int limit, 						
+  boolean (*condition_for_all_nodes)(dBNode *node),  
+  void (*node_action)(dBNode *node),
+  dBNode **path_nodes, Orientation *path_orientations,
+  Nucleotide *path_labels, int*path_length,
+  char *string, double *avg_coverage, Covg *min_covg, Covg *max_covg,
+  boolean *is_cycle, dBGraph *db_graph, int index)
 {
-
-  return db_graph_logical_operation_on_condition_for_all_nodes_in_supernode(node,limit,
-									    condition_for_all_nodes,
-									    node_action,
-									    path_nodes, path_orientations, path_labels, path_length, 
-									    string, avg_coverage, min, max, is_cycle,
-									    true, db_graph, index);
-									   
+  return db_graph_logical_operation_on_condition_for_all_nodes_in_supernode(
+           node, limit, condition_for_all_nodes, node_action,
+           path_nodes, path_orientations, path_labels, path_length, 
+           string, avg_coverage, min_covg, max_covg, is_cycle,
+           true, db_graph, index);
 }
 
 
@@ -1840,22 +1867,20 @@ boolean db_graph_is_condition_true_for_all_nodes_in_supernode(dBNode * node,int 
 // whether true or false, will return the supernode in path_nodes, path_orientations, path_labels
 // node_action MUST BE IDEMPOTENT
 
-
-
-boolean db_graph_is_condition_true_for_at_least_one_node_in_supernode(dBNode * node,int limit, 
-								      boolean (*condition_for_all_nodes)(dBNode * node),  
-								      void (*node_action)(dBNode * node),
-								      dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,  int* path_length,
-								      char * string, double * avg_coverage,int * min,int * max, boolean * is_cycle, 
-								      dBGraph * db_graph, int index)
+boolean db_graph_is_condition_true_for_at_least_one_node_in_supernode(
+  dBNode *node,int limit,
+  boolean (*condition_for_all_nodes)(dBNode *node),  
+  void (*node_action)(dBNode *node),
+  dBNode **path_nodes, Orientation *path_orientations,
+  Nucleotide *path_labels,  int*path_length,
+  char *string, double *avg_coverage, Covg *min_covg, Covg *max_covg,
+  boolean *is_cycle, dBGraph *db_graph, int index)
 {
-  return db_graph_logical_operation_on_condition_for_all_nodes_in_supernode(node,limit,
-									    condition_for_all_nodes,
-									    node_action,
-									    path_nodes, path_orientations, path_labels, path_length,
-									    string, avg_coverage, min, max, is_cycle,
-									    false, db_graph, index);
-
+  return db_graph_logical_operation_on_condition_for_all_nodes_in_supernode(
+           node, limit, condition_for_all_nodes, node_action,
+           path_nodes, path_orientations, path_labels, path_length,
+           string, avg_coverage, min_covg, max_covg, is_cycle,
+           false, db_graph, index);
 }
 
 
@@ -1867,18 +1892,20 @@ boolean db_graph_is_condition_true_for_at_least_one_node_in_supernode(dBNode * n
 // apply the action to all nodes in the supernode, and also you check
 // node_action MUST BE IDEMPOTENT
 
-boolean db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(dBNode * node,int limit,
-										    boolean (*condition_for_all_nodes)(dBNode * node),  
-										    void (*node_action)(dBNode * node), 
-										    int min_start, int min_end, int min_diff,
-										    dBNode * * path_nodes, Orientation * path_orientations, Nucleotide * path_labels,int * path_length,
-										    char * string, double * avg_coverage,int * min,int * max, boolean * is_cycle,
-										    dBGraph * db_graph, int index)
+boolean db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supernode(
+  dBNode *node,int limit,
+  boolean (*condition_for_all_nodes)(dBNode *node),  
+  void (*node_action)(dBNode *node), 
+  int min_start, int min_end, int min_diff,
+  dBNode **path_nodes, Orientation *path_orientations,
+  Nucleotide *path_labels,int *path_length,
+  char *string, double *avg_coverage, Covg *min_covg, Covg *max_covg,
+  boolean *is_cycle, dBGraph *db_graph, int index)
 {
 
   boolean condition_is_true_for_all_nodes_in_supernode=true;
 
-  void action_check_condition_on_all_nodes(dBNode* n)
+  void action_check_condition_on_all_nodes(dBNode *n)
     {
       //printf("db_graph_is_condition_true..:  applying action to node %s\n", binary_kmer_to_seq(element_get_kmer(n),db_graph->kmer_size,tmp_seq) );
       condition_is_true_for_all_nodes_in_supernode = condition_is_true_for_all_nodes_in_supernode  &&   condition_for_all_nodes(n);
@@ -1888,7 +1915,7 @@ boolean db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supern
   *path_length = db_graph_supernode_for_specific_person_or_pop(node, limit, 
 							       action_check_condition_on_all_nodes, 
 							       path_nodes, path_orientations, path_labels,
-							       string, avg_coverage, min, max, is_cycle,
+							       string, avg_coverage, min_covg, max_covg, is_cycle,
 							       db_graph, index);
 
   int num_nodes_at_start_where_condition_is_true=0;
@@ -1949,7 +1976,7 @@ boolean db_graph_is_condition_true_for_start_and_end_but_not_all_nodes_in_supern
 }
 
 void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernode(
-  dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required, FILE* fout,  
+  dBGraph * db_graph, boolean (*condition)(dBNode * node), Covg min_covg_required, FILE* fout,  
   boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index, int index)
 {
 
@@ -1962,8 +1989,8 @@ void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernod
       Nucleotide labels_path[5000];
       char seq[5000+1];
       double avg_coverage;
-      int min_coverage;
-      int  max_coverage;
+      Covg min_coverage;
+      Covg  max_coverage;
       int length_path=0;
       boolean is_cycle;
       
@@ -2015,7 +2042,7 @@ void db_graph_print_supernodes_where_condition_is_true_for_all_nodes_in_supernod
 
 
 void db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_supernode(
-  dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required,
+  dBGraph * db_graph, boolean (*condition)(dBNode * node), Covg min_covg_required,
   FILE* fout, boolean is_for_testing, char** for_test_array_of_supernodes,
   int* for_test_index, int index)
 {
@@ -2031,8 +2058,8 @@ void db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_
     seq[0]='\0';
     int length_path=0;
     double avg_coverage;
-    int min_coverage;
-    int  max_coverage;
+    Covg min_coverage;
+    Covg max_coverage;
     boolean is_cycle;
     
     
@@ -2084,7 +2111,7 @@ void db_graph_print_supernodes_where_condition_is_true_for_at_least_one_node_in_
 // can use this toprint potential indels.
 // min_start and min_end are the number of nodes of overlap with the reference that  you want at the start and  end of the supernode
 void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_all_nodes_in_supernode(
-  dBGraph * db_graph, boolean (*condition)(dBNode * node), int min_covg_required,
+  dBGraph * db_graph, boolean (*condition)(dBNode * node), Covg min_covg_required,
   int min_start, int min_end, int min_diff, FILE* fout,
   boolean is_for_testing, char** for_test_array_of_supernodes, int* for_test_index,
   int index)
@@ -2099,8 +2126,8 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
       Nucleotide labels_path[5000];
       char seq[5000+1];
       double avg_coverage;
-      int min_coverage;
-      int  max_coverage;
+      Covg min_coverage;
+      Covg max_coverage;
       int length_path=0;
       boolean is_cycle;
 
@@ -2154,9 +2181,11 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 }
 
 
-
 boolean detect_vars_condition_always_true(VariantBranchesAndFlanks* var)
 {
+  // Let the compiler know that we're deliberately ignoring a parameter
+  (void)var;
+
   return true;
 }
 
@@ -2184,10 +2213,11 @@ boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesA
 
 
 
-
-
 boolean detect_vars_condition_always_false(VariantBranchesAndFlanks* var)
 {
+  // Let the compiler know that we're deliberately ignoring a parameter
+  (void)var;
+
   return false;
 }
 
@@ -2208,10 +2238,10 @@ boolean detect_vars_condition_flanks_at_least_3(VariantBranchesAndFlanks* var)
 //typical usecase is, colourfunc1 = colour of ref, colourfunc2 = colour of individual ---> calling hom nonref
 boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv(
   VariantBranchesAndFlanks* var, 
-  uint32_t (*get_covg_colourfunc1)(const dBNode*),
-  uint32_t (*get_covg_colourfunc2)(const dBNode*))
+  Covg (*get_covg_colourfunc1)(const dBNode*),
+  Covg (*get_covg_colourfunc2)(const dBNode*))
 {
-  int covg_threshold = 1;
+  Covg covg_threshold = 1;
   int i;
   int count_how_many_nodes_in_one_allele_have_covg_by_colourfunc2=0;
   int count_how_many_nodes_in_other_allele_have_covg_by_colourfunc2=0;
@@ -2284,12 +2314,12 @@ boolean detect_vars_condition_is_hom_nonref_given_colour_funcs_for_ref_and_indiv
 
 boolean detect_vars_condition_is_hom_nonref_with_min_covg_given_colour_funcs_for_ref_and_indiv(
   VariantBranchesAndFlanks* var,
-  uint32_t (*get_covg_ref)(const dBNode*),
-  uint32_t (*get_covg_indiv)(const dBNode*),
-  uint32_t min_covg)
+  Covg (*get_covg_ref)(const dBNode*),
+  Covg (*get_covg_indiv)(const dBNode*),
+  Covg min_covg)
 {
   //Assumes the reference is colour 0 and the individual is colour 1
-  int covg_threshold = min_covg;
+  Covg covg_threshold = min_covg;
   int i;
   int count_how_many_nodes_in_one_allele_have_covg_by_indiv=0;
   int count_how_many_nodes_in_other_allele_have_covg_by_indiv=0;
@@ -2371,7 +2401,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  void (*action_branches)(dBNode*),
 			  void (*action_flanks)(dBNode*),
 			  Edges (*get_colour)(const dBNode*),
-        uint32_t (*get_covg)(const dBNode*),
+        Covg (*get_covg)(const dBNode*),
 			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
 			  boolean apply_model_selection, 
 			  boolean (*model_selection_condition)(AnnotatedPutativeVariant*),
@@ -2439,12 +2469,12 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
 
       double avg_coverage1=0;
-      int min_coverage1=0;
-      int max_coverage1=0;
+      Covg min_coverage1=0;
+      Covg max_coverage1=0;
       
       double avg_coverage2=0;
-      int min_coverage2=0;
-      int max_coverage2=0;
+      Covg min_coverage2=0;
+      Covg max_coverage2=0;
       
       dBNode * current_node = node;
       //will reuse this as we traverse the graph
@@ -2471,19 +2501,19 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    boolean is_cycle3p=false;
 	    
 	    double avg_coverage5p=0;
-	    int min5p=0;
-	    int max5p=0;
+	    Covg min5p_covg = 0;
+	    Covg max5p_covg = 0;
 	    double avg_coverage3p=0;
 	    
-	    int min3p=0;
-	    int max3p=0;
+	    Covg min3p_covg = 0;
+	    Covg max3p_covg = 0;
 	    
 	    
 	    //compute 5' flanking region       	
 	    int length_flank5p_reverse = db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(current_node,opposite_orientation(orientation),
-													  flanking_length,action_flanks,
-													  nodes5p,orientations5p,labels_flank5p,
-													  seq5p,&avg_coverage5p,&min5p,&max5p,
+													  flanking_length, action_flanks,
+													  nodes5p, orientations5p, labels_flank5p,
+													  seq5p, &avg_coverage5p, &min5p_covg, &max5p_covg,
 													  &is_cycle5p,db_graph, get_colour, get_covg);
 	    
 	    if (length_flank5p_reverse>0){
@@ -2496,10 +2526,10 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	      
 	      length_flank5p = db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(nodes5p[length_flank5p_reverse],
 														opposite_orientation(orientations5p[length_flank5p_reverse]),
-														flanking_length,label,
+														flanking_length, label,
 														action_flanks,
-														nodes5p,orientations5p,labels_flank5p,
-														seq5p,&avg_coverage5p,&min5p,&max5p,
+														nodes5p, orientations5p, labels_flank5p,
+														seq5p, &avg_coverage5p, &min3p_covg, &max3p_covg,
 														&is_cycle5p,db_graph, get_colour, get_covg);
 	    }
 	    else{
@@ -2512,7 +2542,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    length_flank3p = db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(path_nodes2[length2],path_orientations2[length2],
 											      flanking_length, action_flanks,
 											      nodes3p,orientations3p,labels_flank3p,
-											      seq3p,&avg_coverage3p,&min3p,&max3p,
+											      seq3p,&avg_coverage3p,&min3p_covg,&max3p_covg,
 											      &is_cycle3p,db_graph, get_colour, get_covg);
 
 
@@ -2528,11 +2558,16 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 										       nodes3p, orientations3p, length_flank3p, forward,
 										       unknown);
 	    */
-	    //i think this warning is wrong! --> warning - array of 5prime nodes, oprientations is in reverse order to what you would expect - it is never used in what follows
-	    set_variant_branches_and_flanks(&var, nodes5p, orientations5p, length_flank5p, path_nodes1, path_orientations1, length1, 
-	    				    path_nodes2, path_orientations2, length2, nodes3p, orientations3p, length_flank3p, unknown);
+	    // i think this warning is wrong! -->
+      // warning - array of 5prime nodes, oprientations is in reverse order to
+      // what you would expect - it is never used in what follows
+	    set_variant_branches_and_flanks(&var,
+                                      nodes5p, orientations5p, length_flank5p,
+                                      path_nodes1, path_orientations1, length1, 
+	    				                        path_nodes2, path_orientations2, length2,
+                                      nodes3p, orientations3p, length_flank3p,
+                                      unknown);
 	    
-
 
 	    if (condition(&var)==true) 
 	      {
@@ -2735,9 +2770,9 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(
   FILE* fout, int max_length, dBGraph * db_graph, 
   boolean (*condition)(VariantBranchesAndFlanks*),
   Edges (*get_colour_ref)(const dBNode*),
-  uint32_t (*get_covg_ref)(const dBNode*),
+  Covg (*get_covg_ref)(const dBNode*),
   Edges (*get_colour_indiv)(const dBNode*),
-  uint32_t (*get_covg_indiv)(const dBNode*),
+  Covg (*get_covg_indiv)(const dBNode*),
   void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*) )
 {
 
@@ -2816,7 +2851,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 						 boolean (*extra_condition)(VariantBranchesAndFlanks* var),
 						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
 						 boolean exclude_ref_bubbles_first, 
-						 Edges (*get_colour_ref)(const dBNode*), uint32_t (*get_covg_ref)(const dBNode*),
+						 Edges (*get_colour_ref)(const dBNode*), Covg (*get_covg_ref)(const dBNode*),
 						 boolean apply_model_selection, 
 						 boolean (*model_selection_condition)(AnnotatedPutativeVariant*, GraphAndModelInfo*) ,
 						 GraphAndModelInfo* model_info)
@@ -2878,12 +2913,12 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
   }
 
   
-  uint32_t get_covg_of_union_first_list_colours(const dBNode* e)
+  Covg get_covg_of_union_first_list_colours(const dBNode* e)
   {
     return element_get_covg_for_colourlist(e, first_list, len_first_list);
   }
 
-  uint32_t get_covg_of_union_second_list_colours(const dBNode* e)
+  Covg get_covg_of_union_second_list_colours(const dBNode* e)
   {
     return element_get_covg_for_colourlist(e, second_list, len_second_list);
   }
@@ -2902,7 +2937,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
     if(union_list[i] != union_list[i-1])
       union_list[len_union_list++] = union_list[i];
 
-  uint32_t get_covg_of_union_first_and_second_list_colours(const dBNode* e)
+  Covg get_covg_of_union_first_and_second_list_colours(const dBNode* e)
   {
     return element_get_covg_for_colourlist(e, union_list, len_union_list);
   }
@@ -3063,12 +3098,12 @@ void db_graph_print_novel_supernodes(char* outfile, int max_length, dBGraph * db
   }
 
   
-  uint32_t get_covg_of_union_first_list_colours(const dBNode* e)
+  Covg get_covg_of_union_first_list_colours(const dBNode* e)
   {
     return element_get_covg_for_colourlist(e, first_list, len_first_list);
   }
 
-  uint32_t get_covg_of_union_second_list_colours(const dBNode* e)
+  Covg get_covg_of_union_second_list_colours(const dBNode* e)
   {
     return element_get_covg_for_colourlist(e, second_list, len_second_list);
   }
@@ -3128,7 +3163,7 @@ void db_graph_print_novel_supernodes(char* outfile, int max_length, dBGraph * db
 void db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(FILE* fout, int max_length, dBGraph * db_graph, 
 									     int* first_list, int len_first_list,
 									     int* second_list,  int len_second_list,
-									     Edges (*get_colour_ref)(const dBNode*), uint32_t (*get_covg_ref)(const dBNode*) ,
+									     Edges (*get_colour_ref)(const dBNode*), Covg (*get_covg_ref)(const dBNode*) ,
 									     boolean (*extra_condition)(VariantBranchesAndFlanks* var),
 									     void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
 {
@@ -3164,8 +3199,9 @@ void db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(FIL
 
 
 //do not export - discuss with Mario
-void db_graph_smooth_bubbles_for_specific_person_or_pop(int coverage,int limit,dBGraph * db_graph, int index){
-  
+void db_graph_smooth_bubbles_for_specific_person_or_pop(Covg coverage, int limit,
+                                                        dBGraph * db_graph, int index)
+{  
   void smooth_bubble(dBNode * node){
     if (db_node_check_status_none(node)){
       db_graph_db_node_smooth_bubble_for_specific_person_or_pop(node,forward,limit,coverage,
@@ -3175,9 +3211,8 @@ void db_graph_smooth_bubbles_for_specific_person_or_pop(int coverage,int limit,d
       
     }
   }
-  
-  hash_table_traverse(&smooth_bubble,db_graph); 
 
+  hash_table_traverse(&smooth_bubble,db_graph); 
 }
 
 
@@ -3266,7 +3301,7 @@ void db_graph_print_supernodes_for_specific_person_or_pop(
   char * seq;
   boolean is_cycle;
   double avg_coverage;
-  int min,max;
+  Covg min_covg, max_covg;
   
   
   path_nodes        = calloc(max_length,sizeof(dBNode*));
@@ -3290,7 +3325,7 @@ void db_graph_print_supernodes_for_specific_person_or_pop(
     if (db_node_check_status_none(node) == true){
       int length = db_graph_supernode_for_specific_person_or_pop(node,max_length,&db_node_action_set_status_visited,
 								 path_nodes,path_orientations,path_labels,
-								 seq,&avg_coverage,&min,&max,&is_cycle,
+								 seq, &avg_coverage, &min_covg, &max_covg, &is_cycle,
 								 db_graph, index);
       
  
@@ -3298,7 +3333,7 @@ void db_graph_print_supernodes_for_specific_person_or_pop(
       if (length>0){	
 	sprintf(name,"node_%i",count_nodes);
 
-	print_minimal_fasta_from_path_for_specific_person_or_pop(fout1,name,length,avg_coverage,min,max,
+	print_minimal_fasta_from_path_for_specific_person_or_pop(fout1,name,length,avg_coverage,min_covg,max_covg,
 								 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
 								 db_graph->kmer_size,true, index);
 	if (length==max_length){
@@ -3310,7 +3345,7 @@ void db_graph_print_supernodes_for_specific_person_or_pop(
       }
       else{
 	sprintf(name,"node_%qd",count_sing);
-	print_minimal_fasta_from_path_for_specific_person_or_pop(fout2,name,length,avg_coverage,min,max,
+	print_minimal_fasta_from_path_for_specific_person_or_pop(fout2,name,length,avg_coverage,min_covg,max_covg,
 								 path_nodes[0],path_orientations[0],path_nodes[length],path_orientations[length],seq,
 								 db_graph->kmer_size,true, index);
 	//fprintf(fout2, "extra information:\n");
@@ -3333,15 +3368,19 @@ void db_graph_print_supernodes_for_specific_person_or_pop(
 }
 
 
-long long  db_graph_count_error_supernodes( int max_length, dBGraph * db_graph, int index, 
-					    dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, char* seq,
-					    boolean (*condition_node_not_visited)(dBNode* n) , 
-					    boolean (*condition_is_error_supernode)(dBNode** path, int len,  int* count_error_nodes, int* count_error_covg),
-					    void (*action_set_visited)(dBNode* e) )
+long long  db_graph_count_error_supernodes(
+  int max_length, dBGraph * db_graph, int index, 
+  dBNode** path_nodes, Orientation* path_orientations,
+  Nucleotide* path_labels, char* seq,
+  boolean (*condition_node_not_visited)(dBNode* n) , 
+  boolean (*condition_is_error_supernode)(dBNode** path, int len,
+                                          int* count_error_nodes,
+                                          Covg* count_error_covg),
+  void (*action_set_visited)(dBNode* e) )
 {
   boolean is_cycle;
   double avg_coverage;
-  int min,max;
+  Covg min_covg, max_covg;
 
   long long check_supernode_and_count_reads_if_error(dBNode * node)
   {
@@ -3351,11 +3390,11 @@ long long  db_graph_count_error_supernodes( int max_length, dBGraph * db_graph, 
       {
 	int length = db_graph_supernode_for_specific_person_or_pop(node,max_length,&db_node_action_set_status_visited,
 								   path_nodes,path_orientations,path_labels,
-								   seq,&avg_coverage,&min,&max,&is_cycle,
+								   seq, &avg_coverage, &min_covg, &max_covg, &is_cycle,
 								   db_graph, index);
 	
 	int count_error_nodes=0;
-	int count_error_covg=0;
+	Covg count_error_covg=0;
 	
 	
 	if (length>=max_length)
@@ -3367,7 +3406,7 @@ long long  db_graph_count_error_supernodes( int max_length, dBGraph * db_graph, 
 	    if (count_error_nodes>=0)
 	      {
 		boolean too_short = true;
-		int num_err_reads =  count_reads_on_allele_in_specific_colour(path_nodes, length, index, &too_short);
+		Covg num_err_reads =  count_reads_on_allele_in_specific_colour(path_nodes, length, index, &too_short);
 		if (too_short==false)
 		  {
 		    return num_err_reads;
@@ -3391,7 +3430,7 @@ long long  db_graph_count_error_supernodes( int max_length, dBGraph * db_graph, 
 
 
 void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, char* filename_sings, int max_length, 
-							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), uint32_t (*get_covg)(const dBNode*),
+							  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*),
 							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*)){
 
   boolean do_we_print_singletons=true;//singletons are supernodes consisting of ONE node.
@@ -3431,8 +3470,7 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
   char * seq;
   boolean is_cycle;
   double avg_coverage=0;
-  int min=0;
-  int max=0;
+  Covg min_covg = 0, max_covg = 0;
 
   path_nodes        = calloc(max_length,sizeof(dBNode*));
   path_orientations = calloc(max_length,sizeof(Orientation));
@@ -3452,7 +3490,7 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
     if (db_node_check_status_none(node) == true){
       int length = db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_length,&db_node_action_set_status_visited,
 									     path_nodes,path_orientations,path_labels,
-									     seq,&avg_coverage,&min,&max,&is_cycle,
+									     seq,&avg_coverage,&min_covg,&max_covg,&is_cycle,
 									     db_graph, get_colour, get_covg);
       
       if (length>0){	
@@ -3504,10 +3542,13 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 //get supernodes in union of two colours. for each supernode, calculate (num reads arrived)/length
 // if sup is in colour 1 and not 2, then increment the bin corresponding to that number in historgram1
 // if sup is in colour 2 and not 1, then increment the bin corresponding to that number in historgram2
-void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int colour1, int colour2,
-							    dBGraph * db_graph, Edges (*get_colour)(const dBNode*), uint32_t (*get_covg)(const dBNode*),
-							    boolean (*condition)(dBNode**, int, int*), int* bins_1_not_2, int* bins_2_not_1){
-
+void db_graph_get_stats_of_supernodes_that_split_two_colour(
+  int max_length, int colour1, int colour2, dBGraph *db_graph,
+  Edges (*get_colour)(const dBNode*),
+  Covg (*get_covg)(const dBNode*),
+  boolean (*condition)(dBNode**, int, int*),
+  int* bins_1_not_2, int* bins_2_not_1)
+{
 
   dBNode * *    path_nodes;
   Orientation * path_orientations;
@@ -3515,9 +3556,8 @@ void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int 
   char * seq;
   boolean is_cycle;
   double avg_coverage;
-  int min,max;
-  
-  
+  Covg min_covg, max_covg;
+
   path_nodes        = calloc(max_length,sizeof(dBNode*));
   path_orientations = calloc(max_length,sizeof(Orientation));
   path_labels       = calloc(max_length,sizeof(Nucleotide));
@@ -3531,8 +3571,8 @@ void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int 
     if (db_node_check_status(node, none) == true)
       {
 	int length = db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_length,&db_node_action_set_status_visited,
-									       path_nodes,path_orientations,path_labels,
-									       seq,&avg_coverage,&min,&max,&is_cycle,
+									       path_nodes, path_orientations, path_labels,
+									       seq, &avg_coverage, &min_covg, &max_covg, &is_cycle,
 									       db_graph, get_colour, get_covg);
 	
 	int which_colour=-1; //if the supernode exists in colour1 not colour2, this will be set to colour1, and vice-versa
@@ -3545,7 +3585,7 @@ void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int 
 		    printf("contig length equals max length [%i] \n",max_length);
 		  }
 		boolean too_short=false;
-		int num_reads = count_reads_on_allele_in_specific_colour(path_nodes, length, which_colour, &too_short);
+		Covg num_reads = count_reads_on_allele_in_specific_colour(path_nodes, length, which_colour, &too_short);
 		double ratio = (double)num_reads/(double)length;
 		//put in bins from 0, 0.01, ...up to 100. That's 10,000 bins. n-th bin means number is n*0.01
 		int bin = (int) (ratio*100);
@@ -3601,8 +3641,11 @@ void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int 
 
 
 
-void traverse_hash_collecting_sums(void (*f)(Element *, int*, int*, int*, int*, int*, int*, int*),HashTable * hash_table, 
-				   int* pgf, int* cox, int* data1, int* data2, int* data3, int* data4, int* data5){
+void traverse_hash_collecting_sums(
+  void (*f)(Element *, Covg*, Covg*, Covg*, Covg*, Covg*, Covg*, Covg*),
+  HashTable * hash_table, 
+  Covg* pgf, Covg* cox, Covg* data1, Covg* data2, Covg* data3, Covg* data4, Covg* data5)
+{
   long long i;
   for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
     if (!db_node_check_status(&hash_table->table[i],unassigned)){
@@ -3616,8 +3659,8 @@ void traverse_hash_collecting_sums(void (*f)(Element *, int*, int*, int*, int*, 
 
 //get supernodes in union of colour 0 and 1.Traverse just these supernodes, and collect total covg in all colours
 void db_graph_get_covgs_in_all_colours_of_col0union1_sups(int max_length, dBGraph * db_graph,
-							  int* pgf, int* cox, 
-							  int* data1, int* data2, int* data3, int* data4, int* data5)
+  Covg* pgf, Covg* cox, 
+  Covg* data1, Covg* data2, Covg* data3, Covg* data4, Covg* data5)
 {
 
   Edges get_colour(const dBNode* e)
@@ -3628,7 +3671,7 @@ void db_graph_get_covgs_in_all_colours_of_col0union1_sups(int max_length, dBGrap
     return edges;
   }
 
-  uint32_t get_covg(const dBNode* e)  
+  Covg get_covg(const dBNode* e)  
   {
     int arr[] = {0,1};
     return element_get_covg_for_colourlist(e, arr, 2);
@@ -3642,9 +3685,8 @@ void db_graph_get_covgs_in_all_colours_of_col0union1_sups(int max_length, dBGrap
   char * seq;
   boolean is_cycle;
   double avg_coverage;
-  int min,max;
-  
-  
+  Covg min_covg, max_covg;
+
   path_nodes        = calloc(max_length,sizeof(dBNode*));
   path_orientations = calloc(max_length,sizeof(Orientation));
   path_labels       = calloc(max_length,sizeof(Nucleotide));
@@ -3652,14 +3694,16 @@ void db_graph_get_covgs_in_all_colours_of_col0union1_sups(int max_length, dBGrap
   
   
 
-  void parse_supernode(dBNode * node, int* pgf, int* cox, int* data1, int* data2, int* data3, int* data4, int* data5){
-    
+  void parse_supernode(dBNode * node, Covg* pgf, Covg* cox,
+                       Covg* data1, Covg* data2, Covg* data3,
+                       Covg* data4, Covg* data5)
+  {
 
     if (db_node_check_status(node, none) == true)
       {
 	int length = db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_length,&db_node_action_set_status_visited,
 									       path_nodes,path_orientations,path_labels,
-									       seq,&avg_coverage,&min,&max,&is_cycle,
+									       seq, &avg_coverage, &min_covg, &max_covg, &is_cycle,
 									       db_graph, get_colour, get_covg);
 	
 
@@ -3704,7 +3748,7 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
     return edges;
   }
 
-  uint32_t get_covg(const dBNode* e)  
+  Covg get_covg(const dBNode* e)  
   {
     int arr[] = {0,1};
     return element_get_covg_for_colourlist(e, arr, 2);
@@ -3717,7 +3761,7 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
   char * seq;
   boolean is_cycle;
   double avg_coverage;
-  int min,max;
+  Covg min_covg, max_covg;
   
   
   path_nodes        = calloc(max_length,sizeof(dBNode*));
@@ -3735,7 +3779,7 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
       {
 	int length = db_graph_supernode_in_subgraph_defined_by_func_of_colours(node,max_length,&db_node_action_set_status_visited,
 									       path_nodes,path_orientations,path_labels,
-									       seq,&avg_coverage,&min,&max,&is_cycle,
+									       seq, &avg_coverage, &min_covg, &max_covg, &is_cycle,
 									       db_graph, get_colour, get_covg);
 	
 
@@ -3760,13 +3804,13 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
 		die("impossible. specific to %d", which_haplotype);
 	      }
 	    boolean too_short=false;
-	    int pgf = count_reads_on_allele_in_specific_colour(path_nodes, length, 0, &too_short);
-	    int cox = count_reads_on_allele_in_specific_colour(path_nodes, length, 1, &too_short);
-	    int data1 = count_reads_on_allele_in_specific_colour(path_nodes, length, 2, &too_short);
-	    int data2 = count_reads_on_allele_in_specific_colour(path_nodes, length, 3, &too_short);
-	    int data3 = count_reads_on_allele_in_specific_colour(path_nodes, length, 4, &too_short);
-	    int data4 = count_reads_on_allele_in_specific_colour(path_nodes, length, 5, &too_short);
-	    int data5 = count_reads_on_allele_in_specific_colour(path_nodes, length, 6, &too_short);
+	    Covg pgf = count_reads_on_allele_in_specific_colour(path_nodes, length, 0, &too_short);
+	    Covg cox = count_reads_on_allele_in_specific_colour(path_nodes, length, 1, &too_short);
+	    Covg data1 = count_reads_on_allele_in_specific_colour(path_nodes, length, 2, &too_short);
+	    Covg data2 = count_reads_on_allele_in_specific_colour(path_nodes, length, 3, &too_short);
+	    Covg data3 = count_reads_on_allele_in_specific_colour(path_nodes, length, 4, &too_short);
+	    Covg data4 = count_reads_on_allele_in_specific_colour(path_nodes, length, 5, &too_short);
+	    Covg data5 = count_reads_on_allele_in_specific_colour(path_nodes, length, 6, &too_short);
 	    
 
 	    fprintf(fout,"Supernode_");
@@ -3870,7 +3914,7 @@ void db_graph_get_proportion_of_cvg_on_each_sup(int max_length, dBGraph * db_gra
 
 
 void db_graph_print_supernodes_defined_by_func_of_colours_given_condition(char * filename_sups, char* filename_sings, int max_length, 
-									  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), uint32_t (*get_covg)(const dBNode*),
+									  dBGraph * db_graph, Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*),
 									  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*),
 									  boolean (*condition)(dBNode** path, Orientation* ors, int len)){
 
@@ -3909,7 +3953,7 @@ void db_graph_print_supernodes_defined_by_func_of_colours_given_condition(char *
   char * seq;
   boolean is_cycle;
   double avg_coverage;
-  int min,max;
+  Covg min, max;
   
   
   path_nodes        = calloc(max_length,sizeof(dBNode*));
@@ -4026,8 +4070,8 @@ void print_covg_stats_for_timestamps_for_supernodes(char* outfile, dBGraph * db_
       }
     //get the supernode, setting nodes to visited
     double avg_cov;
-    int min_cov;
-    int max_cov;
+    Covg min_cov;
+    Covg max_cov;
     boolean is_cycle;
     
     //length_sup is the number of edges in the supernode
@@ -4050,7 +4094,8 @@ void print_covg_stats_for_timestamps_for_supernodes(char* outfile, dBGraph * db_
 	for (i=0; i<NUMBER_OF_COLOURS; i++)
 	  {
 	    boolean too_short=false; // we know it won't be too short
-	    int covg=count_reads_on_allele_in_specific_colour(path_nodes, length_sup, i, &too_short);
+	    Covg covg = count_reads_on_allele_in_specific_colour(path_nodes, length_sup,
+                                                           i, &too_short);
 	    fprintf(fout, "%d", covg);
 	    if (i<NUMBER_OF_COLOURS-1)
 	      {
@@ -4129,8 +4174,8 @@ void print_likelihoods_of_realseq_and_error_models_for_supernodes(dBGraph * db_g
       }
     //get the supernode, setting nodes to visited
     double avg_cov;
-    int min_cov;
-    int max_cov;
+    Covg min_cov;
+    Covg max_cov;
     boolean is_cycle;
     
     //length_sup is the number of edges in the supernode
@@ -4193,8 +4238,8 @@ boolean db_graph_clean_multicoloured_graph_by_frequency(dBGraph * db_graph, bool
     
     //get the supernode, setting nodes to visited
     double avg_cov;
-    int min_cov;
-    int max_cov;
+    Covg min_cov;
+    Covg max_cov;
     boolean is_cycle;
     
     //length_sup is the number of edges in the supernode
@@ -4254,8 +4299,8 @@ boolean db_graph_clean_multicoloured_graph_by_frequency(dBGraph * db_graph, bool
 // returns true if the supernode is pruned, otherwise false
 // if returns false, cannot assume path_nodes etc contain anything useful
 boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_error(
-  dBNode* node, uint32_t coverage, dBGraph * db_graph, int max_expected_sup_len,
-  uint32_t (*sum_of_covgs_in_desired_colours)(const Element *), 
+  dBNode* node, Covg coverage, dBGraph * db_graph, int max_expected_sup_len,
+  Covg (*sum_of_covgs_in_desired_colours)(const Element *), 
   Edges (*get_edge_of_interest)(const Element*), 
   void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
   void (*apply_reset_to_specified_edges_2)(dBNode*),
@@ -4283,8 +4328,8 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
       {
 	//get the supernode, setting nodes to visited
 	double avg_cov;
-	int min_cov;
-	int max_cov;
+	Covg min_cov;
+	Covg max_cov;
 	boolean is_cycle;
 	
 	//length_sup is the number of edges in the supernode
@@ -4358,7 +4403,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
 											  double error_rate_per_base,
 											  int max_length_allowed_to_prune,
 											  dBGraph* db_graph, int max_expected_sup,
-											  uint32_t (*sum_of_covgs_in_desired_colours)(const Element *), 
+											  Covg (*sum_of_covgs_in_desired_colours)(const Element *), 
 											  Edges (*get_edge_of_interest)(const Element*), 
 											  void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 											  void (*apply_reset_to_specified_edges_2)(dBNode*),
@@ -4366,15 +4411,16 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
 											  Orientation* path_orientations, 
 											  Nucleotide* path_labels,
 											  char* supernode_string, int* supernode_len,
-											  int covg_thresh)
+											  Covg covg_thresh)
 {
 
   boolean condition_error_more_likely(dBNode** p_nodes, int len_sp, int num_hap_chroms, 
 				      double  total_dep_of_covg, int rd_len, double err_rate_per_base)
   {
     boolean too_short = false;
-    int cov = count_reads_on_allele_in_specific_func_of_colours(
-                p_nodes, len_sp, sum_of_covgs_in_desired_colours, &too_short);
+    Covg cov
+      = count_reads_on_allele_in_specific_func_of_colours(
+          p_nodes, len_sp, sum_of_covgs_in_desired_colours, &too_short);
     
     if (too_short==true)
       {
@@ -4428,8 +4474,8 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
       {
 	//get the supernode, setting nodes to visited
 	double avg_cov;
-	int min_cov;
-	int max_cov;
+	Covg min_cov;
+	Covg max_cov;
 	boolean is_cycle;
 	
 	//length_sup is the number of edges in the supernode
@@ -4482,7 +4528,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
 /*
 long long db_graph_remove_supernodes_more_likely_errors_than_sampling(dBGraph * db_graph, GraphInfo* ginfo, GraphAndModelInfo* model_info,
 								       int max_length_allowed_to_prune, 
-								      uint32_t (*sum_of_covgs_in_desired_colours)(const Element *), 
+								      Covg (*sum_of_covgs_in_desired_colours)(const Element *), 
 								      Edges (*get_edge_of_interest)(const Element*), 
 								      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 								      void (*apply_reset_to_specified_edges_2)(dBNode*),
@@ -4550,7 +4596,7 @@ long long db_graph_remove_supernodes_more_likely_errors_than_sampling(dBGraph * 
 // this can be applied to an individual, or to a pool of low covg individuals
 long long db_graph_remove_errors_from_pool_according_to_model(dBGraph * db_graph, int num_haploid_chroms, long long total_covg,
 							      int read_len, double error_rate_per_base, int max_length_allowed_to_prune,
-							      uint32_t (*sum_of_covgs_in_desired_colours)(const Element *), 
+							      Covg (*sum_of_covgs_in_desired_colours)(const Element *), 
 							      Edges (*get_edge_of_interest)(const Element*), 
 							      void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 							      void (*apply_reset_to_specified_edges_2)(dBNode*),
@@ -4606,8 +4652,8 @@ long long db_graph_remove_errors_from_pool_according_to_model(dBGraph * db_graph
 // then prune the node, and the interior nodes of the supernode.
 // returns the number of pruned supernodes
 long long db_graph_remove_errors_considering_covg_and_topology(
-  uint32_t coverage, dBGraph * db_graph,
-  uint32_t (*sum_of_covgs_in_desired_colours)(const Element *), 
+  Covg coverage, dBGraph * db_graph,
+  Covg (*sum_of_covgs_in_desired_colours)(const Element *), 
   Edges (*get_edge_of_interest)(const Element*), 
   void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
   void (*apply_reset_to_specified_edges_2)(dBNode*),
@@ -4662,17 +4708,17 @@ long long db_graph_remove_errors_considering_covg_and_topology(
   return number_of_pruned_supernodes;
 }
 
-							  
 
 // 1. sum_of_covgs_in_desired_colours returns the sum of the coverages for the colours you are interested in
 // 1. the argument get_edge_of_interest is a function that gets the "edge" you are interested in - may be a single edge/colour from the graph, or might be a union of some edges 
 // 2 Pass apply_reset_to_specified_edges which applies reset_one_edge to whichever set of edges you care about,
 // 3 Pass apply_reset_to_specified_edges_2 which applies db_node_reset_edges to whichever set of edges you care about,
-void db_graph_remove_low_coverage_nodes(int coverage, dBGraph * db_graph,
-					uint32_t (*sum_of_covgs_in_desired_colours)(const Element *), 
-					Edges (*get_edge_of_interest)(const Element*), 
-					void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
-					void (*apply_reset_to_specified_edges_2)(dBNode*) )
+void db_graph_remove_low_coverage_nodes(
+  Covg coverage, dBGraph * db_graph,
+  Covg (*sum_of_covgs_in_desired_colours)(const Element *), 
+  Edges (*get_edge_of_interest)(const Element*), 
+  void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
+  void (*apply_reset_to_specified_edges_2)(dBNode*) )
 {
   
   void prune_node(dBNode * node){
@@ -4687,7 +4733,7 @@ void db_graph_remove_low_coverage_nodes(int coverage, dBGraph * db_graph,
 } 
 
 
-void db_graph_remove_low_coverage_nodes_ignoring_colours(int coverage, dBGraph * db_graph)
+void db_graph_remove_low_coverage_nodes_ignoring_colours(Covg coverage, dBGraph * db_graph)
 {
   
   void prune_node(dBNode * node){
@@ -4919,35 +4965,34 @@ dBNode *db_graph_find_node_restricted_to_specific_person_or_population(Key key, 
 
 
 void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, int),
-				  HashTable * hash_table, 
-				  int** array, 
-				  int length_of_array, 
-				  int index){
-  
+                                  HashTable * hash_table, int** array,
+                                  int length_of_array, int index)
+{
   uint64_t i;
-  for(i=0;i<hash_table->number_buckets * hash_table->bucket_size;i++){
+  uint64_t num_elements = (uint64_t)hash_table->number_buckets * hash_table->bucket_size;
 
-    if (!db_node_check_for_flag_ALL_OFF(&hash_table->table[i]))
-      // if (!db_node_check_status(&hash_table->table[i],unassigned))
-      {
-	f(hash_table, &hash_table->table[i], array, length_of_array, index);
-      }
+  for(i = 0; i < num_elements; i++)
+  {
+    if(!db_node_check_status(&hash_table->table[i], unassigned))
+    {
+      f(hash_table, &hash_table->table[i], array, length_of_array, index);
+    }
   }
-  
-  
 }
 
 
-void db_graph_traverse_with_array_of_uint64(void (*f)(HashTable*, Element *, uint64_t*, int, int),
-					    HashTable * hash_table, 
-					    uint64_t* array, 
-					    int length_of_array, 
-					    int colour)
+void db_graph_traverse_with_array_of_uint64(void (*f)(HashTable*, Element *,
+                                                      uint64_t*, int, int),
+                                            HashTable * hash_table,
+                                            uint64_t* array,
+                                            int length_of_array, int colour)
 {
   uint64_t i;
-  for(i = 0; i <hash_table->number_buckets * hash_table->bucket_size; i++)
+  uint64_t num_elements = (uint64_t)hash_table->number_buckets * hash_table->bucket_size;
+
+  for(i = 0; i < num_elements; i++)
   {
-    if (!db_node_check_for_flag_ALL_OFF(&hash_table->table[i]))
+    if(!db_node_check_status(&hash_table->table[i], unassigned))
     {
       f(hash_table, &(hash_table->table[i]), array, length_of_array, colour);
     }
@@ -4967,6 +5012,7 @@ void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph,
     die("Cannot open %s\n", filename);
 
   int covgs_len = 10001;
+  // uint64_t instead of Covg since these could get large
   uint64_t* covgs = (uint64_t*) malloc(sizeof(uint64_t) * covgs_len);
 
   if(covgs == NULL)
@@ -5001,7 +5047,7 @@ void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph,
 
 
 
-long long  db_graph_count_covg1_kmers_in_func_of_colours(dBGraph* db_graph, uint32_t (*get_covg)(const dBNode*) )
+long long  db_graph_count_covg1_kmers_in_func_of_colours(dBGraph* db_graph, Covg (*get_covg)(const dBNode*) )
 {
 
   long long count = 0;
@@ -5020,7 +5066,7 @@ long long  db_graph_count_covg1_kmers_in_func_of_colours(dBGraph* db_graph, uint
 
 
 
-long long  db_graph_count_covg2_kmers_in_func_of_colours(dBGraph* db_graph, uint32_t (*get_covg)(const dBNode*) )
+long long  db_graph_count_covg2_kmers_in_func_of_colours(dBGraph* db_graph, Covg (*get_covg)(const dBNode*) )
 {
 
   long long count = 0;
@@ -5347,8 +5393,9 @@ dBNode* db_graph_get_next_node_in_supernode_for_specific_person_or_pop(dBNode* n
 // If two people have equally good sub_supernodes, choose that of the person with highest index.
 // Pass in pre-malloced Sequence* for answer, of length max_length_for_supernode (arg 2)
 
-void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence* pop_consensus_supernode, int max_length_of_supernode, dBNode* node, 
-								       int min_covg_for_pop_supernode, int min_length_for_pop_supernode, dBGraph* db_graph)
+void  db_graph_find_population_consensus_supernode_based_on_given_node(
+  Sequence* pop_consensus_supernode, int max_length_of_supernode, dBNode* node, 
+  int min_covg_for_pop_supernode, int min_length_for_pop_supernode, dBGraph* db_graph)
 {
   
   //  printf("Reimplement using db_graph_supernode\n");
@@ -5380,8 +5427,12 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
 	{
 	  //this returns 0 in length_of_best_sub_supernode_in_each_person if no subsupernode matches constraints
 	  //printf("\nFind best sub supernode in person %d based on first node in supernode, which is %s\n", i, binary_kmer_to_seq(first_node->kmer, db_graph->kmer_size) );
-	  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(first_node,  &index_of_start_of_best_sub_supernode_in_each_person[i], &length_of_best_sub_supernode_in_each_person[i], 
-											       min_covg_for_pop_supernode,  min_length_for_pop_supernode, i, db_graph); 
+
+	  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(
+      first_node, &index_of_start_of_best_sub_supernode_in_each_person[i],
+      &length_of_best_sub_supernode_in_each_person[i], min_covg_for_pop_supernode,
+      min_length_for_pop_supernode, i, db_graph);
+
 	  //printf("OK - that sub supernode in person %d starts at %d ends at %d\n", i, index_of_start_of_best_sub_supernode_in_each_person[i], length_of_best_sub_supernode_in_each_person[i]);
 	}
     }
@@ -5460,13 +5511,14 @@ void  db_graph_find_population_consensus_supernode_based_on_given_node(Sequence*
 
 //subsection (argument1) is allocated by the caller
 //returns 0 if successfully, 1 otherwise
-int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char* subsection, dBNode* node, int start, int end, int index, dBGraph* db_graph)
+int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(
+  char* subsection, dBNode* node, int start, int end, int index, dBGraph* db_graph)
 {
   char tmp_seq[db_graph->kmer_size+1];
   tmp_seq[db_graph->kmer_size]='\0';
 
   //printf("CALL GET SUBSECTION With start %d and end %d\n\n", start, end);
-  if ( (start<0) || (end<0) || (end-start<0) )
+  if ( (start<0) || (end<0) || (end<start) )
     {
       if (DEBUG)
 	{
@@ -5570,7 +5622,7 @@ int db_graph_get_subsection_of_supernode_containing_given_node_as_sequence(char*
 // current candidate, then replace it with this new one. etc.
 
 //Note that if none of the nodes match criteria, return 0 in length of best sub_supernode
-void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(
+void db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_person_or_pop(
   dBNode* first_node_in_supernode,  int* index_for_start_of_sub_supernode,
   int* length_of_best_sub_supernode, int min_people_coverage,
   int min_length_of_sub_supernode, int index, dBGraph* db_graph)
@@ -5658,7 +5710,7 @@ void  db_graph_get_best_sub_supernode_given_min_covg_and_length_for_specific_per
 	}
 
 
-      int next_people_cov= element_get_number_of_people_or_pops_containing_this_element(next_node);
+      int next_people_cov = element_get_number_of_people_or_pops_containing_this_element(next_node);
 
       if  ( next_people_cov < min_people_coverage)
 	{
@@ -5907,17 +5959,6 @@ int db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecutive_ba
 }
 
 
-
-int int_cmp(const void *a, const void *b)
-{
-  const int *ia = (const int *)a; // casting pointer types
-  const int *ib = (const int *)b;
-  return *ia  - *ib;
-  /* integer comparison: returns negative if b > a
-     and positive if a > b */
-}
-
-
 int db_node_addr_cmp(const void *a, const void *b)
 {
   const dBNode** ia = (const dBNode **)a; // casting pointer types
@@ -5930,23 +5971,22 @@ int db_node_addr_cmp(const void *a, const void *b)
 
 
 void get_coverage_from_array_of_nodes(dBNode** array, int length,
-                                      int* min_coverage, int* max_coverage,
-                                      double* avg_coverage, int* mode_coverage,
-                                      double*  percent_nodes_having_modal_value, int index)
+                                      Covg *min_coverage, Covg *max_coverage,
+                                      double* avg_coverage, Covg *mode_coverage,
+                                      double* percent_nodes_having_modal_value,
+                                      int index)
 {
+  Covg sum_coverage = 0;
 
-  
-  int sum_coverage=0;
-
-  *max_coverage         = 0;
-  *min_coverage         = INT_MAX;
+  *max_coverage = 0;
+  *min_coverage = COVG_MAX;
 
   int i;
-  int coverages[length];
+  Covg coverages[length];
 
   for (i=0; i< length; i++)
     {
-      int this_covg = 0;
+      Covg this_covg = 0;
       
       if (array[i]!= NULL)
 	{
@@ -5956,21 +5996,21 @@ void get_coverage_from_array_of_nodes(dBNode** array, int length,
       coverages[i]=this_covg; //will use this later, for the mode
 
       sum_coverage += this_covg;
-      *max_coverage = *max_coverage < this_covg ? this_covg : *max_coverage;
-      *min_coverage = *min_coverage > this_covg ? this_covg : *min_coverage;
+      *max_coverage = MAX(this_covg, *max_coverage);
+      *min_coverage = MIN(this_covg, *min_coverage);
       //printf("i is %d, this node has coverage %d, min is %d, max is %d\n", i, this_covg, *min_coverage, *max_coverage);
 
     }  
 
-  if (*min_coverage==INT_MAX)
+  if (*min_coverage==COVG_MAX)
     {
       *min_coverage=0;
     }
-  *avg_coverage = sum_coverage/length;
+  *avg_coverage = (double)sum_coverage/length;
 
 
   qsort( coverages, length, sizeof(int), int_cmp);
-  int covg_seen_most_often=coverages[0];
+  Covg covg_seen_most_often = coverages[0];
   int number_of_nodes_with_covg_seen_most_often=1;
   int current_run_of_identical_adjacent_covgs=1;
 
@@ -5998,25 +6038,24 @@ void get_coverage_from_array_of_nodes(dBNode** array, int length,
 }
 
 
-void get_coverage_from_array_of_nodes_in_subgraph_defined_by_func_of_colours(dBNode** array, int length, 
-									     int* min_coverage, int* max_coverage, double* avg_coverage, 
-									     int* mode_coverage, double*  percent_nodes_having_modal_value,
-									     Edges (*get_colour)(const dBNode*),
-									     uint32_t (*get_covg)(const dBNode*))
+void get_coverage_from_array_of_nodes_in_subgraph_defined_by_func_of_colours(
+  dBNode** array, int length,  Covg *min_coverage, Covg *max_coverage,
+  double* avg_coverage, Covg *mode_coverage,
+  double *percent_nodes_having_modal_value,
+  Edges (*get_colour)(const dBNode*),
+  Covg (*get_covg)(const dBNode*))
 {
+  Covg sum_coverage = 0;
 
-  
-  int sum_coverage=0;
-
-  *max_coverage         = 0;
-  *min_coverage         = INT_MAX;
+  *max_coverage = 0;
+  *min_coverage = COVG_MAX;
 
   int i;
-  int coverages[length];
+  Covg coverages[length];
 
   for (i=0; i< length; i++)
     {
-      int this_covg = 0;
+      Covg this_covg = 0;
       
       if (array[i]!= NULL)
 	{
@@ -6026,13 +6065,13 @@ void get_coverage_from_array_of_nodes_in_subgraph_defined_by_func_of_colours(dBN
       coverages[i]=this_covg; //will use this later, for the mode
 
       sum_coverage += this_covg;
-      *max_coverage = *max_coverage < this_covg ? this_covg : *max_coverage;
-      *min_coverage = *min_coverage > this_covg ? this_covg : *min_coverage;
+      *max_coverage = MAX(this_covg, *max_coverage);
+      *min_coverage = MIN(this_covg, *min_coverage);
       //printf("i is %d, this node has coverage %d, min is %d, max is %d\n", i, this_covg, *min_coverage, *max_coverage);
 
     }  
 
-  if (*min_coverage==INT_MAX)
+  if (*min_coverage==COVG_MAX)
     {
       *min_coverage=0;
     }
@@ -6040,7 +6079,7 @@ void get_coverage_from_array_of_nodes_in_subgraph_defined_by_func_of_colours(dBN
 
 
   qsort( coverages, length, sizeof(int), int_cmp);
-  int covg_seen_most_often=coverages[0];
+  Covg covg_seen_most_often = coverages[0];
   int number_of_nodes_with_covg_seen_most_often=1;
   int current_run_of_identical_adjacent_covgs=1;
 
@@ -6096,9 +6135,10 @@ void get_percent_novel_from_array_of_nodes(dBNode** array, int length,
 //this is horribly inefficient - order n^2 to compare. But for now I prefer correctness/definitely right-ness over efficiency
 // also remember that 95% of everything you find will be very short.
 // I won't count null pointers that are in one but not the other
-void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(dBNode** array1, dBNode** array2, int length1, int length2, 
-							  int* num_nodes_in_array_1not2, int * num_nodes_in_array_2not1, int** covgs_in_1not2, int** covgs_in_2not1,
-							  dBNode** reused_working_array1, dBNode** reused_working_array2, int index)
+void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(
+  dBNode** array1, dBNode** array2, int length1, int length2, 
+  int* num_nodes_in_array_1not2, int * num_nodes_in_array_2not1, Covg** covgs_in_1not2, Covg** covgs_in_2not1,
+  dBNode** reused_working_array1, dBNode** reused_working_array2, int index)
      
 {
   int j=0;
@@ -6193,15 +6233,17 @@ void get_covg_of_nodes_in_one_but_not_other_of_two_arrays(dBNode** array1, dBNod
 }
 
 
-//this is horribly inefficient - order n^2 to compare. But for now I prefer correctness/definitely right-ness over efficiency
+//this is horribly inefficient - order n^2 to compare. But for now I prefer
+// correctness/definitely right-ness over efficiency
 // also remember that 95% of everything you find will be very short.
 // I won't count null pointers that are in one but not the other
-void get_covg_of_nodes_in_one_but_not_other_of_two_arrays_in_subgraph_defined_by_func_of_colours(dBNode** array1, dBNode** array2, int length1, int length2, 
-												 int* num_nodes_in_array_1not2, int * num_nodes_in_array_2not1, 
-												 int** covgs_in_1not2, int** covgs_in_2not1,
-												 dBNode** reused_working_array1, dBNode** reused_working_array2,
-												 Edges (*get_colour)(const dBNode*),
-                         uint32_t (*get_covg)(const dBNode*))
+void get_covg_of_nodes_in_one_but_not_other_of_two_arrays_in_subgraph_defined_by_func_of_colours(
+  dBNode** array1, dBNode** array2, int length1, int length2, 
+  int* num_nodes_in_array_1not2, int * num_nodes_in_array_2not1, 
+  Covg** covgs_in_1not2, Covg** covgs_in_2not1,
+  dBNode** reused_working_array1, dBNode** reused_working_array2,
+  Edges (*get_colour)(const dBNode*),
+  Covg (*get_covg)(const dBNode*))
   
 {
   int j=0;
@@ -6248,9 +6290,11 @@ void get_covg_of_nodes_in_one_but_not_other_of_two_arrays_in_subgraph_defined_by
       
       if (elem_in_both_arrays==false)
 	{
-	  //this element reused_working_array1[i] is in reused_working_array1 but not reused_working_array2, and is not NULL
+	  // This element reused_working_array1[i] is in reused_working_array1 but not
+    // reused_working_array2, and is not NULL
 	  *num_nodes_in_array_1not2= *num_nodes_in_array_1not2+1;
-	  *(covgs_in_1not2[*num_nodes_in_array_1not2-1])=db_node_get_coverage_in_subgraph_defined_by_func_of_colours(reused_working_array1[i], get_covg);	  
+	  *(covgs_in_1not2[*num_nodes_in_array_1not2-1])
+      = db_node_get_coverage_in_subgraph_defined_by_func_of_colours(reused_working_array1[i], get_covg);	  
 	}
 
     }
@@ -6304,7 +6348,7 @@ boolean make_reference_path_based_sv_calls_condition_always_true(VariantBranches
 
 boolean make_reference_path_based_sv_calls_condition_always_true_for_func_of_colours(VariantBranchesAndFlanks* var,  int colour_of_ref,
 										     Edges (*get_colour)(const dBNode*),
-                         uint32_t (*get_covg)(const dBNode*) )
+                         Covg (*get_covg)(const dBNode*) )
 {
   return true;
 }
@@ -6328,18 +6372,19 @@ boolean make_reference_path_based_sv_calls_condition_always_true_for_func_of_col
 // In normal use, this should be zero - we'll find far too many variants. But can be used for testing.
 // the index for the reference is purely used for checking if nodes exist in the reference at all, or are novel. The trusted path is, in general, not necessarily the reference.
 // The trusted path comes entirely from chrom_fptr, and doe not need to be the same as the reference, as specified in arguments 4,5
-int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, int index_for_indiv_in_edge_array,
-						int index_for_ref_in_edge_array,
-						int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int max_anchor_span, int min_covg, int max_covg, 
-						int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
-						int max_desired_returns,
-						char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
-						char** return_flank3p_array, int** return_variant_start_coord,
-						boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
-						void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-						void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
-						GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump
-						)
+int db_graph_make_reference_path_based_sv_calls(
+  FILE* chrom_fasta_fptr, int index_for_indiv_in_edge_array,
+  int index_for_ref_in_edge_array,
+  int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, int max_anchor_span,
+  Covg min_covg, Covg max_covg, 
+  int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
+  int max_desired_returns,
+  char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
+  char** return_flank3p_array, int** return_variant_start_coord,
+  boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
+  void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
+  void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+  GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump)
 {
 
   int num_variants_found=0;
@@ -6480,8 +6525,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, int inde
   dBNode** working_array1 = (dBNode**) malloc(sizeof(dBNode*)*length_of_arrays); 
   dBNode** working_array2 = (dBNode**) malloc(sizeof(dBNode*)*length_of_arrays); 
 
-  int* covgs_in_trusted_not_variant = (int*) malloc(sizeof(int)*length_of_arrays);
-  int* covgs_in_variant_not_trusted = (int*) malloc(sizeof(int)*max_expected_size_of_supernode);
+  Covg* covgs_in_trusted_not_variant = (Covg*) malloc(sizeof(Covg)*length_of_arrays);
+  Covg* covgs_in_variant_not_trusted = (Covg*) malloc(sizeof(Covg)*max_expected_size_of_supernode);
   //int* covgs_of_indiv_on_trusted_path = (int*) malloc(sizeof(int)*length_of_arrays);
   //int* covgs_of_ref_on_trusted_path = (int*) malloc(sizeof(int)*length_of_arrays);
   //int* covgs_of_indiv_on_variant_path = (int*) malloc(sizeof(int)*length_of_arrays);
@@ -6498,8 +6543,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, int inde
       printf("Cannot malloc covg arrays. Exit\n");
     }
 
-  int** ptrs_to_covgs_in_trusted_not_variant = (int**) malloc(sizeof(int*)*length_of_arrays);
-  int** ptrs_to_covgs_in_variant_not_trusted = (int**) malloc(sizeof(int*)*max_expected_size_of_supernode);
+  Covg** ptrs_to_covgs_in_trusted_not_variant = (Covg**) malloc(sizeof(Covg*)*length_of_arrays);
+  Covg** ptrs_to_covgs_in_variant_not_trusted = (Covg**) malloc(sizeof(Covg*)*max_expected_size_of_supernode);
 
   if ( (ptrs_to_covgs_in_trusted_not_variant==NULL) || (ptrs_to_covgs_in_variant_not_trusted==NULL) )
     {
@@ -6634,8 +6679,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, int inde
 	  
 	  //coverage variables:
 	  double avg_coverage=0;
-	  int min_coverage=0;
-	  int max_coverage=0;
+	  Covg min_coverage=0;
+	  Covg max_coverage=0;
 	  boolean is_cycle=false;
 	  
 	  
@@ -6687,7 +6732,8 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, int inde
 
 	  if (traverse_sup_left_to_right)
 	    {
-	      if (length_curr_supernode - index_of_query_node_in_supernode_array < min_fiveprime_flank_anchor+min_threeprime_flank_anchor)
+	      if(length_curr_supernode - index_of_query_node_in_supernode_array <
+             min_fiveprime_flank_anchor + min_threeprime_flank_anchor)
 		{
 		  //printf("Insuff room on supernode for anchors at start_node_index %d, corresponding to kmer %s . length of current supernode is %d, index of query node in supernode is %d,Move to next position\n", 
 		  // start_node_index, binary_kmer_to_seq(chrom_path_array[start_node_index]->kmer, db_graph->kmer_size, tmp_zam),length_curr_supernode, index_of_query_node_in_supernode_array);
@@ -7192,10 +7238,10 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, int inde
 	      strncpy(flank5p, chrom_string+start_node_index, length_5p_flank);
 	      flank5p[length_5p_flank]='\0';
 
-	      int flank5p_max_covg=0;
-	      int flank5p_min_covg=0;
+	      Covg flank5p_max_covg=0;
+	      Covg flank5p_min_covg=0;
 	      double flank5p_avg_covg=0;
-	      int flank5p_mode_coverage=0;
+	      Covg flank5p_mode_coverage=0;
 	      double flank5p_percent_nodes_with_modal_covg=0;
 	      double flank5p_percent_novel=0; //if trusted path=reference, this is zero by definition, but we want to leave room for trusted path not the reference
                                               // a node is novel iff it is not in the reference genome
@@ -7274,10 +7320,10 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, int inde
 	      strncpy(trusted_branch, chrom_string+first_index_in_chrom_where_supernode_differs_from_chromosome-1, len_trusted_branch);
 	      
 	      trusted_branch[len_trusted_branch]='\0';
-	      int trusted_branch_min_covg=0;
-	      int trusted_branch_max_covg=0;
+	      Covg trusted_branch_min_covg=0;
+	      Covg trusted_branch_max_covg=0;
 	      double trusted_branch_avg_covg=0;
-	      int trusted_branch_mode_coverage=0;
+	      Covg trusted_branch_mode_coverage=0;
 	      double trusted_branch_percent_nodes_with_modal_covg=0;
 	      double trusted_branch_percent_novel=0;
 	      int num_nodes_on_trusted_but_not_variant_branch=0;
@@ -7298,10 +7344,10 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, int inde
 
 	      
 
-	      int branch2_min_covg=0;
-	      int branch2_max_covg=0;
+	      Covg branch2_min_covg=0;
+	      Covg branch2_max_covg=0;
 	      double branch2_avg_covg=0;
-	      int branch2_mode_coverage=0;
+	      Covg branch2_mode_coverage=0;
 	      double branch2_percent_nodes_with_modal_covg=0;
 	      double branch2_percent_novel=0;
 
@@ -7420,7 +7466,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, int inde
 
 
 		  //sanity
-		  if ( (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0) || (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode) )
+		  if ( (index_of_query_node_in_supernode_array<length_5p_flank-len_branch2) || (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode) )
 		    {
 		      die("Programming error. \n"
 "Either index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0\n"
@@ -7489,10 +7535,10 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, int inde
 	      strncpy(flank3p, chrom_string+start_of_3prime_anchor_in_chrom, length_3p_flank);
 	      flank3p[length_3p_flank]='\0';
 
-	      int flank3p_max_covg=0;
-	      int flank3p_min_covg=0;
+	      Covg flank3p_max_covg=0;
+	      Covg flank3p_min_covg=0;
 	      double flank3p_avg_covg=0;
-	      int flank3p_mode_coverage=0;
+	      Covg flank3p_mode_coverage=0;
 	      double flank3p_percent_nodes_with_modal_covg=0;
 	      double flank3p_percent_novel=0;
 
@@ -7808,7 +7854,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr, int inde
 boolean make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours(VariantBranchesAndFlanks* var, 
 													int colour_of_ref,
 													Edges (*get_colour)(const dBNode*),
-													uint32_t (*get_covg)(const dBNode*))
+													Covg (*get_covg)(const dBNode*))
 {
   return true;
 }
@@ -7831,16 +7877,16 @@ boolean make_reference_path_based_sv_calls_condition_always_true_in_subgraph_def
 // The trusted path comes entirely from chrom_fptr, and doe not need to be the same as the reference, as specified in arguments 4,5
 int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_colours(FILE* chrom_fasta_fptr,
 										       Edges (*get_colour)(const dBNode*),
-										       uint32_t (*get_covg)(const dBNode*),
+										       Covg (*get_covg)(const dBNode*),
 										       int ref_colour, //int index_for_ref_in_edge_array,
 										       int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, 
-										       int max_anchor_span, int min_covg, int max_covg, 
+										       int max_anchor_span, Covg min_covg, Covg max_covg, 
 										       int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
 										       int max_desired_returns,
 										       char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
 										       char** return_flank3p_array, int** return_variant_start_coord,
 										       boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
-													    Edges (*get_colour)(const dBNode*), uint32_t (*get_covg)(const dBNode*)),
+													    Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*)),
 										       void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
 										       GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump,
@@ -7986,8 +8032,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   dBNode** working_array1 = (dBNode**) malloc(sizeof(dBNode*)*length_of_arrays); 
   dBNode** working_array2 = (dBNode**) malloc(sizeof(dBNode*)*length_of_arrays); 
 
-  int* covgs_in_trusted_not_variant = (int*) malloc(sizeof(int)*length_of_arrays);
-  int* covgs_in_variant_not_trusted = (int*) malloc(sizeof(int)*max_expected_size_of_supernode);
+  Covg* covgs_in_trusted_not_variant = (Covg*) malloc(sizeof(Covg)*length_of_arrays);
+  Covg* covgs_in_variant_not_trusted = (Covg*) malloc(sizeof(Covg)*max_expected_size_of_supernode);
   //int* covgs_of_indiv_on_trusted_path = (int*) malloc(sizeof(int)*length_of_arrays);
   //int* covgs_of_ref_on_trusted_path = (int*) malloc(sizeof(int)*length_of_arrays);
   //int* covgs_of_indiv_on_variant_path = (int*) malloc(sizeof(int)*length_of_arrays);
@@ -8004,8 +8050,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
       die("Cannot malloc covg arrays. Exit");
     }
 
-  int** ptrs_to_covgs_in_trusted_not_variant = (int**) malloc(sizeof(int*)*length_of_arrays);
-  int** ptrs_to_covgs_in_variant_not_trusted = (int**) malloc(sizeof(int*)*max_expected_size_of_supernode);
+  Covg** ptrs_to_covgs_in_trusted_not_variant = (Covg**) malloc(sizeof(Covg*)*length_of_arrays);
+  Covg** ptrs_to_covgs_in_variant_not_trusted = (Covg**) malloc(sizeof(Covg*)*max_expected_size_of_supernode);
 
   if ( (ptrs_to_covgs_in_trusted_not_variant==NULL) || (ptrs_to_covgs_in_variant_not_trusted==NULL) )
     {
@@ -8142,8 +8188,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	  
 	  //coverage variables:
 	  double avg_coverage=0;
-	  int min_coverage=0;
-	  int max_coverage=0;
+	  Covg min_coverage = 0;
+	  Covg max_coverage = 0;
 	  boolean is_cycle=false;
 	  
 	  int length_curr_supernode = 
@@ -8689,10 +8735,10 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	      strncpy(flank5p, chrom_string+start_node_index, length_5p_flank);
 	      flank5p[length_5p_flank]='\0';
 
-	      int flank5p_max_covg=0;
-	      int flank5p_min_covg=0;
+	      Covg flank5p_max_covg=0;
+	      Covg flank5p_min_covg=0;
 	      double flank5p_avg_covg=0;
-	      int flank5p_mode_coverage=0;
+	      Covg flank5p_mode_coverage=0;
 	      double flank5p_percent_nodes_with_modal_covg=0;
 	      double flank5p_percent_novel=0; //if trusted path=reference, this is zero by definition, but we want to leave room for trusted path not the reference
                                               // a node is novel iff it is not in the reference genome
@@ -8773,10 +8819,10 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	      strncpy(trusted_branch, chrom_string+first_index_in_chrom_where_supernode_differs_from_chromosome-1, len_trusted_branch);
 	      
 	      trusted_branch[len_trusted_branch]='\0';
-	      int trusted_branch_min_covg=0;
-	      int trusted_branch_max_covg=0;
+	      Covg trusted_branch_min_covg=0;
+	      Covg trusted_branch_max_covg=0;
 	      double trusted_branch_avg_covg=0;
-	      int trusted_branch_mode_coverage=0;
+	      Covg trusted_branch_mode_coverage=0;
 	      double trusted_branch_percent_nodes_with_modal_covg=0;
 	      double trusted_branch_percent_novel=0;
 	      int num_nodes_on_trusted_but_not_variant_branch=0;
@@ -8799,10 +8845,10 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 	      
 
-	      int branch2_min_covg=0;
-	      int branch2_max_covg=0;
+	      Covg branch2_min_covg=0;
+	      Covg branch2_max_covg=0;
 	      double branch2_avg_covg=0;
-	      int branch2_mode_coverage=0;
+	      Covg branch2_mode_coverage=0;
 	      double branch2_percent_nodes_with_modal_covg=0;
 	      double branch2_percent_novel=0;
 
@@ -8930,7 +8976,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 
 		  //sanity
-		  if ( (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0) || (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode) )
+		  if ( (index_of_query_node_in_supernode_array<length_5p_flank-len_branch2) || (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode) )
 		    {
           die(
 "Programming error. Either index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0\n"
@@ -8998,10 +9044,10 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	      strncpy(flank3p, chrom_string+start_of_3prime_anchor_in_chrom, length_3p_flank);
 	      flank3p[length_3p_flank]='\0';
 
-	      int flank3p_max_covg=0;
-	      int flank3p_min_covg=0;
+	      Covg flank3p_max_covg=0;
+	      Covg flank3p_min_covg=0;
 	      double flank3p_avg_covg=0;
-	      int flank3p_mode_coverage=0;
+	      Covg flank3p_mode_coverage=0;
 	      double flank3p_percent_nodes_with_modal_covg=0;
 	      double flank3p_percent_novel=0;
 
@@ -9393,13 +9439,13 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(int* list, int len_list,
 										 FILE* chrom_fasta_fptr, int ref_colour,
 										 int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, 
-										 int max_anchor_span, int min_covg, int max_covg, 
+										 int max_anchor_span, Covg min_covg, Covg max_covg, 
 										 int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
 										 int max_desired_returns,
 										 char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array, 
 										 char** return_flank3p_array, int** return_variant_start_coord,
 										 boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
-												      Edges (*get_colour)(const dBNode*), uint32_t (*get_covg)(const dBNode*)),
+												      Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*)),
 										 void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
 										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
 										GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump,
@@ -9420,7 +9466,7 @@ int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(
     return edges;    
   }
 
-  uint32_t get_covg_of_union_first_list_colours(const dBNode* e)
+  Covg get_covg_of_union_first_list_colours(const dBNode* e)
   {
     return element_get_covg_for_colourlist(e, list, len_list);
   }
@@ -9452,7 +9498,7 @@ int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(
 int db_graph_make_reference_path_based_sv_calls_after_marking_vars_in_ref_to_be_ignored(
   char* chrom_fasta, int index_for_indiv_in_edge_array, int index_for_ref_in_edge_array,
   int min_fiveprime_flank_anchor, int min_threeprime_flank_anchor, 
-  int max_anchor_span, int min_covg, int max_covg,
+  int max_anchor_span, Covg min_covg, Covg max_covg,
   int max_expected_size_of_supernode, int length_of_arrays, dBGraph* db_graph, FILE* output_file,
   int max_desired_returns,
   char** return_flank5p_array, char** return_trusted_branch_array, char** return_variant_branch_array,
@@ -9662,9 +9708,21 @@ void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fa
 
 void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
 {
+  // Let the compiler know that we are deliberately doing nothing with our
+  // paramters
+  (void)var;
+  (void)fout;
 }
-void print_no_extra_supernode_info(dBNode** node_array, Orientation* or_array, int len, FILE* fout)
+
+void print_no_extra_supernode_info(dBNode** node_array, Orientation* or_array,
+                                   int len, FILE* fout)
 {
+  // Let the compiler know that we are deliberately doing nothing with our
+  // paramters
+  (void)node_array;
+  (void)or_array;
+  (void)len;
+  (void)fout;
 }
 
 
@@ -9673,12 +9731,12 @@ void print_no_extra_supernode_info(dBNode** node_array, Orientation* or_array, i
 // nodes in this path but not in some specific other path
 void print_fasta_from_path_for_specific_person_or_pop(
   FILE *fout, char *name, int length, double avg_coverage,
-  int min_coverage, int max_coverage, int modal_coverage,
+  Covg min_coverage, Covg max_coverage, Covg modal_coverage,
   double percent_nodes_with_modal_coverage, double percent_novel,
   dBNode *fst_node, Orientation fst_orientation,
   dBNode *lst_node, Orientation lst_orientation,
   char *text_describing_comparison_with_other_path, // may be NULL
-  int *coverages_nodes_in_this_path_but_not_some_other, // may be NULL
+  Covg *coverages_nodes_in_this_path_but_not_some_other, // may be NULL
   int length_of_coverage_array, char * string, // labels of paths
   int kmer_size, boolean include_first_kmer, int index)
 {
@@ -9774,30 +9832,20 @@ void print_fasta_from_path_for_specific_person_or_pop(
 
 }
 
-void print_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *fout,
-								  char * name,
-								  int length,
-								  double avg_coverage,
-								  int min_coverage,
-								  int max_coverage,
-								  int modal_coverage,
-								  double  percent_nodes_with_modal_coverage,
-								  double percent_novel, 
-								  dBNode * fst_node,
-								  Orientation fst_orientation,
-								  dBNode * lst_node,
-								  Orientation lst_orientation,
-								  char* text_describing_comparison_with_other_path, 
-								     //text_describing_comparison_with_other_path may be NULL 
-								     // - use to allow printing coverages of nodes in this path but not in some specific other path
-								  int* coverages_nodes_in_this_path_but_not_some_other, //may be NULL
-								  int length_of_coverage_array,
-								  char * string, //labels of paths
-								  int kmer_size,
-								  boolean include_first_kmer,
-								  Edges (*get_colour)(const dBNode*),
-								  uint32_t (*get_covg)(const dBNode*)
-								  )
+void print_fasta_from_path_in_subgraph_defined_by_func_of_colours(
+  FILE *fout, char * name, int length, double avg_coverage,
+  Covg min_coverage, Covg max_coverage, Covg modal_coverage,
+  double  percent_nodes_with_modal_coverage, double percent_novel,
+  dBNode * fst_node, Orientation fst_orientation,
+  dBNode * lst_node, Orientation lst_orientation,
+  char* text_describing_comparison_with_other_path, //text_describing_comparison_with_other_path may be NULL
+  // - use to allow printing coverages of nodes in this path but not in some specific other path
+  Covg* coverages_nodes_in_this_path_but_not_some_other, // may be NULL
+  int length_of_coverage_array,
+  char * string, //labels of paths
+  int kmer_size, boolean include_first_kmer,
+  Edges (*get_colour)(const dBNode*),
+  Covg (*get_covg)(const dBNode*))
 {
   if (fout==NULL)
     {
@@ -9896,15 +9944,15 @@ void print_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *fout,
 // of nodes in this path but not in some specific other path
 void print_fasta_with_all_coverages_from_path_for_specific_person_or_pop(
   FILE *fout, char * name, int length,
-  double avg_coverage, int min_coverage, int max_coverage, int modal_coverage,
+  double avg_coverage, Covg min_coverage, Covg max_coverage, Covg modal_coverage,
   double percent_nodes_with_modal_coverage, double percent_novel,
   dBNode * fst_node, Orientation fst_orientation,
   dBNode * lst_node, Orientation lst_orientation,
   char* text_describing_comparison_with_other_path, //may be NULL
-  int* coverages_nodes_in_this_path_but_not_some_other, //may be NULL
+  Covg* coverages_nodes_in_this_path_but_not_some_other, //may be NULL
   int length_of_coverage_array,//refers to prev argument
-  int* coverages_nodes_in_this_path, 
-  int* coverages_in_ref_nodes_in_this_path,
+  Covg* coverages_nodes_in_this_path, 
+  Covg* coverages_in_ref_nodes_in_this_path,
   int number_nodes_in_this_path, char * string, // labels of paths
   int kmer_size, boolean include_first_kmer, int index)
 {  
@@ -10017,8 +10065,8 @@ void print_minimal_fasta_from_path_for_specific_person_or_pop(FILE *fout,
 							      char * name,
 							      int length,
 							      double avg_coverage,
-							      int min_coverage,
-							      int max_coverage,
+							      Covg min_coverage,
+							      Covg max_coverage,
 							      dBNode * fst_node,
 							      Orientation fst_orientation,
 							      dBNode * lst_node,
@@ -10114,8 +10162,8 @@ void print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *
 									  char * name,
 									  int length,
 									  double avg_coverage,
-									  int min_coverage,
-									  int max_coverage,
+									  Covg min_coverage,
+									  Covg max_coverage,
 									  dBNode * fst_node,
 									  Orientation fst_orientation,
 									  dBNode * lst_node,
@@ -10124,7 +10172,7 @@ void print_minimal_fasta_from_path_in_subgraph_defined_by_func_of_colours(FILE *
 									  int kmer_size,
 									  boolean include_first_kmer,
 									  Edges (*get_colour)(const dBNode*),
-									  uint32_t (*get_covg)(const dBNode*)
+									  Covg (*get_covg)(const dBNode*)
 									  )
 {
 
@@ -10312,8 +10360,12 @@ boolean does_this_path_exist_in_this_colour(dBNode** array_nodes, Orientation* a
 }
 
 
-void print_standard_extra_supernode_info(dBNode** node_array, Orientation* or_array, int len, FILE* fout)
+void print_standard_extra_supernode_info(dBNode** node_array,
+                                         Orientation* or_array,
+                                         int len, FILE* fout)
 {
+  // Let the compiler know that we're deliberately ignoring a parameter
+  (void)or_array;
   
   int col;
   for (col=0; col<NUMBER_OF_COLOURS; col++)
@@ -10709,7 +10761,7 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
 void calculate_statistics_of_some_function_of_supernodes(
   dBGraph * db_graph, GraphInfo* ginfo, GraphAndModelInfo* model_info,
   int max_expected_sup, BasicStats stats,
-  uint32_t (*sum_of_covgs_in_desired_colours)(const Element *), 
+  Covg (*sum_of_covgs_in_desired_colours)(const Element *), 
   Edges (*get_edge_of_interest)(const Element*))
 {
 
@@ -10729,8 +10781,8 @@ void calculate_statistics_of_some_function_of_supernodes(
 
     int len;
     double avg_cov;
-    int min_cov;
-    int max_cov;
+    Covg min_cov;
+    Covg max_cov;
     boolean is_cycle;
     
     //length_sup is the number of edges in the supernode

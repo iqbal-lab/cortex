@@ -25,15 +25,15 @@
  * **********************************************************************
  */
 /*
-
- */
+  open_hash/little_hash_for_genotyping.c
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <open_hash/little_hash_for_genotyping.h>
-#include <hash_value.h>
 #include <assert.h>
 
+#include "open_hash/little_hash_for_genotyping.h"
+#include "hash_value.h"
 
 
 LittleHashTable * little_hash_table_new(int number_bits, int bucket_size, 
@@ -125,7 +125,7 @@ boolean little_hash_table_find_in_bucket(Key key, long long * current_pos, boole
     //element found
 
    
-    if (genotyping_element_is_key(key,little_hash_table->table[*current_pos], little_hash_table->kmer_size))
+    if (genotyping_element_is_key(key,little_hash_table->table[*current_pos]))
       {
 	found = true;
       }

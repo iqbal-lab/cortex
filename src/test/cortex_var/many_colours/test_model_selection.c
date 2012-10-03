@@ -24,20 +24,28 @@
  *
  * **********************************************************************
  */
+/*
+  test_model_selection.c
+*/
 
-#include <CUnit.h>
-#include <element.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <file_reader.h>
-#include <dB_graph.h>
-#include <dB_graph_population.h>
 #include <string.h>
-#include <cmd_line.h>
 #include <time.h>
-#include <graph_info.h>
-#include <db_differentiation.h>
 
+#include <CUnit.h>
+
+// cortex_var headers
+#include "element.h"
+#include "file_reader.h"
+#include "dB_graph.h"
+#include "dB_graph_population.h"
+#include "cmd_line.h"
+#include "graph_info.h"
+#include "db_differentiation.h"
+
+// This test isn't run -- can probably be removed ?
+// get_log_bayesfactor_varmodel_over_repeatmodel is an empty function now
 void test_get_log_bayesfactor_varmodel_over_repeatmodel()
 {
   if(NUMBER_OF_COLOURS < 100)

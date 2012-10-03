@@ -24,9 +24,14 @@
  *
  * **********************************************************************
  */
+/*
+  chain_hash/priority_queue.c
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <priority_queue.h>
+
+#include "priority_queue.h"
 
 PQueue * pqueue_new(){ 
   
@@ -97,7 +102,7 @@ boolean pqueue_apply_or_insert(Key key, void (*f)(Element*),PQueue *pqueue, shor
   Element element;
 
   for(i=0;i<pqueue->number_entries;i++){
-    if (element_is_key(key,pqueue->elements[i], kmer_size)){
+    if (element_is_key(key,pqueue->elements[i])){
       f(&pqueue->elements[i]);
       pqueue_bubble_up(i,pqueue);
       found = true;
@@ -129,7 +134,7 @@ Element * pqueue_find_or_insert(Key key,boolean * found, PQueue * pqueue, short 
  
   *found = false;
   for(i=0;i<pqueue->number_entries;i++){ 
-    if (element_is_key(key,pqueue->elements[i], kmer_size)){
+    if (element_is_key(key,pqueue->elements[i])){
       *found = true;
       return &(pqueue->elements[i]);
     }
@@ -162,7 +167,7 @@ Element * pqueue_find(Key key,PQueue * pqueue, short kmer_size){
   int i;
 
   for(i=0;i<pqueue->number_entries;i++){ 
-    if (element_is_key(key,pqueue->elements[i], kmer_size)){
+    if (element_is_key(key,pqueue->elements[i])){
       return &(pqueue->elements[i]);
     }
   }
