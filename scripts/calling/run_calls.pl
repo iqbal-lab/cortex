@@ -118,7 +118,7 @@ my (
 	$stampy_hash_stub,     $format,
         $outdir_binaries,      $outdir_calls,   $outdir_vcfs, 
         $qthresh,              $dups,           $homopol,
-        $mem_height,           $mem_width, $binary_colourlist,
+        $mem_height,           $mem_width, 
         $max_read_len,         $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
         $expt_type,            $do_union, $manual_override_cleaning,
         $build_per_sample_vcfs, $global_logfile,  $squeeze_mem,
@@ -161,7 +161,6 @@ $apply_classif                       ='';
 $qthresh                             =-1;
 $dups                                ='';
 $homopol                             =-1;
-$binary_colourlist                   ="";
 $mem_height=-1;
 $mem_width=-1;
 $max_read_len=-1;
@@ -208,7 +207,6 @@ my $help = '';    #default false
     'homopol:i'            => \$homopol,
     'mem_height:i'         => \$mem_height,
     'mem_width:i'          => \$mem_width,
-    'colourlist:s'         => \$binary_colourlist,
     'format:s'             =>\$format,
 #    'max_read_len:i'       => \$max_read_len,
     'max_var_len:i'        => \$max_var_len,
@@ -283,8 +281,12 @@ if ($help)
 }
 
 
-
-
+##this has to happen before running the checks
+$refbindir=abs_path($refbindir);
+if ($refbindir !~ /\/$/)
+{
+    $refbindir = $refbindir.'/';
+}
 
 my %k_to_refbin=();
 ### checks
@@ -338,11 +340,7 @@ if (!(-e $classifier))
     die("Cannot find classifier $classifier in the place I expect to find it: $analyse_variants_dir");
 }
 
-$refbindir=abs_path($refbindir);
-if ($refbindir !~ /\/$/)
-{
-    $refbindir = $refbindir.'/';
-}
+
 $outdir = abs_path($outdir);
 if ($outdir !~ /\/$/)
 {
@@ -640,9 +638,6 @@ if  ($workflow eq "independent" )
 		
 		if (!( ($bc_already_done eq "yes") && ($pd_already_done eq "yes")))##not all done
 		{
-
-
-
 		    $cmd = $cmd." > $log 2>&1";
 		    print "$cmd\n";
 		    my $ret = qx{$cmd};
@@ -2183,10 +2178,6 @@ sub run_checks
 	die("If you want automatic cleaning, you need tos pecify --genome_size");
     }
 
-    if ( ($fastaq_index eq "") && ($binary_colourlist eq "") )
-    {
-	die("Either specify a fastq index or a colourlist");
-    }
     if ($mem_height==-1)
     {
 	die("Must specify --mem_height");
