@@ -808,7 +808,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       {
 	if (optarg==NULL)
 	  errx(1,"[--ref_colour] option requires int argument [which colour is the reference - i.e. what position in colour_list (count starts from 0)]");
-	if (optarg<0)
+	if (atoi(optarg)<0)
 	  errx(1,"[--ref_colour] option requires positive argument [which colour is the reference - i.e. what position in colour_list (count starts from 0)]");
 	if (atoi(optarg)>NUMBER_OF_COLOURS)
 	  errx(1,"[--ref_colour] requires you specify the colour of the reference, and this must be less than the maximum number of colours allowed by Cortex. This maximum number is fixed at compile-time. See the Manual to find how to reset this, and check the number you have entered : %s is correct.", optarg);
@@ -829,7 +829,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 	if (optarg==NULL)
 	  errx(1,"[--cut_homopolymers] option requires positive integer  argument [maximum allowed length of homopolymer in read]");
-	if (optarg<0)
+	if (atoi(optarg)<0)
 	  errx(1,"[--cut_homopolymers] option requires positive integer  argument [maximum allowed length of homopolymer in read]");
 
 	cmdline_ptr->cut_homopolymers  = true;

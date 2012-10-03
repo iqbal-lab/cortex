@@ -1580,7 +1580,7 @@ boolean is_this_kmer_beyond_the_2net(dBNode* n, dBGraph* db_graph, Covg (*get_co
 }
 
 
-
+/*
 // Currently noone appears to call this function
 // Removed unused parameter Covg (*get_covg_1net)(dBNode* e)
 boolean is_this_kmer_in_the_1net(dBNode* n, dBGraph* db_graph)
@@ -1600,9 +1600,9 @@ boolean is_this_kmer_in_the_1net(dBNode* n, dBGraph* db_graph)
 	  strcpy(copy_orig, orig_seq);
 	  modify_character(copy_orig, i,p);//modify the i-th character and change it to the p-th of the other 3. eg if the base is C, and p=2 change it to the second one of A,G,T.
 	  BinaryKmer tmp_kmer1, tmp_kmer2;
-
-    seq_to_binary_kmer(copy_orig, db_graph->kmer_size, &tmp_kmer1);
-    element_get_key(tmp_kmer1, db_graph->kmer_size, &tmp_kmer2);
+	  
+	  seq_to_binary_kmer(copy_orig, db_graph->kmer_size, &tmp_kmer1);
+	  element_get_key(tmp_kmer1, db_graph->kmer_size, &tmp_kmer2);
 	  dBNode* found_node = hash_table_find(&tmp_kmer2, db_graph);
 
 	  if (found_node==NULL)
@@ -1623,7 +1623,7 @@ boolean is_this_kmer_in_the_1net(dBNode* n, dBGraph* db_graph)
   //all possible edits have failed to hit the genotype
   return false;
 }
-
+*/
 
  //we ASSUME colours 0 to number_alleles are the various alternate alleles, loading in multicolour_bin
 void calculate_max_and_max_but_one_llks_of_specified_set_of_genotypes_of_complex_site(

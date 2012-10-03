@@ -1326,30 +1326,20 @@ int main(int argc, char **argv)
       //check that we have read lengths for the colours we want to genotype
       for (k=0; k<cmd_line->num_colours_to_genotype; k++)
 	{
-	  if (db_graph_info->mean_read_length[cmd_line->list_colours_to_genotype[k]] < db_graph->kmer_size )
+	  if (db_graph_info->mean_read_length[cmd_line->list_colours_to_genotype[k]] < (uint32_t) db_graph->kmer_size )
 	    {
 	      die(
-"This will not work. If you scroll up to the summary of read-lengths and covgs\n"
-"in your colours, you will see that at least one of the colours you want to\n"
-"genotype has mean read length < kmer_size. We only know of one way this can\n"
-"happen: If you load fastA files, then cortex does not store read-length/covg\n"
-"data, essentially because the only real use-cases for fasta files are:\n"
-"  a) testing of code and b) reference genomes. \n"
-"So I suggest that either you are running a test on fasta files (in which case\n"
-"please use fastq) or you have accidentally specified the wrong colour to be genotyped\n");
+		  "This will not work. If you scroll up to the summary of read-lengths and covgs\n"
+		  "in your colours, you will see that at least one of the colours you want to\n"
+		  "genotype has mean read length < kmer_size. This should be impossible - this is just a paranoid error check.\n");
 	    }
 
 	  if (db_graph_info->total_sequence[cmd_line->list_colours_to_genotype[k]]==0)
 	    {
 	      die(
-"This will not work. If you scroll up to the summary of read-lengths and covgs\n"
-"in your colours, you will see that at least one of the colours you want to\n"
-"genotype has total sequence 0. We only know of one way this can happen:\n"
-"If you load fastA files, then cortex does not store read-length/covg data,\n"
-"essentially because the only real use-cases for fasta files are:\n"
-"  a) testing of code and b) reference genomes. \n"
-"So I suggest that either you are running a test on fasta files (in which case\n"
-"please use fastq) or you have accidentally specified the wrong colour to be genotyped\n");
+		  "This will not work. If you scroll up to the summary of read-lengths and covgs\n"
+		  "in your colours, you will see that at least one of the colours you want to\n"
+		  "genotype has total sequence 0. \n");
 	    }
 	}
 

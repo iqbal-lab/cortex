@@ -448,7 +448,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(
 							  db_graph, bin_ginfo, false, 
 							  colour_ref_minus_site, only_load_kmers_already_in_graph, clean_colour, 
 							  false);
-  free(bin_ginfo);
+  graph_info_free(bin_ginfo);
 
   int max_allele_length = 90000;
 

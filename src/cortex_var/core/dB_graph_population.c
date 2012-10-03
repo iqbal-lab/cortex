@@ -4981,11 +4981,10 @@ void db_graph_traverse_with_array(void (*f)(HashTable*, Element *, int**, int, i
 }
 
 
-void db_graph_traverse_with_array_of_uint64(void (*f)(HashTable*, Element *,
-                                                      uint64_t*, int, int),
+void db_graph_traverse_with_array_of_uint64(void (*f)(HashTable*, Element *, uint64_t*, uint32_t, int),
                                             HashTable * hash_table,
                                             uint64_t* array,
-                                            int length_of_array, int colour)
+                                            uint32_t length_of_array, int colour)
 {
   uint64_t i;
   uint64_t num_elements = (uint64_t)hash_table->number_buckets * hash_table->bucket_size;
@@ -5004,14 +5003,14 @@ void db_graph_traverse_with_array_of_uint64(void (*f)(HashTable*, Element *,
 void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph, 
                                     int index, boolean (*condition)(dBNode* elem))
 {
-  int i;
+  uint32_t i;
 
   FILE* fout = fopen(filename, "w");
 
   if(fout == NULL)
     die("Cannot open %s\n", filename);
 
-  int covgs_len = 10001;
+  uint32_t covgs_len = 10001;
   // uint64_t instead of Covg since these could get large
   uint64_t* covgs = (uint64_t*) malloc(sizeof(uint64_t) * covgs_len);
 
@@ -5022,7 +5021,7 @@ void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph,
     covgs[i] = 0;
 
   void bin_covg_and_add_to_array(HashTable* htable, Element *e,
-                                 uint64_t* arr, int len, int colour)
+                                 uint64_t* arr, uint32_t len, int colour)
   {
     if(condition(e)==true)
     {
@@ -5036,7 +5035,7 @@ void db_graph_get_covg_distribution(char* filename, dBGraph* db_graph,
 
   fprintf(fout, "KMER_COVG\tFREQUENCY\n");
     for(i = 0; i < covgs_len; i++)
-    fprintf(fout, "%d\t%" PRIu64 "\n", i, covgs[i]);
+    fprintf(fout, "%u\t%" PRIu64 "\n", i, covgs[i]);
 
   fclose(fout);
   free(covgs);
