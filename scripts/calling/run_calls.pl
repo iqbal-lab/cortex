@@ -282,12 +282,14 @@ if ($help)
 
 
 ##this has to happen before running the checks
-$refbindir=abs_path($refbindir);
-if ($refbindir !~ /\/$/)
+if ($refbindir ne "")
 {
-    $refbindir = $refbindir.'/';
+    $refbindir=abs_path($refbindir);
+    if ($refbindir !~ /\/$/)
+    {
+	$refbindir = $refbindir.'/';
+    }
 }
-
 my %k_to_refbin=();
 ### checks
 run_checks();
