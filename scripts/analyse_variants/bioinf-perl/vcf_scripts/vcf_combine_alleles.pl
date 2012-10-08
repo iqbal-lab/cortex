@@ -180,7 +180,7 @@ sub print_list
 
         # @vars_at_same_pos[$start..$end] all share the same ref site
         # merge and print a single entry
-        my @alleles_arr = map {$_->{'ALT'}} @vars_at_same_pos[$start..$end];
+        my @alleles_arr = map {split(",", $_->{'ALT'})} @vars_at_same_pos[$start..$end];
         my %alleles_hash = ();
         @alleles_hash{@alleles_arr} = 1;
         @alleles_arr = sort keys %alleles_hash;
@@ -236,44 +236,56 @@ sub print_list
 
           $new_entry->{'FORMAT'} = ['GT'];
 
-          # For each sample, pick GT with highest conf
+          # For each sample, pick a genotype (GT)
+          # if all genotypes agree => set genotype
           for my $sample (@samples)
           {
-            my $max_gt_conf_var;
+            $new_entry->{$sample}->{'GT'} = undef;
+            my @sample_gts = map {$vars_at_same_pos[$_]->{$sample}->{'GT'}}
+                                 $start..$end;
 
-            for(my $var = $start; $var <= $end; $var++)
+            if(get_genotype_are_ref(@sample_gts))
             {
-              my $gt_conf = $vars_at_same_pos[$var]->{$sample}->{'GT_CONF'};
-              my $sample_gt = $vars_at_same_pos[$var]->{$sample}->{'GT_CONF'};
-
-              if(defined($gt_conf) && defined($sample_gt) && $gt_conf ne ".")
-              {
-                if(!defined($max_gt_conf_var) ||
-                   $max_gt_conf_var->{$sample}->{'GT_CONF'}
-                     > $vars_at_same_pos[$var]->{$sample}->{'GT_CONF'})
-                {
-                  $max_gt_conf_var = $vars_at_same_pos[$var];
-                }
-              }
-            }
-
-            if(defined($max_gt_conf_var))
-            {
-              my $new_gt_call = "";
-              my $prev_gt = $max_gt_conf_var->{$sample}->{'GT'};
-
-              # Get alts
-              my @alts = split(",", $max_gt_conf_var->{'ALT'});
-              unshift(@alts, $max_gt_conf_var->{'REF'});
-
-              while($prev_gt =~ /([\/\|]*)(\d+)/g)
-              {
-                $new_gt_call .= $1.$alleles_hash{$alts[$2]};
-              }
-
-              $new_entry->{$sample}->{'GT'} = $new_gt_call;
+              # sample is ref in all variants
+              $new_entry->{$sample}->{'GT'} = join("/", ('0') x $ploidy);
             }
             else
+            {
+              # Pick GT with highest confidence
+              my $max_gt_conf_var;
+              my $max_gt_conf;
+
+              for(my $var = $start; $var <= $end; $var++)
+              {
+                my $gt_conf = get_gt_conf($vars_at_same_pos[$var], $sample);
+
+                if(defined($gt_conf) && $gt_conf ne "." &&
+                   (!defined($max_gt_conf_var) || $gt_conf > $max_gt_conf))
+                {
+                  $max_gt_conf_var = $vars_at_same_pos[$var];
+                  $max_gt_conf = $gt_conf;
+                }
+              }
+
+              if(defined($max_gt_conf_var))
+              {
+                my $new_gt_call = "";
+                my $prev_gt = $max_gt_conf_var->{$sample}->{'GT'};
+
+                # Get ALTs for this variant
+                my @alts = split(",", $max_gt_conf_var->{'ALT'});
+                unshift(@alts, $max_gt_conf_var->{'REF'});
+
+                while($prev_gt =~ /([\/\|]*)(\.|\d+)/g)
+                {
+                  $new_gt_call .= $1.($2 ne "." ? $alleles_hash{$alts[$2]} : '.');
+                }
+
+                $new_entry->{$sample}->{'GT'} = $new_gt_call;
+              }
+            }
+
+            if(!defined($new_entry->{$sample}->{'GT'}))
             {
               $new_entry->{$sample}->{'GT'} = join("/", ('.') x $ploidy);
             }
@@ -307,3 +319,24 @@ sub print_list
   }
 }
 
+sub get_gt_conf
+{
+  my ($var, $sample) = @_;
+
+  return defined($var->{$sample}->{'CONF'}) ? $var->{$sample}->{'CONF'}
+                                            : $var->{$sample}->{'GT_CONF'};
+}
+
+# When passed a list of genotypes, returns 1 if all are REF, 0 otherwise
+sub get_genotype_are_ref
+{
+  for my $_ (@_)
+  {
+    if(!defined($_) || $_ !~ /^0([\/\|]0)*$/)
+    {
+      return 0;
+    }
+  }
+
+  return 1;
+}

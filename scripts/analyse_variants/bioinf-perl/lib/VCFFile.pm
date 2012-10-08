@@ -8,11 +8,16 @@ use Carp;
 
 # All methods are object methods except these:
 use base 'Exporter';
-our @EXPORT = qw(get_standard_vcf_columns
+our @EXPORT = qw(vcf_get_standard_columns
                  vcf_sort_variants
                  vcf_add_filter_txt
-                 is_snp get_clean_indel
-                 vcf_get_ancestral_true_allele);
+                 vcf_is_snp vcf_get_clean_indel
+                 vcf_get_ancestral_true_allele
+                 vcf_get_flanks
+                 vcf_get_alt_allele_genome_substr0
+                 vcf_get_ancestral_genome_substr0
+                 vcf_get_derived_genome_substr0
+                 vcf_get_ref_alt_genome_lengths);
 
 my @header_tag_columns = qw(ALT FILTER FORMAT INFO);
 my @header_tag_types = qw(Integer Float Character String Flag);
@@ -119,7 +124,7 @@ sub new
     # Test this assumption - error if not true
     my @col_values = split(/\t/, $next_line);
 
-    my @expected_cols = get_standard_vcf_columns();
+    my @expected_cols = vcf_get_standard_columns();
 
     # Can be more columns that standard to include all samples,
     # but fewer needs to be reported (fatal)
@@ -149,7 +154,7 @@ sub new
 
   # Get sample names
   my %usual_fields = ();
-  my @standard_cols = get_standard_vcf_columns();
+  my @standard_cols = vcf_get_standard_columns();
 
   for my $standard_col (@standard_cols) {
     $usual_fields{uc($standard_col)} = 1;
@@ -178,6 +183,12 @@ sub new
 
   bless $self, $class;
   return $self;
+}
+
+sub close_vcf
+{
+  my ($self) = @_;
+  close($self->{_handle}) or carp("Cannot close VCF file handle");
 }
 
 sub _peek_line
@@ -404,9 +415,26 @@ sub print_header
   # Print metainfo lines
   my $header_metainfo = $self->{_header_metainfo};
 
+  if(!defined($header_metainfo->{'fileformat'}))
+  {
+    $header_metainfo->{'fileformat'} = "VCFv4.0";
+  }
+
+  if(!defined($header_metainfo->{'fileDate'}))
+  {
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+    $header_metainfo->{'fileDate'} = sprintf("%02d/%02d/%02d", $mday, $mon+1, $year % 100);
+  }
+
+  print $out "##fileformat=".$header_metainfo->{'fileformat'}."\n";
+  print $out "##fileDate=".$header_metainfo->{'fileDate'}."\n";
+
   for my $key (sort keys %$header_metainfo)
   {
-    print $out "##$key=$header_metainfo->{$key}\n";
+    if($key ne "fileformat" && $key ne "fileDate")
+    {
+      print $out "##$key=$header_metainfo->{$key}\n";
+    }
   }
 
   # Print unknowns
@@ -457,7 +485,8 @@ sub get_header
   my $header_str = "";
 
   # Print header to a string
-  open(my $fh_str, '>', \$header_str)
+  my $fh_str;
+  open($fh_str, '>', \$header_str)
     or die("Could not open string for writing");
 
   $self->print_header($fh_str);
@@ -600,7 +629,7 @@ sub set_columns_with_arr
 }
 
 # Static VCF method
-sub get_standard_vcf_columns
+sub vcf_get_standard_columns
 {
   return qw(CHROM POS ID REF ALT QUAL FILTER INFO FORMAT);
 }
@@ -804,12 +833,23 @@ sub _read_entry_from_file
     }
   }
 
-  if(length($entry{'REF'}) != 1 || length($entry{'ALT'}) != 1)
+  # Strip padding bases off to get true alleles
+  my $min_length = min(length($entry{'REF'}), length($entry{'ALT'}));
+  my $padding_bases = 0;
+
+  while($padding_bases < $min_length &&
+        uc(substr($entry{'REF'}, $padding_bases, 1)) eq
+        uc(substr($entry{'ALT'}, $padding_bases, 1)))
   {
-    # variant is not a SNP
-    $entry{'true_REF'} = substr($entry{'REF'}, 1);
-    $entry{'true_ALT'} = substr($entry{'ALT'}, 1);
-    $entry{'true_POS'} = $entry{'POS'} + 1;
+    $padding_bases++;
+  }
+
+  if($padding_bases > 0)
+  {
+    # variant has a padding base
+    $entry{'true_REF'} = substr($entry{'REF'}, $padding_bases);
+    $entry{'true_ALT'} = substr($entry{'ALT'}, $padding_bases);
+    $entry{'true_POS'} = $entry{'POS'} + $padding_bases;
   }
   else
   {
@@ -947,7 +987,7 @@ sub get_ploidy
 }
 
 # returns 0 or 1
-sub is_snp
+sub vcf_is_snp
 {
   my ($vcf_entry) = @_;
 
@@ -958,7 +998,7 @@ sub is_snp
 }
 
 # returns undef or $indel
-sub get_clean_indel
+sub vcf_get_clean_indel
 {
   my ($vcf_entry) = @_;
 
@@ -988,6 +1028,152 @@ sub vcf_get_ancestral_true_allele
   }
 
   return ($ancestral == 0 ? $vcf_entry->{'true_REF'} : $vcf_entry->{'true_ALT'});
+}
+
+sub vcf_get_flanks
+{
+  my ($vcf_entry, $genome, $flank_size) = @_;
+
+  # Get position 0-based
+  my $var_start = $vcf_entry->{'true_POS'} - 1;
+  my $chr = $vcf_entry->{'CHROM'};
+  my $ref_allele = $vcf_entry->{'true_REF'};
+
+  my $left_flank_start = max(0, $var_start - $flank_size);
+  my $left_flank_length = $var_start - $left_flank_start;
+
+  my $right_flank_start = $var_start + length($ref_allele);
+  my $right_flank_end = min($right_flank_start + $flank_size,
+                            $genome->get_chr_length($chr));
+  my $right_flank_length = $right_flank_end - $right_flank_start;
+
+  my $left = $genome->get_chr_substr0($chr, $left_flank_start, $left_flank_length);
+  my $right = $genome->get_chr_substr0($chr, $right_flank_start, $right_flank_length);
+
+  return ($left, $right);
+}
+
+sub vcf_get_alt_allele_genome_substr0
+{
+  my ($vcf_entry, $genome, $start, $len) = @_;
+
+  my $chr = $vcf_entry->{'CHROM'};
+  my $chr_len = $genome->get_chr_length($chr);
+  my $svlen = $vcf_entry->{'INFO'}->{'SVLEN'};
+
+  my $ref_start = $vcf_entry->{'true_POS'}-1;
+
+  my $alt_allele = $vcf_entry->{'true_ALT'};
+
+  my $ref_len = length($vcf_entry->{'true_REF'});
+  my $alt_len = length($alt_allele);
+
+  my $result = "";
+
+  if($start < $ref_start)
+  {
+    my $up_to = min($start+$len, $ref_start);
+    my $get_len = $up_to - $start;
+    my $sub = $genome->get_chr_substr0($chr, $start, $get_len);
+
+    #print "sub1: $sub\n";
+
+    $result .= $sub;
+    $start += $get_len;
+    $len -= $get_len;
+  }
+
+  if($len == 0)
+  {
+    return $result;
+  }
+
+  # Get derived allele sequence in place of reference
+  if($start >= $ref_start && $start < $ref_start + $alt_len)
+  {
+    my $offset = $start-$ref_start;
+    my $get_len = min($alt_len, $len) - $offset;
+    my $sub = substr($alt_allele, $offset, $get_len);
+
+    #print "sub2: $sub\n";
+
+    $result .= $sub;
+    $start += $get_len;
+    $len -= $get_len;
+  }
+
+  if($len == 0)
+  {
+    return $result;
+  }
+
+  # Get sequence after variant
+  if($start >= $ref_start + $alt_len)
+  {
+    # Convert start to REF coordinates
+    # svlen = length(alt) - length(ref)
+    $start -= $svlen;
+
+    my $up_to = min($start+$len, $chr_len);
+    my $get_len = $up_to - $start;
+    my $sub = $genome->get_chr_substr0($chr, $start, $get_len);
+
+    #print "sub3: $sub\n";
+
+    $result .= $sub;
+  }
+
+  return $result;
+}
+
+sub vcf_get_ancestral_genome_substr0
+{
+  my ($vcf_entry, $genome, $start, $len) = @_;
+
+  my $aa = $vcf_entry->{'INFO'}->{'AA'};
+
+  if(!defined($aa))
+  {
+    carp("VCF entry not polarised with AA info tag");
+  }
+
+  if($aa == 1)
+  {
+    return vcf_get_alt_allele_genome_substr0($vcf_entry, $genome, $start, $len);
+  }
+  else
+  {
+    return $genome->get_chr_substr0($vcf_entry->{'CHROM'}, $start, $len);
+  }
+}
+
+sub vcf_get_derived_genome_substr0
+{
+  my ($vcf_entry, $genome, $start, $len) = @_;
+
+  my $aa = $vcf_entry->{'INFO'}->{'AA'};
+
+  if(!defined($aa))
+  {
+    carp("VCF entry not polarised with AA info tag");
+  }
+
+  if($aa == 0)
+  {
+    return vcf_get_alt_allele_genome_substr0($vcf_entry, $genome, $start, $len);
+  }
+  else
+  {
+    return $genome->get_chr_substr0($vcf_entry->{'CHROM'}, $start, $len);
+  }
+}
+
+sub vcf_get_ref_alt_genome_lengths
+{
+  my ($vcf_entry, $genome) = @_;
+  my $chr_len = $genome->get_chr_length($vcf_entry->{'CHROM'});
+
+  return  ($chr_len, $chr_len + $vcf_entry->{'INFO'}->{'SVLEN'});
 }
 
 1;

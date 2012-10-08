@@ -145,13 +145,6 @@ while(defined($vcf_entry = $vcf->read_entry()))
     my $var_length = length($ref_allele);
     my $ref_chrom_length = $genome->get_chr_length($chr);
 
-    my $left_flank_start = max(0, $var_start-$flank_size);
-    my $left_flank_length = $var_start - $left_flank_start;
-
-    my $right_flank_start = $var_start + $var_length;
-    my $right_flank_length = min($flank_size,
-                                 $ref_chrom_length - $right_flank_start);
-
     my $vcf_info = $vcf_entry->{'INFO'};
 
     if($var_start < 0 || $var_start + $var_length >= $ref_chrom_length)
@@ -166,16 +159,11 @@ while(defined($vcf_entry = $vcf->read_entry()))
     }
     else
     {
-      $vcf_info->{'left_flank'} = $genome->get_chr_substr($chr,
-                                                          $left_flank_start,
-                                                          $left_flank_length);
-
-      $vcf_info->{'right_flank'} = $genome->get_chr_substr($chr,
-                                                           $right_flank_start,
-                                                           $right_flank_length);
+      ($vcf_info->{'left_flank'}, $vcf_info->{'right_flank'})
+        = vcf_get_flanks($vcf_entry, $genome, $flank_size);
   
       my $ref_seq = $genome->get_chr_substr($chr, $var_start, $var_length);
-  
+
       if($filter_by_ref_match && $ref_seq ne uc($ref_allele))
       {
         $num_ref_mismatch++;
@@ -183,11 +171,11 @@ while(defined($vcf_entry = $vcf->read_entry()))
       }
       elsif($filter_Ns &&
             ($vcf_entry->{'REF'} =~ /n/i ||
-            $vcf_entry->{'ALT'} =~ /n/i ||
-            $vcf_info->{'left_flank'} =~ /n/i ||
-            $vcf_info->{'right_flank'} =~ /n/i ||
-            $left_flank_length < $flank_size ||
-            $right_flank_length < $flank_size))
+             $vcf_entry->{'ALT'} =~ /n/i ||
+             $vcf_info->{'left_flank'} =~ /n/i ||
+             $vcf_info->{'right_flank'} =~ /n/i ||
+             length($vcf_info->{'left_flank'}) < $flank_size ||
+             length($vcf_info->{'right_flank'}) < $flank_size))
       {
         $num_ns_in_alleles_or_flanks++;
         $print = 0;

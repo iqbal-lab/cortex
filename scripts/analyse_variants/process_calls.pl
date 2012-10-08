@@ -47,9 +47,7 @@ my $check_perl5_ret = qx{$check_perl5};
 my $isaac_libdir = $isaac_bioinf_dir."lib";
 if ($check_perl5_ret !~ /$isaac_libdir/)
 {
-    my $update_perl5 = "export PERL5LIB=$isaac_libdir:\$PERL5LIB";
-    print "$update_perl5\n";
-    qx{$update_perl5};
+    $ENV{PERL5LIB} .= ":$isaac_libdir";
 }
 
 use lib $cortex_dir."/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6";
@@ -2796,6 +2794,7 @@ sub get_num_reads
 	}
 	return $count;
 }
+
 
 sub get_next_var_from_flank_mapfile
 {

@@ -16,7 +16,7 @@ sub print_usage
   }
 
   print STDERR "" .
-"Usage: ./vcf_header.pl [--entries] <vcf> [header1 ..]
+"Usage: ./vcf_header.pl [--entries|--noheader] <vcf> [header1 ..]
   Print vcf file header (reads from STDIN if <file> is '-').
   Adds extra headers if passed after file.
 
@@ -33,7 +33,8 @@ sub print_usage
   4) to remove metainfo:
     -meta:ID                                e.g. -meta:date
 
-  --entries  Print VCF entries as well as header\n";
+  --entries  Print VCF entries as well as header
+  --noheader Don't print the header\n";
 
   exit;
 }
@@ -52,11 +53,24 @@ if(@ARGV == 0)
 }
 
 my $print_entries = 0;
+my $no_header = 0;
 
-if(@ARGV > 1 && $ARGV[0] =~ /^-?-e(ntries)?$/i)
+for my $arg (@ARGV)
 {
-  $print_entries = 1;
-  shift;
+  if($arg =~ /^-?-e(ntries)?$/i)
+  {
+    $print_entries = 1;
+    shift;
+  }
+  elsif($arg =~ /^-?-n(oheader)?$/i)
+  {
+    $no_header = 1;
+    shift;
+  }
+  else
+  {
+    last;
+  }
 }
 
 my $vcf_file = shift;
@@ -174,7 +188,10 @@ for my $extra_header (@extra_headers)
   }
 }
 
-$vcf->print_header();
+if(!$no_header)
+{
+  $vcf->print_header();
+}
 
 if($print_entries)
 {

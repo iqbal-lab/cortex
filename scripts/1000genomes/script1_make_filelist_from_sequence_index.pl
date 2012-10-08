@@ -16,7 +16,7 @@ if ($sample eq "")
 
 make_single_and_paired_fq_lists($sample, "/ddn/projects3/mcvean_res/zam/phase2_cortex/dummyrun/samples/".$sample, "20120522.sequence.index");
 
-print "Finished!\n\n";
+print "\n\n\n\n*********\nFinished!\n\n";
 
 
 
@@ -84,13 +84,9 @@ sub make_single_and_paired_fq_lists
 		my $oldroot = "data/$indiv/sequence_read";
 		my $newroot = $output_filenames_root;
 		$file1 =~ s/$oldroot/$newroot/;
-		my $file1_unzipped =$file1;
-		$file1_unzipped =~ s/.gz//;
 		$file2 =~ s/$oldroot/$newroot/;
-		my $file2_unzipped = $file2;
-		$file2_unzipped =~ s/.gz//;
 
-		if ($file2 eq "")
+		if ($file2 eq "")  ## single ended file
 		{
 		    $files_covered_in_index{basename($file1)}=1;
 		    #single ended
@@ -100,35 +96,17 @@ sub make_single_and_paired_fq_lists
 		    }
 		    else
 		    {
-			if (-e $file1_unzipped)
+			if (get_file_if_not_already_there($sp[0], $newroot, $file1)==1)
 			{
-			    print SOUT "$file1_unzipped\n";
-			}
-			elsif (-e $file1)
-			{
-			    my $cmd = "gunzip $file1";
-			    print "$cmd\n";
-			    my $ret = qx{$cmd};
-			    print "$ret\n";
-			    if (!(-e $file1_unzipped))
-			    {
-				print ("WARNING - Ignoring $file1 - is downloaded but fails to unzip");
-			    }
-			    else
-			    {
-				print SOUT "$file1_unzipped\n";
-			    }
+			    print SOUT "$file1\n";
 			}
 			else
 			{
-			    ## you could download using Aspera at this point
-			    ## using something this:
-			    ## ascp -i ~/bin/aspera/connect/etc/asperaweb_id_dsa.putty -Tr -Q -l 200M -L- fasp-g1k\@fasp.1000genomes.ebi.ac.uk:$f TARGET_DIR/
-			    print "WARNING - when making filelists, Ignore $file1 as it does not exist on our filesystem - should have been downloaded - did something go wrong?\n";
+			    print "WARNING - when making filelists, Ignore $file1 as it does not exist on our filesystem despite using Aspera - should have been downloaded - did something go wrong?\n";
 			}
 		    }
 		}
-		elsif ($file1 =~ /(\S+)_1(\S+)fastq/)
+		elsif ($file1 =~ /(\S+)_1(\S+)fastq/)## paired end
 		{
 		    my $left=$1;
 		    my $right = $2;
@@ -139,44 +117,21 @@ sub make_single_and_paired_fq_lists
 			}
 			else
 			{
-			    if ( (-e $file1_unzipped) &&(-e $file2_unzipped) )
+			    if ( (get_file_if_not_already_there($sp[0], $newroot, $file1)==1)
+				 &&
+				 (get_file_if_not_already_there($sp[19], $newroot, $file2)==1)
+				)
                             {
-				print POUT1 "$file1_unzipped\n";
-				print POUT2 "$file2_unzipped\n";
+				print POUT1 "$file1\n";
+				print POUT2 "$file2\n";
 			    }
 			    else
 			    {
-				## unzip anything that needs unzipping, before trying again
-				if ( (-e $file1) && (!(-e $file1_unzipped)))
-				{
-				    my $cmd = "gunzip $file1";
-				    print "$cmd\n";
-				    my $ret = qx{$cmd};
-				    print "$ret\n";
-				}
-				if ( (-e $file2) && (!(-e $file2_unzipped)))
-				{
-				    my $cmd = "gunzip $file2";
-				    print "$cmd\n";
-				    my $ret = qx{$cmd};
-				    print "$ret\n";
-				}
-				
+				print "WARNING: One or both of $file1, $file2 is not present on the filesystem, and cannot be obtained with Aspera\n";
+				print "Therefore ignore these files\n";
 			    }
-
-			    if ( (-e $file1_unzipped) &&(-e $file2_unzipped) )
-                            {
-				print POUT1 "$file1_unzipped\n";
-				print POUT2 "$file2_unzipped\n";
-			    }
-			    else
-			    {
-				print "WARNING Ignoring files $file1 and $file2 - either they have not been downloaded or unzip fails\n";
-			    }
-			    
 			    
 			}
-			
 		    }
 		    $files_covered_in_index{basename($file1)}=1;
 		    $files_covered_in_index{basename($file2)}=1;
@@ -209,5 +164,34 @@ sub make_single_and_paired_fq_lists
     if ($sp1[0] != $sp2[0]) 
     {
 	die("Paired end files not same length. Check $pout1, $pout2");
+    }
+}
+
+
+
+### file to get should be in sequence.index format - ie start with data/
+sub get_file_if_not_already_there
+{
+    my ($file_to_get, $where_to_put_it, $file_you_should_have_after_getting) = @_;
+    
+    if (!(-e $file_you_should_have_after_getting))
+    {
+	my $c1 = "/home/zam/bin/aspera/connect/bin/ascp -i /home/zam/bin/aspera/connect/etc/asperaweb_id_dsa.putty -Tr -Q -l 50M -L- fasp-g1k\@fasp.1000genomes.ebi.ac.uk:vol1/ftp/$file_to_get  $where_to_put_it";
+	print "This file not present on filesystem: $file_to_get, so get it with Aspera:\n";
+	my $cret1  = qx{$c1};
+	print "$cret1\n";
+	if (!(-e $file_you_should_have_after_getting))
+	{
+	    return 0;
+	}
+	else
+	{
+	    return 1;
+	}
+    }
+    else
+    {
+	##already exists
+	return 1;
     }
 }

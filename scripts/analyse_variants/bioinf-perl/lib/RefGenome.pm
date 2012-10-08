@@ -24,6 +24,7 @@ sub new
   my %options = (
       uppercase => 0,
       lowercase => 0,
+      first_base_index => 0,
       @_
     );
 
@@ -37,7 +38,9 @@ sub new
     _quals => {},
     _lengths => {},
     _guess_names => {},
-    _options => \%options
+    _uppercase => $options{'uppercase'},
+    _lowercase => $options{'lowercase'},
+    _first_base_index => $options{'first_base_index'}
   };
 
   bless $self, $class;
@@ -60,11 +63,11 @@ sub add_chr
 {
   my ($self, $name, $seq, $quals) = @_;
   
-  if($self->{_options}->{'uppercase'})
+  if($self->{'uppercase'})
   {
     $seq = uc($seq);
   }
-  elsif($self->{_options}->{'lowercase'})
+  elsif($self->{'lowercase'})
   {
     $seq = lc($seq);
   }
@@ -98,8 +101,8 @@ sub load_from_files
 {
   my ($self, @files) = @_;
 
-  my $uppercase = $self->{_options}->{'uppercase'};
-  my $lowercase = $self->{_options}->{'lowercase'};
+  my $uppercase = $self->{'uppercase'};
+  my $lowercase = $self->{'lowercase'};
 
   my ($ref_genomes_hashref, $quals) = read_all_from_files(@files);
 
@@ -264,7 +267,8 @@ sub get_chr
   return defined($name) ? $self->{_chroms}->{$name} : undef;
 }
 
-# 0-based
+# $offet-based -- last base not included in return
+# chr1,2,3 returns base at index 2 only
 sub get_chr_substr
 {
   my ($self, $chrom, $start, $end) = @_;
@@ -276,8 +280,42 @@ sub get_chr_substr
     return undef;
   }
 
-  return substr($self->{_chroms}->{$name}, $start, $end)
-    or carp("Chromosome position out of bounds of 0-" . 
+  my $offset = $self->{_first_base_index};
+
+  return substr($self->{_chroms}->{$name}, $start-$offset, $end-$offset)
+    or carp("Chromosome position out of bounds of " . $offset . "-" . 
+            ($self->{_lengths}->{$name}+$offset-1));
+}
+
+sub get_chr_substr1
+{
+  my ($self, $chrom, $start, $end) = @_;
+
+  my $name = $self->guess_chrom_fasta_name($chrom);
+
+  if(!defined($name))
+  {
+    return undef;
+  }
+
+  return substr($self->{_chroms}->{$name}, $start-1, $end-$start+1)
+    or carp("Chromosome position out of bounds of 1-" .
+            ($self->{_lengths}->{$name}));
+}
+
+sub get_chr_substr0
+{
+  my ($self, $chrom, $start, $len) = @_;
+
+  my $name = $self->guess_chrom_fasta_name($chrom);
+
+  if(!defined($name))
+  {
+    return undef;
+  }
+
+  return substr($self->{_chroms}->{$name}, $start, $len)
+    or carp("Chromosome position out of bounds of 0-" .
             ($self->{_lengths}->{$name}-1));
 }
 

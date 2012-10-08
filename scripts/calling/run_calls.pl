@@ -48,14 +48,14 @@ BEGIN
 my $check_perl5 = "echo \$PERL5LIB";
 my $check_perl5_ret = qx{$check_perl5};
 my $isaac_libdir = $isaac_bioinf_dir."lib";
-if ( ($check_perl5_ret !~ /$isaac_libdir/) || ($check_perl5_ret !~ /$callingscript_dir/) )
+if ($check_perl5_ret !~ /$isaac_libdir/) 
 {
-    my $update_perl5 = "export PERL5LIB=$isaac_libdir:$callingscript_dir:\$PERL5LIB";
-    print "$update_perl5\n";
-    my $update_perl5_ret = qx{$update_perl5};
-    print "$update_perl5_ret\n";
+    $ENV{PERL5LIB} .= ":$isaac_libdir";
 }
-
+if ($check_perl5_ret !~ /$callingscript_dir/)
+{
+    $ENV{PERL5LIB} .= ":$callingscript_dir";
+}
 use RunCallsLib;
 
 

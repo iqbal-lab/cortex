@@ -4,9 +4,9 @@ use Getopt::Long;
 
 my $sample = "";
 my $root  = "/ddn/projects3/mcvean_res/zam/phase2_cortex/dummyrun/samples/";
-my $outdir = $root.$sample.'/';
-my $cortex_dir = "/ddn/projects3/mcvean_res/zam/phase2_cortex/dummyrun/code/CORTEX_release_v1.0.5.8";
+my $cortex_dir = "/ddn/projects3/mcvean_res/zam/phase2_cortex/dummyrun/code/cortex_release_isaac_branch_bitbucket_sequoia/";
 my $kmer= 31;
+my $outdir="";
 
 &GetOptions(
         'sample|s:s'                               => \$sample,
@@ -19,7 +19,10 @@ if ($sample eq "")
 {
     die("You must use --sample and enter a sample name, which we assume is also a directory name inside $root");
 }
-
+else
+{
+    $outdir = $root.$sample.'/';
+}
 
 ## Assumes fastq are downloaded (they do NOT need to be unzipped any more), 
 ##  and filelists are made and valid (contain only files that exists on the filelsystem)
@@ -43,16 +46,16 @@ if (!(-d $outdir))
 }
 if (!(-e $se_list))
 {
-#    die("Abort mission. The filelist $se_list does not exist - have you reun the rpevious script??");
+    die("Abort mission. The filelist $se_list does not exist - have you reun the rpevious script??");
 }
 
 if (!(-e $pe1_list))
 {
- #   die("Abort mission. The filelist $pe1_list does not exist - have you reun the rpevious script??");
+   die("Abort mission. The filelist $pe1_list does not exist - have you reun the rpevious script??");
 }
 if (!(-e $pe2_list))
 {
-  #  die("Abort mission. The filelist $pe2_list does not exist - have you reun the rpevious script??");
+    die("Abort mission. The filelist $pe2_list does not exist - have you reun the rpevious script??");
 }
 
 

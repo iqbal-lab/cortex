@@ -25,11 +25,13 @@ sub print_usage
   them and correct the genotypes.
   
   --remove_mismatches       Remove mismatches that cannot be fixed
-  --keep_phased             If a variant is phased when switched, maintain phasing
   --flag_mismatches <tag>   Add an INFO flag to variants that don't match REF
   --filter_mismatches <tag> Add a FILTER flag to variants that don't match REF
   --flag_swapped <tag>      Add an INFO flag to variants that were swapped
-  --filter_swapped <tag>    Add a FILTER flag to variants that were swapped\n";
+  --filter_swapped <tag>    Add a FILTER flag to variants that were swapped
+
+  --keep_phased   Keep phasing when switching ref/alt (e.g. 1|1 -> 0|0) [default]
+  --remove_phased Variants lose phasing if switched (e.g. 1|1 -> 0/0)\n";
 
   exit;
 }
@@ -48,9 +50,11 @@ if(@ARGV < 2)
 }
 
 my $remove_ref_mismatch = 0;
-my $keep_phased = 0;
 my ($flag_mismatches, $flag_swapped);
 my ($filter_mismatches, $filter_swapped);
+
+my $keep_phased = 1;
+my ($set_keep_phased, $set_remove_phased);
 
 while(@ARGV > 0)
 {
@@ -63,6 +67,13 @@ while(@ARGV > 0)
   {
     shift;
     $keep_phased = 1;
+    $set_keep_phased = 1;
+  }
+  elsif($ARGV[0] =~ /^-?-remove_phased?$/i)
+  {
+    shift;
+    $keep_phased = 0;
+    $set_remove_phased = 1;
   }
   elsif($ARGV[0] =~ /^-?-flag_mismatches$/i)
   {
@@ -116,6 +127,11 @@ my @ref_files = @ARGV;
 if(@ref_files == 0)
 {
   print_usage("Not enough arguments.");
+}
+
+if(defined($set_keep_phased) && defined($set_remove_phased))
+{
+  print_usage("Cannot use --keep_phased and --remove_phased together");
 }
 
 if($remove_ref_mismatch)

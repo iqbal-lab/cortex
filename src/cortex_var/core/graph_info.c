@@ -380,7 +380,6 @@ void graph_info_set_all_metadata(GraphInfo* target, GraphInfo* src, int colour, 
        (strcmp(target->sample_ids[colour],"undefined")!=0)//target has non trivial sample id
        )
     {
-      printf("Src has %s and target has %s to set to pool\n", src->sample_ids[colour], target->sample_ids[colour]);
       set_string_to_null(target->sample_ids[colour], MAX_LEN_SAMPLE_NAME );
       strcat(target->sample_ids[colour], "pool");
     }
