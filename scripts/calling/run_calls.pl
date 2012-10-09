@@ -504,6 +504,7 @@ if ($squeeze_mem)
     else
     {
 	$num_kmers_in_cleaned_pool = get_num_kmers($count_log);
+	print "\n\nFor future reference, the pool contains $num_kmers_in_cleaned_pool kmers\n";
 	if ($num_kmers_in_cleaned_pool==-1)
 	{
 	    print "Unable to find number of kmers in loaded graph in $count_log. Will just continue to next stage using mem_height and width as specified by the user. Mention this to zam please. Should never happen\n";
