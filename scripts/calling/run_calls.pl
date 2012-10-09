@@ -1445,26 +1445,15 @@ sub build_vcfs
     {
 	#$cmd = $cmd." --refcol 0 --require_one_allele_is_ref yes"; 
 	my $ref_fa = get_ref_fasta($list_ref_fasta); 
-	$cmd = $cmd." --refcol 0 --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin --ref_fasta $ref_fa "; 
+	$cmd = $cmd." --refcol 0 --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin --ref_fasta $ref_fa --prefix $short_unique_str "; 
     }
     else#no reference
     {
 	## you are going to call proc_calls repeatedly, and want to make sure each variant gets a differnt/unique chromosome
 	$cmd = $cmd." --global_var_ctr $g_ctr --prefix $short_unique_str";
-
-
 	#$cmd = $cmd." --require_one_allele_is_ref no ";
     }
 
-    if ($which_caller eq "BC")
-    {
-	## no need for this - it will take it from the callfile/genotype file
-	#$cmd = $cmd." --prefix $bc_stub"; ## this tells process_calls what comes before _var_\d+
-    }
-    else
-    {
-	#$cmd = $cmd." --prefix $pd_stub";
-    }
     if ($apply_classif ne '')
     {
 	$cmd = $cmd." --pop_classifier $classifier_output ";
