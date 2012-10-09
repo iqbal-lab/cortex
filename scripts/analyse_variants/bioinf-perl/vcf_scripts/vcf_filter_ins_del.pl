@@ -135,7 +135,7 @@ while(defined($vcf_entry = $vcf->read_entry))
   {
     $num_of_missing_aa++;
   }
-  elsif(!$clean_only || defined($clean_indel = get_clean_indel($vcf_entry)))
+  elsif(!$clean_only || defined($clean_indel = vcf_get_clean_indel($vcf_entry)))
   {
     my $svlen = $vcf_entry->{'INFO'}->{'SVLEN'};
     my $size = ($aa eq "0" ? $svlen : -$svlen);

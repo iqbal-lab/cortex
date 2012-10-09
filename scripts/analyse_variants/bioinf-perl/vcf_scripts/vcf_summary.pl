@@ -127,7 +127,7 @@ while(defined($vcf_entry = $vcf->read_entry()))
   my $ref = uc($vcf_entry->{'true_REF'});
   my $alt = uc($vcf_entry->{'true_ALT'});
   my $svlen = $vcf_entry->{'INFO'}->{'SVLEN'};
-  my $indel = get_clean_indel($vcf_entry);
+  my $indel = vcf_get_clean_indel($vcf_entry);
 
   if(length($ref) == 1 && length($alt) == 1)
   {

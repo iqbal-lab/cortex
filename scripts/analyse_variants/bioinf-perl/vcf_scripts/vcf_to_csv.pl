@@ -10,7 +10,8 @@ use lib $FindBin::Bin;
 use VCFFile;
 
 ## Config
-my $csvsep = "\t";
+my $csvsep = ",";
+my $info_prefix = "INFO_";
 ##
 
 sub print_usage
@@ -57,32 +58,32 @@ else
 }
 
 #
-# Read VCF
+# Open VCF
 #
 my $vcf = new VCFFile($vcf_handle);
 
 # Skip non-PASS variants if -p passed
 if($skip_failed_vars) { $vcf->set_filter_failed(undef);}
 
-my @vcf_cols = $vcf->get_columns_array();
+# Miss out INFO and FORMAT for now
+my @vcf_standard_cols = qw(CHROM POS ID REF ALT QUAL FILTER);
+my %vcf_file_cols = $vcf->get_columns_hash();
 
-@vcf_cols = grep {$_ !~ /^INFO$/i} @vcf_cols;
+my @vcf_cols = grep {defined($vcf_file_cols{$_})} @vcf_standard_cols;
+
+# Add some extra columns
 push(@vcf_cols, ('true_REF','true_ALT','true_POS'));
 
-# Get info fields
-my %info_fields_hash = ();
-
+# Get info fields from the header
 my %header_tags = $vcf->get_header_tags();
 
-while(my ($id, $tag) = each(%header_tags))
-{
-  if($tag->{'column'} eq "INFO")
-  {
-    $info_fields_hash{$id} = 1;
-  }
-}
+my @info_tags_from_header =
+  map {$_->{'ID'}} grep {$_->{'column'} eq "INFO"} values %header_tags;
 
-# Read VCF entry
+my %info_fields_hash = ();
+@info_fields_hash{@info_tags_from_header} = 1;
+
+# Read the first VCF entry
 my $vcf_entry = $vcf->read_entry();
 
 my @additional_info_fields = (keys %{$vcf_entry->{'INFO'}},
@@ -95,10 +96,27 @@ for my $additional_info_field (@additional_info_fields)
 
 my @info_fields = sort {$a cmp $b} keys %info_fields_hash;
 
-print join($csvsep, (@vcf_cols, @info_fields)) . "\n";
+# Get sample names
+my @sample_names = $vcf->get_list_of_sample_names();
 
+# Print header
+my @all_cols = (@vcf_cols, map {$info_prefix.$_} @info_fields);
+
+if(defined($vcf_file_cols{'FORMAT'}))
+{
+  push(@all_cols, 'FORMAT');
+}
+
+push(@all_cols, @sample_names);
+
+print join($csvsep, @all_cols) . "\n";
+
+#
+# Read VCF
+#
 while(defined($vcf_entry))
 {
+  # Do simple columns
   print join($csvsep, map {$vcf_entry->{$_}} @vcf_cols);
 
 #  print $vcf_entry->{$vcf_cols[0]};
@@ -107,6 +125,7 @@ while(defined($vcf_entry))
 #    print $csvsep . $vcf_entry->{$vcf_cols[$i]};
 #  }
 
+  # Print info columns
   for my $info_field (@info_fields)
   {
     print $csvsep;
@@ -124,8 +143,22 @@ while(defined($vcf_entry))
     }
   }
   
+  # Print FORMAT and sample columns
+  if(defined($vcf_entry->{'FORMAT'}))
+  {
+    my $format_arr = $vcf_entry->{'FORMAT'};
+    print $csvsep . join(":", @$format_arr);
+
+    # Print sample columns
+    for my $sample (@sample_names)
+    {
+      print $csvsep . join(":", map {$vcf_entry->{$sample}->{$_}} @$format_arr);
+    }
+  }
+
   print "\n";
-  
+
+  # Read next entry
   $vcf_entry = $vcf->read_entry();
 }
 

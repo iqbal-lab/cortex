@@ -152,7 +152,7 @@ while(defined($vcf_entry = $vcf->read_entry()))
   my $alt_allele = uc($vcf_entry->{'true_ALT'});
 
   # Get inserted or deleted sequence
-  my $indel = get_clean_indel($vcf_entry);
+  my $indel = vcf_get_clean_indel($vcf_entry);
 
   my $ref_length = $genome->get_chr_length($chr);
 
