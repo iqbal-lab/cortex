@@ -1,20 +1,88 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
-v1.0.5.12
+v1.0.5.13
 
-Bugfix release:
+====== New features:
+
+1. Support for reading gzipped FASTA and FASTQ
+2. Support for reading bam (ignores alignment information, just takes reads)
+
+Both features courtesy of Isaac Turner.
+As a result Cortex now has dependencies on samtools, and two libraries of Isaac's,
+all of which are bundled into the release. There is
+a bash script install.sh to run to compile all of these.
+
+
+======  Confusing change that may break your scripts/pipelines:
+
+Apologies for this everyone, but we have changed the convention by which
+colourlists are handled, as follows:
+
+In  v1.0.5.11 and earlier: all paths in the colourlist, and files within are treated as relative
+to the current working directory (obviously absolute paths also are allowed)
+
+**
+FROM THIS RELEASE ON: If a file contains a path, it is relative to the position of that file
+**
+Example: Suppose we have the following directory structure
+
+main/binaries/k31
+main/output
+main/filelists
+
+and we have this colourlist
+
+>cat main/zam_colourlist
+filelists/list_zam_binary1
+filelists/list_kingkong_binary1
+
+You see the paths in the colourlist are relative to where the colourlist is.
+
+Next:
+>cat filelists/list_zam_binary1
+../binaries/k31/zam.ctx
+>cat filelists/list_kingkong_binary1
+../binaries/k31/kingkong.ctx
+
+and again, in these files, the paths are relative to wherever these files are.
+
+
+===== UI changes:
+
+1. cortex_var option --format removed. Pass in FASTQ or FASTA and it gets handled automatically
+2. cortex_var option --max_read_len no longer needed for loading FASTA and FASTQ (but still needed for --gt)
+3. run_calls.pl option --format removed.
+4. If you want to pass in reference assemblies and find differences between them, use
+   --gt_assemblies yes
+   and run_calls will set a very low sequencing error rate on passing through to cortex_var
+
+====== Bugfixes:
 
 Fixes for run_calls and the VCF-dumping script process_calls.
 
 This release fixes
-1. a bug found and fixed by Brad Chapman (process_calls complaining
+
+1. A nasty int overflow bug found by me, Alex Dilthey and Chunlin Xiao which 
+   was leading to corrupted binary graphs.
+2. Various bugs-in-waiting related to int overflows - complete overhaul
+   of code to prevent these.
+3. a bug found and fixed by Brad Chapman (process_calls complaining
    when it saw an N in one allele)
-2. a bug in run_calls, found by Janina Dordel, when running in completely de novo (--ref Absent)
+4. a bug in run_calls, found by Janina Dordel, when running in completely de novo (--ref Absent)
    mode (basically makes it impossible to use --ref Absent, many apologies, big oversight on my part). 
    If you are going to run run_calls like that, you should take
    this fix.
+5. A bug in error-cleaning which could lead to a crash, found and fixed by Andy Rimmer.
+6. A bug in setting of environment variables in process_calls, found and fixed by Ian Streeter.
 
-Many thanks to Brad and Janina who have both been testing/pushing Cortex (and me!)
+Many thanks to all who contributed.
 
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.12
+
+Internal
 
 
 
