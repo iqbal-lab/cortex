@@ -452,7 +452,6 @@ else
 ##          You can use this to work out how much mem to use when you do the multicolour graph
 ##########################################################################################################################################
 
-my %total_clean_kmers=(); ## kmer ---> number (assume min cleaning)
 my $tmpdir = $outdir."tmp_filelists";
 if (!(-d $tmpdir))
 {
@@ -460,61 +459,9 @@ if (!(-d $tmpdir))
     qx{$c};
 }
 
-my $list_all_clean_file = "tmp_list_all_clean_bins_k".$first_kmer;
-my $list_all_clean_path = $tmpdir."/".$list_all_clean_file;
-open(LIST_ALL, ">$list_all_clean_path")||die("Unable to open $list_all_clean_path");
-foreach my $s (@samples)
-{
-    #get binary
-    if ( ($do_auto_cleaning ne "no") || ($do_user_spec_cleaning ne "no") )
-    {
-	my $b = $sample_to_cleaned_bin{$s}{$first_kmer}{$sample_to_min_cleaning_thresh{$s}{$first_kmer}}; 
-	print LIST_ALL "$b\n";
-    }
-    else
-    {
-	my $b = $sample_to_uncleaned{$s}{$first_kmer};
-	print LIST_ALL "$b\n";
-    }
-}
-if ($use_ref ne "Absent")
-{
-    print LIST_ALL $k_to_refbin{$first_kmer};
-}
-close(LIST_ALL);
-my $list_all_clean_pop = $list_all_clean_path.".pop";
-open(LIST_ALL_CLEAN_POP, ">".$list_all_clean_pop)||die("Cannot open $list_all_clean_pop");
-print LIST_ALL_CLEAN_POP "$list_all_clean_file\n";
-close(LIST_ALL_CLEAN_POP);
 if ($squeeze_mem)
 {
-    my $count_log = $list_all_clean_pop.".log";
-    my $ctx_bin_for_count = get_right_binary($first_kmer, $cortex_dir,1);
-    my $cmd_count_kmers = $ctx_bin_for_count." --kmer_size $first_kmer --mem_height $mem_height --mem_width $mem_width  --colour_list $list_all_clean_pop > $count_log 2>&1";
-    print "Load all k=$first_kmer cleaned binaries into one colour, and check how many kmers. Having done this, we can know how much memory to use for the multicolour graphs. This is just a memory saving device\n";
-    qx{$cmd_count_kmers};
-    my $num_kmers_in_cleaned_pool=0; ##will be number of kmers
-    if (ran_out_of_memory($count_log) eq "true")
-    {
-	## do nothing
-    }
-    else
-    {
-	$num_kmers_in_cleaned_pool = get_num_kmers($count_log);
-	print "\n\nFor future reference, the pool contains $num_kmers_in_cleaned_pool kmers\n";
-	if ($num_kmers_in_cleaned_pool==-1)
-	{
-	    print "Unable to find number of kmers in loaded graph in $count_log. Will just continue to next stage using mem_height and width as specified by the user. Mention this to zam please. Should never happen\n";
-	    ## do nothing - stick with same mem width and height
-	}
-	else
-	{
-	    my $new_mem_height = int(log($num_kmers_in_cleaned_pool/100)/log(2)) +1;
-	    print "Cleaning means I can now reduce mem_height to $new_mem_height from $mem_height, and will up mem_width from 100 to 120 to leave some margin\n";
-	    $mem_height = $new_mem_height;
-	    $mem_width = 120;
-	}
-    }
+    get_num_kmers_for_pool();## will reset mem_height and width to lower values if possible.
 }
 
 ##################################
@@ -1042,6 +989,133 @@ close(GLOBAL);
 #######################################################################################################
 #######################################################################################################
 #######################################################################################################
+
+sub get_num_kmers_for_pool_at_specific_k
+{
+    my ($KMER, $use_new_mem_params, $height, $width) = @_;
+
+    my $list_all_clean_file = "tmp_list_all_clean_bins_k".$KMER;
+    my $list_all_clean_path = $tmpdir."/".$list_all_clean_file;
+    open(LIST_ALL, ">$list_all_clean_path")||die("Unable to open $list_all_clean_path");
+    foreach my $s (@samples)
+    {
+	#get binary
+	if ( ($do_auto_cleaning ne "no") || ($do_user_spec_cleaning ne "no") )
+	{
+	    my $b = $sample_to_cleaned_bin{$s}{$KMER}{$sample_to_min_cleaning_thresh{$s}{$KMER}}; 
+	    print LIST_ALL "$b\n";
+	}
+	else
+	{
+	    my $b = $sample_to_uncleaned{$s}{$KMER};
+	    print LIST_ALL "$b\n";
+	}
+    }
+    if ($use_ref ne "Absent")
+    {
+	print LIST_ALL $k_to_refbin{$KMER};
+    }
+    close(LIST_ALL);
+    my $list_all_clean_pop = $list_all_clean_path.".pop";
+    open(LIST_ALL_CLEAN_POP, ">".$list_all_clean_pop)||die("Cannot open $list_all_clean_pop");
+    print LIST_ALL_CLEAN_POP "$list_all_clean_file\n";
+    close(LIST_ALL_CLEAN_POP);
+
+    my $count_log = $list_all_clean_pop."k_".$KMER.".log";
+    my $ctx_bin_for_count = get_right_binary($KMER, $cortex_dir,1);
+
+    if ($use_new_mem_params eq "no")
+    {
+	my $cmd_count_kmers = $ctx_bin_for_count." --kmer_size $KMER --mem_height $mem_height --mem_width $mem_width  --colour_list $list_all_clean_pop > $count_log 2>&1";
+	print "Load all k=$KMER cleaned binaries into one colour, and check how many kmers.\n";
+	qx{$cmd_count_kmers};
+    }
+    else
+    {
+	## use passed in params
+	my $cmd_count_kmers = $ctx_bin_for_count." --kmer_size $KMER --mem_height $height --mem_width $width  --colour_list $list_all_clean_pop > $count_log 2>&1";
+	qx{$cmd_count_kmers};
+    }
+    my $num_kmers_in_cleaned_pool=0; ##will be number of kmers
+    if (ran_out_of_memory($count_log) eq "true")
+    {
+	$num_kmers_in_cleaned_pool = -1;
+    }
+    else
+    {
+	$num_kmers_in_cleaned_pool = get_num_kmers($count_log);
+    }
+
+
+    return $num_kmers_in_cleaned_pool;
+}
+
+sub get_num_kmers_for_pool
+{
+    my %total_clean_kmers=(); ## kmer ---> number (assume min cleaning)
+    
+    my $num_kmers_in_cleaned_pool=0;
+    my $new_mem_height;
+    my $new_mem_width = 125;
+
+    my $new_params_ok=0;
+    if ($last_kmer==$first_kmer)
+    {
+	$num_kmers_in_cleaned_pool = get_num_kmers_for_pool_at_specific_k($first_kmer, "no", 0,0);
+	if ($num_kmers_in_cleaned_pool==-1)
+	{
+	    die("Unable to load all samples into one colour, even after cleaning. Can you alloc more memory, by increasing mem height/width?\n");
+	}
+	$new_mem_height = int(log($num_kmers_in_cleaned_pool/100)/log(2)) +1;
+	
+	## Now double check it works:    
+	if (get_num_kmers_for_pool_at_specific_k($first_kmer, "yes", $new_mem_height, $new_mem_width) !=-1)	
+	{
+	    $new_params_ok=1;
+	}
+	else
+	{
+	    print "Hmm. FYI - We calculated that there were $num_kmers_in_cleaned_pool kmers in the pool, but failed to load them into mem height/width = $new_mem_height, $new_mem_width. Slightly surprised. I'd be grateful if you could inform Zam\n Anyway, this was just an attempt to reduce memory use, we just carry on as before.\n";
+	}
+    }
+    else
+    {
+	my $n1 = get_num_kmers_for_pool_at_specific_k($first_kmer, "no", 0,0);
+	my $n2 = get_num_kmers_for_pool_at_specific_k($last_kmer, "no", 0,0);
+	my $which_kmer_gives_more_nodes=$last_kmer;
+	$num_kmers_in_cleaned_pool = get_max($n1, $n2);
+	if ($n1>$n2)
+	{
+	    $which_kmer_gives_more_nodes=$first_kmer;
+	}
+	
+	$new_mem_height = int(log($num_kmers_in_cleaned_pool/100)/log(2)) +1;
+	
+	## now double check it works
+	if (get_num_kmers_for_pool_at_specific_k($which_kmer_gives_more_nodes, "yes", $new_mem_height, $new_mem_width) !=-1)	
+	{
+	    $new_params_ok=1;
+	}
+	else
+	{
+	    print "Hmm. FYI - We calculated that there were $num_kmers_in_cleaned_pool kmers in the pool, for kmer $which_kmer_gives_more_nodes, but failed to load them into mem height/width = $new_mem_height, $new_mem_width. Slightly surprised. I'd be grateful if you could inform Zam\n Anyway, this was just an attempt to reduce memory use, we just carry on as before.\n";
+
+	}
+	
+    }
+
+    print "\n\nFor future reference, the pool contains $num_kmers_in_cleaned_pool kmers\n";
+
+
+    if ($new_params_ok==1)
+    {
+	print "Cleaning means I can now reduce mem_height to $new_mem_height from $mem_height, and will up mem_width from $mem_width to $new_mem_width to leave some margin\n";
+	$mem_height = $new_mem_height;
+	$mem_width =  $new_mem_width;
+
+    }
+}
+
 
 sub get_current_dir
 {
