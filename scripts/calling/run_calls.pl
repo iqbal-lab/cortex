@@ -115,7 +115,7 @@ my (
 #        $apply_filter_one_allele_must_be_ref,
 	$apply_classif,  $prefix,
 	$ploidy,                #$require_one_allele_is_ref,
-	$stampy_hash_stub,     $format,
+	$stampy_hash_stub,     $gt_assemblies,
         $outdir_binaries,      $outdir_calls,   $outdir_vcfs, 
         $qthresh,              $dups,           $homopol,
         $mem_height,           $mem_width, 
@@ -133,7 +133,7 @@ $kmer_step=1;
 $do_auto_cleaning="no";
 $auto_below=0;
 $auto_above=0;
-$format="unspecified";
+$gt_assemblies="no";
 $do_user_spec_cleaning="no";
 $user_min_clean=0;
 $user_max_clean=0;
@@ -196,7 +196,6 @@ my $help = '';    #default false
     'outvcf:s'             => \$outvcf_filename_stub,
     'ref:s'             => \$use_ref, 
     'ploidy:i'             => \$ploidy,
-#    'require_one_allele_is_ref' => \$apply_filter_one_allele_must_be_ref,
     'apply_pop_classifier'   => \$apply_classif,
     'prefix:s'             => \$prefix,            ## this will prefix any var name
     'stampy_hash:s'        => \$stampy_hash_stub, #stampy creates blah.sthash and blah.stidx. You should enter --stampy_hash blah
@@ -207,13 +206,11 @@ my $help = '';    #default false
     'homopol:i'            => \$homopol,
     'mem_height:i'         => \$mem_height,
     'mem_width:i'          => \$mem_width,
-    'format:s'             =>\$format,
-#    'max_read_len:i'       => \$max_read_len,
+    'gt_assemblies:s'      =>\$gt_assemblies,
     'max_var_len:i'        => \$max_var_len,
     'help'                   => \$help,
     'genome_size:i'        => \$genome_size,
     'refbindir:s'          =>\$refbindir,
-#    'expt_type:s'          =>\$expt_type,
     'list_ref_fasta:s'     =>\$list_ref_fasta,
     'vcftools_dir:s'       =>\$vcftools_dir,
     'manual_override_cleaning:s' => \$manual_override_cleaning,
@@ -258,7 +255,7 @@ if ($help)
 	print "--homopol\t\t\t\tIf you want to cut homopolymers, threshold specified here\n";
 	print "--mem_height\t\t\t\tFor Cortex\n";
 	print "--mem_width\t\t\t\tFor Cortex\n";
-	print "--format\t\t\t\tFormat FASTA or FASTQ. Cortex doesn't use these, but run_calls looks at what you have specified, and sets estimated sequencing error rate to a tiny value if format=FASTQ, to allow \"genotyping\" of reference genomes\n";
+	print "--gt_assemblies\t\t\t\tIf you specify \"yes\", run_calls treats loaded data as reference/consensus assemblies which you want to call variants between, and sets estimated sequencing error rate to a tiny value to allow \"genotyping\" of the assemblies. Default is \"no\"\n";
 #	print "--max_read_len\t\t\t\tMax read length\n";
 	print "--max_var_len\t\t\t\tSee Cortex manual - max var length to look for. Default value 40000 (bp)\n";
 	print "--genome_size\t\t\t\tGenome length in base pairs - needed for genotyping\n";
@@ -694,7 +691,7 @@ if  ($workflow eq "joint" )## then just assume is BC only
 	    
 	    my $cmd = $ctx_bin." --kmer_size $K --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size";
 
-	    if ($format eq "FASTA")
+	    if ($gt_assemblies eq "FASTA")
 	    {
 		#let's assume we are genotyping reference genomes, so tiny sequencing error rate
 		printf("Note - since you passed in fasta, we assume these are reference genomes, with a very low per-base error rate, of 0.0000001, in order to genotype\n");
@@ -849,7 +846,7 @@ if ($do_union eq "yes")
 				   0, $kmer_to_union_callset{$km}{"BC"}, 
 				   $gt_bc_out, $gt_bc_log, "BC", 
 				   $union_callset_to_max_read_len{$km}{"BC"}, 
-				   $expt_type,  $genome_size, $format);
+				   $expt_type,  $genome_size, $gt_assemblies);
 		    
 		    my $pop_classif_file="";
 		    if ($apply_classif)
@@ -875,7 +872,7 @@ if ($do_union eq "yes")
 				   0, $kmer_to_union_callset{$km}{"PD"}, 
 				   $gt_pd_out, $gt_pd_log, "PD", 
 				   $union_callset_to_max_read_len{$km}{"PD"}, 
-				   $expt_type,  $genome_size, $format);
+				   $expt_type,  $genome_size, $gt_assemblies);
 		    my $pop_classif_file;
 		    if ($apply_classif)
 		    {
