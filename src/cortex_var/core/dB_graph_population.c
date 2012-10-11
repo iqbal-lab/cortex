@@ -4660,11 +4660,10 @@ long long db_graph_remove_errors_considering_covg_and_topology(
   int max_expected_sup)
 {
 
-  //int max_expected_sup = 10000;
-  dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)*max_expected_sup); 
-  Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*max_expected_sup); 
-  Nucleotide*  path_labels       = (Nucleotide*) malloc(sizeof(Nucleotide)*max_expected_sup);
-  char*        supernode_string  = (char*) malloc(sizeof(char)*max_expected_sup+1); //+1 for \0
+  dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)* (max_expected_sup+1)); 
+  Orientation* path_orientations = (Orientation*) malloc(sizeof(Orientation)*(max_expected_sup+1)); 
+  Nucleotide*  path_labels       = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_expected_sup+1));
+  char*        supernode_string  = (char*) malloc(sizeof(char)*(max_expected_sup+2)); //2nd +1 for \0
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
     {
