@@ -110,7 +110,6 @@ endif
 # (it already checks if hg is installed)
 VERSION_STR=$(shell if [ `command -v hg` ]; then echo ' (commit' `hg id --num --id`')'; else echo; fi)
 
-# DEV: Add -Wextra
 # DEV: Add -DNDEBUG=1 to turn off assert() calls
 OPT := $(ARCH) -Wall -Wextra $(MACFLAG) -DVERSION_STR='"$(VERSION_STR)"' \
        -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) \
@@ -125,7 +124,11 @@ endif
 LIBLIST = -lgsl -lgslcblas -lseqfile -lbam -lstrbuf -lz -lm
 TEST_LIBLIST = -lcunit -lncurses $(LIBLIST)
 
-LIBINCS = -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO) -I$(IDIR_BAM) -I$(IDIR_SEQ) -I$(IDIR_STRS) -L$(IDIR_GSL) -L$(IDIR_GSL_ALSO) -L$(IDIR_BAM) -L$(IDIR_SEQ) -L$(IDIR_STRS)
+# Add -L/usr/local/lib/ to satisfy some systems that struggle to link libz
+LIBINCS = -L/usr/local/lib -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO) -I$(IDIR_BAM) \
+          -I$(IDIR_SEQ) -I$(IDIR_STRS) -L$(IDIR_GSL) -L$(IDIR_GSL_ALSO) \
+          -L$(IDIR_BAM) -L$(IDIR_SEQ) -L$(IDIR_STRS)
+
 TEST_LIBINCS = -I$(IDIR_CUNIT) -L$(LDIR_CUNIT) $(LIBINCS)
 
 CFLAGS_BASIC      = -I$(IDIR_BASIC) -I$(IDIR_BASE_ENCODING) $(LIBINCS)
