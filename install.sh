@@ -29,3 +29,10 @@ make STRING_BUF_PATH=../string_buffer SAMTOOLS_PATH=../samtools-0.1.18
 cd ..
 
 cd ..
+
+cd scripts/analyse_variants/needleman_wunsch/
+make clean
+make
+cd ..
+cd ..
+cd ..

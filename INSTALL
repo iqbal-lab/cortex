@@ -1,32 +1,21 @@
 
 ** Installation of Cortex itself
 
-1. Change directory into the CORTEX_release_ directory (we will call this the root directory).
-2. cd gsl-1.15/
-3. Type
+1. Run the install bash script
 
-mkdir user_install
-make clean
-./configure --prefix=/path/to/Cortex_release_v1.0.whatever/gsl-1.15/user_install
-make
-make install
+ bash install.sh
 
-3. Change directory back to the root directory.
-4. Open the Makefile with a text editor, and change this text
 
--L/full/path/to/your/install/of/CORTEX_release_v1.0.5.12/gsl-1.15 -L/full/path/to/your/install/of/CORTEX_release_v1.0.5.12/gsl-1.15/gsl -L/full/path/to/your/install/of/CORTEX_release_v1.0.5.12/gsl-1.15/user_install
+2. To compile Cortex for 1 colour and kmers between 1 and 31:
 
-so that the three instances of 
-/full/path/to/your/install/of/
-are replaced with the appropriate path for your install
-
-5. Add /path/to/CORTEX_release_v_whatever/gsl-1.15/user_install/lib
-   to your LD_LIBRARY_PATh environment variable. If your shell is bash, you would do that like this:
-
-   export LD_LIBRARY_PATH=/path/to/CORTEX_release_v_whatever/gsl-1.15/user_install/lib:$LD_LIBRARY_PATH
-
-6. Type 
 make cortex_var
+
+  generates a binary/executable in bin/ called cortex_var_31_c1
+
+  To compile Cortex for 172 colours and kmers between 33 and 63, type
+
+make NUM_COLS=172 MAXK=63 cortex_var
+
 
 If this fails, consult the manual at : http://cortexassembler.sourceforge.net/cortex_var_user_manual.pdf
 
@@ -43,16 +32,17 @@ If this fails, consult the manual at : http://cortexassembler.sourceforge.net/co
    The run_calls.pl and process_calls.pl will need to know where stampy.py is (I pass the path in as an argument)
 
 
-2. Add 
+2. Obtain VCFTools from
+   http://sourceforge.net/projects/vcftools/files/vcftools_0.1.9.tar.gz
+   or an equivalent. It is not enough to know it is installed somewhere on your system by someone,
+   process_calls and run_calls will need to be given the path to the vcftools_0.1.9/ directory (or whichever
+   version you get)
+
+3. Add 
    /path/to/CORTEX_release_v_whatever/scripts/analyse_variants/bioinf-perl/lib/
    and
    /path/to/CORTEX_release_v_whatever/scripts/calling/
    to your PERL5LIB
 
-3. Add /path/to/CORTEX_release_v_whatever/scripts/analyse_variants/needleman_wunsch-0.3.0/ to your PATH
-
-
-4. cd scripts/analyse_variants/needleman_wunsch-0.3.0/
-   make clean
-   make
+4. Add /path/to/CORTEX_release_v_whatever/scripts/analyse_variants/needleman_wunsch/ to your PATH
 
