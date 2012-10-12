@@ -12,6 +12,7 @@ all of which are bundled into the release. There is
 a bash script install.sh to run to compile all of these.
 
 
+
 ======  Confusing change that may break your scripts/pipelines:
 
 Apologies for this everyone, but we have changed the convention by which
@@ -44,7 +45,7 @@ Next:
 ../binaries/k31/kingkong.ctx
 
 and again, in these files, the paths are relative to wherever these files are.
-
+See the manual for more details.
 
 ===== UI changes:
 
