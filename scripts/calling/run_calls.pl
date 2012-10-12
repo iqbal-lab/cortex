@@ -164,7 +164,7 @@ $homopol                             =-1;
 $mem_height=-1;
 $mem_width=-1;
 $max_read_len=-1;
-$max_var_len = 30000;
+$max_var_len = 40000;
 $genome_size=0;
 $refbindir="";
 $list_ref_fasta = "nonexistent_nonsense";
@@ -257,7 +257,7 @@ if ($help)
 	print "--mem_width\t\t\t\tFor Cortex\n";
 	print "--gt_assemblies\t\t\t\tIf you specify \"yes\", run_calls treats loaded data as reference/consensus assemblies which you want to call variants between, and sets estimated sequencing error rate to a tiny value to allow \"genotyping\" of the assemblies. Default is \"no\"\n";
 #	print "--max_read_len\t\t\t\tMax read length\n";
-	print "--max_var_len\t\t\t\tSee Cortex manual - max var length to look for. Default value 40000 (bp)\n";
+	print "--max_var_len\t\t\t\tSee Cortex manual - max var length to look for. Default value $max_var_len (bp)\n";
 	print "--genome_size\t\t\t\tGenome length in base pairs - needed for genotyping\n";
 	print "--refbindir\t\t\t\tFULL PATH to Directory containing binaries built of the reference at all the kmers you want to use. Binary names must include k-kmer (eg k31) and end in .ctx\n";
 	print "\t\t\t\t\tThe binary filename should contain the kmer value, eg refbinary.k31.ctx\n";
