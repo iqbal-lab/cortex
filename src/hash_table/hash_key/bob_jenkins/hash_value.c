@@ -764,7 +764,7 @@ uint32_t hashbig( const void *key, size_t length, uint32_t initval)
 }
 
 
-int hash_value(Key key, int number_buckets){
+uint32_t hash_value(Key key, int number_buckets){
 
   int hashval = hashlittle( key,    NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits),10);
   return (hashval & (number_buckets-1));

@@ -101,7 +101,7 @@ boolean hash_table_find_in_bucket(Key key, long long * current_pos, boolean * ov
   binary_kmer_assignment_operator(bkmer_with_rehash_added, *key);
   bkmer_with_rehash_added[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] =   bkmer_with_rehash_added[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]+ (bitfield_of_64bits) rehash;
 
-  int hashval = hash_value(&bkmer_with_rehash_added,hash_table->number_buckets);
+  uint32_t hashval = hash_value(&bkmer_with_rehash_added,hash_table->number_buckets);
 
 
   boolean found = false;
@@ -373,7 +373,7 @@ Element * hash_table_insert(Key key, HashTable * hash_table){
     binary_kmer_assignment_operator(bkmer_with_rehash_added, *key);
     bkmer_with_rehash_added[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1] =   bkmer_with_rehash_added[NUMBER_OF_BITFIELDS_IN_BINARY_KMER-1]+ (bitfield_of_64bits) rehash;
 
-    int hashval = hash_value(&bkmer_with_rehash_added,hash_table->number_buckets);
+    uint32_t hashval = hash_value(&bkmer_with_rehash_added,hash_table->number_buckets);
     
     if (hash_table->next_element[hashval] < hash_table->bucket_size)
       { //can insert element

@@ -33,6 +33,6 @@
 #include "global.h"
 #include "element.h"
 
-int hash_value(Key key, int number_buckets);
+uint32_t hash_value(Key key, int number_buckets);
 
 #endif /* HASH_VALUE_H_ */

@@ -1280,12 +1280,14 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(
 
 	if (apply_special_action_to_branches==true)
 	  {
-	    for(l=0;l<lengths[j]; l++)
+	    for(l=1;l<lengths[j]; l++)//changed this from l=0 to l=1, I don't think you should apply 
+                                      //the special_action to the end-nodes of the branches, in case they abut
+	                              //another bubble.
 	      {
 		//printf("Applying special action %d\n",l); 
 		special_action(path_nodes1[l]);
 	      }
-	    for(l=0;l<lengths[k]; l++)
+	    for(l=1;l<lengths[k]; l++)
 	      {
 		//printf("Applying special action %d\n",l); 
 		special_action(path_nodes2[l]);
@@ -2200,6 +2202,7 @@ boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesA
 	}
     }
 
+  
   for (i=0; i<var->len_other_allele; i++)
     {
       if (db_node_check_status((var->other_allele)[i], ignore_this_node)==true)
@@ -2401,7 +2404,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  void (*action_branches)(dBNode*),
 			  void (*action_flanks)(dBNode*),
 			  Edges (*get_colour)(const dBNode*),
-        Covg (*get_covg)(const dBNode*),
+			  Covg (*get_covg)(const dBNode*),
 			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
 			  boolean apply_model_selection, 
 			  boolean (*model_selection_condition)(AnnotatedPutativeVariant*),
@@ -2562,11 +2565,11 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
       // warning - array of 5prime nodes, oprientations is in reverse order to
       // what you would expect - it is never used in what follows
 	    set_variant_branches_and_flanks(&var,
-                                      nodes5p, orientations5p, length_flank5p,
-                                      path_nodes1, path_orientations1, length1, 
-	    				                        path_nodes2, path_orientations2, length2,
-                                      nodes3p, orientations3p, length_flank3p,
-                                      unknown);
+					    nodes5p, orientations5p, length_flank5p,
+					    path_nodes1, path_orientations1, length1, 
+					    path_nodes2, path_orientations2, length2,
+					    nodes3p, orientations3p, length_flank3p,
+					    unknown);
 	    
 
 	    if (condition(&var)==true) 
@@ -2716,6 +2719,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	      
 	    
 	    //db_node_action_set_status_visited(path_nodes2[length2]);
+
 	    action_branches(path_nodes2[length2]);
 	    
 	    current_node = path_nodes2[length2];
@@ -2723,7 +2727,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	  }
       } while (current_node != node //to avoid cycles
 	       && db_node_check_status_none(current_node));
-      }
+    }//end of get_vars_with_orientation
     
     
     if (db_node_check_status_none(node)){     
@@ -2733,9 +2737,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
       get_vars_with_orientation(node,reverse);
     }
 
-
-
-  }
+  }//end of get_vars
  
   hash_table_traverse(&get_vars,db_graph); 
 
