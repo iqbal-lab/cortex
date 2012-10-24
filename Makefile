@@ -1,3 +1,8 @@
+#a) pass LIB_PATH=/usr/local/lib/ to compile on WTCHG cluster3
+#b) also set LD_LIBRARY_PATH=/usr/local/lib/:$(LD_LIBRARY_PATH)
+
+
+
 #ifndef CC
   CC = gcc
 #endif
@@ -60,6 +65,9 @@ endif
 # Library paths
 IDIR_GSL = libs/gsl-1.15
 IDIR_GSL_ALSO = libs/gsl-1.15/gsl
+IDIR_GSL3 = libs/gsl-1.15/.libs
+IDIR_GSL4 = libs/gsl-1.15/cblas/.libs
+
 IDIR_STRS = libs/string_buffer
 IDIR_SEQ = libs/seq_file
 IDIR_BAM = libs/samtools-0.1.18
@@ -126,7 +134,7 @@ TEST_LIBLIST = -lcunit -lncurses $(LIBLIST)
 
 # Add -L/usr/local/lib/ to satisfy some systems that struggle to link libz
 LIBINCS = -L/usr/local/lib -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO) -I$(IDIR_BAM) \
-          -I$(IDIR_SEQ) -I$(IDIR_STRS) -L$(IDIR_GSL) -L$(IDIR_GSL_ALSO) \
+          -I$(IDIR_SEQ) -I$(IDIR_STRS) -L$(IDIR_GSL) -L$(IDIR_GSL_ALSO) -L$(IDIR_GSL3)  -L$(IDIR_GSL4) \
           -L$(IDIR_BAM) -L$(IDIR_SEQ) -L$(IDIR_STRS)
 
 TEST_LIBINCS = -I$(IDIR_CUNIT) -L$(LDIR_CUNIT) $(LIBINCS)
