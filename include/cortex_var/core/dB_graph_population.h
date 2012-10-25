@@ -231,15 +231,15 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(dBNode *node,
   dBGraph *db_graph, int index);
 
 
-boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(
-  dBNode *node, Orientation orientation, int limit,
-  void (*node_action)(dBNode *node), 
-  int *length1,dBNode **path_nodes1, Orientation *path_orientations1, Nucleotide *path_labels1,
-  char *seq1, double *avg_coverage1, Covg *min_coverage1, Covg *max_coverage1,
-  int *length2,dBNode **path_nodes2, Orientation *path_orientations2, Nucleotide *path_labels2,
-  char *seq2, double *avg_coverage2, Covg *min_coverage2, Covg *max_coverage2,
-  dBGraph *db_graph, Edges (*get_colour)(const dBNode*)  , Covg (*get_covg)(const dBNode*),
-  boolean apply_special_action_to_branches, void (*special_action)(dBNode *node) );
+boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(boolean (*start_condition)(dBNode*),								      
+								      dBNode *node, Orientation orientation, int limit,
+								      void (*node_action)(dBNode *node), 
+								      int *length1,dBNode **path_nodes1, Orientation *path_orientations1, Nucleotide *path_labels1,
+								      char *seq1, double *avg_coverage1, Covg *min_coverage1, Covg *max_coverage1,
+								      int *length2,dBNode **path_nodes2, Orientation *path_orientations2, Nucleotide *path_labels2,
+								      char *seq2, double *avg_coverage2, Covg *min_coverage2, Covg *max_coverage2,
+								      dBGraph *db_graph, Edges (*get_colour)(const dBNode*)  , Covg (*get_covg)(const dBNode*),
+								      boolean apply_special_action_to_branches, void (*special_action)(dBNode *node) );
 
 
 boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(
@@ -329,14 +329,15 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
 void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph, 
-  boolean (*condition)(VariantBranchesAndFlanks*), 
-  void (*action_branches)(dBNode*),
-  void (*action_flanks)(dBNode*),
-  Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*),
-  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
-  boolean apply_model_selection, 
-  boolean (*model_selection_condition)(AnnotatedPutativeVariant*),
-  GraphAndModelInfo* model_info);
+			  boolean (*condition)(VariantBranchesAndFlanks*), 
+			  void (*action_branches)(dBNode*),
+			  void (*action_flanks)(dBNode*),
+			  Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*),
+			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+			  boolean apply_model_selection, 
+			  boolean (*model_selection_condition)(AnnotatedPutativeVariant*),
+			  GraphAndModelInfo* model_info,
+			  boolean (*start_condition)(dBNode*) );
 
 void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(
   FILE* fout, int max_length, dBGraph *db_graph, 

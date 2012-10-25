@@ -59,7 +59,7 @@ int  main()
 
   /* add the tests to the suites */
 
-
+  /*
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge copy", test_get_edge_copy)) {
     CU_cleanup_registry();
@@ -388,11 +388,17 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
+
+
+  
    if (NULL == CU_add_test(pPopGraphSuite, "Test reading of variant call output (full flank file), when both branches < k long", test_read_next_variant_from_full_flank_file_3))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
       }
+
+  */
+
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test reading of variant call output (full flank file), when both branches < k long and zero-length 3p flank", test_read_next_variant_from_full_flank_file_4))
       {
@@ -401,7 +407,7 @@ int  main()
       }
 
 
-
+   /*
 
    //if (NULL == CU_add_test(pPopGraphSuite, "Test function for estimating genome complexity - first test", test_count_reads_where_snp_makes_clean_bubble1 ))
    //   {
@@ -429,7 +435,7 @@ int  main()
     }
 
   
-
+     /*
    if (NULL == CU_add_test(pPopGraphSuite, "Test algorithm for genotyping of complex site at a simple site (repeat for different coverages and sequencing error rates, simulating real coverage coording to our model, 100 iterations each time)", test_calc_log_likelihood_of_genotype_with_complex_alleles1 ))
       {
 	CU_cleanup_registry();
@@ -466,7 +472,7 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
-
+     */
 
 
  

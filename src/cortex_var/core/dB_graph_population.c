@@ -1168,20 +1168,20 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(
 // otherwise, pass false, NULL for the last two actions.
 
 //TODO - could have triallelic
-boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(
-  dBNode *node, Orientation orientation, int limit,
-  void (*node_action)(dBNode *node), 
-  int *length1, dBNode **path_nodes1, Orientation *path_orientations1,
-  Nucleotide *path_labels1, char *seq1, 
-  double *avg_coverage1, Covg *min_coverage1, Covg *max_coverage1,
-  int *length2, dBNode **path_nodes2, Orientation *path_orientations2,
-  Nucleotide *path_labels2, char *seq2, 
-  double *avg_coverage2, Covg *min_coverage2, Covg *max_coverage2,
-  dBGraph *db_graph,
-  Edges (*get_colour)(const dBNode*),
-  Covg (*get_covg)(const dBNode*),
-  boolean apply_special_action_to_branches,
-  void (*special_action)(dBNode *node))
+boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(boolean (*start_condition)(dBNode*),								      
+								      dBNode *node, Orientation orientation, int limit,
+								      void (*node_action)(dBNode *node), 
+								      int *length1, dBNode **path_nodes1, Orientation *path_orientations1,
+								      Nucleotide *path_labels1, char *seq1, 
+								      double *avg_coverage1, Covg *min_coverage1, Covg *max_coverage1,
+								      int *length2, dBNode **path_nodes2, Orientation *path_orientations2,
+								      Nucleotide *path_labels2, char *seq2, 
+								      double *avg_coverage2, Covg *min_coverage2, Covg *max_coverage2,
+								      dBGraph *db_graph,
+								      Edges (*get_colour)(const dBNode*),
+								      Covg (*get_covg)(const dBNode*),
+								      boolean apply_special_action_to_branches,
+								      void (*special_action)(dBNode *node))
 {
 
   if (node==NULL)
@@ -1194,7 +1194,10 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(
       //printf("\nThis node is not in the graph of this person\n");
       return false;
     }
-
+  else if (start_condition(node)==false)
+    {
+      return false;
+    }
   
   boolean ret = false;
   
@@ -1280,16 +1283,16 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(
 
 	if (apply_special_action_to_branches==true)
 	  {
-	    for(l=1;l<lengths[j]; l++)//changed this from l=0 to l=1, I don't think you should apply 
+	    for(l=0;l<lengths[j]-1; l++)//zahara  added -1
+	                             //changed this from l=0 to l=1, I don't think you should apply 
                                       //the special_action to the end-nodes of the branches, in case they abut
 	                              //another bubble.
 	      {
-		//printf("Applying special action %d\n",l); 
 		special_action(path_nodes1[l]);
 	      }
-	    for(l=1;l<lengths[k]; l++)
+
+	    for(l=0;l<lengths[k]-1; l++)
 	      {
-		//printf("Applying special action %d\n",l); 
 		special_action(path_nodes2[l]);
 	      }
 	  }
@@ -2194,23 +2197,24 @@ boolean detect_vars_condition_always_true(VariantBranchesAndFlanks* var)
 boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesAndFlanks* var)
 {
   int i;
-  for (i=0; i<var->len_one_allele; i++)
+
+  for (i=1; i<var->len_one_allele; i++)//zahara - changed from i=0 to i=1, should not check bifurcation point in case of abutting bubbles
     {
       if (db_node_check_status((var->one_allele)[i], ignore_this_node)==true)
 	{
 	  return false;
 	}
+
     }
 
   
-  for (i=0; i<var->len_other_allele; i++)
+  for (i=1; i<var->len_other_allele; i++)
     {
       if (db_node_check_status((var->other_allele)[i], ignore_this_node)==true)
 	{
 	  return false;
 	}
     }
-
   return true;
 }
 
@@ -2408,7 +2412,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
 			  boolean apply_model_selection, 
 			  boolean (*model_selection_condition)(AnnotatedPutativeVariant*),
-			  GraphAndModelInfo* model_info)
+			  GraphAndModelInfo* model_info,
+			  boolean (*start_condition)(dBNode*) )
 {
 
   
@@ -2449,21 +2454,24 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
     }
 
 
-  /*
-    VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(flanking_length, max_length, max_length, flanking_length, db_graph->kmer_size);
-    if (var==NULL)
-      {
-	die("Unable to allocate a var object at the start of the Bubble Caller. Abort. \n"
-      "V low on memory, or you have asked for max var length which is too big");
-	   }
+  /*  
+  VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(flanking_length, max_length, max_length, flanking_length, db_graph->kmer_size);
+  if (var==NULL)
+    {
+      die("Unable to allocate a var object at the start of the Bubble Caller. Abort. \n"
+	  "V low on memory, or you have asked for max var length which is too big");
+    }
   */
 
+
+  int length_flank3p=0;//zahara
   
   void get_vars(dBNode * node){
 
    
-    void get_vars_with_orientation(dBNode * node, Orientation orientation){
-      
+    // void get_vars_with_orientation(dBNode * node, Orientation orientation){
+    dBNode*  get_vars_with_orientation(dBNode * node, Orientation orientation){ //zahara debug
+
       int length1=0;
       int length2=0;
       seq1[0]='\0';
@@ -2480,6 +2488,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
       Covg max_coverage2=0;
       
       dBNode * current_node = node;
+
       //will reuse this as we traverse the graph
       VariantBranchesAndFlanks var;
 
@@ -2489,7 +2498,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
 	//The idea is that db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours will mark anything is sees with action_flanks
 	//However if it does find a bubble, and if you want it to (penultimate argument=true)  then the branches are  marked with action_branches
-	if (db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(current_node,orientation,max_length,action_flanks,
+	if (db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(start_condition, current_node,orientation,max_length,action_flanks,
 									  &length1,path_nodes1,path_orientations1,path_labels1,
 									  seq1,&avg_coverage1,&min_coverage1,&max_coverage1,
 									  &length2,path_nodes2,path_orientations2,path_labels2,
@@ -2499,7 +2508,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	  {
 
 	    int length_flank5p = 0;	
-	    int length_flank3p = 0;
+	    // zahara  int length_flank3p = 0;
 	    boolean is_cycle5p=false;
 	    boolean is_cycle3p=false;
 	    
@@ -2574,6 +2583,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
 	    if (condition(&var)==true) 
 	      {
+
 		//ModelLogLikelihoodsAndBayesFactors stats;//results of bayes factor calcs go in here
 		//initialise_stats(&stats);
 		AnnotatedPutativeVariant annovar;
@@ -2720,21 +2730,61 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    
 	    //db_node_action_set_status_visited(path_nodes2[length2]);
 
-	    action_branches(path_nodes2[length2]);
-	    
+	    action_branches(path_nodes2[length2]);	    
 	    current_node = path_nodes2[length2];
 	    orientation = path_orientations2[length2];
+
+
+	    /* the following was tried in debugging, but it infinite loops!!
+	    // if the 3p flank is zero length, don't set that node to visited 
+	    //- you want to use that node when
+	    // you get round to it, to see if it has a variant on the other side
+	    if (length_flank3p==0)
+	      {
+		db_node_set_status(nodes3p[0], none);
+	      }
+	    //no need to do it for the 5p flank, we check both directions
+	    //from our initial node
+	    */
+	    
 	  }
       } while (current_node != node //to avoid cycles
 	       && db_node_check_status_none(current_node));
+
+      if (length_flank3p==0)//this is all debug
+	{
+	  return current_node;
+	}
+      else
+	{
+	  return NULL;
+	}
     }//end of get_vars_with_orientation
+  
+
+
+
+
+    if (start_condition(node)==false)
+      {
+	return;
+      }
     
     
     if (db_node_check_status_none(node)){     
       //db_node_action_set_status_visited(node);
       action_flanks(node);
-      get_vars_with_orientation(node,forward);
-      get_vars_with_orientation(node,reverse);
+      dBNode* n = get_vars_with_orientation(node,forward); //zahara this node n is debug
+      if (n!=NULL)
+	{
+	  db_node_set_status(n, none);
+	}
+      n= get_vars_with_orientation(node,reverse);
+      if (n!=NULL)
+	{
+	  db_node_set_status(n, none);
+	}
+
     }
 
   }//end of get_vars
@@ -2780,11 +2830,12 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(
 
   //first detect bubbles in the ref colour, but do not print them out, so they get marked as visited
   db_graph_detect_vars(NULL, max_length, db_graph, 
-		       &detect_vars_condition_always_false,
+		       &detect_vars_condition_always_false,//print results condition
 		       &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
 		       &db_node_action_set_status_visited, //mark everything else as visited
-		       get_colour_ref, get_covg_ref, print_extra_info, false, NULL, NULL);
-
+		       get_colour_ref, get_covg_ref, print_extra_info, false, NULL, NULL,
+		       &db_node_condition_always_true//start condition
+		       );
   //unset the nodes marked as visited, but not those marked as to be ignored
   hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
 
@@ -2792,10 +2843,11 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(
   printf("Now see if can detect anything afer marking stuff to be ignored\n");
   db_graph_detect_vars(fout, max_length, db_graph, 
 		       &detect_vars_condition_branches_not_marked_to_be_ignored,//ignore anything you find that is marked to be ignored
-		       &db_node_action_set_status_visited,
-		       &db_node_action_set_status_visited,
-		       get_colour_indiv, get_covg_indiv, print_extra_info, false, NULL, NULL);
-
+		       &db_node_action_set_status_visited_unless_marked_to_be_ignored,
+		       &db_node_action_set_status_visited_unless_marked_to_be_ignored,
+		       get_colour_indiv, get_covg_indiv, print_extra_info, false, NULL, NULL,
+		       &db_node_condition_is_not_marked_to_be_ignored//start condition
+		       );
 
   //unset the nodes marked as visited, but not those marked as to be ignored
   hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
@@ -2992,15 +3044,14 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 
   if (exclude_ref_bubbles_first==true)
     {
-
       //first detect bubbles in the ref colour, but do not print them out, so they get marked as visited
       db_graph_detect_vars(NULL, max_length, db_graph, 
-			   &detect_vars_condition_always_false,
+			   &detect_vars_condition_always_false,//print condition
 			   &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
 			   &db_node_action_set_status_visited, //mark everything else as visited
 			   get_colour_ref, get_covg_ref, print_extra_info, 
-			   false, NULL, NULL);
-      
+			   false, NULL, NULL, &db_node_condition_always_true//start condition
+			   );
       //unset the nodes marked as visited, but not those marked as to be ignored
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
     }
@@ -3020,7 +3071,8 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 			       &get_covg_of_union_first_and_second_list_colours,
 			       print_extra_info,
 			       apply_model_selection,
-             model_selection_condition_including_modelinfo, model_info);
+			       model_selection_condition_including_modelinfo, model_info,
+			       &db_node_condition_always_true);
 	}
       else// note this if and else is purely for performance. I could just pass &both_conditions_and_avoid_branches_marked_ignore in,
 	  // whether or not we are excludign ref bubbles - if we re not excluding ref bubbles, this is equivalent to &both_conditions
@@ -3028,12 +3080,13 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 	{
 	  db_graph_detect_vars(fout, max_length, db_graph, 
 			       &both_conditions_and_avoid_branches_marked_ignore,
-			       &db_node_action_set_status_visited,
-			       &db_node_action_set_status_visited,
+			       &db_node_action_set_status_visited_unless_marked_to_be_ignored,
+			       &db_node_action_set_status_visited_unless_marked_to_be_ignored,
 			       &get_union_first_and_second_list_colours, 
 			       &get_covg_of_union_first_and_second_list_colours,
 			       print_extra_info, 
-			       apply_model_selection, model_selection_condition_including_modelinfo, model_info);
+			       apply_model_selection, model_selection_condition_including_modelinfo, model_info,
+			       &db_node_condition_is_not_marked_to_be_ignored);
 	}
     }
   else//the two lists of colours are identical, so we don't demand the branches take different colours!
@@ -3047,18 +3100,20 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 			       &get_union_first_and_second_list_colours, 
 			       &get_covg_of_union_first_and_second_list_colours,
 			       print_extra_info, 
-			       apply_model_selection, model_selection_condition_including_modelinfo, model_info);
+			       apply_model_selection, model_selection_condition_including_modelinfo, model_info,
+			       &db_node_condition_always_true);
 	}
       else
 	{
 	  db_graph_detect_vars(fout, max_length, db_graph, 
 			       &extra_condition_and_avoid_branches_marked_ignore,
-			       &db_node_action_set_status_visited,
-			       &db_node_action_set_status_visited,
+			       &db_node_action_set_status_visited_unless_marked_to_be_ignored,
+			       &db_node_action_set_status_visited_unless_marked_to_be_ignored,
 			       &get_union_first_and_second_list_colours, 
 			       &get_covg_of_union_first_and_second_list_colours,
 			       print_extra_info, 
-			       apply_model_selection, model_selection_condition_including_modelinfo, model_info);
+			       apply_model_selection, model_selection_condition_including_modelinfo, model_info,
+			       &db_node_condition_is_not_marked_to_be_ignored);
 
 	}
     }
@@ -4319,7 +4374,6 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 
   if (db_node_check_status(node, none)==false)//don't touch stuff that is visited or pruned, or whatever
     {
-      //printf("zahara DEBUG - Ignore suoernode as status us not none, it is %c\n\n", node->status);
       *supernode_len=-1;//caller can check this
       is_supernode_pruned=false;
       return is_supernode_pruned;

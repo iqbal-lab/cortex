@@ -648,7 +648,8 @@ double estimate_genome_complexity(dBGraph* db_graph, char* fastaq,
 	      Covg min1,min2,max1,max2;
 	      int len1=0;
 	      int len2=0;
-	      boolean forms_clean_bubble=db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(array_nodes_mut[0],
+	      boolean forms_clean_bubble=db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(&db_node_condition_always_true,
+												       array_nodes_mut[0],
 												       array_or_mut[0], db_graph->kmer_size+1,
 												       &db_node_action_do_nothing,
 												       &len1, p1_nodes, p1_or, p1_lab, p1_str,

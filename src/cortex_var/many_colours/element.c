@@ -932,7 +932,8 @@ void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node)
   fwrite(kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
   fwrite(&covg, sizeof(uint32_t), 1, fp); 
   fwrite(&individual_edges, sizeof(Edges), 1, fp);
-  //fflush(fp); //DEV = better performance if avoid flushing? I think so
+  fflush(fp); //do NOT remove this. For some reason prevents an OS/disk
+              //issue which results in writing zeroes. Basically have no idea why, but this fixes it.
 }
 
 
@@ -1188,6 +1189,14 @@ void db_node_action_set_status_visited(dBNode * node){
   db_node_set_status(node,visited);
 }
 
+void db_node_action_set_status_visited_unless_marked_to_be_ignored(dBNode * node)
+{
+  if (db_node_check_status(node, ignore_this_node)==false)
+    {
+      db_node_set_status(node,visited);
+    }
+}
+
 void db_node_action_set_status_special_visited(dBNode * node){
   db_node_set_status(node,special_visited);
 }
@@ -1282,11 +1291,11 @@ void db_node_action_set_status_visited_or_visited_and_exists_in_reference(dBNode
 
 
 void db_node_action_unset_status_visited_or_visited_and_exists_in_reference(dBNode * node){
-  if (db_node_check_status_visited_and_exists_in_reference(node))
+  if (db_node_check_status_visited_and_exists_in_reference(node)==true)
   {
     db_node_set_status(node,exists_in_reference);
   }
-  else if (db_node_check_status(node, visited))
+  else if (db_node_check_status(node, visited)==true)
   {
     db_node_set_status(node, none);
   }
@@ -1388,6 +1397,11 @@ boolean db_node_check_status_is_not_visited_or_visited_and_exists_in_reference(d
     }
 }
 
+
+boolean db_node_condition_is_not_marked_to_be_ignored(dBNode* node)
+{
+  return !db_node_check_status(node,ignore_this_node);
+}
 
 boolean db_node_condition_always_true(dBNode* node)
 {

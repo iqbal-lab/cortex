@@ -4066,9 +4066,9 @@ void test_read_next_variant_from_full_flank_file()
   int max_branch_len=10;
 
   db_graph_detect_vars(fout_bubble, max_branch_len,db_graph, &detect_vars_condition_always_true,
-   &db_node_action_set_status_visited, &db_node_action_set_status_visited,
-   &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info,
-   false, NULL, NULL);
+		       &db_node_action_set_status_visited, &db_node_action_set_status_visited,
+		       &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info,
+		       false, NULL, NULL, &db_node_condition_always_true);
   fclose(fout_bubble);
 
   //output will look like this
@@ -4404,9 +4404,9 @@ void test_read_next_variant_from_full_flank_file_2()
   int max_branch_len=10;
 
   db_graph_detect_vars(fout_bubble, max_branch_len,db_graph, &detect_vars_condition_always_true,
-   &db_node_action_set_status_visited, &db_node_action_set_status_visited,
-   &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info,
-   false, NULL, NULL);
+		       &db_node_action_set_status_visited, &db_node_action_set_status_visited,
+		       &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info,
+		       false, NULL, NULL, db_node_condition_always_true);
   fclose(fout_bubble);
 
   //output will look like this
@@ -4719,7 +4719,7 @@ void test_read_next_variant_from_full_flank_file_3()
                        &db_node_action_set_status_visited,
                        &element_get_colour_union_of_all_colours,
                        &element_get_covg_union_of_all_covgs,
-                       &print_no_extra_info, false, NULL, NULL);
+                       &print_no_extra_info, false, NULL, NULL, &db_node_condition_always_true);
   fclose(fout_bubble);
 
   // output will look like this
@@ -5017,10 +5017,10 @@ void test_read_next_variant_from_full_flank_file_4()
   int max_branch_len=10;
 
   db_graph_detect_vars(fout_bubble, max_branch_len,db_graph,
-    &detect_vars_condition_always_true, &db_node_action_set_status_visited,
-    &db_node_action_set_status_visited, &element_get_colour_union_of_all_colours,
-    &element_get_covg_union_of_all_covgs, &print_no_extra_info,
-    false, NULL, NULL);
+		       &detect_vars_condition_always_true, &db_node_action_set_status_visited,
+		       &db_node_action_set_status_visited, &element_get_colour_union_of_all_colours,
+		       &element_get_covg_union_of_all_covgs, &print_no_extra_info,
+		       false, NULL, NULL, &db_node_condition_always_true);
   fclose(fout_bubble);
 
   // output will look like this
