@@ -932,8 +932,11 @@ void db_node_print_single_colour_binary_of_colour0(FILE * fp, dBNode * node)
   fwrite(kmer, NUMBER_OF_BITFIELDS_IN_BINARY_KMER*sizeof(bitfield_of_64bits), 1, fp);
   fwrite(&covg, sizeof(uint32_t), 1, fp); 
   fwrite(&individual_edges, sizeof(Edges), 1, fp);
-  fflush(fp); //do NOT remove this. For some reason prevents an OS/disk
-              //issue which results in writing zeroes. Basically have no idea why, but this fixes it.
+
+  //do NOT remove this. For some reason prevents an OS/disk
+  //issue which results in writing zeroes. Basically have no idea why, but this fixes it.
+  fflush(fp); 
+              
 }
 
 
