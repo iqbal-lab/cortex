@@ -1056,7 +1056,8 @@ sub get_num_kmers_for_pool
     
     my $num_kmers_in_cleaned_pool=0;
     my $new_mem_height;
-    my $new_mem_width = 125;
+    my $new_mem_width = 13; # for future ref, see logs, but 125 generates the bug
+    my $fixed_width=10;     # for future ref, 100 goes with new mem width 125;  #new width is a little more than fixed_width
 
     my $new_params_ok=0;
     if ($last_kmer==$first_kmer)
@@ -1066,7 +1067,7 @@ sub get_num_kmers_for_pool
 	{
 	    die("Unable to load all samples into one colour, even after cleaning. Can you alloc more memory, by increasing mem height/width?\n");
 	}
-	$new_mem_height = int(log($num_kmers_in_cleaned_pool/100)/log(2)) +1;
+	$new_mem_height = int(log($num_kmers_in_cleaned_pool/$fixed_width)/log(2)) +1;
 	
 	## Now double check it works:    
 	if (get_num_kmers_for_pool_at_specific_k($first_kmer, "yes", $new_mem_height, $new_mem_width) !=-1)	
@@ -1089,7 +1090,7 @@ sub get_num_kmers_for_pool
 	    $which_kmer_gives_more_nodes=$first_kmer;
 	}
 	
-	$new_mem_height = int(log($num_kmers_in_cleaned_pool/100)/log(2)) +1;
+	$new_mem_height = int(log($num_kmers_in_cleaned_pool/$fixed_width)/log(2)) +1;
 	
 	## now double check it works
 	if (get_num_kmers_for_pool_at_specific_k($which_kmer_gives_more_nodes, "yes", $new_mem_height, $new_mem_width) !=-1)	

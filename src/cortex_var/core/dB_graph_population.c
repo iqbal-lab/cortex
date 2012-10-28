@@ -1283,15 +1283,15 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(boolean (*
 
 	if (apply_special_action_to_branches==true)
 	  {
-	    for(l=0;l<lengths[j]-1; l++)//zahara  added -1
-	                             //changed this from l=0 to l=1, I don't think you should apply 
+	    for(l=1;l<lengths[j]; l++)//zahara  
+	                             // changed this from l=0 to l=1, I don't think you should apply 
                                       //the special_action to the end-nodes of the branches, in case they abut
 	                              //another bubble.
 	      {
 		special_action(path_nodes1[l]);
 	      }
 
-	    for(l=0;l<lengths[k]-1; l++)
+	    for(l=1;l<lengths[k]; l++)
 	      {
 		special_action(path_nodes2[l]);
 	      }
@@ -2464,13 +2464,10 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
   */
 
 
-  int length_flank3p=0;//zahara
-  
   void get_vars(dBNode * node){
 
    
-    // void get_vars_with_orientation(dBNode * node, Orientation orientation){
-    dBNode*  get_vars_with_orientation(dBNode * node, Orientation orientation){ //zahara debug
+    void get_vars_with_orientation(dBNode * node, Orientation orientation){
 
       int length1=0;
       int length2=0;
@@ -2508,7 +2505,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	  {
 
 	    int length_flank5p = 0;	
-	    // zahara  int length_flank3p = 0;
+	    int length_flank3p = 0;
 	    boolean is_cycle5p=false;
 	    boolean is_cycle3p=false;
 	    
@@ -2733,32 +2730,12 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    action_branches(path_nodes2[length2]);	    
 	    current_node = path_nodes2[length2];
 	    orientation = path_orientations2[length2];
-
-
-	    /* the following was tried in debugging, but it infinite loops!!
-	    // if the 3p flank is zero length, don't set that node to visited 
-	    //- you want to use that node when
-	    // you get round to it, to see if it has a variant on the other side
-	    if (length_flank3p==0)
-	      {
-		db_node_set_status(nodes3p[0], none);
-	      }
-	    //no need to do it for the 5p flank, we check both directions
-	    //from our initial node
-	    */
 	    
 	  }
       } while (current_node != node //to avoid cycles
 	       && db_node_check_status_none(current_node));
 
-      if (length_flank3p==0)//this is all debug
-	{
-	  return current_node;
-	}
-      else
-	{
-	  return NULL;
-	}
+
     }//end of get_vars_with_orientation
   
 
@@ -2774,17 +2751,8 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
     if (db_node_check_status_none(node)){     
       //db_node_action_set_status_visited(node);
       action_flanks(node);
-      dBNode* n = get_vars_with_orientation(node,forward); //zahara this node n is debug
-      if (n!=NULL)
-	{
-	  db_node_set_status(n, none);
-	}
-      n= get_vars_with_orientation(node,reverse);
-      if (n!=NULL)
-	{
-	  db_node_set_status(n, none);
-	}
-
+      get_vars_with_orientation(node,forward); 
+      get_vars_with_orientation(node,reverse);
     }
 
   }//end of get_vars
