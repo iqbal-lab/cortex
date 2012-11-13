@@ -295,7 +295,12 @@ int db_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop(
   Nucleotide nucleotide, reverse_nucleotide;
   int length = 0;
   int i;
-  dBNode * nodes[limit];
+
+  dBNode** nodes = (dBNode**) malloc(sizeof(dBNode*)*limit);
+  if (nodes==NULL)
+    {
+      die("Unable to malloc array of nodes for tip clipping\n");
+    }
   Orientation next_orientation;
   dBNode * next_node;
   char seq[db_graph->kmer_size+1];
@@ -359,6 +364,7 @@ int db_graph_db_node_clip_tip_with_orientation_for_specific_person_or_pop(
 
   }
 
+  free(nodes);
   return length;
 }
 
@@ -401,7 +407,8 @@ int db_graph_db_node_clip_tip_with_orientation_in_subgraph_defined_by_func_of_co
   Nucleotide nucleotide, reverse_nucleotide;
   int length = 0;
   int i;
-  dBNode * nodes[limit];
+  dBNode** nodes=(dBNode**) malloc(sizeof(dBNode*)*limit);
+
   Orientation next_orientation;
   dBNode * next_node;
   char seq[db_graph->kmer_size+1];
@@ -466,7 +473,7 @@ int db_graph_db_node_clip_tip_with_orientation_in_subgraph_defined_by_func_of_co
      }
       
     }
-  
+  free(nodes);
   return length;
 }
 
@@ -1066,16 +1073,37 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(
 
   
   boolean ret = false;
-  
-  dBNode * path_nodes[4][limit+1];
-  Orientation path_orientations[4][limit+1];
-  Nucleotide path_labels[4][limit];
-  char seq[4][limit+1];
+
+  dBNode***     path_nodes        = (dBNode***)      malloc(sizeof(dBNode**)* 4);
+  Orientation** path_orientations = (Orientation**)  malloc(sizeof(Orientation*)*4);
+  Nucleotide**  path_labels       = (Nucleotide**)   malloc(sizeof(Nucleotide*)*4);
+  char**        seq               = (char**)         malloc(sizeof(char*)*4);
+  if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (seq==NULL) )
+    {
+      die("Unable to alloc arrays for traversing graph in detect_bubbles for specific\n");
+    }
+  int i;
+  for (i=0; i<4; i++)
+    {
+      path_nodes[i]         = (dBNode**)     malloc(sizeof(dBNode*)*(limit+1));
+      path_orientations[i]  = (Orientation*) malloc(sizeof(Orientation)*(limit+1));
+      path_labels[i]        = (Nucleotide*)  malloc(sizeof(Nucleotide)*(limit+1));
+      seq[i]                = (char*)        malloc(sizeof(char*)*(limit+1));
+      if ( (path_nodes[i]==NULL) || (path_orientations[i]==NULL) || (path_labels[i]==NULL) || (seq[i]==NULL) )
+	{
+	  die("Unable to alloc arrays for traversing graph in detect_bubbles for specific\n");
+	}
+
+    }
+
+
+
+
   double avg_coverage[4];
   Covg min_coverage[4];
   Covg max_coverage[4];
   int lengths[4];
-  int i=0;
+  i=0;
   
   void check_nucleotide(Nucleotide n){
 
@@ -1150,6 +1178,20 @@ boolean db_graph_detect_bubble_for_specific_person_or_population(
     }
     j++;
   }
+
+
+  //cleanup
+  for (i=0; i<4; i++)
+    {
+      free(path_nodes[i]);
+      free(path_orientations[i]);
+      free(path_labels[i]);
+      free(seq[i]);
+    }
+  free(path_nodes);
+  free(path_orientations);
+  free(path_labels);
+  free(seq);
     
   return ret;
 }
@@ -1200,16 +1242,35 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(boolean (*
     }
   
   boolean ret = false;
-  
-  dBNode * path_nodes[4][limit+1];
-  Orientation path_orientations[4][limit+1];
-  Nucleotide path_labels[4][limit];
-  char seq[4][limit+1];
+
+  dBNode***     path_nodes        = (dBNode***)      malloc(sizeof(dBNode**)* 4);
+  Orientation** path_orientations = (Orientation**)  malloc(sizeof(Orientation*)*4);
+  Nucleotide**  path_labels       = (Nucleotide**)   malloc(sizeof(Nucleotide*)*4);
+  char**        seq               = (char**)         malloc(sizeof(char*)*4);
+  if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (seq==NULL) )
+    {
+      die("Unable to alloc arrays for traversing graph in detect_bubbles\n");
+    }
+  int i;
+  for (i=0; i<4; i++)
+    {
+      path_nodes[i]         = (dBNode**)     malloc(sizeof(dBNode*)*(limit+1));
+      path_orientations[i]  = (Orientation*) malloc(sizeof(Orientation)*(limit+1));
+      path_labels[i]        = (Nucleotide*)  malloc(sizeof(Nucleotide)*(limit+1));
+      seq[i]                = (char*)        malloc(sizeof(char*)*(limit+1));
+      if ( (path_nodes[i]==NULL) || (path_orientations[i]==NULL) || (path_labels[i]==NULL) || (seq[i]==NULL) )
+	{
+	  die("Unable to alloc arrays for traversing graph in detect_bubbles\n");
+	}
+
+    }
+
+
   double avg_coverage[4];
   Covg min_coverage[4];
   Covg max_coverage[4];
   int lengths[4];
-  int i=0;
+  i=0;
   
   void check_nucleotide(Nucleotide n){
 
@@ -1305,6 +1366,20 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(boolean (*
     }
     j++;
   }
+
+
+  //cleanup
+  for (i=0; i<4; i++)
+    {
+      free(path_nodes[i]);
+      free(path_orientations[i]);
+      free(path_labels[i]);
+      free(seq[i]);
+    }
+  free(path_nodes);
+  free(path_orientations);
+  free(path_labels);
+  free(seq);
     
   return ret;
 }
@@ -1322,22 +1397,37 @@ boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(
 
   boolean ret = false;
   int length1, length2;
-  dBNode * path_nodes1[limit+1];
-  dBNode * path_nodes2[limit+1];
-  Orientation path_orientations1[limit+1];
-  Orientation path_orientations2[limit+1];
-  Nucleotide path_labels1[limit];
-  Nucleotide path_labels2[limit];
+
+
+  dBNode**     path_nodes1        = (dBNode**)      malloc(sizeof(dBNode*)* (limit+1));
+  dBNode**     path_nodes2        = (dBNode**)      malloc(sizeof(dBNode*)* (limit+1));
+  Orientation* path_orientations1 = (Orientation*)  malloc(sizeof(Orientation)*(limit+1));
+  Orientation* path_orientations2 = (Orientation*)  malloc(sizeof(Orientation)*(limit+1));
+  Nucleotide*  path_labels1       = (Nucleotide*)   malloc(sizeof(Nucleotide)*(limit+1));
+  Nucleotide*  path_labels2       = (Nucleotide*)   malloc(sizeof(Nucleotide)*(limit+1));
+  char*        seq1               = (char*)         malloc(sizeof(char)*(limit+1));
+  char*        seq2               = (char*)         malloc(sizeof(char)*(limit+1));
+  if ( (path_nodes1==NULL) || (path_orientations1==NULL) || (path_labels1==NULL) || (seq1==NULL) 
+        ||
+       (path_nodes2==NULL) || (path_orientations2==NULL) || (path_labels2==NULL) || (seq2==NULL) 
+       )
+    {
+      die("Unable to alloc arrays for traversing graph in smooth bubbles\n");
+    }
+
+
+
+
   
   dBNode * * path_nodes_tmp;
   Orientation * path_orientations_tmp;
   Nucleotide * path_labels_tmp;
 
-  char seq1[limit+1];
+
   double avg_coverage1;
   Covg min_coverage1, max_coverage1;
 
-  char seq2[limit+1];
+
   double avg_coverage2;
   Covg min_coverage2, max_coverage2;
 
@@ -1390,6 +1480,16 @@ boolean db_graph_db_node_smooth_bubble_for_specific_person_or_pop(
     }
     
   }
+
+  //cleanup
+  free(path_nodes1);
+  free(path_nodes2);
+  free(path_orientations1);
+  free(path_orientations2);
+  free(path_labels1);
+  free(path_labels2);
+  free(seq1);
+  free(seq2);
 
   return ret;
 }

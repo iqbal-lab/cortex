@@ -130,7 +130,8 @@ else
 endif
 
 LIBLIST = -lgsl -lgslcblas -lseqfile -lbam -lstrbuf -lz -lm
-TEST_LIBLIST = -lcunit -lncurses $(LIBLIST)
+#TEST_LIBLIST = -lcunit -lncurses $(LIBLIST)
+TEST_LIBLIST = -lcunit  $(LIBLIST)
 
 # Add -L/usr/local/lib/ to satisfy some systems that struggle to link libz
 LIBINCS = -L/usr/local/lib -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO) -I$(IDIR_BAM) \
