@@ -2141,7 +2141,7 @@ void calculate_llks_for_biallelic_site_using_full_model_for_one_colour_with_know
     {
       if (annovar->var->other_allele[i]==NULL)
 	{
-	  warn("alt allele to be genotyped contains an N -  unexpected, but will try "
+	  warn("alt allele to be genotyped contains an N (or a kmer missing from the graph)-  unexpected, but will try "
          "to continue. Worth telling Zam (zam@well.ox.ac.uk).\n");
 	  continue;
 	}
