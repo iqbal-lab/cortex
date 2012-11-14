@@ -1477,7 +1477,7 @@ sub build_vcfs
 	$kmer_size, $g_ctr, $short_unique_str) = @_;
     if (!(-e $file))
     {
-	return;
+	return 0 ;
     }
     if ($directory !~ /\/$/)
     {
@@ -1490,7 +1490,7 @@ sub build_vcfs
 
     if ($rw =~ /^0\s+$file/)
     {
-	return;
+	return 0 ;
     }
 
     my $colournames=$outdir_vcfs.'/'."SAMPLES";
