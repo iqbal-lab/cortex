@@ -1,4 +1,20 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.14
+
+Bugfixes:
+
+1. Fixed a stack overflow causing a segfault, found by Alex Dilthey.
+   From the user's point of view: if you set --max_var_len too large,
+   things could blow up.
+
+2. Fixed a bug in the sample info in the metadata in the header of
+   Cortex binaries. Did not affect running of Cortex,
+   but Isaac Turner's cortex_binary_checker did throw a
+   warning/error when it saw it.
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.13
 
 ====== New features:
