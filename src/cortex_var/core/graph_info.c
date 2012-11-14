@@ -354,6 +354,7 @@ void graph_info_set_sample_ids(char** sample_ids, int num_ids, GraphInfo* ginfo,
   for (i=first_col; i<first_col+num_ids; i++)
     {
       strcpy(ginfo->sample_ids[i], sample_ids[i]);
+      ginfo->sample_id_lens[i]=strlen(ginfo->sample_ids[i]);
     }
 }
 

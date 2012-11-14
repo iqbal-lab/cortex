@@ -3288,7 +3288,7 @@ boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHe
 		}
 	      else
 		{
-		  binfo->ginfo->sample_ids[i][binfo->ginfo->sample_id_lens[i]] = '\0';
+		  //binfo->ginfo->sample_ids[i][binfo->ginfo->sample_id_lens[i]] = '\0';
 		  set_string_to_null(binfo->ginfo->sample_ids[i], binfo->ginfo->sample_id_lens[i]+1);
 		  strcat(binfo->ginfo->sample_ids[i], tmp_name);
 		}
