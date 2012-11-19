@@ -1084,7 +1084,7 @@ boolean db_node_read_multicolour_binary(FILE * fp, short kmer_size, dBNode * nod
       int i;
       for (i=0; i< num_colours_in_binary; i++)
 	{
-	  node->coverage[i]         = (int) covg_reading_from_binary[i];
+	  node->coverage[i]         = covg_reading_from_binary[i];
 	  node->individual_edges[i] = individual_edges_reading_from_binary[i];
 	}
     }
@@ -1160,7 +1160,7 @@ boolean db_node_read_single_colour_binary(FILE *fp, short kmer_size, dBNode *nod
       element_set_kmer(node,&kmer,kmer_size);
       //element_initialise(node,&kmer,kmer_size);
       node->individual_edges[index]    = edges;
-      node->coverage[index]            = (int) coverage;
+      node->coverage[index]            = coverage;
       db_node_action_set_status_none(node);
       
     }

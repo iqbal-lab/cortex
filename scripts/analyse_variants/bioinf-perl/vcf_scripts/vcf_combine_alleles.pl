@@ -330,9 +330,9 @@ sub get_gt_conf
 # When passed a list of genotypes, returns 1 if all are REF, 0 otherwise
 sub get_genotype_are_ref
 {
-  for my $_ (@_)
+  for my $genotype (@_)
   {
-    if(!defined($_) || $_ !~ /^0([\/\|]0)*$/)
+    if(!defined($genotype) || $genotype !~ /^0([\/\|]0)*$/)
     {
       return 0;
     }
