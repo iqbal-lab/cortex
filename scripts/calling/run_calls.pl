@@ -1244,15 +1244,17 @@ sub get_colourlist_for_joint
 	    $refbindir=$refbindir.'/';
 	}
 
-	my $ref_bin_list = $refbindir."filelist_refbin_for_joint_".$str."_k".$kmer;
+	#my $ref_bin_list = $refbindir."filelist_refbin_for_joint_".$str."_k".$kmer;
+    my $ref_bin_list = "filelist_refbin_for_joint_".$str."_k".$kmer;
+
+    print OUT  $ref_bin_list."\n";
+    $ref_bin_list = $tmpdir.$ref_bin_list;
 
 	open(REF, ">".$ref_bin_list)||die("Cannot open $ref_bin_list");
 	print REF $refbindir;
 	print REF get_refbin_name($refbindir, $kmer);
 	print REF "\n";
 	close(REF);
-
-	print OUT  $ref_bin_list."\n";
     }
 
 
@@ -1416,7 +1418,13 @@ sub merge_list_of_vcfs
 	close($catout_fh);
 
 	## Now cleanup - remove dups etc
-	my $cmd1 = "$vcftools_dir/perl/vcf-sort $tmp | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --take_first --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_combine_alleles.pl --pass  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass --filter_txt OVERLAPPING_SITE | $vcftools_dir/perl/vcf-sort > $outfilename";	
+    # Pipe stderr to append to the end of global_logfile
+	my $cmd1 = "($vcftools_dir/perl/vcf-sort $tmp | " .
+               $isaac_bioinf_dir."vcf_scripts/vcf_remove_dupes.pl --take_first --filter_txt DUP_CALL | " .
+               $isaac_bioinf_dir."vcf_scripts/vcf_combine_alleles.pl --pass | " .
+               $isaac_bioinf_dir."vcf_scripts/vcf_remove_overlaps.pl --pass --filter_txt OVERLAPPING_SITE | " .
+               $vcftools_dir."/perl/vcf-sort > $outfilename) 2>&1";
+
 	print "$cmd1\n";
 	my $ret1 = qx{$cmd1};
 	print "$ret1\n";
