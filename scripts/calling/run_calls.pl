@@ -1002,6 +1002,7 @@ sub get_num_kmers_for_pool_at_specific_k
 	#get binary
 	if ( ($do_auto_cleaning ne "no") || ($do_user_spec_cleaning ne "no") )
 	{
+
 	    my $b = $sample_to_cleaned_bin{$s}{$KMER}{$sample_to_min_cleaning_thresh{$s}{$KMER}}; 
 	    print LIST_ALL "$b\n";
 	}
@@ -1039,11 +1040,13 @@ sub get_num_kmers_for_pool_at_specific_k
     my $num_kmers_in_cleaned_pool=0; ##will be number of kmers
     if (ran_out_of_memory($count_log) eq "true")
     {
+	print "Pool for k $KMER cannot fit into a hash table with these mem parameters\n";
 	$num_kmers_in_cleaned_pool = -1;
     }
     else
     {
 	$num_kmers_in_cleaned_pool = get_num_kmers($count_log);
+	print "Pool for k $KMER contains $num_kmers_in_cleaned_pool kmers\n";
     }
 
 
@@ -1056,8 +1059,8 @@ sub get_num_kmers_for_pool
     
     my $num_kmers_in_cleaned_pool=0;
     my $new_mem_height;
-    my $new_mem_width = 13; # for future ref, see logs, but 125 generates the bug
-    my $fixed_width=10;     # for future ref, 100 goes with new mem width 125;  #new width is a little more than fixed_width
+    my $new_mem_width = 115; ##modified for pombe, dont copy
+    my $fixed_width=100;     
 
     my $new_params_ok=0;
     if ($last_kmer==$first_kmer)
@@ -1083,6 +1086,26 @@ sub get_num_kmers_for_pool
     {
 	my $n1 = get_num_kmers_for_pool_at_specific_k($first_kmer, "no", 0,0);
 	my $n2 = get_num_kmers_for_pool_at_specific_k($last_kmer, "no", 0,0);
+	if ( ($n1==-1) || ($n2==-1) )
+	{
+	    print("Unable to load all samples into one colour, even after cleaning. Can you alloc more memory, by increasing mem height/width?\n");
+	    if ($n1==-1)
+	    {
+		print "This failed at k $first_kmer\n";
+	    }
+	    else
+	    {
+		print "This was not a problem for k $first_kmer, which DID fit in, and had $n1 kmers in the pool\n";
+	    }
+	    if ($n2==-1)
+	    {
+		print "This failed at k $last_kmer\n";
+	    }
+	    else
+	    {
+		print "This was not a problem for k $last_kmer, which DID fit in, and had $n2 kmers in the pool\n";
+	    }
+	}
 	my $which_kmer_gives_more_nodes=$last_kmer;
 	$num_kmers_in_cleaned_pool = get_max($n1, $n2);
 	if ($n1>$n2)
@@ -1091,6 +1114,11 @@ sub get_num_kmers_for_pool
 	}
 	
 	$new_mem_height = int(log($num_kmers_in_cleaned_pool/$fixed_width)/log(2)) +1;
+
+	while ( (2 ** ($new_mem_height))*$new_mem_width  > $num_kmers_in_cleaned_pool* 1.1)
+	{
+	    $new_mem_width--;
+	}
 	
 	## now double check it works
 	if (get_num_kmers_for_pool_at_specific_k($which_kmer_gives_more_nodes, "yes", $new_mem_height, $new_mem_width) !=-1)	
@@ -1110,7 +1138,7 @@ sub get_num_kmers_for_pool
 
     if ($new_params_ok==1)
     {
-	print "Cleaning means I can now reduce mem_height to $new_mem_height from $mem_height, and will up mem_width from $mem_width to $new_mem_width to leave some margin\n";
+	print "Cleaning means I can now reduce mem_height to $new_mem_height from $mem_height, and will change mem_width from $mem_width to $new_mem_width to leave some margin\n";
 	$mem_height = $new_mem_height;
 	$mem_width =  $new_mem_width;
 
@@ -1666,23 +1694,32 @@ sub build_all_cleaned_binaries
 		\@clean_threshes, $g_size, $manual_override_cleaning_file);
 	    
 
-	    my $min = 9999999;
-	    foreach my $c (@clean_threshes)
+	    if (scalar(@clean_threshes)>0)
 	    {
-		if ($c < $min)
+		my $min = 9999999;
+		foreach my $c (@clean_threshes)
 		{
-		    $min=$c;
+		    if ($c < $min)
+		    {
+			$min=$c;
+		    }
+		    #if ($c>0)
+		    #{
+			build_clean_binary($sample, $k, $c,
+					   $outdir_binaries, 
+					   $href_sample_to_uncleaned, 
+					   $cortex_dir, $mem_height, $mem_width,
+					   $href_sample_to_cleaned);
+		    #}
 		}
-		if ($c>0)
-		{
-		    build_clean_binary($sample, $k, $c,
-				       $outdir_binaries, 
-				       $href_sample_to_uncleaned, 
-				       $cortex_dir, $mem_height, $mem_width,
-				       $href_sample_to_cleaned);
-		}
+		$sample_to_min_cleaning_thresh{$sample}{$k}=$min;
 	    }
-	    $sample_to_min_cleaning_thresh{$sample}{$k}=$min;
+	    else
+	    {
+		## no cleaning thresholds were retund - must be empty graph
+		print "Zam - no cleaning thresholds returned - shoudl not happen - WARNING\n";
+		$sample_to_min_cleaning_thresh{$sample}{$k}=0;
+	    }
 	}
     }    
 }
@@ -1734,12 +1771,13 @@ sub build_clean_binary
     print "$ret2\n";
 
     $sample_to_cleaned_bin{$sample}{$kmer}{$clean_thresh}=$ctx;
-    #print "add $sample  $kmer $clean_thresh = $ctx\n";
+    print "add $sample  $kmer $clean_thresh = $ctx\n";
     if (!(-e $ctx))
     {
 	die("Unable to build $ctx\n");
     }
 }
+
 sub get_cleaning_thresholds
 {
     my ($sampl, $km, $href_log, $href_covg,
@@ -1825,7 +1863,11 @@ sub get_auto_thresholds
     my $deff = get_expected_depth_and_cvg_distrib($href_logfiles->{$sample}->{$kmer}, $kmer, $genome_siz);
     my $deff_for_printing = sprintf( "%.1f", $deff );
     my $auto_thresh  = get_cleaning_thresh_and_distrib($href_covg->{$sample}->{$kmer}, $deff,  \@distrib);
-    if ($deff<$auto_thresh)
+    if ($deff==-1)
+    {
+	##auto threshold is 0
+    }
+    elsif ($deff<$auto_thresh)
     {
 	my $cov_file = $href_covg->{$sample}->{$kmer};
 	my $log_file = $href_logfiles->{$sample}->{$kmer};
@@ -1835,12 +1877,21 @@ sub get_auto_thresholds
     my $i;
     if ($do_auto_keyword eq "yes")
     {
-	print "Automated cleaning chooses threshold $auto_thresh for sample $sample, kmer $kmer\nExpected depth of covg (D_eff) is $deff\n";
-	push @$aref_results, $auto_thresh;
+	if ($deff!=-1)
+	{
+	    print "Automated cleaning chooses threshold $auto_thresh for sample $sample, kmer $kmer\nExpected depth of covg (D_eff) is $deff\n";
+	    push @$aref_results, $auto_thresh;
+	}
+	else
+	{
+	    print "Sample uncleaned graph contains no data, so no cleaning needed. For consistency will make an (empty) \"cleaned\" graph\n";
+	    push @$aref_results, 0;
+	    
+	}
     }
 
     ## how many cleaning thresholds were you asked to generate below the auto one?
-
+    ## TODO - handle case of empty graph when using --auto_above/below- nothing to clean
     ## work in steps which are 1/10 of the distance between the auto-choice, and the deff.
     my $step = int(($deff - $auto_thresh)/10);
 
@@ -2444,7 +2495,15 @@ sub get_expected_depth_and_cvg_distrib
 		my $mean_read_len = $1;
 		my $bases = $2;
 		my $depth = $bases/$genome_len;
-		my $deff= $depth* ($mean_read_len-$kmer+1)/$mean_read_len;
+		my $deff;
+		if ($mean_read_len>0)
+		{
+		    $deff= $depth* ($mean_read_len-$kmer+1)/$mean_read_len;
+		}
+		else
+		{
+		    $deff = -1;
+		}
 		close(LOG);
 		return $deff;
 	    }
@@ -2463,7 +2522,15 @@ sub get_expected_depth_and_cvg_distrib
 sub get_cleaning_thresh_and_distrib
 {
     my ($file, $exp_covg, $aref) = @_;
+
+    if ($exp_covg==-1)
+    {
+	## means the graph is empty, no cleaning
+	return 0;
+    }
+
     open(CLEANINGFILE, $file) or die("Cannot open file '$file'");
+
     my @covgs=();
     my $count=1;
     my $min_index=1;

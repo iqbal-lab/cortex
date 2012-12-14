@@ -1218,16 +1218,32 @@ sub filter_by_flank_mapqual
 			else
 			{
 				die(
-"Expected query name in sam file would be of form var_1_5p_flank, but is $query"
+				    "Expected query name in sam file would be of form var_1_5p_flank, but is $query"
 				);
 			}
-			if ( $sp[4] >= $mapping_qual_thresh )
+			if  ( ( $sp[4] >= $mapping_qual_thresh )
+			      &&
+			      ( $sp[5] =~ /^\d+M$/)
+			      &&
+			      ( $sp[9] =~ /^[=]+$/) )
 			{
 				$href->{$varname} = "PASS";
 			}
 			else
 			{
 				$href->{$varname} = "FAIL";
+				if (
+				    ($sp[4] >= $mapping_qual_thresh)
+				    &&
+				    (
+				      ( $sp[5] !~ /^\d+M$/)
+				      ||
+				      ( $sp[9] !~ /^[=]+$/) 
+				     ) 
+				    )
+				{
+				    print "$varname passes mq filter, but flank is not a perfect match, so filter this out (would get wrong coord)\n";
+				}
 			}
 		}
 	}
