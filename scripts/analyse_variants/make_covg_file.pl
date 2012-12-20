@@ -130,6 +130,10 @@ while (<CALLS>)
 	{
 	    if ($i==$ref_colour)
 	    {
+		if ($i==$number_of_colours-1)
+		{
+		    print OUT "\n";
+		}
 		next;
 	    }
 	    print OUT $array_counts_for_each_colour[$i];
