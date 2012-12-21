@@ -219,17 +219,14 @@ llk.cov.rep<-function(input, p.rep=0.5) {
 
 #x11()
 
-a.cov<-rep(0, length(genome.size))
-g.is.zero<-(genome.size==0)
-a.cov[!g.is.zero]<-cov[!g.is.zero]/(genome.size[!g.is.zero]);
+a.cov=cov/(genome.size);
 
 k.cov <- rep(0, length(read.length))
-is.zero <- (k.cov == 0)
+is.zero <- (read.length == 0)
 k.cov[!is.zero] <- a.cov[!is.zero]*(read.length[!is.zero]-kmer+1)/read.length[!is.zero];
 
 per.base.read.arrival<-rep(0, length(read.length))
-pbra.is.zero <- (per.base.read.arrival==0)
-per.base.read.arrival[!pbra.is.zero]<-cov[!pbra.is.zero]/(read.length[!pbra.is.zero]*genome.size);
+per.base.read.arrival[!is.zero]<-cov[!is.zero]/(read.length[!is.zero]*genome.size);
 
 #First get coverage for each sample from bubbles - check looks concordant
 cov.mn<-apply(d[,first_column_of_sample_data:ncol(d)], 2, mean, trim=0.05);
