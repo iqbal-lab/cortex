@@ -124,12 +124,12 @@ while(defined($vcf_entry = $vcf->read_entry()))
   
       if(length($left_flank) > $max_flank_size)
       {
-        $left_flank = substr($left_flank, 0, $max_flank_size);
+        $left_flank = substr($left_flank, -$max_flank_size);
       }
     
       if(length($left_flank) > $max_flank_size)
       {
-        $right_flank = substr($right_flank, -$max_flank_size);
+        $right_flank = substr($right_flank, 0, $max_flank_size);
       }
     }
     else

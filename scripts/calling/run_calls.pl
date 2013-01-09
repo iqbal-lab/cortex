@@ -110,7 +110,7 @@ my (
         $do_bc,                            $bc_col_args,  $bc_out_stub,
         $do_pd,                            $pd_col_args,  $pd_out_stub,
         $outdir,               $fastaq_index, 
-	$outvcf_filename_stub, 
+	$outvcf_filename_stub, $fastq_offset, 
         $number_of_colours,    $use_ref,
 #        $apply_filter_one_allele_must_be_ref,
 	$apply_classif,  $prefix,
@@ -126,6 +126,7 @@ my (
     );
 
 #set defaults
+$fastq_offset=33;
 $squeeze_mem='';
 $first_kmer=0;
 $last_kmer=0;
@@ -218,8 +219,8 @@ my $help = '';    #default false
 #    'build_per_sample_vcfs:s' =>\$build_per_sample_vcfs,
     'logfile:s'           => \$global_logfile,
     'workflow:s'          => \$workflow,
-    'squeeze_mem'          =>\$squeeze_mem
-
+    'squeeze_mem'          =>\$squeeze_mem,
+    'fastq_ascii_offset:i'   => \$fastq_offset
 );
 
 
@@ -1717,7 +1718,7 @@ sub build_all_cleaned_binaries
 	    else
 	    {
 		## no cleaning thresholds were retund - must be empty graph
-		print "Zam - no cleaning thresholds returned - shoudl not happen - WARNING\n";
+		#print "Zam - no cleaning thresholds returned - shoudl not happen - WARNING\n";
 		$sample_to_min_cleaning_thresh{$sample}{$k}=0;
 	    }
 	}
@@ -2110,6 +2111,10 @@ sub build_unclean
     if ($dupremoval)
     {
 	$cmd = $cmd." --remove_pcr_duplicates";
+    }
+    if ($fastq_offset !=33)
+    {
+	$cmd = $cmd." --fastq_offset $fastq_offset ";
     }
 
     $cmd = $cmd." > $log 2>&1";
