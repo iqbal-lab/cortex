@@ -1,4 +1,34 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.15
+
+Minor release
+
+Bugfixes:
+
+1. run_calls fixed so it now allows you to set the fastq offset if reading non-standard 
+   quality-encoded FASTQ
+
+2. run_calls fixed so it does not error clean if effective coverage is too low.
+   So if you set k to an unreasonably high level, and you have <5x kmer covg, it just won't clean
+   (on auto-clean - you can still force it)
+
+3. Fix the population filter R script to not break when a sample has zero data.
+  
+4. Bugfix in one of scripts, from Chunlin Xiao for case when ref colour is final colour
+
+5. If a variant flank maps confidently, but the flank maps with insertions or deletions in it,
+   there was previously a bug where this led to the wrong coordinate being assigned for the variant.
+   "Fix" for now is to filter these out (message goes to the log). I will implement a real fix,
+   but it's not that straightforward, as this introduces variants that were never directly called,
+   and have different interpretations in different workflows.
+
+
+Under-the-hood change
+
+ - Moved to using htslib to parse bamfiles - thanks to Isaac Turner for this.
+
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.14
 
 Bugfixes:
