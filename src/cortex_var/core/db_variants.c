@@ -780,11 +780,7 @@ boolean get_num_effective_reads_on_branch(int* array, dBNode** allele, int how_m
 }
 
 
-// DEV: these three functions aren't consistent about where they start/end
-// when looping over nodes
-// count_reads_on_allele_in_specific_colour: 2..len-2
-// count_reads_on_allele_in_specific_colour_given_array_of_cvgs: 1..len-1
-// count_reads_on_allele_in_specific_func_of_colours: 2..len-2
+
 
 //does not count covg on first or last nodes, as they are bifurcation nodes
 //if length==0 or 1  returns 0.

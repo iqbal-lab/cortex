@@ -1870,9 +1870,17 @@ sub get_auto_thresholds
     }
     elsif ($deff<$auto_thresh)
     {
-	my $cov_file = $href_covg->{$sample}->{$kmer};
-	my $log_file = $href_logfiles->{$sample}->{$kmer};
-	die("WARNING - the auto-estimator for cleaning has estimated a cleaning threshold $auto_thresh (from $cov_file) which is higher than the expected covg $deff (estimated from $log_file) . Look at the covg profile - is there something odd?\n");
+	if ($deff<3)
+	{
+	    print "WARNING - this sample has too low covg at this kmer ($kmer). Expected depth of covg in graph is only $deff. Not doing any cleaning for this sample at this kmer\n";
+	    $auto_thresh=0;
+	}
+	else
+	{
+	    my $cov_file = $href_covg->{$sample}->{$kmer};
+	    my $log_file = $href_logfiles->{$sample}->{$kmer};
+	    die("WARNING - the auto-estimator for cleaning has estimated a cleaning threshold $auto_thresh (from $cov_file) which is higher than the expected covg $deff (estimated from $log_file) . Look at the covg profile - is there something odd?\n");
+	}
     }
 
     my $i;
@@ -2281,6 +2289,10 @@ sub run_checks
     if ( ($use_ref eq "Absent") && ($list_ref_fasta ne "nonexistent_nonsense"))
     {
 	die("Since you specified --ref Absent, you cannot also specify --list_ref_fasta");
+    }
+    if ( ($use_ref ne "Absent") && ($list_ref_fasta eq "nonexistent_nonsense"))
+    {
+	die("Since you specified --ref  as CoordinatesOnly or CoordinatesAndInCalling, you must specify --list_ref_fasta");
     }
     if ($refbindir ne "")
     {
