@@ -4,9 +4,9 @@
 
 mkdir -p libs
 cd libs
-wget http://downloads.sourceforge.net/project/samtools/samtools/0.1.18/samtools-0.1.18.tar.bz2
-tar xfvj samtools-0.1.18.tar.bz2
-cd samtools-0.1.18
+git clone https://github.com/samtools/htslib.git
+cd htslib
+make clean
 make
 cd ..
 
