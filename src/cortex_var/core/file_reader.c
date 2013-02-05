@@ -523,7 +523,7 @@ void load_se_seq_data_into_graph_colour(
     die("Couldn't open single-end sequence file '%s'\n", file_path);
   }
 
-  seq_set_fastq_ascii_offset(sf, ascii_fq_offset);
+  //seq_set_fastq_ascii_offset(sf, ascii_fq_offset);
 
   // Are we using quality scores
   char read_qual = seq_has_quality_scores(sf);
@@ -638,8 +638,8 @@ void load_pe_seq_data_into_graph_colour(
     die("Couldn't open paired-end sequence file '%s'\n", file_path2);
   }
 
-  seq_set_fastq_ascii_offset(sf1, ascii_fq_offset);
-  seq_set_fastq_ascii_offset(sf2, ascii_fq_offset);
+  //seq_set_fastq_ascii_offset(sf1, ascii_fq_offset);
+  //seq_set_fastq_ascii_offset(sf2, ascii_fq_offset);
 
   // Are we using quality scores
   char read_qual1 = seq_has_quality_scores(sf1);

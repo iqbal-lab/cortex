@@ -22,7 +22,7 @@ endif
 FLAGS := $(FLAGS) -DCOMPILE_TIME='"$(shell date)"' -DSCORE_TYPE='int'
 
 all:
-	gcc -o needleman_wunsch $(FLAGS) -Wall  \
+	gcc -o needleman_wunsch $(FLAGS) -Wall \
 	-I . -I $(UTILITY_LIB_PATH) -I $(STRING_BUF_PATH) \
 	-I $(BIOINF_LIB_PATH) -I $(SCORING_PATH) \
 	nw_cmdline.c needleman_wunsch.c \

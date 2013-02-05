@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h> // toupper() and tolower()
+#include <zlib.h>
 
 #include "string_buffer.h"
 
@@ -464,7 +465,7 @@ void string_buff_str_insert(STRING_BUFFER* dst, const t_buf_pos ddst_pos,
 /* File handling */
 /*****************/
 
-t_buf_pos _string_buff_readline(STRING_BUFFER *sbuf, FILE *file, gzFile *gz_file)
+t_buf_pos _string_buff_readline(STRING_BUFFER *sbuf, FILE *file, gzFile gz_file)
 {
   t_buf_pos init_str_len = sbuf->len;
 
@@ -525,7 +526,7 @@ t_buf_pos string_buff_readline(STRING_BUFFER *sbuf, FILE *file)
 // read gzFile
 // returns number of characters read
 // or 0 if EOF
-t_buf_pos string_buff_reset_gzreadline(STRING_BUFFER *sbuf, gzFile *gz_file)
+t_buf_pos string_buff_reset_gzreadline(STRING_BUFFER *sbuf, gzFile gz_file)
 {
   string_buff_reset(sbuf);
   return string_buff_gzreadline(sbuf, gz_file);
@@ -534,7 +535,7 @@ t_buf_pos string_buff_reset_gzreadline(STRING_BUFFER *sbuf, gzFile *gz_file)
 // read gzFile
 // returns number of characters read
 // or 0 if EOF
-t_buf_pos string_buff_gzreadline(STRING_BUFFER *sbuf, gzFile *gz_file)
+t_buf_pos string_buff_gzreadline(STRING_BUFFER *sbuf, gzFile gz_file)
 {
   return _string_buff_readline(sbuf, NULL, gz_file);
 }
@@ -560,7 +561,7 @@ t_buf_pos string_buff_skip_line(FILE *file)
   return count;
 }
 
-t_buf_pos string_buff_gzskip_line(gzFile *gz_file)
+t_buf_pos string_buff_gzskip_line(gzFile gz_file)
 {
   char c;
   t_buf_pos count = 0;

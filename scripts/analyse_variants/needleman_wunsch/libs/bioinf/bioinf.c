@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <zlib.h>
 
 #include "string_buffer.h"
 
@@ -39,7 +40,7 @@
 
 struct SEQ_FILE
 {
-  gzFile* gz_file;
+  gzFile gz_file;
   FILE* file;
   enum SEQ_FILE_TYPE file_type;
 };
@@ -84,7 +85,7 @@ void _set_seq_filetype(SEQ_FILE* file)
   }
 }
 
-SEQ_FILE* seq_file_gzinit(gzFile* gz_file)
+SEQ_FILE* seq_file_gzinit(gzFile gz_file)
 {
   SEQ_FILE* seq_file = (SEQ_FILE*) malloc(sizeof(SEQ_FILE));
   seq_file->gz_file = gz_file;
@@ -123,7 +124,7 @@ SEQ_FILE* seq_file_open(char* path, char* mode)
 
 SEQ_FILE* seq_file_gzopen(char* path, char* mode)
 {
-  gzFile* gz_file = gzopen(path, mode);
+  gzFile gz_file = gzopen(path, mode);
 
   if(gz_file == NULL)
   {
@@ -225,7 +226,7 @@ void seq_file_read(SEQ_FILE* file, STRING_BUFFER* title, STRING_BUFFER* sequence
 // Returns 1 if a header is read, 0 otherwise
 // Prints errors to stderr if there are syntax issues
 char read_fastq_entry(STRING_BUFFER* header, STRING_BUFFER* sequence,
-                      STRING_BUFFER* quality, FILE *file, gzFile *gz_file)
+                      STRING_BUFFER* quality, FILE *file, gzFile gz_file)
 {
   string_buff_reset(header);
   string_buff_reset(sequence);
@@ -319,7 +320,7 @@ char read_fastq_entry(STRING_BUFFER* header, STRING_BUFFER* sequence,
 
 // Read an entry from a FASTA file
 char read_fasta_entry(STRING_BUFFER* header, STRING_BUFFER* sequence,
-                      FILE *file, gzFile *gz_file)
+                      FILE *file, gzFile gz_file)
 {
   string_buff_reset(header);
   string_buff_reset(sequence);
@@ -420,7 +421,7 @@ char read_fasta_entry(STRING_BUFFER* header, STRING_BUFFER* sequence,
 // returns number of sequences loaded
 //         or -1 on error
 long load_fasta_file(const char* ref_genome_file,
-                     gzFile *ref_genome_file_handle,
+                     gzFile ref_genome_file_handle,
                      STRING_BUFFER*** chrom_names_ptr,
                      STRING_BUFFER*** chrom_seqs_ptr)
 {

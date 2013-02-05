@@ -282,10 +282,13 @@ if ($help)
 ##this has to happen before running the checks
 if ($refbindir ne "")
 {
-    $refbindir=abs_path($refbindir);
-    if ($refbindir !~ /\/$/)
+    if (-d $refbindir)
     {
-	$refbindir = $refbindir.'/';
+	$refbindir=abs_path($refbindir);
+	if ($refbindir !~ /\/$/)
+	{
+	    $refbindir = $refbindir.'/';
+	}
     }
 }
 my %k_to_refbin=();
@@ -1060,7 +1063,7 @@ sub get_num_kmers_for_pool
     
     my $num_kmers_in_cleaned_pool=0;
     my $new_mem_height;
-    my $new_mem_width = 115; ##modified for pombe, dont copy
+    my $new_mem_width = 115; 
     my $fixed_width=100;     
 
     my $new_params_ok=0;
@@ -2300,11 +2303,13 @@ sub run_checks
 	{
 	    $refbindir = $refbindir.'/';
 	}
+
 	if (!(-d $refbindir))
 	{
 	    die("Cannot find the ref binary directory you specified - $refbindir\n");
 	}
     }
+    
     if ( ($do_auto_cleaning ne "no") && ($genome_size==0) )
     {
 	die("If you want automatic cleaning, you need tos pecify --genome_size");

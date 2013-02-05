@@ -477,7 +477,7 @@ int main(int argc, char* argv[])
       }
       else if(strcasecmp(argv[argi], "--substitution_matrix") == 0)
       {
-        gzFile* sub_matrix_file = gzopen(argv[argi+1], "r");
+        gzFile sub_matrix_file = gzopen(argv[argi+1], "r");
         // gzbuffer(sub_matrix_file, 16384); // doesn't seem to work
 
         align_scoring_load_matrix(sub_matrix_file, argv[argi+1],
@@ -491,7 +491,7 @@ int main(int argc, char* argv[])
       }
       else if(strcasecmp(argv[argi], "--substitution_pairs") == 0)
       {
-        gzFile* sub_pairs_file = gzopen(argv[argi+1], "r");
+        gzFile sub_pairs_file = gzopen(argv[argi+1], "r");
         //gzbuffer(sub_pairs_file, 16384); // doesn't seem to work
         
         align_scoring_load_pairwise(sub_pairs_file, argv[argi+1],
@@ -667,7 +667,7 @@ int main(int argc, char* argv[])
   {
     // Read from STDIN
     // Cannot turn off buffering in zlib, so have to use FILE for stdin
-    //gzFile* gz_file = gzdopen(fileno(stdin), "r");
+    //gzFile gz_file = gzdopen(fileno(stdin), "r");
     //gzsetparams(gz_file, Z_NO_COMPRESSION, Z_DEFAULT_STRATEGY);
     //SEQ_FILE* seq = seq_file_gzopen(gz_file);
 

@@ -1,5 +1,5 @@
 #a) pass LIB_PATH=/usr/local/lib/ to compile on WTCHG cluster3
-#b) also set LD_LIBRARY_PATH=/usr/local/lib/:$(LD_LIBRARY_PATH)
+#b) also set LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
 
 
 
@@ -70,7 +70,7 @@ IDIR_GSL4 = libs/gsl-1.15/cblas/.libs
 
 IDIR_STRS = libs/string_buffer
 IDIR_SEQ = libs/seq_file
-IDIR_BAM = libs/samtools-0.1.18
+IDIR_BAM = libs/htslib/htslib
 
 # Main program includes
 IDIR_BASIC = include/basic
@@ -116,10 +116,10 @@ endif
 
 # Comment out this line to turn off adding the commit version
 # (it already checks if hg is installed)
-VERSION_STR=$(shell if [ `command -v hg` ]; then echo ' (commit' `hg id --num --id`')'; else echo; fi)
+#VERSION_STR=$(shell if [ `command -v hg` ]; then echo ' (commit' `hg id --num --id`')'; else echo; fi)
 
 # DEV: Add -DNDEBUG=1 to turn off assert() calls
-OPT := $(ARCH) -Wall -Wextra $(MACFLAG) -DVERSION_STR='"$(VERSION_STR)"' \
+OPT := $(ARCH) -Wall $(MACFLAG) -DVERSION_STR='"$(VERSION_STR)"' \
        -DNUMBER_OF_BITFIELDS_IN_BINARY_KMER=$(BITFIELDS) \
        -DNUMBER_OF_COLOURS=$(NUM_COLS)
 
@@ -129,9 +129,9 @@ else
 	OPT := -O3 $(OPT)
 endif
 
-LIBLIST = -lgsl -lgslcblas -lseqfile -lbam -lstrbuf -lz -lm
-#TEST_LIBLIST = -lcunit -lncurses $(LIBLIST)
-TEST_LIBLIST = -lcunit  $(LIBLIST)
+LIBLIST = -lgsl -lgslcblas -lseqfile -lstrbuf -lhts -lpthread -lz -lm
+TEST_LIBLIST = -lcunit -lncurses $(LIBLIST)
+#TEST_LIBLIST = -lcunit  $(LIBLIST)
 
 # Add -L/usr/local/lib/ to satisfy some systems that struggle to link libz
 LIBINCS = -L/usr/local/lib -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO) -I$(IDIR_BAM) \

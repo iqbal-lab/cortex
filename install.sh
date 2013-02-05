@@ -1,13 +1,14 @@
 #!/bin/bash
 
-if [ ! -d libs ]; then
-    exit 0
+if [ ! -d libs ]
+then
+  echo "Directory libs does not exist" 1>&2
+  exit 0
 fi
-
 
 cd libs
 
-cd samtools-0.1.18
+cd htslib
 make clean
 make
 cd ..
@@ -25,7 +26,7 @@ cd ..
 
 cd seq_file
 make clean
-make STRING_BUF_PATH=../string_buffer SAMTOOLS_PATH=../samtools-0.1.18
+make STRING_BUF_PATH=../string_buffer HTS_PATH=../htslib
 cd ..
 
 cd ..

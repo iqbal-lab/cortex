@@ -29,6 +29,7 @@
 #include <string.h>
 #include <ctype.h> // tolower isspace
 #include <limits.h> // INT_MAX, INT_MIN
+#include <zlib.h>
 
 // utility_lib: string_is_all_whitespace(char*), string_next_nonwhitespace(char*)
 #include "utility_lib.h"
@@ -60,7 +61,7 @@ void _loading_error(char* err_msg, char* file_path, int line_num, char is_matrix
   exit(EXIT_FAILURE);
 }
 
-void align_scoring_load_matrix(gzFile* file, char* file_path,
+void align_scoring_load_matrix(gzFile file, char* file_path,
                                SCORING_SYSTEM* scoring, char case_sensitive)
 {
   STRING_BUFFER* sbuf = string_buff_init(500);
@@ -240,7 +241,7 @@ void align_scoring_load_matrix(gzFile* file, char* file_path,
 }
 
 
-void align_scoring_load_pairwise(gzFile* file, char* file_path,
+void align_scoring_load_pairwise(gzFile file, char* file_path,
                                  SCORING_SYSTEM* scoring, char case_sensitive)
 {
   // Adds to hash table in scoring->swap_table (it needs to be already malloc'ed)
