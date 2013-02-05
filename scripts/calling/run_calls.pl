@@ -1870,7 +1870,7 @@ sub get_auto_thresholds
     }
     elsif ($deff<$auto_thresh)
     {
-	if ($deff<3)
+	if ($deff<5)
 	{
 	    print "WARNING - this sample has too low covg at this kmer ($kmer). Expected depth of covg in graph is only $deff. Not doing any cleaning for this sample at this kmer\n";
 	    $auto_thresh=0;
