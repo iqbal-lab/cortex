@@ -174,7 +174,7 @@ sub get_file_if_not_already_there
 {
     my ($file_to_get, $where_to_put_it, $file_you_should_have_after_getting) = @_;
     
-    if (!(-e $file_you_should_have_after_getting))
+    if (!(-e $file_you_should_have_after_getting || -l $file_you_should_have_after_getting ))
     {
 	my $c1 = "/home/zam/bin/aspera/connect/bin/ascp -i /home/zam/bin/aspera/connect/etc/asperaweb_id_dsa.putty -Tr -Q -l 50M -L- fasp-g1k\@fasp.1000genomes.ebi.ac.uk:vol1/ftp/$file_to_get  $where_to_put_it";
 	print "This file not present on filesystem: $file_to_get, so get it with Aspera:\n";

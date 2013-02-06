@@ -58,9 +58,9 @@ sub make_colour_list
 	$odir = $odir.'/';
     }
     
-    my $colour_list = $odir."discovery_colour_list";
-    my $ref_list = $odir."ref_binary_list";
-    my $pool_list = $odir."pool_binary_list";
+    my $colour_list = "discovery_colour_list";
+    my $ref_list = "ref_binary_list";
+    my $pool_list = "pool_binary_list";
     open(COL, ">".$colour_list)||die("Cannot open $colour_list");
     print COL "$ref_list\n";
     print COL "$pool_list\n";

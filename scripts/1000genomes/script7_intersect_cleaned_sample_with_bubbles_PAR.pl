@@ -43,8 +43,8 @@ my $suffix = "intersect_bubbles_thresh".$thresh;
 
 my $cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --multicolour_bin $bubble_graph --colour_list $colour_list --load_colours_only_where_overlap_clean_colour 0 --successively_dump_cleaned_colours $suffix";
 print "$cmd\n";
-#my $ret = qx{$cmd};
-#print "$ret\n";
+my $ret = qx{$cmd};
+print "$ret\n";
 print "Finished intersecting sample $sample with the bubble graph $bubble_graph\n";
 
 
@@ -72,7 +72,7 @@ sub check_args
     {
 	die("Suspicious - your sample graph $sample_graph does not pattern match with the name of the sample $sam - you must be using nonstandard naming. Please stick to th convention");
     }
-    if ($sample_graph !~ /clean\d+$/)
+    if ($sample_graph !~ /clean\d+.ctx$/)
     {
 	die("You have specified a sample graph $sample_graph which should be a cleaned graph of a sample, but the filename does not contain the text cleanT (for some number T) - please stick to the defined file naming convention");
     }
@@ -134,27 +134,21 @@ sub make_colourlist
     my ($graph, $id) = @_;
 
     my $bname = basename($graph);
-    my $dir="";
-    if ($graph =~/^(\S+)$bname$/)
-    {
-	$dir = $1;
-    }
-    if ($dir eq "")
-    {
-	die("Cant parse this graph name $graph");
-    }
+    my $dir = dirname($graph);
+
     if ($dir !~ /\/$/)
     {
 	$dir = $dir.'/';
     }
     my $col_list = $dir.$id."_colourlist_for_intersection";
     my $list_this_binary=$graph.".filelist";
-
+    my $list_this_binary_nodir = basename($list_this_binary); 
     open(COL, ">".$col_list)||die("Cannot open $col_list");
     open(FLIST, ">".$list_this_binary)||die("Cannot open $list_this_binary");
-    print FLIST "$graph\n";
+
+    print FLIST "$bname\n";
     close(FLIST);
-    print COL "$list_this_binary\n";
+    print COL "$list_this_binary_nodir\n";
     close(FLIST);
     close(COL);
 

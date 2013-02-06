@@ -156,7 +156,7 @@ sub make_colourlist
 {
     my ($list, $pop) = @_;
 
-    my $col_list = $pop.".colourlist_for_cleaning_samples";
+    my $col_list = $pop.$list.".colourlist_for_cleaning_samples";
     open(COL, ">".$col_list)||die("Cannot open $col_list");
     open(LIST, $list)||die("Cannot open your filelist $list");
     while(<LIST>)

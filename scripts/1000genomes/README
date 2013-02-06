@@ -2,4 +2,6 @@ These scripts form a template/skeleton for the
 pipeline with which we are using Cortex on the 1000 Genomes project
 Phase 2. The scripts are simple and not very polished, they 
 are meant for you to use in your own compute infratructure,
-parallelising as much as you can. See the enclosed PDF for details.
+parallelising as much as you can. See the PDF :
+http://cortexassembler.sourceforge.net/cortex_phase2_recipe.pdf
+for details

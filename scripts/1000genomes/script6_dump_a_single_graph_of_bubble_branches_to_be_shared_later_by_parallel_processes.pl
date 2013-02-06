@@ -2,10 +2,10 @@
 use strict;
 
 use Getopt::Long;
-
+use File::Basename;
 ## Pass in a list of CLEANED sample  binaries
 
-my $cortex_dir = "/ddn/projects3/mcvean_res/zam/phase2_cortex/dummyrun/code/CORTEX_release_v1.0.5.8";
+my $cortex_dir = "/path/to/CORTEX_release_v1.0.1.15";
 my $mem_height = 23;
 my $mem_width = 100;
 my $pop="";
@@ -55,7 +55,7 @@ my $ctx_binary1 = check_cortex_compiled_1colour($cortex_dir, $kmer);
 my $bubble_graph = $branches;
 $bubble_graph =~ s/fasta/k31.ctx/;
 my $bubble_graph_log = $bubble_graph.".log";
-my $cmd2 = $ctx_binary." --se_list $branches_list --mem_height 23 --mem_width 100 --max_read_length 15000 --format FASTA --dump_binary $bubble_graph  > $bubble_graph_log 2>&1";
+my $cmd2 = $ctx_binary." --se_list $branches_list --mem_height 23 --mem_width 100 --kmer_size 31  --dump_binary $bubble_graph  > $bubble_graph_log 2>&1";
 qx{$cmd2};
 
 print "Finished building a graph just of the bubble branches/alleles. Now intersect the ref binary\n";
@@ -63,11 +63,11 @@ print "Finished building a graph just of the bubble branches/alleles. Now inters
 
 my $ctx_binary2 = check_cortex_compiled_2colours($cortex_dir, $kmer);
 my $suffix = "intersect_bubbles_thresh".$thresh;
-my $ref_intersect_log = $ref.".intersect_with_bubbles_thresh".$thresh.".log";
+my $ref_intersect_log = basename($ref.".intersect_with_bubbles_thresh".$thresh.".log");
 my $ref_col_list=get_ref_col_list($ref);
 
-my $cmd3 = $ctx_binary2." --multicolour_bin $bubble_graph --mem_height 23 --mem_width 100 --colour_list $ref_col_list  --load_colours_only_where_overlap_clean_colour 0 --successively_dump_cleaned_colours $suffix  > $ref_intersect_log 2>&1";
-qx{$cmd2};
+my $cmd3 = $ctx_binary2." --kmer_size 31 --multicolour_bin $bubble_graph --mem_height 23 --mem_width 100 --colour_list $ref_col_list  --load_colours_only_where_overlap_clean_colour 0 --successively_dump_cleaned_colours $suffix  > $ref_intersect_log 2>&1";
+qx{$cmd3};
 
 
 
@@ -75,8 +75,8 @@ qx{$cmd2};
 sub get_ref_col_list
 {
     my ($ref) = @_:
-    my $ref_col_list = $ref.".colour_list";
-    my $ref_list = $ref.".list";
+    my $ref_col_list = basename($ref.".colour_list");
+    my $ref_list = basename($ref.".list");
     my $c1 = "ls $ref > $ref_list";
     qx{$c1};
     my $c2 = "ls $ref_list  > $ref_col_list";
