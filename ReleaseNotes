@@ -22,6 +22,7 @@ Bugfixes:
    but it's not that straightforward, as this introduces variants that were never directly called,
    and have different interpretations in different workflows.
 
+6. Some bugfixes to the 1000 Genomes scripts, courtesy of Chunlin Xiao.
 
 Under-the-hood change
 

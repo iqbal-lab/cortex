@@ -1,5 +1,4 @@
-****************************
-***** Basic Unit tests *****
+
 
      CUnit - A Unit testing framework for C - Version 2.1-0
      http://cunit.sourceforge.net/
@@ -15,24 +14,20 @@ Suite: Suite_1
   Test: test reading of fasta file ... passed
   Test: test reading of long fasta file ... passed
   Test: test reading of fastq file ... passed
-  Test: test reading of fastq file when some reads are too long or have bad characters ...passed
+  Test: test reading of fastq file when some reads are too long or have bad characters ... Lengths of quality [22] and sequence [7]  strings don't coincide for this read: [read2]. Skip it
+passed
   Test: test conversion from binary nucleotide to C string ... passed
   Test: test binary kmer reverse complement ... passed
   Test: test seq reverse complement ... passed
   Test: test nucleotide iterator ... passed
   Test: test creation of binary kmers from sequence - sliding window ... passed
-  Test: test creation of binary kmers from sequence - breaking at homopolymers ... passed
   Test: test shift last kmer to start ... passed
 
 --Run Summary: Type      Total     Ran  Passed  Failed
                suites        1       1     n/a       0
-               tests        17      17      17       0
-               asserts     369     369     369       0
+               tests        16      16      16       0
+               asserts     292     292     292       0
 
-
-
-********************************
-***** Hash Table Unit tests *****
 
      CUnit - A Unit testing framework for C - Version 2.1-0
      http://cunit.sourceforge.net/
@@ -48,54 +43,54 @@ Suite: Suite_1
                asserts  562219  562219  562219       0
 
 
-****************************
-***** Cortex_var Unit tests *****
-
-
      CUnit - A Unit testing framework for C - Version 2.1-0
      http://cunit.sourceforge.net/
 
 
 Suite: Test main functionality of Cortex
-  Test: Test element - get edge ... passed
   Test: Test element - get edge copy ... passed
   Test: Test assignment operator for element ... passed
   Test: Test setting and checking of element status ... passed
   Test: Test element - get coverage of node for specific person ... passed
   Test: Test element -increment coverage for different people ... passed
   Test: Test function checking number of edges to nodes with specified status ... passed
-  Test: Sanity test for hash_table_find - adding kmers to graph and finding them ... passed
+  Test: Sanity test for hash_table_find - adding kmers to graph and finding them ... Load single-ended files
+  path: /Net/fs1/home/zam/dev/hg/bitbucket/CORTEX_mainline/data/test/graph/test_dB_graph.falist ... passed
   Test: Test dumping and reloading of multicolour binary ... passed
   Test: Test dump Binary format version5, and reload ... passed
-  Test: Test loading of a singlecolour binary ... passed
+  Test: Test loading of a singlecolour binary ...passed
   Test: Test loading of a single-colour binary where nodes are only loaded if they already exist in a predefined "clean" colour, and if so, only taking the edges that overlap both colours ... passed
   Test: Test that coverage of kmers are correcty counted as reads are loaded from a file ... passed
-  Test: Test getting sliding windows, breaking when kmer is not in graph - internal function ... passed
+  Test: Regression test: integer overflow and dumping of covergae distribution does not segfault ...passed
+  Test: Test getting sliding windows, breaking when kmer is not in graph - internal function ...passed
   Test: Test getting sliding windows breaking when kner or edge is not in graph - internal function ... passed
   Test: Test function for getting length distribution of filtered/effective reads after N's, low quality, PCR duplicates and homopolymers have been cut or filtered ... passed
   Test: Test checking if a path lies in a (function of) colours ... passed
   Test: Test dumping of cleaned fasta by aligning against a cleaned graph ... passed
   Test: Test removal of PCR duplicate reads from paired-end fastq ... passed
-  Test: Test removal of PCR duplicate reafds from single-ended fastq ... passed
-  Test: Test loading of three binaries as dumped by graph into sv_trio as separate people ...passed
+  Test: Test removal of PCR duplicate reads from single-ended fastq ... passed
+  Test: Test loading of three binaries as dumped by graph into sv_trio as separate people ... passed
   Test: Test utility function for getting supernode containing a given node ... passed
-  Test: Test that can identify supernode ends ... passed
+  Test: Test that can identify supernode ends ...passed
   Test: Test that can get the min and max coverage of a supernode ... passed
   Test: Test function for checking if condition is true for all nodes in supernode ... passed
   Test: Test error correction via topology of graph - tip clipping ... passed
   Test: Test removal of low-coverage nodes ... passed
   Test: Test utility function for applying some other function to all nodes in a path defined by a fasta ... passed
   Test: Test get_perfect_path (maximal path without branches) in single colour of graph ... passed
+  Test: Loading two people, one fasta each, in same population, and print supernodes. 
+	Each person has 2 reads, and we have manually determined what the supernodes should be ... passed
   Test: Load three people in one population, each consists of one toy chromosome.
 	 Find their individual supernodes correctly ... passed
   Test: Load two people sharing an Alu, differing by sequene before and after the Alu. Find supernodes. ... passed
-  Test: Check that correctly get stats on how many kmers are shared by 1,2,3,... people in a population ... passed
+  Test: Load two people in one population, and test that given a kmer, we can find the first node in the supernode in which that kmer lies. ... passed
+  Test: Load two people in one population, and test that given a node in a person's graoh, you can find the next node in the supernode. ... passed
+  Test: Load two people in one population, and test that for each separately, can find the best sub_supernode, requiring certain people_coverage ... passed
+  Test: Check that correctly get stats on how many kmers are shared by 1,2,3,... passed
   Test: Unit test of utilty function to produce array of nodes corresponding to a given path through graph, as specified by a fasta file ... passed
-  Test: Test function that reads a reference fasta and marks nodes in the graph with status exists_in_reference ... passed
   Test: Unit test of wrapper function for above utility function ... passed
   Test: Test utility function to get next read from file and return it as an array of nodes ... passed
-  Test: Simple null test of new algorithm to find variants using trusted paths AND supernodes. Take a person whose genome is a single read, and a reference genome which is identical.
-	Algorithm should find no variants! ... passed
+  Test: Simple null test of new algorithm to find variants using trusted paths AND supernodes. Take a person whose genome is a single read, and a reference genome which is identical.Algorithm should find no variants! ... passed
   Test: Simple null test of new algorithm to find variants using trusted paths AND supernodes. Take a person whose genome is a single Alu, and a reference genome which is identical.
 	 Algorithm should find no variants. ... passed
   Test: Another null test of the Path Divergence/supernode SV caller. Reference and individual are identical again.
@@ -115,8 +110,7 @@ Suite: Test main functionality of Cortex
 	Caller should spot this and correctly identify the coordinates in the reference, the flanking regions, and the sequence for the two branches ... passed
   Test: Test of the Path Divergence SV caller. Reverse the roles of reference and individual in the previous test. Caller should spot the 2 base insertion
 	Identify the coordinates of variant start, and the relevant flank and branch sequences ... passed
-  Test: Test of the Path Divergence SV caller. Reference is a single supernode, and individual has a complete Alu inserted within the supernode. Find the insertion.
-	 ... passed
+  Test: Test of the Path Divergence SV caller. Reference is a single supernode, and individual has a complete Alu inserted within the supernode. Find the insertion ... passed
   Test: Test of the Path Divergence SV caller. Reverse roles of reference/individual in previous test, and call deletion of Alu. ... passed
   Test: Test of the Path Divergence SV caller. Reference has an Alu inserted within another Alu. Individual lacks the insertion.
 	Call the Alu insertion and correctly identify the coordinates of the variant, flanking sequences, and sequences of the two branches ... passed
@@ -133,15 +127,14 @@ Suite: Test main functionality of Cortex
   Test: Test reading of variant call output (full flank file), when both branches < k long ... passed
   Test: Test reading of variant call output (full flank file), when both branches < k long and zero-length 3p flank ... passed
   Test: Regression test case 1 - genotyping of bubble with one branch <k and one long branch ... passed
-  Test: Regression test case 2 - genotyping of a PD call ... Null test - compile for k=55
-passed
-  Test: Test algorithm for genotyping of complex site at a simple site (repeat for different coverages and sequencing error rates, simulating real coverage coording to our model, 100 iterations each time) ...passed
+  Test: Regression test case 2 - genotyping of a PD call ... passed
+  Test: Test algorithm for genotyping of complex site at a simple site (repeat for different coverages and sequencing error rates, simulating real coverage coording to our model, 100 iterations each time) ... passed
   Test: Test genotyping of complex sites - test with two HLA-B alleles ... passed
-  Test: Test genotyping of complex sites - test with two HLA-B alleles, using 1-net and 2-net error model ...passed
+  Test: Test genotyping of complex sites - test with two HLA-B alleles, using 1-net and 2-net error model ... passed
   Test: Test estimation of sequencing error rate from fasta of pairs of SNP alleles (first allele known not to be present, second known to be homozygous present) - very basic test ... passed
   Test: Test estimation of sequencing error rate from fasta of pairs of SNP alleles (first allele known not to be present, second known to be homozygous present) - another test ... passed
 
 --Run Summary: Type      Total     Ran  Passed  Failed
                suites        1       1     n/a       0
-               tests        70      70      70       0
-               asserts    4911    4911    4911       0
+               tests        69      69      69       0
+               asserts   12323   12323   12323       0
