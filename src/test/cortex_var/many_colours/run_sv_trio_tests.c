@@ -38,6 +38,7 @@
 #include <test_db_complex_genotyping.h>
 #include <test_genome_complexity.h>
 #include <test_seq_error_estimation.h>
+#include "test_error_correction.h"
 #include <CUnit.h>
 #include <Basic.h>
 
@@ -59,7 +60,7 @@ int  main()
 
   /* add the tests to the suites */
 
-
+  /*
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge copy", test_get_edge_copy)) {
     CU_cleanup_registry();
@@ -407,7 +408,7 @@ int  main()
       }
 
 
-   /*
+
 
    //if (NULL == CU_add_test(pPopGraphSuite, "Test function for estimating genome complexity - first test", test_count_reads_where_snp_makes_clean_bubble1 ))
    //   {
@@ -416,7 +417,7 @@ int  main()
   //    }
 
 
-  */ 
+
 
 
 
@@ -468,6 +469,14 @@ int  main()
       }
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test estimation of sequencing error rate from fasta of pairs of SNP alleles (first allele known not to be present, second known to be homozygous present) - another test", test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta_test2 ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
+*/
+
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for mutating specific bases in a string", test_base_mutator ))
       {
 	CU_cleanup_registry();
 	return CU_get_error();

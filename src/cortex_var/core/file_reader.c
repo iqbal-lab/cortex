@@ -139,7 +139,7 @@ char mkpath(const char *path, mode_t mode)
 
 void invalid_base_warning(SeqFile *sf, char b)
 {
-  warn("Invalid sequence [%c] [path: %s; line: %lu]\n",
+  warn("FYI (no cause for great concern) - Invalid sequence [%c] [path: %s; line: %lu]\n",
        b, seq_get_path(sf), seq_curr_line_number(sf));
 }
 
