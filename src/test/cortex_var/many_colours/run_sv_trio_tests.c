@@ -482,6 +482,12 @@ int  main()
 	return CU_get_error();
       }
 
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for error-correcting reads to match a trusted graph", test_fix_end_if_unambiguous ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
 
 
  
