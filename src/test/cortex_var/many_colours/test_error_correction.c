@@ -238,7 +238,7 @@ void test_check_kmers_good()
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
     NULL, 0);
 
-  //read a small FASTQ
+  //read a small FASTQ - all these kmers ARE int he graph and have high quality
   // @zam all qual 30
   // ACGGCTTTACGGT
   // +
@@ -282,14 +282,14 @@ void test_check_kmers_good()
   int j;
   for (j=0; j<read_len-5+1; j++)
     {
-      CU_ASSERT(kmers_in_graph[j]==1);
+      CU_ASSERT(kmers_in_graph[j]==1);//left at the default
     }
 
   for (j=0; j<read_len; j++)
     {
       CU_ASSERT(quals_good[j]==1);
     }
-  CU_ASSERT(first_good_kmer==0);
+  CU_ASSERT(first_good_kmer==-1);
 
   //now try again, but change the quality threshold so that all the qualities fail
   //correct behaviour is still to print it uncorrected, as all the kmers are in the graph
@@ -337,6 +337,7 @@ void test_check_kmers_good()
   read_len = seq_get_length(sf);
   seq_file_close(sf);
 
+  first_good_kmer=-1;
   set_int_array(kmers_in_graph, read_len-5+1, 1);
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=20+33;
@@ -378,6 +379,98 @@ void test_check_kmers_good()
   CU_ASSERT(quals_good[12]==0);
 
   CU_ASSERT(first_good_kmer==0);
+
+
+  //now shift the quality threshold to just above 30, so all the bases have low qual
+  first_good_kmer=-1;
+  set_int_array(kmers_in_graph, read_len-5+1, 1);
+  set_int_array(quals_good, read_len, 1);
+  qual_cutoff=31+33;
+  result = check_kmers_good(read_seq, read_qual,
+			    read_len-5+1, read_len,
+			    kmers_in_graph, quals_good,
+			    qual_cutoff, &first_good_kmer,
+			    db_graph);
+
+
+  CU_ASSERT(result==PrintCorrected);
+
+  CU_ASSERT(kmers_in_graph[0]==1);  
+  CU_ASSERT(kmers_in_graph[1]==1);  
+  CU_ASSERT(kmers_in_graph[2]==1);  
+  CU_ASSERT(kmers_in_graph[3]==0);  
+  CU_ASSERT(kmers_in_graph[4]==0);  
+  CU_ASSERT(kmers_in_graph[5]==0);  
+  CU_ASSERT(kmers_in_graph[6]==0);  
+  CU_ASSERT(kmers_in_graph[7]==0);  
+  CU_ASSERT(kmers_in_graph[8]==1);  
+
+
+  CU_ASSERT(quals_good[0]==0);
+  CU_ASSERT(quals_good[1]==0);
+  CU_ASSERT(quals_good[2]==0);
+  CU_ASSERT(quals_good[3]==0);
+  CU_ASSERT(quals_good[4]==0);
+  CU_ASSERT(quals_good[5]==0);
+  CU_ASSERT(quals_good[6]==0);
+  CU_ASSERT(quals_good[7]==0);
+  CU_ASSERT(quals_good[8]==0);
+  CU_ASSERT(quals_good[9]==0);
+  CU_ASSERT(quals_good[10]==0);
+  CU_ASSERT(quals_good[11]==0);
+  CU_ASSERT(quals_good[12]==0);
+
+  CU_ASSERT(first_good_kmer==0);
+
+
+
+
+  //now shift the quality threshold to just below 10, so all bases have high qual
+  //so now it doesn't matter about the kmers, whether they are in or out, you definitely
+  //print the read uncorrected.
+  set_int_array(kmers_in_graph, read_len-5+1, 1);
+  set_int_array(quals_good, read_len, 1);
+  qual_cutoff=9+33;
+  first_good_kmer=-1;
+  result = check_kmers_good(read_seq, read_qual,
+			    read_len-5+1, read_len,
+			    kmers_in_graph, quals_good,
+			    qual_cutoff, &first_good_kmer,
+			    db_graph);
+
+
+  CU_ASSERT(result==PrintUncorrected);
+
+  //note this - the values are all one because they
+  //have not been set. Since the qualities are all High
+  // it immedietaly exits without checking if the kmers are in the graph
+  CU_ASSERT(kmers_in_graph[0]==1);  
+  CU_ASSERT(kmers_in_graph[1]==1);  
+  CU_ASSERT(kmers_in_graph[2]==1);  
+  CU_ASSERT(kmers_in_graph[3]==1);  
+  CU_ASSERT(kmers_in_graph[4]==1);  
+  CU_ASSERT(kmers_in_graph[5]==1);  
+  CU_ASSERT(kmers_in_graph[6]==1);  
+  CU_ASSERT(kmers_in_graph[7]==1);  
+  CU_ASSERT(kmers_in_graph[8]==1);  
+
+
+  CU_ASSERT(quals_good[0]==1);
+  CU_ASSERT(quals_good[1]==1);
+  CU_ASSERT(quals_good[2]==1);
+  CU_ASSERT(quals_good[3]==1);
+  CU_ASSERT(quals_good[4]==1);
+  CU_ASSERT(quals_good[5]==1);
+  CU_ASSERT(quals_good[6]==1);
+  CU_ASSERT(quals_good[7]==1);
+  CU_ASSERT(quals_good[8]==1);
+  CU_ASSERT(quals_good[9]==1);
+  CU_ASSERT(quals_good[10]==1);
+  CU_ASSERT(quals_good[11]==1);
+  CU_ASSERT(quals_good[12]==1);
+
+  //this also not set
+  CU_ASSERT(first_good_kmer==-1);
 
 
 

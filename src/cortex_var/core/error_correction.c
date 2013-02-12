@@ -177,6 +177,8 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 //populate two arrays of integers, represent the kmers in the read
 //one says whether each kmer is in the graph
 //one says whether the final base has quality above the threshold.
+//if return value is PrintUncorrected, then kmers_in_graph values may NOT be set
+//also first_good_kmer
 ReadCorrectionDecison check_kmers_good(StrBuf* seq, StrBuf* qual, 
 				       int num_kmers, int read_len,
 				       int* kmers_in_graph, int* quals_good,
@@ -193,6 +195,26 @@ ReadCorrectionDecison check_kmers_good(StrBuf* seq, StrBuf* qual,
   boolean all_kmers_in_graph=true;
   boolean all_qualities_good=true;
   boolean found_first_good_kmer=false;
+
+  for (i=0; i<read_len; i++)
+    {
+      //check quality good.
+      if (strbuf_get_char(qual, i) < quality_cutoff)
+	{
+	  quals_good[i]=0;
+	  all_qualities_good=false;
+	}
+    }
+
+  if (all_qualities_good==true)
+    {
+      //performance choice - exit the function immediately,
+      //as we know we will print uncorrected.
+      //saves us the bother of making hash queries
+      //it does mean the contens of kmers_in_graph are UNSET
+      return PrintUncorrected;
+    }
+
   for (i=0; i<num_kmers; i++)
     {
       //check kmer in graph
@@ -225,25 +247,12 @@ ReadCorrectionDecison check_kmers_good(StrBuf* seq, StrBuf* qual,
 	    }
 	}
     }
-  for (i=0; i<read_len; i++)
-    {
-      //check quality good.
-      if (strbuf_get_char(qual, i) < quality_cutoff)
-	{
-	  quals_good[i]=0;
-	  all_qualities_good=false;
-	}
-    }
 
   if (all_kmers_not_in_graph==true)
     {
       return Discard;
     }
   else if (all_kmers_in_graph==true)
-    {
-      return PrintUncorrected;
-    }
-  else if (all_qualities_good==true)
     {
       return PrintUncorrected;
     }
