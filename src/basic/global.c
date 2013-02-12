@@ -64,6 +64,14 @@ void set_string_to_null(char* str, int len)
   memset(str, 0, sizeof(char)*len);
 }
 
+void set_int_array(int* arr, int len, int val)
+{
+  int  i;
+  for (i=0; i<len; i++)
+    {
+      arr[i]=val;
+    }
+}
 
 void die(const char* fmt, ...)
 {

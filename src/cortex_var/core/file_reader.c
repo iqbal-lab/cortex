@@ -823,10 +823,10 @@ void load_se_filelist_into_graph_colour(
 {
   qual_thresh += ascii_fq_offset;
 
-  /* COMMENT_OUT_DURING_TESTS */
+  /* COMMENT_OUT_DURING_TESTS 
   printf(is_colour_list ? "Load single-ended sequence colour list\n"
-	 : "Load single-ended files\n");
-  /*  */
+	   : "Load single-ended files\n");
+    */
 
   // Get absolute path
   char absolute_path[PATH_MAX+1];
@@ -837,9 +837,9 @@ void load_se_filelist_into_graph_colour(
     die("Cannot get absolute path to filelist of SE files: %s\n", se_filelist_path);
   }
 
-  /* COMMENT_OUT_DURING_TESTS */
+  /* COMMENT_OUT_DURING_TESTS 
   printf("  path: %s\n", se_filelist_abs_path);
-  /*  */
+    */
   FILE* se_list_file = fopen(se_filelist_abs_path, "r");
 
   if(se_list_file == NULL)
@@ -922,14 +922,14 @@ void load_se_filelist_into_graph_colour(
 
 
       // Print SE stats for this set of files
-  /* COMMENT_OUT_DURING_TESTS */
+  /* COMMENT_OUT_DURING_TESTS 
       printf("\nNum SE files loaded:%u\n", se_files_loaded);
       printf("\tKmers:%llu\n", hash_table_get_unique_kmers(db_graph));
       printf("\tNumber of bad reads:%llu\n", se_bad_reads);
       printf("\tNumber of dupe reads:%llu\n", se_dup_reads);
       printf("\tSE sequence parsed:%llu\n", se_bases_read);
       printf("\tTotal SE sequence that passed filters:%llu\n", se_bases_loaded);
-      /* */
+       */
 }
 
 // Go through all the files, loading data into the graph
@@ -944,10 +944,10 @@ void load_pe_filelists_into_graph_colour(
 {
   qual_thresh += ascii_fq_offset;
 
-  /* COMMENT_OUT_DURING_TESTS */
+  /* COMMENT_OUT_DURING_TESTS 
   printf(is_colour_lists ? "Load paired-ended sequence colour list\n"
                          : "Load paired-ended files\n");
-  /*  */
+    */
   // Get absolute paths
   char absolute_path1[PATH_MAX+1], absolute_path2[PATH_MAX+1];
 
@@ -1037,14 +1037,14 @@ void load_pe_filelists_into_graph_colour(
             line2->buff);
       }
 
-      /* COMMENT_OUT_DURING_TESTS */
+      /* COMMENT_OUT_DURING_TESTS 
       // Print file paths
       printf(is_colour_lists ? "Paired-end colourlists:\n"
                              : "Paired-end seq files:\n");
 
       printf("  File 1: %s\n", path_ptr1);
       printf("  File 2: %s\n", path_ptr2);
-      /*   */
+        */
 
       // Read
       if(is_colour_lists)
@@ -1092,14 +1092,14 @@ void load_pe_filelists_into_graph_colour(
   *total_bases_loaded += pe_bases_loaded;
 
   // Print SE stats for this set of files
-  /* COMMENT_OUT_DURING_TESTS */
+  /* COMMENT_OUT_DURING_TESTS 
   printf("\nNum PE file pairs loaded:%u\n", pe_file_pairs_loaded);
   printf("\tKmers:%llu\n", hash_table_get_unique_kmers(db_graph));
   printf("\tNumber of bad reads:%llu\n", pe_bad_reads);
   printf("\tNumber of dupe reads:%llu\n", pe_dup_reads);
   printf("\tPE sequence parsed:%llu\n", pe_bases_read);
   printf("\tTotal PE sequence that passed filters:%llu\n", pe_bases_loaded);
-  /*   */
+     */
 }
 
 
@@ -1751,9 +1751,9 @@ long long load_single_colour_binary_data_from_filename_into_graph(char* filename
       die("Called load_single_colour_binary_data_from_filename_into_graph and specified as clean-colour, colour %d, when this executable is compiled for %d colours only. Exit.\n", colour_clean, NUMBER_OF_COLOURS);
     }
 
-  /* COMMENT_OUT_DURING_TESTS */
+  /* COMMENT_OUT_DURING_TESTS 
   printf("Open single colour binary: %s\n", filename);
-  /*  */
+    */
 
   FILE* fp_bin = fopen(filename, "r");
   long long  seq_length = 0;
@@ -1858,9 +1858,9 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
     die("Cannot get absolute path to ctxlist: %s\n", filename);
   }
 
-  /* COMMENT_OUT_DURING_TESTS */
+  /* COMMENT_OUT_DURING_TESTS 
   printf("loading ctxlist: %s\n", filename_abs_path);
-  /*  */
+   */
 
   FILE* fptr = fopen(filename, "r");
   if (fptr == NULL)
@@ -1910,10 +1910,10 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
       
       all_entries_are_unique = false;
 
-      /* COMMENT_OUT_DURING_TESTS */
+      /* COMMENT_OUT_DURING_TESTS 
       printf("Loaded next binary; total kmers in graph is now %qd\n",
              hash_table_get_unique_kmers(db_graph));
-      /*  */
+       */
 
       //Now get metadata.
       boolean do_not_copy_poolcleaning_metadata_from_local_ginfo =only_load_kmers_already_in_hash;
@@ -1967,9 +1967,9 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
   // Get directory path
   StrBuf *dir = file_reader_get_strbuf_of_dir_path(filename_abs_path);
 
-  /* COMMENT_OUT_DURING_TESTS */
+  /* COMMENT_OUT_DURING_TESTS 
   printf("Open this list of colours: %s\n", filename_abs_path);
-  /* */
+   */
   FILE* fp = fopen(filename, "r");
   if (fp == NULL)
   {
