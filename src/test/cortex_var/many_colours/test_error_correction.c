@@ -199,7 +199,7 @@ void test_fix_end_if_unambiguous()
 
 
 
-void test_check_kmers_good()
+void test_populate_kmer_and_qual_int_arrays()
 {
   //pass in a read with chosen qualities, and check the zeroes on quals work, and the kmers.
   //simple test sufficient.
@@ -272,7 +272,7 @@ void test_check_kmers_good()
   char qual_cutoff=20+33;//33=ascii FASTQ sanger offset
   int first_good_kmer=-1;
   
-  ReadCorrectionDecison result = check_kmers_good(read_seq, read_qual,
+  ReadCorrectionDecison result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
 						  read_len-5+1, read_len,
 						  kmers_in_graph, quals_good,
 						  qual_cutoff, &first_good_kmer,
@@ -296,7 +296,7 @@ void test_check_kmers_good()
   qual_cutoff=90+33;
   set_int_array(kmers_in_graph, read_len-5+1, 1);
   set_int_array(quals_good, read_len, 1);
-  result = check_kmers_good(read_seq, read_qual,
+  result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
 			    read_len-5+1, read_len,
 			    kmers_in_graph, quals_good,
 			    qual_cutoff, &first_good_kmer,
@@ -341,7 +341,7 @@ void test_check_kmers_good()
   set_int_array(kmers_in_graph, read_len-5+1, 1);
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=20+33;
-  result = check_kmers_good(read_seq, read_qual,
+  result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
 			    read_len-5+1, read_len,
 			    kmers_in_graph, quals_good,
 			    qual_cutoff, &first_good_kmer,
@@ -386,7 +386,7 @@ void test_check_kmers_good()
   set_int_array(kmers_in_graph, read_len-5+1, 1);
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=31+33;
-  result = check_kmers_good(read_seq, read_qual,
+  result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
 			    read_len-5+1, read_len,
 			    kmers_in_graph, quals_good,
 			    qual_cutoff, &first_good_kmer,
@@ -432,11 +432,11 @@ void test_check_kmers_good()
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=9+33;
   first_good_kmer=-1;
-  result = check_kmers_good(read_seq, read_qual,
-			    read_len-5+1, read_len,
-			    kmers_in_graph, quals_good,
-			    qual_cutoff, &first_good_kmer,
-			    db_graph);
+  result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
+					     read_len-5+1, read_len,
+					     kmers_in_graph, quals_good,
+					     qual_cutoff, &first_good_kmer,
+					     db_graph);
 
 
   CU_ASSERT(result==PrintUncorrected);
@@ -471,6 +471,146 @@ void test_check_kmers_good()
 
   //this also not set
   CU_ASSERT(first_good_kmer==-1);
+
+
+
+
+
+
+  //now try a read where all kmers are not in the graph, but high quality
+  //  @zam all qual 60, no kmers in graph
+  //  ATATATATATAT
+  //  +
+  //  ]]]]]]]]]]]]
+
+  //this read should be printed uncorrected, as all high quality
+
+  sf = seq_file_open("../data/test/error_correction/fq3_for_comparing_with_graph3.fq");
+  if(sf == NULL)
+    {
+      // Error opening file
+      fprintf(stderr, "Error: cannot read seq file '%s'\n", "../data/test/error_correction/fq3_for_comparing_with_graph3.fq");
+      exit(EXIT_FAILURE);
+    }
+
+  seq_next_read(sf);
+  seq_read_all_bases(sf, read_seq);
+  seq_read_all_quals(sf, read_qual);
+  read_len = seq_get_length(sf);
+  seq_file_close(sf);
+
+  first_good_kmer=-1;
+  set_int_array(kmers_in_graph, read_len-5+1, 1);
+  set_int_array(quals_good, read_len, 1);
+  qual_cutoff=10+33;
+  result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
+					     read_len-5+1, read_len,
+					     kmers_in_graph, quals_good,
+					     qual_cutoff, &first_good_kmer,
+					     db_graph);
+
+
+
+  CU_ASSERT(result==PrintUncorrected);
+
+  //hence these guys are not modified or set
+  CU_ASSERT(kmers_in_graph[0]==1);  
+  CU_ASSERT(kmers_in_graph[1]==1);  
+  CU_ASSERT(kmers_in_graph[2]==1);  
+  CU_ASSERT(kmers_in_graph[3]==1);  
+  CU_ASSERT(kmers_in_graph[4]==1);  
+  CU_ASSERT(kmers_in_graph[5]==1);  
+  CU_ASSERT(kmers_in_graph[6]==1);  
+  CU_ASSERT(kmers_in_graph[7]==1);  
+
+  CU_ASSERT(quals_good[0]==1);
+  CU_ASSERT(quals_good[1]==1);
+  CU_ASSERT(quals_good[2]==1);
+  CU_ASSERT(quals_good[3]==1);
+  CU_ASSERT(quals_good[4]==1);
+  CU_ASSERT(quals_good[5]==1);
+  CU_ASSERT(quals_good[6]==1);
+  CU_ASSERT(quals_good[7]==1);
+  CU_ASSERT(quals_good[8]==1);
+  CU_ASSERT(quals_good[9]==1);
+  CU_ASSERT(quals_good[10]==1);
+  CU_ASSERT(quals_good[11]==1);
+
+  //not set also
+  CU_ASSERT(first_good_kmer==-1);
+
+
+
+
+  //now try a read where all kmers are not in the graph, and NOT all high quality
+  // @zam all qual 60, except one with low quality 3, but no kmers in graph
+  // ATATATATATAT
+  //+
+  //]]]]]]]]]]]#
+
+
+  //this read should be discarded
+
+  sf = seq_file_open("../data/test/error_correction/fq4_for_comparing_with_graph3.fq");
+  if(sf == NULL)
+    {
+      // Error opening file
+      fprintf(stderr, "Error: cannot read seq file '%s'\n", "../data/test/error_correction/fq4_for_comparing_with_graph3.fq");
+      exit(EXIT_FAILURE);
+    }
+
+  seq_next_read(sf);
+  seq_read_all_bases(sf, read_seq);
+  seq_read_all_quals(sf, read_qual);
+  read_len = seq_get_length(sf);
+  seq_file_close(sf);
+
+  first_good_kmer=-1;
+  set_int_array(kmers_in_graph, read_len-5+1, 1);
+  set_int_array(quals_good, read_len, 1);
+  qual_cutoff=10+33;
+  result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
+					     read_len-5+1, read_len,
+					     kmers_in_graph, quals_good,
+					     qual_cutoff, &first_good_kmer,
+					     db_graph);
+
+
+
+  CU_ASSERT(result==Discard);
+
+  //hence these guys are not modified or set
+  CU_ASSERT(kmers_in_graph[0]==0);  
+  CU_ASSERT(kmers_in_graph[1]==0);  
+  CU_ASSERT(kmers_in_graph[2]==0);  
+  CU_ASSERT(kmers_in_graph[3]==0);  
+  CU_ASSERT(kmers_in_graph[4]==0);  
+  CU_ASSERT(kmers_in_graph[5]==0);  
+  CU_ASSERT(kmers_in_graph[6]==0);  
+  CU_ASSERT(kmers_in_graph[7]==0);  
+
+  CU_ASSERT(quals_good[0]==1);
+  CU_ASSERT(quals_good[1]==1);
+  CU_ASSERT(quals_good[2]==1);
+  CU_ASSERT(quals_good[3]==1);
+  CU_ASSERT(quals_good[4]==1);
+  CU_ASSERT(quals_good[5]==1);
+  CU_ASSERT(quals_good[6]==1);
+  CU_ASSERT(quals_good[7]==1);
+  CU_ASSERT(quals_good[8]==1);
+  CU_ASSERT(quals_good[9]==1);
+  CU_ASSERT(quals_good[10]==1);
+  CU_ASSERT(quals_good[11]==0);
+
+  //not set also
+  CU_ASSERT(first_good_kmer==-1);
+
+
+
+
+
+
+
 
 
 

@@ -80,10 +80,11 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
       //populate these int arrays, showing which kmers are in the graph, and have all quals >threshold
       //returns Discard if all kmers are not in the graph of known kmers.
       int first_good=0;
-      ReadCorrectionDecison dec = check_kmers_good(buf_seq, buf_qual, num_kmers, read_len,
-						   kmer_in_graph,quality_good, 
-						   quality_cutoff, &first_good, db_graph);
-
+      ReadCorrectionDecison dec = 
+	populate_kmer_and_qual_int_arrays(buf_seq, buf_qual, num_kmers, read_len,
+					  kmer_in_graph,quality_good, 
+					  quality_cutoff, &first_good, db_graph);
+      
 
       //*** start of local functions
       int i;
@@ -179,11 +180,11 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 //one says whether the final base has quality above the threshold.
 //if return value is PrintUncorrected, then kmers_in_graph values may NOT be set
 //also first_good_kmer
-ReadCorrectionDecison check_kmers_good(StrBuf* seq, StrBuf* qual, 
-				       int num_kmers, int read_len,
-				       int* kmers_in_graph, int* quals_good,
-				       char quality_cutoff, int* first_good_kmer,
-				       dBGraph* dbg)
+ReadCorrectionDecison populate_kmer_and_qual_int_arrays(StrBuf* seq, StrBuf* qual, 
+							int num_kmers, int read_len,
+							int* kmers_in_graph, int* quals_good,
+							char quality_cutoff, int* first_good_kmer,
+							dBGraph* dbg)
 {
   int i;
   BinaryKmer curr_kmer;

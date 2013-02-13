@@ -76,11 +76,11 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 					     int bases_modified_count_array_size,
 					     HandleLowQualUncorrectable policy);
 
-ReadCorrectionDecison check_kmers_good(StrBuf* seq, StrBuf* qual, 
-				       int num_kmers, int read_len,
-				       int* kmers_in_graph, int* quals_good,
-				       char quality_cutoff, int* first_good_kmer, 
-				       dBGraph* db_graph);
+ReadCorrectionDecison populate_kmer_and_qual_int_arrays(StrBuf* seq, StrBuf* qual,
+							int num_kmers, int read_len,
+							int* kmers_in_graph, int* quals_good,
+							char quality_cutoff, int* first_good_kmer, 
+							dBGraph* db_graph);
   
 
 boolean fix_end_if_unambiguous(WhichEndOfKmer which_end, StrBuf* read_buffer, int pos, 
