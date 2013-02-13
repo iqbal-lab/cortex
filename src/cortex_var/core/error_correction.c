@@ -38,8 +38,7 @@
 
 
 inline void error_correct_file_against_graph(char* fastq_file, char quality_cutoff, char ascii_qual_offset,
-					     dBGraph *db_graph, 
-					     unsigned long long  *bases_modified,//total bases modified in dataset
+					     dBGraph *db_graph, char* outfile,
 					     int *bases_modified_count_array,//distribution across reads; how many of the read_length bases are fixed
 					     int *posn_modified_count_array,//where in the read are we making corrections?
 					     int bases_modified_count_array_size,
@@ -48,6 +47,12 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
   quality_cutoff+=ascii_qual_offset;
   short kmer_size = db_graph->kmer_size;
   int count_corrected_bases=0;
+
+  FILE* out_fp = fopen(outfile, "w");
+  if (out_fp==NULL)
+    {
+      die("Unable to open output file %s\n", outfile);
+    }
 
   SeqFile *sf = seq_file_open(fastq_file);
   if(sf == NULL)
@@ -72,22 +77,23 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
       seq_read_all_quals(sf, buf_qual);
       int read_len = seq_get_length(sf);
       int num_kmers = read_len-kmer_size+1;
-      int kmer_in_graph[num_kmers];
-      set_int_array(kmer_in_graph, num_kmers, 1);
       int quality_good[read_len];
       set_int_array(quality_good, read_len, 1);
 
-      //populate these int arrays, showing which kmers are in the graph, and have all quals >threshold
-      //returns Discard if all kmers are not in the graph of known kmers.
-      int first_good=0;
+      int first_good=0;//index of first kmer in graph
+
+      //populate the qual array showing which bases have qual >threshold
+      //if all quals are high, will Print uncorrected
+      //else, if all kmers NOT in graph, will discard or print uncorrected depending on policy
+      //else print corrected.
       ReadCorrectionDecison dec = 
-	populate_kmer_and_qual_int_arrays(buf_seq, buf_qual, num_kmers, read_len,
-					  kmer_in_graph,quality_good, 
-					  quality_cutoff, &first_good, db_graph);
+	get_first_good_kmer_and_populate_qual_array(buf_seq, buf_qual, num_kmers, read_len,
+						    quality_good, quality_cutoff, 
+						    &first_good, db_graph, policy);
       
 
       //*** start of local functions
-      int i;
+
       //if going right, keep going to right hand end. if going left, keep going to left hand end
       boolean condition(WhichEndOfKmer direction, int pos)
       {
@@ -101,6 +107,27 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	  }
 	return false;
       }
+      boolean kmer_is_in_graph(char* kmer, dBGraph* db_g)
+      {
+	BinaryKmer curr_kmer;
+	if (seq_to_binary_kmer(kmer, kmer_size, &curr_kmer)==NULL)
+	  {
+	    //is an N
+	    return false;
+	  }
+
+	BinaryKmer temp_key;
+	element_get_key(&curr_kmer, kmer_size, &temp_key);
+	dBNode* node = hash_table_find(&temp_key, db_g);
+	if (node==NULL)
+	  {
+	    return false;
+	  }
+	else
+	  {
+	    return true;
+	  }
+      }
       int increment(int i, WhichEndOfKmer direction)
       {
 	if (direction==Right)
@@ -112,64 +139,74 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	    return i-1;
 	  }
       }
-      char working_str[db_graph->kmer_size+1];
+      char working_str[kmer_size+1];
 
-
-      void check_bases_to_end_of_read(ReadCorrectionDecison* decision, WhichEndOfKmer direction)
+      // start_pos is in kmer units
+      void check_bases_to_end_of_read(int start_pos, ReadCorrectionDecison* decision, WhichEndOfKmer direction)
 
       {
-	int offset=0;
-	if (direction=Right)
+	if ((start_pos<0) || (start_pos>=num_kmers))
 	  {
-	    offset= db_graph->kmer_size-1;
+	    return;
 	  }
-	while ( (*decision==PrintCorrected) && (condition(direction,i)==true) )
+	int pos=start_pos;
+	int offset=0;
+	if (direction==Right)
 	  {
-	    if ( (kmer_in_graph[i]==1) || (quality_good[i+offset]==1) )
-		{
-		  increment(i, direction);
+	    offset= kmer_size-1;
+	  }
+	char local_kmer[kmer_size+1];
+	local_kmer[kmer_size]='\0';	
+	BinaryKmer curr_kmer;
+
+	while ( (*decision==PrintCorrected) && (condition(direction,pos)==true) )
+	  {
+	    strncpy(local_kmer, buf_seq->buff+pos, kmer_size);	  
+
+	    if (quality_good[pos+offset]==1) 
+	      {
+		//nothing to do
+	      }
+	    else if (kmer_is_in_graph(local_kmer, db_graph)==true)
+	      {
+		//nothing to do - don't correct if kmer is in graph
+	      }
+	    else//kmer not in graph and quality bad
+	      {
+		boolean fixed = fix_end_if_unambiguous(direction, buf_seq, pos, 
+						       working_buf, working_str, db_graph);
+		if ( (policy==DiscardReadIfLowQualBaseUnCorrectable) 
+		     &&  
+		     (fixed==false) )
+		  {
+		    *decision=Discard;
+		  }
+		if (fixed==true)
+		  {
+		    count_corrected_bases++;
+		    posn_modified_count_array[offset+pos]++;
+		  }
 		}
-	      else//kmer not in graph and quality bad
-		{
-		  boolean fixed = fix_end_if_unambiguous(direction, buf_seq, i, 
-							 working_buf, working_str, db_graph);
-		  if ( (policy==DiscardReadIfLowQualBaseUnCorrectable) 
-		       &&  
-		       (fixed==false) )
-		    {
-		      *decision=Discard;
-		    }
-		  if (fixed==true)
-		    {
-		      count_corrected_bases++;
-		    }
-		}
-	    }
+	    pos = increment(pos, direction);
+	  }
 	
       }			      
       //end of local functions
 
       if (dec==PrintCorrected)
 	{
-	  i=first_good+1;//i lies between 0 and num_kmers-1
-	  if (i<num_kmers)
-	    {
-	      check_bases_to_end_of_read(&dec, Right);
-	    }
-
-	  i=first_good-1;
-	  if (i>=0)
-	    {
-	      check_bases_to_end_of_read(&dec, Left);
-	    }
+	  check_bases_to_end_of_read(first_good+1, &dec, Right);
+	  check_bases_to_end_of_read(first_good-1, &dec, Left);
 	}
       if (dec!=Discard)
 	{
-	  printf(">%s\n%s\n", seq_get_read_name(sf), strbuf_as_str(buf_seq));
+	  fprintf(out_fp, ">%s\n%s\n", seq_get_read_name(sf), strbuf_as_str(buf_seq));
+	  bases_modified_count_array[count_corrected_bases]++;
 	}
     }
 
     seq_file_close(sf);
+    fclose(out_fp);
     strbuf_free(buf_seq);
     strbuf_free(buf_qual);
     strbuf_free(working_buf);
@@ -180,11 +217,11 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 //one says whether the final base has quality above the threshold.
 //if return value is PrintUncorrected, then kmers_in_graph values may NOT be set
 //also first_good_kmer
-ReadCorrectionDecison populate_kmer_and_qual_int_arrays(StrBuf* seq, StrBuf* qual, 
-							int num_kmers, int read_len,
-							int* kmers_in_graph, int* quals_good,
-							char quality_cutoff, int* first_good_kmer,
-							dBGraph* dbg)
+ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, StrBuf* qual, 
+								  int num_kmers, int read_len,
+								  int* quals_good,
+								  char quality_cutoff, int* first_good_kmer,
+								  dBGraph* dbg, HandleLowQualUncorrectable policy)
 {
   int i;
   BinaryKmer curr_kmer;
@@ -192,8 +229,6 @@ ReadCorrectionDecison populate_kmer_and_qual_int_arrays(StrBuf* seq, StrBuf* qua
   dBNode* curr_node;
   char local_kmer[dbg->kmer_size+1];
   local_kmer[dbg->kmer_size]='\0';
-  boolean all_kmers_not_in_graph=true;
-  boolean all_kmers_in_graph=true;
   boolean all_qualities_good=true;
   boolean found_first_good_kmer=false;
 
@@ -212,11 +247,10 @@ ReadCorrectionDecison populate_kmer_and_qual_int_arrays(StrBuf* seq, StrBuf* qua
       //performance choice - exit the function immediately,
       //as we know we will print uncorrected.
       //saves us the bother of making hash queries
-      //it does mean the contens of kmers_in_graph are UNSET
       return PrintUncorrected;
     }
 
-  for (i=0; i<num_kmers; i++)
+  for (i=0; (i<num_kmers) && (found_first_good_kmer==false); i++)
     {
       //check kmer in graph
       strncpy(local_kmer, seq->buff+i, dbg->kmer_size);
@@ -224,8 +258,6 @@ ReadCorrectionDecison populate_kmer_and_qual_int_arrays(StrBuf* seq, StrBuf* qua
       if (seq_to_binary_kmer(local_kmer, dbg->kmer_size, &curr_kmer)==NULL)
 	{
 	  //there is an N
-	  kmers_in_graph[i]=0;
-	  all_kmers_in_graph=false;
 	}
       else
 	{
@@ -233,36 +265,30 @@ ReadCorrectionDecison populate_kmer_and_qual_int_arrays(StrBuf* seq, StrBuf* qua
 	  curr_node = hash_table_find(&tmp_key, dbg);
 	  if (curr_node==NULL)
 	    {
-	      kmers_in_graph[i]=0;
-	      all_kmers_in_graph=false;
 	    }
 	  else
 	    {
-	      all_kmers_not_in_graph=false;
-	      if (found_first_good_kmer==false)
-		{
-		  found_first_good_kmer=true;
-		  *first_good_kmer=i;
-		}
-
+	      found_first_good_kmer=true;
+	      *first_good_kmer=i;
 	    }
 	}
     }
 
-  if (all_kmers_not_in_graph==true)
+  if (found_first_good_kmer==false)
     {
-      return Discard;
-    }
-  else if (all_kmers_in_graph==true)
-    {
-      return PrintUncorrected;
+      //no good kmers, and not all bases are high quality.
+      if (policy==DiscardReadIfLowQualBaseUnCorrectable)
+	{
+	  return Discard;
+	}
+      else
+	{
+	  return PrintUncorrected;
+	}
     }
   else
     {
       return PrintCorrected;
-      //potential for optimising here. Could compare the integer arrays and check if
-      //the kmers that are absent have low quality.Not sure it gains me anything to do it here, so wont for now
-
     }
 }
 				       

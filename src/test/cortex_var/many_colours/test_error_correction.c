@@ -199,10 +199,14 @@ void test_fix_end_if_unambiguous()
 
 
 
-void test_populate_kmer_and_qual_int_arrays()
+void test_get_first_good_kmer_and_populate_qual_array()
 {
-  //pass in a read with chosen qualities, and check the zeroes on quals work, and the kmers.
-  //simple test sufficient.
+  //pass in a read with chosen qualities, and check 
+  //we correctly get int arrays describing which bases have good quals
+  //and which kmers are in the graph
+  //this function makes a performance choice, no abort and not bother
+  //populating the kmer array as soon as we find out all the qualities are high,
+  //as we immediately know we are not going to do any error-correction.
 
 
   //first set up the hash/graph
@@ -263,8 +267,6 @@ void test_populate_kmer_and_qual_int_arrays()
 
   
   //now let's check
-  int kmers_in_graph[read_len-5+1];
-  set_int_array(kmers_in_graph, read_len-5+1, 1);
   int quals_good[read_len];
   set_int_array(quals_good, read_len, 1);
 
@@ -272,47 +274,75 @@ void test_populate_kmer_and_qual_int_arrays()
   char qual_cutoff=20+33;//33=ascii FASTQ sanger offset
   int first_good_kmer=-1;
   
-  ReadCorrectionDecison result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
-						  read_len-5+1, read_len,
-						  kmers_in_graph, quals_good,
-						  qual_cutoff, &first_good_kmer,
-						  db_graph);
+  ReadCorrectionDecison result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+								   read_len-5+1, read_len,
+								   quals_good,
+								   qual_cutoff, &first_good_kmer,
+								   db_graph, DontWorryAboutLowQualBaseUnCorrectable);
   CU_ASSERT(result==PrintUncorrected);
   
   int j;
-  for (j=0; j<read_len-5+1; j++)
-    {
-      CU_ASSERT(kmers_in_graph[j]==1);//left at the default
-    }
-
   for (j=0; j<read_len; j++)
     {
       CU_ASSERT(quals_good[j]==1);
     }
   CU_ASSERT(first_good_kmer==-1);
 
-  //now try again, but change the quality threshold so that all the qualities fail
-  //correct behaviour is still to print it uncorrected, as all the kmers are in the graph
-  qual_cutoff=90+33;
-  set_int_array(kmers_in_graph, read_len-5+1, 1);
+  //result should be independent of policy
   set_int_array(quals_good, read_len, 1);
-  result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
-			    read_len-5+1, read_len,
-			    kmers_in_graph, quals_good,
-			    qual_cutoff, &first_good_kmer,
-			    db_graph);
+  first_good_kmer=-1;
+
+
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer,
+						       db_graph, DiscardReadIfLowQualBaseUnCorrectable);
   CU_ASSERT(result==PrintUncorrected);
   
-  for (j=0; j<read_len-5+1; j++)
+  for (j=0; j<read_len; j++)
     {
-      CU_ASSERT(kmers_in_graph[j]==1);
+      CU_ASSERT(quals_good[j]==1);
     }
+  CU_ASSERT(first_good_kmer==-1);
 
+
+
+
+  //now try again, but change the quality threshold so that all the qualities fail
+
+  qual_cutoff=90+33;
+  first_good_kmer=-1;
+  set_int_array(quals_good, read_len, 1);
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer,
+						       db_graph, DontWorryAboutLowQualBaseUnCorrectable);
+  CU_ASSERT(result==PrintCorrected); //this function does not know all kmers in the graph
   for (j=0; j<read_len; j++)
     {
       CU_ASSERT(quals_good[j]==0);
     }
   CU_ASSERT(first_good_kmer==0);
+
+
+  first_good_kmer=-1;
+  set_int_array(quals_good, read_len, 1);
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+					     read_len-5+1, read_len,
+					     quals_good,
+					     qual_cutoff, &first_good_kmer,
+					     db_graph, DiscardReadIfLowQualBaseUnCorrectable);
+  CU_ASSERT(result==PrintCorrected); 
+  for (j=0; j<read_len; j++)
+    {
+      CU_ASSERT(quals_good[j]==0);
+    }
+  CU_ASSERT(first_good_kmer==0);
+
+
+
 
   //now try a more complicated read, with a kmer that is not in the graph, but HIGH quality
   //  @zam all qual 10 except30 at the base which isnot in the graph
@@ -338,14 +368,14 @@ void test_populate_kmer_and_qual_int_arrays()
   seq_file_close(sf);
 
   first_good_kmer=-1;
-  set_int_array(kmers_in_graph, read_len-5+1, 1);
+  
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=20+33;
-  result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
-			    read_len-5+1, read_len,
-			    kmers_in_graph, quals_good,
-			    qual_cutoff, &first_good_kmer,
-			    db_graph);
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+					     read_len-5+1, read_len,
+					     quals_good,
+					     qual_cutoff, &first_good_kmer,
+					     db_graph, DiscardReadIfLowQualBaseUnCorrectable);
 
 
   //NOTE - the following is correct behaviour.
@@ -353,16 +383,34 @@ void test_populate_kmer_and_qual_int_arrays()
   //as there is a kmer not in the graph. It doesn't check to see if that kmer has low quality
   CU_ASSERT(result==PrintCorrected);
 
-  CU_ASSERT(kmers_in_graph[0]==1);  
-  CU_ASSERT(kmers_in_graph[1]==1);  
-  CU_ASSERT(kmers_in_graph[2]==1);  
-  CU_ASSERT(kmers_in_graph[3]==0);  
-  CU_ASSERT(kmers_in_graph[4]==0);  
-  CU_ASSERT(kmers_in_graph[5]==0);  
-  CU_ASSERT(kmers_in_graph[6]==0);  
-  CU_ASSERT(kmers_in_graph[7]==0);  
-  CU_ASSERT(kmers_in_graph[8]==1);  
+  CU_ASSERT(quals_good[0]==0);
+  CU_ASSERT(quals_good[1]==0);
+  CU_ASSERT(quals_good[2]==0);
+  CU_ASSERT(quals_good[3]==0);
+  CU_ASSERT(quals_good[4]==0);
+  CU_ASSERT(quals_good[5]==0);
+  CU_ASSERT(quals_good[6]==0);
+  CU_ASSERT(quals_good[7]==1);
+  CU_ASSERT(quals_good[8]==0);
+  CU_ASSERT(quals_good[9]==0);
+  CU_ASSERT(quals_good[10]==0);
+  CU_ASSERT(quals_good[11]==0);
+  CU_ASSERT(quals_good[12]==0);
 
+  CU_ASSERT(first_good_kmer==0);
+
+  //and agin changing policy - should get same answer
+
+  set_int_array(quals_good, read_len, 1);
+  qual_cutoff=20+33;
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+					     read_len-5+1, read_len,
+					     quals_good,
+					     qual_cutoff, &first_good_kmer,
+					     db_graph, DontWorryAboutLowQualBaseUnCorrectable);
+
+
+  CU_ASSERT(result==PrintCorrected);
 
   CU_ASSERT(quals_good[0]==0);
   CU_ASSERT(quals_good[1]==0);
@@ -381,30 +429,54 @@ void test_populate_kmer_and_qual_int_arrays()
   CU_ASSERT(first_good_kmer==0);
 
 
+
+
+
+
+
   //now shift the quality threshold to just above 30, so all the bases have low qual
   first_good_kmer=-1;
-  set_int_array(kmers_in_graph, read_len-5+1, 1);
+  
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=31+33;
-  result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
-			    read_len-5+1, read_len,
-			    kmers_in_graph, quals_good,
-			    qual_cutoff, &first_good_kmer,
-			    db_graph);
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+					     read_len-5+1, read_len,
+					     quals_good,
+					     qual_cutoff, &first_good_kmer,
+					     db_graph, DontWorryAboutLowQualBaseUnCorrectable);
 
 
   CU_ASSERT(result==PrintCorrected);
 
-  CU_ASSERT(kmers_in_graph[0]==1);  
-  CU_ASSERT(kmers_in_graph[1]==1);  
-  CU_ASSERT(kmers_in_graph[2]==1);  
-  CU_ASSERT(kmers_in_graph[3]==0);  
-  CU_ASSERT(kmers_in_graph[4]==0);  
-  CU_ASSERT(kmers_in_graph[5]==0);  
-  CU_ASSERT(kmers_in_graph[6]==0);  
-  CU_ASSERT(kmers_in_graph[7]==0);  
-  CU_ASSERT(kmers_in_graph[8]==1);  
+  CU_ASSERT(quals_good[0]==0);
+  CU_ASSERT(quals_good[1]==0);
+  CU_ASSERT(quals_good[2]==0);
+  CU_ASSERT(quals_good[3]==0);
+  CU_ASSERT(quals_good[4]==0);
+  CU_ASSERT(quals_good[5]==0);
+  CU_ASSERT(quals_good[6]==0);
+  CU_ASSERT(quals_good[7]==0);
+  CU_ASSERT(quals_good[8]==0);
+  CU_ASSERT(quals_good[9]==0);
+  CU_ASSERT(quals_good[10]==0);
+  CU_ASSERT(quals_good[11]==0);
+  CU_ASSERT(quals_good[12]==0);
 
+  CU_ASSERT(first_good_kmer==0);
+
+
+
+  //and again with other policy
+  first_good_kmer=-1;
+  
+  set_int_array(quals_good, read_len, 1);
+  qual_cutoff=31+33;
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+					     read_len-5+1, read_len,
+					     quals_good,
+					     qual_cutoff, &first_good_kmer,
+					     db_graph, DiscardReadIfLowQualBaseUnCorrectable);
+  CU_ASSERT(result==PrintCorrected);
 
   CU_ASSERT(quals_good[0]==0);
   CU_ASSERT(quals_good[1]==0);
@@ -425,34 +497,22 @@ void test_populate_kmer_and_qual_int_arrays()
 
 
 
+
   //now shift the quality threshold to just below 10, so all bases have high qual
   //so now it doesn't matter about the kmers, whether they are in or out, you definitely
   //print the read uncorrected.
-  set_int_array(kmers_in_graph, read_len-5+1, 1);
+  
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=9+33;
   first_good_kmer=-1;
-  result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
 					     read_len-5+1, read_len,
-					     kmers_in_graph, quals_good,
+					     quals_good,
 					     qual_cutoff, &first_good_kmer,
-					     db_graph);
+					     db_graph, DiscardReadIfLowQualBaseUnCorrectable);
 
 
   CU_ASSERT(result==PrintUncorrected);
-
-  //note this - the values are all one because they
-  //have not been set. Since the qualities are all High
-  // it immedietaly exits without checking if the kmers are in the graph
-  CU_ASSERT(kmers_in_graph[0]==1);  
-  CU_ASSERT(kmers_in_graph[1]==1);  
-  CU_ASSERT(kmers_in_graph[2]==1);  
-  CU_ASSERT(kmers_in_graph[3]==1);  
-  CU_ASSERT(kmers_in_graph[4]==1);  
-  CU_ASSERT(kmers_in_graph[5]==1);  
-  CU_ASSERT(kmers_in_graph[6]==1);  
-  CU_ASSERT(kmers_in_graph[7]==1);  
-  CU_ASSERT(kmers_in_graph[8]==1);  
 
 
   CU_ASSERT(quals_good[0]==1);
@@ -469,11 +529,40 @@ void test_populate_kmer_and_qual_int_arrays()
   CU_ASSERT(quals_good[11]==1);
   CU_ASSERT(quals_good[12]==1);
 
-  //this also not set
+  //this isnot set- does not bother to check, since all quals high
   CU_ASSERT(first_good_kmer==-1);
 
 
+  //now again with other policy
+  set_int_array(quals_good, read_len, 1);
+  qual_cutoff=9+33;
+  first_good_kmer=-1;
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+					     read_len-5+1, read_len,
+					     quals_good,
+					     qual_cutoff, &first_good_kmer,
+					     db_graph, DontWorryAboutLowQualBaseUnCorrectable);
 
+
+  CU_ASSERT(result==PrintUncorrected);
+
+
+  CU_ASSERT(quals_good[0]==1);
+  CU_ASSERT(quals_good[1]==1);
+  CU_ASSERT(quals_good[2]==1);
+  CU_ASSERT(quals_good[3]==1);
+  CU_ASSERT(quals_good[4]==1);
+  CU_ASSERT(quals_good[5]==1);
+  CU_ASSERT(quals_good[6]==1);
+  CU_ASSERT(quals_good[7]==1);
+  CU_ASSERT(quals_good[8]==1);
+  CU_ASSERT(quals_good[9]==1);
+  CU_ASSERT(quals_good[10]==1);
+  CU_ASSERT(quals_good[11]==1);
+  CU_ASSERT(quals_good[12]==1);
+
+  //this isnot set- does not bother to check, since all quals high
+  CU_ASSERT(first_good_kmer==-1);
 
 
 
@@ -499,29 +588,16 @@ void test_populate_kmer_and_qual_int_arrays()
   read_len = seq_get_length(sf);
   seq_file_close(sf);
 
-  first_good_kmer=-1;
-  set_int_array(kmers_in_graph, read_len-5+1, 1);
+  first_good_kmer=-1;  
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=10+33;
-  result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
 					     read_len-5+1, read_len,
-					     kmers_in_graph, quals_good,
+					     quals_good,
 					     qual_cutoff, &first_good_kmer,
-					     db_graph);
-
-
+					     db_graph, DontWorryAboutLowQualBaseUnCorrectable);
 
   CU_ASSERT(result==PrintUncorrected);
-
-  //hence these guys are not modified or set
-  CU_ASSERT(kmers_in_graph[0]==1);  
-  CU_ASSERT(kmers_in_graph[1]==1);  
-  CU_ASSERT(kmers_in_graph[2]==1);  
-  CU_ASSERT(kmers_in_graph[3]==1);  
-  CU_ASSERT(kmers_in_graph[4]==1);  
-  CU_ASSERT(kmers_in_graph[5]==1);  
-  CU_ASSERT(kmers_in_graph[6]==1);  
-  CU_ASSERT(kmers_in_graph[7]==1);  
 
   CU_ASSERT(quals_good[0]==1);
   CU_ASSERT(quals_good[1]==1);
@@ -536,8 +612,38 @@ void test_populate_kmer_and_qual_int_arrays()
   CU_ASSERT(quals_good[10]==1);
   CU_ASSERT(quals_good[11]==1);
 
-  //not set also
+  //not set
   CU_ASSERT(first_good_kmer==-1);
+
+
+  //policy makes no difference:
+  first_good_kmer=-1;  
+  set_int_array(quals_good, read_len, 1);
+  qual_cutoff=10+33;
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+					     read_len-5+1, read_len,
+					     quals_good,
+					     qual_cutoff, &first_good_kmer,
+					     db_graph, DiscardReadIfLowQualBaseUnCorrectable);
+
+  CU_ASSERT(result==PrintUncorrected);
+
+  CU_ASSERT(quals_good[0]==1);
+  CU_ASSERT(quals_good[1]==1);
+  CU_ASSERT(quals_good[2]==1);
+  CU_ASSERT(quals_good[3]==1);
+  CU_ASSERT(quals_good[4]==1);
+  CU_ASSERT(quals_good[5]==1);
+  CU_ASSERT(quals_good[6]==1);
+  CU_ASSERT(quals_good[7]==1);
+  CU_ASSERT(quals_good[8]==1);
+  CU_ASSERT(quals_good[9]==1);
+  CU_ASSERT(quals_good[10]==1);
+  CU_ASSERT(quals_good[11]==1);
+
+  //not set
+  CU_ASSERT(first_good_kmer==-1);
+
 
 
 
@@ -549,7 +655,7 @@ void test_populate_kmer_and_qual_int_arrays()
   //]]]]]]]]]]]#
 
 
-  //this read should be discarded
+
 
   sf = seq_file_open("../data/test/error_correction/fq4_for_comparing_with_graph3.fq");
   if(sf == NULL)
@@ -565,29 +671,50 @@ void test_populate_kmer_and_qual_int_arrays()
   read_len = seq_get_length(sf);
   seq_file_close(sf);
 
-  first_good_kmer=-1;
-  set_int_array(kmers_in_graph, read_len-5+1, 1);
+  first_good_kmer=-1;  
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=10+33;
-  result = populate_kmer_and_qual_int_arrays(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
 					     read_len-5+1, read_len,
-					     kmers_in_graph, quals_good,
+					     quals_good,
 					     qual_cutoff, &first_good_kmer,
-					     db_graph);
+					     db_graph, DontWorryAboutLowQualBaseUnCorrectable);
+
+
+
+  CU_ASSERT(result==PrintUncorrected);
+
+  CU_ASSERT(quals_good[0]==1);
+  CU_ASSERT(quals_good[1]==1);
+  CU_ASSERT(quals_good[2]==1);
+  CU_ASSERT(quals_good[3]==1);
+  CU_ASSERT(quals_good[4]==1);
+  CU_ASSERT(quals_good[5]==1);
+  CU_ASSERT(quals_good[6]==1);
+  CU_ASSERT(quals_good[7]==1);
+  CU_ASSERT(quals_good[8]==1);
+  CU_ASSERT(quals_good[9]==1);
+  CU_ASSERT(quals_good[10]==1);
+  CU_ASSERT(quals_good[11]==0);
+
+  //not set - did not find a good kmer
+  CU_ASSERT(first_good_kmer==-1);
+
+
+  //this time the policy makes a difference
+
+  first_good_kmer=-1;  
+  set_int_array(quals_good, read_len, 1);
+  qual_cutoff=10+33;
+  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+					     read_len-5+1, read_len,
+					     quals_good,
+					     qual_cutoff, &first_good_kmer,
+					     db_graph, DiscardReadIfLowQualBaseUnCorrectable);
 
 
 
   CU_ASSERT(result==Discard);
-
-  //hence these guys are not modified or set
-  CU_ASSERT(kmers_in_graph[0]==0);  
-  CU_ASSERT(kmers_in_graph[1]==0);  
-  CU_ASSERT(kmers_in_graph[2]==0);  
-  CU_ASSERT(kmers_in_graph[3]==0);  
-  CU_ASSERT(kmers_in_graph[4]==0);  
-  CU_ASSERT(kmers_in_graph[5]==0);  
-  CU_ASSERT(kmers_in_graph[6]==0);  
-  CU_ASSERT(kmers_in_graph[7]==0);  
 
   CU_ASSERT(quals_good[0]==1);
   CU_ASSERT(quals_good[1]==1);
@@ -609,11 +736,6 @@ void test_populate_kmer_and_qual_int_arrays()
 
 
 
-
-
-
-
-
   hash_table_free(&db_graph);
   strbuf_free(read_seq);
   strbuf_free(read_qual);
@@ -622,4 +744,145 @@ void test_populate_kmer_and_qual_int_arrays()
 
 
 
+}
+
+
+void test_error_correct_file_against_graph()
+{
+  //simple test, with one good kmer in middle. All low qual. Check error corrects left and right.
+  // include a check of the stats collection
+
+
+  //first set up the hash/graph
+  int kmer_size = 5;
+  int number_of_bits = 10;
+  int bucket_size = 10;
+
+  //*********************************************
+
+  //*********************************************
+
+  dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
+  
+  //Load the following fasta: this is to be the trusted graph
+  // >
+  // ACGGCTTTACGGT
+
+
+
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/error_correction/graph3.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+
+  //now test this fastq
+  // @only one kmer in graph, CTTTA
+  // CCCCCTTTAAAAT
+  // +
+  // #############
+
+
+  //we will start at CTTTA and move right, error correcting, and then go back to CTTTA and move left
+  //
+  //graph      ACGGCTTTACGGT
+  // read      CCCCCTTTAAAAT
+  // step1     ccccctttaCaat  << correct base at posn 9
+  // step2     ccccctttaCGat  << correct base at posn 10
+  // step3     ccccctttaCGGt << correct base at posn 11. 
+  //                           < no need to correct posn 12
+  // step4     cccGctttaCGGt  << correct base at posn 3
+  // step5     ccGGctttaCGGt  << correct base at posn 2
+  //                          no need to correct posn 1
+  // step6     AcGGctttaCGGt  << correct base at posn 0
+
+
+  char quality_cutoff= 10;
+  char ascii_qual_offset = 33;
+  char* outfile = "../data/test/error_correction/fq5_for_comparing_with_graph3.err_corrected.fa";
+  int bases_modified_count_array[20];
+  int posn_modified_count_array[20];
+  int bases_modified_count_array_size=20;
+  int i;
+  for (i=0; i<20; i++)
+    {
+      bases_modified_count_array[i]=0;
+      posn_modified_count_array[i]=0;
+    }
+  error_correct_file_against_graph("../data/test/error_correction/fq5_for_comparing_with_graph3.fq", 
+				   quality_cutoff, ascii_qual_offset,
+				   db_graph, outfile,
+				   bases_modified_count_array,
+				   posn_modified_count_array,
+				   bases_modified_count_array_size,
+				   DontWorryAboutLowQualBaseUnCorrectable);
+
+  CU_ASSERT(bases_modified_count_array[0]==0);
+  CU_ASSERT(bases_modified_count_array[1]==0);
+  CU_ASSERT(bases_modified_count_array[2]==0);
+  CU_ASSERT(bases_modified_count_array[3]==0);
+  CU_ASSERT(bases_modified_count_array[4]==0);
+  CU_ASSERT(bases_modified_count_array[5]==0);
+  CU_ASSERT(bases_modified_count_array[6]==1);
+  CU_ASSERT(bases_modified_count_array[7]==0);
+  CU_ASSERT(bases_modified_count_array[8]==0);
+  CU_ASSERT(bases_modified_count_array[9]==0);
+  CU_ASSERT(bases_modified_count_array[10]==0);
+  CU_ASSERT(bases_modified_count_array[11]==0);
+  CU_ASSERT(bases_modified_count_array[12]==0);
+  CU_ASSERT(bases_modified_count_array[13]==0);
+  CU_ASSERT(bases_modified_count_array[14]==0);
+
+  CU_ASSERT(posn_modified_count_array[0]==1);
+  CU_ASSERT(posn_modified_count_array[1]==0);
+  CU_ASSERT(posn_modified_count_array[2]==1);
+  CU_ASSERT(posn_modified_count_array[3]==1);
+  CU_ASSERT(posn_modified_count_array[4]==0);
+  CU_ASSERT(posn_modified_count_array[5]==0);
+  CU_ASSERT(posn_modified_count_array[6]==0);
+  CU_ASSERT(posn_modified_count_array[7]==0);
+  CU_ASSERT(posn_modified_count_array[8]==0);
+  CU_ASSERT(posn_modified_count_array[9]==1);
+  CU_ASSERT(posn_modified_count_array[10]==1);
+  CU_ASSERT(posn_modified_count_array[11]==1);
+  CU_ASSERT(posn_modified_count_array[12]==0);
+
+
+  SeqFile *sf = seq_file_open(outfile);
+  if(sf == NULL)
+    {
+      // Error opening file
+      fprintf(stderr, "Error: cannot read seq file '%s'\n", outfile);
+      exit(EXIT_FAILURE);
+    }
+
+  seq_next_read(sf);
+  StrBuf* read_seq  = strbuf_new();
+  seq_read_all_bases(sf, read_seq);
+  seq_file_close(sf);
+
+
+  //graph is this          ACGGCTTTACGGT
+  // input data is this    CCCCCTTTAAAAT
+  // correction should be  ACGGCTTTACGGT
+  //  i get                ACGGCTTTACGGT 
+
+  CU_ASSERT(strcmp(read_seq->buff, "ACGGCTTTACGGT")==0);
+
+
+
+  //same, but make sure does not fix high qual.
 }

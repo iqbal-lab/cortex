@@ -488,7 +488,12 @@ int  main()
 	return CU_get_error();
       }
 
-   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for checking kmers and qualities in a read that might need correction", test_populate_kmer_and_qual_int_arrays ))
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for checking kmers and qualities in a read that might need correction", test_get_first_good_kmer_and_populate_qual_array ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+   if (NULL == CU_add_test(pPopGraphSuite, "Test error correction of fastq files against a graph", test_error_correct_file_against_graph))
       {
 	CU_cleanup_registry();
 	return CU_get_error();

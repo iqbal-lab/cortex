@@ -69,19 +69,17 @@ typedef enum {
 }WhichEndOfKmer;
 
 inline void error_correct_file_against_graph(char* fastq_file, char quality_cutoff, char ascii_qual_offset,
-					     dBGraph *db_graph, 
-					     unsigned long long  *bases_modified,//total bases modified in dataset
+					     dBGraph *db_graph, char* outfile,
 					     int *bases_modified_count_array,//distribution across reads; how many of the read_length bases are fixed
 					     int *posn_modified_count_array,//where in the read are we making corrections?
 					     int bases_modified_count_array_size,
 					     HandleLowQualUncorrectable policy);
 
-ReadCorrectionDecison populate_kmer_and_qual_int_arrays(StrBuf* seq, StrBuf* qual,
-							int num_kmers, int read_len,
-							int* kmers_in_graph, int* quals_good,
-							char quality_cutoff, int* first_good_kmer, 
-							dBGraph* db_graph);
-  
+ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, StrBuf* qual, 
+								  int num_kmers, int read_len,
+								  int* quals_good,
+								  char quality_cutoff, int* first_good_kmer,
+								  dBGraph* dbg, HandleLowQualUncorrectable policy);
 
 boolean fix_end_if_unambiguous(WhichEndOfKmer which_end, StrBuf* read_buffer, int pos, 
 			       StrBuf* kmer_buf, char* kmer_str,
