@@ -861,7 +861,7 @@ void test_error_correct_file_against_graph()
   CU_ASSERT(posn_modified_count_array[12]==0);
 
 
-  SeqFile *sf = seq_file_open(outfile);
+  SeqFile* sf = seq_file_open(outfile);
   if(sf == NULL)
     {
       // Error opening file
@@ -884,5 +884,73 @@ void test_error_correct_file_against_graph()
 
 
 
+  //Try again with an almost identical fastq, but which
+  //has high quality for one of the previously corrected
   //same, but make sure does not fix high qual.
+  for (i=0; i<20; i++)
+    {
+      bases_modified_count_array[i]=0;
+      posn_modified_count_array[i]=0;
+    }
+  char* outfile2 = "../data/test/error_correction/fq6_for_comparing_with_graph3.err_corrected.fa";
+  error_correct_file_against_graph("../data/test/error_correction/fq6_for_comparing_with_graph3.fq", 
+				   quality_cutoff, ascii_qual_offset,
+				   db_graph, outfile2,
+				   bases_modified_count_array,
+				   posn_modified_count_array,
+				   bases_modified_count_array_size,
+				   DontWorryAboutLowQualBaseUnCorrectable);
+
+  CU_ASSERT(bases_modified_count_array[0]==0);
+  CU_ASSERT(bases_modified_count_array[1]==0);
+  CU_ASSERT(bases_modified_count_array[2]==0);
+  CU_ASSERT(bases_modified_count_array[3]==0);
+  CU_ASSERT(bases_modified_count_array[4]==0);
+  CU_ASSERT(bases_modified_count_array[5]==1);
+  CU_ASSERT(bases_modified_count_array[6]==0);
+  CU_ASSERT(bases_modified_count_array[7]==0);
+  CU_ASSERT(bases_modified_count_array[8]==0);
+  CU_ASSERT(bases_modified_count_array[9]==0);
+  CU_ASSERT(bases_modified_count_array[10]==0);
+  CU_ASSERT(bases_modified_count_array[11]==0);
+  CU_ASSERT(bases_modified_count_array[12]==0);
+  CU_ASSERT(bases_modified_count_array[13]==0);
+  CU_ASSERT(bases_modified_count_array[14]==0);
+
+  CU_ASSERT(posn_modified_count_array[0]==1);
+  CU_ASSERT(posn_modified_count_array[1]==0);
+  CU_ASSERT(posn_modified_count_array[2]==1);
+  CU_ASSERT(posn_modified_count_array[3]==1);
+  CU_ASSERT(posn_modified_count_array[4]==0);
+  CU_ASSERT(posn_modified_count_array[5]==0);
+  CU_ASSERT(posn_modified_count_array[6]==0);
+  CU_ASSERT(posn_modified_count_array[7]==0);
+  CU_ASSERT(posn_modified_count_array[8]==0);
+  CU_ASSERT(posn_modified_count_array[9]==1);
+  CU_ASSERT(posn_modified_count_array[10]==1);
+  CU_ASSERT(posn_modified_count_array[11]==0);
+  CU_ASSERT(posn_modified_count_array[12]==0);
+
+
+  sf = seq_file_open(outfile2);
+  if(sf == NULL)
+    {
+      // Error opening file
+      fprintf(stderr, "Error: cannot read seq file '%s'\n", outfile2);
+      exit(EXIT_FAILURE);
+    }
+
+  seq_next_read(sf);
+  seq_read_all_bases(sf, read_seq);
+  seq_file_close(sf);
+
+
+  //graph is this          ACGGCTTTACGGT
+  // input data is this    CCCCCTTTAAAAT
+  // correction should be  ACGGCTTTACGAT
+
+
+  CU_ASSERT(strcmp(read_seq->buff, "ACGGCTTTACGAT")==0);
+
+
 }
