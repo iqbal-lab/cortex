@@ -302,7 +302,7 @@ const char* usage=
 
 
   // -K
-  "   [--err_correct_1kg]\t\t\t\t\t\t=\t THREE comma-separated arguments: (1) a filelist (listing FASTQ for correction), (2) a string/suffix less than 50 characters long (zam.fastq--->corrected --> zam.fastq.suffix), (3) either 0 or 1. O means discard a read if it has a low quality uncorrectable base, 1 means print it entirely uncorrected if it has a low quality uncorrectable base. In addition you must use --quality_score_threshold\n"
+  "   [--err_correct_1kg]\t\t\t\t\t\t=\t FOUR comma-separated arguments: (1) a filelist (listing FASTQ for correction), (2) a string/suffix less than 50 characters long (/path/to/zam.fastq--->correction process --> outdir/zam.fastq.suffix), (3) an output directory and (4) either 0 or 1. O means discard a read if it has a low quality uncorrectable base, 1 means print it entirely uncorrected if it has a low quality uncorrectable base. In addition you must use --quality_score_threshold and --max_read_len. \n"
 
 ;
 
@@ -354,6 +354,7 @@ int default_opts(CmdLine * c)
 {
   c->do_err_correction=false;
   set_string_to_null(c->err_correction_filelist,MAX_FILENAME_LEN);
+  set_string_to_null(c->err_correction_outdir,MAX_FILENAME_LEN);
   set_string_to_null(c->err_correction_suffix, 50);
   c->err_correction_policy=DontWorryAboutLowQualBaseUnCorrectable;
 
@@ -1530,7 +1531,11 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 
   if ( (cmd_ptr->do_err_correction==true) &&  (cmd_ptr->quality_score_threshold==0) )
     {
-      die("If you specify --err_correct_1kg then you must also specify a quality threshold with -quality_score_threshold\n");
+      die("If you specify --err_correct_1kg then you must also specify a quality threshold with --quality_score_threshold\n");
+    }
+  if ( (cmd_ptr->do_err_correction==true) &&  (cmd_ptr->max_read_length==0) )
+    {
+      die("If you specify --err_correct_1kg then you must also specify --max_read_length\n");
     }
   if ( (cmd_ptr->dump_readlen_distrib==true) && (cmd_ptr->max_read_length==0) )
     {
@@ -2570,12 +2575,17 @@ void  parse_err_correction_args(CmdLine* cmd, char* arg)
   char* fastqlist = strtok(temp1, delims );
   if (fastqlist==NULL)
     {
-      errx(1,"--err_correct_1kg needs a comma-sep list of 3 arguments. A filelist (file, which contains a list of FASTQ). A suffix. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). You don't seem to have given an argumnt\n");
+      errx(1,"--err_correct_1kg needs a comma-sep list of 4 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). You don't seem to have given an argument\n");
     }
   char* suffix = strtok(NULL, delims );
   if (suffix==NULL)
     {
-      errx(1,"--err_correct_1kg needs a comma-sep list of 3 arguments. A filelist (file, which contains a list of FASTQ). A suffix. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). You don't seem to have given a suffix or 0/1\n");
+      errx(1,"--err_correct_1kg needs a comma-sep list of 4 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). You don't seem to have given a suffix or outdir or 0/1\n");
+    }
+  char* outdir = strtok(NULL, delims );
+  if (outdir==NULL)
+    {
+            errx(1,"--err_correct_1kg needs a comma-sep list of 4 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). You don't seem to have given an outdir or 0/1\n");
     }
   char* num_as_str = strtok(NULL, delims );
   if (num_as_str==NULL)
@@ -2588,6 +2598,11 @@ void  parse_err_correction_args(CmdLine* cmd, char* arg)
 
   cmd->do_err_correction=true;
   strcat(cmd->err_correction_filelist, fastqlist);
+  strcat(cmd->err_correction_outdir, outdir);
+  if (cmd->err_correction_outdir[strlen(cmd->err_correction_outdir)]!='/')
+    {
+      strcat(cmd->err_correction_outdir, "/");
+    }
   strcat(cmd->err_correction_suffix, suffix);
   if (strcmp(num_as_str, "0")==0)
     {

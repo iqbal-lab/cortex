@@ -1170,7 +1170,8 @@ int main(int argc, char **argv)
       printf("This is the experimental error-correction code that Richard Durbin, Shane, Jared, Malin and I talked about\n");
       error_correct_list_of_files(cmd_line->err_correction_filelist, cmd_line->quality_score_threshold, cmd_line->quality_score_offset,
 				  db_graph, cmd_line->err_correction_policy,
-				  cmd_line->max_read_length, cmd_line->err_correction_suffix);
+				  cmd_line->max_read_length, cmd_line->err_correction_suffix,
+				  cmd_line->err_correction_outdir);
       timestamp();
       printf("Error correction done\n");
     }

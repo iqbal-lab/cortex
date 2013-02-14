@@ -139,6 +139,7 @@ typedef struct
 
   //new err corrction test code
   char err_correction_filelist[MAX_FILENAME_LEN];
+  char err_correction_outdir[MAX_FILENAME_LEN];
   char err_correction_suffix[50];
   HandleLowQualUncorrectable err_correction_policy;
   boolean do_err_correction;

@@ -31,6 +31,7 @@
 //library headers
 #include "string_buffer.h"
 #include "seq_file.h"
+#include <libgen.h> // basename
 
 // cortex_var headers
 #include "error_correction.h"
@@ -41,16 +42,18 @@
 
 void error_correct_list_of_files(char* list_fastq,char quality_cutoff, char ascii_qual_offset,
 				 dBGraph *db_graph, HandleLowQualUncorrectable policy,
-				 int max_read_len, char* suffix)
+				 int max_read_len, char* suffix, char* outdir)
 {
-  uint64_t* distrib_num_bases_corrected     =(uint64_t*) malloc(sizeof(uint64_t)*(max_read_len+1));
-  uint64_t* distrib_position_bases_corrected=(uint64_t*) malloc(sizeof(uint64_t)*(max_read_len+1));
+
+  int len = max_read_len+2;
+  uint64_t* distrib_num_bases_corrected     =(uint64_t*) malloc(sizeof(uint64_t)*len);
+  uint64_t* distrib_position_bases_corrected=(uint64_t*) malloc(sizeof(uint64_t)*len);
   if ( (distrib_num_bases_corrected==NULL)|| (distrib_position_bases_corrected==NULL))
     {
       die("Unable to alloc arrays for keeping stats. Your machine must have hardly any spare memory\n");
     }
-  set_uint64_t_array(distrib_num_bases_corrected,      max_read_len+1, (uint64_t) 0);
-  set_uint64_t_array(distrib_position_bases_corrected, max_read_len+1, (uint64_t) 0);
+  set_uint64_t_array(distrib_num_bases_corrected,      len, (uint64_t) 0);
+  set_uint64_t_array(distrib_position_bases_corrected, len, (uint64_t) 0);
 
   FILE* list_fastq_fp = fopen(list_fastq, "r");
   if (list_fastq_fp==NULL)
@@ -59,30 +62,39 @@ void error_correct_list_of_files(char* list_fastq,char quality_cutoff, char asci
     }
   StrBuf *next_fastq     = strbuf_new();
   StrBuf* corrected_file = strbuf_new();
+  StrBuf* corrected_file_newpath = strbuf_new();
   while(strbuf_reset_readline(next_fastq, list_fastq_fp))
     {
       strbuf_chomp(next_fastq);
       if(strbuf_len(next_fastq) > 0)
 	 {
 	   strbuf_reset(corrected_file);
+	   strbuf_reset(corrected_file_newpath);
 	   strbuf_copy(corrected_file, 0,//dest
 		       next_fastq,0,strbuf_len(next_fastq));
 	   strbuf_append_str(corrected_file, suffix);
 	   char* next_fastq_str     = strbuf_as_str(next_fastq);
 	   char* corrected_file_str = strbuf_as_str(corrected_file);
+	   char* corrected_file_basename = basename(corrected_file_str);
+	   strbuf_append_str(corrected_file_newpath, outdir);
+	   strbuf_append_str(corrected_file_newpath,corrected_file_basename);
+	   char* corrected_file_newpath_str = strbuf_as_str(corrected_file_newpath);
+
 	   error_correct_file_against_graph(next_fastq_str, quality_cutoff, ascii_qual_offset,
-					    db_graph, corrected_file_str,
+					    db_graph, corrected_file_newpath_str,
 					    distrib_num_bases_corrected,
 					    distrib_position_bases_corrected,
-					    max_read_len+1,
+					    len,
 					    policy);
 	   free(corrected_file_str);
 	   free(next_fastq_str);
+	   free(corrected_file_newpath_str);
 	 }
     }
   fclose(list_fastq_fp);
   strbuf_free(next_fastq);
   strbuf_free(corrected_file);
+  strbuf_free(corrected_file_newpath);
 }
 
 
@@ -93,13 +105,44 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 					     int bases_modified_count_array_size,
 					     HandleLowQualUncorrectable policy)
 {
+  //reset the stats arrays, we get stats per input file
+  set_uint64_t_array(bases_modified_count_array,bases_modified_count_array_size, (uint64_t) 0);
+  set_uint64_t_array(posn_modified_count_array, bases_modified_count_array_size, (uint64_t) 0);
+
+
+  //set some variables, quality etc
   quality_cutoff+=ascii_qual_offset;
   short kmer_size = db_graph->kmer_size;
 
+  //setup output file for corrected reads, plus two stats files
   FILE* out_fp = fopen(outfile, "w");
   if (out_fp==NULL)
     {
       die("Unable to open output file %s\n", outfile);
+    }
+  char* suff1 = ".distrib_num_modified_bases";
+  char* suff2 = ".distrib_posn_modified_bases";
+  char* stat1 = (char*) malloc(sizeof(char)*(strlen(outfile)+strlen(suff1)+1));
+  char* stat2 = (char*) malloc(sizeof(char)*(strlen(outfile)+strlen(suff2)+1));
+  if ( (stat1==NULL) || (stat2==NULL))
+    {
+      die("Unable to malloc FILENAME strings. Something badly wrong with your server\n");
+    }
+  set_string_to_null(stat1, strlen(outfile)+strlen(suff1)+1);
+  set_string_to_null(stat2, strlen(outfile)+strlen(suff2)+1);
+  printf("Start with stat1 %s \n", stat1);
+  strcpy(stat1, outfile);
+  printf("At outfile stat1 %s \n", stat1);
+  strcat(stat1, suff1);
+  printf("Add suffix to stat1 %s \n", stat1);
+  strcat(stat2, outfile);
+  strcat(stat2, suff2);
+
+  FILE* out_stat1 = fopen(stat1, "w");
+  FILE* out_stat2 = fopen(stat2, "w");
+  if ( (out_stat1==NULL)|| (out_stat2==NULL) )
+    {
+      die("Unable to open %s or %s to write to - permissions issue?\n", stat1, stat2);
     }
 
   SeqFile *sf = seq_file_open(fastq_file);
@@ -258,9 +301,23 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 
     seq_file_close(sf);
     fclose(out_fp);
+
+    printf("ZAM coutn size is %d\n", bases_modified_count_array_size);
+    //write out the stats files
+    int i;
+    for (i=0; i<bases_modified_count_array_size; i++)
+      {
+	fprintf(out_stat1, "%d\t%" PRIu64 "\n", i, bases_modified_count_array[i]);
+	fprintf(out_stat2, "%d\t%" PRIu64 "\n", i, posn_modified_count_array[i]);
+      }
+    fclose(out_stat1);
+    fclose(out_stat2);
     strbuf_free(buf_seq);
     strbuf_free(buf_qual);
     strbuf_free(working_buf);
+    free(stat1);
+    free(stat2);
+
 }
 
 //populate two arrays of integers, represent the kmers in the read
@@ -349,7 +406,7 @@ boolean fix_end_if_unambiguous(WhichEndOfKmer which_end, StrBuf* read_buffer, in
 			       StrBuf* kmer_buf, char* kmer_str,//kmer_buf and kmer_str both working variablesm prealloced by caller
 			       dBGraph* dbg)
 {
-
+  //strncpy(kmer_str, read_buffer->buff+pos, dbg->kmer_size);
   strbuf_substr_prealloced(read_buffer, pos, dbg->kmer_size, kmer_str);
   strbuf_set(kmer_buf, kmer_str);
 
