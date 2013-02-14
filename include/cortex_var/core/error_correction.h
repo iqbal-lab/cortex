@@ -68,10 +68,15 @@ typedef enum {
   Right= 1,
 }WhichEndOfKmer;
 
+
+void error_correct_list_of_files(char* list_fastq,char quality_cutoff, char ascii_qual_offset,
+				 dBGraph *db_graph, HandleLowQualUncorrectable policy,
+				 int max_read_len, char* suffix);
+
 inline void error_correct_file_against_graph(char* fastq_file, char quality_cutoff, char ascii_qual_offset,
 					     dBGraph *db_graph, char* outfile,
-					     int *bases_modified_count_array,//distribution across reads; how many of the read_length bases are fixed
-					     int *posn_modified_count_array,//where in the read are we making corrections?
+					     uint64_t *bases_modified_count_array,//distribution across reads; how many of the read_length bases are fixed
+					     uint64_t *posn_modified_count_array,//where in the read are we making corrections?
 					     int bases_modified_count_array_size,
 					     HandleLowQualUncorrectable policy);
 

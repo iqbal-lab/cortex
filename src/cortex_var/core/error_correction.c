@@ -37,16 +37,64 @@
 #include "global.h"
 
 
+
+
+void error_correct_list_of_files(char* list_fastq,char quality_cutoff, char ascii_qual_offset,
+				 dBGraph *db_graph, HandleLowQualUncorrectable policy,
+				 int max_read_len, char* suffix)
+{
+  uint64_t* distrib_num_bases_corrected     =(uint64_t*) malloc(sizeof(uint64_t)*(max_read_len+1));
+  uint64_t* distrib_position_bases_corrected=(uint64_t*) malloc(sizeof(uint64_t)*(max_read_len+1));
+  if ( (distrib_num_bases_corrected==NULL)|| (distrib_position_bases_corrected==NULL))
+    {
+      die("Unable to alloc arrays for keeping stats. Your machine must have hardly any spare memory\n");
+    }
+  set_uint64_t_array(distrib_num_bases_corrected,      max_read_len+1, (uint64_t) 0);
+  set_uint64_t_array(distrib_position_bases_corrected, max_read_len+1, (uint64_t) 0);
+
+  FILE* list_fastq_fp = fopen(list_fastq, "r");
+  if (list_fastq_fp==NULL)
+    {
+      printf("Cannot open file %s\n", list_fastq);
+    }
+  StrBuf *next_fastq     = strbuf_new();
+  StrBuf* corrected_file = strbuf_new();
+  while(strbuf_reset_readline(next_fastq, list_fastq_fp))
+    {
+      strbuf_chomp(next_fastq);
+      if(strbuf_len(next_fastq) > 0)
+	 {
+	   strbuf_reset(corrected_file);
+	   strbuf_copy(corrected_file, 0,//dest
+		       next_fastq,0,strbuf_len(next_fastq));
+	   strbuf_append_str(corrected_file, suffix);
+	   char* next_fastq_str     = strbuf_as_str(next_fastq);
+	   char* corrected_file_str = strbuf_as_str(corrected_file);
+	   error_correct_file_against_graph(next_fastq_str, quality_cutoff, ascii_qual_offset,
+					    db_graph, corrected_file_str,
+					    distrib_num_bases_corrected,
+					    distrib_position_bases_corrected,
+					    max_read_len+1,
+					    policy);
+	   free(corrected_file_str);
+	   free(next_fastq_str);
+	 }
+    }
+  fclose(list_fastq_fp);
+  strbuf_free(next_fastq);
+  strbuf_free(corrected_file);
+}
+
+
 inline void error_correct_file_against_graph(char* fastq_file, char quality_cutoff, char ascii_qual_offset,
 					     dBGraph *db_graph, char* outfile,
-					     int *bases_modified_count_array,//distribution across reads; how many of the read_length bases are fixed
-					     int *posn_modified_count_array,//where in the read are we making corrections?
+					     uint64_t *bases_modified_count_array,//distribution across reads; how many of the read_length bases are fixed
+					     uint64_t *posn_modified_count_array,//where in the read are we making corrections?
 					     int bases_modified_count_array_size,
 					     HandleLowQualUncorrectable policy)
 {
   quality_cutoff+=ascii_qual_offset;
   short kmer_size = db_graph->kmer_size;
-  int count_corrected_bases=0;
 
   FILE* out_fp = fopen(outfile, "w");
   if (out_fp==NULL)
@@ -73,6 +121,8 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 
   while(seq_next_read(sf))
     {
+      int count_corrected_bases=0;
+
       seq_read_all_bases(sf, buf_seq);
       seq_read_all_quals(sf, buf_qual);
       int read_len = seq_get_length(sf);
@@ -181,7 +231,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 		  {
 		    *decision=Discard;
 		  }
-		if (fixed==true)
+		else if (fixed==true)
 		  {
 		    count_corrected_bases++;
 		    posn_modified_count_array[offset+pos]++;
@@ -198,6 +248,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	  check_bases_to_end_of_read(first_good+1, &dec, Right);
 	  check_bases_to_end_of_read(first_good-1, &dec, Left);
 	}
+
       if (dec!=Discard)
 	{
 	  fprintf(out_fp, ">%s\n%s\n", seq_get_read_name(sf), strbuf_as_str(buf_seq));

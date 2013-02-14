@@ -302,7 +302,7 @@ const char* usage=
 
 
   // -K
-  //"   [--require_hw]\t\t\t\t\t\t=\t For each bubble found, calculate likelihood of observed coverage \n\t\t\t\t\t\t\t\t\t under 3 models (repeat, error, variation obeying Hardy-Weinberg)\n\t\t\t\t\t\t\t\t\t Only call variants where the bubble is more likely (according to these models) to be a variant.\n"
+  "   [--err_correct_1kg]\t\t\t\t\t\t=\t THREE comma-separated arguments: (1) a filelist (listing FASTQ for correction), (2) a string/suffix less than 50 characters long (zam.fastq--->corrected --> zam.fastq.suffix), (3) either 0 or 1. O means discard a read if it has a low quality uncorrectable base, 1 means print it entirely uncorrected if it has a low quality uncorrectable base. In addition you must use --quality_score_threshold\n"
 
 ;
 
@@ -352,6 +352,11 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
+  c->do_err_correction=false;
+  set_string_to_null(c->err_correction_filelist,MAX_FILENAME_LEN);
+  set_string_to_null(c->err_correction_suffix, 50);
+  c->err_correction_policy=DontWorryAboutLowQualBaseUnCorrectable;
+
   c->estimate_copy_num=false;
   set_string_to_null(c->copy_num_fasta, MAX_FILENAME_LEN);
   set_string_to_null(c->copy_num_output, MAX_FILENAME_LEN);
@@ -571,7 +576,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"align_input_format",required_argument,NULL,'H'},
     {"path_divergence_caller_output",required_argument,NULL,'I'},
     {"colour_overlaps",required_argument,NULL,'J'},
-    {"require_hw",no_argument,NULL,'K'},
+    {"err_correct_1kg",required_argument,NULL,'K'},
     {"genome_size",required_argument,NULL,'L'},
     {"exclude_ref_bubbles",no_argument,NULL,'M'},
     {"estimate_copy_num",required_argument,NULL,'N'},
@@ -1326,7 +1331,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	}
     case 'K':
 	{
-	  //cmdline_ptr->apply_model_selection_at_bubbles=true;
+	  parse_err_correction_args(cmdline_ptr, optarg);
+	  cmdline_ptr->do_err_correction=true;
 	  break;
 	}
     case 'L':
@@ -1522,6 +1528,10 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
 
+  if ( (cmd_ptr->do_err_correction==true) &&  (cmd_ptr->quality_score_threshold==0) )
+    {
+      die("If you specify --err_correct_1kg then you must also specify a quality threshold with -quality_score_threshold\n");
+    }
   if ( (cmd_ptr->dump_readlen_distrib==true) && (cmd_ptr->max_read_length==0) )
     {
       char tmp[] = "If you want to dump the distribution of (filtered) read lengths, you must specify --max_read_len\n";
@@ -2549,6 +2559,50 @@ int get_numbers_from_open_square_brack_sep_list(char* list, int* return_list,
     }
 }
 
+
+
+void  parse_err_correction_args(CmdLine* cmd, char* arg)
+{
+  char delims[] = ",";
+  char temp1[MAX_FILENAME_LEN];
+  temp1[0]='\0';
+  strcpy(temp1, arg);
+  char* fastqlist = strtok(temp1, delims );
+  if (fastqlist==NULL)
+    {
+      errx(1,"--err_correct_1kg needs a comma-sep list of 3 arguments. A filelist (file, which contains a list of FASTQ). A suffix. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). You don't seem to have given an argumnt\n");
+    }
+  char* suffix = strtok(NULL, delims );
+  if (suffix==NULL)
+    {
+      errx(1,"--err_correct_1kg needs a comma-sep list of 3 arguments. A filelist (file, which contains a list of FASTQ). A suffix. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). You don't seem to have given a suffix or 0/1\n");
+    }
+  char* num_as_str = strtok(NULL, delims );
+  if (num_as_str==NULL)
+    {
+      errx(1,"--err_correct_1kg needs a comma-sep list of 3 arguments. A filelist (file, which contains a list of FASTQ). A suffix. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). You don't seem to have given a third argumentn");
+    }
+  
+
+  //put values into the cmdline object
+
+  cmd->do_err_correction=true;
+  strcat(cmd->err_correction_filelist, fastqlist);
+  strcat(cmd->err_correction_suffix, suffix);
+  if (strcmp(num_as_str, "0")==0)
+    {
+      cmd->err_correction_policy=DiscardReadIfLowQualBaseUnCorrectable;
+    }
+  else if (strcmp(num_as_str, "1")==0)
+    {
+      cmd->err_correction_policy = DontWorryAboutLowQualBaseUnCorrectable;
+    }
+  else
+    {
+      errx(1,"--err_correct_1kg needs a comma-sep list of 3 arguments. A filelist (file, which contains a list of FASTQ). A suffix. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Your 3rd argument is neither 0 nor 1\n");
+    }
+
+}
 
 
 

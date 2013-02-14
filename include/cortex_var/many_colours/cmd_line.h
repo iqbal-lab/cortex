@@ -38,6 +38,7 @@
 #include "file_format.h"
 #include "model_selection.h"
 #include "db_complex_genotyping.h"
+#include "error_correction.h"
 
 #define MAX_FILENAME_LEN 1000
 #define MAX_SUFFIX_LEN 100
@@ -135,6 +136,13 @@ typedef struct
   char file_of_calls_to_be_genotyped[MAX_FILENAME_LEN];
   char output_genotyping[MAX_FILENAME_LEN];
   char colourlist_snp_alleles[MAX_FILENAME_LEN];
+
+  //new err corrction test code
+  char err_correction_filelist[MAX_FILENAME_LEN];
+  char err_correction_suffix[50];
+  HandleLowQualUncorrectable err_correction_policy;
+  boolean do_err_correction;
+
   boolean do_genotyping_of_file_of_sites;
   DiscoveryMethod which_caller_was_used_for_calls_to_be_genotyped;
 
@@ -193,6 +201,10 @@ typedef struct
   //char filelist_2net_binaries_for_alleles[MAX_FILENAME_LEN];
 
   AssumptionsOnGraphCleaning assump_for_genotyping;
+
+  
+
+
 } CmdLine;
 
 
@@ -209,6 +221,7 @@ int get_numbers_from_open_square_brack_sep_list(char* list, int* return_list,
 int parse_colourinfo_argument(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is, int which_detect_bubbles);
 int parse_commasep_or_open_square_brack_sep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is, boolean commasep);
 //int parse_commasep_list(CmdLine* cmd, char* arg, int len_arg, char* text_for_error_describing_which_option_this_is);
+void  parse_err_correction_args(CmdLine* cmd, char* arg);
 int parse_genotype_site_argument(char* arg, int* colours_to_genotype_list, int* num_colours_to_genotype , int* ref_minus_site_colour, int* num_alleles,
 				 int* start_gt_combin_num, int* end_gt_combin_num, char* fasta_file, AssumptionsOnGraphCleaning* assump,
 				 int* wk_col1, int* wk_col2, boolean* using_1net, boolean* using_2net, char* file_1net_bins, double* min_llk);

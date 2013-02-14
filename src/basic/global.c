@@ -30,7 +30,6 @@
 #include <stdarg.h> // needed for va_list
 #include <stdio.h>
 #include <string.h>
-
 #include "global.h"
 
 boolean test_file_existence(char* file)
@@ -65,6 +64,15 @@ void set_string_to_null(char* str, int len)
 }
 
 void set_int_array(int* arr, int len, int val)
+{
+  int  i;
+  for (i=0; i<len; i++)
+    {
+      arr[i]=val;
+    }
+}
+
+void set_uint64_t_array(uint64_t* arr, int len, uint64_t val)
 {
   int  i;
   for (i=0; i<len; i++)

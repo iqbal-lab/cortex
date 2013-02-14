@@ -953,4 +953,198 @@ void test_error_correct_file_against_graph()
   CU_ASSERT(strcmp(read_seq->buff, "ACGGCTTTACGAT")==0);
 
 
+
+  //now, just to double check the statistics, try one fastq that contains both previous reads
+
+  for (i=0; i<20; i++)
+    {
+      bases_modified_count_array[i]=0;
+      posn_modified_count_array[i]=0;
+    }
+  char* outfile3 = "../data/test/error_correction/fq7_for_comparing_with_graph3.err_corrected.fa";
+  error_correct_file_against_graph("../data/test/error_correction/fq7_for_comparing_with_graph3.fq", 
+				   quality_cutoff, ascii_qual_offset,
+				   db_graph, outfile3,
+				   bases_modified_count_array,
+				   posn_modified_count_array,
+				   bases_modified_count_array_size,
+				   DontWorryAboutLowQualBaseUnCorrectable);
+
+  CU_ASSERT(bases_modified_count_array[0]==0);
+  CU_ASSERT(bases_modified_count_array[1]==0);
+  CU_ASSERT(bases_modified_count_array[2]==0);
+  CU_ASSERT(bases_modified_count_array[3]==0);
+  CU_ASSERT(bases_modified_count_array[4]==0);
+  CU_ASSERT(bases_modified_count_array[5]==1);
+  CU_ASSERT(bases_modified_count_array[6]==1);
+  CU_ASSERT(bases_modified_count_array[7]==0);
+  CU_ASSERT(bases_modified_count_array[8]==0);
+  CU_ASSERT(bases_modified_count_array[9]==0);
+  CU_ASSERT(bases_modified_count_array[10]==0);
+  CU_ASSERT(bases_modified_count_array[11]==0);
+  CU_ASSERT(bases_modified_count_array[12]==0);
+  CU_ASSERT(bases_modified_count_array[13]==0);
+  CU_ASSERT(bases_modified_count_array[14]==0);
+
+  CU_ASSERT(posn_modified_count_array[0]==2);
+  CU_ASSERT(posn_modified_count_array[1]==0);
+  CU_ASSERT(posn_modified_count_array[2]==2);
+  CU_ASSERT(posn_modified_count_array[3]==2);
+  CU_ASSERT(posn_modified_count_array[4]==0);
+  CU_ASSERT(posn_modified_count_array[5]==0);
+  CU_ASSERT(posn_modified_count_array[6]==0);
+  CU_ASSERT(posn_modified_count_array[7]==0);
+  CU_ASSERT(posn_modified_count_array[8]==0);
+  CU_ASSERT(posn_modified_count_array[9]==2);
+  CU_ASSERT(posn_modified_count_array[10]==2);
+  CU_ASSERT(posn_modified_count_array[11]==1);
+  CU_ASSERT(posn_modified_count_array[12]==0);
+
+
+  sf = seq_file_open(outfile3);
+  if(sf == NULL)
+    {
+      // Error opening file
+      fprintf(stderr, "Error: cannot read seq file '%s'\n", outfile3);
+      exit(EXIT_FAILURE);
+    }
+
+  seq_next_read(sf);
+  seq_read_all_bases(sf, read_seq);
+  CU_ASSERT(strcmp(read_seq->buff, "ACGGCTTTACGGT")==0);
+  seq_next_read(sf);
+  seq_read_all_bases(sf, read_seq);
+  CU_ASSERT(strcmp(read_seq->buff, "ACGGCTTTACGAT")==0);
+  seq_file_close(sf);
+
+
+
+  //last test - does the policy correctly get executed, for when to discard reads?
+
+  // @only one kmer in graph, CTTTA.To right of CTTTA all bases high qual.Only far left is low qual, but this cannot be corrected
+  // CCCCCTTTAAAAT
+  // +
+  // #]]]#####]]]]
+  for (i=0; i<20; i++)
+    {
+      bases_modified_count_array[i]=0;
+      posn_modified_count_array[i]=0;
+    }
+  char* outfile4 = "../data/test/error_correction/fq8_for_comparing_with_graph3.err_corrected.fa";
+  error_correct_file_against_graph("../data/test/error_correction/fq8_for_comparing_with_graph3.fq", 
+				   quality_cutoff, ascii_qual_offset,
+				   db_graph, outfile4,
+				   bases_modified_count_array,
+				   posn_modified_count_array,
+				   bases_modified_count_array_size,
+				   DontWorryAboutLowQualBaseUnCorrectable);
+
+  CU_ASSERT(bases_modified_count_array[0]==1);
+  CU_ASSERT(bases_modified_count_array[1]==0);
+  CU_ASSERT(bases_modified_count_array[2]==0);
+  CU_ASSERT(bases_modified_count_array[3]==0);
+  CU_ASSERT(bases_modified_count_array[4]==0);
+  CU_ASSERT(bases_modified_count_array[5]==0);
+  CU_ASSERT(bases_modified_count_array[6]==0);
+  CU_ASSERT(bases_modified_count_array[7]==0);
+  CU_ASSERT(bases_modified_count_array[8]==0);
+  CU_ASSERT(bases_modified_count_array[9]==0);
+  CU_ASSERT(bases_modified_count_array[10]==0);
+  CU_ASSERT(bases_modified_count_array[11]==0);
+  CU_ASSERT(bases_modified_count_array[12]==0);
+  CU_ASSERT(bases_modified_count_array[13]==0);
+  CU_ASSERT(bases_modified_count_array[14]==0);
+
+  CU_ASSERT(posn_modified_count_array[0]==0);
+  CU_ASSERT(posn_modified_count_array[1]==0);
+  CU_ASSERT(posn_modified_count_array[2]==0);
+  CU_ASSERT(posn_modified_count_array[3]==0);
+  CU_ASSERT(posn_modified_count_array[4]==0);
+  CU_ASSERT(posn_modified_count_array[5]==0);
+  CU_ASSERT(posn_modified_count_array[6]==0);
+  CU_ASSERT(posn_modified_count_array[7]==0);
+  CU_ASSERT(posn_modified_count_array[8]==0);
+  CU_ASSERT(posn_modified_count_array[9]==0);
+  CU_ASSERT(posn_modified_count_array[10]==0);
+  CU_ASSERT(posn_modified_count_array[11]==0);
+  CU_ASSERT(posn_modified_count_array[12]==0);
+
+
+  sf = seq_file_open(outfile4);
+  if(sf == NULL)
+    {
+      // Error opening file
+      fprintf(stderr, "Error: cannot read seq file '%s'\n", outfile4);
+      exit(EXIT_FAILURE);
+    }
+
+  seq_next_read(sf);
+  seq_read_all_bases(sf, read_seq);
+  CU_ASSERT(strcmp(read_seq->buff, "CCCCCTTTAAAAT")==0);
+  seq_file_close(sf);
+
+
+
+  //and again, this time changing the policy so you want it discarded
+  for (i=0; i<20; i++)
+    {
+      bases_modified_count_array[i]=0;
+      posn_modified_count_array[i]=0;
+    }
+  char* outfile5 = "../data/test/error_correction/fq8_for_comparing_with_graph3.err_corrected.fa2";
+  error_correct_file_against_graph("../data/test/error_correction/fq8_for_comparing_with_graph3.fq", 
+				   quality_cutoff, ascii_qual_offset,
+				   db_graph, outfile5,
+				   bases_modified_count_array,
+				   posn_modified_count_array,
+				   bases_modified_count_array_size,
+				   DiscardReadIfLowQualBaseUnCorrectable);
+
+  CU_ASSERT(bases_modified_count_array[0]==0);
+  CU_ASSERT(bases_modified_count_array[1]==0);
+  CU_ASSERT(bases_modified_count_array[2]==0);
+  CU_ASSERT(bases_modified_count_array[3]==0);
+  CU_ASSERT(bases_modified_count_array[4]==0);
+  CU_ASSERT(bases_modified_count_array[5]==0);
+  CU_ASSERT(bases_modified_count_array[6]==0);
+  CU_ASSERT(bases_modified_count_array[7]==0);
+  CU_ASSERT(bases_modified_count_array[8]==0);
+  CU_ASSERT(bases_modified_count_array[9]==0);
+  CU_ASSERT(bases_modified_count_array[10]==0);
+  CU_ASSERT(bases_modified_count_array[11]==0);
+  CU_ASSERT(bases_modified_count_array[12]==0);
+  CU_ASSERT(bases_modified_count_array[13]==0);
+  CU_ASSERT(bases_modified_count_array[14]==0);
+
+  CU_ASSERT(posn_modified_count_array[0]==0);
+  CU_ASSERT(posn_modified_count_array[1]==0);
+  CU_ASSERT(posn_modified_count_array[2]==0);
+  CU_ASSERT(posn_modified_count_array[3]==0);
+  CU_ASSERT(posn_modified_count_array[4]==0);
+  CU_ASSERT(posn_modified_count_array[5]==0);
+  CU_ASSERT(posn_modified_count_array[6]==0);
+  CU_ASSERT(posn_modified_count_array[7]==0);
+  CU_ASSERT(posn_modified_count_array[8]==0);
+  CU_ASSERT(posn_modified_count_array[9]==0);
+  CU_ASSERT(posn_modified_count_array[10]==0);
+  CU_ASSERT(posn_modified_count_array[11]==0);
+  CU_ASSERT(posn_modified_count_array[12]==0);
+
+
+  sf = seq_file_open(outfile5);
+  if(sf == NULL)
+    {
+      // Error opening file
+      fprintf(stderr, "Error: cannot read seq file '%s'\n", outfile4);
+      exit(EXIT_FAILURE);
+    }
+
+  seq_next_read(sf);
+  CU_ASSERT(seq_read_all_bases(sf, read_seq)==0);
+
+  seq_file_close(sf);
+
+
+
+
 }
