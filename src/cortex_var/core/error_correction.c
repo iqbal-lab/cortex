@@ -130,11 +130,8 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
     }
   set_string_to_null(stat1, strlen(outfile)+strlen(suff1)+1);
   set_string_to_null(stat2, strlen(outfile)+strlen(suff2)+1);
-  printf("Start with stat1 %s \n", stat1);
   strcpy(stat1, outfile);
-  printf("At outfile stat1 %s \n", stat1);
   strcat(stat1, suff1);
-  printf("Add suffix to stat1 %s \n", stat1);
   strcat(stat2, outfile);
   strcat(stat2, suff2);
 
@@ -250,7 +247,6 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	  }
 	char local_kmer[kmer_size+1];
 	local_kmer[kmer_size]='\0';	
-	BinaryKmer curr_kmer;
 
 	while ( (*decision==PrintCorrected) && (condition(direction,pos)==true) )
 	  {
@@ -302,7 +298,6 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
     seq_file_close(sf);
     fclose(out_fp);
 
-    printf("ZAM coutn size is %d\n", bases_modified_count_array_size);
     //write out the stats files
     int i;
     for (i=0; i<bases_modified_count_array_size; i++)
