@@ -813,8 +813,8 @@ void test_error_correct_file_against_graph()
   char quality_cutoff= 10;
   char ascii_qual_offset = 33;
   char* outfile = "../data/test/error_correction/fq5_for_comparing_with_graph3.err_corrected.fa";
-  int bases_modified_count_array[20];
-  int posn_modified_count_array[20];
+  uint64_t bases_modified_count_array[20];
+  uint64_t posn_modified_count_array[20];
   int bases_modified_count_array_size=20;
   int i;
   for (i=0; i<20; i++)
