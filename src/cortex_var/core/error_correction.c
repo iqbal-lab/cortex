@@ -95,6 +95,8 @@ void error_correct_list_of_files(char* list_fastq,char quality_cutoff, char asci
   strbuf_free(next_fastq);
   strbuf_free(corrected_file);
   strbuf_free(corrected_file_newpath);
+  free(distrib_num_bases_corrected);
+  free(distrib_position_bases_corrected);
 }
 
 
@@ -122,24 +124,31 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
     }
   char* suff1 = ".distrib_num_modified_bases";
   char* suff2 = ".distrib_posn_modified_bases";
+  char* suff3 =".read_stats";
   char* stat1 = (char*) malloc(sizeof(char)*(strlen(outfile)+strlen(suff1)+1));
   char* stat2 = (char*) malloc(sizeof(char)*(strlen(outfile)+strlen(suff2)+1));
-  if ( (stat1==NULL) || (stat2==NULL))
+  char* stat3 = (char*) malloc(sizeof(char)*(strlen(outfile)+strlen(suff3)+1));
+
+  if ( (stat1==NULL) || (stat2==NULL) || (stat3==NULL) )
     {
       die("Unable to malloc FILENAME strings. Something badly wrong with your server\n");
     }
   set_string_to_null(stat1, strlen(outfile)+strlen(suff1)+1);
   set_string_to_null(stat2, strlen(outfile)+strlen(suff2)+1);
+  set_string_to_null(stat3, strlen(outfile)+strlen(suff3)+1);
   strcpy(stat1, outfile);
   strcat(stat1, suff1);
   strcat(stat2, outfile);
   strcat(stat2, suff2);
+  strcat(stat3, outfile);
+  strcat(stat3, suff3);
 
   FILE* out_stat1 = fopen(stat1, "w");
   FILE* out_stat2 = fopen(stat2, "w");
-  if ( (out_stat1==NULL)|| (out_stat2==NULL) )
+  FILE* out_stat3 = fopen(stat3, "w");
+  if ( (out_stat1==NULL)|| (out_stat2==NULL) || (out_stat3==NULL) )
     {
-      die("Unable to open %s or %s to write to - permissions issue?\n", stat1, stat2);
+      die("Unable to open %s or %s or %s to write to - permissions issue?\n", stat1, stat2, stat3);
     }
 
   SeqFile *sf = seq_file_open(fastq_file);
@@ -159,6 +168,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
   StrBuf* buf_qual = strbuf_new();
   StrBuf* working_buf=strbuf_new();
 
+  int num_original_reads=0, num_final_reads=0, num_corrected_reads=0, num_discarded_reads=0;
   while(seq_next_read(sf))
     {
       int count_corrected_bases=0;
@@ -232,12 +242,13 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
       char working_str[kmer_size+1];
 
       // start_pos is in kmer units
-      void check_bases_to_end_of_read(int start_pos, ReadCorrectionDecison* decision, WhichEndOfKmer direction)
+      boolean check_bases_to_end_of_read(int start_pos, ReadCorrectionDecison* decision, WhichEndOfKmer direction)
 
       {
+	boolean any_correction_done=false;
 	if ((start_pos<0) || (start_pos>=num_kmers))
 	  {
-	    return;
+	    return any_correction_done;
 	  }
 	int pos=start_pos;
 	int offset=0;
@@ -272,26 +283,46 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 		  }
 		else if (fixed==true)
 		  {
+		    any_correction_done=true;
 		    count_corrected_bases++;
 		    posn_modified_count_array[offset+pos]++;
 		  }
 		}
 	    pos = increment(pos, direction);
 	  }
-	
+	return any_correction_done;
       }			      
       //end of local functions
 
-      if (dec==PrintCorrected)
+
+      num_original_reads++;
+
+      boolean any_fixing_done=false;//remember you can do some fixing but then decide later to discard
+
+      if (dec==PrintCorrected)//this means will try and correct, but might not be able to
 	{
-	  check_bases_to_end_of_read(first_good+1, &dec, Right);
-	  check_bases_to_end_of_read(first_good-1, &dec, Left);
+	  boolean any_fix_right = check_bases_to_end_of_read(first_good+1, &dec, Right);
+	  boolean any_fix_left  = check_bases_to_end_of_read(first_good-1, &dec, Left);
+	  if (any_fix_right||any_fix_left)
+	    {
+	      //then it really was able to correct at least one base somewhere
+	      any_fixing_done=true;
+	    }
 	}
 
-      if (dec!=Discard)
+      if (dec==Discard)
 	{
-	  fprintf(out_fp, ">%s\n%s\n", seq_get_read_name(sf), strbuf_as_str(buf_seq));
+	  num_discarded_reads++;
+	}
+      else
+	{
+	  fprintf(out_fp, ">%s\n%s\n", seq_get_read_name(sf), buf_seq->buff );
 	  bases_modified_count_array[count_corrected_bases]++;
+	  num_final_reads++;
+	  if (any_fixing_done==true)
+	    {
+	      num_corrected_reads++;
+	    }
 	}
     }
 
@@ -307,11 +338,17 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
       }
     fclose(out_stat1);
     fclose(out_stat2);
+    fprintf(out_stat3, "Original reads:\t%d\n", num_original_reads);
+    fprintf(out_stat3, "Final reads:\t%d\n", num_final_reads);
+    fprintf(out_stat3, "Corrected reads:\t%d\n", num_corrected_reads);
+    fprintf(out_stat3, "Discarded reads:\t%d\n", num_discarded_reads);
+    fclose(out_stat3);
     strbuf_free(buf_seq);
     strbuf_free(buf_qual);
     strbuf_free(working_buf);
     free(stat1);
     free(stat2);
+    free(stat3);
 
 }
 
