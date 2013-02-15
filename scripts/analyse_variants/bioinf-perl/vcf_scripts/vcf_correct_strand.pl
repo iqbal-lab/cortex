@@ -232,8 +232,8 @@ while(defined($vcf_entry = $vcf->read_entry()))
 
   if(defined($genome_seq))
   {
-    my $genome_seq_ref = substr($genome_seq, 0, length($ref_allele));
-    my $genome_seq_alt = substr($genome_seq, 0, length($alt_allele));
+    my $genome_seq_ref = uc(substr($genome_seq, 0, length($ref_allele)));
+    my $genome_seq_alt = uc(substr($genome_seq, 0, length($alt_allele)));
 
     if($ref_allele ne $genome_seq_ref)
     {
