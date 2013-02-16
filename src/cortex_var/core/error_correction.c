@@ -63,6 +63,7 @@ void error_correct_list_of_files(char* list_fastq,char quality_cutoff, char asci
   StrBuf *next_fastq     = strbuf_new();
   StrBuf* corrected_file = strbuf_new();
   StrBuf* corrected_file_newpath = strbuf_new();
+
   while(strbuf_reset_readline(next_fastq, list_fastq_fp))
     {
       strbuf_chomp(next_fastq);
@@ -285,7 +286,14 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 		  {
 		    any_correction_done=true;
 		    count_corrected_bases++;
-		    posn_modified_count_array[offset+pos]++;
+		    if (offset+pos<bases_modified_count_array_size)
+		      {
+			posn_modified_count_array[offset+pos]++;
+		      }
+		    else
+		      {
+			posn_modified_count_array[bases_modified_count_array_size-1]++;
+		      }
 		  }
 		}
 	    pos = increment(pos, direction);
@@ -317,7 +325,14 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
       else
 	{
 	  fprintf(out_fp, ">%s\n%s\n", seq_get_read_name(sf), buf_seq->buff );
-	  bases_modified_count_array[count_corrected_bases]++;
+	  if (count_corrected_bases<bases_modified_count_array_size)
+	    {
+	      bases_modified_count_array[count_corrected_bases]++;
+	    }
+	  else
+	    {
+	      bases_modified_count_array[bases_modified_count_array_size-1]++;
+	    }
 	  num_final_reads++;
 	  if (any_fixing_done==true)
 	    {
