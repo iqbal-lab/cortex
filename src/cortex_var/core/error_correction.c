@@ -175,6 +175,8 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
       int count_corrected_bases=0;
 
       seq_read_all_bases(sf, buf_seq);
+      StrBuf* buf_seq_debug  = strbuf_clone(buf_seq);
+      
       seq_read_all_quals(sf, buf_qual);
       int read_len = seq_get_length(sf);
       int num_kmers = read_len-kmer_size+1;
@@ -243,7 +245,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
       char working_str[kmer_size+1];
 
       // start_pos is in kmer units
-      boolean check_bases_to_end_of_read(int start_pos, ReadCorrectionDecison* decision, WhichEndOfKmer direction)
+      boolean check_bases_to_end_of_read(int start_pos, ReadCorrectionDecison* decision, WhichEndOfKmer direction, int* num_corrected_bases_in_this_read_debug)
 
       {
 	boolean any_correction_done=false;
@@ -286,6 +288,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 		  {
 		    any_correction_done=true;
 		    count_corrected_bases++;
+		    *num_corrected_bases_in_this_read_debug=*num_corrected_bases_in_this_read_debug+1;
 		    if (offset+pos<bases_modified_count_array_size)
 		      {
 			posn_modified_count_array[offset+pos]++;
@@ -309,12 +312,18 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 
       if (dec==PrintCorrected)//this means will try and correct, but might not be able to
 	{
-	  boolean any_fix_right = check_bases_to_end_of_read(first_good+1, &dec, Right);
-	  boolean any_fix_left  = check_bases_to_end_of_read(first_good-1, &dec, Left);
+	  int num_corrections_to_this_read_for_debug=0;
+	  boolean any_fix_right = check_bases_to_end_of_read(first_good+1, &dec, Right, &num_corrections_to_this_read_for_debug);
+	  boolean any_fix_left  = check_bases_to_end_of_read(first_good-1, &dec, Left, &num_corrections_to_this_read_for_debug);
 	  if (any_fix_right||any_fix_left)
 	    {
 	      //then it really was able to correct at least one base somewhere
 	      any_fixing_done=true;
+	      if (num_corrections_to_this_read_for_debug>10)
+		{
+		  printf("This read has %d corrections. Original read:\n>%s\n%s\n+\n%s\n", num_corrections_to_this_read_for_debug, seq_get_read_name(sf), buf_seq_debug->buff, buf_qual->buff);
+		  printf("This is the corrected read:\n>%s\n%s\n", seq_get_read_name(sf), buf_seq->buff);
+		}
 	    }
 	}
 

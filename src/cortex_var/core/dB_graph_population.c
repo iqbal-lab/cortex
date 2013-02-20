@@ -5032,7 +5032,7 @@ boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, int e
     }
   else  //or next node has more than one arrow in
     {
-      Orientation next_orientation;
+      Orientation next_orientation=forward;
       
       //we know this element has only one edge out. What is it? The function db_node_has_precisely_one_edge fills the answer into argument 3
       Nucleotide nuc, reverse_nuc;
