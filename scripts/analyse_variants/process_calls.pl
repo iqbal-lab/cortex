@@ -385,7 +385,12 @@ if ( $outdir !~ /\/$/ )
 }
 if ( !( -e $outdir ) )
 {
-	die("Output directory $outdir does not exist");
+    my $c = "mkdir $outdir";
+    qx{$c};
+    if ( !( -e $outdir ) )
+    {
+	die("Output directory $outdir does not exist, and I cannot create it. Permissions? Out of disk?");
+    }
 }
 
 ## You will often need to print a newline after the last colour which is not the reference or pool.
@@ -4061,8 +4066,9 @@ sub wrap_needleman
 			@seq1 = split //, $seq{1};
 			@seq2 = split //, $seq{2};
 
-			my $cmd1 = "$bin --zam $seq{1} $seq{2}";
-			my $ret1 = qx{$cmd1};
+			#my $cmd1 = "$bin --zam $seq{1} $seq{2}";
+			#my $ret1 = qx{$cmd1};
+			my $ret1 = run_nw_alignment_handling_long_strings($seq{1},$seq{2}, $bin, $var_name);
 
 			print OUT "FORWARD ALIGNMENT\n";
 			my ( $count_snps_f, $count_indels_f ) = get_snp_indel_counts($ret1);
@@ -4074,11 +4080,12 @@ sub wrap_needleman
 				print OUT "REVERSE ALIGNMENT\n";
 				@seq2 = split //, rev_comp( $seq{2} );
 				my $rseq2 = rev_comp( $seq{2} );
-				my $cmd2  = "$bin --zam $seq{1} $rseq2";
-				my $ret2  = qx{$cmd2};
-
+				#my $cmd2  = "$bin --zam $seq{1} $rseq2";
+				#my $ret2  = qx{$cmd2};
+				my $rvar_name = $var_name."_rev_alignment";
+				my $ret2 = run_nw_alignment_handling_long_strings($seq{1},$rseq2, $bin, $rvar_name);
 				my ( $count_snps_r, $count_indels_r ) =
-				  get_snp_indel_counts($ret2);
+				    get_snp_indel_counts($ret2);
 				print OUT "$ret2";
 
 				#print OUT "\n";
@@ -4095,6 +4102,40 @@ sub wrap_needleman
 	close(OUT);
 }
 
+sub run_nw_alignment_handling_long_strings
+{
+    my ($str1, $str2, $bin, $var_id) = @_;
+
+    if (length($str1) + length($str2) < 5000)
+    {
+	my $cmd = "$bin --zam $str1 $str2";
+	my $ret = qx{$cmd};
+	return $ret;
+    }
+    else
+    {
+	if ($outdir !~ /\/$/)
+	{
+	    $alignment_dir = $outdir."/tmp_alignments/";
+	}
+	else
+	{
+	    $alignment_dir = $outdir."tmp_alignments/";
+	}
+	if (!(-d $alignment_dir))
+	{
+	    my $c = "mkdir $alignment_dir";
+	    qx{$c};
+	}
+	my $tmpfile = $alignment_dir."alignment_".$var_id;
+	open(TMPAL, ">".$tmpfile)||die("Cannot make temp alignment file $tmpfile - permissions problem? Out of disk?\n");
+	print TMPAL ">\n$str1\n>\n$str2\n";
+	close(TMPAL);
+	my $cmd = "$bin --zam --file $tmpfile";
+	my $ret = qx{$cmd};
+	return $ret;
+    }
+}
 sub get_snp_indel_counts
 {
 	my ($str) = @_;
