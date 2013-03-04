@@ -69,9 +69,9 @@ typedef enum {
 }WhichEndOfKmer;
 
 
-void error_correct_list_of_files(char* list_fastq,char quality_cutoff, char ascii_qual_offset,
+void error_correct_list_of_files(StrBuf* list_fastq,char quality_cutoff, char ascii_qual_offset,
 				 dBGraph *db_graph, HandleLowQualUncorrectable policy,
-				 int max_read_len, char* suffix, char* outdir);
+				 int max_read_len, StrBuf* suffix, char* outdir);
 
 inline void error_correct_file_against_graph(char* fastq_file, char quality_cutoff, char ascii_qual_offset,
 					     dBGraph *db_graph, char* outfile,

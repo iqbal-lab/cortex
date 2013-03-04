@@ -40,9 +40,9 @@
 
 
 
-void error_correct_list_of_files(char* list_fastq,char quality_cutoff, char ascii_qual_offset,
+void error_correct_list_of_files(StrBuf* list_fastq,char quality_cutoff, char ascii_qual_offset,
 				 dBGraph *db_graph, HandleLowQualUncorrectable policy,
-				 int max_read_len, char* suffix, char* outdir)
+				 int max_read_len, StrBuf* suffix, char* outdir)
 {
 
   int len = max_read_len+2;
@@ -55,10 +55,10 @@ void error_correct_list_of_files(char* list_fastq,char quality_cutoff, char asci
   set_uint64_t_array(distrib_num_bases_corrected,      len, (uint64_t) 0);
   set_uint64_t_array(distrib_position_bases_corrected, len, (uint64_t) 0);
 
-  FILE* list_fastq_fp = fopen(list_fastq, "r");
+  FILE* list_fastq_fp = fopen(list_fastq->buff, "r");
   if (list_fastq_fp==NULL)
     {
-      printf("Cannot open file %s\n", list_fastq);
+      printf("Cannot open file %s\n", list_fastq->buff);
     }
   StrBuf *next_fastq     = strbuf_new();
   StrBuf* corrected_file = strbuf_new();
@@ -73,23 +73,18 @@ void error_correct_list_of_files(char* list_fastq,char quality_cutoff, char asci
 	   strbuf_reset(corrected_file_newpath);
 	   strbuf_copy(corrected_file, 0,//dest
 		       next_fastq,0,strbuf_len(next_fastq));
-	   strbuf_append_str(corrected_file, suffix);
-	   char* next_fastq_str     = strbuf_as_str(next_fastq);
-	   char* corrected_file_str = strbuf_as_str(corrected_file);
-	   char* corrected_file_basename = basename(corrected_file_str);
+	   strbuf_append_str(corrected_file, suffix->buff);
+	   char* corrected_file_basename = basename(corrected_file->buff);
 	   strbuf_append_str(corrected_file_newpath, outdir);
-	   strbuf_append_str(corrected_file_newpath,corrected_file_basename);
-	   char* corrected_file_newpath_str = strbuf_as_str(corrected_file_newpath);
+	   strbuf_append_str(corrected_file_newpath, corrected_file_basename);
 
-	   error_correct_file_against_graph(next_fastq_str, quality_cutoff, ascii_qual_offset,
-					    db_graph, corrected_file_newpath_str,
+	   error_correct_file_against_graph(next_fastq->buff, quality_cutoff, ascii_qual_offset,
+					    db_graph, corrected_file_newpath->buff,
 					    distrib_num_bases_corrected,
 					    distrib_position_bases_corrected,
 					    len,
 					    policy);
-	   free(corrected_file_str);
-	   free(next_fastq_str);
-	   free(corrected_file_newpath_str);
+
 	 }
     }
   fclose(list_fastq_fp);
@@ -298,7 +293,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 			posn_modified_count_array[bases_modified_count_array_size-1]++;
 		      }
 		  }
-		}
+	      }
 	    pos = increment(pos, direction);
 	  }
 	return any_correction_done;
@@ -348,6 +343,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	      num_corrected_reads++;
 	    }
 	}
+      strbuf_free(buf_seq_debug);
     }
 
     seq_file_close(sf);

@@ -353,9 +353,6 @@ void initialise_longlong_list(long long* list, int len)
 int default_opts(CmdLine * c)
 {
   c->do_err_correction=false;
-  set_string_to_null(c->err_correction_filelist,MAX_FILENAME_LEN);
-  set_string_to_null(c->err_correction_outdir,MAX_FILENAME_LEN);
-  set_string_to_null(c->err_correction_suffix, 50);
   c->err_correction_policy=DontWorryAboutLowQualBaseUnCorrectable;
 
   c->estimate_copy_num=false;
@@ -519,6 +516,12 @@ CmdLine* cmd_line_alloc()
 	}
       
     }
+
+  //string buffers
+ cmd->err_correction_filelist = strbuf_new();
+ cmd->err_correction_outdir   = strbuf_new();
+ cmd->err_correction_suffix   = strbuf_new();
+  
   return cmd;
 }
 
@@ -530,6 +533,9 @@ void cmd_line_free(CmdLine* cmd)
       free(cmd->colour_sample_ids[i]);
     }
   free(cmd->colour_sample_ids);
+  strbuf_free(cmd->err_correction_filelist);
+  strbuf_free(cmd->err_correction_outdir);
+  strbuf_free(cmd->err_correction_suffix);
   free(cmd);
 }
 
@@ -2565,14 +2571,17 @@ int get_numbers_from_open_square_brack_sep_list(char* list, int* return_list,
 }
 
 
-
-void  parse_err_correction_args(CmdLine* cmd, char* arg)
+void parse_err_correction_args(CmdLine* cmd, char* arg)
 {
+  StrBuf* arg_strbuf  = strbuf_create(arg);
+  if (arg_strbuf==NULL)
+    {
+      die("Unable even to parse the cmd-lien without oom. Your server is out of memory\n");
+    }
+  
+  
   char delims[] = ",";
-  char temp1[MAX_FILENAME_LEN];
-  temp1[0]='\0';
-  strcpy(temp1, arg);
-  char* fastqlist = strtok(temp1, delims );
+  char* fastqlist = strtok(arg_strbuf->buff, delims );
   if (fastqlist==NULL)
     {
       errx(1,"--err_correct_1kg needs a comma-sep list of 4 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). You don't seem to have given an argument\n");
@@ -2595,15 +2604,10 @@ void  parse_err_correction_args(CmdLine* cmd, char* arg)
   
 
   //put values into the cmdline object
-
-  cmd->do_err_correction=true;
-  strcat(cmd->err_correction_filelist, fastqlist);
-  strcat(cmd->err_correction_outdir, outdir);
-  if (cmd->err_correction_outdir[strlen(cmd->err_correction_outdir)]!='/')
-    {
-      strcat(cmd->err_correction_outdir, "/");
-    }
-  strcat(cmd->err_correction_suffix, suffix);
+  strbuf_append_str(cmd->err_correction_filelist, fastqlist);
+  strbuf_append_str(cmd->err_correction_outdir, outdir);
+  strbuf_add_slash_on_end(cmd->err_correction_outdir);
+  strbuf_append_str(cmd->err_correction_suffix, suffix);
   if (strcmp(num_as_str, "0")==0)
     {
       cmd->err_correction_policy=DiscardReadIfLowQualBaseUnCorrectable;
@@ -2616,7 +2620,9 @@ void  parse_err_correction_args(CmdLine* cmd, char* arg)
     {
       errx(1,"--err_correct_1kg needs a comma-sep list of 3 arguments. A filelist (file, which contains a list of FASTQ). A suffix. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Your 3rd argument is neither 0 nor 1\n");
     }
+  cmd->do_err_correction=true;
 
+  strbuf_free(arg_strbuf);
 }
 
 

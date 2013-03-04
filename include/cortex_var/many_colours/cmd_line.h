@@ -138,9 +138,9 @@ typedef struct
   char colourlist_snp_alleles[MAX_FILENAME_LEN];
 
   //new err corrction test code
-  char err_correction_filelist[MAX_FILENAME_LEN];
-  char err_correction_outdir[MAX_FILENAME_LEN];
-  char err_correction_suffix[50];
+  StrBuf* err_correction_filelist;
+  StrBuf* err_correction_outdir;
+  StrBuf* err_correction_suffix;
   HandleLowQualUncorrectable err_correction_policy;
   boolean do_err_correction;
 

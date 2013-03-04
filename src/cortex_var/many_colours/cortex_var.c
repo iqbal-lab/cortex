@@ -1171,7 +1171,7 @@ int main(int argc, char **argv)
       error_correct_list_of_files(cmd_line->err_correction_filelist, cmd_line->quality_score_threshold, cmd_line->quality_score_offset,
 				  db_graph, cmd_line->err_correction_policy,
 				  cmd_line->max_read_length, cmd_line->err_correction_suffix,
-				  cmd_line->err_correction_outdir);
+				  cmd_line->err_correction_outdir->buff);
       timestamp();
       printf("Error correction done\n");
     }

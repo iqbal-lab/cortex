@@ -570,9 +570,9 @@ my %Z_posns_decomp=();
 #my $final_decomp = $fixed_Z_decomp;
 #$final_decomp =~ s/\.fixed_Z//;
 my $final_simple = $simple_vcf_name;
-$final_simple =~ s/.uncleaned//;
+$final_simple =~ s/.raw.vcf.uncleaned/.raw.vcf/;
 my $final_decomp = $decomp_vcf_name;
-$final_decomp =~ s/.uncleaned//;
+$final_decomp =~ s/.decomp.vcf.uncleaned/.decomp.vcf/;
 
 if ($ref_fasta eq "unspecified")
 {
@@ -1224,8 +1224,9 @@ sub filter_by_flank_mapqual
 			if  ( ( $sp[4] >= $mapping_qual_thresh )
 			      &&
 			      ( $sp[5] =~ /^\d+M$/)
-			      &&
-			      ( $sp[9] =~ /^[=]+$/) )
+			    #  &&
+			    #  ( $sp[9] =~ /^[=]+$/) 
+			    )
 			{
 				$href->{$varname} = "PASS";
 			}
@@ -1242,7 +1243,7 @@ sub filter_by_flank_mapqual
 				     ) 
 				    )
 				{
-				    print "$varname passes mq filter, but flank is not a perfect match, so filter this out (would get wrong coord)\n";
+				    print "$varname passes mq filter, but flank is contains insertions/deletions, so filter this out (would get wrong coord)\n";
 				}
 			}
 		}

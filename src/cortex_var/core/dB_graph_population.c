@@ -3194,6 +3194,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
     }
 
+  free(union_list);
 }
 
 
