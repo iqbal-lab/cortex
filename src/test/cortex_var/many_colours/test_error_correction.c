@@ -79,6 +79,7 @@ void test_base_mutator()
   CU_ASSERT(mutate_base(strbuf, 0, 3)==true);
   CU_ASSERT(strcmp(strbuf->buff, "TNAC")==0);
 
+  strbuf_free(strbuf);
 }
 
 
@@ -1145,6 +1146,6 @@ void test_error_correct_file_against_graph()
   seq_file_close(sf);
 
 
-
-
+  strbuf_free(read_seq);
+  hash_table_free(&db_graph);
 }
