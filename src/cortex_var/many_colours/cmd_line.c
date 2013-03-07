@@ -2586,6 +2586,13 @@ void parse_err_correction_args(CmdLine* cmd, char* arg)
     {
       errx(1,"--err_correct_1kg needs a comma-sep list of 4 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). You don't seem to have given an argument\n");
     }
+  
+  //check file exists
+  if (access(fastqlist, R_OK)==-1)
+    {
+      die("Cannot access file %s\n", fastqlist);
+    }
+
   char* suffix = strtok(NULL, delims );
   if (suffix==NULL)
     {
@@ -2596,6 +2603,14 @@ void parse_err_correction_args(CmdLine* cmd, char* arg)
     {
             errx(1,"--err_correct_1kg needs a comma-sep list of 4 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. And a 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). You don't seem to have given an outdir or 0/1\n");
     }
+
+  if (dir_exists(outdir)==false)
+    {
+      die("You have specified an output directory, %s, which does not exist", outdir);
+    }
+
+
+
   char* num_as_str = strtok(NULL, delims );
   if (num_as_str==NULL)
     {

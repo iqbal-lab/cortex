@@ -37,6 +37,8 @@
 #include <libgen.h> // dirname
 #include <errno.h>
 #include <ctype.h> // tolower
+#include <sys/types.h>
+#include <dirent.h>
 
 // third party libraries
 #include <seq_file.h>
@@ -128,6 +130,26 @@ char mkpath(const char *path, mode_t mode)
   return status;
 }
 
+boolean dir_exists(char* dir_to_check)
+{
+  DIR* dir = opendir(dir_to_check);
+  if (dir)
+    {
+      /* Directory exists. */
+      closedir(dir);
+      return true;
+    }
+  else if (ENOENT == errno)
+    {
+      /* Directory does not exist. */
+      return false;
+    }
+  else
+    {
+      /* opendir() failed for some other reason. */
+      return false;
+    }
+}
 
 //
 // Sequence file loading
