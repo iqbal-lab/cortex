@@ -81,7 +81,9 @@ typedef struct
 
   int pd_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
   int num_colours_in_pd_colour_list;
-  
+
+  boolean get_pan_genome_matrix;
+  char pan_genome_genes_fasta[MAX_FILENAME_LEN];
   boolean entered_sampleid_as_cmdline_arg;
   boolean loaded_sample_names;
   boolean print_novel_contigs;

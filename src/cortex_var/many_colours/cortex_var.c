@@ -1278,6 +1278,15 @@ int main(int argc, char **argv)
 
       hash_table_traverse(&db_node_action_set_status_of_unpruned_to_none, db_graph);
     }
+  if (cmd_line->get_pan_genome_matrix==true)
+    {
+      timestamp();
+      printf("Print pangenome matrix. For each read(gene) in this fasta (%s)\nprint the percent of kmers which are present in each sample\n",
+	     cmd_line->pan_genome_genes_fasta);
+      print_percent_agreement_for_each_colour_for_each_read(cmd_line->pan_genome_genes_fasta, 
+							    cmd_line->max_read_length, db_graph);
+      timestamp();
+    }
   if (cmd_line->print_colour_overlap_matrix==true)
     {
       timestamp();
