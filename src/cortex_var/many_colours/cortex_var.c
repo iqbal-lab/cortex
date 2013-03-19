@@ -1272,7 +1272,7 @@ int main(int argc, char **argv)
 	boolean present_in_all_brighton=true;
 	boolean absent_outside_brighton=true;
 	int i;
-	for (i==0; (absent_outside_brighton==false) && (present_in_all_brighton==true) && (i<89); i++)
+	for (i==0; (absent_outside_brighton==true) && (present_in_all_brighton==true) && (i<89); i++)
 	  {
 	    
 	    if (count_reads_on_allele_in_specific_colour(path, len, i, &too_short)==0)
@@ -1288,6 +1288,10 @@ int main(int argc, char **argv)
 		  {
 		    absent_outside_brighton=false;
 		  }
+	      }
+	    if (too_short==true)
+	      {
+		return false;
 	      }
 	  }
 	if ((absent_outside_brighton==true) && (present_in_all_brighton==true))
