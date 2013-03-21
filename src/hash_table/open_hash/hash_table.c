@@ -148,57 +148,6 @@ boolean hash_table_find_in_bucket(Key key, long long * current_pos, boolean * ov
 }
 
 
-//currently not used, and must add a test
-boolean hash_table_apply_or_insert(Key key, void (*f)(Element *), HashTable * hash_table){
-  if (hash_table == NULL) {
-    die("NULL table!");
-  }
-  
-  long long current_pos;
-  Element element;
-  boolean overflow;
-  int rehash=0;
-  boolean found;
-  do
-    {
-      found = hash_table_find_in_bucket(key,&current_pos,&overflow, hash_table,rehash);
-      
-      if (!found)
-	{
-	  if (!overflow)
-	    {
-	      //sanity check
-	      if (!db_node_check_for_flag_ALL_OFF(&hash_table->table[current_pos])){
-		die("Out of bounds - trying to insert new node beyond end of bucket\n");
-	      }
-
-	      element_initialise(&element,key, hash_table->kmer_size);
-	      element_assign( &(hash_table->table[current_pos]),  &element); 
-	      hash_table->unique_kmers++;
-	    }
-	  else//overflow
-	    {
-	      rehash++;
-	      if (rehash>hash_table->max_rehash_tries)
-		{
- 		  die("Dear user - you have not allocated enough memory to contain your sequence data. \n"
-          "Either allocate more memory (have you done your calculations right?\n"
-          "Have you allowed for sequencing errors?), or threshold more harshly on\n"
-          "quality score, and try again. Aborting mission.\n");
-		}
-	    }
-	}
-      else
-	{
-	  f(&hash_table->table[current_pos]);
-	}
-
-
-    }while(overflow);
-
-  return found;
-     
-}
 
 
 void hash_table_traverse(void (*f)(Element *),HashTable * hash_table){
@@ -284,7 +233,7 @@ Element * hash_table_find(Key key, HashTable * hash_table)
 	  if (rehash>hash_table->max_rehash_tries)
 	    {
 	      //fprintf(stderr,"too much rehashing!! Rehash=%d\n", rehash);
- 		  die("Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
+	      //		  die("Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
 	    }
 	}
     } while(overflow);
