@@ -69,7 +69,9 @@ typedef enum
     in_desired_genotype = 11,
     special_visited = 12,
     special_none = 13,
-    special_pruned = 14
+    special_pruned = 14,
+    fw_strand = 15,
+    rv_strand = 16,
   } NodeStatus;
 
 typedef struct{

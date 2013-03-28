@@ -34,6 +34,7 @@
 
 #include <err.h>
 #include <stdint.h>
+#include "string_buffer.h"
 
 typedef signed char boolean;
 #ifndef true
@@ -78,5 +79,7 @@ void warn(const char* fmt, ...)
 // Placeholder for message() -- a function for standard output
 void message(const char* fmt, ...)
   __attribute__ ((format(printf, 1, 2)));
+
+void strbuf_rev_comp(StrBuf* sb);
 
 #endif /* GLOBAL_H_ */

@@ -143,7 +143,9 @@ typedef struct
   StrBuf* err_correction_suffix;
   HandleLowQualUncorrectable err_correction_policy;
   boolean do_err_correction;
-
+  boolean do_greedy_padding;
+  int greedy_pad;
+  
   boolean do_genotyping_of_file_of_sites;
   DiscoveryMethod which_caller_was_used_for_calls_to_be_genotyped;
 

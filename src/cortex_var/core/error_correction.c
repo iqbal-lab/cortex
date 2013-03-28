@@ -36,13 +36,17 @@
 // cortex_var headers
 #include "error_correction.h"
 #include "global.h"
+#include "dB_graph_population.h"
 
 
 
 
 void error_correct_list_of_files(StrBuf* list_fastq,char quality_cutoff, char ascii_qual_offset,
 				 dBGraph *db_graph, HandleLowQualUncorrectable policy,
-				 int max_read_len, StrBuf* suffix, char* outdir)
+				 int max_read_len, StrBuf* suffix, char* outdir,
+				 boolean add_greedy_bases_for_better_bwt_compression,
+				 int num_greedy_bases, boolean rev_comp_read_if_on_reverse_strand)
+
 {
 
   int len = max_read_len+2;
@@ -83,7 +87,10 @@ void error_correct_list_of_files(StrBuf* list_fastq,char quality_cutoff, char as
 					    distrib_num_bases_corrected,
 					    distrib_position_bases_corrected,
 					    len,
-					    policy);
+					    policy,
+					    add_greedy_bases_for_better_bwt_compression,
+					    num_greedy_bases, rev_comp_read_if_on_reverse_strand);
+	     
 
 	 }
     }
@@ -101,7 +108,10 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 					     uint64_t *bases_modified_count_array,//distribution across reads; how many of the read_length bases are fixed
 					     uint64_t *posn_modified_count_array,//where in the read are we making corrections?
 					     int bases_modified_count_array_size,
-					     HandleLowQualUncorrectable policy)
+					     HandleLowQualUncorrectable policy,
+					     boolean add_greedy_bases_for_better_bwt_compression,
+					     int num_greedy_bases,
+					     boolean rev_comp_read_if_on_reverse_strand)
 {
   //reset the stats arrays, we get stats per input file
   set_uint64_t_array(bases_modified_count_array,bases_modified_count_array_size, (uint64_t) 0);
@@ -163,7 +173,8 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
   StrBuf* buf_seq  = strbuf_new();
   StrBuf* buf_qual = strbuf_new();
   StrBuf* working_buf=strbuf_new();
-
+  dBNode* last_node_in_read;
+  Orientation last_or_in_read;
   int num_original_reads=0, num_final_reads=0, num_corrected_reads=0, num_discarded_reads=0;
   while(seq_next_read(sf))
     {
@@ -184,10 +195,12 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
       //if all quals are high, will Print uncorrected
       //else, if all kmers NOT in graph, will discard or print uncorrected depending on policy
       //else print corrected.
+      Orientation strand_first_good_kmer;
       ReadCorrectionDecison dec = 
 	get_first_good_kmer_and_populate_qual_array(buf_seq, buf_qual, num_kmers, read_len,
 						    quality_good, quality_cutoff, 
-						    &first_good, db_graph, policy);
+						    &first_good, &strand_first_good_kmer,
+						    db_graph, policy);
       
 
       //*** start of local functions
@@ -240,7 +253,9 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
       char working_str[kmer_size+1];
 
       // start_pos is in kmer units
-      boolean check_bases_to_end_of_read(int start_pos, ReadCorrectionDecison* decision, WhichEndOfKmer direction, int* num_corrected_bases_in_this_read_debug)
+      boolean check_bases_to_end_of_read(int start_pos, ReadCorrectionDecison* decision, 
+					 WhichEndOfKmer direction, 
+					 int* num_corrected_bases_in_this_read_debug)
 
       {
 	boolean any_correction_done=false;
@@ -314,11 +329,11 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	    {
 	      //then it really was able to correct at least one base somewhere
 	      any_fixing_done=true;
-	      if (num_corrections_to_this_read_for_debug>10)
+	      /*	      if (num_corrections_to_this_read_for_debug>10)
 		{
 		  printf("This read has %d corrections. Original read:\n>%s\n%s\n+\n%s\n", num_corrections_to_this_read_for_debug, seq_get_read_name(sf), buf_seq_debug->buff, buf_qual->buff);
 		  printf("This is the corrected read:\n>%s\n%s\n", seq_get_read_name(sf), buf_seq->buff);
-		}
+		  }*/
 	    }
 	}
 
@@ -328,7 +343,41 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	}
       else
 	{
-	  fprintf(out_fp, ">%s\n%s\n", seq_get_read_name(sf), buf_seq->buff );
+	  fprintf(out_fp, ">%s\n", seq_get_read_name(sf));
+	  char last_kmer_str[db_graph->kmer_size];
+	  if ( (rev_comp_read_if_on_reverse_strand==true)
+	       && (strand_first_good_kmer==reverse) )
+	    {
+	      strbuf_rev_comp(buf_seq);
+	    }
+	  //get the final kmer
+	  strbuf_substr_prealloced(buf_seq, buf_seq->len-db_graph->kmer_size-1, db_graph->kmer_size, last_kmer_str);
+
+	  if (add_greedy_bases_for_better_bwt_compression==true)
+	    {
+	      BinaryKmer last_kmer;
+	      if (seq_to_binary_kmer(last_kmer_str, kmer_size, &last_kmer)==NULL)
+		{
+		  //contains an N
+		  pad_to_N_with_Adenine(buf_seq, buf_seq->len+num_greedy_bases);
+		}
+	
+	      BinaryKmer temp_key;
+	      element_get_key(&last_kmer, kmer_size, &temp_key);
+	      last_node_in_read = hash_table_find(&temp_key, db_graph);
+	      if (last_node_in_read==NULL)
+		{
+		  pad_to_N_with_Adenine(buf_seq, buf_seq->len+num_greedy_bases);
+		}
+	      else
+		{
+		  last_or_in_read = db_node_get_orientation(&last_kmer,last_node_in_read, db_graph->kmer_size);
+		  take_n_greedy_random_steps(last_node_in_read, last_or_in_read,
+					     db_graph, num_greedy_bases, buf_seq);
+		}
+	    }
+	  
+	  fprintf(out_fp, "%s\n", buf_seq->buff );
 	  if (count_corrected_bases<bases_modified_count_array_size)
 	    {
 	      bases_modified_count_array[count_corrected_bases]++;
@@ -381,6 +430,7 @@ ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, S
 								  int num_kmers, int read_len,
 								  int* quals_good,
 								  char quality_cutoff, int* first_good_kmer,
+								  Orientation* strand_first_good_kmer,
 								  dBGraph* dbg, HandleLowQualUncorrectable policy)
 {
   int i;
@@ -430,6 +480,22 @@ ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, S
 	    {
 	      found_first_good_kmer=true;
 	      *first_good_kmer=i;
+	      Orientation or_first_good_kmer  = db_node_get_orientation(&curr_kmer,curr_node, dbg->kmer_size); 
+	      if ( (db_node_check_status(curr_node, rv_strand)==true)
+		   && (or_first_good_kmer==forward) )
+		{
+		  *strand_first_good_kmer = reverse;
+		}
+	      else if ( (db_node_check_status(curr_node, fw_strand)==true)
+		   && (or_first_good_kmer==reverse) )
+		{
+		  *strand_first_good_kmer = reverse;
+		}
+	      else
+		{
+		  *strand_first_good_kmer = forward;
+		}
+
 	    }
 	}
     }
@@ -571,6 +637,234 @@ boolean mutate_base(StrBuf* strbuf, int which_base, int which_mutant)
 }
 
 
+void read_ref_fasta_and_mark_strand(char* ref_fa, dBGraph * db_graph)
+{
+
+  int max_read_length = 20000;//chunk length for reading ref.
+
+  FILE* fp = fopen(ref_fa, "r");
+  if (fp==NULL)
+    {
+      printf("Cannot open reference fasta %s\n", ref_fa);
+      die("Exit");
+    }
+
+  //file reader
+  int file_reader(FILE * fp, Sequence * seq, int max_read_length, boolean new_entry, boolean * full_entry){
+    long long ret;
+    int offset = 0;
+    if (new_entry == false){
+      offset = db_graph->kmer_size;
+      //die("new_entry must be true in hsi test function");
+    }
+    ret =  read_sequence_from_fasta(fp,seq,max_read_length,new_entry,full_entry,offset);
+    
+    return ret;
+  }
+
+
+    //----------------------------------
+  // preallocate the memory used to read the sequences
+  //----------------------------------
+  Sequence * seq = malloc(sizeof(Sequence));
+  if (seq == NULL){
+    fputs("Out of memory trying to allocate Sequence\n",stderr);
+    exit(1);
+  }
+  alloc_sequence(seq,max_read_length,LINE_MAX);
+  
+  
+  int seq_length=0;
+  short kmer_size = db_graph->kmer_size;
+
+  //max_read_length/(kmer_size+1) is the worst case for the number of sliding windows, ie a kmer follow by a low-quality/bad base
+  int max_windows = max_read_length/(kmer_size+1);
+ 
+  //number of possible kmers in a 'perfect' read
+  int max_kmers   = max_read_length-kmer_size+1;
+
+  //we will be calling functions that apply to fastq as well as fasta. Since we are loading a ref fasta, we do not want to cut homopolymers,
+  // and since we have fastq, the qualit-cutfoff os redundant
+  boolean break_homopolymers=false;
+  int homopolymer_cutoff=0;
+  char quality_cut_off=0;
+  
+
+  //----------------------------------
+  //preallocate the space of memory used to keep the sliding_windows. NB: this space of memory is reused for every call -- with the view 
+  //to avoid memory fragmentation
+  //NB: this space needs to preallocate memory for orthogonal situations: 
+  //    * a good read -> few windows, many kmers per window
+  //    * a bad read  -> many windows, few kmers per window    
+  //----------------------------------
+  KmerSlidingWindowSet * windows = malloc(sizeof(KmerSlidingWindowSet));  
+  if (windows == NULL){
+    fputs("Out of memory trying to allocate a KmerArraySet",stderr);
+    exit(1);
+  }  
+  //allocate memory for the sliding windows 
+  binary_kmer_alloc_kmers_set(windows, max_windows, max_kmers);
+
+  BinaryKmer tmp_kmer;
+
+  boolean full_entry = true;
+  boolean prev_full_entry = true;
+  
+  int entry_length;
+
+  while ((entry_length = file_reader(fp,seq,max_read_length, full_entry, &full_entry))){
+
+    if (DEBUG){
+      printf ("\nsequence %s\n",seq->seq);
+    }
+    
+    int i,j;
+    seq_length += (long long) (entry_length - (prev_full_entry==false ? db_graph->kmer_size : 0));
+
+    
+    //last two arguments mean not to break at homopolymers
+    int nkmers = get_sliding_windows_from_sequence(seq->seq,seq->qual,entry_length,quality_cut_off,db_graph->kmer_size,windows,max_windows, 
+						   max_kmers,break_homopolymers, homopolymer_cutoff);
+    
+    if (nkmers == 0) {
+    }
+    else {
+      Element * current_node  = NULL;
+      Orientation current_orientation;
+      
+      for(i=0;i<windows->nwindows;i++){ //for each window
+	KmerSlidingWindow * current_window = &(windows->window[i]);
+	
+	for(j=0;j<current_window->nkmers;j++){ //for each kmer in window
+	  
+	  current_node = hash_table_find(element_get_key(&(current_window->kmer[j]),db_graph->kmer_size, &tmp_kmer),db_graph);	  	 
+
+	  if (current_node){
+	    current_orientation = db_node_get_orientation(&(current_window->kmer[j]),current_node, db_graph->kmer_size);
+	    if (current_orientation==forward)
+	      {
+		db_node_set_status(current_node, fw_strand);
+	      }
+	    else
+	      {
+		db_node_set_status(current_node, rv_strand);
+	      }
+	  }
+	  
+	}
+	
+      }
+    }
+    
+    if (full_entry == false){
+      shift_last_kmer_to_start_of_sequence(seq,entry_length,db_graph->kmer_size);
+    }
+
+    prev_full_entry = full_entry;
+
+  }
+  
+  free_sequence(&seq);
+  binary_kmer_free_kmers_set(&windows);
+
+}
+
+
+void pick_a_random_edge(dBNode* node, Orientation or, Nucleotide* random_nuc)
+{
+  Edges edges = get_union_of_edges(*node);
+  Edges edges_saved = edges;
+  short edges_count = 0;
+
+  if (or == reverse){
+    edges >>= 4;
+    edges_saved >>=4;
+  }
+  int n;
+  for(n=0;n<4;n++){
+    
+    if ((edges & 1) == 1){
+      edges_count++;
+    }
+    edges >>= 1;    
+  }
+
+  if (edges_count==0)
+    {
+      *random_nuc=Undefined;
+    }
+  else
+    {
+      //not that it matters, but see http://stackoverflow.com/questions/2509679/how-to-generate-a-random-number-from-within-a-range-c
+      int which_edge = rand() % edges_count;
+      *random_nuc =  (Nucleotide) which_edge;
+    }
+}
+
+void pad_to_N_with_Adenine(StrBuf* strbuf, int n)
+{
+  int i;
+  for (i=strbuf->len; i<n; i++)
+    {
+      strbuf_append_char(strbuf, 'A');
+    }
+}
+
+
+void take_n_greedy_random_steps(dBNode* start_node, Orientation start_or, dBGraph* db_graph,
+				int num_steps, StrBuf* greedy_seq)
+
+{
+  
+  Orientation  current_orientation,next_orientation;
+  dBNode * current_node = NULL;
+  dBNode * next_node = NULL;
+  Nucleotide nucleotide,rev_nucleotide,nucleotide2;
+  int length =0;
+  char tmp_seq[db_graph->kmer_size+1];
+  tmp_seq[db_graph->kmer_size]='\0';
+
+  //sanity checks
+  if (start_node == NULL)
+    {
+      die("take_n_greedy_random_steps:can't pass a null node");
+    }
+
+  current_node        = start_node;
+  current_orientation = start_or;
+
+  //first edge defined
+  pick_a_random_edge(start_node, start_or, &nucleotide);
+
+  if (nucleotide==Undefined)
+    {
+      pad_to_N_with_Adenine(greedy_seq, num_steps);
+      return;
+    }
+  
+  do{ 
+    length++;
+    next_node =  db_graph_get_next_node_in_subgraph_defined_by_func_of_colours(current_node,current_orientation,
+									       &next_orientation,nucleotide,
+									       &rev_nucleotide,
+									       db_graph, 
+									       &element_get_colour_union_of_all_colours);
+    
+    
+    strbuf_append_char(greedy_seq, binary_nucleotide_to_char(nucleotide));
+    current_node        = next_node;
+    current_orientation = next_orientation;
+    
+    pick_a_random_edge(current_node, current_orientation, &nucleotide);
+    if (nucleotide==Undefined)
+      {
+	pad_to_N_with_Adenine(greedy_seq, num_steps);
+	return;
+      }
+    
+  } while (length<num_steps);
+  
+}
 
 
 

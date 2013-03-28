@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "global.h"
+#include <string_buffer.h>
 
 boolean test_file_existence(char* file)
 {
@@ -128,4 +129,16 @@ void message(const char* fmt, ...)
   va_start(argptr, fmt);
   vfprintf(stderr, fmt, argptr);
   va_end(argptr);
+}
+
+
+void strbuf_rev_comp(StrBuf* sb)
+{
+  strbuf_reverse(sb);
+  int i;
+  for (i=0; i<sb->len; i++)
+    {
+      char r = reverse_char_nucleotide(sb->buff[i]);
+      strbuf_set_char(sb, i, r);
+    }
 }

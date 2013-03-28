@@ -71,19 +71,26 @@ typedef enum {
 
 void error_correct_list_of_files(StrBuf* list_fastq,char quality_cutoff, char ascii_qual_offset,
 				 dBGraph *db_graph, HandleLowQualUncorrectable policy,
-				 int max_read_len, StrBuf* suffix, char* outdir);
+				 int max_read_len, StrBuf* suffix, char* outdir,
+				 boolean add_greedy_bases_for_better_bwt_compression,
+				 int num_greedy_bases, boolean rev_comp_read_if_on_reverse_strand);
 
 inline void error_correct_file_against_graph(char* fastq_file, char quality_cutoff, char ascii_qual_offset,
 					     dBGraph *db_graph, char* outfile,
 					     uint64_t *bases_modified_count_array,//distribution across reads; how many of the read_length bases are fixed
 					     uint64_t *posn_modified_count_array,//where in the read are we making corrections?
 					     int bases_modified_count_array_size,
-					     HandleLowQualUncorrectable policy);
+					     HandleLowQualUncorrectable policy,
+					     boolean add_greedy_bases_for_better_bwt_compression,
+					     int num_greedy_bases, 
+					     boolean rev_comp_read_if_on_reverse_strand);
+
 
 ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, StrBuf* qual, 
 								  int num_kmers, int read_len,
 								  int* quals_good,
 								  char quality_cutoff, int* first_good_kmer,
+								  Orientation* strand_first_good_kmer,
 								  dBGraph* dbg, HandleLowQualUncorrectable policy);
 
 boolean fix_end_if_unambiguous(WhichEndOfKmer which_end, StrBuf* read_buffer, int pos, 
@@ -91,5 +98,15 @@ boolean fix_end_if_unambiguous(WhichEndOfKmer which_end, StrBuf* read_buffer, in
 			       dBGraph* dbg);
 
 boolean mutate_base(StrBuf* strbuf, int which_base, int which_mutant);
+
+void read_ref_fasta_and_mark_strand(char* ref_fa, dBGraph * db_graph);
+
+void pick_a_random_edge(dBNode* node, Orientation or, Nucleotide* random_nuc);
+
+void pad_to_N_with_Adenine(StrBuf* strbuf, int n);
+
+void take_n_greedy_random_steps(dBNode* start_node, Orientation start_or, dBGraph* db_graph,
+				int num_steps, StrBuf* greedy_seq);
+
 
 #endif
