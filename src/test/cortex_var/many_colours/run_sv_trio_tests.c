@@ -422,6 +422,7 @@ int  main()
 
 
 
+   /*
 
    if (NULL == CU_add_test(pPopGraphSuite, "Regression test case 1 - genotyping of bubble with one branch <k and one long branch", regression_test_1_single_bubble_call_one_allele_shorter_than_k_one_very_long ))
       {
@@ -475,10 +476,10 @@ int  main()
 	return CU_get_error();
       }
 
+   */
 
 
 
-  /*zahara
    if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for mutating specific bases in a string", test_base_mutator ))
       {
 	CU_cleanup_registry();
@@ -502,7 +503,7 @@ int  main()
 	return CU_get_error();
       }
 
-  */
+
 
  
 

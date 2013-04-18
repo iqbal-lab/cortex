@@ -433,6 +433,7 @@ ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, S
 								  Orientation* strand_first_good_kmer,
 								  dBGraph* dbg, HandleLowQualUncorrectable policy)
 {
+  *strand_first_good_kmer=forward;
   int i;
   BinaryKmer curr_kmer;
   BinaryKmer tmp_key;
@@ -490,10 +491,6 @@ ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, S
 		   && (or_first_good_kmer==reverse) )
 		{
 		  *strand_first_good_kmer = reverse;
-		}
-	      else
-		{
-		  *strand_first_good_kmer = forward;
 		}
 
 	    }

@@ -274,14 +274,15 @@ void test_get_first_good_kmer_and_populate_qual_array()
 
   char qual_cutoff=20+33;//33=ascii FASTQ sanger offset
   int first_good_kmer=-1;
-  
+
+  Orientation strand_first_good_kmer=reverse;//just testing
   ReadCorrectionDecison result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
-								   read_len-5+1, read_len,
-								   quals_good,
-								   qual_cutoff, &first_good_kmer,
-								   db_graph, DontWorryAboutLowQualBaseUnCorrectable);
+									     read_len-5+1, read_len,
+									     quals_good,
+									     qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
+									     db_graph, DontWorryAboutLowQualBaseUnCorrectable);
   CU_ASSERT(result==PrintUncorrected);
-  
+  CU_ASSERT(strand_first_good_kmer==forward);//I've not marked the ref in the graph, so everything treated as forward
   int j;
   for (j=0; j<read_len; j++)
     {
@@ -293,14 +294,14 @@ void test_get_first_good_kmer_and_populate_qual_array()
   set_int_array(quals_good, read_len, 1);
   first_good_kmer=-1;
 
-
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
-						       qual_cutoff, &first_good_kmer,
+						       qual_cutoff, &first_good_kmer, &strand_first_good_kmer,
 						       db_graph, DiscardReadIfLowQualBaseUnCorrectable);
   CU_ASSERT(result==PrintUncorrected);
-  
+  CU_ASSERT(strand_first_good_kmer==forward);
   for (j=0; j<read_len; j++)
     {
       CU_ASSERT(quals_good[j]==1);
@@ -315,12 +316,14 @@ void test_get_first_good_kmer_and_populate_qual_array()
   qual_cutoff=90+33;
   first_good_kmer=-1;
   set_int_array(quals_good, read_len, 1);
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
-						       qual_cutoff, &first_good_kmer,
+						       qual_cutoff, &first_good_kmer, &strand_first_good_kmer,
 						       db_graph, DontWorryAboutLowQualBaseUnCorrectable);
   CU_ASSERT(result==PrintCorrected); //this function does not know all kmers in the graph
+  CU_ASSERT(strand_first_good_kmer==forward);
   for (j=0; j<read_len; j++)
     {
       CU_ASSERT(quals_good[j]==0);
@@ -330,12 +333,14 @@ void test_get_first_good_kmer_and_populate_qual_array()
 
   first_good_kmer=-1;
   set_int_array(quals_good, read_len, 1);
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
-					     read_len-5+1, read_len,
-					     quals_good,
-					     qual_cutoff, &first_good_kmer,
-					     db_graph, DiscardReadIfLowQualBaseUnCorrectable);
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
+						       db_graph, DiscardReadIfLowQualBaseUnCorrectable);
   CU_ASSERT(result==PrintCorrected); 
+  CU_ASSERT(strand_first_good_kmer==forward);
   for (j=0; j<read_len; j++)
     {
       CU_ASSERT(quals_good[j]==0);
@@ -372,17 +377,19 @@ void test_get_first_good_kmer_and_populate_qual_array()
   
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=20+33;
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
-					     read_len-5+1, read_len,
-					     quals_good,
-					     qual_cutoff, &first_good_kmer,
-					     db_graph, DiscardReadIfLowQualBaseUnCorrectable);
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer, &strand_first_good_kmer,
+						       db_graph, DiscardReadIfLowQualBaseUnCorrectable);
 
 
   //NOTE - the following is correct behaviour.
   //this function just decides that it is worth trying to correct
   //as there is a kmer not in the graph. It doesn't check to see if that kmer has low quality
   CU_ASSERT(result==PrintCorrected);
+  CU_ASSERT(strand_first_good_kmer==forward);
 
   CU_ASSERT(quals_good[0]==0);
   CU_ASSERT(quals_good[1]==0);
@@ -404,11 +411,12 @@ void test_get_first_good_kmer_and_populate_qual_array()
 
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=20+33;
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
-					     read_len-5+1, read_len,
-					     quals_good,
-					     qual_cutoff, &first_good_kmer,
-					     db_graph, DontWorryAboutLowQualBaseUnCorrectable);
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
+						       db_graph, DontWorryAboutLowQualBaseUnCorrectable);
 
 
   CU_ASSERT(result==PrintCorrected);
@@ -440,11 +448,12 @@ void test_get_first_good_kmer_and_populate_qual_array()
   
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=31+33;
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
-					     read_len-5+1, read_len,
-					     quals_good,
-					     qual_cutoff, &first_good_kmer,
-					     db_graph, DontWorryAboutLowQualBaseUnCorrectable);
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
+						       db_graph, DontWorryAboutLowQualBaseUnCorrectable);
 
 
   CU_ASSERT(result==PrintCorrected);
@@ -472,11 +481,12 @@ void test_get_first_good_kmer_and_populate_qual_array()
   
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=31+33;
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
-					     read_len-5+1, read_len,
-					     quals_good,
-					     qual_cutoff, &first_good_kmer,
-					     db_graph, DiscardReadIfLowQualBaseUnCorrectable);
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
+						       db_graph, DiscardReadIfLowQualBaseUnCorrectable);
   CU_ASSERT(result==PrintCorrected);
 
   CU_ASSERT(quals_good[0]==0);
@@ -506,11 +516,12 @@ void test_get_first_good_kmer_and_populate_qual_array()
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=9+33;
   first_good_kmer=-1;
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
-					     read_len-5+1, read_len,
-					     quals_good,
-					     qual_cutoff, &first_good_kmer,
-					     db_graph, DiscardReadIfLowQualBaseUnCorrectable);
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
+						       db_graph, DiscardReadIfLowQualBaseUnCorrectable);
 
 
   CU_ASSERT(result==PrintUncorrected);
@@ -538,11 +549,12 @@ void test_get_first_good_kmer_and_populate_qual_array()
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=9+33;
   first_good_kmer=-1;
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
-					     read_len-5+1, read_len,
-					     quals_good,
-					     qual_cutoff, &first_good_kmer,
-					     db_graph, DontWorryAboutLowQualBaseUnCorrectable);
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
+						       db_graph, DontWorryAboutLowQualBaseUnCorrectable);
 
 
   CU_ASSERT(result==PrintUncorrected);
@@ -592,11 +604,12 @@ void test_get_first_good_kmer_and_populate_qual_array()
   first_good_kmer=-1;  
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=10+33;
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
-					     read_len-5+1, read_len,
-					     quals_good,
-					     qual_cutoff, &first_good_kmer,
-					     db_graph, DontWorryAboutLowQualBaseUnCorrectable);
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
+						       db_graph, DontWorryAboutLowQualBaseUnCorrectable);
 
   CU_ASSERT(result==PrintUncorrected);
 
@@ -621,11 +634,12 @@ void test_get_first_good_kmer_and_populate_qual_array()
   first_good_kmer=-1;  
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=10+33;
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
-					     read_len-5+1, read_len,
-					     quals_good,
-					     qual_cutoff, &first_good_kmer,
-					     db_graph, DiscardReadIfLowQualBaseUnCorrectable);
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer, &strand_first_good_kmer,
+						       db_graph, DiscardReadIfLowQualBaseUnCorrectable);
 
   CU_ASSERT(result==PrintUncorrected);
 
@@ -675,11 +689,12 @@ void test_get_first_good_kmer_and_populate_qual_array()
   first_good_kmer=-1;  
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=10+33;
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
-					     read_len-5+1, read_len,
-					     quals_good,
-					     qual_cutoff, &first_good_kmer,
-					     db_graph, DontWorryAboutLowQualBaseUnCorrectable);
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer, &strand_first_good_kmer,
+						       db_graph, DontWorryAboutLowQualBaseUnCorrectable);
 
 
 
@@ -707,11 +722,12 @@ void test_get_first_good_kmer_and_populate_qual_array()
   first_good_kmer=-1;  
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=10+33;
+  strand_first_good_kmer=reverse;//just testing
   result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
-					     read_len-5+1, read_len,
-					     quals_good,
-					     qual_cutoff, &first_good_kmer,
-					     db_graph, DiscardReadIfLowQualBaseUnCorrectable);
+						       read_len-5+1, read_len,
+						       quals_good,
+						       qual_cutoff, &first_good_kmer, &strand_first_good_kmer,
+						       db_graph, DiscardReadIfLowQualBaseUnCorrectable);
 
 
 
@@ -823,13 +839,17 @@ void test_error_correct_file_against_graph()
       bases_modified_count_array[i]=0;
       posn_modified_count_array[i]=0;
     }
+  boolean add_greedy_bases_for_better_bwt_compression=false;
+  int num_greedy_bases=0;
+  boolean rev_comp_read_if_on_reverse_strand=false;
   error_correct_file_against_graph("../data/test/error_correction/fq5_for_comparing_with_graph3.fq", 
 				   quality_cutoff, ascii_qual_offset,
 				   db_graph, outfile,
 				   bases_modified_count_array,
 				   posn_modified_count_array,
 				   bases_modified_count_array_size,
-				   DontWorryAboutLowQualBaseUnCorrectable);
+				   DontWorryAboutLowQualBaseUnCorrectable,
+				   add_greedy_bases_for_better_bwt_compression, num_greedy_bases, rev_comp_read_if_on_reverse_strand);
 
   CU_ASSERT(bases_modified_count_array[0]==0);
   CU_ASSERT(bases_modified_count_array[1]==0);
@@ -900,7 +920,8 @@ void test_error_correct_file_against_graph()
 				   bases_modified_count_array,
 				   posn_modified_count_array,
 				   bases_modified_count_array_size,
-				   DontWorryAboutLowQualBaseUnCorrectable);
+				   DontWorryAboutLowQualBaseUnCorrectable,
+				   add_greedy_bases_for_better_bwt_compression, num_greedy_bases, rev_comp_read_if_on_reverse_strand);
 
   CU_ASSERT(bases_modified_count_array[0]==0);
   CU_ASSERT(bases_modified_count_array[1]==0);
@@ -969,7 +990,8 @@ void test_error_correct_file_against_graph()
 				   bases_modified_count_array,
 				   posn_modified_count_array,
 				   bases_modified_count_array_size,
-				   DontWorryAboutLowQualBaseUnCorrectable);
+				   DontWorryAboutLowQualBaseUnCorrectable,
+				   add_greedy_bases_for_better_bwt_compression, num_greedy_bases, rev_comp_read_if_on_reverse_strand);
 
   CU_ASSERT(bases_modified_count_array[0]==0);
   CU_ASSERT(bases_modified_count_array[1]==0);
@@ -1038,7 +1060,8 @@ void test_error_correct_file_against_graph()
 				   bases_modified_count_array,
 				   posn_modified_count_array,
 				   bases_modified_count_array_size,
-				   DontWorryAboutLowQualBaseUnCorrectable);
+				   DontWorryAboutLowQualBaseUnCorrectable,
+				   add_greedy_bases_for_better_bwt_compression, num_greedy_bases, rev_comp_read_if_on_reverse_strand);
 
   CU_ASSERT(bases_modified_count_array[0]==1);
   CU_ASSERT(bases_modified_count_array[1]==0);
@@ -1099,7 +1122,8 @@ void test_error_correct_file_against_graph()
 				   bases_modified_count_array,
 				   posn_modified_count_array,
 				   bases_modified_count_array_size,
-				   DiscardReadIfLowQualBaseUnCorrectable);
+				   DiscardReadIfLowQualBaseUnCorrectable,
+				   add_greedy_bases_for_better_bwt_compression, num_greedy_bases, rev_comp_read_if_on_reverse_strand);
 
   CU_ASSERT(bases_modified_count_array[0]==0);
   CU_ASSERT(bases_modified_count_array[1]==0);

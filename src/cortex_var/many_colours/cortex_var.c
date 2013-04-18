@@ -1175,7 +1175,7 @@ int main(int argc, char **argv)
 	  FILE* list_fp = fopen(cmd_line->ref_chrom_fasta_list, "r");
 	  if (list_fp==NULL)
 	    {
-	      die("Can't open your list of reference fasta: %s\n", cmd_line->ref_chrom_fasta_list);
+	      printf("Can't open your list of reference fasta: %s\n", cmd_line->ref_chrom_fasta_list);
 	    }
 	  StrBuf *line = strbuf_new();
 	  while(strbuf_reset_readline(line, list_fp))

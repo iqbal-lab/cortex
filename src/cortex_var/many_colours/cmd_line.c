@@ -302,7 +302,7 @@ const char* usage=
 
 
   // -K
-  "   [--err_correct_1kg]\t\t\t\t\t\t=\t FIVE comma-separated arguments: (1) a filelist (listing FASTQ for correction), (2) a string/suffix less than 50 characters long (/path/to/zam.fastq--->correction process --> outdir/zam.fastq.suffix), (3) an output directory and (4) either 0 or 1. O means discard a read if it has a low quality uncorrectable base, 1 means print it entirely uncorrected if it has a low quality uncorrectable base. (5) A number N of greedy extra bases to pad the end of the read with. I suggest you use 0 (zero) for this, unless you are Jared Simpson or Shane McCarthy, when you would enter 20. The 1000 Genomes project wanted to be able to use a particular BWT compression scheme, which required the addition of N bases of sequence following the read, from where it mapped in the reference. In addition you must use --quality_score_threshold and --max_read_len. \n"
+  "   [--err_correct_1kg]\t\t\t\t\t\t=\t FIVE comma-separated arguments: (1) a filelist (listing FASTQ for correction), (2) a string/suffix less than 50 characters long (/path/to/zam.fastq--->correction process --> outdir/zam.fastq.suffix), (3) an output directory and (4) either 0 or 1. O means discard a read if it has a low quality uncorrectable base, 1 means print it entirely uncorrected if it has a low quality uncorrectable base. (5) A number N of greedy extra bases to pad the end of the read with. I suggest you use 0 (zero) for this, unless you are Jared Simpson or Shane McCarthy, when you would enter 20. The 1000 Genomes project wanted to be able to use a particular BWT compression scheme, which required the addition of N bases of sequence following the read, from where it mapped in the reference. Ignore this unless you are me, Jared or Shane for now. I'll clean up the user interface when this actually gets released. In addition you must use --quality_score_threshold and --max_read_len. \n"
 
 ;
 
@@ -2625,6 +2625,7 @@ void parse_err_correction_args(CmdLine* cmd, char* arg)
       errx(1,"--err_correct_1kg needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.You don't seem to have given a 5th arg\n");
 
     }
+
 
   //put values into the cmdline object
   strbuf_append_str(cmd->err_correction_filelist, fastqlist);
