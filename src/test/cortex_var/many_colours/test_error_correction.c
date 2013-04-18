@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo
+ * Copyright 2009-2013 Zamin Iqbal 
  * 
  * CORTEX project contacts:  
  * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
@@ -1171,5 +1171,81 @@ void test_error_correct_file_against_graph()
 
 
   strbuf_free(read_seq);
+  hash_table_free(&db_graph);
+}
+
+
+
+
+void test_take_n_greedy_random_steps()
+{
+    //first set up the hash/graph
+  int kmer_size = 7;
+  int number_of_bits = 4;
+  int bucket_size = 10;
+
+  double  avg_coverage;
+  Covg min_coverage, max_coverage;
+
+  dBGraph * db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
+
+ 
+
+  int fq_quality_cutoff = 0;
+  int homopolymer_cutoff = 0;
+  boolean remove_duplicates_se = false;
+  char ascii_fq_offset = 33;
+  int into_colour = 0;
+
+  unsigned int files_loaded = 0;
+  unsigned long long bad_reads = 0, dup_reads = 0;
+  unsigned long long seq_loaded = 0, seq_read = 0;
+
+  //load this fasta
+  // >read 1
+  // AGGAACGTCCGCCATTAGACC
+  // >read 2 - differs by a SNP
+  // AGGAACGTACGCCATTAGACC
+  //        ^   
+  //graph s just a SNP bubble, at k=7
+
+  load_se_filelist_into_graph_colour(
+				     "../data/test/error_correction/graph4.falist",
+				     fq_quality_cutoff, homopolymer_cutoff,
+				     remove_duplicates_se, ascii_fq_offset,
+				     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+				     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+				     NULL, 0);
+
+  BinaryKmer tmp_kmer1;
+  BinaryKmer tmp_kmer2;
+
+  dBNode* first_node = hash_table_find(element_get_key(seq_to_binary_kmer("AGGAACG", kmer_size,&tmp_kmer1), kmer_size, &tmp_kmer2),db_graph);
+  CU_ASSERT(first_node!=NULL);
+
+  StrBuf* greedy_seq=strbuf_new();
+  take_n_greedy_random_steps(first_node, forward, db_graph, 1, greedy_seq);  
+  CU_ASSERT(strcmp(greedy_seq->buff,"T")==0);
+  strbuf_reset(greedy_seq);
+
+  take_n_greedy_random_steps(first_node, forward, db_graph, 2, greedy_seq);  
+  CU_ASSERT(  (strcmp(greedy_seq->buff,"TC")==0) || (strcmp(greedy_seq->buff,"TA")==0) );
+  strbuf_reset(greedy_seq);
+
+  take_n_greedy_random_steps(first_node, forward, db_graph, 9, greedy_seq);  
+  CU_ASSERT(  (strcmp(greedy_seq->buff,"TCCGCCATT")==0) || (strcmp(greedy_seq->buff,"TACGCCATT")==0) );
+
+  strbuf_reset(greedy_seq);
+
+  take_n_greedy_random_steps(first_node, forward, db_graph, 16, greedy_seq);  
+  CU_ASSERT(  (strcmp(greedy_seq->buff,"TCCGCCATTAGACCAA")==0) || (strcmp(greedy_seq->buff,"TACGCCATTAGACCAA")==0) );//pad with A's
+  strbuf_reset(greedy_seq);
+
+
+  take_n_greedy_random_steps(first_node, reverse, db_graph, 5, greedy_seq);  
+  CU_ASSERT(strcmp(greedy_seq->buff,"AAAAA")==0);
+  strbuf_reset(greedy_seq);
+
+  strbuf_free(greedy_seq);
   hash_table_free(&db_graph);
 }

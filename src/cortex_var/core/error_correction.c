@@ -778,10 +778,14 @@ void pick_a_random_edge(dBNode* node, Orientation or, Nucleotide* random_nuc)
     edges_saved >>=4;
   }
   int n;
+
+  int which_edges_present[4]={0,0,0,0};
+
   for(n=0;n<4;n++){
     
     if ((edges & 1) == 1){
       edges_count++;
+      which_edges_present[n]=1;
     }
     edges >>= 1;    
   }
@@ -792,9 +796,18 @@ void pick_a_random_edge(dBNode* node, Orientation or, Nucleotide* random_nuc)
     }
   else
     {
-      //not that it matters, but see http://stackoverflow.com/questions/2509679/how-to-generate-a-random-number-from-within-a-range-c
-      int which_edge = rand() % edges_count;
-      *random_nuc =  (Nucleotide) which_edge;
+      boolean found=false;
+      while (found==false)
+	{
+
+	  //not that it matters, but see http://stackoverflow.com/questions/2509679/how-to-generate-a-random-number-from-within-a-range-c
+	  int which_edge = rand() % 4;
+	  if (which_edges_present[which_edge]==1)
+	    {
+	      *random_nuc =  (Nucleotide) which_edge;
+	      found=true;
+	    }
+	}
     }
 }
 
@@ -824,7 +837,8 @@ void take_n_greedy_random_steps(dBNode* start_node, Orientation start_or, dBGrap
   //sanity checks
   if (start_node == NULL)
     {
-      die("take_n_greedy_random_steps:can't pass a null node");
+      pad_to_N_with_Adenine(greedy_seq, num_steps);
+      return;
     }
 
   current_node        = start_node;
