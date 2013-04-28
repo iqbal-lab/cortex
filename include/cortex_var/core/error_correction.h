@@ -91,7 +91,8 @@ ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, S
 								  int* quals_good,
 								  char quality_cutoff, int* first_good_kmer,
 								  Orientation* strand_first_good_kmer,
-								  dBGraph* dbg, HandleLowQualUncorrectable policy);
+								  dBGraph* dbg, HandleLowQualUncorrectable policy,
+								  boolean we_will_want_to_revcomp_reads_on_rev_strand);
 
 boolean fix_end_if_unambiguous(WhichEndOfKmer which_end, StrBuf* read_buffer, int pos, 
 			       StrBuf* kmer_buf, char* kmer_str,

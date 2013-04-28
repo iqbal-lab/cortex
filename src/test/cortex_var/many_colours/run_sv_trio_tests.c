@@ -509,6 +509,13 @@ int  main()
 	return CU_get_error();
       }
 
+   if (NULL == CU_add_test(pPopGraphSuite, "Test error correction can output corrected reads in positive strand direction if desired", 
+			   test_reverse_comp_according_ref_pos_strand))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
 
 
  

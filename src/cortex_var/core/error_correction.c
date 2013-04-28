@@ -200,7 +200,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	get_first_good_kmer_and_populate_qual_array(buf_seq, buf_qual, num_kmers, read_len,
 						    quality_good, quality_cutoff, 
 						    &first_good, &strand_first_good_kmer,
-						    db_graph, policy);
+						    db_graph, policy, rev_comp_read_if_on_reverse_strand);
       
 
       //*** start of local functions
@@ -329,11 +329,6 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	    {
 	      //then it really was able to correct at least one base somewhere
 	      any_fixing_done=true;
-	      /*	      if (num_corrections_to_this_read_for_debug>10)
-		{
-		  printf("This read has %d corrections. Original read:\n>%s\n%s\n+\n%s\n", num_corrections_to_this_read_for_debug, seq_get_read_name(sf), buf_seq_debug->buff, buf_qual->buff);
-		  printf("This is the corrected read:\n>%s\n%s\n", seq_get_read_name(sf), buf_seq->buff);
-		  }*/
 	    }
 	}
 
@@ -350,7 +345,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	    {
 	      strbuf_rev_comp(buf_seq);
 	    }
-	  //get the final kmer
+	  //get the final kmer (after reverse complementing if that is happening)
 	  strbuf_substr_prealloced(buf_seq, buf_seq->len-db_graph->kmer_size-1, db_graph->kmer_size, last_kmer_str);
 
 	  if (add_greedy_bases_for_better_bwt_compression==true)
@@ -431,7 +426,8 @@ ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, S
 								  int* quals_good,
 								  char quality_cutoff, int* first_good_kmer,
 								  Orientation* strand_first_good_kmer,
-								  dBGraph* dbg, HandleLowQualUncorrectable policy)
+								  dBGraph* dbg, HandleLowQualUncorrectable policy,
+								  boolean we_will_want_to_revcomp_reads_on_rev_strand)
 {
   *strand_first_good_kmer=forward;
   int i;
@@ -453,7 +449,8 @@ ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, S
 	}
     }
 
-  if (all_qualities_good==true)
+ 
+  if ( (we_will_want_to_revcomp_reads_on_rev_strand==false) &&(all_qualities_good==true))
     {
       //performance choice - exit the function immediately,
       //as we know we will print uncorrected.
@@ -461,6 +458,8 @@ ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, S
       return PrintUncorrected;
     }
 
+
+  
   for (i=0; (i<num_kmers) && (found_first_good_kmer==false); i++)
     {
       //check kmer in graph
@@ -492,7 +491,10 @@ ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, S
 		{
 		  *strand_first_good_kmer = reverse;
 		}
-
+	      if (all_qualities_good==true)
+		{
+		  return PrintUncorrected;
+		}
 	    }
 	}
     }
