@@ -1347,9 +1347,152 @@ void test_reverse_comp_according_ref_pos_strand()
   CU_ASSERT(strcmp(read_seq->buff, "AGGAACGTCCGCCATTAGACC")==0);
   seq_file_close(sf);
 
+  hash_table_free(&db_graph);
 
 
 
+  //second test
+
+
+  //first set up the hash/graph
+  kmer_size = 5;
+  number_of_bits = 10;
+  bucket_size = 10;
+
+  //*********************************************
+
+  //*********************************************
+
+  db_graph = hash_table_new(number_of_bits, bucket_size, 10, kmer_size);
+  
+  //Load the following fasta: this is to be the trusted graph
+  // >
+  // ACGGCTTTACGGT
+
+
+
+  fq_quality_cutoff = 0;
+  homopolymer_cutoff = 0;
+  remove_duplicates_se = false;
+  ascii_fq_offset = 33;
+  into_colour = 0;
+
+  files_loaded = 0;
+  bad_reads = 0;
+  dup_reads = 0;
+  seq_loaded = 0;
+  seq_read = 0;
+
+  load_se_filelist_into_graph_colour(
+    "../data/test/error_correction/graph3.falist",
+    fq_quality_cutoff, homopolymer_cutoff,
+    remove_duplicates_se, ascii_fq_offset,
+    into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
+    &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
+    NULL, 0);
+
+
+  //now mark reference in reverse direction to the file i will correct
+  read_ref_fasta_and_mark_strand("../data/test/error_correction/graph3_revcomp.fa", 
+				 db_graph);
+
+  //now test this fastq
+  // @only one kmer in graph, CTTTA
+  // CCCCCTTTAAAAT
+  // +
+  // #############
+
+
+  //we will start at CTTTA and move right, error correcting, and then go back to CTTTA and move left
+  //
+  //graph      ACGGCTTTACGGT
+  // read      CCCCCTTTAAAAT
+  // step1     ccccctttaCaat  << correct base at posn 9
+  // step2     ccccctttaCGat  << correct base at posn 10
+  // step3     ccccctttaCGGt << correct base at posn 11. 
+  //                           < no need to correct posn 12
+  // step4     cccGctttaCGGt  << correct base at posn 3
+  // step5     ccGGctttaCGGt  << correct base at posn 2
+  //                          no need to correct posn 1
+  // step6     AcGGctttaCGGt  << correct base at posn 0
+
+
+  char quality_cutoff= 10;
+  char ascii_qual_offset = 33;
+  char* outfile2 = "../data/test/error_correction/fq5_for_comparing_with_graph3.err_corrected.fa";
+
+  for (i=0; i<20; i++)
+    {
+      bases_modified_count_array[i]=0;
+      posn_modified_count_array[i]=0;
+    }
+  add_greedy_bases_for_better_bwt_compression=false;
+  num_greedy_bases=0;
+  rev_comp_read_if_on_reverse_strand=true;
+  error_correct_file_against_graph("../data/test/error_correction/fq5_for_comparing_with_graph3.fq", 
+				   quality_cutoff, ascii_qual_offset,
+				   db_graph, outfile2,
+				   bases_modified_count_array,
+				   posn_modified_count_array,
+				   bases_modified_count_array_size,
+				   DontWorryAboutLowQualBaseUnCorrectable,
+				   add_greedy_bases_for_better_bwt_compression, 
+				   num_greedy_bases, 
+				   rev_comp_read_if_on_reverse_strand);
+
+  CU_ASSERT(bases_modified_count_array[0]==0);
+  CU_ASSERT(bases_modified_count_array[1]==0);
+  CU_ASSERT(bases_modified_count_array[2]==0);
+  CU_ASSERT(bases_modified_count_array[3]==0);
+  CU_ASSERT(bases_modified_count_array[4]==0);
+  CU_ASSERT(bases_modified_count_array[5]==0);
+  CU_ASSERT(bases_modified_count_array[6]==1);
+  CU_ASSERT(bases_modified_count_array[7]==0);
+  CU_ASSERT(bases_modified_count_array[8]==0);
+  CU_ASSERT(bases_modified_count_array[9]==0);
+  CU_ASSERT(bases_modified_count_array[10]==0);
+  CU_ASSERT(bases_modified_count_array[11]==0);
+  CU_ASSERT(bases_modified_count_array[12]==0);
+  CU_ASSERT(bases_modified_count_array[13]==0);
+  CU_ASSERT(bases_modified_count_array[14]==0);
+
+  CU_ASSERT(posn_modified_count_array[0]==1);
+  CU_ASSERT(posn_modified_count_array[1]==0);
+  CU_ASSERT(posn_modified_count_array[2]==1);
+  CU_ASSERT(posn_modified_count_array[3]==1);
+  CU_ASSERT(posn_modified_count_array[4]==0);
+  CU_ASSERT(posn_modified_count_array[5]==0);
+  CU_ASSERT(posn_modified_count_array[6]==0);
+  CU_ASSERT(posn_modified_count_array[7]==0);
+  CU_ASSERT(posn_modified_count_array[8]==0);
+  CU_ASSERT(posn_modified_count_array[9]==1);
+  CU_ASSERT(posn_modified_count_array[10]==1);
+  CU_ASSERT(posn_modified_count_array[11]==1);
+  CU_ASSERT(posn_modified_count_array[12]==0);
+
+
+  sf = seq_file_open(outfile2);
+  if(sf == NULL)
+    {
+      // Error opening file
+      fprintf(stderr, "Error: cannot read seq file '%s'\n", outfile2);
+      exit(EXIT_FAILURE);
+    }
+
+  seq_next_read(sf);
+  strbuf_reset(read_seq);
+  seq_read_all_bases(sf, read_seq);
+  seq_file_close(sf);
+
+
+  //graph is this          ACGGCTTTACGGT
+  // input data is this    CCCCCTTTAAAAT
+  // correction should be  ACGGCTTTACGGT
+  //  i get rev comp of    ACGGCTTTACGGT = ACCGTAAAGCCGT
+
+  CU_ASSERT(strcmp(read_seq->buff, "ACCGTAAAGCCGT")==0);
+
+  hash_table_free(&db_graph);
 
 
 
