@@ -465,6 +465,7 @@ if (!(-d $tmpdir))
 
 if ($squeeze_mem)
 {
+    #TODO - Zam - this is not safe for parallelisation.
     get_num_kmers_for_pool();## will reset mem_height and width to lower values if possible.
 }
 
