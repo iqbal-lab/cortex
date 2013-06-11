@@ -39,8 +39,6 @@
 #include "dB_graph_population.h"
 
 
-
-
 void error_correct_list_of_files(StrBuf* list_fastq,char quality_cutoff, char ascii_qual_offset,
 				 dBGraph *db_graph, HandleLowQualUncorrectable policy,
 				 int max_read_len, StrBuf* suffix, char* outdir,
@@ -180,10 +178,10 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
     {
       int count_corrected_bases=0;
 
-      seq_read_all_bases(sf, buf_seq);
+      seq_read_all_bases_and_quals(sf, buf_seq, buf_qual);
       StrBuf* buf_seq_debug  = strbuf_clone(buf_seq);
       
-      seq_read_all_quals(sf, buf_qual);
+      //      seq_read_all_quals(sf, buf_qual);
       int read_len = seq_get_length(sf);
       int num_kmers = read_len-kmer_size+1;
       int quality_good[read_len];
@@ -197,7 +195,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
       //else print corrected.
       Orientation strand_first_good_kmer;
       ReadCorrectionDecison dec = 
-	get_first_good_kmer_and_populate_qual_array(buf_seq, buf_qual, num_kmers, read_len,
+	get_first_good_kmer_and_populate_qual_array(seq_get_read_name(sf), buf_seq, buf_qual, num_kmers, read_len,
 						    quality_good, quality_cutoff, 
 						    &first_good, &strand_first_good_kmer,
 						    db_graph, policy, rev_comp_read_if_on_reverse_strand);
@@ -421,7 +419,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 //one says whether the final base has quality above the threshold.
 //if return value is PrintUncorrected, then kmers_in_graph values may NOT be set
 //also first_good_kmer
-ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, StrBuf* qual, 
+ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(const char* debug_read_id, StrBuf* seq, StrBuf* qual, 
 								  int num_kmers, int read_len,
 								  int* quals_good,
 								  char quality_cutoff, int* first_good_kmer,
@@ -442,6 +440,13 @@ ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, S
   for (i=0; i<read_len; i++)
     {
       //check quality good.
+
+      //debug:
+      if (strlen(qual->buff)==0)
+	{
+	  printf("This read: id %s, seq: %s has empty qual: %s\n", debug_read_id, seq->buff, qual->buff);
+	  die("Debug this!");
+	}
       if (strbuf_get_char(qual, i) < quality_cutoff)
 	{
 	  quals_good[i]=0;

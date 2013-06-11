@@ -86,7 +86,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 					     boolean rev_comp_read_if_on_reverse_strand);
 
 
-ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(StrBuf* seq, StrBuf* qual, 
+ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(const char* debug_read_id, StrBuf* seq, StrBuf* qual, 
 								  int num_kmers, int read_len,
 								  int* quals_good,
 								  char quality_cutoff, int* first_good_kmer,
