@@ -1167,7 +1167,7 @@ int main(int argc, char **argv)
   if (cmd_line->do_err_correction==true)
     {
       timestamp();
-      printf("This is the experimental error-correction code that Richard Durbin, Shane, Jared, Malin and I talked about\n");
+      printf("Error correct against a population graph\n");
       boolean reverse_comp_reads_to_match_strand=false;
       if (strcmp(cmd_line->ref_chrom_fasta_list, "")!=0)
 	{

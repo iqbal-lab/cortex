@@ -302,7 +302,7 @@ const char* usage=
 
 
   // -K
-  "   [--err_correct_1kg]\t\t\t\t\t\t=\t FIVE comma-separated arguments:\n\t\t\t\t\t\t\t\t\t(1) a filelist (listing FASTQ for correction)\n\t\t\t\t\t\t\t\t\t(2) a string/suffix less than 50 characters long \n\t\t\t\t\t\t\t\t\t  (/path/to/zam.fastq--->correction process --> outdir/zam.fastq.suffix)\n\t\t\t\t\t\t\t\t\t(3) an output directory\n\t\t\t\t\t\t\t\t\t(4) either 0 or 1. \n\t\t\t\t\t\t\t\t\t  O means discard a read if it has a low quality uncorrectable base, \n\t\t\t\t\t\t\t\t\t  1 means print it entirely uncorrected if it has a low quality uncorrectable base.\n\t\t\t\t\t\t\t\t\t(5) A number N of greedy extra bases to pad the end of the read with. \n\t\t\t\t\t\t\t\t\t  I suggest you use 0 (zero) for this, unless you are Jared Simpson\n\t\t\t\t\t\t\t\t\t   or Shane McCarthy, when you would enter 20.\n\t\t\t\t\t\t\t\t\t   The 1000 Genomes project wanted to be able to use a \n\t\t\t\t\t\t\t\t\t   particular BWT compression scheme, which required \n\t\t\t\t\t\t\t\t\t   the addition of N bases of sequence following the read, \n\t\t\t\t\t\t\t\t\t   from where it mapped in the reference. \n\t\t\t\t\t\t\t\t\t   Ignore this unless you are me, Jared or Shane for now.\n\t\t\t\t\t\t\t\t\t   I'll clean up the user interface when this actually gets released. \n\t\t\t\t\t\t\t\t\t   In addition you must use --quality_score_threshold and --max_read_len.\n\t\t\t\t\t\t\t\t\tFinally, if you use --list_ref_fasta then Cortex will mark the + strand in the graph,\n\t\t\t\t\t\t\t\t\tand will print all reads in the + orientation \n"
+  "   [--err_correct]\t\t\t\t\t\t=\t FIVE comma-separated arguments:\n\t\t\t\t\t\t\t\t\t(1) a filelist (listing FASTQ for correction)\n\t\t\t\t\t\t\t\t\t(2) a string/suffix less than 50 characters long \n\t\t\t\t\t\t\t\t\t  (/path/to/zam.fastq--->correction process --> outdir/zam.fastq.suffix)\n\t\t\t\t\t\t\t\t\t(3) an output directory\n\t\t\t\t\t\t\t\t\t(4) either 0 or 1. \n\t\t\t\t\t\t\t\t\t  O means discard a read if it has a low quality uncorrectable base, \n\t\t\t\t\t\t\t\t\t  1 means print it entirely uncorrected if it has a low quality uncorrectable base.\n\t\t\t\t\t\t\t\t\t(5) Experimental option - A number N of greedy extra bases to pad the end of the read with. \n\t\t\t\t\t\t\t\t\t  I suggest you use 0 (zero) for this, unless you are Jared Simpson\n\t\t\t\t\t\t\t\t\t   or Shane McCarthy, when you would enter 20.\n\t\t\t\t\t\t\t\t\t   The 1000 Genomes project wanted to be able to use a \n\t\t\t\t\t\t\t\t\t   particular BWT compression scheme, which required \n\t\t\t\t\t\t\t\t\t   the addition of N bases of sequence following the read, \n\t\t\t\t\t\t\t\t\t   from where it mapped in the reference. \n\t\t\t\t\t\t\t\t\t   Ignore this unless you are me, Jared or Shane for now. \n\t\t\t\t\t\t\t\t\t   In addition you must use --quality_score_threshold and --max_read_len.\n\t\t\t\t\t\t\t\t\tFinally, if you use --list_ref_fasta then Cortex will mark the + strand in the graph,\n\t\t\t\t\t\t\t\t\tand will print all reads in the + orientation \n"
 
 ;
 
@@ -585,7 +585,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"align_input_format",required_argument,NULL,'H'},
     {"path_divergence_caller_output",required_argument,NULL,'I'},
     {"colour_overlaps",required_argument,NULL,'J'},
-    {"err_correct_1kg",required_argument,NULL,'K'},
+    {"err_correct",required_argument,NULL,'K'},
     {"genome_size",required_argument,NULL,'L'},
     {"exclude_ref_bubbles",no_argument,NULL,'M'},
     {"estimate_copy_num",required_argument,NULL,'N'},
@@ -1539,11 +1539,11 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 
   if ( (cmd_ptr->do_err_correction==true) &&  (cmd_ptr->quality_score_threshold==0) )
     {
-      die("If you specify --err_correct_1kg then you must also specify a quality threshold with --quality_score_threshold\n");
+      die("If you specify --err_correct then you must also specify a quality threshold with --quality_score_threshold\n");
     }
   if ( (cmd_ptr->do_err_correction==true) &&  (cmd_ptr->max_read_length==0) )
     {
-      die("If you specify --err_correct_1kg then you must also specify --max_read_len\n");
+      die("If you specify --err_correct then you must also specify --max_read_len\n");
     }
   if ( (cmd_ptr->dump_readlen_distrib==true) && (cmd_ptr->max_read_length==0) )
     {
@@ -2586,7 +2586,7 @@ void parse_err_correction_args(CmdLine* cmd, char* arg)
   char* fastqlist = strtok(arg_strbuf->buff, delims );
   if (fastqlist==NULL)
     {
-      errx(1,"--err_correct_1kg needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding. You don't seem to have given an argument\n");
+      errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding. You don't seem to have given an argument\n");
     }
   
   //check file exists
@@ -2598,12 +2598,12 @@ void parse_err_correction_args(CmdLine* cmd, char* arg)
   char* suffix = strtok(NULL, delims );
   if (suffix==NULL)
     {
-      errx(1,"--err_correct_1kg needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding. You don't seem to have given a suffix or outdir or 0/1\n");
+      errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding. You don't seem to have given a suffix or outdir or 0/1\n");
     }
   char* outdir = strtok(NULL, delims );
   if (outdir==NULL)
     {
-            errx(1,"--err_correct_1kg needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.You don't seem to have given an outdir or 0/1\n");
+            errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.You don't seem to have given an outdir or 0/1\n");
     }
 
   if (dir_exists(outdir)==false)
@@ -2616,13 +2616,13 @@ void parse_err_correction_args(CmdLine* cmd, char* arg)
   char* num_as_str = strtok(NULL, delims );
   if (num_as_str==NULL)
     {
-      errx(1,"--err_correct_1kg needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.You don't seem to have givena 0/1 4th arg\n");
+      errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.You don't seem to have givena 0/1 4th arg\n");
 
     }
   char* pad_as_str = strtok(NULL, delims );
   if (pad_as_str==NULL)
     {
-      errx(1,"--err_correct_1kg needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.You don't seem to have given a 5th arg\n");
+      errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.You don't seem to have given a 5th arg\n");
 
     }
 
@@ -2642,7 +2642,7 @@ void parse_err_correction_args(CmdLine* cmd, char* arg)
     }
   else
     {
-      errx(1,"--err_correct_1kg needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.Your 4th arg is neither 0 nor 1\n");
+      errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.Your 4th arg is neither 0 nor 1\n");
 
     }
 
@@ -2660,7 +2660,7 @@ void parse_err_correction_args(CmdLine* cmd, char* arg)
 	}
       else
 	{
-	  errx(1,"--err_correct_1kg needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.Your 5th arg is neither 0 nor a positive integer\n");	  
+	  errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.Your 5th arg is neither 0 nor a positive integer\n");	  
 	}
     }
   cmd->do_err_correction=true;
