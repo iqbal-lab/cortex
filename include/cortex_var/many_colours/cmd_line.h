@@ -81,7 +81,9 @@ typedef struct
 
   int pd_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];
   int num_colours_in_pd_colour_list;
-  
+
+  boolean get_pan_genome_matrix;
+  char pan_genome_genes_fasta[MAX_FILENAME_LEN];
   boolean entered_sampleid_as_cmdline_arg;
   boolean loaded_sample_names;
   boolean print_novel_contigs;
@@ -222,5 +224,6 @@ int parse_novelseq_args(char* arg, int* array_colours_to_look_in, int* num_cols_
 //boolean get_sample_id_from_se_pe_list(char* cmdline_sampleid, char* se_pe_list);
 int get_number_of_files_and_check_existence_and_get_samplenames_from_col_list(char* colour_list, CmdLine* cmd);
 boolean check_if_colourlist_contains_samplenames(char* filename);
+
 
 #endif /* CMD_LINE_H_ */

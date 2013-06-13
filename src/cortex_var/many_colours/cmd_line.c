@@ -302,7 +302,7 @@ const char* usage=
 
 
   // -K
-  //"   [--require_hw]\t\t\t\t\t\t=\t For each bubble found, calculate likelihood of observed coverage \n\t\t\t\t\t\t\t\t\t under 3 models (repeat, error, variation obeying Hardy-Weinberg)\n\t\t\t\t\t\t\t\t\t Only call variants where the bubble is more likely (according to these models) to be a variant.\n"
+  "   [--pan_genome_matrix]\t\t\t\t\t\t=\t Pass in a gene fasta, and get percent overlap with all colours\n"
 
 ;
 
@@ -352,6 +352,9 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
+  c->get_pan_genome_matrix=false;
+  set_string_to_null(c->pan_genome_genes_fasta, MAX_FILENAME_LEN);
+
   c->estimate_copy_num=false;
   set_string_to_null(c->copy_num_fasta, MAX_FILENAME_LEN);
   set_string_to_null(c->copy_num_output, MAX_FILENAME_LEN);
@@ -571,7 +574,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"align_input_format",required_argument,NULL,'H'},
     {"path_divergence_caller_output",required_argument,NULL,'I'},
     {"colour_overlaps",required_argument,NULL,'J'},
-    {"require_hw",no_argument,NULL,'K'},
+    {"pan_genome_matrix",required_argument,NULL,'K'},
     {"genome_size",required_argument,NULL,'L'},
     {"exclude_ref_bubbles",no_argument,NULL,'M'},
     {"estimate_copy_num",required_argument,NULL,'N'},
@@ -592,7 +595,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:K:L:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1324,9 +1327,23 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 	  break;
 	}
-    case 'K':
+    case 'K'://--pan_genome_matrix
 	{
-	  //cmdline_ptr->apply_model_selection_at_bubbles=true;
+	  cmdline_ptr->get_pan_genome_matrix=true;
+	  if (strlen(optarg)<MAX_FILENAME_LEN)
+	    {
+	      strcpy(cmdline_ptr->pan_genome_genes_fasta,optarg);
+	    }
+	  else
+	    {
+	      errx(1,"[--pan_genome_matrix] filename too long [%s]",optarg);
+	    }
+	  if (access(cmdline_ptr->pan_genome_genes_fasta,F_OK)!=0)
+	    {
+	      errx(1,"[--pan_genome_matrix]   - Cannot open this fasta  [%s] . Abort.\n", 
+		   cmdline_ptr->pan_genome_genes_fasta);
+	    }
+	  
 	  break;
 	}
     case 'L':
@@ -1509,10 +1526,13 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 	  break;
 	}
-      
+    default:
+      {
+	die("Unknown option %c", opt);
+      }      
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:o:pqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:KL:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:o:pqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:K:L:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
   }   
   
   return 0;
@@ -1522,6 +1542,18 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
 
+
+  if ( (cmd_ptr->get_pan_genome_matrix==true) && (cmd_ptr->max_read_length==0) )
+    {
+      char tmp[] = "If you want to get a pangenome matrix, you must specify --max_read_len in your file of genes\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  die("coding error - this string is too long:\n%s\n", tmp);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
   if ( (cmd_ptr->dump_readlen_distrib==true) && (cmd_ptr->max_read_length==0) )
     {
       char tmp[] = "If you want to dump the distribution of (filtered) read lengths, you must specify --max_read_len\n";
@@ -3292,3 +3324,6 @@ boolean check_if_colourlist_contains_samplenames(char* filename)
   fclose(fp);
   return contains_samplenames;
 }
+
+
+
