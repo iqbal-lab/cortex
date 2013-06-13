@@ -1,4 +1,34 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.16
+
+
+New functions
+
+1. As part of the 1000 genomes project, I've developed a new Error correction
+   option (--err_correct) that (is quality aware and) corrects against a population graph (rather than using a reference,
+   or coverage). Results look good. I'm still working on it, and you can expect it to speed
+   up  lot in releases to come, but for now people need it, so I am releasing it.
+   Recommended use is first error correct your reads against a cleaned pool from a population,
+   and then build the graph, and error-clean and call etc as before. Right now it takes
+   fastq in and spits out fasta.    
+
+2. A simple --pan_genome_matrix option that takes in a fasta of known genes, and will report to you
+   what percent of the kmers in that gene are present in all your colours(samples).
+   
+
+Bugfixes
+
+1. Embarrassed that I fixed this a while back and did not release. process_calls was filtering out calls
+   where the ref allele did not match the ref-allele at that position in the reference, when they only
+   disagreed in case (ie lower case "a" in reference genome was being treated as different to "A").
+
+2. various memory leaks caught by valgrind
+
+3. Small bugfixes to the classifier
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.15
 
 Minor release

@@ -276,7 +276,8 @@ void test_get_first_good_kmer_and_populate_qual_array()
   int first_good_kmer=-1;
 
   Orientation strand_first_good_kmer=reverse;//just testing
-  ReadCorrectionDecison result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  char* readid="zam";
+  ReadCorrectionDecison result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 									     read_len-5+1, read_len,
 									     quals_good,
 									     qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
@@ -295,7 +296,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   first_good_kmer=-1;
 
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer, &strand_first_good_kmer,
@@ -317,7 +318,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   first_good_kmer=-1;
   set_int_array(quals_good, read_len, 1);
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer, &strand_first_good_kmer,
@@ -334,7 +335,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   first_good_kmer=-1;
   set_int_array(quals_good, read_len, 1);
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
@@ -378,7 +379,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=20+33;
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer, &strand_first_good_kmer,
@@ -412,7 +413,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=20+33;
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
@@ -450,7 +451,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=31+33;
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
@@ -484,7 +485,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=31+33;
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
@@ -520,7 +521,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   qual_cutoff=9+33;
   first_good_kmer=-1;
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
@@ -554,7 +555,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   qual_cutoff=9+33;
   first_good_kmer=-1;
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
@@ -610,7 +611,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=10+33;
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer,&strand_first_good_kmer,
@@ -640,7 +641,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=10+33;
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer, &strand_first_good_kmer,
@@ -695,7 +696,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=10+33;
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer, &strand_first_good_kmer,
@@ -728,7 +729,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
   set_int_array(quals_good, read_len, 1);
   qual_cutoff=10+33;
   strand_first_good_kmer=reverse;//just testing
-  result = get_first_good_kmer_and_populate_qual_array(read_seq, read_qual,
+  result = get_first_good_kmer_and_populate_qual_array(readid,read_seq, read_qual,
 						       read_len-5+1, read_len,
 						       quals_good,
 						       qual_cutoff, &first_good_kmer, &strand_first_good_kmer,
