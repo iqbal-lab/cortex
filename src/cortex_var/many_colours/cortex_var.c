@@ -1168,151 +1168,19 @@ int main(int argc, char **argv)
     {
 
       timestamp();
-      printf("Print contigs only seen in Brighton outbreak\n");
-
-      boolean is_a_brighton_sample(int num)
-      {
-
-	if (num==52)
-	  {
-	    return true;
-	  }
-	else if (num==54)
-	  {
-	    return true;
-	  }
-	else if (num==56)
-	  {
-	    return true;
-	  }
-	else if (num==60)
-	  {
-	    return true;
-	  }
-
-	else if (num==57 )
-	  {
-	    return true;
-	  }
-	else if (num==59)
-	  {
-	    return true;
-	  }
-	else if (num==62)
-	  {
-	    return true;
-	  }
-	else if (num==61)
-	  {
-	    return true;
-	  }
-	else if (num==51)
-	  {
-	    return true;
-	  }
-	else if (num==63)
-	  {
-	    return true;
-	  }
-	else if (num==53)
-	  {
-	    return true;
-	  }
-
-	else if (num==64)
-	  {
-	    return true;
-	  }
-	else if (num==65)
-	  {
-	    return true;
-	  }
-	else if (num==58)
-	  {
-	    return true;
-	  }
-	else if (num==84)
-	  {
-	    return true;
-	  }
-	else if (num==78)
-	  {
-	    return true;
-	  }
-
-	else if (num==80)
-	  {
-	    return true;
-	  }
-	else if (num==83)
-	  {
-	    return true;
-	  }
-	else if (num==79)
-	  {
-	    return true;
-	  }
-	else if (num==77)
-	  {
-	    return true;
-	  }
-	else if (num==82)
-	  {
-	    return true;
-	  }
-	else
-	  {
-	    return false;
-	  }
-      }
-
-      boolean brighton_condition(dBNode** path, Orientation* ors, int len)
-      {
-	boolean too_short=false;
-	boolean present_in_all_brighton=true;
-	boolean absent_outside_brighton=true;
-	int i;
-	for (i==0; (absent_outside_brighton==true) && (present_in_all_brighton==true) && (i<89); i++)
-	  {
-	    
-	    if (count_reads_on_allele_in_specific_colour(path, len, i, &too_short)==0)
-	      {
-		if (is_a_brighton_sample(i)==true)
-		  {
-		    present_in_all_brighton=false;
-		  }
-	      }
-	    else//there is covg
-	      {
-		if (is_a_brighton_sample(i)==false)
-		  {
-		    absent_outside_brighton=false;
-		  }
-	      }
-	    if (too_short==true)
-	      {
-		return false;
-	      }
-	  }
-	if ((absent_outside_brighton==true) && (present_in_all_brighton==true))
-	  {
-	    return true;
-	  }
-	return false;
-      }
-
-      db_graph_print_supernodes_defined_by_func_of_colours_given_condition(cmd_line->output_supernodes, "", 
-									   cmd_line->max_var_len,// max_var_len is the public face of maximum expected supernode size
-									   db_graph, 
-									   &element_get_colour_union_of_all_colours, 
-									   &element_get_covg_union_of_all_covgs, 
-									   &print_appropriate_extra_supernode_info,
-									   &brighton_condition);
+      printf("Print contigs(supernodes) in the graph created by the union of all colours.\n");
+      
+      db_graph_print_supernodes_defined_by_func_of_colours(cmd_line->output_supernodes, "", 
+							   cmd_line->max_var_len,// max_var_len is the public face of maximum expected supernode size
+							   db_graph, 
+							   &element_get_colour_union_of_all_colours, 
+							   &element_get_covg_union_of_all_covgs, 
+							   &print_appropriate_extra_supernode_info);
 
 
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
       timestamp();
-      printf("Supernodes present in all Brighton samples and absent from all other samples are dumped\n");
+      printf("Supernodes dumped\n");
     }
 
 
