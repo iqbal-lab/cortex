@@ -177,7 +177,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
   while(seq_next_read(sf))
     {
       int count_corrected_bases=0;
-
+      //NOTE - uses modified version fo Isaacs code - new func
       seq_read_all_bases_and_quals(sf, buf_seq, buf_qual);
       StrBuf* buf_seq_debug  = strbuf_clone(buf_seq);
       
