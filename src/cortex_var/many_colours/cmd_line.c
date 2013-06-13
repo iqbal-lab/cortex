@@ -1528,7 +1528,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	}
     default:
       {
-	die("Unknown option %s", opt);
+	die("Unknown option %c", opt);
       }      
 
     }
@@ -3324,3 +3324,6 @@ boolean check_if_colourlist_contains_samplenames(char* filename)
   fclose(fp);
   return contains_samplenames;
 }
+
+
+

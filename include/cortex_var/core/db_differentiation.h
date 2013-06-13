@@ -51,6 +51,6 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(
   int* for_test_index, boolean mark_nodes_for_dumping);
 
 void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_read_length, 
-							   dBGraph* db_graph);
+							   dBGraph* db_graph, char** list_sample_ids);
 
 #endif /* DB_DIFFERENTIATION_H_ */

@@ -284,7 +284,7 @@ void align_list_of_fastaq_to_graph_and_print_coverages_in_all_colours(FileFormat
 
 
 void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_read_length, 
-							   dBGraph* db_graph)
+							   dBGraph* db_graph, char** list_sample_ids)
 {
 
 
@@ -354,6 +354,23 @@ void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_
     {
       die("Cannot open %s. Exit.\n", fasta);
     }
+
+  //print header line
+  fprintf(out, "GENE/READ_ID\t");
+  int i;
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      fprintf(out, "%s", list_sample_ids[i]);
+    
+      if (i<NUMBER_OF_COLOURS-1)
+	{
+	  fprintf(out, "\t");
+	}
+      else
+	{
+	  fprintf(out, "\n");
+	}
+    }
   
   int dummy_colour_ignored=0;//this will be ignored, as setting to false - we don't want to demand the read all lies in any colour
   int num_kmers;
@@ -368,7 +385,7 @@ void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_
 	  int k;
 	  if (full_entry)
 	    {
-	      fprintf(out, ">%s\t", seq->name);
+	      fprintf(out, "%s\t", seq->name);
 	    }
 	  else
 	    {

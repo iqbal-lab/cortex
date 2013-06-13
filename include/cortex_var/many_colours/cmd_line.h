@@ -225,4 +225,5 @@ int parse_novelseq_args(char* arg, int* array_colours_to_look_in, int* num_cols_
 int get_number_of_files_and_check_existence_and_get_samplenames_from_col_list(char* colour_list, CmdLine* cmd);
 boolean check_if_colourlist_contains_samplenames(char* filename);
 
+
 #endif /* CMD_LINE_H_ */

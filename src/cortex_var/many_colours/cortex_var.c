@@ -1284,7 +1284,8 @@ int main(int argc, char **argv)
       printf("Print pangenome matrix. For each read(gene) in this fasta (%s)\nprint the percent of kmers which are present in each sample\n",
 	     cmd_line->pan_genome_genes_fasta);
       print_percent_agreement_for_each_colour_for_each_read(cmd_line->pan_genome_genes_fasta, 
-							    cmd_line->max_read_length, db_graph);
+							    cmd_line->max_read_length, db_graph,
+							    db_graph_info->sample_ids);
       timestamp();
     }
   if (cmd_line->print_colour_overlap_matrix==true)
