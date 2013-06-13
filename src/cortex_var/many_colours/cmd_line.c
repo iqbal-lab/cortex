@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo 
+ * Copyright 2009-2013 Zamin Iqbal and Mario Caccamo 
  * 
  * CORTEX project contacts:  
  * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
@@ -355,6 +355,11 @@ int default_opts(CmdLine * c)
   c->get_pan_genome_matrix=false;
   set_string_to_null(c->pan_genome_genes_fasta, MAX_FILENAME_LEN);
 
+  c->do_err_correction=false;
+  c->err_correction_policy=DontWorryAboutLowQualBaseUnCorrectable;
+  c->do_greedy_padding=false;
+  c->greedy_pad=0;
+
   c->estimate_copy_num=false;
   set_string_to_null(c->copy_num_fasta, MAX_FILENAME_LEN);
   set_string_to_null(c->copy_num_output, MAX_FILENAME_LEN);
@@ -516,7 +521,11 @@ CmdLine* cmd_line_alloc()
 	}
       
     }
-  return cmd;
+ //string buffers
+ cmd->err_correction_filelist = strbuf_new();
+ cmd->err_correction_outdir   = strbuf_new();
+ cmd->err_correction_suffix   = strbuf_new();
+ return cmd;
 }
 
 void cmd_line_free(CmdLine* cmd)
@@ -527,6 +536,9 @@ void cmd_line_free(CmdLine* cmd)
       free(cmd->colour_sample_ids[i]);
     }
   free(cmd->colour_sample_ids);
+  strbuf_free(cmd->err_correction_filelist);
+  strbuf_free(cmd->err_correction_outdir);
+  strbuf_free(cmd->err_correction_suffix);
   free(cmd);
 }
 
@@ -582,7 +594,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"experiment_type", required_argument, NULL, 'P'},
     {"estimated_error_rate", required_argument, NULL, 'Q'},
     {"genotype_site", required_argument, NULL, 'R'},
-    //  {"detect_alleles", required_argument, NULL, 'S'},
+    {"err_correct", required_argument, NULL, 'S'},
     //{"estimate_genome_complexity", required_argument, NULL, 'T'},
     {"print_novel_contigs", required_argument, NULL, 'V'},
     {0,0,0,0}	
@@ -595,7 +607,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:K:L:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:V:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1482,6 +1494,15 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	cmdline_ptr->genotype_complex_site=true;
 	break;
       }
+    case 'S':
+	{
+	  parse_err_correction_args(cmdline_ptr, optarg);
+	  cmdline_ptr->do_err_correction=true;
+	  break;
+	}
+
+
+
       /*
     case 'T'://estimate_genome_complexity
       {
@@ -1532,7 +1553,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       }      
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:o:pqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:K:L:MN:O:P:Q:R:T:V:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:o:pqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:V:", long_options, &longopt_index);
   }   
   
   return 0;
@@ -1542,6 +1563,14 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
 
+  if ( (cmd_ptr->do_err_correction==true) &&  (cmd_ptr->quality_score_threshold==0) )
+    {
+      die("If you specify --err_correct then you must also specify a quality threshold with --quality_score_threshold\n");
+    }
+  if ( (cmd_ptr->do_err_correction==true) &&  (cmd_ptr->max_read_length==0) )
+    {
+      die("If you specify --err_correct then you must also specify --max_read_len\n");
+    }
 
   if ( (cmd_ptr->get_pan_genome_matrix==true) && (cmd_ptr->max_read_length==0) )
     {
@@ -3326,4 +3355,99 @@ boolean check_if_colourlist_contains_samplenames(char* filename)
 }
 
 
+
+void parse_err_correction_args(CmdLine* cmd, char* arg)
+{
+  StrBuf* arg_strbuf  = strbuf_create(arg);
+  if (arg_strbuf==NULL)
+    {
+      die("Unable even to parse the cmd-lien without oom. Your server is out of memory\n");
+    }
+  
+  
+  char delims[] = ",";
+  char* fastqlist = strtok(arg_strbuf->buff, delims );
+  if (fastqlist==NULL)
+    {
+      errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding. You don't seem to have given an argument\n");
+    }
+  
+  //check file exists
+  if (access(fastqlist, R_OK)==-1)
+    {
+      die("Cannot access file %s\n", fastqlist);
+    }
+
+  char* suffix = strtok(NULL, delims );
+  if (suffix==NULL)
+    {
+      errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding. You don't seem to have given a suffix or outdir or 0/1\n");
+    }
+  char* outdir = strtok(NULL, delims );
+  if (outdir==NULL)
+    {
+            errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.You don't seem to have given an outdir or 0/1\n");
+    }
+
+  if (dir_exists(outdir)==false)
+    {
+      die("You have specified an output directory, %s, which does not exist", outdir);
+    }
+
+
+
+  char* num_as_str = strtok(NULL, delims );
+  if (num_as_str==NULL)
+    {
+      errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.You don't seem to have givena 0/1 4th arg\n");
+
+    }
+  char* pad_as_str = strtok(NULL, delims );
+  if (pad_as_str==NULL)
+    {
+      errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.You don't seem to have given a 5th arg\n");
+
+    }
+
+
+  //put values into the cmdline object
+  strbuf_append_str(cmd->err_correction_filelist, fastqlist);
+  strbuf_append_str(cmd->err_correction_outdir, outdir);
+  strbuf_add_slash_on_end(cmd->err_correction_outdir);
+  strbuf_append_str(cmd->err_correction_suffix, suffix);
+  if (strcmp(num_as_str, "0")==0)
+    {
+      cmd->err_correction_policy=DiscardReadIfLowQualBaseUnCorrectable;
+    }
+  else if (strcmp(num_as_str, "1")==0)
+    {
+      cmd->err_correction_policy = DontWorryAboutLowQualBaseUnCorrectable;
+    }
+  else
+    {
+      errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.Your 4th arg is neither 0 nor 1\n");
+
+    }
+
+
+  if (strcmp(pad_as_str, "0")==0)
+    {
+    }
+  else
+    {
+      int n = atoi(pad_as_str);
+      if (n>0)
+	{
+	  cmd->do_greedy_padding=true;
+	  cmd->greedy_pad=n;
+	}
+      else
+	{
+	  errx(1,"--err_correct needs a comma-sep list of 5 arguments. A filelist (file, which contains a list of FASTQ). A suffix. An output directory. A 0 (discard a read if it has a low quality base that is uncorrectable) or 1 (print it correcting what you can). Finally, a number. If >0 this is the number of padding bases to add greedily walking through graph - otherwise put zero to do no padding.Your 5th arg is neither 0 nor a positive integer\n");	  
+	}
+    }
+  cmd->do_err_correction=true;
+
+  strbuf_free(arg_strbuf);
+}
 

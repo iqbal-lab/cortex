@@ -76,6 +76,8 @@ typedef struct {
   GraphInfo* ginfo;
 } BinaryHeaderInfo;
 
+boolean dir_exists(char* dir_to_check);
+
 // mkpath - ensure all directories in path exist
 // Returns 1 on success, 0 on failure
 // Adapted from Jonathan Leffler http://stackoverflow.com/a/675193/431087

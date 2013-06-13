@@ -148,7 +148,8 @@ boolean hash_table_find_in_bucket(Key key, long long * current_pos, boolean * ov
 }
 
 
-//currently not used, and must add a test
+
+
 boolean hash_table_apply_or_insert(Key key, void (*f)(Element *), HashTable * hash_table){
   if (hash_table == NULL) {
     die("NULL table!");
@@ -199,6 +200,7 @@ boolean hash_table_apply_or_insert(Key key, void (*f)(Element *), HashTable * ha
   return found;
      
 }
+
 
 
 void hash_table_traverse(void (*f)(Element *),HashTable * hash_table){
@@ -284,7 +286,7 @@ Element * hash_table_find(Key key, HashTable * hash_table)
 	  if (rehash>hash_table->max_rehash_tries)
 	    {
 	      //fprintf(stderr,"too much rehashing!! Rehash=%d\n", rehash);
- 		  die("Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
+	      //		  die("Dear user - you have not allocated enough memory to contain your sequence data. Either allocate more memory (have you done your calculations right? have you allowed for sequencing errors?), or threshold more harshly on quality score, and try again. Aborting mission.\n");
 	    }
 	}
     } while(overflow);

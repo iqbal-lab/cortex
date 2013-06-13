@@ -30,8 +30,8 @@
 #include <stdarg.h> // needed for va_list
 #include <stdio.h>
 #include <string.h>
-
 #include "global.h"
+#include <string_buffer.h>
 
 boolean test_file_existence(char* file)
 {
@@ -64,6 +64,23 @@ void set_string_to_null(char* str, int len)
   memset(str, 0, sizeof(char)*len);
 }
 
+void set_int_array(int* arr, int len, int val)
+{
+  int  i;
+  for (i=0; i<len; i++)
+    {
+      arr[i]=val;
+    }
+}
+
+void set_uint64_t_array(uint64_t* arr, int len, uint64_t val)
+{
+  int  i;
+  for (i=0; i<len; i++)
+    {
+      arr[i]=val;
+    }
+}
 
 void die(const char* fmt, ...)
 {
@@ -112,4 +129,16 @@ void message(const char* fmt, ...)
   va_start(argptr, fmt);
   vfprintf(stderr, fmt, argptr);
   va_end(argptr);
+}
+
+
+void strbuf_rev_comp(StrBuf* sb)
+{
+  strbuf_reverse(sb);
+  int i;
+  for (i=0; i<sb->len; i++)
+    {
+      char r = reverse_char_nucleotide(sb->buff[i]);
+      strbuf_set_char(sb, i, r);
+    }
 }

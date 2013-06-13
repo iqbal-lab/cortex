@@ -3194,6 +3194,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
       hash_table_traverse(&db_node_action_unset_status_visited_or_visited_and_exists_in_reference, db_graph);	
     }
 
+  free(union_list);
 }
 
 
@@ -5032,7 +5033,7 @@ boolean db_node_is_supernode_end(dBNode * element,Orientation orientation, int e
     }
   else  //or next node has more than one arrow in
     {
-      Orientation next_orientation;
+      Orientation next_orientation=forward;
       
       //we know this element has only one edge out. What is it? The function db_node_has_precisely_one_edge fills the answer into argument 3
       Nucleotide nuc, reverse_nuc;

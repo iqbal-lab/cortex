@@ -174,6 +174,7 @@ void test_hash_table_find_or_insert()
 
 void test_hash_table_apply_or_insert()
 {
+  
   short kmer_size;
   bitfield_of_64bits max_key_given_kmer_size;
   
@@ -263,6 +264,7 @@ void test_hash_table_apply_or_insert()
   step=200000;
   long long max_kmer_to_test=100000;
   test(kmer_size, num_bits, bucket, max_tries, step, max_kmer_to_test);
+
 
 
   

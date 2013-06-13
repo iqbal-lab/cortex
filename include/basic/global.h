@@ -33,6 +33,8 @@
 #define GLOBAL_H_
 
 #include <err.h>
+#include <stdint.h>
+#include "string_buffer.h"
 
 typedef signed char boolean;
 #ifndef true
@@ -63,6 +65,10 @@ int int_cmp(const void *a, const void *b);
 
 void set_string_to_null(char* str, int len);
 
+void set_int_array(int*arr, int len, int val);
+
+void set_uint64_t_array(uint64_t* arr, int len, uint64_t val);
+
 void die(const char* fmt, ...)
   __attribute__ ((format(printf, 1, 2)))
   __attribute__ ((noreturn));
@@ -73,5 +79,7 @@ void warn(const char* fmt, ...)
 // Placeholder for message() -- a function for standard output
 void message(const char* fmt, ...)
   __attribute__ ((format(printf, 1, 2)));
+
+void strbuf_rev_comp(StrBuf* sb);
 
 #endif /* GLOBAL_H_ */

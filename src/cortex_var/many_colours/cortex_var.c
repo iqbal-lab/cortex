@@ -1164,6 +1164,44 @@ int main(int argc, char **argv)
 	}
     }
 
+  if (cmd_line->do_err_correction==true)
+    {
+      timestamp();
+      printf("Error correct against a population graph\n");
+      boolean reverse_comp_reads_to_match_strand=false;
+      if (strcmp(cmd_line->ref_chrom_fasta_list, "")!=0)
+	{
+	  printf("Since you gave a reference fasta list, will mark plus strand on graph and print reads in that strand\n");
+	  FILE* list_fp = fopen(cmd_line->ref_chrom_fasta_list, "r");
+	  if (list_fp==NULL)
+	    {
+	      printf("Can't open your list of reference fasta: %s\n", cmd_line->ref_chrom_fasta_list);
+	    }
+	  StrBuf *line = strbuf_new();
+	  while(strbuf_reset_readline(line, list_fp))
+	    {
+	      strbuf_chomp(line);
+	      if(strbuf_len(line) > 0)
+		{
+		  read_ref_fasta_and_mark_strand(line->buff, db_graph);
+		}
+	    }
+	  strbuf_free(line);
+	  fclose(list_fp);
+	  reverse_comp_reads_to_match_strand=true;
+	  printf("Finished marking strand. Start correcting\n");
+	  timestamp();
+	}
+      error_correct_list_of_files(cmd_line->err_correction_filelist, cmd_line->quality_score_threshold, cmd_line->quality_score_offset,
+				  db_graph, cmd_line->err_correction_policy,
+				  cmd_line->max_read_length, cmd_line->err_correction_suffix,
+				  cmd_line->err_correction_outdir->buff,
+				  cmd_line->do_greedy_padding, 
+				  cmd_line->greedy_pad,
+				  reverse_comp_reads_to_match_strand);
+      timestamp();
+      printf("Error correction done\n");
+    }
   if (cmd_line->print_supernode_fasta==true)
     {
 

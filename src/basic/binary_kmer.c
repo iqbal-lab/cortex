@@ -431,8 +431,10 @@ BinaryKmer* seq_to_binary_kmer(char * seq, short kmer_size, BinaryKmer* prealloc
   for(j=0;j<kmer_size;j++){
 
     if (char_to_binary_nucleotide(seq[j]) == Undefined){
-      die("Seq contains an undefined char\n");
+      prealloced_kmer=NULL;
+      return prealloced_kmer;
     }
+
 
     binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(prealloced_kmer, char_to_binary_nucleotide(seq[j]), kmer_size ); 
     

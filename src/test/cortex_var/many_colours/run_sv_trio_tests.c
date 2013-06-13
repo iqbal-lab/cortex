@@ -38,6 +38,7 @@
 #include <test_db_complex_genotyping.h>
 #include <test_genome_complexity.h>
 #include <test_seq_error_estimation.h>
+#include "test_error_correction.h"
 #include <CUnit.h>
 #include <Basic.h>
 
@@ -116,11 +117,12 @@ int  main()
     return CU_get_error();
   }
 
+  /*
   if (NULL == CU_add_test(pPopGraphSuite, "Regression test: integer overflow and dumping of covergae distribution does not segfault",test_dump_covg_distribution )) {
     CU_cleanup_registry();
     return CU_get_error();
   }
-
+  */
 
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test getting sliding windows, breaking when kmer is not in graph - internal function",test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph )) {
@@ -407,7 +409,7 @@ int  main()
       }
 
 
-   /*
+
 
    //if (NULL == CU_add_test(pPopGraphSuite, "Test function for estimating genome complexity - first test", test_count_reads_where_snp_makes_clean_bubble1 ))
    //   {
@@ -416,10 +418,11 @@ int  main()
   //    }
 
 
-  */ 
 
 
 
+
+   /*
 
    if (NULL == CU_add_test(pPopGraphSuite, "Regression test case 1 - genotyping of bubble with one branch <k and one long branch", regression_test_1_single_bubble_call_one_allele_shorter_than_k_one_very_long ))
       {
@@ -468,6 +471,46 @@ int  main()
       }
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test estimation of sequencing error rate from fasta of pairs of SNP alleles (first allele known not to be present, second known to be homozygous present) - another test", test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta_test2 ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
+   */
+
+
+
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for mutating specific bases in a string", test_base_mutator ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for error-correcting reads to match a trusted graph", test_fix_end_if_unambiguous ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
+   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for checking kmers and qualities in a read that might need correction", test_get_first_good_kmer_and_populate_qual_array ))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+   if (NULL == CU_add_test(pPopGraphSuite, "Test error correction of fastq files against a graph", test_error_correct_file_against_graph))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
+   if (NULL == CU_add_test(pPopGraphSuite, "Test error correction utility function for greedy random walk", test_take_n_greedy_random_steps))
+      {
+	CU_cleanup_registry();
+	return CU_get_error();
+      }
+
+   if (NULL == CU_add_test(pPopGraphSuite, "Test error correction can output corrected reads in positive strand direction if desired", 
+			   test_reverse_comp_according_ref_pos_strand))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
