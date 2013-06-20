@@ -80,6 +80,7 @@ void warn(const char* fmt, ...)
 void message(const char* fmt, ...)
   __attribute__ ((format(printf, 1, 2)));
 
+void strbuf_add_slash_on_end(StrBuf* sbuf);
 void strbuf_rev_comp(StrBuf* sb);
 
 #endif /* GLOBAL_H_ */

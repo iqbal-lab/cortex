@@ -306,6 +306,7 @@ void strbuf_append_buff(StrBuf* dst, StrBuf* src)
   dst->buff[dst->len] = '\0';
 }
 
+
 // Remove \r and \n characters from the end of this StrBuf
 // Returns the number of characters removed
 t_buf_pos strbuf_chomp(StrBuf *sbuf)

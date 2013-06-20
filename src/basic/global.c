@@ -131,6 +131,14 @@ void message(const char* fmt, ...)
   va_end(argptr);
 }
 
+//useful if represents a path to a directory
+void strbuf_add_slash_on_end(StrBuf* sbuf)
+{
+  if (sbuf->buff[sbuf->len]!='/')
+    {
+      strbuf_append_str(sbuf, "/");
+    }
+}
 
 void strbuf_rev_comp(StrBuf* sb)
 {

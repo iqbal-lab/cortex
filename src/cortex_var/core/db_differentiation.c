@@ -398,25 +398,29 @@ void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_
 	  for (j=0; j<NUMBER_OF_COLOURS; j++)//for each colour
 	    {
 	      int count_num_kmers_present=0;
-	      int total_kmers=0;
+	      //	      int total_kmers=0;
 	      for (k=0; k<num_kmers; k++)//for each kmer in the read
 		{
+
 		  if (array_nodes[k] !=NULL)
 		    {
-		      total_kmers++;
+		      // total_kmers++;
 		      if ( array_nodes[k]->coverage[j]>0)
 			{
 			  count_num_kmers_present++;
+			  printf("Found %" PRIu64 "\n", array_nodes[k]->coverage[j]);
 			}
 		    }
 		}
-	      if (total_kmers<=0)
+	      //if (total_kmers<=0)
+	      if (num_kmers<=0)
 		{
 		  fprintf(out, "0");
 		}
 	      else
 		{
-		  float percent=(float) count_num_kmers_present/ (float)total_kmers;
+		  printf("Found %d kmers out of  %d total kmers\n", count_num_kmers_present, num_kmers);
+		  float percent=(float) count_num_kmers_present/ (float)num_kmers; //total_kmers;
 		  fprintf(out, "%0.2f", percent);
 		}
 	      if (j<NUMBER_OF_COLOURS-1)
