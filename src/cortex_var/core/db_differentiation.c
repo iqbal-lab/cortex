@@ -408,7 +408,7 @@ void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_
 		      if ( array_nodes[k]->coverage[j]>0)
 			{
 			  count_num_kmers_present++;
-			  printf("Found %" PRIu64 "\n", array_nodes[k]->coverage[j]);
+			 
 			}
 		    }
 		}
@@ -419,7 +419,6 @@ void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_
 		}
 	      else
 		{
-		  printf("Found %d kmers out of  %d total kmers\n", count_num_kmers_present, num_kmers);
 		  float percent=(float) count_num_kmers_present/ (float)num_kmers; //total_kmers;
 		  fprintf(out, "%0.2f", percent);
 		}
