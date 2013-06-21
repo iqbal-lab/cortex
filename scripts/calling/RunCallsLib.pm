@@ -83,6 +83,7 @@ sub apply_pop_classifier
     
     
     my $out = $covgfile.".classified.split_start_1";
+    if ($num_calls == 0) { system "touch $out" }
 #    my $log = $out.".log";
 
     if (!(-e $out))
@@ -118,7 +119,8 @@ sub count_calls_in_callfile
     }
     else
     {
-	die("Cannot parse $ret to find number of calls, in count_calls_in_callfile\n");
+	#die("Cannot parse $ret to find number of calls, in count_calls_in_callfile\n");
+	$num = 0;
     }
     if ($num==-1)
     {

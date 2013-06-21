@@ -873,6 +873,7 @@ sub print_entry
   }
 
   my @columns_arr = @{$self->{_columns_arr}};
+  return if !defined $entry->{$columns_arr[0]};#bugfix from Schen - he was getting crashes when there are undefined lines. I don't understand how we get undef lines.
 
   for(my $i = 0; $i < @columns_arr; $i++)
   {
