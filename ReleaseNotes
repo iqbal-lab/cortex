@@ -1,20 +1,22 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.16
 
+Minor release.
 
-New functions
+Early versions of new functions
 
 1. As part of the 1000 genomes project, I've developed a new Error correction
    option (--err_correct) that (is quality aware and) corrects against a population graph (rather than using a reference,
    or coverage). Results look good. I'm still working on it, and you can expect it to speed
-   up  lot in releases to come, but for now people need it, so I am releasing it.
+   up a lot in releases to come, but for now people need it, so I am releasing it.
    Recommended use is first error correct your reads against a cleaned pool from a population,
    and then build the graph, and error-clean and call etc as before. Right now it takes
-   fastq in and spits out fasta.    
+   fastq in and spits out fasta.  
 
 2. A simple --pan_genome_matrix option that takes in a fasta of known genes, and will report to you
    what percent of the kmers in that gene are present in all your colours(samples).
-   
+   typical use:  --pan_genome_matrix all_e_coli_genes.fasta --max_read_len 100000
+   will output a matrix showing which samples have which genes.
 
 Bugfixes
 
