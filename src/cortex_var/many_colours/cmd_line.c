@@ -607,7 +607,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:V:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:V:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1553,7 +1553,8 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       }      
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:lm:n:o:pqr:s:t:u:v:w:xy:z:A:B:C:D:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:V:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:V:", long_options, &longopt_index);
+    
   }   
   
   return 0;
@@ -2189,18 +2190,26 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 
       if (binfo.number_of_colours<=0)
 	{
-	  printf("Corrupt binary %s - signature claims to have <=0 colours within\n", cmd_ptr->multicolour_bin);
+	  sprintf(tmp, "Corrupt binary %s - signature claims to have <=0 colours within\n", cmd_ptr->multicolour_bin);
+          strcpy(error_string, tmp);
+          return -1;
 	}
       else if (binfo.number_of_colours >NUMBER_OF_COLOURS)
 	{
-	  printf("Multicolour binary %s contains %d colours, but cortex_var is compiled to support a maximum of %d colours\n", 
+	  sprintf(tmp, "Multicolour binary %s contains %d colours, but cortex_var is compiled to support a maximum of %d colours\n", 
 		  cmd_ptr->multicolour_bin, binfo.number_of_colours, NUMBER_OF_COLOURS);
+          strcpy(error_string, tmp);
+          return -1;
+
 
 	}
       else if ( (cmd_ptr->successively_dump_cleaned_colours==false) && (binfo.number_of_colours+cmd_ptr->num_colours_in_input_colour_list > NUMBER_OF_COLOURS) )
 	{
-	  printf("Between %s (containing %d colours) and %s (containing %d colours), you have exceeded the compile-time limit on colours, %d\n",
+	  sprintf(tmp, "Between %s (containing %d colours) and %s (containing %d colours), you have exceeded the compile-time limit on colours, %d\n",
 		 cmd_ptr->multicolour_bin, binfo.number_of_colours, cmd_ptr->colour_list, cmd_ptr->num_colours_in_input_colour_list, NUMBER_OF_COLOURS);
+          strcpy(error_string, tmp);
+          return -1;
+
 	}
 
        if (is_multicol_bin_ok==false)
@@ -3338,7 +3347,7 @@ boolean check_if_colourlist_contains_samplenames(char* filename)
 	  file = strtok(line, delims);
 	  if (file==NULL)
 	    {
-	      die("Format issue in %s. I don't see how this can happen - please send me your colourlist!\n",line );
+	      die("Format issue in %s. Do you have an empty line in your colourlist?\n",line );
 	    }
 	  else
 	    {
