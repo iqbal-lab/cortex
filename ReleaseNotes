@@ -1,4 +1,19 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.17
+
+Bugfix release
+
+Fixed a single bug, found by Holly Zheng, where when using 
+--successively_dump_cleaned_colours, if also using the 2nd column
+of the colourlist to give sample-ids, these were
+a) not being treated as sample ids
+b) being treated as part of the path to a file.
+
+No need to take this release unless you use --successively_dump_cleaned_colours
+and want to specify in colour_list what the id of the cleaned graph is.
+
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.16
 
 Minor release.
