@@ -131,6 +131,49 @@ void message(const char* fmt, ...)
   va_end(argptr);
 }
 
+
+void strbuf_remove_all_whitespace(StrBuf* sbuf)
+{
+  char* str = strbuf_as_str(sbuf);
+  strbuf_reset(sbuf);
+  int i;
+
+  for(i = 0; str[i]!='\0'; i++)
+  {
+    if(!isspace(str[i]))
+    {
+      strbuf_append_char(sbuf, str[i]);
+    }
+  }
+  free(str);
+}
+
+void strbuf_search_replace(StrBuf* sbuf, char find, char repl)
+{
+  uint32_t i;
+  for (i=0; i<sbuf->len; i++)
+    {
+      if (sbuf->buff[i]==find)
+	{
+	  sbuf->buff[i]=repl;
+	}
+    }
+}
+
+//returns -1 on failure, else the index of the position where the first match is
+int strbuf_find_first(StrBuf* sbuf, char find)
+{
+  uint32_t i;
+  for (i=0; i<sbuf->len; i++)
+    {
+      if (sbuf->buff[i]==find)
+	{
+	  return i;
+	}
+    }
+  return -1;
+}
+
 //useful if represents a path to a directory
 void strbuf_add_slash_on_end(StrBuf* sbuf)
 {
@@ -150,3 +193,4 @@ void strbuf_rev_comp(StrBuf* sb)
       strbuf_set_char(sb, i, r);
     }
 }
+

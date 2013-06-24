@@ -2060,7 +2060,6 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
   return total_seq_loaded;
 }
 
-
 // takes a filename (a colour_list)
 // this file contains a list of filenames (one per colour), each of these represents an individual (and contains a list of single-colour binaries for that individual).
 // Also takes two colour numbers. clean_colour is the clean colour, and in_colour is the colour ALL of these individuals are loaded into, thus:
@@ -2068,7 +2067,7 @@ long long load_population_as_binaries_from_graph(char* filename, int first_colou
 //  and only load those edges that are in the clean colour. Then dump a single-colour binary of colour in_colour,
 // with filename = colour name PLUS a suffix added on the end.
 void dump_successive_cleaned_binaries(char* filename, int in_colour,
-  int clean_colour, char* suffix, dBGraph* db_graph, GraphInfo* db_graph_info)
+				      int clean_colour, char* suffix, dBGraph* db_graph, GraphInfo* db_graph_info)
 {
   if(in_colour == clean_colour)
   {
@@ -2099,13 +2098,32 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
   StrBuf *dir = file_reader_get_strbuf_of_dir_path(filename_abs_path);
   // Create buffer for reading in lines
   StrBuf *line = strbuf_new();
-
+  StrBuf *sample = strbuf_new();
+  
   while(strbuf_reset_readline(line, fp))
   {
     strbuf_chomp(line);
-
+    strbuf_reset(sample);
     if(strbuf_len(line) > 0)
     {
+      //if the colourlist contains samplenames, they will be in the 2nd column, tab-separated
+      //these will override sample ids in the binary headers
+      int index_tab=strbuf_find_first(line, '\t');
+
+      if (index_tab==0)
+	{
+	  die("Colourlist has a line starting with a tab character\n");
+	}
+      else if (index_tab!=-1)//must be >0
+	{
+	  //copy onto an empty/reset strbuf
+	  char* sam = strbuf_substr(line, (size_t)(index_tab+1), (size_t)(line->len - index_tab -1)); //line->len-1 - (index_tab+1) +1
+	  strbuf_ensure_capacity(sample, strlen(sam));
+	  strbuf_set(sample, sam);
+	  free(sam);
+	  strbuf_shrink(line, (t_buf_pos) index_tab);
+	}
+
       // Get paths relative to filelist dir
       if(strbuf_get_char(line, 0) != '/')
         strbuf_insert(line, 0, dir, 0, strbuf_len(dir));
@@ -2131,7 +2149,13 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
       char outfile[1000];
       outfile[0]='\0';
       sprintf(outfile, "%s_%s.ctx", line->buff, suffix);
-
+      
+      //if the colourlist contained a sample-id for this, then use it
+      if (strcmp(sample->buff, "") !=0)
+	{
+	  strcpy(db_graph_info->sample_ids[in_colour], sample->buff);
+	  db_graph_info->sample_id_lens[in_colour]=strlen(db_graph_info->sample_ids[in_colour]);
+	}
       db_graph_dump_single_colour_binary_of_specified_colour(outfile, 
 							     &db_node_check_status_not_pruned, 
 							     db_graph, 
@@ -2148,10 +2172,12 @@ void dump_successive_cleaned_binaries(char* filename, int in_colour,
   }
 
   strbuf_free(line);
+  strbuf_free(sample);
   strbuf_free(dir);
 
   fclose(fp);
 }
+
 
 
 

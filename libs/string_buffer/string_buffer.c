@@ -372,7 +372,8 @@ void strbuf_reverse_region(StrBuf *sbuf, t_buf_pos start, t_buf_pos length)
 char* strbuf_substr(StrBuf *sbuf, t_buf_pos start, t_buf_pos len)
 {
   // Bounds checking
-  if(start + len >= sbuf->len)
+  //commented out by Zam  if(start + len >= sbuf->len)
+  if(start + len > sbuf->len)
   {
     fprintf(stderr, "StrBuf OutOfBounds Error: "
                     "strbuf_substr(start: %lui, len: %lui) [strlen: %lu]\n",

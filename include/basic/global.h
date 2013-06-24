@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo
+ * Copyright 2009-2013 Zamin Iqbal and Mario Caccamo
  * 
  * CORTEX project contacts:  
  * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
@@ -80,6 +79,9 @@ void warn(const char* fmt, ...)
 void message(const char* fmt, ...)
   __attribute__ ((format(printf, 1, 2)));
 
+void strbuf_remove_all_whitespace(StrBuf* sbuf);
+void strbuf_search_replace(StrBuf* sbuf, char find, char repl);
+int strbuf_find_first(StrBuf* sbuf, char find);
 void strbuf_add_slash_on_end(StrBuf* sbuf);
 void strbuf_rev_comp(StrBuf* sb);
 
