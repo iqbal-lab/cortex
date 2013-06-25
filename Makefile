@@ -116,7 +116,7 @@ endif
 
 # Comment out this line to turn off adding the commit version
 # (it already checks if hg is installed)
-#VERSION_STR=$(shell if [ `command -v hg` ]; then echo ' (commit' `hg id --num --id`')'; else echo; fi)
+VERSION_STR=$(shell if [ `command -v hg` ]; then echo ' (commit' `hg id --num --id`')'; else echo; fi)
 
 # DEV: Add -DNDEBUG=1 to turn off assert() calls
 OPT := $(ARCH) -Wall $(MACFLAG) -DVERSION_STR='"$(VERSION_STR)"' \
