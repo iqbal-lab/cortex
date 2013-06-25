@@ -4474,7 +4474,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 
 	    return is_supernode_pruned;//do nothing. This supernode has no interior, is just 1 or 2 nodes, so cannot prune it
 	  }
-	else if (length_sup <= 2*db_graph->kmer_size +2)
+	else// if (length_sup <= 2*db_graph->kmer_size +2)
 	  {
 	    int i;
 	    //to look like an error, must all have actual coverage, caused by an actual errored read, BUT must have low covg, <=threshold
