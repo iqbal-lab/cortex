@@ -1,4 +1,26 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.18
+
+Bugfix release - this one is worth taking!
+
+1. Fixed a bug that Isaac Turner spotted when digging into some calls.
+   Essentially I had put a hard limit, preventing error-cleaning of contigs
+   longer than a SNP. This is in general not the right thing to do,
+   and for microbial samples prevents error cleaning from removing
+   low coverage contigs of the host DNA. 
+
+2. Richard Pearson and I spent some time improving the 
+   Cortex auto-cleaning threshold choice. If you use run_calls now,
+   it makes better choices of thresholds, which can lead to much
+   better calls, especially with heterogeneous datasets.
+   In OUTDIR/binaries/uncleaned run_calls now dumps a PDF for each sample
+   showing the kmer coverage distribution, and showing where it has drawn the threshold.
+
+3. Some fixes to the vcf filtering scripts which were being dump and removing
+   duplicate calls and marking them as overlapping. Entirely my fault for misusing
+   Isaac's script and not even reading the --help. Apologies to all.
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.17
 
 Bugfix release
