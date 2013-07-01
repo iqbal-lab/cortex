@@ -91,6 +91,11 @@ if (!(-e $make_table_script))
     die("Cannot find script for making table of read-lengths/covgs, $make_table_script\n");
 }
 
+my $get_thresh_script = $analyse_variants_dir."get_auto_cleaning_cutoff.R";
+if (!(-e $get_thresh_script))
+{
+    die("Cannot find script $get_thresh_script for calculating cleaning threshold\n");
+}
 
 #use lib $isaac_bioinf_dir;
 use Descriptive;
@@ -122,7 +127,7 @@ my (
         $max_read_len,         $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
         $expt_type,            $do_union, $manual_override_cleaning,
         $build_per_sample_vcfs, $global_logfile,  $squeeze_mem,
-        $workflow
+        $workflow, 
     );
 
 #set defaults
@@ -1440,7 +1445,7 @@ sub merge_list_of_vcfs
     {
 	my $tmp = $tmpdir.basename($outfilename).".temp_cated_vcf";
 
-	open ($catout_fh, ">".$tmp)||die("UNable to open temp file $tmp");
+	open ($catout_fh, ">".$tmp)||die("Unable to open temp file $tmp");
 	print_header_from_vcf($aref->[0], $catout_fh);
 	
 	my $i;
@@ -1450,17 +1455,54 @@ sub merge_list_of_vcfs
 	}
 	close($catout_fh);
 
+
 	## Now cleanup - remove dups etc
-    # Pipe stderr to append to the end of global_logfile
+	my $tmp_midpoint_fails = $tmpdir.basename($outfilename).".temp_vcf_of_fails_midway_through_process";
+	delete_and_add_header($tmp, $tmp_midpoint_fails);
+	my $tmp_midpoint_passes = $tmpdir.basename($outfilename).".temp_vcf_of_passes_midway_through_process";
+	delete_and_add_header($tmp, $tmp_midpoint_passes);
+	my $tmp_nearly_there = $tmpdir.basename($outfilename).".next_temp_vcf";
+	#delete_and_add_header($tmp, $tmp_nearly_there);
+	my $tmp_final_unsorted = $tmpdir.basename($outfilename).".final_unsorted";
+
+	# Pipe stderr to append to the end of global_logfile
 	my $cmd1 = "($vcftools_dir/perl/vcf-sort $tmp | " .
-               $isaac_bioinf_dir."vcf_scripts/vcf_remove_dupes.pl --take_first --filter_txt DUP_CALL | " .
-               $isaac_bioinf_dir."vcf_scripts/vcf_combine_alleles.pl --pass | " .
-               $isaac_bioinf_dir."vcf_scripts/vcf_remove_overlaps.pl --pass --filter_txt OVERLAPPING_SITE | " .
-               $vcftools_dir."/perl/vcf-sort > $outfilename) 2>&1";
+               $isaac_bioinf_dir."vcf_scripts/vcf_remove_dupes.pl --take_first  | " .
+               $isaac_bioinf_dir."vcf_scripts/vcf_combine_alleles.pl --pass  | grep PASS | grep -v \"\#\"  >> $tmp_midpoint_passes) 2>&1";
+	my $cmd2 = "($vcftools_dir/perl/vcf-sort $tmp | " .
+               $isaac_bioinf_dir."vcf_scripts/vcf_remove_dupes.pl --take_first  | " .
+               $isaac_bioinf_dir."vcf_scripts/vcf_combine_alleles.pl --pass  | grep -v PASS | grep -v \"\#\" >> $tmp_midpoint_fails) 2>&1";
+
+	my $cmd3;
+	if ($workflow eq "independent")
+	{
+	    $cmd3 =  "( ($vcftools_dir/perl/vcf-sort $tmp_midpoint_passes | ".
+		$isaac_bioinf_dir."vcf_scripts/vcf_remove_overlaps.pl  --filter_txt OVERLAPPING_SITE | ".
+		$isaac_bioinf_dir."vcf_scripts/vcf_revert_consistent_overlaps.pl) >> $tmp_nearly_there)  2>&1 ";
+	}
+	else
+	{
+	    $cmd3 =  "($vcftools_dir/perl/vcf-sort $tmp_midpoint_passes  >> $tmp_nearly_there)  2>&1 ";
+
+	}
+	my $cmd4 = "(cat $tmp_nearly_there | head -100 | grep ^#; cat $tmp_nearly_there | grep -v \"\#\" ; cat $tmp_midpoint_fails | grep -v \"\#\" ;) > $tmp_final_unsorted ";
+        my $cmd5  = $vcftools_dir."/perl/vcf-sort $tmp_final_unsorted >  $outfilename ";
 
 	print "$cmd1\n";
 	my $ret1 = qx{$cmd1};
 	print "$ret1\n";
+	print "$cmd2\n";
+	my $ret2 = qx{$cmd2};
+	print "$ret2\n";
+	print "$cmd3\n";
+	my $ret3 = qx{$cmd3};
+	print "$ret3\n";
+	print "$cmd4\n";
+	my $ret4 = qx{$cmd4};
+	print "$ret4\n";
+	print "$cmd5\n";
+	my $ret5 = qx{$cmd5};
+	print "$ret5\n";
 
 	$href_result->{$which_caller}->{$raw_or_decomp}= $outfilename;
     }
@@ -1490,6 +1532,21 @@ sub print_header_from_vcf
     }
     close(FILE);
     return;
+}
+
+sub delete_and_add_header
+{
+    my ($file_with_header, $file_missing_header) = @_;
+    my $fh;
+    if (-e $file_missing_header)
+    {
+	print "Delete pre-existing file $file_missing_header ready to make clean start\n";
+	my $cmd = "rm $file_missing_header";
+	qx{$cmd};
+    }
+    open($fh, ">".$file_missing_header)||die("Cannot open $file_missing_header - out of disk space? permissions issue?\n");
+    print_header_from_vcf($file_with_header, $fh);
+    close($fh);
 }
 
 sub print_vcf_contents
@@ -2079,9 +2136,12 @@ sub build_unclean
 	qx{$c1};
     }
     my $ctx = $out."uncleaned/$km/".$name.".unclean.kmer".$km;
+
+
     if ($q>0)
     {
 	$ctx = $ctx.".q$q";
+	print "Build graph using quality threshold $q\n";
     }
 
     if ($hp>0)
@@ -2145,6 +2205,7 @@ sub build_unclean
     {
 	die("Unable to build $ctx");
     }
+
 }
 
 sub get_right_binary
@@ -2593,18 +2654,37 @@ sub get_cleaning_thresh_and_distrib
     }
     close(CLEANINGFILE);
 
-#    return $min_index;
-    my $thresh=$exp_covg;
+    my $print_pdfs=1;
+    my $debugprint=0;
+    my $cmd = "cat $get_thresh_script | R --vanilla --args $file $exp_covg $print_pdfs $debugprint";
+    my $ret = qx{$cmd};
+    my $cutoff=-1;
+    my @sp = split(/\n/, $ret);
     my $i;
-    for ($i=int($exp_covg); $i>0; $i--)
+    for ($i=0; $i<scalar(@sp); $i++)
     {
-	if ($covgs[$i]<$min_val)
+	
+	if ($sp[$i] =~ /print\(cutoff\)/)
 	{
-	    $min_val=$covgs[$i];
-	    $min_index=$i;
+	    
+	    $i++;
+	    if ($sp[$i]=~ /]\s+(\d+)/)
+	    {
+		$cutoff=$1;
+		last;
+	    }
+	    else
+	    {
+		die("Failed to parse the output of get_auto_cleaning_cutoff.R\n");
+	    }
 	}
+	
     }
-    return $min_index;
+    if ($cutoff==-1)
+    {
+	die("Unable to parse a cutoff value from this output: $ret\n");
+    }
+    return $cutoff;
 }
 
 

@@ -139,7 +139,8 @@ while(defined($curr_entry = $vcf->read_entry()))
 
   my $same_chrom = ($curr_entry->{'CHROM'} eq $prev_entry->{'CHROM'});
 
-  $print_curr = (!$same_chrom || $var_end + $padding < $curr_entry->{'true_POS'});
+  $print_curr = (!$same_chrom || $var_end + $padding < $curr_entry->{'true_POS'} );
+
   $prev_overlapping = !($print_curr && $print_prev);
 
   if($prev_overlapping)

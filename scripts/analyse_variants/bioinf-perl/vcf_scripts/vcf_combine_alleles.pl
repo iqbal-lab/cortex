@@ -71,10 +71,10 @@ my $vcf = new VCFFile($vcf_handle);
 if(defined($failed_vars_out)) { $vcf->set_filter_failed($failed_vars_out);}
 
 $vcf->add_header_tag("FILTER", $multiallelic_tag, 0, undef,
-                     "Variant formed from merged alleles");
+                     "Variant formed from combining calls with different alleles at the same site");
 
 $vcf->add_header_tag("FILTER", $dupallele_tag, 0, undef,
-                     "Allele has been merged");
+                     "Duplicate call from combining callsets or VCFs");
 
 $vcf->print_header();
 
@@ -258,8 +258,9 @@ sub print_list
               for(my $var = $start; $var <= $end; $var++)
               {
                 my $gt_conf = get_gt_conf($vars_at_same_pos[$var], $sample);
+                my $gt      = get_gt($vars_at_same_pos[$var], $sample);
 
-                if(defined($gt_conf) && $gt_conf ne "." &&
+                if(defined($gt_conf) && $gt ne "." &&
                    (!defined($max_gt_conf_var) || $gt_conf > $max_gt_conf))
                 {
                   $max_gt_conf_var = $vars_at_same_pos[$var];
@@ -276,12 +277,26 @@ sub print_list
                 my @alts = split(",", $max_gt_conf_var->{'ALT'});
                 unshift(@alts, $max_gt_conf_var->{'REF'});
 
+		my $warning=0;
                 while($prev_gt =~ /([\/\|]*)(\.|\d+)/g)
                 {
-                  $new_gt_call .= $1.($2 ne "." ? $alleles_hash{$alts[$2]} : '.');
+		    if ( ($2 ne ".") && (!defined $alleles_hash{$alts[$2]}))
+		    {
+			$warning=1;#i dont understand how this happens
+		    }
+		    else
+		    {
+			$new_gt_call .= $1.($2 ne "." ? $alleles_hash{$alts[$2]} : '.');
+		    }
                 }
-
-                $new_entry->{$sample}->{'GT'} = $new_gt_call;
+		if ($warning==0)
+		{
+		    $new_entry->{$sample}->{'GT'} = $new_gt_call;
+		}
+		else
+		{
+		    $new_entry->{$sample}->{'GT'} = $prev_gt;
+		}
               }
             }
 
@@ -325,6 +340,14 @@ sub get_gt_conf
 
   return defined($var->{$sample}->{'CONF'}) ? $var->{$sample}->{'CONF'}
                                             : $var->{$sample}->{'GT_CONF'};
+}
+
+sub get_gt
+{
+  my ($var, $sample) = @_;
+
+  return $var->{$sample}->{'GT'};
+
 }
 
 # When passed a list of genotypes, returns 1 if all are REF, 0 otherwise

@@ -607,7 +607,7 @@ else # sort and PV tag and remove ref mismatches
     print "$ret1\n";
 
     print "Remove sites where Stampy has placed variant in wrong place\n";
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  -p --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --take_first --pass --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE > $final_simple ";
+    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  -p --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --take_first --pass  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE > $final_simple ";
     print "$cmd1\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
@@ -623,7 +623,7 @@ else # sort and PV tag and remove ref mismatches
     print "$ret3\n";
 
 
-    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl -p  --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE  > $final_decomp ";
+    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl -p  --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE  > $final_decomp ";
     print "$cmd4\n";
     my $ret4 = qx{$cmd4};
     print "$ret4\n";
