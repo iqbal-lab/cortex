@@ -224,7 +224,7 @@ const char* usage=
 "   [--dump_binary FILENAME] \t\t\t\t\t=\t Dump a binary file, with this name (after applying error-cleaning, if specified).\n" \
   // -w
 "   [--max_read_len] \t\t\t\t\t\t=\t (Unlike previous versions of Cortex) now required only if using --gt or --dump_filtered_readlen_distribution.\n" \
-" \n**** FILTERING AND ERROR CLEANING OPTIONS ****\n\n"\
+" \n**** FILTERING AND ERROR CORRECTION/CLEANING OPTIONS ****\n\n"\
   // -m
 "   [--quality_score_threshold INT] \t\t\t\t=\t Filter for quality scores in the input file (default 0).\n" \
   // -j
@@ -239,6 +239,8 @@ const char* usage=
 "   [--load_colours_only_where_overlap_clean_colour INT] \t=\t Only load nodes from binary files in the colour-list when they overlap a\n\t\t\t\t\t\t\t\t\t specific colour (e.g. that contains a cleaned pooled graph);\n\t\t\t\t\t\t\t\t\t requires you to specify this particular colour. You must have loaded that colour beforehand, using --multicolour_bin\n"  \
   // -F
 "   [--successively_dump_cleaned_colours SUFFIX] \t\t=\t Only to be used when also using --load_colours_only_where_overlap_clean_colour and --multicolour_bin\n\t\t\t\t\t\t\t\t\t Used to allow error-correction of low-coverage data on large numbers of individuals with large genomes.\n\t\t\t\t\t\t\t\t\t Requires the user specify a suffix which will be added to the names of cleaned binaries. See manual for details.\n"  \
+  // -S
+  "   [--err_correct]\t\t\t\t\t\t=\t FIVE comma-separated arguments:\n\t\t\t\t\t\t\t\t\t(1) a filelist (listing FASTQ for correction)\n\t\t\t\t\t\t\t\t\t(2) a string/suffix less than 50 characters long \n\t\t\t\t\t\t\t\t\t  (/path/to/zam.fastq--->correction process --> outdir/zam.fastq.suffix)\n\t\t\t\t\t\t\t\t\t(3) an output directory\n\t\t\t\t\t\t\t\t\t(4) either 0 or 1. \n\t\t\t\t\t\t\t\t\t  O means discard a read if it has a low quality uncorrectable base, \n\t\t\t\t\t\t\t\t\t  1 means correct as many bases as you can, but if there is a low quality uncorrectable base, leave it uncorrected.\n\t\t\t\t\t\t\t\t\t(5) Experimental option - A number N of greedy extra bases to pad the end of the read with. \n\t\t\t\t\t\t\t\t\t  I suggest you use 0 (zero) for this, unless you are Jared Simpson\n\t\t\t\t\t\t\t\t\t   or Shane McCarthy, when you would enter 20.\n\t\t\t\t\t\t\t\t\t   The 1000 Genomes project wanted to be able to use a \n\t\t\t\t\t\t\t\t\t   particular BWT compression scheme, which required \n\t\t\t\t\t\t\t\t\t   the addition of N bases of sequence following the read, \n\t\t\t\t\t\t\t\t\t   from where it mapped in the reference. \n\t\t\t\t\t\t\t\t\t   Ignore this unless you are me, Jared or Shane for now. \n\t\t\t\t\t\t\t\t\t   In addition you must use --quality_score_threshold and --max_read_len.\n\t\t\t\t\t\t\t\t\tFinally, if you use --list_ref_fasta then Cortex will mark the + strand in the graph,\n\t\t\t\t\t\t\t\t\tand will print all reads in the + orientation \n"
 " \n\n**** OUTPUT STATISTICS AND SUPERNODES****\n\n" \
   // -A
 "   [--dump_covg_distribution FILENAME] \t\t\t\t=\t Print k-mer coverage distribution to the file specified\n" \
