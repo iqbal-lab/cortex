@@ -440,6 +440,7 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
                                         kmer_size, read_qual,
                                         quality_cutoff, homopolymer_cutoff,
                                         0, 0);
+
         break;
       }
 
@@ -529,9 +530,11 @@ void load_se_seq_data_into_graph_colour(
   unsigned long long *bases_read, // total bases in file
   unsigned long long *bases_loaded, // bases that make it into the graph
   unsigned long *readlen_count_array, // histogram of contigs lengths
-  unsigned long readlen_count_array_size) // contigs bigger go in final bin
+  unsigned long readlen_count_array_size,// contigs bigger go in final bin
+  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) ) 
 {
   short kmer_size = db_graph->kmer_size;
+  int sub_current=0;
 
   // DEV:
   // First check if this is a cortex binary
@@ -578,7 +581,6 @@ void load_se_seq_data_into_graph_colour(
       curr_found = false;
 
       seq_to_binary_kmer(kmer_str, kmer_size, &curr_kmer);
-
       element_get_key(&curr_kmer, kmer_size, &tmp_key);
       curr_node = hash_table_find_or_insert(&tmp_key, &curr_found, db_graph);
       curr_orient = db_node_get_orientation(&curr_kmer, curr_node, kmer_size);
@@ -604,7 +606,7 @@ void load_se_seq_data_into_graph_colour(
       }
 
       //debug
-      //char tmpstr[32];
+      //char tmpstr[kmer_size];
       //binary_kmer_to_seq(curr_kmer, kmer_size, tmpstr);
       //printf("First kmer: %s\n", tmpstr);
 
@@ -619,6 +621,11 @@ void load_se_seq_data_into_graph_colour(
                       curr_kmer, curr_node, curr_orient,
                       bases_loaded,
                       readlen_count_array, readlen_count_array_size);
+
+	//in most cases, the following is a null function,
+	//but if subsampling is set on, this will dump a binary of the graph
+	//if bases_loaded is the appropriate depth of covg
+	subsample_func(*bases_loaded, readlen_count_array, readlen_count_array_size);
       }
     }
     else
@@ -643,7 +650,9 @@ void load_pe_seq_data_into_graph_colour(
   unsigned long long *bases_read, // total bases in file
   unsigned long long *bases_loaded, // bases that make it into the graph
   unsigned long *readlen_count_array, // length of contigs loaded
-  unsigned long readlen_count_array_size) // contigs bigger go in final bin
+  unsigned long readlen_count_array_size, // contigs bigger go in final bin
+  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) )
+
 {
   short kmer_size = db_graph->kmer_size;
 
@@ -809,6 +818,7 @@ void load_pe_seq_data_into_graph_colour(
                       bases_loaded,
                       readlen_count_array, readlen_count_array_size);
       }
+      subsample_func(*bases_loaded, readlen_count_array, readlen_count_array_size);
     }
   }
 
@@ -841,7 +851,9 @@ void load_se_filelist_into_graph_colour(
   unsigned int *total_files_loaded,
   unsigned long long *total_bad_reads, unsigned long long *total_dup_reads,
   unsigned long long *total_bases_read, unsigned long long *total_bases_loaded,
-  unsigned long *readlen_count_array, unsigned long readlen_count_array_size)
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
+  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) )
+
 {
   qual_thresh += ascii_fq_offset;
 
@@ -911,7 +923,8 @@ void load_se_filelist_into_graph_colour(
           &se_files_loaded,
           &se_bad_reads, &se_dup_reads,
           &se_bases_read, &se_bases_loaded,
-          readlen_count_array, readlen_count_array_size);
+	  readlen_count_array, readlen_count_array_size,
+	  subsample_func);
 
         colour++;
       }
@@ -922,7 +935,8 @@ void load_se_filelist_into_graph_colour(
           ascii_fq_offset, colour, db_graph,
           &se_bad_reads, &se_dup_reads,
           &se_bases_read, &se_bases_loaded,
-          readlen_count_array, readlen_count_array_size);
+	  readlen_count_array, readlen_count_array_size,
+          subsample_func);
       }
 
       se_files_loaded++;
@@ -962,7 +976,8 @@ void load_pe_filelists_into_graph_colour(
   unsigned int *total_file_pairs_loaded,
   unsigned long long *total_bad_reads, unsigned long long *total_dup_reads,
   unsigned long long *total_bases_read, unsigned long long *total_bases_loaded,
-  unsigned long *readlen_count_array, unsigned long readlen_count_array_size)
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
+  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) ) 
 {
   qual_thresh += ascii_fq_offset;
 
@@ -1076,7 +1091,7 @@ void load_pe_filelists_into_graph_colour(
           ascii_fq_offset, colour, db_graph, 0,
           &pe_file_pairs_loaded, &pe_bad_reads, &pe_dup_reads,
           &pe_bases_read, &pe_bases_loaded,
-          readlen_count_array, readlen_count_array_size);
+	  readlen_count_array, readlen_count_array_size, subsample_func);
 
         colour++;
       }
@@ -1087,7 +1102,7 @@ void load_pe_filelists_into_graph_colour(
           ascii_fq_offset, colour, db_graph,
           &pe_bad_reads, &pe_dup_reads,
           &pe_bases_read, &pe_bases_loaded,
-          readlen_count_array, readlen_count_array_size);
+	  readlen_count_array, readlen_count_array_size, subsample_func);
       }
 
       pe_file_pairs_loaded++;

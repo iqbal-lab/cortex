@@ -34,6 +34,7 @@
 #include <string.h>
 #include <math.h>
 #include <inttypes.h>
+#include <string_buffer.h>
 
 // cortex_var headers
 #include "element.h"
@@ -92,6 +93,11 @@ void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* mode
 }
 */
 
+
+void subsample_null(unsigned long long a, unsigned long * b, unsigned long c)
+{
+  return;
+}
 
 
 void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
@@ -680,11 +686,21 @@ int main(int argc, char **argv)
 
 
   GraphInfo* db_graph_info=graph_info_alloc_and_init();//will exit it fails to alloc.
-
+  GraphInfo* db_graph_info_for_sub=graph_info_alloc_and_init();;
 
   // input data:
   if (cmd_line->input_seq==true)
     {
+      if (cmd_line->subsample==true)
+	{
+	  printf("User has specified subsampling, so as we load the fasta/q we will\n periodically dump the graph when loaded depth of coverage is\n %dx ..(steps of %dx) ..%d\n",
+		 cmd_line->subsample_min, cmd_line->subsample_step, cmd_line->subsample_max);
+	  if(cmd_line->entered_sampleid_as_cmdline_arg == true)
+	    {
+	      graph_info_set_sample_ids(cmd_line->colour_sample_ids, 1, db_graph_info_for_sub, 0);
+	    }
+	}
+
       if (strcmp(cmd_line->se_list, "")!=0)
 	{
 	  fprintf(stdout,"Input file of single ended data filenames: %s\n",
@@ -699,15 +715,6 @@ int main(int argc, char **argv)
 	{
 	  fprintf(stdout,"Input file of paired end data: %s, and %s, \n",
 		  cmd_line->pe_list_lh_mates, cmd_line->pe_list_rh_mates); 
-	  /*
-	  if (cmd_line->loaded_sample_names==false)
-	    {
-	      cmd_line->loaded_sample_names = get_sample_id_from_se_pe_list(cmd_line->colour_sample_ids[0], cmd_line->pe_list_lh_mates);
-	    }
-	  if (cmd_line->loaded_sample_names==false)
-	    {
-	      cmd_line->loaded_sample_names = get_sample_id_from_se_pe_list(cmd_line->colour_sample_ids[0], cmd_line->pe_list_rh_mates);
-	      }*/
 	}
       else
 	{
@@ -754,8 +761,8 @@ int main(int argc, char **argv)
       }
     unsigned long readlen_distrib_size = max_expected_read_len + 1;
     unsigned long *readlen_distrib
-    = (unsigned long*) malloc(sizeof(unsigned long) * readlen_distrib_size);
-
+      = (unsigned long*) malloc(sizeof(unsigned long) * readlen_distrib_size);
+    
     if(readlen_distrib == NULL)
     {
       die("Unable to malloc array to hold readlen distirbution!Exit.\n");
@@ -772,91 +779,148 @@ int main(int argc, char **argv)
     int homopolymer_cutoff
       = cmd_line->cut_homopolymers ? cmd_line->homopolymer_limit : 0;
 
-    if(strcmp(cmd_line->se_list, "") != 0)
-    {
-      load_se_filelist_into_graph_colour(cmd_line->se_list,
-        cmd_line->quality_score_threshold, homopolymer_cutoff, false,
-        cmd_line->quality_score_offset,
-        into_colour, db_graph, 0, // 0 => filelist not colourlist
-        &num_files_loaded, &num_bad_reads, &num_dup_reads,
-        &num_bases_parsed, &num_bases_loaded,
-        readlen_distrib, readlen_distrib_size);
-    }
+    void (*subsample_function)(unsigned long long, unsigned long *, unsigned long);
 
-    if(strcmp(cmd_line->pe_list_lh_mates, "") != 0)
+    //local func
+    int next_sub_dump=cmd_line->subsample_min;
+    boolean finished_subsampling=false;
+    void subsample_as_specified(unsigned long long bp_loaded, 
+				unsigned long * rd_distrib, 
+				unsigned long len)
     {
-      load_pe_filelists_into_graph_colour(
-        cmd_line->pe_list_lh_mates, cmd_line->pe_list_rh_mates,
-        cmd_line->quality_score_threshold, homopolymer_cutoff, 
-        cmd_line->remove_pcr_dups,
-        cmd_line->quality_score_offset,
-        into_colour, db_graph, 0, // 0 => filelist not colourlist
-        &num_files_loaded, &num_bad_reads, &num_dup_reads,
-        &num_bases_parsed, &num_bases_loaded,
-        readlen_distrib, readlen_distrib_size);
+      if (finished_subsampling==true)
+	{
+	  return;
+	}
+      if ( (bp_loaded/cmd_line->genome_size) >= next_sub_dump)
+	{
+	  //sort out info
+	  // Update the graph info object
+	  unsigned long mean_r_len = calculate_mean_ulong(rd_distrib,len);
+	  graph_info_set_mean_readlen(db_graph_info_for_sub, 0, mean_r_len);
+	  graph_info_set_seq(db_graph_info_for_sub, 0, bp_loaded);
+	  
+	  //dump graph
+	  StrBuf* sub_bin = strbuf_clone(cmd_line->subsample_stub);
+	  strbuf_append_str(sub_bin,"_subsample_");
+	  char depth[10];
+	  sprintf(depth, "%d", next_sub_dump);
+	  strbuf_append_str(sub_bin, depth);
+	  strbuf_append_str(sub_bin, "x.ctx");
+	  db_graph_dump_single_colour_binary_of_colour0(sub_bin->buff, &db_node_condition_always_true,
+							db_graph, db_graph_info_for_sub, BINVERSION);
+	  printf("Dumped graph at timepoint when loaded coverage hits %dx depth\n", next_sub_dump);
+	  timestamp();
+	  //then prepare for next dump
+	  next_sub_dump += cmd_line->subsample_step;
+	  
+	}
+      if (next_sub_dump>cmd_line->subsample_max)
+	{
+	  finished_subsampling=true;
+	  graph_info_free(db_graph_info_for_sub);
+	  printf("Finished subsampling\n");
+	  timestamp();
+	}
+    }
+    //end of local func
+    
+    if (cmd_line->subsample==true)
+      {
+	subsample_function = &subsample_as_specified;
+      }
+    else
+      {
+	subsample_function = &subsample_null;
+      }
+    
+    if(strcmp(cmd_line->se_list, "") != 0)
+      {
+	load_se_filelist_into_graph_colour(cmd_line->se_list,
+					   cmd_line->quality_score_threshold, homopolymer_cutoff, false,
+					   cmd_line->quality_score_offset,
+					   into_colour, db_graph, 0, // 0 => filelist not colourlist
+					   &num_files_loaded, &num_bad_reads, &num_dup_reads,
+					   &num_bases_parsed, &num_bases_loaded,
+					   readlen_distrib, readlen_distrib_size,
+					   subsample_function);
+      }
+    
+    if(strcmp(cmd_line->pe_list_lh_mates, "") != 0)
+      {
+	load_pe_filelists_into_graph_colour(
+					    cmd_line->pe_list_lh_mates, cmd_line->pe_list_rh_mates,
+					    cmd_line->quality_score_threshold, homopolymer_cutoff, 
+					    cmd_line->remove_pcr_dups,
+					    cmd_line->quality_score_offset,
+					    into_colour, db_graph, 0, // 0 => filelist not colourlist
+					    &num_files_loaded, &num_bad_reads, &num_dup_reads,
+					    &num_bases_parsed, &num_bases_loaded,
+					    readlen_distrib, readlen_distrib_size,
+					    subsample_function);
     }
 
     // Update the graph info object
     unsigned long mean_contig_length = calculate_mean_ulong(readlen_distrib,
                                                             readlen_distrib_size);
-
+    
     graph_info_update_mean_readlen_and_total_seq(db_graph_info, 0,
                                                  mean_contig_length,
                                                  num_bases_loaded);
-
+    
     if(cmd_line->entered_sampleid_as_cmdline_arg == true)
-    {
-      graph_info_set_sample_ids(cmd_line->colour_sample_ids, 1, db_graph_info, 0);
-    }
-
+      {
+	graph_info_set_sample_ids(cmd_line->colour_sample_ids, 1, db_graph_info, 0);
+      }
+    
     // Cleanup marks left on nodes by loading process (for PE reads)
     hash_table_traverse(&db_node_set_status_to_none, db_graph);
-
+    
     hash_table_print_stats(db_graph);
-
+    
     timestamp();
-
+    
     printf("Sequence data loaded\n");
     printf("Total bases parsed:%llu\n", num_bases_parsed);
     printf("Total bases passing filters and loaded into graph:%llu\n",
            num_bases_loaded);
     printf("Mean read length after filters applied:%lu\n", mean_contig_length);
-
+    
     if(cmd_line->dump_readlen_distrib == true)
-    {
-      FILE* rd_distrib_fptr = fopen(cmd_line->readlen_distrib_outfile, "w");
-
-      if(rd_distrib_fptr == NULL)
       {
-        printf("Cannot open %s, so dump distribution of filtered "
-         "read-lengths to stdout (ie to the screen)\n", cmd_line->readlen_distrib_outfile);
-
-        rd_distrib_fptr = fdopen(fileno(stdout), "w");
+	FILE* rd_distrib_fptr = fopen(cmd_line->readlen_distrib_outfile, "w");
+	
+	if(rd_distrib_fptr == NULL)
+	  {
+	    printf("Cannot open %s, so dump distribution of filtered "
+		   "read-lengths to stdout (ie to the screen)\n", cmd_line->readlen_distrib_outfile);
+	    
+	    rd_distrib_fptr = fdopen(fileno(stdout), "w");
+	  }
+	else
+	  {
+	    printf("Dumping distribution of effective read lengths (ie after "
+		   "quality, homopolymer and/or PCR duplicate filters) to file %s.\n",
+		   cmd_line->readlen_distrib_outfile);
+	  }
+	
+	for(i = db_graph->kmer_size; i < readlen_distrib_size; i++)
+	  {
+	    fprintf(rd_distrib_fptr, "%lu\t%lu\n", i, readlen_distrib[i]);
+	  }
+	
+	fclose(rd_distrib_fptr);
       }
-      else
-      {
-        printf("Dumping distribution of effective read lengths (ie after "
-               "quality, homopolymer and/or PCR duplicate filters) to file %s.\n",
-               cmd_line->readlen_distrib_outfile);
-      }
-
-      for(i = db_graph->kmer_size; i < readlen_distrib_size; i++)
-      {
-        fprintf(rd_distrib_fptr, "%lu\t%lu\n", i, readlen_distrib[i]);
-      }
-
-      fclose(rd_distrib_fptr);
-    }
-
+    
     free(readlen_distrib);
-  }
+    }
   else
     {
       //if there is a multicolour binary, load that in first
       timestamp();      
       int first_colour_data_starts_going_into=0;
       boolean graph_has_had_no_other_binaries_loaded=true;
-
+      
       if (cmd_line->input_multicol_bin==true)
 	{
 	  long long  bp_loaded = load_multicolour_binary_from_filename_into_graph(cmd_line->multicolour_bin,db_graph, 
@@ -865,15 +929,15 @@ int main(int argc, char **argv)
 	  printf("Loaded the multicolour binary %s, and got %qd kmers\n", cmd_line->multicolour_bin, bp_loaded/db_graph->kmer_size);
 	  graph_has_had_no_other_binaries_loaded=false;
 	  timestamp();
-
+	  
 	}
-
+      
       if (cmd_line->input_colours==true)
 	{
 	  timestamp();
-
+	  
 	  //normal use
-
+	  
 	  if (cmd_line->successively_dump_cleaned_colours==false)
 	    {
 	      
@@ -884,12 +948,12 @@ int main(int argc, char **argv)
 		  printf("When loading the binaries specified in %s, we only load nodes that are already in colour %d\n", 
 			 cmd_line->colour_list, cmd_line->clean_colour);
 		}
-
+	      
 	      load_population_as_binaries_from_graph(cmd_line->colour_list, first_colour_data_starts_going_into, 
 						     graph_has_had_no_other_binaries_loaded, db_graph, db_graph_info,
 						     cmd_line->load_colours_only_where_overlap_clean_colour, cmd_line->clean_colour,
 						     cmd_line->for_each_colour_load_union_of_binaries);
-
+	      
 	      //if the colour_list contained sample_ids, add them to the GraphInfo object
 	      // these will override the sample-id in the binary
 	      if (cmd_line->loaded_sample_names==true)
@@ -906,38 +970,38 @@ int main(int argc, char **argv)
 	      if (cmd_line->load_colours_only_where_overlap_clean_colour==false)
 		{
 		  die(
-"If you specify --successively_dump_cleaned_colours, you must also specify\n"
-"--load_colours_only_where_overlap_clean_colour That should fix your problem,\n"
-"however, this should have been caught as soon as Cortex parsed your command-line.\n"
-"Please inform Zam Iqbal (zam@well.ox.ac.uk) so he can fix that UI bug\n");
+		      "If you specify --successively_dump_cleaned_colours, you must also specify\n"
+		      "--load_colours_only_where_overlap_clean_colour That should fix your problem,\n"
+		      "however, this should have been caught as soon as Cortex parsed your command-line.\n"
+		      "Please inform Zam Iqbal (zam@well.ox.ac.uk) so he can fix that UI bug\n");
 		}
-
-
+	      
+	      
 	      printf("For each colour in %s, load data into graph, cleaning by comparison with colour %d, then dump a single-colour binary\n",
 		     cmd_line->colour_list,cmd_line->clean_colour);
 	      graph_info_set_specific_colour_to_cleaned_against_pool(db_graph_info,  first_colour_data_starts_going_into, 
-								      cmd_line->multicolour_bin, cmd_line->clean_colour);
-
+								     cmd_line->multicolour_bin, cmd_line->clean_colour);
+	      
 	      db_graph_info->cleaning[first_colour_data_starts_going_into]->cleaned_against_another_graph=true;
 	      dump_successive_cleaned_binaries(cmd_line->colour_list, first_colour_data_starts_going_into,cmd_line->clean_colour,
 					       cmd_line->successively_dump_cleaned_colours_suffix, db_graph, db_graph_info);
-
+	      
 	      graph_info_unset_specific_colour_from_cleaned_against_pool(db_graph_info, first_colour_data_starts_going_into);
 	      db_graph_info->cleaning[first_colour_data_starts_going_into]->cleaned_against_another_graph=false;
 	      printf("Completed dumping of clean binaries\n");
-
+	      
 	      timestamp();
-
+	      
 	    }
-
-
-
+	  
+	  
+	  
 	}
     }
-
-
-
-
+  
+  
+  
+  
   GraphAndModelInfo model_info;
   float repeat_geometric_param_mu = 0.8;
   // float seq_err_rate_per_base;

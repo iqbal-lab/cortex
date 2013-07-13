@@ -3609,7 +3609,6 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
   long long count_sing  = 0;
 
   void print_supernode(dBNode * node){
-    
     count_kmers++;
     char name[100];
 
@@ -3618,7 +3617,7 @@ void db_graph_print_supernodes_defined_by_func_of_colours(char * filename_sups, 
 									     path_nodes,path_orientations,path_labels,
 									     seq,&avg_coverage,&min_covg,&max_covg,&is_cycle,
 									     db_graph, get_colour, get_covg);
-      
+
       if (length>0){	
 	sprintf(name,"node_%i",count_nodes);
 

@@ -222,6 +222,8 @@ const char* usage=
 "   [--sample_id STRING] \t\t\t\t\t=\t (Only) if losding fasta/q, you can use this option to set the sample-identifier.\n\t\t\t\t\t\t\t\t\t This will be saved in any binary file you dump.\n" \
   // -p
 "   [--dump_binary FILENAME] \t\t\t\t\t=\t Dump a binary file, with this name (after applying error-cleaning, if specified).\n" \
+  // -T
+"   [--subsample MIN_DEPTH,MAX_DEPTH,STEP,OUTFILE_STUB] \t\t\t\t\t=\t While loading fasta/q, dump binaries when coverage reaches\n\t\t\t\t\t\t\t\t\t MIN_DEPTH, MIN_DEPTH+STEP...MAX_DEPTH.\n\t\t\t\t\t\t\t\t\tYou must also specify --genome_size to use this option\n" \
   // -w
 "   [--max_read_len] \t\t\t\t\t\t=\t (Unlike previous versions of Cortex) now required only if using --gt or --dump_filtered_readlen_distribution.\n" \
 " \n**** FILTERING AND ERROR CORRECTION/CLEANING OPTIONS ****\n\n"\
@@ -354,6 +356,11 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
+  c->subsample=false;
+  c->subsample_min=0;
+  c->subsample_max=0;
+  c->subsample_step=0;
+
   c->get_pan_genome_matrix=false;
   set_string_to_null(c->pan_genome_genes_fasta, MAX_FILENAME_LEN);
 
@@ -527,6 +534,7 @@ CmdLine* cmd_line_alloc()
  cmd->err_correction_filelist = strbuf_new();
  cmd->err_correction_outdir   = strbuf_new();
  cmd->err_correction_suffix   = strbuf_new();
+ cmd->subsample_stub       = strbuf_new();
  return cmd;
 }
 
@@ -541,6 +549,7 @@ void cmd_line_free(CmdLine* cmd)
   strbuf_free(cmd->err_correction_filelist);
   strbuf_free(cmd->err_correction_outdir);
   strbuf_free(cmd->err_correction_suffix);
+  strbuf_free(cmd->subsample_stub);
   free(cmd);
 }
 
@@ -597,6 +606,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"estimated_error_rate", required_argument, NULL, 'Q'},
     {"genotype_site", required_argument, NULL, 'R'},
     {"err_correct", required_argument, NULL, 'S'},
+    {"subsample", required_argument, NULL, 'T'},
     //{"estimate_genome_complexity", required_argument, NULL, 'T'},
     {"print_novel_contigs", required_argument, NULL, 'V'},
     {0,0,0,0}	
@@ -609,7 +619,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:V:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:V:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1503,32 +1513,84 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  break;
 	}
 
-
-
-      /*
-    case 'T'://estimate_genome_complexity
+    case 'T'://subsample
       {
 	if (optarg==NULL)
-	  errx(1,"[--estimate_genome_complexity] option requires a filename");
+	  errx(1,"[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub\n");
 	
-	if (strlen(optarg)<MAX_FILENAME_LEN)
+	if (strlen(optarg)<MAX_FILENAME_LEN+100)
 	  {
-	    if (access(optarg,R_OK)==-1)
+	    char* min=NULL;
+	    char* max=NULL;
+	    char* step=NULL;
+	    char* filename=NULL;
+	    char delims[] = ",";
+	    char temp1[MAX_FILENAME_LEN+100];
+	    temp1[0]='\0';
+	    strcpy(temp1, optarg);
+	    min = strtok(temp1, delims );
+	    if (min==NULL)
 	      {
-		errx(1,"[--estimate_genome_complexity] filename [%s] cannot be accessed",optarg);
+		errx(1,"[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub\n");
+	      }
+	    else if (isNumeric(min))
+	      {
+		cmdline_ptr->subsample_min = atoi(min);
+	      }
+	    else
+	      {
+		errx(1, "[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub - your first argument is not numeric\n");
+	      }
+
+	    max= strtok( NULL, delims );
+	    if (max==NULL)
+	      {
+		errx(1,"[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub\n");
+	      }
+	    else if (isNumeric(max))
+	      {
+		cmdline_ptr->subsample_max = atoi(max);
+	      }
+	    else
+	      {
+		errx(1, "[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub - your second argument is not numeric\n");
+	      }
+
+	    step= strtok( NULL, delims );
+	    if (step==NULL)
+	      {
+		errx(1,"[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub\n");
+	      }
+	    else if (isNumeric(step))
+	      {
+		cmdline_ptr->subsample_step = atoi(step);
+	      }
+	    else
+	      {
+		errx(1, "[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub - your third argument is not numeric\n");
+	      }
+
+	    filename= strtok( NULL, delims );
+	    if (filename==NULL)
+	      {
+		errx(1,"[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub\n");
+	      }
+	    else
+	      {
+		strbuf_append_str(cmdline_ptr->subsample_stub,filename);
 	      }
 	    
-	    cmdline_ptr->estimate_genome_complexity=true;
-	    strcpy(cmdline_ptr->fastaq_for_estimating_genome_complexity,optarg);
+	    cmdline_ptr->subsample=true;
+
 	  }
 	else
 	  {
-	    errx(1,"[--estimate_genome_complexity] filename too long [%s]",optarg);
+	    errx(1,"[--subsample] argument too long [%s]",optarg);
 	  }
 	
 	break;
       }
-      */
+
     case 'V'://print_novel_contigs
 	{
 	  if (optarg==NULL)
@@ -1555,7 +1617,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       }      
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:V:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:V:", long_options, &longopt_index);
     
   }   
   
@@ -1565,6 +1627,22 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
+  
+  if ( (cmd_ptr->subsample==true) && (cmd_ptr->input_seq==false) )
+    {
+      die("If you specify --subsample, you must be entering sequence data as fasta or fastq or bam\n");
+    }
+
+  if ( (cmd_ptr->subsample==true) &&   ( (cmd_ptr->input_colours==true) || (cmd_ptr->input_multicol_bin==true))    )
+    {
+      die("If you specify --subsample, you must be entering sequence data as fasta or fastq or bam - you are passing in binary files (--multicolour_bin or --colour_list)\n");
+    }
+
+  
+  if ( (cmd_ptr->subsample==true) && (cmd_ptr->genome_size==0) )
+    {
+      die("If you specify --subsample, you must also specify --genome_size (so Cortex can convert from base-pairs of sequence to depth of coverage)\n");
+    }
 
   if ( (cmd_ptr->do_err_correction==true) &&  (cmd_ptr->quality_score_threshold==0) )
     {

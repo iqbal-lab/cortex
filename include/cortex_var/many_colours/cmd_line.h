@@ -63,6 +63,8 @@ typedef struct
   int max_read_length;
   int max_var_len;
   int remv_low_covg_sups_threshold;
+  
+
 
   int detect_bubbles1_first_colour_list[MAX_COLOURS_ALLOWED_TO_MERGE];//these are a set of colours to be considered as merged, for purposes of bubble calling
   int num_colours_in_detect_bubbles1_first_colour_list;
@@ -199,6 +201,13 @@ typedef struct
   boolean using_1net;
   boolean using_2net;
   double min_acceptable_llk;
+
+  //for subsampling
+  int subsample_min;
+  int subsample_max;
+  int subsample_step;
+  StrBuf* subsample_stub;
+  boolean subsample;
 
   //  int working_colour3_for_1net;
   //int working_colour4_for_2net;

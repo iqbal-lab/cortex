@@ -335,7 +335,7 @@ int graph_info_update_mean_readlen(GraphInfo* ginfo, int colour, int previous_me
 
 void graph_info_update_mean_readlen_and_total_seq(GraphInfo* ginfo, int colour,
                                                   unsigned long mean_readlen_in_added_data,
-				                                  unsigned long long added_seq)
+						  unsigned long long added_seq)
 {
   graph_info_update_mean_readlen(ginfo, colour, 
 		      ginfo->mean_read_length[colour], ginfo->total_sequence[colour], 

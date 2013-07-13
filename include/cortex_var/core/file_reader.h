@@ -91,7 +91,8 @@ void load_se_seq_data_into_graph_colour(
   char ascii_fq_offset, int colour_index, dBGraph *db_graph,
   unsigned long long *bad_reads, unsigned long long *dup_reads,
   unsigned long long *bases_read, unsigned long long *bases_loaded,
-  unsigned long *readlen_count_array, unsigned long readlen_count_array_size);
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
+  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) );
 
 void load_pe_seq_data_into_graph_colour(
   const char *file_path1, const char *file_path2,
@@ -99,7 +100,8 @@ void load_pe_seq_data_into_graph_colour(
   char ascii_fq_offset, int colour_index, dBGraph *db_graph,
   unsigned long long *bad_reads, unsigned long long *dup_reads,
   unsigned long long *bases_read, unsigned long long *bases_loaded,
-  unsigned long *readlen_count_array, unsigned long readlen_count_array_size);
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
+  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) );
 
 void load_se_filelist_into_graph_colour(
   char* se_filelist_path,
@@ -108,7 +110,8 @@ void load_se_filelist_into_graph_colour(
   unsigned int *total_files_loaded,
   unsigned long long *total_bad_reads, unsigned long long *total_dup_reads,
   unsigned long long *total_bases_read, unsigned long long *total_bases_loaded,
-  unsigned long *readlen_count_array, unsigned long readlen_count_array_size);
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
+  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) );
 
 void load_pe_filelists_into_graph_colour(
   char* pe_filelist_path1, char* pe_filelist_path2,
@@ -117,7 +120,8 @@ void load_pe_filelists_into_graph_colour(
   unsigned int *total_file_pairs_loaded,
   unsigned long long *total_bad_reads, unsigned long long *total_dup_reads,
   unsigned long long *total_bases_read, unsigned long long *total_bases_loaded,
-  unsigned long *readlen_count_array, unsigned long readlen_count_array_size);
+  unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
+  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) );
 
 // End of loading sequence data
 

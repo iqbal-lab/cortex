@@ -32,6 +32,7 @@
 #include <string.h>
 #include "global.h"
 #include <string_buffer.h>
+#include "binary_kmer.h"
 
 boolean test_file_existence(char* file)
 {
