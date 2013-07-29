@@ -86,7 +86,7 @@ void test_count_reads_where_snp_makes_clean_bubble1()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //and use this file of reads: /data/test/genome_complexity/test_allele_clean_file2.fa
   //  >read lies entirely in graph defined by test_allele_clean_file1.fa, and is clean (forms supernode at k=7)

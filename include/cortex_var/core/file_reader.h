@@ -85,6 +85,8 @@ char mkpath(const char *path, mode_t mode);
 
 StrBuf* file_reader_get_strbuf_of_dir_path(char* path);
 
+void subsample_null(unsigned long long a, unsigned long * b, unsigned long c);
+
 void load_se_seq_data_into_graph_colour(
   const char *file_path,
   char quality_cutoff, int homopolymer_cutoff, boolean remove_dups_se,

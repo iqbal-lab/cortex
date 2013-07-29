@@ -94,10 +94,6 @@ void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* mode
 */
 
 
-void subsample_null(unsigned long long a, unsigned long * b, unsigned long c)
-{
-  return;
-}
 
 
 void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
@@ -810,6 +806,7 @@ int main(int argc, char **argv)
 	  db_graph_dump_single_colour_binary_of_colour0(sub_bin->buff, &db_node_condition_always_true,
 							db_graph, db_graph_info_for_sub, BINVERSION);
 	  printf("Dumped graph at timepoint when loaded coverage hits %dx depth\n", next_sub_dump);
+	  strbuf_free(sub_bin);
 	  timestamp();
 	  //then prepare for next dump
 	  next_sub_dump += cmd_line->subsample_step;
@@ -1205,10 +1202,22 @@ int main(int argc, char **argv)
       timestamp();
     }
 
-  if (cmd_line->dump_binary==true)
+  if ( (cmd_line->dump_binary==true)     
+       ||
+       (cmd_line->subsample==true) )
     {
       if (cmd_line->input_seq==true)
 	{
+	  if ((strcmp(cmd_line->output_binary_filename, "")==0)
+	      &&
+	      (cmd_line->subsample==true) )
+	    {
+	      //then we know subsample stub is set
+	      StrBuf* final_bin = strbuf_clone(cmd_line->subsample_stub);
+	      strbuf_append_str(final_bin,"_all_data.ctx");
+	      strcpy(cmd_line->output_binary_filename, final_bin->buff);
+	      strbuf_free(final_bin);
+	    }
 	  //dump single colour
 	  timestamp();
 	  printf("Input data was fasta/q, so dump single colour binary file: %s\n", cmd_line->output_binary_filename);

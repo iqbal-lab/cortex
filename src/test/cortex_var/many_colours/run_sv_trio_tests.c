@@ -61,7 +61,7 @@ int  main()
   /* add the tests to the suites */
 
 
-
+  /*
   if (NULL == CU_add_test(pPopGraphSuite, "Test element - get edge copy", test_get_edge_copy)) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -117,12 +117,12 @@ int  main()
     return CU_get_error();
   }
 
-  /*
-  if (NULL == CU_add_test(pPopGraphSuite, "Regression test: integer overflow and dumping of covergae distribution does not segfault",test_dump_covg_distribution )) {
-    CU_cleanup_registry();
-    return CU_get_error();
-  }
-  */
+  
+  // comment out while debugging if (NULL == CU_add_test(pPopGraphSuite, "Regression test: integer overflow and dumping of covergae distribution does not segfault",test_dump_covg_distribution )) //{
+  //    CU_cleanup_registry();
+  //  return CU_get_error();
+  // }
+  
 
 
   if (NULL == CU_add_test(pPopGraphSuite, "Test getting sliding windows, breaking when kmer is not in graph - internal function",test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph )) {
@@ -133,6 +133,7 @@ int  main()
     CU_cleanup_registry();
     return CU_get_error();
   }
+
   if (NULL == CU_add_test(pPopGraphSuite, "Test function for getting length distribution of filtered/effective reads after N's, low quality, PCR duplicates and homopolymers have been cut or filtered",test_getting_readlength_distribution )) {
     CU_cleanup_registry();
     return CU_get_error();
@@ -497,6 +498,7 @@ int  main()
 	CU_cleanup_registry();
 	return CU_get_error();
       }
+
    if (NULL == CU_add_test(pPopGraphSuite, "Test error correction of fastq files against a graph", test_error_correct_file_against_graph))
       {
 	CU_cleanup_registry();

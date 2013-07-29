@@ -100,7 +100,7 @@ void error_correct_list_of_files(StrBuf* list_fastq,char quality_cutoff, char as
   free(distrib_position_bases_corrected);
 }
 
-
+//outputs fastQ unless add_greedy_bases_for_better_bwt_compression==true, in which case is for 1000genomes, and they want fastA
 inline void error_correct_file_against_graph(char* fastq_file, char quality_cutoff, char ascii_qual_offset,
 					     dBGraph *db_graph, char* outfile,
 					     uint64_t *bases_modified_count_array,//distribution across reads; how many of the read_length bases are fixed
@@ -181,7 +181,6 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
       seq_read_all_bases_and_quals(sf, buf_seq, buf_qual);
       StrBuf* buf_seq_debug  = strbuf_clone(buf_seq);
       
-      //      seq_read_all_quals(sf, buf_qual);
       int read_len = seq_get_length(sf);
       int num_kmers = read_len-kmer_size+1;
       int quality_good[read_len];
@@ -284,7 +283,7 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	      }
 	    else//kmer not in graph and quality bad
 	      {
-		boolean fixed = fix_end_if_unambiguous(direction, buf_seq, pos, 
+		boolean fixed = fix_end_if_unambiguous(direction, buf_seq, buf_qual, quality_cutoff, pos, 
 						       working_buf, working_str, db_graph);
 		if ( (policy==DiscardReadIfLowQualBaseUnCorrectable) 
 		     &&  
@@ -336,12 +335,21 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	}
       else
 	{
-	  fprintf(out_fp, ">%s\n", seq_get_read_name(sf));
+	  if (add_greedy_bases_for_better_bwt_compression==false)
+	    {
+	      fprintf(out_fp, "@");
+	    }
+	  else
+	    {
+	      fprintf(out_fp, ">");
+	    }
+	  fprintf(out_fp, "%s\n", seq_get_read_name(sf));
 	  char last_kmer_str[db_graph->kmer_size];
 	  if ( (rev_comp_read_if_on_reverse_strand==true)
 	       && (strand_first_good_kmer==reverse) )
 	    {
 	      strbuf_rev_comp(buf_seq);
+	      strbuf_reverse(buf_qual);
 	    }
 	  //get the final kmer (after reverse complementing if that is happening)
 	  strbuf_substr_prealloced(buf_seq, buf_seq->len-db_graph->kmer_size-1, db_graph->kmer_size, last_kmer_str);
@@ -371,6 +379,10 @@ inline void error_correct_file_against_graph(char* fastq_file, char quality_cuto
 	    }
 	  
 	  fprintf(out_fp, "%s\n", buf_seq->buff );
+	  if (add_greedy_bases_for_better_bwt_compression==false)
+	    {
+	      fprintf(out_fp, "+\n%s\n", buf_qual->buff);
+	    }
 	  if (count_corrected_bases<bases_modified_count_array_size)
 	    {
 	      bases_modified_count_array[count_corrected_bases]++;
@@ -524,7 +536,8 @@ ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(const char* de
 				       
 
 //This function fixes a kmer to match the graph if there is a unique way of doing so
-boolean fix_end_if_unambiguous(WhichEndOfKmer which_end, StrBuf* read_buffer, int pos, 
+//the quality scores are here ONLY to allow fixing of the quality score at any fixed base.
+boolean fix_end_if_unambiguous(WhichEndOfKmer which_end, StrBuf* read_buffer, StrBuf* qual_buffer, char quality_cutoff, int pos, 
 			       StrBuf* kmer_buf, char* kmer_str,//kmer_buf and kmer_str both working variablesm prealloced by caller
 			       dBGraph* dbg)
 {
@@ -570,10 +583,12 @@ boolean fix_end_if_unambiguous(WhichEndOfKmer which_end, StrBuf* read_buffer, in
       if (which_end==Left)
 	{
 	  mutate_base(read_buffer, pos, which_mutant_fixes);
+	  set_qual_to_just_above_cutoff(qual_buffer, pos, quality_cutoff);
 	}
       else
 	{
 	  mutate_base(read_buffer, pos+dbg->kmer_size -1, which_mutant_fixes);
+	  set_qual_to_just_above_cutoff(qual_buffer, pos+dbg->kmer_size-1, quality_cutoff);
 	}
       return true;
     }
@@ -582,6 +597,13 @@ boolean fix_end_if_unambiguous(WhichEndOfKmer which_end, StrBuf* read_buffer, in
       return false;
     }
 
+}
+
+//if you do modify a base, you should also fix it's quality score.
+//for the moment, do something ugly and fix it to be 1 more than the quality cutoff
+void set_qual_to_just_above_cutoff(StrBuf* qualbuf, int pos, char cutoff)
+{
+  strbuf_set_char(qualbuf,pos,cutoff+1);
 }
 
 //if the specified base is ACGT then there are 3 possible mutants

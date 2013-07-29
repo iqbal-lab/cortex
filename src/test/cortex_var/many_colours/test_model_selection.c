@@ -128,7 +128,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph,
     &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   load_se_seq_data_into_graph_colour(
     "../data/test/pop_graph/example1_for_testing_genotyping.allele2.fa",
@@ -136,7 +136,7 @@ void test_get_log_bayesfactor_varmodel_over_repeatmodel()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph,
     &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // Now read each allele into an array of nodes, so we can use them
 

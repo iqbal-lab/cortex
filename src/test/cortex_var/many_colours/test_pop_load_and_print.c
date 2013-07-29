@@ -84,7 +84,7 @@ void test_load_two_people_in_same_populations_and_print_separately_their_superno
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
   //printf("Number of bases loaded is %d",seq_loaded);

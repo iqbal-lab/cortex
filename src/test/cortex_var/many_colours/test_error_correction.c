@@ -126,23 +126,32 @@ void test_fix_end_if_unambiguous()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
   StrBuf* readbuf = strbuf_new();
+  StrBuf* qualbuf = strbuf_new();
   StrBuf* kmerbuf = strbuf_init(5);
   char kmerstr[6];
   char* read1="TGACAAAAAC"; 
+  char* qual1="IIIIIIIII#";
+  char cutoff = 40+33;
   strbuf_set(readbuf, read1);
+  strbuf_set(qualbuf, qual1);
   //at position 5 in the read we have AAAAC, which is fixable to AAAAA
-  CU_ASSERT(fix_end_if_unambiguous(Right, readbuf, 5, kmerbuf, kmerstr, db_graph)==true);
+  CU_ASSERT(fix_end_if_unambiguous(Right, readbuf, qualbuf, cutoff, 5, kmerbuf, kmerstr, db_graph)==true);
   CU_ASSERT(strcmp(readbuf->buff, "TGACAAAAAA")==0);
+  CU_ASSERT(strcmp(qualbuf->buff, "IIIIIIIIIJ")==0);
   strbuf_set(readbuf, read1);//reset
+  strbuf_set(qualbuf, qual1);
 
-  CU_ASSERT(fix_end_if_unambiguous(Left, readbuf, 5, kmerbuf, kmerstr, db_graph)==false);
+  CU_ASSERT(fix_end_if_unambiguous(Left, readbuf, qualbuf, cutoff, 5, kmerbuf, kmerstr, db_graph)==false);
   CU_ASSERT(strcmp(readbuf->buff, "TGACAAAAAC")==0);
+  CU_ASSERT(strcmp(qualbuf->buff, "IIIIIIIII#")==0);
+
   hash_table_free(&db_graph);
   strbuf_free(readbuf);
+  strbuf_free(qualbuf);
   strbuf_free(kmerbuf);
 
 
@@ -167,27 +176,36 @@ void test_fix_end_if_unambiguous()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
   readbuf = strbuf_new();
+  qualbuf = strbuf_new();
   kmerbuf = strbuf_init(5);
 
   char* read2="TGACACGGAGGTACGT";//contains ACGGA 
   strbuf_set(readbuf, read2);
+  char* qual2="IIIIIIII#IIIIIII";
+  strbuf_set(qualbuf, qual2);
+
   //at position 4 in the read we have ACGGA which is fixable to ACGGC OR ACGGT
-  CU_ASSERT(fix_end_if_unambiguous(Right, readbuf, 4, kmerbuf, kmerstr, db_graph)==false);
+  CU_ASSERT(fix_end_if_unambiguous(Right, readbuf, qualbuf, cutoff, 4, kmerbuf, kmerstr, db_graph)==false);
   CU_ASSERT(strcmp(readbuf->buff, "TGACACGGAGGTACGT")==0);
+  CU_ASSERT(strcmp(qualbuf->buff, "IIIIIIII#IIIIIII")==0);
+
   strbuf_set(readbuf, read2);//reset
+  strbuf_set(qualbuf, qual2);//reset
 
 
   //in fact, now confirm nothing is changed anywhere in the read
   int j;
   for (j=0; j<9; j++)
     {
-      CU_ASSERT(fix_end_if_unambiguous(Right, readbuf, j, kmerbuf, kmerstr, db_graph)==false);
+      CU_ASSERT(fix_end_if_unambiguous(Right, readbuf, qualbuf, cutoff, j, kmerbuf, kmerstr, db_graph)==false);
       CU_ASSERT(strcmp(readbuf->buff, "TGACACGGAGGTACGT")==0);
+      CU_ASSERT(strcmp(qualbuf->buff, "IIIIIIII#IIIIIII")==0);
       strbuf_set(readbuf, read2);//reset
+      strbuf_set(qualbuf, qual2);//reset
     }
 
 
@@ -241,7 +259,7 @@ void test_get_first_good_kmer_and_populate_qual_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //read a small FASTQ - all these kmers ARE int he graph and have high quality
   // @zam all qual 30
@@ -809,7 +827,7 @@ void test_error_correct_file_against_graph()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
   //now test this fastq
@@ -835,7 +853,7 @@ void test_error_correct_file_against_graph()
 
   char quality_cutoff= 10;
   char ascii_qual_offset = 33;
-  char* outfile = "../data/test/error_correction/fq5_for_comparing_with_graph3.err_corrected.fa";
+  char* outfile = "../data/test/error_correction/fq5_for_comparing_with_graph3.err_corrected.fq";
   uint64_t bases_modified_count_array[20];
   uint64_t posn_modified_count_array[20];
   int bases_modified_count_array_size=20;
@@ -848,6 +866,7 @@ void test_error_correct_file_against_graph()
   boolean add_greedy_bases_for_better_bwt_compression=false;
   int num_greedy_bases=0;
   boolean rev_comp_read_if_on_reverse_strand=false;
+
   error_correct_file_against_graph("../data/test/error_correction/fq5_for_comparing_with_graph3.fq", 
 				   quality_cutoff, ascii_qual_offset,
 				   db_graph, outfile,
@@ -898,17 +917,20 @@ void test_error_correct_file_against_graph()
 
   seq_next_read(sf);
   StrBuf* read_seq  = strbuf_new();
-  seq_read_all_bases(sf, read_seq);
+  StrBuf* read_qual  = strbuf_new();
+
+  seq_read_all_bases_and_quals(sf, read_seq, read_qual);
+
   seq_file_close(sf);
 
 
   //graph is this          ACGGCTTTACGGT
-  // input data is this    CCCCCTTTAAAAT
-  // correction should be  ACGGCTTTACGGT
-  //  i get                ACGGCTTTACGGT 
+  // input data is this    CCCCCTTTAAAAT  quals  #############
+  // correction should be  ACGGCTTTACGGT  quals  ,#,,#####,,,# (at fixed bases, qual is fixed to be 1 more than cutoff)
+
 
   CU_ASSERT(strcmp(read_seq->buff, "ACGGCTTTACGGT")==0);
-
+  CU_ASSERT(strcmp(read_qual->buff, ",#,,#####,,,#")==0);
 
 
   //Try again with an almost identical fastq, but which
@@ -919,7 +941,15 @@ void test_error_correct_file_against_graph()
       bases_modified_count_array[i]=0;
       posn_modified_count_array[i]=0;
     }
-  char* outfile2 = "../data/test/error_correction/fq6_for_comparing_with_graph3.err_corrected.fa";
+
+
+  //single read is:
+  //  @only one kmer in graph, CTTTA. Penultimate base has ghigh quality so should not be corrected
+  //  CCCCCTTTAAAAT
+  //  +
+  //  ###########]#
+
+  char* outfile2 = "../data/test/error_correction/fq6_for_comparing_with_graph3.err_corrected.fq";
   error_correct_file_against_graph("../data/test/error_correction/fq6_for_comparing_with_graph3.fq", 
 				   quality_cutoff, ascii_qual_offset,
 				   db_graph, outfile2,
@@ -969,17 +999,19 @@ void test_error_correct_file_against_graph()
     }
 
   seq_next_read(sf);
-  seq_read_all_bases(sf, read_seq);
+  strbuf_reset(read_seq);
+  strbuf_reset(read_qual);
+  seq_read_all_bases_and_quals(sf, read_seq, read_qual);
   seq_file_close(sf);
 
 
   //graph is this          ACGGCTTTACGGT
-  // input data is this    CCCCCTTTAAAAT
-  // correction should be  ACGGCTTTACGAT
+  // input data is this    CCCCCTTTAAAAT    quas   ###########]#
+  // correction should be  ACGGCTTTACGAT    quals  ,#,,#####,,]#
 
 
   CU_ASSERT(strcmp(read_seq->buff, "ACGGCTTTACGAT")==0);
-
+  CU_ASSERT(strcmp(read_qual->buff, ",#,,#####,,]#")==0);
 
 
   //now, just to double check the statistics, try one fastq that contains both previous reads
@@ -989,7 +1021,7 @@ void test_error_correct_file_against_graph()
       bases_modified_count_array[i]=0;
       posn_modified_count_array[i]=0;
     }
-  char* outfile3 = "../data/test/error_correction/fq7_for_comparing_with_graph3.err_corrected.fa";
+  char* outfile3 = "../data/test/error_correction/fq7_for_comparing_with_graph3.err_corrected.fq";
   error_correct_file_against_graph("../data/test/error_correction/fq7_for_comparing_with_graph3.fq", 
 				   quality_cutoff, ascii_qual_offset,
 				   db_graph, outfile3,
@@ -1039,11 +1071,16 @@ void test_error_correct_file_against_graph()
     }
 
   seq_next_read(sf);
-  seq_read_all_bases(sf, read_seq);
+  strbuf_reset(read_seq);
+  strbuf_reset(read_qual);
+  seq_read_all_bases_and_quals(sf, read_seq, read_qual);
   CU_ASSERT(strcmp(read_seq->buff, "ACGGCTTTACGGT")==0);
+  CU_ASSERT(strcmp(read_qual->buff, ",#,,#####,,,#")==0);
+
   seq_next_read(sf);
-  seq_read_all_bases(sf, read_seq);
+  seq_read_all_bases_and_quals(sf, read_seq, read_qual);
   CU_ASSERT(strcmp(read_seq->buff, "ACGGCTTTACGAT")==0);
+  CU_ASSERT(strcmp(read_qual->buff,",#,,#####,,]#")==0);
   seq_file_close(sf);
 
 
@@ -1059,7 +1096,7 @@ void test_error_correct_file_against_graph()
       bases_modified_count_array[i]=0;
       posn_modified_count_array[i]=0;
     }
-  char* outfile4 = "../data/test/error_correction/fq8_for_comparing_with_graph3.err_corrected.fa";
+  char* outfile4 = "../data/test/error_correction/fq8_for_comparing_with_graph3.err_corrected.fq";
   error_correct_file_against_graph("../data/test/error_correction/fq8_for_comparing_with_graph3.fq", 
 				   quality_cutoff, ascii_qual_offset,
 				   db_graph, outfile4,
@@ -1109,8 +1146,11 @@ void test_error_correct_file_against_graph()
     }
 
   seq_next_read(sf);
-  seq_read_all_bases(sf, read_seq);
+  strbuf_reset(read_seq);
+  strbuf_reset(read_qual);
+  seq_read_all_bases_and_quals(sf, read_seq, read_qual);
   CU_ASSERT(strcmp(read_seq->buff, "CCCCCTTTAAAAT")==0);
+  CU_ASSERT(strcmp(read_qual->buff, "#]]]#####]]]]")==0);
   seq_file_close(sf);
 
 
@@ -1221,7 +1261,7 @@ void test_take_n_greedy_random_steps()
 				     remove_duplicates_se, ascii_fq_offset,
 				     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
 				     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-				     NULL, 0);
+				     NULL, 0, &subsample_null);
 
   BinaryKmer tmp_kmer1;
   BinaryKmer tmp_kmer2;
@@ -1294,7 +1334,7 @@ void test_reverse_comp_according_ref_pos_strand()
 				     remove_duplicates_se, ascii_fq_offset,
 				     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
 				     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-				     NULL, 0);
+				     NULL, 0, &subsample_null);
 
   BinaryKmer tmp_kmer1;
   BinaryKmer tmp_kmer2;
@@ -1316,7 +1356,7 @@ void test_reverse_comp_according_ref_pos_strand()
   boolean rev_comp_read_if_on_reverse_strand=true;
 
   //Now try correcting a fastq that has one read = rev complement of a section of the reference
-  char* outfile = "../data/test/error_correction/fq10_revcomp_of_fq9_for_comparing_with_graph4.error_corrected.fa";
+  char* outfile = "../data/test/error_correction/fq10_revcomp_of_fq9_for_comparing_with_graph4.error_corrected.fq";
 
   error_correct_file_against_graph("../data/test/error_correction/fq10_revcomp_of_fq9_for_comparing_with_graph4.fq",
 				   0, 33, db_graph, outfile,
@@ -1343,9 +1383,12 @@ void test_reverse_comp_according_ref_pos_strand()
 
   seq_next_read(sf);
   StrBuf* read_seq  = strbuf_new();
-  seq_read_all_bases(sf, read_seq);
+  StrBuf* read_qual  = strbuf_new();
+  seq_read_all_bases_and_quals(sf, read_seq, read_qual);
   //expect to get reverse complement of read
   CU_ASSERT(strcmp(read_seq->buff, "AGGAACGTCCGCCATTAGACC")==0);
+  //and reverse of quals
+  CU_ASSERT(strcmp(read_qual->buff, "LKJIIIIIIIIIIIIIIIIII")==0);
   seq_file_close(sf);
 
   hash_table_free(&db_graph);
@@ -1390,7 +1433,7 @@ void test_reverse_comp_according_ref_pos_strand()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
   //now mark reference in reverse direction to the file i will correct
@@ -1420,7 +1463,7 @@ void test_reverse_comp_according_ref_pos_strand()
 
   char quality_cutoff= 10;
   char ascii_qual_offset = 33;
-  char* outfile2 = "../data/test/error_correction/fq5_for_comparing_with_graph3.err_corrected.fa";
+  char* outfile2 = "../data/test/error_correction/fq5_for_comparing_with_graph3.err_corrected.fq";
 
   for (i=0; i<20; i++)
     {
@@ -1482,16 +1525,18 @@ void test_reverse_comp_according_ref_pos_strand()
 
   seq_next_read(sf);
   strbuf_reset(read_seq);
-  seq_read_all_bases(sf, read_seq);
+  strbuf_reset(read_qual);
+  seq_read_all_bases_and_quals(sf, read_seq, read_qual);
   seq_file_close(sf);
 
 
   //graph is this          ACGGCTTTACGGT
-  // input data is this    CCCCCTTTAAAAT
+  // input data is this    CCCCCTTTAAAAT quals ###########
   // correction should be  ACGGCTTTACGGT
-  //  i get rev comp of    ACGGCTTTACGGT = ACCGTAAAGCCGT
+  //  i get rev comp of    ACGGCTTTACGGT = ACCGTAAAGCCGT and quals=reverse of   ,#,,#####,,,# - ie. #,,,#####,,#,
 
   CU_ASSERT(strcmp(read_seq->buff, "ACCGTAAAGCCGT")==0);
+  CU_ASSERT(strcmp(read_qual->buff, "#,,,#####,,#,")==0);
 
   hash_table_free(&db_graph);
 

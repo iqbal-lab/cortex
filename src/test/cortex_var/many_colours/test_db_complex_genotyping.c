@@ -312,7 +312,7 @@ void build_and_save_temp_binaries(char* filelist_binaries,
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph,
     &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   char bin1[200];
   bin1[0]='\0';
@@ -327,7 +327,7 @@ void build_and_save_temp_binaries(char* filelist_binaries,
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph,
     &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   char bin2[100];
   bin2[0]='\0';
@@ -407,7 +407,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(
     remove_duplicates_se, ascii_fq_offset,
     colour_indiv, db_graph,
     &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   load_se_seq_data_into_graph_colour(
     fasta_allele2,
@@ -415,7 +415,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(
     remove_duplicates_se, ascii_fq_offset,
     colour_indiv, db_graph,
     &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // Now we don't want to load the whole of the rest of the genome - just to
   // annotate these nodes with whether they touch the rest of the genome,
@@ -431,7 +431,7 @@ void utility_func_test_complex_genotyping_given_two_alleles(
     remove_duplicates_se, ascii_fq_offset,
     0, temp_db_graph,
     &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   GraphInfo* temp_db_graph_info = graph_info_alloc_and_init();
 
@@ -1310,7 +1310,7 @@ Covg in indiv:
     fq_quality_cutoff, homopolymer_cutoff,
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // Load into colour 1
   into_colour = 1;
@@ -1319,7 +1319,7 @@ Covg in indiv:
     fq_quality_cutoff, homopolymer_cutoff,
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // For second var/test
 
@@ -1330,7 +1330,7 @@ Covg in indiv:
     fq_quality_cutoff, homopolymer_cutoff,
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // Load into colour 1
   into_colour = 1;
@@ -1339,7 +1339,7 @@ Covg in indiv:
     fq_quality_cutoff, homopolymer_cutoff,
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   VariantBranchesAndFlanks var;
   dBNode** branch1 = (dBNode**) malloc(sizeof(dBNode*) * max_read_length);

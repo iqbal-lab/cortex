@@ -521,6 +521,11 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
   }
 }
 
+void subsample_null(unsigned long long a, unsigned long * b, unsigned long c)
+{
+  return;
+}
+
 void load_se_seq_data_into_graph_colour(
   const char *file_path,
   char quality_cutoff, int homopolymer_cutoff, boolean remove_dups_se,

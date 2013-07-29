@@ -89,7 +89,7 @@ void test_hash_table_find()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist not colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //length of sequence read in from file
   CU_ASSERT(seq_read == 16);
@@ -212,7 +212,7 @@ void test_tip_clipping()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT_EQUAL(seq_read,14);
   CU_ASSERT_EQUAL(seq_loaded,14);
@@ -325,7 +325,7 @@ void test_pruning_low_coverage_nodes()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT_EQUAL(seq_read,14);
   CU_ASSERT_EQUAL(seq_loaded,14);
@@ -409,7 +409,7 @@ void test_get_perfect_path_in_one_colour()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
    CU_ASSERT_EQUAL(seq_read,6);
    CU_ASSERT_EQUAL(seq_loaded,6);
@@ -469,7 +469,7 @@ void test_get_perfect_path_in_one_colour()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
    CU_ASSERT_EQUAL(seq_read,13);
    CU_ASSERT_EQUAL(seq_loaded,13);
@@ -540,7 +540,7 @@ void test_get_perfect_path_in_one_colour()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
    CU_ASSERT_EQUAL(seq_read,13);
    CU_ASSERT_EQUAL(seq_loaded,13);
@@ -610,7 +610,7 @@ void test_get_perfect_path_in_one_colour()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
    CU_ASSERT_EQUAL(seq_read,25);
@@ -1001,7 +1001,7 @@ void test_detect_and_smooth_bubble()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT_EQUAL(seq_read,343);
 
@@ -1255,7 +1255,7 @@ void test_is_condition_true_for_all_nodes_in_supernode()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT_EQUAL(seq_read,6);
   CU_ASSERT_EQUAL(seq_loaded,6);
@@ -1413,7 +1413,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(bad_reads==0);
@@ -1496,7 +1496,7 @@ void test_db_graph_supernode_for_specific_person_or_pop()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //person 1:
   //>person1_read1
@@ -1754,7 +1754,7 @@ void test_is_supernode_end()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_loaded==6);
   CU_ASSERT(seq_read==6);
@@ -1809,7 +1809,7 @@ void test_is_supernode_end()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(seq_read==13);
@@ -1875,7 +1875,7 @@ void test_is_supernode_end()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(seq_read==13);
@@ -1947,7 +1947,7 @@ void test_is_supernode_end()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(bad_reads==0);
   CU_ASSERT(seq_loaded==25);
@@ -2015,7 +2015,7 @@ void test_getting_stats_of_how_many_indivduals_share_a_node()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //printf("Number of bases loaded is %d",seq_loaded);
   
@@ -2110,7 +2110,7 @@ void test_get_min_and_max_covg_of_nodes_in_supernode()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //printf("Number of bases loaded is %d",seq_loaded);
   CU_ASSERT(seq_loaded == 24);
@@ -2177,7 +2177,7 @@ void test_db_graph_load_array_with_next_batch_of_nodes_corresponding_to_consecut
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //>one read
   //AATAGACGCCCACACCTGATAGACCCCACACTCTAA
@@ -2439,7 +2439,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_1()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //>one read
   //AATAGACGCCCACACCTGATAGACCCCACAC 
@@ -2533,7 +2533,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_2()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //   >7SLRNA#SINE/Alu  plus GTTCAGAG at start and GTCAGCGTAG at end
   //   GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
@@ -2640,7 +2640,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_3()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
   
   //   >7SLRNA#SINE/Alu  
   // GTTCAGAGGCCGGGCGCGGTGGCGCGTGCCTGTAGTCCCAGCTACTCGGGAGGCTGAG
@@ -2733,7 +2733,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_4()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
   
   CU_ASSERT(seq_read==16320);
   
@@ -2812,7 +2812,7 @@ void test_db_graph_make_reference_path_based_sv_calls_null_test_5()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_alu.fa", "r");
   if (chrom_fptr==NULL)
@@ -2891,7 +2891,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_1()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_read==192);
   
@@ -3037,7 +3037,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_2()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/one_person_aluNsalu_PLUS_SINGLE_BASE_CHANGE.fa", "r");
   if (chrom_fptr==NULL)
@@ -3168,7 +3168,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_3()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_without_2_bases_missing.fa", "r");
   if (chrom_fptr==NULL)
@@ -3303,7 +3303,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_4()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_2_bases_missing.fa", "r");
   if (chrom_fptr==NULL)
@@ -3440,7 +3440,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_5()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_one_supernode_and_without_alu.fa", "r");
   if (chrom_fptr==NULL)
@@ -3576,7 +3576,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_6()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_supernode.fa", "r");
@@ -3710,7 +3710,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_7()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/person_with_alu_in_middle_of_alu.fa", "r");
   if (chrom_fptr==NULL)
@@ -3877,7 +3877,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_8()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_10kb_chrom1_plus_1kb_inserted_mid_supernode.fa", "r");
@@ -4075,7 +4075,7 @@ void test_db_graph_make_reference_path_based_sv_calls_test_9()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   FILE* chrom_fptr = fopen("../data/test/pop_graph/variations/first_person_600lineschrom12_then_10kb_chrom1_plus_1kb_inserted_mid_supernode.fa", "r");
   if (chrom_fptr==NULL)
@@ -4209,7 +4209,7 @@ void test_get_covg_of_nodes_in_one_but_not_other_of_two_arrays()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //>read1
   //AAAACGAAAAAATTCGAG
@@ -4366,7 +4366,7 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // Load two people, one of whom contains this:
 
@@ -4455,7 +4455,7 @@ void test_apply_to_all_nodes_in_path_defined_by_fasta()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //cleanup results
 
@@ -4545,7 +4545,7 @@ void test_does_this_path_exist_in_this_colour()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // Annoyingly, I have called these file colour1 and colour2, but in the
   // hash table they are colours 0 and 1. Sorry for this. From here on, I
@@ -4729,7 +4729,7 @@ void test_dump_covg_distribution()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //now let's up the covg on one of the nodes
   BinaryKmer tmp_kmer1, tmp_kmer2;

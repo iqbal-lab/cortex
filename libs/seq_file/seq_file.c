@@ -949,7 +949,6 @@ char seq_read_all_bases_and_quals(SeqFile *sf, StrBuf *sbuf_seq, StrBuf *sbuf_qu
       break;
     case SEQ_FASTA:
       success = seq_read_all_bases_fasta(sf, sbuf_seq);
-      strbuf_reset(sbuf_qual);
       break;
     case SEQ_FASTQ:
       success = seq_read_all_bases_fastq(sf, sbuf_seq);
@@ -966,7 +965,8 @@ char seq_read_all_bases_and_quals(SeqFile *sf, StrBuf *sbuf_seq, StrBuf *sbuf_qu
       return 0;
   }
 
-  sf->entry_offset += strbuf_len(sbuf_seq);
+
+  sf->entry_offset       += strbuf_len(sbuf_seq);
   sf->total_bases_passed += strbuf_len(sbuf_seq);
 
   // read has been exhausted
@@ -975,8 +975,7 @@ char seq_read_all_bases_and_quals(SeqFile *sf, StrBuf *sbuf_seq, StrBuf *sbuf_qu
   // Exhausted read quality scores
   sf->entry_offset_qual += strbuf_len(sbuf_qual);
   sf->entry_read_qual = 0;
-
-
+  
   return success;
 }
 

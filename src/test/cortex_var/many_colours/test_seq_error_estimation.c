@@ -91,7 +91,7 @@ void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    readlen_distrib, readlen_distrib_arrlen);
+    readlen_distrib, readlen_distrib_arrlen, &subsample_null);
 
 
   // Initialise a graph_info object
@@ -169,7 +169,7 @@ void test_estimate_seq_error_rate_for_one_colour_from_snp_allele_fasta_test2()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    readlen_distrib, readlen_distrib_arrlen);
+    readlen_distrib, readlen_distrib_arrlen, &subsample_null);
 
   // Initialise a graph_info object
   GraphInfo* ginfo = graph_info_alloc_and_init();

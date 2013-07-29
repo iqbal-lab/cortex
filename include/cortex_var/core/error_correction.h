@@ -94,9 +94,10 @@ ReadCorrectionDecison get_first_good_kmer_and_populate_qual_array(const char* de
 								  dBGraph* dbg, HandleLowQualUncorrectable policy,
 								  boolean we_will_want_to_revcomp_reads_on_rev_strand);
 
-boolean fix_end_if_unambiguous(WhichEndOfKmer which_end, StrBuf* read_buffer, int pos, 
+boolean fix_end_if_unambiguous(WhichEndOfKmer which_end, StrBuf* read_buffer,  StrBuf* qual_buffer, char quality_cutoff, int pos, 
 			       StrBuf* kmer_buf, char* kmer_str,
 			       dBGraph* dbg);
+void set_qual_to_just_above_cutoff(StrBuf* qualbuf, int pos, char cutoff);
 
 boolean mutate_base(StrBuf* strbuf, int which_base, int which_mutant);
 

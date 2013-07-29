@@ -106,7 +106,7 @@ void test_find_first_node_in_supernode()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
   //printf("Number of bases loaded is %d",seq_loaded);
@@ -302,7 +302,7 @@ void test_find_next_node_in_supernode()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
   //printf("Number of bases loaded is %d",seq_loaded);
@@ -423,7 +423,7 @@ void test_correctly_find_subsection_of_supernode()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
   //printf("Number of bases loaded is %d",seq_loaded);
@@ -581,7 +581,7 @@ void test_find_best_subsection_of_supernode_with_just_two_people()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
   //printf("Number of bases loaded is %d",seq_loaded);
@@ -685,7 +685,7 @@ void test_get_population_consensus_supernode()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, hash_table, 1, // 0 => falist/fqlist; 1 => colourlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //printf("Number of bases loaded is %d",seq_loaded);
 

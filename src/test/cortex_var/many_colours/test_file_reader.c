@@ -79,7 +79,7 @@ void test_dump_load_sv_trio_binary()
       remove_duplicates_se, ascii_fq_offset,
       into_colour, db_graph_pre, 0,
       &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-      NULL, 0);
+      NULL, 0, &subsample_null);
 
     CU_ASSERT(seq_read == 16);
     CU_ASSERT(seq_loaded == 16);
@@ -286,7 +286,7 @@ void test_dump_load_sv_trio_binary()
       remove_duplicates_se, ascii_fq_offset,
       into_colour, db_graph_pre, 0,
       &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-      NULL, 0);
+      NULL, 0, &subsample_null);
 
     // > 6 unique 33-mers
     // TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC
@@ -439,7 +439,7 @@ void test_dump_load_sv_trio_binary()
       fq_quality_cutoff, homopolymer_cutoff, remove_duplicates_se, ascii_fq_offset,
       into_colour, db_graph_pre, 0,
       &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-      NULL, 0);
+      NULL, 0, &subsample_null);
 
     // >read1 overlaps human chrom 1
     // TAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACCCTAACC
@@ -564,7 +564,7 @@ void test_load_singlecolour_binary()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph_pre, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   GraphInfo* ginfo = graph_info_alloc_and_init();
 
@@ -711,7 +711,7 @@ void test_load_individual_binaries_into_sv_trio()
       remove_duplicates_se, ascii_fq_offset,
       into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
       &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded0,
-      NULL, 0);
+      NULL, 0, &subsample_null);
 
     GraphInfo* ginfo = graph_info_alloc_and_init();
 
@@ -732,7 +732,7 @@ void test_load_individual_binaries_into_sv_trio()
       remove_duplicates_se, ascii_fq_offset,
       into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
       &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded1,
-      NULL, 0);
+      NULL, 0, &subsample_null);
 
     graph_info_initialise(ginfo);
     graph_info_set_seq(ginfo, 0, seq_loaded1);
@@ -750,7 +750,7 @@ void test_load_individual_binaries_into_sv_trio()
       remove_duplicates_se, ascii_fq_offset,
       into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
       &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded2,
-      NULL, 0);
+      NULL, 0, &subsample_null);
 
     graph_info_initialise(ginfo);
     graph_info_set_seq(ginfo, 0, seq_loaded2);
@@ -886,7 +886,7 @@ void test_load_individual_binaries_into_sv_trio()
         remove_duplicates_se, ascii_fq_offset,
         into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
         &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded0,
-        NULL, 0);
+        NULL, 0, &subsample_null);
 
       //GraphInfo* ginfo = graph_info_alloc_and_init();
 
@@ -906,7 +906,7 @@ void test_load_individual_binaries_into_sv_trio()
       remove_duplicates_se, ascii_fq_offset,
       into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
       &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded1,
-      NULL, 0);
+      NULL, 0, &subsample_null);
 
       graph_info_initialise(ginfo);
       graph_info_set_seq(ginfo, 0, seq_loaded1);
@@ -926,7 +926,7 @@ void test_load_individual_binaries_into_sv_trio()
       remove_duplicates_se, ascii_fq_offset,
       into_colour, db_graph, 0, // 0 => falist/fqlist; 1 => colourlist
       &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded2,
-      NULL, 0);
+      NULL, 0, &subsample_null);
 
       graph_info_initialise(ginfo);
       graph_info_set_seq(ginfo, 0, seq_loaded2);
@@ -1193,7 +1193,7 @@ void test_coverage_is_correctly_counted_on_loading_from_file()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   /*
   >occurs once
@@ -1271,7 +1271,7 @@ void test_getting_sliding_windows_where_you_break_at_kmers_not_in_db_graph()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //OK - we have graph. Now test getting sliding windows from
   // 1. a sequence that is all in the graph
@@ -1563,7 +1563,7 @@ void test_get_sliding_windows_from_sequence_requiring_entire_seq_and_edges_to_li
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   //OK - we have graph. Now test getting sliding windows from
   // 1. a sequence that is all in the graph
@@ -1848,7 +1848,7 @@ void test_dumping_of_clean_fasta()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // OK, we now have a graph. Let's see if dumping a clean fasta gives the
   // right answers.
@@ -1960,7 +1960,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
     remove_duplicates_pe, ascii_fq_offset,
     into_colour, db_graph, 0,
     &file_pairs_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // Because there are various N's in the sequence, we lose some bases
   CU_ASSERT(seq_read == 720);
@@ -1988,7 +1988,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
     remove_duplicates_pe, ascii_fq_offset,
     into_colour, db_graph, 0,
     &file_pairs_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_read == 720);
   CU_ASSERT(seq_loaded == 665);
@@ -2018,7 +2018,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
     remove_duplicates_pe, ascii_fq_offset,
     into_colour, db_graph, 0,
     &file_pairs_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // As before, but with four more 36bp reads
   // All the sequence we have read is loaded except for 2 reads, plus the effect
@@ -2060,7 +2060,7 @@ void test_loading_of_paired_end_reads_removing_duplicates()
     remove_duplicates_pe, ascii_fq_offset,
     into_colour, db_graph, 0,
     &file_pairs_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // Five 36bp reads, left and right
   CU_ASSERT(seq_read == 360);
@@ -2106,7 +2106,7 @@ void test_loading_of_single_ended_reads_removing_duplicates()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // Just lose 1 read plus part of another due to Ns
   CU_ASSERT(dup_reads == 0);
@@ -2130,7 +2130,7 @@ void test_loading_of_single_ended_reads_removing_duplicates()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(dup_reads == 0);
   CU_ASSERT(seq_read == 360);
@@ -2152,7 +2152,7 @@ void test_loading_of_single_ended_reads_removing_duplicates()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(dup_reads == 2);
   // As before, but with four more 36bp reads
@@ -2211,7 +2211,7 @@ void test_load_seq_into_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 1 => colourlist not falist/fqlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   // yes, only 4 bases in this fasta!
   CU_ASSERT(seq_read == 4);
@@ -2315,7 +2315,7 @@ void test_load_seq_into_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 1 => colourlist not falist/fqlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_read==4);
   CU_ASSERT(seq_loaded==0);
@@ -2389,7 +2389,7 @@ void test_load_seq_into_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 1 => colourlist not falist/fqlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_read == 11);
   CU_ASSERT(seq_loaded == 0);
@@ -2479,7 +2479,7 @@ void test_load_seq_into_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 1 => colourlist not falist/fqlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_loaded==13);
   CU_ASSERT(seq_read==13);
@@ -2687,7 +2687,7 @@ void test_load_seq_into_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 1 => colourlist not falist/fqlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_loaded==360);
   CU_ASSERT(seq_read==360);
@@ -2816,7 +2816,7 @@ void test_load_seq_into_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 1 => colourlist not falist/fqlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_read==68);
   CU_ASSERT(seq_loaded==67);//one N
@@ -2905,7 +2905,7 @@ void test_load_seq_into_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 1 => colourlist not falist/fqlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
   
   CU_ASSERT(seq_read==72);
   CU_ASSERT(seq_loaded==67);//5 N's
@@ -3057,7 +3057,7 @@ void test_load_seq_into_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 1 => colourlist not falist/fqlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_read==10);
   CU_ASSERT(seq_loaded==6);
@@ -3119,7 +3119,7 @@ void test_load_seq_into_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 1 => colourlist not falist/fqlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_read == 22);
   CU_ASSERT(seq_loaded == 5); // kmer is 5 and there are many Ns
@@ -3261,7 +3261,7 @@ void test_load_seq_into_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 1 => colourlist not falist/fqlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_read == 16);
   CU_ASSERT(seq_loaded == 16);
@@ -3481,7 +3481,7 @@ void test_load_seq_into_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 1, // 1 => colourlist not falist/fqlist
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_read == 1140);
   CU_ASSERT(seq_loaded == 1140);
@@ -3818,7 +3818,7 @@ void test_load_seq_into_array()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   int max_read_length = 200;
 
@@ -4055,7 +4055,7 @@ void test_read_next_variant_from_full_flank_file()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   FILE* fout_bubble = fopen("../data/tempfiles_can_be_deleted/tmp_test.bubbles", "w");
   if (fout_bubble==NULL)
@@ -4392,7 +4392,7 @@ void test_read_next_variant_from_full_flank_file_2()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   FILE* fout_bubble = fopen("../data/tempfiles_can_be_deleted/tmp_test.bubbles", "w");
   
@@ -4702,7 +4702,7 @@ void test_read_next_variant_from_full_flank_file_3()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
 
   FILE* fout_bubble = fopen("../data/tempfiles_can_be_deleted/tmp_test.bubbles", "w");
@@ -5006,7 +5006,7 @@ void test_read_next_variant_from_full_flank_file_4()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   FILE* fout_bubble = fopen("../data/tempfiles_can_be_deleted/tmp_test.bubbles", "w");
   if (fout_bubble==NULL)
@@ -5251,7 +5251,7 @@ void _test_getting_readlength_dist_with_file(
           remove_duplicates, ascii_fq_offset,
           into_colour, db_graph, 0,
           &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-          readlen_counts, readlen_distrib_arrlen);
+          readlen_counts, readlen_distrib_arrlen, &subsample_null);
         }
         else
         {
@@ -5261,7 +5261,7 @@ void _test_getting_readlength_dist_with_file(
             remove_duplicates, ascii_fq_offset,
             into_colour, db_graph, 0,
             &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-            readlen_counts, readlen_distrib_arrlen);
+            readlen_counts, readlen_distrib_arrlen, &subsample_null);
         }
 
         for(j = 0; j < readlen_distrib_arrlen; j++)
@@ -5871,7 +5871,7 @@ void test_loading_binary_data_iff_it_overlaps_a_fixed_colour()
     remove_duplicates_se, ascii_fq_offset,
     into_colour, db_graph_pre, 0,
     &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-    NULL, 0);
+    NULL, 0, &subsample_null);
 
   CU_ASSERT(seq_read == 46);
   CU_ASSERT(seq_loaded == 46);
@@ -6101,7 +6101,7 @@ void test_load_binversion5_binary()
       remove_duplicates_se, ascii_fq_offset,
       into_colour, db_graph_pre, 0,
       &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-      NULL, 0);
+      NULL, 0, &subsample_null);
 
     CU_ASSERT(seq_read == 16);
     CU_ASSERT(seq_loaded == 16);
@@ -6294,7 +6294,7 @@ void test_load_binversion5_binary()
       remove_duplicates_se, ascii_fq_offset,
       into_colour, db_graph_pre, 0,
       &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-      NULL, 0);
+      NULL, 0, &subsample_null);
 
     /*
     > 6 unique 33-mers
@@ -6448,7 +6448,7 @@ void test_load_binversion5_binary()
       remove_duplicates_se, ascii_fq_offset,
       into_colour, db_graph_pre, 0,
       &files_loaded, &bad_reads, &dup_reads, &seq_read, &seq_loaded,
-      NULL, 0);
+      NULL, 0, &subsample_null);
 
     /*
     >read1 overlaps human chrom 1
