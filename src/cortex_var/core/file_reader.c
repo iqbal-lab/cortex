@@ -540,7 +540,7 @@ void load_se_seq_data_into_graph_colour(
   boolean (*subsample_func)() ) 
 {
   short kmer_size = db_graph->kmer_size;
-  int sub_current=0;
+
 
   // DEV:
   // First check if this is a cortex binary

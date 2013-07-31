@@ -770,20 +770,20 @@ int main(int argc, char **argv)
     int homopolymer_cutoff
       = cmd_line->cut_homopolymers ? cmd_line->homopolymer_limit : 0;
 
-   void (*subsample_function)();
+    boolean (*subsample_function)();
 
     //local func
-   void subsample_as_specified();
+    boolean subsample_as_specified()
     {
       double ran = drand48();
-	if (ran <= cmd_line->subsample_propn)
-	  {
-	    return true;
-	  }
-	return false;
+      if (ran <= cmd_line->subsample_propn)
+	{
+	  return true;
+	}
+      return false;
     }
     //end of local func
-    
+
     if (cmd_line->subsample==true)
       {
 	subsample_function = &subsample_as_specified;
@@ -792,7 +792,7 @@ int main(int argc, char **argv)
       {
 	subsample_function = &subsample_null;
       }
-    
+
     if(strcmp(cmd_line->se_list, "") != 0)
       {
 	load_se_filelist_into_graph_colour(cmd_line->se_list,
@@ -804,7 +804,7 @@ int main(int argc, char **argv)
 					   readlen_distrib, readlen_distrib_size,
 					   subsample_function);
       }
-    
+
     if(strcmp(cmd_line->pe_list_lh_mates, "") != 0)
       {
 	load_pe_filelists_into_graph_colour(
