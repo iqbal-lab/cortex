@@ -1,4 +1,14 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.19
+
+Minor changes to functionality
+
+1. Error correction now outputs fastq, not fasta.
+2. A --subsample option is now available, so as you load
+   say 20x of fastq, you can dump binaries at 2x.4x,6x...20x.
+
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.18
 
 Bugfix release - this one is worth taking!

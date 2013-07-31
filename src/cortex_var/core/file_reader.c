@@ -521,9 +521,10 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
   }
 }
 
-void subsample_null(unsigned long long a, unsigned long * b, unsigned long c)
+//a subsample function just says "yes load the read" with some specified probability
+boolean subsample_null()
 {
-  return;
+  return true;
 }
 
 void load_se_seq_data_into_graph_colour(
@@ -536,7 +537,7 @@ void load_se_seq_data_into_graph_colour(
   unsigned long long *bases_loaded, // bases that make it into the graph
   unsigned long *readlen_count_array, // histogram of contigs lengths
   unsigned long readlen_count_array_size,// contigs bigger go in final bin
-  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) ) 
+  boolean (*subsample_func)() ) 
 {
   short kmer_size = db_graph->kmer_size;
   int sub_current=0;
@@ -617,20 +618,18 @@ void load_se_seq_data_into_graph_colour(
 
       if(!is_dupe)
       {
-        // Update coverage
-        db_node_update_coverage(curr_node, colour_index, 1);
-      
-        _process_read(sf, kmer_str, qual_str,
-                      quality_cutoff, homopolymer_cutoff,
-                      db_graph, colour_index,
-                      curr_kmer, curr_node, curr_orient,
-                      bases_loaded,
-                      readlen_count_array, readlen_count_array_size);
-
-	//in most cases, the following is a null function,
-	//but if subsampling is set on, this will dump a binary of the graph
-	//if bases_loaded is the appropriate depth of covg
-	subsample_func(*bases_loaded, readlen_count_array, readlen_count_array_size);
+	if (subsample_func()==true)
+	  {
+	    // Update coverage
+	    db_node_update_coverage(curr_node, colour_index, 1);
+	    
+	    _process_read(sf, kmer_str, qual_str,
+			  quality_cutoff, homopolymer_cutoff,
+			  db_graph, colour_index,
+			  curr_kmer, curr_node, curr_orient,
+			  bases_loaded,
+			  readlen_count_array, readlen_count_array_size);
+	  }
       }
     }
     else
@@ -656,7 +655,7 @@ void load_pe_seq_data_into_graph_colour(
   unsigned long long *bases_loaded, // bases that make it into the graph
   unsigned long *readlen_count_array, // length of contigs loaded
   unsigned long readlen_count_array_size, // contigs bigger go in final bin
-  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) )
+  boolean (*subsample_func)() )
 
 {
   short kmer_size = db_graph->kmer_size;
@@ -798,32 +797,35 @@ void load_pe_seq_data_into_graph_colour(
 
     if(!is_dupe)
     {
-      if(read1)
-      {
-        // Update coverage
-        db_node_update_coverage(curr_node1, colour_index, 1);
+      if (subsample_func()==true)
+	{
+	  if(read1)
+	    {
+	      // Update coverage
+	      db_node_update_coverage(curr_node1, colour_index, 1);
+	      
+	      _process_read(sf1, kmer_str1, qual_str1, 
+			    quality_cutoff, homopolymer_cutoff,
+			    db_graph, colour_index,
+			    curr_kmer1, curr_node1, curr_orient1,
+			    bases_loaded,
+			    readlen_count_array, readlen_count_array_size);
+	    }
+	  
+	  if(read2)
+	    {
+	      // Update coverage
+	      db_node_update_coverage(curr_node2, colour_index, 1);
+	      
+	      _process_read(sf2, kmer_str2, qual_str2, 
+			    quality_cutoff, homopolymer_cutoff,
+			    db_graph, colour_index,
+			    curr_kmer2, curr_node2, curr_orient2,
+			    bases_loaded,
+			    readlen_count_array, readlen_count_array_size);
+	    }
+	}
 
-        _process_read(sf1, kmer_str1, qual_str1, 
-                      quality_cutoff, homopolymer_cutoff,
-                      db_graph, colour_index,
-                      curr_kmer1, curr_node1, curr_orient1,
-                      bases_loaded,
-                      readlen_count_array, readlen_count_array_size);
-      }
-      
-      if(read2)
-      {
-        // Update coverage
-        db_node_update_coverage(curr_node2, colour_index, 1);
-
-        _process_read(sf2, kmer_str2, qual_str2, 
-                      quality_cutoff, homopolymer_cutoff,
-                      db_graph, colour_index,
-                      curr_kmer2, curr_node2, curr_orient2,
-                      bases_loaded,
-                      readlen_count_array, readlen_count_array_size);
-      }
-      subsample_func(*bases_loaded, readlen_count_array, readlen_count_array_size);
     }
   }
 
@@ -857,7 +859,7 @@ void load_se_filelist_into_graph_colour(
   unsigned long long *total_bad_reads, unsigned long long *total_dup_reads,
   unsigned long long *total_bases_read, unsigned long long *total_bases_loaded,
   unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
-  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) )
+  boolean (*subsample_func)() )
 
 {
   qual_thresh += ascii_fq_offset;
@@ -982,7 +984,7 @@ void load_pe_filelists_into_graph_colour(
   unsigned long long *total_bad_reads, unsigned long long *total_dup_reads,
   unsigned long long *total_bases_read, unsigned long long *total_bases_loaded,
   unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
-  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) ) 
+  boolean (*subsample_func)() ) 
 {
   qual_thresh += ascii_fq_offset;
 

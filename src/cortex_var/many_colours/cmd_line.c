@@ -223,7 +223,7 @@ const char* usage=
   // -p
 "   [--dump_binary FILENAME] \t\t\t\t\t=\t Dump a binary file, with this name (after applying error-cleaning, if specified).\n" \
   // -T
-"   [--subsample MIN_DEPTH,MAX_DEPTH,STEP,OUTFILE_STUB] \t\t\t\t\t=\t While loading fasta/q, dump binaries when coverage reaches\n\t\t\t\t\t\t\t\t\t MIN_DEPTH, MIN_DEPTH+STEP...MAX_DEPTH.\n\t\t\t\t\t\t\t\t\tYou must also specify --genome_size to use this option\n" \
+"   [--subsample FRAC] \t\t\t\t\t=\t Subsample input data, taking fraction FRAC of data. If you want to dump a binary after having done this, use --dump_binary\n" \
   // -w
 "   [--max_read_len] \t\t\t\t\t\t=\t (Unlike previous versions of Cortex) now required only if using --gt or --dump_filtered_readlen_distribution.\n" \
 " \n**** FILTERING AND ERROR CORRECTION/CLEANING OPTIONS ****\n\n"\
@@ -357,9 +357,7 @@ void initialise_longlong_list(long long* list, int len)
 int default_opts(CmdLine * c)
 {
   c->subsample=false;
-  c->subsample_min=0;
-  c->subsample_max=0;
-  c->subsample_step=0;
+  c->subsample_propn=(float)1.0;//by default, take all reads
 
   c->get_pan_genome_matrix=false;
   set_string_to_null(c->pan_genome_genes_fasta, MAX_FILENAME_LEN);
@@ -534,7 +532,6 @@ CmdLine* cmd_line_alloc()
  cmd->err_correction_filelist = strbuf_new();
  cmd->err_correction_outdir   = strbuf_new();
  cmd->err_correction_suffix   = strbuf_new();
- cmd->subsample_stub       = strbuf_new();
  return cmd;
 }
 
@@ -549,7 +546,6 @@ void cmd_line_free(CmdLine* cmd)
   strbuf_free(cmd->err_correction_filelist);
   strbuf_free(cmd->err_correction_outdir);
   strbuf_free(cmd->err_correction_suffix);
-  strbuf_free(cmd->subsample_stub);
   free(cmd);
 }
 
@@ -1516,78 +1512,10 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     case 'T'://subsample
       {
 	if (optarg==NULL)
-	  errx(1,"[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub\n");
+	  errx(1,"[--subsample] option requires a decimal number between 0 and 1 as argunemt\n");
 	
-	if (strlen(optarg)<MAX_FILENAME_LEN+100)
-	  {
-	    char* min=NULL;
-	    char* max=NULL;
-	    char* step=NULL;
-	    char* filename=NULL;
-	    char delims[] = ",";
-	    char temp1[MAX_FILENAME_LEN+100];
-	    temp1[0]='\0';
-	    strcpy(temp1, optarg);
-	    min = strtok(temp1, delims );
-	    if (min==NULL)
-	      {
-		errx(1,"[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub\n");
-	      }
-	    else if (isNumeric(min))
-	      {
-		cmdline_ptr->subsample_min = atoi(min);
-	      }
-	    else
-	      {
-		errx(1, "[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub - your first argument is not numeric\n");
-	      }
-
-	    max= strtok( NULL, delims );
-	    if (max==NULL)
-	      {
-		errx(1,"[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub\n");
-	      }
-	    else if (isNumeric(max))
-	      {
-		cmdline_ptr->subsample_max = atoi(max);
-	      }
-	    else
-	      {
-		errx(1, "[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub - your second argument is not numeric\n");
-	      }
-
-	    step= strtok( NULL, delims );
-	    if (step==NULL)
-	      {
-		errx(1,"[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub\n");
-	      }
-	    else if (isNumeric(step))
-	      {
-		cmdline_ptr->subsample_step = atoi(step);
-	      }
-	    else
-	      {
-		errx(1, "[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub - your third argument is not numeric\n");
-	      }
-
-	    filename= strtok( NULL, delims );
-	    if (filename==NULL)
-	      {
-		errx(1,"[--subsample] option requires 4 comma-separated arguments: min depth (integer), max depth (integer), step (integer), output filename stub\n");
-	      }
-	    else
-	      {
-		strbuf_append_str(cmdline_ptr->subsample_stub,filename);
-	      }
-	    
-	    cmdline_ptr->subsample=true;
-
-	  }
-	else
-	  {
-	    errx(1,"[--subsample] argument too long [%s]",optarg);
-	  }
-	
+	cmdline_ptr->subsample_propn = atof(optarg);
+	cmdline_ptr->subsample=true;
 	break;
       }
 
@@ -1639,11 +1567,6 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
     }
 
   
-  if ( (cmd_ptr->subsample==true) && (cmd_ptr->genome_size==0) )
-    {
-      die("If you specify --subsample, you must also specify --genome_size (so Cortex can convert from base-pairs of sequence to depth of coverage)\n");
-    }
-
   if ( (cmd_ptr->do_err_correction==true) &&  (cmd_ptr->quality_score_threshold==0) )
     {
       die("If you specify --err_correct then you must also specify a quality threshold with --quality_score_threshold\n");

@@ -85,7 +85,7 @@ char mkpath(const char *path, mode_t mode);
 
 StrBuf* file_reader_get_strbuf_of_dir_path(char* path);
 
-void subsample_null(unsigned long long a, unsigned long * b, unsigned long c);
+boolean subsample_null();
 
 void load_se_seq_data_into_graph_colour(
   const char *file_path,
@@ -94,7 +94,7 @@ void load_se_seq_data_into_graph_colour(
   unsigned long long *bad_reads, unsigned long long *dup_reads,
   unsigned long long *bases_read, unsigned long long *bases_loaded,
   unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
-  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) );
+  boolean (*subsample_func)() );
 
 void load_pe_seq_data_into_graph_colour(
   const char *file_path1, const char *file_path2,
@@ -103,7 +103,7 @@ void load_pe_seq_data_into_graph_colour(
   unsigned long long *bad_reads, unsigned long long *dup_reads,
   unsigned long long *bases_read, unsigned long long *bases_loaded,
   unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
-  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) );
+  boolean (*subsample_func)() );
 
 void load_se_filelist_into_graph_colour(
   char* se_filelist_path,
@@ -113,7 +113,7 @@ void load_se_filelist_into_graph_colour(
   unsigned long long *total_bad_reads, unsigned long long *total_dup_reads,
   unsigned long long *total_bases_read, unsigned long long *total_bases_loaded,
   unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
-  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) );
+  boolean (*subsample_func)() );
 
 void load_pe_filelists_into_graph_colour(
   char* pe_filelist_path1, char* pe_filelist_path2,
@@ -123,7 +123,7 @@ void load_pe_filelists_into_graph_colour(
   unsigned long long *total_bad_reads, unsigned long long *total_dup_reads,
   unsigned long long *total_bases_read, unsigned long long *total_bases_loaded,
   unsigned long *readlen_count_array, unsigned long readlen_count_array_size,
-  void (*subsample_func)(unsigned long long b_loaded, unsigned long *readlen_count_array, unsigned long readlen_count_array_size) );
+  boolean (*subsample_func)() );
 
 // End of loading sequence data
 

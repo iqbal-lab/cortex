@@ -203,10 +203,7 @@ typedef struct
   double min_acceptable_llk;
 
   //for subsampling
-  int subsample_min;
-  int subsample_max;
-  int subsample_step;
-  StrBuf* subsample_stub;
+  float subsample_propn;//proportion of reads to load
   boolean subsample;
 
   //  int working_colour3_for_1net;

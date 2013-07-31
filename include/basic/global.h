@@ -52,7 +52,7 @@ typedef enum
 #define VERSION 1
 #define SUBVERSION 0
 #define SUBSUBVERSION 5
-#define SUBSUBSUBVERSION 18
+#define SUBSUBSUBVERSION 19
 boolean DEBUG;
 
 #define MAX(x,y) ((x) >= (y) ? (x) : (y))

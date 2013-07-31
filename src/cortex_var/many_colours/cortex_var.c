@@ -682,19 +682,14 @@ int main(int argc, char **argv)
 
 
   GraphInfo* db_graph_info=graph_info_alloc_and_init();//will exit it fails to alloc.
-  GraphInfo* db_graph_info_for_sub=graph_info_alloc_and_init();;
 
   // input data:
   if (cmd_line->input_seq==true)
     {
       if (cmd_line->subsample==true)
 	{
-	  printf("User has specified subsampling, so as we load the fasta/q we will\n periodically dump the graph when loaded depth of coverage is\n %dx ..(steps of %dx) ..%d\n",
-		 cmd_line->subsample_min, cmd_line->subsample_step, cmd_line->subsample_max);
-	  if(cmd_line->entered_sampleid_as_cmdline_arg == true)
-	    {
-	      graph_info_set_sample_ids(cmd_line->colour_sample_ids, 1, db_graph_info_for_sub, 0);
-	    }
+	  printf("User has specified subsampling %f of the reads, so as we parse the fasta/q or BAM  we will\n load each read with probability %f.\n",
+		 cmd_line->subsample_propn, cmd_line->subsample_propn);
 	}
 
       if (strcmp(cmd_line->se_list, "")!=0)
@@ -775,50 +770,17 @@ int main(int argc, char **argv)
     int homopolymer_cutoff
       = cmd_line->cut_homopolymers ? cmd_line->homopolymer_limit : 0;
 
-    void (*subsample_function)(unsigned long long, unsigned long *, unsigned long);
+   void (*subsample_function)();
 
     //local func
-    int next_sub_dump=cmd_line->subsample_min;
-    boolean finished_subsampling=false;
-    void subsample_as_specified(unsigned long long bp_loaded, 
-				unsigned long * rd_distrib, 
-				unsigned long len)
+   void subsample_as_specified();
     {
-      if (finished_subsampling==true)
-	{
-	  return;
-	}
-      if ( (bp_loaded/cmd_line->genome_size) >= next_sub_dump)
-	{
-	  //sort out info
-	  // Update the graph info object
-	  unsigned long mean_r_len = calculate_mean_ulong(rd_distrib,len);
-	  graph_info_set_mean_readlen(db_graph_info_for_sub, 0, mean_r_len);
-	  graph_info_set_seq(db_graph_info_for_sub, 0, bp_loaded);
-	  
-	  //dump graph
-	  StrBuf* sub_bin = strbuf_clone(cmd_line->subsample_stub);
-	  strbuf_append_str(sub_bin,"_subsample_");
-	  char depth[10];
-	  sprintf(depth, "%d", next_sub_dump);
-	  strbuf_append_str(sub_bin, depth);
-	  strbuf_append_str(sub_bin, "x.ctx");
-	  db_graph_dump_single_colour_binary_of_colour0(sub_bin->buff, &db_node_condition_always_true,
-							db_graph, db_graph_info_for_sub, BINVERSION);
-	  printf("Dumped graph at timepoint when loaded coverage hits %dx depth\n", next_sub_dump);
-	  strbuf_free(sub_bin);
-	  timestamp();
-	  //then prepare for next dump
-	  next_sub_dump += cmd_line->subsample_step;
-	  
-	}
-      if (next_sub_dump>cmd_line->subsample_max)
-	{
-	  finished_subsampling=true;
-	  graph_info_free(db_graph_info_for_sub);
-	  printf("Finished subsampling\n");
-	  timestamp();
-	}
+      double ran = drand48();
+	if (ran <= cmd_line->subsample_propn)
+	  {
+	    return true;
+	  }
+	return false;
     }
     //end of local func
     
@@ -1208,16 +1170,6 @@ int main(int argc, char **argv)
     {
       if (cmd_line->input_seq==true)
 	{
-	  if ((strcmp(cmd_line->output_binary_filename, "")==0)
-	      &&
-	      (cmd_line->subsample==true) )
-	    {
-	      //then we know subsample stub is set
-	      StrBuf* final_bin = strbuf_clone(cmd_line->subsample_stub);
-	      strbuf_append_str(final_bin,"_all_data.ctx");
-	      strcpy(cmd_line->output_binary_filename, final_bin->buff);
-	      strbuf_free(final_bin);
-	    }
 	  //dump single colour
 	  timestamp();
 	  printf("Input data was fasta/q, so dump single colour binary file: %s\n", cmd_line->output_binary_filename);
