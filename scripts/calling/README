@@ -1,0 +1,9 @@
+For indep workflow
+
+var1 and var2 are consistent overlapping, so keep the longer
+same for var3 and var4
+var5 overlaps a FAIL, so keep var5, dont mark as overlapping
+
+
+
+For joint workflow - don't make OVERLAPPING on anything.

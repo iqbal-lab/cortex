@@ -30,7 +30,94 @@ if (!(-e $make_union))
 
 # Use current directory to find modules
 use base 'Exporter';
-our @EXPORT = qw(make_a_union_callset_for_each_kmer genotype_union make_sure_dirs_exist_and_create_if_necessary get_max_cleaning_for_given_sample get_min_cleaning_for_given_sample apply_pop_classifier);
+our @EXPORT = qw(make_a_union_callset_for_each_kmer genotype_union make_sure_dirs_exist_and_create_if_necessary get_max_cleaning_for_given_sample get_min_cleaning_for_given_sample apply_pop_classifier delete_and_add_header combine_and_filter_dups_overlaps_and_ref_mismatches_from_vcf);
+
+sub combine_and_filter_dups_overlaps_and_ref_mismatches_from_vcf
+{
+    my ($outfilename, $tmpdir, $aref, $vcftools_dir, $workflow, $num_samples) = @_;
+    
+    my $tmp = $tmpdir.basename($outfilename).".temp_cated_vcf";
+    my $catout_fh;
+    open ($catout_fh, ">".$tmp)||die("Unable to open temp file $tmp");
+    print_header_from_vcf($aref->[0], $catout_fh);
+	
+    my $i;
+    ## concatenate all the vcfs we have so far
+    for ($i=0; $i<scalar @$aref; $i++)
+    {
+	print_vcf_contents($aref->[$i], $catout_fh);
+    }
+    close($catout_fh);
+
+    
+    ## Now cleanup - remove dups etc
+    my $tmp_midpoint_fails = $tmpdir.basename($outfilename).".temp_vcf_of_fails_midway_through_process";
+    delete_and_add_header($tmp, $tmp_midpoint_fails);
+    my $tmp_midpoint_passes = $tmpdir.basename($outfilename).".temp_vcf_of_passes_midway_through_process";
+    delete_and_add_header($tmp, $tmp_midpoint_passes);
+    my $tmp_nearly_there = $tmpdir.basename($outfilename).".next_temp_vcf";
+    if (-e $tmp_nearly_there)
+    {
+	my $c = "rm $tmp_nearly_there";
+	qx{$c};
+    }
+    #delete_and_add_header($tmp, $tmp_nearly_there);
+    my $tmp_final_unsorted = $tmpdir.basename($outfilename).".final_unsorted";
+
+    ##separate passes and fails
+    my $cmd1 = "($vcftools_dir/perl/vcf-sort $tmp | " .
+               $isaac_bioinf_dir."vcf_scripts/vcf_remove_dupes.pl --take_first  | " .
+               $isaac_bioinf_dir."vcf_scripts/vcf_combine_alleles.pl --pass  | grep PASS | grep -v \"\#\"  >> $tmp_midpoint_passes) 2>&1";
+    my $cmd2 = "($vcftools_dir/perl/vcf-sort $tmp | " .
+               $isaac_bioinf_dir."vcf_scripts/vcf_remove_dupes.pl --take_first  | " .
+               $isaac_bioinf_dir."vcf_scripts/vcf_combine_alleles.pl --pass  | grep -v PASS | grep -v \"\#\" >> $tmp_midpoint_fails) 2>&1";
+    
+    my $cmd3;
+    if ( ($workflow eq "independent") && ($num_samples>1) )
+    {
+	    $cmd3 =  "( ($vcftools_dir/perl/vcf-sort $tmp_midpoint_passes | ".
+		$isaac_bioinf_dir."vcf_scripts/vcf_remove_overlaps.pl  --filter_txt OVERLAPPING_SITE  | $vcftools_dir/perl/vcf-sort | ". 
+		$isaac_bioinf_dir."vcf_scripts/vcf_revert_consistent_overlaps.pl) >> $tmp_nearly_there)  2>&1 ";
+    }
+    else #no overlap removal for joint, or for independent with one sample only
+    {
+	$cmd3 =  "($vcftools_dir/perl/vcf-sort $tmp_midpoint_passes  >> $tmp_nearly_there)  2>&1 ";
+    }
+    my $cmd4 = "(cat $tmp_nearly_there | head -100 | grep ^#; cat $tmp_nearly_there | grep -v \"\#\" ; cat $tmp_midpoint_fails | grep -v \"\#\" ;) > $tmp_final_unsorted ";
+    my $cmd5  = $vcftools_dir."/perl/vcf-sort $tmp_final_unsorted >  $outfilename ";
+    
+    print "$cmd1\n";
+    my $ret1 = qx{$cmd1};
+    print "$ret1\n";
+    print "$cmd2\n";
+    my $ret2 = qx{$cmd2};
+    print "$ret2\n";
+    print "$cmd3\n";
+    my $ret3 = qx{$cmd3};
+    print "$ret3\n";
+    print "$cmd4\n";
+    my $ret4 = qx{$cmd4};
+    print "$ret4\n";
+    print "$cmd5\n";
+    my $ret5 = qx{$cmd5};
+    print "$ret5\n";
+    
+}
+
+sub delete_and_add_header
+{
+    my ($file_with_header, $file_missing_header) = @_;
+    my $fh;
+    if (-e $file_missing_header)
+    {
+	print "Delete pre-existing file $file_missing_header ready to make clean start\n";
+	my $cmd = "rm $file_missing_header";
+	qx{$cmd};
+    }
+    open($fh, ">".$file_missing_header)||die("Cannot open $file_missing_header - out of disk space? permissions issue?\n");
+    print_header_from_vcf($file_with_header, $fh);
+    close($fh);
+}
 
 
 ##for now assume there is a ref - will need to fix this
@@ -385,6 +472,45 @@ sub get_max_read_len_of_fasta
     }
     close(FA);
     return $max_read_len;
+}
+
+sub print_header_from_vcf
+{
+    my ($file, $fh) = @_;
+    open(FILE, $file)||die("Cannot open $file");
+    
+    while (<FILE>)
+    {
+	my $line = $_;
+	if ($line =~ /^\#/)
+	{
+	    print $fh $line;
+	}
+	else
+	{
+	    last;
+	}
+    }
+    close(FILE);
+    return;
+}
+
+
+sub print_vcf_contents
+{
+    my ($file, $fh) = @_;
+    open(FILE, $file)||die("Cannot open $file");
+    
+    while (<FILE>)
+    {
+	my $line = $_;
+	if ($line !~ /^\#/)
+	{
+	    print $fh $line;
+	}
+    }
+    close(FILE);
+    return;
 }
 
 

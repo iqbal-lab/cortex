@@ -303,10 +303,11 @@ run_checks();
 
 
 ## sort out loggin
+my $global_fh;
 if ($global_logfile ne "")
 {
-    open(GLOBAL, ">".$global_logfile)||die("Cannot open log file $global_logfile - have you given a bad path? Permissions issue?\n");
-    *STDOUT = *GLOBAL;
+    open($global_fh, ">".$global_logfile)||die("Cannot open log file $global_logfile - have you given a bad path? Permissions issue?\n");
+    *STDOUT = *$global_fh;
 }
 
 
@@ -985,7 +986,7 @@ print "$ret_end\n";
 
 
 ##cleanup
-close(GLOBAL);
+close($global_fh);
 
 
 
@@ -1440,131 +1441,21 @@ sub merge_list_of_vcfs
 	return;
     }
 
-    my $catout_fh;
+
     if (scalar(@$aref)>0)
     {
-	my $tmp = $tmpdir.basename($outfilename).".temp_cated_vcf";
-
-	open ($catout_fh, ">".$tmp)||die("Unable to open temp file $tmp");
-	print_header_from_vcf($aref->[0], $catout_fh);
-	
-	my $i;
-	for ($i=0; $i<scalar @$aref; $i++)
-	{
-	    print_vcf_contents($aref->[$i], $catout_fh);
-	}
-	close($catout_fh);
-
-
-	## Now cleanup - remove dups etc
-	my $tmp_midpoint_fails = $tmpdir.basename($outfilename).".temp_vcf_of_fails_midway_through_process";
-	delete_and_add_header($tmp, $tmp_midpoint_fails);
-	my $tmp_midpoint_passes = $tmpdir.basename($outfilename).".temp_vcf_of_passes_midway_through_process";
-	delete_and_add_header($tmp, $tmp_midpoint_passes);
-	my $tmp_nearly_there = $tmpdir.basename($outfilename).".next_temp_vcf";
-	#delete_and_add_header($tmp, $tmp_nearly_there);
-	my $tmp_final_unsorted = $tmpdir.basename($outfilename).".final_unsorted";
-
-	# Pipe stderr to append to the end of global_logfile
-	my $cmd1 = "($vcftools_dir/perl/vcf-sort $tmp | " .
-               $isaac_bioinf_dir."vcf_scripts/vcf_remove_dupes.pl --take_first  | " .
-               $isaac_bioinf_dir."vcf_scripts/vcf_combine_alleles.pl --pass  | grep PASS | grep -v \"\#\"  >> $tmp_midpoint_passes) 2>&1";
-	my $cmd2 = "($vcftools_dir/perl/vcf-sort $tmp | " .
-               $isaac_bioinf_dir."vcf_scripts/vcf_remove_dupes.pl --take_first  | " .
-               $isaac_bioinf_dir."vcf_scripts/vcf_combine_alleles.pl --pass  | grep -v PASS | grep -v \"\#\" >> $tmp_midpoint_fails) 2>&1";
-
-	my $cmd3;
-	if ($workflow eq "independent")
-	{
-	    $cmd3 =  "( ($vcftools_dir/perl/vcf-sort $tmp_midpoint_passes | ".
-		$isaac_bioinf_dir."vcf_scripts/vcf_remove_overlaps.pl  --filter_txt OVERLAPPING_SITE | ".
-		$isaac_bioinf_dir."vcf_scripts/vcf_revert_consistent_overlaps.pl) >> $tmp_nearly_there)  2>&1 ";
-	}
-	else
-	{
-	    $cmd3 =  "($vcftools_dir/perl/vcf-sort $tmp_midpoint_passes  >> $tmp_nearly_there)  2>&1 ";
-
-	}
-	my $cmd4 = "(cat $tmp_nearly_there | head -100 | grep ^#; cat $tmp_nearly_there | grep -v \"\#\" ; cat $tmp_midpoint_fails | grep -v \"\#\" ;) > $tmp_final_unsorted ";
-        my $cmd5  = $vcftools_dir."/perl/vcf-sort $tmp_final_unsorted >  $outfilename ";
-
-	print "$cmd1\n";
-	my $ret1 = qx{$cmd1};
-	print "$ret1\n";
-	print "$cmd2\n";
-	my $ret2 = qx{$cmd2};
-	print "$ret2\n";
-	print "$cmd3\n";
-	my $ret3 = qx{$cmd3};
-	print "$ret3\n";
-	print "$cmd4\n";
-	my $ret4 = qx{$cmd4};
-	print "$ret4\n";
-	print "$cmd5\n";
-	my $ret5 = qx{$cmd5};
-	print "$ret5\n";
-
+	combine_and_filter_dups_overlaps_and_ref_mismatches_from_vcf($outfilename, $tmpdir, $aref, $vcftools_dir, $workflow, scalar(@samples));
 	$href_result->{$which_caller}->{$raw_or_decomp}= $outfilename;
     }
     else
     {
-
+	printf("Unexpected! No vcf files!\n");
     }
 }
 
 
-sub print_header_from_vcf
-{
-    my ($file, $fh) = @_;
-    open(FILE, $file)||die("Cannot open $file");
-    
-    while (<FILE>)
-    {
-	my $line = $_;
-	if ($line =~ /^\#/)
-	{
-	    print $fh $line;
-	}
-	else
-	{
-	    last;
-	}
-    }
-    close(FILE);
-    return;
-}
 
-sub delete_and_add_header
-{
-    my ($file_with_header, $file_missing_header) = @_;
-    my $fh;
-    if (-e $file_missing_header)
-    {
-	print "Delete pre-existing file $file_missing_header ready to make clean start\n";
-	my $cmd = "rm $file_missing_header";
-	qx{$cmd};
-    }
-    open($fh, ">".$file_missing_header)||die("Cannot open $file_missing_header - out of disk space? permissions issue?\n");
-    print_header_from_vcf($file_with_header, $fh);
-    close($fh);
-}
 
-sub print_vcf_contents
-{
-    my ($file, $fh) = @_;
-    open(FILE, $file)||die("Cannot open $file");
-    
-    while (<FILE>)
-    {
-	my $line = $_;
-	if ($line !~ /^\#/)
-	{
-	    print $fh $line;
-	}
-    }
-    close(FILE);
-    return;
-}
 
 sub build_vcfs
 {
@@ -2096,7 +1987,7 @@ sub get_num_lines
 	}
 	else
 	{
-	    die("$cmd returns $ret - unexpected")
+	    die("Tried this command: \"$cmd\" and it got back \"$ret\" - unexpected")
 	}
     }
 }

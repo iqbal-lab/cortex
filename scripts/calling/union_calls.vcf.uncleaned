@@ -1,0 +1,43 @@
+##fileformat=VCFv4.0
+##fileDate=02/11/12
+##phasing=none, though some calls involve phasing clustered variants
+##variants_justified=left
+##ALT=<ID=COMPLEX,Description="Complex variant, collection of SNPs and indels">
+##ALT=<ID=DEL,Description="Deletion">
+##ALT=<ID=DEL_INV,Description="Deletion + Inversion">
+##ALT=<ID=INDEL,Description="Insertion-deletion">
+##ALT=<ID=INS,Description="Insertion of novel sequence">
+##ALT=<ID=INS_INV,Description="Insertion + Inversion">
+##ALT=<ID=INV,Description="Inversion">
+##ALT=<ID=INV_INDEL,Description="Inversion+indel - this script overcalls these, so worth checking">
+##ALT=<ID=PH_SNPS,Description="Phased SNPs">
+##ALT=<ID=SNP,Description="SNP">
+##ALT=<ID=SNP_FROM_COMPLEX,Description="SNP called from a cluster of phased SNPs or complex SNP/indel , split out for easier comparison with other SNP call sets">
+##FILTER=<ID=DUP_ALLELE,Description="Allele has been merged">
+##FILTER=<ID=DUP_CALL,Description="Duplicated variant that was not the first seen">
+##FILTER=<ID=MAPQ,Description="5prime flank maps to reference with mapping quality below 40">
+##FILTER=<ID=MISMAPPED_UNPLACEABLE,Description="Stampy mapped the variant (using the 5p-flank) confidently (mapqual> 40) to a place where the ref-allele does not match">
+##FILTER=<ID=MULTIALLELIC,Description="Variant formed from merged alleles">
+##FILTER=<ID=OVERLAPPING_SITE,Description="If Stampy (or combining VCFs) has placed two biallelic variants overlapping, they are filtered">
+##FORMAT=<ID=COV,Number=2,Type=Integer,Description="Number of reads on ref and alt alleles">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description="Genotype confidence. Difference in log likelihood of most likely and next most likely genotype">
+##FORMAT=<ID=SITE_CONF,Number=1,Type=Float,Description="Probabilitic site classification confidence. Difference in log likelihood of most likely and next most likely model (models are variant, repeat and error)">
+##INFO=<ID=PV,Number=1,Type=Integer,Description="Possible variation in clean indel position">
+##INFO=<ID=SVLEN,Number=1,Type=Integer,Description="Difference in length between REF and ALT alleles">
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of variant">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	Zam	Iqbal
+chr1	50	var0	GT	C	.	PASS	SVTYPE=SNP;SVLEN=-3	GT:COV	0/1:1,2	1/1:0,5
+chr1	50	var0copy	GT	C	.	PASS	SVTYPE=SNP;SVLEN=-3	GT:COV	0/1:1,2	1/1:0,5
+chr1	100	var1	AAAACGT	ATGC	.	PASS	SVTYPE=INDEL;SVLEN=-3	GT:COV	0/1:1,2	1/1:0,5
+chr1	100	var1copy	AAAACGT	ATGC	.	PASS	SVTYPE=INDEL;SVLEN=-3	GT:COV	0/1:1,2	1/1:0,5
+chr1	101	var2	A	T	.	PASS	SVTYPE=SNP;SVLEN=0	GT:COV	0/0:10,0	1/1:0,10
+chr1	101	var2copy	A	T	.	PASS	SVTYPE=SNP;SVLEN=0	GT:COV	0/0:10,0	1/1:0,10
+chr1	200	var3	AAAACGT	ATGC	.	PASS	SVTYPE=INDEL;SVLEN=-3	GT:COV	0/1:1,2	1/1:0,5
+chr1	200	var3copy	AAAACGT	ATGC	.	PASS	SVTYPE=INDEL;SVLEN=-3	GT:COV	0/1:1,2	1/1:0,5
+chr1	206	var4	T	C	.	PASS	SVTYPE=SNP;SVLEN=0	GT:COV	0/1:1,2	1/1:0,5
+chr1	206	var4copy	T	C	.	PASS	SVTYPE=SNP;SVLEN=0	GT:COV	0/1:1,2	1/1:0,5
+chr1	206	var4copy2	T	C	.	PASS	SVTYPE=SNP;SVLEN=0	GT:COV	0/1:1,2	1/1:0,5
+chr1	300	var5	AAAACGT	ATAGTAC	.	PASS	SVTYPE=INDEL;SVLEN=0	GT:COV	0/1:10,20	1/1:0,5
+chr1	300	var5copy	AAAACGT	ATAGTAC	.	PASS	SVTYPE=INDEL;SVLEN=0	GT:COV	0/1:10,20	1/1:0,5
+chr1	303 	var6 	ACGTTCGACAGAC	A	.	FAIL	SVTYPE=INDEL;SVLEN=-12	GT:COV	1/1:0,19	1/1:1,7

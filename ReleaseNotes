@@ -1,4 +1,32 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.20
+
+Minor changes
+
+1. I've changed the way VCFs are filtered slightly. For the independent
+   workflow, with >1 sample, it is possible to call different but overlapping
+   variants. The right thing to do here is to have a multiallelic site. That
+   is in development, but for now Cortex genotypes biallelic sites only 
+   when running the Bubble Caller and Path Divergence Caller. Therefore, sites
+   that overlap are marked as such in the FILTER field. In those cases where the
+   variants overlap but are consistent, I keep the longer one.
+
+   However for the joint workflow, this is not possible. Sites are called
+   jointly in the graph of all samples. It is possible to have overlapping sites
+   in the joint workflow, but it can only happen when (eg) at k=31 you call at A/C
+   SNP, and at k=61 you call a longer bubble that phases that A/C SNP and a subsequent
+   other SNP. In that case, there is no contradiction between these, and so I do not mark
+   overlaps.
+   
+
+2. Modified the --subsample option. Now it takes one argument, specifying what proportion
+   of reads to load. eg --subsample 0.8 will load 80% of reads.
+
+Bugfix:
+Thanks to Bayo Lau, who spotted that the VCF filtering was not working properly.
+
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.19
 
 Minor changes to functionality
