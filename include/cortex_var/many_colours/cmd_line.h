@@ -206,6 +206,9 @@ typedef struct
   float subsample_propn;//proportion of reads to load
   boolean subsample;
 
+  //for high diff bubble calling
+  boolean bc_high_diff;
+  float min_allele_balance_diff;
   //  int working_colour3_for_1net;
   //int working_colour4_for_2net;
   char filelist_1net_binaries_for_alleles[MAX_FILENAME_LEN];

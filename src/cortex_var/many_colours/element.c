@@ -39,14 +39,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
-#include <limits.h>
 #include <string.h>
 
 // cortex_var headers
 #include "element.h"
 
-const Covg COVG_MAX = UINT_MAX;
-//const Covg COVG_MAX = INT_MAX;
+;
 
 // Only print covg overflow warning once
 char overflow_warning_printed = 0;

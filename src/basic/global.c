@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo
  * 
@@ -33,6 +32,29 @@
 #include "global.h"
 #include <string_buffer.h>
 #include "binary_kmer.h"
+#include <limits.h>
+
+const Covg COVG_MAX = UINT_MAX;
+//const Covg COVG_MAX = INT_MAX
+
+//want to avoid overflow issues,
+//see discussion here:http://stackoverflow.com/questions/1020188/fast-average-without-division
+Covg mean_of_covgs(Covg a, Covg b)
+{
+  return (a&b) + ((a^b)>>1);
+}
+
+Covg sum_covgs(Covg a, Covg b)
+{
+  if(COVG_MAX - b >= a)
+    {
+      return a+b;
+    }
+    else
+    {
+      return  COVG_MAX;
+    }
+}
 
 boolean test_file_existence(char* file)
 {
@@ -48,6 +70,7 @@ boolean test_file_existence(char* file)
   }
 }
 
+
 // integer comparison: returns negative if a < b
 //                                    0 if a == b
 //                             positive if a > b
@@ -57,9 +80,25 @@ int int_cmp(const void *a, const void *b)
   const int *ia = (const int *)a;
   const int *ib = (const int *)b;
 
-  return (*ia  - *ib);
+  //return (*ia  - *ib); Hmm - this could overflow if you subtract a negative from a positive.
+  return (*ia > *ib) - (*ia < *ib);//this won't overflow
 }
 
+int Covg_cmp(const void *a, const void *b)
+{
+  // casting pointer types
+  const Covg *ca = (const Covg *)a;
+  const Covg *cb = (const Covg *)b;
+
+  return (*ca > *cb) - (*ca < *cb);
+}
+
+int float_cmp(const void* a, const void* b)
+{
+  float fa = *(float*) a;
+  float fb = *(float*) b;
+  return (fa > fb) - (fa < fb);
+}
 void set_string_to_null(char* str, int len)
 {
   memset(str, 0, sizeof(char)*len);

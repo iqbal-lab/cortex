@@ -48,10 +48,6 @@
 
 typedef char Edges;
 
-typedef uint32_t Covg;
-//typedef int Covg
-// COVG_MAX is defined as UINT_MAX in element.c
-const Covg COVG_MAX;
 
 typedef enum
   {

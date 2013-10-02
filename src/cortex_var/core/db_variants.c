@@ -28,9 +28,6 @@
   db_variants.c
 */
 
-// system libraries
-#include <stdlib.h>
-#include <math.h>
 
 // third party includes
 #include <gsl_sf_gamma.h>
@@ -40,6 +37,7 @@
 #include "dB_graph.h"
 #include "dB_graph_population.h"
 #include "maths.h"
+
 
 char variant_overflow_warning_printed = 0;
 
@@ -971,5 +969,83 @@ Covg count_reads_on_allele_in_specific_func_of_colours(
   }
 
   return num_of_reads;
+}
+
+
+
+
+//robust to start being > end (might traverse an allele backwards)
+//if length==0 or 1  returns 0.
+Covg median_covg_on_allele_in_specific_colour(dBNode** allele, int len, CovgArray* working_ca,
+					      int colour)
+{
+
+  if ((len==0)|| (len==1))
+    {
+      return 0;//ignore first and last nodes
+    }
+ 
+  reset_covg_array(working_ca);//TODO - use reset_used_part_of.... as performance improvement. Will do when correctness of method established.
+  int i;
+
+  int index=0;
+
+  for(i=1; i <len; i++)
+    {
+      working_ca->covgs[index]=db_node_get_coverage_tolerate_null(allele[i], colour);
+      index++;
+    }
+
+  int array_len = index+1;
+  qsort(working_ca->covgs, array_len, sizeof(Covg), Covg_cmp); 
+  working_ca->len=index+1;
+
+  Covg median=0;
+  int lhs = (array_len - 1) / 2 ;
+  int rhs = array_len / 2 ;
+  
+  if (lhs == rhs)
+    {
+      median = working_ca->covgs[lhs] ;
+    }
+  else 
+    {
+      median = mean_of_covgs(working_ca->covgs[lhs], working_ca->covgs[rhs]);
+    }
+
+  return median;
+}
+
+
+
+
+
+Covg median_of_CovgArray(CovgArray* array, CovgArray* working_array)
+{
+  if (array->len>working_array->len_alloced)
+    {
+      die("Trying to find median of an array using a working-array which is too short\n");
+    }
+  int i=0;
+  for(i = 0; i<array->len; i++)
+    {
+      working_array->covgs[i]=array->covgs[i];
+    }
+
+  qsort(working_array->covgs, array->len, sizeof(Covg), Covg_cmp); 
+  
+  Covg median=0;
+  int lhs = (array->len - 1) / 2 ;
+  int rhs = array->len / 2 ;
+  
+  if (lhs == rhs)
+    {
+      median = working_array->covgs[lhs] ;
+    }
+  else 
+    {
+      median = mean_of_covgs(working_array->covgs[lhs], working_array->covgs[rhs]);
+    }
+  return median;
 }
 

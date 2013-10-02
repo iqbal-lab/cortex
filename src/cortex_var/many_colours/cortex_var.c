@@ -409,35 +409,17 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 
   printf("Detecting bubbles between the union of this set of colours: ");
   int k;
-  if (which==1)
-	{
-	  for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_first_colour_list; k++)
-	    {
-	      printf("%d, ", cmd_line->detect_bubbles1_first_colour_list[k]);
-	    }
-	}
-  else
+
+  for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_first_colour_list; k++)
     {
-      for (k=0; k<cmd_line->num_colours_in_detect_bubbles2_first_colour_list; k++)
-	{
-	  printf("%d, ", cmd_line->detect_bubbles2_first_colour_list[k]);
-	}
+      printf("%d, ", cmd_line->detect_bubbles1_first_colour_list[k]);
     }
+
   printf("\nand the union of this set of colours: ");
-  if (which==1)
+    
+  for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_second_colour_list; k++)
     {
-      for (k=0; k<cmd_line->num_colours_in_detect_bubbles1_second_colour_list; k++)
-	{
-	  printf("%d, ", cmd_line->detect_bubbles1_second_colour_list[k]);
-	}
-    }
-  else
-    {
-      for (k=0; k<cmd_line->num_colours_in_detect_bubbles2_second_colour_list; k++)
-	{
-	  printf("%d, ", cmd_line->detect_bubbles2_second_colour_list[k]);
-	}
-      printf("\n");
+      printf("%d, ", cmd_line->detect_bubbles1_second_colour_list[k]);
     }
   
 
@@ -446,6 +428,20 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
       printf("Will remove bubbles in the reference colour %d before doing any calling\n", cmd_line->ref_colour);
     }
   
+  float* allele_balances=NULL;
+  CovgArray* working_ca=NULL;
+  if (cmd_line->bc_high_diff==true)
+    {
+      printf("User specified calling only if highly-differentiated sites - will only call sites where allele balance differs by at least %f between at least 2 colours (excluding nay reference\n", cmd_line->min_allele_balance_diff);
+
+      allele_balances=calloc(NUMBER_OF_COLOURS, sizeof(float));
+      working_ca = alloc_and_init_covg_array(cmd_line->max_var_len);//will die if fails to alloc
+      if (allele_balances==NULL)
+	{
+	  die("Completely out of memory - can't even alloc a small array\n");
+	}
+    }
+
   if (cmd_line->apply_model_selection_at_bubbles==true)
     {
       printf("Will compare likelihoods of two models (Repeat and  Variation (Hardy-Weinberg)) at all bubbles,\nand mark those more likely to be repeats for filtering\n");
@@ -461,25 +457,59 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
     }
   FILE* fp;
   
-  if (which==1)
-    {
-      fp = fopen(cmd_line->output_detect_bubbles1, "w");
-    }
-  else
-    {
-      fp = fopen(cmd_line->output_detect_bubbles2, "w");
-    }
+  fp = fopen(cmd_line->output_detect_bubbles1, "w");
+
+  //local function
+  boolean bubble_caller_condition(VariantBranchesAndFlanks* var)
+  {
+    if (cmd_line->bc_high_diff==false)
+      {
+	return true;
+      }
+    else
+      {
+	int i;
+	int count=0;
+	
+	for (i=0; i<NUMBER_OF_COLOURS; i++)
+	  {
+	    if ( (i!=cmd_line->ref_colour) //ignore ref
+		 && (model_info->ginfo->total_sequence[i]>0) //ignore colours with no data
+		 )
+	      {
+		float median_covg_allele1 = median_covg_on_allele_in_specific_colour(var->one_allele, var->len_one_allele,
+										     working_ca, i);
+		float median_covg_allele2 = median_covg_on_allele_in_specific_colour(var->other_allele, var->len_other_allele,
+										     working_ca, i);
+		
+		float sum = median_covg_allele1+median_covg_allele2;
+		if (sum>0)
+		  {
+		    float ab = (float)median_covg_allele1/(float)sum;
+		    float rounded_ab = floorf(ab * 100 + 0.5) / 100;
+		    allele_balances[count]=rounded_ab;
+		  }
+		else
+		  {
+		    allele_balances[count]=-1.0;
+		  }
+		count++;
+	      }
+	  }
+	qsort(allele_balances, count, sizeof(float), float_cmp);
+	if (abs(allele_balances[0]-allele_balances[count-1])>= cmd_line->min_allele_balance_diff)
+	  {
+	    return true;
+	  }
+	return false;
+      }
+  }
+  //end local function
+
   
   if (fp==NULL)
     {
-      if (which==1)
-	{
-	  die("Cannot open %s. Exit.", cmd_line->output_detect_bubbles1);
-	}
-      else
-	{
-	  die("Cannot open %s. Exit.", cmd_line->output_detect_bubbles2);
-	}
+      die("Cannot open %s. Exit.", cmd_line->output_detect_bubbles1);
     }
   
   boolean (*mod_sel_criterion)(AnnotatedPutativeVariant* annovar,  GraphAndModelInfo* model_info)=NULL;
@@ -494,33 +524,22 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
     {
       printf("(First exclude bubbles from ref colour %d) \n", cmd_line->ref_colour);
     }
-  if (which==1)
-    {
-      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
-						  cmd_line->detect_bubbles1_first_colour_list, 
-						  cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
-						  cmd_line->detect_bubbles1_second_colour_list, 
-						  cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
-						  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
-						  cmd_line->exclude_ref_bubbles, get_col_ref, get_cov_ref, 
-						  cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion, 
-						  model_info);
-    }
-  else
-    {
-      
-      db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
-						  cmd_line->detect_bubbles2_first_colour_list, 
-						  cmd_line->num_colours_in_detect_bubbles2_first_colour_list,
-						  cmd_line->detect_bubbles2_second_colour_list, 
-						  cmd_line->num_colours_in_detect_bubbles2_second_colour_list,
-						  &detect_vars_condition_always_true, print_appropriate_extra_var_info,
-						  cmd_line->exclude_ref_bubbles, get_col_ref, get_cov_ref, 
-						  cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion,
-						  model_info);
-    }
+  db_graph_detect_vars_given_lists_of_colours(fp,cmd_line->max_var_len,db_graph, 
+					      cmd_line->detect_bubbles1_first_colour_list, 
+					      cmd_line->num_colours_in_detect_bubbles1_first_colour_list,
+					      cmd_line->detect_bubbles1_second_colour_list, 
+					      cmd_line->num_colours_in_detect_bubbles1_second_colour_list,
+					      &bubble_caller_condition, print_appropriate_extra_var_info,
+					      cmd_line->exclude_ref_bubbles, get_col_ref, get_cov_ref, 
+					      cmd_line->apply_model_selection_at_bubbles, mod_sel_criterion, 
+					      model_info);
 
   fclose(fp);
+  if (cmd_line->bc_high_diff==true)
+    {
+      free(allele_balances);
+      free_covg_array(working_ca);
+    }
 }
 
 

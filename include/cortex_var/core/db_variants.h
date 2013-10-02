@@ -31,6 +31,10 @@
 #ifndef DB_VARIANTS_H_
 #define DB_VARIANTS_H_
 
+// system libraries                                                                                                                                                                      
+#include <stdlib.h>
+#include <math.h>
+
 #include "global.h"
 #include "graph_info.h"
 #include "model_info.h"
@@ -39,6 +43,7 @@
 #include "experiment.h"
 #include "dB_graph.h"
 #include "experiment.h"
+#include "dB_graph_supernode.h"
 
 #define MAX_VARNAME_LEN 200
 
@@ -245,10 +250,14 @@ long long get_big_theta(AnnotatedPutativeVariant* annovar);
 boolean get_num_effective_reads_on_branch(int* array, dBNode** allele, int how_many_nodes);
 Covg count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colour, boolean* too_short);
 Covg count_reads_on_allele_in_specific_colour_given_array_of_cvgs(Covg* covgs, int len, boolean* too_short);
-
 Covg count_reads_on_allele_in_specific_func_of_colours(
   dBNode** allele, int len,
   Covg (*sum_of_covgs_in_desired_colours)(const Element *),
   boolean* too_short);
+
+Covg median_covg_on_allele_in_specific_colour(dBNode** allele, int len, CovgArray* working_ca,
+					      int colour);
+
+Covg median_of_CovgArray(CovgArray* array, CovgArray* working_array);
 
 #endif /* DB_VARIANTS_H_ */

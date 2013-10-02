@@ -35,6 +35,13 @@
 #include <stdint.h>
 #include "string_buffer.h"
 
+typedef uint32_t Covg;
+// COVG_MAX is defined as UINT_MAX in global.c
+extern const Covg COVG_MAX;
+
+Covg mean_of_covgs(Covg a, Covg b);
+Covg sum_covgs(Covg a, Covg b);
+
 typedef signed char boolean;
 #ifndef true
 #define true 1
@@ -61,6 +68,8 @@ boolean DEBUG;
 boolean test_file_existence(char* file);
 
 int int_cmp(const void *a, const void *b);
+int Covg_cmp(const void *a, const void *b);
+int float_cmp(const void* a, const void* b);
 
 void set_string_to_null(char* str, int len);
 

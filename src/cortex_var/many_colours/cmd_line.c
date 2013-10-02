@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2009-2013 Zamin Iqbal and Mario Caccamo 
  * 
@@ -258,6 +259,9 @@ const char* usage=
 "   [--detect_bubbles1 COMMA_SEP_COLOURS/COMMA_SEP_COLOURS] \t=\t Find all the bubbles in the graph where the two branches lie in the specified colours\n\t\t\t\t\t\t\t\t\t (after applying all specified actions on graph).\n\t\t\t\t\t\t\t\t\t Typical use would be --detect_bubbles1 1/1 to find hets in colour 1,\n\t\t\t\t\t\t\t\t\t or --detect_bubbles1 0/1 to find homozygous non-reference bubbles where one branch is in colour 0 (and not colour1)\n\t\t\t\t\t\t\t\t\t and the other branch is in colour1 (but not colour 0).\n\t\t\t\t\t\t\t\t\t However, one can do more complex things:\n\t\t\t\t\t\t\t\t\t e.g.  --detect_bubbles1 1,2,3/4,5,6 to find bubbles where one branch is in 1,2 or 3 (and not 4,5 or 6)\n\t\t\t\t\t\t\t\t\t and the other branch in colour 4,5 or 6 (but not 1,2, or 3).\n\t\t\t\t\t\t\t\t\t See the manual for a detailed description of the syntax. It is possible to\n\t\t\t\t\t\t\t\t\t specify \"all colour\" rather than enumerate them explicitly, and also to exclude colours\n" \
   // -s
 "   [--output_bubbles1 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles1 are dumped to this file.\n" \
+  // -v
+"   [--high_diff FLOAT]\t\t\t\t\t\t=\t Only call bubbles that (user-specified) minimum  allele-balance difference \n\t\t\t\t\t\t\t\t\t between at least 2 colours (ignores reference colour)\n\t\t\t\t\t\t\t\t\t Designed to be used when comparing pooled populations\n\t\t\t\t\t\t\t\t\t e.g --detect_bubbles -1/-1 --high_diff 0.9 will call bubbles where \n\t\t\t\t\t\t\t\t\t for example allele_balance(colour0)=0.01 and allele_balance(colour1)=0.95\n" \
+
   // -x
 "   [--print_colour_coverages]\t\t\t\t\t=\t Print coverages in all colours for supernodes and variants.\n" \
   // -M
@@ -356,6 +360,8 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
+  c->bc_high_diff=false;
+  c->min_allele_balance_diff = 0.9; //when looking for high diff sites.
   c->subsample=false;
   c->subsample_propn=(float)1.0;//by default, take all reads
 
@@ -578,7 +584,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"output_bubbles1",required_argument, NULL, 's'},    
     {"gt",required_argument, NULL, 't'},
     {"estim_e_with_snps",required_argument, NULL, 'u'},    
-    //    {"format",required_argument,NULL,'v'},
+    {"high_diff",required_argument,NULL,'v'},
     {"max_read_len",required_argument,NULL,'w'},
     {"print_colour_coverages",no_argument,NULL,'x'},
     {"max_var_len",required_argument,NULL,'y'},
@@ -615,7 +621,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:V:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:V:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1046,36 +1052,24 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       	break;        
       } 
      
-      /*
-    case 'v': //file format - either fasta, fastq or ctx.
+
+    case 'v': //high_diff - 
       {
-
 	if (optarg==NULL)
-	  errx(1,"[--format] option requires argument FASTQ, FASTA or CTX");
-
-	if ( (strcmp(optarg, "FASTA") !=0) && (strcmp(optarg, "FASTQ") !=0) && (strcmp(optarg, "CTX") !=0)  )
 	  {
-	    errx(1,"[--format] option requires argument FASTQ, FASTA or CTX");
+	    errx(1,"[--high_diff requires a decimal argument between 0 and 1 - the minimum difference in allele balance required between two pools\n");
 	  }
-	cmdline_ptr->seq_file_format_known=true;
-	
-	if (strcmp(optarg, "FASTA") ==0)
+	cmdline_ptr->min_allele_balance_diff = atof(optarg);
+	if ( (cmdline_ptr->min_allele_balance_diff<=0)
+	     ||
+	     (cmdline_ptr->min_allele_balance_diff>=1) )
 	  {
-	    cmdline_ptr->format_of_input_seq=FASTA;
+	    errx(1,"[--high_diff requires a decimal argument between 0 and 1 - the minimum difference in allele balance required between two pools\n");
 	  }
-	else if (strcmp(optarg, "FASTQ") ==0)
-	  {
-	    cmdline_ptr->format_of_input_seq=FASTQ;
-	  } 
-	else if (strcmp(optarg, "CTX") ==0)
-	  {
-	    cmdline_ptr->format_of_input_seq=CTX;
-	  }
-
-
+	cmdline_ptr->bc_high_diff=true;
 	break ;
       } 
-      */     
+
     case 'w'://max_read_length
       {
 	if (optarg==NULL)
@@ -1545,7 +1539,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       }      
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:V:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:V:", long_options, &longopt_index);
     
   }   
   
