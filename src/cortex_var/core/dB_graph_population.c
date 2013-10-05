@@ -2503,7 +2503,7 @@ boolean detect_vars_condition_is_hom_nonref_with_min_covg_given_colour_funcs_for
 // argument get_colour specifies some combination of colours, defining the graph within which we look for bubbles.
 // most obvious choices are: colour/edge with index (say)2, or union of all edges, or union of ll except that which is the reference genome
 // model_selection_condition compartes likelihoods of repeat, variation and error models to decide if it is a variant.
-void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph, 
+void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGraph * db_graph, 
 			  boolean (*condition)(VariantBranchesAndFlanks*),
 			  void (*action_branches)(dBNode*),
 			  void (*action_flanks)(dBNode*),
@@ -2563,6 +2563,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
     }
   */
 
+  StrBuf* namebuf = strbuf_new();
 
   void get_vars(dBNode * node){
 
@@ -2588,7 +2589,6 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
       //will reuse this as we traverse the graph
       VariantBranchesAndFlanks var;
-
 
       do{
 	
@@ -2658,7 +2658,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 	    
 	    char name[100];
 	    
-
+	    
 	    /*
 	    set_alloced_variant_branches_and_flanks_allowing_inputargs_in_either_order(var,
 										       nodes5p, orientations5p, length_flank5p, forward,
@@ -2703,6 +2703,10 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		if (annovar.too_short==false)
 		  {
 		    
+		    count_vars++;
+		    strbuf_reset(namebuf);
+		    strbuf_sprintf(namebuf, "%s%d", "var_", count_vars);
+
 		    boolean site_is_variant=true;
 		    if (apply_model_selection==true)
 		      {
@@ -2722,11 +2726,14 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		    
 		    if ( (model_info !=NULL) && (model_info->expt_type != Unspecified))
 		      {
+			//print the GLs to a separate file.
+			//print_genotype_likelihoods(fout_gls, &annovar, model_info, namebuf);			
 			int z;
-			
+
 			if ( (model_info->expt_type == EachColourADiploidSample) || (model_info->expt_type ==EachColourADiploidSampleExceptTheRefColour) )
 			  {
 			    fprintf(fout,"Colour/sample\tGT_call\tllk_hom_br1\tllk_het\tllk_hom_br2\n");
+
 			    for (z=0; z<NUMBER_OF_COLOURS; z++)
 			      {
 				if (z==model_info->ref_colour)
@@ -2788,7 +2795,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 		    
 		    
 		    
-		    count_vars++;
+
 		    
 		    //print flank5p - 
 		    sprintf(name,"var_%i_5p_flank",count_vars);
@@ -2838,7 +2845,7 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 
     }//end of get_vars_with_orientation
   
-
+    strbuf_free(namebuf);
 
 
 
@@ -2882,22 +2889,70 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
     
 }
 
+/*
+void print_genotype_likelihoods(FILE* fout, AnnotatedPutativeVariant* annovar,GraphAndModelInfo* model_info, StrBuf* name)
+{
+  if (fout==NULL)
+    {
+      return;
+    }
+  fprintf(fout, "%s\n", name->buff);
+  int i,c;
+  int n = annovar->var->num_alleles;
+  
+  if ( (model_info->expt_type == EachColourADiploidSample) || (model_info->expt_type ==EachColourADiploidSampleExceptTheRefColour) )
+    {
+      for (c=0; c<NUMBER_OF_COLOURS; c++)
+	{
+	  //this will work for arbitrary numbers of alleles and will print GLs in the same order
+	  //as required by VCF spec.
+	  fprintf("%d\t", c);
+	  for (i=0; i< n + n*(n-1)/2 ; i++)  //n=number of homs, n(n-1)/2 = number of hets
+	    {
+	      //print the GLs
+	      if (c==model_info->ref_colour)
+		{
+		  fprintf(fout, "0");
+		}
+	      else
+		{
+		  fprintf("%.2f", annovar->gen_log_lh[c].log_lh[i]);
+		}
+
+	      if (c< n + n*(n-1)/2 -1)
+		{
+		  fprintf(fout, "\t");
+		}
+	      else
+		{
+		  fprintf(fout, "\n");
+		}
+
+	    }
+	}
+    }
+  else if ( (model_info->expt_type == EachColourAHaploidSample) || (model_info->expt_type ==EachColourAHaploidSampleExceptTheRefColour) )
+    {
+      //add support for this in next release
+    }
+}
+*/
 
 //looks for bubbles in the individual's colour, after having marked all bubbles found purely in the reference colour (ie ignore those)
 //condition is only applied to the second set of bubble,s called in the individual
 //Leaves the bubbles in the ref marked as to be ignored at the end
 void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(
-  FILE* fout, int max_length, dBGraph * db_graph, 
-  boolean (*condition)(VariantBranchesAndFlanks*),
-  Edges (*get_colour_ref)(const dBNode*),
-  Covg (*get_covg_ref)(const dBNode*),
-  Edges (*get_colour_indiv)(const dBNode*),
-  Covg (*get_covg_indiv)(const dBNode*),
-  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*) )
+									FILE* fout, /*FILE* fout_gls,*/ int max_length, dBGraph * db_graph, 
+									boolean (*condition)(VariantBranchesAndFlanks*),
+									Edges (*get_colour_ref)(const dBNode*),
+									Covg (*get_covg_ref)(const dBNode*),
+									Edges (*get_colour_indiv)(const dBNode*),
+									Covg (*get_covg_indiv)(const dBNode*),
+									void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*) )
 {
 
   //first detect bubbles in the ref colour, but do not print them out, so they get marked as visited
-  db_graph_detect_vars(NULL, max_length, db_graph, 
+  db_graph_detect_vars(NULL, /*NULL,*/ max_length, db_graph, 
 		       &detect_vars_condition_always_false,//print results condition
 		       &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
 		       &db_node_action_set_status_visited, //mark everything else as visited
@@ -2909,7 +2964,7 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(
 
   //then start again, detecting variants in the individual.
   printf("Now see if can detect anything afer marking stuff to be ignored\n");
-  db_graph_detect_vars(fout, max_length, db_graph, 
+  db_graph_detect_vars(fout, /*fout_gls,*/ max_length, db_graph, 
 		       &detect_vars_condition_branches_not_marked_to_be_ignored,//ignore anything you find that is marked to be ignored
 		       &db_node_action_set_status_visited_unless_marked_to_be_ignored,
 		       &db_node_action_set_status_visited_unless_marked_to_be_ignored,
@@ -2967,7 +3022,7 @@ boolean are_two_lists_identical(const int const * list1, int len_list1, const in
 //UNLESS both lists are identical, in which case we just call bubbles in the union
 //A consequence is that if you call bubbles on 1,2/1,3 you'll get nothing.
 //if exclude_ref_bubbles_first==false, just pass in NULL, NULL for get_colour_ref and get_covg_ref
-void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBGraph * db_graph, 
+void db_graph_detect_vars_given_lists_of_colours(FILE* fout, /*FILE* fout_gls,*/ int max_length, dBGraph * db_graph, 
 						 int* first_list, int len_first_list,
 						 int* second_list,  int len_second_list,
 						 boolean (*extra_condition)(VariantBranchesAndFlanks* var),
@@ -3113,7 +3168,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
   if (exclude_ref_bubbles_first==true)
     {
       //first detect bubbles in the ref colour, but do not print them out, so they get marked as visited
-      db_graph_detect_vars(NULL, max_length, db_graph, 
+      db_graph_detect_vars(NULL, /*NULL,*/ max_length, db_graph, 
 			   &detect_vars_condition_always_false,//print condition
 			   &db_node_action_set_status_ignore_this_node,//mark branches to be ignored
 			   &db_node_action_set_status_visited, //mark everything else as visited
@@ -3131,7 +3186,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
       //then we do demand that a bubble must have one branch in first list and NOT second list, and vice versa.
       if (exclude_ref_bubbles_first==false)
 	{
-	  db_graph_detect_vars(fout, max_length, db_graph, 
+	  db_graph_detect_vars(fout, /* fout_gls, */ max_length, db_graph, 
 			       &both_conditions,
 			       &db_node_action_set_status_visited,
 			       &db_node_action_set_status_visited,
@@ -3146,7 +3201,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 	  // whether or not we are excludign ref bubbles - if we re not excluding ref bubbles, this is equivalent to &both_conditions
 	  // however it would have a performance cost.
 	{
-	  db_graph_detect_vars(fout, max_length, db_graph, 
+	  db_graph_detect_vars(fout, /* fout_gls, */  max_length, db_graph, 
 			       &both_conditions_and_avoid_branches_marked_ignore,
 			       &db_node_action_set_status_visited_unless_marked_to_be_ignored,
 			       &db_node_action_set_status_visited_unless_marked_to_be_ignored,
@@ -3161,7 +3216,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
     {
       if (exclude_ref_bubbles_first==false)
 	{
-	  db_graph_detect_vars(fout, max_length, db_graph, 
+	  db_graph_detect_vars(fout, /* fout_gls, */ max_length, db_graph, 
 			       extra_condition,
 			       &db_node_action_set_status_visited,
 			       &db_node_action_set_status_visited,
@@ -3173,7 +3228,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBG
 	}
       else
 	{
-	  db_graph_detect_vars(fout, max_length, db_graph, 
+	  db_graph_detect_vars(fout, /* fout_gls, */ max_length, db_graph, 
 			       &extra_condition_and_avoid_branches_marked_ignore,
 			       &db_node_action_set_status_visited_unless_marked_to_be_ignored,
 			       &db_node_action_set_status_visited_unless_marked_to_be_ignored,
@@ -10512,6 +10567,9 @@ void print_standard_extra_supernode_info(dBNode** node_array,
   
 }
 
+
+
+
 void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
 {
   fprintf(fout, "\n");
@@ -10520,6 +10578,31 @@ void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
   print_standard_extra_supernode_info(var->one_allele, var->one_allele_or, var->len_one_allele, fout);
   fprintf(fout, "branch2 coverages\n");
   print_standard_extra_supernode_info(var->other_allele, var->other_allele_or, var->len_other_allele, fout);
+  fprintf(fout, "\n\n");
+}
+
+
+void print_median_covg_extra_info(VariantBranchesAndFlanks* var, CovgArray* working_ca,FILE* fout)
+{
+  fprintf(fout, "\n");
+  //print coverages:
+  fprintf(fout, "Colour\tbr1_median_covg\tbr2_median_covg\n");
+
+  int col;
+  for (col=0; col<NUMBER_OF_COLOURS; col++)
+    {
+      fprintf(fout, "%d\t", col);
+      Covg c1 = median_covg_on_allele_in_specific_colour(var->one_allele,
+							 var->len_one_allele,
+							 working_ca,
+							 col);
+      Covg c2 = median_covg_on_allele_in_specific_colour(var->other_allele,
+							 var->len_other_allele,
+							 working_ca,
+							 col);
+
+      fprintf(fout, "%" PRIu64 "\t%" PRIu64 "\n", (uint64_t)c1,(uint64_t)c2);
+    }
   fprintf(fout, "\n\n");
 }
 
@@ -10753,6 +10836,7 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
 					DiscoveryMethod which_caller, dBGraph* db_graph, 
 					void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
 					AssumptionsOnGraphCleaning assump, GenotypingWorkingPackage* gwp, LittleHashTable* little_dbg)
+
 
 {
 

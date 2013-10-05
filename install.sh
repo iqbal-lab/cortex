@@ -35,5 +35,10 @@ cd scripts/analyse_variants/needleman_wunsch/
 make clean
 make
 cd ..
+
+cd vcf-hack
+make clean
+make
+cd ..
 cd ..
 cd ..

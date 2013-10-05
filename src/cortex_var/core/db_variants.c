@@ -236,7 +236,7 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p,
       var->seq_one[0]='\0';
       var->seq_other[0]='\0';
       var->seq3p[0]='\0';
-
+      var->num_alleles=2;
       return var;
     }
 }

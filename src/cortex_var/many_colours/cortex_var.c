@@ -428,13 +428,13 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
       printf("Will remove bubbles in the reference colour %d before doing any calling\n", cmd_line->ref_colour);
     }
   
-  float* allele_balances=NULL;
+  long double* allele_balances=NULL;
   CovgArray* working_ca=NULL;
-  if (cmd_line->bc_high_diff==true)
+  if (cmd_line->high_diff==true)
     {
       printf("User specified calling only if highly-differentiated sites - will only call sites where allele balance differs by at least %f between at least 2 colours (excluding nay reference\n", cmd_line->min_allele_balance_diff);
 
-      allele_balances=calloc(NUMBER_OF_COLOURS, sizeof(float));
+      allele_balances=calloc(NUMBER_OF_COLOURS, sizeof(long double));
       working_ca = alloc_and_init_covg_array(cmd_line->max_var_len);//will die if fails to alloc
       if (allele_balances==NULL)
 	{
@@ -462,47 +462,77 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
   //local function
   boolean bubble_caller_condition(VariantBranchesAndFlanks* var)
   {
-    if (cmd_line->bc_high_diff==false)
+    if (cmd_line->high_diff==false)
       {
 	return true;
       }
-    else
+    else//we want only high differentiation sites
       {
 	int i;
 	int count=0;
 	
-	for (i=0; i<NUMBER_OF_COLOURS; i++)
+	for (i=0; i<NUMBER_OF_COLOURS; i++)//for each colour
 	  {
-	    if ( (i!=cmd_line->ref_colour) //ignore ref
-		 && (model_info->ginfo->total_sequence[i]>0) //ignore colours with no data
-		 )
+	    
+	    if ( (model_info->ginfo->total_sequence[i]>0) //ignore colours with no data
+	      &&
+		 (model_info->ginfo->mean_read_length[i]>0) )
 	      {
-		float median_covg_allele1 = median_covg_on_allele_in_specific_colour(var->one_allele, var->len_one_allele,
-										     working_ca, i);
-		float median_covg_allele2 = median_covg_on_allele_in_specific_colour(var->other_allele, var->len_other_allele,
-										     working_ca, i);
-		
-		float sum = median_covg_allele1+median_covg_allele2;
-		if (sum>0)
+		if (i==cmd_line->ref_colour)
 		  {
-		    float ab = (float)median_covg_allele1/(float)sum;
-		    float rounded_ab = floorf(ab * 100 + 0.5) / 100;
-		    allele_balances[count]=rounded_ab;
+		    float median_covg_allele1_in_ref = median_covg_on_allele_in_specific_colour(var->one_allele, var->len_one_allele, 
+												working_ca, cmd_line->ref_colour);
+		    float median_covg_allele2_in_ref = median_covg_on_allele_in_specific_colour(var->other_allele, var->len_other_allele, 
+												working_ca, cmd_line->ref_colour);
+		    if ( (median_covg_allele1_in_ref==0) && (median_covg_allele2_in_ref==0) )
+		      {
+			return false; //I insist on covg on ref allele as one of these two
+		      }
 		  }
-		else
+		else//this is not the reference colour
 		  {
-		    allele_balances[count]=-1.0;
+		    uint64_t       R = (uint64_t) (model_info->ginfo->mean_read_length[i]);
+		    //uint64_t factor1 = (R -db_graph->kmer_size+1);
+		    //float factor2 = factor1/R;
+		    //uint64_t seq     = (uint64_t) (model_info->ginfo->total_sequence[i]);
+		    //uint64_t depth   = seq/( (uint64_t)(model_info->genome_len) );
+		    //float exp_covg = factor2 * ((float)depth);
+		    
+		    Covg median_covg_allele1 = median_covg_on_allele_in_specific_colour(var->one_allele, var->len_one_allele,
+											 working_ca, i);
+		    Covg median_covg_allele2 = median_covg_on_allele_in_specific_colour(var->other_allele, var->len_other_allele,
+											 working_ca, i);
+		    
+		    Covg sum =sum_covgs(median_covg_allele1,median_covg_allele2);
+		    // exp depth = depth*factor1/R = seq*factor1/(R*genome_size)
+		    //if ( (sum>0) && (2*R*sum*model_info->genome_len >=seq * factor1) )  //right hand expression means sum>= exp covg/2, but avoids division
+		    if (sum>0)
+		      {
+			long double ab = (long double)median_covg_allele1/(long double)sum;
+			long double rounded_ab = floorl(ab * 100 + 0.5) / 100;
+			allele_balances[count]=rounded_ab;
+			count++;//now, count is the number of stored allele_balances
+		      }
+		    else
+		      {
+			//one of the populations has no covg on BOTH alleles. Discard this site
+			return false;
+		      }
+		    
 		  }
-		count++;
-	      }
-	  }
-	qsort(allele_balances, count, sizeof(float), float_cmp);
+	      }//end of "if there is some data in all colours
+
+	  }//end of for each colour
+
+	qsort(allele_balances, count, sizeof(long double), long_double_cmp);
 	if (abs(allele_balances[0]-allele_balances[count-1])>= cmd_line->min_allele_balance_diff)
 	  {
+	    fprintf(fp,"top and bottom allele balances are %Lf and %Lf and count is %d\n", allele_balances[0], allele_balances[count-1], count);
 	    return true;
 	  }
 	return false;
-      }
+
+      }//end of calling high-diff sites
   }
   //end local function
 
@@ -535,7 +565,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 					      model_info);
 
   fclose(fp);
-  if (cmd_line->bc_high_diff==true)
+  if (cmd_line->high_diff==true)
     {
       free(allele_balances);
       free_covg_array(working_ca);
@@ -594,11 +624,22 @@ int main(int argc, char **argv)
   }
   */
 
+
+  CovgArray* working_ca_for_median=NULL;
+  if (cmd_line->print_median_covg_only==true)
+    {
+      working_ca_for_median = alloc_and_init_covg_array(cmd_line->max_var_len);//will die if fails to alloc
+    }
+
   void print_appropriate_extra_variant_info(VariantBranchesAndFlanks* var, FILE* fp)
   {
     if (cmd_line->print_colour_coverages==true)
       {
 	print_standard_extra_info(var, fp);
+      }
+    else if (cmd_line->print_median_covg_only==true)
+      {
+	print_median_covg_extra_info(var, working_ca_for_median, fp);
       }
     else
       {
@@ -1478,6 +1519,11 @@ int main(int argc, char **argv)
 
   
   hash_table_free(&db_graph);
+  if (cmd_line->print_median_covg_only==true)
+    {
+      free(working_ca_for_median);
+    }
+
   timestamp();
 
   if (cmd_line->dump_aligned_overlap_binary==true)

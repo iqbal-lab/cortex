@@ -159,6 +159,7 @@ typedef struct
   boolean exclude_ref_bubbles;
   //  boolean remove_seq_errors;
   boolean print_colour_coverages;
+  boolean print_median_covg_only;
   boolean load_colours_only_where_overlap_clean_colour;
   boolean successively_dump_cleaned_colours;
   boolean dump_binary;
@@ -207,7 +208,7 @@ typedef struct
   boolean subsample;
 
   //for high diff bubble calling
-  boolean bc_high_diff;
+  boolean high_diff;
   float min_allele_balance_diff;
   //  int working_colour3_for_1net;
   //int working_colour4_for_2net;

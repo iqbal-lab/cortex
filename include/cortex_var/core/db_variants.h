@@ -108,6 +108,7 @@ typedef struct{
   char* seq_one;
   char* seq_other;
   char* seq3p;
+  int num_alleles;
 } VariantBranchesAndFlanks;
 
 

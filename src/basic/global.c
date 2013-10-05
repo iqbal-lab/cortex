@@ -99,6 +99,14 @@ int float_cmp(const void* a, const void* b)
   float fb = *(float*) b;
   return (fa > fb) - (fa < fb);
 }
+
+int long_double_cmp(const void* a, const void* b)
+{
+  long double fa = *(long double*) a;
+  long double fb = *(long double*) b;
+  return (fa > fb) - (fa < fb);
+}
+
 void set_string_to_null(char* str, int len)
 {
   memset(str, 0, sizeof(char)*len);

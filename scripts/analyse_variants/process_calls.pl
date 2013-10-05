@@ -37,7 +37,7 @@ BEGIN
 	
 	push( @INC,
 		$script_dir
-		  . "/perl_modules/Statiistics-Descriptive-2.6",
+		  . "/perl_modules/Statistics-Descriptive-2.6",
 	      $isaac_bioinf_dir."lib/"
 	);
 }
@@ -72,11 +72,11 @@ my (
 	$callfile,             $outdir,
 	$outvcf_filename_stub, $colours,
 	$number_of_colours,    $reference_colour,
-#	                       $apply_filter_one_allele_must_be_ref,
 	$classif,              $prefix,
-	$ploidy,               #$require_one_allele_is_ref,
+	$ploidy,               $vcf_on_which_calls_based,##if we build branches from a VCF and then genotype, and then pass to process_calls, use vcf_on_which_calls_based
 	$stampy_hash_stub,     $ref_fasta, $unioncalls, $caller_type,
-        $callfile_log,         $kmer, $global_var_ctr
+        $callfile_log,         $kmer, $global_var_ctr,
+        $print_gls,            $callfile_is_median_format
 );
 
 #set defaults
@@ -97,9 +97,11 @@ $ref_fasta                           = "unspecified";
 $unioncalls                          = "unspecified";
 $caller_type                         = "unspecified";
 $callfile_log                        = "unspecified";
+$vcf_on_which_calls_based            = "unspecified";
 $kmer                                = -1;
 $global_var_ctr                      =0;
-
+$print_gls                           ='';
+$callfile_is_median_format           =0;
 my $help = '';    #default false
 
 
@@ -113,8 +115,8 @@ my $help = '';    #default false
 	'refcol|r:i'                           => \$reference_colour,
 	                                          # ignore this colour for the VCF - dont 
                                                   #print out anything. if there is no reference in your colours, use -1
-#	'require_one_allele_is_ref|a:s'        => \$apply_filter_one_allele_must_be_ref,
-#	                                          #must be "yes" or "no". Usually in VCF require one allele is the ref allele and matches the reference
+	'vcf_which_generated_calls|a:s'        => \$vcf_on_which_calls_based,
+                                                ##so "bubbles" always have ref allele first, and we already know chr/pos/type of var, everything except genotypes in fact
 	'pop_classifier|c:s'                   => \$classif,
 	                                          ## file containing output of the population filter (classifier.R), or -1 if not used (default)
 	'prefix|p:s'                           => \$prefix,            ## this allows you to add a prefix to any var name. By default, it uses what is in the cortex callfile
@@ -129,6 +131,7 @@ my $help = '';    #default false
         'caller|l:s'                           => \$caller_type,# BC or PD
         'kmer|k:i'                             => \$kmer,
         'global_var_ctr:i'                      => \$global_var_ctr,## for internal use only, used by run_calls.pl
+        'print_gls|q:s'                         => \$print_gls,
 	'help'                                 => \$help,
 );
 
@@ -200,6 +203,12 @@ if ($help)
 "--ref_fasta                   : Stampy maps calls to a reference with a mapping quality. We use a threshold of 40 by default, so 1 in 10000 are wrongly placed on the reference\n";
 	print
 	    "                                If you pass in the name of the reference fasta here, this script will check the VCF and remove misplaced variants\n";
+	print
+"--vcf_which_generated_calls   : Sometimes we make calls on many samples, and generate a union sitelist VCF. We then make a branches file from this, and genotype all\n";
+	print
+	    "                                the samples at these sites. In this case there is no need to map the flanks, align branches etc etc - the VCF is already built, all\n";
+	print
+	    "                                we need to do is add the genotypes\n";
 	print "\n\n\n";
 	exit();
 }
@@ -213,6 +222,7 @@ if ($callfile eq "unspecified")
 {
     die("You must specify --callfile");
 }
+$callfile_is_median_format=check_callfile_format($callfile);
 if ($callfile_log eq "unspecified")
 {
     die("You must specify --callfile_log");
@@ -234,7 +244,6 @@ elsif ($legacy_callfile==1)
 {
     print "This looks like the old format in which Cortex used to output calls. With things like > branch_200_1 for the first branch of var 200. \n";
     print " Should be no problem, have tried to get process_calls.pl to handle the old legacy format. This is not an error message\n";
-
 }
 
 if ($vcftools_dir eq "/path/to/vcftools/dir")
@@ -242,13 +251,13 @@ if ($vcftools_dir eq "/path/to/vcftools/dir")
     die("You must specify the VCFTools directory, either on the commandline with --vcftools_dir, or by editing process_calls.pl manually (it's highlighted for you at the top of the file)\n");
 }
 
-
-#if ( $apply_filter_one_allele_must_be_ref eq "unknown" )
-#{
-#	die(
-#"You have not specified the mandatory argument --require_one_allele_is_ref, which must be either \"yes\" or \"no\"\n"
-#	);
-#}
+if ($vcf_on_which_calls_based ne "unspecified")
+{
+    if (!(-e $vcf_on_which_calls_based))
+    {
+	die("Cannot find the VCF file on which calls are based:  $vcf_on_which_calls_based\n");
+    }
+}
 
 if ( ( !( -e $stampy_bin )) && ($reference_colour != -1) )
 { 
@@ -332,15 +341,7 @@ if ( !( -e $needleman_wunsch_bin ) )
 	die();
 }
 
-#print "Using reference colour $reference_colour\n";
 
-#if (   ( $apply_filter_one_allele_must_be_ref eq "yes" )
-#	&& ( $reference_colour == -1 ) )
-#{
-#	die(
-#"If you say yes to apply_filter_one_allele_must_be_ref then you must specify the ref colour"
-#	);
-#}
 if (   ( $caller_type eq "PD"  )
 	&& ( $reference_colour == -1 ) )
 {
@@ -426,7 +427,8 @@ my %var_name_to_cut_flank = ();
 my %var_name_to_flank_mq_filter           = ();
 
 ## Only map the flanks if there is a reference to map to!
-if ($reference_colour !=-1) 
+## ALSO - do not map if we already have a VCF (on which these call branches were based)
+if ( ($reference_colour !=-1) && ($vcf_on_which_calls_based eq "unspecified") )
 {
     if ( !-e $flankfile )
     {
@@ -461,17 +463,24 @@ if ($reference_colour !=-1)
 
 
 
-## 2. Align branches against each other
+## 2. Align branches against each other (but not if we already have a VCF on which the call branches were based)
 my $proc_bub_output = $outdir . $bname . ".aligned_branches";
 
-if ( !( -e $proc_bub_output ) )
+if ( ( !( -e $proc_bub_output ) ) && ($vcf_on_which_calls_based eq "unspecified") )
 {
 	wrap_needleman( $needleman_wunsch_bin, $callfile, $prefix,
 		$proc_bub_output );
 }
 else
 {
+    if (-e $proc_bub_output )
+    {
 	print "Not aligning branches against each other, as $proc_bub_output already exists\n";
+    }
+    else
+    {
+	print "Not aligning branches against each other, as these calls are based on this VCF $vcf_on_which_calls_based, which already has implicitly done this\n";
+    }
 }
 
 ##  3. Apply filters, and collect a list of good calls.
@@ -507,130 +516,394 @@ my $fh_decomp_vcf;
 
 ## open file handles
 open( $fh_calls,      $callfile )        || die("Cannot open $callfile");
-open( $fh_proc_bub,   $proc_bub_output ) || die("Cannot open $proc_bub_output");
-my $simple_vcf_name = $outdir . $outvcf_filename_stub . ".raw.vcf.uncleaned";
-open( $fh_simple_vcf, "> $simple_vcf_name" ) || die("Cannot open ");
-my $decomp_vcf_name = $outdir . $outvcf_filename_stub . ".decomp.vcf.uncleaned";
-open( $fh_decomp_vcf, "> $decomp_vcf_name" )  || die("Cannot open $decomp_vcf_name");
+if ($vcf_on_which_calls_based eq "unspecified")
+{
+    open( $fh_proc_bub,   $proc_bub_output ) || die("Cannot open $proc_bub_output");
+}
 
-if ($reference_colour!=-1)
+my $simple_vcf_name;
+my $decomp_vcf_name;
+if ($vcf_on_which_calls_based eq "unspecified")
+{
+    $simple_vcf_name = $outdir . $outvcf_filename_stub . ".raw.vcf.uncleaned";
+    $decomp_vcf_name = $outdir . $outvcf_filename_stub . ".decomp.vcf.uncleaned";
+    open( $fh_decomp_vcf, "> $decomp_vcf_name" )  || die("Cannot open $decomp_vcf_name");
+}
+else
+{
+    ## will directly print one single final file
+    $simple_vcf_name = $outdir . $outvcf_filename_stub . ".vcf";
+}
+
+open( $fh_simple_vcf, "> $simple_vcf_name" ) || die("Cannot open $simple_vcf_name");
+
+
+if ( ($reference_colour!=-1) && ($vcf_on_which_calls_based eq "unspecified") )
 {
     open( $fh_map_flanks, $mapped_flanks )   || die("Cannot open $mapped_flanks");
 }
 
 
-##print vcf header
+##print vcf header 
 my $header = get_vcf_header($colours);
 print $fh_simple_vcf $header;
-print $fh_decomp_vcf $header;
+
+if ($vcf_on_which_calls_based eq "unspecified")
+{
+    print $fh_decomp_vcf $header;
+}
 
 my $ret = 1;
-while ( $ret == 1 )
+if ($vcf_on_which_calls_based eq "unspecified")
 {
-
+    while ( $ret == 1 )
+    {
+	
 	$ret = print_next_vcf_entry_for_easy_and_decomposed_vcfs(
-		$fh_calls,               $fh_map_flanks,
-		$fh_proc_bub,            \%var_name_to_combined_filtering_result,
-		\%var_name_to_cut_flank, 1,
-		1,                       $fh_simple_vcf,
-		$fh_decomp_vcf,          \%pop_classifier_confidence,
-	        $reference_colour
-	);
-}
-close($fh_calls);
-close($fh_proc_bub);
-if ($reference_colour !=-1)
+	    $fh_calls,               $fh_map_flanks,
+	    $fh_proc_bub,            \%var_name_to_combined_filtering_result,
+	    \%var_name_to_cut_flank, 1,
+	    1,                       $fh_simple_vcf,
+	    $fh_decomp_vcf,          \%pop_classifier_confidence,
+	    $reference_colour
+	    );
+    }
+    close($fh_calls);
+    close($fh_proc_bub);
+    if ($reference_colour !=-1)
+    {
+	close($fh_map_flanks);
+    }
+    
+   ### cleanup
+    
+   ## for those non-SNPs where the called variant was in the reverse direction, and the 3p flank was zero-length
+   ## we have had to put a Z in place of the base before the variant, in both ref and alt alleles. We need now
+   ## to go through and fix these. Parse the VCF once and collect a list of chrom_pos where we have Z's. We need to do
+   ## this for both raw and decomp VCFs. 
+    my %Z_posns_raw=();## will be chr_pos --> 1 - at these positions the VCFs have a Z
+    my %Z_posns_decomp=();
+    
+   #get_Z_positions(\%Z_posns_raw,    $simple_vcf_name);
+   #get_Z_positions(\%Z_posns_decomp, $decomp_vcf_name);
+    
+    
+   #get_characters_to_replace_Z(\%Z_posns_raw,    $ref_fasta);
+   #get_characters_to_replace_Z(\%Z_posns_decomp, $ref_fasta);
+    
+    
+   #my $fixed_Z_simple = $simple_vcf_name;
+   #$fixed_Z_simple =~ s/\.uncleaned/.fixed_Z/;
+   #my $fixed_Z_decomp = $decomp_vcf_name;
+   #$fixed_Z_decomp =~ s/\.uncleaned/.fixed_Z/;
+   #print "Start fix z\n";
+   #fix_Z($simple_vcf_name, $fixed_Z_simple, \%Z_posns_raw);
+   #fix_Z($decomp_vcf_name, $fixed_Z_decomp, \%Z_posns_decomp);
+   #print "end fix z\n";
+    
+   #my $final_simple = $fixed_Z_simple;
+   #$final_simple =~ s/\.fixed_Z//;
+   #my $final_decomp = $fixed_Z_decomp;
+   #$final_decomp =~ s/\.fixed_Z//;
+    my $final_simple = $simple_vcf_name;
+    $final_simple =~ s/.raw.vcf.uncleaned/.raw.vcf/;
+    my $final_decomp = $decomp_vcf_name;
+    $final_decomp =~ s/.decomp.vcf.uncleaned/.decomp.vcf/;
+    
+    if ($ref_fasta eq "unspecified")
+    {
+	## just sort the file and PV tag it
+	
+	my $cmd1 = "cat $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass --filter_txt OVERLAPPING_SITE > $final_simple";
+	print "$cmd1\n";
+	my $ret1 = qx{$cmd1};
+	print "$ret1\n";
+	
+	my $cmd2 = "cat $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass  --filter_txt OVERLAPPING_SITE > $final_decomp ";
+	print "$cmd2\n";
+	my $ret2 = qx{$cmd2};
+	print "$ret2\n";
+	
+    }
+    else # sort and PV tag and remove ref mismatches
+    {
+	
+	#### RAW vcf
+	my $tmp1 = $simple_vcf_name.".corrected_ref_mismatch";
+	print "Switch ref/alt bases in raw vcf on those sites where we know we have placed them back to front:\n";
+	
+	my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl --keep_phased --filter_mismatches MISMAPPED_UNPLACEABLE $simple_vcf_name $ref_fasta > $tmp1";
+	print "$cmd1\n";
+	my $ret1 = qx{$cmd1};
+	print "$ret1\n";
+	
+	print "Remove sites where Stampy has placed variant in wrong place\n";
+	my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  -p --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --take_first --pass  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE > $final_simple ";
+	print "$cmd1\n";
+	my $ret2 = qx{$cmd2};
+	print "$ret2\n";
+	
+	### DECOMP VCF
+	
+	my $tmp3 = $decomp_vcf_name.".corrected_ref_mismatch";
+	print "Switch ref/alt bases in decomp vcf on those sites where we know we have placed them back to front:\n";
+	
+	my $cmd3 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl --keep_phased --filter_mismatches MISMAPPED_UNPLACEABLE $decomp_vcf_name $ref_fasta > $tmp3 ";
+	print "$cmd3\n";
+	my $ret3 = qx{$cmd3};
+	print "$ret3\n";
+	
+	
+	my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl -p  --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE  > $final_decomp ";
+	print "$cmd4\n";
+	my $ret4 = qx{$cmd4};
+	print "$ret4\n";
+	
+    }
+}## end of "if normal case"
+else
 {
-    close($fh_map_flanks);
+    ## calls were based on a VCF, from which we made branches, and genotyped samples using those branches.
+    
+    ## first parse the callfile, and for each variant, collect the confidences and likelihoods
+    my %GL_info=();
+    my %COV_info=();
+    my %GT_info=();
+    collect_confidences_and_likelihoods($fh_calls, \%GL_info, \%COV_info, \%GT_info, $ploidy);
+    print_final_vcf_by_modifying_sites_vcf($fh_simple_vcf, \%GL_info, \%COV_info, \%GT_info, $vcf_on_which_calls_based);
 }
 
-### cleanup
 
-## for those non-SNPs where the called variant was in the reverse direction, and the 3p flank was zero-length
-## we have had to put a Z in place of the base before the variant, in both ref and alt alleles. We need now
-## to go through and fix these. Parse the VCF once and collect a list of chrom_pos where we have Z's. We need to do
-## this for both raw and decomp VCFs. 
-my %Z_posns_raw=();## will be chr_pos --> 1 - at these positions the VCFs have a Z
-my %Z_posns_decomp=();
-
-#get_Z_positions(\%Z_posns_raw,    $simple_vcf_name);
-#get_Z_positions(\%Z_posns_decomp, $decomp_vcf_name);
-
-
-#get_characters_to_replace_Z(\%Z_posns_raw,    $ref_fasta);
-#get_characters_to_replace_Z(\%Z_posns_decomp, $ref_fasta);
-
-
-#my $fixed_Z_simple = $simple_vcf_name;
-#$fixed_Z_simple =~ s/\.uncleaned/.fixed_Z/;
-#my $fixed_Z_decomp = $decomp_vcf_name;
-#$fixed_Z_decomp =~ s/\.uncleaned/.fixed_Z/;
-#print "Start fix z\n";
-#fix_Z($simple_vcf_name, $fixed_Z_simple, \%Z_posns_raw);
-#fix_Z($decomp_vcf_name, $fixed_Z_decomp, \%Z_posns_decomp);
-#print "end fix z\n";
-
-#my $final_simple = $fixed_Z_simple;
-#$final_simple =~ s/\.fixed_Z//;
-#my $final_decomp = $fixed_Z_decomp;
-#$final_decomp =~ s/\.fixed_Z//;
-my $final_simple = $simple_vcf_name;
-$final_simple =~ s/.raw.vcf.uncleaned/.raw.vcf/;
-my $final_decomp = $decomp_vcf_name;
-$final_decomp =~ s/.decomp.vcf.uncleaned/.decomp.vcf/;
-
-if ($ref_fasta eq "unspecified")
+sub check_callfile_format
 {
-    ## just sort the file and PV tag it
-
-    my $cmd1 = "cat $simple_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass --filter_txt OVERLAPPING_SITE > $final_simple";
-    print "$cmd1\n";
-    my $ret1 = qx{$cmd1};
-    print "$ret1\n";
-
-    my $cmd2 = "cat $decomp_vcf_name   | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass --filter_txt DUP_CALL   | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl --pass  --filter_txt OVERLAPPING_SITE > $final_decomp ";
-    print "$cmd2\n";
-    my $ret2 = qx{$cmd2};
-    print "$ret2\n";
-
+    my ($cf) = @_;
+    open(CF, $cf)||die("Cannot open callfile $cf\n");
+    my $flag = -1;
+    while ($flag==-1)
+    {
+	my $line = <CF>;
+	chomp $line;
+	if ($line =~ /3p_flank/)
+	{
+	    <CF>;#seq
+	    <CF>;#blank line
+	    $line = <CF>;
+	    if ($line =~ /median/)
+	    {
+		$flag=1;
+	    }
+	    else
+	    {
+		$flag=0;
+	    }
+	}
+    }
+    close(CF);
+    return $flag;
 }
-else # sort and PV tag and remove ref mismatches
+##sites VCF has no sample columns
+sub print_final_vcf_by_modifying_sites_vcf
 {
+    my ($final_fh, $href_gl, $href_cov, $href_gt, $in_vcf) = @_;
 
-    #### RAW vcf
-    my $tmp1 = $simple_vcf_name.".corrected_ref_mismatch";
-    print "Switch ref/alt bases in raw vcf on those sites where we know we have placed them back to front:\n";
-
-    my $cmd1 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl --keep_phased --filter_mismatches MISMAPPED_UNPLACEABLE $simple_vcf_name $ref_fasta > $tmp1";
-    print "$cmd1\n";
-    my $ret1 = qx{$cmd1};
-    print "$ret1\n";
-
-    print "Remove sites where Stampy has placed variant in wrong place\n";
-    my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  -p --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --take_first --pass  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE > $final_simple ";
-    print "$cmd1\n";
-    my $ret2 = qx{$cmd2};
-    print "$ret2\n";
-
-    ### DECOMP VCF
-
-    my $tmp3 = $decomp_vcf_name.".corrected_ref_mismatch";
-    print "Switch ref/alt bases in decomp vcf on those sites where we know we have placed them back to front:\n";
-
-    my $cmd3 = $isaac_bioinf_dir."vcf_scripts/vcf_correct_strand.pl --keep_phased --filter_mismatches MISMAPPED_UNPLACEABLE $decomp_vcf_name $ref_fasta > $tmp3 ";
-    print "$cmd3\n";
-    my $ret3 = qx{$cmd3};
-    print "$ret3\n";
+    if ($callfile_is_median_format==0)
+    {
+	die("Do not expect to call this with the print_colour_coverages output format callfile\n");
+    }
+    open(IN, $in_vcf)||die();
+    while (<IN>)
+    {
+	my $line = $_;
+	chomp $line;
 
 
-    my $cmd4 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl -p  --tag PV LEFT $tmp3 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl --take_first --pass | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE  > $final_decomp ";
-    print "$cmd4\n";
-    my $ret4 = qx{$cmd4};
-    print "$ret4\n";
+	if ($line =~ /^\#/)
+	{
+	    #do nothing - header alreafy printed header
+	}
+	else
+	{
+	    my @sp = split(/\s+/, $line);
+	    my $name = $sp[2];
+	    if ( (!exists $href_gt->{$name})
+		 ||
+		 (!exists $href_gl->{$name})
+		 ||
+		 (!exists $href_cov->{$name}) )
+	    {
+		die("Call Zam. Cannot match variant name $name\n");
+	    }
+	    print $final_fh join("\t", @sp[0..7]);
+	    printf $final_fh "\t";
+	    print $final_fh "GT:COV:GT_CONF";
+	    if ($print_gls eq "yes")
+	    {
+		print $final_fh ":GL";
+	    }
+	    print $final_fh "\t";
+	    my $col;
+	    for ($col=0; $col<$number_of_colours; $col++)
+	    {
+
+		if ($col != $reference_colour)
+		{
+		    print $final_fh $href_gt->{$name}->{$col};
+		    print $final_fh ":";
+		    print $final_fh $href_cov->{$name}->{$col};
+		    my $gtconf = get_gt_conf_from_commasep_gls($href_gl->{$name}->{$col});
+		    print $final_fh ":$gtconf:";
+		    print $final_fh $href_gl->{$name}->{$col};
+		    if ($col<$number_of_colours-1)
+		    {
+			print $final_fh "\t";
+		    }
+		    else
+		    {
+			print $final_fh "\n";
+		    }
+		}
+	    }
+	}
+    }
+    close(IN);
 
 }
 
+sub get_gt_conf_from_commasep_gls
+{
+    my ($str) = @_;
+    my @sp = split(/,/, $str);
+    my @s = sort { $a <=> $b } @sp;##sorting log likelihoods. Find difference between max and one below
+    return $s[scalar(@sp)-1] - $s[scalar(@sp)-2];
+}
+sub collect_confidences_and_likelihoods
+{
+    my ($call_fh, $href_gl, $href_cov, $href_gt, $pl) = @_;
+    if ($pl==2)
+    {
+	my %local_hash_gl=();
+	my %local_hash_gt=();
+	my $temp_name = 0;
+	my $realname="";
+	while (<$call_fh>)
+	{
 
+	    #Colour/sample   GT_call llk_hom_br1 llk_het    llk_hom_br2
+	    #0=REF   NO_CALL 0       0      0
+	    #1       HOM2    -803.00 -300.00  -14.89
+	    #2       HOM2    -923.99 -400.00  -12.99
+
+	    my $line = $_;
+	    chomp $line;
+
+	    if ($line =~ /Colour\/sample/)
+	    {
+		$temp_name++;
+		my $num_gls=3;
+
+		my $ct = 0;
+		while ($ct<$number_of_colours)
+		{
+		    $line = <$call_fh>;
+		    chomp $line;
+		    my @sp = split(/\s+/, $line);
+		    my $gt = $sp[1];
+		    my @gls = @sp;
+		    shift @gls;
+		    shift @gls;
+		    $num_gls = scalar(@gls);
+		    my $z;
+		    my $colour = $sp[0];
+
+		    if ($colour =~ /=REF/)
+		    {
+			$colour =~ s/=REF//;
+			print "fixed colour is $colour\n";
+		    }
+		    
+		    for ($z=0; $z<$num_gls; $z++)
+		    {
+			$local_hash_gl{$temp_name}{$colour}{$z}=$gls[$z];
+		    }
+		    if ($gt eq "HOM1")
+		    {
+			$local_hash_gt{$temp_name}{$colour}="0/0";
+		    }
+		    elsif ($gt eq "HET")
+		    {
+			$local_hash_gt{$temp_name}{$colour}="0/1";
+		    }
+		    elsif ($gt eq "HOM2")
+		    {
+			$local_hash_gt{$temp_name}{$colour}="1/1";
+		    }
+		    else
+		    {
+			$local_hash_gt{$temp_name}{$colour}="NO_CALL";
+		    }
+		    $ct++;
+		}
+		##now all the GT and GL info is saved. Next comes the fasta ibit
+		$line = <$call_fh>;
+		chomp $line;
+		
+		##eg >UNION_BC_k61_var_1_5p_flank
+		if ($line =~ />(\S*var_\d+)_5p_flank/)
+		{
+		    $realname = $1;
+		    print "Got realname $realname\n";
+		    ## we have stored all the GL info for all colours in our local hash
+		    ##transfer to the global hash/passed-in hash
+		    my $k;
+		    my $p;
+		    for ($k=0; $k<$number_of_colours; $k++)
+		    {
+			$href_gl->{$realname}->{$k}=$local_hash_gl{$temp_name}{$k}{0};
+			for ($p=1; $p<$num_gls; $p++)
+			{
+			    $href_gl->{$realname}->{$k} = ($href_gl->{$realname}->{$k}).",";
+
+			    $href_gl->{$realname}->{$k} = ($href_gl->{$realname}->{$k}).($local_hash_gl{$temp_name}{$k}{$p});
+			}
+			$href_gt->{$realname}->{$k}=$local_hash_gt{$temp_name}{$k};
+		    }
+		    
+		    ### now we can get the coverage information
+		    <$call_fh>;#5pseq
+		    <$call_fh>;#br1 readid
+		    <$call_fh>;#br1 seq
+		    <$call_fh>;#br2 readid
+		    <$call_fh>;#br2 seq
+		    <$call_fh>;#3p readid
+		    <$call_fh>;#3p seq
+		    <$call_fh>;#blank line
+		    $line = <$call_fh>;
+		    if ($line !~ /br1_median_covg/)
+		    {
+			die("Parsing problem with this callfile - I get $line, but I expect to see \"Colour  br1_median_covg br2_median_covg\"");
+		    }
+		    
+		    for ($k=0; $k<$number_of_colours; $k++)
+		    {
+			$line = <$call_fh>;
+			chomp $line;
+			my @ar = split(/\t/, $line);
+			my $covg1 = $ar[1];
+			my $covg2 = $ar[2];
+			$href_cov->{$realname}->{$k}="$covg1,$covg2";
+		    }
+		    
+		}
+		else
+		{
+		    die("Parsing problem - expected to see 5p flank but got $line\n");
+		}
+	    }
+	}
+	close($call_fh);
+    }
+
+}
 sub get_covg_and_total_seq_from_log
 {
     my ($log, $href_rlen, $href_seq) = @_;
@@ -912,6 +1185,10 @@ sub get_vcf_header
 	  . "##FORMAT=<ID=GT_CONF,Number=1,Type=Float,Description=\"Genotype confidence. Difference in log likelihood of most likely and next most likely genotype\">\n";
 	$head = $head
 	  . "##FORMAT=<ID=SITE_CONF,Number=1,Type=Float,Description=\"Probabilitic site classification confidence. Difference in log likelihood of most likely and next most likely model (models are variant, repeat and error)\">\n";
+	if ($print_gls eq "yes")
+	{
+	    $head = $head."##FORMAT=<ID=GL,Number=.,Type=Float,Description=\"Genotype Likelihood. Log likelihoods of all possible genotypes\">\n";
+	}
 	$head = $head
 	  . "##INFO=<ID=SVLEN,Number=1,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">\n";
 	$head = $head

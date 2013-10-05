@@ -260,7 +260,7 @@ const char* usage=
   // -s
 "   [--output_bubbles1 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles1 are dumped to this file.\n" \
   // -v
-"   [--high_diff FLOAT]\t\t\t\t\t\t=\t Only call bubbles that (user-specified) minimum  allele-balance difference \n\t\t\t\t\t\t\t\t\t between at least 2 colours (ignores reference colour)\n\t\t\t\t\t\t\t\t\t Designed to be used when comparing pooled populations\n\t\t\t\t\t\t\t\t\t e.g --detect_bubbles -1/-1 --high_diff 0.9 will call bubbles where \n\t\t\t\t\t\t\t\t\t for example allele_balance(colour0)=0.01 and allele_balance(colour1)=0.95\n" \
+"   [--high_diff FLOAT]\t\t\t\t\t\t=\t Only call bubbles that (user-specified) minimum  allele-balance difference \n\t\t\t\t\t\t\t\t\t between at least 2 colours (ignores reference colour)\n\t\t\t\t\t\t\t\t\t Designed to be used when comparing pooled populations\n\t\t\t\t\t\t\t\t\t e.g --detect_bubbles -1/-1 --high_diff 0.9 will call bubbles where \n\t\t\t\t\t\t\t\t\t for example allele_balance(colour0)=0.01 and allele_balance(colour1)=0.95\n\t\t\t\t\t\t\t\t\t If you use this option, you must also set --genome_size" \
 
   // -x
 "   [--print_colour_coverages]\t\t\t\t\t=\t Print coverages in all colours for supernodes and variants.\n" \
@@ -360,7 +360,7 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
-  c->bc_high_diff=false;
+  c->high_diff=false;
   c->min_allele_balance_diff = 0.9; //when looking for high diff sites.
   c->subsample=false;
   c->subsample_propn=(float)1.0;//by default, take all reads
@@ -471,6 +471,7 @@ int default_opts(CmdLine * c)
   c->remove_pcr_dups=false;
   //c->clip_tips=false;
   c->print_colour_coverages=false;
+  c->print_median_covg_only=false;
   c->dump_binary=false;
   c->print_supernode_fasta=false;
   c->remove_low_coverage_nodes=false;
@@ -609,7 +610,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"genotype_site", required_argument, NULL, 'R'},
     {"err_correct", required_argument, NULL, 'S'},
     {"subsample", required_argument, NULL, 'T'},
-    //{"estimate_genome_complexity", required_argument, NULL, 'T'},
+    {"print_median_covg_only", no_argument, NULL, 'U'},
     {"print_novel_contigs", required_argument, NULL, 'V'},
     {0,0,0,0}	
   };
@@ -621,7 +622,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:V:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:UV:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1066,7 +1067,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	  {
 	    errx(1,"[--high_diff requires a decimal argument between 0 and 1 - the minimum difference in allele balance required between two pools\n");
 	  }
-	cmdline_ptr->bc_high_diff=true;
+	cmdline_ptr->high_diff=true;
 	break ;
       } 
 
@@ -1512,6 +1513,11 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 	cmdline_ptr->subsample=true;
 	break;
       }
+    case 'U'://print_median_covg_only
+      {
+	cmdline_ptr->print_median_covg_only=true;
+	break ;
+      }
 
     case 'V'://print_novel_contigs
 	{
@@ -1539,7 +1545,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       }      
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:V:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:UV:", long_options, &longopt_index);
     
   }   
   
@@ -1549,7 +1555,27 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
 
 int check_cmdline(CmdLine* cmd_ptr, char* error_string)
 {
-  
+  if ( (cmd_ptr->print_median_covg_only==true) && (cmd_ptr->print_colour_coverages==true) )
+    {
+      char tmp[] = "--print_median_covg_only and --print_colour_coverages are mutually exclusive alternatives - choose one.\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  die("coding error - this string is too long:\n%s\n", tmp);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+      
+    }
+  if  ((cmd_ptr->high_diff==true) &&  (cmd_ptr->genome_size==0))
+    {
+      char tmp[] = "If you specify --high_diff, you must also set --genome_size\n";
+      if (strlen(tmp)>LEN_ERROR_STRING)
+	{
+	  die("coding error - this string is too long:\n%s\n", tmp);
+	}
+      strcpy(error_string, tmp);
+      return -1;
+    }
   if ( (cmd_ptr->subsample==true) && (cmd_ptr->input_seq==false) )
     {
       die("If you specify --subsample, you must be entering sequence data as fasta or fastq or bam\n");

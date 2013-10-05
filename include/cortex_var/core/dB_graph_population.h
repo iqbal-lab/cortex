@@ -328,7 +328,7 @@ void db_graph_print_supernodes_where_condition_is_true_at_start_and_end_but_not_
 // last argument is a condition which you apply to the flanks and branches to decide whether to call.
 // e.g. this might be some constraint on the coverage of the branches, or one might have a condition that one branch
 //      was in one colour  and the other in a different colour, or maybe that both branches are in the same colour
-void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph, 
+void db_graph_detect_vars(FILE* fout, /* FILE* fout_gls, */ int max_length, dBGraph * db_graph, 
 			  boolean (*condition)(VariantBranchesAndFlanks*), 
 			  void (*action_branches)(dBNode*),
 			  void (*action_flanks)(dBNode*),
@@ -340,13 +340,14 @@ void db_graph_detect_vars(FILE* fout, int max_length, dBGraph * db_graph,
 			  boolean (*start_condition)(dBNode*) );
 
 void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(
-  FILE* fout, int max_length, dBGraph *db_graph, 
-  boolean (*condition)(VariantBranchesAndFlanks*),
-  Edges (*get_colour_ref)(const dBNode*),
-  Covg (*get_covg_ref)(const dBNode*),
-  Edges (*get_colour_indiv)(const dBNode*),
-  Covg (*get_covg_indiv)(const dBNode*),
-  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*));
+									FILE* fout, /* FILE* fout_gls, */ 
+									int max_length, dBGraph *db_graph, 
+									boolean (*condition)(VariantBranchesAndFlanks*),
+									Edges (*get_colour_ref)(const dBNode*),
+									Covg (*get_covg_ref)(const dBNode*),
+									Edges (*get_colour_indiv)(const dBNode*),
+									Covg (*get_covg_indiv)(const dBNode*),
+									void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*));
 
 boolean detect_vars_condition_always_true(VariantBranchesAndFlanks*);
 boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesAndFlanks* var);
@@ -372,7 +373,7 @@ boolean detect_vars_condition_is_hom_nonref_with_min_covg_given_colour_funcs_for
 //UNLESS both lists are identical, in which case we just call bubbles in the union
 //A consequence is that if you call bubbles on 1,2/1,3 you'll get nothing.
 //if exclude_ref_bubbles_first==false, just pass in NULL, NULL for the last two arguments
-void db_graph_detect_vars_given_lists_of_colours(FILE* fout, int max_length, dBGraph * db_graph, 
+void db_graph_detect_vars_given_lists_of_colours(FILE* fout, /* FILE* fout_gls, */ int max_length, dBGraph * db_graph, 
 						 int* first_list, int len_first_list,
 						 int* second_list,  int len_second_list,
 						 boolean (*extra_condition)(VariantBranchesAndFlanks* var),
