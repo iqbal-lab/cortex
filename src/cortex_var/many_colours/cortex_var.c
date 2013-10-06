@@ -1521,7 +1521,7 @@ int main(int argc, char **argv)
   hash_table_free(&db_graph);
   if (cmd_line->print_median_covg_only==true)
     {
-      free(working_ca_for_median);
+      free_covg_array(working_ca_for_median);
     }
 
   timestamp();

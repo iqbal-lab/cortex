@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo  
+ * Copyright 2009-2013 Zamin Iqbal and Mario Caccamo  
  * 
  * CORTEX project contacts:  
  * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
@@ -2845,7 +2845,6 @@ void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGra
 
     }//end of get_vars_with_orientation
   
-    strbuf_free(namebuf);
 
 
 
@@ -2863,11 +2862,14 @@ void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGra
     }
 
   }//end of get_vars
+
  
   hash_table_traverse(&get_vars,db_graph); 
 
+
   //cleanup
   //free_VariantBranchesAndFlanks_object(var);
+  strbuf_free(namebuf);
   free(nodes5p);
   free(nodes3p);
   free(orientations5p);
