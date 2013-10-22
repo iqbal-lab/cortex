@@ -653,6 +653,11 @@ int main(int argc, char **argv)
       {
 	print_standard_extra_supernode_info(node_array, or_array, len, fout);
       }
+    else if (cmd_line->print_median_covg_only==true)
+      {
+	print_median_extra_supernode_info(node_array, or_array, 
+					  len, working_ca_for_median, fout);
+      }
     else
       {
 	print_no_extra_supernode_info(node_array, or_array, len, fout);

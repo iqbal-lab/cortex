@@ -10570,6 +10570,32 @@ void print_standard_extra_supernode_info(dBNode** node_array,
 }
 
 
+void print_median_extra_supernode_info(dBNode** node_array,
+				       Orientation* or_array,
+				       int len, CovgArray* working_ca, FILE* fout)
+{
+  // Let the compiler know that we're deliberately ignoring a parameter
+  (void)or_array;
+
+  //  fprintf(fout, "\n");
+  //print coverages:
+  fprintf(fout, "Colour\tmedian_covg_on_sup\n");
+
+  int col;
+  for (col=0; col<NUMBER_OF_COLOURS; col++)
+    {
+      fprintf(fout, "%d\t", col);
+      Covg c = median_covg_on_allele_in_specific_colour(node_array,
+							len,
+							working_ca,
+							col);
+      fprintf(fout, "%" PRIu64 "\n", (uint64_t)c);
+    }
+  //  fprintf(fout, "\n\n");
+}
+
+
+
 
 
 void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout)

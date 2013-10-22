@@ -664,7 +664,13 @@ boolean does_this_path_exist_in_this_colour(dBNode** array_nodes,
 void print_standard_extra_supernode_info(dBNode** node_array,
                                          Orientation* or_array, int len, FILE* fout);
 
+void print_median_extra_supernode_info(dBNode** node_array,
+				       Orientation* or_array,
+				       int len, CovgArray* working_ca, FILE* fout);
+
 void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout);
+
+void print_median_covg_extra_info(VariantBranchesAndFlanks* var, CovgArray* working_ca,FILE* fout);
 
 long long db_graph_health_check(boolean fix, dBGraph * db_graph);
 long long db_graph_clean_orphan_edges(dBGraph * db_graph);

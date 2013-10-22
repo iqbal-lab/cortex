@@ -1957,7 +1957,7 @@ long long load_all_binaries_for_given_person_given_filename_of_file_listing_thei
       /* COMMENT_OUT_DURING_TESTS 
       printf("Loaded next binary; total kmers in graph is now %qd\n",
              hash_table_get_unique_kmers(db_graph));
-       */
+      */
 
       //Now get metadata.
       boolean do_not_copy_poolcleaning_metadata_from_local_ginfo =only_load_kmers_already_in_hash;
