@@ -2529,8 +2529,7 @@ void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGra
   Nucleotide* path_labels2 = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_length+1) );
   char* seq1 = (char*) malloc(sizeof(char)*(max_length+1));
   char* seq2 = (char*) malloc(sizeof(char)*(max_length+1));
-
-
+  CovgArray* working_ca = alloc_and_init_covg_array(max_length+1);
   
   dBNode** nodes5p = (dBNode**) malloc(sizeof(dBNode*) *flanking_length);
   dBNode** nodes3p = (dBNode**) malloc(sizeof(dBNode*) *flanking_length);
@@ -2546,7 +2545,7 @@ void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGra
   if ( (path_nodes1==NULL) || (path_nodes2==NULL) || (path_orientations1==NULL) || (path_orientations2==NULL) 
        || (path_labels1==NULL) || (path_labels2==NULL) || (seq1==NULL) || (seq2==NULL)
        || (nodes5p==NULL) || (nodes3p==NULL) || (orientations5p==NULL) || (orientations3p==NULL)
-       || (labels_flank5p==NULL) || (labels_flank3p==NULL) || (seq5p==NULL) || (seq3p==NULL) )
+       || (labels_flank5p==NULL) || (labels_flank3p==NULL) || (seq5p==NULL) || (seq3p==NULL) || (working_ca==NULL) )
     {
       die("Could not allocate arrays in db_graph_detect_vars. \n"
           "Out of memory, or you asked for unreasonably big max branch size: %d",
@@ -2684,16 +2683,17 @@ void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGra
 		//ModelLogLikelihoodsAndBayesFactors stats;//results of bayes factor calcs go in here
 		//initialise_stats(&stats);
 		AnnotatedPutativeVariant annovar;
+		boolean use_median=false;
 		if (model_info!=NULL)
 		  {
 		    
 		    initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, 
-						db_graph->kmer_size, model_info->assump, NULL, NULL, NULL, true);
+						db_graph->kmer_size, model_info->assump, NULL, NULL, NULL, working_ca, true, use_median);
 		  }
 		else
 		  {
 		    initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, 
-						db_graph->kmer_size, AssumeUncleaned, NULL, NULL, NULL, false);
+						db_graph->kmer_size, AssumeUncleaned, NULL, NULL, NULL, working_ca, false, use_median);
 		    
 		  }
 
@@ -6706,12 +6706,10 @@ int db_graph_make_reference_path_based_sv_calls(
 
   Covg* covgs_in_trusted_not_variant = (Covg*) malloc(sizeof(Covg)*length_of_arrays);
   Covg* covgs_in_variant_not_trusted = (Covg*) malloc(sizeof(Covg)*max_expected_size_of_supernode);
-  //int* covgs_of_indiv_on_trusted_path = (int*) malloc(sizeof(int)*length_of_arrays);
-  //int* covgs_of_ref_on_trusted_path = (int*) malloc(sizeof(int)*length_of_arrays);
-  //int* covgs_of_indiv_on_variant_path = (int*) malloc(sizeof(int)*length_of_arrays);
-  //int* covgs_of_ref_on_variant_path = (int*) malloc(sizeof(int)*length_of_arrays);
 
-  if ( (working_array1==NULL) || (working_array2==NULL)  ) 
+  CovgArray* working_ca = alloc_and_init_covg_array(max_expected_size_of_supernode+1);
+
+  if ( (working_array1==NULL) || (working_array2==NULL) || (working_ca==NULL) ) 
     {
       die("Cannot alloc working arrays. Exit");
     }
@@ -7824,7 +7822,7 @@ int db_graph_make_reference_path_based_sv_calls(
 		      if (model_info!=NULL)
 			{
 			  initialise_putative_variant(&annovar, model_info, var, SimplePathDivergenceCaller, db_graph->kmer_size,
-						      assump, gwp, db_graph, little_db_graph, true);
+						      assump, gwp, db_graph, little_db_graph, working_ca, true, false);//TODO - change that false to true - work through effect on PD but I think will be better
 			  
 			  
 			  if (model_info->expt_type != Unspecified)
@@ -8118,7 +8116,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   Orientation* curr_sup_orientations   = (Orientation*) malloc(sizeof(Orientation)*(max_expected_size_of_supernode+ db_graph->kmer_size));
   Nucleotide*  curr_sup_labels         = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_expected_size_of_supernode+ db_graph->kmer_size));
   char*        supernode_string        = (char*) malloc(sizeof(char)*((max_expected_size_of_supernode+ db_graph->kmer_size)+1)); //+1 for \0
-
+  CovgArray*   working_ca = alloc_and_init_covg_array(max_expected_size_of_supernode+1);
   int working_colour1 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS;
   int working_colour2 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+1;
 
@@ -9408,7 +9406,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 			  // in doing so does various walking aroud the main graph. It will reset any
 			  //node it messes with back to visited
 			  initialise_putative_variant(&annovar, model_info, var, SimplePathDivergenceCaller, db_graph->kmer_size,
-						      assump, gwp, db_graph, little_db_graph, true);
+						      assump, gwp, db_graph, little_db_graph, working_ca, true, false);//TODO use median
 			  
 			  if (model_info->expt_type != Unspecified)
 			    {
@@ -10863,7 +10861,8 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fout, GraphAndModelInfo* model_info,
 					DiscoveryMethod which_caller, dBGraph* db_graph, 
 					void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
-					AssumptionsOnGraphCleaning assump, GenotypingWorkingPackage* gwp, LittleHashTable* little_dbg)
+					AssumptionsOnGraphCleaning assump, GenotypingWorkingPackage* gwp, LittleHashTable* little_dbg,
+					CovgArray* working_ca)
 
 
 {
@@ -10871,9 +10870,10 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
   AnnotatedPutativeVariant annovar;
   if (model_info!=NULL)
     {
+      boolean use_median=true;
       //this does the genotyping.
       initialise_putative_variant(&annovar, model_info, var, which_caller, 
-				  db_graph->kmer_size, assump, gwp, db_graph, little_dbg, true);
+				  db_graph->kmer_size, assump, gwp, db_graph, little_dbg, working_ca,true, use_median);
     }
   else
     {

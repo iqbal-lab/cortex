@@ -701,7 +701,9 @@ sub check_callfile_format
     close(CF);
     return $flag;
 }
+
 ##sites VCF has no sample columns
+##in this case we KNOW the first allele is the ref allele.
 sub print_final_vcf_by_modifying_sites_vcf
 {
     my ($final_fh, $href_gl, $href_cov, $href_gt, $in_vcf) = @_;
@@ -769,6 +771,7 @@ sub print_final_vcf_by_modifying_sites_vcf
 
 }
 
+
 sub get_gt_conf_from_commasep_gls
 {
     my ($str) = @_;
@@ -776,6 +779,8 @@ sub get_gt_conf_from_commasep_gls
     my @s = sort { $a <=> $b } @sp;##sorting log likelihoods. Find difference between max and one below
     return $s[scalar(@sp)-1] - $s[scalar(@sp)-2];
 }
+
+##this assumes the first allele is the ref allele, so no switching needed
 sub collect_confidences_and_likelihoods
 {
     my ($call_fh, $href_gl, $href_cov, $href_gt, $pl) = @_;
@@ -862,7 +867,6 @@ sub collect_confidences_and_likelihoods
 			for ($p=1; $p<$num_gls; $p++)
 			{
 			    $href_gl->{$realname}->{$k} = ($href_gl->{$realname}->{$k}).",";
-
 			    $href_gl->{$realname}->{$k} = ($href_gl->{$realname}->{$k}).($local_hash_gl{$temp_name}{$k}{$p});
 			}
 			$href_gt->{$realname}->{$k}=$local_hash_gt{$temp_name}{$k};
@@ -1613,30 +1617,12 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 		return 0;
 	}
 
-#	if ( $apply_filter_one_allele_must_be_ref eq "yes" )
-#	{
-#		## if neither allele is the ref allele - ignore this
-#	    ## Doesn't matter if using a fake ref or a real ref, one allele MUST match the ref!
-#		if ( $which_is_ref eq "neither" )
-#		{
-#
-#			print "This is not an error: just for auditing:  filter this variant $var_name, as both alleles are non-reference (can't go in a VCF based on the reference)\n";
-#			return 1;
-#		}
-#		elsif ( $which_is_ref eq "b" )
-#		{
-##		      ## let Isaac's scripts handle this
-#			#print "Ignore var $var_name, both alleles REF!\n";
-#			#return 1;
-#		}
-#	}
-#	else
-#	{
-		if ( ( $which_is_ref eq "neither" ) || ( $which_is_ref eq "b" ) )
-		{
-			$which_is_ref = 1;# this will be caught by post-processing scripts.
-		}
-#	}
+
+	if ( ( $which_is_ref eq "neither" ) || ( $which_is_ref eq "b" ) )
+	{
+	    $which_is_ref = 1;# this will be caught by post-processing scripts.
+	}
+	
 
 	if ( ( $var_name ne $var_name2 ) || ( $var_name ne $var_name3 ) )
 	{
@@ -2303,25 +2289,46 @@ sub print_all_genotypes_and_covgs
 		my $gtype;
 		my $confidence = -99999;
 		my $no_data=0;
+		my $gls = "";
 		if ( $do_we_have_genotypes == 1 )
 		{
-			if ( $ploidy == 2 )
+		    if ( $ploidy == 2 )
+		    {
+			$confidence =
+			    get_confidence_diploid( $llk_hom1->[$j], $llk_het->[$j],
+						    $llk_hom2->[$j] );
+
+			if ($which_is_ref==1)
 			{
-				$confidence =
-				  get_confidence_diploid( $llk_hom1->[$j], $llk_het->[$j],
-					$llk_hom2->[$j] );
+			    $gls = $llk_hom1->[$j].",".$llk_het->[$j].",".$llk_hom2->[$j];
 			}
 			else
 			{
-				$confidence =
-				  get_confidence_haploid( $llk_hom1->[$j], $llk_hom2->[$j] );
+			    $gls = $llk_hom2->[$j].",".$llk_het->[$j].",".$llk_hom1->[$j];#switched
 			}
 
+		    }
+		    else
+		    {
+			$confidence =
+			    get_confidence_haploid( $llk_hom1->[$j], $llk_hom2->[$j] );
 
-			if ( ($aref_br1_cov->[$j]==0) && ($aref_br2_cov->[$j]==0) )
+			if ($which_is_ref==1)
 			{
-			    $no_data=1;
+			    $gls = $llk_hom1->[$j].",".$llk_hom2->[$j];
 			}
+			else
+			{
+			    $gls = $llk_hom2->[$j].",".$llk_hom1->[$j];#switched
+			}
+
+		    }
+		    
+		    
+		    if ( ($aref_br1_cov->[$j]==0) && ($aref_br2_cov->[$j]==0) )
+		    {
+			$no_data=1;
+		    }
 		}
 		my $site_conf = -99999;
 		my $stripped_name = $name;
@@ -2406,9 +2413,11 @@ sub print_all_genotypes_and_covgs
 		{
 			print $fh "$cov";
 		}  
-		#die $last_sample_col;
-		
-		# die join(" - ", $j, $number_of_colours, $last_sample_col)."\n";
+		if ($print_gls eq "yes")
+		{
+		    print $fh ":$gls";
+		}
+
 		
 		if ( $j == $last_sample_col )
 		{
@@ -3238,7 +3247,7 @@ sub get_next_alignment_from_procfile
 	if ( $line !~ /FORWARD ALIGNMENT/ )
 	{
 		die(
-"format issue - this line $line should have said FORWARD ALIGNMENT. Current var is $name\n"
+		    "format issue - this line $line should have said FORWARD ALIGNMENT. Current var is $name\n"
 		);
 	}
 	$fw_br1 = <$fh>;

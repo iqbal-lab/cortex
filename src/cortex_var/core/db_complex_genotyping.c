@@ -2418,8 +2418,8 @@ void get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(Annotate
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info,
 				    VariantBranchesAndFlanks* var, DiscoveryMethod caller,  int kmer,
 				    AssumptionsOnGraphCleaning assump, GenotypingWorkingPackage* gwp,
-				    dBGraph* db_graph, LittleHashTable* little_db_graph,
-				    boolean do_genotyping)
+				    dBGraph* db_graph, LittleHashTable* little_db_graph, CovgArray* working_ca,
+				    boolean do_genotyping, boolean use_median)
 				    
 {
   GraphInfo* ginfo = NULL;
@@ -2463,16 +2463,13 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
   boolean flag1=false;
   boolean flag2=false;
 
-  flag1=get_num_effective_reads_on_branch(annovar->br1_covg, var->one_allele, var->len_one_allele);
-  flag2=get_num_effective_reads_on_branch(annovar->br2_covg, var->other_allele, var->len_other_allele);
+  flag1=get_num_effective_reads_on_branch(annovar->br1_covg, var->one_allele, var->len_one_allele, use_median, working_ca);
+  flag2=get_num_effective_reads_on_branch(annovar->br2_covg, var->other_allele, var->len_other_allele, use_median, working_ca);
 
+  annovar->too_short = false;
   if ( (flag1==true)||(flag2==true) )
     {
       annovar->too_short = true;
-    }
-  else
-    {
-      annovar->too_short = false;
     }
   
   if (var->len_one_allele < var->len_other_allele)
@@ -2491,9 +2488,9 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
     }
   else//is a valid putative site
     {
-      get_num_effective_reads_on_branch(annovar->theta1, var->one_allele, annovar->len_start);
-      get_num_effective_reads_on_branch(annovar->theta2, var->other_allele, annovar->len_start);
-      
+      get_num_effective_reads_on_branch(annovar->theta1, var->one_allele, annovar->len_start, use_median, working_ca);
+      get_num_effective_reads_on_branch(annovar->theta2, var->other_allele, annovar->len_start, use_median, working_c);
+
       int i;
       annovar->BigTheta = 0;
       annovar->BigThetaStart = 0;
@@ -2551,7 +2548,6 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 		       )
 		    {
 		      get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(annovar,  
-										     //seq_error_rate_per_base, 
 										     model_info->ginfo->seq_err[i],
 										     sequencing_depth_of_coverage,
 										     mean_read_len,i);

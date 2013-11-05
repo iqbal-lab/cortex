@@ -26,11 +26,11 @@ ifeq ($(MAXK),127)
    BITFIELDS = 4
 endif
 
-ifeq ($(MAXK),160)
+ifeq ($(MAXK),159)
    BITFIELDS = 5
 endif
 
-ifeq ($(MAXK),192)
+ifeq ($(MAXK),191)
    BITFIELDS = 6
 endif
 

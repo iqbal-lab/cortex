@@ -544,15 +544,18 @@ zygosity db_variant_get_zygosity_in_given_func_of_colours(VariantBranchesAndFlan
 void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, 
 								    double sequencing_depth_of_coverage, int read_length, int colour)
 {
-  boolean too_short = false;
-  Covg initial_covg_plus_upward_jumps_branch1 = 
+
+
+  //  boolean too_short = false;
+  /*  Covg initial_covg_plus_upward_jumps_branch1 = 
     count_reads_on_allele_in_specific_colour(annovar->var->one_allele, annovar->var->len_one_allele, colour, &too_short);
   Covg initial_covg_plus_upward_jumps_branch2 = 
-    count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short);
+  count_reads_on_allele_in_specific_colour(annovar->var->other_allele, annovar->var->len_other_allele, colour, &too_short); */
 
-  if (too_short==true)
+  //  if (too_short==true)
+  //  {
+  if (annovar->too_short==true)
     {
-      annovar->too_short=true;
       int j;
       //set all the log likelihoods to zero.
       for (j=0; j<NUMBER_OF_COLOURS; j++)
@@ -561,6 +564,7 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
 	}
       return ;
     }
+      //  }
 
   double theta_one   = ((double)(sequencing_depth_of_coverage * annovar->var->len_one_allele))  /( (double) read_length );
   double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
@@ -568,19 +572,18 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
 
   annovar->gen_log_lh[colour].log_lh[hom_one]   = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
-								     initial_covg_plus_upward_jumps_branch1, 
-								     initial_covg_plus_upward_jumps_branch2, 
+								     annovar->br1_covg[colour],
+								     annovar->br2_covg[colour],
 								     theta_one, theta_other);
   annovar->gen_log_lh[colour].log_lh[het]       = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, seq_error_rate_per_base, 
-								     initial_covg_plus_upward_jumps_branch1, 
-								     initial_covg_plus_upward_jumps_branch2, 
+								     annovar->br1_covg[colour],
+								     annovar->br2_covg[colour],
 								     theta_one, theta_other);
-
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
-								     initial_covg_plus_upward_jumps_branch1, 
-								     initial_covg_plus_upward_jumps_branch2, 
+								     annovar->br1_covg[colour],
+								     annovar->br2_covg[colour],
 								     theta_one, theta_other);
  
 //  printf("Log likelihood of data in colour %d under hom_one is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_one]);
@@ -699,22 +702,17 @@ void get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(
 // NOT the same theta as seen in model_selection.c
 //assumes called by BubbleCaller, so no overlaps between alleles.
 double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
-  zygosity genotype, double error_rate_per_base,
-  Covg covg_branch_1, Covg covg_branch_2,
-  double theta_one, double theta_other) // int kmer was an unused param
+									zygosity genotype, double error_rate_per_base,
+									Covg covg_branch_1, Covg covg_branch_2,
+									double theta_one, double theta_other) // int kmer was an unused param
 {
-  //printf("DEBUG covg branch 1 is %d, and branch2 is %d, and theta 1,2 are "
-  //       "%f, %f, and error ratew per base is %f\n",
-  //       covg_branch_1, covg_branch_2, theta_one, theta_other,
-  //       error_rate_per_base);
-
   if (genotype==hom_one)
   {
     // Apply formula for likelihood in section 9.0 of Supp. Methods of paper;
     // no unique segment, one shared segment
     return (double)covg_branch_1 * log(theta_one) - theta_one -
-           gsl_sf_lnfact(covg_branch_1) +
-           (double)covg_branch_2 * log(error_rate_per_base);
+      gsl_sf_lnfact(covg_branch_1) +
+      (double)covg_branch_2 * log(error_rate_per_base);
   }
   else if (genotype==hom_other)
   {
@@ -761,17 +759,20 @@ void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl)
 //Sometimes we want to take just the start of the branch (if one branch is longer than the other, we may just take the length of the shorter one)
 //and so you enter that in arg3 in that case
 //note these are effective reads, as counting covg in the de Bruijn graph
-//returns TRUE if branch is too short (1 or 2 nodes) to do this
-boolean get_num_effective_reads_on_branch(int* array, dBNode** allele, int how_many_nodes)
+//returns TRUE if branch is too short (1 oor 2 nodes) to do this
+boolean get_num_effective_reads_on_branch(Covg* array, dBNode** allele, int how_many_nodes, boolean use_median, CovgArray* working_ca)
 {
   int i;
   boolean too_short=false;
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
-      array[i] = count_reads_on_allele_in_specific_colour(allele, how_many_nodes, i, &too_short);
-      if (too_short==true)
+      if (use_median==false)
 	{
-	  return too_short;
+	  array[i] = count_reads_on_allele_in_specific_colour(allele, how_many_nodes, i, &too_short);
+	}
+      else
+	{
+	  array[i] = median_covg_on_allele_in_specific_colour(allele, how_many_nodes, working_ca, i, &too_short);
 	}
     }
   return too_short;
@@ -977,11 +978,12 @@ Covg count_reads_on_allele_in_specific_func_of_colours(
 //robust to start being > end (might traverse an allele backwards)
 //if length==0 or 1  returns 0.
 Covg median_covg_on_allele_in_specific_colour(dBNode** allele, int len, CovgArray* working_ca,
-					      int colour)
+					      int colour, boolean* too_short)
 {
 
   if ((len==0)|| (len==1))
     {
+      *too_short=true;
       return 0;//ignore first and last nodes
     }
  

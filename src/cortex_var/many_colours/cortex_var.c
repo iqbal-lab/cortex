@@ -53,47 +53,6 @@
 
 void timestamp();
 
-/*
-double  get_histogram_for_kmers_in_just_one_haplotype(long long** arr, int max, int in_colour, int not_in_colour, int data_colour, dBGraph* db_graph)
-{
-  long long total_kmers_possible=0;
-  long long total_kmers_hit=0; 
-
-
-  void analyse_kmer(dBGraph* db_graph, dBNode* node, int** array, int len, int colour)
-  {
-    if ( (node->coverage[in_colour]>0) && (node->coverage[not_in_colour]==0) )
-      {
-	total_kmers_possible++;
-	//this node is informative about haplotype in_colour, so see how much covg it has in your sample data
-	long long num = (long long) (node->coverage[data_colour]);
-	if (num>0)
-	  {
-	    total_kmers_hit++;
-	  }
-	if (num<len)
-	  {
-	    *(array[num]) = *(array[num]) + 1;
-	  }
-	else
-	  {
-	    *(array[len]) = *(array[len]) + 1;
-	  }
-      }
-  }
-  db_graph_traverse_with_array_of_longlongs(&analyse_kmer, (HashTable*) db_graph, arr, max , -1);//the -1 is ignored
-  return ((double) total_kmers_possible)/((double) total_kmers_hit);
-}
-*/
-
-/*
-// Isaac: can this be removed?
-void run_novel_seq(CmdLine* cmd_line, dBGraph* db_graph, GraphAndModelInfo* model_info)
-{
-}
-*/
-
-
 
 
 void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
@@ -209,8 +168,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
 						       var, db_graph, &gt_file_reader, seq, seq_inc_prev_kmer, kmer_window);
 	  if (ret==1)
 	    {
-	      //AssumptionsOnGraphCleaning assump=AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice; //todo - fix when you have incorporated changes to seq error rate handling
-	      AssumptionsOnGraphCleaning assump=AssumeUncleaned; //todo - fix when you have incorporated changes to seq error rate handling
+	      AssumptionsOnGraphCleaning assump=AssumeUncleaned; 
 	      print_call_given_var_and_modelinfo(var, fout, model_info, cmd_line->which_caller_was_used_for_calls_to_be_genotyped, db_graph,
 						 print_whatever_extra_variant_info,
 						 assump, gwp, little_dbg);

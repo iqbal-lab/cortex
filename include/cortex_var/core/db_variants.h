@@ -147,13 +147,13 @@ typedef struct {
   boolean too_short; //if one or both alleles are too short (containing no interior nodes), this is set to true and a call is not made
   DiscoveryMethod caller;
   VariantBranchesAndFlanks* var;
-  int br1_covg[NUMBER_OF_COLOURS];//covg on first interior kmer + read jumps
-  int br2_covg[NUMBER_OF_COLOURS];
+  Covg br1_covg[NUMBER_OF_COLOURS];//covg on first interior kmer + read jumps
+  Covg br2_covg[NUMBER_OF_COLOURS];
   int len_start;// = min of length(br1) and length(br2)
-  int theta1[NUMBER_OF_COLOURS];//coverage on start of branch1 
-  int theta2[NUMBER_OF_COLOURS];//coverage on start of branch2
-  long long BigTheta; // total coverage of all colours over both branches (sum of all elements of br1_covg and br2_covg)
-  long long BigThetaStart; // total coverage of all colours over start of
+  Covg theta1[NUMBER_OF_COLOURS];//coverage on start of branch1 
+  Covg theta2[NUMBER_OF_COLOURS];//coverage on start of branch2
+  Covg BigTheta; // total coverage of all colours over both branches (sum of all elements of br1_covg and br2_covg)
+  Covg BigThetaStart; // total coverage of all colours over start of
                            //  both branches (sum of all elements of theta1 and theta2)
 
   //under the model that this IS a variant, compare likelihoods of being hom-br1, het, hom-br2

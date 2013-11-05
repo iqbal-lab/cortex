@@ -349,6 +349,18 @@ void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_
     {
       die("Cannot open %s, exiting", outputfile);
     }
+
+  //start debug
+  char debugfile[MAX_FILENAME_LENGTH];
+  sprintf(debugfile, "%s.estim_allele_freq", fasta);
+  FILE* debug_fout = fopen(debugfile, "w");
+  if (debug_fout ==NULL)
+    {
+      die("Cannot open %s, exiting", debugfile);
+    }
+  //end debug
+
+
   FILE* fp = fopen(fasta, "r");
   if (fp==NULL)
     {
@@ -357,18 +369,22 @@ void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_
 
   //print header line
   fprintf(out, "GENE/READ_ID\t");
+  fprintf(debug_fout, "GENE/READ_ID\t");
   int i;
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       fprintf(out, "%s", list_sample_ids[i]);
+      fprintf(debug_fout, "%s", list_sample_ids[i]);
     
       if (i<NUMBER_OF_COLOURS-1)
 	{
 	  fprintf(out, "\t");
+	  fprintf(debug_fout, "\t");
 	}
       else
 	{
 	  fprintf(out, "\n");
+	  fprintf(debug_fout, "\n");
 	}
     }
   
@@ -386,6 +402,7 @@ void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_
 	  if (full_entry)
 	    {
 	      fprintf(out, "%s\t", seq->name);
+	      fprintf(debug_fout, "%s\t", seq->name);
 	    }
 	  else
 	    {
@@ -398,6 +415,7 @@ void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_
 	  for (j=0; j<NUMBER_OF_COLOURS; j++)//for each colour
 	    {
 	      int count_num_kmers_present=0;
+	      Covg debug_min_covg=COVG_MAX;
 	      //	      int total_kmers=0;
 	      for (k=0; k<num_kmers; k++)//for each kmer in the read
 		{
@@ -408,7 +426,11 @@ void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_
 		      if ( array_nodes[k]->coverage[j]>0)
 			{
 			  count_num_kmers_present++;
-			 
+			}
+		      //debug
+		      if (array_nodes[k]->coverage[j]<debug_min_covg)
+			{
+			  debug_min_covg = array_nodes[k]->coverage[j];
 			}
 		    }
 		}
@@ -416,19 +438,24 @@ void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_
 	      if (num_kmers<=0)
 		{
 		  fprintf(out, "0");
+		  fprintf(debug_fout, "0");//debug
 		}
 	      else
 		{
 		  float percent=(float) count_num_kmers_present/ (float)num_kmers; //total_kmers;
 		  fprintf(out, "%0.2f", percent);
+		  fprintf(debug_fout, "%" PRIu32 "", debug_min_covg);
+		  
 		}
 	      if (j<NUMBER_OF_COLOURS-1)
 		{
 		  fprintf(out, "\t");
+		  fprintf(debug_fout, "\t");
 		}
 	      else
 		{
 		  fprintf(out, "\n");
+		  fprintf(debug_fout, "\n");
 		}
 	    }
 	}
@@ -437,6 +464,7 @@ void print_percent_agreement_for_each_colour_for_each_read(char* fasta, int max_
   
   
   fclose(out);
+  fclose(debug_fout);
   
   
   
