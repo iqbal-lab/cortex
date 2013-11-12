@@ -1,4 +1,35 @@
 ++++++++++++++++++++++++++++++++++++++++++++++
+v1.0.5.21
+
+Minor release, primarily for 1000 Genomes pipeline
+
+1. The 1000 Genomes Phase3 pipeline, essentially involves calling variants
+   per population (each population is ~100 people sequenced to ~6x),
+   then making a combined/union callset, then going back and genotyping
+   all samples at all sites. I've just made the following changes in this release
+
+   a) Previously, the raw callfiles for each population were combined, to make a massive
+      list of calls, with a lot of redundancy, all of which would get genotyped, dumped to VCF
+      and then finally the VCF would be cleaned up by removing duplicates etc etc.
+      Not only does this mean a lot of duplicate sites get multiply genotyped,
+      but it is a waste of time to re-map all the flanks to get coordinates, when we already know them!
+      So for Phase3 (and in this release), I combined the *VCFs* from each population, and removed redundancy there,
+      and produced a "sites only" VCF, with no genotype info.
+      I then create a graph just of the alleles called in this VCF.
+      I have added a new script:
+      scripts/1000genomes/final_step_genotype_and_dump_vcf_per_sample.pl
+      This takes a sample graph, overlaps with the set of bubbles, genotypes the sample,
+      and dumps a VCF, reusing the chr/pos etc info from the sites VCF.
+      This is MUCH faster (about 2 hours per sample, and all samples can be run in parallel).
+
+   b) I've modified the genotyping code, to be more robust when genotyping sites not called in that sample.
+
+
+2. I've added an experimental --high_diff option for use when each colour is a pool of samples. The idea is to
+   pull out potential high FST sites. Have a play if you're interested, I've been looking at the 1000 Genomes populations
+   with it, but this is beta/experimental code, and may be modified or even removed if I decide I don't trust the results.
+
+++++++++++++++++++++++++++++++++++++++++++++++
 v1.0.5.20
 
 Minor changes
