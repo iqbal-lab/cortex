@@ -903,6 +903,10 @@ sub collect_confidences_and_likelihoods
 			my $covg1 = $ar[1];
 			my $covg2 = $ar[2];
 			$href_cov->{$realname}->{$k}="$covg1,$covg2";
+			if ( ($covg1==0) && ($covg2==0) )
+			{
+			    $href_gt->{$realname}->{$k}="./.";
+			}
 		    }
 		    
 		}
