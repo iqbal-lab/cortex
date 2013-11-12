@@ -570,7 +570,7 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
   double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
 
   //DEBUG
-  printf("ZAM - covg on two alleles is %" PRIu64 ",%" PRIu64 "\n", (uint64_t) (annovar->br1_covg[colour]),(uint64_t) (annovar->br2_covg[colour]));
+  //printf("ZAM - covg on two alleles is %" PRIu64 ",%" PRIu64 "\n", (uint64_t) (annovar->br1_covg[colour]),(uint64_t) (annovar->br2_covg[colour]));
 
   annovar->gen_log_lh[colour].log_lh[hom_one]   = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
@@ -588,9 +588,9 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
 								     annovar->br2_covg[colour],
 								     theta_one, theta_other);
  
-  printf("Log likelihood of data in colour %d under hom_one is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_one]);
-  printf("Log likelihood of data in colour %d under het is %f\n", colour, annovar->gen_log_lh[colour].log_lh[het] );
-  printf("Log likelihood of dat ain colour %d under hom_other is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_other] );
+  //  printf("Log likelihood of data in colour %d under hom_one is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_one]);
+  // printf("Log likelihood of data in colour %d under het is %f\n", colour, annovar->gen_log_lh[colour].log_lh[het] );
+  // printf("Log likelihood of dat ain colour %d under hom_other is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_other] );
 
 
 }

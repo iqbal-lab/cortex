@@ -784,7 +784,9 @@ sub get_gt_conf_from_commasep_gls
     my ($str) = @_;
     my @sp = split(/,/, $str);
     my @s = sort { $a <=> $b } @sp;##sorting log likelihoods. Find difference between max and one below
-    return $s[scalar(@sp)-1] - $s[scalar(@sp)-2];
+
+    my $rounded_conf = sprintf "%.2f", $s[scalar(@sp)-1] - $s[scalar(@sp)-2];
+    return $rounded_conf;
 }
 
 ##this assumes the first allele is the ref allele, so no switching needed

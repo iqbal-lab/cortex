@@ -49,7 +49,7 @@ my $filename_of_sample_overlap_bubble_binary="";
 
 
 
-check_args($bubble_graph, $mem_height, $mem_width, $sample, $overlap_log);
+check_args($bubble_graph, $mem_height, $mem_width, $sample, $overlap_log, $invcf);
 
 if ($cortex_dir !~ /\/$/)
 {
@@ -60,6 +60,8 @@ if ($cortex_dir !~ /\/$/)
 
 ##if you have not passed in the overlap binary of sample with bubbles, then do it now:
 
+my $ctx_binary = check_cortex_compiled_2colours($cortex_dir, $kmer);
+
 if ($filename_of_sample_overlap_bubble_binary eq "")
 {
 ## Now intersect your sample
@@ -69,10 +71,10 @@ if ($filename_of_sample_overlap_bubble_binary eq "")
 ### note start time
     my $time_start_overlap = new Benchmark;
     
-    my $ctx_binary = check_cortex_compiled_2colours($cortex_dir, $kmer);
+
     my $suffix = "intersect_sites";
     my $colour_list;
-    ($colour_list, $filename_of_sample_overlap_bubble_binary) = make_colourlist($sample_graph, $sample, $suffix);
+    ($colour_list, $filename_of_sample_overlap_bubble_binary) = make_colourlist($sample_graph, $sample, $suffix, $outdir);
     
     my $cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --multicolour_bin $bubble_graph --colour_list $colour_list --load_colours_only_where_overlap_clean_colour 0 --successively_dump_cleaned_colours $suffix > $overlap_log 2>&1";
     print "$cmd\n";
@@ -136,8 +138,16 @@ print("\n*************************\n");
 
 sub check_args
 {
-    my ($bub_g, $h, $w, $sam, $overlap_log) = @_;
+    my ($bub_g, $h, $w, $sam, $overlap_log, $vcf) = @_;
     
+    if ($vcf !~ /cortex_phase3_biallelic_sitelist.vcf/)
+    {
+	die("You have specified an input VCF $vcf which should be cortex_phase3_biallelic_sitelist.vcf (potentially with some path on the front of course), but is not\n");
+    }
+    if ($vcf =~ /cortex_phase3_biallelic_sitelist.vcf.gz/)
+    {
+	die("Please unzip the vcf $vcf and rerun");
+    }
     if ($overlap_log eq "")
     {
 	die("You must specify the name of the log file which will be generated when overlapping the sample with the bubbles\n");
@@ -193,8 +203,9 @@ sub check_cortex_compiled_2colours
 
 sub make_colourlist
 {
-    my ($graph, $id, $suffix) = @_;
+    my ($graph, $id, $suffix, $odir) = @_;
 
+    $graph = File::Spec->rel2abs($graph);
     my $bname = basename($graph);
     my $dir = dirname($graph);
 
@@ -202,15 +213,22 @@ sub make_colourlist
     {
 	$dir = $dir.'/';
     }
-    my $col_list = $dir.$id."_colourlist_for_intersection";
-    my $list_this_binary=$graph.".filelist";
+    if ($odir !~ /\/$/)
+    {
+	$odir = $odir.'/';
+    }
+    
+    my $col_list = $odir.$id."_colourlist_for_intersection";
+    my $list_this_binary=$odir.$bname.".filelist";
     my $list_this_binary_nodir = basename($list_this_binary); 
     open(COL, ">".$col_list)||die("Cannot open $col_list");
     open(FLIST, ">".$list_this_binary)||die("Cannot open $list_this_binary");
 
-    print FLIST "$bname\n";
+#    print FLIST "$bname\n";
+    print FLIST "$graph\n";
     close(FLIST);
-    print COL "$list_this_binary_nodir\n";
+    #print COL "$list_this_binary_nodir\n";
+    print COL "$list_this_binary\n";
     close(FLIST);
     close(COL);
 
