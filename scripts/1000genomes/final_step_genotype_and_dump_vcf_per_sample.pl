@@ -3,15 +3,16 @@ use strict;
 use File::Basename;
 use File::Spec;
 use Getopt::Long;
-
+use Benchmark;
 
 my $invcf = "cortex_phase3_biallelic_sitelist.vcf";
+my $bubble_callfile = "cortex_phase3_biallelic_pseudo_callfile";
 
+##the following are set by the command-line arguments
 my $cortex_dir = "/home/zam/dev/hg/bitbucket/CORTEX_mainline/";
 my $analyse_variants_dir = $cortex_dir."scripts/analyse_variants/";
 my $sample_cleaned_graph="";
-my $ref_overlap_bubble_graph="human_g1k_v37.proper_chroms.k31.ctx.list_intersect_bubbles.ctx";## shoud be absolute path
-my $bubble_callfile = "cortex_phase3_biallelic_pseudo_callfile";
+my $ref_overlap_bubble_graph="human_g1k_v37.proper_chroms.k31.ctx.list_intersect_bubbles.ctx";
 my $mem_height = 24;
 my $mem_width = 73;
 my $kmer= 31;
@@ -20,20 +21,29 @@ my $sample_graph="";
 my $bubble_graph="";
 my $overlap_log="";
 my $outdir="";
-
+my $filename_of_sample_overlap_bubble_binary="";
 
 
 &GetOptions(
+    ##mandatory args
     'invcf:s'                             =>\$invcf,
-    'outdir:s'                             =>\$outdir,
-    'sample:s'                            =>\$sample,
+    'bubble_graph:s'                      =>\$bubble_graph,
+    'bubble_callfile:s'                   =>\$bubble_callfile,#should be as above but with path in front
+    'outdir:s'                            =>\$outdir,
+    'sample:s'                            =>\$sample,##sample ID
+    'ref_overlap_bubble_graph:s'          =>\$ref_overlap_bubble_graph,#should be as above, but with path on front
+
+    ##if you have already overlapped the sample with the bubble graph
+    'sample_overlap_bubbles:s'            =>\$filename_of_sample_overlap_bubble_binary,
+
+    ##if you just have the sample graph and you want this script to overlap it with the bubbles
     'sample_graph:s'                      =>\$sample_graph,##whole genome graph of sample
-    'bubble_graph:s'                         => \$bubble_graph,
-    'bubble_callfile:s'                   => \$bubble_callfile,#should be as above but with path in front
-    'ref_overlap_bubble_graph:s'              => \$ref_overlap_bubble_graph,#should be as above, but with path on front
-    'overlap_log:s'                       => \$overlap_log,#specify name for log file for dumping overlap of sample with bubbles 
-    'mem_height:i'                          =>\$mem_height,
-    'mem_width:i'                           =>\$mem_width,
+    'overlap_log:s'                       =>\$overlap_log,#specify name for log file for dumping overlap of sample with bubbles 
+
+    ## there are default mem height and width set, but you can also set them here
+    'mem_height:i'                        =>\$mem_height,
+    'mem_width:i'                         =>\$mem_width,
+
     );
 
 
@@ -47,19 +57,40 @@ if ($cortex_dir !~ /\/$/)
 }
 
 
+
+##if you have not passed in the overlap binary of sample with bubbles, then do it now:
+
+if ($filename_of_sample_overlap_bubble_binary eq "")
+{
 ## Now intersect your sample
-my $ctx_binary = check_cortex_compiled_2colours($cortex_dir, $kmer);
-my $suffix = "intersect_sites";
-my ($colour_list, $filename_of_sample_overlap_bubble_binary) = make_colourlist($sample_graph, $sample, $suffix);
+    print("\n*************************\n");
+    print("First overlap the sample with the bubbles:\n");
+
+### note start time
+    my $time_start_overlap = new Benchmark;
+    
+    my $ctx_binary = check_cortex_compiled_2colours($cortex_dir, $kmer);
+    my $suffix = "intersect_sites";
+    my $colour_list;
+    ($colour_list, $filename_of_sample_overlap_bubble_binary) = make_colourlist($sample_graph, $sample, $suffix);
+    
+    my $cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --multicolour_bin $bubble_graph --colour_list $colour_list --load_colours_only_where_overlap_clean_colour 0 --successively_dump_cleaned_colours $suffix > $overlap_log 2>&1";
+    print "$cmd\n";
+    my $ret = qx{$cmd};
+    print "$ret\n";
+    print "Finished intersecting sample $sample with the bubble graph $bubble_graph\n";
+    my $time_end_overlap=new Benchmark;
+    my $time_taken_overlap=timediff($time_end_overlap,$time_start_overlap);
+    print "Time taken to overlap sample with bubbles is ", timestr($time_taken_overlap), "\n";
+
+}
 
 
-my $cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --multicolour_bin $bubble_graph --colour_list $colour_list --load_colours_only_where_overlap_clean_colour 0 --successively_dump_cleaned_colours $suffix > $overlap_log 2>&1";
-print "$cmd\n";
-my $ret = qx{$cmd};
-print "$ret\n";
-print "Finished intersecting sample $sample with the bubble graph $bubble_graph\n";
+print("\n*************************\n");
+print "Now, genotype sample:\n";
+### note start time
+    my $time_start_gt = new Benchmark;
 
-print "Now, genotype:\n";
 my $gt_output = $bubble_callfile.".".$sample.".genotyped";
 my $gt_log = $sample."_gt.log ";
 my $g_colour_list = make_2colourlist($filename_of_sample_overlap_bubble_binary, $ref_overlap_bubble_graph, $sample);
@@ -67,7 +98,19 @@ my $gt_cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_widt
 print "$gt_cmd\n";
 my $gt_ret = qx{$gt_cmd};
 print "$gt_ret\n";
-print "Genotyping done\n\nNow dump a VCF\n";
+print "Genotyping done\n";
+my $time_end_gt=new Benchmark;
+my $time_taken_gt=timediff($time_end_gt,$time_start_gt);
+print "Time taken to gt sample is ", timestr($time_taken_gt), "\n";
+
+
+
+#### DUMP VCF
+print("\n*************************\n");
+print("Now dump a VCF\n");
+### note start time
+my $time_start_vcf = new Benchmark;
+
 
 #make sample list
 my $samplelist = "REF_AND_".$sample;
@@ -75,12 +118,18 @@ open(O, ">".$samplelist)||die("Unable to open $samplelist");
 print O "REF\n$sample\n";
 close(O);
 
-my $vcf_cmd = "perl $analyse_variants_dir"."process_calls.pl --callfile $gt_output --callfile_log $gt_log --outvcf $sample".".vcf --outdir $outdir --samplename_list $samplelist  --num_cols 2  --caller BC --kmer 31 --refcol 0 --ploidy 2  --vcf_which_generated_calls $invcf --print_gls yes > $sample".".vcf.log";
+my $vcf_cmd = "perl $analyse_variants_dir"."process_calls.pl --callfile $gt_output --callfile_log $gt_log --outvcf $sample --outdir $outdir --samplename_list $samplelist  --num_cols 2  --caller BC --kmer 31 --refcol 0 --ploidy 2  --vcf_which_generated_calls $invcf --print_gls yes > $sample".".vcf.log";
 print $vcf_cmd;
 my $vcfret = qx{$vcf_cmd};
 print $vcfret;
 
-print "Finished! Sample $sample is genotyped and a VCF has been dumped\n";
+print "\nFinished! Sample $sample is genotyped and a VCF has been dumped\n";
+
+my $time_end_vcf=new Benchmark;
+my $time_taken_vcf=timediff($time_end_vcf,$time_start_vcf);
+print "Time taken to vcf sample with bubbles is ", timestr($time_taken_vcf), "\n";
+
+print("\n*************************\n");
 
 
 
