@@ -212,6 +212,7 @@ void test_fix_end_if_unambiguous()
   hash_table_free(&db_graph);
   strbuf_free(readbuf);
   strbuf_free(kmerbuf);
+  strbuf_free(qualbuf);
 
   
 }
@@ -1217,6 +1218,7 @@ void test_error_correct_file_against_graph()
 
 
   strbuf_free(read_seq);
+  strbuf_free(read_qual);
   hash_table_free(&db_graph);
 }
 
@@ -1539,7 +1541,8 @@ void test_reverse_comp_according_ref_pos_strand()
   CU_ASSERT(strcmp(read_qual->buff, "#,,,#####,,#,")==0);
 
   hash_table_free(&db_graph);
-
+  strbuf_free(read_seq);
+  strbuf_free(read_qual);
 
 
 }

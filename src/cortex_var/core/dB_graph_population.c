@@ -2878,7 +2878,7 @@ void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGra
   free(labels_flank3p);
   free(seq5p);
   free(seq3p);
-
+  free_covg_array(working_ca);
   free(path_nodes1);
   free(path_nodes2);
   free(path_orientations1);
@@ -7995,6 +7995,7 @@ int db_graph_make_reference_path_based_sv_calls(
 
 
   //free malloc-ed variables
+  free_covg_array(working_ca);
   free_VariantBranchesAndFlanks_object(var);
   free_genotyping_work_package(gwp);
   free(chrom_path_array);
@@ -9578,6 +9579,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 
   //free malloc-ed variables
+  free_covg_array(working_ca);
   free_VariantBranchesAndFlanks_object(var);
   free_genotyping_work_package(gwp);
   free(chrom_path_array);

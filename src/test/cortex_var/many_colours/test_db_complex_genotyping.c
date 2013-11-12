@@ -1119,60 +1119,72 @@ Colour:	MeanReadLen	TotalSeq
   var.other_allele     = branch2;
   var.len_other_allele = 134;
 
-  AnnotatedPutativeVariant annovar;
-  initialise_putative_variant(&annovar, &model_info, &var, BubbleCaller, 31, AssumeUncleaned, NULL, NULL, 
-			      NULL, true );//last 3 arguments (gwp, db_graph and little db graph) are not used except for PD genotying.
+  CovgArray* working_ca = alloc_and_init_covg_array(200);
 
-
-  // Since none of the colours except colour 3 has any coverage AT ALL on branch1, I simply
-  // cannot accept a genotype call which is het or hom_one for those colours
-
-  CU_ASSERT(annovar.genotype[1]!=hom_one);
-  CU_ASSERT(annovar.genotype[2]!=hom_one);
-  //leaving out colour 3
-  CU_ASSERT(annovar.genotype[4]!=hom_one);
-  CU_ASSERT(annovar.genotype[5]!=hom_one);
-  CU_ASSERT(annovar.genotype[6]!=hom_one);
-  CU_ASSERT(annovar.genotype[7]!=hom_one);
-  CU_ASSERT(annovar.genotype[8]!=hom_one);
-  CU_ASSERT(annovar.genotype[9]!=hom_one);
-  CU_ASSERT(annovar.genotype[10]!=hom_one);
-  
-  //hom one is least likely
-  CU_ASSERT(annovar.gen_log_lh[10].log_lh[0]<annovar.gen_log_lh[10].log_lh[1]);
-  CU_ASSERT(annovar.gen_log_lh[10].log_lh[0]<annovar.gen_log_lh[10].log_lh[2]);
-
-  CU_ASSERT(annovar.gen_log_lh[1].log_lh[0]<annovar.gen_log_lh[1].log_lh[1]);
-  CU_ASSERT(annovar.gen_log_lh[1].log_lh[0]<annovar.gen_log_lh[1].log_lh[2]);
-
-  CU_ASSERT(annovar.gen_log_lh[2].log_lh[0]<annovar.gen_log_lh[2].log_lh[1]);
-  CU_ASSERT(annovar.gen_log_lh[2].log_lh[0]<annovar.gen_log_lh[2].log_lh[2]);
-
-  CU_ASSERT(annovar.gen_log_lh[3].log_lh[0]<annovar.gen_log_lh[3].log_lh[1]);
-  CU_ASSERT(annovar.gen_log_lh[3].log_lh[0]<annovar.gen_log_lh[3].log_lh[2]);
-
-  CU_ASSERT(annovar.gen_log_lh[4].log_lh[0]<annovar.gen_log_lh[4].log_lh[1]);
-  CU_ASSERT(annovar.gen_log_lh[4].log_lh[0]<annovar.gen_log_lh[4].log_lh[2]);
-
-  CU_ASSERT(annovar.gen_log_lh[5].log_lh[0]<annovar.gen_log_lh[5].log_lh[1]);
-  CU_ASSERT(annovar.gen_log_lh[5].log_lh[0]<annovar.gen_log_lh[5].log_lh[2]);
-
-  CU_ASSERT(annovar.gen_log_lh[6].log_lh[0]<annovar.gen_log_lh[6].log_lh[1]);
-  CU_ASSERT(annovar.gen_log_lh[6].log_lh[0]<annovar.gen_log_lh[6].log_lh[2]);
-
-  CU_ASSERT(annovar.gen_log_lh[7].log_lh[0]<annovar.gen_log_lh[7].log_lh[1]);
-  CU_ASSERT(annovar.gen_log_lh[7].log_lh[0]<annovar.gen_log_lh[7].log_lh[2]);
-
-  CU_ASSERT(annovar.gen_log_lh[8].log_lh[0]<annovar.gen_log_lh[8].log_lh[1]);
-  CU_ASSERT(annovar.gen_log_lh[8].log_lh[0]<annovar.gen_log_lh[8].log_lh[2]);
-
-  CU_ASSERT(annovar.gen_log_lh[9].log_lh[0]<annovar.gen_log_lh[9].log_lh[1]);
-  CU_ASSERT(annovar.gen_log_lh[9].log_lh[0]<annovar.gen_log_lh[9].log_lh[2]);
-
-
-
-
+  //should not make a difference if you measure coverage using median or not, should still give same gt
+  boolean count_covg_using_jumps[2];
+  count_covg_using_jumps[0]=false;
+  count_covg_using_jumps[1]=true;
+  int c;
+  for (c=0; c<2; c++)
+    {
+      AnnotatedPutativeVariant annovar;
+      initialise_putative_variant(&annovar, &model_info, 
+				  &var, BubbleCaller, 31, 
+				  AssumeUncleaned, NULL, 
+				  NULL, NULL, working_ca, true, count_covg_using_jumps[c] );
+      
+      
+      // Since none of the colours except colour 3 has any coverage AT ALL on branch1, I simply
+      // cannot accept a genotype call which is het or hom_one for those colours
+      
+      CU_ASSERT(annovar.genotype[1]!=hom_one);
+      CU_ASSERT(annovar.genotype[2]!=hom_one);
+      //leaving out colour 3
+      CU_ASSERT(annovar.genotype[4]!=hom_one);
+      CU_ASSERT(annovar.genotype[5]!=hom_one);
+      CU_ASSERT(annovar.genotype[6]!=hom_one);
+      CU_ASSERT(annovar.genotype[7]!=hom_one);
+      CU_ASSERT(annovar.genotype[8]!=hom_one);
+      CU_ASSERT(annovar.genotype[9]!=hom_one);
+      CU_ASSERT(annovar.genotype[10]!=hom_one);
+      
+      //hom one is least likely
+      CU_ASSERT(annovar.gen_log_lh[10].log_lh[0]<annovar.gen_log_lh[10].log_lh[1]);
+      CU_ASSERT(annovar.gen_log_lh[10].log_lh[0]<annovar.gen_log_lh[10].log_lh[2]);
+      
+      CU_ASSERT(annovar.gen_log_lh[1].log_lh[0]<annovar.gen_log_lh[1].log_lh[1]);
+      CU_ASSERT(annovar.gen_log_lh[1].log_lh[0]<annovar.gen_log_lh[1].log_lh[2]);
+      
+      CU_ASSERT(annovar.gen_log_lh[2].log_lh[0]<annovar.gen_log_lh[2].log_lh[1]);
+      CU_ASSERT(annovar.gen_log_lh[2].log_lh[0]<annovar.gen_log_lh[2].log_lh[2]);
+      
+      CU_ASSERT(annovar.gen_log_lh[3].log_lh[0]<annovar.gen_log_lh[3].log_lh[1]);
+      CU_ASSERT(annovar.gen_log_lh[3].log_lh[0]<annovar.gen_log_lh[3].log_lh[2]);
+      
+      CU_ASSERT(annovar.gen_log_lh[4].log_lh[0]<annovar.gen_log_lh[4].log_lh[1]);
+      CU_ASSERT(annovar.gen_log_lh[4].log_lh[0]<annovar.gen_log_lh[4].log_lh[2]);
+      
+      CU_ASSERT(annovar.gen_log_lh[5].log_lh[0]<annovar.gen_log_lh[5].log_lh[1]);
+      CU_ASSERT(annovar.gen_log_lh[5].log_lh[0]<annovar.gen_log_lh[5].log_lh[2]);
+      
+      CU_ASSERT(annovar.gen_log_lh[6].log_lh[0]<annovar.gen_log_lh[6].log_lh[1]);
+      CU_ASSERT(annovar.gen_log_lh[6].log_lh[0]<annovar.gen_log_lh[6].log_lh[2]);
+      
+      CU_ASSERT(annovar.gen_log_lh[7].log_lh[0]<annovar.gen_log_lh[7].log_lh[1]);
+      CU_ASSERT(annovar.gen_log_lh[7].log_lh[0]<annovar.gen_log_lh[7].log_lh[2]);
+      
+      CU_ASSERT(annovar.gen_log_lh[8].log_lh[0]<annovar.gen_log_lh[8].log_lh[1]);
+      CU_ASSERT(annovar.gen_log_lh[8].log_lh[0]<annovar.gen_log_lh[8].log_lh[2]);
+      
+      CU_ASSERT(annovar.gen_log_lh[9].log_lh[0]<annovar.gen_log_lh[9].log_lh[1]);
+      CU_ASSERT(annovar.gen_log_lh[9].log_lh[0]<annovar.gen_log_lh[9].log_lh[2]);
+      
+    }
+      
+      
   //cleanup
+  free_covg_array(working_ca);
 
   for (i=0; i<22; i++)
     {
@@ -1439,6 +1451,7 @@ Colour 0 = reference
   var.other_allele_or    =branch2_o;
   var.len_other_allele = 56;
   var.which = first;
+  CovgArray* working_ca = alloc_and_init_covg_array(200);
   int little_width =100;
   int little_height = 10;
   int little_retries=20;
@@ -1451,18 +1464,19 @@ Colour 0 = reference
       die("Unable to malloc genotyping work package. Out of memory. Abort\n");
     }
 
-  //DEBUG ONLY
-  //  db_graph_print_supernodes_defined_by_func_of_colours("zimzam_sups", "zimzam_sings", 10000,
-  //						       db_graph, &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, 
-  //						       &print_no_extra_supernode_info);
-  //END OF DEBUG ONLY
 
-  initialise_putative_variant(&annovar, &model_info, &var, SimplePathDivergenceCaller, 
-			      56, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph, true );
+  //counting covg by counting jumps
+  initialise_putative_variant(&annovar, &model_info, 
+			      &var, SimplePathDivergenceCaller, 31,
+			      AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, 
+			      little_db_graph, working_ca, true, false );
+  CU_ASSERT(annovar.genotype[1]==hom_other);
 
-
-
-
+  //using median
+  initialise_putative_variant(&annovar, &model_info, 
+			      &var, SimplePathDivergenceCaller, 31,
+			      AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, 
+			      little_db_graph, working_ca, true, true );
   CU_ASSERT(annovar.genotype[1]==hom_other);
 
 
@@ -1521,10 +1535,20 @@ Colour 0 = reference
   AnnotatedPutativeVariant annovar2;
   wipe_little_graph(little_db_graph);
 
-  initialise_putative_variant(&annovar2, &model_info, &var, SimplePathDivergenceCaller, 
-			      56, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, little_db_graph, true );
+  initialise_putative_variant(&annovar2, &model_info, 
+			      &var, SimplePathDivergenceCaller, 31,
+			      AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, 
+			      gwp, db_graph, little_db_graph, 
+			      working_ca, true, false );
+  CU_ASSERT(annovar2.genotype[1]==hom_other);//1==colour
 
 
+  //using median
+  initialise_putative_variant(&annovar2, &model_info, 
+			      &var, SimplePathDivergenceCaller, 31,
+			      AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, 
+			      gwp, db_graph, little_db_graph, 
+			      working_ca, true, true );
   CU_ASSERT(annovar2.genotype[1]==hom_other);//1==colour
 
 
