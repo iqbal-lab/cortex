@@ -780,7 +780,6 @@ boolean get_num_effective_reads_on_branch(Covg* array, dBNode** allele, int how_
 	    {
 	      eff_read_len = ginfo->mean_read_length[i] - kmer+1;
 	    }
-	  printf("Got mean read len %d, kmer %d and eff read len of %d\n", ginfo->mean_read_length[i], kmer, eff_read_len);
 	  if (how_many_nodes>eff_read_len)
 	    {
 	      array[i] = ((how_many_nodes+ 0.5*eff_read_len)/eff_read_len) *  median_covg_on_allele_in_specific_colour(allele, how_many_nodes, working_ca, i, &too_short);
@@ -789,7 +788,6 @@ boolean get_num_effective_reads_on_branch(Covg* array, dBNode** allele, int how_
 	    {
 	      array[i] = median_covg_on_allele_in_specific_colour(allele, how_many_nodes, working_ca, i, &too_short);
 	    }
-	  printf("Set num reads pn allele to %" PRIu64 "\n", (uint64_t)array[i] );
 	}
     }
   return too_short;
