@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo  
+ * Copyright 2009-2013 Zamin Iqbal and Mario Caccamo  
  * 
  * CORTEX project contacts:  
  * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
@@ -2463,8 +2463,8 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
   boolean flag1=false;
   boolean flag2=false;
 
-  flag1=get_num_effective_reads_on_branch(annovar->br1_covg, var->one_allele, var->len_one_allele, use_median, working_ca);
-  flag2=get_num_effective_reads_on_branch(annovar->br2_covg, var->other_allele, var->len_other_allele, use_median, working_ca);
+  flag1=get_num_effective_reads_on_branch(annovar->br1_covg, var->one_allele, var->len_one_allele, use_median, working_ca, ginfo, kmer);
+  flag2=get_num_effective_reads_on_branch(annovar->br2_covg, var->other_allele, var->len_other_allele, use_median, working_ca, ginfo, kmer);
 
   annovar->too_short = false;
   if ( (flag1==true)||(flag2==true) )
@@ -2488,8 +2488,8 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
     }
   else//is a valid putative site
     {
-      get_num_effective_reads_on_branch(annovar->theta1, var->one_allele, annovar->len_start, use_median, working_ca);
-      get_num_effective_reads_on_branch(annovar->theta2, var->other_allele, annovar->len_start, use_median, working_c);
+      get_num_effective_reads_on_branch(annovar->theta1, var->one_allele, annovar->len_start, use_median, working_ca, ginfo, kmer);
+      get_num_effective_reads_on_branch(annovar->theta2, var->other_allele, annovar->len_start, use_median, working_ca, ginfo, kmer);
 
       int i;
       annovar->BigTheta = 0;

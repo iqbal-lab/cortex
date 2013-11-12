@@ -10580,13 +10580,14 @@ void print_median_extra_supernode_info(dBNode** node_array,
   fprintf(fout, "Colour\tmedian_covg_on_sup\n");
 
   int col;
+  boolean too_short=false;
   for (col=0; col<NUMBER_OF_COLOURS; col++)
     {
       fprintf(fout, "%d\t", col);
       Covg c = median_covg_on_allele_in_specific_colour(node_array,
 							len,
 							working_ca,
-							col);
+							col, &too_short);
       fprintf(fout, "%" PRIu64 "\n", (uint64_t)c);
     }
   //  fprintf(fout, "\n\n");
@@ -10613,7 +10614,7 @@ void print_median_covg_extra_info(VariantBranchesAndFlanks* var, CovgArray* work
   fprintf(fout, "\n");
   //print coverages:
   fprintf(fout, "Colour\tbr1_median_covg\tbr2_median_covg\n");
-
+  boolean too_short=false;
   int col;
   for (col=0; col<NUMBER_OF_COLOURS; col++)
     {
@@ -10621,11 +10622,11 @@ void print_median_covg_extra_info(VariantBranchesAndFlanks* var, CovgArray* work
       Covg c1 = median_covg_on_allele_in_specific_colour(var->one_allele,
 							 var->len_one_allele,
 							 working_ca,
-							 col);
+							 col, &too_short);
       Covg c2 = median_covg_on_allele_in_specific_colour(var->other_allele,
 							 var->len_other_allele,
 							 working_ca,
-							 col);
+							 col, &too_short);
 
       fprintf(fout, "%" PRIu64 "\t%" PRIu64 "\n", (uint64_t)c1,(uint64_t)c2);
     }

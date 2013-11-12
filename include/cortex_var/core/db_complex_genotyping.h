@@ -218,7 +218,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar,
                                     AssumptionsOnGraphCleaning assump,
                                     GenotypingWorkingPackage* gwp,
                                     dBGraph* db_graph,
-                                    LittleHashTable* little_db_graph,
-                                    boolean do_genotyping);
+                                    LittleHashTable* little_db_graph, CovgArray* working_ca,
+                                    boolean do_genotyping, boolean use_median);
 
 #endif /* DB_COMPLEX_GENOTYPING_H_ */

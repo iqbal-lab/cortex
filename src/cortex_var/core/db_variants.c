@@ -569,6 +569,8 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
   double theta_one   = ((double)(sequencing_depth_of_coverage * annovar->var->len_one_allele))  /( (double) read_length );
   double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
 
+  //DEBUG
+  printf("ZAM - covg on two alleles is %" PRIu64 ",%" PRIu64 "\n", (uint64_t) (annovar->br1_covg[colour]),(uint64_t) (annovar->br2_covg[colour]));
 
   annovar->gen_log_lh[colour].log_lh[hom_one]   = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
@@ -586,9 +588,9 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
 								     annovar->br2_covg[colour],
 								     theta_one, theta_other);
  
-//  printf("Log likelihood of data in colour %d under hom_one is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_one]);
-//  printf("Log likelihood of data in colour %d under het is %f\n", colour, annovar->gen_log_lh[colour].log_lh[het] );
-//  printf("Log likelihood of dat ain colour %d under hom_other is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_other] );
+  printf("Log likelihood of data in colour %d under hom_one is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_one]);
+  printf("Log likelihood of data in colour %d under het is %f\n", colour, annovar->gen_log_lh[colour].log_lh[het] );
+  printf("Log likelihood of dat ain colour %d under hom_other is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_other] );
 
 
 }
@@ -626,18 +628,18 @@ void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(
 
   annovar->gen_log_lh[colour].log_lh[hom_one]   = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
-      hom_one, seq_error_rate_per_base, 
-      initial_covg_plus_upward_jumps_branch1, 
-      initial_covg_plus_upward_jumps_branch2, 
-      theta_one, theta_other);
-
+								     hom_one, seq_error_rate_per_base, 
+								     initial_covg_plus_upward_jumps_branch1, 
+								     initial_covg_plus_upward_jumps_branch2, 
+								     theta_one, theta_other);
+  
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
-      hom_other, seq_error_rate_per_base, 
-      initial_covg_plus_upward_jumps_branch1, 
-      initial_covg_plus_upward_jumps_branch2, 
-      theta_one, theta_other);
-
+								     hom_other, seq_error_rate_per_base, 
+								     initial_covg_plus_upward_jumps_branch1, 
+								     initial_covg_plus_upward_jumps_branch2, 
+								     theta_one, theta_other);
+  
   //this is not allowed by the model
   annovar->gen_log_lh[colour].log_lh[het]
     = annovar->gen_log_lh[colour].log_lh[hom_one] +
@@ -760,7 +762,8 @@ void initialise_genotype_log_likelihoods(GenotypeLogLikelihoods* gl)
 //and so you enter that in arg3 in that case
 //note these are effective reads, as counting covg in the de Bruijn graph
 //returns TRUE if branch is too short (1 oor 2 nodes) to do this
-boolean get_num_effective_reads_on_branch(Covg* array, dBNode** allele, int how_many_nodes, boolean use_median, CovgArray* working_ca)
+boolean get_num_effective_reads_on_branch(Covg* array, dBNode** allele, int how_many_nodes, 
+					  boolean use_median, CovgArray* working_ca, GraphInfo* ginfo, int kmer)
 {
   int i;
   boolean too_short=false;
@@ -772,7 +775,21 @@ boolean get_num_effective_reads_on_branch(Covg* array, dBNode** allele, int how_
 	}
       else
 	{
-	  array[i] = median_covg_on_allele_in_specific_colour(allele, how_many_nodes, working_ca, i, &too_short);
+	  int eff_read_len = 100;
+	  if (ginfo!=NULL)
+	    {
+	      eff_read_len = ginfo->mean_read_length[i] - kmer+1;
+	    }
+	  printf("Got mean read len %d, kmer %d and eff read len of %d\n", ginfo->mean_read_length[i], kmer, eff_read_len);
+	  if (how_many_nodes>eff_read_len)
+	    {
+	      array[i] = ((how_many_nodes+ 0.5*eff_read_len)/eff_read_len) *  median_covg_on_allele_in_specific_colour(allele, how_many_nodes, working_ca, i, &too_short);
+	    }
+	  else
+	    {
+	      array[i] = median_covg_on_allele_in_specific_colour(allele, how_many_nodes, working_ca, i, &too_short);
+	    }
+	  printf("Set num reads pn allele to %" PRIu64 "\n", (uint64_t)array[i] );
 	}
     }
   return too_short;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo
+ * Copyright 2009-2013 Zamin Iqbal and Mario Caccamo
  * 
  * CORTEX project contacts:  
  * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
@@ -248,7 +248,9 @@ long long get_big_theta(AnnotatedPutativeVariant* annovar);
 
 
 //utility functions
-boolean get_num_effective_reads_on_branch(int* array, dBNode** allele, int how_many_nodes);
+boolean get_num_effective_reads_on_branch(Covg* array, dBNode** allele, int how_many_nodes, 
+					  boolean use_median, CovgArray* working_ca, GraphInfo* ginfo, int kmer);
+
 Covg count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colour, boolean* too_short);
 Covg count_reads_on_allele_in_specific_colour_given_array_of_cvgs(Covg* covgs, int len, boolean* too_short);
 Covg count_reads_on_allele_in_specific_func_of_colours(
@@ -257,7 +259,7 @@ Covg count_reads_on_allele_in_specific_func_of_colours(
   boolean* too_short);
 
 Covg median_covg_on_allele_in_specific_colour(dBNode** allele, int len, CovgArray* working_ca,
-					      int colour);
+					      int colour, boolean* too_short);
 
 Covg median_of_CovgArray(CovgArray* array, CovgArray* working_array);
 

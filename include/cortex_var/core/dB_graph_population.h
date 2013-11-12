@@ -685,12 +685,12 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var,
                                         FILE* fout,
                                         GraphAndModelInfo* model_info,
-					                              DiscoveryMethod which_caller,
+					DiscoveryMethod which_caller,
                                         dBGraph* db_graph,
                                         void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
-					                              AssumptionsOnGraphCleaning assump,
+					AssumptionsOnGraphCleaning assump,
                                         GenotypingWorkingPackage* gwp,
-                                        LittleHashTable* little_dbg);
+                                        LittleHashTable* little_dbg, CovgArray* working_ca);
 
 
 void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int colour1, int colour2,

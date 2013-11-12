@@ -246,7 +246,7 @@ elsif ($legacy_callfile==1)
     print " Should be no problem, have tried to get process_calls.pl to handle the old legacy format. This is not an error message\n";
 }
 
-if ($vcftools_dir eq "/path/to/vcftools/dir")
+if ( ($vcftools_dir eq "/path/to/vcftools/dir") && ($vcf_on_which_calls_based eq "unspecified") )
 {
     die("You must specify the VCFTools directory, either on the commandline with --vcftools_dir, or by editing process_calls.pl manually (it's highlighted for you at the top of the file)\n");
 }
@@ -259,10 +259,10 @@ if ($vcf_on_which_calls_based ne "unspecified")
     }
 }
 
-if ( ( !( -e $stampy_bin )) && ($reference_colour != -1) )
+if ( ( !( -e $stampy_bin )) && ($reference_colour != -1) && ($vcf_on_which_calls_based eq "unspecified") )
 { 
-	print(
-"Since you have specified a reference colour (--refcol), I assume you are using a reference. In this case, this script requires Stampy be installed, but it cannot find it. I tlooked for $stampy_bin which is either the default (Zam's path) or the file you entered as the argument of --stampy_bin. Please can you re-run, entering a valid path to Stampy. eg /home/myname/path/to/stampy.py\n"
+    print(
+	"Since you have specified a reference colour (--refcol), I assume you are using a reference. In this case, this script requires Stampy be installed, but it cannot find it. I tlooked for $stampy_bin which is either the default (Zam's path) or the file you entered as the argument of --stampy_bin. Please can you re-run, entering a valid path to Stampy. eg /home/myname/path/to/stampy.py\n"
 	);
 	die();
 }
@@ -303,9 +303,16 @@ if ( ( $reference_colour < 0 ) && ( $reference_colour != -1 ) )
 }
 if ( ( $reference_colour!=-1 ) && ( $stampy_hash_stub eq "" ) )
 {
+    if ($vcf_on_which_calls_based eq "unspecified")
+    {
 	die(
-"If you are using a reference in the graph, then you must provide a stampy hash\n"
-	);
+	    "If you are using a reference in the graph, then you must provide a stampy hash\n"
+	    );
+    }
+    else
+    {
+	#everything is based on an input VCF which already has coords - no need to map
+    }
 }
 
 if ( ( $reference_colour==-1 ) && ( $stampy_hash_stub ne "" ) )
@@ -823,7 +830,6 @@ sub collect_confidences_and_likelihoods
 		    if ($colour =~ /=REF/)
 		    {
 			$colour =~ s/=REF//;
-			print "fixed colour is $colour\n";
 		    }
 		    
 		    for ($z=0; $z<$num_gls; $z++)
@@ -856,7 +862,7 @@ sub collect_confidences_and_likelihoods
 		if ($line =~ />(\S*var_\d+)_5p_flank/)
 		{
 		    $realname = $1;
-		    print "Got realname $realname\n";
+
 		    ## we have stored all the GL info for all colours in our local hash
 		    ##transfer to the global hash/passed-in hash
 		    my $k;

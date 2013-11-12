@@ -1,20 +1,16 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Basename;
-
+use File::Spec;
 use Getopt::Long;
 
-## annoyingly, there are a couple of variable you need to pass in, even though you dont need them for this
-my $hash = "/path/to/stampy/hash/of/human/genone";
-my $stampy = "/path/to/stampy.py";
-my $vcftoolsdir = "/path/to/vcftools_dir";
-my $ref_fasta = "/path/to/human_g1k_v37.fasta.proper_chroms_only";
+
 my $invcf = "cortex_phase3_biallelic_sitelist.vcf";
 
-my $cortex_dir = "/home/zam/CORTEX_release_v1.0.5.21";
+my $cortex_dir = "/home/zam/dev/hg/bitbucket/CORTEX_mainline/";
 my $analyse_variants_dir = $cortex_dir."scripts/analyse_variants/";
 my $sample_cleaned_graph="";
-my $ref_overlap_bubble_graph="human_g1k_v37.proper_chroms.k31.ctx.list_intersect_bubbles.ctx";
+my $ref_overlap_bubble_graph="human_g1k_v37.proper_chroms.k31.ctx.list_intersect_bubbles.ctx";## shoud be absolute path
 my $bubble_callfile = "cortex_phase3_biallelic_pseudo_callfile";
 my $mem_height = 24;
 my $mem_width = 73;
@@ -22,16 +18,20 @@ my $kmer= 31;
 my $sample="";
 my $sample_graph="";
 my $bubble_graph="";
+my $overlap_log="";
+my $outdir="";
 
 
 
 &GetOptions(
     'invcf:s'                             =>\$invcf,
+    'outdir:s'                             =>\$outdir,
     'sample:s'                            =>\$sample,
     'sample_graph:s'                      =>\$sample_graph,##whole genome graph of sample
     'bubble_graph:s'                         => \$bubble_graph,
     'bubble_callfile:s'                   => \$bubble_callfile,#should be as above but with path in front
     'ref_overlap_bubble_graph:s'              => \$ref_overlap_bubble_graph,#should be as above, but with path on front
+    'overlap_log:s'                       => \$overlap_log,#specify name for log file for dumping overlap of sample with bubbles 
     'mem_height:i'                          =>\$mem_height,
     'mem_width:i'                           =>\$mem_width,
     );
@@ -39,7 +39,7 @@ my $bubble_graph="";
 
 
 
-check_args($bubble_graph, $mem_height, $mem_width, $sample);
+check_args($bubble_graph, $mem_height, $mem_width, $sample, $overlap_log);
 
 if ($cortex_dir !~ /\/$/)
 {
@@ -53,7 +53,7 @@ my $suffix = "intersect_sites";
 my ($colour_list, $filename_of_sample_overlap_bubble_binary) = make_colourlist($sample_graph, $sample, $suffix);
 
 
-my $cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --multicolour_bin $bubble_graph --colour_list $colour_list --load_colours_only_where_overlap_clean_colour 0 --successively_dump_cleaned_colours $suffix";
+my $cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --multicolour_bin $bubble_graph --colour_list $colour_list --load_colours_only_where_overlap_clean_colour 0 --successively_dump_cleaned_colours $suffix > $overlap_log 2>&1";
 print "$cmd\n";
 my $ret = qx{$cmd};
 print "$ret\n";
@@ -63,13 +63,19 @@ print "Now, genotype:\n";
 my $gt_output = $bubble_callfile.".".$sample.".genotyped";
 my $gt_log = $sample."_gt.log ";
 my $g_colour_list = make_2colourlist($filename_of_sample_overlap_bubble_binary, $ref_overlap_bubble_graph, $sample);
-my $gt_cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --colour_list $g_colour_list --max_read_len 15000 --gt ".$bubble_callfile.",".$gt_output.",BC –genome_size 3000000000 –experiment_type EachColourADiploidSampleExceptTheRefColour –print_median_covg_only  –estimated_error_rate 0.01 –ref_colour 0  >& $gt_log";
+my $gt_cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --colour_list $g_colour_list --max_read_len 15000 --gt ".$bubble_callfile.",".$gt_output.",BC --genome_size 3000000000 --experiment_type EachColourADiploidSampleExceptTheRefColour --print_median_covg_only  --estimated_error_rate 0.01 --ref_colour 0  > $gt_log 2>&1";
 print "$gt_cmd\n";
 my $gt_ret = qx{$gt_cmd};
 print "$gt_ret\n";
 print "Genotyping done\n\nNow dump a VCF\n";
 
-my $vcf_cmd = "perl $analyse_variants_dir"."process_calls.pl --callfile $gt_ret --callfile_log $gt_log --out_vcf $sample".".vcf --outdir $outdir --samplename_list REF_AND_SAMPLE --num_cols 2 --stampy_hash $hash --vcftools_dir $vcftoolsdir --caller BC --kmer 31 --stampy_bin $stampy --refcol 0 --ploidy 2 --ref_fasta $ref_fasta --vcf_which_generated_calls $invcf";
+#make sample list
+my $samplelist = "REF_AND_".$sample;
+open(O, ">".$samplelist)||die("Unable to open $samplelist");
+print O "REF\n$sample\n";
+close(O);
+
+my $vcf_cmd = "perl $analyse_variants_dir"."process_calls.pl --callfile $gt_output --callfile_log $gt_log --outvcf $sample".".vcf --outdir $outdir --samplename_list $samplelist  --num_cols 2  --caller BC --kmer 31 --refcol 0 --ploidy 2  --vcf_which_generated_calls $invcf --print_gls yes > $sample".".vcf.log";
 print $vcf_cmd;
 my $vcfret = qx{$vcf_cmd};
 print $vcfret;
@@ -81,8 +87,12 @@ print "Finished! Sample $sample is genotyped and a VCF has been dumped\n";
 
 sub check_args
 {
-    my ($bub_g, $h, $w, $sam) = @_;
+    my ($bub_g, $h, $w, $sam, $overlap_log) = @_;
     
+    if ($overlap_log eq "")
+    {
+	die("You must specify the name of the log file which will be generated when overlapping the sample with the bubbles\n");
+    }
     if ($bub_g eq "")
     {
 	die("You must specify the bubble graph, using --bubble_graph");
@@ -155,7 +165,7 @@ sub make_colourlist
     close(FLIST);
     close(COL);
 
-    return ($col_list, $list_this_binary.$suffix.".ctx");
+    return ($col_list, $list_this_binary."_".$suffix.".ctx");
 }
 
 
@@ -170,13 +180,19 @@ sub make_2colourlist
 {
     my ($graph, $ref_binary, $id) = @_;
 
+    $graph = File::Spec->rel2abs($graph);
+    $ref_binary = File::Spec->rel2abs($ref_binary);
     my $bname = basename($graph);
-    my $ref_bname = basename($ref_binary);
+    my $ref_bname =  basename($ref_binary);
     my $dir = dirname($graph);
-
+    my $refdir = dirname($ref_binary);
     if ($dir !~ /\/$/)
     {
 	$dir = $dir.'/';
+    }
+    if ($refdir !~ /\/$/)
+    {
+	$refdir = $refdir.'/';
     }
     my $col_list = $dir.$id."_colourlist_for_genotyping";
     my $list_this_binary=$graph.".filelist";
@@ -192,7 +208,7 @@ sub make_2colourlist
     close(FLIST);
     print RLIST "$ref_bname\n";
     close(RLIST);
-    print COL "$list_ref_binary_nodir\n$list_this_binary_nodir\n";
+    print COL "$list_ref_binary\n$list_this_binary\n";
     close(COL);
 
     return $col_list;

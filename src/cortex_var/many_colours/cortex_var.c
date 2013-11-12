@@ -114,6 +114,11 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
 	}
       kmer_window->nkmers=0;
       
+      CovgArray* working_ca = alloc_and_init_covg_array(cmd_line->max_read_length+1);
+      if (working_ca==NULL)
+	{
+	  die("Unable to alloc an array of coverages for genotyping - abort. Your server must have run out of memory.\n");
+	}
       VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(cmd_line->max_read_length+1, cmd_line->max_read_length+1, 
 									    cmd_line->max_read_length+1, cmd_line->max_read_length+1, db_graph->kmer_size);
       if (var==NULL)
@@ -171,7 +176,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
 	      AssumptionsOnGraphCleaning assump=AssumeUncleaned; 
 	      print_call_given_var_and_modelinfo(var, fout, model_info, cmd_line->which_caller_was_used_for_calls_to_be_genotyped, db_graph,
 						 print_whatever_extra_variant_info,
-						 assump, gwp, little_dbg);
+						 assump, gwp, little_dbg, working_ca);
 	    }
 	  else
 	    {
@@ -183,6 +188,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
       fclose(fout);
       fclose(fp);
       free_VariantBranchesAndFlanks_object(var);
+      free_covg_array(working_ca);
       if (cmd_line->which_caller_was_used_for_calls_to_be_genotyped==SimplePathDivergenceCaller)
 	{
 	  free_genotyping_work_package(gwp); 
@@ -431,7 +437,7 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 	
 	for (i=0; i<NUMBER_OF_COLOURS; i++)//for each colour
 	  {
-	    
+	    boolean too_short=false;
 	    if ( (model_info->ginfo->total_sequence[i]>0) //ignore colours with no data
 	      &&
 		 (model_info->ginfo->mean_read_length[i]>0) )
@@ -439,9 +445,9 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 		if (i==cmd_line->ref_colour)
 		  {
 		    float median_covg_allele1_in_ref = median_covg_on_allele_in_specific_colour(var->one_allele, var->len_one_allele, 
-												working_ca, cmd_line->ref_colour);
+												working_ca, cmd_line->ref_colour, &too_short);
 		    float median_covg_allele2_in_ref = median_covg_on_allele_in_specific_colour(var->other_allele, var->len_other_allele, 
-												working_ca, cmd_line->ref_colour);
+												working_ca, cmd_line->ref_colour, &too_short);
 		    if ( (median_covg_allele1_in_ref==0) && (median_covg_allele2_in_ref==0) )
 		      {
 			return false; //I insist on covg on ref allele as one of these two
@@ -457,9 +463,9 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
 		    //float exp_covg = factor2 * ((float)depth);
 		    
 		    Covg median_covg_allele1 = median_covg_on_allele_in_specific_colour(var->one_allele, var->len_one_allele,
-											 working_ca, i);
+											working_ca, i, &too_short);
 		    Covg median_covg_allele2 = median_covg_on_allele_in_specific_colour(var->other_allele, var->len_other_allele,
-											 working_ca, i);
+											working_ca, i, &too_short);
 		    
 		    Covg sum =sum_covgs(median_covg_allele1,median_covg_allele2);
 		    // exp depth = depth*factor1/R = seq*factor1/(R*genome_size)
