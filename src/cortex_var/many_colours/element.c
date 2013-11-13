@@ -71,7 +71,7 @@ Element* new_element()
   }
 
   e->status = (char)none;
-
+  c->allele_status = (char) neither;
   return e;
 }
 
@@ -94,6 +94,7 @@ void element_assign(Element* e1, Element* e2)
   }
 
   e1->status = e2->status;
+  e1->allele_status = e2->allele_status;
 }
 
 
@@ -382,7 +383,7 @@ void element_initialise(Element * e, Key kmer, short kmer_size){
     }
 
   db_node_set_status(e, none);
-
+  db_node_set_allele_status(e, neither);
 }
 
 
@@ -399,6 +400,7 @@ void element_initialise_kmer_covgs_edges_and_status_to_zero(Element * e)
   }
 
   db_node_set_status(e, none);
+  db_node_set_allele_status(e, neither);
 }
 
 
@@ -803,6 +805,10 @@ boolean db_node_check_status(dBNode * node, NodeStatus status)
 {
   return (node->status == (char)status);
 }
+boolean db_node_check_allele_status(dBNode * node, AlleleStatus status)
+{
+  return (node->allele_status == (char)status);
+}
 
 boolean db_node_check_status_to_be_dumped(dBNode * node)
 {
@@ -844,6 +850,11 @@ boolean db_node_check_status_not_pruned_or_visited(dBNode * node)
 void db_node_set_status(dBNode *node, NodeStatus status)
 {
   node->status = (char)status;
+}
+
+void db_node_set_allele_status(dBNode *node, AlleleStatus status)
+{
+  node->allele_status = (char)status;
 }
 
 void db_node_set_status_to_none(dBNode * node)

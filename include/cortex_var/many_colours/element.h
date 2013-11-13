@@ -70,11 +70,22 @@ typedef enum
     rv_strand = 16,
   } NodeStatus;
 
+
+typedef enum
+  {
+    neither =0,
+    one     =1,
+    two     =2,
+    both    =3,
+  } AlleleStatus;
+
+
 typedef struct{
   BinaryKmer kmer;
   Covg       coverage[NUMBER_OF_COLOURS];
   Edges      individual_edges[NUMBER_OF_COLOURS];
   char       status; // will cast a NodeStatus to char
+  char       allele_status;
 } Element;
 
 
@@ -183,6 +194,7 @@ void db_node_reset_specified_edges(dBNode * node, Orientation orientation,
 boolean db_node_edges_reset(dBNode *node, int colour);
 
 boolean db_node_check_status(dBNode *node, NodeStatus status);
+boolean db_node_check_allele_status(dBNode * node, AlleleStatus status);
 boolean db_node_check_status_not_pruned(dBNode *node);
 boolean db_node_check_status_not_pruned_or_visited(dBNode *node);
 boolean db_node_check_status_to_be_dumped(dBNode *node);
@@ -190,7 +202,7 @@ boolean db_node_check_status_is_not_visited(dBNode *node);
 
 
 void db_node_set_status(dBNode *node,NodeStatus status);
-void db_node_trio_aware_set_pruned_status(dBNode *node, int colour);
+void db_node_set_allele_status(dBNode *node, AlleleStatus status)
 void db_node_set_status_to_none(dBNode *node);
 
 

@@ -2488,8 +2488,8 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
     }
   else//is a valid putative site
     {
-      get_num_effective_reads_on_branch(annovar->theta1, var->one_allele, annovar->len_start, use_median, working_ca, ginfo, kmer);
-      get_num_effective_reads_on_branch(annovar->theta2, var->other_allele, annovar->len_start, use_median, working_ca, ginfo, kmer);
+      get_num_effective_reads_on_unique_part_of_branch(annovar->br1_junc_covg, var->one_allele, annovar->len_start, use_median, working_ca, ginfo, kmer);
+      get_num_effective_reads_on_unique_part_of_branch(annovar->br2_junc_covg, var->other_allele, annovar->len_start, use_median, working_ca, ginfo, kmer);
 
       int i;
       annovar->BigTheta = 0;
@@ -2504,7 +2504,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 	      continue;
 	    }
 	  annovar->BigTheta      += annovar->br1_covg[i] + annovar->br2_covg[i];
-	  annovar->BigThetaStart += annovar->theta1[i] + annovar->theta2[i];
+	  annovar->BigThetaStart += annovar->br1_junc_covg[i] + annovar->br2_junc_covg[i];
 	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[i]));
 	}
       
@@ -2554,8 +2554,12 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 		    }
 		  else
 		    {
-		      get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(annovar, assump,
-											    model_info, little_db_graph, db_graph,gwp,i);
+		      get_all_genotype_log_likelihoods_at_PD_call_for_one_colour_using_juncs(annovar,
+											     model_info->ginfo->seq_err[i],
+											     sequencing_depth_of_coverage,
+											     mean_read_len,i);
+		      //  get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(annovar, assump,
+		      //									    model_info, little_db_graph, db_graph,gwp,i);
 		    }
 		  
 		  if (annovar->gen_log_lh[i].log_lh[hom_one]>= annovar->gen_log_lh[i].log_lh[het])
@@ -2593,13 +2597,18 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 		    }
 		  else
 		    {
-		      get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(annovar, 
+		      get_all_genotype_log_likelihoods_at_PD_call_for_one_colour_using_juncs(annovar,
+											     model_info->ginfo->seq_err[i],
+											     sequencing_depth_of_coverage,
+											     mean_read_len,i);
+
+		      /*		      get_all_full_model_genotype_log_likelihoods_at_PD_call_for_one_colour(annovar, 
 											    assump,
 											    model_info, 
 											    little_db_graph, 
 											    db_graph,
 											    gwp,
-											    i);
+											    i);*/
 
 		    }
 		  

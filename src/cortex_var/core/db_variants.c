@@ -597,6 +597,54 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
 
 
 
+void get_all_genotype_log_likelihoods_at_PD_call_for_one_colour_using_juncs(AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, 
+									    double sequencing_depth_of_coverage, int read_length, int colour)
+{
+
+
+  if (annovar->too_short==true)
+    {
+      int j;
+      //set all the log likelihoods to zero.
+      for (j=0; j<NUMBER_OF_COLOURS; j++)
+	{
+	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[j]));
+	}
+      return ;
+    }
+      //  }
+
+  double theta_one   = ((double)(sequencing_depth_of_coverage * annovar->var->len_one_allele))  /( (double) read_length );
+  double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
+
+  //DEBUG
+  //printf("ZAM - covg on two alleles is %" PRIu64 ",%" PRIu64 "\n", (uint64_t) (annovar->br1_covg[colour]),(uint64_t) (annovar->br2_covg[colour]));
+
+  annovar->gen_log_lh[colour].log_lh[hom_one]   = 
+    get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
+								     annovar->br1_junc_covg[colour],
+								     annovar->br2_junc_covg[colour],
+								     theta_one, theta_other);
+  annovar->gen_log_lh[colour].log_lh[het]       = 
+    get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, seq_error_rate_per_base, 
+								     annovar->br1_junc_covg[colour],
+								     annovar->br2_junc_covg[colour],
+								     theta_one, theta_other);
+  annovar->gen_log_lh[colour].log_lh[hom_other] = 
+    get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
+								     annovar->br1_junc_covg[colour],
+								     annovar->br2_junc_covg[colour],
+								     theta_one, theta_other);
+ 
+  //  printf("Log likelihood of data in colour %d under hom_one is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_one]);
+  // printf("Log likelihood of data in colour %d under het is %f\n", colour, annovar->gen_log_lh[colour].log_lh[het] );
+  // printf("Log likelihood of dat ain colour %d under hom_other is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_other] );
+
+
+}
+
+
+
 
 
 
@@ -792,6 +840,92 @@ boolean get_num_effective_reads_on_branch(Covg* array, dBNode** allele, int how_
     }
   return too_short;
 }
+
+void mark_first_allele(dBNode** allele1, int len1)
+{
+  int i;
+  for (i=0; i<=len1; i++)
+    {
+      if (allele1[i]!=NULL)
+	{
+	  db_node_set_allele_status(allele1[i], one);
+	}
+    }
+}
+
+void mark_second_allele(dBNode** allele2, int len2)
+{
+  int i;
+  for (i=0; i<=len2; i++)
+    {
+      if (allele2[i]!=NULL)
+	{
+	  if (db_node_check_allele_status(allele2[i], one)==false)
+	    {
+	      db_node_set_allele_status(allele2[i], two);
+	    }
+	  else
+	    {
+	      db_node_set_allele_status(allele2[i], both);
+	    }
+	}
+    }
+}
+
+boolean reset_allele_status(dBNode** allele, int len)
+{
+  int i;
+  for (i=0; i<=len;i++)
+    {
+      if (allele[i]!=NULL)
+	{
+	  db_node_set_allele_status(allele[i], neither);
+	}
+    }
+}
+
+//also ignoring things that look like repeats....
+boolean get_num_effective_reads_on_unique_part_of_branch(Covg* array1, dBNode** allele1, int len1, 
+							 Covg* array2, dBNode** allele2, int len2,
+							 CovgArray* working_ca, GraphInfo* ginfo, int kmer)
+{
+  mark_first_allele(allele1, len1);
+  mark_second_allele(allele2, len2);
+  
+  int i;
+  boolean too_short=false;
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      int eff_read_len = 100;
+      if (ginfo!=NULL)
+	{
+	  eff_read_len = ginfo->mean_read_length[i] - kmer+1;
+	}
+      if (len1>eff_read_len)
+	{
+	  array1[i] = ((len1 + 0.5*eff_read_len)/eff_read_len) *  
+	    median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(allele1, len1, working_ca, i, &too_short, one);
+	}
+      else
+	{
+	  array1[i] = median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(allele1, len1, working_ca, i, &too_short, one);
+	}
+      if (len2>eff_read_len)
+	{
+	  array2[i] = ((len2 + 0.5*eff_read_len)/eff_read_len) *  
+	    median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(allele2, len2, working_ca, i, &too_short, two);
+	}
+      else
+	{
+	  array2[i] = median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(allele2, len2, working_ca, i, &too_short, two);
+	}
+    }
+  reset_allele_status(allele1, len1);
+  reset_allele_status(allele2, len2);
+
+  return too_short;
+}
+
 
 
 
@@ -1011,6 +1145,55 @@ Covg median_covg_on_allele_in_specific_colour(dBNode** allele, int len, CovgArra
     {
       working_ca->covgs[index]=db_node_get_coverage_tolerate_null(allele[i], colour);
       index++;
+    }
+
+  int array_len = index+1;
+  qsort(working_ca->covgs, array_len, sizeof(Covg), Covg_cmp); 
+  working_ca->len=index+1;
+
+  Covg median=0;
+  int lhs = (array_len - 1) / 2 ;
+  int rhs = array_len / 2 ;
+  
+  if (lhs == rhs)
+    {
+      median = working_ca->covgs[lhs] ;
+    }
+  else 
+    {
+      median = mean_of_covgs(working_ca->covgs[lhs], working_ca->covgs[rhs]);
+    }
+
+  return median;
+}
+
+
+//only count nodes which have the desired allele status
+Covg median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(dBNode** allele, int len, CovgArray* working_ca,
+									      int colour, boolean* too_short, AlleleStatus st)
+{
+
+  if ((len==0)|| (len==1))
+    {
+      *too_short=true;
+      return 0;//ignore first and last nodes
+    }
+ 
+  reset_covg_array(working_ca);//TODO - use reset_used_part_of.... as performance improvement. Will do when correctness of method established.
+  int i;
+
+  int index=0;
+
+  for(i=1; i <len; i++)
+    {
+      if (allele[i]!=NULL)
+	{
+	  if (db_node_check_allele_status(allele[i], st)==true)
+	    {
+	      working_ca->covgs[index]=db_node_get_coverage_tolerate_null(allele[i], colour);
+	      index++;
+	    }
+	}
     }
 
   int array_len = index+1;

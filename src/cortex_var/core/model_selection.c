@@ -314,8 +314,8 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
 	{
 	  continue;
 	}
-      total_covg_br1 +=annovar->theta1[i];
-      total_covg_br2 +=annovar->theta2[i];
+      total_covg_br1 +=annovar->br1_junc_covg[i];
+      total_covg_br2 +=annovar->br2_junc_covg[i];
     }
   
 
@@ -330,10 +330,10 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
 	{
 	  continue;
 	}
-      //      llk_bal += log_factorial(annovar->theta1[i] + annovar->theta2[i]);
-      //llk_bal -= log_factorial(annovar->theta1[i]);
-      //llk_bal -= log_factorial(annovar->theta2[i]);
-      llk_bal += gsl_sf_lnchoose(annovar->theta1[i] + annovar->theta2[i], annovar->theta1[i]);
+      //      llk_bal += log_factorial(annovar->br1_junc_covg[i] + annovar->br2_junc_covg[i]);
+      //llk_bal -= log_factorial(annovar->br1_junc_covg[i]);
+      //llk_bal -= log_factorial(annovar->br2_junc_covg[i]);
+      llk_bal += gsl_sf_lnchoose(annovar->br1_junc_covg[i] + annovar->br2_junc_covg[i], annovar->br1_junc_covg[i]);
     }
 
 
@@ -388,7 +388,7 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
 	  double pois_rate = lambda_per_copy[i]*2*r; // r copies on each haplotype
 
 	  //add log probability of seeing what we see for idividual i, assuming r copies
-	  copy_number_arr[r] += (annovar->theta1[i]+annovar->theta2[i])*log(pois_rate) - gsl_sf_lnfact(annovar->theta1[i]+annovar->theta2[i])  -pois_rate;
+	  copy_number_arr[r] += (annovar->br1_junc_covg[i]+annovar->br2_junc_covg[i])*log(pois_rate) - gsl_sf_lnfact(annovar->br1_junc_covg[i]+annovar->br2_junc_covg[i])  -pois_rate;
 	}
       if (max>0)//will only happen the first time
 	{
@@ -473,8 +473,8 @@ double ignore_get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVar
   int theta2_bar=0;
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
-      theta1_bar += annovar->theta1[i];
-      theta2_bar += annovar->theta2[i];
+      theta1_bar += annovar->br1_junc_covg[i];
+      theta2_bar += annovar->br2_junc_covg[i];
     }
 
   double log_prob_repeat = log(mu) + gsl_sf_lnfact(theta1_bar) + gsl_sf_lnfact(theta2_bar)
@@ -482,8 +482,8 @@ double ignore_get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVar
 
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
-      int thet = annovar->theta1[i]+ annovar->theta2[i];
-      log_prob_repeat +=  thet * log(lambda_s[i]/alpha) - gsl_sf_lnfact(annovar->theta1[i]) - gsl_sf_lnfact(annovar->theta2[i]);
+      int thet = annovar->br1_junc_covg[i]+ annovar->br2_junc_covg[i];
+      log_prob_repeat +=  thet * log(lambda_s[i]/alpha) - gsl_sf_lnfact(annovar->br1_junc_covg[i]) - gsl_sf_lnfact(annovar->br2_junc_covg[i]);
     }
   
 
@@ -498,7 +498,7 @@ double ignore_get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVar
 
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
-      int thet = annovar->theta1[i]+ annovar->theta2[i];
+      int thet = annovar->br1_junc_covg[i]+ annovar->br2_junc_covg[i];
       log_prob_var +=  thet * log(lambda_s[i]) - log_factorial(thet) ;
     }
   
@@ -511,17 +511,17 @@ double ignore_get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVar
       for (i=0; i<NUMBER_OF_COLOURS; i++)
 	{
 	  double per_sample_sum=0;
-	  if (annovar->theta1[i]==0)
+	  if (annovar->br1_junc_covg[i]==0)
 	    {
 	      per_sample_sum += p*p;
 	    }
-	  if (annovar->theta2[i]==0)
+	  if (annovar->br2_junc_covg[i]==0)
 	    {
 	      per_sample_sum += (1-p)*(1-p);
 	    }
-	  printf("Pow is %f, so add %f to the per sample sum \n", pow(0.5, annovar->theta1[i] + annovar->theta2[i]), 
-		 2*p*(1-p)*pow(0.5, annovar->theta1[i] + annovar->theta2[i]));
-	  per_sample_sum += 2*p*(1-p)*pow(0.5, annovar->theta1[i] + annovar->theta2[i]);
+	  printf("Pow is %f, so add %f to the per sample sum \n", pow(0.5, annovar->br1_junc_covg[i] + annovar->br2_junc_covg[i]), 
+		 2*p*(1-p)*pow(0.5, annovar->br1_junc_covg[i] + annovar->br2_junc_covg[i]));
+	  per_sample_sum += 2*p*(1-p)*pow(0.5, annovar->br1_junc_covg[i] + annovar->br2_junc_covg[i]);
 	  prod = prod*per_sample_sum;
 	  printf("Prod becomes %f\n", prod);
 	}
@@ -541,7 +541,7 @@ double ignore_get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVar
 
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
-      int thet = annovar->theta1[i]+ annovar->theta2[i];
+      int thet = annovar->br1_junc_covg[i]+ annovar->br2_junc_covg[i];
       log_prob_var +=  thet * log(lambda_s[i]) - log_factorial(thet) ;
     }
   
@@ -556,15 +556,15 @@ double ignore_get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVar
       for (i=0; i<NUMBER_OF_COLOURS; i++)
 	{
 	  double per_sample_sum=0;
-	  if (annovar->theta1[i]==0)
+	  if (annovar->br1_junc_covg[i]==0)
 	    {
 	      per_sample_sum += p*p;
 	    }
-	  if (annovar->theta2[i]==0)
+	  if (annovar->br2_junc_covg[i]==0)
 	    {
 	      per_sample_sum += (1-p)*(1-p);
 	    }
-	  per_sample_sum += 2*p*(1-p)*pow(0.5, annovar->theta1[i] + annovar->theta2[i]);
+	  per_sample_sum += 2*p*(1-p)*pow(0.5, annovar->br1_junc_covg[i] + annovar->br2_junc_covg[i]);
 
 	  prod = prod*per_sample_sum;
 	  printf("Prod becomes %f\n", prod);
@@ -581,15 +581,15 @@ double ignore_get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVar
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       double per_sample_sum=0;
-      if (annovar->theta1[i]==0)
+      if (annovar->br1_junc_covg[i]==0)
 	{
 	  per_sample_sum += max_lik_p*max_lik_p;
 	}
-      if (annovar->theta2[i]==0)
+      if (annovar->br2_junc_covg[i]==0)
 	{
 	  per_sample_sum += (1-max_lik_p)*(1-max_lik_p);
 	}
-      per_sample_sum += 2*max_lik_p*(1-max_lik_p)*pow(0.5, annovar->theta1[i] + annovar->theta2[i]);
+      per_sample_sum += 2*max_lik_p*(1-max_lik_p)*pow(0.5, annovar->br1_junc_covg[i] + annovar->br2_junc_covg[i]);
       prod=prod*per_sample_sum;
     }
 
