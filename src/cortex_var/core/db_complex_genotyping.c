@@ -2488,9 +2488,19 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
     }
   else//is a valid putative site
     {
-      get_num_effective_reads_on_unique_part_of_branch(annovar->br1_junc_covg, var->one_allele, annovar->len_start, use_median, working_ca, ginfo, kmer);
-      get_num_effective_reads_on_unique_part_of_branch(annovar->br2_junc_covg, var->other_allele, annovar->len_start, use_median, working_ca, ginfo, kmer);
-
+      if (caller==SimplePathDivergenceCaller)
+	{
+	  get_num_effective_reads_on_unique_part_of_branch(annovar->br1_junc_covg, var->one_allele, annovar->var->len_one_allele, 
+							   annovar->br2_junc_covg, var->other_allele, annovar->var->len_other_allele, 
+							   working_ca, ginfo, kmer, true, ref_colour, 1);
+	}
+      else
+	{
+	  get_num_effective_reads_on_unique_part_of_branch(annovar->br1_junc_covg, var->one_allele, annovar->var->len_one_allele, 
+							   annovar->br2_junc_covg, var->other_allele, annovar->var->len_other_allele, 
+							   working_ca, ginfo, kmer, false, ref_colour, 1);
+	  
+	}
       int i;
       annovar->BigTheta = 0;
       annovar->BigThetaStart = 0;

@@ -54,13 +54,13 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p,
     }
   else
     {      
-      var->flank5p      = (dBNode**) malloc(sizeof(dBNode*)*(len_5p));
+      var->flank5p      = (dBNode**) malloc(sizeof(dBNode*)*(len_5p+1));
       if (var->flank5p==NULL) 
 	{
 	  return NULL;
 	}
 
-      var->one_allele   = (dBNode**) malloc(sizeof(dBNode*)*(len_br1));
+      var->one_allele   = (dBNode**) malloc(sizeof(dBNode*)*(len_br1+1));
       if (var->one_allele==NULL) 
 	{
 	  free(var->flank5p);
@@ -68,7 +68,7 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p,
 	  return NULL;
 	}
 
-      var->other_allele = (dBNode**) malloc(sizeof(dBNode*)*(len_br2));
+      var->other_allele = (dBNode**) malloc(sizeof(dBNode*)*(len_br2+1));
       if (var->other_allele==NULL) 
 	{
 	  free(var->flank5p);
@@ -77,7 +77,7 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p,
 	  return NULL;
 	}
 
-      var->flank3p      = (dBNode**) malloc(sizeof(dBNode*)*(len_3p));
+      var->flank3p      = (dBNode**) malloc(sizeof(dBNode*)*(len_3p+1));
       if (var->flank3p==NULL) 
 	{
 	  free(var->flank5p);
@@ -88,7 +88,7 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p,
 	}
 
       
-      var->flank5p_or    = (Orientation*) malloc(sizeof(Orientation) * len_5p);
+      var->flank5p_or    = (Orientation*) malloc(sizeof(Orientation) * (len_5p+1));
       if (var->flank5p_or==NULL)
 	{
 	  free(var->flank5p);
@@ -98,7 +98,7 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p,
 	  free(var);
 	  return NULL;
 	}
-       var->one_allele_or = (Orientation*) malloc(sizeof(Orientation) * len_br1);
+      var->one_allele_or = (Orientation*) malloc(sizeof(Orientation) * (len_br1+1));
       if (var->one_allele_or==NULL)
 	{
 	  free(var->flank5p);
@@ -109,7 +109,7 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p,
 	  free(var);
 	  return NULL;
 	}
-      var->other_allele_or = (Orientation*) malloc(sizeof(Orientation) * len_br2);
+      var->other_allele_or = (Orientation*) malloc(sizeof(Orientation) * (len_br2+1));
       if (var->other_allele_or==NULL)
 	{
 	  free(var->flank5p);
@@ -121,7 +121,7 @@ VariantBranchesAndFlanks* alloc_VariantBranchesAndFlanks_object(int len_5p,
 	  free(var);
 	  return NULL;
 	}
-      var->flank3p_or    = (Orientation*) malloc(sizeof(Orientation) * len_3p);
+      var->flank3p_or    = (Orientation*) malloc(sizeof(Orientation) * (len_3p+1));
       if (var->flank3p_or==NULL)
 	{
 	  free(var->flank5p);
@@ -841,34 +841,70 @@ boolean get_num_effective_reads_on_branch(Covg* array, dBNode** allele, int how_
   return too_short;
 }
 
-void mark_first_allele(dBNode** allele1, int len1)
+//ref-allele is either 1 (first allele) or 2 (second allele)
+void mark_first_allele(dBNode** allele1, int len1, boolean use_ref_allele_info, int ref_colour, int ref_allele)
 {
   int i;
-  for (i=0; i<=len1; i++)
+  if ( (use_ref_allele_info==false) || (ref_allele !=1) )
     {
-      if (allele1[i]!=NULL)
+      for (i=0; i<=len1; i++)
 	{
-	  db_node_set_allele_status(allele1[i], one);
+	  if (allele1[i]!=NULL)
+	    {
+	      db_node_set_allele_status(allele1[i], one);
+	    }
 	}
+    }
+  else //we are using ref allele info and this is the ref allele
+    {
+      for (i=0; i<=len1; i++)
+	{
+	  if ( (allele1[i]!=NULL) && (db_node_get_coverage(allele1[i], ref_colour)<=1) )
+	    {
+	      db_node_set_allele_status(allele1[i], one);
+	    }
+	}
+      
     }
 }
 
-void mark_second_allele(dBNode** allele2, int len2)
+void mark_second_allele(dBNode** allele2, int len2,boolean use_ref_allele_info, int ref_colour, int ref_allele)
 {
   int i;
-  for (i=0; i<=len2; i++)
+  if ( (use_ref_allele_info==false) || (ref_allele !=2))
     {
-      if (allele2[i]!=NULL)
+      for (i=0; i<=len2; i++)
 	{
-	  if (db_node_check_allele_status(allele2[i], one)==false)
+	  if (allele2[i]!=NULL)
 	    {
-	      db_node_set_allele_status(allele2[i], two);
-	    }
-	  else
-	    {
-	      db_node_set_allele_status(allele2[i], both);
+	      if (db_node_check_allele_status(allele2[i], one)==false)
+		{
+		  db_node_set_allele_status(allele2[i], two);
+		}
+	      else
+		{
+		  db_node_set_allele_status(allele2[i], both);
+		}
 	    }
 	}
+    }
+  else  //we are using ref allele info and this is the ref allele
+    {
+      for (i=0; i<=len2; i++)
+	{
+	  if ( (allele2[i]!=NULL) && (db_node_get_coverage(allele2[i], ref_colour)<=1) )
+	    {
+	      if (db_node_check_allele_status(allele2[i], one)==false)
+		{
+		  db_node_set_allele_status(allele2[i], two);
+		}
+	      else
+		{
+		  db_node_set_allele_status(allele2[i], both);
+		}
+	    }
+	}
+      
     }
 }
 
@@ -885,12 +921,15 @@ boolean reset_allele_status(dBNode** allele, int len)
 }
 
 //also ignoring things that look like repeats....
+//use_ref_allele_info=true if you KNOW one of the two alleles is the ref allele and you know which one
+//  and you want to ignore nodes that occur >1 time on the ref
 boolean get_num_effective_reads_on_unique_part_of_branch(Covg* array1, dBNode** allele1, int len1, 
 							 Covg* array2, dBNode** allele2, int len2,
-							 CovgArray* working_ca, GraphInfo* ginfo, int kmer)
+							 CovgArray* working_ca, GraphInfo* ginfo, int kmer,
+							 boolean use_ref_allele_info, int ref_colour, int ref_allele)
 {
-  mark_first_allele(allele1, len1);
-  mark_second_allele(allele2, len2);
+  mark_first_allele(allele1, len1, use_ref_allele_info, ref_colour, ref_allele);
+  mark_second_allele(allele2, len2, use_ref_allele_info, ref_colour, ref_allele);
   
   int i;
   boolean too_short=false;
@@ -901,23 +940,24 @@ boolean get_num_effective_reads_on_unique_part_of_branch(Covg* array1, dBNode** 
 	{
 	  eff_read_len = ginfo->mean_read_length[i] - kmer+1;
 	}
+      float eff_depth = (float) eff_read_len* ((float)((ginfo->total_sequence[i]/ginfo->mean_read_length[i])));
       if (len1>eff_read_len)
 	{
 	  array1[i] = ((len1 + 0.5*eff_read_len)/eff_read_len) *  
-	    median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(allele1, len1, working_ca, i, &too_short, one);
+	    median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(allele1, len1, working_ca, i, &too_short, one, eff_depth);
 	}
       else
 	{
-	  array1[i] = median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(allele1, len1, working_ca, i, &too_short, one);
+	  array1[i] = median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(allele1, len1, working_ca, i, &too_short, one, eff_depth);
 	}
       if (len2>eff_read_len)
 	{
 	  array2[i] = ((len2 + 0.5*eff_read_len)/eff_read_len) *  
-	    median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(allele2, len2, working_ca, i, &too_short, two);
+	    median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(allele2, len2, working_ca, i, &too_short, two, eff_depth);
 	}
       else
 	{
-	  array2[i] = median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(allele2, len2, working_ca, i, &too_short, two);
+	  array2[i] = median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(allele2, len2, working_ca, i, &too_short, two, eff_depth);
 	}
     }
   reset_allele_status(allele1, len1);
@@ -1170,7 +1210,8 @@ Covg median_covg_on_allele_in_specific_colour(dBNode** allele, int len, CovgArra
 
 //only count nodes which have the desired allele status
 Covg median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(dBNode** allele, int len, CovgArray* working_ca,
-									      int colour, boolean* too_short, AlleleStatus st)
+									      int colour, boolean* too_short, AlleleStatus st,
+									      float eff_depth)
 {
 
   if ((len==0)|| (len==1))
@@ -1190,8 +1231,12 @@ Covg median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(dB
 	{
 	  if (db_node_check_allele_status(allele[i], st)==true)
 	    {
-	      working_ca->covgs[index]=db_node_get_coverage_tolerate_null(allele[i], colour);
-	      index++;
+	      Covg cov = db_node_get_coverage_tolerate_null(allele[i], colour);
+	      if (cov < 2* eff_depth)
+		{
+		  working_ca->covgs[index]=cov;
+		  index++;
+		}
 	    }
 	}
     }

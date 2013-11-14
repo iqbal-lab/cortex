@@ -2760,6 +2760,8 @@ sub get_next_var_from_callfile
 	## variables I will return
 	my @arr_br1_covgs = ();    ## start covg + jumps - array, one per colour
 	my @arr_br2_covgs = ();    ## start covg + jumps - array, one per colour
+	my $br1_median_covg=0;
+	my $br2_median_covg=0;
 	my @arr_br1_min_covg=();
 	my @arr_br2_min_covg=();
 	my @arr_geno      = ();

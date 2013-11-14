@@ -71,7 +71,7 @@ Element* new_element()
   }
 
   e->status = (char)none;
-  c->allele_status = (char) neither;
+  e->allele_status = (char) neither;
   return e;
 }
 

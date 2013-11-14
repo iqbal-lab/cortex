@@ -202,7 +202,7 @@ boolean db_node_check_status_is_not_visited(dBNode *node);
 
 
 void db_node_set_status(dBNode *node,NodeStatus status);
-void db_node_set_allele_status(dBNode *node, AlleleStatus status)
+void db_node_set_allele_status(dBNode *node, AlleleStatus status);
 void db_node_set_status_to_none(dBNode *node);
 
 

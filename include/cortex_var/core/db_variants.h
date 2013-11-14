@@ -254,6 +254,11 @@ long long get_big_theta(AnnotatedPutativeVariant* annovar);
 //utility functions
 boolean get_num_effective_reads_on_branch(Covg* array, dBNode** allele, int how_many_nodes, 
 					  boolean use_median, CovgArray* working_ca, GraphInfo* ginfo, int kmer);
+boolean get_num_effective_reads_on_unique_part_of_branch(Covg* array1, dBNode** allele1, int len1, 
+							 Covg* array2, dBNode** allele2, int len2,
+							 CovgArray* working_ca, GraphInfo* ginfo, int kmer,
+							 boolean use_ref_allele_info, int ref_colour, int ref_allele);
+
 
 Covg count_reads_on_allele_in_specific_colour(dBNode** allele, int len, int colour, boolean* too_short);
 Covg count_reads_on_allele_in_specific_colour_given_array_of_cvgs(Covg* covgs, int len, boolean* too_short);
@@ -265,6 +270,9 @@ Covg count_reads_on_allele_in_specific_func_of_colours(
 Covg median_covg_on_allele_in_specific_colour(dBNode** allele, int len, CovgArray* working_ca,
 					      int colour, boolean* too_short);
 
+Covg median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(dBNode** allele, int len, CovgArray* working_ca,
+									      int colour, boolean* too_short, AlleleStatus st,
+									      float eff_depth);
 Covg median_of_CovgArray(CovgArray* array, CovgArray* working_array);
 
 #endif /* DB_VARIANTS_H_ */
