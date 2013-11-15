@@ -150,10 +150,10 @@ typedef struct {
   Covg br1_covg[NUMBER_OF_COLOURS];//covg on first interior kmer + read jumps
   Covg br2_covg[NUMBER_OF_COLOURS];
   int len_start;// = min of length(br1) and length(br2)
-  Covg br1_junc_covg[NUMBER_OF_COLOURS];//coverage on start of branch1 
-  Covg br2_junc_covg[NUMBER_OF_COLOURS];//coverage on start of branch2
+  Covg br1_uniq_covg[NUMBER_OF_COLOURS];//coverage on start of branch1 
+  Covg br2_uniq_covg[NUMBER_OF_COLOURS];//coverage on start of branch2
   Covg BigTheta; // total coverage of all colours over both branches (sum of all elements of br1_covg and br2_covg)
-  Covg BigThetaStart; // total coverage of all colours over start of
+  Covg BigThetaUniq; // total coverage of all colours over start of
                            //  both branches
 
   //under the model that this IS a variant, compare likelihoods of being hom-br1, het, hom-br2

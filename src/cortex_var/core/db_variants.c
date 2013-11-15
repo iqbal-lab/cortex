@@ -622,18 +622,18 @@ void get_all_genotype_log_likelihoods_at_PD_call_for_one_colour_using_juncs(Anno
 
   annovar->gen_log_lh[colour].log_lh[hom_one]   = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
-								     annovar->br1_junc_covg[colour],
-								     annovar->br2_junc_covg[colour],
+								     annovar->br1_uniq_covg[colour],
+								     annovar->br2_uniq_covg[colour],
 								     theta_one, theta_other);
   annovar->gen_log_lh[colour].log_lh[het]       = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, seq_error_rate_per_base, 
-								     annovar->br1_junc_covg[colour],
-								     annovar->br2_junc_covg[colour],
+								     annovar->br1_uniq_covg[colour],
+								     annovar->br2_uniq_covg[colour],
 								     theta_one, theta_other);
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
-								     annovar->br1_junc_covg[colour],
-								     annovar->br2_junc_covg[colour],
+								     annovar->br1_uniq_covg[colour],
+								     annovar->br2_uniq_covg[colour],
 								     theta_one, theta_other);
  
   //  printf("Log likelihood of data in colour %d under hom_one is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_one]);

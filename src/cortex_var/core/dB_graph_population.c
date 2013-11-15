@@ -10610,6 +10610,19 @@ void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
   fprintf(fout, "\n\n");
 }
 
+//uses br_covg elements of annovar
+void print_standard_extra_allele_info(AnnotatedPutativeVariant* annovar, FILE* fout)
+{
+blah - make this work
+  fprintf(fout, "\n");
+  //print coverages:
+  fprintf(fout, "branch1 coverages\n");
+  print_standard_extra_supernode_info(var->one_allele, var->one_allele_or, var->len_one_allele, fout);
+  fprintf(fout, "branch2 coverages\n");
+  print_standard_extra_supernode_info(var->other_allele, var->other_allele_or, var->len_other_allele, fout);
+  fprintf(fout, "\n\n");
+}
+
 
 void print_median_covg_extra_info(VariantBranchesAndFlanks* var, CovgArray* working_ca,FILE* fout)
 {
@@ -10863,9 +10876,8 @@ void db_graph_print_colour_overlap_matrix(int* first_col_list, int num1,
 
 void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fout, GraphAndModelInfo* model_info,
 					DiscoveryMethod which_caller, dBGraph* db_graph, 
-					void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
-					AssumptionsOnGraphCleaning assump, GenotypingWorkingPackage* gwp, LittleHashTable* little_dbg,
-					CovgArray* working_ca)
+					void (*print_extra_info)(AnnotatedPutativeVariant*, FILE*),
+					AssumptionsOnGraphCleaning assump, CovgArray* working_ca)
 
 
 {
@@ -10979,7 +10991,7 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
 					  var->flank3p[0],               var->flank3p_or[0],
 					  var->seq3p,db_graph->kmer_size,false);
 
-      print_extra_info(var, fout);
+      print_extra_info(annovar, fout);
       
       
     }

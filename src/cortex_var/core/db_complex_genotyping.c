@@ -2490,20 +2490,20 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
     {
       if (caller==SimplePathDivergenceCaller)
 	{
-	  get_num_effective_reads_on_unique_part_of_branch(annovar->br1_junc_covg, var->one_allele, annovar->var->len_one_allele, 
-							   annovar->br2_junc_covg, var->other_allele, annovar->var->len_other_allele, 
+	  get_num_effective_reads_on_unique_part_of_branch(annovar->br1_uniq_covg, var->one_allele, annovar->var->len_one_allele, 
+							   annovar->br2_uniq_covg, var->other_allele, annovar->var->len_other_allele, 
 							   working_ca, ginfo, kmer, true, ref_colour, 1);
 	}
       else
 	{
-	  get_num_effective_reads_on_unique_part_of_branch(annovar->br1_junc_covg, var->one_allele, annovar->var->len_one_allele, 
-							   annovar->br2_junc_covg, var->other_allele, annovar->var->len_other_allele, 
+	  get_num_effective_reads_on_unique_part_of_branch(annovar->br1_uniq_covg, var->one_allele, annovar->var->len_one_allele, 
+							   annovar->br2_uniq_covg, var->other_allele, annovar->var->len_other_allele, 
 							   working_ca, ginfo, kmer, false, ref_colour, 1);
 	  
 	}
       int i;
       annovar->BigTheta = 0;
-      annovar->BigThetaStart = 0;
+      annovar->BigThetaUniq = 0;
       
       for (i=0; i<NUMBER_OF_COLOURS; i++)
 
@@ -2514,7 +2514,7 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
 	      continue;
 	    }
 	  annovar->BigTheta      += annovar->br1_covg[i] + annovar->br2_covg[i];
-	  annovar->BigThetaStart += annovar->br1_junc_covg[i] + annovar->br2_junc_covg[i];
+	  annovar->BigThetaUniq += annovar->br1_uniq_covg[i] + annovar->br2_uniq_covg[i];
 	  initialise_genotype_log_likelihoods(&(annovar->gen_log_lh[i]));
 	}
       
