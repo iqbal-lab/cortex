@@ -140,7 +140,7 @@ if ($help)
 	print "\n\n";
 	print "Usage:\n********  mandatory arguments *********  :\n";
 	print
-"--callfile                    : file of calls output by Cortex (may be from Bubble or Path Divergence caller, but you MUST have used --print_colour_coverages\n";	print
+"--callfile                    : file of calls output by Cortex (may be from Bubble or Path Divergence caller, but you MUST have used --print_colour_coverages or --print_median_covg_only\n";	print
 "--callfile_log                : file in which you have saved the Cortex output (stuff it prints to screen when it runs)\n";
 	print
 "--outvcf                      : the output VCF files will have filenames starting with this\n";
@@ -1571,8 +1571,29 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 		$br2_seq,      $flank3p,        $aref_br1_cov,  $aref_br2_cov,
 		$which_is_ref, $classification, $class_llk_rep, $class_llk_var,
 		$genotype,     $llk_hom1,       $llk_het,       $llk_hom2, $extra_info_fields
-	) = get_next_var_from_callfile( $file_handle_calls, $ploidy );
+	);
 
+	if ($callfile_is_median_format==1)
+	{
+	    (
+	     $eof,          $var_name,       $flank5p,       $br1_seq,
+	     $br2_seq,      $flank3p,        $aref_br1_cov,  $aref_br2_cov,
+	     $which_is_ref, $classification, $class_llk_rep, $class_llk_var,
+	     $genotype,     $llk_hom1,       $llk_het,       $llk_hom2, $extra_info_fields
+	    )
+		= get_next_var_from_callfile_with_median_covgs( $file_handle_calls, $ploidy );
+	}
+	else
+	{
+	    (
+	     $eof,          $var_name,       $flank5p,       $br1_seq,
+	     $br2_seq,      $flank3p,        $aref_br1_cov,  $aref_br2_cov,
+	     $which_is_ref, $classification, $class_llk_rep, $class_llk_var,
+	     $genotype,     $llk_hom1,       $llk_het,       $llk_hom2, $extra_info_fields
+	    )
+		= get_next_var_from_callfile_with_full_colour_covgs( $file_handle_calls, $ploidy );
+
+	}
 
 	my ( $eof2, $var_name2, $strand, $chr, $coord );
 	if ($colour_ref !=-1)
@@ -2742,7 +2763,7 @@ sub determine_type
 	return $what_type;
 }
 
-sub get_next_var_from_callfile
+sub get_next_var_from_callfile_with_full_colour_covgs
 {
 	my ( $fh, $p_loidy ) = @_;
 
@@ -2760,8 +2781,8 @@ sub get_next_var_from_callfile
 	## variables I will return
 	my @arr_br1_covgs = ();    ## start covg + jumps - array, one per colour
 	my @arr_br2_covgs = ();    ## start covg + jumps - array, one per colour
-	my $br1_median_covg=0;
-	my $br2_median_covg=0;
+	my @arr_br1_median_covgs=();
+	my @arr_br2_median_covgs=();
 	my @arr_br1_min_covg=();
 	my @arr_br2_min_covg=();
 	my @arr_geno      = ();
@@ -3051,6 +3072,290 @@ sub get_next_var_from_callfile
 	}
 }
 
+
+sub get_next_var_from_callfile_with_median_covgs
+{
+	my ( $fh, $p_loidy ) = @_;
+
+	my $line = "";
+	my $varname;
+	my $flank5p;
+	my $br1;
+	my $br2;
+	my $flank3p;
+
+	my $classification = "VARIANT";
+	my $class_llk_rep  = -10;
+	my $class_llk_var  = -1;
+
+	## variables I will return
+	my @arr_br1_median_covgs=();#one number per colour
+	my @arr_br2_median_covgs=();
+	my @arr_br1_min_covgs=();#one number per colour
+	my @arr_br2_min_covgs=();
+	my @arr_geno      = ();
+	my @arr_llk_hom1  = ();
+	my @arr_llk_hom2  = ();
+	my @arr_llk_het   = ();
+	my $extra_info="";
+	while (( $line !~ /(\w*var_\d+)_5p_flank/ )
+		&& ( $line !~ /PASSES/ )
+		&& ( $line !~ /FAILS/ )
+		&& ( $line !~ /Colour\/sample/ ) )
+	{
+		if ( eof($fh) )
+		{
+			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+		}
+		else
+		{
+			$line = <$fh>;
+		}
+	}
+
+	if ( $line =~ /PASSES/ )
+	{
+		$classification = "VARIANT";
+		if ( eof($fh) )
+		{
+			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0 );
+		}
+
+		$line = <$fh>;
+		chomp $line;
+
+		if ( $line =~ /llk_var:(\S+).+llk_rep:(\S+)/ )
+		{
+			$class_llk_rep = $1;
+			$class_llk_var = $2;
+		}
+		else
+		{
+			die(
+"Parsing issue. Found model selecion result but cant find likelihoods on $line\n"
+			);
+		}
+		if ( eof($fh) )
+		{
+			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+		}
+		$line = <$fh>;
+
+	}
+	elsif ( $line =~ /FAILS/ )
+	{
+		$classification = "REPEAT";
+		if ( eof($fh) )
+		{
+			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+		}
+
+		$line = <$fh>;
+		chomp $line;
+
+		if ( $line =~ /llk_var:(\S+).+llk_rep:(\S+)/ )
+		{
+			$class_llk_rep = $1;
+			$class_llk_var = $2;
+		}
+		else
+		{
+			die(
+"Parsing issue. Found model selecion result but cant find likelihoods on $line\n"
+			);
+		}
+		if ( eof($fh) )
+		{
+			return ( "EOF", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 );
+		}
+		$line = <$fh>;
+	}
+
+	if ( $line =~ /Colour\/sample/ )
+	{
+		my $j;
+		for ( $j = 0 ; $j < $number_of_colours ; $j++ )
+		{
+			$line = <$fh>;
+			chomp $line;
+
+			my @sp = split( /\t/, $line );
+			if ( $sp[1] eq "HOM1" )
+			{
+				push @arr_geno, "0/0";
+			}
+			elsif ( $sp[1] eq "HET" )
+			{
+				push @arr_geno, "0/1";
+			}
+			elsif ( $sp[1] eq "HOM2" )
+			{
+				push @arr_geno, "1/1";
+			}
+			elsif ( $sp[1] eq "NO_CALL" )
+			{
+				push @arr_geno, "-1/-1"
+				  ; ## should never see the light of day, and easy to spot if appears in VCF
+			}
+			else
+			{
+				die("Bad genotype on $line");
+			}
+
+			if ( $p_loidy == 2 )
+			{
+				push @arr_llk_hom1, $sp[2];
+				push @arr_llk_het,  $sp[3];
+				push @arr_llk_hom2, $sp[4];
+			}
+			else
+			{
+				push @arr_llk_hom1, $sp[2];
+				push @arr_llk_het,  -9999999;
+				push @arr_llk_hom2, $sp[3];
+			}
+		}
+		$line = <$fh>;
+
+	}
+
+	if ( $line =~ /(\w*var_\d+)_5p_flank/ )
+	{
+		$varname = $1;
+		if ($prefix ne "")
+		{
+		    $varname = $prefix."_".$varname;
+		}
+
+		if ( $varname eq "" )
+		{
+			die(
+"Found this line :$line in the callfile - expected it to be of the form var_<NUMBER>_5p_flank\n"
+			);
+		}
+
+		if (exists $call_to_extra_info{$varname})
+		{
+		    $extra_info=$call_to_extra_info{$varname};
+		}
+		elsif ($varname =~ /(\S+)_sub/)
+		{
+		    my $rawname = $1;
+		    if (exists $call_to_extra_info{$rawname})
+		    {
+			$extra_info=$call_to_extra_info{$rawname};
+		    }
+		}
+		else
+		{
+		    #print "No extra info (eg Kmer value)  for $varname\n";
+		}
+
+
+		$flank5p = <$fh>;
+		chomp $flank5p;
+		<$fh>;    #ignore br1 read id
+		$br1 = <$fh>;
+		chomp $br1;
+		<$fh>;    #ignore br2 read id
+		$br2 = <$fh>;
+		chomp $br2;
+		<$fh>;    #ignore 3p flank read id
+		$flank3p = <$fh>;
+		chomp $flank3p;
+		$line    = <$fh>;
+
+#		if ( $line =~ /extra information/ )
+#		{
+#			<$fh>;
+#		}
+		$line = <$fh>;
+		chomp $line;
+		if ( $line !~ /br1_median_covg/ )
+		{
+			die("Expected to see a line containing the text: \"br1_median_covg\" but instead saw $line");
+		}
+
+		##determine which is ref allele
+		my $which_is_ref = "b";
+
+		my $z;
+		for ( $z = 0 ; $z < $number_of_colours ; $z++ )
+		{
+			$line = <$fh>;
+			chomp $line;
+
+			my @stuff = split( /\t/, $line );
+			if (scalar(@stuff)!=5)
+			{
+			    die("Unexpected number of fields in tab sep section of output - expect colour, median covg on 2 branches, min covg on 2 branches=5 fields, but instead we see this : $line\n");
+			}
+			my $co = $stuff[0];
+			my $b1_c = $stuff[1];
+			my $b2_c = $stuff[2];
+			my $mincovg_br1 = $stuff[3];
+			my $mincovg_br2 = $stuff[4];
+			if ($co != $z)
+			{
+			    die("Failing to parse callfile properly. Expected to be on the line for colour $z for variant $varname, but instead seem to be on line for colour $co\n");
+			}
+			push @arr_br1_median_covgs, $b1_c;
+			push @arr_br2_median_covgs, $b2_c;
+			push @arr_br1_min_covgs, $mincovg_br1;
+			push @arr_br2_min_covgs, $mincovg_br2;
+
+		}
+
+
+		if ( $reference_colour == -1 )
+		{
+			$which_is_ref = 1;
+		}
+
+		elsif (( $arr_br1_min_covg[$reference_colour] == 0 )
+			&& ( $arr_br2_min_covg[$reference_colour] >= 1 ) )
+		{
+			$which_is_ref = 2;
+		}
+
+		elsif (( $arr_br1_median_covg[$reference_colour] >= 1 )
+			&& ( $arr_br2_median_covg[$reference_colour] == 0 ) )
+		{
+			$which_is_ref = 1;
+		}
+
+		elsif (( $arr_br1_min_covg[$reference_colour] >= 1 )
+			&& ( $arr_br2_min_covg[$reference_colour] >= 1 ) )
+		{
+			$which_is_ref = 1;##filter script will fixup/choose which one
+		}
+		else
+		{
+			$which_is_ref = "neither";
+		}
+
+		my $eof = "";
+
+		return (
+			$eof,            $varname,        $flank5p,
+			$br1,            $br2,            $flank3p,
+			\@arr_br1_median_covgs, \@arr_br2_median_covgs, $which_is_ref,
+			$classification, $class_llk_rep,  $class_llk_var,
+			\@arr_geno,      \@arr_llk_hom1,  \@arr_llk_het,
+			\@arr_llk_hom2, $extra_info
+		);
+
+	}
+	else
+	{
+		print
+	    "Parsing next line of callfile - unexpected error on  $line. Expected the read-id of 5prime flank in callfile to be of the form (optional_text)var_(number)_5p_flank. This bug is probably due to Zam's changes to support the new format of callfiles but also stay legacy format compatible - contact zam\@well.ox.ac.uk\n";
+
+		die();
+	}
+}
+
+boblet
 sub get_num_reads_using_median
 {
     my ($line, $read_length, $khmer) = @_;

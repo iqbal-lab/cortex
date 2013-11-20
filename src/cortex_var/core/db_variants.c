@@ -1208,6 +1208,39 @@ Covg median_covg_on_allele_in_specific_colour(dBNode** allele, int len, CovgArra
 }
 
 
+
+//robust to start being > end (might traverse an allele backwards)
+//if length==0 or 1  returns 0.
+Covg min_covg_on_allele_in_specific_colour(dBNode** allele, int len, int colour, boolean* too_short)
+{
+
+  if ((len==0)|| (len==1))
+    {
+      *too_short=true;
+      return 0;//ignore first and last nodes
+    }
+ 
+  int i;
+
+  int index=0;
+
+  Covg min_covg = COVG_MAX;
+  for(i=1; i <len; i++)
+    {
+      if (allele[i]!=NULL)
+	{
+	  Covg c=db_node_get_coverage(allele[i], colour);
+	  if (c<min_covg)
+	    {
+	      min_covg = c;
+	    }
+	}
+    }
+
+  return min_covg;
+}
+
+
 //only count nodes which have the desired allele status
 Covg median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(dBNode** allele, int len, CovgArray* working_ca,
 									      int colour, boolean* too_short, AlleleStatus st,

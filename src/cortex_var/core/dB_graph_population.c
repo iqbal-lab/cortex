@@ -10628,7 +10628,7 @@ void print_median_covg_extra_info(VariantBranchesAndFlanks* var, CovgArray* work
 {
   fprintf(fout, "\n");
   //print coverages:
-  fprintf(fout, "Colour\tbr1_median_covg\tbr2_median_covg\n");
+  fprintf(fout, "Colour\tbr1_median_covg\tbr2_median_covg\tbr1_min_covg\tbr2_min_covg\n");
   boolean too_short=false;
   int col;
   for (col=0; col<NUMBER_OF_COLOURS; col++)
@@ -10643,7 +10643,14 @@ void print_median_covg_extra_info(VariantBranchesAndFlanks* var, CovgArray* work
 							 working_ca,
 							 col, &too_short);
 
-      fprintf(fout, "%" PRIu64 "\t%" PRIu64 "\n", (uint64_t)c1,(uint64_t)c2);
+      Covg d1 = min_covg_on_allele_in_specific_colour(var->one_allele,
+							 var->len_one_allele,
+							 col, &too_short);
+      Covg d2 = min_covg_on_allele_in_specific_colour(var->other_allele,
+							 var->len_other_allele,
+							 col, &too_short);
+
+      fprintf(fout, "%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\n", (uint64_t)c1,(uint64_t)c2, (uint64_t)d1,(uint64_t)d2);
     }
   fprintf(fout, "\n\n");
 }
