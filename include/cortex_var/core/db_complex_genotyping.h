@@ -214,11 +214,11 @@ void modify_character(char* str, int which_base, int which_mutant);
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar,
                                     GraphAndModelInfo* model_info,
                                     VariantBranchesAndFlanks* var,
-                                    DiscoveryMethod caller,  int kmer,
+                                    DiscoveryMethod caller,  
+				    int kmer,
                                     AssumptionsOnGraphCleaning assump,
-                                    GenotypingWorkingPackage* gwp,
-                                    dBGraph* db_graph,
-                                    LittleHashTable* little_db_graph, CovgArray* working_ca,
-                                    boolean do_genotyping, boolean use_median);
+				    CovgArray* working_ca,
+                                    boolean do_genotyping, 
+				    boolean use_median);
 
 #endif /* DB_COMPLEX_GENOTYPING_H_ */

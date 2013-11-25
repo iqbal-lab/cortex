@@ -56,7 +56,7 @@ void timestamp();
 
 
 void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
-                    void (*print_whatever_extra_variant_info)(VariantBranchesAndFlanks*, FILE*), 
+                    void (*print_whatever_extra_variant_info)(AnnotatedPutativeVariant*, FILE*), 
                     GraphAndModelInfo* model_info)
                     //Edges(*get_col_ref)(const dBNode* e)
                     //Covg (*get_cov_ref)(const dBNode* e)
@@ -114,7 +114,13 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
 	}
       kmer_window->nkmers=0;
       
-      CovgArray* working_ca = alloc_and_init_covg_array(cmd_line->max_read_length+1);
+      int lim = cmd_line->max_read_length;
+      if (lim < cmd_line->max_var_len)
+	{
+	  lim = cmd_line->max_var_len;
+	}
+
+      CovgArray* working_ca = alloc_and_init_covg_array(lim+1);
       if (working_ca==NULL)
 	{
 	  die("Unable to alloc an array of coverages for genotyping - abort. Your server must have run out of memory.\n");
@@ -176,7 +182,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
 	      AssumptionsOnGraphCleaning assump=AssumeUncleaned; 
 	      print_call_given_var_and_modelinfo(var, fout, model_info, cmd_line->which_caller_was_used_for_calls_to_be_genotyped, db_graph,
 						 print_whatever_extra_variant_info,
-						 assump, gwp, little_dbg, working_ca);
+						 assump, working_ca);
 	    }
 	  else
 	    {
@@ -203,7 +209,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
 
 
 void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph, 
-		  void (*print_some_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
+		  void (*print_some_extra_var_info)(AnnotatedPutativeVariant* annovar, FILE* fp),
 		  GraphAndModelInfo* model_info)
 {
   if (cmd_line->pd_calls_against_each_listed_colour_consecutively==false)
@@ -292,16 +298,16 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 	  
 	  
 	  
-	  global_var_counter += db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(cmd_line->pd_colour_list, cmd_line->num_colours_in_pd_colour_list,
-													    chrom_fptr, cmd_line->ref_colour,
-													    min_fiveprime_flank_anchor, min_threeprime_flank_anchor, 
-													    max_anchor_span, min_covg, max_covg, 
-													    max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
-													    0, NULL, NULL, NULL, NULL, NULL, 
-													    &make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours, 
-													    &db_variant_action_do_nothing,
-													    //print_some_extra_var_info, model_info,  AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, global_var_counter+1);
-													    print_some_extra_var_info, model_info,  AssumeUncleaned, global_var_counter+1);
+	  global_var_counter +=
+	    db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(cmd_line->pd_colour_list, cmd_line->num_colours_in_pd_colour_list,
+											chrom_fptr, cmd_line->ref_colour,
+											min_fiveprime_flank_anchor, min_threeprime_flank_anchor, 
+											max_anchor_span, min_covg, max_covg, 
+											max_expected_size_of_supernode, length_of_arrays, db_graph, out_fptr,
+											0, NULL, NULL, NULL, NULL, NULL, 
+											&make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours, 
+											&db_variant_action_do_nothing,
+											print_some_extra_var_info, model_info,  AssumeUncleaned, global_var_counter+1);
 	  
 	  
 	  fclose(chrom_fptr);
@@ -363,7 +369,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 }
 
 void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph, 
-                      void (*print_appropriate_extra_var_info)(VariantBranchesAndFlanks* var, FILE* fp),
+                      void (*print_appropriate_extra_var_info)(AnnotatedPutativeVariant* annovar, FILE* fp),
                       Edges(*get_col_ref) (const dBNode* e),
                       Covg (*get_cov_ref)(const dBNode* e),
                       //GraphInfo* db_graph_info,
@@ -394,12 +400,17 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
   
   long double* allele_balances=NULL;
   CovgArray* working_ca=NULL;
+  int lim = cmd_line->max_var_len;
+  if (cmd_line->max_read_length> lim)
+    {
+      lim = cmd_line->max_read_length;
+    }
   if (cmd_line->high_diff==true)
     {
       printf("User specified calling only if highly-differentiated sites - will only call sites where allele balance differs by at least %f between at least 2 colours (excluding nay reference\n", cmd_line->min_allele_balance_diff);
 
       allele_balances=calloc(NUMBER_OF_COLOURS, sizeof(long double));
-      working_ca = alloc_and_init_covg_array(cmd_line->max_var_len);//will die if fails to alloc
+      working_ca = alloc_and_init_covg_array(lim);//will die if fails to alloc
       if (allele_balances==NULL)
 	{
 	  die("Completely out of memory - can't even alloc a small array\n");
@@ -590,24 +601,29 @@ int main(int argc, char **argv)
 
 
   CovgArray* working_ca_for_median=NULL;
+  int lim = cmd_line->max_var_len;
+  if (cmd_line->max_read_length>lim)
+    {
+      lim = cmd_line->max_read_length;
+    }
   if (cmd_line->print_median_covg_only==true)
     {
-      working_ca_for_median = alloc_and_init_covg_array(cmd_line->max_var_len);//will die if fails to alloc
+      working_ca_for_median = alloc_and_init_covg_array(lim);//will die if fails to alloc
     }
 
-  void print_appropriate_extra_variant_info(VariantBranchesAndFlanks* var, FILE* fp)
+  void print_appropriate_extra_variant_info(AnnotatedPutativeVariant* annovar, FILE* fp)
   {
     if (cmd_line->print_colour_coverages==true)
       {
-	print_standard_extra_info(var, fp);
+	print_standard_extra_info(annovar, fp);
       }
     else if (cmd_line->print_median_covg_only==true)
       {
-	print_median_covg_extra_info(var, working_ca_for_median, fp);
+	print_median_covg_extra_info(annovar, working_ca_for_median, fp);
       }
     else
       {
-	print_no_extra_info(var, fp);
+	print_no_extra_info(annovar, fp);
       }
   }
 

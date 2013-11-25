@@ -908,7 +908,7 @@ void mark_second_allele(dBNode** allele2, int len2,boolean use_ref_allele_info, 
     }
 }
 
-boolean reset_allele_status(dBNode** allele, int len)
+void reset_allele_status(dBNode** allele, int len)
 {
   int i;
   for (i=0; i<=len;i++)

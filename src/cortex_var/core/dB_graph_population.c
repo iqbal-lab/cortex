@@ -2509,7 +2509,7 @@ void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGra
 			  void (*action_flanks)(dBNode*),
 			  Edges (*get_colour)(const dBNode*),
 			  Covg (*get_covg)(const dBNode*),
-			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+			  void (*print_extra_info)(AnnotatedPutativeVariant*, FILE*),
 			  boolean apply_model_selection, 
 			  boolean (*model_selection_condition)(AnnotatedPutativeVariant*),
 			  GraphAndModelInfo* model_info,
@@ -2680,20 +2680,18 @@ void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGra
 	    if (condition(&var)==true) 
 	      {
 
-		//ModelLogLikelihoodsAndBayesFactors stats;//results of bayes factor calcs go in here
-		//initialise_stats(&stats);
 		AnnotatedPutativeVariant annovar;
 		boolean use_median=false;
 		if (model_info!=NULL)
 		  {
 		    
 		    initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, 
-						db_graph->kmer_size, model_info->assump, NULL, NULL, NULL, working_ca, true, use_median);
+						db_graph->kmer_size, model_info->assump, working_ca, true, use_median);
 		  }
 		else
 		  {
 		    initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, 
-						db_graph->kmer_size, AssumeUncleaned, NULL, NULL, NULL, working_ca, false, use_median);
+						db_graph->kmer_size, AssumeUncleaned, working_ca, false, use_median);
 		    
 		  }
 
@@ -2825,7 +2823,7 @@ void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGra
 							nodes3p[0],orientations3p[0],
 							seq3p,
 							db_graph->kmer_size,false);
-		    print_extra_info(&var, fout);
+		    print_extra_info(&annovar, fout);
 		    
 		    
 		  }
@@ -2950,7 +2948,7 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(
 									Covg (*get_covg_ref)(const dBNode*),
 									Edges (*get_colour_indiv)(const dBNode*),
 									Covg (*get_covg_indiv)(const dBNode*),
-									void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*) )
+									void (*print_extra_info)(AnnotatedPutativeVariant*, FILE*) )
 {
 
   //first detect bubbles in the ref colour, but do not print them out, so they get marked as visited
@@ -3028,7 +3026,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, /*FILE* fout_gls,*/
 						 int* first_list, int len_first_list,
 						 int* second_list,  int len_second_list,
 						 boolean (*extra_condition)(VariantBranchesAndFlanks* var),
-						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+						 void (*print_extra_info)(AnnotatedPutativeVariant*, FILE*),
 						 boolean exclude_ref_bubbles_first, 
 						 Edges (*get_colour_ref)(const dBNode*), Covg (*get_covg_ref)(const dBNode*),
 						 boolean apply_model_selection, 
@@ -3348,7 +3346,7 @@ void db_graph_detect_vars_given_lists_of_colours_excluding_reference_bubbles(FIL
 									     int* second_list,  int len_second_list,
 									     Edges (*get_colour_ref)(const dBNode*), Covg (*get_covg_ref)(const dBNode*) ,
 									     boolean (*extra_condition)(VariantBranchesAndFlanks* var),
-									     void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*))
+									     void (*print_extra_info)(AnnotatedPutativeVariant*, FILE*))
 {
 
 
@@ -6562,7 +6560,7 @@ int db_graph_make_reference_path_based_sv_calls(
   char** return_flank3p_array, int** return_variant_start_coord,
   boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
   void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-  void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+  void (*print_extra_info)(AnnotatedPutativeVariant* var, FILE* fout),
   GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump)
 {
 
@@ -6612,21 +6610,10 @@ int db_graph_make_reference_path_based_sv_calls(
   int working_colour1 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS;
   int working_colour2 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+1;
 
-  GenotypingWorkingPackage* gwp = alloc_genotyping_work_package(2*max_anchor_span, max_expected_size_of_supernode, working_colour1, working_colour2);
-
-  //number of kmers we want to support in the little hash = 2* (max possible kmers in the two alleles) = 2* (2 * max_allele_length) = 4*max_anchor_span
-  int little_width =100;
-  int little_height = (int) (log((float) (4*max_anchor_span)/100)/log(2))+1;
-  int little_retries=20;
-  LittleHashTable* little_db_graph = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
-  if (little_db_graph==NULL)
-    {
-      die("Something very wrong here. Cant even alloc a tiny toy hash table");
-    }
 
   
   if ( (chrom_path_array==NULL) || (chrom_orientation_array==NULL) || (chrom_labels==NULL) || (chrom_string==NULL)
-       || (current_supernode==NULL) || (curr_sup_orientations==NULL) || (curr_sup_labels==NULL) || (supernode_string==NULL) || (gwp==NULL) )
+       || (current_supernode==NULL) || (curr_sup_orientations==NULL) || (curr_sup_labels==NULL) || (supernode_string==NULL)  )
     {
       die("Cannot malloc arrays for PD calls. give up. Your machine is low on "
           "memory or you have asked for ridiculously large variants");
@@ -7822,7 +7809,8 @@ int db_graph_make_reference_path_based_sv_calls(
 		      if (model_info!=NULL)
 			{
 			  initialise_putative_variant(&annovar, model_info, var, SimplePathDivergenceCaller, db_graph->kmer_size,
-						      assump, gwp, db_graph, little_db_graph, working_ca, true, false);//TODO - change that false to true - work through effect on PD but I think will be better
+						      assump, working_ca, true, false);
+
 			  
 			  
 			  if (model_info->expt_type != Unspecified)
@@ -7961,12 +7949,9 @@ int db_graph_make_reference_path_based_sv_calls(
 							  db_graph->kmer_size,
 							  false);
 		      
-		      
+		      print_extra_info(&annovar, output_file); 
 		    }
 		 
-		  //fprintf(output_file, "var_%i - extra information\n", num_variants_found);
-		  print_extra_info(var, output_file);
-
 		  //in some situations you want to mark all branches of variants for future use after this function returns
 		  action_for_branches_of_called_variants(var);
 
@@ -7997,7 +7982,6 @@ int db_graph_make_reference_path_based_sv_calls(
   //free malloc-ed variables
   free_covg_array(working_ca);
   free_VariantBranchesAndFlanks_object(var);
-  free_genotyping_work_package(gwp);
   free(chrom_path_array);
   free(chrom_orientation_array);
   free(chrom_labels);
@@ -8021,7 +8005,7 @@ int db_graph_make_reference_path_based_sv_calls(
   //free(covgs_of_ref_on_variant_path);
   free(working_array1);
   free(working_array2);
-  little_hash_table_free(&little_db_graph);
+
   return num_variants_found;
 
 
@@ -8066,7 +8050,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 										       boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
 													    Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*)),
 										       void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-										       void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+										       void (*print_extra_info)(AnnotatedPutativeVariant* var, FILE* fout),
 										       GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump,
 										       int start_variant_numbering_with_this
 										       )
@@ -8121,24 +8105,13 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   int working_colour1 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS;
   int working_colour2 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+1;
 
-  GenotypingWorkingPackage* gwp = alloc_genotyping_work_package(2*max_anchor_span, max_expected_size_of_supernode, working_colour1, working_colour2);
-  
   if ( (chrom_path_array==NULL) || (chrom_orientation_array==NULL) || (chrom_labels==NULL) || (chrom_string==NULL)
-       || (current_supernode==NULL) || (curr_sup_orientations==NULL) || (curr_sup_labels==NULL) || (supernode_string==NULL) || (gwp==NULL) )
+       || (current_supernode==NULL) || (curr_sup_orientations==NULL) || (curr_sup_labels==NULL) || (supernode_string==NULL) )
     {
       die("Cannot malloc arrays for PD calls. Your machine is low on memory "
           "or you have asked for ridiculously large variants");
     }
 
-  //number of kmers we want to support in the little hash = 2* (max possible kmers in the two alleles) = 2* (2 * max_allele_length) = 4*max_anchor_span
-  int little_width =100;
-  int little_height = (int) (log((float) (4*max_anchor_span)/100)/log(2))+1;
-  int little_retries=20;
-  LittleHashTable* little_db_graph = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
-  if (little_db_graph==NULL)
-    {
-      die("Something very wrong here. Cant even alloc a tiny toy hash table");
-    }
 
   int n;
   for (n=0; n<length_of_arrays; n++)
@@ -9407,7 +9380,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 			  // in doing so does various walking aroud the main graph. It will reset any
 			  //node it messes with back to visited
 			  initialise_putative_variant(&annovar, model_info, var, SimplePathDivergenceCaller, db_graph->kmer_size,
-						      assump, gwp, db_graph, little_db_graph, working_ca, true, false);//TODO use median
+						      assump, working_ca, true, false);//TODO use median
 			  
 			  if (model_info->expt_type != Unspecified)
 			    {
@@ -9546,19 +9519,13 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 							  db_graph->kmer_size,
 							  false);
 		      
+		      print_extra_info(&annovar, output_file);
 		    }
 		 
-		  //fprintf(output_file, "var_%i - extra information\n", num_variants_found);
-		  print_extra_info(var, output_file);
-
 		  //in some situations you want to mark all branches of variants for future use after this function returns
 		  action_for_branches_of_called_variants(var);
 
 		}
-	      
-	      
-	      
-	      
 	      
 	      start_node_index = start_of_3prime_anchor_in_chrom+length_3p_flank+1;
 	      
@@ -9581,7 +9548,6 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   //free malloc-ed variables
   free_covg_array(working_ca);
   free_VariantBranchesAndFlanks_object(var);
-  free_genotyping_work_package(gwp);
   free(chrom_path_array);
   free(chrom_orientation_array);
   free(chrom_labels);
@@ -9606,7 +9572,6 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   //free(covgs_of_ref_on_variant_path);
   free(working_array1);
   free(working_array2);
-  little_hash_table_free(&little_db_graph);
   return num_variants_found;
 
 
@@ -9626,7 +9591,7 @@ int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(
 										 boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
 												      Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*)),
 										 void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-										 void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+										 void (*print_extra_info)(AnnotatedPutativeVariant* annovar, FILE* fout),
 										GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump,
 										int start_numbering_vars_from_this_number
 										)
@@ -9885,11 +9850,11 @@ void apply_to_all_nodes_in_path_defined_by_fasta(void (*func)(dBNode*), FILE* fa
 
 
 
-void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
+void print_no_extra_info(AnnotatedPutativeVariant* annovar, FILE* fout)
 {
   // Let the compiler know that we are deliberately doing nothing with our
   // paramters
-  (void)var;
+  (void)annovar;
   (void)fout;
 }
 
@@ -10599,32 +10564,38 @@ void print_median_extra_supernode_info(dBNode** node_array,
 
 
 
-void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout)
+void print_standard_extra_info(AnnotatedPutativeVariant* annovar, FILE* fout)
 {
   fprintf(fout, "\n");
   //print coverages:
   fprintf(fout, "branch1 coverages\n");
-  print_standard_extra_supernode_info(var->one_allele, var->one_allele_or, var->len_one_allele, fout);
+  print_standard_extra_supernode_info(annovar->var->one_allele, 
+				      annovar->var->one_allele_or, 
+				      annovar->var->len_one_allele, 
+				      fout);
   fprintf(fout, "branch2 coverages\n");
-  print_standard_extra_supernode_info(var->other_allele, var->other_allele_or, var->len_other_allele, fout);
+  print_standard_extra_supernode_info(annovar->var->other_allele, 
+				      annovar->var->other_allele_or, 
+				      annovar->var->len_other_allele, 
+				      fout);
   fprintf(fout, "\n\n");
 }
 
 //uses br_covg elements of annovar
-void print_standard_extra_allele_info(AnnotatedPutativeVariant* annovar, FILE* fout)
+void print_informative_kmer_extra_info(AnnotatedPutativeVariant* annovar, FILE* fout)
 {
-blah - make this work
-  fprintf(fout, "\n");
-  //print coverages:
-  fprintf(fout, "branch1 coverages\n");
-  print_standard_extra_supernode_info(var->one_allele, var->one_allele_or, var->len_one_allele, fout);
-  fprintf(fout, "branch2 coverages\n");
-  print_standard_extra_supernode_info(var->other_allele, var->other_allele_or, var->len_other_allele, fout);
+  fprintf(fout, "\nColour\tBr1_median_covg_on_informative_kmers\tBr2_median_covg_on_informative_kmers\n");
+  int i;
+
+  for (i=0; i<NUMBER_OF_COLOURS; i++)
+    {
+      fprintf(fout, "%d\t%" PRIu64 "\t%" PRIu64 "\n", i, (uint64_t)(annovar->br1_uniq_covg[i]), (uint64_t) (annovar->br2_uniq_covg[i]));
+    }
   fprintf(fout, "\n\n");
 }
 
 
-void print_median_covg_extra_info(VariantBranchesAndFlanks* var, CovgArray* working_ca,FILE* fout)
+void print_median_covg_extra_info(AnnotatedPutativeVariant* annovar, CovgArray* working_ca,FILE* fout)
 {
   fprintf(fout, "\n");
   //print coverages:
@@ -10634,23 +10605,27 @@ void print_median_covg_extra_info(VariantBranchesAndFlanks* var, CovgArray* work
   for (col=0; col<NUMBER_OF_COLOURS; col++)
     {
       fprintf(fout, "%d\t", col);
-      Covg c1 = median_covg_on_allele_in_specific_colour(var->one_allele,
-							 var->len_one_allele,
+      Covg c1 = median_covg_on_allele_in_specific_colour(annovar->var->one_allele,
+							 annovar->var->len_one_allele,
 							 working_ca,
 							 col, &too_short);
-      Covg c2 = median_covg_on_allele_in_specific_colour(var->other_allele,
-							 var->len_other_allele,
+      Covg c2 = median_covg_on_allele_in_specific_colour(annovar->var->other_allele,
+							 annovar->var->len_other_allele,
 							 working_ca,
 							 col, &too_short);
-
-      Covg d1 = min_covg_on_allele_in_specific_colour(var->one_allele,
-							 var->len_one_allele,
-							 col, &too_short);
-      Covg d2 = min_covg_on_allele_in_specific_colour(var->other_allele,
-							 var->len_other_allele,
-							 col, &too_short);
-
-      fprintf(fout, "%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\n", (uint64_t)c1,(uint64_t)c2, (uint64_t)d1,(uint64_t)d2);
+      
+      Covg d1 = min_covg_on_allele_in_specific_colour(annovar->var->one_allele,
+						      annovar->var->len_one_allele,
+						      col, &too_short);
+      Covg d2 = min_covg_on_allele_in_specific_colour(annovar->var->other_allele,
+						      annovar->var->len_other_allele,
+						      col, &too_short);
+      
+      fprintf(fout, "%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\n", 
+	      (uint64_t)c1,
+	      (uint64_t)c2, 
+	      (uint64_t)d1,
+	      (uint64_t)d2);
     }
   fprintf(fout, "\n\n");
 }
@@ -10895,7 +10870,7 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
       boolean use_median=true;
       //this does the genotyping.
       initialise_putative_variant(&annovar, model_info, var, which_caller, 
-				  db_graph->kmer_size, assump, gwp, db_graph, little_dbg, working_ca,true, use_median);
+				  db_graph->kmer_size, assump, working_ca,true, use_median);
     }
   else
     {
@@ -10998,7 +10973,7 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var, FILE* fou
 					  var->flank3p[0],               var->flank3p_or[0],
 					  var->seq3p,db_graph->kmer_size,false);
 
-      print_extra_info(annovar, fout);
+      print_extra_info(&annovar, fout);
       
       
     }

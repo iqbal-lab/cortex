@@ -333,7 +333,7 @@ void db_graph_detect_vars(FILE* fout, /* FILE* fout_gls, */ int max_length, dBGr
 			  void (*action_branches)(dBNode*),
 			  void (*action_flanks)(dBNode*),
 			  Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*),
-			  void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+			  void (*print_extra_info)(AnnotatedPutativeVariant*, FILE*),
 			  boolean apply_model_selection, 
 			  boolean (*model_selection_condition)(AnnotatedPutativeVariant*),
 			  GraphAndModelInfo* model_info,
@@ -347,7 +347,7 @@ void db_graph_detect_vars_after_marking_vars_in_reference_to_be_ignored(
 									Covg (*get_covg_ref)(const dBNode*),
 									Edges (*get_colour_indiv)(const dBNode*),
 									Covg (*get_covg_indiv)(const dBNode*),
-									void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*));
+									void (*print_extra_info)(AnnotatedPutativeVariant*, FILE*));
 
 boolean detect_vars_condition_always_true(VariantBranchesAndFlanks*);
 boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesAndFlanks* var);
@@ -377,7 +377,7 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, /* FILE* fout_gls, 
 						 int* first_list, int len_first_list,
 						 int* second_list,  int len_second_list,
 						 boolean (*extra_condition)(VariantBranchesAndFlanks* var),
-						 void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+						 void (*print_extra_info)(AnnotatedPutativeVariant*, FILE*),
 						 boolean exclude_ref_bubbles_first, 
 						 Edges (*get_colour_ref)(const dBNode*),
 						 Covg (*get_covg_ref)(const dBNode*),
@@ -390,8 +390,8 @@ void db_graph_detect_vars_given_lists_of_colours(FILE* fout, /* FILE* fout_gls, 
 
 
 void db_graph_print_supernodes_for_specific_person_or_pop(
-	char *filename_sups, char *filename_sings, int max_length, dBGraph *db_graph, int index,
-  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*));
+							  char *filename_sups, char *filename_sings, int max_length, dBGraph *db_graph, int index,
+							  void (*print_extra_info)(dBNode**, Orientation*, int, FILE*));
 
 
 long long  db_graph_count_error_supernodes(int max_length, dBGraph *db_graph, int index, 
@@ -552,7 +552,7 @@ boolean make_reference_path_based_sv_calls_condition_always_true_for_func_of_col
 										     Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*) );
 
 
-void print_no_extra_info(VariantBranchesAndFlanks* var, FILE* fout);
+void print_no_extra_info(AnnotatedPutativeVariant* annovar, FILE* fout);
 void print_no_extra_supernode_info(dBNode** node_array, Orientation* or_array, int len, FILE* fout);
 
 
@@ -566,7 +566,7 @@ int db_graph_make_reference_path_based_sv_calls(FILE* chrom_fasta_fptr,
   char** return_flank3p_array, int** return_variant_start_coord,
   boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  int colour_of_indiv),
   void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-  void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout), GraphAndModelInfo* model_info,
+  void (*print_extra_info)(AnnotatedPutativeVariant* var, FILE* fout), GraphAndModelInfo* model_info,
   AssumptionsOnGraphCleaning assump);
 
 boolean make_reference_path_based_sv_calls_condition_always_true_in_subgraph_defined_by_func_of_colours(
@@ -587,7 +587,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
   Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*)),
   void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-  void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+  void (*print_extra_info)(AnnotatedPutativeVariant* var, FILE* fout),
   GraphAndModelInfo* model_info, AssumptionsOnGraphCleaning assump,int start_variant_numbering_with_this
   );
 
@@ -605,7 +605,7 @@ int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(
   boolean (*condition)(VariantBranchesAndFlanks* var,  int colour_of_ref,  
   Edges (*get_colour)(const dBNode*), Covg (*get_covg)(const dBNode*)),
   void (*action_for_branches_of_called_variants)(VariantBranchesAndFlanks* var),
-  void (*print_extra_info)(VariantBranchesAndFlanks* var, FILE* fout),
+  void (*print_extra_info)(AnnotatedPutativeVariant* var, FILE* fout),
   GraphAndModelInfo* model_info, 
   AssumptionsOnGraphCleaning assump, int start_numbering_vars_from_this_number
   );
@@ -668,9 +668,11 @@ void print_median_extra_supernode_info(dBNode** node_array,
 				       Orientation* or_array,
 				       int len, CovgArray* working_ca, FILE* fout);
 
-void print_standard_extra_info(VariantBranchesAndFlanks* var, FILE* fout);
+void print_standard_extra_info(AnnotatedPutativeVariant* annovar, FILE* fout);
 
-void print_median_covg_extra_info(VariantBranchesAndFlanks* var, CovgArray* working_ca,FILE* fout);
+void print_median_covg_extra_info(AnnotatedPutativeVariant* annovar, CovgArray* working_ca,FILE* fout);
+
+void print_informative_kmer_extra_info(AnnotatedPutativeVariant* annovar, FILE* fout);
 
 long long db_graph_health_check(boolean fix, dBGraph * db_graph);
 long long db_graph_clean_orphan_edges(dBGraph * db_graph);
@@ -687,10 +689,9 @@ void print_call_given_var_and_modelinfo(VariantBranchesAndFlanks* var,
                                         GraphAndModelInfo* model_info,
 					DiscoveryMethod which_caller,
                                         dBGraph* db_graph,
-                                        void (*print_extra_info)(VariantBranchesAndFlanks*, FILE*),
+                                        void (*print_extra_info)(AnnotatedPutativeVariant*, FILE*),
 					AssumptionsOnGraphCleaning assump,
-                                        GenotypingWorkingPackage* gwp,
-                                        LittleHashTable* little_dbg, CovgArray* working_ca);
+					CovgArray* working_ca);
 
 
 void db_graph_get_stats_of_supernodes_that_split_two_colour(int max_length, int colour1, int colour2,

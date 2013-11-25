@@ -48,6 +48,8 @@ BEGIN
 my $check_perl5 = "echo \$PERL5LIB";
 my $check_perl5_ret = qx{$check_perl5};
 my $isaac_libdir = $isaac_bioinf_dir."lib";
+
+
 if ($check_perl5_ret !~ /$isaac_libdir/) 
 {
     $ENV{PERL5LIB} .= ":$isaac_libdir";
@@ -545,7 +547,7 @@ if  ($workflow eq "independent" )
 							$sample_to_cleaned_bin{$sam}{$k}{$cleaning}, 
 							$uniqid );
 		## load reference binary and make calls. 
-		my $cmd = $ctx_bin." --kmer_size $k --mem_height $mem_height --mem_width $mem_width --ref_colour 0 --colour_list $colour_list  --print_colour_coverages";
+		my $cmd = $ctx_bin." --kmer_size $k --mem_height $mem_height --mem_width $mem_width --ref_colour 0 --colour_list $colour_list  --print_median_covg_only";
 		print "Load reference $k_to_refbin{$k} in colour 0, and sample ";
 		print $sample_to_cleaned_bin{$sam}{$k}{$cleaning};
 		print " into colour 1\n";
@@ -647,7 +649,7 @@ if  ($workflow eq "joint" )## then just assume is BC only
 	    my $uniqid = "joint_".$str ."kmer".$K."_cleaning_level".$cl;
 	    my $colour_list = get_colourlist_for_joint($K, $cl, $str);
 	    
-	    my $cmd = $ctx_bin." --kmer_size $K --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size";
+	    my $cmd = $ctx_bin." --kmer_size $K --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list  --print_median_covg_only --experiment_type $expt_type --genome_size $genome_size";
 
 	    if ($gt_assemblies eq "FASTA")
 	    {
@@ -825,7 +827,7 @@ if ($do_union eq "yes")
 		{	
 		    $gt_pd_out = $outdir_calls.basename($kmer_to_union_callset{$km}{"PD"}).".genotyped";
 		    my $gt_pd_log = $gt_pd_out."_pd_calls.log";
-		    
+		    print "BOBBERT HERE\n";
 		    genotype_union($multicol_ctx_bin, $multicolour_list, $km, $mem_height, $mem_width, 
 				   0, $kmer_to_union_callset{$km}{"PD"}, 
 				   $gt_pd_out, $gt_pd_log, "PD", 

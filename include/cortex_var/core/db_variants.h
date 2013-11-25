@@ -270,6 +270,8 @@ Covg count_reads_on_allele_in_specific_func_of_colours(
 Covg median_covg_on_allele_in_specific_colour(dBNode** allele, int len, CovgArray* working_ca,
 					      int colour, boolean* too_short);
 
+Covg min_covg_on_allele_in_specific_colour(dBNode** allele, int len, int colour, boolean* too_short);
+
 Covg median_covg_on_allele_in_specific_colour_with_allele_presence_constraint(dBNode** allele, int len, CovgArray* working_ca,
 									      int colour, boolean* too_short, AlleleStatus st,
 									      float eff_depth);

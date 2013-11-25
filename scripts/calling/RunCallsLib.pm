@@ -274,11 +274,13 @@ sub genotype_union
     my ($ctx_bin, $colour_list, $kmer_size, $mem_height, $mem_width, 
 	$ref_colour, $file_to_genotype,$outfile, $logfile, 
 	$which_caller, $max_read_len, $expt_type, $genome_size, $gt_assemblies) = @_;
-
+    print "ROCKON\n";
     	    
     if (!(-e $outfile))
 	    {
-		my $gt_cmd = $ctx_bin." --colour_list $colour_list  --kmer_size $kmer_size --mem_height $mem_height --mem_width $mem_width --ref_colour $ref_colour --gt $file_to_genotype,$outfile,$which_caller --max_read_len $max_read_len  --print_colour_coverages --experiment_type $expt_type --genome_size $genome_size ";
+		print "About to genoitype!!! ZAMZAMZAMZAM\n";
+		my $gt_cmd = $ctx_bin." --colour_list $colour_list  --kmer_size $kmer_size --mem_height $mem_height --mem_width $mem_width --ref_colour $ref_colour --gt $file_to_genotype,$outfile,$which_caller --max_read_len $max_read_len  --print_median_covg_only --experiment_type $expt_type --genome_size $genome_size ";
+		print " IQB command is $gt_cmd\n\n\n\n\n";
 		if ($gt_assemblies eq "yes")
 		{
 		    printf("Note - since you used --gt_assemblies yes, we assume these are reference genomes, with a very low per-base error rate, of 0.0000001, in order to genotype\n");

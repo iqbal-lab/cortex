@@ -3355,7 +3355,7 @@ sub get_next_var_from_callfile_with_median_covgs
 	}
 }
 
-boblet
+
 sub get_num_reads_using_median
 {
     my ($line, $read_length, $khmer) = @_;

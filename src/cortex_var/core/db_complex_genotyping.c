@@ -2417,8 +2417,8 @@ void get_all_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(Annotate
 // db_graph and little_db_graph only used by PD caller genotyping, so again you can pass NULL there for bubble calls
 boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info,
 				    VariantBranchesAndFlanks* var, DiscoveryMethod caller,  int kmer,
-				    AssumptionsOnGraphCleaning assump, GenotypingWorkingPackage* gwp,
-				    dBGraph* db_graph, LittleHashTable* little_db_graph, CovgArray* working_ca,
+				    AssumptionsOnGraphCleaning assump, 
+				    CovgArray* working_ca,
 				    boolean do_genotyping, boolean use_median)
 				    
 {
