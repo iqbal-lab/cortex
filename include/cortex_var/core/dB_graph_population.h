@@ -672,6 +672,8 @@ void print_standard_extra_info(AnnotatedPutativeVariant* annovar, FILE* fout);
 
 void print_median_covg_extra_info(AnnotatedPutativeVariant* annovar, CovgArray* working_ca,FILE* fout);
 
+void print_median_covg_on_informative_kmers_extra_info(AnnotatedPutativeVariant* annovar, CovgArray* working_ca,FILE* fout);
+
 void print_informative_kmer_extra_info(AnnotatedPutativeVariant* annovar, FILE* fout);
 
 long long db_graph_health_check(boolean fix, dBGraph * db_graph);

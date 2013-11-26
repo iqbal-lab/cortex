@@ -619,7 +619,14 @@ int main(int argc, char **argv)
       }
     else if (cmd_line->print_median_covg_only==true)
       {
-	print_median_covg_extra_info(annovar, working_ca_for_median, fp);
+	if (cmd_line->which_caller_was_used_for_calls_to_be_genotyped==BubbleCaller)
+	  {
+	    print_median_covg_extra_info(annovar, working_ca_for_median, fp);
+	  }
+	else
+	  {
+	    print_median_covg_on_informative_kmers_extra_info(annovar, working_ca_for_median, fp);
+	  }
       }
     else
       {

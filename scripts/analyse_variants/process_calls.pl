@@ -507,7 +507,14 @@ if ( $classif ne "-1" )
 
 if ($caller_type eq "PD")
 {
-    filter_calls_where_entire_ref_allele_is_multicopy(\%var_name_to_pd_filter, $callfile, $reference_colour);
+    if ($callfile_is_median_format==0)
+    {
+	filter_pd_calls_where_entire_ref_allele_is_multicopy_with_full_colour_covgs(\%var_name_to_pd_filter, $callfile, $reference_colour);
+    }
+    else
+    {
+	filter_pd_calls_where_entire_ref_allele_is_multicopy_with_median_covgs(\%var_name_to_pd_filter, $callfile, $reference_colour);
+    }
 }
 combine_all_filters(
     \%var_name_to_covg_and_branch_filter,    \%var_name_to_flank_mq_filter,
@@ -1271,7 +1278,7 @@ sub get_vcf_header
 	return $head;
 }
 
-sub  filter_calls_where_entire_ref_allele_is_multicopy
+sub  filter_pd_calls_where_entire_ref_allele_is_multicopy_with_full_colour_covgs
 {
     my ($href, $callfile, $ref_colour) = @_;
     
@@ -1478,6 +1485,195 @@ sub  filter_calls_where_entire_ref_allele_is_multicopy
     close($fh);
     return;
 }
+
+
+
+sub  filter_pd_calls_where_entire_ref_allele_is_multicopy_with_median_covgs
+{
+    my ($href, $callfile, $ref_colour) = @_;
+    
+    my $fh;
+    open($fh, $callfile)||die("Cannot open the callfile $callfile\n");
+
+    my $line = "";
+    my $varname;
+    my $flank5p;
+    my $br1;
+    my $br2;
+    my $flank3p;
+
+    my $classification = "VARIANT";
+    my $class_llk_rep  = -10;
+    my $class_llk_var  = -1;
+    
+
+    my @arr_br1_covgs = (); #median covgs
+    my @arr_br2_covgs = (); 
+
+    while (( $line !~ /(\w*var_\d+)_5p_flank/ )
+	   && ( $line !~ /PASSES/ )
+	   && ( $line !~ /FAILS/ )
+	   && ( $line !~ /Colour\/sample/ ) )
+    {
+	if ( eof($fh) )
+	{
+ 	    close($fh);
+	    return;
+	}
+	else
+	{
+	    $line = <$fh>;
+	}
+    }
+    
+    if ( $line =~ /PASSES/ )
+    {
+	$classification = "VARIANT";
+	if ( eof($fh) )
+	{
+	    close($fh);
+	    return;
+	}
+	
+	$line = <$fh>;
+	chomp $line;
+	
+	if ( $line =~ /llk_var:(\S+).+llk_rep:(\S+)/ )
+	{
+	    $class_llk_rep = $1;
+	    $class_llk_var = $2;
+	}
+	else
+	{
+	    die(
+		"Parsing issue. Found model selecion result but cant find likelihoods on $line\n"
+		);
+	}
+	if ( eof($fh) )
+	{
+	    close($fh);
+	    return ;
+	}
+	$line = <$fh>;
+	
+    }
+    elsif ( $line =~ /FAILS/ )
+    {
+	$classification = "REPEAT";
+	if ( eof($fh) )
+	{
+	    close($fh);
+	    return;
+	}
+	
+	$line = <$fh>;
+	chomp $line;
+	
+	if ( $line =~ /llk_var:(\S+).+llk_rep:(\S+)/ )
+	{
+	    $class_llk_rep = $1;
+	    $class_llk_var = $2;
+	}
+	else
+	{
+	    die(
+		"Parsing issue. Found model selecion result but cant find likelihoods on $line\n"
+		);
+	}
+	if ( eof($fh) )
+	{
+	    close($fh);
+	    return;
+	}
+	$line = <$fh>;
+    }
+    
+    if ( $line =~ /Colour\/sample/ )
+    {
+	my $j;
+	for ( $j = 0 ; $j < $number_of_colours ; $j++ )
+	{
+	    $line = <$fh>;#### all the genotype calls
+	    chomp $line;
+	}
+	$line = <$fh>;
+	
+    }
+    
+    if ( $line =~ /(\w*var_\d+)_5p_flank/ )
+    {
+	$varname = $1;
+	if ($prefix ne "")
+	{
+	    $varname = $prefix."_".$varname;
+	}
+	
+	if ( $varname eq "" )
+	{
+	    die(
+		"Found this line :$line in the callfile - expected it to be of the form var_<NUMBER>_5p_flank\n"
+		);
+	}
+	
+	
+	$flank5p = <$fh>;
+	chomp $flank5p;
+	<$fh>;    #ignore br1 read id
+	$br1 = <$fh>;
+	chomp $br1;
+	<$fh>;    #ignore br2 read id
+	$br2 = <$fh>;
+	chomp $br2;
+	<$fh>;    #ignore 3p flank read id
+	$flank3p = <$fh>;
+	chomp $flank3p;
+	$line    = <$fh>;
+	
+#	if ( $line =~ /extra information/ )
+#	{
+#	    <$fh>;
+#	}
+	$line = <$fh>;
+	chomp $line;
+	if ( $line !~ /br1_median_covg/ )
+	{
+	    die("Expected to see \"br1_median_covg\" but instead saw $line");
+	}
+	my $z;
+	for ( $z = 0 ; $z < $number_of_colours ; $z++ )
+	{
+	    $line = <$fh>;
+	    chomp $line;
+
+	    if ($z==$ref_colour)
+	    {
+		my @stuff = split( /\t/, $line );
+		
+		my $min_covg_on_br1 = $stuff[3];## branch1 is the ref allele
+		if ($min_covg_on_br1>1)
+		{
+		    ### Every kmer on this allele occurs >1 time in reference. We need to filter this call
+		    $href->{$varname}=1;
+		}
+
+	    }
+	}
+	
+	close($fh);
+	return;
+	
+    }
+    else
+    {
+	print
+	    "Unexpected error on  $line. Expected the read-id of 5prime flank in callfile to be of the form (optional_text)var_(number)_5p_flank. This bug is probably due to Zam's changes to support the new format of callfiles but also stay legacy format compatible - contact zam\@well.ox.ac.uk\n";
+	die();
+    }
+    close($fh);
+    return;
+}
+
+
 
 sub filter_by_flank_mapqual
 {
@@ -3312,20 +3508,20 @@ sub get_next_var_from_callfile_with_median_covgs
 			$which_is_ref = 1;
 		}
 
-		elsif (( $arr_br1_min_covg[$reference_colour] == 0 )
-			&& ( $arr_br2_min_covg[$reference_colour] >= 1 ) )
+		elsif (( $arr_br1_min_covgs[$reference_colour] == 0 )
+			&& ( $arr_br2_min_covgs[$reference_colour] >= 1 ) )
 		{
 			$which_is_ref = 2;
 		}
 
-		elsif (( $arr_br1_median_covg[$reference_colour] >= 1 )
-			&& ( $arr_br2_median_covg[$reference_colour] == 0 ) )
+		elsif (( $arr_br1_median_covgs[$reference_colour] >= 1 )
+			&& ( $arr_br2_median_covgs[$reference_colour] == 0 ) )
 		{
 			$which_is_ref = 1;
 		}
 
-		elsif (( $arr_br1_min_covg[$reference_colour] >= 1 )
-			&& ( $arr_br2_min_covg[$reference_colour] >= 1 ) )
+		elsif (( $arr_br1_min_covgs[$reference_colour] >= 1 )
+			&& ( $arr_br2_min_covgs[$reference_colour] >= 1 ) )
 		{
 			$which_is_ref = 1;##filter script will fixup/choose which one
 		}

@@ -10632,6 +10632,37 @@ void print_median_covg_extra_info(AnnotatedPutativeVariant* annovar, CovgArray* 
 
 
 
+void print_median_covg_on_informative_kmers_extra_info(AnnotatedPutativeVariant* annovar, CovgArray* working_ca,FILE* fout)
+{
+  fprintf(fout, "\n");
+  //print coverages:
+  fprintf(fout, "Colour\tbr1_median_covg\tbr2_median_covg\tbr1_min_covg\tbr2_min_covg\n");
+  boolean too_short=false;
+  int col;
+  for (col=0; col<NUMBER_OF_COLOURS; col++)
+    {
+      fprintf(fout, "%d\t", col);
+      Covg c1 = annovar->br1_uniq_covg[col];
+      Covg c2 = annovar->br2_uniq_covg[col];
+      
+      Covg d1 = min_covg_on_allele_in_specific_colour(annovar->var->one_allele,
+						      annovar->var->len_one_allele,
+						      col, &too_short);
+      Covg d2 = min_covg_on_allele_in_specific_colour(annovar->var->other_allele,
+						      annovar->var->len_other_allele,
+						      col, &too_short);
+      
+      fprintf(fout, "%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\t%" PRIu64 "\n", 
+	      (uint64_t)c1,
+	      (uint64_t)c2, 
+	      (uint64_t)d1,
+	      (uint64_t)d2);
+    }
+  fprintf(fout, "\n\n");
+}
+
+
+
 //check all edges in graph
 long long db_graph_health_check(boolean fix, dBGraph * db_graph){
   dBNode * next_node;

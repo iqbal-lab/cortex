@@ -827,7 +827,7 @@ if ($do_union eq "yes")
 		{	
 		    $gt_pd_out = $outdir_calls.basename($kmer_to_union_callset{$km}{"PD"}).".genotyped";
 		    my $gt_pd_log = $gt_pd_out."_pd_calls.log";
-		    print "BOBBERT HERE\n";
+
 		    genotype_union($multicol_ctx_bin, $multicolour_list, $km, $mem_height, $mem_width, 
 				   0, $kmer_to_union_callset{$km}{"PD"}, 
 				   $gt_pd_out, $gt_pd_log, "PD", 
