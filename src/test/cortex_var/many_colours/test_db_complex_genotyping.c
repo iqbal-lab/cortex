@@ -1131,8 +1131,8 @@ Colour:	MeanReadLen	TotalSeq
       AnnotatedPutativeVariant annovar;
       initialise_putative_variant(&annovar, &model_info, 
 				  &var, BubbleCaller, 31, 
-				  AssumeUncleaned, NULL, 
-				  NULL, NULL, working_ca, true, count_covg_using_jumps[c] );
+				  AssumeUncleaned,
+				  working_ca, true, count_covg_using_jumps[c] );
       
       
       // Since none of the colours except colour 3 has any coverage AT ALL on branch1, I simply
@@ -1452,31 +1452,22 @@ Colour 0 = reference
   var.len_other_allele = 56;
   var.which = first;
   CovgArray* working_ca = alloc_and_init_covg_array(200);
-  int little_width =100;
-  int little_height = 10;
-  int little_retries=20;
-  LittleHashTable* little_db_graph = little_hash_table_new(little_height, little_width, little_retries, db_graph->kmer_size);
 
   AnnotatedPutativeVariant annovar;
-  GenotypingWorkingPackage* gwp = alloc_genotyping_work_package(60,1000,NUMBER_OF_COLOURS, NUMBER_OF_COLOURS+1);
-  if (gwp==NULL)
-    {
-      die("Unable to malloc genotyping work package. Out of memory. Abort\n");
-    }
 
 
   //counting covg by counting jumps
   initialise_putative_variant(&annovar, &model_info, 
 			      &var, SimplePathDivergenceCaller, 31,
-			      AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, 
-			      little_db_graph, working_ca, true, false );
+			      AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, 
+			      working_ca, true, false );
   CU_ASSERT(annovar.genotype[1]==hom_other);
 
   //using median
   initialise_putative_variant(&annovar, &model_info, 
 			      &var, SimplePathDivergenceCaller, 31,
-			      AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, gwp, db_graph, 
-			      little_db_graph, working_ca, true, true );
+			      AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice,
+			      working_ca, true, true );
   CU_ASSERT(annovar.genotype[1]==hom_other);
 
 
@@ -1533,12 +1524,11 @@ Colour 0 = reference
 
 
   AnnotatedPutativeVariant annovar2;
-  wipe_little_graph(little_db_graph);
+
 
   initialise_putative_variant(&annovar2, &model_info, 
 			      &var, SimplePathDivergenceCaller, 31,
 			      AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, 
-			      gwp, db_graph, little_db_graph, 
 			      working_ca, true, false );
   CU_ASSERT(annovar2.genotype[1]==hom_other);//1==colour
 
@@ -1547,7 +1537,6 @@ Colour 0 = reference
   initialise_putative_variant(&annovar2, &model_info, 
 			      &var, SimplePathDivergenceCaller, 31,
 			      AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice, 
-			      gwp, db_graph, little_db_graph, 
 			      working_ca, true, true );
   CU_ASSERT(annovar2.genotype[1]==hom_other);//1==colour
 
@@ -1558,8 +1547,6 @@ Colour 0 = reference
 
 
 
-  free_genotyping_work_package(gwp);
-  little_hash_table_free(&little_db_graph);
   hash_table_free(&db_graph);
   free(kmer_window->kmer);
   free(kmer_window);

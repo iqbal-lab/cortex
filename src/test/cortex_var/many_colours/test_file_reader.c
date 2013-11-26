@@ -4065,6 +4065,15 @@ void test_read_next_variant_from_full_flank_file()
 
   int max_branch_len=10;
 
+  /*  GraphInfo* ginfo = graph_info_alloc_and_init();
+  graph_info_set_seq(ginfo, 0, seq_read);
+  graph_info_set_mean_readlen(ginfo,0, 32);
+  GraphAndModelInfo model_info;
+  float repeat_geometric_param_mu = 0.8;//not used in this
+  int num_chroms_in_expt=2;
+  initialise_model_info(&model_info, ginfo, 50, repeat_geometric_param_mu, 
+  -1, 2, EachColourADiploidSample, AssumeAnyErrorSeenMustHaveOccurredAtLeastTwice);*/
+
   db_graph_detect_vars(fout_bubble, max_branch_len,db_graph, &detect_vars_condition_always_true,
 		       &db_node_action_set_status_visited, &db_node_action_set_status_visited,
 		       &element_get_colour_union_of_all_colours, &element_get_covg_union_of_all_covgs, &print_no_extra_info,
@@ -4288,6 +4297,7 @@ void test_read_next_variant_from_full_flank_file()
   free_sequence(&seq);
   free_sequence(&seq_inc_prev_kmer);
   free_VariantBranchesAndFlanks_object(var);
+  //  graph_info_free(ginfo);
 }
 
 

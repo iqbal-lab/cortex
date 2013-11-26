@@ -940,7 +940,13 @@ boolean get_num_effective_reads_on_unique_part_of_branch(Covg* array1, dBNode** 
 	{
 	  eff_read_len = ginfo->mean_read_length[i] - kmer+1;
 	}
-      float eff_depth = (float) eff_read_len* ((float)((ginfo->total_sequence[i]/ginfo->mean_read_length[i])));
+      float eff_depth = 0;
+      if (ginfo->mean_read_length[i]>0)
+	{
+	  eff_depth = (float) eff_read_len* ((float)((ginfo->total_sequence[i]/ginfo->mean_read_length[i])));
+	}
+
+
       if (len1>eff_read_len)
 	{
 	  array1[i] = ((len1 + 0.5*eff_read_len)/eff_read_len) *  

@@ -2463,9 +2463,11 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
   boolean flag1=false;
   boolean flag2=false;
 
-  flag1=get_num_effective_reads_on_branch(annovar->br1_covg, var->one_allele, var->len_one_allele, use_median, working_ca, ginfo, kmer);
-  flag2=get_num_effective_reads_on_branch(annovar->br2_covg, var->other_allele, var->len_other_allele, use_median, working_ca, ginfo, kmer);
-
+  if (do_genotyping==true)
+    {
+      flag1=get_num_effective_reads_on_branch(annovar->br1_covg, var->one_allele, var->len_one_allele, use_median, working_ca, ginfo, kmer);
+      flag2=get_num_effective_reads_on_branch(annovar->br2_covg, var->other_allele, var->len_other_allele, use_median, working_ca, ginfo, kmer);
+    }
   annovar->too_short = false;
   if ( (flag1==true)||(flag2==true) )
     {
@@ -2488,18 +2490,21 @@ boolean initialise_putative_variant(AnnotatedPutativeVariant* annovar, GraphAndM
     }
   else//is a valid putative site
     {
-      if (caller==SimplePathDivergenceCaller)
+      if (do_genotyping==true)
 	{
-	  get_num_effective_reads_on_unique_part_of_branch(annovar->br1_uniq_covg, var->one_allele, annovar->var->len_one_allele, 
-							   annovar->br2_uniq_covg, var->other_allele, annovar->var->len_other_allele, 
-							   working_ca, ginfo, kmer, true, ref_colour, 1);
-	}
-      else
-	{
-	  get_num_effective_reads_on_unique_part_of_branch(annovar->br1_uniq_covg, var->one_allele, annovar->var->len_one_allele, 
-							   annovar->br2_uniq_covg, var->other_allele, annovar->var->len_other_allele, 
-							   working_ca, ginfo, kmer, false, ref_colour, 1);
-	  
+	  if (caller==SimplePathDivergenceCaller)
+	    {
+	      get_num_effective_reads_on_unique_part_of_branch(annovar->br1_uniq_covg, var->one_allele, annovar->var->len_one_allele, 
+							       annovar->br2_uniq_covg, var->other_allele, annovar->var->len_other_allele, 
+							       working_ca, ginfo, kmer, true, ref_colour, 1);
+	    }
+	  else
+	    {
+	      get_num_effective_reads_on_unique_part_of_branch(annovar->br1_uniq_covg, var->one_allele, annovar->var->len_one_allele, 
+							       annovar->br2_uniq_covg, var->other_allele, annovar->var->len_other_allele, 
+							       working_ca, ginfo, kmer, false, ref_colour, 1);
+	      
+	    }
 	}
       int i;
       annovar->BigTheta = 0;

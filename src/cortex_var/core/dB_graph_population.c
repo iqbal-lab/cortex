@@ -2682,7 +2682,7 @@ void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGra
 
 		AnnotatedPutativeVariant annovar;
 		boolean use_median=false;
-		if (model_info!=NULL)
+		if ((model_info!=NULL) && (model_info->ginfo!=NULL))
 		  {
 		    
 		    initialise_putative_variant(&annovar, model_info, &var, BubbleCaller, 
