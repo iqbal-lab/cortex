@@ -906,7 +906,7 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
     current_node        = next_node;
     current_orientation = next_orientation;
     
-  } while (length<limit && 
+  } while (length<(limit-1) && 
 	   !((next_node == node) && (next_orientation == orientation)) && //loop
 	   db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(next_node, opposite_orientation(next_orientation), &nucleotide2, get_colour) && //multiple entries
 	   db_node_has_precisely_one_edge_in_subgraph_defined_by_func_of_colours(current_node, current_orientation, &nucleotide, get_colour)); //has one next edge only

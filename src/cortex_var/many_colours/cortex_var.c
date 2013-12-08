@@ -125,12 +125,12 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
 	{
 	  die("Unable to alloc an array of coverages for genotyping - abort. Your server must have run out of memory.\n");
 	}
-      VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(cmd_line->max_read_length+1, cmd_line->max_read_length+1, 
-									    cmd_line->max_read_length+1, cmd_line->max_read_length+1, db_graph->kmer_size);
+      VariantBranchesAndFlanks* var = alloc_VariantBranchesAndFlanks_object(lim+1, lim+1, lim+1, lim+1, db_graph->kmer_size);
+
       if (var==NULL)
 	{
 	  die("Abort - unable to allocate memory for buffers for reading callfile - \n"
-        "either sever oom conditions or you have specified very very large max_read_len\n");
+	      "either sever oom conditions or you have specified very very large max_read_len or max_var_len\n");
 	}
       GenotypingWorkingPackage* gwp=NULL;
       LittleHashTable* little_dbg=NULL;
@@ -368,7 +368,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
 
 }
 
-void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph, 
+void run_bubble_calls(CmdLine* cmd_line, dBGraph* db_graph, 
                       void (*print_appropriate_extra_var_info)(AnnotatedPutativeVariant* annovar, FILE* fp),
                       Edges(*get_col_ref) (const dBNode* e),
                       Covg (*get_cov_ref)(const dBNode* e),
@@ -401,9 +401,11 @@ void run_bubble_calls(CmdLine* cmd_line, int which, dBGraph* db_graph,
   long double* allele_balances=NULL;
   CovgArray* working_ca=NULL;
   int lim = cmd_line->max_var_len;
+  printf("lim is %d, max read len is %d\n", lim, cmd_line->max_read_length);
   if (cmd_line->max_read_length> lim)
     {
       lim = cmd_line->max_read_length;
+      printf("max read len > lim so set lim to %d\n", lim);
     }
   if (cmd_line->high_diff==true)
     {
@@ -1318,7 +1320,7 @@ int main(int argc, char **argv)
     {
       timestamp();
       printf("Start first set of bubble calls\n");
-      run_bubble_calls(cmd_line, 1, db_graph, &print_appropriate_extra_variant_info,
+      run_bubble_calls(cmd_line, db_graph, &print_appropriate_extra_variant_info,
                        &get_colour_ref, &get_covg_ref, &model_info);
 
       //unset the nodes marked as visited, but not those marked as to be ignored
