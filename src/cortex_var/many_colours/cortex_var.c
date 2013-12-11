@@ -263,10 +263,11 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
   load_paths_from_filelist(cmd_line->ref_chrom_fasta_list, ref_chroms);
 
   // Now set up output file names
-  char* output_file = malloc(sizeof(char)*1000);
-  sprintf(output_file, "%s_pd_calls", cmd_line->path_divergence_caller_output_stub);
+  StrBuf* output_file = strbuf_new();
+  strbuf_append_str(output_file, cmd_line->path_divergence_caller_output_stub);
+  strbuf_append_str(output_file, "_pd_calls");
 
-  FILE* out_fptr = fopen(output_file, "w");
+  FILE* out_fptr = fopen(output_file->buff, "w");
   if (out_fptr==NULL)
     {
       die("Cannot open %s for output\n", output_file);
@@ -362,7 +363,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
       //free(output_files[i]);
     }
   free(ref_chroms);
-  //free(output_files);
+  strbuf_free(output_file);
 
   
 
@@ -603,7 +604,7 @@ int main(int argc, char **argv)
 
 
   CovgArray* working_ca_for_median=NULL;
-  int lim = cmd_line->max_var_len;
+  int lim = 2* cmd_line->max_var_len;//this 2* is deliberate, for the PD.
   if (cmd_line->max_read_length>lim)
     {
       lim = cmd_line->max_read_length;

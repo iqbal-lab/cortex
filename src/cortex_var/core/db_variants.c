@@ -936,13 +936,10 @@ boolean get_num_effective_reads_on_unique_part_of_branch(Covg* array1, dBNode** 
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       int eff_read_len = 100;
-      if (ginfo!=NULL)
+      float eff_depth = 0;
+      if ( (ginfo!=NULL) && (ginfo->mean_read_length[i]>0) && (ginfo->total_sequence[i]>0) )
 	{
 	  eff_read_len = ginfo->mean_read_length[i] - kmer+1;
-	}
-      float eff_depth = 0;
-      if (ginfo->mean_read_length[i]>0)
-	{
 	  eff_depth = (float) eff_read_len* ((float)((ginfo->total_sequence[i]/ginfo->mean_read_length[i])));
 	}
 
@@ -1175,6 +1172,7 @@ Covg count_reads_on_allele_in_specific_func_of_colours(
 Covg median_covg_on_allele_in_specific_colour(dBNode** allele, int len, CovgArray* working_ca,
 					      int colour, boolean* too_short)
 {
+  printf("Len is %d\n", len);
 
   if ((len==0)|| (len==1))
     {
@@ -1185,17 +1183,14 @@ Covg median_covg_on_allele_in_specific_colour(dBNode** allele, int len, CovgArra
   reset_covg_array(working_ca);//TODO - use reset_used_part_of.... as performance improvement. Will do when correctness of method established.
   int i;
 
-  int index=0;
-
   for(i=1; i <len; i++)
     {
-      working_ca->covgs[index]=db_node_get_coverage_tolerate_null(allele[i], colour);
-      index++;
+      working_ca->covgs[i-1]=db_node_get_coverage_tolerate_null(allele[i], colour);
     }
 
-  int array_len = index+1;
+  int array_len =len-1;
   qsort(working_ca->covgs, array_len, sizeof(Covg), Covg_cmp); 
-  working_ca->len=index+1;
+  working_ca->len=len-1;
 
   Covg median=0;
   int lhs = (array_len - 1) / 2 ;

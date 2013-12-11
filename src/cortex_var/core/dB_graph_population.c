@@ -816,13 +816,13 @@ int db_graph_get_perfect_path_with_first_edge_for_specific_person_or_pop(
 //get_colour returns an edge which is a function of the edges in a node. eg union of all edges, or of colours 1 and 2
 // get covg returns coverge desired - most ikely is sum of covgs in each of colours which are summed/unioned in get_colour
 int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_colours(
-  dBNode *node, Orientation orientation, int limit, Nucleotide fst_nucleotide,
-  void (*node_action)(dBNode *node), dBNode **path_nodes,
-  Orientation *path_orientations, Nucleotide *path_labels, char *seq,
-  double *avg_coverage, Covg *min_coverage, Covg *max_coverage,
-  boolean *is_cycle, dBGraph *db_graph, 
-  Edges (*get_colour)(const dBNode*),
-  Covg (*get_covg)(const dBNode*))
+										     dBNode *node, Orientation orientation, int limit, Nucleotide fst_nucleotide,
+										     void (*node_action)(dBNode *node), dBNode **path_nodes,
+										     Orientation *path_orientations, Nucleotide *path_labels, char *seq,
+										     double *avg_coverage, Covg *min_coverage, Covg *max_coverage,
+										     boolean *is_cycle, dBGraph *db_graph, 
+										     Edges (*get_colour)(const dBNode*),
+										     Covg (*get_covg)(const dBNode*))
 {
 
   Orientation  current_orientation,next_orientation;
@@ -926,6 +926,10 @@ int db_graph_get_perfect_path_with_first_edge_in_subgraph_defined_by_func_of_col
       *min_coverage = 0;
     }
 
+  if (length>=limit)
+    {
+      die("This genome has a supernode longer than the maximum %d you have specified with --max_var_len. Re-run with higher --max_var_len\n", limit);
+    }
   return length;
   
 }
@@ -1792,12 +1796,12 @@ int db_graph_supernode_returning_query_node_posn_for_specific_person_or_pop(
 
 
 int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_colours(
-  dBNode *node,int limit,void (*node_action)(dBNode *node), 
-  dBNode **path_nodes, Orientation *path_orientations, Nucleotide *path_labels,
-  char *supernode_str, double *avg_coverage, Covg *min, Covg *max,
-  boolean *is_cycle, int *query_node_posn, dBGraph *db_graph, 
-  Edges (*get_colour)(const dBNode*),
-  Covg (*get_covg)(const dBNode*) )
+											dBNode *node,int limit,void (*node_action)(dBNode *node), 
+											dBNode **path_nodes, Orientation *path_orientations, Nucleotide *path_labels,
+											char *supernode_str, double *avg_coverage, Covg *min, Covg *max,
+											boolean *is_cycle, int *query_node_posn, dBGraph *db_graph, 
+											Edges (*get_colour)(const dBNode*),
+											Covg (*get_covg)(const dBNode*) )
 {
   
   
@@ -1826,6 +1830,15 @@ int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_
   *query_node_posn = length_reverse;
   
   
+  if (length_reverse==limit)
+    {
+      die(
+	  "You implicitly specified a maximum expected length of supernode %d, probably "
+	  "when you set --max_var_len. Cortex has just encountered a longer supernode. "
+	  "Aborting - I advise rerunning with a longer --max_var_len", limit);
+    }
+  
+
   if (length_reverse>0){
     //let's re do the last step, we need to do that because the last node could have had multiple entries
     
@@ -1850,13 +1863,6 @@ int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_
 											      supernode_str,avg_coverage,min,max,
 											      is_cycle,db_graph, 
 											      get_colour, get_covg);
-    if (length==limit)
-      {
-	die(
-"You implicitly specified a maximum expected length of supernode %d, probably "
-"when you set --max_var_len. Cortex has just encountered a longer supernode. "
-"Aborting - I advise rerunning with a longer --max_var_len", limit);
-      }
   }
   else{
     length = db_graph_get_perfect_path_in_subgraph_defined_by_func_of_colours(node,forward,
@@ -1868,6 +1874,13 @@ int db_graph_supernode_returning_query_node_posn_in_subgraph_defined_by_func_of_
   }
   
   
+  if (length==limit)
+    {
+      die(
+	  "You implicitly specified a maximum expected length of supernode %d, probably "
+	  "when you set --max_var_len. Cortex has just encountered a longer supernode. "
+	  "Aborting - I advise rerunning with a longer --max_var_len", limit);
+    }
   
 
   //apply action to the fst and last node
@@ -2724,7 +2737,22 @@ void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGra
 		    
 		    if ( (model_info !=NULL) && (model_info->expt_type != Unspecified))
 		      {
-			//print the GLs to a separate file.
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		//print the GLs to a separate file.
 			//print_genotype_likelihoods(fout_gls, &annovar, model_info, namebuf);			
 			int z;
 
@@ -6694,7 +6722,12 @@ int db_graph_make_reference_path_based_sv_calls(
   Covg* covgs_in_trusted_not_variant = (Covg*) malloc(sizeof(Covg)*length_of_arrays);
   Covg* covgs_in_variant_not_trusted = (Covg*) malloc(sizeof(Covg)*max_expected_size_of_supernode);
 
-  CovgArray* working_ca = alloc_and_init_covg_array(max_expected_size_of_supernode+1);
+  int lim=length_of_arrays;
+  if (lim<max_expected_size_of_supernode)
+    {
+      lim = max_expected_size_of_supernode;
+    }
+  CovgArray* working_ca = alloc_and_init_covg_array(lim+1);
 
   if ( (working_array1==NULL) || (working_array2==NULL) || (working_ca==NULL) ) 
     {
@@ -8101,9 +8134,15 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   Orientation* curr_sup_orientations   = (Orientation*) malloc(sizeof(Orientation)*(max_expected_size_of_supernode+ db_graph->kmer_size));
   Nucleotide*  curr_sup_labels         = (Nucleotide*) malloc(sizeof(Nucleotide)*(max_expected_size_of_supernode+ db_graph->kmer_size));
   char*        supernode_string        = (char*) malloc(sizeof(char)*((max_expected_size_of_supernode+ db_graph->kmer_size)+1)); //+1 for \0
-  CovgArray*   working_ca = alloc_and_init_covg_array(max_expected_size_of_supernode+1);
+  int lim=length_of_arrays;
+  if (lim<max_expected_size_of_supernode)
+    {
+      lim = max_expected_size_of_supernode;
+    }
+  CovgArray*   working_ca = alloc_and_init_covg_array(lim+1);
   int working_colour1 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS;
   int working_colour2 = MAX_ALLELES_SUPPORTED_FOR_STANDARD_GENOTYPING+NUMBER_OF_COLOURS+1;
+  StrBuf* temp_strbuf = strbuf_init(max_expected_size_of_supernode+db_graph->kmer_size+1);
 
   if ( (chrom_path_array==NULL) || (chrom_orientation_array==NULL) || (chrom_labels==NULL) || (chrom_string==NULL)
        || (current_supernode==NULL) || (curr_sup_orientations==NULL) || (curr_sup_labels==NULL) || (supernode_string==NULL) )
@@ -8155,8 +8194,10 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   kmer_window->nkmers=0;
 
   //some strings in which to hold the long sequences we will print.
-  char* trusted_branch = malloc(sizeof(char)*(length_of_arrays+1));
-  char* variant_branch = malloc(sizeof(char)*(max_expected_size_of_supernode+1));
+  int max_len_trusted_branch = length_of_arrays+1;
+  int max_len_variant_branch = max_expected_size_of_supernode+1;
+  char* trusted_branch = malloc(sizeof(char)*(max_len_trusted_branch));
+  char* variant_branch = malloc(sizeof(char)*(max_len_variant_branch));
   
   if ( (trusted_branch==NULL) || (variant_branch==NULL) )
     {
@@ -8355,8 +8396,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	  if (length_curr_supernode>max_anchor_span)
 	    {
 	      die("Warning - bad choice of params. Current supernode is length %d, "
-            "but max anchro size is %d",
-            length_curr_supernode, max_anchor_span);
+		  "but max anchro size is %d",
+		  length_curr_supernode, max_anchor_span);
 	    }
 
 	  //char tmp_seqzam[db_graph->kmer_size+1];
@@ -8963,8 +9004,12 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 	      if ( (len_trusted_branch<=0) || (len_trusted_branch>length_of_arrays-1) )
 		{
 		  die("len_trusted_branch is %d, and length of arrays is %d - "
-          "this should never happen. Exit.",
-          len_trusted_branch, length_of_arrays);
+		      "this should never happen. Exit.",
+		      len_trusted_branch, length_of_arrays);
+		}
+	      if (len_trusted_branch>max_len_trusted_branch)
+		{
+		  printf("Found a variant of length %d - skipping it, as you specified --max_var_len of %d\n", len_trusted_branch, max_len_trusted_branch);
 		}
 
 	      strncpy(trusted_branch, chrom_string+first_index_in_chrom_where_supernode_differs_from_chromosome-1, len_trusted_branch);
@@ -9106,21 +9151,25 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 
 
 		  // ok - need to take reverse complement of the full supernode sequence, inlcuding first kmer
-		  char temp[max_expected_size_of_supernode+db_graph->kmer_size+1];
+		  strbuf_reset(temp_strbuf);
+		  /* char temp[max_expected_size_of_supernode+db_graph->kmer_size+1];
 		  temp[0]='\0';
-		  temp[max_expected_size_of_supernode+db_graph->kmer_size]='\0';
+		  temp[max_expected_size_of_supernode+db_graph->kmer_size]='\0'; */
 
 		  if (curr_sup_orientations[0]==forward)
 		    {
-		      strcat(temp, binary_kmer_to_seq(element_get_kmer(current_supernode[0]), db_graph->kmer_size, tmp_zam));
+		      strbuf_append_str(temp_strbuf,
+					binary_kmer_to_seq(element_get_kmer(current_supernode[0]), db_graph->kmer_size, tmp_zam));
 		    }
 		  else
 		    {
-		      strcat(temp, binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(current_supernode[0]), db_graph->kmer_size, &tmp_kmer), 
-						      db_graph->kmer_size, tmp_zam) );
+		      strbuf_append_str(temp_strbuf,
+					binary_kmer_to_seq(binary_kmer_reverse_complement(element_get_kmer(current_supernode[0]), db_graph->kmer_size, &tmp_kmer), 
+							   db_graph->kmer_size, tmp_zam) );
 		    }
 
-		  strcat(temp, supernode_string);//temp is now the full sequence of the supernode.
+		  strbuf_append_str(temp_strbuf, supernode_string);
+		                                 //temp_strbuf is now the full sequence of the supernode.
 		                                 //remember the query node, where the supernode touches the trusted path at start_node_index, 
                                                  // is not the 0-th element of the supernode. (definitely not, as we are traversing right to left!)
 
@@ -9129,16 +9178,16 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		  //sanity
 		  if ( (index_of_query_node_in_supernode_array<length_5p_flank-len_branch2) || (index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode) )
 		    {
-          die(
-"Programming error. Either index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0\n"
-" or index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode.\n"
-"Neither should be possible. \n"
-"index_of_query_node_in_supernode_array is %d, length_5p_flank is %d,\n"
-"len_branch2 is %d, max_expected_size_of_supernode is %d",
-			        index_of_query_node_in_supernode_array, length_5p_flank,
-              len_branch2, max_expected_size_of_supernode);
+		      die(
+			  "Programming error. Either index_of_query_node_in_supernode_array-length_5p_flank-len_branch2<0\n"
+			  " or index_of_query_node_in_supernode_array-length_5p_flank-len_branch2> max_expected_size_of_supernode.\n"
+			  "Neither should be possible. \n"
+			  "index_of_query_node_in_supernode_array is %d, length_5p_flank is %d,\n"
+			  "len_branch2 is %d, max_expected_size_of_supernode is %d",
+			  index_of_query_node_in_supernode_array, length_5p_flank,
+			  len_branch2, max_expected_size_of_supernode);
 		    }
-		  strncpy(variant_branch, temp+index_of_query_node_in_supernode_array-length_5p_flank-len_branch2, len_branch2);
+		  strncpy(variant_branch, temp_strbuf->buff + index_of_query_node_in_supernode_array-length_5p_flank-len_branch2, len_branch2);
 
 		  variant_branch[len_branch2]='\0';
 
@@ -9375,12 +9424,8 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 		      AnnotatedPutativeVariant annovar;
 		      if (model_info!=NULL)
 			{
-			  //warning - this is bad compartmentalization of code, for speed reasons
-			  // for the PD caller, initialise_putative_variant will genotype the site, and 
-			  // in doing so does various walking aroud the main graph. It will reset any
-			  //node it messes with back to visited
 			  initialise_putative_variant(&annovar, model_info, var, SimplePathDivergenceCaller, db_graph->kmer_size,
-						      assump, working_ca, true, false);//TODO use median
+						      assump, working_ca, true, false);
 			  
 			  if (model_info->expt_type != Unspecified)
 			    {
@@ -9518,7 +9563,11 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 							  flank3p,
 							  db_graph->kmer_size,
 							  false);
-		      
+		      printf("ZAM abotu to call extar info. lens of elements of var are %d, %d, %d,%d\n", 
+			     annovar.var->len_flank5p,
+			     annovar.var->len_one_allele,
+			     annovar.var->len_other_allele,
+			     annovar.var->len_flank5p);
 		      print_extra_info(&annovar, output_file);
 		    }
 		 
@@ -9556,6 +9605,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
   free(curr_sup_orientations);
   free(curr_sup_labels);
   free(supernode_string);
+  strbuf_free(temp_strbuf);
   free_sequence(&seq);
   free(kmer_window->kmer);
   free(kmer_window);
@@ -9615,6 +9665,7 @@ int db_graph_make_reference_path_based_sv_calls_given_list_of_colours_for_indiv(
     return element_get_covg_for_colourlist(e, list, len_list);
   }
 
+  printf("ZAM - max exp size of sup is %d\n", max_expected_size_of_supernode);
   int num_vars_called=db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_colours(chrom_fasta_fptr,
 													 &get_union_list_colours, &get_covg_of_union_first_list_colours,
 													 ref_colour,
