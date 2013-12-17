@@ -270,7 +270,7 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
   FILE* out_fptr = fopen(output_file->buff, "w");
   if (out_fptr==NULL)
     {
-      die("Cannot open %s for output\n", output_file);
+      die("Cannot open %s for output\n", output_file->buff);
     }
 
 
@@ -360,7 +360,6 @@ void run_pd_calls(CmdLine* cmd_line, dBGraph* db_graph,
   for(i=0; i<num_ref_chroms; i++)
     {
       free(ref_chroms[i]);
-      //free(output_files[i]);
     }
   free(ref_chroms);
   strbuf_free(output_file);

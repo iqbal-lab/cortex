@@ -129,7 +129,7 @@ my (
         $max_read_len,         $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
         $expt_type,            $do_union, $manual_override_cleaning,
         $build_per_sample_vcfs, $global_logfile,  $squeeze_mem,
-        $workflow, 
+        $workflow,  $known_contam_list,
     );
 
 #set defaults
@@ -154,6 +154,7 @@ $pd_col_args="";
 $pd_out_stub="PD";
 $outdir="cortex_results/";
 $fastaq_index="";
+$known_contam_list="";
 #$require_one_allele_is_ref           = "yes";
 $prefix                              = "cortex";
 $outvcf_filename_stub                = "default_vcfname";
@@ -227,7 +228,8 @@ my $help = '';    #default false
     'logfile:s'           => \$global_logfile,
     'workflow:s'          => \$workflow,
     'squeeze_mem'          =>\$squeeze_mem,
-    'fastq_ascii_offset:i'   => \$fastq_offset
+    'fastq_ascii_offset:i'   => \$fastq_offset,
+    'remove_known_contams:s'=>$known_contam_list,
 );
 
 
@@ -281,6 +283,7 @@ if ($help)
 	print "--apply_pop_classifier\t\t\t\tApply the Cortex population filter, to classify putative sites as repeat, variant or error. \n\t\t\t\t\tThis is a very powerful method of removing false calls\n\t\t\t\t\t but it requires population information to do so - ie only use it if you have at least 10 samples\n\t\t\t\t\tThis is just a flag (takes no argument)\n";
 #	print "--call_jointly_noref\t\t\tMake (in addition) a callset from the joint graph of samples only. If there is a reference in the graph, ignore it for calling, but use it for VCF building. If there is no VCF in the graph, construct a fake reference purely for building the VCF (has no scientific value). If you have specified --auto, it uses those cleaning levels. If you have specified --auto_above 3 (for example) so each sample has 4 cleanings done, it will make 4 callsets, where the i-th callset uses cleaning level i for all samples\n";
 #	print "--call_jointly_incref\t\t\tMake (in addition) a callset from the joint graph of samples and reference. If you have specified --auto, it uses those cleaning levels. If you have specified --auto_above 3 (for example) so each sample has 4 cleanings done, it will make 4 callsets, where the i-th callset uses cleaning level i for all samples\n";
+	print "--remove_known_contams [FILELIST] - takes a list of Cortex binaries, and removes anything matching these (eg to remove human contamination frokm a bacterial sample\n";
 	print "--help\t\t\t\tprints this\n";
 	exit();
 }
@@ -414,7 +417,8 @@ if ($fastaq_index ne "")
     build_all_unclean_binaries($fastaq_index, $outdir_binaries, 
 			       \%sample_to_uncleaned, \%sample_to_uncleaned_log,
 			       \%sample_to_uncleaned_covg_distrib,
-			       $cortex_dir, $qthresh, $dups, $homopol, $mem_height, $mem_width);
+			       $cortex_dir, $qthresh, $dups, $homopol, $mem_height, $mem_width,
+			       $known_contam_list);
 }
 
 
@@ -1997,7 +2001,7 @@ sub build_all_unclean_binaries
 {
     my ($index, $odir_bins,  
 	$href_sam_to_uncleaned, $href_sam_to_uncleaned_log, $href_sam_to_covg,
-	$cortex_directory, $qual, $dup, $hom, $hei, $widt) = @_;
+	$cortex_directory, $qual, $dup, $hom, $hei, $widt, $contam) = @_;
     my %se_lists=();
     my %pe_lists=();
     get_fastq_filelists(\%se_lists, \%pe_lists, $index, $odir_bins);
@@ -2008,16 +2012,16 @@ sub build_all_unclean_binaries
 	    build_unclean($sample, $se_lists{$sample}, $pe_lists{$sample}, $k, 
 			  $outdir_binaries, $href_sam_to_uncleaned, $href_sam_to_uncleaned_log,
 			  $href_sam_to_covg,
-			  $cortex_directory, $qual, $dup, $hom, $hei, $widt);
+			  $cortex_directory, $qual, $dup, $hom, $hei, $widt, $contam);
 	}
     }
 }
 
-
 sub build_unclean
 {
     my ($name, $se, $pe, $km, $out, $href, $href_log, $href_covg, $cdir, $q, $dupremoval, $hp,
-	$height, $width) = @_;
+	$height, $width, $list_contam_bins) = @_;
+
 
     if ($out !~ /\/$/)
     {
