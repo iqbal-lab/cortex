@@ -32,7 +32,7 @@ make MAXK=31 NUM_COLS=2 cortex_var
 
 Here's the commandline
 
-../../bin/cortex_var_31_c2 --kmer_size 17 --format FASTA --max_read_len 1000 --detect_bubbles1 0/0 --output_bubbles1 bub1 --se_list list_ref_fasta --dump_binary ref.ctx
+../../bin/cortex_var_31_c2 --kmer_size 17  --max_read_len 1000 --detect_bubbles1 0/0 --output_bubbles1 bub1 --se_list list_ref_fasta --dump_binary ref.ctx
 
 
 Output should look like this
@@ -44,7 +44,7 @@ Output should look like this
 -----
 Fri Apr  8 13:45:02 2011
 Starting Cortex
-Command: ../../bin/cortex_var_31_c2 --kmer_size 17 --format FASTA --max_read_len 1000 --detect_bubbles1 0/0 --output_bubbles1 bub1 --se_list list_ref_fasta --dump_binary ref.ctx 
+Command: ../../bin/cortex_var_31_c2 --kmer_size 17  --max_read_len 1000 --detect_bubbles1 0/0 --output_bubbles1 bub1 --se_list list_ref_fasta --dump_binary ref.ctx 
 Maximum k-mer size (compile-time setting): 31
 Actual K-mer size: 17
 Hash table created, number of buckets: 1024
@@ -122,12 +122,12 @@ So far so good.
 
 ##### 2. Build a binary of the individual, and then load both binaries into a 2colour graph and call variants excluding reference-bubbles.
 
- ../../bin/cortex_var_31_c2 --kmer_size 17 --format FASTA --max_read_len 1000 --se_list list_indiv_fasta --dump_binary indiv.ctx
+ ../../bin/cortex_var_31_c2 --kmer_size 17  --max_read_len 1000 --se_list list_indiv_fasta --dump_binary indiv.ctx
 
 -----
 Fri Apr  8 13:48:30 2011
 Starting Cortex
-Command: ../../bin/cortex_var_31_c2 --kmer_size 17 --format FASTA --max_read_len 1000 --se_list list_indiv_fasta --dump_binary indiv.ctx 
+Command: ../../bin/cortex_var_31_c2 --kmer_size 17  --max_read_len 1000 --se_list list_indiv_fasta --dump_binary indiv.ctx 
 Maximum k-mer size (compile-time setting): 31
 Actual K-mer size: 17
 Hash table created, number of buckets: 1024
@@ -295,7 +295,7 @@ The second is the real SNP
 Now call again, telling Cortex to exclude the ref:
 
 
- ../../bin/cortex_var_31_c2 --kmer_size 17 --colour_list colours --detect_bubbles1 1/1 --output_bubbles1 bubbles_called_in_individual_EXCLUDING_REF_BUBBLES --ref_colour 0
+ ../../bin/cortex_var_31_c2 --kmer_size 17 --colour_list colours --detect_bubbles1 1/1 --output_bubbles1 bubbles_called_in_individual_EXCLUDING_REF_BUBBLES --ref_colour 0 --exclude_ref_bubbles
 
 
 Note we have added --ref_colour 0; if Cortex sees that it assumes you want to exclude bubbles in the reference.
@@ -331,7 +331,8 @@ Colour:	MeanReadLen	TotalSeq
 -----
 Fri Apr  8 13:57:56 2011
 Start first set of bubble calls
-Detecting bubbles between the union of this set of colours: 1,  and the union of this set of colours: 1, (First exclude bubbles from ref colour 0) 
+Detecting bubbles between the union of this set of colours: 1,  and the union of this set of colours: 1,
+Will remove bubbles in the reference colour 0 before doing any calling
 
 -----
 Fri Apr  8 13:57:56 2011
