@@ -401,7 +401,7 @@ void run_bubble_calls(CmdLine* cmd_line, dBGraph* db_graph,
   long double* allele_balances=NULL;
   CovgArray* working_ca=NULL;
   int lim = cmd_line->max_var_len;
-  printf("lim is %d, max read len is %d\n", lim, cmd_line->max_read_length);
+  //  printf("lim is %d, max read len is %d\n", lim, cmd_line->max_read_length);
   if (cmd_line->max_read_length> lim)
     {
       lim = cmd_line->max_read_length;

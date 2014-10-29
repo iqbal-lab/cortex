@@ -271,7 +271,6 @@ boolean get_read_lengths_and_total_seqs_from_header(FILE * fp, BinaryHeaderInfo*
 boolean  get_binversion6_extra_data(FILE * fp, BinaryHeaderInfo* binfo, BinaryHeaderErrorCode* ecode, int first_colour_loading_into);
 boolean read_next_error_cleaning_object(FILE* fp, ErrorCleaning* cl);
 
-
 int load_paths_from_filelist(char* filelist_path, char** path_array);
 
 boolean check_colour_list(char* filename, int kmer);

@@ -773,7 +773,8 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(
   //printf("Poisson error rate is %.20f\n", poisson_error_rate);
 
   /*
-  //log of (exp(-poisson_error_rate) (poisson_error_rate^number_errors)/(number_errors!) ) = -poisson_error_rate + number_errors*log(poisson_error_rate) - log(number_errors!)
+  //log of (exp(-poisson_error_rate) (poisson_error_rate^number_errors)/(number_errors!) ) 
+  // = -poisson_error_rate + number_errors*log(poisson_error_rate) - log(number_errors!)
   if (number_errors>0)
     {
       log_prob_error += -poisson_error_rate + number_errors*log(poisson_error_rate) - gsl_sf_lnfact(number_errors);
