@@ -1,0 +1,190 @@
+copy.lo: copy.c ../config.h ../gsl/gsl_vector.h \
+ ../gsl/gsl_vector_complex_long_double.h /usr/include/stdlib.h \
+ /usr/include/features.h /usr/include/sys/cdefs.h \
+ /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
+ /usr/include/gnu/stubs-64.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/stddef.h \
+ /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
+ /usr/include/endian.h /usr/include/bits/endian.h \
+ /usr/include/bits/byteswap.h /usr/include/sys/types.h \
+ /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+ /usr/include/time.h /usr/include/sys/select.h /usr/include/bits/select.h \
+ /usr/include/bits/sigset.h /usr/include/bits/time.h \
+ /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h \
+ /usr/include/alloca.h ../gsl/gsl_types.h ../gsl/gsl_errno.h \
+ /usr/include/stdio.h /usr/include/libio.h /usr/include/_G_config.h \
+ /usr/include/wchar.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/stdarg.h \
+ /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
+ /usr/include/bits/stdio.h /usr/include/errno.h /usr/include/bits/errno.h \
+ /usr/include/linux/errno.h /usr/include/asm/errno.h \
+ /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
+ ../gsl/gsl_complex.h ../gsl/gsl_check_range.h \
+ ../gsl/gsl_vector_long_double.h ../gsl/gsl_inline.h \
+ ../gsl/gsl_block_long_double.h ../gsl/gsl_vector_complex.h \
+ ../gsl/gsl_block_complex_long_double.h \
+ ../gsl/gsl_vector_complex_double.h ../gsl/gsl_vector_double.h \
+ ../gsl/gsl_block_double.h ../gsl/gsl_block_complex_double.h \
+ ../gsl/gsl_vector_complex_float.h ../gsl/gsl_vector_float.h \
+ ../gsl/gsl_block_float.h ../gsl/gsl_block_complex_float.h \
+ ../gsl/gsl_vector_ulong.h ../gsl/gsl_block_ulong.h \
+ ../gsl/gsl_vector_long.h ../gsl/gsl_block_long.h \
+ ../gsl/gsl_vector_uint.h ../gsl/gsl_block_uint.h ../gsl/gsl_vector_int.h \
+ ../gsl/gsl_block_int.h ../gsl/gsl_vector_ushort.h \
+ ../gsl/gsl_block_ushort.h ../gsl/gsl_vector_short.h \
+ ../gsl/gsl_block_short.h ../gsl/gsl_vector_uchar.h \
+ ../gsl/gsl_block_uchar.h ../gsl/gsl_vector_char.h \
+ ../gsl/gsl_block_char.h ../templates_on.h copy_source.c \
+ ../templates_off.h
+
+../config.h:
+
+../gsl/gsl_vector.h:
+
+../gsl/gsl_vector_complex_long_double.h:
+
+/usr/include/stdlib.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/stddef.h:
+
+/usr/include/bits/waitflags.h:
+
+/usr/include/bits/waitstatus.h:
+
+/usr/include/endian.h:
+
+/usr/include/bits/endian.h:
+
+/usr/include/bits/byteswap.h:
+
+/usr/include/sys/types.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/include/time.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/bits/select.h:
+
+/usr/include/bits/sigset.h:
+
+/usr/include/bits/time.h:
+
+/usr/include/sys/sysmacros.h:
+
+/usr/include/bits/pthreadtypes.h:
+
+/usr/include/alloca.h:
+
+../gsl/gsl_types.h:
+
+../gsl/gsl_errno.h:
+
+/usr/include/stdio.h:
+
+/usr/include/libio.h:
+
+/usr/include/_G_config.h:
+
+/usr/include/wchar.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/stdarg.h:
+
+/usr/include/bits/stdio_lim.h:
+
+/usr/include/bits/sys_errlist.h:
+
+/usr/include/bits/stdio.h:
+
+/usr/include/errno.h:
+
+/usr/include/bits/errno.h:
+
+/usr/include/linux/errno.h:
+
+/usr/include/asm/errno.h:
+
+/usr/include/asm-generic/errno.h:
+
+/usr/include/asm-generic/errno-base.h:
+
+../gsl/gsl_complex.h:
+
+../gsl/gsl_check_range.h:
+
+../gsl/gsl_vector_long_double.h:
+
+../gsl/gsl_inline.h:
+
+../gsl/gsl_block_long_double.h:
+
+../gsl/gsl_vector_complex.h:
+
+../gsl/gsl_block_complex_long_double.h:
+
+../gsl/gsl_vector_complex_double.h:
+
+../gsl/gsl_vector_double.h:
+
+../gsl/gsl_block_double.h:
+
+../gsl/gsl_block_complex_double.h:
+
+../gsl/gsl_vector_complex_float.h:
+
+../gsl/gsl_vector_float.h:
+
+../gsl/gsl_block_float.h:
+
+../gsl/gsl_block_complex_float.h:
+
+../gsl/gsl_vector_ulong.h:
+
+../gsl/gsl_block_ulong.h:
+
+../gsl/gsl_vector_long.h:
+
+../gsl/gsl_block_long.h:
+
+../gsl/gsl_vector_uint.h:
+
+../gsl/gsl_block_uint.h:
+
+../gsl/gsl_vector_int.h:
+
+../gsl/gsl_block_int.h:
+
+../gsl/gsl_vector_ushort.h:
+
+../gsl/gsl_block_ushort.h:
+
+../gsl/gsl_vector_short.h:
+
+../gsl/gsl_block_short.h:
+
+../gsl/gsl_vector_uchar.h:
+
+../gsl/gsl_block_uchar.h:
+
+../gsl/gsl_vector_char.h:
+
+../gsl/gsl_block_char.h:
+
+../templates_on.h:
+
+copy_source.c:
+
+../templates_off.h:
