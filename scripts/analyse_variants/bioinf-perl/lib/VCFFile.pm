@@ -51,6 +51,7 @@ sub new
   {
     if($next_line =~ /^##(\w+)=<(.*)>/)
     {
+
       my $tag;
       # Prints error and returns undef if not valid line
       if(defined($tag = _parse_header_tag($1,$2)))
@@ -70,9 +71,11 @@ sub new
     }
     elsif($next_line =~ /^##(.*)=(.*)/)
     {
+
       # header meta info line
       my ($key,$value) = ($1,$2);
       chomp($value);
+
 
       if(defined($header_metainfo{$key}))
       {
@@ -91,15 +94,16 @@ sub new
       chomp($next_line);
       push(@header_extra_lines, $next_line);
       #carp("VCF header line unrecognised '$next_line'");
+
     }
     elsif($next_line =~ /^#[^#]/)
     {
+
       # column header line (e.g. '#CHROM..')
       my $header_line = substr($next_line, 1);
       chomp($header_line);
 
       @columns_arr = split(/\t+/, $header_line);
-
       if(@columns_arr == 0)
       {
         carp("VCF columns missing");
@@ -1049,8 +1053,9 @@ sub vcf_get_flanks
   my $right_flank_length = $right_flank_end - $right_flank_start;
 
   my $left = $genome->get_chr_substr0($chr, $left_flank_start, $left_flank_length);
+  $left=uc($left);
   my $right = $genome->get_chr_substr0($chr, $right_flank_start, $right_flank_length);
-
+  $right = uc($right);
   return ($left, $right);
 }
 
