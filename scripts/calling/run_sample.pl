@@ -14,7 +14,6 @@ my $cortex_dir = "";
 my $mem_height = 16;
 my $mem_width = 100;
 my $kmer= 31;
-my $list_sample_graphs="";
 my $dir="";
 my $max_allele=100000; ##longest allele which will be genotyped
 my $g_size = 0; #genome size
@@ -24,7 +23,6 @@ my $num=0;
     'cortex_dir:s'                        =>\$cortex_dir,
     'invcf:s'                             =>\$invcf,
     'dir:s'                               =>\$dir,
-    'list_sample_graphs:s'                =>\$list_sample_graphs,# sample id \t path to binary
     'genome_size:i'                       =>\$g_size,
     'mem_height:i'                        =>\$mem_height,
     'mem_width:i'                         =>\$mem_width,
@@ -32,6 +30,7 @@ my $num=0;
     'num:i'                               =>\$num,
     'stub:s'                              =>\$stub,
     );
+
 
 
 my $dircmd = "readlink -f $dir";
@@ -50,6 +49,8 @@ if ($dir !~ /\/$/)
 {
     $dir=$dir.'/';
 }
+
+my $list_sample_graphs = $dir."list_sample_ids_and_graphs";
 
 if (check_num($num, $list_sample_graphs)==-1)
 {
