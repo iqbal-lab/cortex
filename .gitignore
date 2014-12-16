@@ -1,0 +1,24 @@
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.[oa]
+*.so
+
+## OS stuff 
+.DS_Store
+
+
+#emacs 
+*~
+
+
+bin/
+libs/seq_file/seq_convert
+libs/seq_file/seq_file_test
+libs/seq_file/test/
+libs/string_buffer/strbuf_test
+scripts/analyse_variants/combine/list_sample_ids_and_graphs
+scripts/analyse_variants/needleman_wunsch/needleman_wunsch

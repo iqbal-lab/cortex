@@ -18,12 +18,18 @@ my $ref_fasta = shift;
 my $ref_binary = shift;
 my $bubble_mem_height = shift;
 my $bubble_mem_width = shift;
+my $run_calls_outdir = shift;# root dir below which we have sample_names and then below thatbinaries/ vcfs/ etc
 
 #make sure there is a slash on the end
 if ($vcftools_dir !~ /\/$/)
 {
     $vcftools_dir=$vcftools_dir.'/';
 }
+if ($run_calls_outdir !~ /\/$/)
+{
+    $run_calls_outdir=$run_calls_outdir.'/';
+}
+
 if ($scripts_dir !~ /\/$/)
 {
     $scripts_dir=$scripts_dir.'/';
@@ -40,6 +46,16 @@ if ($combine_dir !~ /\/$/)
 {
     $combine_dir=$combine_dir.'/';
 }
+
+## use full paths
+my $ref_fa_cmd ="readlink -f $ref_fasta";
+print $ref_fa_cmd."\n";
+$ref_fasta=qx{$ref_fa_cmd};
+chomp $ref_fasta;
+my $ref_bin_cmd ="readlink -f $ref_binary"; 
+print $ref_bin_cmd."\n";
+$ref_binary=qx{$ref_bin_cmd};
+chomp $ref_binary;
 
 
 ## 1. Cat all the VCFs, sort, remove duplicates
@@ -107,4 +123,30 @@ print "$cmd4\n";
 my $ret4 =qx{$cmd4};
 print "$ret4\n";
 
+## Now just make a filelist of sample graphs
 
+make_sample_graph_filelist($run_calls_outdir, $kmer, $outdir);
+
+
+
+sub make_sample_graph_filelist
+{
+    my ($rcdir, $k, $odir) = @_;
+    
+    my $reg = $rcdir."\*/binaries/cleaned/k".$k.'/'."\*ctx";
+
+    my $listing_cmd = "ls $reg";
+    my $listing = qx{$listing_cmd};
+    my @sp = split(/\n/, $listing);
+    my $outfile = $odir."list_sample_ids_and_graphs";
+    open(OUT, ">".$outfile)||die("Cannot open $outfile\n");
+    foreach my $f (@sp)
+    {
+	if ($f=~ /\/([^\/]+)\.kmer/)
+	{
+	    my $id = $1;
+	    print "$id\t$f\n";
+	}
+    }
+    close(OUT);
+}
