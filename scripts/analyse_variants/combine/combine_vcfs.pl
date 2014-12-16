@@ -145,7 +145,7 @@ sub make_sample_graph_filelist
 	if ($f=~ /\/([^\/]+)\.kmer/)
 	{
 	    my $id = $1;
-	    print "$id\t$f\n";
+	    print OUT "$id\t$f\n";
 	}
     }
     close(OUT);
