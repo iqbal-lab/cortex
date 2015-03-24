@@ -22,7 +22,7 @@ of human chromosome 1. The two haplotypes are identical, except for a single SNP
 
 Run this command from the directory in which you find this README
 
-  ../../bin/cortex_var_31_c1 --se_list list_full_genome_fasta --kmer_size 31 --max_read_len 100 --format FASTA --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_genome
+  ../../bin/cortex_var_31_c1 --se_list list_full_genome_fasta --kmer_size 31 --max_read_len 100 --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_genome
 
 (Because this is a tiny dataset, the default settings for how big to build the hash table are fine.
 In general you would need to specify the length and width of the hash table, with --mem_width and mem_height,
@@ -34,8 +34,6 @@ Just to explain the command line
             although if you pass in paired-end reads using --pe_list list1,list2, then it can on-the-fly remove PCR duplicates
 
 --kmer_size - self explanatory. Must be odd.
-
---format  - self explanatory. FASTA or FASTQ allowed.
 
 --detect_bubbles1 0/0 - looks for bubbles in colour 0 . This will make more sense in later examples when we go multicoloured.
 
@@ -128,7 +126,7 @@ The read-id lines are a bit busy and can be ignored for now.
 
 Run this command from the directory in which you find this README
 
-  ../../bin/cortex_var_31_c1 --se_list list_reads --kmer 31 --max_read_len 100 --format FASTA --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_reads
+  ../../bin/cortex_var_31_c1 --se_list list_reads --kmer 31 --max_read_len 100  --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_reads
 
 You should get output that looks like this:
 
@@ -138,7 +136,7 @@ You should get output that looks like this:
 -----
 Thu Apr  7 11:19:07 2011
 Starting Cortex
-Command: ../../bin/cortex_var_31_c1 --se_list list_reads --kmer 31 --max_read_len 100 --format FASTA --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_reads 
+Command: ../../bin/cortex_var_31_c1 --se_list list_reads --kmer 31 --max_read_len 100 --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_reads 
 Maximum k-mer size (compile-time setting): 31
 Actual K-mer size: 31
 Hash table created, number of buckets: 1024
