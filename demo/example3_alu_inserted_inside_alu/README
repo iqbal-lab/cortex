@@ -48,7 +48,7 @@ Output should look like this
 -----
 Thu Apr  7 14:57:50 2011
 Starting Cortex
-Command: ../../bin/cortex_var_63_c2 --se_list list_reference_fasta --kmer_size 55 --format FASTA --max_read_len 1000 --dump_binary ref.ctx 
+Command: ../../bin/cortex_var_63_c2 --se_list list_reference_fasta --kmer_size 55 --max_read_len 1000 --dump_binary ref.ctx 
 Maximum k-mer size (compile-time setting): 63
 Actual K-mer size: 55
 Hash table created, number of buckets: 1024
@@ -100,7 +100,7 @@ Cortex completed
 ### 2. Build a binary of the sample/individual:
 
 
-../../bin/cortex_var_63_c2 --se_list list_individual_fasta --kmer_size 55 --format FASTA --max_read_len 1000 --dump_binary indiv.ctx
+../../bin/cortex_var_63_c2 --se_list list_individual_fasta --kmer_size 55  --max_read_len 1000 --dump_binary indiv.ctx
 
 
 This command-line is very much like what we saw in examples 1 and 2. The only new thing is the --dump_binary option, which is self-explanatory.
@@ -116,7 +116,7 @@ Output should look like this
 -----
 Thu Apr  7 14:59:26 2011
 Starting Cortex
-Command: ../../bin/cortex_var_63_c2 --se_list list_individual_fasta --kmer_size 55 --format FASTA --max_read_len 1000 --dump_binary indiv.ctx 
+Command: ../../bin/cortex_var_63_c2 --se_list list_individual_fasta --kmer_size 55  --max_read_len 1000 --dump_binary indiv.ctx 
 Maximum k-mer size (compile-time setting): 63
 Actual K-mer size: 55
 Hash table created, number of buckets: 1024
