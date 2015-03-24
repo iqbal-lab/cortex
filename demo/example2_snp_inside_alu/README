@@ -9,7 +9,7 @@ is in genome_with_alu_snp.fasta
 
 ####  Here's the command to build a de Bruijn graph from the "assembled" full genome:
 
-../../bin/cortex_var_31_c1 --se_list list_genome_fasta --kmer_size 31 --max_read_len 100 --format FASTA --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_genome
+../../bin/cortex_var_31_c1 --se_list list_genome_fasta --kmer_size 31 --max_read_len 100 --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_genome
 
 
 Here's what the output should look like
@@ -95,7 +95,7 @@ and comparing with the original genome fasta, you will find the two branches (al
 #### This time do it from the reads:
 
 
-../../bin/cortex_var_31_c1 --se_list list_reads --kmer_size 31 --max_read_len 100 --format FASTA --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_reads
+../../bin/cortex_var_31_c1 --se_list list_reads --kmer_size 31 --max_read_len 100 --detect_bubbles1 0/0 --output_bubbles1 bubbles_called_from_reads
 
 
 and you should find it calls the bubble again, in the same way.
