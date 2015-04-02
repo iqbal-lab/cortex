@@ -2,7 +2,9 @@
 use strict;
 
 
-### Take a set of single-sample VCFs and combine them into one "sites" VCF
+### Take a set of single-sample VCFs and combine them into one "sites" VCF and make a cortex graph of alleles and reference-intersect-bubbles
+
+my $ref_binary="";
 
 my $list = shift;
 my $cortex_dir = shift;
@@ -15,7 +17,7 @@ my $outstub = shift;
 my $kmer = shift;
 my $refname = shift; # eg Pf3d7_v3
 my $ref_fasta = shift;
-my $ref_binary = shift;
+$ref_binary = shift;
 my $bubble_mem_height = shift;
 my $bubble_mem_width = shift;
 my $run_calls_outdir = shift;# root dir below which we have sample_names and then below thatbinaries/ vcfs/ etc
@@ -96,6 +98,10 @@ if (!(-e $outvcf1))
     die("ERROR - Failed to build sites vcf\n");
 }
 
+if ($ref_binary eq "")
+{
+    exit(0);
+}
 ## annotate flanks
 my $outvcf2 = $outvcf1.".annot_flanks";
 my $af = $scripts_dir."vcf_add_flanks.pl";
