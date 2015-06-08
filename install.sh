@@ -36,9 +36,5 @@ make clean
 make
 cd ..
 
-cd vcf-hack
-make clean
-make
-cd ..
 cd ..
 cd ..
