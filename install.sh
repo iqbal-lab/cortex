@@ -39,4 +39,3 @@ cd ..
 cd ..
 cd ..
 
-source set_env_vars.sh
