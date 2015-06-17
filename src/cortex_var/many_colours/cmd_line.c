@@ -360,6 +360,7 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
+  c->phelim=false;
   c->high_diff=false;
   c->min_allele_balance_diff = 0.9; //when looking for high diff sites.
   c->subsample=false;
@@ -580,7 +581,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"fastq_offset",required_argument, NULL, 'n'},
     {"sample_id",required_argument,NULL,'o'},
     {"dump_binary",required_argument,NULL,'p'},
-    {"output_supernodes",required_argument,NULL,'q'},
+    {"phelim",no_argument,NULL,'q'},
     {"detect_bubbles1",required_argument, NULL, 'r'},
     {"output_bubbles1",required_argument, NULL, 's'},    
     {"gt",required_argument, NULL, 't'},
@@ -949,29 +950,9 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       }
 
 
-    case 'q': //output supernode contigs
+    case 'q': //phelim demo
       {
-	cmdline_ptr->print_supernode_fasta = true;
-	if (optarg==NULL)
-	  errx(1,"[--output_supernodes] option requires a filename");
-	
-	if (strlen(optarg)<MAX_FILENAME_LEN)
-	  {
-	    strcpy(cmdline_ptr->output_supernodes,optarg);
-	  }
-	else
-	  {
-	    errx(1,"[--output_supernodes] filename too long [%s]",optarg);
-	  }
-	
-	if (access(optarg,F_OK)==0)
-	  {
-	    errx(1,"[--output_supernodes] filename [%s] already exists. Exiting, to prevent overwriting.",optarg);
-	  }
-	if (optarg[0]=='-')
-	  {
-	    errx(1, "[--output_supernodes] requires a filename, but finds this: [%s] starts with -. Have you omitted the filename?\n", optarg);
-	  }
+	cmdline_ptr->phelim=true;
 	break; 
       }
 
