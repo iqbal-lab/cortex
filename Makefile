@@ -164,9 +164,10 @@ CORTEX_VAR_CMD_LINE_TESTS_OBJ = src/obj/basic/global.o src/obj/cortex_var/many_c
 
 MAXK_AND_TEXT = $(join "", $(MAXK))
 NUMCOLS_AND_TEST = $(join "_c", $(NUM_COLS))
+CURRENT_DIR = $(shell pwd)
 
 cortex_var : remove_objects $(CORTEX_VAR_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) $(OPT_COLS) -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ) $(LIBLIST)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) $(OPT_COLS) -L$(CURRENT_DIR)/gsl-1.15 -L$(CURRENT_DIR)/gsl-1.15/gsl -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ) $(LIBLIST)
 
 run_basic_tests : remove_objects $(BASIC_TESTS_OBJ)
 	mkdir -p $(BIN); mkdir -p $(TEMP_TEST_DIR); $(CC) $(CFLAGS_BASIC_TESTS) $(OPT) -o $(BIN)/run_basic_tests_$(MAXK) $(BASIC_TESTS_OBJ) $(TEST_LIBLIST)
