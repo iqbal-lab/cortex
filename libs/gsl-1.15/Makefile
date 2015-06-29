@@ -311,7 +311,7 @@ target_alias =
 top_build_prefix = 
 top_builddir = .
 top_srcdir = .
-SUBDIRS = gsl utils sys test err const complex cheb block vector matrix permutation combination multiset sort ieee-utils cblas blas linalg eigen specfunc dht qrng rng randist fft poly fit multifit statistics siman sum integration interpolation histogram ode-initval ode-initval2 roots multiroots min multimin monte ntuple diff deriv cdf wavelet bspline doc
+SUBDIRS = gsl utils sys test err const complex cheb block vector matrix permutation combination multiset sort ieee-utils cblas blas linalg eigen specfunc dht qrng rng randist fft poly fit multifit statistics siman sum integration interpolation histogram ode-initval ode-initval2 roots multiroots min multimin monte ntuple diff deriv cdf wavelet bspline
 SUBLIBS = block/libgslblock.la blas/libgslblas.la \
 	bspline/libgslbspline.la complex/libgslcomplex.la \
 	cheb/libgslcheb.la dht/libgsldht.la diff/libgsldiff.la \
