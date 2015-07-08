@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo
+ * Copyright 2009-2015 Zamin Iqbal and Mario Caccamo
  * 
  * CORTEX project contacts:  
  * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
@@ -159,10 +159,10 @@ boolean dir_exists(char* dir_to_check)
 //  > quality_cutoff valid
 //  < homopolymer_cutoff valid
 
-void invalid_base_warning(SeqFile *sf, char b)
+void invalid_base_warning(read_t read_obj, char b)
 {
-  warn("FYI (no cause for great concern) - Invalid sequence [%c] [path: %s; line: %lu]\n",
-       b, seq_get_path(sf), seq_curr_line_number(sf));
+  warn("FYI (no cause for great concern) - Invalid sequence [%c] in read\n",
+       b);
 }
 
 short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
@@ -225,13 +225,14 @@ short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
   return num_bp_to_skip;
 }
 
-inline char _read_base(SeqFile *sf, char *b, char *q, char read_qual)
+//pass in (0-based) position of previously read base (pos)
+inline char _read_base(read_t *read_ob, int* pos, char *b, char *q, char read_qual)
 {
-  if(!seq_read_base(sf, b))
+  if (*pos+1 >= read_ob->seq.end)
   {
     return 0;
   }
-
+  b=read_ob->seq->b[*pos+1];
   if(!is_base_char(*b) && *b != 'n' && *b != 'N')
   {
     // Invalid base
@@ -241,42 +242,39 @@ inline char _read_base(SeqFile *sf, char *b, char *q, char read_qual)
     *b = 'N';
   }
 
-  if(read_qual && !seq_read_qual(sf, q))
-  {
-    warn("%s:%d: Couldn't read quality scores [read: %s; path: %s; line: %lu]",
-         __FILE__, __LINE__, seq_get_read_name(sf), seq_get_path(sf),
-         seq_curr_line_number(sf));
-  }
-
   // Convert to upper case
-  *b = toupper(*b);
+  //  *b = toupper(*b);
 
+  *pos = *pos+1;
   return 1;
 }
 
-inline char _read_k_bases(SeqFile *sf, char *bases, char *quals, int k,
+inline char _read_k_bases(read_t *read_ob, int* pos, char *bases, char *quals, int k,
                           char read_qual)
 {
-  if(!seq_read_k_bases(sf, bases, k))
-  {
-    return 0;
-  }
-
-  if(read_qual && !seq_read_k_quals(sf, quals, k))
-  {
-    warn("%s:%d: Couldn't read quality scores [read: %s; path: %s; line: %lu]",
-         __FILE__, __LINE__, seq_get_read_name(sf), seq_get_path(sf),
-         seq_curr_line_number(sf));
-  }
+  if(*pos+k>=read_ob->seq.end)
+    {
+      return 0;
+    }
+  
+  if (is_fastq && (*pos+k>=read_ob->qual.end)   )
+    {
+      warn("Couldn't read quality scores [read: %s]",
+	   read_ob->seq->b);
+    }
 
   // Convert to upper case
   int i;
   for(i = 0; i < k; i++)
-    bases[i] = toupper(bases[i]);
-
+    {
+      bases[i]=read_ob->seq.b[i];
+      quals[i]=read_ob->qual.b[i];
+      // bases[i] = toupper(bases[i]);
+    }
   return 1;
 }
 
+/*
 inline char _read_all_bases(SeqFile *sf, StrBuf *bases, StrBuf *quals,
                             char read_qual)
 {
@@ -295,6 +293,8 @@ inline char _read_all_bases(SeqFile *sf, StrBuf *bases, StrBuf *quals,
 
   return 1;
 }
+*/
+
 
 void _print_kmer(BinaryKmer bkmer, short kmer_size)
 {
@@ -304,7 +304,7 @@ void _print_kmer(BinaryKmer bkmer, short kmer_size)
   printf("%s", str);
 }
 
-char _read_first_kmer(SeqFile *sf, char *kmer_str, char* qual_str,
+char _read_first_kmer(read_t read_ob, int* pos, char *kmer_str, char* qual_str,
                       short kmer_size, char read_qual,
                       char quality_cutoff, int homopolymer_cutoff,
                       char first_base, char first_qual)
@@ -367,7 +367,8 @@ char _read_first_kmer(SeqFile *sf, char *kmer_str, char* qual_str,
   return 1;
 }
 
-inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
+inline void _process_read(seq_file_t* sf, read_t* read_obj, 
+			  char* kmer_str, char* qual_str, 
                           char quality_cutoff, int homopolymer_cutoff,
                           dBGraph *db_graph, int colour_index,
                           BinaryKmer curr_kmer, Element *curr_node,
@@ -383,21 +384,16 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
   BinaryKmer tmp_key;
 
   short kmer_size = db_graph->kmer_size;
-  char read_qual = seq_has_quality_scores(sf);
+  boolean is_fastq = seq_is_fastq(sf);
 
   char base, qual, prev_base;
   unsigned long contig_length;
-                              
-  int homopol_length = 1;
 
+  int homopol_length = 1;
   char keep_reading = 1;
   char is_first_kmer = 1;
 
-  #ifdef DEBUG_CONTIGS
-  printf(">%s\n", seq_get_read_name(sf));
-  #endif
-
-  while(keep_reading)
+  while(seq_read(sf, read_obj)>0)
   {
     if(!is_first_kmer)
     {
@@ -411,10 +407,6 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
       // Update coverage
       db_node_update_coverage(curr_node, colour_index, 1);
     }
-
-    #ifdef DEBUG_CONTIGS
-    _print_kmer(curr_kmer, kmer_size);
-    #endif
 
     is_first_kmer = 0;
 
@@ -431,79 +423,85 @@ inline void _process_read(SeqFile *sf, char* kmer_str, char* qual_str,
         homopol_length++;
     }
 
-    while((keep_reading = _read_base(sf, &base, &qual, read_qual)))
-    {
-      // Check for Ns and low quality scores
-      if(base == 'N' || (read_qual && qual <= quality_cutoff))
+    int i=0;
+    for(i=0; i<read_obj->seq.end; i++)
       {
-        keep_reading = _read_first_kmer(sf, kmer_str, qual_str,
-                                        kmer_size, read_qual,
-                                        quality_cutoff, homopolymer_cutoff,
-                                        0, 0);
+	base=read_obj->seq->b[i];
+	if (is_fastq)
+	  {
+	    qual = read_obj->qual->b[i];
+	  }
 
-        break;
+	// Check for Ns and low quality scores
+	if(base == 'N' || (is_fastq && qual <= quality_cutoff))
+	  {
+	    //pass in i by reference, skip beyond this and find first good kmer
+	    _read_first_kmer(read_obj, &i,  
+			     kmer_str, qual_str,
+			     kmer_size, is_fastq,
+			     quality_cutoff, homopolymer_cutoff,
+			     0, 0);
+	    
+	    break;
+	  }
+	
+	// Check homopolymer run length
+	if(homopolymer_cutoff != 0)
+	  {
+	    if(prev_base == base)
+	      {
+		homopol_length++;
+		
+		if(homopol_length >= homopolymer_cutoff)
+		  {
+		    // Skip the rest of these bases
+		    while((keep_reading = _read_base(sf, &i, &base, &qual, read_qual)) &&
+			  base == prev_base);
+		    
+		    // Pass on first base that is != prev_base
+		    keep_reading = _read_first_kmer(sf, kmer_str, qual_str,
+						    kmer_size, read_qual,
+						    quality_cutoff, homopolymer_cutoff,
+						    base, qual);
+		    break;
+		  }
+	      }
+	    else
+	      {
+		// Reset homopolymer length
+		homopol_length = 1;
+	      }
+	  }
+	
+	// base accepted
+	contig_length++;
+	
+	// Update curr -> prev hash table entry
+	prev_node = curr_node;
+	prev_orient = curr_orient;
+	prev_base = base;
+
+	// Construct new kmer
+	//binary_kmer_assignment_operator(curr_kmer, prev_kmer);
+	Nucleotide nuc = char_to_binary_nucleotide(base);
+	binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end((BinaryKmer*)curr_kmer,
+									 nuc,
+									 kmer_size);
+	
+	
+	// Lookup in db
+	element_get_key((BinaryKmer*)curr_kmer, kmer_size, &tmp_key);
+	curr_node = hash_table_find_or_insert(&tmp_key, &curr_found, db_graph);
+	curr_orient = db_node_get_orientation((BinaryKmer*)curr_kmer, curr_node, kmer_size);
+	
+	// Update covg
+	db_node_update_coverage(curr_node, colour_index, 1);
+	
+	// Add edge
+	db_node_add_edge(prev_node, curr_node,
+			 prev_orient, curr_orient,
+			 kmer_size, colour_index);
       }
-
-      // Check homopolymer run length
-      if(homopolymer_cutoff != 0)
-      {
-        if(prev_base == base)
-        {
-          homopol_length++;
-
-          if(homopol_length >= homopolymer_cutoff)
-          {
-            // Skip the rest of these bases
-            while((keep_reading = _read_base(sf, &base, &qual, read_qual)) &&
-                  base == prev_base);
-
-            // Pass on first base that is != prev_base
-            keep_reading = _read_first_kmer(sf, kmer_str, qual_str,
-                                            kmer_size, read_qual,
-                                            quality_cutoff, homopolymer_cutoff,
-                                            base, qual);
-            break;
-          }
-        }
-        else
-        {
-          // Reset homopolymer length
-          homopol_length = 1;
-        }
-      }
-
-      // base accepted
-      contig_length++;
-
-      // Update curr -> prev hash table entry
-      prev_node = curr_node;
-      prev_orient = curr_orient;
-      prev_base = base;
-
-      // Construct new kmer
-      //binary_kmer_assignment_operator(curr_kmer, prev_kmer);
-      Nucleotide nuc = char_to_binary_nucleotide(base);
-      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end((BinaryKmer*)curr_kmer,
-                                                                       nuc,
-                                                                       kmer_size);
-
-      #ifdef DEBUG_CONTIGS
-      printf("%c", base);
-      #endif
-
-      // Lookup in db
-      element_get_key((BinaryKmer*)curr_kmer, kmer_size, &tmp_key);
-      curr_node = hash_table_find_or_insert(&tmp_key, &curr_found, db_graph);
-      curr_orient = db_node_get_orientation((BinaryKmer*)curr_kmer, curr_node, kmer_size);
-
-      // Update covg
-      db_node_update_coverage(curr_node, colour_index, 1);
-
-      // Add edge
-      db_node_add_edge(prev_node, curr_node,
-                       prev_orient, curr_orient,
-                       kmer_size, colour_index);
-    }
 
     // Store bases that made it into the graph
     (*bases_loaded) += contig_length;
