@@ -1,39 +1,45 @@
-ifndef CC
-  CC = gcc
+# To compile SAM/BAM support:
+#     make HTSLIB=../htslib
+
+ifdef HTSLIB
+	ABSPATH=$(realpath $(HTSLIB))
+	PARAMS := $(PARAMS) HTSLIB=$(ABSPATH)
 endif
 
 ifdef DEBUG
-	CFLAGS := -DDEBUG=1 --debug -g
-else
-	CFLAGS := -O3
+	PARAMS := $(PARAMS) DEBUG=$(DEBUG)
 endif
 
-CFLAGS := $(CFLAGS) -Wall -Wextra -I $(HTS_PATH)/htslib/ -I $(STRING_BUF_PATH)
+#
+# Compile dnacat
+#
+ifdef HTSLIB
+	HTSARGS=-I $(HTSLIB) -D_USESAM=1 $(HTSLIB)/libhts.a -lm
+endif
 
-LIB_FLAGS = -L $(HTS_PATH)/htslib/ -L $(STRING_BUF_PATH) -lstrbuf -lhts -lpthread -lz -lm
+CFLAGS=-Wall -Wextra -std=c99 -pedantic -I.
+LINKING=$(HTSARGS) -lpthread -lz
 
-OBJS = seq_file.o seq_common.o seq_fasta.o seq_fastq.o seq_plain.o seq_sam.o
+ifdef DEBUG
+	OPT = -O0 --debug -g
+else
+	OPT = -O3
+endif
 
-all: htslib string_buffer clean $(OBJS)
-	ar -csru libseqfile.a $(OBJS)
-	$(CC) -o seq_convert $(CFLAGS) seq_convert.c libseqfile.a $(LIB_FLAGS)
-	$(CC) -o seq_file_test $(CFLAGS) seq_file_test.c libseqfile.a $(LIB_FLAGS)
-	cd new_api; make HTSLIB=$(shell readlink -f $(HTS_PATH))
+all: bin/dnacat benchmarks dev
 
-htslib:
-	if [[ '$(HTS_PATH)' == '' ]]; \
-	then echo "Error: Please pass HTS_PATH=... with path to htslib dir"; exit 1; fi
+bin/dnacat: tools/dna_cat.c
+	mkdir -p bin
+	$(CC) $(CFLAGS) $(OPT) -o $@ $< $(LINKING) -lm
 
-string_buffer:
-	if [[ '$(STRING_BUF_PATH)' == '' ]]; \
-	then echo "Error: Please pass STRING_BUF_PATH=... with path to string_buffer dir"; exit 1; fi
+benchmarks:
+	cd benchmarks; make $(PARAMS)
+dev:
+	cd dev; make $(PARAMS)
 
 clean:
-	rm -rf $(OBJS) libseqfile.a seq_convert seq_file_test \
-	       seq_file.dSYM seq_file.greg seq_convert.dSYM seq_file_test.dSYM
-	cd new_api; make clean
+	rm -rf bin
+	cd benchmarks; make clean
+	cd dev; make clean
 
-.PHONY: all clean htslib string_buffer
-
-%.o : %.c %.h
-	$(CC) $(CFLAGS) -c $< -o $@
+.PHONY: all clean benchmarks dev
