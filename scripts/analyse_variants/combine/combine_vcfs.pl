@@ -9,20 +9,40 @@ my $ref_binary="";
 my $list = shift;
 my $cortex_dir = shift;
 my $vcftools_dir = shift;
-my $scripts_dir = shift;
-my $analyse_dir = shift;
-my $combine_dir = shift;
 my $outdir = shift;
 my $outstub = shift;
 my $kmer = shift;
-my $refname = shift; # eg Pf3d7_v3
-my $ref_fasta = shift;
-$ref_binary = shift;
+my $refname = shift; # eg Pf3d7_v3 or GRC38
+my $ref_fasta = shift; #one fasta file for the reference genome
+$ref_binary = shift; ## cortex binary file for reference genome
 my $bubble_mem_height = shift;
 my $bubble_mem_width = shift;
 my $run_calls_outdir = shift;# root dir below which we have sample_names and then below thatbinaries/ vcfs/ etc
 
+
+
+&GetOptions(
+    'list_vcfs:s'       => \$list,
+    'cortex_dir:s'      => \$cortex_dir,
+    'vcftools_dir:s'    => \$vcftools_dir,
+    'outdir:s'          => \$outdir,
+    'prefix:s'          => \$outstub,
+    'refname:s'         => \$refname,
+    'ref_fasta:s'       => \$ref_fasta,
+    'rootdir_for_sample_output:s'       => \$run_calls_outdir,
+    'kmer:i'            =>\$kmer,
+    'mem_height:i'      =>\$mem_height,
+    'mem_width:i'       =>\$mem_width,
+);
+
+
+
+
 #make sure there is a slash on the end
+if ($cortex_dir !~ /\/$/)
+{
+    $cortex_dir=$cortex_dir.'/';
+}
 if ($vcftools_dir !~ /\/$/)
 {
     $vcftools_dir=$vcftools_dir.'/';
@@ -31,23 +51,13 @@ if ($run_calls_outdir !~ /\/$/)
 {
     $run_calls_outdir=$run_calls_outdir.'/';
 }
-
-if ($scripts_dir !~ /\/$/)
-{
-    $scripts_dir=$scripts_dir.'/';
-}
-if ($analyse_dir !~ /\/$/)
-{
-    $analyse_dir=$analyse_dir.'/';
-}
 if ($outdir !~ /\/$/)
 {
     $outdir=$outdir.'/';
 }
-if ($combine_dir !~ /\/$/)
-{
-    $combine_dir=$combine_dir.'/';
-}
+my $scripts_dir = $cortex_dir."scripts/analyse_variants/bioinf-perl/vcf_scripts/";
+my $analyse_dir = $cortex_dir."scripts/analyse_variants/";
+my $combine_dir = $cortex_dir."scripts/analyse_variants/combine/";
 
 ## use full paths
 my $ref_fa_cmd ="readlink -f $ref_fasta";
@@ -74,7 +84,7 @@ my $c1 = "head -n1 $list";
 my $r1 = qx{$c1};
 chomp $r1;
 
-my $cmd1 = "head -n 300 $r1 | grep \"#\" | grep -v CHROM > $tmpvcf";
+my $cmd1 = "head -n 1000 $r1 | grep \"#\" | grep -v CHROM > $tmpvcf";
 print "$cmd1\n";
 my $rcmd1 = qx{$cmd1};
 print "$rcmd1\n";
