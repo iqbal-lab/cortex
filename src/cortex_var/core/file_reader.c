@@ -1,8 +1,7 @@
 /*
  * Copyright 2009-2015 Zamin Iqbal and Mario Caccamo
  * 
- * CORTEX project contacts:  
- * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
+ * CORTEX project contact:  
  * 		Z. Iqbal (zam@well.ox.ac.uk)
  *
  * **********************************************************************
@@ -159,14 +158,13 @@ boolean dir_exists(char* dir_to_check)
 //  > quality_cutoff valid
 //  < homopolymer_cutoff valid
 
-void invalid_base_warning(read_t read_obj, char b)
+void invalid_base_warning(char b)
 {
-  warn("FYI (no cause for great concern) - Invalid sequence [%c] in read\n",
-       b);
+  warn("FYI (no cause for great concern) - Invalid sequence [%c] in read\n", b);
 }
 
-short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
-                   short kmer_size, char read_qual,
+short _kmer_errors(char *kmer_str, char* qual_str,
+                   short kmer_size, boolean is_fastq,
                    char quality_cutoff, int homopolymer_cutoff,
                    char *skip_homorun_base) // set to != 0 if need to skip a base
 {
@@ -180,7 +178,7 @@ short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
       if(kmer_str[i] != 'n' && kmer_str[i] != 'N')
       {
         // Invalid base
-        invalid_base_warning(sf, kmer_str[i]);
+        invalid_base_warning(kmer_str[i]);
       }
 
       // skip
@@ -189,7 +187,7 @@ short _kmer_errors(SeqFile *sf, char *kmer_str, char* qual_str,
     }
   }
 
-  if(read_qual)
+  if(is_fastq && quality_cutoff>0)
   {
     // Find latest poor-quality base position
     for(i = kmer_size-1; i >= 0; i--)
@@ -249,7 +247,8 @@ inline char _read_base(read_t *read_ob, int* pos, char *b, char *q, char read_qu
   return 1;
 }
 
-inline char _read_k_bases(read_t *read_ob, int* pos, char *bases, char *quals, int k,
+//was _read_k_bases
+inline char _next_k_bases(read_t *read_ob, int* pos, char *bases, char *quals, int k,
                           char read_qual)
 {
   if(*pos+k>=read_ob->seq.end)
@@ -263,14 +262,10 @@ inline char _read_k_bases(read_t *read_ob, int* pos, char *bases, char *quals, i
 	   read_ob->seq->b);
     }
 
-  // Convert to upper case
-  int i;
-  for(i = 0; i < k; i++)
-    {
-      bases[i]=read_ob->seq.b[i];
-      quals[i]=read_ob->qual.b[i];
-      // bases[i] = toupper(bases[i]);
-    }
+  memmove(bases, read_ob->seq.b[i], k);
+  memmove(bases, read_ob->qual.b[i], k);
+      // bases[i] = toupper(bases[i]);   // Convert to upper case
+
   return 1;
 }
 
@@ -304,8 +299,10 @@ void _print_kmer(BinaryKmer bkmer, short kmer_size)
   printf("%s", str);
 }
 
-char _read_first_kmer(read_t read_ob, int* pos, char *kmer_str, char* qual_str,
-                      short kmer_size, char read_qual,
+//was _read_first_kmer
+char _get_first_kmer(read_t* read_ob, int* pos, 
+		      char *kmer_str, char* qual_str,
+                      short kmer_size, boolean is_fastq,
                       char quality_cutoff, int homopolymer_cutoff,
                       char first_base, char first_qual)
 {
@@ -317,17 +314,17 @@ char _read_first_kmer(read_t read_ob, int* pos, char *kmer_str, char* qual_str,
     kmer_str[0] = first_base;
     qual_str[0] = first_qual;
 
-    if(!_read_k_bases(sf, kmer_str+1, qual_str+1, kmer_size-1, read_qual))
+    if(!_next_k_bases(read_ob, pos, kmer_str+1, qual_str+1, kmer_size-1, is_fastq))
       return 0;
   }
-  else if(!_read_k_bases(sf, kmer_str, qual_str, kmer_size, read_qual))
+  else if(!_next_k_bases(read_ob, pos, kmer_str, qual_str, kmer_size, is_fastq))
   {
     return 0;
   }
 
   char skip_homorun_base = 0;
 
-  while((bp_to_skip = _kmer_errors(sf, kmer_str, qual_str, kmer_size, read_qual,
+  while((bp_to_skip = _kmer_errors(kmer_str, qual_str, kmer_size, is_fastq,
                                    quality_cutoff, homopolymer_cutoff,
                                    &skip_homorun_base)) > 0)
   {
@@ -336,7 +333,7 @@ char _read_first_kmer(read_t read_ob, int* pos, char *kmer_str, char* qual_str,
     while(bp_to_skip == kmer_size)
     {
       // Re read whole kmer
-      if(!_read_k_bases(sf, kmer_str, qual_str, kmer_size, read_qual))
+      if(!_next_k_bases(read_obj, pos, kmer_str, qual_str, kmer_size, is_fastq))
       {
         return 0;
       }
@@ -356,8 +353,8 @@ char _read_first_kmer(read_t read_ob, int* pos, char *kmer_str, char* qual_str,
       memmove(kmer_str, kmer_str+bp_to_skip, bp_to_keep);
       memmove(qual_str, qual_str+bp_to_skip, bp_to_keep);
 
-      if(!_read_k_bases(sf, kmer_str+bp_to_keep, qual_str+bp_to_keep,
-                        bp_to_skip, read_qual))
+      if(!_next_k_bases(sf, kmer_str+bp_to_keep, qual_str+bp_to_keep,
+                        bp_to_skip, is_fastq))
       {
         return 0;
       }
@@ -455,12 +452,12 @@ inline void _process_read(seq_file_t* sf, read_t* read_obj,
 		if(homopol_length >= homopolymer_cutoff)
 		  {
 		    // Skip the rest of these bases
-		    while((keep_reading = _read_base(sf, &i, &base, &qual, read_qual)) &&
+		    while((keep_reading = _read_base(sf, &i, &base, &qual, is_fastq)) &&
 			  base == prev_base);
 		    
 		    // Pass on first base that is != prev_base
 		    keep_reading = _read_first_kmer(sf, kmer_str, qual_str,
-						    kmer_size, read_qual,
+						    kmer_size, is_fastq,
 						    quality_cutoff, homopolymer_cutoff,
 						    base, qual);
 		    break;
