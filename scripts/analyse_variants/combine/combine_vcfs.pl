@@ -66,10 +66,9 @@ my $combine_dir = $cortex_dir."scripts/analyse_variants/combine/";
 
 
 
-BEGIN
-{
-    push( @INC,$cortex_dir. "scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6",$scripts_dir."lib/");
-}
+push( @INC,$cortex_dir. "scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6");
+push(@INC, $scripts_dir."lib/");
+
 
 
 
