@@ -202,7 +202,7 @@ my $ctx_binary2 = check_cortex_compiled_2colours($cortex_dir, $kmer);
 my $suffix = "intersect_bubbles";
 my $ref_intersect_log = basename($ref_binary.".intersect_with_bubbles.log");
 $ref_intersect_log=$outdir.$ref_intersect_log;
-my $ref_col_list=get_ref_col_list($ref, $out_dir);
+my $ref_col_list=get_ref_col_list($ref_binary, $outdir);
 my $new_ref_binary = $ref_intersect_log;
 $new_ref_binary =~ s/log/ctx/;
 
