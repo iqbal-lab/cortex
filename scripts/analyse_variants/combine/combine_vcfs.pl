@@ -17,7 +17,7 @@ my $bubble_mem_height = 14;
 my $bubble_mem_width = 100;
 my $run_calls_outdir = "";# root dir below which we have sample_names and then below thatbinaries/ vcfs/ etc
 my $mem_height =20;
-my $mem_width 100;
+my $mem_width = 100;
 
 
 &GetOptions(
