@@ -1,4 +1,4 @@
-x// system libraries
+// system libraries
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -139,6 +139,7 @@ inline char _read_base(read_t *read_ob, int* pos, char *b, char *q, char read_qu
 inline char _next_k_bases(read_t *read_ob, int* pos, char *bases, char *quals, int k,
                           boolean is_fastq)
 {
+  printf("5\n");
   if(*pos+k>=read_ob->seq.end)
     {
       return 0;
@@ -150,7 +151,7 @@ inline char _next_k_bases(read_t *read_ob, int* pos, char *bases, char *quals, i
     }
 
   memmove(bases, (read_ob->seq.b) + *pos+1, k);
-  memmove(bases, (read_ob->qual.b) + *pos+1, k);
+  memmove(quals, (read_ob->qual.b) + *pos+1, k);
       // bases[i] = toupper(bases[i]);   // Convert to upper case
 
   return 1;
@@ -187,9 +188,10 @@ char _get_first_kmer(read_t* read_ob, int* pos,
                       char first_base, char first_qual)
 {
   short bp_to_skip;
-
+  printf("6\n");
   if(first_base != 0)
   {
+  printf("7\n");
     // Already got one base
     kmer_str[0] = first_base;
     qual_str[0] = first_qual;
@@ -229,7 +231,7 @@ char _get_first_kmer(read_t* read_ob, int* pos,
     {
       // Skip bp_to_skip bases
       int bp_to_keep = kmer_size - bp_to_skip;
-
+      printf("Before move kmer_str is %s\n", kmer_str);
       memmove(kmer_str, kmer_str+bp_to_skip, bp_to_keep);
       memmove(qual_str, qual_str+bp_to_skip, bp_to_keep);
 
@@ -248,118 +250,123 @@ inline void _process_read(seq_file_t* sf, read_t* read_obj, short kmer_size,
 			  char* kmer_str, char* qual_str, 
                           char quality_cutoff, int homopolymer_cutoff,
                           int colour_index,
-			  unsigned long long *bases_loaded,
-                          unsigned long *readlen_count_array,
-                          unsigned long readlen_count_array_size)
+			  unsigned long long *bases_loaded)
 {
-
   boolean is_fastq = seq_is_fastq(sf);
 
   char base, qual, prev_base;
-  unsigned long contig_length;
 
   int homopol_length = 1;
   char keep_reading = 1;
   char is_first_kmer = 1;
 
-  while(seq_read(sf, read_obj)>0)
+  //read an entire read into buffer
+  if (seq_read(sf, read_obj)>0)
   {
-    if(!is_first_kmer)
-    {
-      //normally - add to de Bruijn graph here
-      printf("Current kmer is %s\n", kmer_str);
-    }
+	memmove(kmer_str, (read_ob->seq.b), k);
+	prev_base = kmer_str[kmer_size-1];
 
-    is_first_kmer = 0;
-
-    contig_length = kmer_size;
-    prev_base = kmer_str[kmer_size-1];
-
-    // Set homopol_length for the first kmer in this contig
-    if(homopolymer_cutoff != 0)
-    {
-      homopol_length = 1;
-
-      int i;
-      for(i = kmer_size-2; i >= 0 && kmer_str[i] == prev_base; i--)
-        homopol_length++;
-    }
-
-    int i=0;
-    for(i=0; i<read_obj->seq.end; i++)
-      {
-	base=read_obj->seq.b[i];
-	if (is_fastq)
-	  {
-	    qual = read_obj->qual.b[i];
-	  }
-
-	// Check for Ns and low quality scores
-	if(base == 'N' || (is_fastq && qual <= quality_cutoff))
-	  {
-	    //pass in i by reference, skip beyond this and find first good kmer
-	    _get_first_kmer(read_obj, &i,  
-			     kmer_str, qual_str,
-			     kmer_size, is_fastq,
-			     quality_cutoff, homopolymer_cutoff,
-			     0, 0);
-	    printf("Now got first kmer %s\n", kmer_str);
-	    break;
-	  }
-	
-	// Check homopolymer run length
+	// Set homopol_length for the first kmer in this contig
 	if(homopolymer_cutoff != 0)
 	  {
-	    if(prev_base == base)
-	      {
-		homopol_length++;
-		
-		if(homopol_length >= homopolymer_cutoff)
-		  {
-		    // Skip the rest of these bases
-		    while((keep_reading = _read_base(read_obj, &i, &base, &qual, is_fastq)) &&
-			  base == prev_base);
-		    
-		    // Pass on first base that is != prev_base
-		    keep_reading = _get_first_kmer(read_obj, &i, 
-						   kmer_str, qual_str,
-						   kmer_size, is_fastq,
-						   quality_cutoff, homopolymer_cutoff,
-						   base, qual);
-		    printf("After homopol, first kmer is %s\n", kmer_str);
-		    break;
-		  }
-	      }
-	    else
-	      {
-		// Reset homopolymer length
-		homopol_length = 1;
-	      }
+	    homopol_length = 1;
+	    
+	    int i;
+	    for(i = kmer_size-2; i >= 0 && kmer_str[i] == prev_base; i--)
+	      homopol_length++;
 	  }
 	
-	// base accepted
-	contig_length++;
+	int i=0;
+	for(i=0; i<read_obj->seq.end; i++)
+	  {
+	    printf("2\n");
+	    base=read_obj->seq.b[i];
+	    printf("Base is %c\n", base);
+	    if (is_fastq)
+	      {
+		qual = read_obj->qual.b[i];
+	      }
+	    
+	    // Check for Ns and low quality scores
+	    if(base == 'N' || (is_fastq && qual <= quality_cutoff))
+	      {
+		//pass in i by reference, skip beyond this and find first good kmer
+		_get_first_kmer(read_obj, &i,  
+				kmer_str, qual_str,
+				kmer_size, is_fastq,
+				quality_cutoff, homopolymer_cutoff,
+				0, 0);
+		printf("Now got first kmer %s\n", kmer_str);
+		break;
+	      }
+	    
+	    // Check homopolymer run length
+	    if(homopolymer_cutoff != 0)
+	      {
+		if(prev_base == base)
+		  {
+		    homopol_length++;
+		    
+		    if(homopol_length >= homopolymer_cutoff)
+		      {
+			// Skip the rest of these bases
+			while((keep_reading = _read_base(read_obj, &i, &base, &qual, is_fastq)) &&
+			      base == prev_base);
+			
+			// Pass on first base that is != prev_base
+			keep_reading = _get_first_kmer(read_obj, &i, 
+						       kmer_str, qual_str,
+						       kmer_size, is_fastq,
+						       quality_cutoff, homopolymer_cutoff,
+						       base, qual);
+			printf("After homopol, first kmer is %s\n", kmer_str);
+			break;
+		      }
+		  }
+		else
+		  {
+		    // Reset homopolymer length
+		    homopol_length = 1;
+		  }
+	      }
 	
-	// Update curr -> prev hash table entry
-	prev_base = base;
+	    prev_base = base;
+	    
+	  }
+	printf("Kmer is %s\n", kmer_str);
+	// Store bases that made it into the graph
+	(*bases_loaded) += contig_length;
+	
 
-      }
-
-    // Store bases that made it into the graph
-    (*bases_loaded) += contig_length;
-
-    // Store contig length
-    if(readlen_count_array != NULL)
-    {
-      contig_length = MIN(contig_length, readlen_count_array_size-1);
-      readlen_count_array[contig_length]++;
-    }
   }
+
 }
 
 int main()
 {
-  
-  
+    // Open file
+  seq_file_t *sf = seq_open("test.fa");
+  if(sf == NULL)
+  {
+    printf("Cant open\n");
+    exit(1);
+  }
+  short kmer_size=5;
+    // Vars for reading in
+  char kmer_str[kmer_size+1];
+  kmer_str[0]='\0';
+  char qual_str[kmer_size+1];
+  qual_str[0]='\0';
+  char quality_cutoff=0;
+  int homopolymer_cutoff=0;
+  int colour_index=0;
+  unsigned long long bases_loaded=0;
+  read_t* sr = seq_read_new();
+  _process_read(sf, sr, kmer_size,
+		kmer_str, qual_str,
+		quality_cutoff, homopolymer_cutoff,
+		colour_index,
+		&bases_loaded);
+
   return 1;
 }
