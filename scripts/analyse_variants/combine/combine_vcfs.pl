@@ -1,5 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
+use File::Basename;
+use File::Spec;
+use Getopt::Long;
+use Benchmark;
+
 
 
 ### Take a set of single-sample VCFs and combine them into one "sites" VCF and make a cortex graph of alleles and reference-intersect-bubbles
