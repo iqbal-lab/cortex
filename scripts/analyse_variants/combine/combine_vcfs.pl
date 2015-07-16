@@ -4,21 +4,20 @@ use strict;
 
 ### Take a set of single-sample VCFs and combine them into one "sites" VCF and make a cortex graph of alleles and reference-intersect-bubbles
 
-my $ref_binary="";
-
-my $list = shift;
-my $cortex_dir = shift;
-my $vcftools_dir = shift;
-my $outdir = shift;
-my $outstub = shift;
-my $kmer = shift;
-my $refname = shift; # eg Pf3d7_v3 or GRC38
-my $ref_fasta = shift; #one fasta file for the reference genome
-$ref_binary = shift; ## cortex binary file for reference genome
-my $bubble_mem_height = shift;
-my $bubble_mem_width = shift;
-my $run_calls_outdir = shift;# root dir below which we have sample_names and then below thatbinaries/ vcfs/ etc
-
+my $list = "";
+my $cortex_dir = "";
+my $vcftools_dir = "";
+my $outdir = "";
+my $outstub = "";
+my $kmer = 31;
+my $refname = "REF"; # eg Pf3d7_v3 or GRC38
+my $ref_fasta = ""; #one fasta file for the reference genome
+my $ref_binary = ""; ## cortex binary file for reference genome
+my $bubble_mem_height = 14;
+my $bubble_mem_width = 100;
+my $run_calls_outdir = "";# root dir below which we have sample_names and then below thatbinaries/ vcfs/ etc
+my $mem_height =20;
+my $mem_width 100;
 
 
 &GetOptions(
@@ -29,6 +28,7 @@ my $run_calls_outdir = shift;# root dir below which we have sample_names and the
     'prefix:s'          => \$outstub,
     'refname:s'         => \$refname,
     'ref_fasta:s'       => \$ref_fasta,
+    'ref_binary:s'       => \$ref_binary,
     'rootdir_for_sample_output:s'       => \$run_calls_outdir,
     'kmer:i'            =>\$kmer,
     'mem_height:i'      =>\$mem_height,
@@ -200,8 +200,8 @@ print "Finished building a graph just of the bubble branches/alleles. Now inters
 
 my $ctx_binary2 = check_cortex_compiled_2colours($cortex_dir, $kmer);
 my $suffix = "intersect_bubbles";
-my $ref_intersect_log = basename($ref.".intersect_with_bubbles.log");
-$ref_intersect_log=$out_dir.$ref_intersect_log;
+my $ref_intersect_log = basename($ref_binary.".intersect_with_bubbles.log");
+$ref_intersect_log=$outdir.$ref_intersect_log;
 my $ref_col_list=get_ref_col_list($ref, $out_dir);
 my $new_ref_binary = $ref_intersect_log;
 $new_ref_binary =~ s/log/ctx/;
