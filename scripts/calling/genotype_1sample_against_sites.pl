@@ -23,18 +23,21 @@ my $outdir="";
 my $filename_of_sample_overlap_bubble_binary="";
 my $max_allele=100000; ##longest allele which will be genotyped
 my $g_size = 0; #genome size
+my $config ="";
+
 &GetOptions(
     ##mandatory args
     'cortex_dir:s'                        =>\$cortex_dir,
     'invcf:s'                             =>\$invcf,
-    'bubble_graph:s'                      =>\$bubble_graph,
-    'bubble_callfile:s'                   =>\$bubble_callfile,
+    'config:s'                             =>\$config,
+#    'bubble_graph:s'                      =>\$bubble_graph,
+#    'bubble_callfile:s'                   =>\$bubble_callfile,
     'outdir:s'                            =>\$outdir,
     'sample:s'                            =>\$sample,##sample ID
-    'ref_overlap_bubble_graph:s'          =>\$ref_overlap_bubble_graph,
+#    'ref_overlap_bubble_graph:s'          =>\$ref_overlap_bubble_graph,
     'genome_size:i'                       =>\$g_size,
     ##if you have already overlapped the sample with the bubble graph
-    'sample_overlap_bubbles:s'            =>\$filename_of_sample_overlap_bubble_binary,
+ #   'sample_overlap_bubbles:s'            =>\$filename_of_sample_overlap_bubble_binary,
 
     ##if you just have the sample graph and you want this script to overlap it with the bubbles
     'sample_graph:s'                      =>\$sample_graph,##whole genome graph of sample
@@ -43,11 +46,19 @@ my $g_size = 0; #genome size
     ## there are default mem height and width set, but you can also set them here
     'mem_height:i'                        =>\$mem_height,
     'mem_width:i'                         =>\$mem_width,
-    'max_allele:i'                        =>\$max_allele
+#    'max_allele:i'                        =>\$max_allele
     );
 
 
 
+if ($config eq "")
+{
+    die("Must specify --config, the file output by combine_vcfs.pl\n");
+}
+elsif (!(-e $config))
+{
+    die("Cannot open the user specified file $config\n");
+}
 
 if ($cortex_dir !~ /\/$/)
 {
@@ -62,36 +73,34 @@ my $analyse_variants_dir = $cortex_dir."scripts/analyse_variants/";
 check_args($cortex_dir, $bubble_graph, $mem_height, $mem_width, $sample, $overlap_log, $invcf, $g_size);
 
 
+($cortex_dir, $kmer, $bubble_callfile, $max_allele, $bubble_graph, $ref_overlap_bubble_graph) = get_args_from_config($config);
 
 
 ##if you have not passed in the overlap binary of sample with bubbles, then do it now:
 
 my $ctx_binary = check_cortex_compiled_2colours($cortex_dir, $kmer);
 
-if ($filename_of_sample_overlap_bubble_binary eq "")
-{
+
 ## Now intersect your sample
-    print("\n*************************\n");
-    print("First overlap the sample with the bubbles:\n");
+print("\n*************************\n");
+print("First overlap the sample with the bubbles:\n");
 
 ### note start time
-    my $time_start_overlap = new Benchmark;
-    
+my $time_start_overlap = new Benchmark;
 
-    my $suffix = "intersect_sites";
-    my $colour_list;
-    ($colour_list, $filename_of_sample_overlap_bubble_binary) = make_colourlist($sample_graph, $sample, $suffix, $outdir);
-    
-    my $cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --multicolour_bin $bubble_graph --colour_list $colour_list --load_colours_only_where_overlap_clean_colour 0 --successively_dump_cleaned_colours $suffix > $overlap_log 2>&1";
-    print "$cmd\n";
-    my $ret = qx{$cmd};
-    print "$ret\n";
-    print "Finished intersecting sample $sample with the bubble graph $bubble_graph\n";
-    my $time_end_overlap=new Benchmark;
-    my $time_taken_overlap=timediff($time_end_overlap,$time_start_overlap);
-    print "Time taken to overlap sample with bubbles is ", timestr($time_taken_overlap), "\n";
 
-}
+my $suffix = "intersect_sites";
+my $colour_list;
+($colour_list, $filename_of_sample_overlap_bubble_binary) = make_colourlist($sample_graph, $sample, $suffix, $outdir);
+
+my $cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --multicolour_bin $bubble_graph --colour_list $colour_list --load_colours_only_where_overlap_clean_colour 0 --successively_dump_cleaned_colours $suffix > $overlap_log 2>&1";
+print "$cmd\n";
+my $ret = qx{$cmd};
+print "$ret\n";
+print "Finished intersecting sample $sample with the bubble graph $bubble_graph\n";
+my $time_end_overlap=new Benchmark;
+my $time_taken_overlap=timediff($time_end_overlap,$time_start_overlap);
+print "Time taken to overlap sample with bubbles is ", timestr($time_taken_overlap), "\n";
 
 
 print("\n*************************\n");
@@ -286,4 +295,48 @@ sub make_2colourlist
     close(COL);
 
     return $col_list;
+}
+
+sub get_args_from_config
+{
+    my ($cfile) = @_;
+    open(CFILE, $cfile)||die("Cannot open $cfile\n");
+    my @arr=();
+    while (<CFILE>)
+    {
+	my $ln = $_;
+	chomp $ln;
+	my @sp = split("\t", $ln);
+	if ($sp[0] eq "cortex_dir")
+	{
+	    $arr[0]=$sp[1];
+	}
+	elsif ($sp[0] eq "kmer")
+	{
+	    $arr[1]=$sp[1];
+	}
+	elsif ($sp[0] eq "bubble_callfile")
+	{
+	    $arr[2]=$sp[1];
+	}
+	elsif ($sp[0] eq "max_allele")
+	{
+	    $arr[3]=$sp[1];
+	}
+	elsif ($sp[0] eq "bubble_graph")
+	{
+	    $arr[4]=$sp[1];
+	}
+	elsif ($sp[0] eq "ref_overlap_bubble_graph")
+	{
+	    $arr[5]=$sp[1];
+	}
+	else
+	{
+	    die("Malformed config file\n");
+	}
+
+
+    }
+    close(CFILE);
 }
