@@ -64,6 +64,19 @@ my $scripts_dir = $cortex_dir."scripts/analyse_variants/bioinf-perl/vcf_scripts/
 my $analyse_dir = $cortex_dir."scripts/analyse_variants/";
 my $combine_dir = $cortex_dir."scripts/analyse_variants/combine/";
 
+
+
+BEGIN
+{
+	push( @INC,
+		$cortex_dir
+		  . "/scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6",
+	      $scripts_dir."lib/",
+	    );
+}
+
+
+
 ## use full paths
 my $ref_fa_cmd ="readlink -f $ref_fasta";
 print $ref_fa_cmd."\n";
