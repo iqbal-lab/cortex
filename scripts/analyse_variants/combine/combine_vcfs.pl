@@ -11,7 +11,7 @@ use Cwd 'abs_path';
 
 my $list = "";
 my $cortex_dir = abs_path($0);
-$cortex_dir =~ /scripts\/analyse_variants\/combine//;
+$cortex_dir =~ s/scripts\/analyse_variants\/combine//;
 my $vcftools_dir = "";
 my $outdir = "";
 my $outstub = "";
