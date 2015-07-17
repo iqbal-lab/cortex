@@ -4,7 +4,9 @@ use File::Basename;
 use File::Spec;
 use Getopt::Long;
 use Benchmark;
-use Cwd 'abs_path';
+use Cwd    qw( abs_path );
+use FindBin qw($Bin);
+
 
 
 ### Take a set of single-sample VCFs and combine them into one "sites" VCF and make a cortex graph of alleles and reference-intersect-bubbles
@@ -66,8 +68,9 @@ my $analyse_dir = $cortex_dir."scripts/analyse_variants/";
 my $combine_dir = $cortex_dir."scripts/analyse_variants/combine/";
 my $libdir      = $cortex_dir."scripts/analyse_variants/bioinf-perl/lib/";
 
-use lib $cortex_dir."scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6/";
-use lib $libdir;
+use lib use FindBin qw($Bin);
+use lib "$Bin/../perl_modules/Statistics-Descriptive-2.6/";
+use lib "$Bin/../bioinf-perl/lib/";
 
 
 ## use full paths
