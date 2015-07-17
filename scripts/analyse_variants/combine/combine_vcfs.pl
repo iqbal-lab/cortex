@@ -4,13 +4,14 @@ use File::Basename;
 use File::Spec;
 use Getopt::Long;
 use Benchmark;
-
+use Cwd 'abs_path';
 
 
 ### Take a set of single-sample VCFs and combine them into one "sites" VCF and make a cortex graph of alleles and reference-intersect-bubbles
 
 my $list = "";
-my $cortex_dir = "";
+my $cortex_dir = abs_path($0);
+$cortex_dir =~ /scripts\/analyse_variants\/combine//;
 my $vcftools_dir = "";
 my $outdir = "";
 my $outstub = "";
@@ -27,7 +28,7 @@ my $mem_width = 100;
 
 &GetOptions(
     'list_vcfs:s'       => \$list,
-    'cortex_dir:s'      => \$cortex_dir,
+    #'cortex_dir:s'      => \$cortex_dir,
     'vcftools_dir:s'    => \$vcftools_dir,
     'outdir:s'          => \$outdir,
     'prefix:s'          => \$outstub,
@@ -63,9 +64,9 @@ if ($outdir !~ /\/$/)
 my $scripts_dir = $cortex_dir."scripts/analyse_variants/bioinf-perl/vcf_scripts/";
 my $analyse_dir = $cortex_dir."scripts/analyse_variants/";
 my $combine_dir = $cortex_dir."scripts/analyse_variants/combine/";
-my $libdir      = $cortex_dir."scripts/analyse_variants/bioinf-perl/lib";
+my $libdir      = $cortex_dir."scripts/analyse_variants/bioinf-perl/lib/";
 
-use lib $cortex_dir. "scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6";
+use lib $cortex_dir."scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6/";
 use lib $libdir;
 
 
