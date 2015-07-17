@@ -63,26 +63,10 @@ if ($outdir !~ /\/$/)
 my $scripts_dir = $cortex_dir."scripts/analyse_variants/bioinf-perl/vcf_scripts/";
 my $analyse_dir = $cortex_dir."scripts/analyse_variants/";
 my $combine_dir = $cortex_dir."scripts/analyse_variants/combine/";
+my $libdir      = $cortex_dir."scripts/analyse_variants/bioinf-perl/lib";
 
-
-
-push( @INC,$cortex_dir. "scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6");
-push(@INC, $scripts_dir."lib/");
-
-my $check_perl5 = "echo \$PERL5LIB";
-my $check_perl5_ret = qx{$check_perl5};
-my $libdir = $scripts_dir."lib/";
-
-
-if ($check_perl5_ret !~ /libdir/)
-{
-    $ENV{PERL5LIB} .= ":$libdir";
-}
-if ($check_perl5_ret !~ /$scripts_dir/)
-{
-    $ENV{PERL5LIB} .= ":$scripts_dir";
-}
-
+use lib $cortex_dir. "scripts/analyse_variants/perl_modules/Statistics-Descriptive-2.6";
+use lib $libdir;
 
 
 ## use full paths
