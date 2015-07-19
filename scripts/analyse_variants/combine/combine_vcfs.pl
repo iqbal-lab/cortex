@@ -12,8 +12,10 @@ use FindBin qw($Bin);
 ### Take a set of single-sample VCFs and combine them into one "sites" VCF and make a cortex graph of alleles and reference-intersect-bubbles
 
 my $list = "";
+
 my $cortex_dir = abs_path($0);
-$cortex_dir =~ s/scripts\/analyse_variants\/combine//;
+$cortex_dir =~ s/scripts\/analyse_variants\/combine\/combine_vcfs.pl//;
+
 my $vcftools_dir = "";
 my $outdir = "";
 my $outstub = "";
@@ -66,11 +68,28 @@ if ($outdir !~ /\/$/)
 my $scripts_dir = $cortex_dir."scripts/analyse_variants/bioinf-perl/vcf_scripts/";
 my $analyse_dir = $cortex_dir."scripts/analyse_variants/";
 my $combine_dir = $cortex_dir."scripts/analyse_variants/combine/";
-my $libdir      = $cortex_dir."scripts/analyse_variants/bioinf-perl/lib/";
 
-use lib use FindBin qw($Bin);
-use lib "$Bin/../perl_modules/Statistics-Descriptive-2.6/";
-use lib "$Bin/../bioinf-perl/lib/";
+
+sub get_stat
+{
+    return abs_path("$Bin/../perl_modules/Statistics-Descriptive-2.6/");
+}
+
+sub get_vcflib
+{
+    return abs_path("$Bin/../bioinf-perl/lib/");
+}
+
+
+BEGIN
+{
+    push @INC, get_stat();
+    push @INC, get_vcflib();
+}
+
+use Descriptive;
+use VCFFile;
+my $libdir      = get_vcflib();
 
 
 ## use full paths
@@ -120,7 +139,7 @@ print "$cmd111\n";
 my $rcmd111 = qx{$cmd111};
 print "$rcmd111\n";
 
-my $cmd1111 = "perl $rd  --take_first --pass $tmpvcf > $outvcf1"; #| $ro --pass --filter_txt OVERLAPPING_SITE | grep -v \"\" >  $outvcf1";
+my $cmd1111 = "perl  -I $libdir $rd  --take_first --pass $tmpvcf > $outvcf1"; #| $ro --pass --filter_txt OVERLAPPING_SITE | grep -v \"\" >  $outvcf1";
 print "$cmd1111\n";
 my $rcmd1111=qx{$cmd1111};
 print "$rcmd1111\n";
@@ -142,7 +161,7 @@ if ($ref_binary eq "")
 my $af = $scripts_dir."vcf_add_flanks.pl";
 my $kp4 = $kmer+4;
 print "Annotate flanks\n";
-my $cmd2 = "perl $af $kp4 $outvcf1 $refname $ref_fasta > $outvcf2";
+my $cmd2 = "perl  -I $libdir $af $kp4 $outvcf1 $refname $ref_fasta > $outvcf2";
 print "$cmd2\n";
 my $ret2 = qx{$cmd2};
 print "$ret2\n";
