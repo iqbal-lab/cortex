@@ -1,8 +1,7 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo 
+ * Copyright 2009-2015 Zamin Iqbal and Mario Caccamo 
  * 
- * CORTEX project contacts:  
- * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
+ * CORTEX project contact:  
  * 		Z. Iqbal (zam@well.ox.ac.uk)
  *
  * **********************************************************************
@@ -87,7 +86,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
       if (seq == NULL){
 	die("Out of memory trying to allocate Sequence");
       }
-      alloc_sequence(seq,cmd_line->max_read_length,LINE_MAX);
+      alloc_sequence(seq,cmd_line->max_read_length+db_graph->kmer_size,LINE_MAX);
 
       Sequence * seq_inc_prev_kmer = malloc(sizeof(Sequence));
       if (seq == NULL){
@@ -103,21 +102,21 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
 	{
 	  die("Failed to malloc kmer sliding window for genotyping. Exit.\n");
 	}
-      kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(cmd_line->max_read_length-db_graph->kmer_size-1));
+      kmer_window->kmer = (BinaryKmer*) malloc(sizeof(BinaryKmer)*(cmd_line->max_read_length+db_graph->kmer_size));
       if (kmer_window->kmer==NULL)
 	{
 	  die("Failed to malloc kmer_window->kmer for genotyping. Tried to alloc\n"
-        "an array of %d binary kmers. Max read len:%d, kmer size %d. Exit.\n", 
-		    cmd_line->max_read_length-db_graph->kmer_size-1,
-        cmd_line->max_read_length,
-        db_graph->kmer_size);
+	      "an array of %d binary kmers. Max read len:%d, kmer size %d. Exit.\n", 
+	      cmd_line->max_read_length-db_graph->kmer_size-1,
+	      cmd_line->max_read_length,
+	      db_graph->kmer_size);
 	}
       kmer_window->nkmers=0;
       
-      int lim = cmd_line->max_read_length;
+      int lim = cmd_line->max_read_length+db_graph->kmer_size;
       if (lim < cmd_line->max_var_len)
 	{
-	  lim = cmd_line->max_var_len;
+	  lim = cmd_line->max_var_len+db_graph->kmer_size;
 	}
 
       CovgArray* working_ca = alloc_and_init_covg_array(lim+1);
@@ -130,16 +129,16 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
       if (var==NULL)
 	{
 	  die("Abort - unable to allocate memory for buffers for reading callfile - \n"
-	      "either sever oom conditions or you have specified very very large max_read_len or max_var_len\n");
+	      "either severe oom conditions or you have specified very very large max_read_len or max_var_len\n");
 	}
       GenotypingWorkingPackage* gwp=NULL;
       LittleHashTable* little_dbg=NULL;
       if (cmd_line->which_caller_was_used_for_calls_to_be_genotyped==SimplePathDivergenceCaller)
 	{
-	  int max = cmd_line->max_read_length;
+	  int max = cmd_line->max_read_length+db_graph->kmer_size;
 	  if (cmd_line->max_var_len > max)
 	    {
-	      max = cmd_line->max_var_len;
+	      max = cmd_line->max_var_len+db_graph->kmer_size;
 	    }
 	  gwp = alloc_genotyping_work_package(max,max,
 					      NUMBER_OF_COLOURS, 
@@ -175,7 +174,7 @@ void run_genotyping(CmdLine* cmd_line, dBGraph* db_graph,
 	  //note you are reading a bunch of variants that may have been called on another sample,
 	  //and potentially are genotyping them on a different sample. So these reads can contain kmers
 	  // that are not in our graph. These become NULL points in our array of dBNode* 's.
-	  ret = read_next_variant_from_full_flank_file(fp, cmd_line->max_read_length,
+	  ret = read_next_variant_from_full_flank_file(fp, cmd_line->max_read_length+db_graph->kmer_size+1,
 						       var, db_graph, &gt_file_reader, seq, seq_inc_prev_kmer, kmer_window);
 	  if (ret==1)
 	    {

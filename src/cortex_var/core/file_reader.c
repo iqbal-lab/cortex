@@ -1477,7 +1477,7 @@ int get_single_kmer_sliding_window_from_sequence(char * seq, int length, short k
 	      //add new base
 	      binary_kmer_left_shift_one_base_and_insert_new_base_at_right_end(&current_good_kmer, current_base, kmer_size );
 	      num_kmers++;
-	      binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1],current_good_kmer);      
+ 	      binary_kmer_assignment_operator(kmer_window->kmer[num_kmers-1],current_good_kmer);      
 	      latest_base_we_have_read++;	      
 	    }
 
@@ -2919,7 +2919,7 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
 
   // we will also need the last kmer of either branch, to prepend in front of the 3p flank. 
   // At first sight, this seems complicated by the fact that sometimes one branch or even both branches are very short (<kmer)
-  // however we have helpfully passed in the last kmer of the 50 flank, so we definitely have >k bases available to us
+  // however we have helpfully passed in the last kmer of the 5p flank, so we definitely have >k bases available to us
 
 
   char last_kmer_of_branch1[db_graph->kmer_size+1];
@@ -2968,11 +2968,13 @@ int read_next_variant_from_full_flank_file(FILE* fptr, int max_read_length,
     {
       die("One of these reads (3p flank) is longer than specified max read length\n");
     }
-
-  //save the sequence we have read:
-  strncpy(var->seq3p, seq->seq, (int) strlen(seq->seq));
-  var->seq3p[(int) strlen(seq->seq)]='\0';
   
+  if (var->len_flank3p!= -1)
+    {
+      //save the sequence we have read:
+      strncpy(var->seq3p, seq->seq, (int) strlen(seq->seq));
+      var->seq3p[(int) strlen(seq->seq)]='\0';
+    }
   return 1;
 
 }
