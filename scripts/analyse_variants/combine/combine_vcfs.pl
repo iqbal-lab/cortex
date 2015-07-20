@@ -251,9 +251,7 @@ close($fh_CONFIG);
 
 
 ## Now just make a filelist of sample graphs
-
 make_sample_graph_filelist($run_calls_outdir, $kmer, $outdir);
-
 
 
 printf("\n\n****\nDONE.\nPlease note this has output a config file: $output_config which is needed as an argument by scripts/calling/genotype_1sample_against_sites.pl\n");

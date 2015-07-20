@@ -5,6 +5,9 @@ use File::Basename;
 use File::Spec;
 use Getopt::Long;
 use Benchmark;
+use Cwd    qw( abs_path );
+use FindBin qw($Bin);
+
 
 my $all_samples_index = "";
 my $index_dir="";
@@ -20,7 +23,9 @@ my $stampy_hash="";
 my $list_ref="";
 my $refbindir="";
 my $num=-1;
-my $cortex_dir = "";
+my $cortex_dir = abs_path($0);
+$cortex_dir =~ s/scripts\/calling\/par.pl//;
+
 my $outdir="";
 
 &GetOptions(
@@ -30,7 +35,6 @@ my $outdir="";
     'list_ref:s'                  =>\$list_ref,
     'refbindir:s'                 =>\$refbindir,
     'index_dir:s'                 =>\$index_dir,
-    'cortex_dir:s'                =>\$cortex_dir,
     'vcftools_dir:s'              =>\$vcftools_dir,
     'out_dir:s'                   =>\$outdir,
     'stampy_bin:s'                =>\$stampy_bin,
@@ -62,13 +66,12 @@ chomp $line;
 my @sp = split(/\t/, $line);
 my $sample = $sp[0];
 my $odir = $outdir."results/".$sample.'/';
-my $c2 = "mkdir $odir";
+my $c2 = "mkdir -p $odir";
 qx{$c2};
 my $log = $odir."log_bc.".$sample;
 print "$log\n";
 my $cmd ="perl $cortex_dir"."scripts/calling/run_calls.pl --fastaq_index $index --first_kmer $kmer --auto_cleaning yes --bc $bc --pd $pd --outdir $odir --ploidy 1 --genome_size 4400000 --mem_height $mem_height --mem_width $mem_width --qthresh $qthresh --vcftools_dir $vcftools_dir  --do_union yes --logfile $log --workflow independent --ref CoordinatesAndInCalling --list_ref_fasta $list_ref --refbindir $refbindir --stampy_bin $stampy_bin --stampy_hash $stampy_hash --outvcf $sample ";
 qx{$cmd};
-
 
 
 
