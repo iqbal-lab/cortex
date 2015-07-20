@@ -102,6 +102,11 @@ print $ref_bin_cmd."\n";
 $ref_binary=qx{$ref_bin_cmd};
 chomp $ref_binary;
 
+if (!(-d $outdir))
+{
+    my $c = "mkdir -p $outdir";
+    qx{$c};
+}
 my $output_config = $outdir."config.txt";
 my $fh_CONFIG;
 open($fh_CONFIG, ">".$output_config)||die("Cannot open output config file $output_config\n");
