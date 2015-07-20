@@ -1,0 +1,994 @@
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (TeX Live 2012) (format=pdflatex 2012.6.30)  20 JUL 2015 15:31
+entering extended mode
+ restricted \write18 enabled.
+ file:line:error style messages enabled.
+ %&-line parsing enabled.
+**cortex_user_manual.tex
+(./cortex_user_manual.tex
+LaTeX2e <2011/06/27>
+Babel <v3.8m> and hyphenation patterns for english, dumylang, nohyphenation, ge
+rman-x-2012-05-30, ngerman-x-2012-05-30, afrikaans, ancientgreek, ibycus, arabi
+c, armenian, basque, bulgarian, catalan, pinyin, coptic, croatian, czech, danis
+h, dutch, ukenglish, usenglishmax, esperanto, estonian, ethiopic, farsi, finnis
+h, french, friulan, galician, german, ngerman, swissgerman, monogreek, greek, h
+ungarian, icelandic, assamese, bengali, gujarati, hindi, kannada, malayalam, ma
+rathi, oriya, panjabi, tamil, telugu, indonesian, interlingua, irish, italian, 
+kurmanji, latin, latvian, lithuanian, mongolian, mongolianlmc, bokmal, nynorsk,
+ polish, portuguese, romanian, romansh, russian, sanskrit, serbian, serbianc, s
+lovak, slovenian, spanish, swedish, turkish, turkmen, ukrainian, uppersorbian, 
+welsh, loaded.
+(./bioinfo.cls
+Document Class: bioinfo 2003/02/08 0.1
+(/usr/local/texlive/2012/texmf-dist/tex/latex/base/inputenc.sty
+Package: inputenc 2008/03/30 v1.1d Input encoding file
+\inpenc@prehook=\toks14
+\inpenc@posthook=\toks15
+) (./crop.sty
+Package: crop 2001/11/16 v1.6 cropmarks (mf)
+\CROP@width=\dimen102
+\CROP@height=\dimen103
+\CROP@index=\count79
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2009/02/05 v1.0o Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/usr/local/texlive/2012/texmf-dist/tex/latex/latexconfig/graphics.cfg
+File: graphics.cfg 2010/04/23 v1.9 graphics configuration of TeX Live
+)
+Package graphics Info: Driver file: pdftex.def on input line 91.
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/pdftex-def/pdftex.def
+File: pdftex.def 2011/05/27 v0.06d Graphics/color for pdfTeX
+
+(/usr/local/texlive/2012/texmf-dist/tex/generic/oberdiek/infwarerr.sty
+Package: infwarerr 2010/04/08 v1.3 Providing info/warning/error messages (HO)
+)
+(/usr/local/texlive/2012/texmf-dist/tex/generic/oberdiek/ltxcmds.sty
+Package: ltxcmds 2011/11/09 v1.22 LaTeX kernel commands for general use (HO)
+)
+\Gread@gobject=\count80
+))
+\CROP@offset=\count81
+Package crop Info: Local config file crop.cfg used on input line 344.
+
+(./crop.cfg))
+Package crop Info: using pdf(la)tex graphics driver on input line 33.
+ (./graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks16
+)
+\Gin@req@height=\dimen104
+\Gin@req@width=\dimen105
+)
+(/usr/local/texlive/2012/texmf-dist/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2000/07/18 v2.13 AMS math features
+\@mathmargin=\skip41
+
+For additional information on amsmath, use the `?' option.
+(/usr/local/texlive/2012/texmf-dist/tex/latex/amsmath/amstext.sty
+Package: amstext 2000/06/29 v2.01
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0
+\@emptytoks=\toks17
+\ex@=\dimen106
+))
+(/usr/local/texlive/2012/texmf-dist/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d
+\pmbraise@=\dimen107
+)
+(/usr/local/texlive/2012/texmf-dist/tex/latex/amsmath/amsopn.sty
+Package: amsopn 1999/12/14 v2.01 operator names
+)
+\inf@bad=\count82
+LaTeX Info: Redefining \frac on input line 211.
+\uproot@=\count83
+\leftroot@=\count84
+LaTeX Info: Redefining \overline on input line 307.
+\classnum@=\count85
+\DOTSCASE@=\count86
+LaTeX Info: Redefining \ldots on input line 379.
+LaTeX Info: Redefining \dots on input line 382.
+LaTeX Info: Redefining \cdots on input line 467.
+\Mathstrutbox@=\box26
+\strutbox@=\box27
+\big@size=\dimen108
+LaTeX Font Info:    Redeclaring font encoding OML on input line 567.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
+\macc@depth=\count87
+\c@MaxMatrixCols=\count88
+\dotsspace@=\muskip10
+\c@parentequation=\count89
+\dspbrk@lvl=\count90
+\tag@help=\toks18
+\row@=\count91
+\column@=\count92
+\maxfields@=\count93
+\andhelp@=\toks19
+\eqnshift@=\dimen109
+\alignsep@=\dimen110
+\tagshift@=\dimen111
+\tagwidth@=\dimen112
+\totwidth@=\dimen113
+\lineht@=\dimen114
+\@envbody=\toks20
+\multlinegap=\skip42
+\multlinetaggap=\skip43
+\mathdisplay@stack=\toks21
+LaTeX Info: Redefining \[ on input line 2666.
+LaTeX Info: Redefining \] on input line 2667.
+) (./array.sty
+Package: array 1998/05/13 v2.3m Tabular extension package (FMi)
+\col@sep=\dimen115
+\extrarowheight=\dimen116
+\NC@list=\toks22
+\extratabsurround=\skip44
+\backup@length=\skip45
+) (./color.sty
+Package: color 1999/02/16 v1.0i Standard LaTeX Color (DPC)
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/latexconfig/color.cfg
+File: color.cfg 2007/01/18 v1.5 color configuration of teTeX/TeXLive
+)
+Package color Info: Driver file: pdftex.def on input line 125.
+)
+(/usr/local/texlive/2012/texmf-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2009/06/22 v3.00
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2009/06/22 v3.00 Basic AMSFonts support
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 96.
+))
+(./flushend.sty
+Package: flushend 1997/10/01
+\@aaa=\box28
+\@ccc=\box29
+\@viper=\box30
+\hold@viper=\box31
+\atColsBreak=\toks23
+\@extra@skip=\dimen117
+\@nd@page@rule=\dimen118
+) (./stfloats.sty
+Package: stfloats 1999/10/22
+\@dblbotnum=\count94
+\c@dblbotnumber=\count95
+)
+(/usr/local/texlive/2012/texmf-dist/tex/latex/amscls/amsthm.sty
+Package: amsthm 2009/07/02 v2.20.1
+\thm@style=\toks24
+\thm@bodyfont=\toks25
+\thm@headfont=\toks26
+\thm@notefont=\toks27
+\thm@headpunct=\toks28
+\thm@preskip=\skip46
+\thm@postskip=\skip47
+\thm@headsep=\skip48
+\dth@everypar=\toks29
+)
+(./chngpage.sty
+Package: chngpage 2001/01/31 v1.1b change page layout
+\c@cp@cnt=\count96
+\c@cp@tempcnt=\count97
+) (./times.sty
+Package: times 2000/01/12 PSNFSS-v8.1 Times font as default roman (SPQR) 
+)
+\c@section=\count98
+\c@subsection=\count99
+\c@subsubsection=\count100
+\c@paragraph=\count101
+\c@subparagraph=\count102
+\c@figure=\count103
+\c@table=\count104
+\dropfromtop=\skip49
+\extraspace=\skip50
+\aboveskipchk=\skip51
+\abovecaptionskip=\skip52
+\belowcaptionskip=\skip53
+\rotdimen=\dimen119
+\tempdime=\dimen120
+\temptbox=\box32
+ (./natbib.sty
+Package: natbib 2000/07/24 7.0a (PWD)
+\bibhang=\skip54
+\bibsep=\skip55
+LaTeX Info: Redefining \cite on input line 508.
+\c@NAT@ctr=\count105
+)) (./cortex_user_manual.aux)
+\openout1 = `cortex_user_manual.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 17.
+LaTeX Font Info:    ... okay on input line 17.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 17.
+LaTeX Font Info:    ... okay on input line 17.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 17.
+LaTeX Font Info:    ... okay on input line 17.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 17.
+LaTeX Font Info:    ... okay on input line 17.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 17.
+LaTeX Font Info:    ... okay on input line 17.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 17.
+LaTeX Font Info:    ... okay on input line 17.
+LaTeX Font Info:    Try loading font information for OT1+ptm on input line 17.
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/psnfss/ot1ptm.fd
+File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
+)
+(/usr/local/texlive/2012/texmf-dist/tex/context/base/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count106
+\scratchdimen=\dimen121
+\scratchbox=\box33
+\nofMPsegments=\count107
+\nofMParguments=\count108
+\everyMPshowfont=\toks30
+\MPscratchCnt=\count109
+\MPscratchDim=\dimen122
+\MPnumerator=\count110
+\makeMPintoPDFobject=\count111
+\everyMPtoPDFconversion=\toks31
+) (/usr/local/texlive/2012/texmf-dist/tex/generic/oberdiek/pdftexcmds.sty
+Package: pdftexcmds 2011/11/29 v0.20 Utility functions of pdfTeX for LuaTeX (HO
+)
+
+(/usr/local/texlive/2012/texmf-dist/tex/generic/oberdiek/ifluatex.sty
+Package: ifluatex 2010/03/01 v1.3 Provides the ifluatex switch (HO)
+Package ifluatex Info: LuaTeX not detected.
+)
+(/usr/local/texlive/2012/texmf-dist/tex/generic/oberdiek/ifpdf.sty
+Package: ifpdf 2011/01/30 v2.3 Provides the ifpdf switch (HO)
+Package ifpdf Info: pdfTeX in PDF mode is detected.
+)
+Package pdftexcmds Info: LuaTeX not detected.
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+)
+(/usr/local/texlive/2012/texmf-dist/tex/latex/oberdiek/epstopdf-base.sty
+Package: epstopdf-base 2010/02/09 v2.5 Base part for package epstopdf
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/oberdiek/grfext.sty
+Package: grfext 2010/08/19 v1.1 Manage graphics extensions (HO)
+
+(/usr/local/texlive/2012/texmf-dist/tex/generic/oberdiek/kvdefinekeys.sty
+Package: kvdefinekeys 2011/04/07 v1.3 Define keys (HO)
+))
+(/usr/local/texlive/2012/texmf-dist/tex/latex/oberdiek/kvoptions.sty
+Package: kvoptions 2011/06/30 v3.11 Key value format for package options (HO)
+
+(/usr/local/texlive/2012/texmf-dist/tex/generic/oberdiek/kvsetkeys.sty
+Package: kvsetkeys 2012/04/25 v1.16 Key value parser (HO)
+
+(/usr/local/texlive/2012/texmf-dist/tex/generic/oberdiek/etexcmds.sty
+Package: etexcmds 2011/02/16 v1.5 Avoid name clashes with e-TeX commands (HO)
+Package etexcmds Info: Could not find \expanded.
+(etexcmds)             That can mean that you are not using pdfTeX 1.50 or
+(etexcmds)             that some package has redefined \expanded.
+(etexcmds)             In the latter case, load this package earlier.
+)))
+Package grfext Info: Graphics extension search list:
+(grfext)             [.png,.pdf,.jpg,.mps,.jpeg,.jbig2,.jb2,.PNG,.PDF,.JPG,.JPE
+G,.JBIG2,.JB2,.eps]
+(grfext)             \AppendGraphicsExtensions on input line 452.
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
+e
+))
+LaTeX Font Info:    Try loading font information for OT1+phv on input line 21.
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/psnfss/ot1phv.fd
+File: ot1phv.fd 2001/06/04 scalable font definitions for OT1/phv.
+)
+LaTeX Font Info:    Font shape `OT1/phv/m/it' in size <9> not available
+(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 21.
+LaTeX Font Info:    Font shape `OT1/phv/bx/it' in size <9> not available
+(Font)              Font shape `OT1/phv/b/it' tried instead on input line 21.
+LaTeX Font Info:    Font shape `OT1/phv/b/it' in size <9> not available
+(Font)              Font shape `OT1/phv/b/sl' tried instead on input line 21.
+LaTeX Font Info:    Font shape `OT1/phv/bx/it' in size <19> not available
+(Font)              Font shape `OT1/phv/b/it' tried instead on input line 21.
+LaTeX Font Info:    Font shape `OT1/phv/b/it' in size <19> not available
+(Font)              Font shape `OT1/phv/b/sl' tried instead on input line 21.
+LaTeX Font Info:    Font shape `OT1/phv/m/it' in size <8> not available
+(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 21.
+
+Overfull \hbox (37.37648pt too wide) detected at line 21
+[]\OT1/phv/b/sl/19 Population genomics for the modern family!![]   []
+ []
+
+LaTeX Font Info:    Font shape `OT1/phv/bx/n' in size <9> not available
+(Font)              Font shape `OT1/phv/b/n' tried instead on input line 21.
+LaTeX Font Info:    Font shape `OT1/phv/bx/n' in size <16> not available
+(Font)              Font shape `OT1/phv/b/n' tried instead on input line 21.
+
+Underfull \hbox (badness 10000) detected at line 21
+[]
+ []
+
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 25.
+(/usr/local/texlive/2012/texmf-dist/tex/latex/psnfss/ot1pcr.fd
+File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
+)
+LaTeX Font Info:    Try loading font information for U+msa on input line 27.
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2009/06/22 v3.00 AMS symbols A
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 27.
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2009/06/22 v3.00 AMS symbols B
+)
+
+LaTeX Font Warning: Font shape `OT1/cmr/m/n' in size <6.5> not available
+(Font)              size <6> substituted on input line 27.
+
+
+LaTeX Font Warning: Font shape `OML/cmm/m/it' in size <6.5> not available
+(Font)              size <6> substituted on input line 27.
+
+
+LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <6.5> not available
+(Font)              size <6> substituted on input line 27.
+
+
+Underfull \hbox (badness 2538) in paragraph at lines 30--31
+[]\OT1/phv/m/n/8 variant call quality improved by integration of information
+ []
+
+
+Underfull \hbox (badness 1275) in paragraph at lines 31--32
+[]\OT1/phv/m/n/8 calling indels, complex combinations of SNPs, indels and
+ []
+
+
+Underfull \hbox (badness 4686) in paragraph at lines 31--32
+\OT1/phv/m/n/8 rearrangements (see our paper for nucleotide resolution
+ []
+
+
+Overfull \hbox (2.60768pt too wide) in paragraph at lines 33--34
+[]\OT1/phv/m/n/8 power/sensitivity of variant calls predicted by simple mathema
+tical
+ []
+
+
+Underfull \hbox (badness 1189) in paragraph at lines 38--39
+[]\OT1/phv/m/n/8 alignment of a reference (or reads) to a graph, either to
+ []
+
+
+Underfull \hbox (badness 2653) in paragraph at lines 38--39
+\OT1/phv/m/n/8 call variants, or to observe support/coverage in different
+ []
+
+Missing character: There is no Ò in font phvr7t!
+Missing character: There is no Ó in font phvr7t!
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+LaTeX Font Info:    Font shape `OT1/phv/bx/n' in size <10> not available
+(Font)              Font shape `OT1/phv/b/n' tried instead on input line 45.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 48.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+LaTeX Font Info:    Try loading font information for OMS+phv on input line 58.
+
+(/usr/local/texlive/2012/texmf-dist/tex/latex/psnfss/omsphv.fd
+File: omsphv.fd 
+)
+LaTeX Font Info:    Font shape `OMS/phv/m/n' in size <7> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 58.
+ [1
+
+{/usr/local/texlive/2012/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
+
+
+]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+LaTeX Font Info:    Font shape `OT1/phv/bx/n' in size <8> not available
+(Font)              Font shape `OT1/phv/b/n' tried instead on input line 148.
+LaTeX Font Info:    Font shape `OT1/phv/bx/it' in size <8> not available
+(Font)              Font shape `OT1/phv/b/it' tried instead on input line 148.
+LaTeX Font Info:    Font shape `OT1/phv/b/it' in size <8> not available
+(Font)              Font shape `OT1/phv/b/sl' tried instead on input line 148.
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+[2]
+Overfull \hbox (5.39972pt too wide) in paragraph at lines 561--561
+[]  \OT1/pcr/m/n/9 Cannot be used with --se_list, or --pe_list.[] 
+ []
+
+
+Overfull \hbox (21.5997pt too wide) in paragraph at lines 561--561
+[]  \OT1/pcr/m/n/9 can specify sample identifiers for each colour.[] 
+ []
+
+
+Overfull \hbox (10.79971pt too wide) in paragraph at lines 561--561
+[]  \OT1/pcr/m/n/9 If you are loading just one binary (1 or many[] 
+ []
+
+
+Overfull \hbox (21.5997pt too wide) in paragraph at lines 561--561
+[]  \OT1/pcr/m/n/9 Lists of "left" and "right", or \us 1 and \us 2[] 
+ []
+
+
+Overfull \hbox (16.1997pt too wide) in paragraph at lines 561--561
+[]  \OT1/pcr/m/n/9 paired-end fasta/q files, assumed to be in the[] 
+ []
+
+
+Overfull \hbox (10.79971pt too wide) in paragraph at lines 561--561
+[]  \OT1/pcr/m/n/9 i.e. file1_1.fq and file1_2.fq should both be[] 
+ []
+
+
+Overfull \hbox (26.9997pt too wide) in paragraph at lines 561--561
+[]  \OT1/pcr/m/n/9 One of two parameters that determine memory use.[] 
+ []
+
+
+Overfull \hbox (26.9997pt too wide) in paragraph at lines 561--561
+[]  \OT1/pcr/m/n/9 They specify a "rectangle" of memory, into which[] 
+ []
+
+
+Overfull \hbox (5.39972pt too wide) in paragraph at lines 561--561
+[]  \OT1/pcr/m/n/9 Takes an integer value. If in doubt try 100.[] 
+ []
+
+
+Overfull \hbox (32.39969pt too wide) in paragraph at lines 561--561
+[]   \OT1/pcr/m/n/9 One of two parameters that determine memory use.[] 
+ []
+
+
+Overfull \hbox (32.39969pt too wide) in paragraph at lines 561--561
+[]   \OT1/pcr/m/n/9 They specify a "rectangle" of memory, into which[] 
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+ [3]
+Overfull \hbox (26.9997pt too wide) in paragraph at lines 561--561
+[]\OT1/pcr/m/n/9 --load_colours_only_where_overlap_clean_colour INT[] 
+ []
+
+
+Overfull \hbox (16.1997pt too wide) in paragraph at lines 561--561
+[]  \OT1/pcr/m/n/9 --load_colours_only_where_overlap_clean_colour[] 
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+[4]
+Overfull \hbox (5.39972pt too wide) in paragraph at lines 561--561
+[]    \OT1/pcr/m/n/9 --align requires a list of fasta or fastq.[] 
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+ [5]
+Underfull \hbox (badness 1152) in paragraph at lines 566--568
+\OT1/ptm/m/n/9 Cortex now comes bundled with the GNU Scientific Library,
+ []
+
+
+Underfull \hbox (badness 1019) in paragraph at lines 566--568
+\OT1/ptm/m/n/9 samtools, and two libraries from Isaac Turner. These are all
+ []
+
+
+Underfull \hbox (badness 2080) in paragraph at lines 587--588
+\OT1/ptm/m/n/9 so negative, fractional or non-numeric values of MAXK or
+ []
+
+
+Underfull \hbox (badness 2409) in paragraph at lines 592--593
+[]\OT1/ptm/m/n/9 Get Stampy from http://www.well.ox.ac.uk/project-stampy.
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+[6]
+Overfull \hbox (10.79971pt too wide) in paragraph at lines 603--603
+[]\OT1/pcr/m/n/9 scripts/analyse_variants/needleman_wunsch-0.3.0[] 
+ []
+
+
+Underfull \hbox (badness 2689) in paragraph at lines 619--620
+\OT1/ptm/m/n/9 algorithm does require knowledge of read-pairing (described
+ []
+
+
+Overfull \hbox (5.39972pt too wide) in paragraph at lines 657--657
+[]\OT1/pcr/m/n/9 ls child*.ctx > list_binaries_for_child_colour[] 
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+ [7]
+Underfull \hbox (badness 3168) in paragraph at lines 733--734
+\OT1/ptm/m/n/9 A simple (and approximate) mechanism for removing PCR
+ []
+
+
+Underfull \hbox (badness 1127) in paragraph at lines 735--736
+\OT1/ptm/m/n/9 Reads can be cut at homopolymers of a specified length. --
+ []
+
+Missing character: There is no Ò in font ptmr7t!
+Missing character: There is no Ó in font ptmr7t!
+Missing character: There is no Ò in font ptmr7t!
+Missing character: There is no Ó in font ptmr7t!
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+[8]
+Underfull \hbox (badness 2119) in paragraph at lines 746--747
+\OT1/ptm/m/n/9 of 2 million kmers in the genome, plus a number due to
+ []
+
+
+Underfull \hbox (badness 2213) in paragraph at lines 746--747
+\OT1/ptm/m/n/9 sequencing errors, so we try 4 million as an overestimate.
+ []
+
+Missing character: There is no ² in font ptmr7t!
+Missing character: There is no Ò in font ptmr7t!
+Missing character: There is no Ó in font ptmr7t!
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+ [9]
+Underfull \hbox (badness 2057) in paragraph at lines 800--802
+\OT1/ptm/m/n/9 By error correcting and then dumping a binary just of the
+ []
+
+
+Overfull \hbox (4.23215pt too wide) in paragraph at lines 807--808
+[]\OT1/ptm/m/n/9 --remove[]low[]coverage[]supernodes N. This is the recommended
+
+ []
+
+
+Underfull \hbox (badness 3679) in paragraph at lines 821--823
+[]\OT1/ptm/m/n/9 Here is a step-by-step example. Suppose you have 100
+ []
+
+
+Underfull \hbox (badness 1454) in paragraph at lines 823--824
+\OT1/ptm/m/n/9 --colour[]list FILE1, where FILE1 is a filelist containing
+ []
+
+
+Underfull \hbox (badness 3579) in paragraph at lines 823--824
+\OT1/ptm/m/n/9 just one file (FILE2), and where FILE2 is a list of
+ []
+
+
+Underfull \hbox (badness 5696) in paragraph at lines 823--824
+\OT1/ptm/m/n/9 all the indiv[]N.uncleaned.ctx) and error-clean using --
+ []
+
+
+Underfull \hbox (badness 3612) in paragraph at lines 823--824
+\OT1/ptm/m/n/9 remove[]low[]coverage[]supernodes , and dump a cleaned
+ []
+
+
+Underfull \hbox (badness 1527) in paragraph at lines 825--826
+\OT1/ptm/m/n/9 h --multicolour[]bin cleaned[]pool.ctx --colour[]list (list one
+ []
+
+
+Underfull \hbox (badness 1331) in paragraph at lines 827--829
+\OT1/ptm/m/n/9 Each cleaned binary is dumped in the same directory as its
+ []
+
+
+Overfull \hbox (16.1997pt too wide) in paragraph at lines 836--836
+[]\OT1/pcr/m/n/9 --load_colours_only_where_overlap_clean_colour 0[] 
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+[10]
+Overfull \hbox (21.5997pt too wide) in paragraph at lines 915--915
+[]   \OT1/pcr/m/n/9 --detect_bubbles1 1,3,4,5,6,7,8,9,10/20,21,22,[] 
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+ [11]
+Underfull \hbox (badness 2435) in paragraph at lines 954--955
+\OT1/ptm/m/n/9 Variants are printed in this format (this is an example for
+ []
+
+
+Overfull \hbox (5.39972pt too wide) in paragraph at lines 966--966
+[]\OT1/pcr/m/n/9 CGCCCTTGTTGAGTGTTCTTTGGAATTGTCGTTTTTTGAGCACAAC[] 
+ []
+
+
+Overfull \hbox (5.39972pt too wide) in paragraph at lines 966--966
+[]\OT1/pcr/m/n/9 TGCCCTTGTTGAGTGTTCTTTGGAATTGTCGTTTTTTGAGCACAAC[] 
+ []
+
+
+Overfull \hbox (5.39972pt too wide) in paragraph at lines 1001--1001
+[]\OT1/pcr/m/n/9 CGCCCTTGTTGAGTGTTCTTTGGAATTGTCGTTTTTTGAGCACAAC[] 
+ []
+
+
+Overfull \hbox (5.39972pt too wide) in paragraph at lines 1001--1001
+[]\OT1/pcr/m/n/9 TGCCCTTGTTGAGTGTTCTTTGGAATTGTCGTTTTTTGAGCACAAC[] 
+ []
+
+Missing character: There is no Ò in font ptmr7t!
+Missing character: There is no Ó in font ptmr7t!
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+[12]
+Missing character: There is no Ò in font ptmr7t!
+Missing character: There is no Ó in font ptmr7t!
+
+Overfull \hbox (43.19968pt too wide) in paragraph at lines 1067--1067
+[]\OT1/pcr/m/n/9 Colour/sample GT_call llk_hom_br1 llk_het llk_hom_br2[] 
+ []
+
+
+Underfull \hbox (badness 2486) in paragraph at lines 1068--1069
+\OT1/ptm/m/n/9 followed by the usual (flanks, branches, colour coverages).
+ []
+
+
+Overfull \hbox (10.79971pt too wide) in paragraph at lines 1093--1093
+[]  \OT1/pcr/m/n/9 --gt UNION_CALLSET,UNION_CALLSET.genotyped,BC[] 
+ []
+
+
+Overfull \hbox (10.79971pt too wide) in paragraph at lines 1093--1093
+[]     \OT1/pcr/m/n/9 EachColourADiploidSampleExceptTheRefColour[] 
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+ [13]
+Overfull \hbox (9.03253pt too wide) in paragraph at lines 1105--1106
+\OT1/ptm/m/n/9 We provide an R script (in the scripts/analyse[]variants directo
+ry),called
+ []
+
+
+Underfull \hbox (badness 1990) in paragraph at lines 1139--1140
+[]\OT1/ptm/m/n/9 number of colours in the graph. For example you use
+ []
+
+
+Underfull \hbox (badness 1389) in paragraph at lines 1158--1159
+\OT1/ptm/m/n/9 To give a concrete example, supposing I have N calls over
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+[14]
+Underfull \hbox (badness 2318) in paragraph at lines 1175--1176
+\OT1/ptm/m/n/9 Please note \OT1/ptm/b/n/9 this will not work \OT1/ptm/m/n/9 if 
+you use 4e9 instead of
+ []
+
+
+Underfull \hbox (badness 1762) in paragraph at lines 1175--1176
+\OT1/ptm/m/n/9 separated columns are variant number, classification (variant,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1186--1188
+
+ []
+
+Missing character: There is no Ò in font ptmr7t!
+Missing character: There is no Ó in font ptmr7t!
+
+Underfull \hbox (badness 2941) in paragraph at lines 1217--1218
+\OT1/ptm/m/n/9 Specify the number of colours in the graph. If you used
+ []
+
+
+Overfull \hbox (11.99399pt too wide) in paragraph at lines 1231--1233
+\OT1/ptm/m/n/9 This will create two files, /path/to/foo.stidx, and /path/to/foo
+.sthash.You
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+ [15]
+Underfull \hbox (badness 10000) in paragraph at lines 1250--1251
+
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+[16]
+Underfull \hbox (badness 1253) in paragraph at lines 1328--1329
+\OT1/ptm/m/n/9 automated error-cleaning with a specified threshold across all
+ []
+
+
+Underfull \hbox (badness 1297) in paragraph at lines 1328--1329
+\OT1/ptm/m/n/9 workflows create "binaries", "calls" and "vcfs" subdirectories
+ []
+
+
+Underfull \hbox (badness 1715) in paragraph at lines 1330--1332
+\OT1/ptm/m/n/9 The joint discovery workflow is the most direct and simple
+ []
+
+
+Underfull \hbox (badness 1320) in paragraph at lines 1358--1359
+[]\OT1/ptm/m/n/9 Discovers differences between samples, and not between
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+ [17]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+[18]
+Overfull \hbox (10.79971pt too wide) in paragraph at lines 1623--1623
+[]   \OT1/pcr/m/n/9 to allow "genotyping" of differences between[] 
+ []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+ [19]
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+[20]
+Underfull \hbox (badness 2418) in paragraph at lines 1708--1709
+\OT1/ptm/m/n/9 Actually there's nothing special about microbes. The above
+ []
+
+
+Underfull \hbox (badness 2326) in paragraph at lines 1732--1733
+\OT1/ptm/m/n/9 The mem[]height and mem[]width options specify how much
+ []
+
+
+Overfull \hbox (10.79971pt too wide) in paragraph at lines 1743--1743
+[]\OT1/pcr/m/n/9 --qthresh 10 --auto_cleaning yes --auto_above 2[] 
+ []
+
+Extra height:0.0pt when 518.20804pt
+(2)Left:518.20804pt Right:512.51637pt Output:518.20804pt
+- LAST -
+Extra skip:0.0pt
+Left:518.20804pt
+Right:512.51637pt
+Output:518.20804pt
+
+Overfull \hbox (261.0pt too wide) has occurred while \output is active
+[][] 
+ []
+
+
+Overfull \vbox (1.0pt too high) has occurred while \output is active []
+
+ [21]
+(./cortex_user_manual.aux)
+
+LaTeX Font Warning: Size substitutions with differences
+(Font)              up to 0.5pt have occurred.
+
+ ) 
+Here is how much of TeX's memory you used:
+ 3243 strings out of 493488
+ 41480 string characters out of 3141326
+ 121813 words of memory out of 3000000
+ 6454 multiletter control sequences out of 15000+200000
+ 41182 words of font info for 80 fonts, out of 3000000 for 9000
+ 961 hyphenation exceptions out of 8191
+ 38i,11n,26p,1086b,277s stack positions out of 5000i,500n,10000p,200000b,50000s
+{/usr/local/texlive/2012/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/t
+exlive/2012/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex9.pfb></usr/loca
+l/texlive/2012/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/
+texlive/2012/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/te
+xlive/2012/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/texl
+ive/2012/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive
+/2012/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/20
+12/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texlive/2012
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2012/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2012/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/local/texlive/2012/texmf
+-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/local/texlive/2012/texmf-dist/fo
+nts/type1/urw/helvetic/uhvb8a.pfb></usr/local/texlive/2012/texmf-dist/fonts/typ
+e1/urw/helvetic/uhvbo8a.pfb></usr/local/texlive/2012/texmf-dist/fonts/type1/urw
+/helvetic/uhvr8a.pfb></usr/local/texlive/2012/texmf-dist/fonts/type1/urw/helvet
+ic/uhvro8a.pfb></usr/local/texlive/2012/texmf-dist/fonts/type1/urw/times/utmb8a
+.pfb></usr/local/texlive/2012/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr
+/local/texlive/2012/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on cortex_user_manual.pdf (21 pages, 268213 bytes).
+PDF statistics:
+ 146 PDF objects out of 1000 (max. 8388607)
+ 103 compressed objects within 2 object streams
+ 0 named destinations out of 1000 (max. 500000)
+ 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+
