@@ -269,14 +269,26 @@ sub make_sample_graph_filelist
     my $listing_cmd = "ls $reg";
     my $listing = qx{$listing_cmd};
     my @sp = split(/\n/, $listing);
-    my $outfile = $odir."list_sample_ids_and_graphs";
+    my $outfile = $odir."list_args_for_final_step";
     open(OUT, ">".$outfile)||die("Cannot open $outfile\n");
     foreach my $f (@sp)
     {
 	if ($f=~ /\/([^\/]+)\.kmer/)
 	{
 	    my $id = $1;
-	    print OUT "$id\t$f\n";
+	    my $sample_odir;
+	    if ($f=~ /($rcdir.+)binaries/)
+	    {
+		$sample_odir = $1;
+	    }
+	    
+	    my $sample_gtdir= $sample_odir."union_calls";
+	    if (!(-d $sample_gtdir))
+	    {
+		my $c = "mkdir $sample_gtdir";
+		qx{$c};
+	    }
+	    print OUT "$id\t$sample_gtdir\t$f\n";
 	}
     }
     close(OUT);
