@@ -105,7 +105,6 @@ chomp $ref_binary;
 my $output_config = $outdir."config.txt";
 my $fh_CONFIG;
 open($fh_CONFIG, ">".$output_config)||die("Cannot open output config file $output_config\n");
-print $fh_CONFIG  "cortex_dir\t$cortex_dir\n";
 print $fh_CONFIG "kmer\t$kmer\n";
 
 
@@ -233,11 +232,11 @@ print "Finished building a graph just of the bubble branches/alleles. Now inters
 
 my $ctx_binary2 = check_cortex_compiled_2colours($cortex_dir, $kmer);
 my $suffix = "intersect_bubbles";
-my $ref_intersect_log = basename($ref_binary.".intersect_with_bubbles.log");
+my $ref_intersect_log = basename($ref_binary.".intersect_bubbles.log");
 $ref_intersect_log=$outdir.$ref_intersect_log;
-my $ref_col_list=get_ref_col_list($ref_binary, $outdir);
-my $new_ref_binary = $ref_intersect_log;
-$new_ref_binary =~ s/log/ctx/;
+my ($reflist, $ref_col_list) =get_ref_col_list($ref_binary, $outdir);
+my $new_ref_binary = $reflist."_intersect_bubbles.ctx";
+
 
 my $cmd_b4 = $ctx_binary2." --kmer_size $kmer --multicolour_bin $bubble_graph --mem_height $mem_height --mem_width $mem_width --colour_list $ref_col_list  --load_colours_only_where_overlap_clean_colour 0 --successively_dump_cleaned_colours $suffix  > $ref_intersect_log 2>&1";
 print "$cmd_b4\n";
@@ -295,7 +294,7 @@ sub get_ref_col_list
     print "$c2\n";
     my $r2 =qx{$c2};
     print "$r2\n";
-    return $ref_col_list;
+    return ($ref_list, $ref_col_list);
 }
 
 

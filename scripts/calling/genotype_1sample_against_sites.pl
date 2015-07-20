@@ -4,30 +4,27 @@ use File::Basename;
 use File::Spec;
 use Getopt::Long;
 use Benchmark;
+use Cwd    qw( abs_path );
+use FindBin qw($Bin);
 
-my $invcf = "";
-my $bubble_callfile = "";
+
+my $cortex_dir = abs_path($0);
+$cortex_dir =~ s/scripts\/calling\/genotype_1sample_against_sites.pl//;
 
 ##the following are set by the command-line arguments
-my $cortex_dir = "";
+my $invcf = "";
 my $sample_cleaned_graph="";
-my $ref_overlap_bubble_graph="";
 my $mem_height = 16;
 my $mem_width = 100;
-my $kmer= 31;
 my $sample="";
 my $sample_graph="";
-my $bubble_graph="";
-my $overlap_log="";
 my $outdir="";
 my $filename_of_sample_overlap_bubble_binary="";
-my $max_allele=100000; ##longest allele which will be genotyped
 my $g_size = 0; #genome size
 my $config ="";
 
 &GetOptions(
     ##mandatory args
-    'cortex_dir:s'                        =>\$cortex_dir,
     'invcf:s'                             =>\$invcf,
     'config:s'                             =>\$config,
 #    'bubble_graph:s'                      =>\$bubble_graph,
@@ -41,7 +38,7 @@ my $config ="";
 
     ##if you just have the sample graph and you want this script to overlap it with the bubbles
     'sample_graph:s'                      =>\$sample_graph,##whole genome graph of sample
-    'overlap_log:s'                       =>\$overlap_log,#specify name for log file for dumping overlap of sample with bubbles 
+#    'overlap_log:s'                       =>\$overlap_log,#specify name for log file for dumping overlap of sample with bubbles 
 
     ## there are default mem height and width set, but you can also set them here
     'mem_height:i'                        =>\$mem_height,
@@ -60,6 +57,8 @@ elsif (!(-e $config))
     die("Cannot open the user specified file $config\n");
 }
 
+my ($kmer, $bubble_callfile, $max_allele, $bubble_graph, $ref_overlap_bubble_graph) = get_args_from_config($config);
+
 if ($cortex_dir !~ /\/$/)
 {
     $cortex_dir=$cortex_dir.'/';
@@ -70,10 +69,8 @@ if ($outdir !~ /\/$/)
 }
 
 my $analyse_variants_dir = $cortex_dir."scripts/analyse_variants/";
-check_args($cortex_dir, $bubble_graph, $mem_height, $mem_width, $sample, $overlap_log, $invcf, $g_size);
+check_args($mem_height, $mem_width, $sample, $invcf, $g_size);
 
-
-($cortex_dir, $kmer, $bubble_callfile, $max_allele, $bubble_graph, $ref_overlap_bubble_graph) = get_args_from_config($config);
 
 
 ##if you have not passed in the overlap binary of sample with bubbles, then do it now:
@@ -93,6 +90,7 @@ my $suffix = "intersect_sites";
 my $colour_list;
 ($colour_list, $filename_of_sample_overlap_bubble_binary) = make_colourlist($sample_graph, $sample, $suffix, $outdir);
 
+my $overlap_log=$outdir."log_overlap_of_".$sample."_with_bubbles.txt";
 my $cmd = $ctx_binary." --kmer_size $kmer --mem_height $mem_height --mem_width $mem_width --multicolour_bin $bubble_graph --colour_list $colour_list --load_colours_only_where_overlap_clean_colour 0 --successively_dump_cleaned_colours $suffix > $overlap_log 2>&1";
 print "$cmd\n";
 my $ret = qx{$cmd};
@@ -137,7 +135,7 @@ open(O, ">".$samplelist)||die("Unable to open $samplelist");
 print O "REF\n$sample\n";
 close(O);
 
-my $vcf_cmd = "perl $analyse_variants_dir"."process_calls.pl --callfile $gt_output --callfile_log $gt_log --outvcf $sample --outdir $outdir --samplename_list $samplelist  --num_cols 2  --caller BC --kmer 31 --refcol 0 --ploidy 2  --vcf_which_generated_calls $invcf --print_gls yes > $outdir".$sample.".vcf.log";
+my $vcf_cmd = "perl $analyse_variants_dir"."process_calls.pl --callfile $gt_output --callfile_log $gt_log --outvcf $sample --outdir $outdir --samplename_list $samplelist  --num_cols 2  --caller BC --kmer 31 --refcol 0 --ploidy 2  --vcf_which_generated_calls $invcf --print_gls yes > $outdir".$sample.".vcf.log 2>&1";
 print $vcf_cmd;
 my $vcfret = qx{$vcf_cmd};
 print $vcfret;
@@ -155,27 +153,13 @@ print("\n*************************\n");
 
 sub check_args
 {
-    my ($ctx_dir, $bub_g, $h, $w, $sam, $overlap_log, $vcf, $g) = @_;
-    if ($ctx_dir eq "")
-    {
-	die("You must specify the Cortex install directory with --cortex_dir");
-    }
+    my ($h, $w, $sam, $vcf, $g) = @_;
+
     if ($g==0)
     {
 	die("You must specify the genome size with --genome_size, which is used to convert bases-loaded into depth loaded\n");
     }
-    if ($overlap_log eq "")
-    {
-	die("You must specify the name of the log file which will be generated when overlapping the sample with the bubbles\n");
-    }
-    if ($bub_g eq "")
-    {
-	die("You must specify the bubble graph, using --bubble_graph");
-    }
-    if (!(-e $bub_g))
-    {
-	die("You have specified a non existent file $bub_g");
-    }
+
     if ($sam eq "")
     {
 	die("You must specify sample id with --sample");
@@ -235,7 +219,7 @@ sub make_colourlist
     }
     
     my $col_list = $odir.$id."_colourlist_for_intersection";
-    my $list_this_binary=$odir.$bname.".filelist";
+    my $list_this_binary=$odir.$id.".filelist";
     my $list_this_binary_nodir = basename($list_this_binary); 
     open(COL, ">".$col_list)||die("Cannot open $col_list");
     open(FLIST, ">".$list_this_binary)||die("Cannot open $list_this_binary");
@@ -307,29 +291,26 @@ sub get_args_from_config
 	my $ln = $_;
 	chomp $ln;
 	my @sp = split("\t", $ln);
-	if ($sp[0] eq "cortex_dir")
+
+	if ($sp[0] eq "kmer")
 	{
 	    $arr[0]=$sp[1];
 	}
-	elsif ($sp[0] eq "kmer")
+	elsif ($sp[0] eq "bubble_callfile")
 	{
 	    $arr[1]=$sp[1];
 	}
-	elsif ($sp[0] eq "bubble_callfile")
+	elsif ($sp[0] eq "max_allele")
 	{
 	    $arr[2]=$sp[1];
 	}
-	elsif ($sp[0] eq "max_allele")
+	elsif ($sp[0] eq "bubble_graph")
 	{
 	    $arr[3]=$sp[1];
 	}
-	elsif ($sp[0] eq "bubble_graph")
-	{
-	    $arr[4]=$sp[1];
-	}
 	elsif ($sp[0] eq "ref_overlap_bubble_graph")
 	{
-	    $arr[5]=$sp[1];
+	    $arr[4]=$sp[1];
 	}
 	else
 	{
@@ -339,4 +320,5 @@ sub get_args_from_config
 
     }
     close(CFILE);
+    return @arr;
 }
