@@ -180,7 +180,6 @@ $list_ref_fasta = "nonexistent_nonsense";
 $expt_type = "";
 $do_union = "no";
 $manual_override_cleaning="no";
-$build_per_sample_vcfs="no";
 $global_logfile = "default_logfile";
 my $pooled_colour = -1;    #deprecated
 my $help = '';    #default false
@@ -224,12 +223,11 @@ my $help = '';    #default false
     'vcftools_dir:s'       =>\$vcftools_dir,
     'manual_override_cleaning:s' => \$manual_override_cleaning,
     'do_union:s'         =>\$do_union,
-#    'build_per_sample_vcfs:s' =>\$build_per_sample_vcfs,
     'logfile:s'           => \$global_logfile,
     'workflow:s'          => \$workflow,
     'squeeze_mem'          =>\$squeeze_mem,
     'fastq_ascii_offset:i'   => \$fastq_offset,
-    'remove_known_contams:s'=>$known_contam_list,
+##    'remove_known_contams:s'=>$known_contam_list,  NOT IMPLEMENTED YET
 );
 
 
@@ -246,14 +244,14 @@ if ($help)
 	print "--auto_below\t\t\t\tYou can also ask it to run for, say 2 thresholds below the auto-chosen one. By default it wont do this\n";
 	print "--auto_above\t\t\t\tYou can ask it to run for, say 3 threshold values above the auto-chosen one (will stay below the expected depth\n";
 	print "--user_cleaning\t\t\t\tValid arguments are yes and no. Default is no. Make your own cleanig choices\n";
-	print "--user_min_clean\t\t\t\tIf you want to try a range. Use this also if you only want to use one threshold.\n";
-	print "--user_max_clean\t\t\t\tIf you want to try a range. Ignore this if you only want to use one threshold\n";
-	print "--user_clean_step\t\t\t\tIncrement between cleaning thresholds.\n";
-	print "--bc\t\t\t\tMake Bubble Calls. You must enter yes or no. Default (if you don't use --bc) is no.\n";
-	print "--pd\t\t\t\tMake Path Divergence Calls. You must enter yes or no. Default (if you don't use --pd) is no.\n";
+	print "--user_min_clean\t\t\tIf you want to try a range. Use this also if you only want to use one threshold.\n";
+	print "--user_max_clean\t\t\tIf you want to try a range. Ignore this if you only want to use one threshold\n";
+	print "--user_clean_step\t\t\tIncrement between cleaning thresholds.\n";
+	print "--bc\t\t\t\t\tMake Bubble Calls. You must enter yes or no. Default (if you don't use --bc) is no.\n";
+	print "--pd\t\t\t\t\tMake Path Divergence Calls. You must enter yes or no. Default (if you don't use --pd) is no.\n";
 	print "--outdir\t\t\t\tOutput directory. Everything will go into dsubdirectories of this directory\n";
 	print "--outvcf\t\t\t\tVCFs generated will have names that start with the text you enter here\n";
-	print "--ref\t\t\t\tSpecify if you are using a reference, and if so, how.\n\t\t\t\t\tValid values are CoordinatesOnly, CoordinatesAndInCalling, and Absent\n";
+	print "--ref\t\t\t\t\tSpecify if you are using a reference, and if so, how.\n\t\t\t\t\tValid values are CoordinatesOnly, CoordinatesAndInCalling, and Absent\n";
 	print "--ploidy\t\t\t\tMust be 1 or 2.\n";
 #	print "--require_one_allele_is_ref\t\t\t\tyes or no. Highly recommended if you want a VCF with ref chromosome positions\n";
 	print "--prefix\t\t\t\tIf you want your variant calls to have names with a specific prefix, use this\n";
@@ -261,11 +259,11 @@ if ($help)
 	print "--stampy_bin\t\t\t\tSpecify the path to your Stampy binary. Or manually edit this at the top of the file (it's marked out for you)\n";
 	print "--fastaq_index\t\t\t\tMANDATORY. File has format SAMPLE_NAME\tse_list\tpe_list1\tpe_list2. One line per sample\n";
 	print "--qthresh\t\t\t\tIf you want Cortex to use a quality score threshold, speify it here\n";
-	print "--dups\t\t\t\tIf you want Cortex to remove PCR duplicates, specify this flag (no arguments, just --dups)\n";
+	print "--dups\t\t\t\t\tIf you want Cortex to remove PCR duplicates, specify this flag (no arguments, just --dups)\n";
 	print "--homopol\t\t\t\tIf you want to cut homopolymers, threshold specified here\n";
 	print "--mem_height\t\t\t\tFor Cortex\n";
 	print "--mem_width\t\t\t\tFor Cortex\n";
-	print "--gt_assemblies\t\t\t\tIf you specify \"yes\", run_calls treats loaded data as reference/consensus assemblies which you want to call variants between, and sets estimated sequencing error rate to a tiny value to allow \"genotyping\" of the assemblies. Default is \"no\"\n";
+	print "--gt_assemblies\t\t\t\tIf you specify \"yes\", run_calls treats loaded data as reference/consensus assemblies \n\t\t\t\t\t which you want to call variants between, and sets estimated sequencing error rate to a tiny value to allow \"genotyping\" of the assemblies. Default is \"no\"\n";
 #	print "--max_read_len\t\t\t\tMax read length\n";
 	print "--max_var_len\t\t\t\tSee Cortex manual - max var length to look for. Default value $max_var_len (bp)\n";
 	print "--genome_size\t\t\t\tGenome length in base pairs - needed for genotyping\n";
@@ -276,15 +274,12 @@ if ($help)
 	print "--vcftools_dir\t\t\t\tVCFtools is used to generate VCFs - mandatory to either specify this on cmd-line, or manually edit the path at the top of this script\n";
 	print "              \t\t\t\tThis should be the VCFtools root dir, which has subdirectories called: bin,  cpp,  lib ..\n";
 	print "--do_union\t\t\t\tHaving made per-sample callsets (per kmer and cleaning), should we combine all calls into a union set, and genotype all samples? Valid values are yes and no. Default is no.\n";
-	print "--manual_override_cleaning\t\t\t\tYou can specify specific thresholds for specific samples by giving a file here, each line has three (tab sep) columns: sample name, kmer, and comma-separated thresholds\nDon't use this unless you know what you are doing\n";
-#	print "--build_per_sample_vcfs\t\t\t\tThis script repeatedly runs Cortex BC and PD callers, calling on each sample separately, and then by default builds one pair (raw/decomp) of VCFs for the union set. If in addition you want VCFs built for each callset, enter \"yes\" here. In general, do not do this, it is very slow.\n";
-	print "--logfile\t\t\t\tOutput always goes to a logfile, not to stdout/screen. If you do not specify a name here, it goes to a file called \"default_logfile\". So, enter a filename for yout logfile here. Use filename,f to force overwriting of that file even if it already exists. Otherwise run_calls will abort to prevent overwriting.\n";
-	print "--workflow\t\t\t\tMandatory to specify this. Valid arguments are \"joint\" and \"independent\"\n";
-	print "--apply_pop_classifier\t\t\t\tApply the Cortex population filter, to classify putative sites as repeat, variant or error. \n\t\t\t\t\tThis is a very powerful method of removing false calls\n\t\t\t\t\t but it requires population information to do so - ie only use it if you have at least 10 samples\n\t\t\t\t\tThis is just a flag (takes no argument)\n";
-#	print "--call_jointly_noref\t\t\tMake (in addition) a callset from the joint graph of samples only. If there is a reference in the graph, ignore it for calling, but use it for VCF building. If there is no VCF in the graph, construct a fake reference purely for building the VCF (has no scientific value). If you have specified --auto, it uses those cleaning levels. If you have specified --auto_above 3 (for example) so each sample has 4 cleanings done, it will make 4 callsets, where the i-th callset uses cleaning level i for all samples\n";
-#	print "--call_jointly_incref\t\t\tMake (in addition) a callset from the joint graph of samples and reference. If you have specified --auto, it uses those cleaning levels. If you have specified --auto_above 3 (for example) so each sample has 4 cleanings done, it will make 4 callsets, where the i-th callset uses cleaning level i for all samples\n";
-	print "--remove_known_contams [FILELIST] - takes a list of Cortex binaries, and removes anything matching these (eg to remove human contamination frokm a bacterial sample\n";
-	print "--help\t\t\t\tprints this\n";
+	print "--manual_override_cleaning\t\tYou can specify specific thresholds for specific samples by giving a file here, \n\t\t\t\t\t each line has three (tab sep) columns: sample name, kmer, and comma-separated thresholds\n\t\t\t\t\t Don't use this unless you know what you are doing\n";
+	print "--logfile\t\t\t\tOutput always goes to a logfile, not to stdout/screen. \n\t\t\t\t\t If you do not specify a name here, it goes to a file called \"default_logfile\". Use filename,f to force overwriting of that file even if it already exists. \n\t\t\t\t\t Otherwise run_calls will abort to prevent overwriting.\n";
+	print "--workflow\t\t\t\tMandatory to specify this. Valid arguments are:\n\t\t\t\t\t \"joint\"\tCompare all samples against all in a multicolour graph. \n\t\t\t\t\t\t\tEasy to run (goes all the way to VCF) but requires a lot of memory if hundreds of samples\n\t\t\t\t\t \"joint_1col\"\tAs joint, but bubble-calling done in a 1-colour graph pooling all samples. \n\t\t\t\t\t\t\tRun with \"--do_union no\" to build graphs for each sample in parallel, and .. \n\t\t\t\t\t\t\tonce these jobs are done, run with \"--do_union yes\" to call variants. \n\t\t\t\t\t\t\tGenotyping+VCF is done by another script, per-sample and parallelised, \n\t\t\t\t\t\t\tthus has tiny memory footprint\n\t\t\t\t\t \"independent\"\tCompare each sample with the reference genome independently, \n\t\t\t\t\t\t\tmake a combined de-duplicated list of called sites\n\t\t\t\t\t\t\tand then genotype all samples at those sites.\n\t\t\t\t\t\t\tThis workflow is closest to a standard mapping pipeline (eg GATK)\n";
+	print "--apply_pop_classifier\t\t\tApply the Cortex population filter, to classify putative sites as repeat, variant or error. \n\t\t\t\t\tThis is a very powerful method of removing false calls\n\t\t\t\t\tbut it requires population information to do so.\n\t\t\t\t\tOnly use this if you have at least 10 unrelated samples\n\t\t\t\t\tThis is just a flag (takes no argument)\n";
+#	print "--remove_known_contams [FILELIST] - takes a list of Cortex binaries, and removes anything matching these (eg to remove human contamination frokm a bacterial sample\n";
+	print "--help\t\t\t\t\tprints this help information\n";
 	exit();
 }
 
@@ -509,10 +504,6 @@ if (!(-d $dir_for_per_sample_calls))
 }
 
 my $dir_for_joint_calls=$outdir_calls."joint_callsets/";
-if ($workflow eq "joint" )
-{
-    #print "Joint call dir is $dir_for_joint_calls\n";
-}
 
 
 if (!(-d $dir_for_joint_calls))
@@ -617,12 +608,17 @@ if  ($workflow eq "independent" )
 }
 
 
-if  ($workflow eq "joint" )## then just assume is BC only
+if  ($workflow =~ /joint/ )## then just assume is BC only
 {
 
  
     print " \n\n\n***    Make calls in joint graph\n";
  
+    if ($workflow eq "joint_1col")
+    {
+	print "Will combine all samples into a single colour, to reduce memory footprint, and make bubble calls\n";
+	print "Genotyping each sample will then need to be done afterwards by another script\n";
+    }
 
     my $num_cleanings = get_num_cleaning_levels();
     my $cl=0;
@@ -634,7 +630,16 @@ if  ($workflow eq "joint" )## then just assume is BC only
 	for ($cl=0; $cl < $num_cleanings; $cl++)
 	{	
 	    my $do_it = 1;
-	    my $num_cols = scalar(@samples);
+	    my $num_cols;
+	    if ($workflow eq "joint")
+	    {
+		$num_cols = scalar(@samples);
+	    }
+	    else
+	    {
+		$num_cols=1;# all samples in one colour
+	    }
+
 	    if ($use_ref ne "Absent")
 	    {
 		$num_cols++;
@@ -650,10 +655,16 @@ if  ($workflow eq "joint" )## then just assume is BC only
 	    {
 		$str = "exc_ref_from_calling";
 	    }
-	    my $uniqid = "joint_".$str ."kmer".$K."_cleaning_level".$cl;
-	    my $colour_list = get_colourlist_for_joint($K, $cl, $str);
+	    my $uniqid = $workflow."_".$str ."kmer".$K."_cleaning_level".$cl;
+	    my $colour_list = get_colourlist_for_joint($K, $cl, $str, $workflow);
 	    
-	    my $cmd = $ctx_bin." --kmer_size $K --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list  --print_median_covg_only --experiment_type $expt_type --genome_size $genome_size";
+	    
+	    my $cmd = $ctx_bin." --kmer_size $K --mem_height $mem_height --mem_width $mem_width --colour_list $colour_list  --print_median_covg_only ";
+	    if ($workflow eq "joint")
+	    {
+		##only do genotyping in normal joint workflow
+		$cmd = $cmd." --experiment_type $expt_type --genome_size $genome_size";
+	    }
 
 	    if ($gt_assemblies eq "FASTA")
 	    {
@@ -856,10 +867,9 @@ if ($do_union eq "yes")
 		}
 	    }
 	}
-	else
+	elsif ($workflow eq "joint")
 	{
 	    ## joint workflow - genotyping done already. Apply the pop filter, and build VCFs for each callset
-
 
 	    my $num_cleanings = get_num_cleaning_levels();
 	    my $cl=0;
@@ -891,6 +901,13 @@ if ($do_union eq "yes")
 	    }
 
 	}
+	else #workflow is joint_1col
+	{
+            finish_up();
+            ##cleanup
+            close($global_fh);  
+            exit(0);
+	}
 	
 	
 	
@@ -898,8 +915,9 @@ if ($do_union eq "yes")
 ## 6. Make one VCF for BC and one for PD
 ######################################################################################################
 
-	print "\n\n\n*** Now combine all preexisting vcfs\n\n";
 
+	print "\n\n\n*** Now combine all preexisting vcfs\n\n";
+	
 	my $pref;
 	my $refstr;
 	if ($use_ref eq "Absent")
@@ -920,7 +938,7 @@ if ($do_union eq "yes")
 	{
 	    $pref=$outvcf_filename_stub."_wk_flow_I_".$refstr."_FINAL";
 	}
-	else
+	elsif ($workflow eq "joint")
 	{
 	    $pref=$outvcf_filename_stub."_wk_flow_J_".$refstr."_FINAL";
 	}
@@ -939,57 +957,18 @@ if ($do_union eq "yes")
 	}
 
 
-
-	if ($build_per_sample_vcfs eq "yes")
-	{
-	    print "\n******   Build VCFs for each of the individual callsets   ***\n";
-	    build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
-	}
 	
 	
 
-######################################################################################################
-## 7. Post-process the VCFS - make a union, remove dupliate lines, remove variants where 
-##    the ref allele does not match the reference. Check each line has right number of fields.
-######################################################################################################
-
 
     }
-}
-
-else  ##### if not making a union set
-{
-
-    if ($build_per_sample_vcfs eq "yes")
-    {
-	## build the VCFs for each of the individual callsets
-	print "\n******   Build VCFs for each of the individual callsets   ***\n";
-	build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
-    }
-    #clean_all_vcfs(\%vcfs_needing_post_processing);
-}
-
-
-
-#### print a report ####
-
-print "\n\nAll graph building, calling and VCF building is complete\n";
-print_report(\%vcfs_needing_merging, \%final_vcfs);
-
-
-
-
-## print finish time
-print "Finish  time: ";
-my $end = "date";
-my $ret_end = qx{date};
-print "$ret_end\n";
+}## end of     if(do_union)==yes
 
 
 
 
 
-
+finish_up();
 
 ##cleanup
 close($global_fh);
@@ -1007,6 +986,21 @@ close($global_fh);
 #######################################################################################################
 #######################################################################################################
 
+
+sub finish_up()
+{
+    print "\n\nAll graph building, calling and VCF building is complete\n";
+#    print_report(\%vcfs_needing_merging, \%final_vcfs);
+
+## print finish time
+    print "Finish  time: ";
+    my $end = "date";
+    my $ret_end = qx{date};
+    print "$ret_end\n";
+
+
+
+}
 sub get_num_kmers_for_pool_at_specific_k
 {
     my ($KMER, $use_new_mem_params, $height, $width) = @_;
@@ -1265,22 +1259,22 @@ sub get_refbin_name
 }
 sub get_colourlist_for_joint
 {
-    my ($kmer, $level, $str) = @_;
+    my ($kmer, $level, $str, $wkflow) = @_;
 
 
     my $tmpdir = $outdir_calls."tmp_filelists/";
     if (!(-d $tmpdir))
     {
 	my $mkdir_cmd = "mkdir -p $tmpdir";
-    print "$mkdir_cmd\n";
+	print "$mkdir_cmd\n";
 	my $mkdir_ret = qx{$mkdir_cmd};
-    print "$mkdir_ret\n";
+	print "$mkdir_ret\n";
     }
 
-    my $outfile = $tmpdir."tmp_colourlist_joint_".$str."_kmer".$kmer."_level".$level;
+    my $outfile = $tmpdir."tmp_colourlist_".$wkflow."t_".$str."_kmer".$kmer."_level".$level;
     open(OUT, ">".$outfile)||die("Cannot open $outfile");
 
-    ## Now - latest change to all these colourlists etc. The binary filelists are relative to wherever the colour list is
+    ## Now - The binary filelists are relative to wherever the colour list is
 
     if ($use_ref ne "Absent")
     {
@@ -1289,11 +1283,10 @@ sub get_colourlist_for_joint
 	    $refbindir=$refbindir.'/';
 	}
 
-	#my $ref_bin_list = $refbindir."filelist_refbin_for_joint_".$str."_k".$kmer;
-    my $ref_bin_list = "filelist_refbin_for_joint_".$str."_k".$kmer;
+	my $ref_bin_list = "filelist_refbin_for_joint_".$str."_k".$kmer;
 
-    print OUT  $ref_bin_list."\n";
-    $ref_bin_list = $tmpdir.$ref_bin_list;
+	print OUT  $ref_bin_list."\n";
+	$ref_bin_list = $tmpdir.$ref_bin_list;
 
 	open(REF, ">".$ref_bin_list)||die("Cannot open $ref_bin_list");
 	print REF $refbindir;
@@ -1303,25 +1296,52 @@ sub get_colourlist_for_joint
     }
 
 
-    foreach my $sample (@samples)
+    ## the following filename is only used in joint_1col
+    my $f="list_all_samples_kmer".$kmer."_cleaning_level".$level;
+    if ($wkflow eq "joint_1col")
     {
-	my $f = "sample_".$sample."_kmer.".$kmer."_cleaning_level".$level."_binary";
-	print OUT "$f\n";#colourlist and sample filelist in
+	print OUT "$f\n";
 	$f = $tmpdir.$f;
 	open(F, ">".$f)||die("Cannot open $f");
-	#print F $current_dir; 
-       	if ($sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level] !=0)
+    }
+    foreach my $sample (@samples)
+    {
+	if ($wkflow eq "joint")
 	{
-	    print F $sample_to_cleaned_bin{$sample}{$kmer}{$sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level]};
+	    $f = "sample_".$sample."_kmer.".$kmer."_cleaning_level".$level."_binary";
+	    print OUT "$f\n";
+	    $f = $tmpdir.$f;
+	    open(F, ">".$f)||die("Cannot open $f");
+	    #print F $current_dir; 
+	    if ($sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level] !=0)
+	    {
+		print F $sample_to_cleaned_bin{$sample}{$kmer}{$sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level]};
+	    }
+	    else
+	    {
+		print F $sample_to_uncleaned{$sample}{$kmer};
+	    }
+	    print F "\n";
+	    close(F);
 	}
-	else
+	else##joint_1col
 	{
-	    print F $sample_to_uncleaned{$sample}{$kmer};
+	    if ($sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level] !=0)
+	    {
+		print F $sample_to_cleaned_bin{$sample}{$kmer}{$sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level]};
+	    }
+	    else
+	    {
+		print F $sample_to_uncleaned{$sample}{$kmer};
+	    }
+	    print F "\n";
 	}
-	print F "\n";
-	close(F);
     }
     close(OUT);
+    if ($wkflow eq "joint_1col")
+    {
+	close(F);
+    }
     
     return $outfile;
 }

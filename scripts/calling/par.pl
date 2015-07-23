@@ -24,6 +24,7 @@ my $list_ref="";
 my $refbindir="";
 my $num=-1;
 my $cortex_dir = abs_path($0);
+my $genome_size=3000000;
 $cortex_dir =~ s/scripts\/calling\/par.pl//;
 
 my $outdir="";
@@ -45,6 +46,7 @@ my $outdir="";
     'mem_height:i'                =>\$mem_height,
     'mem_width:i'                 =>\$mem_width,
     'qthresh:i'                   =>\$qthresh,
+    'genome_size:i'               =>\$genome_size,
     );
 
 check_args($num, $index_dir);
@@ -70,7 +72,8 @@ my $c2 = "mkdir -p $odir";
 qx{$c2};
 my $log = $odir."log_bc.".$sample;
 print "$log\n";
-my $cmd ="perl $cortex_dir"."scripts/calling/run_calls.pl --fastaq_index $index --first_kmer $kmer --auto_cleaning yes --bc $bc --pd $pd --outdir $odir --ploidy 1 --genome_size 4400000 --mem_height $mem_height --mem_width $mem_width --qthresh $qthresh --vcftools_dir $vcftools_dir  --do_union yes --logfile $log --workflow independent --ref CoordinatesAndInCalling --list_ref_fasta $list_ref --refbindir $refbindir --stampy_bin $stampy_bin --stampy_hash $stampy_hash --outvcf $sample ";
+
+my $cmd ="perl $cortex_dir"."scripts/calling/run_calls.pl --fastaq_index $index --first_kmer $kmer --auto_cleaning yes --bc $bc --pd $pd --outdir $odir --ploidy 1 --genome_size $genome_size --mem_height $mem_height --mem_width $mem_width --qthresh $qthresh --vcftools_dir $vcftools_dir  --do_union yes --logfile $log --workflow independent --ref CoordinatesAndInCalling --list_ref_fasta $list_ref --refbindir $refbindir --stampy_bin $stampy_bin --stampy_hash $stampy_hash --outvcf $sample ";
 qx{$cmd};
 
 
