@@ -261,8 +261,8 @@ printf("\n\n****\nDONE.\nPlease note this has output a config file: $output_conf
 sub make_sample_graph_filelist
 {
     my ($rcdir, $k, $odir) = @_;
-    
-    my $reg = $rcdir."\*/binaries/cleaned/k".$k.'/'."\*ctx";
+     
+    my $reg = $rcdir."results/\*/binaries/cleaned/k".$k.'/'."\*ctx";
 
     my $listing_cmd = "ls $reg";
     my $listing = qx{$listing_cmd};
