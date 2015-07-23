@@ -16,10 +16,9 @@ my $list = "";
 my $cortex_dir = abs_path($0);
 $cortex_dir =~ s/scripts\/analyse_variants\/combine\/combine_vcfs.pl//;
 
-my $vcftools_dir = "";
 my $outdir = "";
 my $outstub = "";
-my $kmer = 31;
+
 my $refname = "REF"; # eg Pf3d7_v3 or GRC38
 my $ref_fasta = ""; #one fasta file for the reference genome
 my $ref_binary = ""; ## cortex binary file for reference genome
@@ -36,7 +35,6 @@ my $mem_width = 100;
     'vcftools_dir:s'    => \$vcftools_dir,
     'outdir:s'          => \$outdir,
     'prefix:s'          => \$outstub,
-    'refname:s'         => \$refname,
     'ref_fasta:s'       => \$ref_fasta,
     'ref_binary:s'       => \$ref_binary,
     'rootdir_for_sample_output:s'       => \$run_calls_outdir,
@@ -61,15 +59,91 @@ if ($run_calls_outdir !~ /\/$/)
 {
     $run_calls_outdir=$run_calls_outdir.'/';
 }
+
+if ($outdir eq "")
+{
+    $outdir = $run_calls_outdir."combine/";
+    my $c = "mkdir $outdir";
+    qx{$c};
+}
 if ($outdir !~ /\/$/)
 {
     $outdir=$outdir.'/';
 }
+
+if (-e $run_calls_outdir."config.par.txt")
+{
+    ($kmer, $vcftools_dir, $ref_binary, $genome_size, $mem_height, $mem_width) =
+	get_args_from_par_config($run_calls_outdir."config.par.txt");
+}
+
+
 my $scripts_dir = $cortex_dir."scripts/analyse_variants/bioinf-perl/vcf_scripts/";
 my $analyse_dir = $cortex_dir."scripts/analyse_variants/";
 my $combine_dir = $cortex_dir."scripts/analyse_variants/combine/";
 
 
+if ($list eq "")
+{
+    ## go to the $run_calls_outdir and make the list
+    my $list = $run_calls_outdir."list_all_raw_vcfs";
+    my $cmd = "ls $run_calls_outdir"."*/vcfs/*wk*raw* > $list";
+    qx{$cmd};
+    if (!-e ($list))
+    {
+	die("Unable to create $list\n");
+    }
+}
+
+
+sub get_args_from_par_config()
+{
+    my ($config_file) = @_;
+    open(CONFIG, $config_file)||die("Cannot open $config_file\n");
+    my ($mh, $mw, $g, $rb, $k, $vcft)=(-1,-1,-1,-1,-1,-1);
+    while (<CONFIG>)
+    {
+	my $line = $_;
+	chomp $line;
+	my @sp = split(/\t/, $line);
+	if ($sp[0] eq "vcftools_dir")
+	{
+	    $vcft = $sp[1];
+	}
+	elsif ($sp[0] eq "kmer")
+	{
+	    $k = $sp[1];
+	}
+	elsif ($sp[0] eq "mem_height")
+	{
+	    $mh = $sp[1];
+	}
+	elsif ($sp[0] eq "mem_width")
+	{
+	    $mw = $sp[1];
+	}
+	elsif ($sp[0] eq "genome_size")
+	{
+	    $g = $sp[1];
+	}
+	elsif ($sp[0] eq "ref_binary")
+	{
+	    $rb = $sp[1];
+	}
+	else
+	{
+	    die("unexpected tag in $config_file\n");
+	}
+    }
+    close(CONFIG);
+    if ( ($k eq "-1") || ($mh eq "-1") || ($mw eq "-1") 
+	 || ($rb eq "-1") || ($vcft eq "-1") || ($g eq "-1") )
+    {
+	die("Missing tag in $config_file\n");
+    }
+    return ($k, $vcft, $rb, $g, $mh, $mw);
+	
+}
 sub get_stat
 {
     return abs_path("$Bin/../perl_modules/Statistics-Descriptive-2.6/");

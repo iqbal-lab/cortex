@@ -10,13 +10,13 @@ use FindBin qw($Bin);
 
 
 my $all_samples_index = "";
-my $index_dir="";
 my $kmer = 31;
 my $qthresh = 10;
 my $bc="yes";
 my $pd = "no";
-my $mem_height = 16;
-my $mem_width=100;
+my $mem_height = 0;
+my $mem_width=0;
+my $genome_size=3000000;
 my $vcftools_dir = "";
 my $stampy_bin="";
 my $stampy_hash="";
@@ -35,7 +35,7 @@ my $outdir="";
     'index:s'                     =>\$all_samples_index,
     'list_ref:s'                  =>\$list_ref,
     'refbindir:s'                 =>\$refbindir,
-    'index_dir:s'                 =>\$index_dir,
+#    'index_dir:s'                 =>\$index_dir,
     'vcftools_dir:s'              =>\$vcftools_dir,
     'out_dir:s'                   =>\$outdir,
     'stampy_bin:s'                =>\$stampy_bin,
@@ -45,11 +45,10 @@ my $outdir="";
     'kmer:i'                      =>\$kmer,
     'mem_height:i'                =>\$mem_height,
     'mem_width:i'                 =>\$mem_width,
+    'genome_size:i'                 =>\$genome_size,
     'qthresh:i'                   =>\$qthresh,
-    'genome_size:i'               =>\$genome_size,
     );
 
-check_args($num, $index_dir);
 
 if ($index_dir !~ /\/$/)
 {
@@ -59,6 +58,23 @@ if ($outdir !~ /\/$/)
 {
     $outdir = $outdir.'/';
 }
+
+my $index_dir =$outdir."indexes/";
+my $config = $outdir."config.par.txt";
+my $ref_binary;
+($mem_height, $mem_width, $ref_binary) = check_args($num, $index_dir, $mem_height, $mem_width, $genome_size, $refbindir, $kmer);
+open(CONFIG, ">".$config)||die("Unable to create $config\n");
+print CONFIG "vcftools_dir\t$vcftools_dir\n";
+print CONFIG "kmer\t$kmer\n";
+print CONFIG "ref_binary\t$ref_binary\n";
+print CONFIG "genome_size\t$genome_size\n";
+print CONFIG "mem_height\t$mem_height\n";
+print CONFIG "mem_width\t$mem_width\n";
+close(CONFIG);
+
+
+if ($mem_height==0)
+
 my $index = $index_dir."index_".$num;
 my $c1 = "head -n $num $all_samples_index  | tail -n 1 > $index";
 qx{$c1};
@@ -67,7 +83,7 @@ my $line= <F>;
 chomp $line;
 my @sp = split(/\t/, $line);
 my $sample = $sp[0];
-my $odir = $outdir."results/".$sample.'/';
+my $odir = $outdir.$sample.'/';
 my $c2 = "mkdir -p $odir";
 qx{$c2};
 my $log = $odir."log_bc.".$sample;
@@ -80,14 +96,47 @@ qx{$cmd};
 
 sub check_args
 {
-    my ($n, $i_dir) = @_;
+    my ($n, $i_dir, $mh, $mw, $g, $rbindir, $km) = @_;
+    if ($km %%2==0)
+    {
+	die("Kmer must be an odd number\n");
+    }
+    elsif ($km<10) 
+    {
+	die("I'm just going to stop this being run for k<10, can't believe it will be useful - typo?\n");
+    }
     if ($n==-1)
     {
 	die("--num is a mandatory argument, specifies which sample from the INDEX file to run\n");
     }
-if (!(-d $i_dir))
-	{
+    if (!(-d $i_dir))
+    {
 	my $c1 = "mkdir $i_dir";
 	qx{$c1};
-	}	
+    }	
+    if ($g==0)
+    {
+	die("You must enter a genome size (in bp) using --genome_size. An estimate is fine. This will be used to get memory use parameters mem ehight/width (if you do not enter them) and later on will be used for likelihood calculations\n");
+    }
+    if ( ($mh==0) ||  ($mw==0))
+    {
+	$mw=100;
+	$mh = int(log(2*$g+0.5)/log(2));
+    }
+
+    if (!(-d $rbindir))
+    {
+	die("The specified directory $rbindir does not exist\n");
+    }
+
+    my @files = glob($rbindir."/*k".$km.".ctx");
+    if (scalar @files==0)
+    {
+	die("The reference binary directory $rbindir does not contain any files with names ending k$kmer".".ctx; \neither you have not followed the naing convention we are asking for, \nor there is no Cortex binary graph file of the reference genome in that directory\n");
+    }
+    elsif (scalar @files>1)
+    {
+	die("There is more than one file in the reference binary directory $rbindir with name ending k$kmer".".ctx, so this script can't work out which is the reference binary\n");
+    }
+    return ($mh, $mw, $files[0]);
 }
