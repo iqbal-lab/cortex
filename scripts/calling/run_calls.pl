@@ -180,7 +180,6 @@ $list_ref_fasta = "nonexistent_nonsense";
 $expt_type = "";
 $do_union = "no";
 $manual_override_cleaning="no";
-$build_per_sample_vcfs="no";
 $global_logfile = "default_logfile";
 my $pooled_colour = -1;    #deprecated
 my $help = '';    #default false
@@ -224,7 +223,6 @@ my $help = '';    #default false
     'vcftools_dir:s'       =>\$vcftools_dir,
     'manual_override_cleaning:s' => \$manual_override_cleaning,
     'do_union:s'         =>\$do_union,
-#    'build_per_sample_vcfs:s' =>\$build_per_sample_vcfs,
     'logfile:s'           => \$global_logfile,
     'workflow:s'          => \$workflow,
     'squeeze_mem'          =>\$squeeze_mem,
@@ -277,12 +275,11 @@ if ($help)
 	print "              \t\t\t\tThis should be the VCFtools root dir, which has subdirectories called: bin,  cpp,  lib ..\n";
 	print "--do_union\t\t\t\tHaving made per-sample callsets (per kmer and cleaning), should we combine all calls into a union set, and genotype all samples? Valid values are yes and no. Default is no.\n";
 	print "--manual_override_cleaning\t\tYou can specify specific thresholds for specific samples by giving a file here, \n\t\t\t\t\t each line has three (tab sep) columns: sample name, kmer, and comma-separated thresholds\n\t\t\t\t\t Don't use this unless you know what you are doing\n";
-#	print "--build_per_sample_vcfs\t\t\t\tThis script repeatedly runs Cortex BC and PD callers, calling on each sample separately, and then by default builds one pair (raw/decomp) of VCFs for the union set. If in addition you want VCFs built for each callset, enter \"yes\" here. In general, do not do this, it is very slow.\n";
 	print "--logfile\t\t\t\tOutput always goes to a logfile, not to stdout/screen. \n\t\t\t\t\t If you do not specify a name here, it goes to a file called \"default_logfile\". Use filename,f to force overwriting of that file even if it already exists. \n\t\t\t\t\t Otherwise run_calls will abort to prevent overwriting.\n";
-	print "--workflow\t\t\t\tMandatory to specify this. Valid arguments are:\n\t\t\t\t\t \"joint\" (compare all samples against all in a multicolour graph). \n\t\t\t\t\t      Easy to run (goes all the way to VCF) but requires a lot of memory if hundreds of samples\n\t\t\t\t\t \"joint_par\" As joint, but just goes as far as calling variants. \n\t\t\t\t\t      Genotyping is done by another script, per-sample and parallelised, \n\t\t\t\t\t      thus has tiny memory footprint\n\t\t\t\t\t \"independent\"\n";
-	print "--apply_pop_classifier\t\t\tApply the Cortex population filter, to classify putative sites as repeat, variant or error. \n\t\t\t\t\tThis is a very powerful method of removing false calls\n\t\t\t\t\t but it requires population information to do so - ie only use it if you have at least 10 unrelated samples\n\t\t\t\t\tThis is just a flag (takes no argument)\n";
+	print "--workflow\t\t\t\tMandatory to specify this. Valid arguments are:\n\t\t\t\t\t \"joint\"\tCompare all samples against all in a multicolour graph. \n\t\t\t\t\t\t\tEasy to run (goes all the way to VCF) but requires a lot of memory if hundreds of samples\n\t\t\t\t\t \"joint_1col\"\tAs joint, but bubble-calling done in a 1-colour graph pooling all samples. \n\t\t\t\t\t\t\tRun with \"--do_union no\" to build graphs for each sample in parallel, and .. \n\t\t\t\t\t\t\tonce these jobs are done, run with \"--do_union yes\" to call variants. \n\t\t\t\t\t\t\tGenotyping+VCF is done by another script, per-sample and parallelised, \n\t\t\t\t\t\t\tthus has tiny memory footprint\n\t\t\t\t\t \"independent\"\tCompare each sample with the reference genome independently, \n\t\t\t\t\t\t\tmake a combined de-duplicated list of called sites\n\t\t\t\t\t\t\tand then genotype all samples at those sites.\n\t\t\t\t\t\t\tThis workflow is closest to a standard mapping pipeline (eg GATK)\n";
+	print "--apply_pop_classifier\t\t\tApply the Cortex population filter, to classify putative sites as repeat, variant or error. \n\t\t\t\t\tThis is a very powerful method of removing false calls\n\t\t\t\t\tbut it requires population information to do so.\n\t\t\t\t\tOnly use this if you have at least 10 unrelated samples\n\t\t\t\t\tThis is just a flag (takes no argument)\n";
 #	print "--remove_known_contams [FILELIST] - takes a list of Cortex binaries, and removes anything matching these (eg to remove human contamination frokm a bacterial sample\n";
-	print "--help\t\t\t\t\tprints this\n";
+	print "--help\t\t\t\t\tprints this help information\n";
 	exit();
 }
 
@@ -617,7 +614,7 @@ if  ($workflow =~ /joint/ )## then just assume is BC only
  
     print " \n\n\n***    Make calls in joint graph\n";
  
-    if ($workflow eq "joint_par")
+    if ($workflow eq "joint_1col")
     {
 	print "Will combine all samples into a single colour, to reduce memory footprint, and make bubble calls\n";
 	print "Genotyping each sample will then need to be done afterwards by another script\n";
@@ -870,10 +867,9 @@ if ($do_union eq "yes")
 		}
 	    }
 	}
-	else
+	elsif ($workflow eq "joint")
 	{
 	    ## joint workflow - genotyping done already. Apply the pop filter, and build VCFs for each callset
-
 
 	    my $num_cleanings = get_num_cleaning_levels();
 	    my $cl=0;
@@ -905,6 +901,13 @@ if ($do_union eq "yes")
 	    }
 
 	}
+	else #workflow is joint_1col
+	{
+            finish_up();
+            ##cleanup
+            close($global_fh);  
+            exit(0);
+	}
 	
 	
 	
@@ -912,8 +915,9 @@ if ($do_union eq "yes")
 ## 6. Make one VCF for BC and one for PD
 ######################################################################################################
 
-	print "\n\n\n*** Now combine all preexisting vcfs\n\n";
 
+	print "\n\n\n*** Now combine all preexisting vcfs\n\n";
+	
 	my $pref;
 	my $refstr;
 	if ($use_ref eq "Absent")
@@ -934,7 +938,7 @@ if ($do_union eq "yes")
 	{
 	    $pref=$outvcf_filename_stub."_wk_flow_I_".$refstr."_FINAL";
 	}
-	else
+	elsif ($workflow eq "joint")
 	{
 	    $pref=$outvcf_filename_stub."_wk_flow_J_".$refstr."_FINAL";
 	}
@@ -953,57 +957,18 @@ if ($do_union eq "yes")
 	}
 
 
-
-	if ($build_per_sample_vcfs eq "yes")
-	{
-	    print "\n******   Build VCFs for each of the individual callsets   ***\n";
-	    build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
-	}
 	
 	
 
-######################################################################################################
-## 7. Post-process the VCFS - make a union, remove dupliate lines, remove variants where 
-##    the ref allele does not match the reference. Check each line has right number of fields.
-######################################################################################################
-
 
     }
-}
-
-else  ##### if not making a union set
-{
-
-    if ($build_per_sample_vcfs eq "yes")
-    {
-	## build the VCFs for each of the individual callsets
-	print "\n******   Build VCFs for each of the individual callsets   ***\n";
-	build_per_sample_vcfs($outdir_vcfs.'/'."per_sample_vcfs", \%vcfs_needing_post_processing);
-    }
-    #clean_all_vcfs(\%vcfs_needing_post_processing);
-}
-
-
-
-#### print a report ####
-
-print "\n\nAll graph building, calling and VCF building is complete\n";
-print_report(\%vcfs_needing_merging, \%final_vcfs);
-
-
-
-
-## print finish time
-print "Finish  time: ";
-my $end = "date";
-my $ret_end = qx{date};
-print "$ret_end\n";
+}## end of     if(do_union)==yes
 
 
 
 
 
-
+finish_up();
 
 ##cleanup
 close($global_fh);
@@ -1021,6 +986,21 @@ close($global_fh);
 #######################################################################################################
 #######################################################################################################
 
+
+sub finish_up()
+{
+    print "\n\nAll graph building, calling and VCF building is complete\n";
+#    print_report(\%vcfs_needing_merging, \%final_vcfs);
+
+## print finish time
+    print "Finish  time: ";
+    my $end = "date";
+    my $ret_end = qx{date};
+    print "$ret_end\n";
+
+
+
+}
 sub get_num_kmers_for_pool_at_specific_k
 {
     my ($KMER, $use_new_mem_params, $height, $width) = @_;
@@ -1316,9 +1296,9 @@ sub get_colourlist_for_joint
     }
 
 
-    ## the following filename is only used in joint_par
+    ## the following filename is only used in joint_1col
     my $f="list_all_samples_kmer".$kmer."_cleaning_level".$level;
-    if ($wkflow eq "joint_par")
+    if ($wkflow eq "joint_1col")
     {
 	print OUT "$f\n";
 	$f = $tmpdir.$f;
@@ -1344,7 +1324,7 @@ sub get_colourlist_for_joint
 	    print F "\n";
 	    close(F);
 	}
-	else##joint_par
+	else##joint_1col
 	{
 	    if ($sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level] !=0)
 	    {
@@ -1358,7 +1338,7 @@ sub get_colourlist_for_joint
 	}
     }
     close(OUT);
-    if ($wkflow eq "joint_par")
+    if ($wkflow eq "joint_1col")
     {
 	close(F);
     }
