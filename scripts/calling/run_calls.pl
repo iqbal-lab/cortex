@@ -987,7 +987,7 @@ close($global_fh);
 #######################################################################################################
 
 
-sub finish_up()
+sub finish_up
 {
     print "\n\nAll graph building, calling and VCF building is complete\n";
 #    print_report(\%vcfs_needing_merging, \%final_vcfs);
