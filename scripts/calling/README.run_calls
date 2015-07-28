@@ -1,0 +1,74 @@
+README.run_calls
+
+Run_calls tries to wrap and control the huge number of options available to you when using Cortex.
+There are a few axes we need to consider
+
+1. Are we just going to run everything in 1 process from beginning to end?
+   This is the simplest option in one sense, though it may be too slow with large datasets
+   If parallelising, then the whole workflow gets divided up into stages
+   Stage1: building per sample graphs - very parallelisable
+   Stage2: variant calling. 
+             - Parallelisable for independent workflow.
+             - Single job for joint workflow, with one-colour per sample. 
+               Does genotyping in same step, and might as well dump VCF at same time.
+               Simple but can be high memory for many samples. Will not scale indefinitely.
+             - Single job for joint_1col workflow, but low memory as it pools samples into 1 colour.
+               This produces IDENTICAL calls to joint, but the genotyping needs to be done as
+               a subsequent step.
+   Stage3: Produce unified site-list and re-genotype samples at these sites.
+
+2. What workflow will we use?
+	Independent: easiest. Compare each sample with reference independently, and produce a per-sample VCF.
+				Combine all these VCFs to produce a master-list of variant sites, and then go back and regenotype
+				all samples, producing final VCFs per sample all with the same sites.
+
+	Joint:  Compare all-against-all in a multicolour graph and genotype in one go, and dump a VCF.
+			Can parallelise before and after the multi-coloured calling step.
+			As we scale to tens of large eukaryote genomes, hundreds of small euk genomes or
+			thousands of bacterial genomes, this starts use unacceptable amounts of memory.
+
+	Joint_1col: Does calling in a 1-colour pooled graph (low memory), allowing
+				genotyping and VCF dumping to happen afterwards in parallel.
+				Scalable to arbitrary numbers of samples
+
+3. Is the reference in the graph and if so, is it used in variant-calling, or just for coordinates?
+
+
+What is the right way to conceptualise this for people, in terms of making the command-line interface straighforward?
+I think
+
+ - instead of the historic --do_union yes/no - which implicitly told you whether to go beyond building, we should have
+
+ --stage which allows 3 options
+ 	build 			just build samples. Easily parallelised
+ 	build_and_call	for independent this will build and call per-sample but won't combine callsets across samples
+ 					for joint this will at each k build and call and genotype all samples and dump VCF
+ 					for joint_1col this will build and call in a 1-colour graph for each k and stop
+ 	build_call_combine_gt	For independent: I would like to NOT SUPPORT that in run_calls. People should use combine_vcfs, then genotype_1_sample.
+ 											Only issue is that does not wrap up combining multiple kmers.
+ 							For joint: 		Combining across samples is already implicitly done in previous steps, so
+ 											this just leaves combining VCFs across kmers.
+ 							For joint_1col: For each kmer, we need to genotype all samples at the called-sites, and dump VCF
+ 											then combine VCFs across kmers.
+
+
+
+
+4. If you just use serial runcalls, you have one outdir containing binaries/, calls/, vcfs/.
+   For parallel, you make one such directory per sample, then make a combined VCF, then genotype all samples,
+   outputting for each sample to their directory.
+
+
+
+
+What system tests do you want?
+
+2 bacterial samples
+
+run serially and do for one kmer
+joint (absent, CAIC, CO) , indep, joint_1col 
+run in parallel - all above, and get same answers in parallel as in serial!!
+
+As above for 2 kmers.
+
+

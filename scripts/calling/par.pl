@@ -126,18 +126,7 @@ sub get_args_from_config_if_undefined
 	    $list_r, $r_fa, $rbindir);
 
 }
-sub add_slash
-{
-    my ($d)  = @_;
-    if ($d ne "")
-    {
-	if ($d !~ /\/$/)
-	{
-	    $d= $d.'/';
-	}
-    }
-    return $d;
-}
+
 sub check_args
 {
     my ($n, $i_dir, $mh, $mw, $g, $km) = @_;
