@@ -14,7 +14,6 @@ BEGIN
 {
     $cortex_dir = abs_path($0);
     $cortex_dir =~ s/scripts\/calling\/prepare.pl//;
-
     push ( @INC, $cortex_dir."scripts/calling/");
 }
 
@@ -66,11 +65,6 @@ my $mem_width;
 $outdir = BasicUtils::add_slash($outdir);
 
 
-##  Will save useful info ain a config file
-my $config = $outdir."config.prep.txt";
-my $c_fh;
-open ($c_fh, ">".$config)||die("Cannot create $config file - file permissions 
-    issue?\n");
 
 ##Variables which I will write to the config file
 my %arr_config = ("ref_fa" => $ref_fa, 
@@ -86,11 +80,14 @@ my %arr_config = ("ref_fa" => $ref_fa,
 my $cmd = "export LD_LIBRARY_PATH=$cortex_dir"."/libs/gsl-1.15/:$cortex_dir"."/libs/gsl-1.15/blas/:$cortex_dir"."/libs/gsl-1.15/.libs/:$cortex_dir"."/libs/gsl-1.15/blas/.libs/:$cortex_dir"."/libs/gsl-1.15/cblas/.libs/:\$LD_LIBRARY_PATH";
 qx{$cmd};
 
+if ($index ne "no")
+{
 ### Compile Cortex
-my $cortex_bin = compile_cortex($cortex_dir, $num_samples, $kmer);
+    my $cortex_bin = compile_cortex($cortex_dir, $num_samples, $kmer);
 
 ### Check can run Cortex
-check_cortex_runnable($cortex_bin);
+    check_cortex_runnable($cortex_bin);
+}
 
 ### Build reference binary
 my $ref_falist =$outdir."filelists/"."ref_list";
@@ -135,8 +132,17 @@ print "$cmd_stampy1\n$ret_stampy1\n$cmd_stampy2\n$ret_stampy2\n";
 
 $arr_config{"stampy_hash"}= $stampy_hash;
 
-add_to_config($c_fh, \%arr_config);
-close($c_fh);
+if ($outdir ne "no")
+{
+    ##  Will save useful info in a config file
+    my $config = $outdir."config.prep.txt";
+    my $c_fh;#c_fh means Config File Handle
+    open ($c_fh, ">".$config)||die("Cannot create $config file - file permissions 
+    issue?\n");
+    
+    add_to_config($c_fh, \%arr_config);
+    close($c_fh);
+}
 
 ###################################################################
 
@@ -147,9 +153,12 @@ sub check_args
         $loc_outdir, $loc_stampy_bin, $loc_stampy_hash, 
         $loc_kmer, $loc_refid) = @_;
     
-    if (($loc_index eq "") || (!(-e $loc_index)))
+    if ($loc_index eq "no")
     {
-	my $str = "You must specify an index file with --index.\n";
+    }
+    elsif (($loc_index eq "") || (!(-e $loc_index)))
+    {
+	my $str = "You must specify an index file with --index - the file format is as follows.\n";
 	$str .= "Each sample corresponds to one line of this file.\n";
 	$str .= "Each line is tab separated with 4 fields.";
 	$str .= "Field1 = sample identifier\n";
@@ -163,7 +172,9 @@ sub check_args
 	$str .= "         You can just put a dot \".\" to ignore this.\n";
 	$str .= "Field3 = As field 3, for right-hand reads from paired ends\n";
 	$str .= "         You can just put a dot \".\" to ignore this.\n";
-	die("Please create this file and specify it using --index\n");
+	$str .= "If you actively want to set up reference utils for a species but not\n";
+	$str .= "for some specific dataset, use \"--index no\" .\n";
+	#die("Please create this file and specify it using --index\n");
     }
     my $num_samples_cmd = "wc -l $loc_index";
     my $num_samples = qx{$num_samples_cmd};
@@ -233,11 +244,14 @@ sub check_args
     
     
 ## Sort out the output directory
-    BasicUtils::create_dir_if_does_not_exist($loc_outdir, "check_args of prepare.pl");
-    $loc_outdir = BasicUtils::add_slash($loc_outdir);
-    my $filelist_dir = $loc_outdir."filelists/";
-    BasicUtils::create_dir_if_does_not_exist($filelist_dir,  "check_args of prepare.pl");
-    
+    if ($outdir ne "no")
+    {
+	BasicUtils::create_dir_if_does_not_exist($loc_outdir, "check_args of prepare.pl");
+	$loc_outdir = BasicUtils::add_slash($loc_outdir);
+	my $filelist_dir = $loc_outdir."filelists/";
+	BasicUtils::create_dir_if_does_not_exist($filelist_dir,  "check_args of prepare.pl");
+    }
+
 ## Create the reference fasta filelist
     my $ref_fa_list = $filelist_dir."list_ref_fa";
     my $cmd_create_reffalist = "ls $loc_ref_fa > $ref_fa_list";
@@ -300,7 +314,7 @@ sub compile_cortex
 
     my $maxk = 32 * (int($k / 32) +1) -1;
 
-    my $c = "cd $ctx_dir; source setenv.sh; make NUM_COLS=$n_samples MAXK=$maxk cortex_var;";
+    my $c = "cd $ctx_dir; source setenv.sh; make NUM_COLS=1 MAXK=$maxk cortex_var; make NUM_COLS=2 MAXK=$maxk cortex_var; make NUM_COLS=$n_samples MAXK=$maxk cortex_var;";
     qx{$c};
     $ctx_dir = BasicUtils::add_slash($ctx_dir);
     my $bin = $ctx_dir."bin/cortex_var_".$maxk."_c".$n_samples;
