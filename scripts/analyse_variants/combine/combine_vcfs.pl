@@ -24,10 +24,10 @@ my $ref_fasta = ""; #one fasta file for the reference genome
 my $ref_binary = ""; ## cortex binary file for reference genome
 my $bubble_mem_height = 14;
 my $bubble_mem_width = 100;
-my $run_calls_outdir = "";# root dir below which we have sample_names and then below thatbinaries/ vcfs/ etc
 my $mem_height =20;
 my $mem_width = 100;
-
+my $vcftools_dir = "";
+my $kmer = 31;
 
 &GetOptions(
     'list_vcfs:s'       => \$list,
@@ -37,7 +37,6 @@ my $mem_width = 100;
     'prefix:s'          => \$outstub,
     'ref_fasta:s'       => \$ref_fasta,
     'ref_binary:s'       => \$ref_binary,
-    'rootdir_for_sample_output:s'       => \$run_calls_outdir,
     'kmer:i'            =>\$kmer,
     'mem_height:i'      =>\$mem_height,
     'mem_width:i'       =>\$mem_width,
@@ -55,26 +54,24 @@ if ($vcftools_dir !~ /\/$/)
 {
     $vcftools_dir=$vcftools_dir.'/';
 }
-if ($run_calls_outdir !~ /\/$/)
-{
-    $run_calls_outdir=$run_calls_outdir.'/';
-}
 
-if ($outdir eq "")
-{
-    $outdir = $run_calls_outdir."combine/";
-    my $c = "mkdir $outdir";
-    qx{$c};
-}
 if ($outdir !~ /\/$/)
 {
-    $outdir=$outdir.'/';
+    $outdir = $outdir.'/';
 }
 
-if (-e $run_calls_outdir."config.par.txt")
+my $comb_dir = $outdir."combine/";
+my $c = "mkdir $comb_dir";
+if (!(-d $comb_dir))
+{
+    qx{$c};
+}
+
+my $genome_size=0;
+if (-e $outdir."config.par.txt")
 {
     ($kmer, $vcftools_dir, $ref_binary, $genome_size, $mem_height, $mem_width) =
-	get_args_from_par_config($run_calls_outdir."config.par.txt");
+	get_args_from_par_config($outdir."config.par.txt");
 }
 
 
@@ -85,9 +82,9 @@ my $combine_dir = $cortex_dir."scripts/analyse_variants/combine/";
 
 if ($list eq "")
 {
-    ## go to the $run_calls_outdir and make the list
-    my $list = $run_calls_outdir."list_all_raw_vcfs";
-    my $cmd = "ls $run_calls_outdir"."*/vcfs/*wk*raw* > $list";
+    ## go to the $outdir and make the list
+    my $list = $outdir."list_all_raw_vcfs";
+    my $cmd = "ls $outdir"."*/vcfs/*wk*raw* > $list";
     qx{$cmd};
     if (!-e ($list))
     {
@@ -96,7 +93,7 @@ if ($list eq "")
 }
 
 
-sub get_args_from_par_config()
+sub get_args_from_par_config
 {
     my ($config_file) = @_;
     open(CONFIG, $config_file)||die("Cannot open $config_file\n");
@@ -167,21 +164,21 @@ my $libdir      = get_vcflib();
 
 
 ## use full paths
-my $ref_fa_cmd ="readlink -f $ref_fasta";
-print $ref_fa_cmd."\n";
-$ref_fasta=qx{$ref_fa_cmd};
-chomp $ref_fasta;
-my $ref_bin_cmd ="readlink -f $ref_binary"; 
-print $ref_bin_cmd."\n";
-$ref_binary=qx{$ref_bin_cmd};
-chomp $ref_binary;
+#my $ref_fa_cmd ="readlink -f $ref_fasta";
+#print $ref_fa_cmd."\n";
+#$ref_fasta=qx{$ref_fa_cmd};
+#chomp $ref_fasta;
+#my $ref_bin_cmd ="readlink -f $ref_binary"; 
+#print $ref_bin_cmd."\n";
+#$ref_binary=qx{$ref_bin_cmd};
+#chomp $ref_binary;
 
-if (!(-d $outdir))
+if (!(-d $comb_dir))
 {
-    my $c = "mkdir -p $outdir";
+    my $c = "mkdir -p $comb_dir";
     qx{$c};
 }
-my $output_config = $outdir."config.txt";
+my $output_config = $comb_dir."config.txt";
 my $fh_CONFIG;
 open($fh_CONFIG, ">".$output_config)||die("Cannot open output config file $output_config\n");
 print $fh_CONFIG "kmer\t$kmer\n";
@@ -192,7 +189,7 @@ print $fh_CONFIG "kmer\t$kmer\n";
 ## 1. Cat all the VCFs, sort, remove duplicates
 
 
-my $outvcf1 = $outdir.$outstub.".sites_vcf";
+my $outvcf1 = $comb_dir.$outstub.".sites_vcf";
 my $tmpvcf = $outvcf1.".tmp_delete_me";
 my $header = "\#\#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tDUMMY";
 my $rd = $scripts_dir."vcf_remove_dupes.pl";
@@ -212,12 +209,12 @@ open(H, ">>".$tmpvcf);
 print H $header."\n";
 close(H);
 
-my $cmd111="cat $list | xargs cat | grep -v \"\#\" | grep PASS | $vcftools_dir/perl/vcf-sort >> $tmpvcf";
+my $cmd111="cat $list | xargs cat | grep -v \"\#\" | grep PASS | $vcftools_dir"."/perl/vcf-sort >> $tmpvcf";
 print "$cmd111\n";
 my $rcmd111 = qx{$cmd111};
 print "$rcmd111\n";
 
-my $cmd1111 = "perl  -I $libdir $rd  --take_first --pass $tmpvcf > $outvcf1"; #| $ro --pass --filter_txt OVERLAPPING_SITE | grep -v \"\" >  $outvcf1";
+my $cmd1111 = "perl  -I $libdir $rd  --take_first --pass $tmpvcf > $outvcf1"; #| ≈ß$ro --pass --filter_txt OVERLAPPING_SITE | grep -v \"\" >  $outvcf1";
 print "$cmd1111\n";
 my $rcmd1111=qx{$cmd1111};
 print "$rcmd1111\n";
@@ -248,7 +245,7 @@ print "$ret2\n";
 
 ###############################################
 ##make pseudo callfile
-my $pseudo_callfile = $outdir.$outstub.".pseudo_callfile";
+my $pseudo_callfile = $comb_dir.$outstub.".pseudo_callfile";
 my $ps = $combine_dir."build_pseudo_callfile_from_vcf.pl";
 print "Make pseudo callfile\n";
 my $cmd3 = "perl $ps $outvcf2 $pseudo_callfile";
@@ -309,8 +306,8 @@ print "Finished building a graph just of the bubble branches/alleles. Now inters
 my $ctx_binary2 = check_cortex_compiled_2colours($cortex_dir, $kmer);
 my $suffix = "intersect_bubbles";
 my $ref_intersect_log = basename($ref_binary.".intersect_bubbles.log");
-$ref_intersect_log=$outdir.$ref_intersect_log;
-my ($reflist, $ref_col_list) =get_ref_col_list($ref_binary, $outdir);
+$ref_intersect_log=$comb_dir.$ref_intersect_log;
+my ($reflist, $ref_col_list) =get_ref_col_list($ref_binary, $comb_dir);
 my $new_ref_binary = $reflist."_intersect_bubbles.ctx";
 
 
@@ -325,7 +322,7 @@ close($fh_CONFIG);
 
 
 ## Now just make a filelist of sample graphs
-make_sample_graph_filelist($run_calls_outdir, $kmer, $outdir);
+make_sample_graph_filelist($outdir, $kmer, $comb_dir);
 
 
 printf("\n\n****\nDONE.\nPlease note this has output a config file: $output_config which is needed as an argument by scripts/calling/genotype_1sample_against_sites.pl\n");
@@ -334,14 +331,14 @@ printf("\n\n****\nDONE.\nPlease note this has output a config file: $output_conf
 
 sub make_sample_graph_filelist
 {
-    my ($rcdir, $k, $odir) = @_;
+    my ($rcdir, $k, $combine_dir) = @_;
      
     my $reg = $rcdir."results/\*/binaries/cleaned/k".$k.'/'."\*ctx";
 
     my $listing_cmd = "ls $reg";
     my $listing = qx{$listing_cmd};
     my @sp = split(/\n/, $listing);
-    my $outfile = $odir."list_args_for_final_step";
+    my $outfile = $combine_dir."list_args_for_final_step";
     open(OUT, ">".$outfile)||die("Cannot open $outfile\n");
     foreach my $f (@sp)
     {
