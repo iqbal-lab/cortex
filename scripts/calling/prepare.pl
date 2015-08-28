@@ -113,7 +113,7 @@ else
     print "reference binary $refbin already exists\n";
 }
 
-$arr_config{"ref_falist"}=abs_path($ref_falist);
+$arr_config{"list_ref"}=abs_path($ref_falist);
 $arr_config{"ref_fa"} =abs_path($ref_fa);
 $arr_config{"refbin"}= abs_path($refbin);
 

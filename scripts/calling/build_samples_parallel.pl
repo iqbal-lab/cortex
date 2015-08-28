@@ -16,7 +16,7 @@ BEGIN
     push ( @INC, $cortex_dir."scripts/calling/");
 }
 
-use Config; # qw( get_from_config_if_undef );
+use ConfigMgmt qw( get_from_config_if_undef );
 use BasicUtils qw ( add_slash );
 my $all_samples_index = "";
 my $kmer = 31;
@@ -109,7 +109,7 @@ qx{$c2};
 my $log = $odir."log_bc.".$sample;
 print "$log\n";
 
-my $cmd ="perl $cortex_dir"."scripts/calling/run_calls.pl --fastaq_index $index --first_kmer $kmer --auto_cleaning yes --bc $bc --pd $pd --outdir $odir --ploidy 1 --genome_size $genome_size --mem_height $mem_height --mem_width $mem_width --qthresh $qthresh --vcftools_dir $vcftools_dir  --do_union yes --logfile $log --workflow independent --ref CoordinatesAndInCalling --ref_fasta $ref_fa --refbindir $refbindir --stampy_bin $stampy_bin --stampy_hash $stampy_hash --outvcf $sample ";
+my $cmd ="perl $cortex_dir"."scripts/calling/run_calls.pl --fastaq_index $index --first_kmer $kmer --auto_cleaning yes --bc $bc --pd $pd --outdir $odir --ploidy 1 --genome_size $genome_size --mem_height $mem_height --mem_width $mem_width --qthresh $qthresh --vcftools_dir $vcftools_dir  --do_union yes --logfile $log --workflow independent --ref CoordinatesAndInCalling --list_ref $list_ref --refbindir $refbindir --stampy_bin $stampy_bin --stampy_hash $stampy_hash --outvcf $sample ";
 qx{$cmd};
 
 
@@ -124,12 +124,12 @@ sub get_args_from_config_if_undefined
     ## you to have no config file, am ignorning
     ## the error/return values
     my $err;
-    ($err, $vcft)   = Config::get_from_config_if_undef($vcft, "vcftools_dir", $conf); 
-    ($err, $st_bin) = Config::get_from_config_if_undef($st_bin, "stampy_bin", $conf);
-    ($err, $st_hash)= Config::get_from_config_if_undef($st_hash, "stampy_hash", $conf);
-    ($err, $list_r) = Config::get_from_config_if_undef($list_r, "list_ref", $conf);
-    ($err, $r_fa)   = Config::get_from_config_if_undef( $r_fa, "ref_fa", $conf);
-    ($err, $rbindir)= Config::get_from_config_if_undef( $rbindir, "refbindir", $conf);
+    ($err, $vcft)   = get_from_config_if_undef($vcft, "vcftools_dir", $conf); 
+    ($err, $st_bin) = get_from_config_if_undef($st_bin, "stampy_bin", $conf);
+    ($err, $st_hash)= get_from_config_if_undef($st_hash, "stampy_hash", $conf);
+    ($err, $list_r) = get_from_config_if_undef($list_r, "list_ref", $conf);
+    ($err, $r_fa)   = get_from_config_if_undef( $r_fa, "ref_fa", $conf);
+    ($err, $rbindir)= get_from_config_if_undef( $rbindir, "refbindir", $conf);
 
     return ($vcft, $st_bin, $st_hash, 
 	    $list_r, $r_fa, $rbindir);

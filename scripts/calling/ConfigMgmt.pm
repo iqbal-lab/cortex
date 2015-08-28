@@ -1,4 +1,4 @@
-package Config;
+package ConfigMgmt;
 
 use strict;
 use warnings;
@@ -19,11 +19,11 @@ sub get_from_config_if_undef
     ## if the variable has a value, don't get a value from the config file
     if ($var ne "")
     {
-	return (EPASS, $var);
+	return ("EPASS", $var);
     }
     if (!(-e $file))
     {
-	return (EFILE, "");
+	return ("EFILE", "");
     }
     open(FILE, $file)||die("Unable to open config file $file\n");
     while (<FILE>)
@@ -37,13 +37,13 @@ sub get_from_config_if_undef
 	{
 	    if (scalar @sp !=2)
 	    {
-		return (EFILE, "");
+		return ("EFILE", "");
 	    }
-	    return (EPASS, $val);
+	    return ("EPASS", $val);
 	}
     }
     close(FILE);
-    return (EPASS, "");
+    return ("EPASS", "");
 }
 
 1;
