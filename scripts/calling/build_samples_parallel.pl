@@ -7,8 +7,17 @@ use Getopt::Long;
 use Benchmark;
 use Cwd    qw( abs_path );
 use FindBin qw($Bin);
-use Config qw ( get_from_config_if_undef );
 
+my $cortex_dir;
+BEGIN
+{
+    $cortex_dir = abs_path($0);
+    $cortex_dir =~ s/scripts\/calling\/build_samples_parallel.pl//;
+    push ( @INC, $cortex_dir."scripts/calling/");
+}
+
+use Config; # qw( get_from_config_if_undef );
+use BasicUtils qw ( add_slash );
 my $all_samples_index = "";
 my $kmer = 31;
 my $qthresh = 10;
@@ -21,10 +30,10 @@ my $stampy_bin="";
 my $stampy_hash="";
 my $list_ref="";
 my $refbindir="";
+my $ref_fa="";
 my $num=-1;
-my $cortex_dir = abs_path($0);
 my $genome_size=3000000;
-$cortex_dir =~ s/scripts\/calling\/par.pl//;
+
 
 my $outdir="";
 
@@ -48,12 +57,12 @@ my $outdir="";
 
 
 
-$outdir = add_slash($outdir);
+$outdir = BasicUtils::add_slash($outdir);
 my $index_dir =$outdir."indexes/";
 my $prev_config = $outdir."config.prep.txt";
 my $this_config = $outdir."config.par.txt";
 my $ref_binary;
-($mem_height, $mem_width, $ref_binary) 
+($mem_height, $mem_width) 
     = check_args($num, $index_dir, $mem_height, $mem_width, 
 		 $genome_size, $kmer);
 
@@ -68,9 +77,9 @@ my $ref_binary;
 				      $stampy_hash,$list_ref, 
 				      $ref_fa, $refbindir, $prev_config);
 
-check_args_second($vcftools_dir, $stampy_bin, 
-		  $stampy_hash,$list_ref, 
-		  $ref_fa, $refbindir);  
+$ref_binary = check_args_second($vcftools_dir, $stampy_bin, 
+			       $stampy_hash,$list_ref, 
+			       $ref_fa, $refbindir, $kmer);  
 
 
 ##remember many par.pl processes run in parallel, can't all write to same file
@@ -100,7 +109,7 @@ qx{$c2};
 my $log = $odir."log_bc.".$sample;
 print "$log\n";
 
-my $cmd ="perl $cortex_dir"."scripts/calling/run_calls.pl --fastaq_index $index --first_kmer $kmer --auto_cleaning yes --bc $bc --pd $pd --outdir $odir --ploidy 1 --genome_size $genome_size --mem_height $mem_height --mem_width $mem_width --qthresh $qthresh --vcftools_dir $vcftools_dir  --do_union yes --logfile $log --workflow independent --ref CoordinatesAndInCalling --ref_fasta $ref_fasta --refbindir $refbindir --stampy_bin $stampy_bin --stampy_hash $stampy_hash --outvcf $sample ";
+my $cmd ="perl $cortex_dir"."scripts/calling/run_calls.pl --fastaq_index $index --first_kmer $kmer --auto_cleaning yes --bc $bc --pd $pd --outdir $odir --ploidy 1 --genome_size $genome_size --mem_height $mem_height --mem_width $mem_width --qthresh $qthresh --vcftools_dir $vcftools_dir  --do_union yes --logfile $log --workflow independent --ref CoordinatesAndInCalling --ref_fasta $ref_fa --refbindir $refbindir --stampy_bin $stampy_bin --stampy_hash $stampy_hash --outvcf $sample ";
 qx{$cmd};
 
 
@@ -115,12 +124,12 @@ sub get_args_from_config_if_undefined
     ## you to have no config file, am ignorning
     ## the error/return values
     my $err;
-    ($err, $vcft)   = get_from_config_if_undef($vcft, "vcftools_dir", $conf); 
-    ($err, $st_bin) = get_from_config_if_undef($st_bin, "stampy_bin", $conf);
-    ($err, $st_hash)= get_from_config_if_undef($st_hash, "stampy_hash", $conf);
-    ($err, $list_r) = get_from_config_if_undef($list_r, "list_ref", $conf);
-    ($err, $r_fa)   = get_from_config_if_undef( $r_fa, "ref_fa", $conf);
-    ($err, $rbindir)= get_from_config_if_undef( $rbindir, "refbindir", $conf);
+    ($err, $vcft)   = Config::get_from_config_if_undef($vcft, "vcftools_dir", $conf); 
+    ($err, $st_bin) = Config::get_from_config_if_undef($st_bin, "stampy_bin", $conf);
+    ($err, $st_hash)= Config::get_from_config_if_undef($st_hash, "stampy_hash", $conf);
+    ($err, $list_r) = Config::get_from_config_if_undef($list_r, "list_ref", $conf);
+    ($err, $r_fa)   = Config::get_from_config_if_undef( $r_fa, "ref_fa", $conf);
+    ($err, $rbindir)= Config::get_from_config_if_undef( $rbindir, "refbindir", $conf);
 
     return ($vcft, $st_bin, $st_hash, 
 	    $list_r, $r_fa, $rbindir);
@@ -161,14 +170,14 @@ sub check_args
     }
 
 
-    return ($mh, $mw, $files[0]);
+    return ($mh, $mw);
 }
 
 
 sub check_args_second
 {
     my ($vcftools_dir, $stampy_bin, $stampy_hash,$list_ref, 
-	$ref_fa, $refbindir) = @_;
+	$ref_fa, $refbindir, $km) = @_;
 
     if ($vcftools_dir eq "")
     {
@@ -212,4 +221,5 @@ sub check_args_second
     {
 	die("There is more than one file in the reference binary directory $refbindir with name ending k$kmer".".ctx, so this script can't work out which is the reference binary\n");
     }
+    return $files[0];
 }

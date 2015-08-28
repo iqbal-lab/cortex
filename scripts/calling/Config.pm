@@ -3,6 +3,10 @@ package Config;
 use strict;
 use warnings;
 
+use base 'Exporter';
+our @EXPORT = qw( get_from_config_if_undef );
+
+
 ## returns a pair (err, ret)
 ## err is EFILE if the file does not exist or cannot be opened, else EPASS
 ## ret is "" if the tag is not in the file, 
@@ -41,3 +45,5 @@ sub get_from_config_if_undef
     close(FILE);
     return (EPASS, "");
 }
+
+1;
