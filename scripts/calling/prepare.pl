@@ -67,14 +67,12 @@ $outdir = BasicUtils::add_slash($outdir);
 
 
 ##Variables which I will write to the config file
-my %arr_config = ("ref_fa" => $ref_fa, 
-		  "refbindir"=> $refdir."/ctx_bins", 
-		  "vcftools_dir"=>$vcftools_dir,
-		  "stampy_bin"=>$stampy_bin, 
+my %arr_config = ("ref_fa" => abs_path($ref_fa), 
+		  "refbindir"=> abs_path($refdir."/ctx_bins"), 
+		  "vcftools_dir"=>abs_path($vcftools_dir),
+		  "stampy_bin"=>abs_path($stampy_bin), 
 		  #"stampy_hash"=>$stampy_hash, 
 		  "genome_size"=>$genome_size);
-
-#add_to_config($c_fh, \%arr_config);
 
 
 my $cmd = "export LD_LIBRARY_PATH=$cortex_dir"."/libs/gsl-1.15/:$cortex_dir"."/libs/gsl-1.15/blas/:$cortex_dir"."/libs/gsl-1.15/.libs/:$cortex_dir"."/libs/gsl-1.15/blas/.libs/:$cortex_dir"."/libs/gsl-1.15/cblas/.libs/:\$"."LD_LIBRARY_PATH";
@@ -115,10 +113,10 @@ else
     print "reference binary $refbin already exists\n";
 }
 
-$arr_config{"ref_falist"}=$ref_falist;
-$arr_config{"ref_fa"} =$ref_fa;
-$arr_config{"refbin"}= $refbin;
-#add_to_config($c_fh, \@arr_config);
+$arr_config{"ref_falist"}=abs_path($ref_falist);
+$arr_config{"ref_fa"} =abs_path($ref_fa);
+$arr_config{"refbin"}= abs_path($refbin);
+
 
 
 ### Build stampy hash
@@ -126,12 +124,12 @@ my $stampy_stub = $refdir."stampy/".$ref_id;
 if ( !( (-e $stampy_stub.".stidx") && (-e $stampy_stub.".sthash") ) )
 {
     ##if they don't both exist, kill the one that does
-    if (!(-e $stampy_stub.".stidx"))
+    if (-e $stampy_stub.".stidx")
     {
 	my $rmv1 = "rm $stampy_stub".".stidx";
 	qx{$rmv1};
     }
-    elsif (!(-e $stampy_stub.".sthash"))
+    elsif (-e $stampy_stub.".sthash")
     {
         my $rmv1 = "rm $stampy_stub".".sthash";
         qx{$rmv1};
@@ -146,7 +144,7 @@ if (!(-e $stampy_stub.".stidx"))
     print "Build Stampy hash\n";
     #print "$cmd_stampy1\n$ret_stampy1\n$cmd_stampy2\n$ret_stampy2\n";
 }
-$arr_config{"stampy_hash"}= $stampy_hash;
+$arr_config{"stampy_hash"}= abs_path($stampy_hash);
 
 if ($outdir ne "no")
 {
