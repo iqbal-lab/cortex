@@ -52,9 +52,9 @@ my $ref_id = "REF";
 
 ## will make outdir if it does not exist, as well as refdir
 ## it returns absolute paths 
-my $num_samples;
-my $mem_height;
-my $mem_width;
+my $num_samples=0;
+my $mem_height=0;
+my $mem_width=0;
 ($num_samples, $mem_height, $mem_width, $genome_size,
  $ref_fa, $stampy_bin, $stampy_hash, $outdir )  
     
@@ -80,14 +80,13 @@ my %arr_config = ("ref_fa" => $ref_fa,
 my $cmd = "export LD_LIBRARY_PATH=$cortex_dir"."/libs/gsl-1.15/:$cortex_dir"."/libs/gsl-1.15/blas/:$cortex_dir"."/libs/gsl-1.15/.libs/:$cortex_dir"."/libs/gsl-1.15/blas/.libs/:$cortex_dir"."/libs/gsl-1.15/cblas/.libs/:\$LD_LIBRARY_PATH";
 qx{$cmd};
 
-if ($index ne "no")
-{
-### Compile Cortex
-    my $cortex_bin = compile_cortex($cortex_dir, $num_samples, $kmer);
+
+### Compile Cortex for 1,2,num_samples, num_samples+1 colours, and return the path to the 1-colour binary
+my $cortex_bin = compile_cortex($cortex_dir, $num_samples, $kmer);
 
 ### Check can run Cortex
-    check_cortex_runnable($cortex_bin);
-}
+check_cortex_runnable($cortex_bin);
+
 
 ### Build reference binary
 my $ref_falist =$outdir."filelists/"."ref_list";
@@ -158,7 +157,7 @@ sub check_args
     }
     elsif (($loc_index eq "") || (!(-e $loc_index)))
     {
-	my $str = "You must specify an index file with --index - the file format is as follows.\n";
+	my $str = "You must generally specify an index file with --index - the file format is as follows.\n";
 	$str .= "Each sample corresponds to one line of this file.\n";
 	$str .= "Each line is tab separated with 4 fields.";
 	$str .= "Field1 = sample identifier\n";
@@ -176,16 +175,21 @@ sub check_args
 	$str .= "for some specific dataset, use \"--index no\" .\n";
 	#die("Please create this file and specify it using --index\n");
     }
-    my $num_samples_cmd = "wc -l $loc_index";
-    my $num_samples = qx{$num_samples_cmd};
-    chomp $num_samples;
-    if ($num_samples =~ /^(\d+)/)
+    
+    my $num_samples=0;
+    if ($loc_index ne "no")
     {
-	$num_samples = $1;
-    }
-    else
-    {
-	die("Failed to count lines in index $loc_index - permissions issue?\n");
+	my $num_samples_cmd = "wc -l $loc_index";
+	$num_samples = qx{$num_samples_cmd};
+	chomp $num_samples;
+	if ($num_samples =~ /^(\d+)/)
+	{
+	    $num_samples = $1;
+	}
+	else
+	{
+	    $num_samples=0;
+	}
     }
     
     if (!(-e $loc_ref_fa))
@@ -250,13 +254,13 @@ sub check_args
 	$loc_outdir = BasicUtils::add_slash($loc_outdir);
 	my $filelist_dir = $loc_outdir."filelists/";
 	BasicUtils::create_dir_if_does_not_exist($filelist_dir,  "check_args of prepare.pl");
-    }
+    
 
 ## Create the reference fasta filelist
-    my $ref_fa_list = $filelist_dir."list_ref_fa";
-    my $cmd_create_reffalist = "ls $loc_ref_fa > $ref_fa_list";
-    qx{$cmd_create_reffalist};
-    
+	my $ref_fa_list = $filelist_dir."list_ref_fa";
+	my $cmd_create_reffalist = "ls $loc_ref_fa > $ref_fa_list";
+	qx{$cmd_create_reffalist};
+    }
     
 ## Check the stampy binary
     if (!(-e $loc_stampy_bin))
@@ -312,17 +316,29 @@ sub compile_cortex
 {
     my ($ctx_dir, $n_samples, $k) = @_;
 
+    $ctx_dir = BasicUtils::add_slash($ctx_dir);
     my $maxk = 32 * (int($k / 32) +1) -1;
 
-    my $c = "cd $ctx_dir; source setenv.sh; make NUM_COLS=1 MAXK=$maxk cortex_var; make NUM_COLS=2 MAXK=$maxk cortex_var; make NUM_COLS=$n_samples MAXK=$maxk cortex_var;";
-    qx{$c};
-    $ctx_dir = BasicUtils::add_slash($ctx_dir);
-    my $bin = $ctx_dir."bin/cortex_var_".$maxk."_c".$n_samples;
-    if (!(-e $bin))
+    my @nums = (1);
+    if ($n_samples>0)
     {
-	die("Failed to compile Cortex, tried to make $bin and failed\n");
+	push @nums,2;
+	push @nums, $n_samples;
+	push @nums, $n_samples+1;
     }
-    return $bin;
+    foreach my $n (@nums)
+    {
+	my $c = "cd $ctx_dir; source setenv.sh; make NUM_COLS=$n MAXK=$maxk cortex_var;";
+	qx{$c};
+	my $bin = $ctx_dir."bin/cortex_var_".$maxk."_c".$n;
+	if (!(-e $bin))
+	{
+	    die("Failed to compile Cortex, tried to make $bin and failed\n");
+	}
+
+    }
+    
+    return  $ctx_dir."bin/cortex_var_".$maxk."_c1";
 }
 
 sub check_cortex_runnable
