@@ -41,7 +41,7 @@ my $ref_id = "REF";
     'vcftools_dir:s'              =>\$vcftools_dir,
     'outdir:s'                    =>\$outdir,
     'stampy_bin:s'               =>\$stampy_bin,
-   # 'stampy_hash:s'               =>\$stampy_hash,
+    #'stampy_hash:s'               =>\$stampy_hash,
     'ref_id:s'                    =>\$ref_id, ##not mandatory
     'kmer:i'                      =>\$kmer,
     );
@@ -137,11 +137,11 @@ if ( !( (-e $stampy_stub.".stidx") && (-e $stampy_stub.".sthash") ) )
 }
 if (!(-e $stampy_stub.".stidx"))
 {
-    my $cmd_stampy1 = "$stampy_bin -G $stampy_stub $ref_fa";
+    my $cmd_stampy1 = "$stampy_bin -G $stampy_stub $ref_fa 2>&1";
     my $ret_stampy1 = qx{$cmd_stampy1};
-    my $cmd_stampy2 = "$stampy_bin -g $stampy_stub -H $stampy_stub";
+    my $cmd_stampy2 = "$stampy_bin -g $stampy_stub -H $stampy_stub 2>&1";
     my $ret_stampy2 = qx{$cmd_stampy2};
-    print "Build Stampy hash\n";
+    print "Built Stampy hash\n";
     #print "$cmd_stampy1\n$ret_stampy1\n$cmd_stampy2\n$ret_stampy2\n";
 }
 $arr_config{"stampy_hash"}= abs_path($stampy_hash);
@@ -191,6 +191,15 @@ sub check_args
 	#die("Please create this file and specify it using --index\n");
     }
     
+
+    ## R must be in path
+    my $rcom = "R --version";
+    my $rret = qx{$rcom};
+    if ($rret !~ /R version/)
+    {
+	die("R must be in oyur path\n");
+    }
+
     my $num_samples=0;
     if ($loc_index ne "no")
     {
@@ -220,6 +229,7 @@ sub check_args
 	    $str .= "not to be in fasta format\n";
 	    die($str."   ".$err);
 	}
+	$loc_ref_fa = abs_path($loc_ref_fa);
     }
     
     
@@ -230,18 +240,30 @@ sub check_args
     my $mem_w=100;
 ## 2^height * width = 3g
 ## => height = log_2(3g/width)
-    my $mem_h = int(log(1.5*$genome_len/100)/log(2) +0.5);
+    my $mem_h = int(log(3*$genome_len/100)/log(2) +0.5);
     
     
 ## Set up the reference directory
-    BasicUtils::create_dir_if_does_not_exist($loc_refdir, "check_args of prepare.pl");
+    if (!(-d $loc_refdir))
+    {
+	my $c = "mkdir -p $loc_refdir";
+	qx{$c};
+	if (!(-d $loc_refdir))
+	{
+	    my $str = "You specified $loc_refdir as directory for ref objects.\n";
+	    $str .= "This did not exist, so we tried to create it, and that failed\n";
+	    die($str);
+	}
+    }
+    $loc_refdir = abs_path($loc_refdir);
     $loc_refdir = BasicUtils::add_slash($loc_refdir);
+    BasicUtils::create_dir_if_does_not_exist($loc_refdir, "check_args of prepare.pl");
     my $st_dir = $loc_refdir."stampy/";
     my $ctxdir = $loc_refdir."ctx_bins/";
     BasicUtils::create_dir_if_does_not_exist($st_dir,  "check_args of prepare.pl");
     BasicUtils::create_dir_if_does_not_exist($ctxdir, "check_args of prepare.pl");
     
-    
+
 ### is the VCFtools directory actualy a directory with the right stuff?
     if (!(-d $loc_vcftools_dir))
     {
@@ -249,7 +271,8 @@ sub check_args
     }
     else
     {
-	$loc_vcftools_dir=BasicUtils::add_slash($loc_vcftools_dir);
+	$loc_vcftools_dir = BasicUtils::add_slash($loc_vcftools_dir);
+
 	my $d1 = $loc_vcftools_dir."perl";
 	if (!(-e $d1))
 	{
@@ -266,6 +289,7 @@ sub check_args
     if ($outdir ne "no")
     {
 	BasicUtils::create_dir_if_does_not_exist($loc_outdir, "check_args of prepare.pl");
+	$loc_outdir = abs_path($loc_outdir);
 	$loc_outdir = BasicUtils::add_slash($loc_outdir);
 	my $filelist_dir = $loc_outdir."filelists/";
 	BasicUtils::create_dir_if_does_not_exist($filelist_dir,  "check_args of prepare.pl");
@@ -286,6 +310,7 @@ sub check_args
     {
 	die("--stampy_bin should give full path to stampy.py\n")
     }
+    
     my $stcmd = "$stampy_bin --help";
     my $stret = qx{$stcmd};
     
@@ -295,14 +320,13 @@ sub check_args
         $str .= " calling --help. Maybe Python 2.6 or 2.7 not present?\n";
         die($str);
     }
-    
+    $loc_stampy_bin = abs_path($loc_stampy_bin);
     if ($loc_stampy_hash eq "")
     {
 	$loc_stampy_hash=$loc_refdir."stampy/REF";
     }
-    my $stf1 = $loc_stampy_hash.".stidx";
-    my $stf2 = $loc_stampy_hash.".sthash";
-    
+    $loc_stampy_hash = abs_path($loc_stampy_hash);
+
     if ($loc_kmer % 2==0)
     {
 	die("Kmer must be an odd number\n");

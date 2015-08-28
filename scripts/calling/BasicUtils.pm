@@ -81,6 +81,7 @@ sub is_fastq
 sub create_dir_if_does_not_exist
 {
     my ($dir, $funcname) = @_;
+
     if (!(-d $dir))
     {
 	my $cmd = "mkdir -p $dir";
