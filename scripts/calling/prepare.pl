@@ -77,7 +77,7 @@ my %arr_config = ("ref_fa" => $ref_fa,
 #add_to_config($c_fh, \%arr_config);
 
 
-my $cmd = "export LD_LIBRARY_PATH=$cortex_dir"."/libs/gsl-1.15/:$cortex_dir"."/libs/gsl-1.15/blas/:$cortex_dir"."/libs/gsl-1.15/.libs/:$cortex_dir"."/libs/gsl-1.15/blas/.libs/:$cortex_dir"."/libs/gsl-1.15/cblas/.libs/:\$LD_LIBRARY_PATH";
+my $cmd = "export LD_LIBRARY_PATH=$cortex_dir"."/libs/gsl-1.15/:$cortex_dir"."/libs/gsl-1.15/blas/:$cortex_dir"."/libs/gsl-1.15/.libs/:$cortex_dir"."/libs/gsl-1.15/blas/.libs/:$cortex_dir"."/libs/gsl-1.15/cblas/.libs/:\$"."LD_LIBRARY_PATH";
 qx{$cmd};
 
 
@@ -95,7 +95,7 @@ qx{$cmd_list};
 my $refbin = $refdir."ctx_bins/".$ref_id.".k".$kmer.".ctx";
 my $ref_bin_log = $refbin.".log";
 my $cmd_build = "$cortex_bin --se_list $ref_falist --kmer $kmer ";
-    $cmd_build .= "--mem_height $mem_height --mem_width mem_width ";
+    $cmd_build .= "--mem_height $mem_height --mem_width $mem_width ";
     $cmd_build .= "--sample_id $ref_id --dump_binary $refbin > $ref_bin_log";
     $cmd_build .= " 2>&1";
 if (!(-e $refbin))
@@ -123,12 +123,29 @@ $arr_config{"refbin"}= $refbin;
 
 ### Build stampy hash
 my $stampy_stub = $refdir."stampy/".$ref_id;
-my $cmd_stampy1 = "$stampy_bin -G $stampy_stub $ref_fa";
-my $ret_stampy1 = qx{$cmd_stampy1};
-my $cmd_stampy2 = "$stampy_bin -g $stampy_stub -H $stampy_stub";
-my $ret_stampy2 = qx{$cmd_stampy2};
-print "$cmd_stampy1\n$ret_stampy1\n$cmd_stampy2\n$ret_stampy2\n";
-
+if ( !( (-e $stampy_stub.".stidx") && (-e $stampy_stub.".sthash") ) )
+{
+    ##if they don't both exist, kill the one that does
+    if (!(-e $stampy_stub.".stidx"))
+    {
+	my $rmv1 = "rm $stampy_stub".".stidx";
+	qx{$rmv1};
+    }
+    elsif (!(-e $stampy_stub.".sthash"))
+    {
+        my $rmv1 = "rm $stampy_stub".".sthash";
+        qx{$rmv1};
+    }
+}
+if (!(-e $stampy_stub.".stidx"))
+{
+    my $cmd_stampy1 = "$stampy_bin -G $stampy_stub $ref_fa";
+    my $ret_stampy1 = qx{$cmd_stampy1};
+    my $cmd_stampy2 = "$stampy_bin -g $stampy_stub -H $stampy_stub";
+    my $ret_stampy2 = qx{$cmd_stampy2};
+    print "Build Stampy hash\n";
+    #print "$cmd_stampy1\n$ret_stampy1\n$cmd_stampy2\n$ret_stampy2\n";
+}
 $arr_config{"stampy_hash"}= $stampy_hash;
 
 if ($outdir ne "no")
@@ -269,7 +286,7 @@ sub check_args
     }
     elsif ($loc_stampy_bin !~ /stampy.py$/)
     {
-	die("--stampy_bin shoould give full path to stampy.py\n")
+	die("--stampy_bin should give full path to stampy.py\n")
     }
     my $stcmd = "$stampy_bin --help";
     my $stret = qx{$stcmd};
@@ -287,21 +304,6 @@ sub check_args
     }
     my $stf1 = $loc_stampy_hash.".stidx";
     my $stf2 = $loc_stampy_hash.".sthash";
-    if ( (!(-e $stf1)) || (!(-e $stf2)) )
-    {
-	##They do not both exist
-	
-	if (-e $stf1) 
-	{
-	    my $c1 ="rm $stf1";
-		qx{$c1};
-	}
-	if (!( -e $stf2))
-	    {
-		my $c2 ="rm $stf2";
-		qx{$c2};
-	    }
-    }
     
     if ($loc_kmer % 2==0)
     {
@@ -328,8 +330,8 @@ sub compile_cortex
     }
     foreach my $n (@nums)
     {
-	my $c = "cd $ctx_dir; source setenv.sh; make NUM_COLS=$n MAXK=$maxk cortex_var;";
-	qx{$c};
+	my $c = "export LD_LIBRARY_PATH=$ctx_dir"."/libs/gsl-1.15/:$ctx_dir"."/libs/gsl-1.15/blas/:$ctx_dir"."/libs/gsl-1.15/.libs/:$ctx_dir"."/libs/gsl-1.15/blas/.libs/:$ctx_dir"."/libs/gsl-1.15/cblas/.libs/:\$"."LD_LIBRARY_PATH; cd $ctx_dir; make NUM_COLS=$n MAXK=$maxk cortex_var 2>&1;";
+	my $r = qx{$c};
 	my $bin = $ctx_dir."bin/cortex_var_".$maxk."_c".$n;
 	if (!(-e $bin))
 	{
