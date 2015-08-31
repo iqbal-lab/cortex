@@ -73,7 +73,10 @@ if (-e $outdir."config.par.txt")
     ($kmer, $vcftools_dir, $ref_binary, $genome_size, $mem_height, $mem_width) =
 	get_args_from_par_config($outdir."config.par.txt");
 }
-
+if (-e  $outdir."config.prep.txt")
+{
+    $ref_fasta =get_args_from_prep_config($outdir."config.prep.txt"); 
+}
 
 my $scripts_dir = $cortex_dir."scripts/analyse_variants/bioinf-perl/vcf_scripts/";
 my $analyse_dir = $cortex_dir."scripts/analyse_variants/";
@@ -82,14 +85,46 @@ my $combine_dir = $cortex_dir."scripts/analyse_variants/combine/";
 
 if ($list eq "")
 {
-    ## go to the $outdir and make the list
-    my $list = $outdir."list_all_raw_vcfs";
-    my $cmd = "ls $outdir"."*/vcfs/*wk*raw* > $list";
-    qx{$cmd};
-    if (!-e ($list))
+    if (-e $outdir."list_all_raw_vcfs")
     {
-	die("Unable to create $list\n");
+	$list = $outdir."list_all_raw_vcfs";
     }
+    else
+    {
+	## go to the $outdir and make the list
+	my $list = $outdir."list_all_raw_vcfs";
+	my $cmd = "ls $outdir"."*/vcfs/*wk*raw* > $list";
+	qx{$cmd};
+	if (!-e ($list))
+	{
+	    die("Unable to create $list\n");
+	}
+    }
+}
+
+sub get_args_from_prep_config
+{
+    my ($config_file) = @_;
+    open(CONFIG, $config_file)||die("Cannot open pre $config_file\n");
+    my ($rf)="";
+    while (<CONFIG>)
+    {
+	my $line = $_;
+	chomp $line;
+	my @sp = split(/\t/, $line);
+	if ($sp[0] eq "ref_fa")
+	{
+	    $rf = $sp[1];
+	}
+    }
+    close(CONFIG);
+
+    if ($rf eq "")
+    {
+	die("Missing tag in pre config file\n");
+    }
+    return $rf;
+    
 }
 
 
@@ -129,7 +164,8 @@ sub get_args_from_par_config
 	}
 	else
 	{
-	    die("unexpected tag in $config_file\n");
+	    print ("unexpected tag in $config_file\n");
+	    die($sp[0]);
 	}
     }
     close(CONFIG);
@@ -161,7 +197,7 @@ BEGIN
 use Descriptive;
 use VCFFile;
 my $libdir      = get_vcflib();
-
+print "ZAMZAM libdir is $libdir\n";
 
 ## use full paths
 #my $ref_fa_cmd ="readlink -f $ref_fasta";
@@ -333,7 +369,7 @@ sub make_sample_graph_filelist
 {
     my ($rcdir, $k, $combine_dir) = @_;
      
-    my $reg = $rcdir."results/\*/binaries/cleaned/k".$k.'/'."\*ctx";
+    my $reg = $rcdir."\*/binaries/cleaned/k".$k.'/'."\*ctx";
 
     my $listing_cmd = "ls $reg";
     my $listing = qx{$listing_cmd};
