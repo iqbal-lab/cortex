@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use base 'Exporter';
-our @EXPORT = qw( get_from_config_if_undef );
+our @EXPORT = qw( get_from_config_if_undef print_to_config get_all_info_from_config_if_undef);
 
 
 ## returns a pair (err, ret)
@@ -14,16 +14,16 @@ our @EXPORT = qw( get_from_config_if_undef );
 ##     else it returns the value.
 sub get_from_config_if_undef
 {
-    my ($var, $str, $file) = @_;
+    my ($hashref, $str, $file) = @_;
 
     ## if the variable has a value, don't get a value from the config file
-    if ($var ne "")
+    if ($hashref->{$str} ne "")
     {
-	return ("EPASS", $var);
+	return "EPASS";
     }
     if (!(-e $file))
     {
-	return ("EFILE", "");
+	return "EFILE";
     }
     open(FILE, $file)||die("Unable to open config file $file\n");
     while (<FILE>)
@@ -37,13 +37,49 @@ sub get_from_config_if_undef
 	{
 	    if (scalar @sp !=2)
 	    {
-		return ("EFILE", "");
+		return "EFILE";
 	    }
-	    return ("EPASS", $val);
+	    $hashref->{$str}=$val;
+	    return "EPASS";
 	}
     }
     close(FILE);
-    return ("EPASS", "");
+    return "EPASS";
 }
+
+sub print_to_config
+{
+    my ($str, $hashref, $fh) = @_;
+    print $fh $str."\t".$hashref->{$str};
+    print $fh "\n";
+}
+
+sub get_all_info_from_config_if_undef
+{
+    my ($hashref, $file) = @_;
+
+    open(FILE, $file) ||die("Cannot open file $file in get_all_from_config_if_undef\n");
+    while (<FILE>)
+    {
+	my $line = $_;
+	chomp $line;
+	my @sp = split(/\t/, $line);
+        my $tag = $sp[0];
+	my $val = $sp[1];
+	if (!exists $hashref->{$tag})
+	{
+	    $hashref->{$tag}=$val;
+	}
+	else
+	{
+	    if ($hashref->{$tag} eq "")
+	    {
+		$hashref->{$tag}=$val;
+	    }
+	}
+    }
+    close(FILE);
+}
+
 
 1;

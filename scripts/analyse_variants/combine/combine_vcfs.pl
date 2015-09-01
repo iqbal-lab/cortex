@@ -230,7 +230,7 @@ my $tmpvcf = $outvcf1.".tmp_delete_me";
 my $header = "\#\#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tDUMMY";
 my $rd = $scripts_dir."vcf_remove_dupes.pl";
 my $ro = $scripts_dir."vcf_remove_overlaps.pl";
-print "Make sites VCF\n";
+print "Make sites VCF using list $list\n";
 
 my $c1 = "head -n1 $list";
 my $r1 = qx{$c1};
