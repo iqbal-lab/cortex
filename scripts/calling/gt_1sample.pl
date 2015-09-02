@@ -56,8 +56,11 @@ my $config ="";
 
 
 check_mandatory_args(\%vars);
-get_all_info_from_config_if_undef(\%vars, $vars{"config"});
 
+get_all_info_from_config_if_undef(\%vars, $vars{"config"});
+my $prep_config = $vars{"config"};
+$prep_config =~ s/combine\/config.txt/config.prep.txt/;
+get_all_info_from_config_if_undef(\%vars, $prep_config);
 
 $cortex_dir = BasicUtils::add_slash($cortex_dir);
 $vars{"outdir"} =  BasicUtils::add_slash($vars{"outdir"});
