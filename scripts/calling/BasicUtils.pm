@@ -3,6 +3,10 @@ package BasicUtils;
 use strict;
 use warnings;
 
+use base 'Exporter';
+our @EXPORT = qw(add_slash is_fasta is_fastq create_dir_if_does_not_exist count_bases_in_fasta  );
+
+
 sub add_slash
 {
     my ($d)  = @_;
@@ -90,7 +94,7 @@ sub create_dir_if_does_not_exist
 	if (!(-d $dir))
     	{
 	    my $str = "Unable to create directory ";
-	    $str .= "$dir in function $funcname\n";
+	    $str .= "$dir in script/function $funcname\n";
 	    $str .= "Error output:\n$ret\n";
 	    die($str);
     	}	

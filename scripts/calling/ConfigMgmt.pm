@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use base 'Exporter';
-our @EXPORT = qw( get_from_config_if_undef print_to_config get_all_info_from_config_if_undef);
+our @EXPORT = qw( get_from_config_if_undef print_to_config get_all_info_from_config_if_undef check_outdir);
 
 
 ## returns a pair (err, ret)
@@ -58,6 +58,10 @@ sub get_all_info_from_config_if_undef
 {
     my ($hashref, $file) = @_;
 
+    if (!( -e $file))
+    {
+	return;## just return if the file does not exist
+    }
     open(FILE, $file) ||die("Cannot open file $file in get_all_from_config_if_undef\n");
     while (<FILE>)
     {
@@ -81,5 +85,23 @@ sub get_all_info_from_config_if_undef
     close(FILE);
 }
 
+
+sub check_outdir
+{
+    my ($hashref) = @_;
+    if ($hashref->{"outdir"} eq "")
+    {
+	my $errstr = "You must specify with --outdir the output directory, which \n";
+	$errstr .= "must be the same directory used as output dir in prepare.pl\n";
+	die($errstr);
+    }
+    $hashref->{"outdir"} = BasicUtils::add_slash($hashref->{"outdir"});
+    if (!(-d $hashref->{"outdir"} ))
+    {
+	my $errstr = "Output directory does not exist:".$hashref->{"outdir"};
+	$errstr .= "\n This should have been created previously by prepare.pl\n";
+	die($errstr);
+    }
+}
 
 1;

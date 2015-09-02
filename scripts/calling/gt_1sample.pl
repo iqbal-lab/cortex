@@ -58,9 +58,14 @@ my $config ="";
 check_mandatory_args(\%vars);
 
 get_all_info_from_config_if_undef(\%vars, $vars{"config"});
+
 my $prep_config = $vars{"config"};
 $prep_config =~ s/combine\/config.txt/config.prep.txt/;
 get_all_info_from_config_if_undef(\%vars, $prep_config);
+
+my $par_config = $vars{"config"};
+$par_config =~ s/combine\/config.txt/config.par.txt/;
+get_all_info_from_config_if_undef(\%vars, $par_config);
 
 $cortex_dir = BasicUtils::add_slash($cortex_dir);
 $vars{"outdir"} =  BasicUtils::add_slash($vars{"outdir"});
@@ -77,8 +82,8 @@ my $ctx_binary = check_cortex_compiled_2colours($cortex_dir, $vars{"kmer"});
 
 
 ## Now intersect your sample
-print("\n*************************\n");
-print("First overlap the sample with the bubbles:\n");
+#print("\n*************************\n");
+#print("First overlap the sample with the bubbles:\n");
 
 ### note start time
 my $time_start_overlap = new Benchmark;
@@ -101,18 +106,18 @@ $cmd .= " --multicolour_bin ".$vars{"bubble_graph"};
 $cmd .= " --colour_list $colour_list --load_colours_only_where_overlap_clean_colour 0 ";
 $cmd .= " --successively_dump_cleaned_colours $suffix > $overlap_log 2>&1";
 
-print "$cmd\n";
+#print "$cmd\n";
 my $ret = qx{$cmd};
-print "$ret\n";
+#print "$ret\n";
 
-print "Finished intersecting sample ".$vars{"sample"}." with the bubble graph ".$vars{"bubble_graph"}."\n";
+#print "Finished intersecting sample ".$vars{"sample"}." with the bubble graph ".$vars{"bubble_graph"}."\n";
 my $time_end_overlap=new Benchmark;
 my $time_taken_overlap=timediff($time_end_overlap,$time_start_overlap);
-print "Time taken to overlap sample with bubbles is ", timestr($time_taken_overlap), "\n";
+#print "Time taken to overlap sample with bubbles is ", timestr($time_taken_overlap), "\n";
 
 
-print("\n*************************\n");
-print "Now, genotype sample:\n";
+#print("\n*************************\n");
+#print "Now, genotype sample:\n";
 ### note start time
 my $time_start_gt = new Benchmark;
 
@@ -132,19 +137,19 @@ $gt_cmd .= " --gt ".$vars{"bubble_callfile"}.",".$gt_output.",BC ";
 $gt_cmd .= " --genome_size ".$vars{"genome_size"};
 $gt_cmd .= " --experiment_type EachColourADiploidSampleExceptTheRefColour --print_median_covg_only ";
 $gt_cmd .= " --estimated_error_rate 0.01 --ref_colour 0  > $gt_log 2>&1";
-print "$gt_cmd\n";
+#print "$gt_cmd\n";
 my $gt_ret = qx{$gt_cmd};
-print "$gt_ret\n";
-print "Genotyping done\n";
+#print "$gt_ret\n";
+#print "Genotyping done\n";
 my $time_end_gt=new Benchmark;
 my $time_taken_gt=timediff($time_end_gt,$time_start_gt);
-print "Time taken to gt sample is ", timestr($time_taken_gt), "\n";
+#print "Time taken to gt sample is ", timestr($time_taken_gt), "\n";
 
 
 
 #### DUMP VCF
-print("\n*************************\n");
-print("Now dump a VCF\n");
+#print("\n*************************\n");
+#print("Now dump a VCF\n");
 ### note start time
 my $time_start_vcf = new Benchmark;
 
@@ -161,18 +166,14 @@ $vcf_cmd .= " --samplename_list $samplelist --num_cols 2  --caller BC ";
 $vcf_cmd .= " --kmer ".$vars{"kmer"};
 $vcf_cmd .= " --refcol 0 --ploidy 2  --vcf_which_generated_calls ".$vars{"invcf"};
 $vcf_cmd .= " --print_gls yes > ".$vars{"outdir"}.".".$vars{"sample"}.".vcf.log 2>&1";
-print $vcf_cmd;
+#print $vcf_cmd;
 my $vcfret = qx{$vcf_cmd};
-print $vcfret;
+#print $vcfret;
 
 print "\nFinished! Sample ".$vars{"sample"}." is genotyped and a VCF has been dumped\n";
 
 my $time_end_vcf=new Benchmark;
 my $time_taken_vcf=timediff($time_end_vcf,$time_start_vcf);
-print "Time taken to vcf sample with bubbles is ", timestr($time_taken_vcf), "\n";
-
-print("\n*************************\n");
-
 
 
 sub check_mandatory_args

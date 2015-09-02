@@ -16,7 +16,7 @@ BEGIN
     push ( @INC, $cortex_dir."scripts/calling/");
 }
 
-use ConfigMgmt qw( get_from_config_if_undef print_to_config get_all_info_from_config_if_undef);
+use ConfigMgmt qw( get_from_config_if_undef print_to_config get_all_info_from_config_if_undef check_outdir);
 use BasicUtils qw ( add_slash );
 
 
@@ -39,24 +39,6 @@ my %vars = ( "index" => "",
 	     "ref_binary" => "",
 	     "index_dir"=> "");
 
-#my $all_samples_index = "";
-#my $kmer = 31;
-#my $qthresh = 10;
-#my $bc="yes";
-#my $pd = "no";
-#my $mem_height = 0;
-#my $mem_width=0;
-#my $vcftools_dir = "";
-#my $stampy_bin="";
-#my $stampy_hash="";
-#my $list_ref="";
-#my $refbindir="";
-#my $ref_fa="";
-#my $num=-1;
-#my $genome_size=3000000;
-
-
-#my $outdir="";
 
 &GetOptions(
     'num:i'                       =>\$vars{"num"},,
@@ -138,23 +120,6 @@ $cmd .= " --outvcf $sample ";
 my $ret = qx{$cmd};
 
 
-sub check_outdir
-{
-    my ($hashref) = @_;
-    if ($hashref->{"outdir"} eq "")
-    {
-	my $errstr = "You must specify with --outdir the output directory, which \n";
-	$errstr .= "must be the same directory used as output dir in prepare.pl\n";
-	die($errstr);
-    }
-    $hashref->{"outdir"} = BasicUtils::add_slash($hashref->{"outdir"});
-    if (!(-d $hashref->{"outdir"} ))
-    {
-	my $errstr = "Output directory does not exist:".$hashref->{"outdir"};
-	$errstr .= "\n This should have been created previously by prepare.pl\n";
-	die($errstr);
-    }
-}
 
 sub get_args_from_config_if_undefined
 {

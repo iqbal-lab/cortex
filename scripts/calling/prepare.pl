@@ -33,6 +33,7 @@ my $outdir="";
 my $kmer="";
 my $genome_size="";
 my $ref_id = "REF";
+my $verbose ='';
 
 &GetOptions(
     'index:s'                     =>\$all_samples_index,
@@ -44,6 +45,7 @@ my $ref_id = "REF";
     #'stampy_hash:s'               =>\$stampy_hash,
     'ref_id:s'                    =>\$ref_id, ##not mandatory
     'kmer:i'                      =>\$kmer,
+    'verbose'                    => \$verbose,
     );
 
 
@@ -105,12 +107,18 @@ if (!(-e $refbin))
     }
     else
     {
-        print "Created reference genome Cortex binary graph file $refbin\n";
+	if ($verbose)
+	{
+	    print "Created reference genome Cortex binary graph file $refbin\n";
+	}
     }
 }
 else
 {
-    print "reference binary $refbin already exists\n";
+    if ($verbose)
+    {
+	print "reference binary $refbin already exists\n";
+    }
 }
 
 $arr_config{"list_ref"}=abs_path($ref_falist);
@@ -141,8 +149,11 @@ if (!(-e $stampy_stub.".stidx"))
     my $ret_stampy1 = qx{$cmd_stampy1};
     my $cmd_stampy2 = "$stampy_bin -g $stampy_stub -H $stampy_stub 2>&1";
     my $ret_stampy2 = qx{$cmd_stampy2};
-    print "Built Stampy hash\n";
-    #print "$cmd_stampy1\n$ret_stampy1\n$cmd_stampy2\n$ret_stampy2\n";
+    if ($verbose)
+    {
+	print "Built Stampy hash\n";
+	#print "$cmd_stampy1\n$ret_stampy1\n$cmd_stampy2\n$ret_stampy2\n";
+    }
 }
 $arr_config{"stampy_hash"}= abs_path($stampy_hash);
 

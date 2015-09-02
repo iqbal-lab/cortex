@@ -2573,7 +2573,7 @@ sub get_cleaning_thresh_and_distrib
 
     my $print_pdfs=1;
     my $debugprint=0;
-    my $cmd = "cat $get_thresh_script | R --vanilla --args $file $exp_covg $print_pdfs $debugprint";
+    my $cmd = "cat $get_thresh_script | R --vanilla --args $file $exp_covg $print_pdfs $debugprint 2>&1";
     my $ret = qx{$cmd};
     my $cutoff=-1;
     my @sp = split(/\n/, $ret);
