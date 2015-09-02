@@ -119,7 +119,7 @@ my $c2 = "mkdir -p $odir";
 qx{$c2};
 my $log = $odir."log.".$sample;
 
-my $cmd ="perl $cortex_dir"."scripts/calling/run_calls.pl --fastaq_index ".$vars{"index"};
+my $cmd ="perl $cortex_dir"."scripts/calling/run_calls.pl --fastaq_index $index";
 $cmd .= " --first_kmer ".$vars{"kmer"};
 $cmd .= " --auto_cleaning yes --bc ".$vars{"bc"};
 $cmd .= " --pd ".$vars{"pd"};
