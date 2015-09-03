@@ -17,7 +17,7 @@ BEGIN
 }
 
 use ConfigMgmt qw( get_from_config_if_undef print_to_config get_all_info_from_config_if_undef check_outdir);
-use BasicUtils qw ( add_slash );
+use BasicUtils qw ( check_cortex_runnable add_slash );
 
 
 my %vars = ( "index" => "",
@@ -264,4 +264,14 @@ sub check_args
 	die($errstr);
     }
     $hashref->{"ref_binary"}=$files[0];
+
+
+        ## R must be in path
+    my $rcom = "R --version";
+    my $rret = qx{$rcom};
+    if ($rret !~ /R version/)
+    {
+	die("R must be in your path\n");
+    }
+
 }

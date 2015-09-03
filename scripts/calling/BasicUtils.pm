@@ -4,7 +4,24 @@ use strict;
 use warnings;
 
 use base 'Exporter';
-our @EXPORT = qw(add_slash is_fasta is_fastq create_dir_if_does_not_exist count_bases_in_fasta  );
+our @EXPORT = qw(check_cortex_runnable add_slash is_fasta is_fastq create_dir_if_does_not_exist count_bases_in_fasta  );
+
+
+sub check_cortex_runnable
+{
+    my ($ctx_bin) = @_;
+    
+    my $cmd = "$ctx_bin --help";
+    my $ret = qx{$cmd};
+    if ($ret =~ /Starting Cortex/)
+    {
+	return; 
+    }
+    else
+    {
+	die("Cortex has been compiled, but the binary ($ctx_bin) cannot be run. This probably means some library (probably GSL) could not be found\n");
+    }
+}
 
 
 sub add_slash

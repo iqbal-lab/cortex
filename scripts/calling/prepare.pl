@@ -17,7 +17,7 @@ BEGIN
     push ( @INC, $cortex_dir."scripts/calling/");
 }
 
-use BasicUtils qw ( add_slash is_fastq count_bases_in_fasta create_dir_if_does_not_exist );
+use BasicUtils qw ( check_cortex_runnable add_slash is_fastq count_bases_in_fasta create_dir_if_does_not_exist );
 
 
 
@@ -208,7 +208,7 @@ sub check_args
     my $rret = qx{$rcom};
     if ($rret !~ /R version/)
     {
-	die("R must be in oyur path\n");
+	die("R must be in your path\n");
     }
 
     my $num_samples=0;
@@ -374,22 +374,6 @@ sub compile_cortex
     }
     
     return  $ctx_dir."bin/cortex_var_".$maxk."_c1";
-}
-
-sub check_cortex_runnable
-{
-    my ($ctx_bin) = @_;
-    
-    my $cmd = "$ctx_bin --help";
-    my $ret = qx{$cmd};
-    if ($ret =~ /Starting Cortex/)
-    {
-	return; 
-    }
-    else
-    {
-	die("prepare.pl has compiled Cortex, but it cannot run the executable/binary. This probably means some library (probably GSL) could not be find\n");
-    }
 }
 
 
