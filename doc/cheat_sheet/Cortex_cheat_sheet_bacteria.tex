@@ -116,13 +116,13 @@ This script will create a config script in /path3/results containing information
 parallel --gnu -j 20  
   perl scripts/calling/build_samples_parallel.pl 
   --num {}  --index INDEX  
-  --out_dir /path3/results  ::: {1..1700}
+  --outdir /path3/results --kmer 31 ::: {1..1700}
 \end{verbatim}
 {\bf Step2} Combine all the per-sample VCFs to get one combined set of sites (SNPs, indels, structural variants). 
 
 \begin{verbatim}
 perl scripts/analyse_variants/combine/combine_vcfs.pl 
- --prefix XYZ   --outdir  /path3/results
+ --prefix XYZ   --outdir  /path3/results --intersect_ref
    
 \end{verbatim}
 {\bf Step 3} Finally, independently genotype each sample at all of these sites. Here using GNU parallels to spread across 20 cores of a server. Memory use now drops as we only use the graph of poymorphisms.
