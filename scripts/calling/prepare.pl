@@ -58,7 +58,7 @@ my $num_samples=0;
 my $mem_height=0;
 my $mem_width=0;
 ($num_samples, $mem_height, $mem_width, $genome_size,
- $ref_fa, $stampy_bin, $stampy_hash, $outdir )  
+ $ref_fa, $stampy_bin, $stampy_hash, $outdir, $refdir )  
     
     ## includes creating missing dirs and checking Stampy, VCFtools
     = check_args($all_samples_index, $ref_fa, $refdir, $vcftools_dir, $outdir, 
@@ -344,7 +344,8 @@ sub check_args
     }	
     
     return ($num_samples, $mem_h, $mem_w, $genome_len,
-	    $loc_ref_fa, $loc_stampy_bin, $loc_stampy_hash, $loc_outdir )    
+	    $loc_ref_fa, $loc_stampy_bin, $loc_stampy_hash, $loc_outdir,
+	    $loc_refdir);    
 }
 
 sub compile_cortex
