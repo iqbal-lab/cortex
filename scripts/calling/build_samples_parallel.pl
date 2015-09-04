@@ -33,7 +33,7 @@ my %vars = ( "index" => "",
 	     "list_ref"=>"",
 	     "refbindir"=>"",
 	     "ref_fa"=>"",
-	     "num"=>-1,
+	     "num"=>1,
 	     "genome_size"=>"",
 	     "outdir" => "",
 	     "ref_binary" => "",
@@ -90,7 +90,10 @@ if ($vars{"num"}==1)
 
 my $index = $vars{"index_dir"}."index_".$vars{"num"};
 my $c1 = "head -n ".$vars{"num"}." ".$vars{"index"}." | tail -n 1 > $index";
-qx{$c1};
+#print $c1."\n";
+my $ret1 = qx{$c1};
+#print $ret1;
+
 open(F, $index)||die("Unable to create an index file for job ".$vars{"num"});
 my $line= <F>;
 chomp $line;

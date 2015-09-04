@@ -93,10 +93,11 @@ print $ret_combine;
 ## Genotype (in parallel)
 
 my $gt = "cat $outdir"."combine/list_args_for_final_step | ";
-$gt .= "parallel --gnu -j $num_procs --colsep '\t' ";
+$gt .= "parallel --gnu -j $num_procs --colsep \'\\t\' ";
 $gt .= $cortex_dir."scripts/calling/gt_1sample.pl ";
 $gt .= $outdir."combine/config.txt ";
 $gt .= $outdir."/combine/".$prefix."_sites.vcf ";
 $gt .= " --sample {1} --outdir {2} --sample_graph {3} ";
+print "$gt\n";
 my $ret_gt = qx{$gt};
 print $ret_gt;
