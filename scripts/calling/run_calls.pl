@@ -2343,7 +2343,7 @@ sub run_checks
 	    foreach my $f (@files)
 	    {
 		
-		if (($f =~ /k$z/) && ($f =~ /.ctx/))
+		if (($f =~ /k$z/) && ($f =~ /.ctx$/))
 		{
 		    $found=1;
 		    $k_to_refbin{$z}=$refbindir.$f;
