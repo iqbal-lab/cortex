@@ -93,7 +93,8 @@ my $ref_falist =$outdir."filelists/"."ref_list";
 my $cmd_list =  "ls $ref_fa > $ref_falist";
 qx{$cmd_list};
 my $refbin = $refdir."ctx_bins/".$ref_id.".k".$kmer.".ctx";
-my $ref_bin_log = $refbin.".log";
+my $ref_bin_log = $refdir."ctx_bins/".$ref_id.".k".$kmer.".log";
+
 my $cmd_build = "$cortex_bin --se_list $ref_falist --kmer $kmer ";
     $cmd_build .= "--mem_height $mem_height --mem_width $mem_width ";
     $cmd_build .= "--sample_id $ref_id --dump_binary $refbin > $ref_bin_log";
