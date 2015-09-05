@@ -57,7 +57,7 @@ my $mem_width="";
 my $prep = "perl $cortex_dir"."scripts/calling/prepare.pl --index $all_samples_index --ref_fa $ref_fa";
 $prep .= " --dir_for_ref_objects $refdir --vcftools_dir $vcftools_dir --outdir $outdir ";
 $prep .= " --stampy_bin $stampy_bin --kmer $kmer";
-#my $ret_prep = qx{$prep};
+my $ret_prep = qx{$prep};
 
 ## Build
 
@@ -80,15 +80,15 @@ if ( ($mem_height ne "") && ($mem_width ne ""))
 }
 $build .= " ::: {1..".$num_samples."}";
 
-#my $ret_build = qx{$build};
+my $ret_build = qx{$build};
 
 
 ## Combine
 
 my $combine = "perl $cortex_dir"."scripts/analyse_variants/combine/combine_vcfs.pl ";
 $combine .= " --prefix $prefix --outdir $outdir --intersect_ref ";
-#my $ret_combine = qx{$combine};
-#print $ret_combine;
+my $ret_combine = qx{$combine};
+print $ret_combine;
 
 ## Genotype (in parallel)
 
