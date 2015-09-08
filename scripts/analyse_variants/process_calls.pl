@@ -1199,7 +1199,7 @@ sub get_vcf_header
 	$head = $head . "##fileformat=VCFv4.0\n";
 	$head = $head . "##fileDate=$date\n";
 	$head = $head
-	  . "##phasing=none, though some calls involve phasing clustered variants\n";
+	  . "##phasing=none,though some calls involve phasing clustered variants\n";
 	$head = $head
 	  . "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
 	$head = $head
@@ -1237,9 +1237,9 @@ sub get_vcf_header
 	$head = $head
 	  . "##FILTER=<ID=MISMAPPED_UNPLACEABLE,Description=\"Stampy mapped the variant (using the 5p-flank) confidently (mapqual> $mapping_qual_thresh) to a place where the ref-allele does not match\">\n";
 	$head = $head
-	  . "##FILTER=<ID=MULTIALLELIC, Description=\"Cortex does not call multiallelic sites, but combining run_calls VCFs can produce them. Filtered as current genotyper assumes biallelic.\">\n";
+	  . "##FILTER=<ID=MULTIALLELIC,Description=\"Cortex does not call multiallelic sites, but combining run_calls VCFs can produce them. Filtered as current genotyper assumes biallelic.\">\n";
 	$head = $head
-	  . "##FILTER=<ID=OVERLAPPING_SITE, Description=\"If Stampy (or combining VCFs) has placed two biallelic variants overlapping, they are filtered\">\n";
+	  . "##FILTER=<ID=OVERLAPPING_SITE,Description=\"If Stampy (or combining VCFs) has placed two biallelic variants overlapping, they are filtered\">\n";
 
 	$head = $head . "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t";
 	#if ( $colourfile !~ /,/ )

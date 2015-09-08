@@ -101,3 +101,29 @@ $gt .= " --sample {1} --outdir {2} --sample_graph {3} ";
 print "$gt\n";
 my $ret_gt = qx{$gt};
 print $ret_gt;
+
+
+
+### Now combine all VCFs.
+my $mk_list = "ls $outdir"."/*/union_calls/*vcf > $outdir"."list_per_sample_vcfs_on_final_sitelist";
+qx{$mk_list};
+open(LIST, $outdir."list_per_sample_vcfs_on_final_sitelist")||die();
+while (<LIST>)
+{
+    my $file = $_;
+    chomp $file;
+    my $bgz = "bgzip -c $file > $file".".gz";
+    my $bgz_ret = qx{$bgz};
+    #print "$bgz\n$bgz_ret\n";
+    my $tab = "tabix -p vcf $file".".gz";
+    my $tab_ret = qx{$tab};
+    #print "$tab\n$tab_ret\n";
+}
+close(LIST);
+
+my $vcfm = $vcftools_dir."perl/vcf-merge";
+my $merge_cmd = "$vcfm  $outdir"."/*/union_calls/*vcf.gz > $outdir"."/combined.vcf";
+print "$merge_cmd\n";
+my $merge_ret = qx{$merge_cmd};
+print "$merge_ret\n";
+print "DONE\n";
