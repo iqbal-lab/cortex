@@ -33,7 +33,7 @@ my $outdir="";
 my $kmer="";
 my $num_procs="";
 my $mem_height="";
-my $prefix = "";
+my $prefix = "default_prefix";
 my $mem_width="";
 &GetOptions(
     'index:s'                     =>\$all_samples_index,
@@ -122,7 +122,7 @@ while (<LIST>)
 close(LIST);
 
 my $vcfm = $vcftools_dir."perl/vcf-merge";
-my $merge_cmd = "$vcfm  $outdir"."/*/union_calls/*vcf.gz > $outdir"."/combined.vcf";
+my $merge_cmd = "$vcfm  $outdir"."/*/union_calls/*vcf.gz > $outdir".$prefix.".combined.vcf";
 print "$merge_cmd\n";
 my $merge_ret = qx{$merge_cmd};
 print "$merge_ret\n";
