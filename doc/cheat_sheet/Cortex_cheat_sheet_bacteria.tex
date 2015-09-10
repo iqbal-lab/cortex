@@ -71,7 +71,7 @@ left=10mm,right=10mm,top=10mm,bottom=15mm}
 \makeatother
 
 
-\title{Cortex cheat sheet for bacterial genomics}
+\title{Cortex for bacterial genomics: quickstart}
 \date{2015}
 
 
@@ -90,51 +90,34 @@ Download Cortex from github (https://github.com/iqbal-lab/cortex)  - there are d
 You must have installed VCFtools (and have the entire directory, not just the binary executable), R and Stampy. R must be in your path. Add the following directories to PERL5LIB and PATH
 \begin{verbatim}
 export PERL5LIB= /path/cortex/scripts/analyse_variants/
-    bioinf-perl/lib;/path/cortex/scripts/calling:$PERL5LIB
+    bioinf-perl/lib;/path/cortex/scripts/calling:
+    /path/VCFTools_dir/perl:$PERL5LIB
 export PATH = /path/cortex/scripts/analyse_variants/
    needleman_wunsch-0.3.0
 \end{verbatim}
+Also, make an INDEX file, mapping sample-identifiers to sequence data. 
 
+\section{Independent workflow: motivation}
+Do variant discovery independently for each sample (against a reference), then combine the callsets to make a single set of candidate sites (SNPs, indels, SVs), and then genotype all samples. 
 
-\section{Preparation (once per species)}
+We already have a script for this - run\_calls.pl - but at the genotyping step this combines all samples into one graph. This won't scale to thousands of samples, so we have a new pipeline. This cheatsheet shows how to run it on a single machine with many CPUs/cores, using GNU parallels.
 
-There are a set of files Cortex needs to use, which you should not need to worry about, so we wrap it all up:
+\section{Independent workflow: how to run it}
+This script will compile Cortex for you, make reference genome binaries, Stampy indexes - all the things that used to have to be done manually. It will also choose appropriate memory-use parameters
 \begin{verbatim}
-perl scripts/calling/prepare.pl --index INDEX  
-     --ref_fa species.fasta 
-     --dir_for_ref_objects /path/refdir/ 
-     --vcftools_dir /path2/vcftools_1.0.9/
-     --outdir /path3/results
-     --stampy_bin /path4/stampy.py  --kmer 31
+ perl cortex/scripts/calling/run_indep_wkflow_with_gnu_par.pl  
+ --index INDEX  --ref_fa ref_genome.fa  
+ --dir_for_ref_objects ref/ 
+ --vcftools_dir ~/installed_apps/vcftools_0.1.9/ 
+ --outdir results/ 
+ --stampy_bin ~/installed_apps/stampy-1.0.23/stampy.py 
+ --kmer 31 --procs 20 --prefix salmonella
 \end{verbatim}
-This script will create a config script in /path3/results containing information about your parameter choices, so you do not need to enter them again in subsequent scripts.
+This starts with FASTQ (or BAM) files, and finishes with a single VCF with all samples genotyped at the same sites. 
+
+\section{Troubleshooting}
 
 
-\section{Compare samples against a reference; combine results; genotype}
-{\bf Step1 }First we build per-sample graphs in parallel using commands such as this GNU parallels command. This will create a directory for each sample within directory /path3/results/.  A typical command would be (for 1700 samples):
-\begin{verbatim}
-parallel --gnu -j 20  
-  perl scripts/calling/build_samples_parallel.pl 
-  --num {}  --index INDEX  
-  --outdir /path3/results --kmer 31 ::: {1..1700}
-\end{verbatim}
-{\bf Step2} Combine all the per-sample VCFs to get one combined set of sites (SNPs, indels, structural variants). 
-
-\begin{verbatim}
-perl scripts/analyse_variants/combine/combine_vcfs.pl 
- --prefix XYZ   --outdir  /path3/results --intersect_ref
-   
-\end{verbatim}
-{\bf Step 3} Finally, independently genotype each sample at all of these sites. Here using GNU parallels to spread across 20 cores of a server. Memory use now drops as we only use the graph of poymorphisms.
-\begin{verbatim}
-cat /path3/results/combine/list_args_for_final_step | 
-    parallel --colsep '\t'  perl scripts/calling/gt_1sample.pl
-    --config /path3/results/combine/config.txt
-    --invcf /path3/results/combine/XYZ.sites_vcf
-    --sample {1} --outdir {2}  --sample_graph {3} 
-\end{verbatim}
-This will give you one VCF file per sample in \\
-/path3/results/\{sample\_id\}/union\_calls/
 
 \section{Segregating variants within our dataset (joint workflow)}
 First build sample graphs as Step1 in the previous example. Then UNDETERMINED
