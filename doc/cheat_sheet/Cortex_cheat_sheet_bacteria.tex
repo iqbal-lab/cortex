@@ -100,7 +100,8 @@ Also, make an INDEX file, mapping sample-identifiers to sequence data.
 \section{Independent workflow: motivation}
 Do variant discovery independently for each sample (against a reference), then combine the callsets to make a single set of candidate sites (SNPs, indels, SVs), and then genotype all samples. 
 
-We already have a script for this - run\_calls.pl - but at the genotyping step this combines all samples into one graph. This won't scale to thousands of samples, so we have a new pipeline. This cheatsheet shows how to run it on a single machine with many CPUs/cores, using GNU parallels.
+
+This new pipeline will parallelise and scale to hundreds of thousands of bacteria. This cheatsheet shows how to run it on a single machine with many CPUs/cores, using GNU parallels.
 
 \section{Independent workflow: how to run it}
 This script will compile Cortex for you, make reference genome binaries, Stampy indexes - all the things that used to have to be done manually. It will also choose appropriate memory-use parameters
@@ -116,7 +117,7 @@ This script will compile Cortex for you, make reference genome binaries, Stampy 
 This starts with FASTQ (or BAM) files, and finishes with a single VCF with all samples genotyped at the same sites. 
 
 \section{Troubleshooting}
-
+If some of your samples have extremely high coverage, it is possible the default memory use parameters won't be enough. 
 
 
 \section{Segregating variants within our dataset (joint workflow)}
