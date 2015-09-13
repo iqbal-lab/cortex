@@ -72,13 +72,12 @@ else
     die("index file $all_samples_index is malformed/missing. \"wc -l\" fails to count the number of lines in it\n");
 }
 
-my $build = "parallel --gnu -j $num_procs perl $cortex_dir"."scripts/calling/build_samples_parallel.pl --num {} ";
+my $build = "seq 1 $num_samples | parallel --gnu -j $num_procs perl $cortex_dir"."scripts/calling/build_samples_parallel.pl --num {} ";
 $build .= " --index $all_samples_index --outdir $outdir  --kmer $kmer ";
 if ( ($mem_height ne "") && ($mem_width ne "")) 
 {
     $build .= " --mem_height $mem_height --mem_width $mem_width ";
 }
-$build .= " ::: {1..".$num_samples."}";
 
 my $ret_build = qx{$build};
 
