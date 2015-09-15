@@ -36,7 +36,15 @@ while (<VCF>)
 	    $right = uc($2);
 	    if ( (length($left)<$kmer) || (length($right)<$kmer) )
 	    {
-		die("Your vcf is annotatedw with flanks, but they are shorter than the kmer\n");
+		## just pad with Ns - this must be a call at the end of a chromosome.
+		while (length($left)<$kmer)
+		{
+		    $left = "N".$left;
+		}
+		while (length($right)<$kmer)
+		{
+		    $left = $right."N";
+		}
 	    }
 	}
 
