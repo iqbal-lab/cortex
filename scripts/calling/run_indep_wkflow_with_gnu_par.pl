@@ -50,7 +50,10 @@ my $mem_width="";
     );
 
 
-
+if ($outdir !~ /\/$/)
+{
+    $outdir = $outdir.'/';
+}
 
 ### Prepare
 
