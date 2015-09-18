@@ -120,10 +120,10 @@ my $gpc = "cat $list >> $gnupar_list";
 qx{$gpc};
 
 ### parallelise zipping and indexing
-my $gp_cmd = "parallel --gnu -j $num_procs --header : ' $cortex_dir"."scripts/calling/zip_index.pl";
+my $gp_cmd = "parallel --gnu -j $num_procs --header : ' perl  $cortex_dir"."scripts/calling/zip_index.pl";
 $gp_cmd .= " {FILE}' :::: $gnupar_list ";
 print "$gp_cmd\n";
-$gp_ret = qx{$gm_cmd};
+my $gp_ret = qx{$gp_cmd};
 print "$gp_ret\n";
 
 ### Now for the moment we use vcf-merge though I suspect it wont scale

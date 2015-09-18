@@ -366,8 +366,14 @@ sub compile_cortex
     foreach my $n (@nums)
     {
 	my $c = "export LD_LIBRARY_PATH=$ctx_dir"."/libs/gsl-1.15/:$ctx_dir"."/libs/gsl-1.15/blas/:$ctx_dir"."/libs/gsl-1.15/.libs/:$ctx_dir"."/libs/gsl-1.15/blas/.libs/:$ctx_dir"."/libs/gsl-1.15/cblas/.libs/:\$"."LD_LIBRARY_PATH; cd $ctx_dir; make NUM_COLS=$n MAXK=$maxk cortex_var 2>&1;";
-	my $r = qx{$c};
+
 	my $bin = $ctx_dir."bin/cortex_var_".$maxk."_c".$n;
+	if (!(-e $bin))
+	{
+	    #then compile
+	    my $r = qx{$c};
+	}
+	
 	if (!(-e $bin))
 	{
 	    die("Failed to compile Cortex, tried to make $bin and failed\n");
