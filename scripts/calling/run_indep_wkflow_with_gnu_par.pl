@@ -55,6 +55,7 @@ if ($outdir !~ /\/$/)
     $outdir = $outdir.'/';
 }
 
+
 ### Prepare
 
 my $prep = "perl $cortex_dir"."scripts/calling/prepare.pl --index $all_samples_index --ref_fa $ref_fa";
@@ -110,20 +111,22 @@ print $ret_gt;
 ### Now combine all VCFs.
 my $mk_list = "ls $outdir"."/*/union_calls/*vcf > $outdir"."list_per_sample_vcfs_on_final_sitelist";
 qx{$mk_list};
-open(LIST, $outdir."list_per_sample_vcfs_on_final_sitelist")||die();
-while (<LIST>)
-{
-    my $file = $_;
-    chomp $file;
-    my $bgz = "bgzip -c $file > $file".".gz";
-    my $bgz_ret = qx{$bgz};
-    #print "$bgz\n$bgz_ret\n";
-    my $tab = "tabix -p vcf $file".".gz";
-    my $tab_ret = qx{$tab};
-    #print "$tab\n$tab_ret\n";
-}
-close(LIST);
+my $list = $outdir."list_per_sample_vcfs_on_final_sitelist";
+my $gnupar_list = $list.".gnupar";
+open(GP, ">".$gnupar_list)||die("Cannot open $gnupar_list");
+print GP "FILE\n";
+close(GP);
+my $gpc = "cat $list >> $gnupar_list";
+qx{$gpc};
 
+### parallelise zipping and indexing
+my $gp_cmd = "parallel --gnu -j $num_procs --header : ' $cortex_dir"."scripts/calling/zip_index.pl";
+$gp_cmd .= " {FILE}' :::: $gnupar_list ";
+print "$gp_cmd\n";
+$gp_ret = qx{$gm_cmd};
+print "$gp_ret\n";
+
+### Now for the moment we use vcf-merge though I suspect it wont scale
 my $vcfm = $vcftools_dir."perl/vcf-merge";
 my $merge_cmd = "$vcfm  $outdir"."/*/union_calls/*vcf.gz > $outdir".$prefix.".combined.vcf";
 print "$merge_cmd\n";
