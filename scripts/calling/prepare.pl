@@ -277,6 +277,10 @@ sub check_args
     
 
 ### is the VCFtools directory actualy a directory with the right stuff?
+    if ($loc_vcftools_dir eq "")
+    {
+	die("You must specify --vcftools_dir\n");
+    }
     if (!(-d $loc_vcftools_dir))
     {
 	die("The vcftools directory specified ($loc_vcftools_dir) doesn't exist\n");
@@ -296,6 +300,22 @@ sub check_args
 	}
     }
     
+
+## check vcflib on path
+    my $vcflc = "vcfcombine --help";
+    my $vcflr = qx{$vcflc};
+    if ($vcflr =~ /usage/)
+    {
+    }
+    elsif ($vcflr =~ /o such file or/)
+    {
+	die("the vcflib/bin directory does not appear to be in your path, or vcflib is not installed at all\n");
+    }
+    else
+    {
+	die("Running vcfcombine --help does not either succeed or fail. Either vcflib needs installing or there is a parsing error\n");
+    }
+
     
 ## Sort out the output directory
     if ($outdir ne "no")
