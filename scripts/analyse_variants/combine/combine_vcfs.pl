@@ -115,7 +115,7 @@ my $cmd111="cat ".$vars{"list_vcfs"}." | xargs cat | grep -v \"\#\" | grep PASS 
 my $rcmd111 = qx{$cmd111};
 #print "$rcmd111\n";
 
-my $cmd1111 = "perl  -I $libdir $rd  --take_first --pass $tmpvcf > $outvcf1 2>/dev/null"; #| ≈ß$ro --pass --filter_txt OVERLAPPING_SITE | grep -v \"\" >  $outvcf1";
+my $cmd1111 = "perl  -I $libdir $rd  --take_first --pass $tmpvcf > $outvcf1 2>/dev/null"; #| $ro --pass --filter_txt OVERLAPPING_SITE | grep -v \"\" >  $outvcf1";
 #print "$cmd1111\n";
 my $rcmd1111=qx{$cmd1111};
 #print "$rcmd1111\n";

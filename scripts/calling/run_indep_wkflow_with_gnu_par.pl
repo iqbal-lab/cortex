@@ -10,11 +10,16 @@ use Cwd    qw( abs_path );
 use FindBin qw($Bin);
 
 my $cortex_dir;
+my $calling_dir;
+
+my $str_input_args = "*********** Command-line used was : *********************\nperl ".$0." ".join(" ",@ARGV)."\n*********************************************************\n";
 
 BEGIN
 {
     $cortex_dir = abs_path($0);
+    $calling_dir = $cortex_dir;
     $cortex_dir =~ s/scripts\/calling\/run_indep_wkflow_with_gnu_par.pl//;
+    $calling_dir =~ s/run_indep_wkflow_with_gnu_par.pl//;
     push ( @INC, $cortex_dir."scripts/calling/");
 }
 
@@ -35,6 +40,7 @@ my $num_procs="";
 my $mem_height="";
 my $prefix = "default_prefix";
 my $mem_width="";
+my $global_logfile = "default_logfile";
 &GetOptions(
     'index:s'                     =>\$all_samples_index,
     'ref_fa:s'                    =>\$ref_fa,
@@ -47,6 +53,7 @@ my $mem_width="";
     'procs:i'                     =>\$num_procs,
     'mem_height:i'                     =>\$mem_height,
     'mem_width:i'                     =>\$mem_width,
+    'logfile:s'                   =>\$global_logfile,
     );
 
 
@@ -55,6 +62,21 @@ if ($outdir !~ /\/$/)
     $outdir = $outdir.'/';
 }
 
+my $global_fh;
+if ($global_logfile ne "")
+{
+    open($global_fh, ">".$global_logfile)||die("Cannot open log file $global_logfile - have you given a bad path? Permissions issue?\n");
+    *STDOUT = *$global_fh;
+}
+
+
+## print start time
+print "Start time: ";
+my $st = "date";
+my $ret_st = qx{date};
+print "$ret_st\n";
+
+print "\n\n$str_input_args\n";
 
 ### Prepare
 
@@ -112,6 +134,8 @@ print $ret_gt;
 my $mk_list = "ls $outdir"."/*/union_calls/*vcf > $outdir"."list_per_sample_vcfs_on_final_sitelist";
 qx{$mk_list};
 my $list = $outdir."list_per_sample_vcfs_on_final_sitelist";
+
+
 my $gnupar_list = $list.".gnupar";
 open(GP, ">".$gnupar_list)||die("Cannot open $gnupar_list");
 print GP "FILE\n";
@@ -120,17 +144,56 @@ my $gpc = "cat $list >> $gnupar_list";
 qx{$gpc};
 
 ### parallelise zipping and indexing
-#my $gp_cmd = "parallel --gnu -j $num_procs --header : ' perl  $cortex_dir"."scripts/calling/zip_index.pl";
-#$gp_cmd .= " {FILE}' :::: $gnupar_list ";
-#print "$gp_cmd\n";
-#my $gp_ret = qx{$gp_cmd};
-#print "$gp_ret\n";
+my $gp_cmd = "parallel --gnu -j $num_procs --header : ' perl  $cortex_dir"."scripts/calling/zip_index.pl";
+$gp_cmd .= " {FILE}' :::: $gnupar_list ";
+print "$gp_cmd\n";
+my $gp_ret = qx{$gp_cmd};
+print "$gp_ret\n";
 
-### Now for the moment we use vcf-merge though I suspect it wont scale
-#my $vcfm = $vcftools_dir."perl/vcf-merge";
-#my $merge_cmd = "$vcfm  $outdir"."/*/union_calls/*vcf.gz > $outdir".$prefix.".combined.vcf";
-#print "$merge_cmd\n";
-#my $merge_ret = qx{$merge_cmd};
-#print "$merge_ret\n";
+##update the list to refer to zipped files
+$mk_list = "ls $outdir"."/*/union_calls/*vcf.gz > $outdir"."list_per_sample_vcfs_on_final_sitelist";
+qx{$mk_list};
+
+my $final_vcf = $outdir.$prefix."union_calls.all_samples.vcf";
+merge_vcfs($list, $final_vcf);
+
 
 print "DONE\n";
+
+## print end time
+print "End time: ";
+$st = "date";
+$ret_st = qx{date};
+print "$ret_st\n";
+
+close($global_fh);
+exit(0);
+
+sub merge_vcfs
+{
+    my ($list_all, $ofile) = @_;
+    
+    my $cmd = "bcftools merge --file-list $list_all -o $ofile";
+    qx{$cmd};
+
+}
+
+
+sub merge_next
+{
+    my ($list, $curr, $number_sams, $final_outfile, $tempfile, $limit) =@_;
+    
+    my $of;
+    if ($curr+$limit-1 > $number_sams)
+    {
+	$of = $final_outfile;
+    }
+    else
+    {
+	$of = $tempfile;
+    }
+    my $cmd = "tail -n+$curr $list | head -n $limit | xargs vcfcombine > $of";
+    print "$cmd\n";
+    my $ret = qx{$cmd};
+    print "$ret\n";
+}

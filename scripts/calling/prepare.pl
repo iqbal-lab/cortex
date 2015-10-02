@@ -302,19 +302,19 @@ sub check_args
     
 
 ## check vcflib on path
-    my $vcflc = "vcfcombine --help";
-    my $vcflr = qx{$vcflc};
-    if ($vcflr =~ /usage/)
-    {
-    }
-    elsif ($vcflr =~ /o such file or/)
-    {
-	die("the vcflib/bin directory does not appear to be in your path, or vcflib is not installed at all\n");
-    }
-    else
-    {
-	die("Running vcfcombine --help does not either succeed or fail. Either vcflib needs installing or there is a parsing error\n");
-    }
+#    my $vcflc = "vcfcombine --help 2>/dev/null";
+#    my $vcflr = qx{$vcflc};
+#    if ($vcflr =~ /usage/)
+#    {
+#    }
+#    elsif ($vcflr =~ /o such file or/)
+#    {
+#	die("the vcflib/bin directory does not appear to be in your path, or vcflib is not installed at all\n");
+#    }
+#    else
+#    {
+#	die("Running vcfcombine --help does not either succeed or fail. Either vcflib needs installing or there is a parsing error\n");
+#    }
 
     
 ## Sort out the output directory

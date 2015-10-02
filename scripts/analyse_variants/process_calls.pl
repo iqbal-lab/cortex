@@ -1215,6 +1215,11 @@ sub get_vcf_header
 	$head = $head
 	  . "##INFO=<ID=SVLEN,Number=1,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">\n";
 	$head = $head
+	  . "##INFO=<ID=KMER,Number=1,Type=Integer,Description=\"Kmer size at which variant was discovered\">\n";
+	$head = $head
+	  . "##INFO=<ID=PV,Number=1,Type=Integer,Description=\"Possible variation in clean indel position\">\n";
+
+	$head = $head
 	  . "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of variant\">\n";
 	$head = $head . "##ALT=<ID=SNP,Description=\"SNP\">\n";
 	$head = $head
