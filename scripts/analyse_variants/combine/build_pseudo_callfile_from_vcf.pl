@@ -3,7 +3,6 @@ use strict;
 
 use File::Basename;
 
-my $cortex_dir = "/home/zam/dev/hg/CORTEX_release_v1.0.5.21/";
 my $mem_height = 22;
 my $mem_width = 73;
 my $pop="";
@@ -59,7 +58,7 @@ while (<VCF>)
 	if ( $st1 eq $st2  )
 	{
 	    ##VCF has padded, adding a base at the start
-	    $lflank = $lflank.$st1;
+	#    $lflank = $lflank.$st1;
 	    $branch1 = substr($branch1,1);
 	    $branch2 = substr($branch2,1);
 	}
