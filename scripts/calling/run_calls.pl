@@ -1965,9 +1965,10 @@ sub get_fastq_filelists
     {
 	my $line = $_;
 	chomp $line;
-	my @sp = split(/\t/, $line);
+	my @sp = split(/\s+/, $line);
 	my $name = $sp[0];
 	my $se   = $sp[1];
+
 	if (get_num_lines($se)==0)
 	{
 	    $href_se_lists->{$name} = "NO";	    
@@ -2007,6 +2008,7 @@ sub get_num_lines
     {
 	my $cmd = "wc -l $file";
 	my $ret = qx{$cmd};
+
 	if ($ret =~ /(\d+)\s+$file/)
 	{
 	    return $1;

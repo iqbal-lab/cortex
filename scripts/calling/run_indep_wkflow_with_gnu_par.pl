@@ -179,21 +179,3 @@ sub merge_vcfs
 }
 
 
-sub merge_next
-{
-    my ($list, $curr, $number_sams, $final_outfile, $tempfile, $limit) =@_;
-    
-    my $of;
-    if ($curr+$limit-1 > $number_sams)
-    {
-	$of = $final_outfile;
-    }
-    else
-    {
-	$of = $tempfile;
-    }
-    my $cmd = "tail -n+$curr $list | head -n $limit | xargs vcfcombine > $of";
-    print "$cmd\n";
-    my $ret = qx{$cmd};
-    print "$ret\n";
-}
