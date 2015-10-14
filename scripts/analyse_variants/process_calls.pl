@@ -2270,17 +2270,17 @@ sub print_vcf_entry
 			my $two_alleles = $aref_indel_alleles->[ $cnt - 1 ];
 			my $this_indel_ref_allele;
 			my $this_indel_alt_allele;
-			if ( $two_alleles =~ /^([ACGTN]+)_([ACGTN]+)$/ )
+			if ( $two_alleles =~ /^([ACGTNacgtn]+)_([ACGTNacgtn]+)$/ )
 			{
 				$this_indel_ref_allele = $1;
 				$this_indel_alt_allele = $2;
 			}
-			elsif ( $two_alleles =~ /^_([ACGTN]+)$/ )
+			elsif ( $two_alleles =~ /^_([ACGTNacgtn]+)$/ )
 			{
 				$this_indel_ref_allele = "";
 				$this_indel_alt_allele = $1;
 			}
-			elsif ( $two_alleles =~ /^([ACGTN]+)_$/ )
+			elsif ( $two_alleles =~ /^([ACGTNacgtn]+)_$/ )
 			{
 				$this_indel_ref_allele = $1;
 				$this_indel_alt_allele = "";
