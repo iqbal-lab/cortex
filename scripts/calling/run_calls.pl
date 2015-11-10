@@ -2161,7 +2161,7 @@ sub get_number_samples
     {
 	my $line = $_;
 	chomp $line;
-	my @sp = split(/\t/, $line);
+	my @sp = split(/\s+/, $line);
 	if (scalar (@sp) != 4)
 	{
 	    print("Format error in fastaq index $index - each line should be tab separated with 4 fields. Name of sample\tse_list\tpe_list1\tpe_list2\n");
