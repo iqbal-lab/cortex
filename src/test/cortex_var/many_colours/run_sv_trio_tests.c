@@ -371,11 +371,11 @@ int  main()
 
 
 
-   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for comparing overlap of alleles with each other and selves", test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles ))
+   /*   if (NULL == CU_add_test(pPopGraphSuite, "Test utility function for comparing overlap of alleles with each other and selves", test_initialise_multiplicities_of_allele_nodes_wrt_both_alleles ))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
-      }
+	}*/
 
 
 

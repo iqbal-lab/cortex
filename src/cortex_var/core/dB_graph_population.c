@@ -9545,11 +9545,7 @@ int db_graph_make_reference_path_based_sv_calls_in_subgraph_defined_by_func_of_c
 							  flank3p,
 							  db_graph->kmer_size,
 							  false);
-		      printf("ZAM abotu to call extar info. lens of elements of var are %d, %d, %d,%d\n", 
-			     annovar.var->len_flank5p,
-			     annovar.var->len_one_allele,
-			     annovar.var->len_other_allele,
-			     annovar.var->len_flank5p);
+
 		      print_extra_info(&annovar, output_file);
 		    }
 		 
