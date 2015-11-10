@@ -63,11 +63,6 @@ ifeq ($(UNAME),Darwin)
 endif
 
 # Library paths
-IDIR_GSL = libs/gsl-1.15
-IDIR_GSL_ALSO = libs/gsl-1.15/gsl
-IDIR_GSL3 = libs/gsl-1.15/.libs
-IDIR_GSL4 = libs/gsl-1.15/cblas/.libs
-
 IDIR_STRS = libs/string_buffer
 IDIR_SEQ = libs/seq_file
 IDIR_BAM = libs/htslib/htslib
@@ -126,13 +121,13 @@ else
 	OPT := -O3 $(OPT)
 endif
 
-LIBLIST = -lgsl -lgslcblas -lseqfile -lstrbuf -lhts -lpthread -lz -lm
+LIBLIST = -lseqfile -lstrbuf -lhts -lpthread -lz -lm
 TEST_LIBLIST = -lcunit -lncurses $(LIBLIST)
 #TEST_LIBLIST = -lcunit  $(LIBLIST)
 
 # Add -L/usr/local/lib/ to satisfy some systems that struggle to link libz
-LIBINCS = -L/usr/local/lib -I$(IDIR_GSL) -I$(IDIR_GSL_ALSO) -I$(IDIR_BAM) \
-          -I$(IDIR_SEQ) -I$(IDIR_STRS) -L$(IDIR_GSL) -L$(IDIR_GSL_ALSO) -L$(IDIR_GSL3)  -L$(IDIR_GSL4) \
+LIBINCS = -L/usr/local/lib -I$(IDIR_BAM) \
+          -I$(IDIR_SEQ) -I$(IDIR_STRS)  \
           -L$(IDIR_BAM) -L$(IDIR_SEQ) -L$(IDIR_STRS)
 
 TEST_LIBINCS = -I$(IDIR_CUNIT) -L$(LDIR_CUNIT) $(LIBINCS)
@@ -155,7 +150,7 @@ BASIC_TESTS_OBJ = src/obj/basic/binary_kmer.o src/obj/basic/global.o src/obj/bas
 
 HASH_TABLE_TESTS_OBJ = src/obj/basic/global.o src/obj/test/hash_table/run_hash_table_tests.o src/obj/cortex_var/many_colours/element.o src/obj/cortex_var/many_colours/hash_value.o src/obj/cortex_var/many_colours/hash_table.o src/obj/test/hash_table/test_hash.o src/obj/basic/binary_kmer.o  src/obj/basic/seq.o src/obj/basic/event_encoding.o
 
-CORTEX_VAR_TESTS_OBJ = src/obj/basic/global.o src/obj/cortex_var/many_colours/genotyping_element.o src/obj/cortex_var/many_colours/little_hash_for_genotyping.o src/obj/cortex_var/many_colours/model_info.o src/obj/test/cortex_var/many_colours/test_genome_complexity.o src/obj/test/cortex_var/many_colours/test_db_complex_genotyping.o src/obj/test/cortex_var/many_colours/test_db_variants.o src/obj/test/cortex_var/many_colours/test_model_selection.o src/obj/test/cortex_var/many_colours/test_file_reader.o src/obj/test/cortex_var/many_colours/test_pop_load_and_print.o src/obj/test/cortex_var/many_colours/run_sv_trio_tests.o src/obj/test/cortex_var/many_colours/supernode_cmp.o src/obj/test/cortex_var/many_colours/test_pop_supernode_consensus.o src/obj/test/cortex_var/many_colours/test_pop_element.o src/obj/test/cortex_var/many_colours/test_dB_graph_population.o src/obj/cortex_var/many_colours/binary_kmer.o src/obj/cortex_var/many_colours/element.o src/obj/cortex_var/many_colours/seq.o src/obj/cortex_var/many_colours/hash_value.o src/obj/cortex_var/many_colours/hash_table.o src/obj/cortex_var/many_colours/dB_graph.o src/obj/cortex_var/many_colours/file_reader.o src/obj/cortex_var/many_colours/error_correction.o src/obj/cortex_var/many_colours/dB_graph_population.o src/obj/cortex_var/many_colours/dB_graph_supernode.o src/obj/cortex_var/many_colours/db_variants.o src/obj/cortex_var/many_colours/event_encoding.o src/obj/cortex_var/many_colours/graph_info.o src/obj/cortex_var/many_colours/model_selection.o src/obj/cortex_var/many_colours/maths.o src/obj/cortex_var/many_colours/db_complex_genotyping.o src/obj/test/cortex_var/many_colours/simulator.o src/obj/cortex_var/many_colours/genome_complexity.o src/obj/cortex_var/many_colours/seq_error_rate_estimation.o src/obj/test/cortex_var/many_colours/test_seq_error_estimation.o src/obj/test/cortex_var/many_colours/test_error_correction.o
+CORTEX_VAR_TESTS_OBJ = src/obj/basic/global.o src/obj/cortex_var/many_colours/genotyping_element.o src/obj/cortex_var/many_colours/little_hash_for_genotyping.o src/obj/cortex_var/many_colours/model_info.o src/obj/test/cortex_var/many_colours/test_genome_complexity.o  src/obj/test/cortex_var/many_colours/test_db_variants.o src/obj/test/cortex_var/many_colours/test_model_selection.o src/obj/test/cortex_var/many_colours/test_file_reader.o src/obj/test/cortex_var/many_colours/test_pop_load_and_print.o src/obj/test/cortex_var/many_colours/run_sv_trio_tests.o src/obj/test/cortex_var/many_colours/supernode_cmp.o src/obj/test/cortex_var/many_colours/test_pop_supernode_consensus.o src/obj/test/cortex_var/many_colours/test_pop_element.o src/obj/test/cortex_var/many_colours/test_dB_graph_population.o src/obj/cortex_var/many_colours/binary_kmer.o src/obj/cortex_var/many_colours/element.o src/obj/cortex_var/many_colours/seq.o src/obj/cortex_var/many_colours/hash_value.o src/obj/cortex_var/many_colours/hash_table.o src/obj/cortex_var/many_colours/dB_graph.o src/obj/cortex_var/many_colours/file_reader.o src/obj/cortex_var/many_colours/error_correction.o src/obj/cortex_var/many_colours/dB_graph_population.o src/obj/cortex_var/many_colours/dB_graph_supernode.o src/obj/cortex_var/many_colours/db_variants.o src/obj/cortex_var/many_colours/event_encoding.o src/obj/cortex_var/many_colours/graph_info.o src/obj/cortex_var/many_colours/model_selection.o src/obj/cortex_var/many_colours/maths.o src/obj/cortex_var/many_colours/db_complex_genotyping.o src/obj/test/cortex_var/many_colours/simulator.o src/obj/cortex_var/many_colours/genome_complexity.o src/obj/cortex_var/many_colours/seq_error_rate_estimation.o src/obj/test/cortex_var/many_colours/test_seq_error_estimation.o src/obj/test/cortex_var/many_colours/test_error_correction.o
 
 CORTEX_VAR_CMD_LINE_TESTS_OBJ = src/obj/basic/global.o src/obj/cortex_var/many_colours/cmd_line.o src/obj/test/cortex_var/many_colours/test_cmd_line.o src/obj/test/cortex_var/many_colours/run_cmd_line_tests.o src/obj/cortex_var/many_colours/binary_kmer.o src/obj/cortex_var/many_colours/element.o src/obj/cortex_var/many_colours/seq.o src/obj/cortex_var/many_colours/hash_value.o src/obj/cortex_var/many_colours/hash_table.o src/obj/cortex_var/many_colours/dB_graph.o src/obj/cortex_var/many_colours/file_reader.o src/obj/cortex_var/many_colours/dB_graph_population.o src/obj/cortex_var/many_colours/db_variants.o src/obj/cortex_var/many_colours/event_encoding.o src/obj/cortex_var/many_colours/graph_info.o src/obj/cortex_var/many_colours/model_selection.o src/obj/cortex_var/many_colours/maths.o
 
@@ -164,7 +159,7 @@ NUMCOLS_AND_TEST = $(join "_c", $(NUM_COLS))
 CURRENT_DIR = $(shell pwd)
 
 cortex_var : remove_objects $(CORTEX_VAR_OBJ)
-	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) $(OPT_COLS) -L$(CURRENT_DIR)/gsl-1.15 -L$(CURRENT_DIR)/gsl-1.15/gsl -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ) $(LIBLIST)
+	mkdir -p $(BIN); $(CC) $(CFLAGS_CORTEX_VAR) $(OPT) $(OPT_COLS)  -o $(BIN)/cortex_var_$(join $(MAXK_AND_TEXT),$(NUMCOLS_AND_TEST)) $(CORTEX_VAR_OBJ) $(LIBLIST)
 
 run_basic_tests : remove_objects $(BASIC_TESTS_OBJ)
 	mkdir -p $(BIN); mkdir -p $(TEMP_TEST_DIR); $(CC) $(CFLAGS_BASIC_TESTS) $(OPT) -o $(BIN)/run_basic_tests_$(MAXK) $(BASIC_TESTS_OBJ) $(TEST_LIBLIST)

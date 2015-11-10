@@ -33,8 +33,6 @@
 #include <string.h>
 #include <math.h>
 
-#include <gsl_sf_gamma.h>
-
 #include "db_variants.h"
 #include "dB_graph.h"
 #include "dB_graph_population.h"
@@ -794,15 +792,15 @@ double calc_log_likelihood_of_genotype_with_complex_alleles(
 
   if (num_1net_errors>0)
     {
-      log_prob_error += -poisson_1net_err_rate + num_1net_errors*log(poisson_1net_err_rate) - gsl_sf_lnfact(num_1net_errors);
+      log_prob_error += -poisson_1net_err_rate + num_1net_errors*log(poisson_1net_err_rate) - log_factorial(num_1net_errors);
     }
   if (num_2net_errors>0)
     {
-      log_prob_error += -poisson_2net_err_rate + num_2net_errors*log(poisson_2net_err_rate) - gsl_sf_lnfact(num_2net_errors);
+      log_prob_error += -poisson_2net_err_rate + num_2net_errors*log(poisson_2net_err_rate) - log_factorial(num_2net_errors);
     }
   if (num_3net_errors>0)
     {
-      log_prob_error += -poisson_3net_err_rate + num_3net_errors*log(poisson_3net_err_rate) - gsl_sf_lnfact(num_3net_errors);
+      log_prob_error += -poisson_3net_err_rate + num_3net_errors*log(poisson_3net_err_rate) - log_factorial(num_3net_errors);
     }
   
 
@@ -922,7 +920,7 @@ double calc_log_prob_of_covg_on_chunk(double eff_D_over_R, Covg* working_array,
     // add log dpois ( eff_D_over_R * working_array_self_count , covg_on_self_in_this_chunk)
     log_prob += -eff_D_over_R * working_array_len +
                 (double)covg_in_this_chunk * log(eff_D_over_R * working_array_len) -
-                gsl_sf_lnfact(covg_in_this_chunk);
+                log_factorial_uint64_t(covg_in_this_chunk);
   }
 
   return log_prob;
@@ -1332,7 +1330,7 @@ double calc_log_likelihood_of_genotype_with_complex_alleles_using_little_hash(Ge
   if (num_1net_errors>0)
     {
       log_prob_error += -poisson_1net_err_rate + 
-	num_1net_errors*log(poisson_1net_err_rate) - gsl_sf_lnfact(num_1net_errors);
+	num_1net_errors*log(poisson_1net_err_rate) - log_factorial(num_1net_errors);
     }
 
 

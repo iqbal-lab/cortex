@@ -35,7 +35,6 @@
 #include <math.h>
 #include <inttypes.h>
 
-#include <gsl_sf_gamma.h>
 
 // cortex_var headers
 #include "element.h"
@@ -4634,16 +4633,6 @@ boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than
 	return false;
       }
 
-    /*
-    // log of      dpois(c, D_over_R*e*k/3)  * exp(-D_over_R*e*len/3)
-    double llk_cov_under_error_model = -total_dep_of_covg*err_rate_per_base*k/(3*rd_len) 
-                                       + cov*log(total_dep_of_covg*err_rate_per_base*k/(3*rd_len)) 
-                                       - total_dep_of_covg*err_rate_per_base*sp_len/(3*rd_len)
-                                       - gsl_sf_lnfact(cov);
-
-    // dpois(c, total_covg*f*(R-k+1)/R)*exp(-total_covg*f*len/R)
-    double llk_cov_under_pop_var_model = -total_dep_of_covg*f
-    */
 
     if ((len_sp <= db_graph->kmer_size +1 ) && (cov<=covg_thresh))
       {

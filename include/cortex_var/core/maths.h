@@ -35,8 +35,8 @@
 #include "element.h"
 #include "dB_graph.h"
 
-float log_factorial(int number);
-float log_factorial_ll(long long number);
+double log_factorial(int number);
+double log_factorial_uint64_t(uint64_t number);
 int min_of_ints(int a, int b);
 int max_of_ints(int a, int b);
 unsigned long calculate_mean_ulong(unsigned long* array, unsigned long len);

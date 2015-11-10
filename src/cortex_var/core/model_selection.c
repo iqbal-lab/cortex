@@ -1,8 +1,7 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo 
+ * Copyright 2009-2015 Zamin Iqbal and Mario Caccamo 
  * 
  * CORTEX project contacts:  
- * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
  * 		Z. Iqbal (zam@well.ox.ac.uk)
  *
  * **********************************************************************
@@ -33,8 +32,6 @@
 #include <string.h>
 #include <time.h>
 #include <maths.h>
-
-#include <gsl_sf_gamma.h>
 
 #include "element.h"
 #include "file_reader.h"
@@ -304,7 +301,7 @@ double beta_func(double alpha, double beta)
 // and this is that coefficient, so the prior is B(bal_prior,bal_prior)
 double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info, double bal_prior)
 {
-
+  /*
   int total_covg_br1 = 0;
   int total_covg_br2 = 0;
   int i;
@@ -417,7 +414,7 @@ double calculate_integrated_loglikelihood_of_repeat_model_given_data(AnnotatedPu
   //but also return it
   return llk_bal + llk_cov;
   
-
+  */
   
 }
 
@@ -443,6 +440,7 @@ double get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVariant* a
 
 //mu is the paramter of the geometric distribution describing the prior
 //for number of copies in a repeat. lies between 0 and 1.
+
 double ignore_get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVariant* annovar, GraphAndModelInfo* model_info)
 {
   
@@ -477,13 +475,13 @@ double ignore_get_log_bayesfactor_varmodel_over_repeatmodel(AnnotatedPutativeVar
       theta2_bar += annovar->br2_uniq_covg[i];
     }
 
-  double log_prob_repeat = log(mu) + gsl_sf_lnfact(theta1_bar) + gsl_sf_lnfact(theta2_bar)
-    - log(annovar->BigThetaUniq + 1) - log(alpha) ; //(annovar->BigThetaUniq + 1)*log(alpha);
+  double log_prob_repeat = log(mu); // + gsl_sf_lnfact(theta1_bar) + gsl_sf_lnfact(theta2_bar)
+  //    - log(annovar->BigThetaUniq + 1) - log(alpha) ; //(annovar->BigThetaUniq + 1)*log(alpha);
 
   for (i=0; i<NUMBER_OF_COLOURS; i++)
     {
       int thet = annovar->br1_uniq_covg[i]+ annovar->br2_uniq_covg[i];
-      log_prob_repeat +=  thet * log(lambda_s[i]/alpha) - gsl_sf_lnfact(annovar->br1_uniq_covg[i]) - gsl_sf_lnfact(annovar->br2_uniq_covg[i]);
+      log_prob_repeat +=  thet * log(lambda_s[i]/alpha) ; //- gsl_sf_lnfact(annovar->br1_uniq_covg[i]) - gsl_sf_lnfact(annovar->br2_uniq_covg[i]);
     }
   
 

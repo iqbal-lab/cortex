@@ -1,8 +1,7 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo  
+ * Copyright 2009-2015 Zamin Iqbal and Mario Caccamo  
  * 
- * CORTEX project contacts:  
- * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
+ * CORTEX project contact:  
  * 		Z. Iqbal (zam@well.ox.ac.uk)
  *
  * **********************************************************************
@@ -36,14 +35,14 @@
 
 
 // log(n!)= sum from i=1 to n, of  (log(i))                                                                                                                                                                          
-float log_factorial(int number)
+double log_factorial(int number)
 {
   if (number<0)
     {
       die("Do not call log_factorial with negative argument %d\n", number);
     }
   int i;
-  float ret=0;
+  double ret=0;
   for (i=1; i<=number; i++)
     {
       ret+=log(i);
@@ -52,14 +51,14 @@ float log_factorial(int number)
 }
 
 
-float log_factorial_ll(long long number)
+double log_factorial_uint64_t(uint64_t number)
 {
   if (number<0)
     {
-      die("Do not call log_factorial with negative argument %lld\n", number);
+      die("Do not call log_factorial with negative argument %" PRIu64 "\n", number);
     }
-  long long i;
-  float ret=0;
+  uint64_t i;
+  double ret=0;
   for (i=1; i<=number; i++)
     {
       ret+=log(i);

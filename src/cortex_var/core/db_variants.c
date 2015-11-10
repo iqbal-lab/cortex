@@ -30,7 +30,7 @@
 
 
 // third party includes
-#include <gsl_sf_gamma.h>
+
 
 // cortex_var headers
 #include "db_variants.h"
@@ -761,7 +761,7 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
     // Apply formula for likelihood in section 9.0 of Supp. Methods of paper;
     // no unique segment, one shared segment
     return (double)covg_branch_1 * log(theta_one) - theta_one -
-      gsl_sf_lnfact(covg_branch_1) +
+      log_factorial_uint64_t(covg_branch_1) +
       (double)covg_branch_2 * log(error_rate_per_base);
   }
   else if (genotype==hom_other)
@@ -769,7 +769,7 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
     // Apply formula for likelihood in section 9.0 of Supp. Methods of paper;
     // no unique segment, one shared segment
     return (double)covg_branch_2 * log(theta_other) - theta_other -
-           gsl_sf_lnfact(covg_branch_2) +
+           log_factorial_uint64_t(covg_branch_2) +
            (double)covg_branch_1 * log(error_rate_per_base);
   }
   else if (genotype==het)
@@ -777,9 +777,9 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
     // Apply formula for likelihood in section 9.0 of Supp. Methods of paper;
     // no shared segment, TWO unique segments
     return ((double)covg_branch_1*log(theta_one/2) - theta_one/2 -
-             gsl_sf_lnfact(covg_branch_1)) +
+             log_factorial_uint64_t(covg_branch_1)) +
            ((double)covg_branch_2*log(theta_other/2) - theta_other/2 -
-            gsl_sf_lnfact(covg_branch_2));
+            log_factorial_uint64_t(covg_branch_2));
   }
   else
   {
