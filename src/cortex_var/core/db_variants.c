@@ -1,8 +1,7 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo  
+ * Copyright 2009-2015 Zamin Iqbal and Mario Caccamo  
  * 
  * CORTEX project contacts:  
- * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
  * 		Z. Iqbal (zam@well.ox.ac.uk)
  *
  * **********************************************************************
@@ -568,9 +567,6 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
 
   double theta   = ((double)(sequencing_depth_of_coverage * (read_length - annovar->kmer +1 )))  /( (double) read_length );
 
-  //DEBUG
-  //printf("ZAM - covg on two alleles is %" PRIu64 ",%" PRIu64 "\n", (uint64_t) (annovar->br1_covg[colour]),(uint64_t) (annovar->br2_covg[colour]));
-
   annovar->gen_log_lh[colour].log_lh[hom_one]   = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
 								     annovar->br1_covg[colour],
@@ -615,9 +611,6 @@ void get_all_genotype_log_likelihoods_at_PD_call_for_one_colour_using_juncs(Anno
 
   double theta   = ((double)(sequencing_depth_of_coverage * (read_length - annovar->kmer +1)))  /( (double) read_length );
 
-  //DEBUG
-  //printf("ZAM - covg on two alleles is %" PRIu64 ",%" PRIu64 "\n", (uint64_t) (annovar->br1_covg[colour]),(uint64_t) (annovar->br2_covg[colour]));
-
   annovar->gen_log_lh[colour].log_lh[hom_one]   = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
 								     annovar->br1_uniq_covg[colour],
@@ -647,8 +640,8 @@ void get_all_genotype_log_likelihoods_at_PD_call_for_one_colour_using_juncs(Anno
 
 
 void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(
-  AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, 
-  double sequencing_depth_of_coverage, int read_length, int colour)
+									    AnnotatedPutativeVariant* annovar, double seq_error_rate_per_base, 
+									    double sequencing_depth_of_coverage, int read_length, int colour)
 {
   boolean too_short = false;
   Covg initial_covg_plus_upward_jumps_branch1 = 
@@ -674,15 +667,15 @@ void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(
   annovar->gen_log_lh[colour].log_lh[hom_one]   = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
 								     hom_one, seq_error_rate_per_base, 
-								     initial_covg_plus_upward_jumps_branch1, 
-								     initial_covg_plus_upward_jumps_branch2, 
+								     annovar->br1_covg[colour],
+								     annovar->br2_covg[colour],
 								     theta, theta);
   
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
 								     hom_other, seq_error_rate_per_base, 
-								     initial_covg_plus_upward_jumps_branch1, 
-								     initial_covg_plus_upward_jumps_branch2, 
+								     annovar->br1_covg[colour],
+								     annovar->br2_covg[colour],
 								     theta, theta);
   
   //this is not allowed by the model
@@ -745,7 +738,7 @@ void get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(
 
 //assuming a pair of branches really do make up a variant, calculate the log likelihood of a genotype
 //under the model described in our paper (eg used for HLA)
-//theta here is (R-k+1) * (D/R) * length of branch/allele. 
+//theta here is (R-k+1) * (D/R) 
 // NOT the same theta as seen in model_selection.c
 //assumes called by BubbleCaller, so no overlaps between alleles.
 double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
@@ -759,7 +752,7 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
     // no unique segment, one shared segment
     return (double)covg_branch_1 * log(theta_one) - theta_one -
       log_factorial_uint64_t(covg_branch_1) +
-      (double)covg_branch_2 * log(error_rate_per_base);
+      (double)covg_branch_2 * log(error_rate_per_base*theta_one);
   }
   else if (genotype==hom_other)
   {
@@ -767,7 +760,7 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
     // no unique segment, one shared segment
     return (double)covg_branch_2 * log(theta_other) - theta_other -
            log_factorial_uint64_t(covg_branch_2) +
-           (double)covg_branch_1 * log(error_rate_per_base);
+           (double)covg_branch_1 * log(error_rate_per_base*theta_other);
   }
   else if (genotype==het)
   {
