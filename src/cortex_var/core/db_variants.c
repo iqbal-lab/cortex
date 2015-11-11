@@ -566,8 +566,7 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
     }
       //  }
 
-  double theta_one   = ((double)(sequencing_depth_of_coverage * annovar->var->len_one_allele))  /( (double) read_length );
-  double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
+  double theta   = ((double)(sequencing_depth_of_coverage * (read_length - annovar->kmer +1 )))  /( (double) read_length );
 
   //DEBUG
   //printf("ZAM - covg on two alleles is %" PRIu64 ",%" PRIu64 "\n", (uint64_t) (annovar->br1_covg[colour]),(uint64_t) (annovar->br2_covg[colour]));
@@ -576,17 +575,17 @@ void get_all_genotype_log_likelihoods_at_bubble_call_for_one_colour(AnnotatedPut
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
 								     annovar->br1_covg[colour],
 								     annovar->br2_covg[colour],
-								     theta_one, theta_other);
+								     theta, theta);
   annovar->gen_log_lh[colour].log_lh[het]       = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, seq_error_rate_per_base, 
 								     annovar->br1_covg[colour],
 								     annovar->br2_covg[colour],
-								     theta_one, theta_other);
+								     theta, theta);
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
 								     annovar->br1_covg[colour],
 								     annovar->br2_covg[colour],
-								     theta_one, theta_other);
+								     theta, theta);
  
   //  printf("Log likelihood of data in colour %d under hom_one is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_one]);
   // printf("Log likelihood of data in colour %d under het is %f\n", colour, annovar->gen_log_lh[colour].log_lh[het] );
@@ -614,8 +613,7 @@ void get_all_genotype_log_likelihoods_at_PD_call_for_one_colour_using_juncs(Anno
     }
       //  }
 
-  double theta_one   = ((double)(sequencing_depth_of_coverage * annovar->var->len_one_allele))  /( (double) read_length );
-  double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
+  double theta   = ((double)(sequencing_depth_of_coverage * (read_length - annovar->kmer +1)))  /( (double) read_length );
 
   //DEBUG
   //printf("ZAM - covg on two alleles is %" PRIu64 ",%" PRIu64 "\n", (uint64_t) (annovar->br1_covg[colour]),(uint64_t) (annovar->br2_covg[colour]));
@@ -624,17 +622,17 @@ void get_all_genotype_log_likelihoods_at_PD_call_for_one_colour_using_juncs(Anno
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
 								     annovar->br1_uniq_covg[colour],
 								     annovar->br2_uniq_covg[colour],
-								     theta_one, theta_other);
+								     theta, theta);
   annovar->gen_log_lh[colour].log_lh[het]       = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, seq_error_rate_per_base, 
 								     annovar->br1_uniq_covg[colour],
 								     annovar->br2_uniq_covg[colour],
-								     theta_one, theta_other);
+								     theta, theta);
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
 								     annovar->br1_uniq_covg[colour],
 								     annovar->br2_uniq_covg[colour],
-								     theta_one, theta_other);
+								     theta, theta);
  
   //  printf("Log likelihood of data in colour %d under hom_one is %f\n", colour, annovar->gen_log_lh[colour].log_lh[hom_one]);
   // printf("Log likelihood of data in colour %d under het is %f\n", colour, annovar->gen_log_lh[colour].log_lh[het] );
@@ -670,8 +668,7 @@ void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(
       return ;
     }
 
-  double theta_one = ((double)(sequencing_depth_of_coverage * annovar->var->len_one_allele))/( (double) read_length );
-  double theta_other = ((double)(sequencing_depth_of_coverage * annovar->var->len_other_allele))/( (double) read_length );
+  double theta = ((double)(sequencing_depth_of_coverage * (read_length-annovar->kmer+1)))/( (double) read_length );
 
 
   annovar->gen_log_lh[colour].log_lh[hom_one]   = 
@@ -679,14 +676,14 @@ void get_all_haploid_genotype_log_likelihoods_at_bubble_call_for_one_colour(
 								     hom_one, seq_error_rate_per_base, 
 								     initial_covg_plus_upward_jumps_branch1, 
 								     initial_covg_plus_upward_jumps_branch2, 
-								     theta_one, theta_other);
+								     theta, theta);
   
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
 								     hom_other, seq_error_rate_per_base, 
 								     initial_covg_plus_upward_jumps_branch1, 
 								     initial_covg_plus_upward_jumps_branch2, 
-								     theta_one, theta_other);
+								     theta, theta);
   
   //this is not allowed by the model
   annovar->gen_log_lh[colour].log_lh[het]
@@ -730,13 +727,13 @@ void get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, seq_error_rate_per_base, 
 								     initial_covg_plus_upward_jumps_branch1, 
 								     initial_covg_plus_upward_jumps_branch2, 
-								     theta_one, theta_other);
+								     theta, theta);
 
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
 								     initial_covg_plus_upward_jumps_branch1, 
 								     initial_covg_plus_upward_jumps_branch2, 
-								     theta_one, theta_other);
+								     theta, theta);
 
   //this is not allowed by the model
   annovar->gen_log_lh[colour].log_lh[het] = annovar->gen_log_lh[colour].log_lh[hom_one] + annovar->gen_log_lh[colour].log_lh[hom_other] - 999999;
@@ -748,7 +745,7 @@ void get_all_haploid_genotype_log_likelihoods_at_non_SNP_PD_call_for_one_colour(
 
 //assuming a pair of branches really do make up a variant, calculate the log likelihood of a genotype
 //under the model described in our paper (eg used for HLA)
-//theta here is as used in the paper: (D/R) * length of branch/allele. 
+//theta here is (R-k+1) * (D/R) * length of branch/allele. 
 // NOT the same theta as seen in model_selection.c
 //assumes called by BubbleCaller, so no overlaps between alleles.
 double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(

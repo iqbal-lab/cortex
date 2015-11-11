@@ -2693,7 +2693,7 @@ void db_graph_detect_vars(FILE* fout, /*FILE* fout_gls ,*/ int max_length, dBGra
 	      {
 
 		AnnotatedPutativeVariant annovar;
-		boolean use_median=false;
+		boolean use_median=true;
 		if ((model_info!=NULL) && (model_info->ginfo!=NULL))
 		  {
 		    
