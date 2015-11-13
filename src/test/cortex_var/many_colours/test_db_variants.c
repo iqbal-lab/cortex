@@ -1,8 +1,7 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo 
+ * Copyright 2009-2015 Zamin Iqbal and Mario Caccamo 
  * 
  * CORTEX project contacts:  
- * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
  * 		Z. Iqbal (zam@well.ox.ac.uk)
  *
  * **********************************************************************
@@ -123,9 +122,15 @@ void test_get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller()
   double ret_hom2;
 
   //1. Simple het
-  ret_het = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,10, 20,20);
-  ret_hom1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 10,10, 20,20);
-  ret_hom2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, 0.01, 10,10, 20,20);
+  ret_het = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 
+									     10,10, 
+									     20,20);
+  ret_hom1 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_one, 0.01, 
+									      10,10, 
+									      20,20);
+  ret_hom2 = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, 0.01, 
+									      10,10, 
+									      20,20);
   CU_ASSERT( (ret_het>ret_hom1) && (ret_het>ret_hom2) );
   CU_ASSERT(ret_hom1 == ret_hom2);
 
