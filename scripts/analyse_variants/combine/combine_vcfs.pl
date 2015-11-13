@@ -142,7 +142,7 @@ if ($vars{"intersect_ref"} eq '')
 ## annotate flanks
 
 my $af = $scripts_dir."vcf_add_flanks.pl";
-my $kp4 = $vars{"kmer"}+4;
+my $kp4 = $vars{"kmer"}+1;
 #print "Annotate flanks\n";
 my $cmd2 = "perl  -I $libdir $af $kp4 $outvcf1 ".$vars{"refname"}." ".$vars{"ref_fa"}." > $outvcf2 2>/dev/null";
 #print "$cmd2\n";
@@ -150,13 +150,12 @@ my $ret2 = qx{$cmd2};
 #print "$ret2\n";
 
 
-
 ###############################################
 ##make pseudo callfile
 $vars{"bubble_callfile"} = $comb_dir.$vars{"prefix"}.".pseudo_callfile";
 my $ps = $scripts_dir2."build_pseudo_callfile_from_vcf.pl";
 #print "Make pseudo callfile\n";
-my $cmd3 = "perl $ps $outvcf2 ".$vars{"bubble_callfile"};
+my $cmd3 = "perl $ps $outvcf2 ".$vars{"bubble_callfile"}." ".$vars{"kmer"};
 #print "$cmd3\n";
 my $ret3 = qx{$cmd3};
 #print "$ret3\n";

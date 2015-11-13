@@ -6,10 +6,10 @@ use File::Basename;
 my $mem_height = 22;
 my $mem_width = 73;
 my $pop="";
-my $kmer= 31;
+
 my $vcf=shift;
 my $outfile = shift;
-
+my $kmer = shift;
 
 
 open(OUT, ">".$outfile)||die("Cannot open the specified output file: $outfile\n");   
