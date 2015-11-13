@@ -762,7 +762,7 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
     // no unique segment, one shared segment
     return (double)covg_branch_1 * log(theta_one) - theta_one -
       log_factorial_uint64_t(covg_branch_1) +
-      (double)covg_branch_2 * log(error_rate_per_base);
+      (double)covg_branch_2 * log(error_rate_per_base*theta_one);
   }
   else if (genotype==hom_other)
   {
@@ -770,7 +770,7 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
     // no unique segment, one shared segment
     return (double)covg_branch_2 * log(theta_other) - theta_other -
            log_factorial_uint64_t(covg_branch_2) +
-           (double)covg_branch_1 * log(error_rate_per_base);
+           (double)covg_branch_1 * log(error_rate_per_base*theta_other);
   }
   else if (genotype==het)
   {
