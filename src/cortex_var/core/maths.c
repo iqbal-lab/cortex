@@ -89,6 +89,17 @@ int max_of_ints(int a, int b)
       return b;
     }
 }
+double max_of_doubles(double a, double b)
+{
+  if (a>=b)    
+    {
+      return a;
+    }
+  else
+    {
+      return b;
+    }
+}
 
 unsigned long calculate_mean_ulong(unsigned long* array, unsigned long len)
 {

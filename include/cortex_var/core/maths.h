@@ -1,8 +1,7 @@
 /*
- * Copyright 2009-2011 Zamin Iqbal and Mario Caccamo
+ * Copyright 2009-2015 Zamin Iqbal and Mario Caccamo
  * 
  * CORTEX project contacts:  
- *              M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
  *              Z. Iqbal (zam@well.ox.ac.uk)
  *
  * **********************************************************************
@@ -39,6 +38,7 @@ double log_factorial(int number);
 double log_factorial_uint64_t(uint64_t number);
 int min_of_ints(int a, int b);
 int max_of_ints(int a, int b);
+double max_of_doubles(double a, double b);
 unsigned long calculate_mean_ulong(unsigned long* array, unsigned long len);
 long long calculate_mean(long long* array, long long len);
 

@@ -133,6 +133,7 @@ void test_get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller()
 									      20,20);
   CU_ASSERT( (ret_het>ret_hom1) && (ret_het>ret_hom2) );
   CU_ASSERT(ret_hom1 == ret_hom2);
+  printf("llk hom1 het hom2 are %f, %f, %f\n", ret_hom1, ret_het, ret_hom2);
 
   //2. simple hom
   ret_het = get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, 0.01, 10,0, 20,20);
@@ -176,7 +177,7 @@ void test_get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller()
 
   //higher sequencing error gives lower CONFIDENCE (gap between likelihood of het and hom models)
   CU_ASSERT(t1-t2 < t3-t4);
-
+  printf("t1, t2, t3, t4 %f, %f, %f, %f\n", t1,t2,t3,t4);
 
 }
 
