@@ -1,8 +1,7 @@
 /*
- * Copyright 2009-2013 Zamin Iqbal and Mario Caccamo  
+ * Copyright 2009-2015 Zamin Iqbal and Mario Caccamo  
  * 
  * CORTEX project contacts:  
- * 		M. Caccamo (mario.caccamo@bbsrc.ac.uk) and 
  * 		Z. Iqbal (zam@well.ox.ac.uk)
  *
  * **********************************************************************

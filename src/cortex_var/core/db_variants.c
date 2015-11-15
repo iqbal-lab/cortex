@@ -747,19 +747,16 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
 									double theta_one, double theta_other) // int kmer was an unused param
 {
 
-  double e1 = error_rate_per_base*theta_one;
-  double e2 = error_rate_per_base*theta_other;
   
   if (genotype==hom_one)
   {
     // Apply formula for likelihood in section 9.0 of Supp. Methods of paper;
     // no unique segment, one shared segment
-    return (
-	    double)covg_branch_1 * log(theta_one) 
+    return (double)covg_branch_1 * log(theta_one) 
       - theta_one 
       - log_factorial_uint64_t(covg_branch_1) 
       +
-      (double)covg_branch_2 * log(e1) - e1;
+      (double)covg_branch_2 * log(error_rate_per_base);
      
   }
   else if (genotype==hom_other)
@@ -768,7 +765,7 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
     // no unique segment, one shared segment
     return (double)covg_branch_2 * log(theta_other) - theta_other -
            log_factorial_uint64_t(covg_branch_2) +
-      (double)covg_branch_1 * log(e2) - e2;
+      (double)covg_branch_1 * log(error_rate_per_base);
   }
   else if (genotype==het)
   {
@@ -826,14 +823,14 @@ boolean get_num_effective_reads_on_branch(Covg* array, dBNode** allele, int how_
 	    {
 	      eff_read_len = ginfo->mean_read_length[i] - kmer+1;
 	    }
-	  if (how_many_nodes>eff_read_len)
+	  /* if (how_many_nodes>eff_read_len)
 	    {
 	      array[i] = ((how_many_nodes+ 0.5*eff_read_len)/eff_read_len) *  median_covg_on_allele_in_specific_colour(allele, how_many_nodes, working_ca, i, &too_short);
 	    }
 	  else
-	    {
+	  {*/
 	      array[i] = median_covg_on_allele_in_specific_colour(allele, how_many_nodes, working_ca, i, &too_short);
-	    }
+	      //}
 	}
     }
   return too_short;
