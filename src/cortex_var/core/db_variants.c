@@ -750,22 +750,35 @@ double get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(
   
   if (genotype==hom_one)
   {
-    // Apply formula for likelihood in section 9.0 of Supp. Methods of paper;
-    // no unique segment, one shared segment
+
+    //reads on branch2 are errors, but only penalise those above what we expect to be emitted by branch1
+    double cb2 = (double)covg_branch_2 - error_rate_per_base*theta_one;
+    if (cb2<0)
+      {
+	cb2=0;
+      }
+
+
     return (double)covg_branch_1 * log(theta_one) 
       - theta_one 
       - log_factorial_uint64_t(covg_branch_1) 
       +
-      (double)covg_branch_2 * log(error_rate_per_base);
+      (double)cb2 * log(error_rate_per_base);
      
   }
   else if (genotype==hom_other)
   {
-    // Apply formula for likelihood in section 9.0 of Supp. Methods of paper;
-    // no unique segment, one shared segment
+
+    //reads on branch1 are errors, but only penalise those above what we expect to be emitted by branch2
+    double cb1 = (double)covg_branch_1 - error_rate_per_base*theta_other;
+    if (cb1<0)
+      {
+	cb1=0;
+      }
+
     return (double)covg_branch_2 * log(theta_other) - theta_other -
            log_factorial_uint64_t(covg_branch_2) +
-      (double)covg_branch_1 * log(error_rate_per_base);
+      (double)cb1 * log(error_rate_per_base);
   }
   else if (genotype==het)
   {
