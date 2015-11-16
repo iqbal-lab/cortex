@@ -37,7 +37,7 @@ my $k_plus_one = $kmer+1;
 while (<FILE>)
 {
     my $line = $_;
-    if ($line =~ /var_\d+_5p_flank/)
+    if ($line =~ /5p_flank/)
     {
 	$line =<FILE>;## 5p flank sequence
 	my $last_k = substr($line, -$k_plus_one);
