@@ -868,7 +868,7 @@ sub collect_confidences_and_likelihoods
 		chomp $line;
 		
 		##eg >UNION_BC_k61_var_1_5p_flank
-		if ($line =~ />(\S*var_\d+)_5p_flank/)
+		if ($line =~ />(\S+)_5p_flank/)
 		{
 		    $realname = $1;
 

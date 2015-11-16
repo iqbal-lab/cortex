@@ -48,6 +48,9 @@ my $config ="";
     ##if you just have the sample graph and you want this script to overlap it with the bubbles
     'sample_graph:s'                      =>\$vars{"sample_graph"},##whole genome graph of sample
 
+    ## if you have already overlapped the sample with the sites
+    'sample_graph_intersec_bubbles:s' =>\$vars{"filename_of_sample_overlap_bubble_binary"},
+
     ## config files will set mem height and width set, but you can also set them here
     'mem_height:i'                        =>\$vars{"mem_height"},
     'mem_width:i'                         =>\$vars{"mem_width"},
@@ -92,29 +95,35 @@ my $time_start_overlap = new Benchmark;
 my $suffix = "intersect_sites";
 my $colour_list;
 
-($colour_list, $vars{"filename_of_sample_overlap_bubble_binary"}) 
+my $flag = "yes"; ## default assumption, we do need to intersect sample graph with bubbles
+
+($colour_list, $vars{"filename_of_sample_overlap_bubble_binary"}, $flag) 
     = make_colourlist($vars{"sample_graph"}, 
 		      $vars{"sample"}, 
 		      $suffix, 
-		      $vars{"outdir"});
+		      $vars{"outdir"},
+		      $vars{"filename_of_sample_overlap_bubble_binary"});
 
-my $overlap_log=$vars{"outdir"}."log_overlap_of_".$vars{"sample"}."_with_bubbles.txt";
-my $cmd = $ctx_binary." --kmer_size ".$vars{"kmer"};
-$cmd .= " --mem_height ".$vars{"mem_height"};
-$cmd .= " --mem_width ".$vars{"mem_width"};
-$cmd .= " --multicolour_bin ".$vars{"bubble_graph"};
-$cmd .= " --colour_list $colour_list --load_colours_only_where_overlap_clean_colour 0 ";
-$cmd .= " --successively_dump_cleaned_colours $suffix > $overlap_log 2>&1";
 
+if ($flag eq "yes")
+{
+    my $overlap_log=$vars{"outdir"}."log_overlap_of_".$vars{"sample"}."_with_bubbles.txt";
+    my $cmd = $ctx_binary." --kmer_size ".$vars{"kmer"};
+    $cmd .= " --mem_height ".$vars{"mem_height"};
+    $cmd .= " --mem_width ".$vars{"mem_width"};
+    $cmd .= " --multicolour_bin ".$vars{"bubble_graph"};
+    $cmd .= " --colour_list $colour_list --load_colours_only_where_overlap_clean_colour 0 ";
+    $cmd .= " --successively_dump_cleaned_colours $suffix > $overlap_log 2>&1";
+    
 #print "$cmd\n";
-my $ret = qx{$cmd};
+    my $ret = qx{$cmd};
 #print "$ret\n";
-
+    
 #print "Finished intersecting sample ".$vars{"sample"}." with the bubble graph ".$vars{"bubble_graph"}."\n";
-my $time_end_overlap=new Benchmark;
-my $time_taken_overlap=timediff($time_end_overlap,$time_start_overlap);
+    my $time_end_overlap=new Benchmark;
+    my $time_taken_overlap=timediff($time_end_overlap,$time_start_overlap);
 #print "Time taken to overlap sample with bubbles is ", timestr($time_taken_overlap), "\n";
-
+}
 
 #print("\n*************************\n");
 #print "Now, genotype sample:\n";
@@ -125,26 +134,29 @@ my $bn = basename($vars{"bubble_callfile"});
 
 my $gt_output = $vars{"outdir"}.$bn.".".$vars{"sample"}.".genotyped";
 my $gt_log = $vars{"outdir"}.$vars{"sample"}."_gt.log ";
-my $g_colour_list = make_2colourlist($vars{"filename_of_sample_overlap_bubble_binary"}, 
-				     $vars{"ref_overlap_bubble_graph"}, 
-				     $vars{"sample"});
-my $gt_cmd = $ctx_binary." --kmer_size ".$vars{"kmer"};
-$gt_cmd .= " --mem_height ".$vars{"mem_height"};
-$gt_cmd .= " --mem_width ".$vars{"mem_width"};
-$gt_cmd .= " --colour_list $g_colour_list ";
-$gt_cmd .= " --max_read_len ".$vars{"max_allele"};
-$gt_cmd .= " --gt ".$vars{"bubble_callfile"}.",".$gt_output.",BC ";
-$gt_cmd .= " --genome_size ".$vars{"genome_size"};
-$gt_cmd .= " --experiment_type EachColourADiploidSampleExceptTheRefColour --print_median_covg_only ";
-$gt_cmd .= " --estimated_error_rate 0.01 --ref_colour 0  > $gt_log 2>&1";
+
+if (!(-e $gt_output))
+{
+    my $g_colour_list = make_2colourlist($vars{"filename_of_sample_overlap_bubble_binary"}, 
+					 $vars{"ref_overlap_bubble_graph"}, 
+					 $vars{"sample"});
+    my $gt_cmd = $ctx_binary." --kmer_size ".$vars{"kmer"};
+    $gt_cmd .= " --mem_height ".$vars{"mem_height"};
+    $gt_cmd .= " --mem_width ".$vars{"mem_width"};
+    $gt_cmd .= " --colour_list $g_colour_list ";
+    $gt_cmd .= " --max_read_len ".$vars{"max_allele"};
+    $gt_cmd .= " --gt ".$vars{"bubble_callfile"}.",".$gt_output.",BC ";
+    $gt_cmd .= " --genome_size ".$vars{"genome_size"};
+    $gt_cmd .= " --experiment_type EachColourADiploidSampleExceptTheRefColour --print_median_covg_only ";
+    $gt_cmd .= " --estimated_error_rate 0.01 --ref_colour 0  > $gt_log 2>&1";
 #print "$gt_cmd\n";
-my $gt_ret = qx{$gt_cmd};
+    my $gt_ret = qx{$gt_cmd};
 #print "$gt_ret\n";
 #print "Genotyping done\n";
-my $time_end_gt=new Benchmark;
-my $time_taken_gt=timediff($time_end_gt,$time_start_gt);
+    my $time_end_gt=new Benchmark;
+    my $time_taken_gt=timediff($time_end_gt,$time_start_gt);
 #print "Time taken to gt sample is ", timestr($time_taken_gt), "\n";
-
+}
 
 
 #### DUMP VCF
@@ -166,9 +178,9 @@ $vcf_cmd .= " --samplename_list $samplelist --num_cols 2  --caller BC ";
 $vcf_cmd .= " --kmer ".$vars{"kmer"};
 $vcf_cmd .= " --refcol 0 --ploidy 2  --vcf_which_generated_calls ".$vars{"invcf"};
 $vcf_cmd .= " --print_gls yes > ".$vars{"outdir"}.".".$vars{"sample"}.".vcf.log 2>&1";
-#print $vcf_cmd;
+print $vcf_cmd;
 my $vcfret = qx{$vcf_cmd};
-#print $vcfret;
+print $vcfret;
 
 print "\nFinished! Sample ".$vars{"sample"}." is genotyped and a VCF has been dumped\n";
 
@@ -253,9 +265,9 @@ sub check_args
     {
 	die("You must specify sample id with --sample");
     }
-    if ($hashref->{"sample_graph"} eq "")
+    if ( ($hashref->{"sample_graph"} eq "") && ($hashref->{"filename_of_sample_overlap_bubble_binary"} eq ""))
     {
-	die("You must specify the sample graph with --sample_graph");
+	die("You must specify the sample graph with --sample_graph or the sample-overlapped-with-bubbles graph using --sample_graph_intersec_bubbles");
     }
 
 #$mem_height, $mem_width, $sample, $invcf, $g_size);
@@ -293,8 +305,14 @@ sub check_cortex_compiled_2colours
 
 sub make_colourlist
 {
-    my ($graph, $id, $suffix, $odir) = @_;
+    my ($graph, $id, $suffix, $odir, $filename_sample_ov_bubble_graph) = @_;
 
+
+    if ($filename_sample_ov_bubble_graph ne "")
+    {
+
+	return ("",$filename_sample_ov_bubble_graph, "no");##no, no need to intersect sample and graph
+    }
     $graph = File::Spec->rel2abs($graph);
     my $bname = basename($graph);
     my $dir = dirname($graph);
@@ -322,7 +340,7 @@ sub make_colourlist
     close(FLIST);
     close(COL);
 
-    return ($col_list, $list_this_binary."_".$suffix.".ctx");
+    return ($col_list, $list_this_binary."_".$suffix.".ctx", "yes");
 }
 
 
