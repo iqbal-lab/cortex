@@ -620,7 +620,7 @@ void get_all_genotype_log_likelihoods_at_PD_call_for_one_colour_using_juncs(Anno
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(het, seq_error_rate_per_base, 
 								     annovar->br1_uniq_covg[colour],
 								     annovar->br2_uniq_covg[colour],
-								     theta/2, theta/2);
+								     theta, theta);
   annovar->gen_log_lh[colour].log_lh[hom_other] = 
     get_log_likelihood_of_genotype_on_variant_called_by_bubblecaller(hom_other, seq_error_rate_per_base, 
 								     annovar->br1_uniq_covg[colour],
