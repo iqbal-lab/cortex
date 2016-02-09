@@ -73,30 +73,30 @@ if ($current_dir !~ /\/$/)
 my $proc_calls = $analyse_variants_dir."process_calls.pl";
 if (!(-e $proc_calls))
 {
-    die("Cannot find process_calls script: $proc_calls\n");
+    print_to_errfile($err_fh, "NONE", "INITIAL_CHECKS", "Cannot find $proc_calls - should never happen", "");
 }
 my $make_union = $analyse_variants_dir."make_union_varset_including_metadata_in_names.pl";
 if (!(-e $make_union))
 {
-    die("Cannot find make_union_varset script: $make_union\n");
+    print_to_errfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $make_union - should never happen","");
 }
 
 my $make_covg_script = $analyse_variants_dir."make_covg_file.pl";
 if (!(-e $make_covg_script))
 {
-    die("Cannot find make covg script for classifier, $make_covg_script");
+    print_to_errfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $make_covg_script - should never happen","");
 }
 
 my $make_table_script = $analyse_variants_dir."make_read_len_and_total_seq_table.pl";
 if (!(-e $make_table_script))
 {
-    die("Cannot find script for making table of read-lengths/covgs, $make_table_script\n");
+    print_to_errfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $make_table_script - should never happen","");
 }
 
 my $get_thresh_script = $analyse_variants_dir."get_auto_cleaning_cutoff.R";
 if (!(-e $get_thresh_script))
 {
-    die("Cannot find script $get_thresh_script for calculating cleaning threshold\n");
+    print_to_errfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $get_thresh_script - should never happen","");
 }
 
 #use lib $isaac_bioinf_dir;
@@ -129,7 +129,7 @@ my (
         $max_read_len,         $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
         $expt_type,            $do_union, $manual_override_cleaning,
         $build_per_sample_vcfs, $global_logfile,  $squeeze_mem,
-        $workflow,  $known_contam_list,
+        $workflow,  $known_contam_list, $errfile
     );
 
 #set defaults
@@ -155,6 +155,7 @@ $pd_out_stub="PD";
 $outdir="cortex_results/";
 $fastaq_index="";
 $known_contam_list="";
+$errfile = "";
 #$require_one_allele_is_ref           = "yes";
 $prefix                              = "cortex";
 $outvcf_filename_stub                = "default_vcfname";
@@ -306,7 +307,9 @@ run_checks();
 my $global_fh;
 if ($global_logfile ne "")
 {
-    open($global_fh, ">".$global_logfile)||die("Cannot open log file $global_logfile - have you given a bad path? Permissions issue?\n");
+    open($global_fh, ">".$global_logfile)||
+	print_to_errfile($err_fh, "NONE", "INITIAL_CHECKS", "Cannot open global logfile $global_logfile - permissions issue? Bad path?", "");
+
     *STDOUT = *$global_fh;
 }
 
@@ -329,7 +332,8 @@ elsif ( ($ploidy==2) && ( ($use_ref eq "CoordinatesOnly") || ($use_ref eq "Coord
 }
 else
 {
-    die("Either your ploidy is mis-specified (should be 1 or 2), or your --ref argument is wrong (should be Absent, CoordinatesOnly, or CoordinatesAndInCalling\n");
+    print_to_errfile($err_fh, "NONE", "INITIAL_CHECKS", "Either your ploidy is mis-specified (should be 1 or 2), or your --ref argument is wrong (should be Absent, CoordinatesOnly, or CoordinatesAndInCalling\n", "");
+
 }
 
 ## print start time
@@ -346,7 +350,8 @@ my $classifier = $analyse_variants_dir."classifier.parallel.ploidy_aware.R";
 
 if (!(-e $classifier))
 {
-    die("Cannot find classifier $classifier in the place I expect to find it: $analyse_variants_dir");
+    print_to_errfile($err_fh, "NONE", "INITIAL_CHECKS", "Cannot find $classifier - should be in $analyse_variants_dir", "");
+
 }
 
 
@@ -355,6 +360,7 @@ if ($outdir !~ /\/$/)
 {
     $outdir = $outdir.'/';
 }
+$errfile =$outdir."PROGRESS";
 $outdir_binaries=$outdir."binaries/";
 $outdir_calls   =$outdir."calls/";
 $outdir_vcfs    =$outdir."vcfs/";
@@ -472,7 +478,6 @@ if (!(-d $tmpdir))
 
 if ($squeeze_mem)
 {
-    #TODO - Zam - this is not safe for parallelisation.
     get_num_kmers_for_pool();## will reset mem_height and width to lower values if possible.
 }
 
@@ -1001,13 +1006,40 @@ sub finish_up
 
 
 }
+
+sub print_to_progressfile
+{
+    my ($fh, $stage, $result, $best_guess_reason_if_fail, $file_you_could_look_in) = @_;
+
+    print  $fh "$stage\t$result\t";
+    if ($result eq "FAIL")
+    {
+	print $fh "$best_guess_reason_if_fail\t$file_you_could_look_in\n";
+	close($fh);
+	print $fh "$stage FAILED\n";
+	close($global_fh);
+	die();
+    }
+    else
+    {
+	print $fh "\t\n";
+    }
+
+    if ($sresult eq "FAIL")
+    {
+
+    }
+}
+
 sub get_num_kmers_for_pool_at_specific_k
 {
     my ($KMER, $use_new_mem_params, $height, $width) = @_;
 
     my $list_all_clean_file = "tmp_list_all_clean_bins_k".$KMER;
     my $list_all_clean_path = $tmpdir."/".$list_all_clean_file;
-    open(LIST_ALL, ">$list_all_clean_path")||die("Unable to open $list_all_clean_path");
+    open(LIST_ALL, ">$list_all_clean_path")||
+	print_to_errfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL", "Cannot create this file $list_all_clean_path needed internally. Very odd - out of disk?", "");
+
     foreach my $s (@samples)
     {
 	#get binary
@@ -1029,7 +1061,9 @@ sub get_num_kmers_for_pool_at_specific_k
     }
     close(LIST_ALL);
     my $list_all_clean_pop = $list_all_clean_path.".pop";
-    open(LIST_ALL_CLEAN_POP, ">".$list_all_clean_pop)||die("Cannot open $list_all_clean_pop");
+    open(LIST_ALL_CLEAN_POP, ">".$list_all_clean_pop)||
+	print_to_errfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL", "Cannot create this tiny tiny file $list_all_clean_pop needed internally. Very odd - out of disk?", "");
+
     print LIST_ALL_CLEAN_POP "$list_all_clean_file\n";
     close(LIST_ALL_CLEAN_POP);
 
@@ -1079,7 +1113,7 @@ sub get_num_kmers_for_pool
 	$num_kmers_in_cleaned_pool = get_num_kmers_for_pool_at_specific_k($first_kmer, "no", 0,0);
 	if ($num_kmers_in_cleaned_pool==-1)
 	{
-	    die("Unable to load all samples into one colour, even after cleaning. Can you alloc more memory, by increasing mem height/width?\n");
+	print_to_errfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL", "Cannot load all samples into one colour, even after cleaning, with the memory parameters you have entered. Can you alloc more memory, by increasing mem height/width?", "");
 	}
 	$new_mem_height = int(log($num_kmers_in_cleaned_pool/$fixed_width)/log(2)) +1;
 	
@@ -1186,7 +1220,7 @@ sub get_time
 sub get_num_kmers
 {
     my ($log) = @_;
-    open(LOG, $log)||die("Cannot open $log");
+    open(LOG, $log)|| print_to_errfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL","Cannot open (for reading) zahara 
     while (<LOG>)
     {
 	my $line = $_;
