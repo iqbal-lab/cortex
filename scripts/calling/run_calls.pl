@@ -70,35 +70,6 @@ if ($current_dir !~ /\/$/)
 
 
 
-my $proc_calls = $analyse_variants_dir."process_calls.pl";
-if (!(-e $proc_calls))
-{
-    print_to_errfile($err_fh, "NONE", "INITIAL_CHECKS", "Cannot find $proc_calls - should never happen", "");
-}
-my $make_union = $analyse_variants_dir."make_union_varset_including_metadata_in_names.pl";
-if (!(-e $make_union))
-{
-    print_to_errfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $make_union - should never happen","");
-}
-
-my $make_covg_script = $analyse_variants_dir."make_covg_file.pl";
-if (!(-e $make_covg_script))
-{
-    print_to_errfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $make_covg_script - should never happen","");
-}
-
-my $make_table_script = $analyse_variants_dir."make_read_len_and_total_seq_table.pl";
-if (!(-e $make_table_script))
-{
-    print_to_errfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $make_table_script - should never happen","");
-}
-
-my $get_thresh_script = $analyse_variants_dir."get_auto_cleaning_cutoff.R";
-if (!(-e $get_thresh_script))
-{
-    print_to_errfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $get_thresh_script - should never happen","");
-}
-
 #use lib $isaac_bioinf_dir;
 use Descriptive;
 
@@ -304,11 +275,53 @@ run_checks();
 
 
 ## sort out loggin
+
+$outdir = abs_path($outdir);
+if ($outdir !~ /\/$/)
+{
+    $outdir = $outdir.'/';
+}
+$errfile =$outdir."PROGRESS";
+my $err_fh;
+open($err_fh, ">".$errfile)||die("Cannot open $errfile");
+
+
+my $proc_calls = $analyse_variants_dir."process_calls.pl";
+if (!(-e $proc_calls))
+{
+    print_to_progressfile($err_fh, "NONE", "INITIAL_CHECKS", "Cannot find $proc_calls - should never happen", "");
+}
+my $make_union = $analyse_variants_dir."make_union_varset_including_metadata_in_names.pl";
+if (!(-e $make_union))
+{
+    print_to_progressfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $make_union - should never happen","");
+}
+
+my $make_covg_script = $analyse_variants_dir."make_covg_file.pl";
+if (!(-e $make_covg_script))
+{
+    print_to_progressfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $make_covg_script - should never happen","");
+}
+
+my $make_table_script = $analyse_variants_dir."make_read_len_and_total_seq_table.pl";
+if (!(-e $make_table_script))
+{
+    print_to_progressfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $make_table_script - should never happen","");
+}
+
+my $get_thresh_script = $analyse_variants_dir."get_auto_cleaning_cutoff.R";
+if (!(-e $get_thresh_script))
+{
+    print_to_progressfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $get_thresh_script - should never happen","");
+}
+
+
+
 my $global_fh;
 if ($global_logfile ne "")
 {
     open($global_fh, ">".$global_logfile)||
-	print_to_errfile($err_fh, "NONE", "INITIAL_CHECKS", "Cannot open global logfile $global_logfile - permissions issue? Bad path?", "");
+	print_to_progressfile($err_fh, "NONE", "INITIAL_CHECKS", "Cannot open global logfile $global_logfile - permissions issue? Bad path?", "");
 
     *STDOUT = *$global_fh;
 }
@@ -332,7 +345,7 @@ elsif ( ($ploidy==2) && ( ($use_ref eq "CoordinatesOnly") || ($use_ref eq "Coord
 }
 else
 {
-    print_to_errfile($err_fh, "NONE", "INITIAL_CHECKS", "Either your ploidy is mis-specified (should be 1 or 2), or your --ref argument is wrong (should be Absent, CoordinatesOnly, or CoordinatesAndInCalling\n", "");
+    print_to_progressfile($err_fh, "NONE", "INITIAL_CHECKS", "Either your ploidy is mis-specified (should be 1 or 2), or your --ref argument is wrong (should be Absent, CoordinatesOnly, or CoordinatesAndInCalling\n", "");
 
 }
 
@@ -350,17 +363,12 @@ my $classifier = $analyse_variants_dir."classifier.parallel.ploidy_aware.R";
 
 if (!(-e $classifier))
 {
-    print_to_errfile($err_fh, "NONE", "INITIAL_CHECKS", "Cannot find $classifier - should be in $analyse_variants_dir", "");
+    print_to_progressfile($err_fh, "NONE", "INITIAL_CHECKS", "Cannot find $classifier - should be in $analyse_variants_dir", "");
 
 }
 
 
-$outdir = abs_path($outdir);
-if ($outdir !~ /\/$/)
-{
-    $outdir = $outdir.'/';
-}
-$errfile =$outdir."PROGRESS";
+
 $outdir_binaries=$outdir."binaries/";
 $outdir_calls   =$outdir."calls/";
 $outdir_vcfs    =$outdir."vcfs/";
@@ -977,7 +985,7 @@ finish_up();
 
 ##cleanup
 close($global_fh);
-
+close($err_fh);
 
 
 
@@ -1009,7 +1017,9 @@ sub finish_up
 
 sub print_to_progressfile
 {
-    my ($fh, $stage, $result, $best_guess_reason_if_fail, $file_you_could_look_in) = @_;
+    my ($fh, $stage, $result, 
+	$best_guess_reason_if_fail, 
+	$file_you_could_look_in) = @_;
 
     print  $fh "$stage\t$result\t";
     if ($result eq "FAIL")
@@ -1025,10 +1035,6 @@ sub print_to_progressfile
 	print $fh "\t\n";
     }
 
-    if ($sresult eq "FAIL")
-    {
-
-    }
 }
 
 sub get_num_kmers_for_pool_at_specific_k
@@ -1038,7 +1044,7 @@ sub get_num_kmers_for_pool_at_specific_k
     my $list_all_clean_file = "tmp_list_all_clean_bins_k".$KMER;
     my $list_all_clean_path = $tmpdir."/".$list_all_clean_file;
     open(LIST_ALL, ">$list_all_clean_path")||
-	print_to_errfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL", "Cannot create this file $list_all_clean_path needed internally. Very odd - out of disk?", "");
+	print_to_progressfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL", "Cannot create this file $list_all_clean_path needed internally. Very odd - out of disk?", "");
 
     foreach my $s (@samples)
     {
@@ -1062,7 +1068,7 @@ sub get_num_kmers_for_pool_at_specific_k
     close(LIST_ALL);
     my $list_all_clean_pop = $list_all_clean_path.".pop";
     open(LIST_ALL_CLEAN_POP, ">".$list_all_clean_pop)||
-	print_to_errfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL", "Cannot create this tiny tiny file $list_all_clean_pop needed internally. Very odd - out of disk?", "");
+	print_to_progressfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL", "Cannot create this tiny tiny file $list_all_clean_pop needed internally. Very odd - out of disk?", "");
 
     print LIST_ALL_CLEAN_POP "$list_all_clean_file\n";
     close(LIST_ALL_CLEAN_POP);
@@ -1113,7 +1119,7 @@ sub get_num_kmers_for_pool
 	$num_kmers_in_cleaned_pool = get_num_kmers_for_pool_at_specific_k($first_kmer, "no", 0,0);
 	if ($num_kmers_in_cleaned_pool==-1)
 	{
-	print_to_errfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL", "Cannot load all samples into one colour, even after cleaning, with the memory parameters you have entered. Can you alloc more memory, by increasing mem height/width?", "");
+	print_to_progressfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL", "Cannot load all samples into one colour, even after cleaning, with the memory parameters you have entered. Can you alloc more memory, by increasing mem height/width?", "");
 	}
 	$new_mem_height = int(log($num_kmers_in_cleaned_pool/$fixed_width)/log(2)) +1;
 	
@@ -1220,7 +1226,11 @@ sub get_time
 sub get_num_kmers
 {
     my ($log) = @_;
-    open(LOG, $log)|| print_to_errfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL","Cannot open (for reading) zahara 
+    open(LOG, $log)|| print_to_progressfile($err_fh, 
+					    "CALC_TOTAL_KMERS_IN_POOL",
+					    "FAIL",
+					    "Cannot open $log to read kmer info",
+					    $log);
     while (<LOG>)
     {
 	my $line = $_;
@@ -1238,7 +1248,11 @@ sub get_num_kmers
 sub ran_out_of_memory
 {
     my ($log) = @_;
-    open(LOG, $log)||die("Cannot open $log");
+    open(LOG, $log)|| print_to_progressfile($err_fh, 
+					    "CHECKING_IF_OUT_OF_MEMORY",
+					    "FAIL",
+					    "Cannot open $log to check if out of memory",
+					    $log);
     while (<LOG>)
     {
 	my $line = $_;
@@ -1261,7 +1275,14 @@ sub get_refbin_name
 	$dir = $dir.'/';
     }
     ## check ref binary exists
-    opendir (DIR, $dir) or die("Cannot open reference binary directory $dir\n");
+    opendir (DIR, $dir) or 
+	print_to_progressfile($err_fh, 
+			      "FIND_REFERENCE_BINARY",
+			      "FAIL",
+			      "Cannot look inside directory $dir",
+			      "");
+    
+
     my @files=();
     while (my $file = readdir(DIR)) {
 	push @files, $file;
@@ -1276,16 +1297,28 @@ sub get_refbin_name
     {
 	if (($f =~ /k$kHHmer/) && ($f =~ /.ctx/))
 	    {
-		$found=1;
+		$found++;
 		$the_binary=$f;
 	    }
     }
     if (($found==0) || ($the_binary eq "") )
     {
-	die("Cannot find a reference binary for k=$kHHmer in the specified dir $dir\n");
+	print_to_progressfile($err_fh, 
+			      "FIND_REFERENCE_BINARY",
+			      "FAIL",
+			      "Cannot find a k$kHHmer reference binary in the specified directory $dir",
+			      "");
+	
+
     }
     else
     {
+	print_to_progressfile($err_fh, 
+			      "FIND_REFERENCE_BINARY",
+			      "FAIL",
+			      "Find too many ($found) k$kHHmer reference binaries in the specified directory $dir - expected to find precisely 1",
+			      "");
+
     }
 
     return $the_binary;
@@ -1306,7 +1339,13 @@ sub get_colourlist_for_joint
     }
 
     my $outfile = $tmpdir."tmp_colourlist_".$wkflow."t_".$str."_kmer".$kmer."_level".$level;
-    open(OUT, ">".$outfile)||die("Cannot open $outfile");
+    open(OUT, ">".$outfile)||
+	print_to_progressfile($err_fh, 
+			      "MAKE_INTERMEDIATE_FILELIST",
+			      "FAIL",
+			      "Cannot write tiny file $outfile - permissions? Our of disk?",
+			      "");
+
 
     ## Now - The binary filelists are relative to wherever the colour list is
 
