@@ -2006,17 +2006,15 @@ sub get_num_lines
     }
     else
     {
-	my $cmd = "wc -l $file";
-	my $ret = qx{$cmd};
-
-	if ($ret =~ /(\d+)\s+$file/)
+	my $ct=0;
+	open(JIM, $file)||die("Cannot open $file");
+	while (<JIM>)
 	{
-	    return $1;
+	    my $line = $_;
+	    $ct++;
 	}
-	else
-	{
-	    die("Tried this command: \"$cmd\" and it got back \"$ret\" - unexpected")
-	}
+	close(JIM);
+	return $ct;
     }
 }
 sub build_all_unclean_binaries
