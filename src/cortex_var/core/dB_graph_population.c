@@ -1347,7 +1347,7 @@ boolean db_graph_detect_bubble_in_subgraph_defined_by_func_of_colours(boolean (*
 
 	if (apply_special_action_to_branches==true)
 	  {
-	    for(l=1;l<lengths[j]; l++)//zahara  
+	    for(l=1;l<lengths[j]; l++)// 
 	                             // changed this from l=0 to l=1, I don't think you should apply 
                                       //the special_action to the end-nodes of the branches, in case they abut
 	                              //another bubble.
@@ -2310,7 +2310,7 @@ boolean detect_vars_condition_branches_not_marked_to_be_ignored(VariantBranchesA
 {
   int i;
 
-  for (i=1; i<var->len_one_allele; i++)//zahara - changed from i=0 to i=1, should not check bifurcation point in case of abutting bubbles
+  for (i=1; i<var->len_one_allele; i++)// changed from i=0 to i=1, should not check bifurcation point in case of abutting bubbles
     {
       if (db_node_check_status((var->one_allele)[i], ignore_this_node)==true)
 	{
@@ -4265,7 +4265,7 @@ void print_covg_stats_for_timestamps_for_supernodes(char* outfile, dBGraph * db_
 
   if ( (path_nodes==NULL) || (path_orientations==NULL) || (path_labels==NULL) || (supernode_string==NULL) )
     {
-      die("Cannot malloc arrays for db_graph_remove_errors_considering_covg_and_topology");
+      die("Cannot malloc arrays for print_covg_stats_for_timestamps_for_supernodes");
     }
 
 
@@ -4512,7 +4512,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
   void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
   void (*apply_reset_to_specified_edges_2)(dBNode*),
   dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, 
-  char* supernode_str, int* supernode_len)
+  char* supernode_str, int* supernode_len, boolean use_mean)
 {
 
   boolean is_supernode_pruned=true;
@@ -4560,14 +4560,33 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 	    int i;
 	    //to look like an error, must all have actual coverage, caused by an actual errored read, BUT must have low covg, <=threshold
 	    boolean interior_nodes_look_like_error=true;
-	    for (i=1; (i<=length_sup-1) && (interior_nodes_look_like_error==true); i++)
+
+	    if (use_mean==false)
 	      {
-		if (sum_of_covgs_in_desired_colours(path_nodes[i])>coverage)
+		for (i=1; (i<=length_sup-1) && (interior_nodes_look_like_error==true); i++)
+		  {
+		    if (sum_of_covgs_in_desired_colours(path_nodes[i])>coverage)
+		      {
+			interior_nodes_look_like_error=false;
+		      }
+		  }
+	      }
+	    else
+	      {
+		Covg sum=0;
+		int count=0;
+		for (i=1; (i<=length_sup-1) ; i++)
+		  {
+		    count++;
+		    sum += sum_of_covgs_in_desired_colours(path_nodes[i]);
+		  }
+		double mean = (double) sum/count;
+		
+		if (mean>=coverage)
 		  {
 		    interior_nodes_look_like_error=false;
 		  }
 	      }
-
 	    if (interior_nodes_look_like_error==true)
 	      {
 
@@ -4847,13 +4866,13 @@ long long db_graph_remove_errors_from_pool_according_to_model(dBGraph * db_graph
 // traverse graph. At each node, if covg <= arg1, get its supernode. If that supernode length is <= kmer-length, and ALL interior nodes have covg <= arg1 
 // then prune the node, and the interior nodes of the supernode.
 // returns the number of pruned supernodes
-long long db_graph_remove_errors_considering_covg_and_topology(
+long long db_graph_remove_errors_considering_covg_and_topology(  
   Covg coverage, dBGraph * db_graph,
   Covg (*sum_of_covgs_in_desired_colours)(const Element *), 
   Edges (*get_edge_of_interest)(const Element*), 
   void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
   void (*apply_reset_to_specified_edges_2)(dBNode*),
-  int max_expected_sup)
+  int max_expected_sup, boolean use_mean)
 {
 
   dBNode**     path_nodes        = (dBNode**) malloc(sizeof(dBNode*)* (max_expected_sup+1)); 
@@ -4878,7 +4897,8 @@ long long db_graph_remove_errors_considering_covg_and_topology(
 												  get_edge_of_interest,
 												  apply_reset_to_specified_edges, 
 												  apply_reset_to_specified_edges_2,
-												  path_nodes, path_orientations, path_labels,supernode_string,&len);
+												  path_nodes, path_orientations, path_labels,supernode_string,
+												  &len, use_mean);
     if (is_sup_pruned==true)
       {
 	return 1;

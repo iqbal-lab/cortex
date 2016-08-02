@@ -129,10 +129,11 @@ my (
         $max_read_len,         $max_var_len, $genome_size, $refbindir, $list_ref_fasta,
         $expt_type,            $do_union, $manual_override_cleaning,
         $build_per_sample_vcfs, $global_logfile,  $squeeze_mem,
-        $workflow,  $known_contam_list,
+        $workflow,  $known_contam_list, $vclean
     );
 
 #set defaults
+$vclean='';#if set , will error clean unitigs if the MEAN covg is <threshold
 $fastq_offset=33;
 $squeeze_mem='';
 $first_kmer=0;
@@ -227,6 +228,7 @@ my $help = '';    #default false
     'workflow:s'          => \$workflow,
     'squeeze_mem'          =>\$squeeze_mem,
     'fastq_ascii_offset:i'   => \$fastq_offset,
+    'vclean'              =>\$vclean,
 ##    'remove_known_contams:s'=>$known_contam_list,  NOT IMPLEMENTED YET
 );
 
@@ -279,6 +281,7 @@ if ($help)
 	print "--workflow\t\t\t\tMandatory to specify this. Valid arguments are:\n\t\t\t\t\t \"joint\"\tCompare all samples against all in a multicolour graph. \n\t\t\t\t\t\t\tEasy to run (goes all the way to VCF) but requires a lot of memory if hundreds of samples\n\t\t\t\t\t \"joint_1col\"\tAs joint, but bubble-calling done in a 1-colour graph pooling all samples. \n\t\t\t\t\t\t\tRun with \"--do_union no\" to build graphs for each sample in parallel, and .. \n\t\t\t\t\t\t\tonce these jobs are done, run with \"--do_union yes\" to call variants. \n\t\t\t\t\t\t\tGenotyping+VCF is done by another script, per-sample and parallelised, \n\t\t\t\t\t\t\tthus has tiny memory footprint\n\t\t\t\t\t \"independent\"\tCompare each sample with the reference genome independently, \n\t\t\t\t\t\t\tmake a combined de-duplicated list of called sites\n\t\t\t\t\t\t\tand then genotype all samples at those sites.\n\t\t\t\t\t\t\tThis workflow is closest to a standard mapping pipeline (eg GATK)\n";
 	print "--apply_pop_classifier\t\t\tApply the Cortex population filter, to classify putative sites as repeat, variant or error. \n\t\t\t\t\tThis is a very powerful method of removing false calls\n\t\t\t\t\tbut it requires population information to do so.\n\t\t\t\t\tOnly use this if you have at least 10 unrelated samples\n\t\t\t\t\tThis is just a flag (takes no argument)\n";
 #	print "--remove_known_contams [FILELIST] - takes a list of Cortex binaries, and removes anything matching these (eg to remove human contamination frokm a bacterial sample\n";
+	print "--vclean\t\t\tWhen doing error cleaning, remove a unitig if the MEAN kmer coverage on that unitig is less than the threshold (set elsewhere). By default this is false, and the MAX is used\n";
 	print "--help\t\t\t\t\tprints this help information\n";
 	exit();
 }
@@ -435,7 +438,7 @@ build_all_cleaned_binaries(\%sample_to_uncleaned, \%sample_to_uncleaned_log,
 			   $cortex_dir, $mem_height, $mem_width, $max_var_len,
 			   $do_auto_cleaning, $auto_below, $auto_above,
 			   $do_user_spec_cleaning, $user_min_clean, $user_max_clean, $user_clean_step, $genome_size,
-			   $manual_override_cleaning);
+			   $manual_override_cleaning, $vclean);
 
 
 if ( ($do_auto_cleaning eq "yes") || ($do_auto_cleaning eq "stringent") || ($do_user_spec_cleaning eq "yes") || ($manual_override_cleaning ne "no") )
@@ -1661,7 +1664,7 @@ sub build_all_cleaned_binaries
 	$cortex_dir, $mem_height, $mem_width, $max_var_len,
 	$do_auto_cleaning, $auto_below, $auto_above,
 	$do_user_spec_cleaning, $user_min_clean, $user_max_clean, $user_clean_step, $g_size,
-	$manual_override_cleaning_file) = @_;
+	$manual_override_cleaning_file, $VClean) = @_;
 
 
 
@@ -1696,7 +1699,7 @@ sub build_all_cleaned_binaries
 					   $outdir_binaries, 
 					   $href_sample_to_uncleaned, 
 					   $cortex_dir, $mem_height, $mem_width,
-					   $href_sample_to_cleaned);
+					   $href_sample_to_cleaned, $VClean);
 		    #}
 		}
 		$sample_to_min_cleaning_thresh{$sample}{$k}=$min;
@@ -1714,7 +1717,7 @@ sub build_all_cleaned_binaries
 
 sub build_clean_binary
 {
-    my ($sample, $kmer, $clean_thresh, $outdir_bins, $hash_sample_to_uncleaned, $cortex_dir, $height, $width, $href_sam_to_cleaned_bin) = @_;
+    my ($sample, $kmer, $clean_thresh, $outdir_bins, $hash_sample_to_uncleaned, $cortex_dir, $height, $width, $href_sam_to_cleaned_bin, $Vclean) = @_;
     
     if ($outdir_bins !~ /\/$/)
     {
@@ -1752,13 +1755,26 @@ sub build_clean_binary
 
 
     my $cortex_binary = get_right_binary($kmer, $cortex_dir,1 );##one colour
-    my $cmd2 = $cortex_binary." --kmer_size $kmer --mem_height $height --mem_width $width --dump_binary $ctx --remove_low_coverage_supernodes $clean_thresh --multicolour_bin $uncleaned > $log 2>&1";
+    my $cmd2 = $cortex_binary." --kmer_size $kmer --mem_height $height --mem_width $width --dump_binary $ctx --remove_low_coverage_supernodes $clean_thresh --multicolour_bin $uncleaned ";
+    if ($Vclean)
+    {
+	$cmd2 = $cmd2. " --vclean ";
+    }
+    $cmd2 = $cmd2." > $log 2>&1";
     print "$cmd2\n";
     my $ret2 = qx{$cmd2};
     print "$ret2\n";
 
     $sample_to_cleaned_bin{$sample}{$kmer}{$clean_thresh}=$ctx;
     print "add $sample  $kmer $clean_thresh = $ctx\n";
+    if ($Vclean)
+    {
+	print "clean unitigs with MEAN kmer coverage below the threshold (traditionally we used MAX)\n";
+    }
+    else
+    {
+	print "clean unitigs with MAX kmer coverage below the threshold\n";
+    }
     if (!(-e $ctx))
     {
 	die("Unable to build $ctx\n");

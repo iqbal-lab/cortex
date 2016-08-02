@@ -37,7 +37,8 @@ my %vars = ( "index" => "",
 	     "genome_size"=>"",
 	     "outdir" => "",
 	     "ref_binary" => "",
-	     "index_dir"=> "");
+	     "index_dir"=> "",
+             "vclean" => '');
 
 
 &GetOptions(
@@ -56,6 +57,7 @@ my %vars = ( "index" => "",
     'mem_width:i'                 =>\$vars{"mem_width"},
     'genome_size:i'               =>\$vars{"genome_size"},
     'qthresh:i'                   =>\$vars{"qthresh"},
+    'vclean'                      =>\$vars{"vclean"},
     );
 
 
@@ -120,6 +122,10 @@ $cmd .= " --stampy_bin ".$vars{"stampy_bin"};
 $cmd .= " --stampy_hash ".$vars{"stampy_hash"};
 $cmd .= " --outvcf $sample ";
 
+if ($vars{"vclean"})
+{
+    $cmd .= "--vclean ";
+}
 my $ret = qx{$cmd};
 
 

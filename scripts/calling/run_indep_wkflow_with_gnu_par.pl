@@ -41,6 +41,7 @@ my $mem_height="";
 my $prefix = "default_prefix";
 my $mem_width="";
 my $global_logfile = "default_logfile";
+my $vclean='';
 &GetOptions(
     'index:s'                     =>\$all_samples_index,
     'ref_fa:s'                    =>\$ref_fa,
@@ -54,6 +55,7 @@ my $global_logfile = "default_logfile";
     'mem_height:i'                     =>\$mem_height,
     'mem_width:i'                     =>\$mem_width,
     'logfile:s'                   =>\$global_logfile,
+    'vclean'                     =>\$vclean,
     );
 
 
@@ -103,6 +105,10 @@ $build .= " --index $all_samples_index --outdir $outdir  --kmer $kmer ";
 if ( ($mem_height ne "") && ($mem_width ne "")) 
 {
     $build .= " --mem_height $mem_height --mem_width $mem_width ";
+}
+if ($vclean)
+{
+    $build .= " --vclean ";
 }
 
 my $ret_build = qx{$build};
