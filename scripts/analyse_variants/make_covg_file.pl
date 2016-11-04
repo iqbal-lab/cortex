@@ -49,57 +49,46 @@ while (<CALLS>)
 	$lenbr2 = length($line);
 	$line = <CALLS>;
 	$line = <CALLS>;
-	while ($line !~ /branch1 coverages/)
+
+
+	# what do we expect next:
+	#Colour  br1_median_covg br2_median_covg br1_min_covg    br2_min_covg
+	#0       0       0       0       0
+	#1       91      86      67      70
+	#2       73      71      51      62
+
+	while ($line !~ /^Colour/)
 	{
 	    	$line = <CALLS>;
 	}
-	$line = <CALLS>;
-	if ($line !~ /Covg in Colour 0/)
+	my $n=0;
+	while ($n<=$number_of_colours-1)
 	{
-	    die("PArsing error at line $line");
-	}
-
-	my $current_colour = 0;
-	while ($current_colour <= $number_of_colours-1)
-	{
-	    my $line_of_counts = <CALLS>;
-	    chomp $line_of_counts;
-	    $reads_on_branch  =count_reads($line_of_counts);
-	    push @array_counts_for_each_colour, $reads_on_branch;
-	    
-	    if ($current_colour == $ref_colour)
-	    {
-		$all_nodes_br1_in_ref=are_all_nodes_in_ref($line_of_counts);
-	    }
-	    $current_colour++;
 	    $line = <CALLS>;
-	}
-
-	if ($line !~ /branch2 coverages/)
-	{
-	    die("Expected branch2 coverages but got $line in $callfile");
-	}
-	$current_colour = 0;
-	$line = <CALLS>;
-
-	while ($current_colour <= $number_of_colours-1)
-	{
-	    my $line_of_counts = <CALLS>;
-	    chomp $line_of_counts;
-	    $reads_on_branch=count_reads($line_of_counts);
-	    $array_counts_for_each_colour[$current_colour] = $array_counts_for_each_colour[$current_colour]."\t".$reads_on_branch;
-
-	    if ($current_colour == $ref_colour)
+	    my @sp = split(/\s+/, $line);
+	    my $col = $sp[0];
+	    if ($n!=$col)
 	    {
-		$all_nodes_br2_in_ref=are_all_nodes_in_ref($line_of_counts);
+		die("Unexpected ordering of colours in $line\n");
 	    }
-
-
-	    $current_colour++;
-	    $line=<CALLS>;
+	    my $br1_median = $sp[1];
+	    my $br2_median = $sp[2];
+	    my $br1_min = $sp[3];
+	    my $br2_min = $sp[4];
+	    $array_counts_for_each_colour[$col] = $br1_median."\t".$br2_median;
+	    if ($col == $ref_colour)
+	    {
+		if ($br1_min>0)
+		{
+		    $all_nodes_br1_in_ref=1;
+		}
+		if ($br2_min>0)
+		{
+		    $all_nodes_br2_in_ref=1;
+		}
+	    }
+	    $n++;
 	}
-
-	my $i;
 
 	if ( ($all_nodes_br1_in_ref==1) && ($all_nodes_br2_in_ref==1) )
 	{
@@ -125,6 +114,7 @@ while (<CALLS>)
 	{
 	    die("Ref colour is not -1 and yet is not positive\n");
 	}
+	my $i;
 
 	for ($i=0; $i<$number_of_colours; $i++)
 	{
@@ -154,64 +144,3 @@ while (<CALLS>)
 close(CALLS);
 close(OUT);
 print "Completed making covg file!\n";
-
-sub are_all_nodes_in_ref
-{
-    my ($line) = @_;
-    my @sp = split(/\s+/, $line);
-    my $i;
-    my $total = $sp[1];
-    if (scalar @sp < 3)
-    {
-	return 0;
-    }
-
-    my $all_nodes_in_ref=1;
-    for ($i=2; $i< scalar(@sp)-1; $i++)##ignore first and last
-    {
-	if ($sp[$i]==0)
-	{
-	    $all_nodes_in_ref=0;
-	    last;
-	}
-    }
-    return $all_nodes_in_ref;
-
-}
-
-
-
-sub count_reads
-{
-    my ($line) = @_;
-    my @sp = split(/\s+/, $line);
-    my $i;
-    my $total = $sp[1];
-    if (scalar @sp < 3)
-    {
-	return 0;
-    }
-
-    for ($i=2; $i< scalar(@sp)-1; $i++)##ignore first and last
-    {
-	my $jump = $sp[$i] - $sp[$i-1];
-	if ($jump >0)
-	{
-	    if ($i+1 < scalar(@sp)-1) ## ie if there is a next base in this array
-	    {
-		my $next_jump = $sp[$i+1]-$sp[$i];
-		if ($next_jump != -$jump)  ## ie provided the jump was not a spike on a single kmer
-		{
-		    $total += $jump;
-		}
-	    }
-	    else
-	    {
-		$total +=$jump;
-	    }
-	}
-    }
-
-
-    return $total;
-}
