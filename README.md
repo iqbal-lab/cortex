@@ -1,4 +1,4 @@
-cortex
+##cortex
 ======
 
 reference free variant assembly
@@ -6,13 +6,11 @@ reference free variant assembly
 I'm just about to migrate Cortex officially from Sourceforge to Github, and make a new release.
 
 
-# Download
+## Download
 
-'
-git clone --recursive git@github.com:iqbal-lab/cortex.git
-'
+'git clone --recursive git@github.com:iqbal-lab/cortex.git'
 
-# Compile
+## Compile
 
 `
 cd cortex
@@ -20,4 +18,5 @@ cd cortex
 bash install.h
 
 make cortex_var
+
 `
