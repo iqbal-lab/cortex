@@ -16,5 +16,8 @@ git clone --recursive git@github.com:iqbal-lab/cortex.git
 
 `
 cd cortex
+
 bash install.h
+
+make cortex_var
 `
