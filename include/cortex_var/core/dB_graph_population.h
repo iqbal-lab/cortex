@@ -149,7 +149,7 @@ boolean db_graph_remove_supernode_containing_this_node_if_looks_like_induced_by_
 	void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 	void (*apply_reset_to_specified_edges_2)(dBNode*),
 	dBNode** path_nodes, Orientation* path_orientations, Nucleotide* path_labels, 
-	char* supernode_str, int* supernode_len);
+	char* supernode_str, int* supernode_len, boolean use_mean);
 
 // traverse graph. At each node, if covg <= arg1, get its supernode. If ALL interior nodes have covg <= arg1 
 // then prune the node, and the interior nodes of the supernode.
@@ -160,7 +160,7 @@ long long db_graph_remove_errors_considering_covg_and_topology(
 	Edges (*get_edge_of_interest)(const Element*), 
 	void (*apply_reset_to_specified_edges)(dBNode*, Orientation, Nucleotide), 
 	void (*apply_reset_to_specified_edges_2)(dBNode*),
-	int max_expected_sup);
+	int max_expected_sup, boolean use_mean);
 
 
 boolean db_graph_remove_supernode_containing_this_node_if_more_likely_error_than_sampling(

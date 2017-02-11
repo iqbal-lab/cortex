@@ -25,7 +25,7 @@ cd ..
 
 cd ..
 
-cd scripts/analyse_variants/needleman_wunsch/
+cd scripts/analyse_variants/seq-align
 make clean
 make
 cd ..

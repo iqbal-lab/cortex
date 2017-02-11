@@ -207,8 +207,6 @@ const char* usage=
 
 "   [--help] \t\t\t\t\t\t\t=\t This help screen.\n\n" \
 " \n ** DATA LOADING ** \n\n"\
-  // -v
-  //"   [--format TYPE] \t\t\t\t\t\t=\t File format for input in se_list and pe_list. All files assumed to be of the same format.\n\t\t\t\t\t\t\t\t\t Type must be FASTQ or FASTA\n"
 "   [--colour_list FILENAME] \t\t\t\t\t=\t File of filenames, one per colour. n-th file is a list of\n\t\t\t\t\t\t\t\t\t single-colour binaries to be loaded into colour n.\n\t\t\t\t\t\t\t\t\t Cannot be used with --se_list or --pe_list \n\t\t\t\t\t\t\t\t\t Optionally, this can contain a second column, containing a sample identifier/name for each colour\n" \
 "   [--multicolour_bin FILENAME] \t\t\t\t=\t Filename of a multicolour binary, will be loaded first, into colours 0..n.\n\t\t\t\t\t\t\t\t\t If using --colour_list also, those will be loaded into subsequent colours, after this.\n" \
 "   [--se_list FILENAME] \t\t\t\t\t=\t List of single-end fasta/q to be loaded into a single-colour graph.\n\t\t\t\t\t\t\t\t\t Cannot be used with --colour_list\n\t\t\t\t\t\t\t\t\t Optionally, the first line is allowed to have, after the filename, a tab, and then a sample identifier\n" \
@@ -260,7 +258,7 @@ const char* usage=
   // -s
 "   [--output_bubbles1 FILENAME]\t\t\t\t\t=\t Bubbles called in detect_bubbles1 are dumped to this file.\n" \
   // -v
-"   [--high_diff FLOAT]\t\t\t\t\t\t=\t Only call bubbles that (user-specified) minimum  allele-balance difference \n\t\t\t\t\t\t\t\t\t between at least 2 colours (ignores reference colour)\n\t\t\t\t\t\t\t\t\t Designed to be used when comparing pooled populations\n\t\t\t\t\t\t\t\t\t e.g --detect_bubbles -1/-1 --high_diff 0.9 will call bubbles where \n\t\t\t\t\t\t\t\t\t for example allele_balance(colour0)=0.01 and allele_balance(colour1)=0.95\n\t\t\t\t\t\t\t\t\t If you use this option, you must also set --genome_size" \
+"   [--vclean] \t\t\t\t\t=\t  When error cleaning remove unitigs with MEAN coverage below the set threshold. If you do not set this, the default us to remove unitigs with MAX kmer coverage below the set threshold. ie this setting will clean more unitigs off\n" \
 
   // -x
 "   [--print_colour_coverages]\t\t\t\t\t=\t Print coverages in all colours for supernodes and variants.\n" \
@@ -360,7 +358,8 @@ void initialise_longlong_list(long long* list, int len)
 
 int default_opts(CmdLine * c)
 {
-  c->high_diff=false;
+  c->stringent_use_mean=false;
+
   c->min_allele_balance_diff = 0.9; //when looking for high diff sites.
   c->subsample=false;
   c->subsample_propn=(float)1.0;//by default, take all reads
@@ -585,7 +584,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
     {"output_bubbles1",required_argument, NULL, 's'},    
     {"gt",required_argument, NULL, 't'},
     {"estim_e_with_snps",required_argument, NULL, 'u'},    
-    {"high_diff",required_argument,NULL,'v'},
+    {"vclean",no_argument,NULL,'v'},
     {"max_read_len",required_argument,NULL,'w'},
     {"print_colour_coverages",no_argument,NULL,'x'},
     {"max_var_len",required_argument,NULL,'y'},
@@ -622,7 +621,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
   optind=1;
   
  
-  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:UV:", long_options, &longopt_index);
+  opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:vw:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:UV:", long_options, &longopt_index);
 
   while ((opt) > 0) {
 	       
@@ -1054,20 +1053,9 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       } 
      
 
-    case 'v': //high_diff - 
+    case 'v': //vclean
       {
-	if (optarg==NULL)
-	  {
-	    errx(1,"[--high_diff requires a decimal argument between 0 and 1 - the minimum difference in allele balance required between two pools\n");
-	  }
-	cmdline_ptr->min_allele_balance_diff = atof(optarg);
-	if ( (cmdline_ptr->min_allele_balance_diff<=0)
-	     ||
-	     (cmdline_ptr->min_allele_balance_diff>=1) )
-	  {
-	    errx(1,"[--high_diff requires a decimal argument between 0 and 1 - the minimum difference in allele balance required between two pools\n");
-	  }
-	cmdline_ptr->high_diff=true;
+	cmdline_ptr->stringent_use_mean=true;
 	break ;
       } 
 
@@ -1545,7 +1533,7 @@ int parse_cmdline_inner_loop(int argc, char* argv[], int unit_size, CmdLine* cmd
       }      
 
     }
-    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:v:w:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:UV:", long_options, &longopt_index);
+    opt = getopt_long(argc, argv, "ha:b:c:d:e:f:g:i:jk:l:m:n:o:p:q:r:s:t:u:vw:xy:z:A:B:CD:E:F:G:H:I:J:K:L:MN:O:P:Q:R:S:T:UV:", long_options, &longopt_index);
     
   }   
   

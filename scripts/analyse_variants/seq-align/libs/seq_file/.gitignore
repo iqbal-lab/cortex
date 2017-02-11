@@ -1,0 +1,5 @@
+
+benchmarks/ktest
+benchmarks/seqtest
+bin
+dev/seqcmdline

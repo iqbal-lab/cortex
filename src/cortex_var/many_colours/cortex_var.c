@@ -1182,7 +1182,7 @@ int main(int argc, char **argv)
 							   &element_get_colour_union_of_all_colours,
 							   &apply_reset_to_specific_edge_in_union_of_all_colours, 
 							   &apply_reset_to_all_edges_in_union_of_all_colours,
-							   cmd_line->max_var_len);
+							   cmd_line->max_var_len, cmd_line->stringent_use_mean);
       timestamp();
       printf("Error correction done\n");
       int z;

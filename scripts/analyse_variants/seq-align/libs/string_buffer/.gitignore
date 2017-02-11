@@ -1,0 +1,7 @@
+libstrbuf.a
+strbuf_test
+string_buffer.o
+tmp.strbuf.001.txt
+tmp.strbuf.001.txt.gz
+tmp.strbuf.002.txt
+tmp.strbuf.002.txt.gz
