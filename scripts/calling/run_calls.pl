@@ -284,35 +284,35 @@ if ($outdir !~ /\/$/)
 $errfile =$outdir."PROGRESS";
 my $err_fh;
 open($err_fh, ">".$errfile)||die("Cannot open $errfile");
-
+print_to_progressfile($err_fh, "INITIAL_CHECKS", "PASS", "", "");
 
 my $proc_calls = $analyse_variants_dir."process_calls.pl";
 if (!(-e $proc_calls))
 {
-    print_to_progressfile($err_fh, "NONE", "INITIAL_CHECKS", "Cannot find $proc_calls - should never happen", "");
+    print_to_progressfile($err_fh, "INITIAL_CHECKS", "FAIL", "Cannot find $proc_calls - should never happen", "");
 }
 my $make_union = $analyse_variants_dir."make_union_varset_including_metadata_in_names.pl";
 if (!(-e $make_union))
 {
-    print_to_progressfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $make_union - should never happen","");
+    print_to_progressfile($err_fh, "INITIAL_CHECKS", "FAIL", "Cannot find $make_union - should never happen","");
 }
 
 my $make_covg_script = $analyse_variants_dir."make_covg_file.pl";
 if (!(-e $make_covg_script))
 {
-    print_to_progressfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $make_covg_script - should never happen","");
+    print_to_progressfile($err_fh, "INITIAL_CHECKS", "FAIL", "Cannot find $make_covg_script - should never happen","");
 }
 
 my $make_table_script = $analyse_variants_dir."make_read_len_and_total_seq_table.pl";
 if (!(-e $make_table_script))
 {
-    print_to_progressfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $make_table_script - should never happen","");
+    print_to_progressfile($err_fh, "INITIAL_CHECKS", "FAIL","Cannot find $make_table_script - should never happen","");
 }
 
 my $get_thresh_script = $analyse_variants_dir."get_auto_cleaning_cutoff.R";
 if (!(-e $get_thresh_script))
 {
-    print_to_progressfile($err_fh, "NONE","INITIAL_CHECKS","Cannot find $get_thresh_script - should never happen","");
+    print_to_progressfile($err_fh, "INITIAL_CHECKS", "FAIL","Cannot find $get_thresh_script - should never happen","");
 }
 
 
@@ -345,7 +345,7 @@ elsif ( ($ploidy==2) && ( ($use_ref eq "CoordinatesOnly") || ($use_ref eq "Coord
 }
 else
 {
-    print_to_progressfile($err_fh, "NONE", "INITIAL_CHECKS", "Either your ploidy is mis-specified (should be 1 or 2), or your --ref argument is wrong (should be Absent, CoordinatesOnly, or CoordinatesAndInCalling\n", "");
+    print_to_progressfile($err_fh, "INITIAL_CHECKS", "FAIL", "Either your ploidy is mis-specified (should be 1 or 2), or your --ref argument is wrong (should be Absent, CoordinatesOnly, or CoordinatesAndInCalling\n", "");
 
 }
 
@@ -363,7 +363,7 @@ my $classifier = $analyse_variants_dir."classifier.parallel.ploidy_aware.R";
 
 if (!(-e $classifier))
 {
-    print_to_progressfile($err_fh, "NONE", "INITIAL_CHECKS", "Cannot find $classifier - should be in $analyse_variants_dir", "");
+    print_to_progressfile($err_fh, "INITIAL_CHECKS", "FAIL", "Cannot find $classifier - should be in $analyse_variants_dir", "");
 
 }
 
@@ -423,11 +423,13 @@ my %sample_to_kmer_to_list_cleanings_used=();
 
 if ($fastaq_index ne "")
 {
+    print_to_progressfile($err_fh, "START_BUILD", "PASS", "", "");
     build_all_unclean_binaries($fastaq_index, $outdir_binaries, 
 			       \%sample_to_uncleaned, \%sample_to_uncleaned_log,
 			       \%sample_to_uncleaned_covg_distrib,
 			       $cortex_dir, $qthresh, $dups, $homopol, $mem_height, $mem_width,
 			       $known_contam_list);
+    print_to_progressfile($err_fh, "COMPLETE_BUILD", "PASS", "", "");
 }
 
 
@@ -1021,6 +1023,7 @@ sub print_to_progressfile
 	$best_guess_reason_if_fail, 
 	$file_you_could_look_in) = @_;
 
+    print "ZAMZAMZAMZAMIQBQIQBQIQB\n";
     print  $fh "$stage\t$result\t";
     if ($result eq "FAIL")
     {
