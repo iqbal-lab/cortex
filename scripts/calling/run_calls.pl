@@ -70,6 +70,39 @@ if ($current_dir !~ /\/$/)
 
 
 
+<<<<<<< HEAD
+=======
+my $proc_calls = $analyse_variants_dir."process_calls.pl";
+if (!(-e $proc_calls))
+{
+    print_to_progressfile($progress_fh, "INITIAL_CHECKS", "FAIL", "Cannot find $proc_calls - should never happen", "");
+}
+
+my $make_union = $analyse_variants_dir."make_union_varset_including_metadata_in_names.pl";
+if (!(-e $make_union))
+{
+    print_to_progressfile($progress_fh, "INITIAL_CHECKS", "FAIL", "Cannot find $make_union - should never happen","");
+}
+
+my $make_covg_script = $analyse_variants_dir."make_covg_file.pl";
+if (!(-e $make_covg_script))
+{
+    print_to_progressfile($progress_fh, "INITIAL_CHECKS", "FAIL", "Cannot find $make_covg_script - should never happen","");
+}
+
+my $make_table_script = $analyse_variants_dir."make_read_len_and_total_seq_table.pl";
+if (!(-e $make_table_script))
+{
+    print_to_progressfile($progress_fh, "INITIAL_CHECKS","FAIL", "Cannot find $make_table_script - should never happen","");
+}
+
+my $get_thresh_script = $analyse_variants_dir."get_auto_cleaning_cutoff.R";
+if (!(-e $get_thresh_script))
+{
+    print_to_progressfile($progress_fh, "INITIAL_CHECKS", "FAIL", "Cannot find $get_thresh_script - should never happen","");
+}
+
+
 #use lib $isaac_bioinf_dir;
 use Descriptive;
 
@@ -324,7 +357,8 @@ my $global_fh;
 if ($global_logfile ne "")
 {
     open($global_fh, ">".$global_logfile)||
-	print_to_progressfile($err_fh, "NONE", "INITIAL_CHECKS", "Cannot open global logfile $global_logfile - permissions issue? Bad path?", "");
+	print_to_progressfile($progress_fh, "INITIAL_CHECKS", "FAIL", "Cannot open global logfile $global_logfile - permissions issue? Bad path?", "");
+
 
     *STDOUT = *$global_fh;
 }
@@ -349,7 +383,6 @@ elsif ( ($ploidy==2) && ( ($use_ref eq "CoordinatesOnly") || ($use_ref eq "Coord
 else
 {
     print_to_progressfile($err_fh, "INITIAL_CHECKS", "FAIL", "Either your ploidy is mis-specified (should be 1 or 2), or your --ref argument is wrong (should be Absent, CoordinatesOnly, or CoordinatesAndInCalling\n", "");
-
 }
 
 ## print start time
@@ -367,7 +400,6 @@ my $classifier = $analyse_variants_dir."classifier.parallel.ploidy_aware.R";
 if (!(-e $classifier))
 {
     print_to_progressfile($err_fh, "INITIAL_CHECKS", "FAIL", "Cannot find $classifier - should be in $analyse_variants_dir", "");
-
 }
 
 
@@ -1027,12 +1059,15 @@ sub print_to_progressfile
 	$file_you_could_look_in) = @_;
 
     print "ZAMZAMZAMZAMIQBQIQBQIQB\n";
-    print  $fh "$stage\t$result\t";
+    my ($fh, $stage, $result, $comment, $file_you_could_look_in) = @_;
+
+    print  $fh "$stage\t$result\t$comment\t";
+
     if ($result eq "FAIL")
     {
-	print $fh "$best_guess_reason_if_fail\t$file_you_could_look_in\n";
+	print $fh "$file_you_could_look_in\n";
 	close($fh);
-	print $fh "$stage FAILED\n";
+	print $global_fh "$stage FAILED - see $progress_file\n";
 	close($global_fh);
 	die();
     }
@@ -1050,7 +1085,8 @@ sub get_num_kmers_for_pool_at_specific_k
     my $list_all_clean_file = "tmp_list_all_clean_bins_k".$KMER;
     my $list_all_clean_path = $tmpdir."/".$list_all_clean_file;
     open(LIST_ALL, ">$list_all_clean_path")||
-	print_to_progressfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL", "Cannot create this file $list_all_clean_path needed internally. Very odd - out of disk?", "");
+	print_to_progressfile($err_fh, "CALC_TOTAL_KMERS_IN_POOL", "FAIL", "Cannot create this file $list_all_clean_path needed internally. Very odd - out of disk?", "");
+
 
     foreach my $s (@samples)
     {
@@ -1074,7 +1110,8 @@ sub get_num_kmers_for_pool_at_specific_k
     close(LIST_ALL);
     my $list_all_clean_pop = $list_all_clean_path.".pop";
     open(LIST_ALL_CLEAN_POP, ">".$list_all_clean_pop)||
-	print_to_progressfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL", "Cannot create this tiny tiny file $list_all_clean_pop needed internally. Very odd - out of disk?", "");
+	print_to_progressfile($progress_fh, "CALC_TOTAL_KMERS_IN_POOL", "FAIL", "Cannot create this tiny tiny file $list_all_clean_pop needed internally. Very odd - out of disk?", "");
+
 
     print LIST_ALL_CLEAN_POP "$list_all_clean_file\n";
     close(LIST_ALL_CLEAN_POP);
@@ -1095,7 +1132,11 @@ sub get_num_kmers_for_pool_at_specific_k
 	qx{$cmd_count_kmers};
     }
     my $num_kmers_in_cleaned_pool=0; ##will be number of kmers
-    if (ran_out_of_memory($count_log) eq "true")
+    if (ran_out_of_memory($count_log) eq "-1")
+    {
+	print_to_progressfile($progress_fh, "CALC_TOTAL_KMERS_IN_POOL", "FAIL", "Cannot seem to access this count_log $count_log - previous step failed without even printing an error to that file", "");	
+    }
+    elsif (ran_out_of_memory($count_log) eq "true")
     {
 	print "Pool for k $KMER cannot fit into a hash table with these mem parameters\n";
 	$num_kmers_in_cleaned_pool = -1;
@@ -1125,7 +1166,8 @@ sub get_num_kmers_for_pool
 	$num_kmers_in_cleaned_pool = get_num_kmers_for_pool_at_specific_k($first_kmer, "no", 0,0);
 	if ($num_kmers_in_cleaned_pool==-1)
 	{
-	print_to_progressfile($err_fh, "BINARIES_BUILT", "CALC_TOTAL_KMERS_IN_POOL", "Cannot load all samples into one colour, even after cleaning, with the memory parameters you have entered. Can you alloc more memory, by increasing mem height/width?", "");
+	print_to_progressfile($progress_fh, "CALC_TOTAL_KMERS_IN_POOL", "FAIL", "Cannot load all samples into one colour, even after cleaning, with the memory parameters you have entered. Can you alloc more memory, by increasing mem height/width?", "");
+
 	}
 	$new_mem_height = int(log($num_kmers_in_cleaned_pool/$fixed_width)/log(2)) +1;
 	
@@ -1232,11 +1274,15 @@ sub get_time
 sub get_num_kmers
 {
     my ($log) = @_;
+
     open(LOG, $log)|| print_to_progressfile($err_fh, 
 					    "CALC_TOTAL_KMERS_IN_POOL",
 					    "FAIL",
 					    "Cannot open $log to read kmer info",
 					    $log);
+
+    open(LOG, $log)|| print_to_progressfile($progress_fh, "CALC_TOTAL_KMERS_IN_POOL", "FAIL", "Cannot open (for reading) $log", "");
+
     while (<LOG>)
     {
 	my $line = $_;
@@ -1254,11 +1300,15 @@ sub get_num_kmers
 sub ran_out_of_memory
 {
     my ($log) = @_;
+
     open(LOG, $log)|| print_to_progressfile($err_fh, 
 					    "CHECKING_IF_OUT_OF_MEMORY",
 					    "FAIL",
 					    "Cannot open $log to check if out of memory",
 					    $log);
+
+    open(LOG, $log)|| return -1;
+
     while (<LOG>)
     {
 	my $line = $_;
@@ -1281,6 +1331,7 @@ sub get_refbin_name
 	$dir = $dir.'/';
     }
     ## check ref binary exists
+
     opendir (DIR, $dir) or 
 	print_to_progressfile($err_fh, 
 			      "FIND_REFERENCE_BINARY",
@@ -1288,6 +1339,7 @@ sub get_refbin_name
 			      "Cannot look inside directory $dir",
 			      "");
     
+
 
     my @files=();
     while (my $file = readdir(DIR)) {
@@ -1315,6 +1367,11 @@ sub get_refbin_name
 			      "Cannot find a k$kHHmer reference binary in the specified directory $dir",
 			      "");
 	
+
+    }
+    elsif ($found>1)
+    {
+	print_to_progressfile($progress_fh, "CALLING_PREP", "FAIL", "Found more than one file in $dir which has k$kHHmer and \".ctx\" in the filename, so cannot tell which is the ref binary. Don't put binaries for >1 reference in this directory", "");
 
     }
     else
@@ -1345,13 +1402,13 @@ sub get_colourlist_for_joint
     }
 
     my $outfile = $tmpdir."tmp_colourlist_".$wkflow."t_".$str."_kmer".$kmer."_level".$level;
+
     open(OUT, ">".$outfile)||
 	print_to_progressfile($err_fh, 
 			      "MAKE_INTERMEDIATE_FILELIST",
 			      "FAIL",
 			      "Cannot write tiny file $outfile - permissions? Our of disk?",
 			      "");
-
 
     ## Now - The binary filelists are relative to wherever the colour list is
 
@@ -1367,7 +1424,8 @@ sub get_colourlist_for_joint
 	print OUT  $ref_bin_list."\n";
 	$ref_bin_list = $tmpdir.$ref_bin_list;
 
-	open(REF, ">".$ref_bin_list)||die("Cannot open $ref_bin_list");
+	open(REF, ">".$ref_bin_list)||print_to_progressfile($progress_fh, "CALLING_PREP", "FAIL", "Cannot open $ref_bin_list - should be a filelist for a reference binary", "");
+
 	print REF $refbindir;
 	print REF get_refbin_name($refbindir, $kmer);
 	print REF "\n";
@@ -1381,7 +1439,9 @@ sub get_colourlist_for_joint
     {
 	print OUT "$f\n";
 	$f = $tmpdir.$f;
-	open(F, ">".$f)||die("Cannot open $f");
+	open(F, ">".$f)||
+	    print_to_progressfile($progress_fh, "CALLING_PREP", "FAIL", "Cannot open $f, used in 1-coloured joint calling", "");
+
     }
     foreach my $sample (@samples)
     {
@@ -1390,7 +1450,8 @@ sub get_colourlist_for_joint
 	    $f = "sample_".$sample."_kmer.".$kmer."_cleaning_level".$level."_binary";
 	    print OUT "$f\n";
 	    $f = $tmpdir.$f;
-	    open(F, ">".$f)||die("Cannot open $f");
+	    open(F, ">".$f)||
+		print_to_progressfile($progress_fh, "CALLING_PREP", "FAIL", "Cannot open $f, used in joint calling", "");
 	    #print F $current_dir; 
 	    if ($sample_to_kmer_to_list_cleanings_used{$sample}{$kmer}->[$level] !=0)
 	    {
@@ -1452,59 +1513,6 @@ sub get_num_cleaning_levels
 }
 
 
-sub build_per_sample_vcfs
-{
-
-    die("Dont think i want to support this");
-    my ($dir, $href) = @_;
-
-    if ($dir !~ /\/$/)
-    {
-	$dir = $dir.'/';
-    }
-    if (!(-d $dir))
-    {
-	my $mkdir_cmd = "mkdir -p $dir";
-	print "$mkdir_cmd\n";
-    my $mkdir_ret = qx{$mkdir_cmd};
-    print "$mkdir_ret\n";
-    }
-
-    foreach my $k (@kmers)
-    {
-	foreach my $sam (@samples)
-	{
-	    my $samdir = $dir.$sam;
-	    if (!(-e $samdir))
-	    {
-		my $mkdir_cmd = "mkdir -p $samdir";
-        print "$mkdir_cmd\n";
-		my $mkdir_ret = qx{$mkdir_cmd};
-        print "$mkdir_ret\n";
-	    }
-	    
-	    foreach my $cleaning (keys %{$sample_to_cleaned_bin{$sam}{$k}})
-	    {
-		if ($do_bc eq "yes")
-		{
-		    my $bc_file =  $sample_to_bc_callfile{$sam}{$k}{$cleaning};
-		    my $stub = "BC_sample_".$sam."_kmer".$k."_cleaning".$cleaning;
-		    my $this_log =$samdir. $stub.".log";
-		    #build_vcfs($bc_file, $stub, 2, $this_log, $samdir, $href);
-		}
-		if ($do_pd eq "yes")
-		{
-		    my $pd_file =  $sample_to_pd_callfile{$sam}{$k}{$cleaning};
-		    my $stub = "PD_sample_".$sam."_kmer".$k."_cleaning".$cleaning;
-		    my $this_log =$samdir. $stub.".log";
-		    #build_vcfs($pd_file, $stub, 2, $this_log, $samdir, $href);
-		}
-
-	    }
-	}
-    }
-
-}
 
 
 sub merge_vcfs
@@ -1590,7 +1598,9 @@ sub build_vcfs
     my $colournames=$outdir_vcfs.'/'."SAMPLES";
     if (!(-e $colournames))
     {
-	open(COL, ">$colournames") or die("Cannot open file '$colournames'");
+	open(COL, ">$colournames") ||
+	    print_to_progressfile($progress_fh,"VCF", "FAIL", "Cannot open/create filelist of sample names: $colournames", ""); 
+
 	if ($use_ref ne "Absent")
 	{
 	    print COL "REF\n";
@@ -1677,7 +1687,9 @@ sub make_multicol_filelist
 	qx{$cmd1};
     }
     my $colourlist = $tmpdir."/tmp_multicol_col_list";
-    open(TMP, ">$colourlist") or die("Cannot open file '$colourlist'");
+    open(TMP, ">$colourlist") ||
+	print_to_progressfile($progress_fh,"GENOTYPE_RUNCALLS_UNIONCALLSET", "FAIL", "Cannot open/create colourlist $colourlist", "");
+
     my $i;
     for ($i=0; $i<scalar(@$aref_bins); $i++)
     {
@@ -1687,7 +1699,8 @@ sub make_multicol_filelist
     for ($i=0; $i<scalar(@$aref_bins); $i++)
     {
     my $tmp_out_file = $tmpdir.'/colour'.$i.'_filelist';
-	open(TMP, ">$tmp_out_file") or die("Cannot open file '$tmp_out_file'");
+	open(TMP, ">$tmp_out_file") || 
+	    print_to_progressfile($progress_fh,"GENOTYPE_RUNCALLS_UNIONCALLSET", "FAIL", "Cannot open/create temp file $tmp_out_file", "");
 	print TMP $aref_bins->[$i] . "\n";
 	close(TMP);
     }
