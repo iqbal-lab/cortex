@@ -121,7 +121,7 @@ else
 	OPT := -O3 $(OPT)
 endif
 
-vLIBLIST = -lseqfile -lstrbuf -lhts -lpthread -lz -lm
+LIBLIST = -lseqfile -lstrbuf -lhts -lpthread -lz -lm
 TEST_LIBLIST = -lcunit -lncurses $(LIBLIST)
 #TEST_LIBLIST = -lcunit  $(LIBLIST)
 
