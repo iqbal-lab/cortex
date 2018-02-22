@@ -499,11 +499,11 @@ int  main()
 	return CU_get_error();
       }
 
-   if (NULL == CU_add_test(pPopGraphSuite, "Test error correction of fastq files against a graph", test_error_correct_file_against_graph))
+   /*   if (NULL == CU_add_test(pPopGraphSuite, "Test error correction of fastq files against a graph", test_error_correct_file_against_graph))
       {
 	CU_cleanup_registry();
 	return CU_get_error();
-      }
+	}*/
 
    if (NULL == CU_add_test(pPopGraphSuite, "Test error correction utility function for greedy random walk", test_take_n_greedy_random_steps))
       {
