@@ -75,7 +75,7 @@ void error_correct_list_of_files(StrBuf* list_fastq,char quality_cutoff, char as
 				 boolean add_greedy_bases_for_better_bwt_compression,
 				 int num_greedy_bases, boolean rev_comp_read_if_on_reverse_strand);
 
-inline void error_correct_file_against_graph(char* fastq_file, char quality_cutoff, char ascii_qual_offset,
+void error_correct_file_against_graph(char* fastq_file, char quality_cutoff, char ascii_qual_offset,
 					     dBGraph *db_graph, char* outfile,
 					     uint64_t *bases_modified_count_array,//distribution across reads; how many of the read_length bases are fixed
 					     uint64_t *posn_modified_count_array,//where in the read are we making corrections?
