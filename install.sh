@@ -3,33 +3,17 @@
 if [ ! -d libs ]
 then
   echo "Directory libs does not exist" 1>&2
-  exit 0
+  exit 1
 fi
 
-cd libs
+make -C libs/htslib clean
+make -C libs/htslib
 
-cd htslib
-make clean
-make
-cd ..
+make -C libs/string_buffer clean
+make -C libs/string_buffer
 
-cd string_buffer
-make clean
-make
-cd ..
+make -C libs/seq_file clean
+make -C libs/seq_file STRING_BUF_PATH=../string_buffer HTS_PATH=../htslib
 
-cd seq_file
-make clean
-make STRING_BUF_PATH=../string_buffer HTS_PATH=../htslib
-cd ..
-
-cd ..
-
-cd scripts/analyse_variants/seq-align
-make clean
-make
-cd ..
-
-cd ..
-cd ..
-
+make -C scripts/analyse_variants/seq-align clean
+make -C scripts/analyse_variants/seq-align
