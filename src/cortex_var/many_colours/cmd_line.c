@@ -2088,19 +2088,7 @@ int check_cmdline(CmdLine* cmd_ptr, char* error_string)
       strcpy(error_string, tmp);
       return -1;
     }
-  
-  if (  (cmd_ptr->max_read_length>100000) && (cmd_ptr->align_given_list==false) && (cmd_ptr->do_genotyping_of_file_of_sites==false) )
-    {
-      char tmp[]="You are not allowed to set maximum read length >100000 when loading fasta/q into a graph. (However it IS allowed if you are aligning fasta/q to  preexisting graph, or genotyping a file of calls (which might be very long)). Since you have not specified --align, Cortex has exited.\n";
-      if (strlen(tmp)>LEN_ERROR_STRING)
-	{
-	  die("coding error - this string is too long:\n%s\n", tmp);
-	}
-      strcpy(error_string, tmp);
-      return -1;
-      
-    }
-  
+    
 
   if (  (cmd_ptr->max_read_length>300000000) && (cmd_ptr->align_given_list==true) )
     {
