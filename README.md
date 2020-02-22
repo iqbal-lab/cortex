@@ -58,7 +58,14 @@ File questions or issues to the [Issue Tracker](https://github.com/iqbal-lab/cor
 
 ## Citation
 
-Zamin Iqbal, Isaac Turner, Gil McVean.
-*High-throughput microbial population genomics using the Cortex variation assembler*
-**Bioinformatics**  2013;2(15):275-6. 
-[(link)](https://doi.org/10.1093/bioinformatics/bts673)
+Zamin Iqbal, Mario Caccamo, Isaac Turner, Paul Flicek, Gil McVean.
+*De novo assembly and genotyping of variants using colored de Bruijn graphs*
+**Nature Genetics**  44, pages226–232(2012) 
+[(link)](https://www.nature.com/articles/ng.1028)
+
+## For future reference
+We are currently working on a new variant calling package which wraps cortex and samtools, which can be found here
+[(link)](https://github.com/iqbal-lab-org/clockwork). We have been building singularity containers of these, and these should shortly be hosted externally and easily available
+
+
+
