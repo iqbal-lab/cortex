@@ -24,12 +24,9 @@ If this fails, consult the manual at : http://cortexassembler.sourceforge.net/co
 
 ** Other packages/set-up required for run_calls.pl and for dumping VCFs
 
-1. Obtain Stampy from 
-   http://www.well.ox.ac.uk/project-stampy
-   Unzip it somewhere, cd into it and type make. 
-   Stampy requirements: Stampy needs Python version 2.6 or 2.7
-                        Only supports x86_64 and (experimental) Mac.
-   The run_calls.pl and process_calls.pl will need to know where stampy.py is (I pass the path in as an argument)
+1. Git clone minimap2 from https://github.com/lh3/minimap2
+   Cd into it and type make. This produces the minimap2 executable.
+   The run_calls.pl and process_calls.pl will need to know where this executable is (I pass the path in as an argument)
 
 
 2. Obtain VCFTools from

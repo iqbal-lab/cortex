@@ -6,8 +6,8 @@ use Getopt::Long;
 
 
 #### Dear User - this following line is the only one in this script you may want to edit
-my $stampy_bin =
-  "/home/zam/installed_apps/stampy-1.0.13/stampy.py";    #### <<<<<<< can also use command line parameter to specify this
+my $minimap2_bin =
+  "/path/to/minimap2";    #### <<<<<<< can also use command line parameter to specify this
 my $vcftools_dir="/path/to/vcftools/dir";### <<<< can also use command line param
 
 #### no need to modify anything below this line
@@ -74,7 +74,7 @@ my (
 	$number_of_colours,    $reference_colour,
 	$classif,              $prefix,
 	$ploidy,               $vcf_on_which_calls_based,##if we build branches from a VCF and then genotype, and then pass to process_calls, use vcf_on_which_calls_based
-	$stampy_hash_stub,     $ref_fasta, $unioncalls, $caller_type,
+	$ref_fasta, $unioncalls, $caller_type,
         $callfile_log,         $kmer, $global_var_ctr,
         $print_gls,            $callfile_is_median_format
 );
@@ -92,7 +92,6 @@ $number_of_colours                   = 0;
 $reference_colour                    = -1;
 $ploidy                              = 2;
 #$apply_filter_one_allele_must_be_ref = "unknown";
-$stampy_hash_stub                    = "";
 $ref_fasta                           = "unspecified";
 $unioncalls                          = "unspecified";
 $caller_type                         = "unspecified";
@@ -121,9 +120,7 @@ my $help = '';    #default false
 	                                          ## file containing output of the population filter (classifier.R), or -1 if not used (default)
 	'prefix|p:s'                           => \$prefix,            ## this allows you to add a prefix to any var name. By default, it uses what is in the cortex callfile
 	'ploidy|y:i'                           => \$ploidy,            ## must be 1 or 2
-	'stampy_hash|t:s'                      => \$stampy_hash_stub,
-	                                            #stampy creates blah.sthash and blah.stidx. You should enter --stampy_hash blah
-	'stampy_bin|b:s'                       => \$stampy_bin,    ## must be 1 or 2
+	'minimap2_bin|b:s'                       => \$minimap2_bin,
         'ref_fasta|e:s'                        => \$ref_fasta, ## optional, but if there, will remove calls which have been misplaced by mapper.
         'vcftools_dir|d:s'                     => \$vcftools_dir,    #mandatory
         'unioncalls|u:s'                       => \$unioncalls, ## purely for internal use - the union callset which is passed in for genotyping (which generates $callfile),
@@ -151,37 +148,27 @@ if ($help)
 	print
 "--num_cols                    : nUmber of colours in your graph (and callfile output)\n";
 	print
-"--stampy_bin                  : Path to stampy bin - default is set via variable in script. \n";
-
+"--minimap2_bin                : Path to minimap2 binary - default is set via variable in script. \n";
 	print
-"--stampy_hash                 : VCF format needs a chromosome and position. You have two options:\n";
+ "--vcftools_dir                : VCFtools is used to generate VCFs - mandatory to either specify this on cmd-line, or manually edit the path at the top of this script\n";
+	print 
+	    "                                 This should be the VCFtools root directory, which has subdirectories called: bin,  cpp,  lib ..\n";
 	print
-"                                 1. Use a reference genome to place yout variants. If you do this, process_calls.pl will\n";
+"--ref_fasta                   : VCF format needs a chromosome and position. You have two options:\n";
 	print
-"                                    map your calls to it using Stampy. You need to first build a Stampy hash. \n";
-	print
-"                                    Stampy creates blah.sthash and blah.stidx. You should enter --stampy_hash blah\n";
+"                                 1. Use a reference genome or draft assembly to place your variants. \n";
 	print
 "                                 2. You have no reference, and don't care about coordinates, but want to know what the\n";
 	print
 "                                    variants are (SNPs, indels, complex), and who has what allele (genotypes)\n";
 	print
 "                                    In that case we already know we are going to be abusing VCF slightly - this is fine, we are pragmatic.\n";
+print
+"                                    Suppose you have N variant calls, create a pseudo-reference which has N chromosomes; \n";
 	print
-"                                    In this case (suppose you have N variant calls), create a pseudo-reference which has N chromosomes\n";
-	print
-"                                    Chromosome i is the 5prime flank, branch1 and then 3prime flank of variant i\n";
-	print
-"                                    Then build a stampy hash of this pseudo-reference and pass it in with the --stampy_hash argument as in 1 above\n";
-	print
-"                                 3. You have no decent reference but you have a rough consensus draft assembly - same as case 1\n";
-	print
-"                                 In all cases, you must use Stampy (http://www.well.ox.ac.uk/project-stampy)\n";
-
-	print
- "--vcftools_dir                : VCFtools is used to generate VCFs - mandatory to either specify this on cmd-line, or manually edit the path at the top of this script\n";
-	print 
-	    "                                 This should be the VCFtools root directory, which has subdirectories called: bin,  cpp,  lib ..\n";
+"                                    chromosome i is the 5prime flank, branch1 and then 3prime flank of variant i. Pass this pseudo-reference here.\n";
+print
+"                              We use a minimap2 mapping quality threshold of 40 by default, so 1 in 10000 calls are wrongly placed on the reference.\n";
 	print
 	    "--caller                      : Which caller generated this callset. Acceptable arguments are BC or PD.\n";
 	print
@@ -199,10 +186,6 @@ if ($help)
 "--ploidy                      : Acceptable values are 1 and 2. Default is 2.\n";
 	print
 "--prefix                      : String prefix which will go in the front of any variant names. e.g --prefix ZAM will produce variants ZAM_var_1, ZAM_var_2, etc\n";
-	print
-"--ref_fasta                   : Stampy maps calls to a reference with a mapping quality. We use a threshold of 40 by default, so 1 in 10000 are wrongly placed on the reference\n";
-	print
-	    "                                If you pass in the name of the reference fasta here, this script will check the VCF and remove misplaced variants\n";
 	print
 "--vcf_which_generated_calls   : Sometimes we make calls on many samples, and generate a union sitelist VCF. We then make a branches file from this, and genotype all\n";
 	print
@@ -259,10 +242,11 @@ if ($vcf_on_which_calls_based ne "unspecified")
     }
 }
 
-if ( ( !( -e $stampy_bin )) && ($reference_colour != -1) && ($vcf_on_which_calls_based eq "unspecified") )
+
+if ( ( !( -e $minimap2_bin )) && ($reference_colour != -1) && ($vcf_on_which_calls_based eq "unspecified") )
 { 
     print(
-	"Since you have specified a reference colour (--refcol), I assume you are using a reference. In this case, this script requires Stampy be installed, but it cannot find it. I tlooked for $stampy_bin which is either the default (Zam's path) or the file you entered as the argument of --stampy_bin. Please can you re-run, entering a valid path to Stampy. eg /home/myname/path/to/stampy.py\n"
+	"Since you have specified a reference colour (--refcol), I assume you are using a reference. In this case, this script requires minimap2 be installed, but it cannot find it. It looked for $minimap2_bin which is either the default path or the file you entered as the argument of --minimap2_bin. Please can you re-run, entering a valid path to minimap2. eg /home/myname/path/to/minimap2\n"
 	);
 	die();
 }
@@ -301,12 +285,12 @@ if ( ( $reference_colour < 0 ) && ( $reference_colour != -1 ) )
 "Reference colour must be -1 (meaning there is no reference), or >=0 - you entered $reference_colour"
 	);
 }
-if ( ( $reference_colour!=-1 ) && ( $stampy_hash_stub eq "" ) )
+if ( ( $reference_colour!=-1 ) && ( $ref_fasta eq "" ) )
 {
     if ($vcf_on_which_calls_based eq "unspecified")
     {
 	die(
-	    "If you are using a reference in the graph, then you must provide a stampy hash\n"
+	    "If you are using a reference in the graph, then you must provide a reference fasta file\n"
 	    );
     }
     else
@@ -315,10 +299,10 @@ if ( ( $reference_colour!=-1 ) && ( $stampy_hash_stub eq "" ) )
     }
 }
 
-if ( ( $reference_colour==-1 ) && ( $stampy_hash_stub ne "" ) )
+if ( ( $reference_colour==-1 ) && ( $ref_fasta ne "" ) )
 {
-    print("You can either use a reference, or not. If you use a reference, specify --refcol AND --stampy_hash. \n");
-    die("If you have not used a reference in the Cortex graph, then do not specify --refcol and do not specify --stampy_hash\n");
+    print("You can either use a reference, or not. If you use a reference, specify --refcol AND --ref_fasta. \n");
+    die("If you have not used a reference in the Cortex graph, then do not specify --refcol and do not specify --ref_fasta\n");
 }
 
 if ( ( $ploidy != 1 ) && ( $ploidy != 2 ) )
@@ -459,7 +443,8 @@ if ( ($reference_colour !=-1) && ($vcf_on_which_calls_based eq "unspecified") )
     else
     {
 	my $map_flanks_cmd =
-	    "$stampy_bin -g $stampy_hash_stub -h $stampy_hash_stub --norefoutput --inputformat=fasta -M $flankfile -o $mapped_flanks";
+	    "$minimap2_bin -ax sr $ref_fasta $flankfile -o $mapped_flanks";
+    # used to be: "$stampy_bin -g $stampy_hash_stub -h $stampy_hash_stub --norefoutput --inputformat=fasta -M $flankfile -o $mapped_flanks";
 	print "$map_flanks_cmd\n";
 	my $map_flanks_ret = qx{$map_flanks_cmd};
 	print "$map_flanks_ret\n";
@@ -651,7 +636,7 @@ if ($vcf_on_which_calls_based eq "unspecified")
 	my $ret1 = qx{$cmd1};
 	print "$ret1\n";
 	
-	print "Remove sites where Stampy has placed variant in wrong place\n";
+	print "Remove sites where minimap2 has placed variant in wrong place\n";
 	my $cmd2 = $isaac_bioinf_dir."vcf_scripts/vcf_align.pl  -p --tag PV LEFT $tmp1 $ref_fasta  | $vcftools_dir/perl/vcf-sort | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_dupes.pl  --take_first --pass  | $isaac_bioinf_dir"."vcf_scripts/vcf_remove_overlaps.pl  --pass --filter_txt OVERLAPPING_SITE > $final_simple ";
 	print "$cmd1\n";
 	my $ret2 = qx{$cmd2};
@@ -1240,11 +1225,11 @@ sub get_vcf_header
 	$head = $head
 	  . "##FILTER=<ID=MAPQ,Description=\"5prime flank maps to reference with mapping quality below $mapping_qual_thresh\">\n";
 	$head = $head
-	  . "##FILTER=<ID=MISMAPPED_UNPLACEABLE,Description=\"Stampy mapped the variant (using the 5p-flank) confidently (mapqual> $mapping_qual_thresh) to a place where the ref-allele does not match\">\n";
+	  . "##FILTER=<ID=MISMAPPED_UNPLACEABLE,Description=\"minimap2 mapped the variant (using the 5p-flank) confidently (mapqual> $mapping_qual_thresh) to a place where the ref-allele does not match\">\n";
 	$head = $head
 	  . "##FILTER=<ID=MULTIALLELIC,Description=\"Cortex does not call multiallelic sites, but combining run_calls VCFs can produce them. Filtered as current genotyper assumes biallelic.\">\n";
 	$head = $head
-	  . "##FILTER=<ID=OVERLAPPING_SITE,Description=\"If Stampy (or combining VCFs) has placed two biallelic variants overlapping, they are filtered\">\n";
+	  . "##FILTER=<ID=OVERLAPPING_SITE,Description=\"If minimap2 (or combining VCFs) has placed two biallelic variants overlapping, they are filtered\">\n";
 
 	$head = $head . "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t";
 	#if ( $colourfile !~ /,/ )

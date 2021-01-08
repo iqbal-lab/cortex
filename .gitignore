@@ -12,10 +12,14 @@
 .DS_Store
 
 
-#emacs 
+#editors
 *~
+*.swp
 
+#scratch
+tmp_work
 
+#build
 bin/
 libs/seq_file/seq_convert
 libs/seq_file/seq_file_test

@@ -11,7 +11,7 @@ use Cwd 'abs_path';
 
 
 #### Dear User - this following line is the only one in this script you may want to edit
-my $stampy_bin ="/path/to/stampy.py";    #### <<<<<<< can also use command line parameter
+my $minimap2_bin ="/path/to/minimap2";    #### <<<<<<< can also use command line parameter
 my $vcftools_dir="/path/to/vcftools/dir";### <<<< can also use command line param
 #### ****************  no need to modify anything below this line
 
@@ -122,7 +122,7 @@ my (
 #        $apply_filter_one_allele_must_be_ref,
 	$apply_classif,  $prefix,
 	$ploidy,                #$require_one_allele_is_ref,
-	$stampy_hash_stub,     $gt_assemblies,
+	$gt_assemblies,
         $outdir_binaries,      $outdir_calls,   $outdir_vcfs, 
         $qthresh,              $dups,           $homopol,
         $mem_height,           $mem_width, 
@@ -207,8 +207,7 @@ my $help = '';    #default false
     'ploidy:i'             => \$ploidy,
     'apply_pop_classifier'   => \$apply_classif,
     'prefix:s'             => \$prefix,            ## this will prefix any var name
-    'stampy_hash:s'        => \$stampy_hash_stub, #stampy creates blah.sthash and blah.stidx. You should enter --stampy_hash blah
-    'stampy_bin:s'         => \$stampy_bin,    ## must be 1 or 2
+    'minimap2_bin:s'         => \$minimap2_bin,
     'fastaq_index:s'        => \$fastaq_index,
     'qthresh:i'            => \$qthresh,
     'dups'                   => \$dups,
@@ -257,8 +256,7 @@ if ($help)
 	print "--ploidy\t\t\t\tMust be 1 or 2.\n";
 #	print "--require_one_allele_is_ref\t\t\t\tyes or no. Highly recommended if you want a VCF with ref chromosome positions\n";
 	print "--prefix\t\t\t\tIf you want your variant calls to have names with a specific prefix, use this\n";
-	print "--stampy_hash\t\t\t\tMANDATORY. Build a hash of your reference genome, and specify here the path to it. if stampy makes blah.stdidx etc then specify blah.\n";
-	print "--stampy_bin\t\t\t\tSpecify the path to your Stampy binary. Or manually edit this at the top of the file (it's marked out for you)\n";
+	print "--minimap2_bin\t\t\t\tSpecify the path to your minimap2 binary. Or manually edit this at the top of the file (it's marked out for you)\n";
 	print "--fastaq_index\t\t\t\tMANDATORY. File has format SAMPLE_NAME\tse_list\tpe_list1\tpe_list2. One line per sample\n";
 	print "--qthresh\t\t\t\tIf you want Cortex to use a quality score threshold, speify it here\n";
 	print "--dups\t\t\t\t\tIf you want Cortex to remove PCR duplicates, specify this flag (no arguments, just --dups)\n";
@@ -1535,7 +1533,7 @@ sub build_vcfs
     {
 	#$cmd = $cmd." --refcol 0 --require_one_allele_is_ref yes"; 
 	my $ref_fa = get_ref_fasta($list_ref_fasta); 
-	$cmd = $cmd." --refcol 0 --stampy_hash $stampy_hash_stub --stampy_bin $stampy_bin --ref_fasta $ref_fa --prefix $short_unique_str "; 
+	$cmd = $cmd." --refcol 0 --minimap2_bin $minimap2_bin --ref_fasta $ref_fa --prefix $short_unique_str "; 
     }
     else#no reference
     {
