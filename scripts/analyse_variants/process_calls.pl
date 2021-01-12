@@ -13,7 +13,7 @@ my $vcftools_dir="/path/to/vcftools/dir";### <<<< can also use command line para
 #### no need to modify anything below this line
 
 # However you may decide you want to increase this threshold
-my $mapping_qual_thresh = 40;    #  - demand 5prime flank maps with quality>= 40
+my $mapping_qual_thresh = 1;    #  - demand 5prime flank maps with quality>= 40
 
 
 my $script_dir;
@@ -443,7 +443,7 @@ if ( ($reference_colour !=-1) && ($vcf_on_which_calls_based eq "unspecified") )
     else
     {
 	my $map_flanks_cmd =
-	    "$minimap2_bin -ax sr $ref_fasta $flankfile -o $mapped_flanks";
+	    "$minimap2_bin -ax sr -k9 -w4 --secondary=no $ref_fasta $flankfile -o $mapped_flanks";
     # used to be: "$stampy_bin -g $stampy_hash_stub -h $stampy_hash_stub --norefoutput --inputformat=fasta -M $flankfile -o $mapped_flanks";
 	print "$map_flanks_cmd\n";
 	my $map_flanks_ret = qx{$map_flanks_cmd};
@@ -1784,9 +1784,14 @@ sub print_next_vcf_entry_for_easy_and_decomposed_vcfs
 	my ( $eof2, $var_name2, $strand, $chr, $coord );
 	if ($colour_ref !=-1)
 	{
-	    ## then we have already mapped the flanks to the reference:
+        ## then we have already mapped the flanks to the reference:
+        while (1){
 	    ( $eof2, $var_name2, $strand, $chr, $coord )=
 		get_next_var_from_flank_mapfile($file_handle_map_flanks);
+        # In SAM, only one alignment has '& 0x900 == 0';
+        # this skips secondary/supplementary alignments 
+        if ( (($strand & 0x900) == 0) || ($eof2 eq "EOF" ) ) { last;}
+        }
 	}
 	else
 	{
