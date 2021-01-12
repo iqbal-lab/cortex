@@ -27,10 +27,10 @@ use BasicUtils qw ( check_cortex_runnable add_slash is_fastq count_bases_in_fast
 $cortex_dir = add_slash($cortex_dir);
 
 
-## Script to prepare reference graph binary, Stampy hash of reference etc
+## Script to prepare reference graph binary
 
 my $vcftools_dir = "";
-my $stampy_bin="";
+my $minimap2_bin="";
 my $all_samples_index="";
 my $ref_fa="";
 my $refdir = "";
@@ -49,7 +49,7 @@ my $vclean='';
     'dir_for_ref_objects:s'       =>\$refdir, 
     'vcftools_dir:s'              =>\$vcftools_dir,
     'outdir:s'                    =>\$outdir,
-    'stampy_bin:s'               =>\$stampy_bin,
+    'minimap2_bin:s'               =>\$minimap2_bin,
     'kmer:i'                      =>\$kmer,
     'procs:i'                     =>\$num_procs,
     'mem_height:i'                     =>\$mem_height,
@@ -84,7 +84,7 @@ print "\n\n$str_input_args\n";
 
 my $prep = "perl $cortex_dir"."scripts/calling/prepare.pl --index $all_samples_index --ref_fa $ref_fa";
 $prep .= " --dir_for_ref_objects $refdir --vcftools_dir $vcftools_dir --outdir $outdir ";
-$prep .= " --stampy_bin $stampy_bin --kmer $kmer";
+$prep .= " --minimap2_bin $minimap2_bin --kmer $kmer";
 my $ret_prep = qx{$prep};
 
 ## Build

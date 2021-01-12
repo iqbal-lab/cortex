@@ -80,13 +80,6 @@ cortex_var_31_c1 --kmer_size 31
 
 \end{verbatim}
 \begin{itemize}
-\item{Build a Stampy hash of the genome}
-\end{itemize}
-\begin{verbatim}
-stampy.py -G stampy_refhash ref.fa
-stampy.py -g stampy_refhash -H stampy_refhash
-\end{verbatim}
-\begin{itemize}
 \item{And now we can assemble variants, compare the two genomes at two different kmers, combine all the results and dump VCFs:}
 \end{itemize}
 \begin{verbatim}
@@ -96,8 +89,7 @@ perl run_calls.pl --first_kmer 31
     --outdir dirname 
     --outvcf NAME 
     --ploidy 1 
-    --stampy_hash stampy_refhash 
-    --stampy_bin /path/stampy.py 
+    --minimap2_bin /path/minimap2 
     --list_ref_fasta FILELIST 
     --refbindir ref/ 
     --genome_size 2800000 
@@ -130,8 +122,7 @@ parallel --gnu -j 20
   --list_ref LISTREF 
   --refbindir DIR_WITH_CTX_BINS 
   --index_dir indexes/ 
-  --stampy_bin stampy-1.0.23/stampy.py 
-  --stampy_hash  stampy_refhash 
+  --minimap2_bin path/minimap2
   --bc yes 
   --pd no 
   --kmer 31
@@ -589,7 +580,7 @@ make NUM_COLS=3 MAXK=95 cortex_var
 \subsection{Install/setup needed for post-processing of Cortex calls}
 There are two external dependencies, which you will need in order to be able to dump VCFs. In both cases my script will need you to tell it the path to these packages.
 \begin{itemize}
-\item{Get Stampy from http://www.well.ox.ac.uk/project-stampy. This is needed for placing of variants on a reference. Stampy needs you to have Python 2.6 or 2.7, and only supports x86\us 64. Download it, unzip it, change into that directory and type "make"}
+\item{Get minimap2 from https://github.com/lh3/minimap2. This is needed for placing of variants on a reference. Download it, unzip it, change into that directory and type "make"}
 \item{Get a tar ball of VCFTools from\\ https://sourceforge.net/projects/vcftools/files/ \\ (I specifically require a tar ball, not a subversion repository, as they seem to have different directory hierarchies, and I need to be able to find things). I can verify that version 0.1.8 and 0.1.9 work fine}
 \end{itemize}
 Add the following two directories to your PERL5LIB
@@ -1216,25 +1207,21 @@ process\us calls.pl takes the  following mandatory arguments
  \end{verbatim}
  Specify the number of colours in the graph. If you used cortex\us var\us 31\us c2419 but only loaded 127 samples, you should enter 2419 here.
   \begin{verbatim}
-  --stampy_bin
+  --minimap2_bin
  \end{verbatim}
- Full path to stampy.py (which you can obtain from\\
-  http://www.well.ox.ac.uk/project-stampy).
+ Full path to minimap2 (which you can obtain from\\
+ https://github.com/lh3/minimap2).
+Cortex calls variants completely without use of a reference, but inevitably one needs to place these on an assembly. process\us calls.pl will map the flanks of your calls to an assembly using minimap2 (it must be minimap2, you cannot replace it with a mapper of your choice - note this is not a standard operation for a mapper). 
   \begin{verbatim}
---stampy_hash PATH
+  --ref_fasta FILENAME
  \end{verbatim}
-Cortex calls variants completely without use of a reference, but inevitably one needs to place these on an assembly. process\us calls.pl will map the flanks of your calls to an assembly using Stampy (it must be Stampy, you cannot replace it with a mapper of your choice - note this is not a standard operation for a mapper). You need to first build a Stampy hash. Suppose your reference was ref.fa, then you do this as follows
-\begin{verbatim}
-stampy.py -G /path/to/foo ref.fa
-stampy.py -g /path/to/foo -H /path/to/foo
-\end{verbatim}
-This will create two files, /path/to/foo.stidx, and /path/to/foo.sthash.You should enter \dd stampy\us hash /path/to/foo. (Replace the string foo with the name of your species or reference or whatever).
+ minimap2 maps calls to a reference with a mapping quality. We use a threshold of 40 by default, so 1 in 10000 are wrongly placed on the reference. If you pass in the name of the reference fasta here, this script will check the VCF and remove misplaced variants. 
 If you have no reference, and don't care about coordinates, but want to know what the variants are (SNPs, indels, complex), and who has what allele (genotypes), then we  abuse VCF slightly. Suppose you have N variant calls.  First create a pseudo-reference which has N chromosomes. Chromosome i is the 5prime flank, branch1 and then 3prime flank of variant i:
  \begin{verbatim}
   perl make_fake_reference.pl --callfile FILE 
        --outfile OUTFILE
  \end{verbatim}
- Then build a stampy hash of this pseudo-reference and pass it in with the --stampy\us hash argument above. 
+ Then pass this pseudo-reference here.
   Back to arguments of process\us calls.pl:
   \begin{verbatim}
   --vcftools_dir
@@ -1267,10 +1254,6 @@ The following arguments are optional
   --prefix STRING
  \end{verbatim}
  String prefix will go on the start of all variant names. e.g \dd prefix ZAM will produce variants ZAM\us var\us 1, ZAM\us var\us 2, etc
-  \begin{verbatim}
-  --ref_fasta FILENAME
- \end{verbatim}
- Stampy maps calls to a reference with a mapping quality. We use a threshold of 40 by default, so 1 in 10000 are wrongly placed on the reference. If you pass in the name of the reference fasta here, this script will check the VCF and remove misplaced variants. 
  
  \subsection{Interpreting Cortex VCFs}
  The main Cortex VCF file is the "raw.vcf". Here is a  typical line, which I'll have to print over a few
@@ -1469,17 +1452,8 @@ The reasons to prefer "Coordinates And Calling" (including the reference colour 
    prefix, use this.
    
    
---stampy_hash PATH_STUB
-  MANDATORY. Build a hash of 
-  your reference genome, and 
-  specify here the path to it. 
-  If stampy makes blah.stdidx etc
-  then specify blah. 
-  See below for what to do if there is
-  no reference.
-  
---stampy_bin /path/stampy.py
-  Specify the path to your Stampy binary. 
+--minimap2_bin /path/minimap2
+  Specify the path to your minimap2 binary. 
   Or manually edit this at the top of the 
   file (it's marked out for you).
   
@@ -1650,8 +1624,7 @@ perl run_calls.pl --first_kmer 31
     --outdir dirname 
     --outvcf NAME 
     --ploidy 1 
-    --stampy_hash ref/species_name 
-    --stampy_bin /path/stampy.py 
+    --minimap2_bin /path/minimap2 
     --list_ref_fasta FILELIST 
     --refbindir ref/ 
     --genome_size 2800000  
@@ -1682,8 +1655,7 @@ perl run_calls.pl --first_kmer 31
     --outdir dirname 
     --outvcf NAME 
     --ploidy 1 
-    --stampy_hash ref/species_name 
-    --stampy_bin /path/stampy.py 
+    --minimap2_bin /path/minimap2 
     --list_ref_fasta FILELIST 
     --refbindir ref/ 
     --genome_size 2800000 
@@ -1715,8 +1687,7 @@ perl run_calls.pl --first_kmer 31
     --outdir dirname 
     --outvcf NAME 
     --ploidy 2
-    --stampy_hash grc37 
-    --stampy_bin /path/stampy.py 
+    --minimap2_bin /path/minimap2 
     --list_ref_fasta FILELIST_GRC37 
     --refbindir ref/ 
     --genome_size 3000000000 

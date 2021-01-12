@@ -87,7 +87,7 @@ left=10mm,right=10mm,top=10mm,bottom=15mm}
 
 Download Cortex from github (https://github.com/iqbal-lab/cortex)  - there are download instructions there.
 
-You must have installed VCFtools (and have the entire directory, not just the binary executable), R and Stampy. R must be in your path. Add the following directories to PERL5LIB and PATH
+You must have installed VCFtools (and have the entire directory, not just the binary executable), R and minimap2. R must be in your path. Add the following directories to PERL5LIB and PATH
 \begin{verbatim}
 export PERL5LIB= /path/cortex/scripts/analyse_variants/
     bioinf-perl/lib;/path/cortex/scripts/calling:
@@ -106,7 +106,7 @@ perl scripts/calling/prepare.pl --index INDEX
      --dir_for_ref_objects /path/refdir/ 
      --vcftools_dir /path2/vcftools_1.0.9/
      --outdir /path3/results
-     --stampy_bin /path4/stampy.py  --kmer 31
+     --minimap2 /path4/minimap2  --kmer 31
 \end{verbatim}
 This script will create a config script in /path3/results containing information about your parameter choices, so you do not need to enter them again in subsequent scripts.
 

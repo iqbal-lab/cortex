@@ -18,8 +18,7 @@ my $pd = "no";
 my $mem_height = 16;
 my $mem_width=100;
 my $vcftools_dir = "";
-my $stampy_bin="";
-my $stampy_hash="";
+my $minimap2_bin="";
 my $list_ref="";
 my $refbindir="";
 my $num=-1;
@@ -37,8 +36,7 @@ my $outdir="";
     'index_dir:s'                 =>\$index_dir,
     'vcftools_dir:s'              =>\$vcftools_dir,
     'out_dir:s'                   =>\$outdir,
-    'stampy_bin:s'                =>\$stampy_bin,
-    'stampy_hash:s'               =>\$stampy_hash,
+    'minimap2_bin:s'                =>\$minimap2_bin,
     'bc:s'                        =>\$bc,
     'kmer:i'                      =>\$kmer,
     'mem_height:i'                =>\$mem_height,
@@ -68,7 +66,7 @@ my $sample = $sp[0];
 
 my $log = $outdir."log_bc.".$sample;
 
-my $cmd ="perl $cortex_dir"."scripts/calling/run_calls.pl --fastaq_index $index --first_kmer $kmer --auto_cleaning yes --bc $bc --pd $pd --outdir $outdir --ploidy 1  --mem_height $mem_height --mem_width $mem_width --qthresh $qthresh --vcftools_dir $vcftools_dir  --do_union no --logfile $log --workflow joint_par --ref CoordinatesAndInCalling --list_ref_fasta $list_ref --refbindir $refbindir --stampy_bin $stampy_bin --stampy_hash $stampy_hash --outvcf $sample ";
+my $cmd ="perl $cortex_dir"."scripts/calling/run_calls.pl --fastaq_index $index --first_kmer $kmer --auto_cleaning yes --bc $bc --pd $pd --outdir $outdir --ploidy 1  --mem_height $mem_height --mem_width $mem_width --qthresh $qthresh --vcftools_dir $vcftools_dir  --do_union no --logfile $log --workflow joint_par --ref CoordinatesAndInCalling --list_ref_fasta $list_ref --refbindir $refbindir --minimap2_bin $minimap2_bin --outvcf $sample ";
 qx{$cmd};
 
 

@@ -21,11 +21,10 @@ use BasicUtils qw ( check_cortex_runnable add_slash is_fastq count_bases_in_fast
 
 
 
-## Script to prepare reference graph binary, Stampy hash of reference etc
+## Script to prepare reference graph binary, etc
 
 my $vcftools_dir = "";
-my $stampy_bin="";
-my $stampy_hash="";
+my $minimap2_bin="";
 my $all_samples_index="";
 my $ref_fa="";
 my $refdir = "";
@@ -41,8 +40,7 @@ my $verbose ='';
     'dir_for_ref_objects:s'       =>\$refdir, 
     'vcftools_dir:s'              =>\$vcftools_dir,
     'outdir:s'                    =>\$outdir, ## you can enter "no" here, and it will only prepare for species, not dataset
-    'stampy_bin:s'               =>\$stampy_bin,
-    #'stampy_hash:s'               =>\$stampy_hash,
+    'minimap2_bin:s'               =>\$minimap2_bin,
     'ref_id:s'                    =>\$ref_id, ##not mandatory
     'kmer:i'                      =>\$kmer,
     'verbose'                    => \$verbose,
@@ -58,11 +56,11 @@ my $num_samples=0;
 my $mem_height=0;
 my $mem_width=0;
 ($num_samples, $mem_height, $mem_width, $genome_size,
- $ref_fa, $stampy_bin, $stampy_hash, $outdir, $refdir )  
+ $ref_fa, $minimap2_bin, $outdir, $refdir )  
     
-    ## includes creating missing dirs and checking Stampy, VCFtools
+    ## includes creating missing dirs and checking minimap2, VCFtools
     = check_args($all_samples_index, $ref_fa, $refdir, $vcftools_dir, $outdir, 
-		 $stampy_bin, $stampy_hash, $kmer, $ref_id);
+		 $minimap2_bin, $kmer, $ref_id);
 
 $outdir = BasicUtils::add_slash($outdir);
 
@@ -72,8 +70,7 @@ $outdir = BasicUtils::add_slash($outdir);
 my %arr_config = ("ref_fa" => abs_path($ref_fa), 
 		  "refbindir"=> abs_path($refdir."/ctx_bins"), 
 		  "vcftools_dir"=>abs_path($vcftools_dir),
-		  "stampy_bin"=>abs_path($stampy_bin), 
-		  #"stampy_hash"=>$stampy_hash, 
+		  "minimap2_bin"=>abs_path($minimap2_bin), 
 		  "genome_size"=>$genome_size);
 
 
@@ -128,35 +125,6 @@ $arr_config{"refbin"}= abs_path($refbin);
 
 
 
-### Build stampy hash
-my $stampy_stub = $refdir."stampy/".$ref_id;
-if ( !( (-e $stampy_stub.".stidx") && (-e $stampy_stub.".sthash") ) )
-{
-    ##if they don't both exist, kill the one that does
-    if (-e $stampy_stub.".stidx")
-    {
-	my $rmv1 = "rm $stampy_stub".".stidx";
-	qx{$rmv1};
-    }
-    elsif (-e $stampy_stub.".sthash")
-    {
-        my $rmv1 = "rm $stampy_stub".".sthash";
-        qx{$rmv1};
-    }
-}
-if (!(-e $stampy_stub.".stidx"))
-{
-    my $cmd_stampy1 = "$stampy_bin -G $stampy_stub $ref_fa 2>&1";
-    my $ret_stampy1 = qx{$cmd_stampy1};
-    my $cmd_stampy2 = "$stampy_bin -g $stampy_stub -H $stampy_stub 2>&1";
-    my $ret_stampy2 = qx{$cmd_stampy2};
-    if ($verbose)
-    {
-	print "Built Stampy hash\n";
-	#print "$cmd_stampy1\n$ret_stampy1\n$cmd_stampy2\n$ret_stampy2\n";
-    }
-}
-$arr_config{"stampy_hash"}= abs_path($stampy_hash);
 
 if ($outdir ne "no")
 {
@@ -176,7 +144,7 @@ sub check_args
 
 {
     my ($loc_index, $loc_ref_fa, $loc_refdir, $loc_vcftools_dir, 
-        $loc_outdir, $loc_stampy_bin, $loc_stampy_hash, 
+        $loc_outdir, $loc_minimap2_bin, 
         $loc_kmer, $loc_refid) = @_;
     
     if ($loc_index eq "no")
@@ -270,9 +238,7 @@ sub check_args
     $loc_refdir = abs_path($loc_refdir);
     $loc_refdir = BasicUtils::add_slash($loc_refdir);
     BasicUtils::create_dir_if_does_not_exist($loc_refdir, "check_args of prepare.pl");
-    my $st_dir = $loc_refdir."stampy/";
     my $ctxdir = $loc_refdir."ctx_bins/";
-    BasicUtils::create_dir_if_does_not_exist($st_dir,  "check_args of prepare.pl");
     BasicUtils::create_dir_if_does_not_exist($ctxdir, "check_args of prepare.pl");
     
 
@@ -333,31 +299,26 @@ sub check_args
 	qx{$cmd_create_reffalist};
     }
     
-## Check the stampy binary
-    if (!(-e $loc_stampy_bin))
+## Check the minimap2 binary
+    if (!(-e $loc_minimap2_bin))
     {
-	die("You must specify the full path to stampy.py using --stampy_bin\n");
+	die("You must specify the full path to minimap2 using --minimap2_bin\n");
     }
-    elsif ($loc_stampy_bin !~ /stampy.py$/)
+    elsif ($loc_minimap2_bin !~ /minimap2$/)
     {
-	die("--stampy_bin should give full path to stampy.py\n")
+	die("--minimap2_bin should give full path to minimap2\n")
     }
     
-    my $stcmd = "$stampy_bin --help";
+    my $stcmd = "$minimap2_bin --help";
     my $stret = qx{$stcmd};
     
     if ($stret !~ /Usage/)
     {
-        my $str = "The stampy.py specified does not seem to run (tried "; 
-        $str .= " calling --help. Maybe Python 2.6 or 2.7 not present?\n";
+        my $str = "The minimap2 specified executable does not seem to run (tried "; 
+        $str .= " calling --help.\n";
         die($str);
     }
-    $loc_stampy_bin = abs_path($loc_stampy_bin);
-    if ($loc_stampy_hash eq "")
-    {
-	$loc_stampy_hash=$loc_refdir."stampy/REF";
-    }
-    $loc_stampy_hash = abs_path($loc_stampy_hash);
+    $loc_minimap2_bin = abs_path($loc_minimap2_bin);
 
     if ($loc_kmer % 2==0)
     {
@@ -365,7 +326,7 @@ sub check_args
     }	
     
     return ($num_samples, $mem_h, $mem_w, $genome_len,
-	    $loc_ref_fa, $loc_stampy_bin, $loc_stampy_hash, $loc_outdir,
+	    $loc_ref_fa, $loc_minimap2_bin, $loc_outdir,
 	    $loc_refdir);    
 }
 

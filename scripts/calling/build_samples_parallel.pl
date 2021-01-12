@@ -28,8 +28,7 @@ my %vars = ( "index" => "",
 	     "mem_height"=>"",
 	     "mem_width"=>"",
 	     "vcftools_dir"=>"",
-	     "stampy_bin"=>"",
-	     "stampy_hash"=>"",
+	     "minimap2_bin"=>"",
 	     "list_ref"=>"",
 	     "refbindir"=>"",
 	     "ref_fa"=>"",
@@ -48,8 +47,7 @@ my %vars = ( "index" => "",
     'refbindir:s'                 =>\$vars{"refbindir"},
     'vcftools_dir:s'              =>\$vars{"vcftools_dir"},
     'outdir:s'                   =>\$vars{"outdir"},
-    'stampy_bin:s'                =>\$vars{"stampy_bin"},
-    'stampy_hash:s'               =>\$vars{"stampy_hash"},
+    'minimap2_bin:s'                =>\$vars{"minimap2_bin"},
     'bc:s'                        =>\$vars{"bc"},
     'pd:s'                        =>\$vars{"pd"},
     'kmer:i'                      =>\$vars{"kmer"},
@@ -118,8 +116,7 @@ $cmd .= " --vcftools_dir ".$vars{"vcftools_dir"};
 $cmd .= " --do_union yes --logfile $log,f --workflow independent --ref CoordinatesAndInCalling";
 $cmd .= " --list_ref ".$vars{"list_ref"};
 $cmd .= " --refbindir ".$vars{"refbindir"};
-$cmd .= " --stampy_bin ".$vars{"stampy_bin"};
-$cmd .= " --stampy_hash ".$vars{"stampy_hash"};
+$cmd .= " --minimap2_bin ".$vars{"minimap2_bin"};
 $cmd .= " --outvcf $sample ";
 
 if ($vars{"vclean"})
@@ -141,8 +138,7 @@ sub get_args_from_config_if_undefined
     ## the error/return values
     my $err;
     ($err, $vcft)   = get_from_config_if_undef($vcft, "vcftools_dir", $conf); 
-    ($err, $st_bin) = get_from_config_if_undef($st_bin, "stampy_bin", $conf);
-    ($err, $st_hash)= get_from_config_if_undef($st_hash, "stampy_hash", $conf);
+    ($err, $st_bin) = get_from_config_if_undef($st_bin, "minimap2_bin", $conf);
     ($err, $list_r) = get_from_config_if_undef($list_r, "list_ref", $conf);
     ($err, $r_fa)   = get_from_config_if_undef( $r_fa, "ref_fa", $conf);
     ($err, $rbindir)= get_from_config_if_undef( $rbindir, "refbindir", $conf);
@@ -212,18 +208,11 @@ sub check_args
 	$errstr .= "or you must specify --vcftools_dir.\n";
 	die($errstr);
     }
-    if ($hashref->{"stampy_bin"} eq "")
+    if ($hashref->{"minimap2_bin"} eq "")
     {
 	my $errstr = "Either you should use prepare.pl, which would leave a config file\n";
-	$errstr .= "specifying stampy_bin - the path to stampy.py -  (which it appears you have not),\n";
-	$errstr .= "or you must specify --stampy_bin.\n";
-	die($errstr);
-    }
-    if ($hashref->{"stampy_hash"} eq "")
-    {
-	my $errstr = "Either you should use prepare.pl, which would leave a config file\n";
-	$errstr .= "specifying stampy_hash (which it appears you have not),\n";
-	$errstr .= "or you must specify --stampy_hash.\n";
+	$errstr .= "specifying minimap2_bin - the path to minimap2 -  (which it appears you have not),\n";
+	$errstr .= "or you must specify --minimap2_bin.\n";
 	die($errstr);
     }
     if ($hashref->{"list_ref"} eq "")
