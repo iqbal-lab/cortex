@@ -167,8 +167,6 @@ print
 "                                    Suppose you have N variant calls, create a pseudo-reference which has N chromosomes; \n";
 	print
 "                                    chromosome i is the 5prime flank, branch1 and then 3prime flank of variant i. Pass this pseudo-reference here.\n";
-print
-"                              We use a minimap2 mapping quality threshold of 40 by default, so 1 in 10000 calls are wrongly placed on the reference.\n";
 	print
 	    "--caller                      : Which caller generated this callset. Acceptable arguments are BC or PD.\n";
 	print
@@ -1225,7 +1223,7 @@ sub get_vcf_header
 	$head = $head
 	  . "##FILTER=<ID=MAPQ,Description=\"5prime flank maps to reference with mapping quality below $mapping_qual_thresh\">\n";
 	$head = $head
-	  . "##FILTER=<ID=MISMAPPED_UNPLACEABLE,Description=\"minimap2 mapped the variant (using the 5p-flank) confidently (mapqual> $mapping_qual_thresh) to a place where the ref-allele does not match\">\n";
+	  . "##FILTER=<ID=MISMAPPED_UNPLACEABLE,Description=\"minimap2 mapped the variant (using the 5p-flank) to a place where the ref-allele does not match\">\n";
 	$head = $head
 	  . "##FILTER=<ID=MULTIALLELIC,Description=\"Cortex does not call multiallelic sites, but combining run_calls VCFs can produce them. Filtered as current genotyper assumes biallelic.\">\n";
 	$head = $head
