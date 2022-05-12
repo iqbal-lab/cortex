@@ -109,6 +109,13 @@ ifdef 32_BITS
 	ARCH =
 endif
 
+UNAME_P := $(shell uname -p)
+ifneq ($(filter arm%,$(UNAME_P)),)
+	ARCH =
+endif
+ifneq ($(filter aarch%,$(UNAME_P)),)
+	ARCH =
+endif
 
 # DEV: Add -DNDEBUG=1 to turn off assert() calls
 OPT := $(ARCH) -Wall $(MACFLAG) -DVERSION_STR='"$(VERSION_STR)"' \
