@@ -297,7 +297,7 @@ if ( ( $reference_colour!=-1 ) && ( $ref_fasta eq "" ) )
     }
 }
 
-if ( ( $reference_colour==-1 ) && ( $ref_fasta ne "" ) )
+if ( ( $reference_colour==-1 ) && ( $ref_fasta ne "unspecified" ) )
 {
     print("You can either use a reference, or not. If you use a reference, specify --refcol AND --ref_fasta. \n");
     die("If you have not used a reference in the Cortex graph, then do not specify --refcol and do not specify --ref_fasta\n");
